@@ -1,0 +1,39 @@
+# weaver-gate - PRD (crate charter)
+
+**Status:** STUB. Not merged, not ratified, and not a member of the document set.
+It exists so the composition root has a named home before it has content.
+
+**Date filed:** 2026-07-29
+**Document ID:** `weaver-gate-PRD`
+**Parent:** `WeaverTools-PRD`
+**Editorial:** Per the Working Rules.
+
+**This file settles nothing.** It names a domain and the reason the domain needs a
+root. Nothing in the corpus may cite this document as having decided anything.
+
+## The domain
+
+The network face, and nothing else. `WeaverTools-PRD` section 3 has the Gate holding
+the only network socket and being the only ingress for work, terminating the external
+protocol, translating to the internal wire, and forwarding inward. A tool reaching
+outward under step 7 is not ingress and does not pass through here.
+
+It is a root rather than a crate because a network face acquires parts. Protocol
+termination, authentication, and translation are separable jobs, and which of them
+become member crates is not knowable before the charter is written.
+
+## What is already decided elsewhere and is not this document's to reopen
+
+The harness binds no listening socket. A Gate process never outlives the agent it
+fronts. Work enters only through this face, and the response returns through it.
+Supervising gate lifetime is `weaver-admin`'s.
+
+## What is open
+
+The member list. The external protocol. The internal wire format and where it is
+defined. The authentication model and how it relates to the `SO_PEERCRED` peer
+identity the floor already carries. Everything a charter exists to state.
+
+## Graph
+
+No records. This document declares no node and no edge.
