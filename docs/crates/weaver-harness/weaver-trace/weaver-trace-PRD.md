@@ -1,0 +1,669 @@
+# weaver-trace - PRD (crate charter)
+
+**Status:** MERGED. In `main` and the source of truth for now. The crate PRD set is
+written together and merged together, and no Spec is written against any member
+before the whole set is merged. Ratification is the mapping of the whole document
+set into the graph, and it belongs to the set rather than to this document.
+
+**Date filed:** 2026-07-29
+**Document ID:** `weaver-trace-PRD`
+**Parent:** `weaver-harness-PRD`
+**Companion contract:** `weaver-harness-trace-contract`, written with this document
+**Editorial:** Per the Working Rules.
+
+---
+
+## 1. What this crate is
+
+`weaver-trace` defines the primary artifact. It depends on no other Weaver crate,
+binds no socket, and holds no cognition.
+
+**It is not a floor crate.** The floor is `weaver-traits` and `weaver-types`, which
+every domain draws from and none contains. This crate has one caller. The harness
+authors every event and no other crate submits one, and a reader of a finished record is
+downstream of a file rather than a party to this crate. An earlier reading grouped it
+with the floor, and that grouping is residue from before sole-writer collapsed the
+five-party trace seam to two. Depending on nothing is what this crate has in common with
+the floor. Being drawn by everything is what it does not. The no-dependency claim
+survives contact with the message kinds only because their payloads are opaque here,
+which section 3 states rather than assumes. It defines what an event is, records events
+durably, projects them into a queryable present, and validates a record on read.
+
+```graph
+node: weaver-trace
+kind: crate
+
+edge: parent
+from: weaver-trace
+to: weaver-harness
+```
+
+**It does not produce the trace.** The harness authors. This crate is the mechanism the
+harness authors through, and the distinction is the whole of the charter. `weaver-trace`
+decides nothing about what is worth recording, when a session begins, what a turn is, or
+at what verbosity a run records. Every one of those is policy and every one is the
+harness's. This crate guarantees that what it is handed is recorded faithfully, ordered
+correctly, and readable afterward.
+
+The previous tree had no document governing production at all. It had a schema
+contract, an access contract, and a draft custody contract, and nothing binding the
+sole producer on how it produces. Every defect that corpus records is on the
+producer side, which is why this charter is organized around production and why it
+is written together with the contract that binds it.
+
+## 2. The artifact
+
+### 2.1 Three nested units
+
+**A turn** is one request through to its final answer, bounded by `turn.started`
+and `turn.closed`.
+
+**A run** is one residency working on a session. `run0` creates the session.
+`run1` and after resume it. A run ends at unload or at process death, and the
+identifier is an ordinal within the session, so which run produced an event is
+answerable from the event alone.
+
+**A session** is the continuity itself, spanning one or more runs. It is the unit
+the agent's conversation belongs to, and it is the boundary statelessness is
+defined against: a new session begins with nothing, and a session that has been
+running for a week is still one session.
+
+### 2.2 The session has two materializations
+
+The **working structure** is the session in RAM: the volatile relational present,
+a deterministic projection of the event stream. It is what the harness reasons
+over, which makes it state rather than a report about state. It lives for one run,
+and it runs ahead of the durable record by the depth of the writer's queue, per
+section 4.2.
+
+**The working structure is append-only by construction.** It offers no update
+surface, no delete surface, and no mechanism a caller could reach to alter an event
+after it has landed. This is a structural guarantee rather than a behavioral one.
+The agent runs as its own UID with access to bash, and a mutable in-process store
+reachable through any path that UID can touch is a store the agent could alter.
+A misconfigured sudoers entry, a future dependency, or a bug in a calling crate
+cannot produce a mutation because the structure offers no mutation. The audit trust
+property this crate exists to protect requires that guarantee to be architectural,
+not a promise that everyone agreed to keep.
+
+The **durable record** is the session on disk: append-only, sequence-faithful,
+canonical, and outliving both the process and the run. It is a persistent audit
+store that `weaver-admin` reads directly and the agent has no path to.
+
+One session is one record. A run appends to it, so the record accumulates across
+every run of that session and the working structure is rebuilt from it at the start
+of each.
+
+**A record is not a file.** Today it is exactly one, because there is no rotation,
+but the two nouns are kept apart deliberately. If a record ever spans more than one
+file its parts are **segments**, and nothing has to be renamed on the day that
+happens. Defining the word costs a sentence. Discovering that half the corpus used
+`record` to mean `file` would cost considerably more.
+
+```graph
+node: session-record
+kind: artifact
+```
+
+### 2.3 Recreation is how a session resumes, not only how it is audited
+
+The durable record recreates the working structure exactly over the events it holds.
+That property is usually stated as an audit guarantee, and it is one, but it is first
+a **live mechanism**: rebuilding the working structure from the record is what lets a
+session continue after a restart. `run1` opens the session's record, projects it,
+and appends. Session resume is recreation, and there is no second path for it.
+
+**Exactly is scoped to the committed range.** Section 4.2 has the working structure
+running ahead of the record by the depth of the writer's queue, so a record recreates
+the structure as of its last committed event rather than as it stood when the process
+died. Recreation is exact over what the record holds and silent about a forfeited
+tail, and those are two claims rather than one. A resume therefore begins from a whole
+shorter history, which is the case section 4.2 accepts, and never from a partial
+event.
+
+This is why recreation accepts any well-formed record including an operator-provided
+copy, and why the projection must be deterministic rather than approximately
+faithful. A resume that produced slightly different rows would be an agent that
+remembers its own conversation slightly wrong.
+
+### 2.4 Spans
+
+Spans are neither materialization and they are not stored. A span is a view over a range
+of events, derived on demand for interoperability with tools that speak spans. It
+has no durable home, no residency, and no authority. The previous tree wrote closed
+spans into its durable log as events, which made spans a durable primitive, which
+inverted its own ruling that a derived span is never the durable home, and which
+left a separate span export that was a projection of data already stored in
+projected form. Its own crate Spec could not resolve the resulting redundancy. This
+charter resolves it by honoring the original rule: events are durable, spans are
+derived, and nothing is stored twice.
+
+### 2.5 Schema authority
+
+The single emission is authored against the durable event schema. The working structure
+is a projection rather than a second author, so its projection version governs only how
+events become rows and may be bumped without changing what is emitted. A change to the
+durable event schema is the breaking change, and the projection declares which
+event-schema versions it consumes.
+
+## 3. Events are typed, and that is a safety property
+
+An event carries an envelope and a payload. The envelope identifies the session, the
+run, the turn, the sequence, the kind, the producing subsystem, the causal parent,
+the payload hash, and **two timestamps**: a session-scoped wall-clock stamp at
+millisecond resolution for the calendar question, and a run-scoped monotonic reading
+at nanosecond source with a microsecond floor for interval measurement. The two are
+not interchangeable and neither answers the other's question, which is why there is no
+single occurrence time. `weaver-harness-trace-contract` section 3 states which party
+stamps them and why the scopes differ. The payload shape is determined by the kind,
+and the kind vocabulary is closed.
+
+**Three payload shapes are opaque to this crate.** `message.user`,
+`message.assistant`, and `message.tool_result` carry conversation messages in the
+shape `weaver-traits` defines, and this crate neither defines that shape nor decodes
+it. It records the octets, hashes them, sequences them, and projects them as carried
+content. Decoding is the harness's, which links `weaver-traits` and is the only party
+that reads a message as a message.
+
+This is the demand rule rather than a convenience. Section 6 guarantees canonical
+byte form, gapless sequence, a crash-safe commit boundary, deterministic projection,
+exact recreation, run integrity, and typed refusal, and not one of them requires
+knowing what a message says. A crate that depends on no other linking a definition it
+does not need gives up the property for nothing, so the alternative reading, where
+`weaver-trace` floor-links `weaver-traits` to decode three kinds, is refused on the
+same grounds section 4 refuses everything else it does not demand.
+
+**What refusal on submit means for these three.** The `payload does not decode for
+its kind` case of `weaver-harness-trace-contract` section 5 reaches the envelope
+binding and the octet well-formedness, not the message's interior. A malformed
+conversation message is a defect the harness catches before submitting, because the
+harness is where a message is a message.
+
+```graph
+node: event-envelope
+kind: vocabulary
+
+node: event-kind-set
+kind: vocabulary
+
+node: payload-shapes
+kind: vocabulary
+
+node: commit-boundary-states
+kind: vocabulary
+
+node: working-structure
+kind: vocabulary
+
+node: failure-vocabulary
+kind: vocabulary
+
+edge: defines
+from: weaver-trace
+to: event-envelope
+
+edge: defines
+from: weaver-trace
+to: event-kind-set
+
+edge: defines
+from: weaver-trace
+to: payload-shapes
+
+edge: defines
+from: weaver-trace
+to: commit-boundary-states
+
+edge: defines
+from: weaver-trace
+to: working-structure
+
+edge: defines
+from: weaver-trace
+to: failure-vocabulary
+```
+
+These six are what `weaver-harness-trace-contract` draws from this crate, so the
+union check of G4 runs against this list rather than against a reading.
+
+**Three fields are recorder-assigned, the rest harness-supplied.** The sequence and
+the payload hash are computed by the recorder on admission, because ordering is a
+property of the record and the hash is taken over the canonical bytes the recorder
+produces. The turn hash of section 4.2 is the third, assigned on the `turn.closed`
+envelope and absent from every other kind. Everything else is a fact only the harness
+holds and the recorder could not derive.
+
+**The recorder assigns properties of the record. It never authors content.** That is
+the line, and all three assigned fields sit on the same side of it: a sequence, a
+hash over canonical bytes, and a hash over a turn's canonical bytes are facts about
+what the record contains rather than statements about what happened. An event is
+content, which is why the harness authors every one of them and why section 3.1
+refuses a commit-checkpoint kind. Assigning a field to an event the harness authored
+does not make the recorder an author. Emitting an event the harness did not author
+would.
+
+### 3.1 The closed kind set
+
+The kind vocabulary is closed, and this is where it lives. A set declared closed and
+held nowhere cannot be checked against, and the compile-time pin above is argued from
+its closure.
+
+**Floor, always recorded:**
+
+| Kind | Meaning |
+|---|---|
+| `load` | opens a run |
+| `unload` | closes a run |
+| `session.closed` | the session will not be resumed |
+| `turn.started` / `turn.closed` | the turn bracket |
+| `message.user` | operator input |
+| `message.assistant` | model output as conversation |
+| `message.tool_result` | a tool result entering the conversation |
+| `tool.call.started` / `tool.call.completed` | the tool bracket |
+
+**Ceiling, added when elected:**
+
+| Kind | Meaning |
+|---|---|
+| `model.request` | the decode boundary, request side |
+| `model.output` | the decode boundary, response side |
+| `model.measurement` | token identifiers, entropies, sampler parameters, weights hash, residual reductions |
+
+Thirteen kinds. Adding one is an edit to this charter and to every contract whose
+vocabulary clause names the set, because consumers key on the closure.
+
+**There is no `session.started`.** A session begins when `run0` begins, so a separate
+kind would fire at the same moment as `run0`'s `load` and mean the same thing. The
+same argument retires the description of `weaver-admin`'s initial contact as a
+distinct first entry: **the `load` event of `run0` is that contact's record.** Admin
+authorizes the transition and hands it across, the harness authors its `load` on
+entering the run, and the monotonic origin is captured at that event. There is no
+room between those for an earlier entry, and the worker spawn and descriptor handoff
+precede the harness existing at all, so they sit outside the trace by construction.
+
+**There is no commit-checkpoint kind.** The committed boundary is interrogable from
+the record itself, and an event marking it would be the recorder authoring into a
+record the harness is the sole writer of.
+
+**This enumeration appears in the contract as well, deliberately.** A Spec is derived
+from its crate's PRD plus every contract that crate is party to, so the harness Spec
+writer reads the contract and never opens this charter. The contract must therefore
+carry the field set rather than point at it. The two copies are not redundant, because
+this one says what an event **is** and the contract's says what the harness
+**supplies**, but they assert a property of the same thing and can diverge. **If they
+ever disagree, this charter is authoritative** for the envelope, because this crate
+defines the artifact and consumers outside that contract read the record. A divergence
+is a defect to file rather than one a reader resolves by choosing.
+
+**The emission path is typed values, not instrumentation macros.** This is a design
+requirement rather than an implementation preference, and the reason is a defect
+the previous tree documented against itself. Its span layer took field names as
+literal tokens at the emit site, so nothing connected an emitter to the declared
+attribute vocabulary. The result was that four of the most operationally valuable
+measurements in the system, the decode timing fields, appear nowhere in the
+vocabulary at all, and a span kind outside the closed set was emitted at three
+sites. The Spec's own conclusion was that the vocabulary could not be read as the
+schema.
+
+A typed event with a closed kind and a typed payload cannot carry an invented
+field, because the compiler refuses it. The apex asks for compile-time pins where a
+runtime test structurally cannot reach. This is one, obtained by construction
+rather than by adding a check that someone must remember to run.
+
+Adding an event kind is a change to this charter and to the contract. It is not a
+free extension, because consumers key on the closed set.
+
+**`load` and `unload` are event kinds, and they are the run bracket.** Entering a
+run writes its `load` event and leaving it writes its `unload` event, both authored
+by the harness. The minimal run is those two events with nothing between, so **a run
+cannot be empty**, and that is what makes run numbers verifiable rather than merely
+declared. A missing run number is a load episode whose bracket events vanished,
+which is corruption of the same kind as a sequence gap.
+
+The bracket is defined here beside the run field deliberately. A run label that
+could be stamped without the events existing to verify it against would be an
+assertion with nothing behind it, which is the shape of every defect in the previous
+tree's attribute vocabulary.
+
+**A run edge is authored, not inferred.** Its boundaries are known at the moment
+each bracket event is written, because resume writes nothing and the envelope's run
+field is the only place a boundary is recorded. No consumer reconstructs a run by
+range analysis.
+
+## 4. What producing the trace requires
+
+### 4.1 Create, or resume
+
+A record is opened by `weaver-admin` while the worker still holds that principal,
+and the descriptor is passed to the worker before it drops to the agent uid.
+`weaver-admin` resolves which session is being loaded. The harness never learns the
+path either way.
+
+**`run0` creates.** The record is new and empty, and the working structure begins
+empty with it.
+
+**Every later run resumes.** The record already exists, and before the first event
+of the new run is authored it is read, validated, and projected into a working
+structure. Only then does the run append. A resume that cannot validate its record
+is a failed load rather than a degraded start, because an agent that begins against
+a partial history is one that has silently forgotten part of its own conversation.
+
+The two cases differ only in whether the record was empty. There is no separate
+resume path, no second projection mechanism, and no reconstruction from anything
+other than the record.
+
+**This crate's write surface accepts descriptors, never paths.** That is the API
+consequence of the custody model, and stating it here is what makes custody
+expressible rather than merely intended. A crate that offers a path-taking write
+function offers a way around the boundary, and the previous tree carried exactly
+that: a trace-root resolver with zero production callers whose layout described a
+path no artifact ever used, while the security invariant three other documents
+cited was specified against it.
+
+Every descriptor is close-on-exec and append-only. The first keeps tool
+subprocesses from inheriting a writable handle. The second makes append-only a
+property of the handle rather than of the writer behaving well.
+
+### 4.2 Update
+
+One emission per event, and one emission reaches two sinks. The order is fixed and
+is not an implementation detail, because the failure it prevents is a working
+structure holding an event the record never received:
+
+1. the harness submits an authored event,
+2. this crate admits it or refuses it with a typed failure,
+3. an admitted event is assigned its sequence and rendered to canonical bytes once,
+4. that one rendering fans out, projected into the working structure and handed to
+   the durable writer in the same act.
+
+**Refusal sits at admission, ahead of the fan-out.** An event that fails validation
+reaches neither sink and an event that passes reaches both, so there is no state in
+which one materialization holds what the other refused. What the recorder may judge
+is bounded by section 3, reaching the envelope binding and the octet well-formedness
+and never the interior of a payload.
+
+**The working structure lands first and is the acknowledgment.** It is in-process
+memory and the durable writer is a device, so the projection completes and the turn
+proceeds while the append is still in flight. Reads are served at memory latency and
+the durable twin trails. This is a trade the architecture makes deliberately rather
+than a gap in it.
+
+**The durable record trails by the depth of the write queue.** Process death forfeits
+whatever the writer had not yet appended. On a fast, quiet device that tail is
+effectively one event. On a saturated, contended, or slow device the queue is deeper
+and so is the loss. **The bound is a property of the deployment, not of this crate.**
+This crate offers no policy field to tune it and no flush cadence to elect, because a
+periodic flush is an interruption on a path whose purpose is to never have one.
+
+**What reached disk is whole.** A record truncates at an event boundary and never
+inside one, so recreation replays a shorter history rather than a damaged one, and
+the run that comes back is missing its tail rather than holding a corrupted middle.
+
+The three states of the commit boundary describe where an event sits in that fan-out.
+**Committed** has been appended, survives process death, and is what recreation and
+export read. **Pending** has been admitted and projected and is still in the writer's
+queue, so it is the loss window, whose depth the storage sets rather than an election.
+**Failed** is a durable write that errored against a live process, and it is surfaced.
+
+**Silent shed is forbidden while the process lives.** A durable write that fails under
+a running process is named and surfaced and never swallowed, because the process is
+there to report it. A tail lost to process death is a different failure, unreportable
+by the thing that died, and the record must not present the two as one. A trace is
+measurement data, and a silently partial record does not produce a gap a reader can
+see. It produces a coherent account of a session that did not happen.
+
+**Each turn carries a hash over its own events, computed before the fan-out.** At
+turn close the recorder hashes the canonical bytes of the events that turn brackets
+and assigns the value to the `turn.closed` envelope, alongside the sequence and the
+payload hash, per section 3. It is not a payload field, because a payload is content
+the harness authored and this is a property of the record the recorder derived. One
+computation, one value, and the fan-out delivers it to both sinks, so the working
+structure and the durable record hold a figure produced from the same bytes in the
+same act.
+
+**The hash verifies the append-only property of section 2.2. It does not detect
+loss.** A structure with no mutation surface should not be able to disagree with the
+record, and a recomputation over the working structure that disagrees with the value
+the record carries is evidence that it did. That is the check the audit trust
+property needs, because a structural guarantee is worth having and worth witnessing.
+A forfeited tail is a different matter and section 4.2 already names it.
+
+**The cost is bounded by the turn and not by the session.** A turn appends its delta
+to a resident context rather than resending the conversation, so the events a turn
+brackets do not grow with the history behind them and turn fifty costs about what
+turn one cost. That bound is why this is a standing requirement rather than an
+elective audit.
+
+The recorder computes the value, carries it, and recomputes it on request. It never
+compares and never concludes. `weaver-admin` holds the trigger and the frequency,
+because scheduling an audit belongs to the auditor, and the harness answers rather
+than schedules.
+
+**Nothing on the turn path touches disk.** The harness reads the working structure
+in RAM. The durable append runs off the hot path, and a slow or failing durable
+consumer never slows the interior read. The two are failure-isolated.
+
+**Canonical form is one mechanism, used everywhere.** Integer fields that can exceed
+the double-safe range serialize as decimal strings. Nanosecond values exceed it by
+roughly two hundred times, so a reader parsing them as doubles gets a silently
+different number with no error and no way back. The previous tree got this right in
+its record and wrong in its span export, which is what happens when two artifacts
+carry the same field under two rules.
+
+**The reason is resolution, not overflow.** Read as overflow avoidance the rule
+looks like defensive rounding, and the natural response is to store fewer digits.
+That response destroys the measurement. The monotonic clock resolves to nanoseconds
+with a microsecond floor because the harness runs orders of magnitude faster than
+the decoder, which pays network-class millisecond latency, and local latency is the
+reason the model was brought next to the services in the first place. A record that
+cannot resolve finer than the fastest thing it measures makes that advantage
+invisible. This is systems-architecture timing, not network timing, and the decimal
+string exists to carry the digits rather than to dodge an exception.
+
+### 4.3 Maintain
+
+**One session is one record, and there is no rotation.** However many runs a
+session spans, they append to the same file. Rotation would make a record a set of
+files, which would put an ordering and enumeration problem into recreation, and
+recreation is the mechanism session resume depends on. If a session ever runs long
+enough that one file is a problem, rotation arrives as a schema and manifest
+extension. It is not built in advance of that.
+
+A run ends at unload or at process death. Ending a run is not ending the session, so the
+writer's queue is drained and the record left open to the next run rather than
+finalized. Finalization belongs to the session, not the run.
+
+Close is ordered: drain, then checksum, then write the manifest. The manifest is
+written last because it describes a finalized artifact, and a manifest that
+describes a file still being written describes nothing.
+
+The manifest carries the committed sequence range, the artifact hash, the run count,
+the verbosity of each run, and a completeness status. **The manifest records
+verbosity per run and never once for the session.** Verbosity is a load condition of
+one run per section 5, so a single session-wide field would be a field that cannot
+state the truth about a session whose runs differed. **A producer emits
+status and never a conclusion.** Whether an artifact is usable is a reading a
+consumer performs, and absence of a completeness block is never read as complete.
+
+## 5. Verbosity
+
+Two levels, **floor** and **ceiling**, and they add rather than exclude.
+
+**The floor is always recorded and cannot be switched off.** It is what the turn
+needs to run: the turn brackets, the message sequence, and enough of the tool events
+to carry results into the next iteration. It is derived rather than chosen, because
+the harness reasons over the working structure and an event the turn depends on is
+not elective. Nothing below the floor is a quieter agent. It is a broken one.
+
+**The ceiling is elected per agent in its state file.** It adds the measurement
+payloads with their token identifiers and entropies, the decode boundary, and the
+residual reductions when readout is enabled. The cost is real and the election is the
+operator's.
+
+**Verbosity is a property of the run.** It is read from the state file at every load,
+fixed for the life of that run, and scoped to nothing wider. A session holds one run
+or many, each with its own load conditions, so a run recorded at the floor places no
+constraint on a later run recorded at the ceiling and an operator editing the file
+between runs is exercising the mechanism rather than defeating it.
+
+The scope stops at the run because the measurement does. Ceiling events describe one
+load of one model under one set of sampler parameters, and they are read against the
+run that produced them rather than against the session. What crosses a run boundary
+is the conversation, which is the floor, replayed so a later run can rebuild context
+by re-tokenizing what was said. A run recorded at the floor therefore leaves its
+successor a whole conversation, which is the only thing a successor draws from it.
+
+Two consequences. **The manifest records the verbosity of each run**, per section 4.3,
+or elected brevity and silent loss look identical to a reader and the completeness
+status is defeated. **Replay requires the ceiling**, because the token identifiers and
+sampler parameters it needs live in the measurement payload, so a run recorded at the
+floor is reproduced rather than diagnosed, and a reader makes that judgment per run.
+
+**There is no seal, and the residual election needs none.** An earlier version of this
+section fixed the ceiling at `run0` and had later runs read the record rather than the
+file, arguing that a session with a verbosity discontinuity is one every consumer has
+to reason about. Recording verbosity per run answers that argument at its source,
+since no reader is left inferring one value for a session that had several. The seal
+also created a conflict it could not settle, because the residual-readout election of
+`weaver-types-PRD` section 2.1 is read per load and its reductions ride inside a
+ceiling payload, so a sealed floor-only session had no licensed home for them. Per-run
+verbosity dissolves that case rather than adjudicating it. Readout belongs to whichever
+run elected the ceiling.
+
+## 6. What this crate guarantees
+
+- Canonical byte form, one rule, all artifacts.
+- A strictly increasing, gapless sequence over committed events, **scoped to the
+  session** and therefore continuous across every run that appends to it. The word
+  monotonic is reserved in this charter for the clock of section 4.2. The sequence is
+  the order and the clock is the instrument, and reading either for the other's job
+  is an error the contract names explicitly.
+- A crash-safe commit with an explicit committed boundary. Crash safety is a
+  property of what reached disk, which truncates at an event boundary and never
+  inside one. It is not a promise that nothing is lost, because section 4.2
+  forfeits the writer's queue to process death and bounds that queue by the
+  deployment rather than by this crate.
+- Deterministic projection: the same record, the same schema version, the same
+  projection version, the same rows.
+- Exact recreation of the working structure from any well-formed record, over that
+  record's committed range, including an operator-provided copy. Recreation does not
+  privilege the original file, and it does not restore a tail that section 4.2
+  forfeited.
+- Run integrity on read: run 0 present, run numbers contiguous from 0 with no
+  repeats and no holes, and every run opening with its `load` event and closing with
+  its `unload` event. A broken bracket is corruption even when the number is
+  present, so this is stronger than a number check.
+- A per-turn hash over the events a turn brackets, computed once before the fan-out,
+  carried in both materializations, and recomputable on demand over the working
+  structure. It is an integrity witness for the append-only property of section 2.2
+  rather than a durability mechanism, and this crate produces it without judging it.
+- Mechanical validity checking on read, and a typed refusal rather than a partial
+  result. Authenticity is not judged here, because the operator owns what is
+  submitted.
+- Typed failure for every refusal. Nothing fails silently and nothing returns a
+  partial result with a success status.
+
+## 7. The seam
+
+The production seam is bound by `weaver-harness-trace-contract`: the two exchanges,
+what each party supplies and guarantees, the ordering rule that admission precedes
+the fan-out, the failure vocabulary, and the prohibitions on both sides. It is read
+alongside this charter and neither is complete without the other.
+
+The seam edge is declared once, by the crate that asks, which is the harness. This
+charter points at the contract and does not restate the edge.
+
+This section was a list of what the contract had to settle, written before the
+contract existed. It is now a third partial copy of a document that says it better,
+so it is a pointer instead.
+
+## 8. What does not cross
+
+**The stored span export.** Spans are derived on demand. There is no second
+artifact.
+
+**The reserved span kinds.** The previous tree retained sleep and reconciliation
+kinds so its enum could keep parsing archived artifacts. There are no archived
+artifacts here, so the reason does not transfer and the kinds do not cross. This is
+consistent with the apex rule against carrying slots for designs not yet written,
+and it is a different reason than that rule gives.
+
+**The attribute-name vocabulary as a convention.** Typed payloads replace a module
+of name constants that emitters were free to ignore.
+
+**Post-hoc annotation by consumers.** The previous tree let its analysis crate write
+spans into a finished trace after the run, which meant a reader could not assume
+every span in an artifact came from the producing process. The harness is the sole
+writer, and an analysis artifact is a separate file.
+
+**Memory, in every form.** No consolidation events, no belief vocabulary, no
+substrate. The event kinds that serve those exist when their emitters do.
+
+**Redaction, at write time.** The recorder never filters, so it never scrubs. The
+harness authors what it authors and its only filtering mechanism is the verbosity
+election of section 5, and a recorder that dropped or altered content because it
+judged the payload would have taken policy the harness holds. There is no third
+place on the write path where redaction could occur, so the record is raw by
+construction rather than by an unmade decision. Scrubbing, if ever wanted, is a
+formatter election on export and downstream of everything here. What an operator
+does with a delivered artifact is theirs.
+
+**Embeddings.** Nothing in the stateless turn retrieves by similarity, so a vector
+recorded here would have no consumer. A payload field whose only reader is unbuilt
+is a reserved slot in data form, and the schema is where that rule is easiest to
+break, because adding a field feels smaller than adding an interface. Embeddings
+enter the record when something reads them.
+
+## 9. Staged requirements
+
+A staged requirement is recognized work with an entry condition that holds it out of
+the current pass. It is written here rather than carried in conversation so that its
+disposition is a decision made at ratification rather than a thing remembered. This
+document is living, so an item leaves this section by being built rather than by
+being rediscovered.
+
+**This section is authoritative for staged work belonging to this crate.** A working
+list of open items holds deferred work too, and the two placements need one of them
+named. A staged requirement with a crate to belong to lives in that crate's charter,
+because it travels with the crate and because a Spec is derived from the charter plus
+its contracts and never from a working list. A working list holds what has no owner
+yet, and an item moves into a charter the moment it acquires one. That list is never
+ratified and shrinks toward empty, so work parked only there is work that evaporates.
+
+Twin reconciliation was staged here and is no longer. It is a requirement of section
+4.2 and section 6, promoted when its grounds changed from durability monitoring to
+integrity verification, and a requirement does not sit in this section waiting for
+bandwidth.
+
+**The in-RAM engine.** The working structure is append-only by construction per
+section 2.2, so `rusqlite` is out on that ground before the C-dependency question is
+reached. What remains is the shape of the hand-rolled engine. It must not regress to
+a fixed list of named reads, which is what made the previous tree's working structure
+a dead end when memory needed two more, and a typed query builder over indexed tables
+is the shape that keeps extension cheap without a parser. **Entry condition:** the
+Spec pass.
+
+**The richness the working structure needs.** It must be rich enough that a future
+activation network can attach and read it without reshaping it. **Entry condition:**
+the Spec pass.
+
+**The weight of the previous durability implementation.** The previous tree's
+`event_log.rs` is 2,773 lines carrying canonical byte encoding, payload hashing,
+sequence-gap detection, a committed-versus-pending boundary, and commit-pressure
+policy. Whether that implementation is heavier than the obligation requires is worth
+examining, and this is a question about the implementation rather than about whether
+the format is right. **Entry condition:** the Spec pass.
+
+**Two cells the hash leaves open.** Section 4.2 fixes that a per-turn hash exists,
+when it is computed, and who triggers the comparison. It does not fix the hash
+domain, meaning exactly which bytes of which events are covered, nor whether
+recomputation runs over the projected rows or over retained canonical bytes. Both are
+representation questions. **Entry condition:** the Spec pass.
+
+## 10. Open ruling
+
+**The interoperability target.** Spans are derived for tools that speak spans, and
+the previous tree's format borrowed OTLP field names without being OTLP, then
+carried a claim that a trivial converter could bridge them which turned out to be
+untrue and unverified. Whether the derived view targets OTLP specifically, and what
+conformance record backs that claim, is not settled here.

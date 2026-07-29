@@ -1,13 +1,14 @@
 # weaver-harness - PRD (crate charter)
 
-**Status:** DRAFT. Not ratified. The crate PRD set is written together and frozen
-together, and no Spec, contract, or code is written against any member before the
-whole set is ratified.
+**Status:** MERGED. In `main` and the source of truth for now. The crate PRD set is
+written together and merged together, and no Spec is written against any member
+before the whole set is merged. Ratification is the mapping of the whole document
+set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
-**Editorial:** ASCII, no em-dashes, no semicolons.
+**Editorial:** Per the Working Rules.
 
 ---
 
@@ -17,6 +18,15 @@ whole set is ratified.
 The harness is a constituent organ of an agent rather than a resident service that
 agents are loaded into and unloaded from. An agent whose harness outlives it is not
 an agent, it is a session.
+
+```graph
+node: weaver-harness
+kind: crate
+
+edge: parent
+from: weaver-harness
+to: WeaverTools
+```
 
 This is load-bearing rather than pedantic. The apex rests the entire regulation
 model on the agent being an operating-system user, and that boundary only means
@@ -30,14 +40,13 @@ socket, and implements no model of any kind. Model weights are resident in the S
 reached over the decode socket behind a provider interface, so the harness drives
 generation without hosting it.
 
-**The privilege window.** The harness runs inside the worker process, and the
-worker does not run as the agent uid for the whole of its life. It is spawned by
-`weaver-admin`, receives its trace descriptors while it still holds that principal,
-and drops to `weaver-<name>`. Everything the harness itself
-does happens after that drop. The distinction matters because custody depends on
-the descriptors having been obtained before it, and a charter that says only "the
-harness runs as the agent" leaves the mechanism that protects the trace
-unexplained.
+**The privilege window.** The harness runs inside the worker process, and the worker
+does not run as the agent uid for the whole of its life. It is spawned by
+`weaver-admin`, receives its trace descriptors while it still holds that principal, and
+drops to `weaver-<name>`. Everything the harness itself does happens after that drop.
+The distinction matters because custody depends on the descriptors having been obtained
+before it, and a charter that says only "the harness runs as the agent" leaves the
+mechanism that protects the trace unexplained.
 
 ## 2. What the harness owns
 
@@ -119,6 +128,12 @@ and has no first-contact surface. Work arrives already authenticated.
 `weaver-admin`.** The harness consumes the state file that admin produces and never
 writes it.
 
+```graph
+edge: reads
+from: weaver-harness
+to: agent-state-file
+```
+
 **Encoding and decoding both go to `weaver-spu`, and so does everything that
 serves them.** Model residency, GPU arbitration, decode compute, embedding compute,
 and the KV cache are that crate's. The encoder is not a harness component that
@@ -167,9 +182,37 @@ context and returns it, per apex 5.2.
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
 | Coordination | `weaver-admin` | Receives lifecycle sequencing and the trace descriptors of section 5. Reports readiness and confirmation. |
 
-The harness links `weaver-traits`, `weaver-types`, and `weaver-trace` as vocabulary
-and links no other internal crate. That is the whole dependency surface, and it is
-checkable against this list.
+The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and links
+`weaver-trace` as a member of its own domain under a contract. It links no other
+internal crate. The three are one dependency surface and two classifications, which is
+what the block below projects: two `floor-link` records and one `seam`. Calling all
+three floor vocabulary would use the word `WeaverTools-PRD` section 5.1 reserves for
+what every domain draws from and no domain contains. That is the whole
+dependency surface, and it is checkable against this list.
+
+```graph
+edge: seam
+from: weaver-harness
+to: weaver-trace
+via: weaver-harness-trace-contract
+tag: link
+
+edge: floor-link
+from: weaver-harness
+to: weaver-traits
+
+edge: floor-link
+from: weaver-harness
+to: weaver-types
+```
+
+The three socket seams above carry no records yet. Each needs the contract that
+governs it, and a seam without one fails G3 rather than passing incompletely. Each has
+a stub beside it, which is not the same thing: a stub settles nothing and declares no
+records, so there is nothing for a `via` field to name. The contracts do not exist
+until the stubs are written into. They are written when `weaver-gate`, `weaver-spu`, and
+`weaver-admin` are chartered, which is the write-together rule arriving as a
+mechanical fact rather than as an argument.
 
 ## 5. Trace authorship and custody
 
@@ -192,9 +235,39 @@ The SPU returns its generation and measurement payload tagged with the `turn_key
 it was given, and the harness writes `model.request`, `model.output`, and
 `model.measurement`. The harness writes `turn.started` and `turn.closed` around
 every turn, the message events, and the tool-call events. It records the
-`weaver-admin`'s initial contact as the session's first entry. One emission per event,
+`load` event that opens each run, which for `run0` is both the session's first
+entry and the record of `weaver-admin`'s initial contact. One emission per event,
 authored against the durable event schema, feeding the durable record and the
 working structure together.
+
+**Sole writer means sole enforcer of verbosity.** `weaver-trace-PRD` section 5 defines
+a floor that is always recorded and a ceiling elected per agent, and the recorder holds
+no policy, so nothing but the harness can decide that a ceiling event is not emitted.
+The harness reads the election from the agent state file at every load and applies it
+for that run, and it authors the run's level into the record so the manifest of
+`weaver-trace-PRD` section 4.3 can carry verbosity per run. A later run finding the
+file changed adopts the new value as its own load condition, which is the mechanism
+working rather than a conflict to refuse.
+
+**The integrity check is answered here and scheduled elsewhere. This is a stub.**
+`weaver-trace-PRD` section 4.2 puts a per-turn hash in both materializations and
+gives the trigger to `weaver-admin`. The harness answers such a request by
+recomputing the value over the working structure and returning it, and it does not
+compare, schedule, or act on the result. What admin asks for, in what shape, what it
+does with a mismatch, and how the request reaches a running worker are unsettled
+until `weaver-admin` is chartered. `weaver-harness-admin-contract` is a stub for the
+same reason and is the first document written when that charter lands.
+
+No seam edge is declared for it. The Document Format has a seam declared once by the
+crate that asks, and admin is the crate that asks, so declaring it here would put an
+edge in the graph on another crate's behalf and give a clean resolve to a seam that
+does not exist.
+
+```graph
+edge: writes
+from: weaver-harness
+to: session-record
+```
 
 **One emission, three derivations.** The `QueryEvent` stream is the third, alongside
 the durable record and the working structure, and it is not a second event system.
@@ -209,10 +282,11 @@ was recorded.
 **Nothing on the turn path touches disk.** The harness reads its own trace from the
 working structure in RAM. Even fast storage is too much latency to block a turn on,
 so the durable commit runs off the hot path and a slow or failing disk consumer
-never slows the interior read. The two are failure-isolated. What the durable side
-may do under pressure is block, spool, or fail loudly. It may never shed silently,
-because the trace is measurement data and a silently partial record renders a
-plausible and wrong account of the turn.
+never slows the interior read. The two are failure-isolated. Under pressure the durable
+side reports its growing queue rather than absorbing it, and `weaver-trace-PRD`
+section 4.2 leaves it no cadence to elect and no window to tune. It may never shed
+silently, because the trace is measurement data and a silently partial record renders
+a plausible and wrong account of the turn.
 
 **Custody is structural, not policy.** The trace file is owned by the agent uid and
 belongs to the `weaver-admin` group. The group reads, the owner does not. So
