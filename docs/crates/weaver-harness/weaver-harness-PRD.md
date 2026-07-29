@@ -26,7 +26,7 @@ principals inside one principal, which is the arrangement the architecture exist
 to avoid.
 
 The harness holds control. It holds no substrate storage, binds no listening
-socket, and implements no model. Decoder weights are resident in the SPU and
+socket, and implements no model of any kind. Model weights are resident in the SPU and
 reached over the decode socket behind a provider interface, so the harness drives
 generation without hosting it.
 
@@ -119,11 +119,22 @@ and has no first-contact surface. Work arrives already authenticated.
 `weaver-admin`.** The harness consumes the state file that admin produces and never
 writes it.
 
-**Model residency, GPU arbitration, decode compute, and the KV cache itself go to
-`weaver-spu`.** The harness decides when a flush happens. It does not hold the
-cache, and it does not reach into it. Eviction granularity is constrained by the
-append-only session protocol and is settled in that crate's PRD and the decode
-contract, not here.
+**Encoding and decoding both go to `weaver-spu`, and so does everything that
+serves them.** Model residency, GPU arbitration, decode compute, embedding compute,
+and the KV cache are that crate's. The encoder is not a harness component that
+happens to live near the decoder. It is the other half of the semantic processing
+unit and is held to the same discipline: the same residency accounting, the same
+GPU arbitration, the same lifecycle confirmation.
+
+**The harness routes.** It sends work to the SPU and receives tokens or embeddings
+back, and which of the two it asked for changes nothing about the seam. It holds no
+weights, performs no forward pass, and has no in-process model of either kind. A
+harness that hosts an embedder for latency reasons has taken half the SPU into the
+interior and given up the arbitration that made residency accountable.
+
+The harness decides when a KV flush happens. It does not hold the cache and does
+not reach into it. Eviction granularity is constrained by the append-only session
+protocol and is settled in that crate's PRD and the contract, not here.
 
 **The trace primitive goes to `weaver-trace`.** The span type, the event schema, the
 durable record mechanics, the working-structure projection, and the export
@@ -268,22 +279,5 @@ so the set is bounded, not drafted here.
 - Trace authorship, covering the event set this crate writes and the descriptor
   discipline of section 5.
 
-Contracts this crate is party to are authored in the contract pass, one per seam in
-section 4, and are not children of this document.
-
-## 7. Open ruling
-
-**Does the encoder cross?** Written here as though it does not. The previous tree's
-justification for the harness holding encoder weights in process was that a
-cross-process hop on every memory read is dead cost, and memory is out of scope, so
-that justification leaves with it. Under apex 7 the embedder serves no step of the
-turn and is not in the closed observability set, so the criteria exclude it.
-
-The reason this is recorded as open rather than settled is that the previous tree
-ratified the opposite rule, that an agent without an embedder fails closed. That
-rule was motivated by retrieval. Retiring it is a decision the operator makes rather
-than one the criteria make silently.
-
-If the ruling is that the encoder does not cross, apex section 6 needs correcting,
-because it assigns `weaver-spu` encoder residency while the turn in apex section 3
-never embeds.
+Contracts this crate is party to are written with the PRDs of their other parties,
+one per seam in section 4, and are not children of this document.

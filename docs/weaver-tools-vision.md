@@ -172,8 +172,8 @@ portions of it ahead of time, and injects on the right tag.
 That organ creates no state. It selects over state the trace already holds, which is
 why it can stand on the in-RAM working structure before drey is ever provisioned. It
 is the first of the four properties from section 1 to arrive, and it arrives alone.
-There is still no association, no consolidation, and nothing that survives the
-session. What changes is that the agent stops carrying its whole record and starts
+There is still no association, no consolidation, and nothing the agent can draw on
+that survives the session. What changes is that the agent stops carrying its whole record and starts
 carrying what bears on now, which is the beginning of a memory and not yet one.
 
 Two questions are open here and are left open deliberately, because they are
