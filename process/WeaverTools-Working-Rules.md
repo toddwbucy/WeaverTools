@@ -1,0 +1,93 @@
+# WeaverTools Working Rules
+
+**Version:** v0.2, 2026-07-29. Companion to the Working Process and the
+Guiding Statement. The Guiding Statement says what we are building. The Working
+Process says how the work moves. This says how we write.
+
+Transcribed to disk from v0.1 of 2026-06-14, which existed only as a session handoff.
+The line width in section 1 is the one addition, supplied because G1 cites a criterion
+this document is the home for and did not previously state.
+
+## 1. Editorial rules, hard
+
+- ASCII only. No em-dashes, no semicolons.
+- Never the words genuinely, honestly, or actually.
+- Prose lines wrap at 88 characters. Tables and fenced blocks are exempt, because
+  neither wraps without changing meaning.
+- Dense prose over bullet lists. Use a list only when the content is a true
+  enumeration.
+- No filler openers. Open on the substance.
+- Avoid visual collisions, repeated adjacent tokens or abbreviations that run
+  together when read. The reader is dyslexic, so "HAH. HAH" reads as "HAHA" and is
+  rewritten. Two identifiers differing by one character are the same defect in a
+  graph block.
+- Self-citation format is (Bucy, 2026). Take your own work seriously and others
+  tend to follow.
+
+## 2. Working discipline
+
+Adversarial by default. The work wants falsification-seeking critique, not
+validation. When given a correction, grant it cleanly, then test whether it
+dissolves the critique or only relocates it.
+
+Read before assuming. When a repo, document, or prior decision is referenced, read
+it. Do not answer from memory when the source is reachable.
+
+Document-first, batch-edit. On load-bearing changes, state the rationale before
+drafting. Draft candidates and let the human ratify. Hold edits and make one batch
+rather than a stream of spot changes.
+
+Decide from measurement. Defer architecture decisions until there is a measurement
+to decide from. If a claim cannot be stated before measuring, that is the bias tell.
+
+IS and IS-NOT is an authoring tool here, used to draw sharp boundaries in prose, and
+it is welcome. What is not welcome is knowledge-graph governance shipped as a
+product feature: axioms, smells, conformance scoring, and the rest of the previous
+tree's apparatus. The framing device is fine and the product stays out.
+
+This does not reach the gates and phases this project runs on itself. Those govern how
+documents come to exist and are checked by looking, which is the opposite of the thing
+being excluded. The rule is about what WeaverTools ships, not about how WeaverTools is
+built.
+
+## 3. Scope guardrails
+
+These exist because this project was split off to escape stale context. Hold them.
+
+This project is the OS-primitives program and nothing wider. Decisions from the
+earlier full-application work do not carry forward unless re-ratified here.
+
+When something feels in scope, check it against the Guiding Statement before acting.
+Document processing, orchestration, and application concerns are out.
+
+Build primitives, not the application. Do not chase parity with what already exists.
+Each primitive is bounded by what it alone must do.
+
+Keep the boundary between a primitive's mechanic and a consumer's reasoning. If a
+proposed feature carries a motive, that motive probably belongs to a consumer, not
+the primitive.
+
+## 4. Vocabulary precision
+
+Hold these distinctions as hard, because collapsing them is how scope drifts.
+
+A primitive is not an application. The application is what you get by composing
+primitives.
+
+OS-level is not network-first. OS-level inherits the operating system's trust model.
+Network-first assumes the network and adds auth above it.
+
+Structural composition is not orchestration. A primitive reaching one level down to
+do its own job is structural. A consumer pulling several together toward a purpose
+is orchestration.
+
+A mechanic is not its motive. The primitive does the doing. The consumer holds the
+why.
+
+Contract-coupled is not implementation-coupled. Primitives fit by a shared wire
+contract, never by depending on a specific neighbor crate.
+
+## 5. Tone
+
+Concise. Warm and direct. Push back constructively, with the work's interest in mind
+rather than deference.
