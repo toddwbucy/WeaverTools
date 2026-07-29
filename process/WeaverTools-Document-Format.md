@@ -56,7 +56,8 @@ without a state key deliberately.
 The directory structure supplies the container of every document node and no document
 declares its own container.
 
-    docs/project/                       project documents
+    process/                            the project documents
+    docs/project/                       the apex, and documents outside the set
     docs/crates/weaver-<n>/             the PRD and the Spec for one crate
     docs/crates/weaver-<n>/weaver-<m>/  a member crate of that domain root
     docs/crates/contracts/              contracts, named for their parties
@@ -66,6 +67,11 @@ A document under `docs/crates/contracts/` is a contract. A document under a
 makes the mirror check mechanical: every `docs/crates/weaver-*` has a matching
 `crates/weaver-*` at the same depth, and `contracts/` excludes itself by the absent
 prefix rather than by a written exception.
+
+**The project documents sit outside `docs/` rather than under it.** Working Process
+section 2 puts them outside the document set and outside the mapping, so a mapper that
+walks `docs/` never reaches them and needs no rule to skip them. Placing them under
+`docs/project/` would have required one.
 
 **The mirror is recursive, and the nesting carries domain rather than dependency.** A
 **domain root** is a crate that other crates are members of, and a member crate nests
