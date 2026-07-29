@@ -1,11 +1,13 @@
 # WeaverTools - Primary PRD
 
-**Status:** RATIFIED 2026-07-28 by operator. Frozen. This document changes only
-by being re-authored and re-ratified whole, per section 10.
+**Status:** MERGED 2026-07-28. In `main` and the source of truth for now. Nothing
+in this corpus is ratified until the whole document set maps into the graph, which
+is the Working Process section 2 definition and belongs to the set rather than to
+any one document.
 
 **Date filed:** 2026-07-28
 **Document ID:** `WeaverTools-PRD`
-**Editorial:** ASCII, no em-dashes.
+**Editorial:** Per the Working Rules.
 
 ---
 
@@ -23,7 +25,16 @@ weaver-admin    weaver-harness   weaver-spu      weaver-gate
 weaver-trace    weaver-traits    weaver-types
 ```
 
-They are written together, as one act, and frozen together. This is the
+```graph
+node: WeaverTools
+kind: system
+```
+
+Every crate's parent edge points here. This document declares no other edge,
+because a child declares its own parent and an apex holding a copy of the whole
+crate graph is a topology document under another name.
+
+They are written together, as one act, and merged together. This is the
 property that matters. A corpus assembled from documents written weeks apart
 encodes a different understanding of the system in each document, and the
 contradictions that result are not mistakes anyone made - they are what
@@ -141,14 +152,28 @@ violates one of them is wrong, not merely inconsistent.
 
 ### 5.1 The floor is vocabulary and every behavior is a socket
 
-`weaver-traits`, `weaver-types`, and `weaver-trace` are linked as Cargo
-dependencies because they are shared vocabulary - types, traits, schema. You
-cannot send a type definition over a socket.
+**The floor is exactly `weaver-traits` and `weaver-types`.** They are linked as
+Cargo dependencies because they are shared vocabulary, types and traits and
+schema, and you cannot send a type definition over a socket. Floor is a linkage
+fact rather than a rank: a floor crate is one every domain draws from and no
+domain contains. This is the definition the whole corpus classifies against.
 
-**Every seam where one crate asks another to do something is a SO_PEERCRED
-Unix socket governed by a named contract.** There are no exceptions, including
-for crates that arrive later. When the memory leg returns it returns behind a
-socket, not as a path dependency.
+`weaver-trace` is not floor. The harness links it as a Cargo dependency too, but
+under a contract and as a member of the harness domain, because the harness is
+its only caller. Depending on nothing is what it has in common with the floor.
+Being drawn by everything is what it does not.
+
+**Every seam where one crate asks another process to do something is a
+SO_PEERCRED Unix socket governed by a named contract.** There are no exceptions,
+including for crates that arrive later. When the memory leg returns it returns
+behind a socket, not as a path dependency.
+
+A seam that does not cross a process boundary is a library boundary. It is still
+a seam and still governed by a named contract, and it is tagged `link` rather
+than `socket` so the difference is stated rather than inferred. The
+harness-to-trace seam is the one such seam in the base set. What the invariant
+forbids is a behavior reached by path dependency across a process line, not a
+crate calling a crate inside one binary.
 
 This invariant is what makes statefulness a feature add rather than a
 re-architecture. Memory behind a socket is a new socket, a new contract, and a
@@ -180,7 +205,7 @@ Two mechanical consequences:
   party list is checkable against the dependency graph.
 - An agent handed one side of a contract can build that side without asking
   what the other side does. This is not an aspiration - it is the property
-  that permits crates to be built in parallel once the floor is frozen.
+  that permits crates to be built in parallel once the floor is merged.
 
 ## 6. The agent lifecycle
 
@@ -264,7 +289,7 @@ one of exactly two criteria. State which one, at the moment you carry it.
 "Serves" means you can name the step in section 3 that exercises it. Not that
 it might be needed, not that the prior tree had it.
 
-### 7.2 Is it an observability capability the operator needs to diagnose a deployed agent?
+### 7.2 Is it observability the operator needs to diagnose a deployed agent?
 
 The named set, closed:
 
@@ -328,51 +353,66 @@ fixed now, in three parts:
 2. **A new socket and a new contract.** Per invariant 5.1, memory arrives as a
    socket peer with a complete contract, never as a linked crate.
 3. **Its own PRDs.** Stateful PRDs are written per crate as required, and
-   contracts are amended or added by the freeze discipline in section 10.
+   contracts are amended or added by the order of work in section 10.
 
 No seam, stub, reserved slot, or dormant contract party is carried in
 anticipation of this. Preparation for memory is a property of the schemas being
 extensible, not a set of empty joints. A slot reserved today is a guess about a
 design that has not been written.
 
-## 10. The freeze discipline
+## 10. The order of work
 
-The document set is frozen when ratified, and **a frozen document changes only
-by being re-authored and re-ratified whole**.
+A merged document changes by being edited. A ratified document does not change at
+all, and a change found necessary after ratification returns the work to authoring
+rather than being patched in place. The three states and their transitions belong
+to the Working Process, section 2, and are not restated here.
 
 No amendment banners. No supersession notices. No citations into retired
 documents. No obligations patched inline because their referent was withdrawn.
-If a change touches a contract, every party to that contract re-ratifies in the
-same act.
+If a change touches a contract, every party to that contract merges in the same act.
 
 Every one of those devices is a reasonable local decision. Together they are
-how a ratified corpus stops being coherent while every individual document
-still looks maintained.
+how a corpus stops being coherent while every individual document still looks
+maintained.
 
 The order of work is strict:
 
 ```
-1. This document, ratified
-2. Seven crate PRDs, written together        -> freeze
-3. Specs, against frozen PRDs                -> freeze
-4. Contracts, complete per 5.3, party-checked -> freeze
-5. Floor code: traits, types, trace           -> freeze
+1. This document and the seven crate PRDs, together
+2. Each crate PRD with its contracts, written as one act
+3. Specs, against the merged PRD and contract set
+4. Graph mapping, which ratifies the set
+5. Floor code: traits, types, trace
 6. spu | harness | admin | gate, in parallel
 7. Composition root, integration
 ```
 
-Nothing at step N is written before step N-1 is frozen. The parallelism at step
-6 is earned by the completeness of step 4 and the freezing of step 5, and by
+Nothing at step N is written before step N-1 is merged. The parallelism at step
+6 is earned by the completeness of step 2 and the merging of step 5, and by
 nothing else. Contracts that are complete cannot be built against in parallel
 while the floor beneath them is still moving.
 
+A contract is not a phase of its own. The harness is the hub every crate connects
+to, so a crate PRD is largely about its seam with the harness, and a PRD written
+without its contract has no center to attach to and grows one of its own. Specs
+come after the contracts rather than before them, because a Spec is build
+instructions for one crate written against its PRD and every contract that crate
+is party to. A Spec written first documents code instead of governing it.
+
 ## 11. Enforcement
 
-No conformance graph is built during this program. The PRD to Spec to contract
-to code chain is still enforced strictly, and it does not require a database. A
-graph measures whether code matches settled intent. This program deliberately
-unsettles intent, so the graph is early rather than slow. It is the instrument
-for the phase after this one.
+No graph measures code against this document set during this program. The PRD to
+Spec to contract to code chain is enforced by the four devices below and does not
+require a database. A conformance graph measures whether code matches settled
+intent, and this program deliberately unsettles intent, so that graph is early
+rather than slow. It is the instrument for the phase after this one.
+
+**The mapping graph is a different artifact and this section does not prohibit it.**
+It is generated from the documents rather than from the code, it answers questions
+about the documents, and completing it is what ratifies the set. Section 0 declares
+the root node it is built from. The two artifacts share a word and share nothing
+else: one is built from code and asked whether the documents were obeyed, and the
+other is built from documents and asked whether they cohere.
 
 What enforces instead:
 

@@ -1,6 +1,6 @@
 # WeaverTools - Vision
 
-**Status:** LIVING. Not in the freeze set. This document changes as each stage of
+**Status:** LIVING. Outside the document set. This document changes as each stage of
 development teaches what the next one looks like. It is never ratified and nothing
 is written against it.
 
@@ -25,9 +25,9 @@ coherence.
 
 This document holds the intent the PRD sheds. It is the picture of where WeaverTools
 goes after stage one, written so the near-term work stays clean by having somewhere
-else to put the motive. It is living, not frozen. Its later stages are named, not
-dated, because the shape of any stage is not knowable until the stage before it is
-most of the way built.
+else to put the motive. It is living rather than merged into the set. Its later
+stages are named, not dated, because the shape of any stage is not knowable until
+the stage before it is most of the way built.
 
 One rule governs the boundary between the two documents. This document speaks in
 biology, cortex and brainstem and hippocampus, because the organism model is the
@@ -72,8 +72,8 @@ memory rather than being rebuilt for it.
 The destination is the test the whole program exists to run. WeaverTools is built to
 test whether an agent whose boundary is other-produced can nonetheless self-produce
 its individuation through accumulated experience (Bucy, 2026). An agent whose record
-ends with its session cannot test this. The staged arc is the path from the floor that makes the test
-possible to the agent that is its object of measurement.
+ends with its session cannot test this. The staged arc is the path from the floor
+that makes the test possible to the agent that is its object of measurement.
 
 ## 2. The organism model
 
@@ -173,8 +173,9 @@ That organ creates no state. It selects over state the trace already holds, whic
 why it can stand on the in-RAM working structure before drey is ever provisioned. It
 is the first of the four properties from section 1 to arrive, and it arrives alone.
 There is still no association, no consolidation, and nothing the agent can draw on
-that survives the session. What changes is that the agent stops carrying its whole record and starts
-carrying what bears on now, which is the beginning of a memory and not yet one.
+that survives the session. What changes is that the agent stops carrying its whole
+record and starts carrying what bears on now, which is the beginning of a memory and
+not yet one.
 
 Two questions are open here and are left open deliberately, because they are
 architecture decisions and there is not yet a measurement to decide them from:
@@ -211,6 +212,15 @@ answer. That is the point. A vision that committed to the classifier over the
 activation network, or fixed drey before the reinjection organ, would be guessing at
 designs that have not been written, which is the exact reserved-slot move the PRD
 forbids.
+
+**One disagreement is owed a settlement here.** The previous tree's autonomic-memory
+PRD proscribes decoder-invoked memory tools outright, arguing that retrieval-as-tool
+spends the decoder's budget on retrieval machinery rather than on reasoning. Section
+4 of this document has the retrieval tool as an ordinary call out through the tool
+surface, which is the pattern that PRD rejects. Both positions are defensible and
+this document is the newer thinking, so this is where the disagreement is settled
+rather than inherited. It is named here rather than left in a working list because a
+working list is never ratified and shrinks toward empty.
 
 So this document grows as the work teaches it. Each stage that completes turns one
 of its open questions into a settled decision, and that decision moves into a PRD and
