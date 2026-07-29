@@ -36,23 +36,43 @@ explains why the architecture is shaped the way it is. It never becomes a spec t
 
 ## 1. The staged arc
 
-Stage one is the stateless agent: one turn, end to end, through the gate, against a
-real local model, emitting an honest trace. It accumulates no experience and
-therefore tests nothing. It is the apparatus floor, the Level A substrate of
-privileged low-latency connectivity, per-agent OS individuation, and a trace worth
-trusting, on which the later work becomes possible.
+Stage one is the agent that keeps a complete record and no memory: one turn, end to
+end, through the gate, against a real local model, emitting a trace worth trusting.
+
+The distinction is worth drawing carefully, because calling stage one stateless is a
+convenience that misleads anyone who takes it literally. The trace is state. It is a
+factual, sequence-faithful account of everything that occurred in a session, held in
+RAM while the session runs, and the agent reasons over it, so turn two knows what
+turn one did because the trace says so. What stage one lacks is not state. It is
+everything that turns a record into a memory: selection, so that what matters is
+kept and the rest is not, association, so that recall works by relevance rather than
+by position, consolidation, so that many episodes settle into one structure, and
+persistence, so that anything the agent can draw on survives the session at all. A
+record answers what happened, in order. A memory answers what bears on now.
+
+Something does survive, and saying otherwise would be sloppy. The durable record
+outlives the process and the session both. It is a persistent audit store, written
+for `weaver-admin` and for later analysis, and the agent has no path to it and no
+mechanism that would read it back into a new session. So the claim worth making is
+narrower and stronger than nothing survives, which a careful reader falsifies by
+pointing at the file on disk. Nothing the agent can draw on survives, and that is
+why there is nothing to individuate from, and why stage one tests nothing.
+
+It is the apparatus floor, the Level A substrate of privileged low-latency
+connectivity, per-agent OS individuation, and a trace worth trusting, on which the
+later work becomes possible.
 
 Later stages add the capacity to accumulate and use experience. They are not
 specified here and not committed to an order, because the discipline of this project
 is to decide architecture from measurement rather than ahead of it. What can be said
 now is the shape of the growth, not its schedule: each new capability arrives as an
-organ behind its own socket and contract, and the agent grows toward statefulness
-rather than being rebuilt for it.
+organ behind its own socket and contract, and the agent grows from a record toward a
+memory rather than being rebuilt for it.
 
 The destination is the test the whole program exists to run. WeaverTools is built to
 test whether an agent whose boundary is other-produced can nonetheless self-produce
-its individuation through accumulated experience (Bucy, 2026). A stateless agent
-cannot test this. The staged arc is the path from the floor that makes the test
+its individuation through accumulated experience (Bucy, 2026). An agent whose record
+ends with its session cannot test this. The staged arc is the path from the floor that makes the test
 possible to the agent that is its object of measurement.
 
 ## 2. The organism model
@@ -75,8 +95,8 @@ activation network that filters prompts or queries is a kidney or a liver, an or
 that decides what passes and what does not. The memory leg, drey together with the
 consolidation pass, is the hippocampus, the organ that turns momentary experience
 into lasting memory. None of these exist in stage one, because a body with no
-bloodstream needs no kidney, and an agent with no accumulated experience needs
-nothing to consolidate. The architecture's whole claim is that when the body needs
+bloodstream needs no kidney, and an agent whose record ends with its session has no
+accumulation to settle. The architecture's whole claim is that when the body needs
 an organ it grows one, rather than having been built around a slot left empty in
 anticipation.
 
@@ -95,8 +115,8 @@ The prior attempt built the memory leg and the turn loop at the same time and sp
 its final months subtracting one from the other. That was not a resourcing failure,
 it was an ordering failure, and the same dependency shows up in both places. An
 agent that cannot complete a turn has nothing to remember, and an organ that turns
-experience into structure needs experience to work on. Statelessness first is not a
-compromise forced by scope. It is the sequence.
+experience into structure needs experience to work on. The record before the memory
+is not a compromise forced by scope. It is the sequence.
 
 ## 3. The hardware ceiling
 
@@ -139,17 +159,22 @@ the finished thing.
 
 A cheap-looking win is available the moment the trace lives in RAM at the token
 level: pack past the context limit, clear space, and reinject earlier material from
-the working structure. Dumb recycling, keep everything you can, is a stateless
-harness policy and nothing more. Selective reinjection is a different animal. The
-moment something decides what is worth carrying forward and what to drop, that
-decision is the seed of consolidation, and it is the first stateful judgment the
-system makes.
+the working structure. Dumb recycling, keep everything you can, is a harness policy
+and nothing more. Selective reinjection is a different animal. The moment something
+decides what is worth carrying forward and what to drop, that decision is the seed
+of consolidation, and it is the first judgment in the system that is about
+relevance rather than order.
 
 So reinjection is not a PRD line. It arrives as its own organ. A small activation
 network or a classifier, trained on trace data, watches the trace, pre-caches
-portions of it ahead of time, and injects on the right tag. That is proto-statefulness
-without a permanent store, memory-like behavior standing on the in-RAM working
-structure before drey is ever provisioned.
+portions of it ahead of time, and injects on the right tag.
+
+That organ creates no state. It selects over state the trace already holds, which is
+why it can stand on the in-RAM working structure before drey is ever provisioned. It
+is the first of the four properties from section 1 to arrive, and it arrives alone.
+There is still no association, no consolidation, and nothing that survives the
+session. What changes is that the agent stops carrying its whole record and starts
+carrying what bears on now, which is the beginning of a memory and not yet one.
 
 Two questions are open here and are left open deliberately, because they are
 architecture decisions and there is not yet a measurement to decide them from:
