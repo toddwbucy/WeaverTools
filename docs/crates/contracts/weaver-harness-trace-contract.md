@@ -32,6 +32,33 @@ contract and is a defect.
 and the harness links it. A contract is not the same thing as a socket, and this one
 governs an API surface rather than a protocol on a transport.
 
+## Vocabulary
+
+Every contract names the vocabulary it depends on, grouped by the crate that
+defines it. A contract without this clause is not a valid contract, and a group is
+stated even when empty, because an explicit nothing is an assertion someone checked
+and an absent group is silence.
+
+**From `weaver-traits`.** The message model. The `message.user`,
+`message.assistant`, and `message.tool_result` payloads carry conversation messages
+in whatever shape that crate defines, and this contract does not redefine them.
+
+**From `weaver-types`.** Two fields of the agent state file, read at load and fixed
+for the life of the run: the verbosity ceiling election of section 3, and the commit
+policy that governs the boundary in section 4. Neither is interpreted here beyond
+being carried.
+
+**From `weaver-trace`.** The event envelope and its field set, the closed event-kind
+vocabulary, the per-kind payload shapes, the three commit-boundary states, the
+working structure as a projection, and the failure vocabulary of section 5. These
+are the party's own definitions, named because they cross the seam and a reader of
+this document should not have to infer where they come from.
+
+**Nothing from any other crate.** This seam is a library boundary between two crates
+and touches no third.
+
+---
+
 **The envelope field set appears here and in `weaver-trace-PRD` section 3,
 deliberately.** A Spec is derived from its crate's PRD plus every contract that crate
 is party to, so the harness Spec writer reads this document and never opens the trace

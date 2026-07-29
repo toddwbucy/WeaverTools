@@ -148,6 +148,29 @@ compose.
     invites the same leak. A contract names the vocabulary that crosses the seam,
     its meaning, ordering, and failure modes. How a crate represents that
     internally belongs to its Spec.
+12. **Section 5.3 does not require a vocabulary clause, and it must.** Every
+    contract carries a clause naming the vocabulary it depends on, grouped by the
+    crate that defines it, and **a contract without one is not a valid contract.**
+    The clause is mandatory even when a group is empty: "this contract draws nothing
+    from `weaver-types`" is an assertion someone checked, while a missing group is
+    silence, and silence is what let the previous tree's attribute vocabulary drift
+    until the declared names were smaller than the emitted ones.
+
+    This is what makes the floor governable without a floor contract. A single
+    document binding every crate is one nobody opens. A clause is checked at every
+    seam, by the people writing that seam, while they are thinking about it. It also
+    yields a mechanical check the previous tree never had: **the floor's required
+    surface is the union of every contract's clause.** Anything in the floor named
+    by no clause is unused. Anything named by a clause and absent from the floor is
+    a gap. That is the party-list-against-dependency-graph check of section 5.3,
+    applied to vocabulary rather than to emitters.
+
+    The consequence for `weaver-traits-PRD` and `weaver-types-PRD` is that they are
+    not crate catalogues. They are **requirement documents** stating the conditions
+    of participation, enforced at every contract rather than admired in one place.
+    It is also why the floor is written third rather than last: the harness
+    establishes the center, the floor establishes the terms on which anything
+    connects to it, and nothing written after can be correct without them.
 
 **Document taxonomy, three kinds not two.** A PRD is what and why, per crate. A
 contract is the protocol between parties, binding two or more crates and belonging
