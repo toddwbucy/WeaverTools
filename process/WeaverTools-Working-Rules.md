@@ -1,12 +1,13 @@
 # WeaverTools Working Rules
 
-**Version:** v0.2, 2026-07-29. Companion to the Working Process and the
-Guiding Statement. The Guiding Statement says what we are building. The Working
-Process says how the work moves. This says how we write.
+**Version:** v0.3, 2026-07-30. Companion to the Working Process, the Document Format,
+and the Handoff Format. Project documents carry a version and a date and no state, per
+Working Process section 2.
+**Parent:** WeaverTools Working Process
 
-Transcribed to disk from v0.1 of 2026-06-14, which existed only as a session handoff.
-The line width in section 1 is the one addition, supplied because G1 cites a criterion
-this document is the home for and did not previously state.
+The apex says what we are building. The Working Process says how the work moves. The
+Document Format says what shape a document takes. The Handoff Format says what shape a
+batch takes when it moves between seats. This says how we write.
 
 ## 1. Editorial rules, hard
 
@@ -57,7 +58,7 @@ These exist because this project was split off to escape stale context. Hold the
 This project is the OS-primitives program and nothing wider. Decisions from the
 earlier full-application work do not carry forward unless re-ratified here.
 
-When something feels in scope, check it against the Guiding Statement before acting.
+When something feels in scope, check it against the apex scope criteria before acting.
 Document processing, orchestration, and application concerns are out.
 
 Build primitives, not the application. Do not chase parity with what already exists.

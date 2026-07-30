@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.2, 2026-07-29. Companion to the Working Process. Project documents
+**Version:** v0.4, 2026-07-30. Companion to the Working Process. Project documents
 carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -67,6 +67,25 @@ A document under `docs/crates/contracts/` is a contract. A document under a
 makes the mirror check mechanical: every `docs/crates/weaver-*` has a matching
 `crates/weaver-*` at the same depth, and `contracts/` excludes itself by the absent
 prefix rather than by a written exception.
+
+**A contract is named for its parties, initiator first.** The name records which of the
+two nodes initiates the signal the contract governs, so `weaver-admin` asking the
+harness to enter and leave a run gives `weaver-admin-harness-contract`, and the harness
+asking the SPU to admit and release a model gives `weaver-harness-spu-contract`. This is
+the same fact the seam record carries in `from` and `to`, which is why a name that
+disagrees with its seam is a defect in one of them rather than a matter of taste.
+
+**The name states flow direction and nothing else.** It does not say which crate
+sequences the workflow that signal sits inside, and it does not say that this is the
+only traffic between the pair. Behavior between two nodes collapses into direction of
+flow, one signal at a time, and a later signal running the other way is a second seam
+with its own name rather than a contradiction of this one.
+
+**A preserved stub carries `.stub` and is not a document.** Working Process section 2
+keeps a stub under its own name with the suffix appended when its draft is written, so
+`weaver-spu-PRD.md.stub` sits beside `weaver-spu-PRD.md`. It is not a `.md` file, so the
+walk never reaches it and the mirror never counts it, which is the same exclusion by
+naming that `contracts/` gets from its absent prefix.
 
 **The project documents sit outside `docs/` rather than under it.** Working Process
 section 2 puts them outside the document set and outside the mapping, so a mapper that
@@ -265,10 +284,19 @@ wrong material passes this format and fails that gate.
 It does not make the graph. Phase two builds the graph from documents written this way
 and never by hand.
 
-## 9. Open
+## 9. When mapping runs
 
-**When mapping runs.** Ratification is the mapping of the whole set, and that leaves
-open whether mapping happens once at the end or continuously from the first document.
-Continuous mapping is what this format is for. A format that is mechanical from the
-first charter can be mapped the day a charter lands, which surfaces a missing edge
-while one document is in hand rather than in a terminal pass over nine. Ruling wanted.
+Mapping runs continuously, from the first charter, and ratification remains the mapping
+of the whole set.
+
+A format that is mechanical from the first charter can be mapped the day that charter
+lands, which surfaces a missing edge while one document is still in hand rather than in
+a terminal pass over nine. The alternative concentrates every mapping defect into one
+pass at the end of phase one, where each fix is a phase one reopening and the document
+that would answer it was written weeks earlier.
+
+Continuous mapping does not move ratification earlier. A mapped document is not a
+ratified one, the set ratifies together or not at all, and an intermediate build is a
+check rather than a milestone. What continuous mapping buys is that phase two's closing
+checklist meets a graph that has already been built many times rather than one being
+attempted for the first time.

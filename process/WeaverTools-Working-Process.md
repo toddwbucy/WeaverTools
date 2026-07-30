@@ -1,9 +1,10 @@
 # WeaverTools Working Process
 
-**Version:** v0.3, 2026-07-29. Companion to the Working Rules and the Guiding
-Statement. The Guiding Statement says what we are building. The Working Rules say how
-we write. The Document Format says what shape a document takes. This says who is
-primary, in what order the work moves, and what must be true before it moves.
+**Version:** v0.5, 2026-07-30. Companion to the Working Rules, the Document Format, and
+the Handoff Format. The apex says what we are building. The Working Rules say how we
+write. The Document Format says what shape a document takes. The Handoff Format says
+what shape a batch takes when it moves between seats. This says who is primary, in what
+order the work moves, and what must be true before it moves.
 
 This document is the boot prompt for every fresh session on this project, in either
 seat. Read it first. Section 6 says where the work currently sits on the map.
@@ -43,6 +44,28 @@ chartered. A stub settles nothing, declares no graph records, and may not be cit
 any document as having decided anything. It is replaced wholesale rather than refined,
 which is what separates it from a draft.
 
+**Replaced wholesale does not mean overwritten.** The stub is kept under its own name
+with `.stub` appended, so `weaver-spu-PRD.md` becomes `weaver-spu-PRD.md.stub` and the
+draft is written fresh at the original name. A stub accumulates what earlier passes
+learned about the thing it names, because the work is chartered workflow by workflow and
+a workflow runs through crates that have no charter yet, so the drafting reads the stub
+alongside the old tree's code. Not every note survives that drafting and none of them
+binds, since a stub decides nothing. Keeping the file keeps the record of what the draft
+was drafted against, and a note that did not survive is the one a later reader most
+needs, because its absence from the draft is otherwise indistinguishable from its never
+having been raised.
+
+**Where a stub and the old tree conflict, the stub wins.** The stub is this program's
+more recent statement of intent about that crate and the tree predates the split, so a
+conflict is a question the project has already answered once. The precedence fires only
+on conflict. Where a stub is silent and the tree speaks, nothing opposes the tree and it
+flows into the draft unopposed, which is what step 3 review is for. Precedence handles
+collision and review handles absorption, and neither substitutes for the other.
+
+**The suffix does the exclusion.** A `.md.stub` file is not a `.md` file, so the mapper
+never reads it, the mirror check never counts it, and the document set never contains
+it, none of which needs a rule written to be true.
+
 It is a state and not a member of the document set, so ratification does not wait on
 it and the mapping does not read it. A stub that acquires a decision has stopped being
 a stub and is a draft.
@@ -67,10 +90,17 @@ carries ratification. A header that reads RATIFIED before the mapping has run is
 asserting something the project has no mechanism to have produced.
 
 **The project documents sit outside this model.** The Working Process, the Working
-Rules, the Document Format, and the Guiding Statement govern the set rather than
-belonging to it, they do not map into the graph, and ratification is defined as the
-mapping. They carry a version and a date and no state. A state on a document that
-cannot reach the terminal state is a label that never resolves.
+Rules, the Document Format, and the Handoff Format govern the set rather than belonging
+to it, they do not map into the graph, and ratification is defined as the mapping. They
+carry a version and a date and no state. A state on a document that cannot reach the
+terminal state is a label that never resolves.
+
+**A project document's `Parent:` header carries no edge.** The Document Format defines
+that header against a `parent` edge and rules that the edge governs where the two
+disagree. These documents do not map, so there is no edge to govern and nothing for the
+header to disagree with. It is kept as a reader's convenience, naming which project
+document a reader should have in hand first, and every project document parents to the
+Working Process because this one is the boot prompt.
 
 The word freeze is not used. It was doing the work of both merged and ratified, which
 forced corrections to a merged document to queue behind a ceremony that does not apply
@@ -160,14 +190,6 @@ Phase one closes when every crate in scope has a merged PRD, every seam has a me
 contract, every spec is merged, and G4 and G6 hold across the whole set. Only seams
 take contracts. The other edge kinds are structure and carry none.
 
-### Gate candidate, not in force
-
-**G7, rulings landed.** A ruling names the documents it changes. This gate checks that
-each named document carries the change. It is offered because the first live ruling in
-this corpus named four documents and landed in none of them, and nothing detected that
-until a re-review opened for other reasons. A ruling recorded in a working list reads as
-settled to every later reader, so an unlanded ruling is worse than an open one.
-
 ## 5. Phase two, graph
 
 Produces the knowledge graph as a standing artifact, and performs ratification. A
@@ -253,7 +275,7 @@ their domains named and nothing settled, and the three harness seams have stub
 contracts beside them.
 
 `weaver-admin` is next, and lifecycle is where it starts: a load workflow and an
-unload workflow, agreed across `weaver-harness-admin-contract`. The apex re-authoring
+unload workflow, agreed across `weaver-admin-harness-contract`. The apex re-authoring
 waits on all seven charters and is the one piece of collected work that cannot be
 taken early.
 
@@ -264,7 +286,7 @@ Merged means the work may move forward, which is what merged is for.
 
 It does not govern the content of any crate. It governs which seat is primary, in what
 order the work moves, and what must be true before it moves. A rule that constrains
-what a crate does rather than how it comes to exist belongs in the Guiding Statement or
-in a charter.
+what a crate does rather than how it comes to exist belongs in the apex or in a
+charter.
 
 It does not say what shape a document takes. That is the Document Format's.
