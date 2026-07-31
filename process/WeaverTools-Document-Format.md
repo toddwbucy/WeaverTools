@@ -1,7 +1,10 @@
 # WeaverTools Document Format
 
-**Version:** v0.4, 2026-07-30. Companion to the Working Process. Project documents
-carry a version and a date and no state, per Working Process section 2.
+**Version:** v0.5, 2026-07-31. Companion to the Working Process. Project documents
+carry a version and a date and no state, per Working Process section 2. The v0.5
+change is one entry: the artifact example in section 3 stops naming `weaver-admin` as
+the state file's writer and stops citing the deferred state-file contract, both
+retired by the admin pass.
 **Parent:** WeaverTools Working Process
 
 The Working Process says who is primary and in what order the work moves. This says
@@ -145,13 +148,17 @@ hand.
 vision document's word and it does not cover the floor, so it is not used here. One
 PRD, one Spec, and as many contracts as it has seams.
 
-**artifact.** A durable thing that crates produce and consume without a call between
+**artifact.** A durable thing produced or consumed by crates without a call between
 them. The agent state file, the session record, the model artifact. Artifacts are
-first-class because three of the corpus's real relationships are three-place and pass
-through one: `weaver-types` owns the agent state file, `weaver-admin` writes it, and
-the harness reads it, with no Cargo edge anywhere in that sentence. Without an artifact
-node those relationships are untypeable and the state-file contract that
-`weaver-types-PRD` section 6 defers has nothing to be a contract over.
+first-class because the corpus's real relationships around them are three-place and
+pass through one: `weaver-types` owns the agent state file's format, the operator
+writes it from outside the program, and `weaver-admin` and the harness both read it,
+with no Cargo edge anywhere in that sentence. Without an artifact node those
+relationships are untypeable. An earlier form of this entry had `weaver-admin` as the
+writer and cited a deferred state-file contract, and both halves are retired:
+authorship is the operator's per `weaver-admin-PRD` section 1, and section 10 of that
+charter rules the contract out rather than deferring it, there being no producer
+inside the program to bind.
 
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
