@@ -236,9 +236,11 @@ event because it judged the level has taken policy the harness holds.
 
 **Answering an integrity request.** When asked for a turn's hash the harness has the
 recorder recompute it over the working structure and returns the value. It does not
-schedule the request, compare the result, or act on a mismatch. Who asks, in what
-shape, and what a mismatch obliges are unsettled until `weaver-admin` is chartered,
-and `weaver-harness-admin-contract` is the stub that holds that seam.
+schedule the request, compare the result, or act on a mismatch. Who asks and in what
+shape is settled by `weaver-admin-harness-contract` sections 3 and 6, and what a
+mismatch obliges sits with `weaver-admin` as the auditor, per `weaver-admin-PRD`
+section 2. Neither changes this side of it. The harness recomputes and returns, and
+the prohibition on comparing is the same obligation read from the other end.
 
 **Handling refusal.** A refused event is not emitted. The harness must not project
 it, must not treat it as recorded, and must not retry it under a new sequence as
@@ -274,6 +276,17 @@ recorder surfaces the pressure rather than absorbing it, and a write that fails 
 a live process is named. It never drops an admitted event quietly. A tail forfeited to
 process death is outside this obligation, because the process that would report it is
 the one that died.
+
+**Writing the divergence artifact.** The recorder writes it. It is the only party
+permitted to write, and the prohibition on the harness reaching an artifact directly is
+not suspended by an error state. The harness detects the disagreement and asks. The
+recorder writes the working structure whole, through a descriptor it was given, and does
+not modify the record. Which party supplies that descriptor and when it crosses is a
+Spec question, marked as one here: descriptors cross once at enter per
+`weaver-admin-harness-contract` section 3, and a divergence is only known to be
+needed at unload. Whether that means a descriptor supplied at enter for a case that
+usually does not occur, or one supplied at the moment of need, is a mechanism this
+contract does not choose.
 
 **Deterministic projection.** The same record, schema version, and projection version
 yield the same rows. The working structure is rebuildable exactly from committed
@@ -322,6 +335,10 @@ crate's Spec.
   both values named. Neither party resolves it, because it is evidence about the
   append-only property of `weaver-trace-PRD` section 2.2 rather than a fault in this
   exchange, and the principal that asked owns what follows.
+- **Unload divergence.** At the close of a run the working structure and the durable
+  record disagree under the comparison of `weaver-admin-PRD` section 4.2. Neither party
+  resolves it. The record is not modified, the working structure is written beside it,
+  and the session closes in a declared error state rather than closing certified.
 - **Record invalid on read.** Recreation refuses. Names the check that failed and the
   sequence range involved when known.
 - **Resume refused.** The same validity checks applied at run start rather than at
@@ -348,6 +365,30 @@ inspect the file, and it holds no path with which it could.
 **Neither may write a second authoritative representation.** Derived views are
 permitted when they name the committed source range they represent and do not claim
 completeness beyond it. A derived view is never a durable home.
+
+**The divergence artifact is not a second authoritative representation.** When an
+unload validation finds the working structure and the durable record in disagreement,
+the working structure is written to a second file beside the record and both survive.
+That file is permitted, and the reasoning is written out here rather than left to be
+reconstructed from the paragraph above, because the reconstruction is the work an
+auditor would otherwise have to perform to know the artifact is legitimate.
+
+It is not authoritative, and neither is the record while the pair stands. Both are held
+precisely because the disagreement has not been adjudicated, and nothing in the system
+will adjudicate it without an operator. What the prohibition above forbids is a
+representation claiming to be the true one, and this artifact exists to claim the
+opposite.
+
+It is not a derived view, so the durable-home clause does not reach it either. A derived
+view names a committed source range and is reproducible from it. This is the working
+structure written out verbatim under a declared error state, and the reason it must be
+written at all is that it is not reproducible. The record can be read again at any time.
+The side that disagreed with it cannot, because the process holding it is the one
+ending.
+
+It is evidence, produced at the only moment it is producible, and it is never read as
+the record. A reader recreating a session reads the record. A reader investigating the
+error state reads both and decides which one the operator keeps.
 
 **Neither may make a span durable.** Spans are views over event ranges, produced on
 demand. Writing a span into the record makes it a primitive and reintroduces the
@@ -393,3 +434,8 @@ How each check is implemented is Spec work. What must be checkable is stated her
 - Every `turn.closed` carries a turn hash and no other kind does.
 - A turn hash recomputed over an unaltered working structure matches the record.
 - No stored span appears in any record.
+- After a divergence write the record is byte-unchanged from what it held before the
+  comparison ran.
+- Given the pair produced by a divergence, the record is identifiable as the record
+  without reference to filenames. Which mechanism carries that identification is the
+  Spec's, and the property is that one exists.

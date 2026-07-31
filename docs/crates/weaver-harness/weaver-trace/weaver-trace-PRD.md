@@ -6,6 +6,10 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-07-31. The `model.measurement` payload gains the prompt-block
+partition and explicit model identity, which apex section 8 requires for replay and
+this charter did not carry. Revised again the same day: section 4.1's drop ordering
+is retired, the worker holding the agent uid from its first instruction.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -267,10 +271,27 @@ its closure.
 |---|---|
 | `model.request` | the decode boundary, request side |
 | `model.output` | the decode boundary, response side |
-| `model.measurement` | token identifiers, entropies, sampler parameters, weights hash, residual reductions |
+| `model.measurement` | input and output token identifiers, entropies, sampler parameters, model identity with its weights hash, the prompt-block partition, residual reductions |
 
 Thirteen kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
+
+**The measurement payload is what apex section 8 rests replay on, so its field list
+is not this charter's to choose freely.** Replay feeds recorded tokens back through a
+forward pass rather than re-sampling, which needs the input and output token
+identifiers, the model identity and its weights hash, the sampling parameters, and
+the prompt-block partition. The prompt-block partition and the explicit identity were
+absent from an earlier version of this row. A payload carrying a weights hash and no
+identity says which bytes were loaded without saying what was loaded, which is enough
+to detect that two runs differ and not enough to reconstitute either, and a payload
+without the partition cannot tell a replay where one block ended and the next began.
+
+**Replay is a ceiling capability, and the apex's requirement is scoped to it.** All
+three `model.*` kinds are elected, so a run recorded at the floor carries no
+measurement payload and is not replayable. What the apex forbids is a measurement
+payload missing one of those fields. It does not oblige a floor run to carry the kind,
+and a reader who takes the requirement as universal has read a condition on the
+payload as a condition on the record.
 
 **There is no `session.started`.** A session begins when `run0` begins, so a separate
 kind would fire at the same moment as `run0`'s `load` and mean the same thing. The
@@ -334,10 +355,13 @@ range analysis.
 
 ### 4.1 Create, or resume
 
-A record is opened by `weaver-admin` while the worker still holds that principal,
-and the descriptor is passed to the worker before it drops to the agent uid.
-`weaver-admin` resolves which session is being loaded. The harness never learns the
-path either way.
+A record is opened by `weaver-admin` while it holds that principal, and the descriptor
+is passed to a worker that has held the agent uid from its first instruction, because
+the init system starts the unit under `User=` and there is no drop to order, per
+`weaver-admin-harness-contract` section 2. The receiving uid confers nothing either
+way: a descriptor crossing a Unix socket is a capability and the kernel rechecks no
+permission at receipt. `weaver-admin` resolves which session is being loaded. The
+harness never learns the path.
 
 **`run0` creates.** The record is new and empty, and the working structure begins
 empty with it.
@@ -360,9 +384,24 @@ that: a trace-root resolver with zero production callers whose layout described 
 path no artifact ever used, while the security invariant three other documents
 cited was specified against it.
 
-Every descriptor is close-on-exec and append-only. The first keeps tool
-subprocesses from inheriting a writable handle. The second makes append-only a
-property of the handle rather than of the writer behaving well.
+Every descriptor this crate writes through is close-on-exec and append-only. The
+first keeps tool subprocesses from inheriting a writable handle. The second makes
+append-only a property of the handle rather than of the writer behaving well.
+
+**The two flags do not arrive by the same route, and only one of them travels.**
+Append-only rides the open file description, so a descriptor passed over a Unix
+socket carries it and the opener confers it once. Close-on-exec rides the
+descriptor, so it does not cross, and the receiving call is the only place it can be
+supplied. `weaver-admin` opens append-only and cannot confer close-on-exec on a
+descriptor it hands over. The harness supplies it at the receive, and
+`weaver-admin-harness-contract` section 5 holds that split.
+
+**What is pinnable at compile time is the shape and not the flags.** A behavior on
+the receive path is not a type property, so no pin reaches either flag. What a pin
+does reach is one receive site, taking no flag argument, returning a handle the rest
+of the crate cannot construct another way. The flags themselves take the
+perturbation-verified test of apex section 11, and the test is confirmed by watching
+it fail when the flag is removed.
 
 ### 4.2 Update
 

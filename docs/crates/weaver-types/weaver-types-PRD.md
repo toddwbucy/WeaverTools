@@ -6,6 +6,14 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-07-31. Section 2.3 goes from three wire definitions to five, adding
+`organ-envelope` and `harness-alert` owed by `weaver-admin-harness-contract` section 8,
+and section 4's departure paragraph follows the count. Revised again the same day:
+sections 5 and 6 stop resting on admin writing the configuration file, the writer
+being the operator and the readers two, and the deferred state-file contract is
+recorded as ruled out rather than pending. Revised a third time: section 2.1's edge
+sentence, wrong on both halves, now states that no writes edge exists and that the
+contract is ruled out.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -56,8 +64,17 @@ the floor in the same act.
 
 ### 2.1 The agent state file
 
-The declarative document that defines an agent. `weaver-admin` produces it, the
-harness consumes it, and neither writes the other's half.
+The declarative document that defines an agent. The operator produces it, and both
+`weaver-admin` and the harness read it. Neither crate in this program authors it,
+because creating an agent is an operator act and the file is its declaration, per
+`weaver-admin-PRD` section 1. Admin validates it before a process exists and the
+harness consumes the elections it carries.
+
+**The identifier is wrong and its correction is owed rather than taken here.** The file
+is configuration, read at load and fixed for the run, and the agent's state is the
+trace. Renaming the node reaches this section, its five `holds` edges, and every
+citation in the corpus, which is one act on the corrections branch rather than a
+change made beside a producer correction.
 
 ```graph
 node: agent-state-file
@@ -138,8 +155,10 @@ contract's clause draws a field rather than the whole file and an edge needs
 something to point at. The five records above are the five fields this section lists,
 so a clause naming a sixth has no target and the mapping says so.
 
-The `writes` edge from `weaver-admin` is declared in that crate's charter and is not
-written here, which is the same deferral section 6 states in prose.
+There is no `writes` edge from any crate, because the writer is the operator and the
+operator is not a node the graph carries. Both crates that touch the file declare
+`reads`, each in its own charter, and section 6 rules the once-deferred contract out
+rather than deferring it.
 
 Known fields, from the passes already done: the model binding, the tool set, the
 permission mode, the residual-readout election, and the verbosity ceiling election.
@@ -175,10 +194,18 @@ was licensed to carry. That interaction closes with the scope that created it.
 
 ### 2.2 Peer identity, and one bounded policy carve-out
 
-Every seam in this program is a `SO_PEERCRED` Unix socket, so every process that
-accepts a connection must establish who is on the other end. The identity type lives
-here because every process kind needs it and none of them may depend on another to
-get it.
+The seams that admit an outside principal and the seams that cross the membrane are
+named `SO_PEERCRED` Unix sockets, so a process accepting a connection on one of them
+must establish who is on the other end. The identity type lives here because more than
+one process kind needs it and none of them may depend on another to get it.
+
+**The claim is scoped to those seams and was once stated of all of them.** The earlier
+wording made every seam in the program a credentialed socket, and
+`weaver-admin-harness-contract` falsifies it: an inherited unnamed pair reports the
+creating process at both ends, distinguishes nothing, and authenticates by possession
+instead. That contract draws neither definition below and says so. A universal with a
+counterexample is a weaker seat than a scoped claim that holds, and the scoped claim is
+what the carve-out rests on.
 
 **Alongside the identity type, this crate carries the authorization predicate, and
 that is a deliberate exception to holding only data.** The rule that decides whether a
@@ -208,6 +235,74 @@ to: peer-identity
 edge: defines
 from: weaver-types
 to: authorization-predicate
+```
+
+### 2.3 The wire vocabulary the first socket contract draws
+
+**These five arrived on demand and not in advance.** Section 4 held wire protocol
+vocabulary out of this crate until a written contract needed it.
+`weaver-admin-harness-contract` section 8 is that contract, and it draws exactly the
+five values below. Nothing else enters this subsection until another contract draws
+it, and a sixth definition arriving without a contract behind it is the reserved-slot
+error apex section 9 forbids, in schema form.
+
+**Four of the five belong to the coordination seam.** `admin-directive` is what the
+asking party sends across the coordination channel. `harness-answer` is what the
+answering party returns. `lifecycle-refusal` is the typed form of a refusal, carrying
+why a lifecycle act could not be performed rather than a free string, so that a caller
+branches on a value and an operator reads a reason. `harness-alert` is the fault the
+harness raises unasked, which is the direction the duplex channel exists to carry and
+the reason that seam is not simplex.
+
+**The fifth belongs to the floor and not to that seam.** `organ-envelope` is the
+carrier every organ channel draws, holding the exchange a message belongs to, that
+message's position in the exchange, and the type of its payload. It is defined here
+because the coordination seam was the first channel to need it, and it is the one
+value in this subsection no later contract draws as new, because apex section 5.4
+makes a duplex channel with the harness the test of an organ and every such channel
+carries this envelope. When `weaver-admin-harness-contract` sections 1 and 2 lift into
+a floor document, this record follows the mechanic it belongs to and the other four
+stay here.
+
+The meaning of each, its ordering against the others, and the failure modes are the
+contract's and are not restated here. This crate holds the representation the two
+processes must agree on, which is the whole of what a floor definition is.
+
+```graph
+node: organ-envelope
+kind: vocabulary
+
+node: admin-directive
+kind: vocabulary
+
+node: harness-answer
+kind: vocabulary
+
+node: lifecycle-refusal
+kind: vocabulary
+
+node: harness-alert
+kind: vocabulary
+
+edge: defines
+from: weaver-types
+to: organ-envelope
+
+edge: defines
+from: weaver-types
+to: admin-directive
+
+edge: defines
+from: weaver-types
+to: harness-answer
+
+edge: defines
+from: weaver-types
+to: lifecycle-refusal
+
+edge: defines
+from: weaver-types
+to: harness-alert
 ```
 
 ## 3. What it must not hold
@@ -244,12 +339,12 @@ producers and consumers. Under the custody model the harness never resolves a pa
 and `weaver-admin` holds the paths it opens, so there is nothing for a shared constant
 to coordinate. If the admin pass finds a path two crates must agree on, it enters then.
 
-**Wire protocol vocabulary.** Not excluded on principle, absent on demand. Each socket
-seam names what crosses it in its contract, and the shared representation of that
-vocabulary lands here when the first such contract is written. No socket contract
-exists yet, so nothing is owed. This is the clearest case in the corpus of a thing
-that will obviously be needed and is still not written, because writing it now would
-mean guessing at agreements that do not exist.
+**Wire protocol vocabulary was held here and has left.** It was absent on demand
+rather than excluded on principle, and the demand has fired.
+`weaver-admin-harness-contract` is the first socket contract, it names five values
+that cross, and their shared representation is now section 2.3. Nothing was guessed:
+each of the five arrived because a written agreement needed it. The rule that placed
+the paragraph here still governs everything not yet drawn.
 
 ## 5. The terms of participation
 
@@ -258,10 +353,13 @@ is present even when the answer is nothing. The union of those clauses is this c
 required surface: a definition no clause names is unused, and a definition a clause
 names and this crate lacks is a gap.
 
-**The producer and the consumer are both bound.** The agent state file has one writer
-and one reader, and the format is an obligation on both. A producer that emits a shape
-the consumer does not accept, or a consumer that tolerates a shape the producer never
-emits, are the same defect seen from two ends.
+**The producer and the consumers are all bound.** The agent state file has one writer,
+the operator, who stands outside the program, and two readers inside it, admin
+validating before a process exists and the harness consuming the elections it
+carries. The format is an obligation on all three. A producer that emits a shape a
+consumer does not accept, or a consumer that tolerates a shape the producer never
+emits, are the same defect seen from two ends, and two readers that disagree about
+one file is that defect a third way.
 
 **Compatibility posture is stated, not assumed.** A field added, removed, or given a
 new meaning is a change to every producer and consumer of the file in the same act.
@@ -277,9 +375,12 @@ change that cannot be carried in one act has not been thought through.
 This crate is party to no contract. It defines and does nothing, so there is nothing
 to agree to, and it is **named in** contracts rather than signing them.
 
-The agent state file is a real producer-to-consumer agreement, but its parties are
-`weaver-admin` and `weaver-harness`. That contract is written in the admin pass, when
-admin's side can be specified rather than assumed. Writing it now would produce a
-document describing one party's obligations against a charter that does not exist,
-which is how the previous tree ended up with contracts that documented code instead of
-governing it.
+The agent state file is a real producer-to-consumer agreement, but its producer is the
+operator and its parties are not two crates. An earlier form of this paragraph
+deferred a contract between `weaver-admin` and the harness to the admin pass, and that
+pass ruled the other way, in `weaver-admin-PRD` section 10: authorship moved to the
+operator, both crates that touch the file read it, so there is no producer inside the
+program and no producer-consumer agreement between two crates to write. Only seams
+take contracts, per Working Process section 4. This charter is the named authority on
+the format under G5, each reading charter carries its own validation obligations, and
+no third document exists.

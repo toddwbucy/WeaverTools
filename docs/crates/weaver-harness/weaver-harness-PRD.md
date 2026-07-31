@@ -6,6 +6,14 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-07-31. Section 4 is restated against the revised apex 5.1, records
+that the harness opens exchanges on the coordination seam and holds the alert, and
+drops the stale claim that the admin contract is an unwritten stub. Corrected on
+review from three seams to four, the trace link seam having been uncounted since the
+charter was written. Revised again the same day: section 1's argued drop ordering is
+retired with the drop itself, and section 3's orchestration paragraph is split
+between the transition, which is admin's, and the fan-out inside the directives,
+which is the harness's.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -40,13 +48,24 @@ socket, and implements no model of any kind. Model weights are resident in the S
 reached over the decode socket behind a provider interface, so the harness drives
 generation without hosting it.
 
-**The privilege window.** The harness runs inside the worker process, and the worker
-does not run as the agent uid for the whole of its life. It is spawned by
-`weaver-admin`, receives its trace descriptors while it still holds that principal, and
-drops to `weaver-<name>`. Everything the harness itself does happens after that drop.
-The distinction matters because custody depends on the descriptors having been obtained
-before it, and a charter that says only "the harness runs as the agent" leaves the
-mechanism that protects the trace unexplained.
+**There is no privilege window.** The harness runs inside the worker process, and the
+worker runs as the agent uid for the whole of its life. `weaver-admin-PRD` section 7
+has admin holding no capability of its own and asking the init system to start the
+worker as a transient unit carrying the agent's `User=`, so the process begins at
+`weaver-<name>` and never holds anything above it. Everything the harness does happens
+under that identity, and the descriptors arrive into it.
+
+**Custody rests on possession and not on the receiving identity.** An earlier reading
+of this section had the worker begin under the admin principal, receive its
+descriptors, and drop, and it argued the ordering of that drop. The drop is retired:
+under the delegation above there is no interval in which worker code runs as anything
+but the agent, so the ordering has no subject. What survives, and what this paragraph
+is kept to say, is the reason the ordering never mattered. A descriptor passed over a
+Unix socket is a capability rather than a permission, the kernel runs no permission
+check at the receiving end, and possession is what custody rests on, so the worker
+appends to a file its own uid could not open. A charter that says only that the
+harness runs as the agent leaves the mechanism protecting the trace unexplained,
+which is why it is stated rather than assumed.
 
 ## 2. What the harness owns
 
@@ -110,23 +129,27 @@ them unloads it. Activity is the only lifecycle layer the harness owns.
 
 ## 3. What the harness does not own
 
-**Lifecycle orchestration goes to `weaver-admin`.** Sequencing a load or unload,
-collecting each organ's confirmation, rolling back a partial transition, and
-supervising worker and gate lifetimes are `weaver-admin`'s, which is long-lived
-where the harness is mortal. The harness is one of the things a load assembles, not
-the thing that assembles it, and it cannot drive the early steps of its own
-creation, because the worker spawn and the descriptor handoff run before the
-harness is running as the harness at all. A crate chartered as one agent's interior
-cannot also be the component that coordinates all agents, and the previous tree
-carried roughly four and a half thousand lines of multi-agent coordination inside
-exactly that contradiction.
+**The lifecycle transition goes to `weaver-admin`, and the fan-out inside it comes
+back.** Authorizing a load or unload, opening the record, starting and stopping the
+worker unit, rolling back what its own acts built, and supervising worker and gate
+lifetimes are `weaver-admin`'s, which is long-lived where the harness is mortal. The
+harness is one of the things a load assembles, not the thing that assembles it, and
+it cannot drive the early steps of its own creation, because the worker spawn and the
+descriptor handoff run before the harness is running as the harness at all. What the
+harness does own is the interior of the enter and leave directives: admin holds one
+seam and no channel to the SPU or the gate, per `weaver-admin-PRD` section 6, so the
+harness fans admin's directive out along its own seams, collects each organ's
+confirmation, and returns one aggregate. Sequencing the organs is the harness's
+because the seams are, and the previous tree carried roughly four and a half thousand
+lines of multi-agent coordination inside the opposite reading.
 
 **Network ingress goes to `weaver-gate`.** The harness binds no listening socket
 and has no first-contact surface. Work arrives already authenticated.
 
-**Provisioning, boundary custody, and the privileged startup window go to
-`weaver-admin`.** The harness consumes the state file that admin produces and never
-writes it.
+**Boundary verification and lifecycle supervision go to `weaver-admin`.** Provisioning
+is the operator's rather than admin's, per `weaver-admin-PRD` section 1, and there is
+no privileged startup window to assign. The harness reads the configuration file the
+operator produces and never writes it.
 
 ```graph
 edge: reads
@@ -172,15 +195,40 @@ own contract, per apex 5.1, and this crate gains a seam rather than a dependency
 
 ## 4. The seams
 
-Every behavioral seam is a SO_PEERCRED Unix socket under a named contract, per apex
-5.1. The harness is party to three, and every request across them carries the turn
-context and returns it, per apex 5.2.
+The harness is party to four seams, and every one of them is governed by a named
+contract, per apex 5.1. Three cross a process line and are Unix sockets that
+authenticate their peer, by credential where the channel has a name and by possession
+where it has none. The coordination seam is a connected pair with no name and
+authenticates by possession, per `weaver-admin-harness-contract` section 2. Which case
+the other two fall under follows from process topology, which no document in the set
+states yet.
+
+The fourth is the seam to `weaver-trace`. It crosses no process line, so it is a
+library boundary tagged `link` rather than `socket`, and it authenticates nothing
+because there is no second process to identify. It is a seam under a contract all the
+same, which is why the count here is four and the table below is three.
+
+Every request carrying work across these seams carries the turn context and returns
+it, per apex 5.2. Lifecycle directives on the coordination seam carry no turn context
+because they belong to no turn, and the scope of 5.2 is owed a restatement that says
+so, filed in `weaver-admin-PRD` section 11.
+
+The three sockets:
 
 | Seam | Peer | The harness's role |
 |---|---|---|
 | Turn ingress | `weaver-gate` | Receives authenticated work. Gate never reaches past it. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
-| Coordination | `weaver-admin` | Receives lifecycle sequencing and the trace descriptors of section 5. Reports readiness and confirmation. |
+| Coordination | `weaver-admin` | Receives lifecycle sequencing and the trace descriptors of section 5. Reports readiness and confirmation. Opens its own exchanges to raise `harness-alert`, which is the direction that makes the seam duplex. |
+
+**The harness raises alerts and does not assume where they land.** An alert is its
+own exchange on the coordination channel, opened by the harness, and the emit point is
+not designed on the assumption that the record is its only sink, so a push transport
+on the deployment track is a future seam rather than a future rewrite of this one. An
+alert that cannot be written because the channel is full or closed is dropped and the
+harness continues, per `weaver-admin-harness-contract` section 6, and the drop is
+noted in the record so that a run with no alerts and a run whose alerts were lost stay
+distinguishable afterward.
 
 The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and links
 `weaver-trace` as a member of its own domain under a contract. It links no other
@@ -206,13 +254,17 @@ from: weaver-harness
 to: weaver-types
 ```
 
-The three socket seams above carry no records yet. Each needs the contract that
-governs it, and a seam without one fails G3 rather than passing incompletely. Each has
-a stub beside it, which is not the same thing: a stub settles nothing and declares no
-records, so there is nothing for a `via` field to name. The contracts do not exist
-until the stubs are written into. They are written when `weaver-gate`, `weaver-spu`, and
-`weaver-admin` are chartered, which is the write-together rule arriving as a
-mechanical fact rather than as an argument.
+The three socket seams above carry no records yet, and the reason differs by seam. A
+seam without the contract that governs it fails G3 rather than passing incompletely,
+and a stub is not that contract: a stub settles nothing and declares no records, so
+there is nothing for a `via` field to name. The turn ingress and decode seams are in
+that state and stay there until `weaver-gate` and `weaver-spu` are chartered, which is
+the write-together rule arriving as a mechanical fact rather than as an argument.
+
+The coordination seam is no longer in that state. `weaver-admin-harness-contract` is
+written and declares the seam from admin's side, per the Document Format rule that a
+seam is declared once by the crate that asks. That contract is the `via` this seam
+resolves through, and no record is declared here on admin's behalf.
 
 ## 5. Trace authorship and custody
 
@@ -249,14 +301,15 @@ for that run, and it authors the run's level into the record so the manifest of
 file changed adopts the new value as its own load condition, which is the mechanism
 working rather than a conflict to refuse.
 
-**The integrity check is answered here and scheduled elsewhere. This is a stub.**
+**The integrity check is answered here and scheduled elsewhere.**
 `weaver-trace-PRD` section 4.2 puts a per-turn hash in both materializations and
 gives the trigger to `weaver-admin`. The harness answers such a request by
 recomputing the value over the working structure and returning it, and it does not
 compare, schedule, or act on the result. What admin asks for, in what shape, what it
-does with a mismatch, and how the request reaches a running worker are unsettled
-until `weaver-admin` is chartered. `weaver-harness-admin-contract` is a stub for the
-same reason and is the first document written when that charter lands.
+does with a mismatch, and how the request reaches a running worker are settled by
+`weaver-admin-harness-contract` sections 3 and 6, which is where this stub closed.
+What a mismatch obliges sits with `weaver-admin` as the auditor and does not return
+here.
 
 No seam edge is declared for it. The Document Format has a seam declared once by the
 crate that asks, and admin is the crate that asks, so declaring it here would put an
@@ -288,14 +341,17 @@ section 4.2 leaves it no cadence to elect and no window to tune. It may never sh
 silently, because the trace is measurement data and a silently partial record renders
 a plausible and wrong account of the turn.
 
-**Custody is structural, not policy.** The trace file is owned by the agent uid and
-belongs to the `weaver-admin` group. The group reads, the owner does not. So
-`weaver-admin` reads the trace directly from the filesystem with no harness
-involved, which is what makes operator-side replay and audit possible, while the
-agent that produced it holds no read bit of its own.
+**Custody is structural, not policy.** The trace file is owned by `weaver-admin` and
+belongs to the group the operator shares with it. The agent uid is neither owner nor
+group and holds no bit on the file at all. So `weaver-admin` reads the trace directly
+from the filesystem with no harness involved, which is what makes operator-side replay
+and audit possible, while the agent that produced it holds nothing of its own.
 
-Ownership alone would not hold this, because an owner may change a file's mode
-whenever it can name the file. Two independent locks deny the name. The first is
+**The agent must not own the file, and this paragraph used to say it did.** An owner
+may change a file's mode whenever it can name the file, so an arrangement that made the
+agent the owner and withheld read would withhold nothing durable. Non-ownership is what
+buys the property, and the argument that used to justify a second lock is the argument
+that removes the first. Two independent locks still deny the name. The first is
 the directory. The trace lives in a folder owned by `weaver-admin` and not
 searchable by the agent uid, so a tool the agent elects, `bash` above all, cannot
 traverse to the file to open it fresh or to change its mode. The kernel refuses the
@@ -311,8 +367,8 @@ path to disclose and cannot be induced to open one. The write capability rides t
 descriptor rather than the mode, so custody takes nothing the agent needs for its
 own home directory and work.
 
-**Trace descriptors are close-on-exec and append-only.** Two flags, one pin, and
-the crate is broken without either.
+**Trace descriptors are close-on-exec and append-only, and the crate is broken
+without either.**
 
 Without `O_CLOEXEC`, every subprocess the harness spawns for a tool call inherits a
 writable handle to the trace, and the agent edits its own audit record through a
@@ -326,9 +382,23 @@ This is what makes append-only a property of the descriptor rather than of the
 writer behaving well, and it is why a compromised harness can append falsehood but
 cannot erase what already happened.
 
-Both are invisible at runtime until exploited, and a test that opens a trace
-normally will never see either. Together they are the highest-value compile-time
-pin in the crate.
+**The two flags do not arrive by the same route, and only one of them travels.**
+Append-only rides the open file description, so it crosses with a descriptor passed
+over a Unix socket and `weaver-admin` confers it once at the open. Close-on-exec rides
+the descriptor and does not cross, so the receiving call is the only place it can be
+supplied and supplying it is this crate's obligation rather than the sender's.
+`weaver-admin-harness-contract` section 5 holds that split, and
+`weaver-trace-PRD` section 4.1 states the same mechanism.
+
+Both are invisible at runtime until exploited, and a test that opens a trace normally
+will never see either. **Neither is reachable by a compile-time pin.** A behavior on
+the receive path is not a type property, and an earlier reading of this section called
+the pair the crate's highest-value pin, which the mechanism above falsifies. What a pin
+does reach is the shape of the receive: one receive site, taking no flag argument,
+returning a handle the rest of the crate cannot construct another way. That pin is
+real and it is a different claim. The flags themselves take the perturbation-verified
+test of apex section 11, and the test counts only when it has been watched to fail with
+the flag removed.
 
 **The harness reads, the model does not.** The harness reads the trace continuously,
 because the working structure is its projection and every prompt assembly is a read

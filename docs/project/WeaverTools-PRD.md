@@ -6,6 +6,12 @@ is the Working Process section 2 definition and belongs to the set rather than t
 any one document.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-07-31. Section 5 carries a fourth invariant and 5.1 is restated.
+Both were taken early as a named exception to Working Process section 7, recorded
+in section 5. This is not the apex re-authoring, which still waits on all seven
+charters, and no other item owed to that re-authoring moved with these two. The 5.1
+example clause was corrected the same day, on review, from a fork mechanism the
+governing contract had already retired.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -145,10 +151,20 @@ alone, a model-elected call whose result the harness supplies deterministically,
 and it makes no claim about the finished behavior. A tool call that requires
 retained state to decide when to fire belongs to the later stateful program.
 
-## 5. The three invariants
+## 5. The four invariants
 
 These bind every crate PRD, every Spec, and every contract. A document that
 violates one of them is wrong, not merely inconsistent.
+
+**Section 5.4 and the restatement inside 5.1 were taken early on 2026-07-31, as a
+named exception to Working Process section 7,** which holds the apex re-authoring
+until all seven charters exist and calls it the one piece of collected work that
+cannot be taken early. The exception was ruled because 5.4 defines what an organ
+is, `weaver-spu` is the second organ, and the charter the rule waits on cannot be
+written against a definition the rule withholds until that charter exists. The
+scope of the exception is those two entries. Every other item in
+`weaver-admin-PRD` section 11 marked as filing with the apex re-authoring still
+files with it, and this document is still un-re-authored.
 
 ### 5.1 The floor is vocabulary and every behavior is a socket
 
@@ -163,10 +179,26 @@ under a contract and as a member of the harness domain, because the harness is
 its only caller. Depending on nothing is what it has in common with the floor.
 Being drawn by everything is what it does not.
 
-**Every seam where one crate asks another process to do something is a
-SO_PEERCRED Unix socket governed by a named contract.** There are no exceptions,
-including for crates that arrive later. When the memory leg returns it returns
-behind a socket, not as a path dependency.
+**Every seam where one crate asks another process to do something is a Unix
+socket governed by a named contract, and it authenticates its peer.** There are
+no exceptions, including for crates that arrive later. When the memory leg
+returns it returns behind a socket, not as a path dependency.
+
+**How it authenticates follows from whether the channel has a name.** A channel
+reached by a path is reachable by anyone who can resolve that path, so it
+authenticates by credential, which is what `SO_PEERCRED` is for. A channel with
+no name is a connected pair created by one party and handed to another, and
+possession of the descriptor is the authentication, because no third party can
+reach a socket that has no address. Which party creates the pair, and how the far
+end travels to the process that holds it, belong to the contract governing that
+seam and are not the apex's to settle. Two cases, one property.
+
+The property is what the invariant protects: no process in this program talks to
+another without the second knowing who the first is. The earlier reading named
+the credential mechanism as the invariant itself, which made the coordination
+channel of `weaver-admin-harness-contract` section 2 read as an exception rather
+than as the second case, and an invariant that admits one exception in its first
+round of contact with a real seam is a rule that will admit a second.
 
 A seam that does not cross a process boundary is a library boundary. It is still
 a seam and still governed by a named contract, and it is tagged `link` rather
@@ -206,6 +238,29 @@ Two mechanical consequences:
 - An agent handed one side of a contract can build that side without asking
   what the other side does. This is not an aspiration - it is the property
   that permits crates to be built in parallel once the floor is merged.
+
+### 5.4 Organ and submodule
+
+**An organ is a crate that governs a domain and holds a duplex channel with the
+harness.** Both properties, and neither alone. A crate that governs a domain and
+reaches the harness some other way is not an organ, and the duplex requirement
+does not bend.
+
+**A submodule falls under an organ's domain with that organ as its consumer.** It
+holds no channel with the harness, and the shape of its channel with its own
+organ is unconstrained and is that organ's business. That a submodule is never a
+party to a lifecycle transition follows from its having no channel with the
+harness, rather than standing as a rule of its own.
+
+The harness is the organ whose domain is coordination, which is why it is the hub
+every other organ is duplex with rather than a spoke. This is written as a test a
+candidate passes and not as a list of the organs that exist today, so a crate
+chartered later is classified by reading it against the test rather than by
+amending an enumeration.
+
+Section 6 already names organs and the harness as the coordinating center, and
+5.1 already carries the floor half of the same three-way distinction. This
+harvests what those two imply rather than importing a new frame.
 
 ## 6. The agent lifecycle
 

@@ -34,6 +34,25 @@ The member list. The external protocol. The internal wire format and where it is
 defined. The authentication model and how it relates to the `SO_PEERCRED` peer
 identity the floor already carries. Everything a charter exists to state.
 
+## What the admin pass leaves open here
+
+The admin contract scopes the agent's boundary by uid. The harness worker runs as
+`weaver-<n>` and holds the seam descriptor and the trace descriptors in its address
+space. Whether external tool processes launched through the gate run under that same uid
+or under a separate uid the gate owns is a gate question, and the answer decides how
+much of the admin boundary is kernel-enforced rather than merely hardened.
+
+If tools run as the agent uid, then descriptor scoping and the cleared dumpable flag are
+hardening against a same-uid peer, because a same-uid process can attempt a ptrace
+attach and can open anything the agent uid can open. If tools run under a uid the gate
+owns, the worker's descriptors are unreachable from tool code by construction, at the
+cost that a tool reaches nothing in the agent's home directory without an explicit
+grant.
+
+Admin states no requirement beyond assuming the first case is no worse than hardening.
+The ruling belongs here rather than in admin, because the uid a tool process runs under
+is a fact about the outward surface.
+
 ## Graph
 
 No records. This document declares no node and no edge.
