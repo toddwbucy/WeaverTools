@@ -1,6 +1,6 @@
 # WeaverTools Handoff Format
 
-**Version:** v0.3, 2026-07-30. Companion to the Working Process. Project documents
+**Version:** v0.4, 2026-07-31. Companion to the Working Process. Project documents
 carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -92,9 +92,8 @@ The manifest that follows is a true enumeration and takes list form:
 
 It may not carry two branches.
 
-It may not close an item silently. An item leaves the working list only when its change
-is verified landed in the documents, so an item removed with nothing to show for it has
-skipped the one check the list exists to be.
+It may not close an item silently. An item that leaves the working list without a named
+home is the unlanded ruling G7 exists to catch.
 
 **Neither seat sends the other seat's edits already made.** The receiving seat's job is
 to check and to advise, and a batch that arrives with its conclusions applied has
@@ -120,10 +119,10 @@ exists.
 authoritative. It is context, accumulated by earlier passes that ran through a crate
 before it was chartered, and it decides nothing. Where the stub and the old tree
 conflict the stub wins, per Working Process section 2. Where the stub applies, the
-drafting seat has a free hand to take a note, reshape it, or leave it. What it may not
-do is overwrite the file: the stub keeps its own name with `.stub` appended and the
-draft is written fresh at the original name, so a note that did not survive is still
-recoverable when a later reading finds the right use for it.
+drafting seat has a free hand to take a note, reshape it, or leave it. The draft is
+written fresh at the stub's name and the stub is deleted in the same act, a tracked
+deletion per Working Process section 2, so a note that did not survive is recoverable
+from the commit that cut the draft rather than from a file beside it.
 
 The clause is written out rather than cited. A commission is read by a seat starting
 fresh on a crate, and a pointer to a rule about how much weight to give the material in

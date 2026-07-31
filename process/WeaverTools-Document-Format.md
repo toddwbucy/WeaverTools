@@ -63,13 +63,16 @@ declares its own container.
     docs/project/                       the apex, and documents outside the set
     docs/crates/weaver-<n>/             the PRD and the Spec for one crate
     docs/crates/weaver-<n>/weaver-<m>/  a member crate of that domain root
-    docs/crates/contracts/              contracts, named for their parties
+    docs/crates/contracts/              contracts, and the material they draw
 
-A document under `docs/crates/contracts/` is a contract. A document under a
-`weaver-<n>/` directory is a PRD or a Spec by its own filename suffix. This is what
-makes the mirror check mechanical: every `docs/crates/weaver-*` has a matching
+A document under `docs/crates/contracts/` is a contract by its `-contract` suffix,
+and a document there without that suffix is drawn material rather than a contract,
+which is how `weaver-organ-channel` sits beside the contracts that draw it. A document
+under a `weaver-<n>/` directory is a PRD or a Spec by its own filename suffix. This is
+what makes the mirror check mechanical: every `docs/crates/weaver-*` has a matching
 `crates/weaver-*` at the same depth, and `contracts/` excludes itself by the absent
-prefix rather than by a written exception.
+prefix rather than by a written exception, the same exclusion-by-naming the absent
+`-contract` suffix performs inside it.
 
 **A contract is named for its parties, initiator first.** The name records which of the
 two nodes initiates the signal the contract governs, so `weaver-admin` asking the
@@ -163,7 +166,12 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
-**document.** A PRD, a Spec, or a contract.
+**document.** A PRD, a Spec, or a contract. Drawn material is not a fourth authored
+kind. It is what a lift extracts from contracts and states once, marked by its
+container and its absent `-contract` suffix, binding no parties and sourcing no edge,
+which is how the walk reaches `weaver-organ-channel` while phase one still produces
+exactly three kinds. A second extraction takes its own ruling rather than riding this
+one.
 
 ## 4. Edge kinds
 
@@ -184,14 +192,21 @@ the seam record carries the contract and the floor-link record cannot. Where non
 exists the pair is a `floor-link`. Writing both for one pair produces two edges where
 the system has one relationship.
 
-A seam is declared once, by the crate that asks. The other party's charter points at
-the contract and does not restate the edge, which is what keeps the party list
-checkable rather than doubled.
+A seam is declared once. On an organ channel the organ declares and the harness does
+not, because the harness is the hub every organ is duplex with and a hub declaring its
+own edges would carry the whole seam graph in one crate. On every other seam the crate
+that asks declares. The asks rule had no unique answer on a duplex organ seam, which is
+why `weaver-admin-harness-contract` section 0 replaced it there and only there. Where
+the question has a single answer the rule stands and the landed declarations stand with
+it, the trace seam first among them, declared from the harness by `weaver-harness-PRD`
+section 4 with `weaver-trace-PRD` section 7 recording the same rule. The other party's
+charter points at the contract and does not restate the edge, which is what keeps the
+party list checkable rather than doubled.
 
 Nothing points back at a seam. A seam is an edge, an edge cannot be the target of an
 edge, and giving seams identifiers so that contracts could address them would buy an
 inverse edge that carries no fact the seam's own `via` does not already carry. The
-governing relation is stated once, on the seam, from the asking side. The contract's
+governing relation is stated once, on the seam, from the declaring side. The contract's
 `party` records are what make the pair checkable from the other direction.
 
 Between a contract and what it binds:

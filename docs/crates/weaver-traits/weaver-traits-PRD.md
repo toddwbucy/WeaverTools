@@ -197,9 +197,10 @@ it. Memory is out of scope and the encoder is not in the stateless MVP, so nothi
 this program demands it. It arrives when a crate demands it.
 
 **`Channel`.** Implemented there by the harness and the gate for interior message
-passing. Every seam in this program is a socket under a contract, so the agreement
-between two crates is the contract rather than a shared trait. If the gate pass finds
-a genuine shared abstraction, it enters then.
+passing. The agreement between two crates is the contract rather than a shared trait,
+carried by a socket where the seam crosses a process line and by a link where it does
+not. If the gate pass finds a shared abstraction the contracts cannot carry, it enters
+then.
 
 **`AgentMemory` and `GNNInference`.** The memory leg in trait form.
 

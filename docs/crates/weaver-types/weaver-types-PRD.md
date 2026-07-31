@@ -260,9 +260,10 @@ message's position in the exchange, and the type of its payload. It is defined h
 because the coordination seam was the first channel to need it, and it is the one
 value in this subsection no later contract draws as new, because apex section 5.4
 makes a duplex channel with the harness the test of an organ and every such channel
-carries this envelope. When `weaver-admin-harness-contract` sections 1 and 2 lift into
-a floor document, this record follows the mechanic it belongs to and the other four
-stay here.
+carries this envelope. The mechanics this record serves live in `weaver-organ-channel`
+as of the lift of 2026-07-31, and that document declares no records of its own, so this
+record stays here with the other four and each organ contract draws it in its own
+vocabulary clause.
 
 The meaning of each, its ordering against the others, and the failure modes are the
 contract's and are not restated here. This crate holds the representation the two

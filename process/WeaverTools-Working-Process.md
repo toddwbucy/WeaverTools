@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.5, 2026-07-30. Companion to the Working Rules, the Document Format, and
+**Version:** v0.6, 2026-07-31. Companion to the Working Rules, the Document Format, and
 the Handoff Format. The apex says what we are building. The Working Rules say how we
 write. The Document Format says what shape a document takes. The Handoff Format says
 what shape a batch takes when it moves between seats. This says who is primary, in what
@@ -44,16 +44,18 @@ chartered. A stub settles nothing, declares no graph records, and may not be cit
 any document as having decided anything. It is replaced wholesale rather than refined,
 which is what separates it from a draft.
 
-**Replaced wholesale does not mean overwritten.** The stub is kept under its own name
-with `.stub` appended, so `weaver-spu-PRD.md` becomes `weaver-spu-PRD.md.stub` and the
-draft is written fresh at the original name. A stub accumulates what earlier passes
-learned about the thing it names, because the work is chartered workflow by workflow and
-a workflow runs through crates that have no charter yet, so the drafting reads the stub
-alongside the old tree's code. Not every note survives that drafting and none of them
-binds, since a stub decides nothing. Keeping the file keeps the record of what the draft
-was drafted against, and a note that did not survive is the one a later reader most
-needs, because its absence from the draft is otherwise indistinguishable from its never
-having been raised.
+**Replaced wholesale means the stub leaves the tree.** The draft is written fresh at
+the stub's name and the stub is deleted in the same act, a tracked deletion, so the
+commit that cuts the draft is the commit that holds the stub's last state. Ruled
+2026-07-31, reversing the preservation rule this section carried through v0.5, which
+kept the file beside the draft under a `.stub` suffix. History is the archive and the
+tree is not: a note that did not survive the drafting is findable at the commit that
+retired it, and a tree that carries consumed stubs accumulates files no gate reads, no
+mapper counts, and no pass owns. A stub accumulates what earlier passes learned about
+the thing it names, because the work is chartered workflow by workflow and a workflow
+runs through crates that have no charter yet, so the drafting reads the stub alongside
+the old tree's code. Not every note survives that drafting and none of them binds,
+since a stub decides nothing.
 
 **Where a stub and the old tree conflict, the stub wins.** The stub is this program's
 more recent statement of intent about that crate and the tree predates the split, so a
@@ -61,10 +63,6 @@ conflict is a question the project has already answered once. The precedence fir
 on conflict. Where a stub is silent and the tree speaks, nothing opposes the tree and it
 flows into the draft unopposed, which is what step 3 review is for. Precedence handles
 collision and review handles absorption, and neither substitutes for the other.
-
-**The suffix does the exclusion.** A `.md.stub` file is not a `.md` file, so the mapper
-never reads it, the mirror check never counts it, and the document set never contains
-it, none of which needs a rule written to be true.
 
 It is a state and not a member of the document set, so ratification does not wait on
 it and the mapping does not read it. A stub that acquires a decision has stopped being
@@ -185,6 +183,15 @@ something a reader resolves by picking.
 
 **G6, extraction complete.** Nothing the graph or the code will need still lives only
 in the old tree. This is the gate that makes the deletion in phase two safe.
+
+**G7, rulings landed.** A ruling names the documents it changes, and this gate checks
+that each named document carries the change. It is in force because the first live
+ruling in this corpus named four documents and landed in none of them, and nothing
+detected that until a re-review opened for other reasons. A ruling recorded in a working
+list reads as settled to every later reader, so an unlanded ruling is worse than an open
+one. It is checkable by looking, since the ruling names the documents and the documents
+either carry the change or do not. Where a ruling is landed in part on purpose, the
+documents still owed are named as owed rather than left to be noticed.
 
 Phase one closes when every crate in scope has a merged PRD, every seam has a merged
 contract, every spec is merged, and G4 and G6 hold across the whole set. Only seams

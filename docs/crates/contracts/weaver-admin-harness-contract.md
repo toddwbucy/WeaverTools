@@ -1,7 +1,8 @@
 # weaver-admin-harness-contract
 
-**Status:** DRAFT. Written with `weaver-admin-PRD` as one act, per apex section 10. It
-is not MERGED for the reason that charter's header gives, and the two move together.
+**Status:** MERGED. In `main` and the source of truth for now. Written with
+`weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
+human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
 **Revised:** 2026-07-30, from a simplex seam to a duplex one, under the organ
@@ -14,6 +15,10 @@ section 9 union claim was corrected from unchanged to three-to-five. Third, sect
 5 was made derived from section 3 and now carries the model binding, the gate
 instruction, and the aggregate, and section 4's enter ordering states the full
 condition the reliance rests on.
+**Revised:** 2026-07-31, fourth. Sections 1 and 2 lifted into `weaver-organ-channel`
+per the ruling of that date, each section replaced by a draw plus this seam's own
+facts, and section 4's closure paragraph struck as travelling with the lifted
+material.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -33,14 +38,13 @@ properties and not either, and admin owns the lifecycle domain. A seam with one
 initiator would leave admin an organ missing half of what makes it one. The invariant
 is authored in the apex and this document is downstream of it.
 
-**Two layers live in this document and the boundary between them is marked.** Sections
-1 and 2 are the organ channel, which is the same for every organ the harness is duplex
-with and names admin only where a mechanical fact requires it. Sections 3 through 7 are
-admin's instance, which is the exchange list and its rules. The layering is the point:
-the channel does not know what a load directive is, in the way that IP does not know
-what a name lookup is. When a second organ needs the channel, sections 1 and 2 lift
-into a floor document and every organ contract draws them, and that lift is a move
-rather than a rewrite because they are written to survive it.
+**Two layers meet in this document and the boundary between them is a draw.** Sections
+1 and 2 draw `weaver-organ-channel`, which states the channel mechanics once for every
+organ the harness is duplex with, and keep only what is this seam's own. Sections 3
+through 7 are admin's instance, which is the exchange list and its rules. The layering
+is the point: the channel does not know what a load directive is, in the way that IP
+does not know what a name lookup is. The lift that document's section 0 records was
+anticipated here and landed on 2026-07-31.
 
 It carries no representation. The types it names have a definition site and no field
 list here, the ordering it fixes is stated as a rule rather than as a state machine,
@@ -68,68 +72,26 @@ does not restate that edge.
 
 ## 1. The channel is duplex
 
-**Either party may open an exchange.** Two initiators exist on this seam and both
-directions are first-class. The harness opening an exchange is a normal event rather
-than an intrusion, and an implementation that treats a harness-opened message as a
-protocol error has the seam backwards.
+`weaver-organ-channel` section 1 states the message layer: two initiators, the exchange
+as the unit, identity by opening party and ordinal, the minimal exchange, concurrent
+exchanges, the non-guarantees, and delivery. Nothing in that layer is this seam's own
+and nothing of it is restated here.
 
-**The exchange is the unit, and every message names the one it belongs to.** A message
-carries the exchange it is part of, its position in that exchange as open or continue or
-close, and the type of its payload. Nothing else is required of the envelope for the
-seam to work. The channel routes on those three fields and reads no further, which is
-what keeps the layer below indifferent to what the layer above is saying.
-
-**An exchange is identified by its opening party and that party's ordinal.** Two
-initiators numbering their own exchanges cannot collide without coordinating, so there
-is no correlation authority to appoint and no shared counter to keep. This is the
-mechanism that lets one channel carry both directions, and it is why the earlier reading
-needed a second channel and this one does not.
-
-**The minimal exchange is a single message that opens and closes at once.** Nothing
-requires an exchange to have two sides. An announcement that expects no answer is a
-complete exchange of one message, and it is the same shape as a directive rather than a
-special case beside it.
-
-**More than one exchange may be in flight.** An earlier form of this document allowed
-one, and that rule was an artifact of having a single initiator rather than a property
-worth keeping. Under two initiators it is unholdable, because the party that did not
-ask has no way to know an exchange is outstanding at the moment it needs to open one.
-
-**What the channel does not provide is as load-bearing as what it does.** It does not
-interpret a payload, does not retry, does not time anything out, does not synthesize a
-message neither party sent, and holds no opinion about whether an exchange makes sense.
-Every one of those is the business of the contract above it. A layer is usable in
-proportion to how sharply its non-guarantees are stated.
-
-**What it does provide is boundaries, ordering, and loss-free delivery until closure.**
-One write is one read, messages arrive in the order they were written, and a message
-either arrives or the channel closes. There is no silent loss.
-
-**The datagram shape is borrowed and the datagram guarantees are not.** The envelope is
-a discriminated record on a preserved boundary, which is the shape worth taking from a
-protocol like IPv4. What is not taken is best effort, and what is not needed is
-addressing. A connected pair is one hop with one peer, possession identifies that peer
-per section 2, so there is no address to carry and nothing to route between. On this
-substrate ordering and boundary preservation are properties of the socket type rather
-than work done above it, and a reader who inherits unreliability by association with the
-metaphor has read the metaphor as a guarantee.
+One fact of this seam lands at that layer. Both parties open exchanges on this channel,
+and section 3 names which party opens which.
 
 ## 2. The channel
 
-**An unnamed connected pair, created by admin before the unit starts, with one end
-reaching the worker.** It has no name in the filesystem, so no second process can open
-it, and possession of the descriptor is what identifies the peer. Those three
-properties are what this contract binds, and they hold whatever carries the end across.
+`weaver-organ-channel` section 2 states the process-boundary layer: the unnamed
+connected pair, one pair for both directions, boundary preservation as a socket-type
+property, authentication by possession, the close-on-exec split, the holder in
+transit, the channel's life bound to the far process, and closure never read as an
+answer. What follows is this seam's own.
 
-**One pair carries both directions.** The creating party is not the initiating party,
-and the two roles are separate here. Admin creates the pair because admin is the only
-party that exists before the unit starts. Both parties open exchanges on it.
-
-**The pair preserves message boundaries.** Section 1 requires one write to be one read,
-which is a property of the socket type rather than of framing done above it. A stream
-pair would push framing into every contract that draws this channel, which is the layer
-violation this section exists to prevent. The requirement is stated as the property, and
-which socket type supplies it is the Spec's.
+**Admin creates the pair, before the unit starts, because admin is the only party that
+exists before the unit starts.** This is the creating-party rule of
+`weaver-organ-channel` section 2 landing on this seam, and the creating party is not
+the initiating party.
 
 **How the worker's end arrives is open, and the earlier wording assumed a spawn admin
 no longer performs.** The clause read that the pair was inherited by the worker, which
@@ -139,22 +101,16 @@ fork of admin's to inherit across. `weaver-admin-PRD` section 10 holds the cell,
 what settles it is what the transient-unit interface carries rather than a choice this
 document makes. If it carries no descriptor, what reopens is this section's channel
 design and not the grant mechanism, because the alternatives are all channel shapes
-and each pays the second-opener case this section rejects.
+and each pays the second-opener case `weaver-organ-channel` section 2 rejects.
 
-**The init system is a holder in transit and not a peer.** It may touch the end while
-placing it and does not retain one, so the property is stated against retention rather
-than against having ever held.
+**The init system is a holder in transit and not a peer,** which is
+`weaver-organ-channel` section 2's retention rule with its intermediary named. It may
+touch the end while placing it and does not retain one.
 
-**This seam authenticates its peer by possession rather than by credential.** On a pair
-created by one process and handed to another, `SO_PEERCRED` reports the creating
-process for both ends, so it distinguishes nothing. A named socket that the worker
-dialed would report a usable credential and would also be dialable by anything running
-as the agent uid, which includes an elected `bash` tool. The unnamed pair is chosen
-because it removes the second party rather than because it authenticates one, and a
-channel no second party can open needs no credential to tell them apart. Apex section
-5.1 reads `SO_PEERCRED` with no exceptions and now has two, so the correction owed is a
-restatement of what the invariant protects rather than a patch admitting this seam,
-and `weaver-admin-PRD` section 11 files it in that form.
+**Possession is this seam's authentication, and the apex correction it forced is
+filed.** Apex section 5.1 reads `SO_PEERCRED` with no exceptions and now has two, so
+the correction owed is a restatement of what the invariant protects rather than a
+patch admitting this seam, and `weaver-admin-PRD` section 11 files it in that form.
 
 **The worker holds the agent uid from its first instruction and clears its dumpable
 flag after its final exec.** There is no drop, because the init system starts the unit
@@ -179,21 +135,21 @@ the whole of what the removed ordering was protecting and it stands unchanged.
 cannot verify from outside the process, which is what a contract is for, so
 `weaver-admin-PRD` section 7 points here rather than restating it.
 
-**Close-on-exec does not survive the crossing, and the receiver is the only party that
-can supply it.** `O_APPEND` lives on the open file description and travels with the
-descriptor. Close-on-exec is a property of the descriptor rather than of the
-description, so a receiver calling `recvmsg` without `MSG_CMSG_CLOEXEC` accepts a
-handle with the flag clear, and every subprocess a tool call spawns from that point
-inherits a writable handle to the trace. Admin can open the file correctly and still
-lose the property at the receive, so the obligation splits across the parties in
-section 5 rather than resting on the sender alone. The same holds for this channel's
-own descriptor, which reaches the supervisor rather than being received by it, so the
-flag is set on admin's end before the channel is handed across and set again after the
-worker's last exec. The second is a set and not a check, because `execve` can clear the
-flag and a step that reports rather than repairs leaves the channel inheritable by
-every tool subprocess.
+**On this seam the close-on-exec split of `weaver-organ-channel` section 2 lands on
+the trace descriptors and this channel's own.** `O_APPEND` lives on the open file
+description and travels with the trace descriptors, and close-on-exec does not, so a
+receiver calling `recvmsg` without `MSG_CMSG_CLOEXEC` accepts a handle with the flag
+clear, and every subprocess a tool call spawns from that point inherits a writable
+handle to the trace. Admin can open the file correctly and still lose the property at
+the receive, so the obligation splits across the parties in section 5 rather than
+resting on the sender alone. The same holds for this channel's own descriptor, which
+reaches the supervisor rather than being received by it, so the flag is set on admin's
+end before the channel is handed across and set again after the worker's last exec. The
+second is a set and not a check, because `execve` can clear the flag and a step that
+reports rather than repairs leaves the channel inheritable by every tool subprocess.
 
-**The channel lives exactly as long as the worker.** It is not reconnected, not
+**The channel lives exactly as long as the worker,** which is `weaver-organ-channel`
+section 2's lifetime rule with its far process named. It is not reconnected, not
 reopened, and not shared with a second worker.
 
 ## 3. The exchanges
@@ -272,11 +228,6 @@ an obligation on the party that could break it.
 - An answer to leave arrives only after the queue is drained, so admin may rely on a
   left answer meaning what reached the writer reached disk.
 - A directive that arrives out of this order is refused and is not queued.
-
-**Channel closure is not an answer.** A closed channel with no answer outstanding is
-the worker having exited. A closed channel with an answer outstanding is the worker
-having died mid-exchange, and admin treats that as the failure of that exchange and
-never as its success. Neither party synthesizes an answer from a closure.
 
 ## 5. What each party supplies and guarantees
 
@@ -419,8 +370,9 @@ because `weaver-types-PRD` section 5 asks for it even when it is empty.
 
 **`organ-envelope` belongs to the floor and not to this seam,** because it is the
 carrier every organ contract draws rather than a thing admin and the harness agreed on
-between themselves. It is named here because this is the first contract to need it, and
-it moves with sections 1 and 2 when they lift.
+between themselves. It is named here because this was the first contract to need it. The
+definition stays in `weaver-types` and the mechanics it serves live in
+`weaver-organ-channel`, per `weaver-types-PRD` section 2.3.
 
 **`peer-identity` and `authorization-predicate` are not drawn here, and the negative is
 stated rather than left to the absence of an edge.** This seam authenticates by

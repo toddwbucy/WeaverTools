@@ -1,10 +1,9 @@
 # weaver-admin - PRD (crate charter)
 
-**Status:** DRAFT. Authored by the architecture seat against the merged corpus. It is
-not MERGED, because merge is the human's call under Working Process section 4. The
-rulings that reshaped this charter are recorded in it rather than pending against it,
-and section 10 now carries a shorter list than it did. The header moves on his ruling
-with no other edit.
+**Status:** MERGED. In `main` and the source of truth for now. The rulings that
+reshaped this charter are recorded in it rather than pending against it, and section
+10 now carries a shorter list than it did. The header moved on the human's ruling of
+2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
 **Revised:** 2026-07-31, twice. First, four entries left the section 11 register as

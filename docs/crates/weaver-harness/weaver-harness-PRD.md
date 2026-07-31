@@ -262,8 +262,8 @@ that state and stay there until `weaver-gate` and `weaver-spu` are chartered, wh
 the write-together rule arriving as a mechanical fact rather than as an argument.
 
 The coordination seam is no longer in that state. `weaver-admin-harness-contract` is
-written and declares the seam from admin's side, per the Document Format rule that a
-seam is declared once by the crate that asks. That contract is the `via` this seam
+written and declares the seam from admin's side, per the Document Format rule that on
+an organ channel the organ declares. That contract is the `via` this seam
 resolves through, and no record is declared here on admin's behalf.
 
 ## 5. Trace authorship and custody
@@ -311,8 +311,8 @@ does with a mismatch, and how the request reaches a running worker are settled b
 What a mismatch obliges sits with `weaver-admin` as the auditor and does not return
 here.
 
-No seam edge is declared for it. The Document Format has a seam declared once by the
-crate that asks, and admin is the crate that asks, so declaring it here would put an
+No seam edge is declared for it. The Document Format has the organ declare on an
+organ channel, and admin is the organ on this one, so declaring it here would put an
 edge in the graph on another crate's behalf and give a clean resolve to a seam that
 does not exist.
 
