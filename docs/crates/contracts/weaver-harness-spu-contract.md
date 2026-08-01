@@ -20,6 +20,12 @@ arbitrating, and the prohibitions carry the relocated no-evict binding.
 deferred direction: an SPU death after the aggregate is authored to the stream as
 the `fault` event rather than carried to admin as an alert, and section 8's exit
 condition restates against the event kind's case set.
+**Revised:** 2026-08-01, fifth, the naming ruling. Wire vocabulary is named for
+the loop whose traffic it carries: this contract draws loop 0's trio,
+`lifecycle-directive`, `lifecycle-answer`, and `lifecycle-refusal`, the
+sender-named pair it owed the floor dissolving with the convention that collided
+on the harness, and this seam's refusal cases settling as `lifecycle-refusal`
+cases.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -76,11 +82,11 @@ to: lifecycle-refusal
 
 edge: draws
 from: weaver-harness-spu-contract
-to: harness-directive
+to: lifecycle-directive
 
 edge: draws
 from: weaver-harness-spu-contract
-to: spu-answer
+to: lifecycle-answer
 ```
 
 **The seam edge is declared by the organ and appears in `weaver-spu-PRD` section 6.**
@@ -317,8 +323,8 @@ Every contract names the vocabulary it depends on, grouped by the crate that def
 and a group is stated even when empty, because an explicit nothing is an assertion
 someone checked and an absent group is silence.
 
-**Drawn from `weaver-types`:** `organ-envelope`, `model-binding`, `lifecycle-refusal`,
-`harness-directive`, `spu-answer`.
+**Drawn from `weaver-types`:** `organ-envelope`, `model-binding`,
+`lifecycle-directive`, `lifecycle-answer`, `lifecycle-refusal`.
 
 `organ-envelope` is the carrier every organ channel draws, and it is drawn here rather
 than defined here. The definition stays in `weaver-types` and the mechanics it serves
@@ -329,17 +335,16 @@ live in `weaver-organ-channel`, per `weaver-types-PRD` section 2.3.
 interpreted here beyond being carried. Neither party redefines it. The operator writes
 it, admin validates it, the harness carries it, and the SPU resolves it.
 
-`lifecycle-refusal` is drawn rather than extended with a parallel type of this seam's
-own. The refusal has to reach admin inside the enter aggregate unchanged, and a second
-refusal type would oblige the harness to translate one into the other, which is exactly
-the report-to-parse that `weaver-admin-harness-contract` section 6 rules out. Whether
-its case set grows to hold this seam's cases is the cell `weaver-spu-PRD` section 10
-holds.
-
-`harness-directive` and `spu-answer` are the two definitions this act owes the floor,
-per section 8. Their naming follows the sending party, which is the convention
-`admin-directive` and `harness-answer` set, and the collision it produces is filed as a
-cell rather than resolved here.
+`lifecycle-directive`, `lifecycle-answer`, and `lifecycle-refusal` are loop 0's
+trio, named for the loop per the human's ruling of 2026-08-01, and this contract
+draws the cases that cross its seam: admit and release on the directive, their
+confirmations on the answer, and this seam's refusal cases on the refusal, which
+settles the extension question the cell once held, one refusal type for the loop
+with its closed case set at the floor. A second type of any of the three would
+oblige the harness to translate on the way into the aggregate, which is exactly
+the report-to-parse that `weaver-admin-harness-contract` section 6 rules out. The
+sender-named pair this paragraph once owed the floor dissolved with the naming
+ruling, the convention having collided on the harness.
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer because
 `weaver-types-PRD` section 5 asks for it even when it is empty. `provider-trait` is the
@@ -353,31 +358,11 @@ event kind, no envelope field, and no payload shape crosses this seam. This is t
 negative that keeps the sole-writer property checkable from this side rather than only
 asserted from the harness's.
 
-**The two definitions land in `weaver-types` and are owed by this act.**
-`weaver-types-PRD` section 2.3 rules that nothing enters it until another contract draws
-it, and this is that contract. They belong to the floor rather than to either party,
-because the harness and the SPU both need them and neither may depend on the other. The
-records below belong in `weaver-types-PRD` section 2.3 and are written unfenced
-deliberately, so that a mapper reading this document does not ingest records this
-document is not the source of:
-
-    node: harness-directive
-    kind: vocabulary
-
-    node: spu-answer
-    kind: vocabulary
-
-    edge: defines
-    from: weaver-types
-    to: harness-directive
-
-    edge: defines
-    from: weaver-types
-    to: spu-answer
-
-Two definitions and no more. A directive with its cases and an answer with its cases is
-what sections 2 and 5 demand, and the carrier and the refusal are already defined. A
-third added because a third felt tidy would be a reserved slot in data form.
+**No definition is owed by this act.** The trio this contract draws already
+lives at `weaver-types-PRD` section 2.3, one owner and four drawers, so the
+unfenced records an earlier version deposited here for the mapper dissolved with
+the sender-named pair they defined. What this contract contributes is its case
+enumeration and nothing schematic.
 
 ## 8. What this document changes elsewhere
 
@@ -385,9 +370,10 @@ Named here because a document whose reach cannot be read for the reach is a trap
 are owed by this act and are also carried in `weaver-spu-PRD` section 11, which is that
 crate's register and the authoritative list under G5.
 
-- `weaver-types-PRD` section 2.3. Two definitions arrive on demand, so that subsection
-  goes from five to seven. This contract draws five values in all, three of which
-  already exist, and `model-binding` is drawn from section 2.1 rather than from 2.3.
+- `weaver-types-PRD` section 2.3. Nothing arrives: the loop trio this contract
+  draws already exists under the naming ruling of 2026-08-01, and `model-binding`
+  is drawn from section 2.1 rather than from 2.3. The two-definition entry this
+  line once carried dissolved with the sender-named pair.
 - `weaver-harness-PRD` section 4. The decode seam resolves through this contract and
   gains no record in that charter, because the organ declares.
 

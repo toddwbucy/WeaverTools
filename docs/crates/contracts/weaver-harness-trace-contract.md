@@ -28,6 +28,8 @@ human's ruling of this date: the recorder holds the working structure as the RAM
 copy of the same canonical form the stream carries, the deterministic-projection
 obligation becomes one-rendering-held-and-handed, and the projection-failure case
 becomes an append failure.
+**Revised:** 2026-08-01, further. The vocabulary clause adopts `agent-config`, the
+artifact renamed on the human's ruling of this date.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -87,7 +89,7 @@ crate defines, and this contract does not redefine them. The harness draws it. T
 recorder does not, because those three payloads are opaque to it per `weaver-trace-PRD`
 section 3, so this name crosses the seam in one direction only.
 
-**From `weaver-types`.** One field of the agent state file. The verbosity ceiling
+**From `weaver-types`.** One field of the agent config. The verbosity ceiling
 election of section 3 is read from the file at every load and fixed for the life of
 that run, so it is run-scoped and a later run finding the file changed adopts the new
 value as its own load condition. It is not interpreted here beyond being carried.

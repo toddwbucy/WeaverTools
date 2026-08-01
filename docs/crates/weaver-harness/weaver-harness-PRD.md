@@ -49,6 +49,8 @@ owed.
 **Revised:** 2026-08-01, an eleventh entry. Section 2 adopts proto-stateful, per
 the human's rename of this date, the word collision with the previous tree's
 stateless retiring with the overstatement.
+**Revised:** 2026-08-01, a twelfth entry. Prose adopts `agent-config`, the
+artifact renamed on the human's ruling of this date.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -191,7 +193,7 @@ operator produces and never writes it.
 ```graph
 edge: reads
 from: weaver-harness
-to: agent-state-file
+to: agent-config
 ```
 
 **Encoding and decoding both go to `weaver-spu`, and so does everything that
@@ -216,7 +218,7 @@ stream mechanics, the working structure, and the export
 formatters are that crate's. The harness authors events. `weaver-trace` defines
 what an event is and what it costs to commit one.
 
-**The trait contracts go to `weaver-traits`, and the state file format to
+**The trait contracts go to `weaver-traits`, and the config file format to
 `weaver-types`.**
 
 **Safety adjudication of tool input goes to the kernel and is not a harness
@@ -332,7 +334,7 @@ working structure together.
 **Sole writer means sole enforcer of verbosity.** `weaver-trace-PRD` section 5 defines
 a floor that is always recorded and a ceiling elected per agent, and the recorder holds
 no policy, so nothing but the harness can decide that a ceiling event is not emitted.
-The harness reads the election from the agent state file at every load and applies it
+The harness reads the election from the agent config at every load and applies it
 for that run, and it authors the run's level into the run's own events so the stream
 states verbosity per run and elected brevity and silent loss stay distinguishable. A
 later run finding the file changed adopts the new value as its own load condition,

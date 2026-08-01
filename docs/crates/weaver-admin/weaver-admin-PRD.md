@@ -79,6 +79,11 @@ closes on the human's ruling of this date, the transient-unit check having run:
 namelessness restates as unreachability in section 6, the channel a socket bound
 in an admin-owned unsearchable directory and connected once at the worker's
 start by the unit's own declared opens.
+**Revised:** 2026-08-01, a fifteenth entry, two rulings in one act. The artifact
+renames to `agent-config` across the corpus, the section 11 register emptying with
+its last entry, and the coordination seam's wire pair renames to loop 0's
+`lifecycle-directive` and `lifecycle-answer` under the naming ruling, wire
+vocabulary naming for the loop whose traffic it carries.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -177,14 +182,14 @@ at the cheapest possible moment.
 ```graph
 edge: reads
 from: weaver-admin
-to: agent-state-file
+to: agent-config
 ```
 
-**The node name in that record is wrong and is renamed in a later act.** The artifact
-is configuration rather than state, and the agent's state is the trace. The identifier
-is `weaver-types`' to change, so the record above keeps the resolving name until the
-rename lands in the same act as `weaver-types-PRD` section 2.1, per section 11. What
-changes here is the direction, which is this charter's to state.
+**The node renamed to `agent-config` on 2026-08-01, the human's ruling and the
+last register entry anywhere.** The artifact is configuration rather than state,
+the agent's state is the trace, and the old `agent-state-file` identifier pointed
+at the wrong artifact. The record above and `weaver-types-PRD` section 2.1 moved
+in one act, and this charter's section 11 register is empty.
 
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its
@@ -924,13 +929,10 @@ process topology. The entries that had already landed by other acts left with
 them: the `weaver-harness-PRD` custody restatement with the durable-record cut,
 the `weaver-types-PRD` section 2.2 motivating case with the external-boundary
 contracts, the Document Format's state-file clause with that document's v0.5, and
-both `open-items` entries as that list shrank. One entry remains.
-
-- `weaver-types-PRD` section 2.1: the artifact is renamed from `agent-state-file` to a
-  configuration name, its seven `holds` edges follow the node, and the producer becomes
-  the operator rather than `weaver-admin`. The graph record in section 2 of this
-  charter keeps the old identifier until this lands, because a node renamed on one side
-  only is a dangling edge, and the two move in one act.
+both `open-items` entries as that list shrank. The last entry, the
+`weaver-types-PRD` section 2.1 rename to `agent-config`, landed on 2026-08-01 on
+the human's ruling, and the register is empty. An entry entering here now enters
+an empty list, which is the state a register earns.
 
 ## 12. Children
 

@@ -28,6 +28,8 @@ contract. Section 10's client-boundary and wire-framing cells close against
 **Revised:** 2026-08-01, again, the fault-carrier ruling. Section 8's staged fault
 cases land as `fault` events on the stream rather than in a shape a pending ruling
 would give them.
+**Revised:** 2026-08-01, further, the naming ruling. The section 11 entry for the
+seam's wire pair dissolves, the contract drawing loop 0's trio.
 **Revised:** 2026-08-01, once more, on review. Section 2's one-listening-socket
 claim scopes from the program to the agent, admin's operator surface having
 falsified the wider wording.
@@ -327,10 +329,9 @@ field landed in `weaver-types-PRD` section 2.1, the predicate's consumer citatio
 2.2, the turn-ingress resolution in `weaver-harness-PRD` section 4, and the
 open-items entry on this contract's name settled with the name standing as filed.
 
-- `weaver-types-PRD` section 2.3: this seam's directive and answer arrive on demand,
-  drawn by the contract, seam-owned rather than reused across seams, with their names
-  pending the naming ruling `weaver-spu-PRD` section 10 holds, per the contract's
-  section 7.
+- The section 2.3 entry this register carried dissolved with the naming ruling of
+  2026-08-01: the seam draws loop 0's trio and owes the floor nothing, per the
+  contract's section 7.
 - `WeaverTools-PRD`: the gate's rows and prose join the correction list's demotion
   entry, the component table, the section 3 path, and the organ framing of section 6,
   all filing with the re-authoring.

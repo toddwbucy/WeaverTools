@@ -19,6 +19,8 @@ which no election but blocking could have kept.
 **Revised:** 2026-08-01, fourth entry. Section 3 names the stream the program's
 one fault carrier, per the fault-carrier ruling of this date: faults ride it as
 `fault` events, the coordination seam's alert exchange retired in the same act.
+**Revised:** 2026-08-01, fifth entry, the naming ruling. Section 7 draws loop 0's
+trio, the surface's owed pair dissolving, the verbs and stop as directive cases.
 **Document ID:** `weaver-admin-operator-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -177,9 +179,11 @@ is the contract-coupled reading `weaver-admin-PRD` section 8 states.
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer
 because `weaver-types-PRD` section 5 asks for it even when it is empty.
 
-This surface's request and answer definitions are owed to `weaver-types-PRD` section
-2.3 on demand, with their names pending the naming ruling `weaver-spu-PRD` section
-10 holds, the same gate the residency and gate seams stand behind.
+This surface draws loop 0's `lifecycle-directive` and `lifecycle-answer` beside
+the refusal, per the naming ruling of 2026-08-01: the verbs and the stop are
+directive cases entering at this surface, the answers are answer cases, and the
+observations ride the same shapes while transitioning nothing, section 2's
+enumeration naming which cases cross. Nothing is owed to the floor.
 
 ## 8. What this document changes elsewhere
 

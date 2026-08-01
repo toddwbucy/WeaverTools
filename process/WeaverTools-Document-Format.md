@@ -1,6 +1,8 @@
 # WeaverTools Document Format
 
-**Version:** v0.7, 2026-08-01. The v0.7 change is the `Loops/` entry's holder rule:
+**Version:** v0.8, 2026-08-01, second entry this date. The v0.8 change follows
+the artifact rename of this date, the section 3 examples reading `agent-config`
+where they read the state file. The v0.7 change is the `Loops/` entry's holder rule:
 loops belong to the harness unless specific to one domain and no other, per the
 human's ruling of 2026-08-01, landed on the merge of `load-unload-loop` per that
 document's section 0. Previously v0.6, 2026-07-31. Companion to the Working
@@ -182,9 +184,9 @@ vision document's word and it does not cover the floor, so it is not used here. 
 PRD, one Spec, and as many contracts as it has seams.
 
 **artifact.** A durable thing produced or consumed by crates without a call between
-them. The agent state file, the session record, the model artifact. Artifacts are
+them. The agent config, the session record, the model artifact. Artifacts are
 first-class because the corpus's real relationships around them are three-place and
-pass through one: `weaver-types` owns the agent state file's format, the operator
+pass through one: `weaver-types` owns the agent config's format, the operator
 writes it from outside the program, and `weaver-admin` and the harness both read it,
 with no Cargo edge anywhere in that sentence. Without an artifact node those
 relationships are untypeable. An earlier form of this entry had `weaver-admin` as the
@@ -251,12 +253,12 @@ Between a crate and what it owns or touches:
   because implied nodes are what this format exists to remove.
 - `elects`, from a vocabulary node that is a field to the vocabulary node whose values
   it selects from or is validated against. The floor's two-crate structure rests
-  entirely on this relation: the agent state file's permission mode and tool set are
+  entirely on this relation: the agent config's permission mode and tool set are
   `weaver-types` fields electing from `weaver-traits` definitions, and a `floor-link`
   is crate-level and carries none of it.
 - `holds`, from an artifact to a vocabulary node that is one of its fields. A clause
   that draws a field of an artifact points at the field, which is a vocabulary node
-  the owning crate defines, and the artifact holds it. Without this the state file's
+  the owning crate defines, and the artifact holds it. Without this the config's
   fields are drawable in prose and unaddressable in the graph.
 - `writes` and `reads`, from a crate to an artifact.
 

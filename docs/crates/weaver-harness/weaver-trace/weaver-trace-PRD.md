@@ -35,6 +35,8 @@ rows builds a derived view, and recall over past runs is the memory round's,
 proposed as similarity through the SPU's encode side.
 **Revised:** 2026-08-01, a fourth entry this date. Sections 2.1 and 8 adopt
 proto-stateful, per the human's rename of this date.
+**Revised:** 2026-08-01, a fifth entry this date. Section 5 adopts `agent-config`,
+the artifact renamed on the human's ruling of this date.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -540,12 +542,12 @@ to carry results into the next iteration. It is derived rather than chosen, beca
 the harness reasons over the working structure and an event the turn depends on is
 not elective. Nothing below the floor is a quieter agent. It is a broken one.
 
-**The ceiling is elected per agent in its state file.** It adds the measurement
+**The ceiling is elected per agent in its config file.** It adds the measurement
 payloads with their token identifiers and entropies, the decode boundary, and the
 residual reductions when readout is enabled. The cost is real and the election is the
 operator's.
 
-**Verbosity is a property of the run.** It is read from the state file at every load,
+**Verbosity is a property of the run.** It is read from the config file at every load,
 fixed for the life of that run, and scoped to nothing wider. A session holds one run
 or many, each with its own load conditions, so a run recorded at the floor places no
 constraint on a later run recorded at the ceiling and an operator editing the file

@@ -26,6 +26,11 @@ rather than reaching admin as an alert, and the section 10 cell restates its exi
 against the event kind's case set.
 **Revised:** 2026-08-01, a fifth entry. Sections 2 and 8 adopt the proto-stateful
 vocabulary, per the human's rename of this date.
+**Revised:** 2026-08-01, a seventh entry, the naming ruling. The section 10 naming
+cell closes, the collision governing and wire vocabulary naming for the loop, this
+seam drawing loop 0's trio with its refusal cases settling as `lifecycle-refusal`
+cases, and the two section 11 entries the sender-named pair carried leave the
+register.
 **Revised:** 2026-08-01, a sixth entry, on review. Section 3 stops claiming the
 gate binds a network socket, the demotion of 2026-07-31 having made it a local
 hook, and the only-listener claim scopes to the agent.
@@ -523,9 +528,11 @@ answer: the artifact does not resolve, the artifact does not parse or declares a
 this crate cannot serve, the artifact is present and unreadable by the agent uid, the
 device ordinal is not present, the device is occupied by something this program did not
 put there, and what admission requires exceeds what the device has free. Every device
-case is caught here and nowhere earlier, per ruling C. **Settled by:** the ruling on
-whether these cases extend `lifecycle-refusal` or take a definition of their own, which
-section 11 files as a conditional edit to `weaver-types-PRD`.
+case is caught here and nowhere earlier, per ruling C. **Settled by:** the type
+half settled with the
+naming ruling of 2026-08-01, the cases extending `lifecycle-refusal` as loop 0
+cases, and the enumeration itself still arrives with the decode workflow's
+measurements.
 
 **Whether the record names the model that served the run.** Section 4.4 leaves it open.
 A run recorded at the floor carries no `model.measurement`, so its record names no model
@@ -565,14 +572,11 @@ against, taken with a measurement of what the driver query costs on the admit pa
 That tree recorded a preference and not a reason, and shelling to an external tool on an
 admission path is the visible cost a reason would have named.
 
-**The naming of the two owed wire definitions.** Section 11 owes `weaver-types` a
-directive and an answer for this seam. Named for the sending party, following the
-convention `admin-directive` and `harness-answer` set, they are `harness-directive` and
-`spu-answer`. That gives the harness both a `harness-answer` it sends upward and a
-`harness-directive` it sends downward, which is a true statement of the hub model and
-also two identifiers a reader has to hold apart. The Working Rules treat visual
-collision as a defect in a graph block as much as on a page. **Settled by:** a ruling on
-whether the convention or the collision governs.
+**The naming of the wire definitions is closed.** The collision governed, per the
+human's ruling of 2026-08-01, and the convention changed: wire vocabulary is named
+for the loop whose traffic it carries, direction being a fact about a loop's walk
+rather than a name on a duplex channel. This seam draws loop 0's trio and owes the
+floor nothing, per `weaver-types-PRD` section 2.3.
 
 ## 11. Edits owed in the same act
 
@@ -581,15 +585,6 @@ one act, and this section is that register. Nothing below is applied by this doc
 An entry leaves this register when the edit lands, because a ruling recorded and not
 landed reads as settled and an entry landed and not cleared reads as outstanding.
 
-- `weaver-types-PRD` section 2.3: two definitions arrive on demand, a directive the
-  harness sends across this seam and an answer this crate returns. That subsection rules
-  that nothing enters it until another contract draws it, and
-  `weaver-harness-spu-contract` is that contract. Names are a cell in section 10.
-- `weaver-types-PRD` section 2.3, conditionally: whether the admit refusal cases extend
-  `lifecycle-refusal` or take a definition of their own. The draft reuses
-  `lifecycle-refusal`, on the grounds that a reason the enter aggregate carries without
-  translation has to be the type that aggregate already carries. Owed if the ruling goes
-  the other way.
 - `open-items.md`, the note owed to this crate's stub: discharged by section 2 of this
   charter carrying its substance directly, so the item leaves the list rather than
   moving into the stub it was owed to. Named by substance because that list renumbers.

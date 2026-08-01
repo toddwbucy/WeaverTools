@@ -61,6 +61,9 @@ rename sweeps this document and every charter that carried the word.
 one-listening-socket claim scopes from the program to the agent, the operator
 surface of `weaver-admin-operator-contract` having falsified the wider wording,
 admin standing outside every agent per section 12.
+**Revised:** 2026-08-01, ninth entry. Prose adopts `agent-config`, the artifact
+renamed on the human's ruling of this date, the config file being configuration
+and the agent's state being the trace.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -162,7 +165,7 @@ states how it serves this path.
 6. The SPU decodes against the hot KV cache and returns the generation together
    with its measurement payload, tagged with the `turn_key` it was given. The
    harness writes `model.request`, `model.output`, and `model.measurement` into
-   the trace. If residual readout is enabled in this agent's state file, the
+   the trace. If residual readout is enabled in this agent's config file, the
    eval callback reduces per-layer activations in place and the reduction
    returns by the same path.
 7. If the generation contains a tool call, the harness executes it as the
@@ -210,7 +213,7 @@ A proto-stateful agent that:
    deterministic result into the stream in place of a stochastic one, with the
    calculator as the reference case,
 7. can be reloaded with residual readout enabled or disabled by a change to its
-   state file alone, with no rebuild.
+   config file alone, with no rebuild.
 
 Autonomic action, in the sense this program reserves the word, is
 harness-initiated and out of scope here. Protoautonomic names the mechanic
@@ -443,7 +446,7 @@ it might be needed, not that the prior tree had it.
 The named set, closed:
 
 - **Residual-stream readout.** Per-layer activations from the running decoder,
-  reduced in place, enabled or disabled per agent by its state file. See
+  reduced in place, enabled or disabled per agent by its config file. See
   section 8.
 - **Measurement payloads.** Token identifiers and token entropies, emitted into
   the stream at production time. These are what make replay under

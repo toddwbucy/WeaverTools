@@ -26,6 +26,13 @@ this date.
 five definitions to four, per the fault-carrier ruling of this date: the alert
 exchange retired and the fault travels as the `fault` event kind, so no contract
 draws the definition and G4 rules it off the floor.
+**Revised:** 2026-08-01, a fourth entry this date, two rulings in one act. The
+artifact renames from `agent-state-file` to `agent-config`, the node, its seven
+`holds` edges, and every corpus citation moving together, the last register entry
+anywhere leaving with it. And section 2.3 adopts loop naming: wire vocabulary is
+named for the loop whose traffic it carries, `lifecycle-directive` and
+`lifecycle-answer` renaming the sender-named pair, the owed seam pairs dissolving
+into the one trio every loop 0 contract draws.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -74,7 +81,7 @@ Everything here is present because the harness demonstrably needs it. The set gr
 when a later crate demands more, by the ritual: a crate PRD added or changed updates
 the floor in the same act.
 
-### 2.1 The agent state file
+### 2.1 The agent config
 
 The declarative document that defines an agent. The operator produces it, and both
 `weaver-admin` and the harness read it. Neither crate in this program authors it,
@@ -82,14 +89,14 @@ because creating an agent is an operator act and the file is its declaration, pe
 `weaver-admin-PRD` section 1. Admin validates it before a process exists and the
 harness consumes the elections it carries.
 
-**The identifier is wrong and its correction is owed rather than taken here.** The file
-is configuration, read at load and fixed for the run, and the agent's state is the
-trace. Renaming the node reaches this section, its six `holds` edges, and every
-citation in the corpus, which is one act on the corrections branch rather than a
-change made beside a producer correction.
+**The identifier corrected on 2026-08-01, from `agent-state-file` to
+`agent-config`, on the human's ruling.** The file is configuration, read at load
+and fixed for the run, and the agent's state is the trace, so the old name
+pointed at the wrong artifact. The node, its seven `holds` edges, and every
+citation in the corpus moved in one act.
 
 ```graph
-node: agent-state-file
+node: agent-config
 kind: artifact
 
 node: model-binding
@@ -142,31 +149,31 @@ from: weaver-types
 to: trace-sink
 
 edge: holds
-from: agent-state-file
+from: agent-config
 to: model-binding
 
 edge: holds
-from: agent-state-file
+from: agent-config
 to: tool-set
 
 edge: holds
-from: agent-state-file
+from: agent-config
 to: permission-mode
 
 edge: holds
-from: agent-state-file
+from: agent-config
 to: residual-readout-election
 
 edge: holds
-from: agent-state-file
+from: agent-config
 to: verbosity-ceiling-election
 
 edge: holds
-from: agent-state-file
+from: agent-config
 to: gate-instruction
 
 edge: holds
-from: agent-state-file
+from: agent-config
 to: trace-sink
 
 edge: elects
@@ -179,7 +186,7 @@ to: tool-trait
 ```
 
 The last two are the floor's own argument in edge form. `weaver-traits-PRD` section 2
-rests the two-crate floor on one fact, that the state file names a permission mode and
+rests the two-crate floor on one fact, that the config file names a permission mode and
 a tool set whose definitions therefore cannot sit above the floor. Those are fields
 here electing from vocabulary that crate defines, and without an edge the single
 argument the floor's structure rests on is prose the graph cannot see.
@@ -206,7 +213,7 @@ per `weaver-admin-operator-contract` section 3: the operator writes it, admin
 validates it and connects the stream to it at load, and no other crate reads it.
 
 Two of those fields are named in `weaver-harness-trace-contract`'s vocabulary clause,
-so the state file is already a declared dependency of a contract this crate is not
+so the config file is already a declared dependency of a contract this crate is not
 party to. That is the normal shape: this crate supplies vocabulary that agreements
 between other crates are written in.
 
@@ -287,21 +294,31 @@ to: authorization-predicate
 
 **These four arrived on demand and not in advance.** Section 4 held wire protocol
 vocabulary out of this crate until a written contract needed it.
-`weaver-admin-harness-contract` section 8 is that contract, and it draws exactly the
-four values below. Nothing else enters this subsection until another contract draws
-it, and a fifth definition arriving without a contract behind it is the
-reserved-slot error apex section 9 forbids, in schema form. `harness-alert` was
+`weaver-admin-harness-contract` section 8 was that contract, and nothing else
+enters this subsection until another contract draws it, a fifth definition
+arriving without a contract behind it being the reserved-slot error apex section
+9 forbids, in schema form. `harness-alert` was
 drawn here until the fault-carrier ruling of 2026-08-01 retired the alert exchange,
 the fault travelling as the `fault` event kind `weaver-trace-PRD` section 3.1
 defines, and a definition no contract draws leaves the floor by G4's own test.
 
-**Three of the four belong to the coordination seam.** `admin-directive` is what the
-asking party sends across the coordination channel. `harness-answer` is what the
-answering party returns. `lifecycle-refusal` is the typed form of a refusal, carrying
-why a lifecycle act could not be performed rather than a free string, so that a caller
-branches on a value and an operator reads a reason.
+**Three of the four are loop 0's trio, named for the loop and not for a sender or
+a seam, per the human's naming ruling of 2026-08-01.** Wire vocabulary is named
+for the loop whose traffic it carries: the channels are duplex, so direction is a
+fact about a loop's walk rather than about a name, and loops are unique where
+senders are not, which is what retired the sender convention after it collided on
+the harness. `lifecycle-directive` is the ask of the load/unload loop, entering
+at the operator surface and fanning out along the harness's seams.
+`lifecycle-answer` is its answer, aggregating back. `lifecycle-refusal` is the
+typed refusal, carrying why a lifecycle act could not be performed rather than a
+free string. Each closed case set lives here and every loop 0 contract draws the
+cases that cross its own seam: enter, leave, and stop at coordination, admit and
+release at residency, raise and lower at the gate, the verbs and observations at
+the operator surface. One owner, four drawers, no drift, which is the shape
+`lifecycle-refusal` already proved across three seams. A later loop names its
+own traffic the same way.
 
-**The fourth belongs to the floor and not to that seam.** `organ-envelope` is the
+**The fourth belongs to the floor and not to any loop.** `organ-envelope` is the
 carrier every organ channel draws, holding the exchange a message belongs to, that
 message's position in the exchange, and the type of its payload. It is defined here
 because the coordination seam was the first channel to need it, and it is the one
@@ -320,10 +337,10 @@ processes must agree on, which is the whole of what a floor definition is.
 node: organ-envelope
 kind: vocabulary
 
-node: admin-directive
+node: lifecycle-directive
 kind: vocabulary
 
-node: harness-answer
+node: lifecycle-answer
 kind: vocabulary
 
 node: lifecycle-refusal
@@ -335,11 +352,11 @@ to: organ-envelope
 
 edge: defines
 from: weaver-types
-to: admin-directive
+to: lifecycle-directive
 
 edge: defines
 from: weaver-types
-to: harness-answer
+to: lifecycle-answer
 
 edge: defines
 from: weaver-types
@@ -351,7 +368,7 @@ to: lifecycle-refusal
 **No logic beyond the section 2.2 predicate.** The carve-out is one rule with one
 justification, not a category.
 
-**No internal dependency other than `weaver-traits`.** The state file names a
+**No internal dependency other than `weaver-traits`.** The config file names a
 permission mode and a tool set, which is why that edge exists and why the floor is two
 crates rather than one.
 
@@ -394,7 +411,7 @@ is present even when the answer is nothing. The union of those clauses is this c
 required surface: a definition no clause names is unused, and a definition a clause
 names and this crate lacks is a gap.
 
-**The producer and the consumers are all bound.** The agent state file has one writer,
+**The producer and the consumers are all bound.** The agent config has one writer,
 the operator, who stands outside the program, and two readers inside it, admin
 validating before a process exists and the harness consuming the elections it
 carries. The format is an obligation on all three. A producer that emits a shape a
@@ -416,7 +433,7 @@ change that cannot be carried in one act has not been thought through.
 This crate is party to no contract. It defines and does nothing, so there is nothing
 to agree to, and it is **named in** contracts rather than signing them.
 
-The agent state file is a real producer-to-consumer agreement, but its producer is the
+The agent config is a real producer-to-consumer agreement, but its producer is the
 operator and its parties are not two crates. An earlier form of this paragraph
 deferred a contract between `weaver-admin` and the harness to the admin pass, and that
 pass ruled the other way, in `weaver-admin-PRD` section 10: authorship moved to the

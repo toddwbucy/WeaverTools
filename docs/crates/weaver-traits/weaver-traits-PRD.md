@@ -8,6 +8,8 @@ set into the graph, and it belongs to the set rather than to this document.
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-01. Section 5 adopts proto-stateful, per the human's rename
 of this date, one word and no other change.
+**Revised:** 2026-08-01, again. Section 2 adopts `agent-config`, the artifact
+renamed on the human's ruling of this date.
 **Document ID:** `weaver-traits-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -33,7 +35,7 @@ Every trait in this charter is implemented or consumed by the harness today, so 
 obvious question is why they are not harness-internal.
 
 The answer comes from `weaver-types`, not from any crate not yet chartered. The agent
-state file names a permission mode and a tool set. If those definitions lived in the
+config file names a permission mode and a tool set. If those definitions lived in the
 harness, then `weaver-types` would depend on `weaver-harness`, and the floor would
 sit above the thing it is meant to be beneath. A neutral crate below both breaks that
 inversion.

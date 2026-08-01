@@ -61,6 +61,10 @@ absorbed it.
 human's ruling of this date and the transient-unit check: declared opens carry
 the descriptors, the coordination socket is named and unreachable rather than
 nameless, and possession of the connected end remains the authentication.
+**Revised:** 2026-08-01, thirteenth, the naming ruling. The wire pair renames to
+`lifecycle-directive` and `lifecycle-answer`, loop 0's trio with the refusal, wire
+vocabulary naming for the loop whose traffic it carries rather than the sender,
+and section 8's records follow.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -389,8 +393,8 @@ the exchanges above are the whole of what either learns.
 
 ## 8. Vocabulary
 
-**Drawn from `weaver-types`:** `organ-envelope`, `admin-directive`, `harness-answer`,
-`lifecycle-refusal`.
+**Drawn from `weaver-types`:** `organ-envelope`, `lifecycle-directive`,
+`lifecycle-answer`, `lifecycle-refusal`.
 
 ```graph
 edge: draws
@@ -399,11 +403,11 @@ to: organ-envelope
 
 edge: draws
 from: weaver-admin-harness-contract
-to: admin-directive
+to: lifecycle-directive
 
 edge: draws
 from: weaver-admin-harness-contract
-to: harness-answer
+to: lifecycle-answer
 
 edge: draws
 from: weaver-admin-harness-contract
@@ -441,10 +445,10 @@ records this document is not the source of:
     node: organ-envelope
     kind: vocabulary
 
-    node: admin-directive
+    node: lifecycle-directive
     kind: vocabulary
 
-    node: harness-answer
+    node: lifecycle-answer
     kind: vocabulary
 
     node: lifecycle-refusal
@@ -456,11 +460,11 @@ records this document is not the source of:
 
     edge: defines
     from: weaver-types
-    to: admin-directive
+    to: lifecycle-directive
 
     edge: defines
     from: weaver-types
-    to: harness-answer
+    to: lifecycle-answer
 
     edge: defines
     from: weaver-types
@@ -469,7 +473,7 @@ records this document is not the source of:
 Four definitions and no more. A carrier, a directive with its cases, an answer with
 its cases, and a refusal with its cases is what sections 1, 3, and 6 demand, and a
 fifth added because a fifth felt tidy would be a reserved slot in data form. The
-stop exchange adds a case to `admin-directive` and a case to `harness-answer` and
+stop exchange adds a case to `lifecycle-directive` and a case to `lifecycle-answer` and
 adds no fifth definition, which is the enumeration growing where the shape already
 lives. `harness-alert` was the fifth until the fault-carrier ruling of 2026-08-01
 retired the alert exchange, the fault travelling as a `fault` event on the stream,

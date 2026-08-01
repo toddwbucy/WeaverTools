@@ -17,6 +17,9 @@ written the same date.
 aggregate is authored to the stream as the `fault` event rather than handled in a
 shape a pending ruling would give it, and section 8's deferral restates against
 the event kind's case set.
+**Revised:** 2026-08-01, further, the naming ruling. This seam draws loop 0's
+trio, the seam-owned pair it awaited dissolving with the sender convention, and
+section 7's drift defense restates against the floor's single ownership.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -242,7 +245,7 @@ Every contract names the vocabulary it depends on, grouped by the crate that def
 it, and a group is stated even when empty.
 
 **Drawn from `weaver-types`:** `organ-envelope`, `gate-instruction`,
-`lifecycle-refusal`, and this seam's directive and answer.
+`lifecycle-directive`, `lifecycle-answer`, and `lifecycle-refusal`.
 
 `organ-envelope` is the carrier every organ channel draws, drawn here as the
 coordination and residency contracts draw it.
@@ -255,15 +258,14 @@ resolves it.
 
 `lifecycle-refusal` is drawn rather than twinned, per section 5.
 
-**This seam's directive and answer are owed to `weaver-types-PRD` section 2.3, and
-their names are decided deliberately rather than inherited.** The register asked
-exactly that, and the decision is: seam-owned definitions rather than reuse of
-`harness-directive` across two seams, because a shared enumeration that two contracts
-grow independently is drift with a type's name on it, and each seam's case set should
-close at its own contract. The names themselves are provisional until the naming
-ruling `weaver-spu-PRD` section 10 holds, since sender-naming is what produced the
-collision that cell prices, and the owed definitions land with that ruling in one
-act.
+**This seam draws loop 0's trio and owes the floor nothing, per the naming ruling
+of 2026-08-01.** Wire vocabulary is named for the loop whose traffic it carries,
+and this contract draws the cases that cross its seam: raise and lower on the
+directive, ready and stopped on the answer, this seam's refusals on the refusal.
+The seam-owned reading an earlier version chose to prevent drift is answered at
+its root rather than kept: the closed case sets have one owner, the floor, and
+contracts draw rather than grow them, so the drift two independent enumerations
+invited cannot occur.
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer
 because `weaver-types-PRD` section 5 asks for it even when it is empty.
@@ -278,9 +280,10 @@ Named here because a document whose reach cannot be read for the reach is a trap
 These are owed by this act, and `weaver-gate-PRD` section 11 is the authoritative
 register under G5.
 
-- `weaver-types-PRD` sections 2.1, 2.2, and 2.3, per that register: the instruction
-  field, the predicate's consumer citation, and the seam's pair pending the naming
-  ruling.
+- `weaver-types-PRD` sections 2.1 and 2.2, per that register: the instruction
+  field and the predicate's consumer citation, both landed. The seam pair once
+  owed to 2.3 dissolved with the naming ruling of 2026-08-01, the loop trio
+  covering it.
 - `weaver-harness-PRD` section 4: the sentence holding turn ingress open until this
   crate is chartered resolves by pointing at this contract, gaining no record there,
   the organ declaring in its own charter. On merge.
