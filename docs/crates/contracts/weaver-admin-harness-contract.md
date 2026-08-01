@@ -40,6 +40,12 @@ empty working structure rather than projecting a record, leave drains to the str
 and validates nothing, the departure answer drops the validation outcome, the
 cannot-validate refusal case leaves section 6, and the descriptors admin guarantees
 refer to the sink the configuration declares.
+**Revised:** 2026-08-01, ninth. Section 6's refusal account is scoped by the
+authoring point, per the architecture seat's ruling of this date out of the
+load-unload-loop review: before the `load` event a refusal leaves the stream clean
+and the harness in its prior state, after it the stream shows the authored bracket
+with no `unload`, per `weaver-admin-PRD` section 5, and the earlier unscoped
+sentences claimed the first account for both cases.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -328,9 +334,15 @@ ask, because admin answers nothing. The cases:
 by the state, and the answer says at rest. The out-of-order case above still covers a
 stop before enter or after leave.
 
-A refusal leaves the harness in the state it was in before the directive. A refused
-enter means no run was entered and no bracket was opened, so the stream never shows
-a run that was not entered.
+What a refusal leaves behind is scoped by the authoring point of the fan-out.
+Before the `load` event is authored, a refusal leaves the harness in the state it
+was in before the directive: no run was entered, no bracket was opened, and the
+stream never shows a run that was not entered. After the `load` event is authored,
+a refusal from a later arm leaves the authored bracket on the stream with no
+`unload` behind it, a truthful account of a load that did not complete rather than
+corruption to repair, per `weaver-admin-PRD` section 5. The exit itself does not
+change: the harness reports where the fan-out stopped, admin unwinds and publishes
+no state, and nothing reaches back to erase what was authored.
 
 **The alert exchange has no refusal,** because it closes on the message that opens it
 and there is nothing left for either party to refuse.
