@@ -213,7 +213,17 @@ cannot reach the file. Confinement is not a policy layered on top. It is the OS
 trust model the agent inherits as an ordinary user, and the home directory is the
 whole of what that user owns.
 
-A tool is external to the agent, not constitutive of it. A tool call leaves as
+Two tool classes exist and the word tool must not blur them. An internal tool is
+constitutive of the agent, an organ function reached inside the body: the
+protoautonomic calculator is one, an autonomic memory lookup is another, and
+their calls are the harness's interior dispatch, never gate traffic. An external
+tool is the agent engaging the world, a call over the network, a database API, a
+hand reaching outside the body, and the paragraph below is about these alone.
+Which class a given capability belongs to, and how external dispatch is
+chartered, is the token workflow's question and is deliberately not settled here.
+
+An external tool is external to the agent, not constitutive of it. Its call
+leaves as
 ordinary model output, crossing the gate opaque and logged, and the harness owns
 dispatch on the far side, so the gate never distinguishes a tool call from any
 other output. The return is symmetric: the result re-enters through the gate,
