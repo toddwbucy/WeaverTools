@@ -46,6 +46,13 @@ load-unload-loop review: before the `load` event a refusal leaves the stream cle
 and the harness in its prior state, after it the stream shows the authored bracket
 with no `unload`, per `weaver-admin-PRD` section 5, and the earlier unscoped
 sentences claimed the first account for both cases.
+**Revised:** 2026-08-01, tenth, the fault-carrier ruling. The stream is the
+program's one fault carrier, so the alert exchange retires entire: the exchange
+count is three, all admin's, a fault the worker survives travels as the `fault`
+event of `weaver-trace-PRD` section 3.1, `harness-alert` leaves the vocabulary and
+the floor with the G4 union going five to four, admin's drain guarantee leaves with
+the unsolicited traffic it existed for, and the duplex property restates as the
+channel's rather than the exchange census's, admin's organ standing unchanged.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -58,12 +65,15 @@ The agreement over the coordination seam: what crosses it, what each crossing me
 what each party may rely on, and how it fails. It is read alongside `weaver-admin-PRD`
 and `weaver-harness-PRD`, and none of the three is complete without the other two.
 
-**The seam is duplex and there is one document for it.** Either party may open an
-exchange. That is not a feature this seam happens to have, it is what makes admin an
-organ. An organ owns a domain and holds a duplex channel with the harness, both
-properties and not either, and admin owns the lifecycle domain. A seam with one
-initiator would leave admin an organ missing half of what makes it one. The invariant
-is authored in the apex and this document is downstream of it.
+**The seam is duplex at the channel and there is one document for it.** Either party
+may open an exchange by the channel's mechanics, and the duplex channel is what
+makes admin an organ: an organ owns a domain and holds a duplex channel with the
+harness, both properties and not either, and admin owns the lifecycle domain. The
+property is the channel's rather than the exchange census's, the same reading the
+half-chartered organ seams take, so the census standing at three exchanges, all
+admin's since the fault-carrier ruling of 2026-08-01 rerouted the fault to the
+stream, retires no half of what makes admin an organ. The invariant is authored in
+the apex and this document is downstream of it.
 
 **Two layers meet in this document and the boundary between them is a draw.** Sections
 1 and 2 draw `weaver-organ-channel`, which states the channel mechanics once for every
@@ -104,8 +114,9 @@ as the unit, identity by opening party and ordinal, the minimal exchange, concur
 exchanges, the non-guarantees, and delivery. Nothing in that layer is this seam's own
 and nothing of it is restated here.
 
-One fact of this seam lands at that layer. Both parties open exchanges on this channel,
-and section 3 names which party opens which.
+One fact of this seam lands at that layer. Either party may open an exchange on this
+channel, the census of chartered exchanges is section 3's, and every one of them is
+admin's today, per the fault-carrier ruling of 2026-08-01.
 
 ## 2. The channel
 
@@ -181,7 +192,7 @@ reopened, and not shared with a second worker.
 
 ## 3. The exchanges
 
-Four, and no others. Three are opened by admin and one is opened by the harness.
+Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run ordinal, the trace descriptors, the
@@ -211,27 +222,30 @@ with the turn's fate, aborted naming the turn it closed, or at rest because noth
 was in flight, and both are clean closes of the exchange rather than refusals,
 because the operator's intent is satisfied by the state either way. The answer is
 given only after the close event is placed, which is the announce-after-record
-discipline the alert already carries. Stop touches no run bracket. It is the channel
+discipline. Stop touches no run bracket. It is the channel
 the operator interrupt of `weaver-harness-PRD` section 2 arrives on, and it exists on
 this seam because the operator holds no other crossing. How the abort lands at the
 decoder is the harness's interior and crosses nowhere.
 
-**Alert.** Opened by the harness, and closed by the same message that opens it. The
-harness reports a fault the worker survived. Admin does not answer, and the reason is
-mechanical rather than stylistic: an answer would give the harness a thing to wait on in
-the middle of a run, which hands the run's progress to the party section 7 forbids from
-reaching into a run. The prohibition would survive in letter and fail in effect. The
-fault reaches the record before the alert reaches the channel, so the alert carries
-promptness and the record carries the fact.
+**There is no alert exchange, per the fault-carrier ruling of 2026-08-01.** A fault
+the worker survives is a `fault` event, authored by the harness into the stream
+like every other event, per `weaver-trace-PRD` section 3.1, and the stream is the
+program's one fault carrier: the operator's tooling keys on it there and comes back
+through the operator surface with a verb, per `weaver-admin-operator-contract`
+section 6 and the basic loop's section 2. Admin learns nothing of a fault, holding
+custody of the sink and comprehension of nothing. An earlier form of this section
+carried the fault to admin as a fourth exchange, the alert, and the ruling retired
+it: with one outbound path carrying every event in order, a second carrier for the
+same fact was a channel earning nothing.
 
-**A fault the worker does not survive is not an alert.** Death is observed through
-closure per section 4, and the harness does not report its own death.
+**A fault the worker does not survive is not a `fault` event.** Death is observed
+through closure per section 4, and the harness does not report its own death.
 
-**The alert's case set is open with a defined exit.** The candidates named so far
-originate in the SPU and reach admin through the harness as hub rather than directly.
-The set closes when the organs that can raise a fault have charters naming what they
-raise, and the first of those is `weaver-spu-PRD`. This document binds the shape of the
-exchange and not the enumeration.
+**The fault's case set is open with a defined exit.** The candidates named so far
+originate in the SPU and reach the record through the harness as author. The set
+closes when the organs that can raise a fault have charters naming what they raise,
+and the first of those is `weaver-spu-PRD`. This document binds nothing of it, the
+shape now being the event kind's, per `weaver-trace-PRD` section 3.1.
 
 **The descriptors cross once, in the enter exchange.** They are not re-sent, not
 revoked, and not replaced. A harness that needs a descriptor it was not given has a
@@ -247,17 +261,13 @@ an obligation on the party that could break it.
 ## 4. Ordering
 
 - Enter is first and happens exactly once on a channel.
-- Stop is valid only between a completed enter and a leave, carries no ordering
-  against the alert, and a stop arriving at rest answers at rest rather than
-  refusing.
-- An alert is valid in that same window, so every alert names a live run. A fault
-  before ready is a refusal on the enter exchange rather than an alert, because there
-  is no run yet for one to name.
+- Stop is valid only between a completed enter and a leave, and a stop arriving at
+  rest answers at rest rather than refusing.
+- An organ fault before the enter aggregate is answered is a refusal on the enter
+  exchange naming the arm, rather than a `fault` event, the report to admin and
+  the account on the stream being two different things.
 - Leave is last, happens at most once, and is terminal on the channel.
 - Messages within one exchange are ordered.
-- Exchanges opened by different parties carry no ordering against each other. An alert
-  may cross while a directive is outstanding, and neither party may read one as a
-  response to the other.
 - An answer to enter arrives only after the working structure is standing, the
   model is admitted, and Gate is started, so admin may rely on a ready answer meaning
   the interior is serving rather than starting. The reliance is exactly as large as
@@ -282,13 +292,10 @@ session, and
 that the boundary the worker runs inside exists and is correct, because
 admin verified it before the unit started and is the only party positioned to. The
 guarantee is of verification rather than of authorship, since the boundary is the
-operator's artifact. It guarantees that no directive carries work of any kind. It
-guarantees that it drains this channel, because a channel admin holds open and does not
-read fills, and a full channel is the one way a notification could stall the run it is
-about.
+operator's artifact. It guarantees that no directive carries work of any kind.
 
 **The harness supplies** its readiness as the aggregate of the enter fan-out, its
-confirmation of departure, the turn's fate on a stop, and its alerts.
+confirmation of departure, and the turn's fate on a stop.
 
 **The harness guarantees** that every descriptor it accepts is accepted close-on-exec,
 per section 2, which is an obligation on the receiving call and cannot be met by the
@@ -297,14 +304,10 @@ events, that it writes only through the descriptors it was handed, that it resol
 path, and that a ready answer is given only after a standing working structure, an
 admitted model, and a started gate. It guarantees that a refusal names where the
 fan-out stopped, so that admin rolls back on the answer alone. It guarantees that a
-fault reaches the
-record before its alert reaches the channel, and that no run blocks on an alert being
-taken. It guarantees that a stop answer follows the close event it reports, so the
-record holds the abort before the channel does.
-
-**Admin's drain and the harness's non-blocking write are two halves of one property,**
-and neither party holds it alone. That is why both appear as guarantees rather than one
-appearing as a prohibition on the other.
+fault the worker survives is authored to the stream as a `fault` event, per the
+fault-carrier ruling, and that no run blocks on anything downstream of the
+emission. It guarantees that a stop answer follows the close event it reports, so
+the record holds the abort before the channel does.
 
 **Close-on-exec is the receiver's, and only the receiver can supply it.** The flag
 rides the descriptor rather than the open file description, so it does not cross with
@@ -344,9 +347,6 @@ corruption to repair, per `weaver-admin-PRD` section 5. The exit itself does not
 change: the harness reports where the fan-out stopped, admin unwinds and publishes
 no state, and nothing reaches back to erase what was authored.
 
-**The alert exchange has no refusal,** because it closes on the message that opens it
-and there is nothing left for either party to refuse.
-
 **A worker that dies is not a refusal.** Admin observes the process exit and the
 channel closure together, and what that leaves on the stream is a run whose `load`
 has no `unload`, a truthful account of a death rather than corruption to repair,
@@ -354,10 +354,7 @@ per `weaver-admin-PRD` section 5.
 
 **Nothing on this seam retries.** A refused directive returns to admin, which either
 rolls back or reports. A harness that retried an author, or an admin that re-sent a
-directive after a refusal, would put two attempts behind one operator intent. An alert
-that cannot be written because the channel is full or closed at admin's end is dropped
-and the harness continues, and the drop is noted in the record so that a run with no
-alerts and a run whose alerts were lost are distinguishable after the fact.
+directive after a refusal, would put two attempts behind one operator intent.
 
 ## 7. Prohibitions
 
@@ -366,16 +363,14 @@ narrows nothing about that. It sends no path. It asks for no event to be authore
 behalf. Into a running
 turn it conveys the operator's intent to stop and nothing narrower, because the abort's
 mechanics are the harness's, per `weaver-admin-PRD` section 3, and unload still waits on
-rest rather than racing it. It does not answer an alert, and it does not treat
-an alert as authorization for anything the prohibition above forbids. What admin does in
-response leaves this seam and reaches the operator surface, which is `weaver-admin-PRD`
-section 8's.
+rest rather than racing it.
 
-**On the harness.** It opens no exchange this document does not enumerate, which is the
-prohibition that replaces the older one that it initiates nothing. It writes nothing
+**On the harness.** It opens no exchange at all, the alert retired to the stream by
+the fault-carrier ruling, and this is the prohibition that replaces the older one
+that it initiates nothing. It writes nothing
 outside an exchange. It does not resolve a trace path or accept one. It does not report
-its own death. It announces nothing it has not first recorded. It does not block a run
-on an alert being taken. It asks admin for nothing, because an alert carrying a request
+its own death. It announces nothing it has not first recorded. It asks admin for
+nothing, because a notification carrying a request
 is a control surface wearing a notification's clothes. It does not treat a directive as
 authorization for anything beyond the directive, which is the shape a lifecycle channel
 would grow a control surface through.
@@ -387,7 +382,7 @@ the exchanges above are the whole of what either learns.
 ## 8. Vocabulary
 
 **Drawn from `weaver-types`:** `organ-envelope`, `admin-directive`, `harness-answer`,
-`lifecycle-refusal`, `harness-alert`.
+`lifecycle-refusal`.
 
 ```graph
 edge: draws
@@ -405,10 +400,6 @@ to: harness-answer
 edge: draws
 from: weaver-admin-harness-contract
 to: lifecycle-refusal
-
-edge: draws
-from: weaver-admin-harness-contract
-to: harness-alert
 ```
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer
@@ -451,9 +442,6 @@ records this document is not the source of:
     node: lifecycle-refusal
     kind: vocabulary
 
-    node: harness-alert
-    kind: vocabulary
-
     edge: defines
     from: weaver-types
     to: organ-envelope
@@ -470,16 +458,14 @@ records this document is not the source of:
     from: weaver-types
     to: lifecycle-refusal
 
-    edge: defines
-    from: weaver-types
-    to: harness-alert
-
-Five definitions and no more. A carrier, a directive with its cases, an answer with its
-cases, a refusal with its cases, and an alert with its cases is what sections 1, 3, and
-6 demand, and a sixth added because a sixth felt tidy would be a reserved slot in data
-form. The stop exchange adds a case to `admin-directive` and a case to
-`harness-answer` and adds no sixth definition, which is the enumeration growing where
-the shape already lives.
+Four definitions and no more. A carrier, a directive with its cases, an answer with
+its cases, and a refusal with its cases is what sections 1, 3, and 6 demand, and a
+fifth added because a fifth felt tidy would be a reserved slot in data form. The
+stop exchange adds a case to `admin-directive` and a case to `harness-answer` and
+adds no fifth definition, which is the enumeration growing where the shape already
+lives. `harness-alert` was the fifth until the fault-carrier ruling of 2026-08-01
+retired the alert exchange, the fault travelling as a `fault` event on the stream,
+and the definition left `weaver-types-PRD` section 2.3 in the same act.
 
 ## 9. What this document changes elsewhere
 

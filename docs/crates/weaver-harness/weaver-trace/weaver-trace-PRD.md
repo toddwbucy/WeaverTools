@@ -22,6 +22,10 @@ ruling B leaves with them, and the sequence scope narrows from the session to th
 run, session-wide order being the consumer's to assemble from admin's ordinal.
 What enter becomes without a record is the cell `weaver-admin-PRD` section 10
 holds.
+**Revised:** 2026-08-01, second entry this date. The kind set gains `fault`,
+thirteen to fourteen, per the fault-carrier ruling of this date: the stream is the
+program's one fault carrier, the coordination seam's alert exchange retiring in
+the same act.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -272,6 +276,7 @@ its closure.
 | `message.assistant` | model output as conversation |
 | `message.tool_result` | a tool result entering the conversation |
 | `tool.call.started` / `tool.call.completed` | the tool bracket |
+| `fault` | a fault the worker survived, reported by an organ and authored by the harness |
 
 **Ceiling, added when elected:**
 
@@ -281,8 +286,16 @@ its closure.
 | `model.output` | the decode boundary, response side |
 | `model.measurement` | input and output token identifiers, entropies, sampler parameters, model identity with its weights hash, the prompt-block partition, residual reductions |
 
-Thirteen kinds. Adding one is an edit to this charter and to every contract whose
-vocabulary clause names the set, because consumers key on the closure.
+Fourteen kinds. Adding one is an edit to this charter and to every contract whose
+vocabulary clause names the set, because consumers key on the closure. `fault` is
+the fourteenth, added under that rule by the fault-carrier ruling of 2026-08-01:
+the stream is the program's one fault carrier, so a fault the worker survives is an
+event like every other, floor rather than ceiling because a fault invisible at
+floor verbosity would be the silently partial account this charter forbids. The
+operator's tooling keys on it from the stream and comes back through the operator
+surface with a verb. Its payload names the raising organ and carries what that
+organ reported, and the case set behind it is deferred to the token workflow with
+the organs' own charters, per `weaver-spu-PRD` section 10.
 
 **The measurement payload is what apex section 8 rests replay on, so its field list
 is not this charter's to choose freely.** Replay feeds recorded tokens back through a

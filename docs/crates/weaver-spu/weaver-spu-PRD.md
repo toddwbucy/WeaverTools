@@ -20,6 +20,10 @@ edit lands in that charter in the same act.
 device, per ruling C: nothing upstream arbitrates, the no-auto-evict binding of apex
 section 6 relocates here to the place that enforces it, and the second-arbitrator
 framing of sections 2, 3, and 4.1 rewrites to sole authority.
+**Revised:** 2026-08-01, a fourth entry, the fault-carrier ruling. The fault this
+crate raises reaches the record as the `fault` event through the harness as author,
+rather than reaching admin as an alert, and the section 10 cell restates its exit
+against the event kind's case set.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -374,9 +378,10 @@ replaced, and Document Format section 4 now carries the scoped rule.
 direction of it.** Apex section 5.4 makes a duplex channel with the harness one of the
 two properties of an organ, and the property does not bend. Both exchanges chartered
 here are opened by the harness. The direction this crate opens is the fault it raises,
-which reaches admin through the harness as hub, and the case set for it is deferred with
-a named exit in section 10. A reader should not take a half-chartered direction for an
-absent one.
+which reaches the record through the harness as author, written as the `fault` event
+of `weaver-trace-PRD` section 3.1 per the fault-carrier ruling of 2026-08-01, and
+the case set for it is deferred with a named exit in section 10. A reader should not
+take a half-chartered direction for an absent one.
 
 **One channel carries the organ's traffic, and whether decode shares it is not settled
 here.** Apex section 5.4 names a duplex channel, singular, and `weaver-types-PRD`
@@ -532,15 +537,15 @@ traffic precedes it. **Settled by:** a measurement taken when there is decode tr
 measure, which is the token workflow. Named here so the seam is inherited as a question
 rather than rediscovered as a surprise.
 
-**What this crate raises, which the admin contract is waiting on.**
-`weaver-admin-harness-contract` section 3 rules the alert case set open with a defined
-exit, and names its exit as the organs that can raise a fault acquiring charters that
-say what they raise, **with this charter named as the first of those.** This pass does
-not close it, because a fault the worker survives is a fault during a run and the run
-belongs to the workflow that has not been chartered. The exit condition is therefore
-unmet by this pass and stays unmet, and that is stated plainly rather than left for a
-reader to discover by checking. **Settled by:** the token workflow's pass over this
-crate.
+**What this crate raises, which the `fault` event is waiting on.** The fault-carrier
+ruling of 2026-08-01 made the stream the fault's carrier and the `fault` event kind
+its shape, and the case set behind that kind closes when the organs that can raise
+a fault have charters naming what they raise, **with this charter named as the
+first of those.** This pass does not close it, because a fault the worker survives
+is a fault during a run and the run belongs to the workflow that has not been
+chartered. The exit condition is therefore unmet by this pass and stays unmet, and
+that is stated plainly rather than left for a reader to discover by checking.
+**Settled by:** the token workflow's pass over this crate.
 
 **Device-state reporting, which the old tree answers in a way this corpus has not ruled
 on.** That tree read free memory from the device driver through a command-line tool and

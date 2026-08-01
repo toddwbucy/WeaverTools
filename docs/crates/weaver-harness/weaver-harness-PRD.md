@@ -35,6 +35,10 @@ ruling at `weaver-admin-operator-contract` section 3: the disk paragraphs become
 stream paragraphs, the manifest citation leaves the verbosity clause, and the
 descriptor discipline stands unchanged as the half that never depended on who
 persists the record.
+**Revised:** 2026-08-01, an eighth entry, the fault-carrier ruling. The alert
+leaves section 4: the harness opens no exchange on the coordination seam, a fault
+the worker survives travels as the `fault` event of `weaver-trace-PRD` section
+3.1, and the seam table's coordination row follows.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -240,16 +244,15 @@ The three sockets:
 |---|---|---|
 | Turn ingress | `weaver-gate` | Receives authenticated work. Gate never reaches past it. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
-| Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptors of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens its own exchanges to raise `harness-alert`, which is the direction that makes the seam duplex. |
+| Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptors of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens no exchange of its own, the fault travelling as a `fault` event on the stream per the fault-carrier ruling of 2026-08-01. |
 
-**The harness raises alerts and does not assume where they land.** An alert is its
-own exchange on the coordination channel, opened by the harness, and the emit point is
-not designed on the assumption that the record is its only sink, so a push transport
-on the deployment track is a future seam rather than a future rewrite of this one. An
-alert that cannot be written because the channel is full or closed is dropped and the
-harness continues, per `weaver-admin-harness-contract` section 6, and the drop is
-noted in the record so that a run with no alerts and a run whose alerts were lost stay
-distinguishable afterward.
+**A fault the worker survives is a `fault` event, and the stream is its carrier.**
+The fault-carrier ruling of 2026-08-01 retired the alert exchange: with one
+outbound path carrying every event in order to the operator's sink, a second
+carrier for the same fact earned nothing. The harness authors the fault like every
+other event, no run blocks on anything downstream of the emission, and the
+operator's tooling keys on the fault fields and comes back through the operator
+surface with a verb, per `weaver-admin-operator-contract` section 6.
 
 The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and links
 `weaver-trace` as a member of its own domain under a contract. It links no other

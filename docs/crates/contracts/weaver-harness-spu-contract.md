@@ -16,6 +16,10 @@ revision compressed away.
 **Revised:** 2026-07-31, third. The residue framing rewrites to sole authority under
 ruling C, admission being the one check on the device with nothing upstream
 arbitrating, and the prohibitions carry the relocated no-evict binding.
+**Revised:** 2026-08-01, fourth. The fault-carrier ruling of this date reshapes the
+deferred direction: an SPU death after the aggregate is authored to the stream as
+the `fault` event rather than carried to admin as an alert, and section 8's exit
+condition restates against the event kind's case set.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -270,7 +274,8 @@ the death upward as a refusal on the enter exchange naming this arm, because the
 run yet for a fault to belong to, which is the same rule `weaver-admin-harness-contract`
 section 4 applies to a fault before ready. The refusal is the harness's report, not the
 SPU's answer. After the aggregate is answered, the death is a fault the worker survived,
-and what the harness does with it is the deferred alert case of section 8.
+authored to the stream as the `fault` event per the fault-carrier ruling of
+2026-08-01, its case set deferred per section 8.
 
 **A release that cannot be confirmed is reported unconfirmed.** The harness does not
 synthesize a release from a closure and does not retry one. What makes this survivable
@@ -386,9 +391,10 @@ crate's register and the authoritative list under G5.
 - `weaver-harness-PRD` section 4. The decode seam resolves through this contract and
   gains no record in that charter, because the organ declares.
 
-**What this document does not close, and the corpus is waiting on it.**
-`weaver-admin-harness-contract` section 3 rules the alert case set open with its exit
-condition being the organs that can raise a fault acquiring charters naming what they
-raise, and names `weaver-spu-PRD` as the first of those. This pass charters the
-residency half of this seam and not the run, so the exit condition is unmet and stays
-unmet. Stated here rather than left to a reader who checks.
+**What this document does not close, and the corpus is waiting on it.** The
+fault-carrier ruling of 2026-08-01 made the `fault` event the fault's shape, and
+its case set closes when the organs that can raise a fault have charters naming
+what they raise, `weaver-spu-PRD` first among them, per that charter's section 10.
+This pass charters the residency half of this seam and not the run, so the exit
+condition is unmet and stays unmet. Stated here rather than left to a reader who
+checks.

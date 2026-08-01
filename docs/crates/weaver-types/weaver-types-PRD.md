@@ -22,6 +22,10 @@ two consumers, the gate's client socket and the operator surface of
 the seventh field, the sink the stream is connected to at load, demanded by
 `weaver-admin-operator-contract` section 3 and carried by the durable-record cut of
 this date.
+**Revised:** 2026-08-01, third entry this date. `harness-alert` leaves section 2.3,
+five definitions to four, per the fault-carrier ruling of this date: the alert
+exchange retired and the fault travels as the `fault` event kind, so no contract
+draws the definition and G4 rules it off the floor.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -281,22 +285,23 @@ to: authorization-predicate
 
 ### 2.3 The wire vocabulary the first socket contract draws
 
-**These five arrived on demand and not in advance.** Section 4 held wire protocol
+**These four arrived on demand and not in advance.** Section 4 held wire protocol
 vocabulary out of this crate until a written contract needed it.
 `weaver-admin-harness-contract` section 8 is that contract, and it draws exactly the
-five values below. Nothing else enters this subsection until another contract draws
-it, and a sixth definition arriving without a contract behind it is the reserved-slot
-error apex section 9 forbids, in schema form.
+four values below. Nothing else enters this subsection until another contract draws
+it, and a fifth definition arriving without a contract behind it is the
+reserved-slot error apex section 9 forbids, in schema form. `harness-alert` was
+drawn here until the fault-carrier ruling of 2026-08-01 retired the alert exchange,
+the fault travelling as the `fault` event kind `weaver-trace-PRD` section 3.1
+defines, and a definition no contract draws leaves the floor by G4's own test.
 
-**Four of the five belong to the coordination seam.** `admin-directive` is what the
+**Three of the four belong to the coordination seam.** `admin-directive` is what the
 asking party sends across the coordination channel. `harness-answer` is what the
 answering party returns. `lifecycle-refusal` is the typed form of a refusal, carrying
 why a lifecycle act could not be performed rather than a free string, so that a caller
-branches on a value and an operator reads a reason. `harness-alert` is the fault the
-harness raises unasked, which is the direction the duplex channel exists to carry and
-the reason that seam is not simplex.
+branches on a value and an operator reads a reason.
 
-**The fifth belongs to the floor and not to that seam.** `organ-envelope` is the
+**The fourth belongs to the floor and not to that seam.** `organ-envelope` is the
 carrier every organ channel draws, holding the exchange a message belongs to, that
 message's position in the exchange, and the type of its payload. It is defined here
 because the coordination seam was the first channel to need it, and it is the one
@@ -324,9 +329,6 @@ kind: vocabulary
 node: lifecycle-refusal
 kind: vocabulary
 
-node: harness-alert
-kind: vocabulary
-
 edge: defines
 from: weaver-types
 to: organ-envelope
@@ -342,10 +344,6 @@ to: harness-answer
 edge: defines
 from: weaver-types
 to: lifecycle-refusal
-
-edge: defines
-from: weaver-types
-to: harness-alert
 ```
 
 ## 3. What it must not hold

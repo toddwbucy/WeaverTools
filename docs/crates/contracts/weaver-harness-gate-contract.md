@@ -13,6 +13,10 @@ prohibitions, the live view retired under ruling A of the subtraction batch.
 of this date, with the register landings recorded at `weaver-gate-PRD` section 11.
 The client socket this seam raises gains its own contract, `weaver-gate-world-contract`,
 written the same date.
+**Revised:** 2026-08-01, again, the fault-carrier ruling. A gate death after the
+aggregate is authored to the stream as the `fault` event rather than handled in a
+shape a pending ruling would give it, and section 8's deferral restates against
+the event kind's case set.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -206,9 +210,9 @@ this arm as needing nothing undone here.
 when.** Before the enter aggregate is answered, the death is a refusal on the enter
 exchange naming this arm, per the rule `weaver-admin-harness-contract` section 4
 applies to a fault before ready. After the aggregate, the death is the loss of the
-agent's reachability, observed through closure, and what the harness does with the
-observation is the coordination seam's, in the shape the fault-carrier ruling gives
-it.
+agent's reachability, observed through closure and authored to the stream as the
+`fault` event, per the fault-carrier ruling of 2026-08-01, the operator's tooling
+keying on it there.
 
 **Nothing on this seam retries.** A refused directive returns to the harness, which
 unwinds, and a re-sent directive would put two attempts behind one operator intent.
@@ -282,6 +286,6 @@ register under G5.
   the organ declaring in its own charter. On merge.
 
 **What this document does not close.** The fault cases a running hook raises arrive
-with the token workflow and land in the shape the fault-carrier ruling gives them,
-and the alert exit condition of the coordination seam is that ruling's to retire or
-restate, not this seam's.
+with the token workflow and land as `fault` events, the shape the fault-carrier
+ruling of 2026-08-01 gave them, their case set closing with the organs' charters
+per `weaver-spu-PRD` section 10.

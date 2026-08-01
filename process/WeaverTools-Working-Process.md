@@ -1,6 +1,8 @@
 # WeaverTools Working Process
 
-**Version:** v0.10, 2026-08-01, third entry this date. The v0.10 change is section
+**Version:** v0.11, 2026-08-01, fourth entry this date. The v0.11 change is
+section 7 again, the fault-carrier ruling moving from what remains to landed, the
+apex re-authoring standing alone before the Specs. The v0.10 change was section
 7 once more, the durable-record cut moving from what remains to landed. The v0.9
 change was section 7
 again: the gate pair merged on the human's ruling, the two external-boundary
@@ -305,10 +307,14 @@ coordination contract, the admin and harness charters, the apex, and the loop
 document all restate against the stream, the enter question left as the cell
 `weaver-admin-PRD` section 10 holds.
 
-What remains in this phase: the fault-carrier ruling, which holds the alert
-rerouting and the bracket semantic, the apex re-authoring, whose waiting condition,
-all seven charters, is now met, and then the Specs, written last against the
-settled set.
+The fault-carrier ruling landed 2026-08-01: the stream is the program's one fault
+carrier, a fault the worker survives travelling as the `fault` event, the
+coordination seam's alert exchange retired, and the bracket semantic having
+already narrowed under the durable-record cut to the truthful-account reading.
+
+What remains in this phase: the apex re-authoring, whose waiting condition, all
+seven charters, is now met, and then the Specs, written last against the settled
+set.
 
 Nothing ratifies until the whole set maps, so no milestone here is a ratification.
 Merged means the work may move forward, which is what merged is for.

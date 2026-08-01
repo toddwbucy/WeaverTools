@@ -61,6 +61,11 @@ the run-bracket and reader-edge cells leave section 10 with the GID-mask staged
 item, and a new cell names what enter becomes without a record, deferred to the
 memory-and-state round. The cut handoff's rider lands with it: step 6 of the load
 drops the word together, an orphan of ruling A's live-view deletion.
+**Revised:** 2026-08-01, an eleventh entry, the fault-carrier ruling. The harness
+opens no exchange on the coordination seam: a fault the worker survives travels as
+the `fault` event on the stream rather than as an alert to admin, section 6's seam
+table and duplex account follow, and the duplex property restates as the
+channel's rather than the exchange census's.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -550,7 +555,7 @@ an end of.
 
 | Seam | Peer | What crosses |
 |---|---|---|
-| Coordination | `weaver-harness` | Admin directs the run to be entered and left, hands the trace descriptors inside the enter directive, and conveys the operator's intent to stop. The harness confirms, refuses, answers a stop with the turn's fate, or reports a fault the worker survived. |
+| Coordination | `weaver-harness` | Admin directs the run to be entered and left, hands the trace descriptors inside the enter directive, and conveys the operator's intent to stop. The harness confirms, refuses, or answers a stop with the turn's fate. A fault the worker survives crosses nowhere here, travelling as the `fault` event on the stream. |
 
 ```graph
 edge: seam
@@ -571,17 +576,17 @@ exchange on its one channel and the harness fanning that out along its own pathw
 Admin makes no admission decision at all, per ruling C: the device is the SPU's to
 judge, and what admin would have asked the SPU it learns from the aggregate instead.
 
-**The seam is duplex, because admin is an organ.** An organ governs a domain and holds
-a duplex channel with the harness, both properties and neither alone, and admin governs
-the lifecycle domain. Either party opens an exchange. Admin opens three, two that
-drive a transition and one that conveys
-the operator's intent to stop, and the harness opens one, reporting a fault the
-worker survived. What
-survives from the earlier one-initiator reading is narrower and still true: readiness is
-a confirmation to a directive rather than a directive, and a worker's death is
-observed through process exit rather than reported over the channel. What does not
-survive is the generalization from those facts to a channel with a single asking
-party.
+**The seam is duplex at the channel, because admin is an organ.** An organ governs a
+domain and holds a duplex channel with the harness, both properties and neither
+alone, and admin governs the lifecycle domain. Either party may open an exchange by
+the channel's mechanics, and the chartered census is admin's three, two that drive
+a transition and one that conveys the operator's intent to stop. The harness opens
+none since the fault-carrier ruling of 2026-08-01: a fault the worker survives
+travels as the `fault` event on the stream, the operator's tooling keys on it
+there, and the duplex property is the channel's rather than the census's, per the
+contract's section 0. A worker's death is observed through process exit rather
+than reported over the channel, and readiness is a confirmation to a directive
+rather than a directive.
 
 **The seam edge is declared by the organ rather than by the harness.** It was declared
 by the party that asks, and both parties ask now. The harness is the hub every organ is

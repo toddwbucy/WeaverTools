@@ -25,6 +25,9 @@ of this date, and the on-merge edits of section 11 land in the same act:
 lands in 2.2, and `weaver-harness-PRD` section 4 resolves turn ingress through the
 contract. Section 10's client-boundary and wire-framing cells close against
 `weaver-gate-world-contract`, written this date on the same ruling.
+**Revised:** 2026-08-01, again, the fault-carrier ruling. Section 8's staged fault
+cases land as `fault` events on the stream rather than in a shape a pending ruling
+would give them.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -257,8 +260,9 @@ the interior generates, concurrent clients against the one-turn loop, backpressu
 cancellation, and drain on stop.
 
 **Staged:** the separate-uid arm of the section 7 cell. Fault cases a running hook
-raises toward the harness, which arrive when there is a running hook to raise them and
-land in the shape the fault-carrier ruling gives them.
+raises toward the harness, which arrive when there is a running hook to raise them
+and land as the `fault` events of `weaver-trace-PRD` section 3.1, per the
+fault-carrier ruling of 2026-08-01.
 
 None of these acquires a trait, a variant, a feature flag, or a config field in this
 pass. A charter naming a domain boundary is a decided boundary. An unbuilt interface

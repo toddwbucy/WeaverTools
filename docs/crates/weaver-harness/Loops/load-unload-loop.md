@@ -1,6 +1,9 @@
 # Load/Unload Loop
 
-**Status:** DRAFT v0.1, 2026-08-01. Loop 0, the outermost loop: opened by the load
+**Status:** DRAFT v0.2, 2026-08-01, second entry this date. The fault-carrier
+ruling lands: section 5's alert paragraph becomes the `fault` event on the stream
+and the section 8 cell narrows to the kind's case set. Previously v0.1, 2026-08-01.
+Loop 0, the outermost loop: opened by the load
 event, closed by the unload event, with every other loop nesting inside its
 bracket. Drafted on the human's ruling of this date that loops belong to the
 harness unless specific to one domain and no other, so this document files beside
@@ -113,10 +116,12 @@ turn closing with the stop reason marked and the run staying open, per
 `weaver-admin-harness-contract` section 3. Stop never unloads. Loop 0 continues
 until leave closes it, however many turns run and however many are stopped.
 
-The alert is the harness's own direction on the coordination seam, a fault the
-worker survived, and its case set is open with a named exit, per that contract's
-section 3. Where the alert lands in this walk waits on the fault-carrier ruling,
-and this document inherits the cell rather than settling it.
+A fault the worker survives is a `fault` event, authored by the harness into the
+stream like every other event, per the fault-carrier ruling of 2026-08-01. It
+crosses no seam of its own: the operator's tooling keys on it from the stream and
+comes back through the operator surface with a verb, per
+`weaver-admin-operator-contract` section 6, and the case set behind the kind is
+deferred to the token workflow with the organs' charters.
 
 ## 6. Closing the loop
 
@@ -151,8 +156,9 @@ coordination seam observes, per `weaver-harness-spu-contract` section 5 and
 
 Each cell names what settles it, and none is this document's to settle.
 
-- **The alert path.** Where a fault the worker survives lands in this walk.
-  Awaits the fault-carrier ruling, per section 5.
+- **The fault case set.** The `fault` event's cases, per section 5. Awaits the
+  token workflow's pass over the organs' charters, the fault-carrier ruling of
+  2026-08-01 having settled the carrier and the kind.
 - **What enter becomes without a record.** Rides the cell `weaver-admin-PRD`
   section 10 holds, including where the run ordinal survives an admin restart.
 - **The loop abstraction.** Whether loop 0 takes a type or a trait. Awaits the

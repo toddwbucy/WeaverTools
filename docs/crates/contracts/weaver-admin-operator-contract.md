@@ -16,6 +16,9 @@ on the human's instruction: the tail forfeited to process death, the pressure
 election named and left to the spec seat, and a silent shed a broken build rather
 than a policy. The earlier wording promised every committed event to the stream,
 which no election but blocking could have kept.
+**Revised:** 2026-08-01, fourth entry. Section 3 names the stream the program's
+one fault carrier, per the fault-carrier ruling of this date: faults ride it as
+`fault` events, the coordination seam's alert exchange retired in the same act.
 **Document ID:** `weaver-admin-operator-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -118,6 +121,13 @@ descriptor. The mechanism is the Spec's.
 **Custody survives the ruling.** The agent uid reaches neither this socket nor the
 stream's sink, per the boundary `weaver-admin-PRD` section 2 constructs, so the
 record's exclusion of the agent does not depend on who persists it.
+
+**The stream is also the program's one fault carrier,** per the fault-carrier
+ruling of 2026-08-01. A fault the worker survives rides it as the `fault` event of
+`weaver-trace-PRD` section 3.1, in order with everything else, and the operator's
+tooling keys on the fault fields for its own purposes. There is no second alert
+path anywhere in the program, and tooling that decides a fault warrants action
+comes back through this socket with a verb, per section 6.
 
 ## 4. Ordering
 
