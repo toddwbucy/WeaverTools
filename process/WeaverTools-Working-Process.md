@@ -1,8 +1,10 @@
 # WeaverTools Working Process
 
-**Version:** v0.7, 2026-07-31. The v0.7 change redraws section 7's map to the tree
-of this date, three passes having merged against a map that still read the admin
-pass as next, and corrects this header's pointer at that section from six to seven.
+**Version:** v0.8, 2026-08-01. The v0.8 change is section 7's post-merge redraw,
+the batch of 2026-07-31 moving from the working tree to merged and the gate pair
+standing as the draft it is. The v0.7 change redrew section 7's map to the tree
+of 2026-07-31, three passes having merged against a map that still read the admin
+pass as next, and corrected this header's pointer at that section from six to seven.
 The v0.6 change was section 2's stub ruling and gate G7.
 Companion to the Working Rules, the Document Format, and
 the Handoff Format. The apex says what we are building. The Working Rules say how we
@@ -281,13 +283,13 @@ member, `weaver-traits` and `weaver-types` as the floor, `weaver-admin`, and
 contracts are merged beside them, coordination, trace production, and residency,
 with `weaver-organ-channel` as the drawn material the organ contracts share.
 
-In the working tree and not yet merged: the rulings batch of 2026-07-31, carrying
-the stop exchange and the close kind, the subtraction batches of the same date
-retiring the live view, the integrity witness, and admin's device arbitration, the
-apex's conflict binding relocated to SPU admission, the `basic-inference-loop`
-workflow pair under the harness's `Loops/` directory, and the `weaver-gate` pair,
-re-drafted under the demotion ruling of that date, the organ's job simplified to a
-local hook and its standing unchanged.
+The batch of 2026-07-31 merged to `main` on 2026-08-01: the stop exchange and the
+close kind, the subtraction rulings retiring the live view, the integrity witness,
+and admin's device arbitration, the apex's conflict binding relocated to SPU
+admission, and the `basic-inference-loop` workflow pair under the harness's
+`Loops/` directory. The `weaver-gate` pair rides in the tree as a draft carrying no
+decisions, re-drafted under the demotion ruling of that date, the organ's job
+simplified to a local hook and its standing unchanged, and its merge remains below.
 
 What remains in this phase: the fault-carrier ruling, which holds the alert
 rerouting and the bracket semantic, the gate pair's merge, the apex re-authoring,

@@ -1,6 +1,11 @@
 # Basic Inference Loop
 
-**Status:** DRAFT v0.7, 2026-07-31. The register gains ruling C's entry, held apart
+**Status:** DRAFT v0.8, 2026-08-01. The post-merge sweep of the open-items list: the
+batch of 2026-07-31 merged to main, the rulings register below is struck as landed,
+section 3 stops counting the stop exchange as unmerged, and the diagram redraws
+carrying the enter ordering of v0.5, the live view's retirement under ruling A, and
+the label collision fix. Previously v0.7, 2026-07-31. The register gains ruling C's
+entry, held apart
 from rulings A and B because it overturns an apex binding and they do not, the
 device-arbitration subtraction touching no content in this document. Previously
 v0.6, the subtraction batch: the live view is retired
@@ -24,6 +29,10 @@ graph block here would duplicate a record that already has a home.
 **Editorial:** Per the Working Rules.
 
 ## Rulings of 2026-07-31, landed by the batch of this date
+
+**Struck 2026-08-01. The batch merged and every landing below is history rather than
+work owed.** The block stays for provenance, per the strike convention, so a reader
+of an earlier revision can tell a landed ruling from one never made.
 
 This document is written against four rulings made in session on this date, and the
 batch of this date lands their edits in the documents this register names. The
@@ -188,10 +197,10 @@ and opens an exchange. The monitoring is the outside's job. The verb is admin's.
 ## 3. The lifecycle
 
 Admin's chartered verb set is load, unload, and validate, per `weaver-admin-PRD`
-section 4. This loop walks load and unload, adds the stop exchange of ruling 1,
-and never reaches validate, which starts no process and joins no loop. Three
-operator acts, then, all crossing at admin, carried by the exchanges of
-`weaver-admin-harness-contract` section 3. Two are merged. The third is ruling 1.
+section 4. This loop walks load and unload, adds the stop exchange, and never
+reaches validate, which starts no process and joins no loop. Three operator acts,
+then, all crossing at admin, carried by the exchanges of
+`weaver-admin-harness-contract` section 3, and all three are merged.
 
 **Enter the run.** Admin resolves the session, opens the record under its own
 principal, and directs the harness to enter, supplying the session identity, the
@@ -214,9 +223,10 @@ finalized, which is why session close is a separate cell. Per contract section 3
 and `weaver-admin-PRD` section 4.2. Gate last up, Gate first down: the agent is
 never reachable while its interior is half built or half torn down.
 
-**Stop.** The fifth exchange, ruling 1. Admin conveys the operator's intent to
-stop, one bit, no work. The harness aborts the current turn, the turn closes with
-the stop reason marked, the run stays open, and the agent takes the next prompt.
+**Stop.** The fifth exchange, per contract section 3. Admin conveys the operator's
+intent to stop, one bit, no work. The harness aborts the current turn, the turn
+closes with the stop reason marked, the run stays open, and the agent takes the next
+prompt.
 The harness answers with the turn's fate, aborted or nothing in flight, both clean
 closes. Stop is a turn-level interruption exposed on the run-level organ because
 the operator has no seat inside the gate exchange, and `weaver-harness-PRD`
