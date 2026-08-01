@@ -204,6 +204,25 @@ classifier that adjudicates danger from the model's disposition. The enforceable
 constraint lives in the OS, where it can be checked, rather than in a heuristic,
 where it can only be hoped for.
 
+The agent's reachable world is its own home directory and nothing more. There is
+no architectural reason to grant it any wider access to the host it runs on, and
+as standing doctrine it never holds root on that host, for its own integrity and
+safety. This completes outward what the harness charter already establishes
+inward, where the agent is never told the trace file's name and its tool surface
+cannot reach the file. Confinement is not a policy layered on top. It is the OS
+trust model the agent inherits as an ordinary user, and the home directory is the
+whole of what that user owns.
+
+A tool is external to the agent, not constitutive of it. A tool call leaves as
+ordinary model output, crossing the gate opaque and logged, and the harness owns
+dispatch on the far side, so the gate never distinguishes a tool call from any
+other output. The return is symmetric: the result re-enters through the gate,
+opaque and logged, and reaches the model only as part of the next prompt.
+Outbound reach to other machines, over SSH or any other means the agent's
+credentials permit, is ordinary user capability on the OS trust model rather than
+a crate surface, so the rule that no crate exposes a network surface stands
+untouched, because nothing listens.
+
 Stated at the level of the program, this is the Level A claim in operational dress:
 per-agent OS individuation is not only how agents are told apart, it is how they are
 made safe.
