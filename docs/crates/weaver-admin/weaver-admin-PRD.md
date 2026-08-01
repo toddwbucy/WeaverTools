@@ -59,7 +59,8 @@ material, the load opens a sink rather than a record, unload reduces to the drai
 with the validation account gone, session close loses the checksum and manifest,
 the run-bracket and reader-edge cells leave section 10 with the GID-mask staged
 item, and a new cell names what enter becomes without a record, deferred to the
-memory-and-state round.
+memory-and-state round. The cut handoff's rider lands with it: step 6 of the load
+drops the word together, an orphan of ruling A's live-view deletion.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -388,15 +389,15 @@ order is the substance.
 6. **Direct enter, and receive the aggregate.** The directive carries the session
    identity, the run ordinal, the descriptors, the model binding, and the gate
    instruction, per the contract. The descriptors ride inside the directive over the
-   coordination channel as `SCM_RIGHTS` ancillary payload, the trace descriptors
-   together, per `weaver-harness-PRD` section 5, so the
-   worker receives handles and never paths and accepts them close-on-exec at its one
-   receive site. What section 10 holds open is how the channel's own end reaches a
-   unit admin did not fork, and not how the descriptors cross a channel that
-   exists. Everything after the directive and before the answer is the harness's:
-   it stands up an empty working structure, authors its `load` event, which is the
-   record of admin's contact and the origin of
-   the run's monotonic clock, asks the SPU to admit the model, and starts Gate last so
+   coordination channel as `SCM_RIGHTS` ancillary payload, the trace descriptors,
+   per `weaver-harness-PRD` section 5, so the worker receives handles and never
+   paths and accepts them close-on-exec at its one receive site. What section 10
+   holds open is how the channel's own end reaches a unit admin did not fork, and
+   not how the descriptors cross a channel that exists. Everything after the
+   directive and before the answer is the harness's: it stands up an empty working
+   structure, authors its `load` event, which is the record of admin's contact and
+   the origin of the run's monotonic clock, asks the SPU to admit the model, and
+   starts Gate last so
    no work arrives before the interior can serve it. Admin holds no channel to either
    organ, per section 6, so what admin receives is one answer aggregating the fan-out,
    ready or a refusal naming where it stopped.
