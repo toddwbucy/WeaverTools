@@ -1,6 +1,9 @@
 # WeaverTools Working Process
 
-**Version:** v0.13, 2026-08-01, sixth entry this date. The v0.13 change is
+**Version:** v0.14, 2026-08-01, seventh entry this date. The v0.14 change is
+section 1's seat assignment, per the human's ruling: authoring moves to the seat
+holding the working tree and review to the remote session, formalizing the
+practice phase one's close ran on. The v0.13 change was
 section 7 recording the apex re-authoring as landed, the Specs standing alone in
 what remains. The v0.12 change was section
 7 recording the working-structure ruling, the relational projection retired. The
@@ -37,9 +40,17 @@ Whoever holds the authoritative artifact is primary. The artifact that is
 authoritative changes as the work moves, and the primary seat moves with it. The other
 seat advises in and does not edit in place.
 
-Two seats carry the work. The architecture seat holds theory, architecture, PRDs,
-contracts, and specs. The implementation seat holds the codebase and the graph. A
-session in either seat states which one it is in before it begins.
+Two seats carry the work, and their assignment changed on the human's ruling of
+2026-08-01. The authoring seat is the session that holds the working tree: it
+drafts and lands PRDs, contracts, specs, and their edits, because grounding in
+the files and the corpus's cross-document state proved decisive through phase
+one. The review seat is the remote session: it consults, reviews uploaded
+snapshots at a distance, and returns findings in the standard shape below, which
+is the defect-finding a fresh context does best. The earlier assignment, the
+architecture seat authoring and the implementation seat landing, is history the
+changelogs of this date record. The codebase and the graph stay with the seat
+that holds the tree. A session in either seat states which one it is in before
+it begins.
 
 Neither seat settles a disagreement with the other. Both surface it to the human, who
 is the adjudicator by definition and who sits in both seats.
