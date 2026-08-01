@@ -466,9 +466,10 @@ configuration file is present and parses. Its required fields are there. The mod
 names and the settings it carries for that model resolve to real things in the format
 those things are expected to be in. The stream sink it declares exists, or the flag
 that orders one created is set. The boundary checks of load step 3 run against the
-operator's provisioning. Every one of these is a question about whether a named thing exists and is
-what it claims to be, and admin answers it by looking rather than by asking another
-crate, which is why this verb reaches no seam and starts no process.
+operator's provisioning. Every one of these is a question about whether a named
+thing exists and is what it claims to be, and admin answers it by looking rather
+than by asking another crate, which is why this verb reaches no seam and starts no
+process.
 
 Reached as the front half of a load, a clean inventory flows into step 4 and a failure
 refuses before any process exists. Invoked alone, it stops at the result and reports,

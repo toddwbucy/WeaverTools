@@ -183,8 +183,8 @@ This is the demand rule rather than a convenience. Section 6 guarantees canonica
 byte form, a gapless run-scoped sequence, an interrogable committed boundary, whole
 events to the sink, deterministic projection, and typed refusal, and not one of
 them requires knowing what a message says. A crate that depends on no other
-linking a definition it
-does not need gives up the property for nothing, so the alternative reading, where
+linking a definition it does not need gives up the property for nothing, so the
+alternative reading, where
 `weaver-trace` floor-links `weaver-traits` to decode three kinds, is refused on the
 same grounds section 4 refuses everything else it does not demand.
 
