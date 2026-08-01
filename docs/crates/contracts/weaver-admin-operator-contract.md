@@ -11,6 +11,11 @@ same ruling.
 **Revised:** 2026-08-01, second entry. The filename gains the `-contract` suffix on
 the human's correction, a contract being named as one whatever its parties, and
 every citation in the corpus follows the rename in the same act.
+**Revised:** 2026-08-01, third entry. Section 3's tee promise states its own bounds,
+on the human's instruction: the tail forfeited to process death, the pressure
+election named and left to the spec seat, and a silent shed a broken build rather
+than a policy. The earlier wording promised every committed event to the stream,
+which no election but blocking could have kept.
 **Document ID:** `weaver-admin-operator-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -88,10 +93,20 @@ stream, one event per line, authored against the durable event schema `weaver-tr
 owns, and hands it to the operator. **Durability is the operator's responsibility and
 not the program's.** Retention, indexing, persistence, and every view built on the
 record are backend work, served by separate tooling on the operator's own compute,
-addressed to that operator's specific needs, and outside this program entirely. What
-the program promises is the tee: every committed event reaches the stream, in order,
-identical in content to what the working structure holds, and never shed silently,
-per `weaver-trace-PRD` section 4.2.
+addressed to that operator's specific needs, and outside this program entirely.
+
+**What the program promises is the tee, and the promise states its own bounds.**
+What reaches the stream is in order and identical in content to what the working
+structure holds. What can fail to reach it is bounded and named, twice and no more.
+The writer's queue trails the working structure and its tail is forfeited to process
+death, per `weaver-trace-PRD` section 4.2, an abrupt exit covering nothing the queue
+still held. And under sustained pressure from a slow sink the stream side does what
+the tee back-pressure election rules, blocking the emitter, shedding with the gap
+marked in the stream, or detaching with the detachment marked, an election the spec
+seat takes against a real consumer at a real rate and nothing this contract
+pre-decides. Nothing is ever shed silently: a stream that lost events says so in the
+stream, so a record with no marks and a record that lost something are never
+confusable, and a silent drop is a broken build rather than a policy.
 
 **Where the stream lands is the operator's declaration.** The sink is named in the
 agent's configuration, validated by admin at load like every other field, and the

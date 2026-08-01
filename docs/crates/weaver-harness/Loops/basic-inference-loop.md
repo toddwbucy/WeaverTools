@@ -1,6 +1,9 @@
 # Basic Inference Loop
 
-**Status:** DRAFT v0.9, 2026-08-01, second entry this date. The gate pair merged on
+**Status:** DRAFT v0.10, 2026-08-01, third entry this date. The tee back-pressure
+cell narrows to the marked elections of `weaver-admin-operator-contract` section 3,
+the tee promise now stating its bounds, a silent drop contractually impossible.
+Previously v0.9, second entry this date. The gate pair merged on
 the human's ruling, so section 2's proposal note resolves, and the wire-framing cell
 leaves section 7, settled by `weaver-gate-world-contract` at the delimiter level
 with the field shapes staying with the spec seat. Previously v0.8, the post-merge
@@ -320,9 +323,11 @@ Each cell names the ruling or measurement it awaits.
   settled either way, the turn closes with the reason marked. Awaits the spec
   seat against the SPU's cancellation surface.
 - **Tee back-pressure.** The tee has two sinks, the RAM working structure and the
-  output stream. Whether the decode path waits on a slow output reader, or the
-  output side takes a bounded buffer with a drop or detach policy under pressure,
-  is a spec-seat measurement against a real consumer at a real rate. The RAM copy
-  always lands.
+  output stream, and the RAM copy always lands. The option space narrowed when the
+  tee promise merged: `weaver-admin-operator-contract` section 3 makes a silent
+  drop contractually impossible, so the election is between blocking the emitter,
+  shedding with the gap marked in the stream, and detaching with the detachment
+  marked. Which one is a spec-seat measurement against a real consumer at a real
+  rate.
 - **Streaming and partial turns.** Content-shaped and deferred. Carried here so
   the cell has one home, and it awaits the memory round's architecture pass.
