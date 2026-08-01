@@ -50,13 +50,15 @@ by position, consolidation, so that many episodes settle into one structure, and
 persistence, so that anything the agent can draw on survives the session at all. A
 record answers what happened, in order. A memory answers what bears on now.
 
-Something does survive, and saying otherwise would be sloppy. The durable record
-outlives the process and the session both. It is a persistent audit store, written
-for `weaver-admin` and for later analysis, and the agent has no path to it and no
-mechanism that would read it back into a new session. So the claim worth making is
-narrower and stronger than nothing survives, which a careful reader falsifies by
-pointing at the file on disk. Nothing the agent can draw on survives, and that is
-why there is nothing to individuate from, and why stage one tests nothing.
+Something does survive, and saying otherwise would be sloppy. The record the
+stream accumulates outlives the process and the session both, on the operator's
+side of the sink, per the ruling of 2026-08-01 at `weaver-admin-operator-contract`
+section 3. It is written for the operator and for later analysis, the agent has no
+path to it, and since the cut of that date nothing in the program reads it back
+into a new session at all. So the claim worth making is narrower and stronger than
+nothing survives, which a careful reader falsifies by pointing at the operator's
+storage. Nothing the agent can draw on survives, and that is why there is nothing
+to individuate from, and why stage one tests nothing.
 
 It is the apparatus floor, the Level A substrate of privileged low-latency
 connectivity, per-agent OS individuation, and a trace worth trusting, on which the

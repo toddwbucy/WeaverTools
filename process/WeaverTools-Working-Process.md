@@ -1,6 +1,8 @@
 # WeaverTools Working Process
 
-**Version:** v0.9, 2026-08-01, second entry this date. The v0.9 change is section 7
+**Version:** v0.10, 2026-08-01, third entry this date. The v0.10 change is section
+7 once more, the durable-record cut moving from what remains to landed. The v0.9
+change was section 7
 again: the gate pair merged on the human's ruling, the two external-boundary
 contracts arrived as blockers before any Spec, and the durable-record cut entered
 what remains. The v0.8 change was section 7's post-merge redraw, the batch of
@@ -297,8 +299,13 @@ ruling that a document on `main` is merged, and the external boundaries took the
 contracts the same day, `weaver-admin-operator-contract` and
 `weaver-gate-world-contract`, written as blockers before any Spec.
 
-What remains in this phase: the durable-record cut the ruling of 2026-08-01 scopes,
-registered on the open-items list, the fault-carrier ruling, which holds the alert
+The durable-record cut of 2026-08-01 landed the same day: the program owns no
+record, per `weaver-admin-operator-contract` section 3, and the trace pair, the
+coordination contract, the admin and harness charters, the apex, and the loop
+document all restate against the stream, the enter question left as the cell
+`weaver-admin-PRD` section 10 holds.
+
+What remains in this phase: the fault-carrier ruling, which holds the alert
 rerouting and the bracket semantic, the apex re-authoring, whose waiting condition,
 all seven charters, is now met, and then the Specs, written last against the
 settled set.

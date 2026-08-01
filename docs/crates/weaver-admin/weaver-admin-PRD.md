@@ -52,6 +52,14 @@ cell closes.
 That contract also records the durable-record ruling of the same date, durability
 being the operator's with the program's obligation ending at the NDJSON tee, and the
 cut it scopes is registered on the open-items list rather than landed here.
+**Revised:** 2026-08-01, a tenth entry, the durable-record cut. The program owns no
+record, per the ruling at `weaver-admin-operator-contract` section 3: section 2's
+custody restates from the record to the stream's sink and drops the divergence
+material, the load opens a sink rather than a record, unload reduces to the drain
+with the validation account gone, session close loses the checksum and manifest,
+the run-bracket and reader-edge cells leave section 10 with the GID-mask staged
+item, and a new cell names what enter becomes without a record, deferred to the
+memory-and-state round.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -167,41 +175,28 @@ harness the word coordinator and the act of sequencing the organs with it, and n
 here contests it. What admin owns is the directive and the aggregate it gets back, which
 is a different act from coordinating a turn, and the two never run at the same time.
 
-**Custody of the durable record, at the filesystem, and the agent owns none of it.**
-The record is owned by `weaver-admin` and grouped to the group the operator shares
-with it. The agent uid is neither owner nor group and holds no bit on the file, and
-the directory is not searchable by the agent uid. So admin reaches the record with no
-harness involved, which is what makes operator-side audit possible.
+**Custody of the stream's sink, and the agent reaches none of it.** The program
+owns no record, per the ruling of 2026-08-01 at `weaver-admin-operator-contract`
+section 3, and durability is the operator's. What admin owns is the connection: it
+opens the sink the agent's configuration declares under its own principal and
+passes descriptors into the enter directive, so the worker writes a stream it could
+not have opened for itself. Where the sink is a file, the operator's provisioning
+keeps the agent uid off it by ownership, mode, and the directory's search bit,
+which admin's boundary check verifies rather than builds, the same posture as
+section 1, and a kernel check rather than a concealment, since a process holding a
+descriptor can always `readlink` its own `/proc/self/fd`.
 
-**Ownership is what the agent must not have, and the reason is `chmod`.** An owner can
-always restore its own access to a file whatever the mode says, so an arrangement that
-made the agent the owner and withheld read would be withholding nothing durable. Non
-ownership is what buys both halves: the agent cannot widen the mode, and it cannot
-traverse the directory to reach the inode at all.
-
-**The path is not a secret and custody never rests on hiding it.** A process holding a
-descriptor can read its own `/proc/self/fd` and recover the path, so any model that
-depended on the agent not knowing where the record lives would be defeated by a
-`readlink`. What the agent cannot do is traverse a directory its uid has no search bit
-on, and that is a kernel check rather than a concealment.
-
-**The agent writes through a descriptor and by no other route.** Permission is checked
-once when the file is opened, against the opener, and a descriptor passed by
-`SCM_RIGHTS` installs against that same open file description with no recheck. So the
-worker appends to a file it could not have opened for itself, which is the whole of
-its access and is revocable by closing the descriptor.
+**The agent writes through a descriptor and by no other route.** Permission is
+checked once when the sink is opened, against the opener, and a descriptor passed
+by `SCM_RIGHTS` installs against that same open file description with no recheck.
+So the worker writes a stream it could not have opened for itself, which is the
+whole of its access and is revocable by closing the descriptor.
 
 **The working structure in RAM is append-only by construction, because its API
 exposes no update path.** That is the one append-only claim this charter carries, a
 structural property of the in-RAM store rather than a witnessed discipline, and
 integrity accounting past the emission boundary is the consumer's business on the
 consumer's compute.
-
-```graph
-edge: reads
-from: weaver-admin
-to: session-record
-```
 
 **A log of admin's own privileged acts.** A completed rollback and a refused load
 are privileged acts that leave nothing behind
@@ -229,15 +224,14 @@ which is the same class of hole the trace directory's search bit exists to close
 operator reads through membership in `weaver-admin`, which is the same path by which
 the operator reaches a session record.
 
-**The session record, the trace directory, and this log are secured against the
-agent and against nothing stronger, and the party that concerns is the operator.**
-Admin owns the artifacts, the operator reaches them through the shared group, and
-custody is exclusion of the agent rather than evidence against the holder. This is
-not a gap the charter can close, because the operator is the party that admits
-principals, configures the delegation of section 7, and holds the group. The program
-secures the agent against reaching its own record and does not secure anything
-against the operator, who is trusted by construction. The apex states that trust
-model once, per section 11, and this paragraph is its local half.
+**The stream's sink and this log are secured against the agent and against nothing
+stronger, and the party that concerns is the operator.** Custody is exclusion of
+the agent rather than evidence against the holder. This is not a gap the charter
+can close, because the operator is the party that admits principals, configures the
+delegation of section 7, owns the sink, and holds what accumulates behind it. The
+program secures the agent against reaching its own record and does not secure
+anything against the operator, who is trusted by construction. The apex states that
+trust model once, per section 11, and this paragraph is its local half.
 
 ```graph
 node: admin-operations-log
@@ -248,21 +242,12 @@ from: weaver-admin
 to: admin-operations-log
 ```
 
-**Admin emits and does not conclude.** A comparison that differs is a fact, and the
-judgment that a record is intact or corrupt is a consumer's to make with knowledge of
-what the difference means. So the result leaves as a described comparison rather than
-as a verdict, and no clause of this charter licenses admin to call a record good.
-
-**The in-RAM side is the reference by construction, stated as a direction rather than
-as a verdict.** The working structure was built by a process this program holds and
-the file on disk was not, so a divergence is reported as disk differing from RAM. That
-is an ordering of the two sides and not a claim that RAM is correct, and its authority
-is bounded to the current run, since the structure exists only while the agent is
-loaded.
-
-**Admin repairs nothing.** A supervisor that corrected a record it found divergent
-would be an editor of the record, which ends the single-writer property that makes the
-record evidence at all. A divergence is emitted and left.
+**Admin concludes nothing about the record, because it holds none.** The comparison
+an earlier version of this section emitted, the reference direction it argued, and
+the repair it forbade all presupposed a program-owned file to compare against the
+working structure, and each dissolved with it on 2026-08-01. What survives is the
+posture: admin repairs nothing, adjudicates nothing, and calls nothing good, over
+any artifact it touches.
 
 ## 3. What this crate does not own
 
@@ -283,11 +268,11 @@ rest rather than racing it.
 event, holds no event kind, and its own first contact is recorded by the harness as
 the `load` event of `run0` rather than by an entry of its own.
 
-**Reading the record as a record.** Admin holds the descriptor and the directory,
-which is custody, and custody is not comprehension. Parsing a record into events
-requires the format `weaver-trace` owns, and the edge that a reader in this domain
-would need is an open cell in section 10 rather than a thing this charter grants
-itself.
+**Reading the stream as content.** Admin connects the sink, which is custody, and
+custody is not comprehension. Parsing events is the operator's tooling's business
+on the other side of the sink, per `weaver-admin-operator-contract` section 6, and
+admin interprets no content in either direction, the monitoring being the outside's
+job and the verb being admin's, per the basic loop's section 2.
 
 **Provisioning, in every part.** The OS identity, the home directory, the modes and
 group memberships on it, and the agent's configuration file are the operator's, per
@@ -390,13 +375,12 @@ order is the substance.
    directory exists with the expected ownership and modes, and the trace directory is
    admin-owned and not searchable by the agent uid. Any failure refuses. Nothing here
    is repaired, and nothing here is built.
-4. **Resolve the session and open the record.** Admin decides which session is being
+4. **Resolve the session and open the sink.** Admin decides which session is being
    loaded, a decision the harness is structurally unable to make because it never
-   learns a path. `run0` opens a new and empty record and a later run opens the
-   existing one. The descriptors are obtained here, under admin's own principal, which
-   is what lets the worker append to a file its uid could not open. Close-on-exec is
-   not admin's to confer on a passed descriptor and is the harness's obligation at the
-   receive, per the contract.
+   learns a path, and opens the sink the configuration declares. The descriptors are
+   obtained here, under admin's own principal, which is what lets the worker write a
+   stream its uid could not open. Close-on-exec is not admin's to confer on a passed
+   descriptor and is the harness's obligation at the receive, per the contract.
 5. **Ask the init system to start the worker as a transient unit carrying the agent's
    `User=`.** Admin does not put the worker under the agent uid itself. It asks a
    process that already holds that authority, per section 7, and the unit's cgroup
@@ -410,8 +394,8 @@ order is the substance.
    receive site. What section 10 holds open is how the channel's own end reaches a
    unit admin did not fork, and not how the descriptors cross a channel that
    exists. Everything after the directive and before the answer is the harness's:
-   it projects the existing record into a working structure, authors its `load`
-   event, which for `run0` is the record of admin's first contact and the origin of
+   it stands up an empty working structure, authors its `load` event, which is the
+   record of admin's contact and the origin of
    the run's monotonic clock, asks the SPU to admit the model, and starts Gate last so
    no work arrives before the interior can serve it. Admin holds no channel to either
    organ, per section 6, so what admin receives is one answer aggregating the fan-out,
@@ -437,69 +421,39 @@ the record of admin's first contact and places the worker start and the descript
 handoff outside the trace by construction, because they run before the harness exists
 to author anything. The load's one trace entry is written at step 6 by the harness,
 and the unload's at its own bracket. Nothing admin does before that moment reaches the
-record, and nothing should, because a second party appending to a session record ends
-the single-writer property that lets a broken bracket read as corruption under section
-6 of that charter. The consequence is stated in section 2 rather than left for a reader
-to rediscover here: the supervisory half of the lifecycle is unrecorded by the trace,
-and its record is admin's own.
+record, and nothing should, because a second party writing into the stream ends the
+single-writer property that makes the account evidence at all. The consequence is
+stated in section 2 rather than left for a reader to rediscover here: the
+supervisory half of the lifecycle is unrecorded by the trace, and its record is
+admin's own.
 
 ### 4.2 unload
 
 The reverse in effect and not in shape, because what the load built across seven steps
-is unwound in three, and two of admin's acts here, the validation moment inside the
-directive and the publish to a state that is not absent, have no counterpart on the
-way up.
+is unwound in three, and one of admin's acts here, the publish to a state that is not
+absent, has no counterpart on the way up.
 
 1. **Direct leave, and receive the aggregate.** Everything between the directive and
    the answer is the harness's, in its own order: it stops Gate first, so a Gate
    process never outlives the interior it protects and nothing new arrives, and it
    refuses while a turn is in flight rather than racing one, because a turn
    interrupted mid-decode leaves the SPU holding a session. At rest it authors its
-   `unload` event, closing the bracket, and drains the writer's queue. The record is
-   left open to the next run rather than finalized, because finalization belongs to
-   the session. It validates the record against the working structure while both still
-   exist, per the paragraph below, then releases the SPU, so residency ends and the
-   device is freed. The answer carries left and the validation outcome, or a refusal
-   naming where the sequence stopped. Admin holds no channel to Gate or the SPU, per
-   section 6, so this directive is the whole of admin's part in their unwinding.
+   `unload` event, closing the bracket, drains the writer's queue to the stream,
+   then releases the SPU, so residency ends and the device is freed. The answer
+   carries left, or a refusal naming where the sequence stopped. Admin holds no
+   channel to Gate or the SPU, per section 6, so this directive is the whole of
+   admin's part in their unwinding.
 2. **Stop the worker unit.** The process exits, descriptors close with it, and the
    unit's cgroup goes with the unit.
 3. **Publish provisioned and unloaded.** Which is a different state from absent, and
    absent is reached by an operator act rather than by a verb.
 
-**Unload validation is the harness's work today because the harness holds both tiers.**
-The working structure and the durable file have one writer between them, and the crate
-that owns the two things in conflict is the only one positioned to compare them. Admin
-opens the exchange and receives the outcome across its one seam. It reads neither side,
-which is the custody-without-comprehension limit section 2 already states, reached here
-by ownership rather than by rule.
-
-**A divergence is preserved rather than adjudicated.** Where the two sides agree, the
-comparison certifies the one record. Where they do not, an error state is declared and
-the working structure is written to a second file beside the first, and both survive the
-unload. Neither side is overwritten, so no version of the record is destroyed to make
-another authoritative, and choosing between them is a forensic question the operator
-answers afterward against both artifacts. Admin reports the error state and adjudicates
-nothing, and the account of why one was preferred is the operator's to keep. The second
-file is legal on the production seam rather than tolerated there, and the reasoning is
-stated in `weaver-harness-trace-contract` section 6: it is neither authoritative nor a
-derived view, and it is evidence under a declared error state that is never read as the
-record.
-
-**The promise this makes is worth stating in the operator's own terms.** Either an
-unload leaves one record certified complete, or, where the working structure and the
-file do not agree, it leaves both under a declared error state. There is no outcome in
-which a divergence is quietly reconciled and none in which one side is discarded to
-produce a single file.
-
-**Which crate owns unload validation follows the state tiers rather than the name of
-the harness.** State management sits in the harness today, which is the only reason the
-comparison sits there, and the proto-stateful reading of section 1 is exactly this: a
-placeholder held by the coordinating organ until the organ whose domain is state
-exists. When state migrates out, unload validation migrates with it, because the work
-belongs to whoever holds the two sides. A later reader who finds this comparison in a
-memory organ rather than in the harness is reading the migration this charter
-anticipates rather than a contradiction of it.
+**What leave promises is the drain, and nothing more since 2026-08-01.** A left
+answer means everything admitted reached the stream, per the contract's ordering,
+and everything after the sink is the operator's, per `weaver-admin-operator-contract`
+section 3. Nothing is compared, certified, or adjudicated at unload, the leave-time
+validation having dissolved with the program-owned record it compared against, and
+the stream ends where the run did, finalized by nothing.
 
 ### 4.3 validate
 
@@ -510,9 +464,9 @@ which is one code path entered two ways rather than two checks free to drift apa
 What it inventories is what a load depends on and cannot discover later. The
 configuration file is present and parses. Its required fields are there. The model it
 names and the settings it carries for that model resolve to real things in the format
-those things are expected to be in. The trace target exists, or the flag that orders one
-created is set. The boundary checks of load step 3 run against the operator's
-provisioning. Every one of these is a question about whether a named thing exists and is
+those things are expected to be in. The stream sink it declares exists, or the flag
+that orders one created is set. The boundary checks of load step 3 run against the
+operator's provisioning. Every one of these is a question about whether a named thing exists and is
 what it claims to be, and admin answers it by looking rather than by asking another
 crate, which is why this verb reaches no seam and starts no process.
 
@@ -528,29 +482,22 @@ this charter does not govern.
 ### 4.4 Session close, and removal
 
 `weaver-trace-PRD` section 3.1 carries `session.closed`, meaning the session will not
-be resumed, and section 4.3 orders the close as drain, then checksum, then manifest.
-No verb performs the whole of it, because a session spans runs and an agent outlives a
-session. The harness authors `session.closed` while it is alive, because it is content
-and the harness is the sole writer of content, and the drain and the checksum are
-the unload validation of 4.2 performed on the session's last run, because those are
-descriptions of a finished file rather than statements about what happened. The cost
-is that closing a session requires the agent loaded for the authoring half, which is
-load, stop, unload: the stop exchange ceases token processing and holds everything
-loaded at rest, and no close crosses the seam as a verb or a conveyance of its own.
-What cues the authoring of `session.closed` inside that window is the session-close
-cell of section 10, which this wording does not close.
+be resumed. No verb performs it, because a session spans runs and an agent outlives
+a session. The harness authors `session.closed` while it is alive, because it is
+content and the harness is the sole writer of content. The cost is that closing a
+session requires the agent loaded for the authoring, which is load, stop, unload:
+the stop exchange ceases token processing and holds everything loaded at rest, and
+no close crosses the seam as a verb or a conveyance of its own. What cues the
+authoring of `session.closed` inside that window is the session-close cell of
+section 10, which this wording does not close. The checksum and the manifest an
+earlier version ordered after the drain dissolved with the program-owned record on
+2026-08-01, finalization being the operator's over the operator's storage.
 
-**The manifest is where this ruling is weaker than it looks.** Its committed sequence
-range, run count, and per-run verbosity are facts about events, and admin cannot
-compose them without parsing the record, which section 3 declines. So the manifest is
-gated on the reader cell of section 10 and not on this ruling. What admin can supply
-without a parse is the artifact hash and the completeness status.
-
-**Removing an agent removes no record.** An audit store whose deletion is a side effect
-of a lifecycle act is not an audit store, and the records outlive the process, the
-session, and the agent by construction. Deprovisioning still happens and it is the
-operator's, over files and accounts, and this charter states only that no verb of this
-crate reaches the durable record.
+**Removing an agent removes no record, because the program holds none.** The
+stream's accumulations live with the operator and outlive the process, the session,
+and the agent by that operator's own election. Deprovisioning still happens and it
+is the operator's, over files and accounts, and this charter states only that no
+verb of this crate reaches the operator's storage.
 
 ## 5. What a failure partway through leaves behind
 
@@ -558,47 +505,40 @@ Stated by where it failed, because rollback obligations differ and a charter tha
 says a partial load is never published has not yet said what is left to clear.
 
 **A crate that writes no boundary has no partial boundary to reap**, so rollback is
-smaller than it was. What a failed load can leave is a worker process, a session record
-that was opened, and a device the SPU took. Nothing that survives a crash needs a later
-verb to recognize and refuse it, because nothing durable was authored.
+smaller than it was. What a failed load can leave is a worker process, a connected
+sink, and a device the SPU took. Nothing that survives a crash needs a later verb to
+recognize and refuse it, because nothing durable of the program's was authored.
 
-A `load` that fails at steps 1 through 4 leaves nothing to reap beyond, for `run0`,
-an empty record. No process exists.
+A `load` that fails at steps 1 through 4 leaves nothing to reap. No process exists,
+and a sink opened at step 4 is closed, nothing having been written through it.
 
 A `load` that fails at step 5, or at step 6 before the `load` event is authored,
-leaves a worker that never entered a run. Admin stops the unit, and for `run0` the
-record is empty.
+leaves a worker that never entered a run. Admin stops the unit, and nothing entered
+the stream.
 
 **A device conflict refused at model admission is a refusal inside step 6, and it
-arrives after the `load` event in the fan-out's own order,** project, author, admit,
-gate. So what it leaves is the paragraph below, an authored bracket with no
-`unload`, plus a device the SPU's refusal left free, per the residency contract. It
+arrives after the `load` event in the fan-out's own order,** stand up, author,
+admit, gate. So what it leaves is an authored bracket with no `unload` on the
+stream, plus a device the SPU's refusal left free, per the residency contract. It
 needs no clause of its own, per ruling C, because it is a refusal inside the fan-out
 like any other, which is what retiring the pre-flight arbitration was for.
 
 **A `load` that fails inside step 6 after the harness has authored its `load` event
-leaves a run with a `load` and no `unload`.** As merged, `weaver-trace-PRD` section
-4.3 has a run ending at unload or at process death and section 6 calls a broken
-bracket corruption even when the run number is present, so one crash makes the session
-permanently unresumable through the resume validation of section 4.1. Nothing in the
-merged corpus closes that bracket: the harness is the sole writer and it is the thing
-that died, and admin reads the record and does not write it.
-
-The fix this charter is written against is that **a bracket is closed by its `unload`
-or terminated by the next run's `load`, and a run with no `load` stays corruption.**
-It adds no event kind, it keeps the harness from authoring about a run it was not in,
-and it is the same distinction the corpus already draws between a tail forfeited to
-process death and a silent shed, one level up. This is an edit to `weaver-trace-PRD`
-and it lands in the same act as this charter, per section 11.
+leaves a stream whose last run shows a `load` and no `unload`.** That is a truthful
+account of a death rather than corruption the program must repair, resume having
+dissolved with the program-owned record on 2026-08-01, and what a consumer makes of
+a broken bracket is that consumer's reading over the operator's storage. The
+run-bracket fix an earlier version of this section carried, and the cell section 10
+held for it, dissolved the same day for want of a validator to enforce them.
 
 **Rollback is admin's own reap plus one directive, because admin built with its own
 acts plus one directive.** A refused fan-out is the harness's to unwind along the
 same seams it fanned out on, and what returns to admin is the refusal naming where it
 stopped. Admin's remaining obligations are its own: direct leave where a run was
-entered, stop the unit, and for `run0` remove the empty record. Each of those can
-itself fail, and a rollback that cannot complete reports what it could not undo and
-does not publish any state, which is the same rule as a partial load and not a second
-one.
+entered, and stop the unit. Nothing durable of the program's exists to remove. Each
+of those can itself fail, and a rollback that cannot complete reports what it could
+not undo and does not publish any state, which is the same rule as a partial load
+and not a second one.
 
 ## 6. The seam
 
@@ -817,15 +757,15 @@ describes none of it.
 
 **What leaves with it.** Analysis, export, the operator views a graph or a fleet menu
 would be built on, and any indexed query over history. Each is a consumer of the
-durable record on the terms `weaver-trace` publishes, which is what contract-coupled
-means here, and none is staged work in section 9, because staged work is work this
-crate will later do. Multi-agent management through the operator surface stays, since
-it drives verbs rather than reading records.
+operator-held record on the terms `weaver-trace` publishes, which is what
+contract-coupled means here, and none is staged work in section 9, because staged
+work is work this crate will later do. Multi-agent management through the operator
+surface stays, since it drives verbs rather than reading records.
 
-**What admin still reads, so the departure is not read as wider than it is.** Admin
-parses the record for the session manifest, which is a lifecycle act and stays,
-pending the durable-record ruling that gates all manifest material. The reader edge
-of section 10 covers it and no longer waits on a tooling crate to be chartered.
+**Admin reads nothing of the record at all, as of 2026-08-01.** The manifest this
+paragraph once held open dissolved with the program-owned record, per the ruling at
+`weaver-admin-operator-contract` section 3, so no lifecycle act parses events and
+the reader edge section 10 once held has no subject.
 
 ## 9. Staged requirements
 
@@ -845,15 +785,9 @@ removed the thing a second executable would have separated. One authority remain
 it is delegated, so a split buys nothing and the layout is one binary. A staged item
 whose entry condition resolves to no work is closed rather than carried.
 
-**A GID mask at lifecycle boundaries**, which changes shape under the custody ruling
-and is restated rather than inherited. It was written when the agent owned the record
-and admin needed a read that widened after unload. The agent now owns nothing and admin
-owns the file throughout, so the question is no longer admin's access to its own
-artifact. What survives is whether the agent's descriptor-mediated write should be
-narrowed at unload by an operator-configured tier, which is the same territory as the
-`chattr +a` candidate of section 2 and belongs beside it. **Entry condition:** a
-measurement on a real trace, since both tiers cost something on the write path and
-neither cost has been timed.
+Nothing is staged here at present. The GID-mask item this section carried was
+written against admin owning the record's file, and it left with the record on
+2026-08-01, the write path now ending at a sink the operator declares.
 
 ## 10. Open rulings
 
@@ -899,25 +833,24 @@ factual answer, taken before the Spec. Named here because the ruling that closed
 mechanism opened this, and a charter that recorded only the closure would be
 recording the half that reads well.
 
-**The run bracket.** Section 5's fix is an edit to merged `weaver-trace-PRD` sections
-4.3 and 6. The alternative is a fourteenth event kind authored by the resuming
-harness to record the death positively, which costs an edit to every contract naming
-the closed set. **Settled by:** the human's ruling, weighing an edit to two sections
-against an edit to the kind set.
+**Session close.** Section 4.4 puts `session.closed` with the harness, at the cost
+of requiring the agent loaded for the authoring. What cues that authoring inside the
+load, stop, unload window is the open half. **Settled by:** the human's ruling. The
+drain-and-checksum half an earlier form of this cell carried dissolved with the
+record on 2026-08-01.
 
-**Session close.** Section 4.4 puts `session.closed` with the harness and the drain
-and checksum with the unload validation of 4.2 run on the session's last run, at the
-cost of requiring the agent loaded for the authoring half. **Settled by:** the human's
-ruling.
-
-**The reader edge.** Admin parses a record for the session manifest, and apex section
-8 places a replay driver outside the agent as an operator principal.
-`weaver-trace-PRD` section 1 has one caller, and a cross-domain edge from this root
-into a member of the harness's root has no category in the Document Format. The corpus
-already requires the second reader, so this is a missing category rather than a new
-want, and section 8's departure narrows it rather than removing it. **Settled by:** a
-ruling on what kind of edge a read-side consumer of `weaver-trace` declares. No longer
-waits on a tooling crate.
+**What enter becomes without a record.** Enter stands up an empty working structure,
+per the cut of 2026-08-01, so a later run of a session begins with the session's
+identity and none of its conversation, and sessions are single-run at the program's
+promise level. Two faces of one question stand open. Whether continuity returns
+through operator-held storage handed back at load, through the memory round's own
+substrate, or not at all is a design the corpus defers on purpose. And the run
+ordinal is admin's to supply with nothing program-side holding the last one across
+an admin restart, so what makes the ordinal trustworthy over a fleet of restarts
+belongs to the same design. **Settled by:** the memory-and-state round, and
+deliberately not by the cut batch that left it, because the batch deletes what
+dissolved and a resume redesigned in a deletion batch would be a load-bearing
+decision taken in passing.
 
 **The operator-to-service seam is closed.** Section 8's socket is governed by
 `weaver-admin-operator-contract`, written on the human's ruling of 2026-08-01 that the
@@ -978,18 +911,13 @@ moved, and the apex re-authoring still waits on all seven charters.
   same section all point at it, and stating it in three charters instead is the
   duplication G5 exists to catch. Files with the apex re-authoring.
 - `weaver-types-PRD` section 2.1: the artifact is renamed from `agent-state-file` to a
-  configuration name, its six `holds` edges follow the node, and the producer becomes
+  configuration name, its seven `holds` edges follow the node, and the producer becomes
   the operator rather than `weaver-admin`. The graph record in section 2 of this
   charter keeps the old identifier until this lands, because a node renamed on one side
   only is a dangling edge, and the two move in one act.
 - `weaver-harness-PRD`: the trace file is owned by `weaver-admin` and not by the agent
   uid, per section 2, and any clause resting on the agent owning the record is restated.
   Owed with the custody ruling.
-- `weaver-trace-PRD` sections 4.3 and 6: a bracket is closed by its `unload` or
-  terminated by the next run's `load`. Owed if the run bracket is ruled.
-- `weaver-trace-PRD` section 4.3: a `session-manifest` artifact node, so that admin
-  writing the manifest does not read as admin writing the record. Owed with session
-  close, and gated by the reader cell for the fields that need a parse.
 - `WeaverTools-PRD` section 5.2: scoped to requests that belong to an existing turn,
   the approved wording per the ruling of 2026-07-31. As stated, every
   request crossing a seam carries the trace context identifying the turn it belongs

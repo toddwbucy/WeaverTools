@@ -29,6 +29,12 @@ the derivations counting two.
 **Revised:** 2026-08-01, a sixth entry. Section 4's seam-record paragraph resolves
 turn ingress through `weaver-harness-gate-contract`, the gate pair merged per the
 human's ruling of this date.
+**Revised:** 2026-08-01, a seventh entry, the durable-record cut. Section 5's
+custody prose restates from the admin-owned file to the operator's sink, per the
+ruling at `weaver-admin-operator-contract` section 3: the disk paragraphs become
+stream paragraphs, the manifest citation leaves the verbosity clause, and the
+descriptor discipline stands unchanged as the half that never depended on who
+persists the record.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -128,7 +134,7 @@ from that structure only the message sequence. The measurement events, the
 lifecycle events, and the custody records stay in the harness's working state and
 never enter a prompt. This is a discipline of the engine and not a property of the
 model, and it is the seam a later recall feature would breach by rendering the
-durable record back into context. Trace content reaches the model as the ordinary
+record back into context. Trace content reaches the model as the ordinary
 conversation and in no other form.
 
 The message model is provider-agnostic. The concrete transport is constructed at
@@ -190,7 +196,7 @@ not reach into it. Eviction granularity is constrained by the append-only sessio
 protocol and is settled in that crate's PRD and the contract, not here.
 
 **The trace primitive goes to `weaver-trace`.** The span type, the event schema, the
-durable record mechanics, the working-structure projection, and the export
+stream mechanics, the working-structure projection, and the export
 formatters are that crate's. The harness authors events. `weaver-trace` defines
 what an event is and what it costs to commit one.
 
@@ -305,17 +311,17 @@ it was given, and the harness writes `model.request`, `model.output`, and
 every turn, the message events, and the tool-call events. It records the
 `load` event that opens each run, which for `run0` is both the session's first
 entry and the record of `weaver-admin`'s initial contact. One emission per event,
-authored against the durable event schema, feeding the durable record and the
+authored against the durable event schema, feeding the outbound stream and the
 working structure together.
 
 **Sole writer means sole enforcer of verbosity.** `weaver-trace-PRD` section 5 defines
 a floor that is always recorded and a ceiling elected per agent, and the recorder holds
 no policy, so nothing but the harness can decide that a ceiling event is not emitted.
 The harness reads the election from the agent state file at every load and applies it
-for that run, and it authors the run's level into the record so the manifest of
-`weaver-trace-PRD` section 4.3 can carry verbosity per run. A later run finding the
-file changed adopts the new value as its own load condition, which is the mechanism
-working rather than a conflict to refuse.
+for that run, and it authors the run's level into the run's own events so the stream
+states verbosity per run and elected brevity and silent loss stay distinguishable. A
+later run finding the file changed adopts the new value as its own load condition,
+which is the mechanism working rather than a conflict to refuse.
 
 ```graph
 edge: writes
@@ -323,7 +329,7 @@ from: weaver-harness
 to: session-record
 ```
 
-**One emission, two derivations.** The durable record and the working structure
+**One emission, two derivations.** The outbound stream and the working structure
 receive the same authored emission, and neither is a second author. This settles
 schema authority rather than inheriting it: the durable event schema is the author,
 the projection is a view, and a change to what a view wants cannot reach back and
@@ -331,42 +337,38 @@ alter what was recorded. There is no third derivation and no view this program t
 responsibility for: a consumer who wants a front end builds one on the output, on the
 consumer's own compute.
 
-**Nothing on the turn path touches disk.** The harness reads its own trace from the
-working structure in RAM. Even fast storage is too much latency to block a turn on,
-so the durable commit runs off the hot path and a slow or failing disk consumer
-never slows the interior read. The two are failure-isolated. Under pressure the durable
-side reports its growing queue rather than absorbing it, and `weaver-trace-PRD`
-section 4.2 leaves it no cadence to elect and no window to tune. It may never shed
-silently, because the trace is measurement data and a silently partial record renders
-a plausible and wrong account of the turn.
+**Nothing on the turn path waits on the sink.** The harness reads its own trace from
+the working structure in RAM. Even a fast sink is too much latency to block a turn
+on, so the stream write runs off the hot path and a slow or failing sink never slows
+the interior read. The two are failure-isolated. Under pressure the stream side
+reports its growing queue rather than absorbing it, `weaver-trace-PRD` section 4.2
+leaves it no cadence to elect and no window to tune, and what may happen next is the
+marked election of `weaver-admin-operator-contract` section 3. It may never shed
+silently, because the trace is measurement data and a silently partial account
+renders a plausible and wrong story of the turn.
 
-**Custody is structural, not policy.** The trace file is owned by `weaver-admin` and
-belongs to the group the operator shares with it. The agent uid is neither owner nor
-group and holds no bit on the file at all. So the record is readable straight from
-the filesystem with no harness involved, by the `weaver-admin` service through
-custody and by the operator through the shared group, and replay and audit are the
-operator's acts rather than the service's, per `weaver-admin-PRD` sections 7 and 8,
-while the agent that produced it holds nothing of its own.
+**Custody is structural, not policy.** The stream's sink is opened by
+`weaver-admin` under its own principal, per `weaver-admin-operator-contract`
+section 3, and the record the stream accumulates lives on the operator's side of
+it. So the record is readable there with no harness involved, replay and audit are
+the operator's acts over the operator's storage, per `weaver-admin-PRD` sections 7
+and 8, and the agent that produced it holds nothing of its own.
 
-**The agent must not own the file, and this paragraph used to say it did.** An owner
-may change a file's mode whenever it can name the file, so an arrangement that made the
-agent the owner and withheld read would withhold nothing durable. Non-ownership is what
-buys the property, and the argument that used to justify a second lock is the argument
-that removes the first. Two independent locks still deny the name. The first is
-the directory. The trace lives in a folder owned by `weaver-admin` and not
-searchable by the agent uid, so a tool the agent elects, `bash` above all, cannot
-traverse to the file to open it fresh or to change its mode. The kernel refuses the
-path lookup before the file's own bits are consulted. The second is the descriptor
-discipline. **The harness never resolves a trace path.** Descriptors are opened by a
-`weaver-admin` principal and passed to the worker over the coordination socket using
-`SCM_RIGHTS`, so the harness receives handles, never paths, and writes through them.
-The agent is never told the name and could not act on it if it were. Neither lock
-is redundant, because they answer different adversaries. The directory stops the
-agent's tool surface from reaching the file. The descriptor discipline stops the
-harness from being the leak, since a component that never resolves a path holds no
-path to disclose and cannot be induced to open one. The write capability rides the
-descriptor rather than the mode, so custody takes nothing the agent needs for its
-own home directory and work.
+**The agent holds no route to the sink, twice over.** The first lock is the
+operator's provisioning, where the sink is a file: ownership, mode, and the
+directory's search bit deny the agent uid the path, verified by admin at load, so a
+tool the agent elects, `bash` above all, cannot traverse to it. The kernel refuses
+the path lookup before anything else is consulted. The second is the descriptor
+discipline. **The harness never resolves a trace path.** Descriptors are opened by
+a `weaver-admin` principal and passed to the worker over the coordination socket
+using `SCM_RIGHTS`, so the harness receives handles, never paths, and writes
+through them. The agent is never told the name and could not act on it if it were.
+Neither lock is redundant, because they answer different adversaries. The
+provisioning stops the agent's tool surface from reaching the sink. The descriptor
+discipline stops the harness from being the leak, since a component that never
+resolves a path holds no path to disclose and cannot be induced to open one. The
+write capability rides the descriptor rather than the mode, so custody takes
+nothing the agent needs for its own home directory and work.
 
 **Trace descriptors are close-on-exec, and the crate is broken without it.**
 

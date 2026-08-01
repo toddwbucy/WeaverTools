@@ -25,6 +25,14 @@ arbitrates no hardware, the SPU is the one authority on the device, and the
 no-auto-evict guarantee moves with the rejection rather than leaving with it.
 Taken early under the same named exception, because a merged binding contradicted
 by the ruling's charter edits would be a collision in main.
+**Revised:** 2026-08-01, fourth entry, the durable-record cut. Durability is the
+operator's, per the ruling recorded at `weaver-admin-operator-contract` section 3:
+section 2's rebuild-from-record clause dissolves with record-based resume, section
+3's single emission feeds the working structure and the outbound stream, section
+4's definition of done restates the trace items against the declared sink, and
+section 8's replay driver reads the operator-held stream. Taken early under the
+same named exception, because merged contracts now contradict the old wording and
+a collision in main is the case the exception exists for.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -81,15 +89,16 @@ It does **not** mean the agent is stateless within a session. Two things hold
 state across turns inside one session, both deliberate:
 
 - **The KV cache.** It is kept hot and flushed on the harness's terms, not per
-  prompt. It is the one surface holding state that cannot be reconstructed from
-  the durable record, which is what makes it the surface most likely to grow
-  quietly into session state if the line is not drawn. Its owner, its flush
-  trigger, and who is forbidden to touch it are named in `weaver-spu-PRD` as a
-  rule the code can be checked against.
-- **The working structure.** The in-RAM relational projection of the session's
-  trace events. It is volatile and reconstructible by construction: lose the
-  process and lose the working structure, then rebuild it exactly from the
-  durable record. It is working memory, not a store.
+  prompt. It is one of the two surfaces holding state the program cannot
+  reconstruct, which is what makes it the surface most likely to grow quietly
+  into session state if the line is not drawn. Its owner, its flush trigger, and
+  who is forbidden to touch it are named in `weaver-spu-PRD` as a rule the code
+  can be checked against.
+- **The working structure.** The in-RAM relational projection of the run's trace
+  events. It is volatile by construction: lose the process and lose the working
+  structure, and the program rebuilds it from nothing rather than from a record,
+  the stream's accumulation being the operator's per the ruling of 2026-08-01.
+  It is working memory, not a store.
 
 Conversation context is not agent memory. The distinction is the whole of what
 this program defers.
@@ -130,7 +139,8 @@ states how it serves this path.
 9. The response returns through Gate to the client.
 
 Throughout: each event is emitted **once**, and that single emission feeds both
-the volatile working structure and the durable record. Not two writes to
+the volatile working structure and the outbound NDJSON stream, whose durability is
+the operator's per `weaver-admin-operator-contract` section 3. Not two writes to
 reconcile.
 
 The single emission is authored against the **durable event schema**. The
@@ -146,9 +156,10 @@ A stateless agent that:
 
 1. completes a turn end to end, through the gate, with a real local model,
 2. emits a trace that is turn-bracketed, contains only events this system
-   authored with nothing leaked in from dependencies, resolves to the correct
-   path, and conforms to its own schema,
-3. writes that trace where the agent cannot reach it,
+   authored with nothing leaked in from dependencies, reaches the declared sink,
+   and conforms to its own schema,
+3. hands that trace to a sink the agent cannot reach, durability being the
+   operator's per `weaver-admin-operator-contract` section 3,
 4. keeps a hot KV cache across turns, flushed on the harness's terms,
 5. executes a real tool under kernel-enforced OS constraint, with bash as the
    reference case,
@@ -372,8 +383,8 @@ The named set, closed:
 - **Residual-stream readout.** Per-layer activations from the running decoder,
   reduced in place, enabled or disabled per agent by its state file. See
   section 8.
-- **Measurement payloads.** Token identifiers and token entropies, emitted to
-  the durable record at production time. These are what make replay under
+- **Measurement payloads.** Token identifiers and token entropies, emitted into
+  the stream at production time. These are what make replay under
   observation possible. Without them a replay is approximate, and an
   approximate replay of a forward pass is a false diagnosis rather than a weak
   one.
@@ -410,8 +421,9 @@ recorded. These are requirements on `weaver-trace-PRD`, derived from a
 of them observes a forward pass that never happened.
 
 Custody places the replay driver outside the agent. The agent must not own or
-even read its own durable trace, so a tool that reads traces and drives the SPU
-runs as an operator principal. This is structural, not policy.
+even read its own trace, so a tool that reads the operator-held stream and drives
+the SPU runs as an operator principal, over the operator's own storage. This is
+structural, not policy.
 
 ## 9. Out of scope, and how it returns
 

@@ -18,6 +18,10 @@ contract is ruled out.
 owed by the gate pair's merge of this date, and section 2.2 names the scoped claim's
 two consumers, the gate's client socket and the operator surface of
 `weaver-admin-operator-contract`, both credentialed seams.
+**Revised:** 2026-08-01, second entry this date. Section 2.1 gains `trace-sink` as
+the seventh field, the sink the stream is connected to at load, demanded by
+`weaver-admin-operator-contract` section 3 and carried by the durable-record cut of
+this date.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -102,6 +106,9 @@ kind: vocabulary
 node: gate-instruction
 kind: vocabulary
 
+node: trace-sink
+kind: vocabulary
+
 edge: defines
 from: weaver-types
 to: model-binding
@@ -126,6 +133,10 @@ edge: defines
 from: weaver-types
 to: gate-instruction
 
+edge: defines
+from: weaver-types
+to: trace-sink
+
 edge: holds
 from: agent-state-file
 to: model-binding
@@ -149,6 +160,10 @@ to: verbosity-ceiling-election
 edge: holds
 from: agent-state-file
 to: gate-instruction
+
+edge: holds
+from: agent-state-file
+to: trace-sink
 
 edge: elects
 from: permission-mode
@@ -167,8 +182,8 @@ argument the floor's structure rests on is prose the graph cannot see.
 
 Each field is a vocabulary node this crate defines and the artifact holds, because a
 contract's clause draws a field rather than the whole file and an edge needs
-something to point at. The six records above are the six fields this section lists,
-so a clause naming a seventh has no target and the mapping says so.
+something to point at. The seven records above are the seven fields this section
+lists, so a clause naming an eighth has no target and the mapping says so.
 
 There is no `writes` edge from any crate, because the writer is the operator and the
 operator is not a node the graph carries. Both crates that touch the file declare
@@ -176,13 +191,15 @@ operator is not a node the graph carries. Both crates that touch the file declar
 rather than deferring it.
 
 Known fields, from the passes already done: the model binding, the tool set, the
-permission mode, the residual-readout election, the verbosity ceiling election, and
-the gate instruction. The last three arrived from the trace, harness, and gate
-passes rather than from this crate's own reasoning, which is the demand rule working
-as intended. The gate instruction names the socket the gate binds, and it travels
-the way the model binding does: the operator writes it, admin validates it, the
-harness carries it uninterpreted, and the gate resolves it, per `weaver-gate-PRD`
-section 10.
+permission mode, the residual-readout election, the verbosity ceiling election, the
+gate instruction, and the trace sink. The last four arrived from the trace, harness,
+gate, and operator-contract passes rather than from this crate's own reasoning,
+which is the demand rule working as intended. The gate instruction names the socket
+the gate binds, and it travels the way the model binding does: the operator writes
+it, admin validates it, the harness carries it uninterpreted, and the gate resolves
+it, per `weaver-gate-PRD` section 10. The trace sink names where the stream lands,
+per `weaver-admin-operator-contract` section 3: the operator writes it, admin
+validates it and connects the stream to it at load, and no other crate reads it.
 
 Two of those fields are named in `weaver-harness-trace-contract`'s vocabulary clause,
 so the state file is already a declared dependency of a contract this crate is not

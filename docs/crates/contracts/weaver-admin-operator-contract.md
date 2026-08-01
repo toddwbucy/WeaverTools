@@ -180,7 +180,8 @@ This surface's request and answer definitions are owed to `weaver-types-PRD` sec
   operator-to-service cell closes. Landed in the same act.
 - `weaver-types-PRD` section 2.3: the request and answer pair, pending the naming
   ruling, per section 7.
-- The durable-record cut this ruling scopes lands as its own batch and is registered
-  on the open-items list: the program-side checksum, manifest, leave-time file
-  comparison, and record-based session resume dissolve with the record's ownership,
-  and the working list carries the target documents.
+- The durable-record cut this ruling scopes landed on 2026-08-01 as its own batch:
+  the program-side checksum, the manifest, the leave-time comparison, and
+  record-based session resume left the corpus, `weaver-types-PRD` section 2.1
+  gained `trace-sink` on this contract's demand, and what the batch left behind is
+  the enter cell `weaver-admin-PRD` section 10 holds.

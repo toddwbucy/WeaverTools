@@ -116,8 +116,8 @@ makes an unconfirmed release expensive: an occupant that is gone but not confirm
 blocks a device that is free. Section 4.2 states the ordering that follows.
 
 **The hot cache, and the rule apex section 2 asks this charter to state.** The cache is
-the one surface in this program holding state that cannot be reconstructed from the
-durable record, which is why apex section 2 names it the sole exception to statelessness
+the one surface in this program holding state that nothing could reconstruct even
+in principle, which is why apex section 2 names it the sole exception to statelessness
 and assigns its ownership rule here rather than to the crate that uses it. The rule has
 three parts and all three are already settled in the merged corpus. **This crate owns
 the cache.** **The harness owns the flush decision,** per `weaver-harness-PRD` section
@@ -140,7 +140,7 @@ this charter names no event kind.
 ## 3. What this crate must not hold
 
 **Trace authorship, and any route to the record.** It authors no event, holds no event
-kind, and holds no descriptor to the durable record. The route it must not have is
+kind, and holds no descriptor to the stream's sink. The route it must not have is
 concrete rather than abstract: the worker holds the trace descriptors and the
 coordination channel to admin in its address space at the moment it forks, so an SPU
 that inherited either would hold a writable handle to the record its own agent produces

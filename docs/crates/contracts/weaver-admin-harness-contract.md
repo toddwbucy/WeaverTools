@@ -34,6 +34,12 @@ overturned. The integrity witness is retired under ruling B, the recompute excha
 struck entire with its ordering, supplies, and refusal cases, and the append-only
 sender guarantee struck with the O_APPEND argument, close-on-exec standing on its
 own grounds. The exchange count is four.
+**Revised:** 2026-08-01, eighth, the durable-record cut. Durability is the
+operator's per `weaver-admin-operator-contract` section 3, so enter stands up an
+empty working structure rather than projecting a record, leave drains to the stream
+and validates nothing, the departure answer drops the validation outcome, the
+cannot-validate refusal case leaves section 6, and the descriptors admin guarantees
+refer to the sink the configuration declares.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -176,7 +182,7 @@ session identity, the run ordinal, the trace descriptors, the
 model binding, and the gate instruction. The last two are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU or the gate, so
 if admin's intent for either does not cross this seam it crosses nowhere. The harness
-projects the record into a working structure, authors its `load` event, asks the SPU to
+stands up an empty working structure, authors its `load` event, asks the SPU to
 admit the model binding it was handed, and starts Gate last. It answers ready only when
 every step of that fan-out has confirmed, or it refuses, and a refusal names where the
 fan-out stopped, so that admin rolls back what was built without asking a second
@@ -186,11 +192,11 @@ than as parties to this seam.
 
 **Leave the run.** Opened by admin. Admin directs the harness to leave. The harness
 stops Gate first, refuses while a turn is in flight, authors its `unload` event,
-drains the writer's queue, validates the record against the working structure while
-both exist, and releases the SPU. It answers left carrying the validation outcome, or
-it refuses, and a refusal names where the sequence stopped. The record is left open to
-the next run rather than finalized. As with enter, the answer is the aggregate and the
-organs appear in its content rather than as parties to this seam.
+drains the writer's queue to the stream, and releases the SPU. It answers left, or
+it refuses, and a refusal names where the sequence stopped. The stream ends where
+the run did, finalized by nothing, per the ruling of 2026-08-01. As with enter, the
+answer is the aggregate and the organs appear in its content rather than as parties
+to this seam.
 
 **Stop the turn.** Opened by admin. Admin conveys the operator's intent to stop, one
 bit and no work. The harness aborts the turn in flight, the turn closes with the stop
@@ -246,12 +252,12 @@ an obligation on the party that could break it.
 - Exchanges opened by different parties carry no ordering against each other. An alert
   may cross while a directive is outstanding, and neither party may read one as a
   response to the other.
-- An answer to enter arrives only after the record is validated and projected, the
+- An answer to enter arrives only after the working structure is standing, the
   model is admitted, and Gate is started, so admin may rely on a ready answer meaning
   the interior is serving rather than starting. The reliance is exactly as large as
   the fan-out, per section 3.
 - An answer to leave arrives only after the queue is drained, so admin may rely on a
-  left answer meaning what reached the writer reached disk.
+  left answer meaning what was admitted reached the stream.
 - A directive that arrives out of this order is refused and is not queued.
 
 ## 5. What each party supplies and guarantees
@@ -264,8 +270,9 @@ this list.
 trace descriptors, the model binding the fan-out admits,
 the gate instruction the fan-out starts, and the intent to stop.
 
-**Admin guarantees** that every trace descriptor it passes refers to the record of
-the session it named, that the run ordinal is the next one for that session, and
+**Admin guarantees** that every trace descriptor it passes refers to the sink the
+session's configuration declares, that the run ordinal is the next one for that
+session, and
 that the boundary the worker runs inside exists and is correct, because
 admin verified it before the unit started and is the only party positioned to. The
 guarantee is of verification rather than of authorship, since the boundary is the
@@ -275,17 +282,16 @@ read fills, and a full channel is the one way a notification could stall the run
 about.
 
 **The harness supplies** its readiness as the aggregate of the enter fan-out, its
-confirmation of departure carrying the validation outcome, the
-turn's fate on a stop, and its alerts.
+confirmation of departure, the turn's fate on a stop, and its alerts.
 
 **The harness guarantees** that every descriptor it accepts is accepted close-on-exec,
 per section 2, which is an obligation on the receiving call and cannot be met by the
 sender. It guarantees that it authors the run's bracket
 events, that it writes only through the descriptors it was handed, that it resolves no
-path, and that a ready answer is given only after a validated projection, an admitted
-model, and a started gate. It guarantees that a refusal names where the fan-out stopped,
-so that admin rolls back on the answer alone. It guarantees that a refusal to validate a
-record is a refusal rather than a degraded start. It guarantees that a fault reaches the
+path, and that a ready answer is given only after a standing working structure, an
+admitted model, and a started gate. It guarantees that a refusal names where the
+fan-out stopped, so that admin rolls back on the answer alone. It guarantees that a
+fault reaches the
 record before its alert reaches the channel, and that no run blocks on an alert being
 taken. It guarantees that a stop answer follows the close event it reports, so the
 record holds the abort before the channel does.
@@ -302,7 +308,7 @@ test apex section 11 asks for rather than a compile-time pin. What can be pinned
 the shape: one receive site, taking no flag argument, returning a handle the rest of
 the crate cannot construct another way.
 
-**Neither party guarantees the record's tail.** `weaver-trace-PRD` section 4.2
+**Neither party guarantees the stream's tail.** `weaver-trace-PRD` section 4.2
 forfeits the writer's queue to process death and bounds the depth by the deployment,
 so an answer to leave covers what was drained and an abrupt exit covers nothing.
 
@@ -311,7 +317,6 @@ so an answer to leave covers what was drained and an abrupt exit covers nothing.
 Refusals are typed and enumerable, and every one of them is the harness refusing an
 ask, because admin answers nothing. The cases:
 
-- the record cannot be validated, so the run cannot be entered
 - the descriptors are absent, unusable, or do not carry the required flags
 - an organ the enter fans out to refused, and the refusal names which organ and
   carries its reason, so the aggregate answer is one refusal rather than a report to
@@ -324,16 +329,16 @@ by the state, and the answer says at rest. The out-of-order case above still cov
 stop before enter or after leave.
 
 A refusal leaves the harness in the state it was in before the directive. A refused
-enter means no run was entered and no bracket was opened, which is what keeps a
-refused load out of the corruption case that `weaver-admin-PRD` section 5 describes.
+enter means no run was entered and no bracket was opened, so the stream never shows
+a run that was not entered.
 
 **The alert exchange has no refusal,** because it closes on the message that opens it
 and there is nothing left for either party to refuse.
 
 **A worker that dies is not a refusal.** Admin observes the process exit and the
-channel closure together, and what that leaves in the record is the run bracket
-question of `weaver-admin-PRD` section 5. This contract records the observation and
-takes no position on the fix, which is `weaver-trace-PRD`'s.
+channel closure together, and what that leaves on the stream is a run whose `load`
+has no `unload`, a truthful account of a death rather than corruption to repair,
+per `weaver-admin-PRD` section 5.
 
 **Nothing on this seam retries.** A refused directive returns to admin, which either
 rolls back or reports. A harness that retried an author, or an admin that re-sent a

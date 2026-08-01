@@ -13,6 +13,15 @@ is retired, the worker holding the agent uid from its first instruction. Revised
 third time the same day: the `turn.closed` payload states its close kind, clean or
 stopped with reason, per the stop exchange of `weaver-admin-harness-contract`
 section 3.
+**Revised:** 2026-08-01, the durable-record cut. Durability is the operator's, per
+the ruling recorded at `weaver-admin-operator-contract` section 3, and the program
+owns no record: the durable file becomes the outbound stream, recreation-as-resume
+dissolves with every run beginning empty, the checksum, the manifest, read-time
+validation, and run integrity on read leave entire, the gated hash material of
+ruling B leaves with them, and the sequence scope narrows from the session to the
+run, session-wide order being the consumer's to assemble from admin's ordinal.
+What enter becomes without a record is the cell `weaver-admin-PRD` section 10
+holds.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -33,8 +42,9 @@ with the floor, and that grouping is residue from before sole-writer collapsed t
 five-party trace seam to two. Depending on nothing is what this crate has in common with
 the floor. Being drawn by everything is what it does not. The no-dependency claim
 survives contact with the message kinds only because their payloads are opaque here,
-which section 3 states rather than assumes. It defines what an event is, records events
-durably, projects them into a queryable present, and validates a record on read.
+which section 3 states rather than assumes. It defines what an event is, renders each
+one to canonical form once, projects it into a queryable present, and hands the same
+rendering to the outbound stream.
 
 ```graph
 node: weaver-trace
@@ -65,22 +75,23 @@ is written together with the contract that binds it.
 **A turn** is one request through to its final answer, bounded by `turn.started`
 and `turn.closed`.
 
-**A run** is one residency working on a session. `run0` creates the session.
-`run1` and after resume it. A run ends at unload or at process death, and the
-identifier is an ordinal within the session, so which run produced an event is
-answerable from the event alone.
+**A run** is one residency working on a session. `run0` opens the session. A run
+ends at unload or at process death, and the identifier is an ordinal within the
+session, so which run produced an event is answerable from the event alone.
 
-**A session** is the continuity itself, spanning one or more runs. It is the unit
-the agent's conversation belongs to, and it is the boundary statelessness is
-defined against: a new session begins with nothing, and a session that has been
-running for a week is still one session.
+**A session** is the identity the runs share, and the unit the agent's conversation
+belongs to. It is the boundary statelessness is defined against: a new session
+begins with nothing. What continuity a later run of the same session holds is the
+enter cell `weaver-admin-PRD` section 10 names, the program promising none since
+the ruling of 2026-08-01, and the stream's account of the session accumulating on
+the operator's side rather than in anything the program keeps.
 
 ### 2.2 The session has two materializations
 
 The **working structure** is the session in RAM: the volatile relational present,
 a deterministic projection of the event stream. It is what the harness reasons
 over, which makes it state rather than a report about state. It lives for one run,
-and it runs ahead of the durable record by the depth of the writer's queue, per
+and it runs ahead of the outbound stream by the depth of the writer's queue, per
 section 4.2.
 
 **The working structure is append-only by construction.** It offers no update
@@ -93,45 +104,41 @@ cannot produce a mutation because the structure offers no mutation. The audit tr
 property this crate exists to protect requires that guarantee to be architectural,
 not a promise that everyone agreed to keep.
 
-The **durable record** is the session on disk: append-only, sequence-faithful,
-canonical, and outliving both the process and the run. It is a persistent audit
-store that `weaver-admin` reads directly and the agent has no path to.
+The **stream** is the session's outbound account: the same admitted events in the
+same canonical NDJSON form, one event per line, in order, written to the sink the
+operator declares and `weaver-admin` connects at load. Durability is the operator's,
+per `weaver-admin-operator-contract` section 3, and the program holds nothing of the
+stream once it has left the writer.
 
-One session is one record. A run appends to it, so the record accumulates across
-every run of that session and the working structure is rebuilt from it at the start
-of each.
-
-**A record is not a file.** Today it is exactly one, because there is no rotation,
-but the two nouns are kept apart deliberately. If a record ever spans more than one
-file its parts are **segments**, and nothing has to be renamed on the day that
-happens. Defining the word costs a sentence. Discovering that half the corpus used
-`record` to mean `file` would cost considerably more.
+**The session record is what the stream accumulates, and the operator owns it.**
+The name survives the ruling of 2026-08-01 because the thing it names survives: an
+append-only, sequence-faithful, canonical account of the session, outliving process
+and run both. What changed is custody. The record lives on the operator's side of
+the sink, in whatever storage that operator's tooling keeps, and the program neither
+reads it back nor vouches for what stands behind the descriptor. The agent has no
+path to the sink, per `weaver-harness-PRD` section 5, so the custody that matters,
+the agent's exclusion from its own account, does not depend on who persists it.
 
 ```graph
 node: session-record
 kind: artifact
 ```
 
-### 2.3 Recreation is how a session resumes, not only how it is audited
+### 2.3 Projection is deterministic, and resume is no longer its second job
 
-The durable record recreates the working structure exactly over the events it holds.
-That property is usually stated as an audit guarantee, and it is one, but it is first
-a **live mechanism**: rebuilding the working structure from the record is what lets a
-session continue after a restart. `run1` opens the session's record, projects it,
-and appends. Session resume is recreation, and there is no second path for it.
+The projection from admitted events to rows is deterministic: the same events, the
+same schema version, the same projection version, the same rows. That is what makes
+the working structure a derivation rather than a second author, and it is what lets
+a consumer of the stream rebuild an equivalent structure on its own compute and
+trust the result, since the account it holds is the same canonical bytes the
+projection consumed.
 
-**Exactly is scoped to the committed range.** Section 4.2 has the working structure
-running ahead of the record by the depth of the writer's queue, so a record recreates
-the structure as of its last committed event rather than as it stood when the process
-died. Recreation is exact over what the record holds and silent about a forfeited
-tail, and those are two claims rather than one. A resume therefore begins from a whole
-shorter history, which is the case section 4.2 accepts, and never from a partial
-event.
-
-This is why recreation accepts any well-formed record including an operator-provided
-copy, and why the projection must be deterministic rather than approximately
-faithful. A resume that produced slightly different rows would be an agent that
-remembers its own conversation slightly wrong.
+An earlier version of this section made recreation the session-resume mechanism,
+`run1` opening the record, projecting it, and appending. That mechanism dissolved
+with the program-owned record under the ruling of 2026-08-01. Every run begins with
+an empty working structure, the program promises no resume, and what continuity
+across runs becomes, against operator-held storage or the memory round, is the
+enter cell `weaver-admin-PRD` section 10 holds.
 
 ### 2.4 Spans
 
@@ -157,7 +164,7 @@ event-schema versions it consumes.
 
 An event carries an envelope and a payload. The envelope identifies the session, the
 run, the turn, the sequence, the kind, the producing subsystem, the causal parent,
-the payload hash, and **two timestamps**: a session-scoped wall-clock stamp at
+and **two timestamps**: a session-scoped wall-clock stamp at
 millisecond resolution for the calendar question, and a run-scoped monotonic reading
 at nanosecond source with a microsecond floor for interval measurement. The two are
 not interchangeable and neither answers the other's question, which is why there is no
@@ -173,9 +180,10 @@ content. Decoding is the harness's, which links `weaver-traits` and is the only 
 that reads a message as a message.
 
 This is the demand rule rather than a convenience. Section 6 guarantees canonical
-byte form, gapless sequence, a crash-safe commit boundary, deterministic projection,
-exact recreation, run integrity, and typed refusal, and not one of them requires
-knowing what a message says. A crate that depends on no other linking a definition it
+byte form, a gapless run-scoped sequence, an interrogable committed boundary, whole
+events to the sink, deterministic projection, and typed refusal, and not one of
+them requires knowing what a message says. A crate that depends on no other
+linking a definition it
 does not need gives up the property for nothing, so the alternative reading, where
 `weaver-trace` floor-links `weaver-traits` to decode three kinds, is refused on the
 same grounds section 4 refuses everything else it does not demand.
@@ -233,21 +241,18 @@ to: failure-vocabulary
 These six are what `weaver-harness-trace-contract` draws from this crate, so the
 union check of G4 runs against this list rather than against a reading.
 
-**Three fields are recorder-assigned, the rest harness-supplied.** The sequence and
-the payload hash are computed by the recorder on admission, because ordering is a
-property of the record and the hash is taken over the canonical bytes the recorder
-produces. The turn hash of section 4.2 is the third, assigned on the `turn.closed`
-envelope and absent from every other kind. Everything else is a fact only the harness
-holds and the recorder could not derive.
+**One field is recorder-assigned, the rest harness-supplied.** The sequence is
+computed by the recorder on admission, because ordering is a property of the account
+rather than a fact the harness holds. The hashes an earlier version assigned beside
+it left under ruling B and the cut of 2026-08-01. Everything else is a fact only the
+harness holds and the recorder could not derive.
 
-**The recorder assigns properties of the record. It never authors content.** That is
-the line, and all three assigned fields sit on the same side of it: a sequence, a
-hash over canonical bytes, and a hash over a turn's canonical bytes are facts about
-what the record contains rather than statements about what happened. An event is
-content, which is why the harness authors every one of them and why section 3.1
-refuses a commit-checkpoint kind. Assigning a field to an event the harness authored
-does not make the recorder an author. Emitting an event the harness did not author
-would.
+**The recorder assigns properties of the account. It never authors content.** That
+is the line. A sequence is a fact about where an event sits rather than a statement
+about what happened. An event is content, which is why the harness authors every one
+of them and why section 3.1 refuses a commit-checkpoint kind. Assigning a field to
+an event the harness authored does not make the recorder an author. Emitting an
+event the harness did not author would.
 
 ### 3.1 The closed kind set
 
@@ -306,8 +311,8 @@ room between those for an earlier entry, and the worker spawn and descriptor han
 precede the harness existing at all, so they sit outside the trace by construction.
 
 **There is no commit-checkpoint kind.** The committed boundary is interrogable from
-the record itself, and an event marking it would be the recorder authoring into a
-record the harness is the sole writer of.
+the recorder's boundary report, per section 4.2, and an event marking it would be
+the recorder authoring into an account the harness is the sole writer of.
 
 **This enumeration appears in the contract as well, deliberately.** A Spec is derived
 from its crate's PRD plus every contract that crate is party to, so the harness Spec
@@ -340,9 +345,10 @@ free extension, because consumers key on the closed set.
 **`load` and `unload` are event kinds, and they are the run bracket.** Entering a
 run writes its `load` event and leaving it writes its `unload` event, both authored
 by the harness. The minimal run is those two events with nothing between, so **a run
-cannot be empty**, and that is what makes run numbers verifiable rather than merely
-declared. A missing run number is a load episode whose bracket events vanished,
-which is corruption of the same kind as a sequence gap.
+cannot be empty**, and that is what makes run numbers verifiable by whoever reads
+the account rather than merely declared. The program runs no such check since the
+cut of 2026-08-01, the reading being the consumer's, and the property holds either
+way because it is a property of what is written.
 
 The bracket is defined here beside the run field deliberately. A run label that
 could be stamped without the events existing to verify it against would be an
@@ -350,9 +356,9 @@ assertion with nothing behind it, which is the shape of every defect in the prev
 tree's attribute vocabulary.
 
 **A run edge is authored, not inferred.** Its boundaries are known at the moment
-each bracket event is written, because resume writes nothing and the envelope's run
-field is the only place a boundary is recorded. No consumer reconstructs a run by
-range analysis.
+each bracket event is written, because nothing else writes a boundary and the
+envelope's run field is the only place one is recorded. No consumer reconstructs a
+run by range analysis.
 
 **A `turn.closed` payload states which kind of close it was.** A clean close carries
 the turn's completion. A stopped close carries the stop reason in place of one,
@@ -364,28 +370,22 @@ act, per the rule of this section.
 
 ## 4. What producing the trace requires
 
-### 4.1 Create, or resume
+### 4.1 Open
 
-A record is opened by `weaver-admin` while it holds that principal, and the descriptor
-is passed to a worker that has held the agent uid from its first instruction, because
-the init system starts the unit under `User=` and there is no drop to order, per
+The sink is opened by `weaver-admin` while it holds that principal, per
+`weaver-admin-operator-contract` section 3, and the descriptor is passed to a worker
+that has held the agent uid from its first instruction, because the init system
+starts the unit under `User=` and there is no drop to order, per
 `weaver-admin-harness-contract` section 2. The receiving uid confers nothing either
 way: a descriptor crossing a Unix socket is a capability and the kernel rechecks no
 permission at receipt. `weaver-admin` resolves which session is being loaded. The
-harness never learns the path.
+harness never learns a path or a sink's nature.
 
-**`run0` creates.** The record is new and empty, and the working structure begins
-empty with it.
-
-**Every later run resumes.** The record already exists, and before the first event
-of the new run is authored it is read, validated, and projected into a working
-structure. Only then does the run append. A resume that cannot validate its record
-is a failed load rather than a degraded start, because an agent that begins against
-a partial history is one that has silently forgotten part of its own conversation.
-
-The two cases differ only in whether the record was empty. There is no separate
-resume path, no second projection mechanism, and no reconstruction from anything
-other than the record.
+**Every run begins empty.** The working structure starts with nothing, the run's
+first authored event is its `load`, and the stream continues at whatever sink admin
+connected. There is no resume path, per the cut of 2026-08-01, no projection of
+prior history, and no reconstruction from anything, the enter cell of
+`weaver-admin-PRD` section 10 holding what continuity may later become.
 
 **This crate's write surface accepts descriptors, never paths.** That is the API
 consequence of the custody model, and stating it here is what makes custody
@@ -395,17 +395,19 @@ that: a trace-root resolver with zero production callers whose layout described 
 path no artifact ever used, while the security invariant three other documents
 cited was specified against it.
 
-Every descriptor this crate writes through is close-on-exec and append-only. The
-first keeps tool subprocesses from inheriting a writable handle. The second makes
-append-only a property of the handle rather than of the writer behaving well.
+Every descriptor this crate writes through is close-on-exec, and where the sink is
+a file it is append-only as well. The first keeps tool subprocesses from inheriting
+a writable handle. The second makes append-only a property of the handle rather
+than of the writer behaving well, and it applies where the sink has a seek to
+forbid, a pipe or a socket having none.
 
 **The two flags do not arrive by the same route, and only one of them travels.**
 Append-only rides the open file description, so a descriptor passed over a Unix
 socket carries it and the opener confers it once. Close-on-exec rides the
 descriptor, so it does not cross, and the receiving call is the only place it can be
-supplied. `weaver-admin` opens append-only and cannot confer close-on-exec on a
-descriptor it hands over. The harness supplies it at the receive, and
-`weaver-admin-harness-contract` section 5 holds that split.
+supplied. `weaver-admin` opens a file sink append-only and cannot confer
+close-on-exec on a descriptor it hands over. The harness supplies it at the receive,
+and `weaver-admin-harness-contract` section 5 holds that split.
 
 **What is pinnable at compile time is the shape and not the flags.** A behavior on
 the receive path is not a type property, so no pin reaches either flag. What a pin
@@ -418,13 +420,13 @@ it fail when the flag is removed.
 
 One emission per event, and one emission reaches two sinks. The order is fixed and
 is not an implementation detail, because the failure it prevents is a working
-structure holding an event the record never received:
+structure holding an event the stream never received:
 
 1. the harness submits an authored event,
 2. this crate admits it or refuses it with a typed failure,
 3. an admitted event is assigned its sequence and rendered to canonical bytes once,
 4. that one rendering fans out, projected into the working structure and handed to
-   the durable writer in the same act.
+   the stream writer in the same act.
 
 **Refusal sits at admission, ahead of the fan-out.** An event that fails validation
 reaches neither sink and an event that passes reaches both, so there is no state in
@@ -433,65 +435,42 @@ is bounded by section 3, reaching the envelope binding and the octet well-formed
 and never the interior of a payload.
 
 **The working structure lands first and is the acknowledgment.** It is in-process
-memory and the durable writer is a device, so the projection completes and the turn
-proceeds while the append is still in flight. Reads are served at memory latency and
-the durable twin trails. This is a trade the architecture makes deliberately rather
-than a gap in it.
+memory and the sink is not, so the projection completes and the turn proceeds while
+the stream write is still in flight. Reads are served at memory latency and the
+stream trails. This is a trade the architecture makes deliberately rather than a gap
+in it.
 
-**The durable record trails by the depth of the write queue.** Process death forfeits
-whatever the writer had not yet appended. On a fast, quiet device that tail is
-effectively one event. On a saturated, contended, or slow device the queue is deeper
-and so is the loss. **The bound is a property of the deployment, not of this crate.**
-This crate offers no policy field to tune it and no flush cadence to elect, because a
-periodic flush is an interruption on a path whose purpose is to never have one.
+**The stream trails by the depth of the write queue.** Process death forfeits
+whatever the writer had not yet handed to the sink. On a fast, quiet sink that tail
+is effectively one event. On a saturated, contended, or slow sink the queue is
+deeper and so is the loss. **The bound is a property of the deployment, not of this
+crate.** This crate offers no policy field to tune it and no flush cadence to elect,
+because a periodic flush is an interruption on a path whose purpose is to never have
+one. What may happen under sustained pressure is the marked election of
+`weaver-admin-operator-contract` section 3, and nothing here widens it.
 
-**What reached disk is whole.** A record truncates at an event boundary and never
-inside one, so recreation replays a shorter history rather than a damaged one, and
-the run that comes back is missing its tail rather than holding a corrupted middle.
+**What reaches the sink is whole.** The writer hands the sink complete events and
+never a partial one, so a consumer's account truncates at an event boundary rather
+than holding a corrupted middle.
 
-The three states of the commit boundary describe where an event sits in that fan-out.
-**Committed** has been appended, survives process death, and is what recreation and
-export read. **Pending** has been admitted and projected and is still in the writer's
-queue, so it is the loss window, whose depth the storage sets rather than an election.
-**Failed** is a durable write that errored against a live process, and it is surfaced.
+The three states of the commit boundary describe where an event sits in that
+fan-out. **Committed** has been handed to the sink and is what the operator's
+account holds. **Pending** has been admitted and projected and is still in the
+writer's queue, so it is the loss window, whose depth the deployment sets rather
+than an election. **Failed** is a stream write that errored against a live process,
+and it is surfaced.
 
-**Silent shed is forbidden while the process lives.** A durable write that fails under
-a running process is named and surfaced and never swallowed, because the process is
-there to report it. A tail lost to process death is a different failure, unreportable
-by the thing that died, and the record must not present the two as one. A trace is
-measurement data, and a silently partial record does not produce a gap a reader can
-see. It produces a coherent account of a session that did not happen.
+**Silent shed is forbidden while the process lives.** A stream write that fails
+under a running process is named and surfaced and never swallowed, because the
+process is there to report it. A tail lost to process death is a different failure,
+unreportable by the thing that died, and the account must not present the two as
+one. A trace is measurement data, and a silently partial account does not produce a
+gap a reader can see. It produces a coherent account of a session that did not
+happen.
 
-**Each turn carries a hash over its own events, computed before the fan-out.** At
-turn close the recorder hashes the canonical bytes of the events that turn brackets
-and assigns the value to the `turn.closed` envelope, alongside the sequence and the
-payload hash, per section 3. It is not a payload field, because a payload is content
-the harness authored and this is a property of the record the recorder derived. One
-computation, one value, and the fan-out delivers it to both sinks, so the working
-structure and the durable record hold a figure produced from the same bytes in the
-same act.
-
-**The hash verifies the append-only property of section 2.2. It does not detect
-loss.** A structure with no mutation surface should not be able to disagree with the
-record, and a recomputation over the working structure that disagrees with the value
-the record carries is evidence that it did. That is the check the audit trust
-property needs, because a structural guarantee is worth having and worth witnessing.
-A forfeited tail is a different matter and section 4.2 already names it.
-
-**The cost is bounded by the turn and not by the session.** A turn appends its delta
-to a resident context rather than resending the conversation, so the events a turn
-brackets do not grow with the history behind them and turn fifty costs about what
-turn one cost. That bound is why this is a standing requirement rather than an
-elective audit.
-
-The recorder computes the value, carries it, and recomputes it on request. It never
-compares and never concludes. `weaver-admin` holds the trigger and the frequency,
-because scheduling an audit belongs to the auditor, and the harness answers rather
-than schedules.
-
-**Nothing on the turn path touches disk.** The harness reads the working structure
-in RAM. The durable append runs off the hot path, and a slow or failing durable
-consumer never slows the interior read. The two are failure-isolated.
+**Nothing on the turn path waits on the sink.** The harness reads the working
+structure in RAM. The stream write runs off the hot path, and a slow or failing
+sink never slows the interior read. The two are failure-isolated.
 
 **Canonical form is one mechanism, used everywhere.** Integer fields that can exceed
 the double-safe range serialize as decimal strings. Nanosecond values exceed it by
@@ -510,30 +489,19 @@ cannot resolve finer than the fastest thing it measures makes that advantage
 invisible. This is systems-architecture timing, not network timing, and the decimal
 string exists to carry the digits rather than to dodge an exception.
 
-### 4.3 Maintain
+### 4.3 Drain
 
-**One session is one record, and there is no rotation.** However many runs a
-session spans, they append to the same file. Rotation would make a record a set of
-files, which would put an ordering and enumeration problem into recreation, and
-recreation is the mechanism session resume depends on. If a session ever runs long
-enough that one file is a problem, rotation arrives as a schema and manifest
-extension. It is not built in advance of that.
+A run ends at unload or at process death. At unload the writer's queue is drained,
+so a left answer on the coordination seam means everything admitted reached the
+sink, per `weaver-admin-harness-contract` section 4. At process death the queue's
+tail is forfeited, per section 4.2, and nothing drains it.
 
-A run ends at unload or at process death. Ending a run is not ending the session, so the
-writer's queue is drained and the record left open to the next run rather than
-finalized. Finalization belongs to the session, not the run.
-
-Close is ordered: drain, then checksum, then write the manifest. The manifest is
-written last because it describes a finalized artifact, and a manifest that
-describes a file still being written describes nothing.
-
-The manifest carries the committed sequence range, the artifact hash, the run count,
-the verbosity of each run, and a completeness status. **The manifest records
-verbosity per run and never once for the session.** Verbosity is a load condition of
-one run per section 5, so a single session-wide field would be a field that cannot
-state the truth about a session whose runs differed. **A producer emits
-status and never a conclusion.** Whether an artifact is usable is a reading a
-consumer performs, and absence of a completeness block is never read as complete.
+That is the whole of maintenance since the cut of 2026-08-01. There is no
+finalization, no checksum, and no manifest, because the program owns no artifact to
+finalize: what shape the account takes at rest, whether one file or many, rotated or
+not, indexed or not, is the operator's tooling's business on the operator's side of
+the sink. `session.closed` is content, authored by the harness like every other
+event, and the stream simply ends where the session did.
 
 ## 5. Verbosity
 
@@ -563,11 +531,12 @@ is the conversation, which is the floor, replayed so a later run can rebuild con
 by re-tokenizing what was said. A run recorded at the floor therefore leaves its
 successor a whole conversation, which is the only thing a successor draws from it.
 
-Two consequences. **The manifest records the verbosity of each run**, per section 4.3,
-or elected brevity and silent loss look identical to a reader and the completeness
-status is defeated. **Replay requires the ceiling**, because the token identifiers and
-sampler parameters it needs live in the measurement payload, so a run recorded at the
-floor is reproduced rather than diagnosed, and a reader makes that judgment per run.
+Two consequences. **The stream states the verbosity of each run**, authored by the
+harness into the run's own events, or elected brevity and silent loss look identical
+to a consumer of the account. **Replay requires the ceiling**, because the token
+identifiers and sampler parameters it needs live in the measurement payload, so a
+run recorded at the floor is reproduced rather than diagnosed, and a reader makes
+that judgment per run.
 
 **There is no seal, and the residual election needs none.** An earlier version of this
 section fixed the ceiling at `run0` and had later runs read the record rather than the
@@ -583,35 +552,28 @@ run elected the ceiling.
 ## 6. What this crate guarantees
 
 - Canonical byte form, one rule, all artifacts.
-- A strictly increasing, gapless sequence over committed events, **scoped to the
-  session** and therefore continuous across every run that appends to it. The word
-  monotonic is reserved in this charter for the clock of section 4.2. The sequence is
-  the order and the clock is the instrument, and reading either for the other's job
-  is an error the contract names explicitly.
-- A crash-safe commit with an explicit committed boundary. Crash safety is a
-  property of what reached disk, which truncates at an event boundary and never
-  inside one. It is not a promise that nothing is lost, because section 4.2
-  forfeits the writer's queue to process death and bounds that queue by the
-  deployment rather than by this crate.
-- Deterministic projection: the same record, the same schema version, the same
+- A strictly increasing, gapless sequence over admitted events, **scoped to the
+  run**. Session-wide order is the pair of admin's run ordinal and the sequence,
+  assembled by the consumer, because the program holds nothing across a residency
+  since the cut of 2026-08-01. The word monotonic is reserved in this charter for
+  the clock of section 4.2. The sequence is the order and the clock is the
+  instrument, and reading either for the other's job is an error the contract names
+  explicitly.
+- An explicit committed boundary, interrogable while the process lives: what was
+  handed to the sink, what the queue still holds, and what failed. It is not a
+  promise that nothing is lost, because section 4.2 forfeits the writer's queue to
+  process death and bounds that queue by the deployment rather than by this crate.
+- Whole events to the sink, never a partial one, so a consumer's account truncates
+  at an event boundary.
+- Deterministic projection: the same events, the same schema version, the same
   projection version, the same rows.
-- Exact recreation of the working structure from any well-formed record, over that
-  record's committed range, including an operator-provided copy. Recreation does not
-  privilege the original file, and it does not restore a tail that section 4.2
-  forfeited.
-- Run integrity on read: run 0 present, run numbers contiguous from 0 with no
-  repeats and no holes, and every run opening with its `load` event and closing with
-  its `unload` event. A broken bracket is corruption even when the number is
-  present, so this is stronger than a number check.
-- A per-turn hash over the events a turn brackets, computed once before the fan-out,
-  carried in both materializations, and recomputable on demand over the working
-  structure. It is an integrity witness for the append-only property of section 2.2
-  rather than a durability mechanism, and this crate produces it without judging it.
-- Mechanical validity checking on read, and a typed refusal rather than a partial
-  result. Authenticity is not judged here, because the operator owns what is
-  submitted.
 - Typed failure for every refusal. Nothing fails silently and nothing returns a
   partial result with a success status.
+
+What left this list on 2026-08-01, deliberately rather than by drift: exact
+recreation, run integrity on read, mechanical validity on read, and the per-turn
+hash. Each presupposed a program-owned record to read back, and the ruling recorded
+at `weaver-admin-operator-contract` section 3 places the record with the operator.
 
 ## 7. The seam
 
@@ -680,11 +642,6 @@ its contracts and never from a working list. A working list holds what has no ow
 yet, and an item moves into a charter the moment it acquires one. That list is never
 ratified and shrinks toward empty, so work parked only there is work that evaporates.
 
-Twin reconciliation was staged here and is no longer. It is a requirement of section
-4.2 and section 6, promoted when its grounds changed from durability monitoring to
-integrity verification, and a requirement does not sit in this section waiting for
-bandwidth.
-
 **The in-RAM engine.** The working structure is append-only by construction per
 section 2.2, so `rusqlite` is out on that ground before the C-dependency question is
 reached. What remains is the shape of the hand-rolled engine. It must not regress to
@@ -700,15 +657,9 @@ the Spec pass.
 **The weight of the previous durability implementation.** The previous tree's
 `event_log.rs` is 2,773 lines carrying canonical byte encoding, payload hashing,
 sequence-gap detection, a committed-versus-pending boundary, and commit-pressure
-policy. Whether that implementation is heavier than the obligation requires is worth
-examining, and this is a question about the implementation rather than about whether
-the format is right. **Entry condition:** the Spec pass.
-
-**Two cells the hash leaves open.** Section 4.2 fixes that a per-turn hash exists,
-when it is computed, and who triggers the comparison. It does not fix the hash
-domain, meaning exactly which bytes of which events are covered, nor whether
-recomputation runs over the projected rows or over retained canonical bytes. Both are
-representation questions. **Entry condition:** the Spec pass.
+policy. The obligation it would be read against shrank under the cut of 2026-08-01,
+so the examination is now whether anything beyond canonical encoding, the boundary,
+and pressure surfacing survives at all. **Entry condition:** the Spec pass.
 
 ## 10. Open ruling
 

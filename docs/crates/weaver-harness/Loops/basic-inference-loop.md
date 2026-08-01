@@ -1,6 +1,10 @@
 # Basic Inference Loop
 
-**Status:** DRAFT v0.10, 2026-08-01, third entry this date. The tee back-pressure
+**Status:** DRAFT v0.11, 2026-08-01, fourth entry this date. The durable-record cut
+lands: enter stands up an empty working structure, leave drains and validates
+nothing, section 5 places the record with the operator, and the register's ruling B
+paragraph gains its resolution note. Previously v0.10, third entry this date. The
+tee back-pressure
 cell narrows to the marked elections of `weaver-admin-operator-contract` section 3,
 the tee promise now stating its bounds, a silent drop contractually impossible.
 Previously v0.9, second entry this date. The gate pair merged on
@@ -89,7 +93,11 @@ contracts and the charters that carried them. Ruling B's cut of `weaver-trace-PR
 and the leave-time material waits on the durable-record ruling: whether the trace
 crate still persists internally with the tee adding the outbound copy, or the
 consumer owns persistence and the durable record dissolves, which would also
-dissolve the only session-resume path the corpus holds.
+dissolve the only session-resume path the corpus holds. That ruling landed
+2026-08-01, the consumer owning persistence, recorded at
+`weaver-admin-operator-contract` section 3 and carried across the corpus by the cut
+batch of that date, the enter question left as the cell `weaver-admin-PRD` section
+10 holds.
 
 **Ruling C** takes its own entry, apart from the two above, because it overturns an
 apex binding and they do not. Admin arbitrates no hardware and reasons about the
@@ -133,17 +141,20 @@ Three levels, strictly nested. Session over run over turn.
 
 A **session** is opened by `run0`'s load event, there being no
 `session.started`, per `weaver-trace-PRD` section 3.1. Admin resolves the session
-identity and opens the record under its own principal before any run exists, per
-`weaver-admin-PRD` section 4.1, and the record is a file rather than the session.
-An empty record rolled back before enter was never a session at all. A session
-spans runs. `session.closed` is in the merged kind set with its
-shape proposed at `weaver-admin-PRD` section 4.4, its ordering is the open cell in
-section 7, and nothing in the basic loop depends on the answer.
+identity and opens the stream's sink under its own principal before any run
+exists, per `weaver-admin-PRD` section 4.1, and the sink is a connection rather
+than the session. A sink connected and never written was never a session at all. A
+session spans runs in the stream's account, and what a later run holds of it is
+the enter cell `weaver-admin-PRD` section 10 names. `session.closed` is in the
+merged kind set with its shape proposed at `weaver-admin-PRD` section 4.4, its
+ordering is the open cell in section 7, and nothing in the basic loop depends on
+the answer.
 
 A **run** is the agent's life. The load event opens it and the unload event closes
 it. One run, bookended, with its turns inside. Runs are monotonic under admin's
-ordinal, supplied in the enter directive and validated by the trace on read. The
-ordinal is not a trace counter. The trace validates what admin authored.
+ordinal, supplied in the enter directive. The ordinal is not a trace counter, and
+where it survives an admin restart is a face of the enter cell `weaver-admin-PRD`
+section 10 holds.
 
 A **turn** is one external exchange, bounded by the boundary crossing. It opens at the
 harness's `turn.started` off the gate's inbound crossing and closes at the harness's
@@ -194,8 +205,9 @@ governed by `weaver-gate-world-contract` as of the same date. The gate's lifecyc
 position is stated in section 3.
 
 Admin's interface is the lifecycle exchanges of the contract, and the program's one
-output is the NDJSON structure exiting at admin, whose relationship to the durable
-record awaits the ruling the register above names. Admin monitors nothing. It holds
+output is the NDJSON stream exiting at admin, per `weaver-admin-operator-contract`
+section 3, the ruling the register above awaited having landed on 2026-08-01.
+Admin monitors nothing. It holds
 no session with a watcher, keeps no watch of its own, and interprets no content,
 which is custody without comprehension per `weaver-admin-PRD` section 3. If
 something external watches the output and decides the agent must be stopped or
@@ -210,13 +222,13 @@ reaches validate, which starts no process and joins no loop. Three operator acts
 then, all crossing at admin, carried by the exchanges of
 `weaver-admin-harness-contract` section 3, and all three are merged.
 
-**Enter the run.** Admin resolves the session, opens the record under its own
-principal, and directs the harness to enter, supplying the session identity, the
-run ordinal, the trace descriptors, the
+**Enter the run.** Admin resolves the session, opens the stream's sink under its
+own principal, and directs the harness to enter, supplying the session identity,
+the run ordinal, the trace descriptors, the
 model binding, and the gate instruction. The harness never resolves a path and
 never learns a name. Descriptors cross once, in this directive, and are not
-re-sent, revoked, or replaced. The harness projects the record into a working
-structure, authors its load event, which is the run opening, asks the SPU to admit
+re-sent, revoked, or replaced. The harness stands up an empty working structure,
+authors its load event, which is the run opening, asks the SPU to admit
 the model binding it was handed, and starts Gate last. It answers ready only when
 every step of that fan-out has confirmed, or it refuses naming where the fan-out
 stopped, so that admin rolls back without asking a second question. Per contract
@@ -224,10 +236,9 @@ section 3 and `weaver-admin-PRD` section 4.1.
 
 **Leave the run.** Admin directs the harness to leave. The harness stops Gate
 first, refuses while a turn is in flight, authors its unload event, which is the
-run closing, drains the writer's queue, validates the record against the working
-structure while both exist, and releases the SPU last. It answers left carrying
-the validation outcome. The record is left open to the next run rather than
-finalized, which is why session close is a separate cell. Per contract section 3
+run closing, drains the writer's queue to the stream, and releases the SPU last.
+It answers left. The stream ends where the run did, finalized by nothing, which is
+why session close is only the authoring of its own event. Per contract section 3
 and `weaver-admin-PRD` section 4.2. Gate last up, Gate first down: the agent is
 never reachable while its interior is half built or half torn down.
 
@@ -275,24 +286,27 @@ downstream reads its input out of it. The decoder reads from the harness. The
 trace witnesses the traffic, it does not carry it.
 
 One emission, two derivations, per `weaver-harness-PRD` section 5. The harness
-authors each event once. The durable record is the schema author, the working
+authors each event once. The durable event schema is the author, the working
 structure is a derivation, and a change to what a view wants
 cannot reach back and alter what was recorded. Admission precedes the fan-out per
-`weaver-trace-PRD` section 4.2: one rendering reaches both trace sinks in the same
-act, the working structure lands first and is the acknowledgment, and the durable
-side trails by the writer's queue with no cadence to elect and no window to tune.
-It may never shed silently. Nothing on the turn path touches disk, and a slow or
-failing disk consumer never slows the interior read. There is no third derivation
+`weaver-trace-PRD` section 4.2: one rendering reaches both sinks in the same act,
+the working structure lands first and is the acknowledgment, and the stream side
+trails by the writer's queue with no cadence to elect and no window to tune.
+It may never shed silently. Nothing on the turn path waits on the sink, and a slow
+or failing sink never slows the interior read. There is no third derivation
 and no view this program takes responsibility for: a consumer who wants a front end
 builds one on the output exiting admin, on the consumer's own compute, and if
 accountability matters to that consumer they hash the stream as it lands, before
 they persist it, on their own hardware.
 
-The durable record does not move. When the memory round comes, memory returns as
-a new socket peer under its own contract, consuming finished traces, while the
-trace stays the harness-linked recorder, per `WeaverTools-PRD` sections 5.1 and
-9. The record is the framework's obligation. The view is the consumer's choice.
-The two paths are deliberately asymmetric and the asymmetry is the point.
+The record moved, by ruling. Durability is the operator's as of 2026-08-01, the
+program's obligation ending at the tee, per `weaver-admin-operator-contract`
+section 3, and the record is what the stream accumulates on the operator's side of
+the sink. When the memory round comes, memory returns as a new socket peer under
+its own contract, per `WeaverTools-PRD` sections 5.1 and 9, and what it consumes is
+that round's question, answered against operator-held storage per the enter cell
+`weaver-admin-PRD` section 10 holds. The stream is the framework's obligation.
+Everything after the sink is the consumer's.
 
 ## 6. The harness
 

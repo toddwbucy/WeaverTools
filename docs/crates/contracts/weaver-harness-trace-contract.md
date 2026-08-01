@@ -14,6 +14,12 @@ vocabulary, and the conformance list keeps close-on-exec while the hash and
 append-only items go. Read-time validation beyond the payload-hash check, the
 divergence artifact, and the companion charter's cut stand untouched pending the
 durable-record ruling.
+**Revised:** 2026-08-01, the durable-record cut. The ruling recorded at
+`weaver-admin-operator-contract` section 3 places durability with the operator, so
+the resume exchange leaves section 2 entire, validation on read, run integrity, and
+the divergence artifact leave the recorder's obligations and the prohibitions, the
+record-based entries leave the failure vocabulary, sequence scope narrows to the
+run, and the conformance list keeps what the tee still promises.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -31,8 +37,8 @@ contract is done.
   worth recording, when a session begins and ends, what a turn is, and at what
   verbosity each run records. Holds every descriptor.
 - **`weaver-trace`, the recorder.** Assigns ordering, produces canonical form,
-  commits durably, projects into the working structure, validates on read. Holds no
-  policy and decides nothing about content.
+  projects into the working structure, and hands the same rendering to the outbound
+  stream. Holds no policy and decides nothing about content.
 
 No third party writes. Components elsewhere in the system report to the harness and
 the harness authors. A crate that emits directly into the trace is outside this
@@ -142,32 +148,22 @@ rather than one a reader resolves by choosing.
 
 ## 1. What this contract governs
 
-The production seam: how an authored event becomes a durable record and a queryable
-present, what each party guarantees to the other, and what happens when either
-fails.
+The production seam: how an authored event becomes the outbound stream and a
+queryable present, what each party guarantees to the other, and what happens when
+either fails.
 
 It does **not** govern the content of events, which is the harness's, nor the
 internal storage mechanism, which is `weaver-trace`'s, nor how any consumer reads a
 finished artifact, which is a separate agreement.
 
-## 2. Two exchanges
+## 2. One exchange
 
-The seam carries two, and the second is easy to overlook because it happens once
-per run rather than once per event.
+The seam carried two until the cut of 2026-08-01. The resume exchange left with the
+program-owned record: every run begins with an empty working structure, per
+`weaver-trace-PRD` section 4.1, and there is nothing for the recorder to read back.
+What remains is the exchange that happens once per event.
 
-### 2.1 Resume
-
-Before the first event of a run is authored, the harness asks the recorder to
-project the session's existing record into a working structure. The recorder reads,
-validates, and projects, or refuses with a named failure and produces nothing.
-
-For `run0` the record is empty and the projection is empty with it. For every later
-run this is how the session continues, so **a refusal here fails the load** rather
-than starting the run against a partial history. There is no degraded resume. An
-agent that begins against an incomplete projection is one that has silently
-forgotten part of its own conversation, and it has no way to discover that it did.
-
-### 2.2 Emit
+### 2.1 Emit
 
 One authored event moves through four steps, in this order, always.
 
@@ -180,15 +176,14 @@ One authored event moves through four steps, in this order, always.
 3. **Order and canonicalize.** An admitted event is assigned its sequence and
    rendered to canonical bytes once.
 4. **Fan out.** That one rendering enters the working structure and is handed to the
-   durable writer in the same act, and the assigned sequence returns to the harness.
+   stream writer in the same act, and the assigned sequence returns to the harness.
 
 **The order is the guarantee.** Admission precedes the fan-out, so neither
-materialization can hold an event the other refused. A working structure containing
-what the record cannot is a divergence with no detection point, and the harness would
-reason over history no restart will reproduce.
+materialization can hold an event the other refused, and the account the operator
+accumulates is the same admitted events the harness reasons over.
 
-The working structure lands first and is the acknowledgment. The durable append trails
-by the depth of the writer's queue, per `weaver-trace-PRD` section 4.2, and process
+The working structure lands first and is the acknowledgment. The stream trails by
+the depth of the writer's queue, per `weaver-trace-PRD` section 4.2, and process
 death forfeits whatever that queue still held.
 
 ## 3. What the harness owes
@@ -201,7 +196,7 @@ component does not submit.
 producing subsystem, and the causal parent when one applies. `weaver-trace` has no
 notion of a turn or of a load episode and must not acquire one. A run is bracketed
 by the harness authoring its `load` and `unload` events, so the recorder could not
-infer a run boundary even if it tried, because resume writes nothing.
+infer a run boundary even if it tried, because nothing else writes one.
 
 **Both timestamps, stamped at authoring.** The recorder's own clock would read
 commit or receive time, which is a later and different quantity, so it does not own
@@ -227,8 +222,8 @@ wall-clock is session-wide and is the calendar, monotonic is run-scoped and is t
 microsecond instrument. No field is ever read for the one job it cannot do.
 
 **Descriptors, never paths.** Every write target is supplied as an already-open
-descriptor, obtained from `weaver-admin` before the worker drops privilege. The
-harness never asks the recorder to open a path, and the recorder offers no way to.
+descriptor, obtained from `weaver-admin` in the enter directive. The harness never
+asks the recorder to open a path, and the recorder offers no way to.
 
 **Policy.** The verbosity level for the run. The recorder applies it and does not
 choose it.
@@ -250,56 +245,30 @@ though it were a new occurrence.
 ## 4. What the recorder owes
 
 **Ordering.** Sequence numbers are assigned by the recorder, strictly increasing
-**within the session**, with no duplicates and no gaps among committed events. The
-scope is the session and not the run, because a resuming run appends to the record
-its predecessor started and continues its numbering. Monotonicity is guaranteed
-against the session rather than against wall-clock time, and reads follow sequence
-order.
+**within the run**, with no duplicates and no gaps among admitted events. The scope
+narrowed from the session on 2026-08-01, because a recorder that begins every run
+empty holds nothing to continue numbering from. Session-wide order is the pair of
+admin's run ordinal and the sequence, assembled by the consumer, per
+`weaver-trace-PRD` section 6. Reads follow sequence order.
 
 **Canonical form.** One byte-form rule for every artifact it writes. Integer fields
 that can exceed the double-safe range are written as decimal strings, so a consumer
 parsing numbers as doubles cannot read a silently different value.
 
-**A commit boundary that can be interrogated.** The last committed sequence, the last
-admitted sequence, the current depth of the writer's queue, and the last commit error
-when one exists. The queue depth is reported rather than bounded, because the bound is
-the storage's and not the recorder's.
+**A commit boundary that can be interrogated.** The last sequence handed to the
+sink, the last admitted sequence, the current depth of the writer's queue, and the
+last stream-write error when one exists. The queue depth is reported rather than
+bounded, because the bound is the deployment's and not the recorder's.
 
-**Durability without silent loss.** When the durable append cannot keep pace, the
-recorder surfaces the pressure rather than absorbing it, and a write that fails under
-a live process is named. It never drops an admitted event quietly. A tail forfeited to
-process death is outside this obligation, because the process that would report it is
-the one that died.
+**No silent loss.** When the stream cannot keep pace, the recorder surfaces the
+pressure rather than absorbing it, a write that fails under a live process is named,
+and what may happen next is the marked election of `weaver-admin-operator-contract`
+section 3. It never drops an admitted event quietly. A tail forfeited to process
+death is outside this obligation, because the process that would report it is the
+one that died.
 
-**Writing the divergence artifact.** The recorder writes it. It is the only party
-permitted to write, and the prohibition on the harness reaching an artifact directly is
-not suspended by an error state. The harness detects the disagreement and asks. The
-recorder writes the working structure whole, through a descriptor it was given, and does
-not modify the record. Which party supplies that descriptor and when it crosses is a
-Spec question, marked as one here: descriptors cross once at enter per
-`weaver-admin-harness-contract` section 3, and a divergence is only known to be
-needed at unload. Whether that means a descriptor supplied at enter for a case that
-usually does not occur, or one supplied at the moment of need, is a mechanism this
-contract does not choose.
-
-**Deterministic projection.** The same record, schema version, and projection version
-yield the same rows. The working structure is rebuildable exactly from committed
-events, and rebuilding only reads.
-
-**Validation on read.** Envelope version, known kind, sequence monotonicity, no
-duplicate committed sequence, payload decodes for its kind,
-required fields present, coherent committed boundary, and no trailing bytes
-masquerading as committed.
-
-**Run integrity, checked at the same time.** Run 0 present, run numbers contiguous
-from 0 with no repeats and no holes, and every run opening with its `load` event and
-closing with its `unload` event. A run whose bracket is broken is corrupt even when
-its number is present, so a number check alone is weaker than the property. This is
-the run-level analogue of the gapless-sequence check, and a record showing runs 0, 1,
-1, 2, 5, 8 fails on both counts.
-
-A malformed record is refused rather than partially accepted. Authenticity is not
-judged, because the operator owns what is submitted.
+**Deterministic projection.** The same events, schema version, and projection
+version yield the same rows.
 
 **Typed failure.** Every refusal is named. Nothing returns a partial result with a
 success status.
@@ -315,27 +284,22 @@ crate's Spec.
   sequence and assigns one after admission, so at submit time there is nothing to
   conflict with. A duplicate sequence is reachable on read, where section 4 checks
   for it, and that is a different failure.
-- **Commit failed.** The event was admitted and the durable writer could not append
-  it. The session is failed rather than continued.
-- **Commit pressure.** The durable append cannot keep pace and the writer's queue is
-  growing. Surfaced as an event while the record remains writable, or as a fatal
-  error when it does not.
-- **Projection failed after admission.** The durable writer holds the event and the
-  working structure does not. **The recorder owns the resolution:** rebuild the
-  projection from the record, or fail loudly. It must never continue against a
-  silently stale present.
-- **Unload divergence.** At the close of a run the working structure and the durable
-  record disagree under the comparison of `weaver-admin-PRD` section 4.2. Neither party
-  resolves it. The record is not modified, the working structure is written beside it,
-  and the session closes in a declared error state rather than closing certified.
-- **Record invalid on read.** Recreation refuses. Names the check that failed and the
-  sequence range involved when known.
-- **Resume refused.** The same validity checks applied at run start rather than at
-  audit time. The consequence differs: an audit read that refuses leaves an operator
-  to investigate, while a resume that refuses means the agent does not load. Both
-  refuse whole and neither returns a partial projection.
+- **Commit failed.** The event was admitted and the stream writer could not hand it
+  to the sink. The session is failed rather than continued.
+- **Commit pressure.** The stream cannot keep pace and the writer's queue is
+  growing. Surfaced as an event while the sink remains writable, or as a fatal
+  error when it does not, and what follows is the marked election of
+  `weaver-admin-operator-contract` section 3.
+- **Projection failed after admission.** The stream writer holds the event and the
+  working structure does not. **The recorder owns the resolution:** fail loudly. It
+  must never continue against a silently stale present, and there is no record to
+  rebuild from since the cut of 2026-08-01.
 - **Write target unusable.** A descriptor is closed, is not writable, or does not
   satisfy the required flags.
+
+Three entries left this vocabulary with the cut of 2026-08-01, unload divergence,
+record invalid on read, and resume refused, each presupposing a program-owned record
+to read back.
 
 ## 6. What neither party may do
 
@@ -347,37 +311,16 @@ recorder that acquires any of these has taken cognition into the floor.
 not for tests, not behind a feature. A path-taking function is a way around the
 custody boundary, and its existence is the defect regardless of who calls it.
 
-**The harness may not reach the artifact directly.** It writes through the recorder
-and reads through the working structure. It does not open, seek, truncate, or
-inspect the file, and it holds no path with which it could.
+**The harness may not reach the sink directly.** It writes through the recorder
+and reads through the working structure. It does not open, seek, or inspect what
+stands behind the descriptor, and it holds no path with which it could.
 
 **Neither may write a second authoritative representation.** Derived views are
 permitted when they name the committed source range they represent and do not claim
-completeness beyond it. A derived view is never a durable home.
-
-**The divergence artifact is not a second authoritative representation.** When an
-unload validation finds the working structure and the durable record in disagreement,
-the working structure is written to a second file beside the record and both survive.
-That file is permitted, and the reasoning is written out here rather than left to be
-reconstructed from the paragraph above, because the reconstruction is the work an
-auditor would otherwise have to perform to know the artifact is legitimate.
-
-It is not authoritative, and neither is the record while the pair stands. Both are held
-precisely because the disagreement has not been adjudicated, and nothing in the system
-will adjudicate it without an operator. What the prohibition above forbids is a
-representation claiming to be the true one, and this artifact exists to claim the
-opposite.
-
-It is not a derived view, so the durable-home clause does not reach it either. A derived
-view names a committed source range and is reproducible from it. This is the working
-structure written out verbatim under a declared error state, and the reason it must be
-written at all is that it is not reproducible. The record can be read again at any time.
-The side that disagreed with it cannot, because the process holding it is the one
-ending.
-
-It is evidence, produced at the only moment it is producible, and it is never read as
-the record. A reader recreating a session reads the record. A reader investigating the
-error state reads both and decides which one the operator keeps.
+completeness beyond it. A derived view is never a durable home. The divergence
+artifact an earlier version excepted here left with the leave-time comparison on
+2026-08-01, there being no program-owned record for the working structure to
+diverge from.
 
 **Neither may make a span durable.** Spans are views over event ranges, produced on
 demand. Writing a span into the record makes it a primitive and reintroduces the
@@ -397,32 +340,20 @@ the kind set is closed and consumers key on it.
 
 How each check is implemented is Spec work. What must be checkable is stated here.
 
-- A refused submission leaves no row in the working structure.
-- A resume against a valid record yields a projection matching what the previous run
-  held at its last committed event.
-- A resume against an invalid record fails the load and produces no partial
-  projection.
-- Sequence continues across a resume rather than restarting, so a session spanning
-  several runs has one unbroken numbering.
-- A projection failure after admission rebuilds or fails, and never continues stale.
-- Committed sequence is monotonic and gapless under concurrent authoring during a
-  single run.
-- Run 0 is present, run numbers are contiguous from 0, and every run opens with its
-  `load` event and closes with its `unload` event.
+- A refused submission leaves no row in the working structure and no line on the
+  stream.
+- Admitted sequence is monotonic and gapless under concurrent authoring during a
+  single run, and every run's numbering begins fresh.
+- A projection failure after admission fails loudly and never continues stale.
 - A monotonic reading is never compared across a run boundary.
-- A truncated tail reads as uncommitted rather than committed.
-- The working structure rebuilt from a record matches the live projection over the
-  committed range.
+- The stream receives whole events and never a partial one.
+- What reaches the stream is byte-identical to the canonical rendering the working
+  structure projected, one rendering feeding both.
 - No write surface accepts a path. This is a compile-time property and is pinned as
   one, because a runtime test cannot demonstrate the absence of a function.
 - Every descriptor the harness holds is close-on-exec, supplied at the one receive
   site.
-- Commit pressure is surfaced as an event while the record remains writable and is
+- Commit pressure is surfaced as an event while the sink remains writable and is
   fatal when it is not.
 - Every `turn.closed` states its close kind, clean or stopped with reason.
-- No stored span appears in any record.
-- After a divergence write the record is byte-unchanged from what it held before the
-  comparison ran.
-- Given the pair produced by a divergence, the record is identifiable as the record
-  without reference to filenames. Which mechanism carries that identification is the
-  Spec's, and the property is that one exists.
+- No stored span appears on the stream.
