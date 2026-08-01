@@ -1,10 +1,9 @@
 # weaver-gate - PRD (crate charter)
 
-**Status:** DRAFT. Re-cut in the implementation seat under the demotion ruling of
-2026-07-31, with `weaver-harness-gate-contract` as one act, per apex section 10, and
-carrying no decisions. It reaches the lifecycle half of this crate, the hook the enter
-and leave directives raise and lower. The exchanges that carry work arrive with the
-token workflow.
+**Status:** MERGED. In `main` and the source of truth for now, per the human's ruling
+of 2026-08-01 that a document on `main` is merged and not a draft. It reaches the
+lifecycle half of this crate, the hook the enter and leave directives raise and
+lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
 **Revised:** 2026-07-31. The full re-draft the edit register of this date orders. The
@@ -20,6 +19,12 @@ returns to its own root, its parent to the apex, and its seam to its own declara
 under the organ rule.
 **Revised:** 2026-07-31, once more. The live-view mention leaves section 3, the live
 view retired under ruling A of the subtraction batch.
+**Revised:** 2026-08-01. The status moves from draft to merged on the human's ruling
+of this date, and the on-merge edits of section 11 land in the same act:
+`gate-instruction` enters `weaver-types-PRD` section 2.1, the predicate citation
+lands in 2.2, and `weaver-harness-PRD` section 4 resolves turn ingress through the
+contract. Section 10's client-boundary and wire-framing cells close against
+`weaver-gate-world`, written this date on the same ruling.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -283,45 +288,41 @@ hold bind failure is the cell `weaver-spu-PRD` section 10 holds for its cases, a
 this charter rides that cell rather than opening a twin. **Settled by:** the ruling
 that settles it there.
 
-**Wire framing at the client socket.** How a prompt is delimited and how a client
-knows a response has ended, the cell the basic loop carries. **Settled by:** the spec
-seat, when the token workflow's contract half drafts.
+**Wire framing at the client socket is closed.** Newline-delimited JSON, one request
+line and one response line per turn, ruled at `weaver-gate-world` section 2 on
+2026-08-01. The field shapes stay with the spec seat and streaming with the token
+workflow, per that contract's section 3.
 
-**The gate instruction's home.** This act rules it a field of the agent's
-configuration file, defined at `weaver-types-PRD` section 2.1 beside `model-binding`,
-on the identical grounds: the operator writes it, admin validates it, the harness
-carries it, this crate resolves it. **Settled by:** merge of this charter, with the
-types edit owed in section 11.
+**The gate instruction's home is closed.** A field of the agent's configuration
+file, defined at `weaver-types-PRD` section 2.1 beside `model-binding`, on the
+identical grounds: the operator writes it, admin validates it, the harness carries
+it, this crate resolves it. The types edit landed with the merge of this charter on
+2026-08-01.
 
-**The client boundary's seam category.** The client socket is a place an outside
-principal asks the program to act, and the near party is a human or a front-end
-process rather than a crate, so the Document Format's party edge has no category for
-it. This is the second instance of the cell `weaver-admin-PRD` section 10 holds for
-the operator-to-service socket, and it rides that cell rather than opening a twin.
-**Settled by:** the ruling that settles it there.
+**The client boundary's seam category is closed.** The client socket takes a
+contract of its own, `weaver-gate-world`, per the human's ruling of 2026-08-01 that
+the external boundaries are contracted before any Spec. The party category the
+Document Format lacked is owed to the Format by `weaver-admin-operator` section 8,
+one register entry for both instances.
 
 ## 11. Edits owed in the same act
 
 Named here because a document whose reach cannot be read for the reach is a trap.
-These are owed by this act and this list is the authoritative one under G5.
+These are owed by this act and this list is the authoritative one under G5. An entry
+leaves this register when the edit lands.
 
-- `weaver-types-PRD` section 2.1: `gate-instruction` arrives as a configuration file
-  field, per section 10 of this charter.
+**Four left on 2026-08-01, with the merge of this pair.** The `gate-instruction`
+field landed in `weaver-types-PRD` section 2.1, the predicate's consumer citation in
+2.2, the turn-ingress resolution in `weaver-harness-PRD` section 4, and the
+open-items entry on this contract's name settled with the name standing as filed.
+
 - `weaver-types-PRD` section 2.3: this seam's directive and answer arrive on demand,
   drawn by the contract, seam-owned rather than reused across seams, with their names
   pending the naming ruling `weaver-spu-PRD` section 10 holds, per the contract's
   section 7.
-- `weaver-types-PRD` section 2.2: the boundary predicate of section 2 is the consumer
-  that subsection's scoped claim has waited on, and its prose gains the citation when
-  this pair merges.
-- `weaver-harness-PRD` section 4: the sentence holding turn ingress open until this
-  crate is chartered resolves by pointing at `weaver-harness-gate-contract`, gaining
-  no record there, the organ declaring in section 6 of this charter. On merge.
 - `WeaverTools-PRD`: the gate's rows and prose join the correction list's demotion
   entry, the component table, the section 3 path, and the organ framing of section 6,
   all filing with the re-authoring.
-- `open-items.md`: the corrections item on this contract's name settles on merge, the
-  name standing as filed. Named by substance because that list renumbers.
 
 ## 12. Children
 

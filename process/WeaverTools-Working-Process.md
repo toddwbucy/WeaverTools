@@ -1,8 +1,11 @@
 # WeaverTools Working Process
 
-**Version:** v0.8, 2026-08-01. The v0.8 change is section 7's post-merge redraw,
-the batch of 2026-07-31 moving from the working tree to merged and the gate pair
-standing as the draft it is. The v0.7 change redrew section 7's map to the tree
+**Version:** v0.9, 2026-08-01, second entry this date. The v0.9 change is section 7
+again: the gate pair merged on the human's ruling, the two external-boundary
+contracts arrived as blockers before any Spec, and the durable-record cut entered
+what remains. The v0.8 change was section 7's post-merge redraw, the batch of
+2026-07-31 moving from the working tree to merged and the gate pair standing as the
+draft it then was. The v0.7 change redrew section 7's map to the tree
 of 2026-07-31, three passes having merged against a map that still read the admin
 pass as next, and corrected this header's pointer at that section from six to seven.
 The v0.6 change was section 2's stub ruling and gate G7.
@@ -277,24 +280,28 @@ known gap with a named owner.
 
 ## 7. Current position
 
-Phase one. Six charters are merged: `weaver-harness` with `weaver-trace` as its
-member, `weaver-traits` and `weaver-types` as the floor, `weaver-admin`, and
-`weaver-spu`, half chartered by ruling to the end of the lifecycle workflow. Three
-contracts are merged beside them, coordination, trace production, and residency,
-with `weaver-organ-channel` as the drawn material the organ contracts share.
+Phase one. Seven charters are merged: `weaver-harness` with `weaver-trace` as its
+member, `weaver-traits` and `weaver-types` as the floor, `weaver-admin`,
+`weaver-spu`, half chartered by ruling to the end of the lifecycle workflow, and
+`weaver-gate`, chartered to the same boundary. Six contracts are merged beside them,
+coordination, trace production, residency, the gate seam, and the two external
+boundaries, `weaver-admin-operator` and `weaver-gate-world`, with
+`weaver-organ-channel` as the drawn material the organ contracts share.
 
 The batch of 2026-07-31 merged to `main` on 2026-08-01: the stop exchange and the
 close kind, the subtraction rulings retiring the live view, the integrity witness,
 and admin's device arbitration, the apex's conflict binding relocated to SPU
 admission, and the `basic-inference-loop` workflow pair under the harness's
-`Loops/` directory. The `weaver-gate` pair rides in the tree as a draft carrying no
-decisions, re-drafted under the demotion ruling of that date, the organ's job
-simplified to a local hook and its standing unchanged, and its merge remains below.
+`Loops/` directory. The `weaver-gate` pair merged on 2026-08-01 on the human's
+ruling that a document on `main` is merged, and the external boundaries took their
+contracts the same day, `weaver-admin-operator` and `weaver-gate-world`, written as
+blockers before any Spec.
 
-What remains in this phase: the fault-carrier ruling, which holds the alert
-rerouting and the bracket semantic, the gate pair's merge, the apex re-authoring,
-which waits on all seven charters and is the one piece of collected work that cannot
-be taken early, and then the Specs, written last against the settled set.
+What remains in this phase: the durable-record cut the ruling of 2026-08-01 scopes,
+registered on the open-items list, the fault-carrier ruling, which holds the alert
+rerouting and the bracket semantic, the apex re-authoring, whose waiting condition,
+all seven charters, is now met, and then the Specs, written last against the
+settled set.
 
 Nothing ratifies until the whole set maps, so no milestone here is a ratification.
 Merged means the work may move forward, which is what merged is for.

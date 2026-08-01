@@ -1,6 +1,10 @@
 # Basic Inference Loop
 
-**Status:** DRAFT v0.8, 2026-08-01. The post-merge sweep of the open-items list: the
+**Status:** DRAFT v0.9, 2026-08-01, second entry this date. The gate pair merged on
+the human's ruling, so section 2's proposal note resolves, and the wire-framing cell
+leaves section 7, settled by `weaver-gate-world` at the delimiter level with the
+field shapes staying with the spec seat. Previously v0.8, the post-merge sweep of
+the open-items list: the
 batch of 2026-07-31 merged to main, the rulings register below is struck as landed,
 section 3 stops counting the stop exchange as unmerged, and the diagram redraws
 carrying the enter ordering of v0.5, the live view's retirement under ruling A, and
@@ -181,9 +185,10 @@ does not pick the organ.
 The gate, in this loop, is a local Unix socket hook on the front end, the mouth
 and the ears, an opaque pass-through with no translation and no opinions about
 content in either direction. Whoever connects gets to converse with the agent and
-gets nothing else. The gate charter is drafted and unmerged, so everything in this
-paragraph is a proposal awaiting its merge, drafted against ruling 3 above. The
-gate's lifecycle position is merged fact and is stated in section 3.
+gets nothing else. The gate charter merged on 2026-08-01, so this paragraph stands
+on it rather than proposing ahead of it, and the client socket's own boundary is
+governed by `weaver-gate-world` as of the same date. The gate's lifecycle position
+is stated in section 3.
 
 Admin's interface is the lifecycle exchanges of the contract, and the program's one
 output is the NDJSON structure exiting at admin, whose relationship to the durable
@@ -310,9 +315,6 @@ Each cell names the ruling or measurement it awaits.
 - **Session close ordering.** The shape of `session.closed` is proposed at
   `weaver-admin-PRD` section 4.4 and only its ordering is open. Awaits an
   architecture ruling, and nothing in the basic loop depends on it.
-- **Wire framing at the gate socket.** How a prompt is delimited and how a client
-  knows a response has ended. Awaits the spec seat, decided when the gate
-  contract drafts against ruling 3.
 - **Stop mechanics at the decoder.** Whether stop cancels a generation mid-decode
   or takes effect at the next boundary the SPU offers. The trace semantics are
   settled either way, the turn closes with the reason marked. Awaits the spec

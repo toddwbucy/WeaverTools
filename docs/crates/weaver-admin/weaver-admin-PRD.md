@@ -45,6 +45,12 @@ child all come out, the load renumbers to seven steps, a device conflict becomes
 admission refusal inside the enter fan-out landing in section 5's bracket case, and
 the rhetorical uses of the word device rename to instrument so the one token means
 the GPU.
+**Revised:** 2026-08-01, a ninth entry. The operator surface takes its contract,
+`weaver-admin-operator`, written as a blocker before any Spec per the human's ruling
+of this date: section 8 cites it and section 10's operator-to-service cell closes.
+That contract also records the durable-record ruling of the same date, durability
+being the operator's with the program's obligation ending at the NDJSON tee, and the
+cut it scopes is registered on the open-items list rather than landed here.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -794,8 +800,9 @@ a constraint rather than rediscovered.
 conveys the operator's intent to stop across the contract's stop exchange. It carries
 no work, per section 3. It is not network ingress and breaches nothing Gate holds, on
 the grounds section 3 states. It is the whole of how the role reaches the service,
-and it is a seam by the Working Process test, so section 10 names it as one rather
-than this section contracting it in passing.
+and it is a seam by the Working Process test, governed by `weaver-admin-operator` as
+of 2026-08-01, which also carries the format of what crosses and the output stream
+the durable-record ruling of that date defines.
 
 **Reading and analysis of finished records is not this crate's, and not this
 repository's.** An earlier reading named `weaver-admin-tools` a member of this domain,
@@ -911,12 +918,12 @@ want, and section 8's departure narrows it rather than removing it. **Settled by
 ruling on what kind of edge a read-side consumer of `weaver-trace` declares. No longer
 waits on a tooling crate.
 
-**The operator-to-service seam.** Section 8's socket is a place one party asks another
-to act across a process line, which by Working Process section 4 is a seam and takes a
-contract. Section 6 does not declare it, because the near party is a human role rather
-than a crate and the Document Format's party edge has no category for that. **Settled
-by:** the front-end pass, which is where the surface is designed. Named here so the
-seam is inherited rather than rediscovered.
+**The operator-to-service seam is closed.** Section 8's socket is governed by
+`weaver-admin-operator`, written on the human's ruling of 2026-08-01 that the
+external boundaries are contracted before any Spec. Section 6 still does not declare
+it, because the near party is a human role rather than a crate, and the party
+category the Document Format lacks is owed to the Format by that contract's own
+register, one entry covering this seam and the gate's client boundary both.
 
 **Whether there is a configuration-file contract at all.** `weaver-types-PRD` section 6
 defers one to this pass, and the ruling that moved authorship to the operator changed
@@ -970,7 +977,7 @@ moved, and the apex re-authoring still waits on all seven charters.
   same section all point at it, and stating it in three charters instead is the
   duplication G5 exists to catch. Files with the apex re-authoring.
 - `weaver-types-PRD` section 2.1: the artifact is renamed from `agent-state-file` to a
-  configuration name, its five `holds` edges follow the node, and the producer becomes
+  configuration name, its six `holds` edges follow the node, and the producer becomes
   the operator rather than `weaver-admin`. The graph record in section 2 of this
   charter keeps the old identifier until this lands, because a node renamed on one side
   only is a dangling edge, and the two move in one act.

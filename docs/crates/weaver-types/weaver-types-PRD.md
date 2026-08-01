@@ -14,6 +14,10 @@ being the operator and the readers two, and the deferred state-file contract is
 recorded as ruled out rather than pending. Revised a third time: section 2.1's edge
 sentence, wrong on both halves, now states that no writes edge exists and that the
 contract is ruled out.
+**Revised:** 2026-08-01. Section 2.1 gains `gate-instruction` as the sixth field,
+owed by the gate pair's merge of this date, and section 2.2 names the scoped claim's
+two consumers, the gate's client socket and the operator surface of
+`weaver-admin-operator`, both credentialed seams.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -72,7 +76,7 @@ harness consumes the elections it carries.
 
 **The identifier is wrong and its correction is owed rather than taken here.** The file
 is configuration, read at load and fixed for the run, and the agent's state is the
-trace. Renaming the node reaches this section, its five `holds` edges, and every
+trace. Renaming the node reaches this section, its six `holds` edges, and every
 citation in the corpus, which is one act on the corrections branch rather than a
 change made beside a producer correction.
 
@@ -95,6 +99,9 @@ kind: vocabulary
 node: verbosity-ceiling-election
 kind: vocabulary
 
+node: gate-instruction
+kind: vocabulary
+
 edge: defines
 from: weaver-types
 to: model-binding
@@ -115,6 +122,10 @@ edge: defines
 from: weaver-types
 to: verbosity-ceiling-election
 
+edge: defines
+from: weaver-types
+to: gate-instruction
+
 edge: holds
 from: agent-state-file
 to: model-binding
@@ -134,6 +145,10 @@ to: residual-readout-election
 edge: holds
 from: agent-state-file
 to: verbosity-ceiling-election
+
+edge: holds
+from: agent-state-file
+to: gate-instruction
 
 edge: elects
 from: permission-mode
@@ -152,8 +167,8 @@ argument the floor's structure rests on is prose the graph cannot see.
 
 Each field is a vocabulary node this crate defines and the artifact holds, because a
 contract's clause draws a field rather than the whole file and an edge needs
-something to point at. The five records above are the five fields this section lists,
-so a clause naming a sixth has no target and the mapping says so.
+something to point at. The six records above are the six fields this section lists,
+so a clause naming a seventh has no target and the mapping says so.
 
 There is no `writes` edge from any crate, because the writer is the operator and the
 operator is not a node the graph carries. Both crates that touch the file declare
@@ -161,9 +176,13 @@ operator is not a node the graph carries. Both crates that touch the file declar
 rather than deferring it.
 
 Known fields, from the passes already done: the model binding, the tool set, the
-permission mode, the residual-readout election, and the verbosity ceiling election.
-The last two arrived from the trace and harness passes rather than from this crate's
-own reasoning, which is the demand rule working as intended.
+permission mode, the residual-readout election, the verbosity ceiling election, and
+the gate instruction. The last three arrived from the trace, harness, and gate
+passes rather than from this crate's own reasoning, which is the demand rule working
+as intended. The gate instruction names the socket the gate binds, and it travels
+the way the model binding does: the operator writes it, admin validates it, the
+harness carries it uninterpreted, and the gate resolves it, per `weaver-gate-PRD`
+section 10.
 
 Two of those fields are named in `weaver-harness-trace-contract`'s vocabulary clause,
 so the state file is already a declared dependency of a contract this crate is not
@@ -206,6 +225,12 @@ creating process at both ends, distinguishes nothing, and authenticates by posse
 instead. That contract draws neither definition below and says so. A universal with a
 counterexample is a weaker seat than a scoped claim that holds, and the scoped claim is
 what the carve-out rests on.
+
+**The scoped claim has its consumers named as of 2026-08-01.** The client socket of
+`weaver-gate-PRD` section 2 is the seam that admits an outside principal, and the
+operator surface `weaver-admin-operator` governs is the seam the operator reaches
+the service on. Both authenticate by `SO_PEERCRED`, both judge by the one shared
+rule, and both draw the pair below.
 
 **Alongside the identity type, this crate carries the authorization predicate, and
 that is a deliberate exception to holding only data.** The rule that decides whether a

@@ -1,14 +1,18 @@
 # weaver-harness / weaver-gate - contract
 
-**Status:** DRAFT. Written with the re-cut `weaver-gate-PRD` as one act, per apex
-section 10, and carrying no decisions. This content replaces the placeholder of
-2026-07-29 at its own name, which is the consumption the v0.6 stub ruling shapes. It
-governs the lifecycle half of this seam, the raise and the lower. The exchanges that
-carry work arrive with the token workflow.
+**Status:** MERGED. In `main` and the source of truth for now, per the human's ruling
+of 2026-08-01 that a document on `main` is merged and not a draft. This content
+replaces the placeholder of 2026-07-29 at its own name, which is the consumption the
+v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise and
+the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
 **Revised:** 2026-07-31. The live-view write end leaves the fork enumeration and the
 prohibitions, the live view retired under ruling A of the subtraction batch.
+**Revised:** 2026-08-01. The status moves from draft to merged on the human's ruling
+of this date, with the register landings recorded at `weaver-gate-PRD` section 11.
+The client socket this seam raises gains its own contract, `weaver-gate-world`,
+written the same date.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.

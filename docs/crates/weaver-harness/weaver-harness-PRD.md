@@ -26,6 +26,9 @@ leaving sections 2, 4, and 5, and the ruling that introduced it overturned. The
 integrity witness is retired under ruling B, the answered-here paragraph and the
 O_APPEND argument leaving section 5, close-on-exec standing on its own grounds, and
 the derivations counting two.
+**Revised:** 2026-08-01, a sixth entry. Section 4's seam-record paragraph resolves
+turn ingress through `weaver-harness-gate-contract`, the gate pair merged per the
+human's ruling of this date.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -266,14 +269,12 @@ from: weaver-harness
 to: weaver-types
 ```
 
-The socket seams above carry no records here, and the reason differs by seam. A
-seam without the contract that governs it fails G3 rather than passing incompletely,
-and a stub is not that contract: a stub settles nothing and declares no records, so
-there is nothing for a `via` field to name. The turn ingress seam is in that state
-and stays there until `weaver-gate` is chartered, which is the write-together rule
-arriving as a mechanical fact rather than as an argument. The decode seam resolves
-through `weaver-harness-spu-contract`, declared from the SPU's side per the organ
-rule of Document Format section 4, and no record is declared here on that crate's
+The socket seams above carry no records here. A seam without the contract that
+governs it fails G3 rather than passing incompletely, and none is in that state now:
+the turn ingress seam resolves through `weaver-harness-gate-contract` as of the gate
+pair's merge on 2026-08-01, and the decode seam through
+`weaver-harness-spu-contract`, each declared from the organ's side per the organ
+rule of Document Format section 4, with no record declared here on either crate's
 behalf.
 
 The coordination seam is no longer in that state. `weaver-admin-harness-contract` is
