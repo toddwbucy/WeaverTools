@@ -13,7 +13,19 @@ review from three seams to four, the trace link seam having been uncounted since
 charter was written. Revised again the same day: section 1's argued drop ordering is
 retired with the drop itself, and section 3's orchestration paragraph is split
 between the transition, which is admin's, and the fan-out inside the directives,
-which is the harness's.
+which is the harness's. Revised a third time the same day: section 2 cites the
+interrupt's channel. Per the rulings carried by
+`basic-inference-loop`. Revised a fourth time the same day: section 4's seam-record
+paragraph resolves the decode seam through `weaver-harness-spu-contract`, landing
+the edit registered in `weaver-spu-PRD` section 11, whose entry leaves in the same
+act, and section 5's custody paragraph reads the record by the service through
+custody and the operator through the shared group, replay and audit being the
+operator's acts. Revised a fifth time the same day, the subtraction batch. The live
+view is retired under ruling A, its node, its exit, and its receive-side obligation
+leaving sections 2, 4, and 5, and the ruling that introduced it overturned. The
+integrity witness is retired under ruling B, the answered-here paragraph and the
+O_APPEND argument leaving section 5, close-on-exec standing on its own grounds, and
+the derivations counting two.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -69,9 +81,9 @@ which is why it is stated rather than assumed.
 
 ## 2. What the harness owns
 
-**The agentic engine.** The query loop, tool dispatch, batch partitioning, and the
-`QueryEvent` stream that is the rendering interface for every consumer. The loop
-runs until the model returns a final answer or the operator interrupts it.
+**The agentic engine.** The query loop, tool dispatch, and batch partitioning. The
+loop runs until the model returns a final answer or the operator interrupts it, the
+interrupt arriving as the stop exchange of `weaver-admin-harness-contract` section 3.
 
 **The tool system.** The registry, the execution context, and the permission modes.
 Permission modes are operator policy and not a safety boundary. What a tool can
@@ -219,7 +231,7 @@ The three sockets:
 |---|---|---|
 | Turn ingress | `weaver-gate` | Receives authenticated work. Gate never reaches past it. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
-| Coordination | `weaver-admin` | Receives lifecycle sequencing and the trace descriptors of section 5. Reports readiness and confirmation. Opens its own exchanges to raise `harness-alert`, which is the direction that makes the seam duplex. |
+| Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptors of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens its own exchanges to raise `harness-alert`, which is the direction that makes the seam duplex. |
 
 **The harness raises alerts and does not assume where they land.** An alert is its
 own exchange on the coordination channel, opened by the harness, and the emit point is
@@ -254,12 +266,15 @@ from: weaver-harness
 to: weaver-types
 ```
 
-The three socket seams above carry no records yet, and the reason differs by seam. A
+The socket seams above carry no records here, and the reason differs by seam. A
 seam without the contract that governs it fails G3 rather than passing incompletely,
 and a stub is not that contract: a stub settles nothing and declares no records, so
-there is nothing for a `via` field to name. The turn ingress and decode seams are in
-that state and stay there until `weaver-gate` and `weaver-spu` are chartered, which is
-the write-together rule arriving as a mechanical fact rather than as an argument.
+there is nothing for a `via` field to name. The turn ingress seam is in that state
+and stays there until `weaver-gate` is chartered, which is the write-together rule
+arriving as a mechanical fact rather than as an argument. The decode seam resolves
+through `weaver-harness-spu-contract`, declared from the SPU's side per the organ
+rule of Document Format section 4, and no record is declared here on that crate's
+behalf.
 
 The coordination seam is no longer in that state. `weaver-admin-harness-contract` is
 written and declares the seam from admin's side, per the Document Format rule that on
@@ -301,36 +316,19 @@ for that run, and it authors the run's level into the record so the manifest of
 file changed adopts the new value as its own load condition, which is the mechanism
 working rather than a conflict to refuse.
 
-**The integrity check is answered here and scheduled elsewhere.**
-`weaver-trace-PRD` section 4.2 puts a per-turn hash in both materializations and
-gives the trigger to `weaver-admin`. The harness answers such a request by
-recomputing the value over the working structure and returning it, and it does not
-compare, schedule, or act on the result. What admin asks for, in what shape, what it
-does with a mismatch, and how the request reaches a running worker are settled by
-`weaver-admin-harness-contract` sections 3 and 6, which is where this stub closed.
-What a mismatch obliges sits with `weaver-admin` as the auditor and does not return
-here.
-
-No seam edge is declared for it. The Document Format has the organ declare on an
-organ channel, and admin is the organ on this one, so declaring it here would put an
-edge in the graph on another crate's behalf and give a clean resolve to a seam that
-does not exist.
-
 ```graph
 edge: writes
 from: weaver-harness
 to: session-record
 ```
 
-**One emission, three derivations.** The `QueryEvent` stream is the third, alongside
-the durable record and the working structure, and it is not a second event system.
-It is a lossy projection of the same authored emission, serving live operator
-rendering only. A consumer that falls behind misses events, which is acceptable
-because a dropped frame in an operator view is not a hole in the record. It carries
-no measurement payload and it is never authoritative. This settles schema authority
-rather than inheriting it: the durable event schema is the author, every other form
-is a view, and a change to what a renderer wants cannot reach back and alter what
-was recorded.
+**One emission, two derivations.** The durable record and the working structure
+receive the same authored emission, and neither is a second author. This settles
+schema authority rather than inheriting it: the durable event schema is the author,
+the projection is a view, and a change to what a view wants cannot reach back and
+alter what was recorded. There is no third derivation and no view this program takes
+responsibility for: a consumer who wants a front end builds one on the output, on the
+consumer's own compute.
 
 **Nothing on the turn path touches disk.** The harness reads its own trace from the
 working structure in RAM. Even fast storage is too much latency to block a turn on,
@@ -343,9 +341,11 @@ a plausible and wrong account of the turn.
 
 **Custody is structural, not policy.** The trace file is owned by `weaver-admin` and
 belongs to the group the operator shares with it. The agent uid is neither owner nor
-group and holds no bit on the file at all. So `weaver-admin` reads the trace directly
-from the filesystem with no harness involved, which is what makes operator-side replay
-and audit possible, while the agent that produced it holds nothing of its own.
+group and holds no bit on the file at all. So the record is readable straight from
+the filesystem with no harness involved, by the `weaver-admin` service through
+custody and by the operator through the shared group, and replay and audit are the
+operator's acts rather than the service's, per `weaver-admin-PRD` sections 7 and 8,
+while the agent that produced it holds nothing of its own.
 
 **The agent must not own the file, and this paragraph used to say it did.** An owner
 may change a file's mode whenever it can name the file, so an arrangement that made the
@@ -367,38 +367,24 @@ path to disclose and cannot be induced to open one. The write capability rides t
 descriptor rather than the mode, so custody takes nothing the agent needs for its
 own home directory and work.
 
-**Trace descriptors are close-on-exec and append-only, and the crate is broken
-without either.**
+**Trace descriptors are close-on-exec, and the crate is broken without it.**
 
 Without `O_CLOEXEC`, every subprocess the harness spawns for a tool call inherits a
 writable handle to the trace, and the agent edits its own audit record through a
 descriptor requiring no path and passing no check.
 
-Without `O_APPEND`, the handle can seek, so a write lands wherever the file
-position sits and a holder of the descriptor can overwrite history rather than
-extend it. With it, every write is placed atomically at end of file regardless of
-position, and the record can be added to but not unwritten through that handle.
-This is what makes append-only a property of the descriptor rather than of the
-writer behaving well, and it is why a compromised harness can append falsehood but
-cannot erase what already happened.
+The flag rides the descriptor and does not cross with a passed handle, so the
+receiving call is the only place it can be supplied and supplying it is this crate's
+obligation rather than the sender's. `weaver-admin-harness-contract` section 5 holds
+that obligation.
 
-**The two flags do not arrive by the same route, and only one of them travels.**
-Append-only rides the open file description, so it crosses with a descriptor passed
-over a Unix socket and `weaver-admin` confers it once at the open. Close-on-exec rides
-the descriptor and does not cross, so the receiving call is the only place it can be
-supplied and supplying it is this crate's obligation rather than the sender's.
-`weaver-admin-harness-contract` section 5 holds that split, and
-`weaver-trace-PRD` section 4.1 states the same mechanism.
-
-Both are invisible at runtime until exploited, and a test that opens a trace normally
-will never see either. **Neither is reachable by a compile-time pin.** A behavior on
-the receive path is not a type property, and an earlier reading of this section called
-the pair the crate's highest-value pin, which the mechanism above falsifies. What a pin
-does reach is the shape of the receive: one receive site, taking no flag argument,
-returning a handle the rest of the crate cannot construct another way. That pin is
-real and it is a different claim. The flags themselves take the perturbation-verified
-test of apex section 11, and the test counts only when it has been watched to fail with
-the flag removed.
+It is invisible at runtime until exploited, and a test that opens a trace normally
+will never see it. **It is not reachable by a compile-time pin.** A behavior on the
+receive path is not a type property. What a pin does reach is the shape of the
+receive: one receive site, taking no flag argument, returning a handle the rest of
+the crate cannot construct another way. That pin is real and it is a different claim.
+The flag itself takes the perturbation-verified test of apex section 11, and the test
+counts only when it has been watched to fail with the flag removed.
 
 **The harness reads, the model does not.** The harness reads the trace continuously,
 because the working structure is its projection and every prompt assembly is a read

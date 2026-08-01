@@ -1,10 +1,20 @@
 # WeaverTools Document Format
 
-**Version:** v0.5, 2026-07-31. Companion to the Working Process. Project documents
-carry a version and a date and no state, per Working Process section 2. The v0.5
-change is one entry: the artifact example in section 3 stops naming `weaver-admin` as
-the state file's writer and stops citing the deferred state-file contract, both
-retired by the admin pass.
+**Version:** v0.6, 2026-07-31. Companion to the Working Process. Project documents
+carry a version and a date and no state, per Working Process section 2. The v0.6
+change is six entries in one act, the sixth restating the stub paragraph of section
+2 to the v0.6 stub ruling of the Working Process, live stubs at `.stub` and consumed
+stubs leaving the tree. Four more were ruled on this date and never landed,
+found when three merged charters cited rules this document did not state: the
+contract-by-suffix sentence with its drawn-material reading and the container
+table's gloss, per the filing ruling `weaver-organ-channel` section 5 records, the
+section 3 reconciliation of the kinds outside the Working Process's three, and the
+section 4 declaration rule scoped to the declaring side with the organ-channel
+case, per the rule `weaver-admin-harness-contract` section 0 states. The fifth is
+the `Loops/` container entry, per the filing ruling of this date. The v0.5 change
+was one entry: the artifact example in section 3 stops naming `weaver-admin` as the
+state file's writer and stops citing the deferred state-file contract, both retired
+by the admin pass.
 **Parent:** WeaverTools Working Process
 
 The Working Process says who is primary and in what order the work moves. This says
@@ -64,15 +74,27 @@ declares its own container.
     docs/crates/weaver-<n>/             the PRD and the Spec for one crate
     docs/crates/weaver-<n>/weaver-<m>/  a member crate of that domain root
     docs/crates/contracts/              contracts, and the material they draw
+    docs/crates/weaver-<n>/Loops/       workflow documents of that domain root
 
 A document under `docs/crates/contracts/` is a contract by its `-contract` suffix,
-and a document there without that suffix is drawn material rather than a contract,
-which is how `weaver-organ-channel` sits beside the contracts that draw it. A document
-under a `weaver-<n>/` directory is a PRD or a Spec by its own filename suffix. This is
-what makes the mirror check mechanical: every `docs/crates/weaver-*` has a matching
-`crates/weaver-*` at the same depth, and `contracts/` excludes itself by the absent
-prefix rather than by a written exception, the same exclusion-by-naming the absent
-`-contract` suffix performs inside it.
+named for its parties. A document there without the suffix is drawn material, stated
+once where the contracts that cite it draw from it, and `weaver-organ-channel` is
+the first, per the filing ruling its section 5 records. The suffix reading is the
+same exclusion-by-naming device this document uses twice already, the absent
+`weaver-` prefix and the `.stub` suffix. A document under a `weaver-<n>/` directory
+is a PRD or a Spec by its own filename suffix. This is what makes the mirror check
+mechanical: every `docs/crates/weaver-*` has a matching `crates/weaver-*` at the
+same depth, and `contracts/` excludes itself by the absent prefix rather than by a
+written exception.
+
+A document under a `Loops/` directory is a workflow document, the container typing the
+kind directly because that directory splits into no further kinds, where `contracts/`
+needs the suffix to split contracts from the material they draw. It walks a settled set
+and authors no edges of its own, so it carries no graph block, and where it and a
+charter disagree the charter yields nothing. `Loops/` excludes itself from the mirror by
+the absent `weaver-` prefix, the same exclusion `contracts/` takes. Loops file under the
+organ that holds them, and agent loops belong to the harness, so the first such
+directory is `docs/crates/weaver-harness/Loops/`.
 
 **A contract is named for its parties, initiator first.** The name records which of the
 two nodes initiates the signal the contract governs, so `weaver-admin` asking the
@@ -87,11 +109,12 @@ only traffic between the pair. Behavior between two nodes collapses into directi
 flow, one signal at a time, and a later signal running the other way is a second seam
 with its own name rather than a contradiction of this one.
 
-**A preserved stub carries `.stub` and is not a document.** Working Process section 2
-keeps a stub under its own name with the suffix appended when its draft is written, so
-`weaver-spu-PRD.md.stub` sits beside `weaver-spu-PRD.md`. It is not a `.md` file, so the
+**A live stub carries `.stub` and is not a document.** It is not a `.md` file, so the
 walk never reaches it and the mirror never counts it, which is the same exclusion by
-naming that `contracts/` gets from its absent prefix.
+naming that `contracts/` gets from its absent prefix. A stub leaves the tree in the
+act that cuts its draft, per Working Process section 2 as ruled 2026-07-31, the draft
+landing at the `.md` name beside the suffix's tracked deletion, so no consumed stub
+survives to be walked and history is the archive.
 
 **The project documents sit outside `docs/` rather than under it.** Working Process
 section 2 puts them outside the document set and outside the mapping, so a mapper that
@@ -166,12 +189,13 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
-**document.** A PRD, a Spec, or a contract. Drawn material is not a fourth authored
-kind. It is what a lift extracts from contracts and states once, marked by its
-container and its absent `-contract` suffix, binding no parties and sourcing no edge,
-which is how the walk reaches `weaver-organ-channel` while phase one still produces
-exactly three kinds. A second extraction takes its own ruling rather than riding this
-one.
+**document.** A PRD, a Spec, or a contract. Working Process section 4 produces
+three kinds and no fourth, and the two documents this format types that are none of
+the three do not breach that: drawn material is contract material stated once,
+holding what the organ contracts share and deciding nothing they do not draw, and a
+workflow document walks a settled set and authors no edges of its own. The three
+kinds author the graph. These two add no authored record to it, which is what the
+Working Process's count is a count of.
 
 ## 4. Edge kinds
 
@@ -192,22 +216,19 @@ the seam record carries the contract and the floor-link record cannot. Where non
 exists the pair is a `floor-link`. Writing both for one pair produces two edges where
 the system has one relationship.
 
-A seam is declared once. On an organ channel the organ declares and the harness does
-not, because the harness is the hub every organ is duplex with and a hub declaring its
-own edges would carry the whole seam graph in one crate. On every other seam the crate
-that asks declares. The asks rule had no unique answer on a duplex organ seam, which is
-why `weaver-admin-harness-contract` section 0 replaced it there and only there. Where
-the question has a single answer the rule stands and the landed declarations stand with
-it, the trace seam first among them, declared from the harness by `weaver-harness-PRD`
-section 4 with `weaver-trace-PRD` section 7 recording the same rule. The other party's
-charter points at the contract and does not restate the edge, which is what keeps the
-party list checkable rather than doubled.
+A seam is declared once, from the declaring side. On a seam with one asking party
+the asker declares. On an organ channel both parties ask, so the asks rule has no
+unique answer there, and the organ declares rather than the harness, per the rule
+`weaver-admin-harness-contract` section 0 states: the harness is the hub every organ
+is duplex with, and a hub that declared its own edges would carry the whole seam
+graph in one crate. The other party's charter points at the contract and does not
+restate the edge, which is what keeps the party list checkable rather than doubled.
 
 Nothing points back at a seam. A seam is an edge, an edge cannot be the target of an
 edge, and giving seams identifiers so that contracts could address them would buy an
 inverse edge that carries no fact the seam's own `via` does not already carry. The
-governing relation is stated once, on the seam, from the declaring side. The contract's
-`party` records are what make the pair checkable from the other direction.
+governing relation is stated once, on the seam, from the declaring side. The
+contract's `party` records are what make the pair checkable from the other direction.
 
 Between a contract and what it binds:
 

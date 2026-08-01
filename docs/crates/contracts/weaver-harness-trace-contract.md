@@ -5,6 +5,15 @@
 separately.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-07-31. Section 3 gains the close kind on `turn.closed`, clean or
+stopped with reason, matching the charter's revision of this date.
+**Revised:** 2026-07-31, again, the subtraction batch. The integrity witness is
+retired under ruling B: hashing leaves admission, the turn hash and the integrity
+request leave both parties' obligations, the turn-hash-mismatch fault leaves the
+vocabulary, and the conformance list keeps close-on-exec while the hash and
+append-only items go. Read-time validation beyond the payload-hash check, the
+divergence artifact, and the companion charter's cut stand untouched pending the
+durable-record ruling.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -168,15 +177,10 @@ One authored event moves through four steps, in this order, always.
    number.
 2. **Admit or refuse.** `weaver-trace` validates the envelope and admits the event,
    or refuses it with a named failure and no partial effect.
-3. **Order and canonicalize.** An admitted event is assigned its sequence, rendered
-   to canonical bytes once, and hashed over those bytes.
+3. **Order and canonicalize.** An admitted event is assigned its sequence and
+   rendered to canonical bytes once.
 4. **Fan out.** That one rendering enters the working structure and is handed to the
    durable writer in the same act, and the assigned sequence returns to the harness.
-
-On a `turn.closed` event step 3 also assigns the turn hash, computed over the
-canonical bytes of the events that turn brackets, per `weaver-trace-PRD` section 4.2.
-It is assigned to the envelope rather than authored into the payload, and the harness
-neither supplies it nor is consulted about it.
 
 **The order is the guarantee.** Admission precedes the fan-out, so neither
 materialization can hold an event the other refused. A working structure containing
@@ -234,13 +238,10 @@ ceiling is not elected, the harness does not submit the events above it. The
 recorder records what it is given and never filters, so a recorder that drops an
 event because it judged the level has taken policy the harness holds.
 
-**Answering an integrity request.** When asked for a turn's hash the harness has the
-recorder recompute it over the working structure and returns the value. It does not
-schedule the request, compare the result, or act on a mismatch. Who asks and in what
-shape is settled by `weaver-admin-harness-contract` sections 3 and 6, and what a
-mismatch obliges sits with `weaver-admin` as the auditor, per `weaver-admin-PRD`
-section 2. Neither changes this side of it. The harness recomputes and returns, and
-the prohibition on comparing is the same obligation read from the other end.
+**The close kind on `turn.closed`.** The payload carries which kind of close it was,
+clean or stopped, and a stopped close carries the reason, authored when the abort of
+`weaver-admin-harness-contract` section 3's stop exchange lands. The charter is
+authoritative for the shape, per the divergence rule of the vocabulary clause.
 
 **Handling refusal.** A refused event is not emitted. The harness must not project
 it, must not treat it as recorded, and must not retry it under a new sequence as
@@ -254,13 +255,6 @@ scope is the session and not the run, because a resuming run appends to the reco
 its predecessor started and continues its numbering. Monotonicity is guaranteed
 against the session rather than against wall-clock time, and reads follow sequence
 order.
-
-**A turn hash, assigned and recomputable.** On `turn.closed` the recorder assigns a
-hash over the canonical bytes of that turn's events, before the fan-out, so both
-materializations carry a value produced in one act. On request it recomputes that
-hash over the working structure and returns it. It never compares the two and never
-concludes from them, because the comparison is `weaver-admin`'s and its trigger and
-frequency are `weaver-admin`'s.
 
 **Canonical form.** One byte-form rule for every artifact it writes. Integer fields
 that can exceed the double-safe range are written as decimal strings, so a consumer
@@ -293,7 +287,7 @@ yield the same rows. The working structure is rebuildable exactly from committed
 events, and rebuilding only reads.
 
 **Validation on read.** Envelope version, known kind, sequence monotonicity, no
-duplicate committed sequence, payload decodes for its kind, payload hash matches,
+duplicate committed sequence, payload decodes for its kind,
 required fields present, coherent committed boundary, and no trailing bytes
 masquerading as committed.
 
@@ -330,11 +324,6 @@ crate's Spec.
   working structure does not. **The recorder owns the resolution:** rebuild the
   projection from the record, or fail loudly. It must never continue against a
   silently stale present.
-- **Turn hash mismatch.** A recomputation over the working structure disagrees with
-  the value the record carries for that turn. Reported with the turn identified and
-  both values named. Neither party resolves it, because it is evidence about the
-  append-only property of `weaver-trace-PRD` section 2.2 rather than a fault in this
-  exchange, and the principal that asked owns what follows.
 - **Unload divergence.** At the close of a run the working structure and the durable
   record disagree under the comparison of `weaver-admin-PRD` section 4.2. Neither party
   resolves it. The record is not modified, the working structure is written beside it,
@@ -426,13 +415,11 @@ How each check is implemented is Spec work. What must be checkable is stated her
   committed range.
 - No write surface accepts a path. This is a compile-time property and is pinned as
   one, because a runtime test cannot demonstrate the absence of a function.
-- Every descriptor the harness holds is close-on-exec and append-only. Also a
-  compile-time property.
+- Every descriptor the harness holds is close-on-exec, supplied at the one receive
+  site.
 - Commit pressure is surfaced as an event while the record remains writable and is
   fatal when it is not.
-- A malformed payload hash is refused.
-- Every `turn.closed` carries a turn hash and no other kind does.
-- A turn hash recomputed over an unaltered working structure matches the record.
+- Every `turn.closed` states its close kind, clean or stopped with reason.
 - No stored span appears in any record.
 - After a divergence write the record is byte-unchanged from what it held before the
   comparison ran.

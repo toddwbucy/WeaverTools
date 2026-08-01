@@ -1,13 +1,17 @@
 # WeaverTools Working Process
 
-**Version:** v0.6, 2026-07-31. Companion to the Working Rules, the Document Format, and
+**Version:** v0.7, 2026-07-31. The v0.7 change redraws section 7's map to the tree
+of this date, three passes having merged against a map that still read the admin
+pass as next, and corrects this header's pointer at that section from six to seven.
+The v0.6 change was section 2's stub ruling and gate G7.
+Companion to the Working Rules, the Document Format, and
 the Handoff Format. The apex says what we are building. The Working Rules say how we
 write. The Document Format says what shape a document takes. The Handoff Format says
 what shape a batch takes when it moves between seats. This says who is primary, in what
 order the work moves, and what must be true before it moves.
 
 This document is the boot prompt for every fresh session on this project, in either
-seat. Read it first. Section 6 says where the work currently sits on the map.
+seat. Read it first. Section 7 says where the work currently sits on the map.
 
 Phase three is unratified. That is deliberate and it is itself a gate. No crate code
 is written until phase three is ratified.
@@ -271,20 +275,24 @@ known gap with a named owner.
 
 ## 7. Current position
 
-Phase one. The base crate set is merged: `weaver-harness`, `weaver-trace`,
-`weaver-traits`, `weaver-types`, with `weaver-harness-trace-contract`. Those four are
-the layer every later crate is built against and chartering proceeds from them.
+Phase one. Six charters are merged: `weaver-harness` with `weaver-trace` as its
+member, `weaver-traits` and `weaver-types` as the floor, `weaver-admin`, and
+`weaver-spu`, half chartered by ruling to the end of the lifecycle workflow. Three
+contracts are merged beside them, coordination, trace production, and residency,
+with `weaver-organ-channel` as the drawn material the organ contracts share.
 
-The crate tree is nested rather than flat. `weaver-traits` and `weaver-types` are the
-floor and sit at the top. `weaver-harness` is a domain root with `weaver-trace` as its
-member. `weaver-spu`, `weaver-admin`, and `weaver-gate` are domain roots stubbed with
-their domains named and nothing settled, and the three harness seams have stub
-contracts beside them.
+In the working tree and not yet merged: the rulings batch of 2026-07-31, carrying
+the stop exchange and the close kind, the subtraction batches of the same date
+retiring the live view, the integrity witness, and admin's device arbitration, the
+apex's conflict binding relocated to SPU admission, the `basic-inference-loop`
+workflow pair under the harness's `Loops/` directory, and the `weaver-gate` pair,
+re-drafted under the demotion ruling of that date, the organ's job simplified to a
+local hook and its standing unchanged.
 
-`weaver-admin` is next, and lifecycle is where it starts: a load workflow and an
-unload workflow, agreed across `weaver-admin-harness-contract`. The apex re-authoring
-waits on all seven charters and is the one piece of collected work that cannot be
-taken early.
+What remains in this phase: the fault-carrier ruling, which holds the alert
+rerouting and the bracket semantic, the gate pair's merge, the apex re-authoring,
+which waits on all seven charters and is the one piece of collected work that cannot
+be taken early, and then the Specs, written last against the settled set.
 
 Nothing ratifies until the whole set maps, so no milestone here is a ratification.
 Merged means the work may move forward, which is what merged is for.

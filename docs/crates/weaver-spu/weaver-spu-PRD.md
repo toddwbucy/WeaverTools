@@ -12,6 +12,14 @@ later releasing it.
 harness forks during the enter fan-out over a pair the harness creates before the
 fork. The rationale is recorded at `weaver-harness-spu-contract` section 1 and the
 markers that priced the ruling are removed.
+**Revised:** 2026-07-31, again. Section 6 stops claiming the Document Format still
+carries the superseded asks rule, that document's v0.6 landing the scoped one, and
+the section 11 entry for `weaver-harness-PRD` section 4 leaves the register as its
+edit lands in that charter in the same act.
+**Revised:** 2026-07-31, a third entry. Admission becomes the one check on the
+device, per ruling C: nothing upstream arbitrates, the no-auto-evict binding of apex
+section 6 relocates here to the place that enforces it, and the second-arbitrator
+framing of sections 2, 3, and 4.1 rewrites to sole authority.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -91,16 +99,15 @@ to serve, established by an admit and ended by a release. Residency is what the 
 exchanges of section 4 move between, and it is the whole of what this crate publishes
 about itself in this workflow.
 
-**Admission against what the device shows, which is not what admin arbitrated.**
-`weaver-admin-PRD` section 2 keeps fleet arbitration with admin, on the grounds that
-only something that knows about every agent can see a conflict between agents, and it
-names the residue: a device occupied by something outside this program is invisible to
-admin, so a load that clears arbitration there can still fail here. That residue is this
-crate's. Admin decides whether the fleet permits the load. This crate decides whether
-the device accepts it. **The two are halves of one sentence in apex section 6 and
-neither reopens the other,** which is the note the admin pass owed this crate's stub and
-never deposited, carried into the charter directly rather than into the file it was owed
-to.
+**Admission is the one check on the device, and this crate is its one authority.**
+Nothing upstream weighs the GPU: admin's load-time concern is the configuration file
+and what it points at, per ruling C of 2026-07-31, so a device conflict is discovered
+here, at model admission, and nowhere earlier. **Admission refuses and never
+evicts.** A conflict is rejected until the operator explicitly unloads the occupant,
+which is apex section 6's binding relocated to the place that enforces it, so no
+load, at any point in its sequence, auto-evicts another agent. The refusal names
+itself and travels to admin inside the enter aggregate like any other refused arm of
+the fan-out.
 
 **Release of the device.** Freeing what admission took, so that the device is available
 to the next load rather than to an unload that is merely intended. Apex section 6 seats
@@ -153,11 +160,12 @@ with no gesture toward keeping the expensive part warm. This is free rather than
 costly, because the process holding the state dies with the unit and
 there is nowhere for it to be kept.
 
-**Fleet knowledge.** It knows what it was asked to admit and what it holds. It does not
-know what other agents exist, what they hold, or whether one of them would rather have
-this device. A crate that acquired that would be a second arbitrator, and two
-arbitrators over one device is the arrangement `weaver-admin-PRD` section 2 exists to
-prevent.
+**Fleet knowledge.** It knows what it was asked to admit and what it holds. It does
+not know what other agents exist, what they hold, or whether one of them would
+rather have this device, and it does not need to: it is the one authority on the
+device, per ruling C, and it judges the device it can see rather than the fleet it
+cannot. Whether the fleet should spend this device on this agent is the operator's
+question, answered in the configuration before a load is directed at all.
 
 **The agent's configuration file.** `weaver-types-PRD` section 2.1 has one writer, the
 operator, and two readers, admin and the harness. This crate is not a third. The model
@@ -170,8 +178,7 @@ crate binds no socket at all, because the channel it uses was created by the har
 before the fork and arrives already connected.
 
 **Policy about whether a load should happen.** It answers whether this device can take
-this model now. Whether the fleet should spend this device on this agent is admin's, and
-whether the agent should be loaded at all is the operator's.
+this model now, and whether the agent should be loaded at all is the operator's.
 
 **Cognition.** It runs a forward pass and it does not decide what to run one for. The
 prompt is assembled by the harness, the tool decision is the model's, and the
@@ -196,17 +203,21 @@ below has to carry a reason the harness can place in that aggregate without tran
 Opened by the harness, carrying the model binding it was handed in the enter directive.
 It ends in residency confirmed or in a typed refusal.
 
-1. **Resolve the binding to an artifact.** A binding naming a model this crate cannot
-find is refused before the device is touched. 2. **Read what the artifact declares about
-itself, without loading it.** The old tree reads a model file's header and metadata
-block to answer what family this is and what its basic dimensions are, without reading
-tensor data and without touching the device. That is a mechanic worth keeping, because
-it converts the most common shape of a bad binding, an artifact that is present and
-wrong, into a refusal that costs no device work. 3. **Judge the device against what
-admission requires.** What the artifact needs plus the working headroom the residency
-requires must fit what the device has free. This is the check admin structurally cannot
-perform, per section 2. 4. **Take the device and load the weights.** 5. **Confirm
-residency.** The answer confirms and carries nothing else, per section 4.4.
+1. **Resolve the binding to an artifact.** A binding naming a model this crate
+   cannot find is refused before the device is touched.
+2. **Read what the artifact declares about itself, without loading it.** The old
+   tree reads a model file's header and metadata block to answer what family this is
+   and what its basic dimensions are, without reading tensor data and without
+   touching the device. That is a mechanic worth keeping, because it converts the
+   most common shape of a bad binding, an artifact that is present and wrong, into a
+   refusal that costs no device work.
+3. **Judge the device against what admission requires.** What the artifact needs
+   plus the working headroom the residency requires must fit what the device has
+   free. This is the one check on the device, per section 2, and nothing upstream
+   performed an earlier one.
+4. **Take the device and load the weights.**
+5. **Confirm residency.** The answer confirms and carries nothing else, per section
+   4.4.
 
 **Every step before the fourth is refusable at no cost, and that ordering is the
 substance.** A refusal reaching the harness before any device work has happened is a
@@ -356,9 +367,8 @@ possession, which is the apex's second case rather than an exception to its firs
 `weaver-admin-harness-contract` section 0 states, the organ declares and the harness
 does not, because the harness is the hub every organ is duplex with and a hub declaring
 its own edges would carry the whole seam graph in one crate. The older rule, that the
-crate which asks declares, has no unique answer on a duplex seam, which is why it was
-replaced. It still stands in the Document Format's own words, and section 11 files that
-edit.
+crate which asks declares, had no unique answer on a duplex seam, which is why it was
+replaced, and Document Format section 4 now carries the scoped rule.
 
 **The channel is duplex because this crate is an organ, and this pass charters one
 direction of it.** Apex section 5.4 makes a duplex channel with the harness one of the
@@ -500,8 +510,8 @@ carried a usable candidate list, which is offered as mechanics rather than as th
 answer: the artifact does not resolve, the artifact does not parse or declares a shape
 this crate cannot serve, the artifact is present and unreadable by the agent uid, the
 device ordinal is not present, the device is occupied by something this program did not
-put there, and what admission requires exceeds what the device has free. The last two
-are the ones admin structurally could not have caught. **Settled by:** the ruling on
+put there, and what admission requires exceeds what the device has free. Every device
+case is caught here and nowhere earlier, per ruling C. **Settled by:** the ruling on
 whether these cases extend `lifecycle-refusal` or take a definition of their own, which
 section 11 files as a conditional edit to `weaver-types-PRD`.
 
@@ -568,11 +578,6 @@ landed reads as settled and an entry landed and not cleared reads as outstanding
   `lifecycle-refusal`, on the grounds that a reason the enter aggregate carries without
   translation has to be the type that aggregate already carries. Owed if the ruling goes
   the other way.
-- `weaver-harness-PRD` section 4: the decode seam gains no record in that charter. It
-  says the three socket seams carry no records yet and that two of them stay that way
-  until this crate and the gate are chartered, which reads as the record arriving there.
-  Under the organ rule the record is declared here, so that sentence resolves by
-  pointing at this contract rather than by gaining a block.
 - `open-items.md`, the note owed to this crate's stub: discharged by section 2 of this
   charter carrying its substance directly, so the item leaves the list rather than
   moving into the stub it was owed to. Named by substance because that list renumbers.

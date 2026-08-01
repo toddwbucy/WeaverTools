@@ -15,6 +15,36 @@ the receiving seat had repaired four times against resends from this copy. Third
 the descriptor cell of section 10 stopped offering admin forking as a peer
 alternative and adopted the contract's wording on what an absent interface reopens,
 and 4.2's opening line was rewritten for the list it now has.
+**Revised:** 2026-07-31, a fourth entry this date. Section 3 splits activity control
+across the seam and corrects the network-ingress restatement, and section 8 gains the
+stop conveyance. Per the rulings of this date carried by
+`basic-inference-loop`.
+**Revised:** 2026-07-31, a fifth entry this date. Section 4.1 step 7 orders
+projection before the `load` event, per the resume exchange of
+`weaver-harness-trace-contract` section 2.1, the section 11 entry for apex 5.2
+takes the approved scoping wording, and section 4.4's sequence reads load, stop,
+unload, the close conveyance removed, the verb being the stop exchange that already
+exists. Per the edit register of this date.
+**Revised:** 2026-07-31, a sixth entry this date, hygiene in one act. The operations
+log of section 2 stops naming a `destroy` this charter rules admin does not perform,
+section 5's rollback clause splits step 7 at the `load` event, section 7 points the
+tool-uid cell at the gate charter rather than the consumed stub, section 11 cites
+gate G7 as in force and drops the register entry for the spu stub note, whose
+substance the merged spu charter carries directly.
+**Revised:** 2026-07-31, a seventh entry this date, the subtraction batch. The live
+view is retired under ruling A and the integrity witness under ruling B: the
+three-tier append-only account reduces to the working structure's structural
+sentence, the tamper-evidence limit and the integrity trigger, frequency, and window
+leave section 2, the recompute conveyance leaves sections 6 and 8, and the seam table
+carries the four exchanges that remain. Leave-time validation, the manifest, and the
+drain stand untouched pending the durable-record ruling.
+**Revised:** 2026-07-31, an eighth entry this date. Device arbitration leaves this
+crate entire, per ruling C: the section 2 fleet-arbitration paragraphs, the load's
+arbitration step, the denied-arbitration log instance, and the arbitration Spec
+child all come out, the load renumbers to seven steps, a device conflict becomes an
+admission refusal inside the enter fan-out landing in section 5's bracket case, and
+the rhetorical uses of the word device rename to instrument so the one token means
+the GPU.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -122,21 +152,6 @@ is `weaver-types`' to change, so the record above keeps the resolving name until
 rename lands in the same act as `weaver-types-PRD` section 2.1, per section 11. What
 changes here is the direction, which is this charter's to state.
 
-**Fleet arbitration of the device.** Apex section 6 binds a load to reject a GPU
-conflict rather than evicting the occupant, and only something that knows about every
-agent can see a conflict. This crate holds that decision because it is the only thing
-that loads agents, so what it has loaded is what it knows. It reads no device to
-learn this and keeps no store: the knowledge is a property of the supervisor having
-performed the loads, and no store is needed for it. Indexed query over history left
-this repository with the reading and analysis tooling of section 8, so this paragraph
-points at no staged database and there is none to point at.
-
-**The arbitration is bounded by what admin loaded, and the residue is named.** A
-device occupied by something outside this program is invisible to admin and is not
-admin's to arbitrate, so a load that clears arbitration here can still fail at model
-admission on device state admin could not see. That is a real second failure point
-rather than a gap, and section 5 places it.
-
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its
 own operation, and the transition publishes only after every organ has confirmed to the
@@ -169,15 +184,11 @@ once when the file is opened, against the opener, and a descriptor passed by
 worker appends to a file it could not have opened for itself, which is the whole of
 its access and is revocable by closing the descriptor.
 
-**A descriptor does not make a file append-only, and the corpus should not imply it
-does.** `ftruncate` reaches through any writable descriptor, so the durable
-append-only property is sole-writer discipline that the per-turn stamp detects a
-violation of rather than a thing the kernel refuses. Append-only holds in three tiers
-and they are not equally strong. The working structure in RAM is append-only by
-construction, because its API exposes no update path. The durable record is
-append-only by discipline, witnessed after the fact by the stamp. The kernel tier is
-`chattr +a`, which takes `CAP_LINUX_IMMUTABLE`, sits in operator configuration, and is
-named here as a candidate rather than a requirement.
+**The working structure in RAM is append-only by construction, because its API
+exposes no update path.** That is the one append-only claim this charter carries, a
+structural property of the in-RAM store rather than a witnessed discipline, and
+integrity accounting past the emission boundary is the consumer's business on the
+consumer's compute.
 
 ```graph
 edge: reads
@@ -185,8 +196,8 @@ from: weaver-admin
 to: session-record
 ```
 
-**A log of admin's own privileged acts.** A completed rollback, a `destroy`, a denied
-arbitration, and a refused load are privileged acts that leave nothing behind
+**A log of admin's own privileged acts.** A completed rollback and a refused load
+are privileged acts that leave nothing behind
 otherwise. A refusal reaching an operator is a typed `lifecycle-refusal` returned on
 the socket of section 8 and needs no log to be legible, but an act that completed with
 no operator holding the return has no reader at all. Admin holds a log file for those.
@@ -211,24 +222,15 @@ which is the same class of hole the trace directory's search bit exists to close
 operator reads through membership in `weaver-admin`, which is the same path by which
 the operator reaches a session record.
 
-**What the mode does not buy, said plainly.** The session record is tamper-evident
-against the agent because the agent is neither its owner nor its group and reaches it
-only through a descriptor it cannot have opened. The operations log has no such split,
-because admin is its author, its owner, and its reader. No arrangement of bits on a
-file its own author owns makes that file evidence against that author. What this
-custody buys is exclusion of the agent and nothing stronger, and a claim of
-tamper-evidence here would need a second party that is not chartered. Stating the limit
-is the point, since an audit artifact believed to be more than it is fails worse than
-one that never claimed it.
-
-**The same limit reaches the session record and the trace directory, and the party it
-concerns is the operator.** Admin owns the record and the directory, the operator
-reaches both through the shared group, and neither arrangement is evidence against the
-principal that holds it. This is not a gap the charter can close, because the operator
-is the party that admits principals, configures the delegation of section 7, and holds
-the group. The program secures the agent against reaching its own record and does not
-secure anything against the operator, who is trusted by construction. The apex states
-that trust model once, per section 11, and this paragraph is its local half.
+**The session record, the trace directory, and this log are secured against the
+agent and against nothing stronger, and the party that concerns is the operator.**
+Admin owns the artifacts, the operator reaches them through the shared group, and
+custody is exclusion of the agent rather than evidence against the holder. This is
+not a gap the charter can close, because the operator is the party that admits
+principals, configures the delegation of section 7, and holds the group. The program
+secures the agent against reaching its own record and does not secure anything
+against the operator, who is trusted by construction. The apex states that trust
+model once, per section 11, and this paragraph is its local half.
 
 ```graph
 node: admin-operations-log
@@ -238,11 +240,6 @@ edge: writes
 from: weaver-admin
 to: admin-operations-log
 ```
-
-**The trigger and the frequency of the integrity check, and the emission of its
-result.** `weaver-trace-PRD` section 4.2 gives the recorder the computation and this
-crate the schedule, because scheduling an audit belongs to the auditor. Admin asks,
-the harness recomputes and returns, and admin compares.
 
 **Admin emits and does not conclude.** A comparison that differs is a fact, and the
 judgment that a record is intact or corrupt is a consumer's to make with knowledge of
@@ -260,13 +257,6 @@ loaded.
 would be an editor of the record, which ends the single-writer property that makes the
 record evidence at all. A divergence is emitted and left.
 
-**Responsibility for integrity is windowed and the window is named.** It opens when the
-file is created and closes when the agent unloads. Between loads the file sits in the
-operator's domain with no process of this program holding it, and the corpus claims
-nothing about that interval. The authoritative event is the unload-time comparison of
-the working structure against the file, because that is the last moment both sides
-exist at once.
-
 ## 3. What this crate does not own
 
 **The turn, in any part.** No prompt, turn, task, or run enters through this crate,
@@ -275,9 +265,12 @@ abstract one, because the operator-facing surface of section 8 is where it will 
 tested: reporting an agent's state, listing agents, and driving a verb are in bounds,
 and carrying a prompt to a loaded agent is out however convenient a menu makes it.
 
-**Activity control.** Stop, cancel, and interrupt belong to the harness and every one
-of them returns the agent to loaded and idle. Admin does not reach into a running
-turn, and unload waits on rest rather than racing it.
+**Activity control's mechanics.** The abort of a turn belongs to the harness and
+returns the agent to loaded and idle. What this crate holds is the conveyance: the
+operator's intent to stop crosses as the stop exchange of the contract, one bit and
+no work, because the operator holds no other crossing. Admin carries the intent and
+never the mechanics, reaches nothing of the turn's content, and unload still waits on
+rest rather than racing it.
 
 **Trace authorship.** The harness is the sole writer of the record. Admin authors no
 event, holds no event kind, and its own first contact is recorded by the harness as
@@ -294,19 +287,21 @@ group memberships on it, and the agent's configuration file are the operator's, 
 section 1. Admin creates no principal, chowns nothing, and edits no account. A verb of
 this crate that found a boundary missing refuses and does not build one.
 
-**Model admission, residency, and release.** Admin decides whether a load may take
-the device. The SPU admits the model, holds residency, and releases. Section 2's
-arbitration and that crate's residency are two halves of one sentence in apex section
-6 and are not the same responsibility.
+**Model admission, residency, and release, and the device entire.** The SPU admits
+the model, holds residency, releases, and is the one authority on the device, per
+apex section 6 as relocated under ruling C. Admin arbitrates no hardware and reasons
+about the device at no point: a conflict is discovered at admission, refused there,
+and the refusal travels SPU to harness to admin inside the enter aggregate.
 
-**Network ingress.** Gate binds the only listening network socket. A localhost Unix
-socket carrying an operator's verb is not network ingress and breaches nothing, on two
-grounds stated here rather than cited. A Unix socket binds no port and is reachable
-only by a process already on the host, so it adds no ingress for the invariant to be
-about. And a network-attached surface on the admin side would be the first thing in
-the architecture arguing against apex section 12, since the regulation model rests on
-the kernel bounding reach and a listener admits a principal the kernel did not place.
-Section 8 states this where the surface that tests it is named.
+**Network ingress.** There is none. Gate binds no listening network socket, per the
+ruling of 2026-07-31 carried on the apex correction list, and no other crate does
+either. A localhost Unix socket carrying an operator's verb is not network ingress and
+breaches nothing, on two grounds stated here rather than cited. A Unix socket binds no
+port and is reachable only by a process already on the host, so it adds no ingress for
+the invariant to be about. And a network-attached surface on the admin side would be the
+first thing in the architecture arguing against apex section 12, since the regulation
+model rests on the kernel bounding reach and a listener admits a principal the kernel
+did not place. Section 8 states this where the surface that tests it is named.
 
 **The floor's vocabulary, beyond what it demands.** This crate links `weaver-types`
 and does not link `weaver-traits`. It reads a configuration file whose permission mode
@@ -322,11 +317,11 @@ nothing draws them on this crate's behalf, and claiming it as an exclusion would
 claiming a property the manifest does not have.
 
 **A charter carries no vocabulary clause, so this crate draws nothing by its own
-words.** The clause `weaver-types-PRD` section 5 asks for is a contract device, present
-in a contract even when its answer is empty, and the union the G4 check reads is the
-union over the contracts a crate is party to. This crate is party to one, and
-`weaver-admin-harness-contract` section 8 draws five `weaver-types` values and nothing
-from `weaver-traits`. That union is the whole of what this crate draws.
+words.** The clause `weaver-types-PRD` section 5 asks for is a contract instrument,
+present in a contract even when its answer is empty, and the union the G4 check
+reads is the union over the contracts a crate is party to. This crate is party to
+one, and `weaver-admin-harness-contract` section 8 draws five `weaver-types` values
+and nothing from `weaver-traits`. That union is the whole of what this crate draws.
 
 ```graph
 edge: floor-link
@@ -388,39 +383,40 @@ order is the substance.
    directory exists with the expected ownership and modes, and the trace directory is
    admin-owned and not searchable by the agent uid. Any failure refuses. Nothing here
    is repaired, and nothing here is built.
-4. **Arbitrate the device against the model binding.** A conflict is refused. Doing
-   this before the worker starts is what keeps a refused load from leaving a process
-   behind.
-5. **Resolve the session and open the record.** Admin decides which session is being
+4. **Resolve the session and open the record.** Admin decides which session is being
    loaded, a decision the harness is structurally unable to make because it never
    learns a path. `run0` opens a new and empty record and a later run opens the
    existing one. The descriptors are obtained here, under admin's own principal, which
    is what lets the worker append to a file its uid could not open. Close-on-exec is
    not admin's to confer on a passed descriptor and is the harness's obligation at the
    receive, per the contract.
-6. **Ask the init system to start the worker as a transient unit carrying the agent's
+5. **Ask the init system to start the worker as a transient unit carrying the agent's
    `User=`.** Admin does not put the worker under the agent uid itself. It asks a
    process that already holds that authority, per section 7, and the unit's cgroup
    arrives with the unit rather than being shaped in advance.
-7. **Hand over the trace descriptors.** The worker receives handles and never paths,
-   and it accepts them close-on-exec. The route by which they reach a process admin did
-   not fork is an open cell in section 10 and is the one place this sequence is not yet
-   settled.
-8. **Direct enter, and receive the aggregate.** The directive carries the session
-   identity, the run ordinal, the model binding, and the gate instruction, per the
-   contract. Everything after the directive and before the answer is the harness's:
-   it authors its `load` event, which for `run0` is the record of admin's first
-   contact and the origin of the run's monotonic clock, projects the existing record
-   into a working structure, asks the SPU to admit the model, and starts Gate last so
+6. **Direct enter, and receive the aggregate.** The directive carries the session
+   identity, the run ordinal, the descriptors, the model binding, and the gate
+   instruction, per the contract. The descriptors ride inside the directive over the
+   coordination channel as `SCM_RIGHTS` ancillary payload, the trace descriptors
+   together, per `weaver-harness-PRD` section 5, so the
+   worker receives handles and never paths and accepts them close-on-exec at its one
+   receive site. What section 10 holds open is how the channel's own end reaches a
+   unit admin did not fork, and not how the descriptors cross a channel that
+   exists. Everything after the directive and before the answer is the harness's:
+   it projects the existing record into a working structure, authors its `load`
+   event, which for `run0` is the record of admin's first contact and the origin of
+   the run's monotonic clock, asks the SPU to admit the model, and starts Gate last so
    no work arrives before the interior can serve it. Admin holds no channel to either
    organ, per section 6, so what admin receives is one answer aggregating the fan-out,
    ready or a refusal naming where it stopped.
-9. **Publish loaded and idle.** Only now, and only on a ready aggregate. A partial
+7. **Publish loaded and idle.** Only now, and only on a ready aggregate. A partial
    load is never published as loaded, and the published state is idle rather than
    active.
 
-Step 8 is the one ask in the sequence, and a refusal at any point inside it enters
-the rollback of section 5 carrying the name of the step that refused.
+Step 6 is the one ask in the sequence, and a refusal at any point inside it enters
+the rollback of section 5 carrying the name of the step that refused. A device
+conflict discovered at model admission is such a refusal, named by the SPU inside
+the aggregate, and admin holds no earlier check to catch it, per ruling C.
 
 **The worker never holds a principal above the agent's, which removes a window rather
 than narrowing one.** Under the delegation of section 7 the init system starts the
@@ -428,11 +424,11 @@ process already as `weaver-<n>`, so there is no interval in which worker code ru
 anything else and no drop for the ordering of an earlier draft to get right. The
 privilege window that section 10 once carried as an open cell has no subject.
 
-**Steps 1 through 7 produce no trace entry, and neither does the rollback path.** That
+**Steps 1 through 5 produce no trace entry, and neither does the rollback path.** That
 is a ruling and not an omission. `weaver-trace-PRD` section 3.1 makes `run0`'s `load`
 the record of admin's first contact and places the worker start and the descriptor
 handoff outside the trace by construction, because they run before the harness exists
-to author anything. The load's one trace entry is written at step 8 by the harness,
+to author anything. The load's one trace entry is written at step 6 by the harness,
 and the unload's at its own bracket. Nothing admin does before that moment reaches the
 record, and nothing should, because a second party appending to a session record ends
 the single-writer property that lets a broken bracket read as corruption under section
@@ -442,7 +438,7 @@ and its record is admin's own.
 
 ### 4.2 unload
 
-The reverse in effect and not in shape, because what the load built across nine steps
+The reverse in effect and not in shape, because what the load built across seven steps
 is unwound in three, and two of admin's acts here, the validation moment inside the
 directive and the publish to a state that is not absent, have no counterpart on the
 way up.
@@ -516,7 +512,7 @@ crate, which is why this verb reaches no seam and starts no process.
 Reached as the front half of a load, a clean inventory flows into step 4 and a failure
 refuses before any process exists. Invoked alone, it stops at the result and reports,
 which is the cheap way to test an operator's provisioning before a load depends on it.
-It takes the device from nothing and changes no agent state either way.
+It changes no agent state either way.
 
 **It repairs nothing and concludes nothing.** A check that fails emits what was expected
 against what was found, per section 2, and the remedy is the operator's over artifacts
@@ -532,7 +528,10 @@ and the harness is the sole writer of content, and the drain and the checksum ar
 the unload validation of 4.2 performed on the session's last run, because those are
 descriptions of a finished file rather than statements about what happened. The cost
 is that closing a session requires the agent loaded for the authoring half, which is
-load, close, unload.
+load, stop, unload: the stop exchange ceases token processing and holds everything
+loaded at rest, and no close crosses the seam as a verb or a conveyance of its own.
+What cues the authoring of `session.closed` inside that window is the session-close
+cell of section 10, which this wording does not close.
 
 **The manifest is where this ruling is weaker than it looks.** Its committed sequence
 range, run count, and per-run verbosity are facts about events, and admin cannot
@@ -556,13 +555,21 @@ smaller than it was. What a failed load can leave is a worker process, a session
 that was opened, and a device the SPU took. Nothing that survives a crash needs a later
 verb to recognize and refuse it, because nothing durable was authored.
 
-A `load` that fails at steps 1 through 5 leaves nothing to reap beyond, for `run0`,
+A `load` that fails at steps 1 through 4 leaves nothing to reap beyond, for `run0`,
 an empty record. No process exists.
 
-A `load` that fails at steps 6 or 7 leaves a worker that never entered a run. Admin
-stops the unit, and for `run0` the record is empty.
+A `load` that fails at step 5, or at step 6 before the `load` event is authored,
+leaves a worker that never entered a run. Admin stops the unit, and for `run0` the
+record is empty.
 
-**A `load` that fails inside step 8 after the harness has authored its `load` event
+**A device conflict refused at model admission is a refusal inside step 6, and it
+arrives after the `load` event in the fan-out's own order,** project, author, admit,
+gate. So what it leaves is the paragraph below, an authored bracket with no
+`unload`, plus a device the SPU's refusal left free, per the residency contract. It
+needs no clause of its own, per ruling C, because it is a refusal inside the fan-out
+like any other, which is what retiring the pre-flight arbitration was for.
+
+**A `load` that fails inside step 6 after the harness has authored its `load` event
 leaves a run with a `load` and no `unload`.** As merged, `weaver-trace-PRD` section
 4.3 has a run ending at unload or at process death and section 6 calls a broken
 bracket corruption even when the run number is present, so one crash makes the session
@@ -594,7 +601,7 @@ an end of.
 
 | Seam | Peer | What crosses |
 |---|---|---|
-| Coordination | `weaver-harness` | Admin directs the run to be entered and left, hands the trace descriptors, and directs a recomputed integrity value. The harness confirms, refuses, or reports a fault the worker survived. |
+| Coordination | `weaver-harness` | Admin directs the run to be entered and left, hands the trace descriptors inside the enter directive, and conveys the operator's intent to stop. The harness confirms, refuses, answers a stop with the turn's fate, or reports a fault the worker survived. |
 
 ```graph
 edge: seam
@@ -612,18 +619,19 @@ because the harness is the coordinator every organ is situated against and admin
 a peer of the organs the harness sequences. This is apex section 6 read straight: all
 coordination passes through the harness, so admin directing a load is admin opening an
 exchange on its one channel and the harness fanning that out along its own pathways.
-The admission decision that section 2 keeps is a decision admin makes before it directs
-the harness and reads no device, so it needs no channel to the SPU to make.
+Admin makes no admission decision at all, per ruling C: the device is the SPU's to
+judge, and what admin would have asked the SPU it learns from the aggregate instead.
 
 **The seam is duplex, because admin is an organ.** An organ governs a domain and holds
 a duplex channel with the harness, both properties and neither alone, and admin governs
-the lifecycle domain. Either party opens an exchange. Admin opens the three that drive a
-transition, and the harness opens one, reporting a fault the worker survived. What
+the lifecycle domain. Either party opens an exchange. Admin opens three, two that
+drive a transition and one that conveys
+the operator's intent to stop, and the harness opens one, reporting a fault the
+worker survived. What
 survives from the earlier one-initiator reading is narrower and still true: readiness is
-a confirmation to a directive rather than a directive, the harness recomputes an
-integrity value and returns it without comparing or concluding, and a worker's death is
+a confirmation to a directive rather than a directive, and a worker's death is
 observed through process exit rather than reported over the channel. What does not
-survive is the generalization from those three facts to a channel with a single asking
+survive is the generalization from those facts to a channel with a single asking
 party.
 
 **The seam edge is declared by the organ rather than by the harness.** It was declared
@@ -776,17 +784,18 @@ and this charter names it as an assumption.** If they do, the boundary between t
 agent and its own worker is hardening rather than kernel-enforced separation. If they
 run under a uid Gate owns, the worker's descriptors are unreachable from tool code by
 construction. Admin states no requirement beyond assuming the first case is no worse
-than hardening, and the cell is filed against that stub so it is inherited as a
-constraint rather than rediscovered.
+than hardening, and the cell is filed against the gate charter so it is inherited as
+a constraint rather than rediscovered.
 
 ## 8. The operator surface, and the domain that left
 
 **The operator surface is a localhost Unix socket reached by a member of the
-`weaver-admin` group.** It reports state, lists agents, and drives the three verbs. It
-carries no work, per section 3. It is not network ingress and breaches nothing Gate
-holds, on the grounds section 3 states. It is the whole of how the role reaches the
-service, and it is a seam by the Working Process test, so section 10 names it as one
-rather than this section contracting it in passing.
+`weaver-admin` group.** It reports state, lists agents, drives the three verbs, and
+conveys the operator's intent to stop across the contract's stop exchange. It carries
+no work, per section 3. It is not network ingress and breaches nothing Gate holds, on
+the grounds section 3 states. It is the whole of how the role reaches the service,
+and it is a seam by the Working Process test, so section 10 names it as one rather
+than this section contracting it in passing.
 
 **Reading and analysis of finished records is not this crate's, and not this
 repository's.** An earlier reading named `weaver-admin-tools` a member of this domain,
@@ -806,9 +815,9 @@ crate will later do. Multi-agent management through the operator surface stays, 
 it drives verbs rather than reading records.
 
 **What admin still reads, so the departure is not read as wider than it is.** Admin
-parses the record for the session manifest and asks for a recomputed integrity value
-across the coordination seam. Those are lifecycle acts and they stay. The reader edge
-of section 10 covers them and no longer waits on a tooling crate to be chartered.
+parses the record for the session manifest, which is a lifecycle act and stays,
+pending the durable-record ruling that gates all manifest material. The reader edge
+of section 10 covers it and no longer waits on a tooling crate to be chartered.
 
 ## 9. Staged requirements
 
@@ -922,11 +931,11 @@ citing that contract is an owed edit, per section 11.
 ## 11. Edits owed in the same act
 
 Apex section 10 requires that a change touching a contract merges with every party in
-one act, and the G7 candidate asks that a ruling name the documents it changes. This
+one act, and gate G7 asks that a ruling name the documents it changes. This
 section is that register. Nothing below is applied by this document, and the items
 already carried in `open-items` are cited rather than restated.
 
-**An entry leaves this register when the edit lands.** The register is the G7 device
+**An entry leaves this register when the edit lands.** The register is the G7 instrument
 read from the other end, and it has a symmetric failure: a ruling recorded and not
 landed reads as settled to every later reader, and an entry landed and not cleared
 reads as outstanding. A reader who checks two entries against the corpus, finds them
@@ -973,7 +982,8 @@ moved, and the apex re-authoring still waits on all seven charters.
 - `weaver-trace-PRD` section 4.3: a `session-manifest` artifact node, so that admin
   writing the manifest does not read as admin writing the record. Owed with session
   close, and gated by the reader cell for the fields that need a parse.
-- `WeaverTools-PRD` section 5.2: scoped to requests that carry work. As stated, every
+- `WeaverTools-PRD` section 5.2: scoped to requests that belong to an existing turn,
+  the approved wording per the ruling of 2026-07-31. As stated, every
   request crossing a seam carries the trace context identifying the turn it belongs
   to. A lifecycle directive on the coordination seam crosses a seam and belongs to no
   turn, so the seam this pass chartered is a counterexample to the invariant as
@@ -1006,9 +1016,6 @@ moved, and the apex re-authoring still waits on all seven charters.
   paragraph and by the apex trust-model entry above, and its two-branch analysis is
   moot, since the mechanism it branched on is closed and the principal it names is the
   operator.
-- `weaver-spu-PRD` stub: device arbitration sits with admin and residency with the
-  SPU, so the stub takes the note that section 2's arbitration and that crate's
-  residency are two halves of one sentence and neither reopens the other.
 
 ## 12. Children
 
@@ -1018,7 +1025,6 @@ set is bounded, not drafted here.
 - Boundary verification, covering identity, home, and the trace directory.
 - Lifecycle sequencing and the rollback of section 5.
 - The coordination channel, covering the transient unit and descriptor handoff.
-- Device arbitration and the fleet view it reads from.
 - The operator surface of section 8.
 
 Contracts this crate is party to are written with the PRDs of their other parties,

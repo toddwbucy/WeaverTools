@@ -13,6 +13,9 @@ fork, and the markers that priced the ruling are removed.
 close-on-exec from the pair's creation, closing the tool-fork inheritance the review
 found, and the possession sentence in section 1 recovers the argument the first
 revision compressed away.
+**Revised:** 2026-07-31, third. The residue framing rewrites to sole authority under
+ruling C, admission being the one check on the device with nothing upstream
+arbitrating, and the prohibitions carry the relocated no-evict binding.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -228,8 +231,9 @@ than a check. It guarantees that it retains nothing across a residency, so a rel
 device is released whole.
 
 **Neither party guarantees the device against what it did not put there.** A device
-occupied by something outside this program is invisible to admin's arbitration and is
-what this seam's refusal exists to catch, per `weaver-spu-PRD` section 2. What neither
+occupied by something outside this program is caught at admission and nowhere
+earlier, the SPU being the one authority on the device per `weaver-spu-PRD` section
+2. What neither
 party can guarantee is that such an occupant does not arrive between the judgment and
 the allocation, so an admit that passes its device check and fails its allocation is a
 real case rather than a contradiction, and section 5 names it.
@@ -253,7 +257,7 @@ the enter aggregate unchanged.
 
 **A refusal leaves the SPU in the state it was in before the directive.** A refused
 admit means no model was admitted and no device memory is held, which is what keeps a
-refused load from leaving a device that arbitration will later see as occupied.
+refused load from leaving a device occupied against the next admission.
 
 **An admit that fails after taking the device frees it before answering.** The two
 failures are one refusal to the harness and two different obligations on the SPU, and
@@ -293,8 +297,9 @@ opens no exchange this document does not enumerate, which in this pass means it 
 none, and the direction reserved for it is deferred rather than forbidden. It reaches no
 other crate and holds no channel to `weaver-admin`, because admin holds one seam and
 what this crate has to say to admin travels through the harness as hub. It does not read
-the agent's configuration file. It does not arbitrate the fleet, decide whether a load
-should happen, or evict an occupant it did not admit. It binds no socket. It
+the agent's configuration file. It does not decide whether a load should happen, and
+it evicts no occupant, refusal being admission's only answer to a conflict, per the
+relocated binding of apex section 6. It binds no socket. It
 retains nothing across a residency.
 
 **On both.** Neither party carries a fact about the other's interior. The harness does

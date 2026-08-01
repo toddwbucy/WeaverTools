@@ -9,7 +9,10 @@ set into the graph, and it belongs to the set rather than to this document.
 **Revised:** 2026-07-31. The `model.measurement` payload gains the prompt-block
 partition and explicit model identity, which apex section 8 requires for replay and
 this charter did not carry. Revised again the same day: section 4.1's drop ordering
-is retired, the worker holding the agent uid from its first instruction.
+is retired, the worker holding the agent uid from its first instruction. Revised a
+third time the same day: the `turn.closed` payload states its close kind, clean or
+stopped with reason, per the stop exchange of `weaver-admin-harness-contract`
+section 3.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -350,6 +353,14 @@ tree's attribute vocabulary.
 each bracket event is written, because resume writes nothing and the envelope's run
 field is the only place a boundary is recorded. No consumer reconstructs a run by
 range analysis.
+
+**A `turn.closed` payload states which kind of close it was.** A clean close carries
+the turn's completion. A stopped close carries the stop reason in place of one,
+authored by the harness when the abort of `weaver-admin-harness-contract` section 3's
+stop exchange lands. Every open has a close and the close says which kind it was, so
+a reader never infers an abort from an absence. This adds a field to one payload
+shape and no kind to the set, and it edits this charter and the contract in the same
+act, per the rule of this section.
 
 ## 4. What producing the trace requires
 

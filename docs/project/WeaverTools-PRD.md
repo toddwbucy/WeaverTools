@@ -12,6 +12,19 @@ in section 5. This is not the apex re-authoring, which still waits on all seven
 charters, and no other item owed to that re-authoring moved with these two. The 5.1
 example clause was corrected the same day, on review, from a fork mechanism the
 governing contract had already retired.
+**Revised:** 2026-07-31, second entry. Section 6's verb set restates from four
+transition verbs to two plus `validate`, the operator acts leaving the verb set,
+per the edit `weaver-admin-PRD` section 11 owes and section 4 states. Taken early
+under the same named exception, because a merged verb set contradicted by a
+merged charter is a collision in main. The rest of section 6's owed items,
+orchestration seating, the linked-vocabulary sentence, and the emission wording,
+move with the apex re-authoring and did not move here.
+**Revised:** 2026-07-31, third entry. Section 6's GPU-conflict binding relocates
+from the load driver to SPU model admission, per ruling C of this date: admin
+arbitrates no hardware, the SPU is the one authority on the device, and the
+no-auto-evict guarantee moves with the rejection rather than leaving with it.
+Taken early under the same named exception, because a merged binding contradicted
+by the ruling's charter edits would be a collision in main.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -264,15 +277,20 @@ harvests what those two imply rather than importing a new frame.
 
 ## 6. The agent lifecycle
 
-The administrative lifecycle has exactly four state-transition verbs:
-`create`, `load`, `unload`, `destroy`. Read-only `list` and `show` are
-observations, not transitions.
+The administrative lifecycle has exactly two state-transition verbs, `load` and
+`unload`, and one verb that transitions nothing, `validate`, which confirms an
+agent's configuration and boundary without starting anything against them.
+Read-only `list` and `show` are observations, not transitions. Admitting and
+removing a principal are operator acts on the operating system, performed before
+an agent exists and after it stops existing. They sit outside the program's verb
+set, and what they bracket is the resting state the diagram names provisioned
+and unloaded, per `weaver-admin-PRD` section 4.
 
 ```
 absent
   |   ^
-  |   |    create / destroy
-  v   |
+  |   |    operator provisioning / removal
+  v   |    (operator acts, not verbs of this program)
 provisioned, unloaded
   |   ^
   |   |    load / unload
@@ -284,8 +302,9 @@ loaded, idle
 active
 ```
 
-`create` and `destroy` govern provisioned identity. `load` and `unload` govern
-the complete residency boundary. **Loaded-and-idle is a first-class state** -
+Provisioned identity is made and removed by the operator rather than by a verb.
+`load` and `unload` govern the complete residency boundary. **Loaded-and-idle
+is a first-class state** -
 without it the system cannot interrupt one run while leaving the agent ready
 for the next.
 
@@ -323,8 +342,10 @@ Binding rules:
 - Load starts Gate last. Unload stops Gate first. A Gate process never outlives
   the worker interior it protects.
 - No lifecycle verb auto-chains another.
-- GPU conflict is rejected until the operator explicitly unloads the occupant.
-  Load never auto-evicts another agent.
+- A GPU conflict is rejected at model admission, by the SPU, until the operator
+  explicitly unloads the occupant. Admission refuses and never evicts, so no load,
+  at any point in its sequence, auto-evicts another agent. The SPU is the one
+  authority on the device and nothing upstream weighs it.
 - No prompt, turn, task, or run enters through Admin. Work enters only through
   Gate.
 - Activity stop, cancellation, or interruption returns the agent to

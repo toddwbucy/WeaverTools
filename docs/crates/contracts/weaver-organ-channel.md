@@ -6,6 +6,8 @@ needed the same channel, and ruled in on 2026-07-31. This document is the one
 statement of the organ channel's mechanics and every organ contract draws it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-07-31. One word in section 5, a live stub rather than a preserved
+one, aligning to the v0.6 stub ruling of the Working Process.
 **Document ID:** `weaver-organ-channel`
 **Parent:** `WeaverTools-PRD`, invariant 5.4
 **Editorial:** Per the Working Rules.
@@ -198,7 +200,7 @@ is not a contract by the Format's own naming rule. It describes no crate, so it 
 a PRD. It is not build instructions, so it is not a Spec. The suffix reading is the
 same exclusion-by-naming device the Format already uses twice, once where `contracts/`
 excludes itself from the crate mirror by its absent `weaver-` prefix and once where
-`.stub` excludes a preserved stub from the walk. The Format's sentence that a document
+`.stub` excludes a live stub from the walk. The Format's sentence that a document
 under `contracts/` is a contract is now a sentence about the suffix rather than the
 directory, per its section 2.
 

@@ -19,6 +19,21 @@ condition the reliance rests on.
 per the ruling of that date, each section replaced by a draw plus this seam's own
 facts, and section 4's closure paragraph struck as travelling with the lifted
 material.
+**Revised:** 2026-07-31, fifth. The stop exchange lands as section 3's fifth, with
+its ordering line, its derivations into sections 5 and 6, and the section 7 re-scope
+from reaching into a run to carrying work. Per the rulings of this date carried by
+`basic-inference-loop`.
+**Revised:** 2026-07-31, sixth. Section 3's enter orders projection before the
+`load` event, matching the resume exchange of `weaver-harness-trace-contract`
+section 2.1, where validation and projection precede the first authored event of a
+run. Per the edit register of this date.
+**Revised:** 2026-07-31, seventh, the subtraction batch. The live view is retired
+under ruling A, its descriptor leaving the enter payload, its guarantees leaving
+section 5, and its vocabulary leaving section 8, the ruling that introduced it
+overturned. The integrity witness is retired under ruling B, the recompute exchange
+struck entire with its ordering, supplies, and refusal cases, and the append-only
+sender guarantee struck with the O_APPEND argument, close-on-exec standing on its
+own grounds. The exchange count is four.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -135,14 +150,14 @@ the whole of what the removed ordering was protecting and it stands unchanged.
 cannot verify from outside the process, which is what a contract is for, so
 `weaver-admin-PRD` section 7 points here rather than restating it.
 
-**On this seam the close-on-exec split of `weaver-organ-channel` section 2 lands on
-the trace descriptors and this channel's own.** `O_APPEND` lives on the open file
-description and travels with the trace descriptors, and close-on-exec does not, so a
+**On this seam the close-on-exec obligation of `weaver-organ-channel` section 2 lands
+on the trace descriptors and this channel's own.** Close-on-exec rides the descriptor
+rather than the open file description, so a
 receiver calling `recvmsg` without `MSG_CMSG_CLOEXEC` accepts a handle with the flag
 clear, and every subprocess a tool call spawns from that point inherits a writable
 handle to the trace. Admin can open the file correctly and still lose the property at
-the receive, so the obligation splits across the parties in section 5 rather than
-resting on the sender alone. The same holds for this channel's own descriptor, which
+the receive, so the obligation is the receiver's in section 5 rather than
+the sender's. The same holds for this channel's own descriptor, which
 reaches the supervisor rather than being received by it, so the flag is set on admin's
 end before the channel is handed across and set again after the worker's last exec. The
 second is a set and not a check, because `execve` can clear the flag and a step that
@@ -157,17 +172,17 @@ reopened, and not shared with a second worker.
 Four, and no others. Three are opened by admin and one is opened by the harness.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
-session identity, the run ordinal, the trace descriptors, the model binding, and the
-gate instruction. The last two are in the directive because the ruling of
-`weaver-admin-PRD` section 6 gives admin no channel to the SPU or the gate, so if
-admin's intent for either does not cross this seam it crosses nowhere. The harness
-authors its `load` event, projects the record into a working structure, asks the SPU
-to admit the model binding it was handed, and starts Gate last. It answers ready only
-when every step of that fan-out has confirmed, or it refuses, and a refusal names
-where the fan-out stopped, so that admin rolls back what was built without asking a
-second question. The answer, either way, closes the exchange and is the aggregate:
-one directive out, one answer back, and the organs appear in the answer's content
-rather than as parties to this seam.
+session identity, the run ordinal, the trace descriptors, the
+model binding, and the gate instruction. The last two are in the directive because the
+ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU or the gate, so
+if admin's intent for either does not cross this seam it crosses nowhere. The harness
+projects the record into a working structure, authors its `load` event, asks the SPU to
+admit the model binding it was handed, and starts Gate last. It answers ready only when
+every step of that fan-out has confirmed, or it refuses, and a refusal names where the
+fan-out stopped, so that admin rolls back what was built without asking a second
+question. The answer, either way, closes the exchange and is the aggregate: one
+directive out, one answer back, and the organs appear in the answer's content rather
+than as parties to this seam.
 
 **Leave the run.** Opened by admin. Admin directs the harness to leave. The harness
 stops Gate first, refuses while a turn is in flight, authors its `unload` event,
@@ -177,9 +192,17 @@ it refuses, and a refusal names where the sequence stopped. The record is left o
 the next run rather than finalized. As with enter, the answer is the aggregate and the
 organs appear in its content rather than as parties to this seam.
 
-**Recompute an integrity value.** Opened by admin. Admin directs the harness to
-recompute the value for a named turn over the working structure. The harness answers
-with the value, or it refuses. It does not compare and does not conclude.
+**Stop the turn.** Opened by admin. Admin conveys the operator's intent to stop, one
+bit and no work. The harness aborts the turn in flight, the turn closes with the stop
+reason marked in place of a response, and the run stays open. The harness answers
+with the turn's fate, aborted naming the turn it closed, or at rest because nothing
+was in flight, and both are clean closes of the exchange rather than refusals,
+because the operator's intent is satisfied by the state either way. The answer is
+given only after the close event is placed, which is the announce-after-record
+discipline the alert already carries. Stop touches no run bracket. It is the channel
+the operator interrupt of `weaver-harness-PRD` section 2 arrives on, and it exists on
+this seam because the operator holds no other crossing. How the abort lands at the
+decoder is the harness's interior and crosses nowhere.
 
 **Alert.** Opened by the harness, and closed by the same message that opens it. The
 harness reports a fault the worker survived. Admin does not answer, and the reason is
@@ -212,7 +235,9 @@ an obligation on the party that could break it.
 ## 4. Ordering
 
 - Enter is first and happens exactly once on a channel.
-- Recompute is valid only between a completed enter and a leave.
+- Stop is valid only between a completed enter and a leave, carries no ordering
+  against the alert, and a stop arriving at rest answers at rest rather than
+  refusing.
 - An alert is valid in that same window, so every alert names a live run. A fault
   before ready is a refusal on the enter exchange rather than an alert, because there
   is no run yet for one to name.
@@ -236,12 +261,12 @@ exchange payload change is a supplies change by construction, and a Spec writer 
 this list.
 
 **Admin supplies** the session identity and run ordinal for the run being entered, the
-trace descriptors, the model binding the fan-out admits, the gate instruction the
-fan-out starts, and the identity of the turn whose value it wants recomputed.
+trace descriptors, the model binding the fan-out admits,
+the gate instruction the fan-out starts, and the intent to stop.
 
-**Admin guarantees** that every descriptor it passes was opened append-only and refers
-to the record of the session it named, that the run ordinal is the next one for that
-session, and that the boundary the worker runs inside exists and is correct, because
+**Admin guarantees** that every trace descriptor it passes refers to the record of
+the session it named, that the run ordinal is the next one for that session, and
+that the boundary the worker runs inside exists and is correct, because
 admin verified it before the unit started and is the only party positioned to. The
 guarantee is of verification rather than of authorship, since the boundary is the
 operator's artifact. It guarantees that no directive carries work of any kind. It
@@ -250,32 +275,32 @@ read fills, and a full channel is the one way a notification could stall the run
 about.
 
 **The harness supplies** its readiness as the aggregate of the enter fan-out, its
-confirmation of departure carrying the validation outcome, the recomputed value, and
-its alerts.
+confirmation of departure carrying the validation outcome, the
+turn's fate on a stop, and its alerts.
 
 **The harness guarantees** that every descriptor it accepts is accepted close-on-exec,
 per section 2, which is an obligation on the receiving call and cannot be met by the
-sender. It guarantees that it authors the run's bracket events, that it writes only
-through the descriptors it was handed, that it resolves no path, and that a ready
-answer is given only after a validated projection, an admitted model, and a started
-gate. It guarantees that a refusal names where the fan-out stopped, so that admin
-rolls back on the answer alone. It guarantees that a recomputed
-value is produced without comparison and without conclusion, and that a refusal to
-validate a record is a refusal rather than a degraded start. It guarantees that a fault
-reaches the record before its alert reaches the channel, and that no run blocks on an
-alert being taken.
+sender. It guarantees that it authors the run's bracket
+events, that it writes only through the descriptors it was handed, that it resolves no
+path, and that a ready answer is given only after a validated projection, an admitted
+model, and a started gate. It guarantees that a refusal names where the fan-out stopped,
+so that admin rolls back on the answer alone. It guarantees that a refusal to validate a
+record is a refusal rather than a degraded start. It guarantees that a fault reaches the
+record before its alert reaches the channel, and that no run blocks on an alert being
+taken. It guarantees that a stop answer follows the close event it reports, so the
+record holds the abort before the channel does.
 
 **Admin's drain and the harness's non-blocking write are two halves of one property,**
 and neither party holds it alone. That is why both appear as guarantees rather than one
 appearing as a prohibition on the other.
 
-**Append-only is the sender's and close-on-exec is the receiver's, and the split is the
-point.** One flag rides the open file description and the other rides the descriptor,
-so a single sentence assigning both to one party is wrong about one of them whichever
-party it names. Both are behaviors rather than type properties on the receive path, so
-both take the perturbation-verified test apex section 11 asks for rather than a
-compile-time pin. What can be pinned is the shape: one receive site, taking no flag
-argument, returning a handle the rest of the crate cannot construct another way.
+**Close-on-exec is the receiver's, and only the receiver can supply it.** The flag
+rides the descriptor rather than the open file description, so it does not cross with
+a passed handle and the receiving call is the one place it exists. It is a behavior
+rather than a type property on the receive path, so it takes the perturbation-verified
+test apex section 11 asks for rather than a compile-time pin. What can be pinned is
+the shape: one receive site, taking no flag argument, returning a handle the rest of
+the crate cannot construct another way.
 
 **Neither party guarantees the record's tail.** `weaver-trace-PRD` section 4.2
 forfeits the writer's queue to process death and bounds the depth by the deployment,
@@ -293,8 +318,10 @@ ask, because admin answers nothing. The cases:
   parse
 - the directive is out of order for the channel's state
 - activity is not at rest, so the run cannot be left
-- the named turn is not present in the working structure
-- the value cannot be recomputed
+
+**A stop at rest is not a refusal.** Nothing was in flight, the intent is satisfied
+by the state, and the answer says at rest. The out-of-order case above still covers a
+stop before enter or after leave.
 
 A refusal leaves the harness in the state it was in before the directive. A refused
 enter means no run was entered and no bracket was opened, which is what keeps a
@@ -317,13 +344,15 @@ alerts and a run whose alerts were lost are distinguishable after the fact.
 
 ## 7. Prohibitions
 
-**On admin.** It sends no work, in any form and under any framing. It sends no path.
-It asks for no event to be authored on its behalf. It does not ask the harness to
-compare a value or to act on one. It does not reach into a run in progress, because
-stop, cancel, and interrupt are the harness's and admin waits on rest. It does not
-answer an alert, and it does not treat an alert as authorization for anything the
-prohibition above forbids. What admin does in response leaves this seam and reaches the
-operator surface, which is `weaver-admin-PRD` section 8's.
+**On admin.** It sends no work, in any form and under any framing, and a run in progress
+narrows nothing about that. It sends no path. It asks for no event to be authored on its
+behalf. Into a running
+turn it conveys the operator's intent to stop and nothing narrower, because the abort's
+mechanics are the harness's, per `weaver-admin-PRD` section 3, and unload still waits on
+rest rather than racing it. It does not answer an alert, and it does not treat
+an alert as authorization for anything the prohibition above forbids. What admin does in
+response leaves this seam and reaches the operator surface, which is `weaver-admin-PRD`
+section 8's.
 
 **On the harness.** It opens no exchange this document does not enumerate, which is the
 prohibition that replaces the older one that it initiates nothing. It writes nothing
@@ -381,10 +410,8 @@ possession per section 2, so it reaches neither definition. `weaver-types-PRD` s
 and a claim about what another document says is only checkable if that document says
 it.
 
-**Drawn from `weaver-trace`:** nothing. The value the harness returns crosses inside
-`harness-answer` and this contract names no field of the record's envelope. What admin
-compares it against comes from reading the record, which is the reader cell of
-`weaver-admin-PRD` section 10 and not a thing this seam carries.
+**Drawn from `weaver-trace`:** nothing. No event kind, envelope field, or payload
+shape crosses this seam, and this contract names no field of the record's envelope.
 
 **The five definitions land in `weaver-types` and are owed by this act.**
 `weaver-types-PRD` section 4 rules that wire vocabulary is absent on demand and that
@@ -433,7 +460,9 @@ records this document is not the source of:
 Five definitions and no more. A carrier, a directive with its cases, an answer with its
 cases, a refusal with its cases, and an alert with its cases is what sections 1, 3, and
 6 demand, and a sixth added because a sixth felt tidy would be a reserved slot in data
-form.
+form. The stop exchange adds a case to `admin-directive` and a case to
+`harness-answer` and adds no sixth definition, which is the enumeration growing where
+the shape already lives.
 
 ## 9. What this document changes elsewhere
 
@@ -467,3 +496,15 @@ reader of an earlier revision can tell a closed item from one that was never the
   Working Process section 7 and recorded as such in apex section 5. This is the one
   item on this list that was registered and not applied under the apex rule, and the
   exception is what released it.
+
+**Landed with the fifth revision, recorded rather than owed,** because the batch of
+2026-07-31 carried every party in one act:
+
+- `weaver-admin-PRD` sections 3, 4.1, and 8. The activity-control split, the
+  descriptor payload at load, and the operator surface's stop conveyance.
+- `weaver-harness-PRD` section 2. The interrupt's citation.
+- `weaver-trace-PRD` section 3.1 and `weaver-harness-trace-contract` section 3. The
+  `turn.closed` payload states its close kind.
+- The `WeaverTools-PRD` correction list, deposited at review rather than by this
+  act and cited by substance rather than position: the gate binds no network socket,
+  restated at the apex re-authoring.
