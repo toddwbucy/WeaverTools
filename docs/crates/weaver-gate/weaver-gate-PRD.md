@@ -28,6 +28,9 @@ contract. Section 10's client-boundary and wire-framing cells close against
 **Revised:** 2026-08-01, again, the fault-carrier ruling. Section 8's staged fault
 cases land as `fault` events on the stream rather than in a shape a pending ruling
 would give them.
+**Revised:** 2026-08-01, once more, on review. Section 2's one-listening-socket
+claim scopes from the program to the agent, admin's operator surface having
+falsified the wider wording.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -110,9 +113,12 @@ the only thing that enters is work.
 
 ## 2. What this crate owns
 
-**The hook.** This crate binds the one listening socket the program has, of any kind:
-a named local Unix socket. Ready means bound. Stopped means closed. The socket it
-binds is not this crate's decision: it arrives as the gate instruction inside the
+**The hook.** This crate binds the one listening socket the agent has, of any
+kind: a named local Unix socket. The claim is scoped to the agent deliberately,
+the operator surface of `weaver-admin-operator-contract` being a listening local
+socket that stands outside every agent, per apex section 12. Ready means bound.
+Stopped means closed. The socket it binds is not this crate's decision: it
+arrives as the gate instruction inside the
 enter fan-out, operator-declared and admin-validated, carried by the harness
 uninterpreted, resolved here. The parallel to `model-binding` is exact and deliberate.
 

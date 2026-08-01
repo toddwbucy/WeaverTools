@@ -57,6 +57,10 @@ name corrects from stateless to proto-stateful, per the human's ruling of this
 date: the agent holds real state within a session and none across sessions, the
 old word overstated the emptiness, and the prefix follows protoautonomic. The
 rename sweeps this document and every charter that carried the word.
+**Revised:** 2026-08-01, eighth entry, on the same review. Section 3 step 1's
+one-listening-socket claim scopes from the program to the agent, the operator
+surface of `weaver-admin-operator-contract` having falsified the wider wording,
+admin standing outside every agent per section 12.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -139,10 +143,11 @@ This is the path the MVP must execute. Every requirement in every crate PRD
 states how it serves this path.
 
 1. A client reaches the agent's **Gate** at its local Unix socket hook, the one
-   listening socket the program binds, of any kind, per the demotion ruling of
-   2026-07-31 and `weaver-gate-world-contract`. There is no listening network
-   socket anywhere in the program. Outbound connections made by a tool under
-   step 7 are not ingress and do not pass through Gate.
+   listening socket the agent binds, of any kind, per the demotion ruling of
+   2026-07-31 and `weaver-gate-world-contract`. Admin's operator socket stands
+   outside every agent, per section 12, and there is no listening network socket
+   anywhere in the program. Outbound connections made by a tool under step 7 are
+   not ingress and do not pass through Gate.
 2. Gate authenticates the connection by peer credential under the boundary
    predicate, which admits front-end principals and excludes the agent uid, and
    relays the request to the harness unread: one NDJSON line in, per the world

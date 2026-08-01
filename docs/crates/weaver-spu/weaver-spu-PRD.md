@@ -26,6 +26,9 @@ rather than reaching admin as an alert, and the section 10 cell restates its exi
 against the event kind's case set.
 **Revised:** 2026-08-01, a fifth entry. Sections 2 and 8 adopt the proto-stateful
 vocabulary, per the human's rename of this date.
+**Revised:** 2026-08-01, a sixth entry, on review. Section 3 stops claiming the
+gate binds a network socket, the demotion of 2026-07-31 having made it a local
+hook, and the only-listener claim scopes to the agent.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -179,9 +182,10 @@ binding reaches it across the seam because the harness was handed it in the ente
 directive, so a read here would be a second interpretation of a file admin already
 validated, with no way to disagree usefully and every way to disagree quietly.
 
-**A listening socket of any kind.** `weaver-gate` binds the only network socket. This
-crate binds no socket at all, because the channel it uses was created by the harness
-before the fork and arrives already connected.
+**A listening socket of any kind.** `weaver-gate` binds the agent's only
+listening socket, a local hook and no network socket, per the demotion ruling of
+2026-07-31. This crate binds no socket at all, because the channel it uses was
+created by the harness before the fork and arrives already connected.
 
 **Policy about whether a load should happen.** It answers whether this device can take
 this model now, and whether the agent should be loaded at all is the operator's.
