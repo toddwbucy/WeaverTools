@@ -57,6 +57,10 @@ channel's rather than the exchange census's, admin's organ standing unchanged.
 5.1's second case as landed rather than describing the correction as filed, the
 restatement having merged on 2026-07-31 and the re-authoring of this date having
 absorbed it.
+**Revised:** 2026-08-01, twelfth. Section 2's channel arrival settles per the
+human's ruling of this date and the transient-unit check: declared opens carry
+the descriptors, the coordination socket is named and unreachable rather than
+nameless, and possession of the connected end remains the authentication.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -135,15 +139,15 @@ exists before the unit starts.** This is the creating-party rule of
 `weaver-organ-channel` section 2 landing on this seam, and the creating party is not
 the initiating party.
 
-**How the worker's end arrives is open, and the earlier wording assumed a spawn admin
-no longer performs.** The clause read that the pair was inherited by the worker, which
-held while admin forked it. Under the delegation `weaver-admin-PRD` section 7 rules,
-the init system starts the unit and the worker is not admin's child, so there is no
-fork of admin's to inherit across. `weaver-admin-PRD` section 10 holds the cell, and
-what settles it is what the transient-unit interface carries rather than a choice this
-document makes. If it carries no descriptor, what reopens is this section's channel
-design and not the grant mechanism, because the alternatives are all channel shapes
-and each pays the second-opener case `weaver-organ-channel` section 2 rejects.
+**How the worker's end arrives is settled, per the ruling of 2026-08-01.** The
+transient-unit check ran and the interface carries declared opens rather than
+raw caller descriptors, so the channel is a socket admin binds inside an
+admin-owned unsearchable directory, connected once at the worker's start by the
+unit's own declaration, per `weaver-admin-PRD` sections 6 and 10. Namelessness
+restates as unreachability: the name exists, the agent's tool surface cannot
+traverse to it, and no second opener exists in practice because the kernel
+denies the path lookup, which is the same property the unnamed pair bought and
+the second-opener case `weaver-organ-channel` section 2 rejects stays rejected.
 
 **The init system is a holder in transit and not a peer,** which is
 `weaver-organ-channel` section 2's retention rule with its intermediary named. It may

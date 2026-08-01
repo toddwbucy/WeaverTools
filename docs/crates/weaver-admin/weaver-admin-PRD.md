@@ -74,6 +74,11 @@ memory round's to take or decline.
 drains the section 11 register: every entry that filed with it landed in that
 act, the already-landed entries are recorded as such, and one entry remains, the
 `weaver-types-PRD` section 2.1 rename.
+**Revised:** 2026-08-01, a fourteenth entry. The descriptor cell of section 10
+closes on the human's ruling of this date, the transient-unit check having run:
+namelessness restates as unreachability in section 6, the channel a socket bound
+in an admin-owned unsearchable directory and connected once at the worker's
+start by the unit's own declared opens.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -603,19 +608,20 @@ one crate, so the organ declares its seam and the rule generalizes to every orga
 harness gains. Here the organ is `weaver-admin` and the record above is admin's to
 state.
 
-**The channel has no name in the filesystem, and that is a requirement rather than an
-implementation choice.** A named socket the worker dials is dialable by anything running
-as the agent uid, and `bash` is exactly that. A channel with no name cannot be opened by
-a second party, so possession of the descriptor is what authenticates the peer and the
-channel collapses to one for the whole of the worker's life.
-
-**How an unnamed pair reaches a process this crate did not fork is unsettled, and the
-requirement is stated at the level that survives the answer.** An earlier draft said
-inherited across the spawn, which was true while admin forked the worker and is not true
-under the delegation of section 7. What the seam requires is namelessness and a single
-peer, and the two routes to it are named as a cell in section 10. Both preserve the
-property this paragraph argues for, so the requirement is written as the property rather
-than as the mechanism that used to deliver it.
+**The channel is unreachable by the agent's tool surface, and that is the
+requirement, restated from namelessness on 2026-08-01.** A dialable socket the
+worker's tools could reach would let an elected `bash` open the agent's own
+supervisory channel, and namelessness was the first mechanism that denied the
+dial. The check of the init system's transient-unit interface, run per the
+section 10 cell, settled the mechanism: descriptors reach a unit by the unit's
+own declared opens rather than by a raw handle from the caller, so the channel
+is a socket admin binds inside an admin-owned directory the agent uid cannot
+search, connected once at the worker's start by the init system's facility and
+never dialable from tool code, the kernel denying the path lookup exactly as it
+does for the sink. The name exists and reachability does not, one stone for both
+birds, and the channel still collapses to one peer for the whole of the worker's
+life, possession of the connected end remaining the authentication with the
+peer credential now real and available as a check the Spec elects.
 
 **Which is why this seam authenticates by possession rather than by credential, and the
 difference is stated rather than left to be noticed.** Apex section 5.1 has every seam
@@ -830,23 +836,20 @@ on the cell.
 **Drop-first is closed and its subject is gone.** The worker starts as the agent uid,
 so there is no privilege window to order a handoff against.
 
-**How the trace descriptors reach a process admin did not fork.** This is the cell the
-mechanism ruling opened, and it is the one place section 4.1 is unsettled. Section 6
-requires the coordination channel to be an unnamed connected pair, on the grounds that
-a named socket is dialable by anything running as the agent uid, and under delegation
-admin is not the worker's parent, so inheritance across a fork is not available. The
-route this cell holds open is admin passing a descriptor into the transient unit
-through the init system's own facility for it, which keeps the channel unnamed and
-moves one more thing into operator configuration. Admin forking the worker itself is
-not the peer alternative an earlier form of this cell offered, because an init system
-supplies no identity to a process it did not start, so admin setting the uid takes a
-capability section 7 rules admin does not hold. What an absent interface reopens is
-the channel design of `weaver-admin-harness-contract` section 2 and not the grant
-mechanism, in that contract's own words. **Settled by:** a check of what the init
-system's transient-unit interface will carry, which is a mechanical question with a
-factual answer, taken before the Spec. Named here because the ruling that closed the
-mechanism opened this, and a charter that recorded only the closure would be
-recording the half that reads well.
+**How the descriptors reach a process admin did not fork is closed.** The check
+this cell named was run on 2026-08-01, before the Spec as required, and the init
+system's transient-unit interface carries the route: a unit declares its opens,
+the init system performs them at start, a path opened or an AF_UNIX socket
+connected, and the resulting descriptors reach the service at its first
+instruction by the listen-fds interface. A raw descriptor from the caller does
+not cross, so the unnamed-pair route died with the fork it needed, and the
+channel design restates as section 6 now carries it: the coordination socket is
+bound by admin inside an admin-owned unsearchable directory, connected once at
+the worker's start, unreachable by the agent's tool surface, with possession of
+the connected end the authentication and the peer credential available as a
+check the Spec elects. The sink's descriptors travel the same way, the unit
+opening what its declaration names and the worker receiving handles and never
+resolving paths.
 
 **Session close.** Section 4.4 puts `session.closed` with the harness, at the cost
 of requiring the agent loaded for the authoring. What cues that authoring inside the
