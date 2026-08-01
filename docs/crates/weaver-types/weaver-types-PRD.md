@@ -17,7 +17,7 @@ contract is ruled out.
 **Revised:** 2026-08-01. Section 2.1 gains `gate-instruction` as the sixth field,
 owed by the gate pair's merge of this date, and section 2.2 names the scoped claim's
 two consumers, the gate's client socket and the operator surface of
-`weaver-admin-operator`, both credentialed seams.
+`weaver-admin-operator-contract`, both credentialed seams.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -228,8 +228,8 @@ what the carve-out rests on.
 
 **The scoped claim has its consumers named as of 2026-08-01.** The client socket of
 `weaver-gate-PRD` section 2 is the seam that admits an outside principal, and the
-operator surface `weaver-admin-operator` governs is the seam the operator reaches
-the service on. Both authenticate by `SO_PEERCRED`, both judge by the one shared
+operator surface `weaver-admin-operator-contract` governs is the seam the operator
+reaches the service on. Both authenticate by `SO_PEERCRED`, both judge by the one shared
 rule, and both draw the pair below.
 
 **Alongside the identity type, this crate carries the authorization predicate, and

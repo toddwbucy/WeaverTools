@@ -2,12 +2,15 @@
 
 **Status:** MERGED. In `main` and the source of truth for now. Written on the human's
 ruling of 2026-08-01: the two external boundaries take contracts before any Spec is
-written, this document and `weaver-admin-operator` in one act, and both are blockers
-on the Spec phase. One party is an external principal rather than a crate, the second
-instance of the category that ruling settles.
+written, this document and `weaver-admin-operator-contract` in one act, and both
+are blockers on the Spec phase. One party is an external principal rather than a
+crate, the second instance of the category that ruling settles.
 
 **Date filed:** 2026-08-01
-**Document ID:** `weaver-gate-world`
+**Revised:** 2026-08-01, second entry. The filename gains the `-contract` suffix on
+the human's correction, per `weaver-admin-operator-contract`, and every citation in
+the corpus follows the rename in the same act.
+**Document ID:** `weaver-gate-world-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
@@ -26,22 +29,23 @@ the gate carries without reading, delimiter and octets, never fields. The harnes
 bound to this page through `weaver-harness-gate-contract` when the token workflow
 charters the turn exchanges, and this document does not restate that seam.
 
-**The filename carries no `-contract` suffix, and the absence is the category,** per
-`weaver-admin-operator` section 0, whose naming ruling this document shares.
+**The filename carries the `-contract` suffix like every contract,** per
+`weaver-admin-operator-contract` section 0, whose naming correction of 2026-08-01
+this document shares.
 
 ```graph
-node: weaver-gate-world
+node: weaver-gate-world-contract
 kind: document
 
 edge: party
-from: weaver-gate-world
+from: weaver-gate-world-contract
 to: weaver-gate
 ```
 
 The second party is the world: a local client principal admitted by the boundary
 predicate. The graph carries no node for a principal outside the program, so the
-party is named in prose and the missing category rides `weaver-admin-operator`'s
-register entry rather than taking a twin.
+party is named in prose and the missing category rides
+`weaver-admin-operator-contract`'s register entry rather than taking a twin.
 
 ## 1. The channel
 
@@ -139,4 +143,4 @@ workflow charters the turn exchanges, and nothing enters `weaver-types-PRD` sect
   the delimiter level with the field shapes staying with the spec seat. Landed in
   the same act.
 - `WeaverTools-Document-Format.md`: the external-principal party category rides
-  `weaver-admin-operator`'s register entry.
+  `weaver-admin-operator-contract`'s register entry.

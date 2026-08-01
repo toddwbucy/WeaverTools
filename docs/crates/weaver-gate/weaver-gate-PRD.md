@@ -24,7 +24,7 @@ of this date, and the on-merge edits of section 11 land in the same act:
 `gate-instruction` enters `weaver-types-PRD` section 2.1, the predicate citation
 lands in 2.2, and `weaver-harness-PRD` section 4 resolves turn ingress through the
 contract. Section 10's client-boundary and wire-framing cells close against
-`weaver-gate-world`, written this date on the same ruling.
+`weaver-gate-world-contract`, written this date on the same ruling.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -289,7 +289,7 @@ this charter rides that cell rather than opening a twin. **Settled by:** the rul
 that settles it there.
 
 **Wire framing at the client socket is closed.** Newline-delimited JSON, one request
-line and one response line per turn, ruled at `weaver-gate-world` section 2 on
+line and one response line per turn, ruled at `weaver-gate-world-contract` section 2 on
 2026-08-01. The field shapes stay with the spec seat and streaming with the token
 workflow, per that contract's section 3.
 
@@ -300,10 +300,11 @@ it, this crate resolves it. The types edit landed with the merge of this charter
 2026-08-01.
 
 **The client boundary's seam category is closed.** The client socket takes a
-contract of its own, `weaver-gate-world`, per the human's ruling of 2026-08-01 that
-the external boundaries are contracted before any Spec. The party category the
-Document Format lacked is owed to the Format by `weaver-admin-operator` section 8,
-one register entry for both instances.
+contract of its own, `weaver-gate-world-contract`, per the human's ruling of
+2026-08-01 that the external boundaries are contracted before any Spec. The party
+category the
+Document Format lacked is owed to the Format by `weaver-admin-operator-contract`
+section 8, one register entry for both instances.
 
 ## 11. Edits owed in the same act
 

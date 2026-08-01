@@ -2,12 +2,16 @@
 
 **Status:** MERGED. In `main` and the source of truth for now. Written on the human's
 ruling of 2026-08-01: the two external boundaries take contracts before any Spec is
-written, this document and `weaver-gate-world` in one act, and both are blockers on
-the Spec phase. One party is an external principal rather than a crate, which is the
-seam category `weaver-admin-PRD` section 10 held open, settled by that same ruling.
+written, this document and `weaver-gate-world-contract` in one act, and both are
+blockers on the Spec phase. One party is an external principal rather than a crate,
+which is the seam category `weaver-admin-PRD` section 10 held open, settled by that
+same ruling.
 
 **Date filed:** 2026-08-01
-**Document ID:** `weaver-admin-operator`
+**Revised:** 2026-08-01, second entry. The filename gains the `-contract` suffix on
+the human's correction, a contract being named as one whatever its parties, and
+every citation in the corpus follows the rename in the same act.
+**Document ID:** `weaver-admin-operator-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
@@ -24,19 +28,19 @@ are stated here rather than in a Spec because the party on the far end is outsid
 program and builds against this page and nothing else. What a field list contains is
 the Spec's. What shape a message takes on the wire is this document's.
 
-**The filename carries no `-contract` suffix, and the absence is the category.** A
-contract between crates is named for its parties with the suffix, per Document Format
-section 2. One party here is not a crate, so the suffix is withheld the way the
-`contracts/` directory withholds the `weaver-` prefix, exclusion by naming, and the
-Format's party-edge category for an external principal is owed by this act, per
-section 8.
+**The filename carries the `-contract` suffix like every contract, on the human's
+correction of 2026-08-01.** A contract is named as one whatever its parties, per
+Document Format section 2, and the external category is carried by the party prose
+below and by the party-edge category the Format is owed per section 8, never by a
+withheld suffix. An earlier form of this document withheld it as an
+exclusion-by-naming mark and was corrected the same day.
 
 ```graph
-node: weaver-admin-operator
+node: weaver-admin-operator-contract
 kind: document
 
 edge: party
-from: weaver-admin-operator
+from: weaver-admin-operator-contract
 to: weaver-admin
 ```
 
@@ -155,7 +159,7 @@ This surface's request and answer definitions are owed to `weaver-types-PRD` sec
 ## 8. What this document changes elsewhere
 
 - `WeaverTools-Document-Format.md`: a party-edge category for an external principal,
-  this document and `weaver-gate-world` being the two instances. Owed to the
+  this document and `weaver-gate-world-contract` being the two instances. Owed to the
   Format's next revision.
 - `weaver-admin-PRD` sections 8 and 10: the surface cites this contract and the
   operator-to-service cell closes. Landed in the same act.

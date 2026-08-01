@@ -285,7 +285,7 @@ member, `weaver-traits` and `weaver-types` as the floor, `weaver-admin`,
 `weaver-spu`, half chartered by ruling to the end of the lifecycle workflow, and
 `weaver-gate`, chartered to the same boundary. Six contracts are merged beside them,
 coordination, trace production, residency, the gate seam, and the two external
-boundaries, `weaver-admin-operator` and `weaver-gate-world`, with
+boundaries, `weaver-admin-operator-contract` and `weaver-gate-world-contract`, with
 `weaver-organ-channel` as the drawn material the organ contracts share.
 
 The batch of 2026-07-31 merged to `main` on 2026-08-01: the stop exchange and the
@@ -294,8 +294,8 @@ and admin's device arbitration, the apex's conflict binding relocated to SPU
 admission, and the `basic-inference-loop` workflow pair under the harness's
 `Loops/` directory. The `weaver-gate` pair merged on 2026-08-01 on the human's
 ruling that a document on `main` is merged, and the external boundaries took their
-contracts the same day, `weaver-admin-operator` and `weaver-gate-world`, written as
-blockers before any Spec.
+contracts the same day, `weaver-admin-operator-contract` and
+`weaver-gate-world-contract`, written as blockers before any Spec.
 
 What remains in this phase: the durable-record cut the ruling of 2026-08-01 scopes,
 registered on the open-items list, the fault-carrier ruling, which holds the alert

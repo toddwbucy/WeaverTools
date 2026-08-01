@@ -2,9 +2,9 @@
 
 **Status:** DRAFT v0.9, 2026-08-01, second entry this date. The gate pair merged on
 the human's ruling, so section 2's proposal note resolves, and the wire-framing cell
-leaves section 7, settled by `weaver-gate-world` at the delimiter level with the
-field shapes staying with the spec seat. Previously v0.8, the post-merge sweep of
-the open-items list: the
+leaves section 7, settled by `weaver-gate-world-contract` at the delimiter level
+with the field shapes staying with the spec seat. Previously v0.8, the post-merge
+sweep of the open-items list: the
 batch of 2026-07-31 merged to main, the rulings register below is struck as landed,
 section 3 stops counting the stop exchange as unmerged, and the diagram redraws
 carrying the enter ordering of v0.5, the live view's retirement under ruling A, and
@@ -187,8 +187,8 @@ and the ears, an opaque pass-through with no translation and no opinions about
 content in either direction. Whoever connects gets to converse with the agent and
 gets nothing else. The gate charter merged on 2026-08-01, so this paragraph stands
 on it rather than proposing ahead of it, and the client socket's own boundary is
-governed by `weaver-gate-world` as of the same date. The gate's lifecycle position
-is stated in section 3.
+governed by `weaver-gate-world-contract` as of the same date. The gate's lifecycle
+position is stated in section 3.
 
 Admin's interface is the lifecycle exchanges of the contract, and the program's one
 output is the NDJSON structure exiting at admin, whose relationship to the durable

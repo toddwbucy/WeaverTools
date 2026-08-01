@@ -46,8 +46,9 @@ admission refusal inside the enter fan-out landing in section 5's bracket case, 
 the rhetorical uses of the word device rename to instrument so the one token means
 the GPU.
 **Revised:** 2026-08-01, a ninth entry. The operator surface takes its contract,
-`weaver-admin-operator`, written as a blocker before any Spec per the human's ruling
-of this date: section 8 cites it and section 10's operator-to-service cell closes.
+`weaver-admin-operator-contract`, written as a blocker before any Spec per the
+human's ruling of this date: section 8 cites it and section 10's operator-to-service
+cell closes.
 That contract also records the durable-record ruling of the same date, durability
 being the operator's with the program's obligation ending at the NDJSON tee, and the
 cut it scopes is registered on the open-items list rather than landed here.
@@ -800,9 +801,9 @@ a constraint rather than rediscovered.
 conveys the operator's intent to stop across the contract's stop exchange. It carries
 no work, per section 3. It is not network ingress and breaches nothing Gate holds, on
 the grounds section 3 states. It is the whole of how the role reaches the service,
-and it is a seam by the Working Process test, governed by `weaver-admin-operator` as
-of 2026-08-01, which also carries the format of what crosses and the output stream
-the durable-record ruling of that date defines.
+and it is a seam by the Working Process test, governed by
+`weaver-admin-operator-contract` as of 2026-08-01, which also carries the format of
+what crosses and the output stream the durable-record ruling of that date defines.
 
 **Reading and analysis of finished records is not this crate's, and not this
 repository's.** An earlier reading named `weaver-admin-tools` a member of this domain,
@@ -919,7 +920,7 @@ ruling on what kind of edge a read-side consumer of `weaver-trace` declares. No 
 waits on a tooling crate.
 
 **The operator-to-service seam is closed.** Section 8's socket is governed by
-`weaver-admin-operator`, written on the human's ruling of 2026-08-01 that the
+`weaver-admin-operator-contract`, written on the human's ruling of 2026-08-01 that the
 external boundaries are contracted before any Spec. Section 6 still does not declare
 it, because the near party is a human role rather than a crate, and the party
 category the Document Format lacks is owed to the Format by that contract's own

@@ -11,7 +11,7 @@ the lower. The exchanges that carry work arrive with the token workflow.
 prohibitions, the live view retired under ruling A of the subtraction batch.
 **Revised:** 2026-08-01. The status moves from draft to merged on the human's ruling
 of this date, with the register landings recorded at `weaver-gate-PRD` section 11.
-The client socket this seam raises gains its own contract, `weaver-gate-world`,
+The client socket this seam raises gains its own contract, `weaver-gate-world-contract`,
 written the same date.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
