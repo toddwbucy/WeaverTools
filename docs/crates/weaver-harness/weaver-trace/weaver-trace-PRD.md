@@ -26,6 +26,13 @@ holds.
 thirteen to fourteen, per the fault-carrier ruling of this date: the stream is the
 program's one fault carrier, the coordination seam's alert exchange retiring in
 the same act.
+**Revised:** 2026-08-01, third entry this date. The relational projection retires,
+per the human's ruling: the working structure holds the same canonical NDJSON the
+stream carries, one rendering held and handed, so the deterministic-projection
+guarantee, the projection version, and the staged relational engine all dissolve,
+nothing existing to reconcile. The loop's reads are sequential, a consumer wanting
+rows builds a derived view, and recall over past runs is the memory round's,
+proposed as similarity through the SPU's encode side.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -47,8 +54,8 @@ five-party trace seam to two. Depending on nothing is what this crate has in com
 the floor. Being drawn by everything is what it does not. The no-dependency claim
 survives contact with the message kinds only because their payloads are opaque here,
 which section 3 states rather than assumes. It defines what an event is, renders each
-one to canonical form once, projects it into a queryable present, and hands the same
-rendering to the outbound stream.
+one to canonical form once, holds that rendering in RAM as the working structure,
+and hands the same rendering to the outbound stream.
 
 ```graph
 node: weaver-trace
@@ -92,11 +99,13 @@ the operator's side rather than in anything the program keeps.
 
 ### 2.2 The session has two materializations
 
-The **working structure** is the session in RAM: the volatile relational present,
-a deterministic projection of the event stream. It is what the harness reasons
-over, which makes it state rather than a report about state. It lives for one run,
-and it runs ahead of the outbound stream by the depth of the writer's queue, per
-section 4.2.
+The **working structure** is the session in RAM: the run's admitted events in the
+same canonical NDJSON form the stream carries, held in order, per the ruling of
+2026-08-01 that retired the relational projection. It is what the harness reasons
+over, which makes it state rather than a report about state, and the loop's reads
+are sequential by design, the message sequence and the tool events in the order
+they landed. It lives for one run, and it runs ahead of the outbound stream by the
+depth of the writer's queue, per section 4.2.
 
 **The working structure is append-only by construction.** It offers no update
 surface, no delete surface, and no mechanism a caller could reach to alter an event
@@ -128,21 +137,23 @@ node: session-record
 kind: artifact
 ```
 
-### 2.3 Projection is deterministic, and resume is no longer its second job
+### 2.3 One rendering, held and handed, and nothing to reconcile
 
-The projection from admitted events to rows is deterministic: the same events, the
-same schema version, the same projection version, the same rows. That is what makes
-the working structure a derivation rather than a second author, and it is what lets
-a consumer of the stream rebuild an equivalent structure on its own compute and
-trust the result, since the account it holds is the same canonical bytes the
-projection consumed.
+The working structure and the stream carry the same canonical rendering, one held
+and one handed, so no reconciliation between them can be owed and none exists.
+An earlier version of this section guaranteed a deterministic projection from
+events to rows, and the guarantee dissolved with the rows: with one representation
+there is nothing a projection version could govern and nothing a divergence could
+open between. A consumer of the stream that wants rows, an index, or any other
+shape builds a derived view on its own compute from the same bytes, and a derived
+view names its source range and is never a durable home, per section 8.
 
-An earlier version of this section made recreation the session-resume mechanism,
-`run1` opening the record, projecting it, and appending. That mechanism dissolved
-with the program-owned record under the ruling of 2026-08-01. Every run begins with
-an empty working structure, the program promises no resume, and what continuity
-across runs becomes, against operator-held storage or the memory round, is the
-enter cell `weaver-admin-PRD` section 10 holds.
+An earlier version of this section also made recreation the session-resume
+mechanism, `run1` opening the record, projecting it, and appending. That mechanism
+dissolved with the program-owned record under the ruling of 2026-08-01. Every run
+begins with an empty working structure, the program promises no resume, and what
+continuity across runs becomes, against operator-held storage or the memory round,
+is the enter cell `weaver-admin-PRD` section 10 holds.
 
 ### 2.4 Spans
 
@@ -158,11 +169,11 @@ derived, and nothing is stored twice.
 
 ### 2.5 Schema authority
 
-The single emission is authored against the durable event schema. The working structure
-is a projection rather than a second author, so its projection version governs only how
-events become rows and may be bumped without changing what is emitted. A change to the
-durable event schema is the breaking change, and the projection declares which
-event-schema versions it consumes.
+The single emission is authored against the durable event schema, and that schema
+is the only schema. The working structure holds the same canonical form rather
+than a second representation, so no projection version exists to govern anything,
+per the ruling of 2026-08-01. A change to the durable event schema is the breaking
+change, and it is the one version every consumer keys on.
 
 ## 3. Events are typed, and that is a safety property
 
@@ -179,14 +190,14 @@ and the kind vocabulary is closed.
 **Three payload shapes are opaque to this crate.** `message.user`,
 `message.assistant`, and `message.tool_result` carry conversation messages in the
 shape `weaver-traits` defines, and this crate neither defines that shape nor decodes
-it. It records the octets, hashes them, sequences them, and projects them as carried
+it. It records the octets, sequences them, and carries them as opaque
 content. Decoding is the harness's, which links `weaver-traits` and is the only party
 that reads a message as a message.
 
 This is the demand rule rather than a convenience. Section 6 guarantees canonical
 byte form, a gapless run-scoped sequence, an interrogable committed boundary, whole
-events to the sink, deterministic projection, and typed refusal, and not one of
-them requires knowing what a message says. A crate that depends on no other
+events to the sink, one rendering held and handed, and typed refusal, and not one
+of them requires knowing what a message says. A crate that depends on no other
 linking a definition it does not need gives up the property for nothing, so the
 alternative reading, where
 `weaver-trace` floor-links `weaver-traits` to decode three kinds, is refused on the
@@ -438,7 +449,7 @@ structure holding an event the stream never received:
 1. the harness submits an authored event,
 2. this crate admits it or refuses it with a typed failure,
 3. an admitted event is assigned its sequence and rendered to canonical bytes once,
-4. that one rendering fans out, projected into the working structure and handed to
+4. that one rendering fans out, appended to the working structure and handed to
    the stream writer in the same act.
 
 **Refusal sits at admission, ahead of the fan-out.** An event that fails validation
@@ -448,7 +459,7 @@ is bounded by section 3, reaching the envelope binding and the octet well-formed
 and never the interior of a payload.
 
 **The working structure lands first and is the acknowledgment.** It is in-process
-memory and the sink is not, so the projection completes and the turn proceeds while
+memory and the sink is not, so the append completes and the turn proceeds while
 the stream write is still in flight. Reads are served at memory latency and the
 stream trails. This is a trade the architecture makes deliberately rather than a gap
 in it.
@@ -468,7 +479,7 @@ than holding a corrupted middle.
 
 The three states of the commit boundary describe where an event sits in that
 fan-out. **Committed** has been handed to the sink and is what the operator's
-account holds. **Pending** has been admitted and projected and is still in the
+account holds. **Pending** has been admitted and appended and is still in the
 writer's queue, so it is the loss window, whose depth the deployment sets rather
 than an election. **Failed** is a stream write that errored against a live process,
 and it is surfaced.
@@ -578,8 +589,8 @@ run elected the ceiling.
   process death and bounds that queue by the deployment rather than by this crate.
 - Whole events to the sink, never a partial one, so a consumer's account truncates
   at an event boundary.
-- Deterministic projection: the same events, the same schema version, the same
-  projection version, the same rows.
+- One rendering, held and handed: the working structure and the stream carry the
+  same canonical bytes, so no reconciliation between them exists to owe.
 - Typed failure for every refusal. Nothing fails silently and nothing returns a
   partial result with a success status.
 
@@ -655,17 +666,18 @@ its contracts and never from a working list. A working list holds what has no ow
 yet, and an item moves into a charter the moment it acquires one. That list is never
 ratified and shrinks toward empty, so work parked only there is work that evaporates.
 
-**The in-RAM engine.** The working structure is append-only by construction per
-section 2.2, so `rusqlite` is out on that ground before the C-dependency question is
-reached. What remains is the shape of the hand-rolled engine. It must not regress to
-a fixed list of named reads, which is what made the previous tree's working structure
-a dead end when memory needed two more, and a typed query builder over indexed tables
-is the shape that keeps extension cheap without a parser. **Entry condition:** the
-Spec pass.
-
-**The richness the working structure needs.** It must be rich enough that a future
-activation network can attach and read it without reshaping it. **Entry condition:**
-the Spec pass.
+**The in-RAM representation.** Whether the working structure holds canonical lines
+parsed on read or typed events rendered to their line once, and how the loop's
+sequential reads are served, are the Spec's, bounded by section 2.2: one canonical
+structure, append-only, no second authoritative form and no mutation surface. The
+relational engine this item used to stage, a hand-rolled typed query builder that
+existed because `rusqlite` was ruled out on append-only grounds, dissolved under
+the ruling of 2026-08-01: nothing chartered reads relationally, the loop's reads
+are sequential, and a consumer wanting an index builds a derived view. Recall over
+past runs, when the memory round takes it, is similarity through the SPU's encode
+side over the NDJSON account rather than a relational query, per the proposed
+reading the enter cell of `weaver-admin-PRD` section 10 carries. **Entry
+condition:** the Spec pass.
 
 **The weight of the previous durability implementation.** The previous tree's
 `event_log.rs` is 2,773 lines carrying canonical byte encoding, payload hashing,

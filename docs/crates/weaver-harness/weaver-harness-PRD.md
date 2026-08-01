@@ -39,6 +39,10 @@ persists the record.
 leaves section 4: the harness opens no exchange on the coordination seam, a fault
 the worker survives travels as the `fault` event of `weaver-trace-PRD` section
 3.1, and the seam table's coordination row follows.
+**Revised:** 2026-08-01, a ninth entry. The relational projection retires per the
+human's ruling of this date: section 5's derivation paragraph becomes one
+rendering with two holders, the working structure being the harness's own copy of
+the canonical stream rather than a projection of it.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -200,7 +204,7 @@ not reach into it. Eviction granularity is constrained by the append-only sessio
 protocol and is settled in that crate's PRD and the contract, not here.
 
 **The trace primitive goes to `weaver-trace`.** The span type, the event schema, the
-stream mechanics, the working-structure projection, and the export
+stream mechanics, the working structure, and the export
 formatters are that crate's. The harness authors events. `weaver-trace` defines
 what an event is and what it costs to commit one.
 
@@ -332,13 +336,13 @@ from: weaver-harness
 to: session-record
 ```
 
-**One emission, two derivations.** The outbound stream and the working structure
-receive the same authored emission, and neither is a second author. This settles
-schema authority rather than inheriting it: the durable event schema is the author,
-the projection is a view, and a change to what a view wants cannot reach back and
-alter what was recorded. There is no third derivation and no view this program takes
-responsibility for: a consumer who wants a front end builds one on the output, on the
-consumer's own compute.
+**One emission, one rendering, two holders.** The outbound stream and the working
+structure hold the same canonical rendering of the same authored emission, per the
+ruling of 2026-08-01 that retired the relational projection: nothing is derived, so
+nothing can diverge and no reconciliation is owed. The durable event schema is the
+only schema, and there is no second representation and no view this program takes
+responsibility for: a consumer who wants rows, an index, or a front end builds one
+on the output, on the consumer's own compute.
 
 **Nothing on the turn path waits on the sink.** The harness reads its own trace from
 the working structure in RAM. Even a fast sink is too much latency to block a turn
@@ -393,7 +397,8 @@ The flag itself takes the perturbation-verified test of apex section 11, and the
 counts only when it has been watched to fail with the flag removed.
 
 **The harness reads, the model does not.** The harness reads the trace continuously,
-because the working structure is its projection and every prompt assembly is a read
+because the working structure is its own copy of the record and every prompt
+assembly is a read
 of it. That is harness-internal work on the harness's own state. Sole broker names
 the harness holding the only handle, not a service it offers the model. There is no
 model-facing read path, and the pin in section 2 is what keeps that true: trace

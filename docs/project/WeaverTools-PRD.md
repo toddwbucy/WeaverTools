@@ -33,6 +33,12 @@ section 2's rebuild-from-record clause dissolves with record-based resume, secti
 section 8's replay driver reads the operator-held stream. Taken early under the
 same named exception, because merged contracts now contradict the old wording and
 a collision in main is the case the exception exists for.
+**Revised:** 2026-08-01, fifth entry. The relational projection retires per the
+human's ruling of this date: section 2's working structure holds the canonical
+form the stream carries and section 3's schema-authority paragraph drops the
+projection version, one schema being the only schema, and section 9's
+schema-extension clause counts one schema with it. Taken early under the same
+named exception, the re-authoring following immediately.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -94,11 +100,12 @@ state across turns inside one session, both deliberate:
   into session state if the line is not drawn. Its owner, its flush trigger, and
   who is forbidden to touch it are named in `weaver-spu-PRD` as a rule the code
   can be checked against.
-- **The working structure.** The in-RAM relational projection of the run's trace
-  events. It is volatile by construction: lose the process and lose the working
-  structure, and the program rebuilds it from nothing rather than from a record,
-  the stream's accumulation being the operator's per the ruling of 2026-08-01.
-  It is working memory, not a store.
+- **The working structure.** The run's trace events held in RAM in the same
+  canonical form the stream carries, per the ruling of 2026-08-01 that retired
+  the relational projection. It is volatile by construction: lose the process and
+  lose the working structure, and the program rebuilds it from nothing rather
+  than from a record, the stream's accumulation being the operator's. It is
+  working memory, not a store.
 
 Conversation context is not agent memory. The distinction is the whole of what
 this program defers.
@@ -143,12 +150,12 @@ the volatile working structure and the outbound NDJSON stream, whose durability 
 the operator's per `weaver-admin-operator-contract` section 3. Not two writes to
 reconcile.
 
-The single emission is authored against the **durable event schema**. The
-working structure is a projection of committed events rather than a second
-author, so its projection version governs only how events become rows and may
-be bumped without changing what is emitted. A change to the durable event
-schema is the breaking change, and the projection declares which event-schema
-versions it can consume.
+The single emission is authored against the **durable event schema**, and that
+schema is the only schema. The working structure holds the same canonical form
+the stream carries rather than a projection of it, per the ruling of 2026-08-01,
+so no projection version exists and nothing can diverge between the two. A
+change to the durable event schema is the breaking change, and it is the one
+version every consumer keys on.
 
 ## 4. Definition of done
 
@@ -434,10 +441,10 @@ analysis, training, and the desktop frontend.
 Statefulness returns as a **feature add**, not as a retrofit. The mechanism is
 fixed now, in three parts:
 
-1. **Schema extension.** The in-RAM relational schema and the durable NDJSON
-   event schema are versioned independently and extend additively, under the
-   authority stated in section 3. Memory adds tables and event kinds, and it
-   does not reshape existing ones.
+1. **Schema extension.** The durable NDJSON event schema is the one schema,
+   versioned once and extending additively, under the authority stated in
+   section 3. Memory adds event kinds and payload shapes, and it does not
+   reshape existing ones.
 2. **A new socket and a new contract.** Per invariant 5.1, memory arrives as a
    socket peer with a complete contract, never as a linked crate.
 3. **Its own PRDs.** Stateful PRDs are written per crate as required, and

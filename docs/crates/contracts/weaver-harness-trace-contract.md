@@ -20,6 +20,14 @@ the resume exchange leaves section 2 entire, validation on read, run integrity, 
 the divergence artifact leave the recorder's obligations and the prohibitions, the
 record-based entries leave the failure vocabulary, sequence scope narrows to the
 run, and the conformance list keeps what the tee still promises.
+**Revised:** 2026-08-01, again. The kind set this contract draws grew by `fault`,
+thirteen to fourteen, per the fault-carrier ruling of this date and the change
+protocol of section 7, the entry recorded here in the same act as the charter's.
+**Revised:** 2026-08-01, once more. The relational projection retires per the
+human's ruling of this date: the recorder holds the working structure as the RAM
+copy of the same canonical form the stream carries, the deterministic-projection
+obligation becomes one-rendering-held-and-handed, and the projection-failure case
+becomes an append failure.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -37,7 +45,7 @@ contract is done.
   worth recording, when a session begins and ends, what a turn is, and at what
   verbosity each run records. Holds every descriptor.
 - **`weaver-trace`, the recorder.** Assigns ordering, produces canonical form,
-  projects into the working structure, and hands the same rendering to the outbound
+  holds the working structure, and hands the same rendering to the outbound
   stream. Holds no policy and decides nothing about content.
 
 No third party writes. Components elsewhere in the system report to the harness and
@@ -86,7 +94,8 @@ value as its own load condition. It is not interpreted here beyond being carried
 
 **From `weaver-trace`.** The event envelope and its field set, the closed event-kind
 vocabulary, the per-kind payload shapes, the three commit-boundary states, the
-working structure as a projection, and the failure vocabulary of section 5. These
+working structure as the RAM copy of the same canonical form, and the failure
+vocabulary of section 5. These
 are the party's own definitions, named because they cross the seam and a reader of
 this document should not have to infer where they come from.
 
@@ -267,8 +276,9 @@ section 3. It never drops an admitted event quietly. A tail forfeited to process
 death is outside this obligation, because the process that would report it is the
 one that died.
 
-**Deterministic projection.** The same events, schema version, and projection
-version yield the same rows.
+**One rendering, held and handed.** The working structure holds the canonical
+form the stream carries, byte-identical, per the ruling of 2026-08-01 that retired
+the relational projection, so nothing exists between the two to reconcile.
 
 **Typed failure.** Every refusal is named. Nothing returns a partial result with a
 success status.
@@ -290,10 +300,10 @@ crate's Spec.
   growing. Surfaced as an event while the sink remains writable, or as a fatal
   error when it does not, and what follows is the marked election of
   `weaver-admin-operator-contract` section 3.
-- **Projection failed after admission.** The stream writer holds the event and the
-  working structure does not. **The recorder owns the resolution:** fail loudly. It
-  must never continue against a silently stale present, and there is no record to
-  rebuild from since the cut of 2026-08-01.
+- **Append failed after admission.** The working structure could not take the
+  event, one side of the fan-out failing against the other. **The recorder owns
+  the resolution:** fail loudly. It must never continue against a silently stale
+  present, and there is no record to rebuild from since the cut of 2026-08-01.
 - **Write target unusable.** A descriptor is closed, is not writable, or does not
   satisfy the required flags.
 
@@ -340,15 +350,15 @@ the kind set is closed and consumers key on it.
 
 How each check is implemented is Spec work. What must be checkable is stated here.
 
-- A refused submission leaves no row in the working structure and no line on the
-  stream.
+- A refused submission leaves no event in the working structure and no line on
+  the stream.
 - Admitted sequence is monotonic and gapless under concurrent authoring during a
   single run, and every run's numbering begins fresh.
-- A projection failure after admission fails loudly and never continues stale.
+- An append failure after admission fails loudly and never continues stale.
 - A monotonic reading is never compared across a run boundary.
 - The stream receives whole events and never a partial one.
 - What reaches the stream is byte-identical to the canonical rendering the working
-  structure projected, one rendering feeding both.
+  structure holds, one rendering feeding both.
 - No write surface accepts a path. This is a compile-time property and is pinned as
   one, because a runtime test cannot demonstrate the absence of a function.
 - Every descriptor the harness holds is close-on-exec, supplied at the one receive

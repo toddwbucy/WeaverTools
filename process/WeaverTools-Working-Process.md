@@ -1,6 +1,8 @@
 # WeaverTools Working Process
 
-**Version:** v0.11, 2026-08-01, fourth entry this date. The v0.11 change is
+**Version:** v0.12, 2026-08-01, fifth entry this date. The v0.12 change is section
+7 recording the working-structure ruling, the relational projection retired. The
+v0.11 change was
 section 7 again, the fault-carrier ruling moving from what remains to landed, the
 apex re-authoring standing alone before the Specs. The v0.10 change was section
 7 once more, the durable-record cut moving from what remains to landed. The v0.9
@@ -311,6 +313,10 @@ The fault-carrier ruling landed 2026-08-01: the stream is the program's one faul
 carrier, a fault the worker survives travelling as the `fault` event, the
 coordination seam's alert exchange retired, and the bracket semantic having
 already narrowed under the durable-record cut to the truthful-account reading.
+The working-structure ruling landed the same day: the relational projection
+retired, the RAM copy holding the same canonical NDJSON the stream carries, one
+rendering with two holders and nothing to reconcile, recall over past runs
+proposed to the memory round as similarity through the SPU's encode side.
 
 What remains in this phase: the apex re-authoring, whose waiting condition, all
 seven charters, is now met, and then the Specs, written last against the settled

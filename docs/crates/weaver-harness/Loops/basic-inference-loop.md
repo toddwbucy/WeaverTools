@@ -1,6 +1,9 @@
 # Basic Inference Loop
 
-**Status:** DRAFT v0.11, 2026-08-01, fourth entry this date. The durable-record cut
+**Status:** DRAFT v0.12, 2026-08-01, fifth entry this date. The working-structure
+ruling lands in section 5: one rendering with two holders, the relational
+projection retired, the derivation language leaving with it. Previously v0.11,
+fourth entry this date. The durable-record cut
 lands: enter stands up an empty working structure, leave drains and validates
 nothing, section 5 places the record with the operator, and the register's ruling B
 paragraph gains its resolution note. Previously v0.10, third entry this date. The
@@ -285,16 +288,18 @@ The trace is a recorder, not a bus. The harness hands it content and nothing
 downstream reads its input out of it. The decoder reads from the harness. The
 trace witnesses the traffic, it does not carry it.
 
-One emission, two derivations, per `weaver-harness-PRD` section 5. The harness
-authors each event once. The durable event schema is the author, the working
-structure is a derivation, and a change to what a view wants
-cannot reach back and alter what was recorded. Admission precedes the fan-out per
+One emission, one rendering, two holders, per `weaver-harness-PRD` section 5 and
+the working-structure ruling of 2026-08-01. The harness authors each event once,
+the durable event schema is the only schema, and the working structure holds the
+same canonical NDJSON the stream carries, so nothing is derived and nothing can
+diverge. Admission precedes the fan-out per
 `weaver-trace-PRD` section 4.2: one rendering reaches both sinks in the same act,
 the working structure lands first and is the acknowledgment, and the stream side
 trails by the writer's queue with no cadence to elect and no window to tune.
 It may never shed silently. Nothing on the turn path waits on the sink, and a slow
-or failing sink never slows the interior read. There is no third derivation
-and no view this program takes responsibility for: a consumer who wants a front end
+or failing sink never slows the interior read. There is no second representation
+and no view this program takes responsibility for: a consumer who wants rows, an
+index, or a front end
 builds one on the output exiting admin, on the consumer's own compute, and if
 accountability matters to that consumer they hash the stream as it lands, before
 they persist it, on their own hardware.

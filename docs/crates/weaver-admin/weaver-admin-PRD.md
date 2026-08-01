@@ -66,6 +66,10 @@ opens no exchange on the coordination seam: a fault the worker survives travels 
 the `fault` event on the stream rather than as an alert to admin, section 6's seam
 table and duplex account follow, and the duplex property restates as the
 channel's rather than the exchange census's.
+**Revised:** 2026-08-01, a twelfth entry. The section 10 enter cell gains its
+proposed reading, per the working-structure ruling of this date: continuity as
+similarity recall through the SPU's encode side over the NDJSON account, the
+memory round's to take or decline.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -854,7 +858,11 @@ through operator-held storage handed back at load, through the memory round's ow
 substrate, or not at all is a design the corpus defers on purpose. And the run
 ordinal is admin's to supply with nothing program-side holding the last one across
 an admin restart, so what makes the ordinal trustworthy over a fleet of restarts
-belongs to the same design. **Settled by:** the memory-and-state round, and
+belongs to the same design. A proposed reading stands as of 2026-08-01, per the
+working-structure ruling: continuity returns as similarity recall, the SPU's
+encode side querying the session's NDJSON account rather than any relational
+store, which turns this cell into a handoff rather than a hole. **Settled by:**
+the memory-and-state round, which takes or declines the proposed reading, and
 deliberately not by the cut batch that left it, because the batch deletes what
 dissolved and a resume redesigned in a deletion batch would be a load-bearing
 decision taken in passing.
