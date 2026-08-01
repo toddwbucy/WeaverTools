@@ -70,6 +70,10 @@ channel's rather than the exchange census's.
 proposed reading, per the working-structure ruling of this date: continuity as
 similarity recall through the SPU's encode side over the NDJSON account, the
 memory round's to take or decline.
+**Revised:** 2026-08-01, a thirteenth entry. The apex re-authoring of this date
+drains the section 11 register: every entry that filed with it landed in that
+act, the already-landed entries are recorded as such, and one entry remains, the
+`weaver-types-PRD` section 2.1 rename.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -906,67 +910,24 @@ recorded as such in `WeaverTools-PRD` section 5. The five wire definitions lande
 said they would go, because 2.3 is where that charter keeps definitions and 4 is where
 it keeps the departure argument. Both were edited. The harness clause on opening
 exchanges landed in `weaver-harness-PRD` section 4. Nothing else in this register
-moved, and the apex re-authoring still waits on all seven charters.
+moved while the apex re-authoring waited on all seven charters.
 
-- `WeaverTools-PRD` section 6: the verb set goes from four to three by two departures
-  and one arrival. `create` and `destroy` leave as operator acts, the
-  provisioned-and-unloaded state they bracket survives, and `validate` arrives, which
-  the apex does not carry today. Validate changes no agent state, so the apex's set is
-  no longer four state transitions and the sentence scoping it that way is restated as
-  the operations admin performs on an agent. The locality rule that decides which crate
-  owns a given validation is charter-level and is not owed to the apex. Per section 4,
-  and files with the apex re-authoring.
-- `WeaverTools-PRD` section 12 and section 3: the program verifies the agent's
-  operating-system boundary and does not author it, so the clauses that seat boundary
-  authorship inside this program are restated as verification against an
-  operator-supplied boundary. Files with the apex re-authoring.
-- `WeaverTools-PRD`, the trust model, stated once: this program secures the record
-  against the agent and the operator is trusted by construction. Section 2's limit
-  paragraph, the between-load interval of section 2, and the emit-only result of the
-  same section all point at it, and stating it in three charters instead is the
-  duplication G5 exists to catch. Files with the apex re-authoring.
+**The re-authoring of 2026-08-01 drained this register.** Every entry that filed
+with it landed in that act: the verb-set restatement, the
+verification-not-authorship clauses of apex sections 12 and 3, the trust model
+stated once, the 5.2 scoping to requests that belong to an existing turn, the
+component-ownership drop, the argless qualification on section 3 step 7, and the
+process topology. The entries that had already landed by other acts left with
+them: the `weaver-harness-PRD` custody restatement with the durable-record cut,
+the `weaver-types-PRD` section 2.2 motivating case with the external-boundary
+contracts, the Document Format's state-file clause with that document's v0.5, and
+both `open-items` entries as that list shrank. One entry remains.
+
 - `weaver-types-PRD` section 2.1: the artifact is renamed from `agent-state-file` to a
   configuration name, its seven `holds` edges follow the node, and the producer becomes
   the operator rather than `weaver-admin`. The graph record in section 2 of this
   charter keeps the old identifier until this lands, because a node renamed on one side
   only is a dangling edge, and the two move in one act.
-- `weaver-harness-PRD`: the trace file is owned by `weaver-admin` and not by the agent
-  uid, per section 2, and any clause resting on the agent owning the record is restated.
-  Owed with the custody ruling.
-- `WeaverTools-PRD` section 5.2: scoped to requests that belong to an existing turn,
-  the approved wording per the ruling of 2026-07-31. As stated, every
-  request crossing a seam carries the trace context identifying the turn it belongs
-  to. A lifecycle directive on the coordination seam crosses a seam and belongs to no
-  turn, so the seam this pass chartered is a counterexample to the invariant as
-  written, and it is the second such counterexample in two rounds after 5.1.
-  `weaver-harness-PRD` section 4 states the scoping and names it as owed, and this
-  entry is what it is owed to. A charter naming an apex edit that no register holds is
-  the G7 failure the register exists to catch. Files with the apex re-authoring.
-- `WeaverTools-PRD` component ownership: the reading and analysis of finished records
-  leaves this repository, per section 8, so the apex's component list drops it rather
-  than carrying it as a member yet to be built. Files with the apex re-authoring.
-- `weaver-types-PRD` section 2.2: the peer-credential carve-out gains its motivating
-  case. The operator-to-service socket of section 8 is the seam that authenticates by
-  credential, against the coordination pair that authenticates by possession, and 2.2
-  currently names the second without the first.
-- `WeaverTools-PRD` section 3 step 7: naming a policy mechanism as bounding the tool
-  surface does not bound it. A grant carrying a wildcard in argument position is
-  unbounded by the path it appears to name, so the apex clause takes the argless
-  qualification section 7 states. Files with the apex re-authoring.
-- `WeaverTools-PRD` process topology: the general sentence naming which crates compile
-  into one binary, assigned to the apex by section 7. Admin states its own half there
-  and the rest has no owner, so apex section 5.1's scoped invariant is a test that
-  reads a topology no document states. Files with the apex re-authoring.
-- `WeaverTools-Document-Format.md` section 3: the clause citing the deferred
-  state-file contract, per the ruling in section 10.
-- `open-items.md` section 4: the binary-layout item is closed rather than moved, per
-  section 9, and the GID-mask item moves into section 9 restated. The admin-side
-  database entry leaves the list rather than moving, because section 8 removed its
-  owner and no other crate takes it.
-- `open-items.md` section 1: the custody-limit item is answered by section 2's limit
-  paragraph and by the apex trust-model entry above, and its two-branch analysis is
-  moot, since the mechanism it branched on is closed and the principal it names is the
-  operator.
 
 ## 12. Children
 

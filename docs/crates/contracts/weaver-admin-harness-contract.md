@@ -53,6 +53,10 @@ event of `weaver-trace-PRD` section 3.1, `harness-alert` leaves the vocabulary a
 the floor with the G4 union going five to four, admin's drain guarantee leaves with
 the unsolicited traffic it existed for, and the duplex property restates as the
 channel's rather than the exchange census's, admin's organ standing unchanged.
+**Revised:** 2026-08-01, eleventh. Section 2's possession paragraph cites apex
+5.1's second case as landed rather than describing the correction as filed, the
+restatement having merged on 2026-07-31 and the re-authoring of this date having
+absorbed it.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -145,10 +149,10 @@ and each pays the second-opener case `weaver-organ-channel` section 2 rejects.
 `weaver-organ-channel` section 2's retention rule with its intermediary named. It may
 touch the end while placing it and does not retain one.
 
-**Possession is this seam's authentication, and the apex correction it forced is
-filed.** Apex section 5.1 reads `SO_PEERCRED` with no exceptions and now has two, so
-the correction owed is a restatement of what the invariant protects rather than a
-patch admitting this seam, and `weaver-admin-PRD` section 11 files it in that form.
+**Possession is this seam's authentication, per apex 5.1's second case.** The
+invariant reads by credential where the channel has a name and by possession where
+it has none, restated on 2026-07-31 with this seam as the case that forced it, so
+the seam is an instance of the rule rather than an exception admitted to it.
 
 **The worker holds the agent uid from its first instruction and clears its dumpable
 flag after its final exec.** There is no drop, because the init system starts the unit

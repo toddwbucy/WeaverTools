@@ -43,6 +43,9 @@ the worker survives travels as the `fault` event of `weaver-trace-PRD` section
 human's ruling of this date: section 5's derivation paragraph becomes one
 rendering with two holders, the working structure being the harness's own copy of
 the canonical stream rather than a projection of it.
+**Revised:** 2026-08-01, a tenth entry. Section 4's 5.2 sentence cites the scoped
+invariant the apex re-authoring of this date landed, rather than naming it as
+owed.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -239,8 +242,8 @@ same, which is why the count here is four and the table below is three.
 
 Every request carrying work across these seams carries the turn context and returns
 it, per apex 5.2. Lifecycle directives on the coordination seam carry no turn context
-because they belong to no turn, and the scope of 5.2 is owed a restatement that says
-so, filed in `weaver-admin-PRD` section 11.
+because they belong to no turn, per 5.2 as scoped by the re-authoring of
+2026-08-01.
 
 The three sockets:
 

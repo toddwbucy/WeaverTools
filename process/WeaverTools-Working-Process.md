@@ -1,6 +1,8 @@
 # WeaverTools Working Process
 
-**Version:** v0.12, 2026-08-01, fifth entry this date. The v0.12 change is section
+**Version:** v0.13, 2026-08-01, sixth entry this date. The v0.13 change is
+section 7 recording the apex re-authoring as landed, the Specs standing alone in
+what remains. The v0.12 change was section
 7 recording the working-structure ruling, the relational projection retired. The
 v0.11 change was
 section 7 again, the fault-carrier ruling moving from what remains to landed, the
@@ -318,9 +320,12 @@ retired, the RAM copy holding the same canonical NDJSON the stream carries, one
 rendering with two holders and nothing to reconcile, recall over past runs
 proposed to the memory round as similarity through the SPU's encode side.
 
-What remains in this phase: the apex re-authoring, whose waiting condition, all
-seven charters, is now met, and then the Specs, written last against the settled
-set.
+The apex re-authoring landed 2026-08-01, the last held item of this section:
+`WeaverTools-PRD` is rewritten as one act against the settled set, the collected
+corrections and the register items filed against it drained in the same act.
+
+What remains in this phase: the Specs, written last against the settled set, and
+then the mapping of phase two, which is the ratification.
 
 Nothing ratifies until the whole set maps, so no milestone here is a ratification.
 Merged means the work may move forward, which is what merged is for.

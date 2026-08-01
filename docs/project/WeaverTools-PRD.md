@@ -39,6 +39,19 @@ form the stream carries and section 3's schema-authority paragraph drops the
 projection version, one schema being the only schema, and section 9's
 schema-extension clause counts one schema with it. Taken early under the same
 named exception, the re-authoring following immediately.
+**Revised:** 2026-08-01, sixth entry, the re-authoring. All seven charters merged
+and every ruling of the subtraction era landed, this document is rewritten as one
+act against the settled set, the held item of Working Process section 7: section 6
+seats the load's coordination on admin and the turn's on the harness with the
+harness the sole trace writer across both, section 5.2 scopes to requests that
+belong to an existing turn, section 5.3 mandates the vocabulary clause and names
+what crosses rather than what is used, section 2 stops framing the cache and the
+working structure as two things of a kind, section 3 walks the merged path with
+the gate as a local hook and the argless grant named, section 9's prohibition
+names data as well as interfaces, and section 12 gains the trust model, the
+process topology, and the verification posture. The taken-early entries above are
+absorbed rather than repeated, and the register items filed against this
+re-authoring across the charters leave their registers in the same act.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -89,38 +102,42 @@ rather than a peer of the harness loop.
 
 Stateless means **the agent begins each session with no accumulated
 experience**. There is no belief graph, no consolidation, no recall, no sleep
-or nap pass, and no memory substrate of any kind.
+or nap pass, and no memory substrate of any kind. Conversation context within a
+session is not agent memory, and the distinction is the whole of what this
+program defers.
 
 It does **not** mean the agent is stateless within a session. Two things hold
-state across turns inside one session, both deliberate:
+state across turns inside one session, both deliberate, and they are not two
+things of a kind:
 
-- **The KV cache.** It is kept hot and flushed on the harness's terms, not per
-  prompt. It is one of the two surfaces holding state the program cannot
-  reconstruct, which is what makes it the surface most likely to grow quietly
-  into session state if the line is not drawn. Its owner, its flush trigger, and
-  who is forbidden to touch it are named in `weaver-spu-PRD` as a rule the code
-  can be checked against.
-- **The working structure.** The run's trace events held in RAM in the same
-  canonical form the stream carries, per the ruling of 2026-08-01 that retired
-  the relational projection. It is volatile by construction: lose the process and
-  lose the working structure, and the program rebuilds it from nothing rather
-  than from a record, the stream's accumulation being the operator's. It is
-  working memory, not a store.
-
-Conversation context is not agent memory. The distinction is the whole of what
-this program defers.
+- **The working structure** is the state the agent reasons over: the run's trace
+  events held in RAM in the same canonical form the stream carries, per the
+  ruling of 2026-08-01 that retired the relational projection. Lose it and turn
+  two has nothing to be about. It is volatile by construction, the program
+  rebuilds it from nothing rather than from a record, the stream's accumulation
+  being the operator's, and it is working memory, not a store.
+- **The KV cache** is an optimization holding the same content precomputed at
+  the decoder. Lose it and the agent is slow rather than absent. It is kept hot
+  and flushed on the harness's terms, not per prompt, and because its loss costs
+  real compute it is the surface most likely to grow quietly into session state
+  if the line is not drawn. Its owner, its flush trigger, and who is forbidden
+  to touch it are named in `weaver-spu-PRD` as a rule the code can be checked
+  against.
 
 ## 3. One turn, end to end
 
 This is the path the MVP must execute. Every requirement in every crate PRD
 states how it serves this path.
 
-1. A client reaches the agent's **Gate** over its network face. Gate is the
-   only crate that binds a listening network socket and the only ingress for
-   work. Outbound connections made by a tool under step 7 are not ingress and
-   do not pass through Gate.
-2. Gate authenticates the peer, converts to the internal wire, and forwards to
-   the agent's harness worker over a SO_PEERCRED Unix socket.
+1. A client reaches the agent's **Gate** at its local Unix socket hook, the one
+   listening socket the program binds, of any kind, per the demotion ruling of
+   2026-07-31 and `weaver-gate-world-contract`. There is no listening network
+   socket anywhere in the program. Outbound connections made by a tool under
+   step 7 are not ingress and do not pass through Gate.
+2. Gate authenticates the connection by peer credential under the boundary
+   predicate, which admits front-end principals and excludes the agent uid, and
+   relays the request to the harness unread: one NDJSON line in, per the world
+   contract, opaque at the gate and interpreted by the harness.
 3. The **harness** opens the turn root span, assigns the `turn_key`, and emits
    `turn.started`.
 4. The harness assembles the prompt: system prompt, the session's message
@@ -136,19 +153,24 @@ states how it serves this path.
    returns by the same path.
 7. If the generation contains a tool call, the harness executes it as the
    agent's own constrained Linux user. What that tool can reach is bounded by
-   the kernel through filesystem permissions, sudoers, and cgroups, rather than
-   by any harness judgment about the command it was handed. Bash and CLI access
-   is the reference tool and a real MVP capability, safe because the user it
-   runs as cannot reach what it should not. The harness emits
-   `tool.call.started` and `tool.call.completed`, then returns to step 5.
-8. On a final answer the harness emits `turn.closed` and assembles the per-turn
-   record as a read of the working structure.
-9. The response returns through Gate to the client.
+   the kernel through filesystem permissions, sudoers entries whose grants are
+   argless, and cgroups, rather than by any harness judgment about the command
+   it was handed, a grant carrying a wildcard in argument position being
+   unbounded by the path it appears to name, per `weaver-admin-PRD` section 7.
+   Bash and CLI access is the reference tool and a real MVP capability, safe
+   because the user it runs as cannot reach what it should not. The harness
+   emits `tool.call.started` and `tool.call.completed`, then returns to step 5.
+8. On a final answer the harness emits `turn.closed`, closing the bracket in
+   the stream, the close naming its kind.
+9. The response returns through Gate to the client, one NDJSON line out,
+   delivering a turn already closed.
 
 Throughout: each event is emitted **once**, and that single emission feeds both
 the volatile working structure and the outbound NDJSON stream, whose durability is
 the operator's per `weaver-admin-operator-contract` section 3. Not two writes to
-reconcile.
+reconcile. The stream is also the program's one fault carrier: a fault the worker
+survives is a `fault` event on it, per the fault-carrier ruling of 2026-08-01,
+and no second alert path exists anywhere in the program.
 
 The single emission is authored against the **durable event schema**, and that
 schema is the only schema. The working structure holds the same canonical form
@@ -187,15 +209,11 @@ retained state to decide when to fire belongs to the later stateful program.
 These bind every crate PRD, every Spec, and every contract. A document that
 violates one of them is wrong, not merely inconsistent.
 
-**Section 5.4 and the restatement inside 5.1 were taken early on 2026-07-31, as a
-named exception to Working Process section 7,** which holds the apex re-authoring
-until all seven charters exist and calls it the one piece of collected work that
-cannot be taken early. The exception was ruled because 5.4 defines what an organ
-is, `weaver-spu` is the second organ, and the charter the rule waits on cannot be
-written against a definition the rule withholds until that charter exists. The
-scope of the exception is those two entries. Every other item in
-`weaver-admin-PRD` section 11 marked as filing with the apex re-authoring still
-files with it, and this document is still un-re-authored.
+**The named exception to Working Process section 7 ran its course and is
+closed.** The 5.1 restatement and 5.4 were taken early on 2026-07-31, further
+entries followed as collisions with merged charters demanded, and the
+re-authoring of 2026-08-01 absorbed them all. Nothing files against this
+document now except by editing it.
 
 ### 5.1 The floor is vocabulary and every behavior is a socket
 
@@ -245,8 +263,12 @@ dependency graph and on every call site.
 
 ### 5.2 The join key travels with the work
 
-**Every request crossing a seam carries the trace context identifying the turn
-it belongs to, and every response carries it back.**
+**Every request that belongs to an existing turn carries, at every seam it
+crosses, the trace context identifying that turn, and every response carries it
+back.** The scope is deliberate and load-bearing: a lifecycle directive on the
+coordination seam and a residency directive on the SPU seam each cross a seam and
+belong to no turn, so they carry none, and the earlier universal wording made
+every such directive a counterexample to the invariant it was meant to serve.
 
 The harness is the sole writer of the trace, so a component does not emit its
 own spans. It reports, and the harness authors the event. That only works if
@@ -259,8 +281,18 @@ wire is specified.
 
 ### 5.3 A contract is a complete interface
 
-A contract names its parties, and for each party: the types it uses, the errors
-it can return, and the ordering guarantees it relies on and provides.
+A contract names its parties, and for each party: the vocabulary that crosses
+the seam with its meaning, the errors it can return, and the ordering guarantees
+it relies on and provides. How a party represents any of that internally belongs
+to its Spec and appears in no contract.
+
+**Every contract carries a vocabulary clause, and a contract without one is not
+a valid contract.** The clause names what the contract draws, grouped by the
+crate that defines it, and a group is stated even when it is empty, because an
+explicit nothing is an assertion someone checked and an absent group is silence.
+This is what makes the floor governable without a floor contract: the floor's
+required surface is the union of every clause, a definition no clause names is
+unused, and a definition a clause names that the floor lacks is a gap.
 
 Two mechanical consequences:
 
@@ -330,28 +362,37 @@ The chain, in order:
 
 | Component | Owns |
 |---|---|
-| **weaver-admin** | External authorization, provisioning, lifecycle intent, custody of the boundary |
-| **weaver-harness** | Ordered load/unload orchestration, readiness, rollback, activity control |
+| **weaver-admin** | External authorization, boundary verification, lifecycle direction, custody of the sink, rollback |
+| **weaver-harness** | The fan-out inside enter and leave, readiness aggregation, activity control |
 | **weaver-spu** | Model admission, decoder and encoder residency, GPU release |
-| **weaver-gate** | Sole work ingress, and the outer membrane, started last and stopped first |
+| **weaver-gate** | Sole work ingress, and the outer membrane, raised last and lowered first |
 
-Admin authorizes lifecycle intent. The harness coordinator sequences the
-transaction, collects every organ's confirmation, and returns the aggregate to
-Admin. Each organ performs its own operation.
+**Admin is the coordinating center of the load, and the harness is the
+coordinating center of the turn.** Admin authorizes the intent, verifies the
+boundary the operator wrote, opens the sink, starts the worker unit, and directs
+the transition across its one seam, rolling back its own acts where a directive
+refuses. The harness cannot drive the early steps of its own creation, because
+the worker spawn and the descriptor handoff run before the harness exists at
+all, and supervising worker lifetimes is long-lived and fleet-wide where the
+harness is mortal. What the harness owns is the interior of the directives:
+admin holds no channel to the SPU or the gate, so the harness fans the directive
+out along its own seams, collects each organ's confirmation, and returns one
+aggregate. Sequencing the organs is the harness's because the seams are, and
+each organ performs its own operation.
 
-`weaver-trace` is not on that list. It is linked vocabulary under 5.1 rather
-than a socket peer, so it cannot be a party that confirms a transition. It is
-the substrate every organ emits into during the load and for the whole of the
-agent's residency thereafter.
-
-The harness is the coordinating center of the agent. Admin authorizes the
-intent and hands the transition across, and from that point the harness creates
-the trace for the session, records admin's initial contact as its first entry,
-sequences the load, and writes every component's activity into that trace. All
-coordination between components passes through the harness. It is the sole
-writer of the trace and the sole broker of access to it. That seam is where
-later organs attach, each behind its own socket and contract, and it is the
+**The harness is the sole writer of the trace across both centers.** It stands
+up the working structure, authors the `load` event of the run, which for `run0`
+is the record of admin's initial contact, and writes every component's activity
+into the stream for the whole of the residency. All coordination between
+components passes through the harness, which is what makes it the hub every
+later organ attaches to, each behind its own socket and contract, and the
 structural reason statefulness is an extension rather than a re-architecture.
+
+`weaver-trace` is not a party to the transition. It is linked by the harness
+under a contract as a member of the harness's domain, per 5.1's link case, so it
+cannot be a socket peer that confirms anything. It is the mechanism the harness
+records through, during the load and for the whole of the agent's residency
+thereafter.
 
 Binding rules:
 
@@ -451,9 +492,13 @@ fixed now, in three parts:
    contracts are amended or added by the order of work in section 10.
 
 No seam, stub, reserved slot, or dormant contract party is carried in
-anticipation of this. Preparation for memory is a property of the schemas being
-extensible, not a set of empty joints. A slot reserved today is a guess about a
-design that has not been written.
+anticipation of this, **and a reserved slot can be a data field as easily as an
+interface**: a payload field whose only reader is unbuilt, a vector nothing
+retrieves, an event kind with no emitter. The schema is where this rule is
+tested most often, because adding a field feels smaller than adding an
+interface and is the same error. Preparation for memory is a property of the
+schemas being extensible, not a set of empty joints or empty fields. A slot
+reserved today is a guess about a design that has not been written.
 
 ## 10. The order of work
 
@@ -543,12 +588,34 @@ than treating the difference as configuration.
 
 What it buys is that the locus of regulation moves up to the agent. Because an
 agent is an operating-system user, what it may touch is bounded once, at the
-agent, by the kernel. The alternative is to distribute components across a
+agent, by the kernel. The boundary that does the bounding is the operator's
+artifact, authored before an agent exists by whatever means that operator's site
+admits a principal, and the program verifies it rather than authors it, per
+`weaver-admin-PRD` section 1: a program that admitted principals would be
+raising a second trust model above the one it claims to inherit. The
+alternative is to distribute components across a
 network and regulate every seam between them, so each component carries its own
 policy layer and the composite behavior is whatever those layers happen to add
 up to. Regulating the principal is cheaper to reason about and cheaper to audit
 than regulating every seam, and it is a discipline with decades of tooling
 behind it rather than one invented for the purpose.
+
+**The trust model, stated once.** The program secures the agent's record against
+the agent and against nothing stronger. The operator is trusted by construction:
+the operator admits the principal, writes the boundary, declares the sink, and
+holds what accumulates behind it, and every custody argument in this corpus is
+exclusion of the agent rather than evidence against the holder. A charter that
+appears to defend an artifact against its operator is misread.
+
+**The process topology, stated once so 5.1's test has something to read.** An
+agent is three processes and one supervisor outside them. The worker is the
+composition root: its binary compiles the harness, `weaver-trace` under its
+contract, and the floor. The SPU and the gate are each their own binary,
+forked by the harness during enter and holding one channel end each from their
+first instruction. `weaver-admin` stands outside every agent, compiles into its
+own processes, and is never linked into a worker. A crate calling a crate
+inside one of those binaries is a link seam. Anything else crosses a process
+line and is a socket, per 5.1.
 
 This is systems architecture at the OS level rather than at the network level,
 and the difference is not stylistic. At the network level the unit of
