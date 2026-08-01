@@ -1,6 +1,10 @@
 # WeaverTools Document Format
 
-**Version:** v0.6, 2026-07-31. Companion to the Working Process. Project documents
+**Version:** v0.7, 2026-08-01. The v0.7 change is the `Loops/` entry's holder rule:
+loops belong to the harness unless specific to one domain and no other, per the
+human's ruling of 2026-08-01, landed on the merge of `load-unload-loop` per that
+document's section 0. Previously v0.6, 2026-07-31. Companion to the Working
+Process. Project documents
 carry a version and a date and no state, per Working Process section 2. The v0.6
 change is six entries in one act, the sixth restating the stub paragraph of section
 2 to the v0.6 stub ruling of the Working Process, live stubs at `.stub` and consumed
@@ -93,8 +97,11 @@ needs the suffix to split contracts from the material they draw. It walks a sett
 and authors no edges of its own, so it carries no graph block, and where it and a
 charter disagree the charter yields nothing. `Loops/` excludes itself from the mirror by
 the absent `weaver-` prefix, the same exclusion `contracts/` takes. Loops file under the
-organ that holds them, and agent loops belong to the harness, so the first such
-directory is `docs/crates/weaver-harness/Loops/`.
+organ that holds them, and the holder is decided by the human's ruling of 2026-08-01:
+loops belong to the harness unless specific to one domain and no other, a loop confined
+to one domain filing under that domain's own root. The first such directory is
+`docs/crates/weaver-harness/Loops/`, holding the inference loop and loop 0, the
+load/unload loop.
 
 **A contract is named for its parties, initiator first.** The name records which of the
 two nodes initiates the signal the contract governs, so `weaver-admin` asking the
