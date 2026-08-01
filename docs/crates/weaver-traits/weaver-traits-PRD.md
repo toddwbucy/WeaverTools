@@ -6,6 +6,8 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-01. Section 5 adopts proto-stateful, per the human's rename
+of this date, one word and no other change.
 **Document ID:** `weaver-traits-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -193,8 +195,8 @@ something, and at that point the enforcement argument in section 2 is rhetoric.
 ## 6. What does not cross
 
 **`Embedder`.** The previous tree's SPU implemented it and its memory crate consumed
-it. Memory is out of scope and the encoder is not in the stateless MVP, so nothing in
-this program demands it. It arrives when a crate demands it.
+it. Memory is out of scope and the encoder is not in the proto-stateful MVP, so
+nothing in this program demands it. It arrives when a crate demands it.
 
 **`Channel`.** Implemented there by the harness and the gate for interior message
 passing. The agreement between two crates is the contract rather than a shared trait,

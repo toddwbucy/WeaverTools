@@ -52,6 +52,11 @@ names data as well as interfaces, and section 12 gains the trust model, the
 process topology, and the verification posture. The taken-early entries above are
 absorbed rather than repeated, and the register items filed against this
 re-authoring across the charters leave their registers in the same act.
+**Revised:** 2026-08-01, seventh entry, on review of the re-authoring. The stage's
+name corrects from stateless to proto-stateful, per the human's ruling of this
+date: the agent holds real state within a session and none across sessions, the
+old word overstated the emptiness, and the prefix follows protoautonomic. The
+rename sweeps this document and every charter that carried the word.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -88,7 +93,7 @@ happens when documents from different moments are read as a single body.
 
 ## 1. The deliverable
 
-A deployable **stateless agent** that completes a turn end to end against a
+A deployable **proto-stateful agent** that completes a turn end to end against a
 real local model and emits a clean, turn-bracketed, correctly-custodied trace.
 
 The trace is the primary artifact. It is not a log of what the harness did. It
@@ -98,17 +103,21 @@ span is the frame that joins them. Every later capability - replay under
 observation, and eventually the memory leg - is a consumer of finished traces
 rather than a peer of the harness loop.
 
-## 2. What "stateless" means, precisely
+## 2. What proto-stateful means, precisely
 
-Stateless means **the agent begins each session with no accumulated
-experience**. There is no belief graph, no consolidation, no recall, no sleep
-or nap pass, and no memory substrate of any kind. Conversation context within a
-session is not agent memory, and the distinction is the whole of what this
-program defers.
+Proto-stateful means **the agent holds real state within a session and none
+across sessions**. It begins each session with no accumulated experience: no
+belief graph, no consolidation, no recall, no sleep or nap pass, and no memory
+substrate of any kind. Conversation context within a session is not agent
+memory, and the distinction is the whole of what this program defers. The
+prefix reads as protoautonomic does in section 4, naming the mechanics alone
+and claiming nothing about the finished behavior. An earlier vocabulary called
+this stage stateless, which the human's ruling of 2026-08-01 corrected as an
+overstatement: an agent holding a working structure and a hot cache is not
+stateless, it is an agent whose state dies with the session.
 
-It does **not** mean the agent is stateless within a session. Two things hold
-state across turns inside one session, both deliberate, and they are not two
-things of a kind:
+Two things hold state across turns inside one session, both deliberate, and
+they are not two things of a kind:
 
 - **The working structure** is the state the agent reasons over: the run's trace
   events held in RAM in the same canonical form the stream carries, per the
@@ -181,7 +190,7 @@ version every consumer keys on.
 
 ## 4. Definition of done
 
-A stateless agent that:
+A proto-stateful agent that:
 
 1. completes a turn end to end, through the gate, with a real local model,
 2. emits a trace that is turn-bracketed, contains only events this system
@@ -419,7 +428,7 @@ because it belongs to none of them.
 Material crosses from the prior tree, or is written fresh, only if it satisfies
 one of exactly two criteria. State which one, at the moment you carry it.
 
-### 7.1 Does it serve one stateless turn end to end?
+### 7.1 Does it serve one turn end to end?
 
 "Serves" means you can name the step in section 3 that exercises it. Not that
 it might be needed, not that the prior tree had it.
@@ -632,14 +641,14 @@ things this document refuses to trade away.
 The trade in section 12 is not evenly justified across the program, and this
 document is the wrong place to pretend otherwise.
 
-A stateless agent is precisely the workload a network architecture serves well.
-Anything holding no accumulated state is replicable by construction, and
+A proto-stateful agent is precisely the workload a network architecture serves
+well. Holding nothing across sessions, it is replicable by construction, and
 replicable workloads are what horizontal scale, failover, and rolling
 replacement exist for. Measured at stage one and nowhere else, giving up
-redundancy in order to co-locate a stateless agent is the worse engineering
-choice, and no amount of saved latency repays it. A local stateless agent is
-not a better version of a networked stateless service. It is a worse one with a
-faster interior.
+redundancy in order to co-locate a proto-stateful agent is the worse
+engineering choice, and no amount of saved latency repays it. A local
+proto-stateful agent is not a better version of a networked service of the
+same shape. It is a worse one with a faster interior.
 
 The trade pays only once the agent holds state bound to it. At that point the
 thing redundancy would protect is unique by construction and cannot be
@@ -647,15 +656,16 @@ replicated regardless of architecture, so the reliability being given up was
 never available. The latency being bought stops being a per-request saving and
 becomes the budget a continuous coordination loop runs inside.
 
-So this document specifies a floor and not a product. A stateless local agent
-is a defensible intermediate and an indefensible end state, and building one
+So this document specifies a floor and not a product. A proto-stateful local
+agent is a defensible intermediate and an indefensible end state, and building one
 without building past it would be paying the full cost of this architecture for
 none of what the cost is for. That is an accounting of where the costs land,
 not a claim about what gets built next.
 
 The order, however, is not a staging preference. Statefulness is a property
 added to a working turn rather than a substitute for having one, so a stateful
-agent cannot be built before there is a stateless agent to make stateful. The
+agent cannot be built before there is a proto-stateful agent to make stateful.
+The
 prior attempt is the evidence. It built the memory leg and the turn loop
 concurrently, so every change to either had to stay coherent with the other
 while both were still moving, and its final phase deleted roughly nine thousand

@@ -9,14 +9,15 @@ is written against it.
 **Editorial:** ASCII, no em-dashes, no semicolons.
 
 Companion to `WeaverTools-PRD`. The PRD is design and is checkable against code.
-This document is motive and is not. Where the PRD specifies one stateless turn,
-this document holds the arc that turn is the first step of.
+This document is motive and is not. Where the PRD specifies one turn of the
+proto-stateful agent, this document holds the arc that turn is the first step
+of.
 
 ---
 
 ## 0. What this document is, and is not
 
-The apex PRD builds a stateless Weaver agent and claims nothing beyond it. That
+The apex PRD builds a proto-stateful Weaver agent and claims nothing beyond it. That
 restraint is deliberate and it is correct. A design document earns its authority by
 being falsifiable against the code that fulfills it, and a document that also
 carried the long-horizon intent would tangle load-bearing near-term claims with
@@ -39,8 +40,9 @@ explains why the architecture is shaped the way it is. It never becomes a spec t
 Stage one is the agent that keeps a complete record and no memory: one turn, end to
 end, through the gate, against a real local model, emitting a trace worth trusting.
 
-The distinction is worth drawing carefully, because calling stage one stateless is a
-convenience that misleads anyone who takes it literally. The trace is state. It is a
+The distinction is worth drawing carefully, and the corpus stopped calling stage
+one stateless on 2026-08-01 for exactly this reason: the old name was a
+convenience that misled anyone who took it literally. The trace is state. It is a
 factual, sequence-faithful account of everything that occurred in a session, held in
 RAM while the session runs, and the agent reasons over it, so turn two knows what
 turn one did because the trace says so. What stage one lacks is not state. It is

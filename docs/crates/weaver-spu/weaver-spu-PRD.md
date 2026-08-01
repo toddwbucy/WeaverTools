@@ -24,6 +24,8 @@ framing of sections 2, 3, and 4.1 rewrites to sole authority.
 crate raises reaches the record as the `fault` event through the harness as author,
 rather than reaching admin as an alert, and the section 10 cell restates its exit
 against the event kind's case set.
+**Revised:** 2026-08-01, a fifth entry. Sections 2 and 8 adopt the proto-stateful
+vocabulary, per the human's rename of this date.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -121,7 +123,7 @@ blocks a device that is free. Section 4.2 states the ordering that follows.
 
 **The hot cache, and the rule apex section 2 asks this charter to state.** The cache is
 the one surface in this program holding state that nothing could reconstruct even
-in principle, which is why apex section 2 names it the sole exception to statelessness
+in principle, which is why apex section 2 singles it out by name
 and assigns its ownership rule here rather than to the crate that uses it. The rule has
 three parts and all three are already settled in the merged corpus. **This crate owns
 the cache.** **The harness owns the flush decision,** per `weaver-harness-PRD` section
@@ -457,12 +459,13 @@ worker, applied one level down, and it is what keeps the routing claim of
 ## 8. What does not cross, and what waits
 
 **The encoder is named as domain and is not built.** Encoding and decoding are one
-domain and it is this crate's, per `weaver-harness-PRD` section 3. An encoding is useful
-only if something retrieves by similarity, nothing in the stateless turn retrieves, and
-an embedder would produce vectors with no consumer. So this charter states the domain,
-adds no affordance for it, and builds nothing: no trait, no variant, no feature flag, no
-configuration field. **Ownership is not usage.** A charter naming a domain is a decided
-boundary, and an unbuilt interface waiting to be filled is what apex section 9 forbids.
+domain and it is this crate's, per `weaver-harness-PRD` section 3. An encoding is
+useful only if something retrieves by similarity, nothing in the proto-stateful
+turn retrieves, and an embedder would produce vectors with no consumer. So this
+charter states the domain, adds no affordance for it, and builds nothing: no
+trait, no variant, no feature flag, no configuration field. **Ownership is not
+usage.** A charter naming a domain is a decided boundary, and an unbuilt interface
+waiting to be filled is what apex section 9 forbids.
 
 **The memory leg in every form.** No substrate, no recall, no consolidation. When memory
 returns it returns as a socket peer under its own contract, per apex 5.1.

@@ -33,6 +33,8 @@ guarantee, the projection version, and the staged relational engine all dissolve
 nothing existing to reconcile. The loop's reads are sequential, a consumer wanting
 rows builds a derived view, and recall over past runs is the memory round's,
 proposed as similarity through the SPU's encode side.
+**Revised:** 2026-08-01, a fourth entry this date. Sections 2.1 and 8 adopt
+proto-stateful, per the human's rename of this date.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -91,11 +93,12 @@ ends at unload or at process death, and the identifier is an ordinal within the
 session, so which run produced an event is answerable from the event alone.
 
 **A session** is the identity the runs share, and the unit the agent's conversation
-belongs to. It is the boundary statelessness is defined against: a new session
-begins with nothing. What continuity a later run of the same session holds is the
-enter cell `weaver-admin-PRD` section 10 names, the program promising none since
-the ruling of 2026-08-01, and the stream's account of the session accumulating on
-the operator's side rather than in anything the program keeps.
+belongs to. It is the boundary the proto-stateful definition of apex section 2 is
+drawn against: a new session begins with nothing. What continuity a later run of
+the same session holds is the enter cell `weaver-admin-PRD` section 10 names, the
+program promising none since the ruling of 2026-08-01, and the stream's account of
+the session accumulating on the operator's side rather than in anything the
+program keeps.
 
 ### 2.2 The session has two materializations
 
@@ -644,7 +647,7 @@ construction rather than by an unmade decision. Scrubbing, if ever wanted, is a
 formatter election on export and downstream of everything here. What an operator
 does with a delivered artifact is theirs.
 
-**Embeddings.** Nothing in the stateless turn retrieves by similarity, so a vector
+**Embeddings.** Nothing in the proto-stateful turn retrieves by similarity, so a vector
 recorded here would have no consumer. A payload field whose only reader is unbuilt
 is a reserved slot in data form, and the schema is where that rule is easiest to
 break, because adding a field feels smaller than adding an interface. Embeddings

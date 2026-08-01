@@ -46,6 +46,9 @@ the canonical stream rather than a projection of it.
 **Revised:** 2026-08-01, a tenth entry. Section 4's 5.2 sentence cites the scoped
 invariant the apex re-authoring of this date landed, rather than naming it as
 owed.
+**Revised:** 2026-08-01, an eleventh entry. Section 2 adopts proto-stateful, per
+the human's rename of this date, the word collision with the previous tree's
+stateless retiring with the overstatement.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -134,10 +137,12 @@ harness does not touch the cache and so cannot protect any region of it.
 The alternative this rules out is resending the full message history every turn.
 The previous tree ran production on that path and measured a single exploration
 turn climbing from 5,988 to 24,932 prompt tokens, with a concurrent request timing
-out because the accumulated context made every call slow. **Stateless in this
-program means the agent begins each session with no accumulated experience. It does
-not mean the decoder is driven statelessly.** The two readings produce opposite
-architectures, and the previous tree used the word for the second one.
+out because the accumulated context made every call slow. **Proto-stateful in
+this program means the agent begins each session with no accumulated experience,
+holding real state only within one, per apex section 2. It does not mean the
+decoder is driven statelessly.** The previous tree used the old word stateless
+for cold full-history resend, the opposite architecture, and the rename of
+2026-08-01 retires that collision along with the overstatement.
 
 Assembly is also where the model's view of the trace is settled. The harness
 reasons over an in-RAM working structure that holds the whole trace, and it renders
