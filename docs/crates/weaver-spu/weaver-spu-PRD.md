@@ -46,6 +46,18 @@ the same day, the closure defers one more thing by name: whether the decode
 socket carries the organ envelope, and under what encoding, goes to the token
 workflow, the every-channel sentence of `weaver-types-PRD` section 2.3 meeting
 its first unclassified instance there rather than silently.
+**Revised:** 2026-08-02, a third entry this date, the token workflow's charter
+act. The decode half arrives: section 13 charters the decode submodule and the
+token seam, the crate's second seam to the harness on its own socket per the
+decoder-cut ruling, and section 14 charters the family libraries, the module
+discipline the operator's ruling of this date shapes the crate around. The two
+sections file after the children deliberately, sections 8 through 12 being
+cited by number across the merged corpus, arrival order being filing order.
+Section 2 gains the substrate paragraph, section 6 the token seam's row and
+record, section 7 counts two channel ends across the fork, section 8's
+deferred list shrinks to what stays deferred, and section 10's fault cell
+closes its half here, the cases this crate raises named in 13.10 with the
+gate's cases still owed.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -119,6 +131,15 @@ exists to avoid, and it would also give residency a lifetime that outlives the t
 residency is for.
 
 ## 2. What this crate owns
+
+**The umbrella's substrate.** The crate is about two things, per the operator's
+ruling of 2026-08-02: the family libraries of section 14, where everything a
+model family defines once is defined once, and the presentation of Unix
+sockets over which the harness hands work in and takes results back. Each
+semantic domain of processing is tied to its own submodule, the decoder the
+first and in this pass the only one, per section 13. The encoder and the
+later operation types arrive as their own submodules when their workflows
+charter them, and nothing here reserves their shape.
 
 **Model residency.** The device-side fact that one model's weights are present and ready
 to serve, established by an admit and ended by a release. Residency is what the two
@@ -371,6 +392,7 @@ This crate holds one seam. It is a duplex channel to `weaver-harness`, governed 
 | Seam | Peer | What crosses |
 |---|---|---|
 | Residency | `weaver-harness` | The harness asks this crate to admit the model binding it was handed and later to release it. This crate confirms or refuses with a reason the enter aggregate can carry unchanged. |
+| Token | `weaver-harness` | The harness opens the resident decode session, appends each turn's delta, and receives the generation with its measurement. The stop's cancel and the flush cross here. Per section 13 and `weaver-harness-spu-decode-contract`. |
 
 ```graph
 edge: seam
@@ -379,10 +401,25 @@ to: weaver-harness
 via: weaver-harness-spu-contract
 tag: socket
 
+edge: seam
+from: weaver-spu
+to: weaver-harness
+via: weaver-harness-spu-decode-contract
+tag: socket
+
 edge: floor-link
 from: weaver-spu
 to: weaver-types
 ```
+
+**The token seam is the second seam to the same peer, on its own socket, and it
+is not an organ channel.** The decoder-cut ruling of 2026-08-02 gave decode its
+own socket so no lifecycle directive queues behind decode traffic, and section
+13.2 carries the classification that ruling deferred: the organ test of apex
+section 5.4 names one duplex channel, the lifecycle channel is that channel,
+and this one is operation surface, so the organ envelope does not cross it and
+the every-channel sentence of `weaver-types-PRD` section 2.3 stays scoped to
+organ channels with no exception admitted.
 
 **The tag is `socket` because the seam crosses a process line,** which is the test apex
 section 5.1 states after its restatement. It does not imply the credential mechanism. On
@@ -445,13 +482,17 @@ after its final exec** for the same reason and by the same mechanism. The flag r
 `execve`, so the requirement is stated against the last exec and is a set rather than a
 check.
 
-**The fork carries exactly one descriptor across and the discipline that holds it is the
-harness's.** At the moment of the fork the worker holds the trace descriptors and the
+**The fork carries exactly two descriptors across and the discipline that holds
+them is the harness's.** The count was one until the token workflow's act: the
+lifecycle channel's end, and now the decode socket's end beside it, both pairs
+created by the harness before the fork, per the decoder-cut ruling and section
+13.2. At the moment of the fork the worker holds the trace descriptor and the
 coordination channel to admin. Both are close-on-exec under the receiver rule of
 `weaver-organ-channel` section 2, bound on that seam by `weaver-admin-harness-contract`
 section 2 and `weaver-harness-PRD` section 5, and that discipline is what keeps them out
 of this process. This charter states the requirement it depends on rather than restating
-the obligation: **this crate receives the channel end and no other descriptor, and a
+the obligation: **this crate receives its two channel ends and no other
+descriptor, and a
 build in which it holds a trace descriptor is broken whether or not it writes through
 one.** The contract binds the party that can meet it.
 
@@ -502,12 +543,15 @@ sharing across unrelated clients. These answer how one device is shared among ma
 concurrent network clients, and this architecture has one agent per residency by
 construction.
 
-**Deferred to the token workflow, and named as deferred rather than omitted.** The
-decode seam and everything that crosses it, sessions and their append-only protocol,
-turn processing, the measurement payload, residual readout as it reaches this
-crate, sampling, and the flush mechanism. Each of these is real, each is this crate's,
-and each depends on a workflow that starts at the gate. The charter's next sections
-arrive with that workflow.
+**Chartered by the token workflow's act of 2026-08-02, no longer deferred.** The
+decode seam, sessions and their append-only protocol, turn processing, the
+measurement obligation, residual readout as it reaches this crate, sampling and
+its dispositions, and the flush all arrive in section 13, which is the
+charter's next section arriving with its workflow exactly as this paragraph
+promised. What stays out is the encoder's operations, per the paragraph
+above, and the turn-path elaborations that belong to the gate's own charter,
+streaming and concurrent clients among them, which reach this crate only
+after that seam's turn-direction act shapes them.
 
 ## 9. Staged requirements
 
@@ -571,15 +615,15 @@ the decode seam by `weaver-types-Spec` section 4's own rule, or the universal
 gains its first exception and says so, and that classification belongs to the
 workflow that charters the traffic rather than to this closure.
 
-**What this crate raises, which the `fault` event is waiting on.** The fault-carrier
-ruling of 2026-08-01 made the stream the fault's carrier and the `fault` event kind
-its shape, and the case set behind that kind closes when the organs that can raise
-a fault have charters naming what they raise, **with this charter named as the
-first of those.** This pass does not close it, because a fault the worker survives
-is a fault during a run and the run belongs to the workflow that has not been
-chartered. The exit condition is therefore unmet by this pass and stays unmet, and
-that is stated plainly rather than left for a reader to discover by checking.
-**Settled by:** the token workflow's pass over this crate.
+**What this crate raises is named, and the corpus-wide cell half-closes.** The
+fault-carrier ruling of 2026-08-01 made the stream the fault's carrier and the
+`fault` event kind its shape, with this charter named as the first of the
+organs owing an enumeration. Section 13.10 now carries it, the token
+workflow's act having chartered the run this crate's faults occur in. What
+keeps the corpus-wide case set open is the gate's half, arriving with the
+turn direction of `weaver-harness-gate-contract`, and the `fault` payload's
+shape at `weaver-trace-Spec` section 11 waits on that remainder rather than
+on this crate. **Settled by:** the gate's turn-direction act.
 
 **Device-state reporting, which the old tree answers in a way this corpus has not ruled
 on.** That tree read free memory from the device driver through a command-line tool and
@@ -611,6 +655,18 @@ landed reads as settled and an entry landed and not cleared reads as outstanding
 - `open-items.md`, the encoder item: it moves into section 8 of this charter, which is
   where staged and excluded work belonging to a crate lives once the crate has a
   charter to hold it.
+- `weaver-types-PRD` section 2.3, owed by the decode contract's act: the token
+  vocabulary this seam draws, named for the seam's currency under the naming
+  ruling's ratified extension, this seam's loop being loop 1, the builder's
+  and variable, defined at the floor because both parties need it and
+  neither may depend on the other.
+- `weaver-harness-PRD` section 2: landed in this same act. The framing
+  candidate of section 13.4 ratified, the per-model assembly paragraph
+  rescopes, the deterministic floor staying the harness's and the family
+  template's render seating in the family library, with the rendered reality
+  returning on the report path.
+- `weaver-trace-PRD` section 3.1, by the token workflow's trace act: the three
+  `model.*` payload shapes, produced against section 13.6's obligations.
 
 ## 12. Children
 
@@ -622,6 +678,236 @@ is bounded, not drafted here, and incomplete for the same reason the charter is.
 - Release, covering the ordering that makes a confirmation a fact about the device.
 - The organ channel's construction and the fork, covering the descriptor discipline of
   section 7.
+- The decode submodule of section 13: the session, the token-boundary stop, the
+  measurement production, the readout tap per backend, and the encoding of the
+  token seam, elected with a measurement.
+- The family libraries of section 14: the per-family module surface and the
+  capability declaration.
 
 Contracts this crate is party to are written with the PRDs of their other parties, one
 per seam in section 6, and are not children of this document.
+
+## 13. Serving the turn: the decode submodule and the token seam
+
+Arrived with the token workflow, per section 8's promise, and filed after the
+children because sections 8 through 12 are cited by number across the merged
+corpus and a renumbering that broke every citation would buy tidiness at the
+wrong price. Everything here is derived from the turn path of apex section 3,
+the grammar of `basic-inference-loop`, and the operator's rulings of
+2026-08-02, with the salvage survey at `docs/project/` as the record of what
+the prior program learned.
+
+### 13.1 The submodule
+
+**The decoder is the first operation submodule, and each semantic domain gets
+its own.** The crate's shape is the substrate of section 2: family libraries
+plus socket presentation, with the processing itself in per-domain
+submodules. In this pass the decoder is the only submodule and it shares the
+crate's one process. A later operation type arrives as its own submodule in
+its own process under this domain root, with its own socket and its own
+contract, the sockets and processes multiplying while the organ does not.
+Nothing is reserved for the later types: no trait, no variant, no socket
+bound early, per apex section 9.
+
+### 13.2 The token seam
+
+**The second seam to the harness, on its own socket, created by the harness
+before the fork like the first.** The decoder-cut ruling gave decode its own
+socket, and this section charters what that ruling deferred. The pair is
+created beside the lifecycle pair and crosses the same fork, so possession
+authenticates it the same way, and section 7 counts both ends.
+
+**It is not an organ channel, and the classification is this act's.** Apex
+section 5.4's test names one duplex channel and the lifecycle channel is it.
+This socket is operation surface, so the organ envelope does not cross it,
+`weaver-types-PRD` section 2.3's every-channel sentence stays scoped to organ
+channels with no exception admitted, and the seam's vocabulary is its own,
+named for the seam's currency under the naming ruling's ratified extension,
+a loop name being what this seam cannot take with loop 1 the builder's and
+variable, defined at
+the floor, and owed to `weaver-types-PRD` section 2.3 by the contract's act.
+
+**Every request on this seam belongs to a turn and carries its context.**
+Apex section 5.2 scopes the join-key invariant to requests that belong to an
+existing turn, and unlike the lifecycle directives that forced the scoping,
+decode traffic is exactly what the invariant is for: every ask carries the
+turn's context and every answer carries it back, so the reports this crate
+returns are attributable with more than one turn in flight or none.
+
+### 13.3 The session
+
+**One resident decode session per residency, append-only, and the discipline
+is forced rather than elected.** The prior program proved on live hardware
+that hybrid and recurrent decoder families cannot roll their state back: a
+protocol that rewinds resident state fails silently on the families that
+keep recurrent layers, and the failure surfaces as position errors far from
+its cause. So the session advances only forward. Each turn appends its
+delta at the resident end, nothing ever asks resident state to rewind, and
+the protocol is uniform across families because the weakest family sets the
+rule.
+
+**The identity prefix is established at open and permanent for the session's
+life.** `weaver-harness-PRD` section 2 rests the prefix's permanence on this
+seam as an invariant the SPU honors, and this is where it is honored: no
+operation of this seam removes or alters the prefix short of the flush of
+13.9, whose outcome is defined against it.
+
+**A session that cannot take the next delta refuses, typed, and sheds
+nothing.** There is no eviction and no compaction inside this crate, because
+either would be this crate deciding which part of the agent's context
+matters, which is cognition and the harness's. The refusal names the
+overflow and the harness decides what a full context means for the turn.
+
+### 13.4 Framing, and where it is performed
+
+**Ratified by the operator, 2026-08-02, in this act.** The family library
+renders.
+The harness sends canonical messages, the message model of `weaver-traits`,
+and the submodule renders them through the family's template into what the
+model sees. The rendered reality returns on the report path of 13.6, the
+template's identity, the token identifiers, and the block partition, so the
+record holds the mapping from the canonical conversation to what the model
+saw, per the operator's end-to-end requirement of 2026-08-02: input
+formatted correctly for the family, verified per family, and output style
+handled by the trace holding both the verbatim emission and the canonical
+parse.
+
+The grounds. Family knowledge lives in one home, section 14's, rather than
+splitting across two domains or forcing the harness to link an SPU-domain
+member across the topology's grain. The harness's deterministic assembly
+floor is untouched: order of parts, the message sequence read from the
+working structure, and everything `weaver-harness-PRD` section 2 fixes stay
+the harness's, and what moves is only the family template's application. The
+trace's authorship is untouched, because the render reports back and the
+harness authors the report. The operator ratified the candidate with this
+act and directed the whole change in one place, so the
+`weaver-harness-PRD` edit lands in this same act rather than riding the
+register as a condition, the change tied to its reason.
+
+### 13.5 The turn, and the stop
+
+**Append and generate is the turn's shape on this seam.** The harness
+appends the turn's delta and the generation returns with its measurement,
+the two crossings of the fork the basic loop's section 4 draws.
+
+**PENDING, ruling candidate for ratification.** The stop lands at the token
+boundary. The generation checks for the harness's cancel between sampled
+tokens, which at production decode rates bounds the stop's latency well
+under the operator's perception, and a mid-kernel abort would buy
+milliseconds at the cost of device-state certainty. **An aborted generation
+still leaves the session well-framed:** the family's turn terminator is made
+resident before the answer returns, the prior program's own lesson, because
+an append-only session whose last turn ends mid-emission is malformed for
+every turn that follows. The partial output returns marked stopped, the
+harness closes the turn with the stop reason per the grammar, and the run
+stays open.
+
+### 13.6 The measurement obligation
+
+**This crate produces what the record requires, at production time, and the
+harness authors it.** `weaver-trace-PRD` section 3.1 is authoritative for
+the payload's field list. What this charter fixes is the producing side:
+the per-token signals are computed against the pre-sampler distribution,
+positionally paired with the token identifiers, and absent rather than
+zeroed when not produced, because an empty vector and a certain model are
+different facts. The timings, the model's identity with its weights hash,
+the template identity, and the block partition of 13.4 travel with the
+generation, and nothing is retained here afterward: produced, reported,
+gone, per section 3's no-state rule.
+
+### 13.7 Residual readout
+
+**The election governs production, and this crate is where production
+happens.** The agent's configuration elects the readout per load, per apex
+section 4's definition of done, and the election reaches this crate at
+admit with the binding. Elected, the per-layer activations are reduced in
+place at the tap and the reductions return on the same path as the
+generation, per apex section 3 step 6. Not elected, no tap runs and no
+affordance idles. **A binding that elects readout against a backend whose
+engine cannot tap refuses at admit,** because a load that grants an
+observability election it cannot honor fails at its cheapest moment or
+lies at its most expensive one.
+
+### 13.8 Sampling, and the dispositions
+
+**Every sampling knob carries a disposition, and seed is a knob.** Per the
+composability ruling of 2026-08-02: each knob is frozen at the worker's
+composition root or left operator-tunable, the builder's election per knob,
+and the effective values are recorded whichever side set them, because a
+disposition changes who sets a value and never whether the record holds
+it. The prior program never made its seed configurable at all, so the
+disposition mechanism is the seed's first real home, and a frozen seed
+plus a frozen sampling surface is what makes a binary's declared starting
+field re-enterable, per apex section 8's stochastic re-entry arrangement.
+The knob enumeration and its types are the Spec's and the floor's.
+
+### 13.9 The flush
+
+**The harness owns the decision and this seam carries it.** The flush is
+the harness's ask on this seam, and its outcome is defined against the
+prefix invariant: after a flush the identity prefix is resident and the
+accumulated turns are gone. Where a family's state permits truncation the
+outcome is reached by truncation, and where it cannot roll back it is
+reached by re-establishing the prefix fresh, the invariant being the
+outcome rather than the mechanism, and the mechanism the Spec's per
+family. The harness still holds no handle to the cache and touches
+nothing, per section 2.
+
+### 13.10 The faults this submodule raises
+
+The enumeration section 10's cell waited on, each a fault the worker
+survives, reported to the harness and authored by it as the `fault` event:
+
+- **Device fault during generation.** The device errored mid-forward and
+  the generation cannot complete. The turn fails, the residency's
+  continued fitness is this crate's next answer, and the report names the
+  device's account of itself.
+- **Residency degraded.** The weights or the session state are no longer
+  servable, discovered outside any single generation.
+- **Readout fault while elected.** The tap failed with readout elected,
+  the generation itself surviving, reported because an elected
+  observability that silently stopped observing is the lie 13.7 refuses.
+
+An overflow is a typed refusal on the exchange rather than a fault, and a
+death is observed through closure rather than reported, both per the
+contracts. The gate's cases arrive with its turn direction, and the
+corpus-wide case set closes there, per section 10.
+
+## 14. The family libraries
+
+**Everything a model family defines is defined once, in that family's
+module, and nowhere else.** A family, Qwen or Gemma or the Harmony
+speakers, shares its template, its marker vocabulary, its tokenizer
+conventions, its configuration shapes, and its orchestration quirks across
+every operation type that serves its models, and the prior program proved
+the premise concretely: its encoder's text tower was a decoder-family
+member, sharing architecture and tokenizer with the decoder path that
+never knew it. The module discipline is the boundary: one module per
+family holding the template, the types, the parsing and rendering, and the
+forward orchestration, with nothing family-specific living outside its
+module and the kernels shared beneath, which is the prior program's own
+share-kernels-own-orchestration rule promoted to a charter line.
+
+**Both directions of the end-to-end template requirement live here and are
+tested here.** Inbound, the family module is what makes input formatted
+correctly for the family, and the reference test shape is the prior
+program's marker promotion, every control marker tokenizing to exactly
+one token because a degraded marker is structure read as prose. Outbound,
+the family module's parsers are the recorded bridge from the verbatim
+emission to the canonical form, with parse failures carried as their own
+distinct facts rather than collapsed into clean turns.
+
+**The modules become member crates when the second consumer exists, and
+not before.** This round the decoder is the only consumer, and a shared
+library with one consumer is a reserved slot by apex section 9's own
+test. The boundary is drawn now so the extraction is a local move in the
+act that charters the encoder, which is the reversibility test applied
+to this crate's own future, and the destination is recorded where
+destinations live rather than here.
+
+**A family declares its capabilities and the declaration is consulted at
+admit.** What operations a family's models serve, what template identity
+it renders, and whether its engine can tap for readout are facts the
+family module states, and admission judges a binding against them, which
+is how 13.7's refusal knows to fire. The declaration's shape is the
+Spec's.
