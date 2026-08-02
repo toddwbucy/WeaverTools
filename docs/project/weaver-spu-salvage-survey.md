@@ -10,7 +10,9 @@ quarry is read-only throughout, per the workspace's standing rule.
 **Sources:** the archived tree at `WeaverTools-archived/crates/weaver-spu` (75
 files, roughly 37.6k lines) and `WeaverTools-archived/docs/architecture/crates/
 weaver-spu/` (12 documents), swept 2026-08-02, with the operator's rulings of the
-same date recorded in section 3.
+same date recorded in section 3. The quarry-side facts rest on the authoring
+seat's sweep alone, the review seat's environment not reaching the archived
+tree, and the corpus-side citations carry both seats' verification.
 
 **Editorial:** Per the Working Rules.
 
@@ -222,8 +224,9 @@ where the quarry offers nothing: no cancellation surface exists in the
 archived tree, a generation cannot be aborted mid-loop, so that cell is
 new work rather than salvage. The disposition knobs, where the
 quarry's seed exists only as a hardcoded default and a determinism test,
-never wire-configurable, so `Disposition<T>` is the seed's first real
-home. And the backend-peers seam as the decoder's interior, GGUF and
+never wire-configurable, so the disposition principle's type,
+`Disposition<T>` the natural candidate and the SPU Spec's to take or
+leave, is the seed's first real home. And the backend-peers seam as the decoder's interior, GGUF and
 candle-native first-class under the umbrella.
 
 The SPU Spec then follows the workflow, residency plus the decoder per the
