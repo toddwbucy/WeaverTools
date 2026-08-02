@@ -32,7 +32,7 @@ human's ruling of this date.
 **Revised:** 2026-08-01, a seventh entry, the durable-record cut. Section 5's
 custody prose restates from the admin-owned file to the operator's sink, per the
 ruling at `weaver-admin-operator-contract` section 3: the disk paragraphs become
-stream paragraphs, the manifest citation leaves the verbosity clause, and the
+stream paragraphs, the manifest citation leaves the elections clause, and the
 descriptor discipline stands unchanged as the half that never depended on who
 persists the record.
 **Revised:** 2026-08-01, an eighth entry, the fault-carrier ruling. The alert
@@ -51,6 +51,10 @@ the human's rename of this date, the word collision with the previous tree's
 stateless retiring with the overstatement.
 **Revised:** 2026-08-01, a twelfth entry. Prose adopts `agent-config`, the
 artifact renamed on the human's ruling of this date.
+**Revised:** 2026-08-02. Section 5's sole-enforcer paragraph retires with the
+recording levels, per the human's ruling of this date: the harness authors whatever
+occurs and filters nothing, and the run's level is no longer authored into the
+run's events because there is no level to state.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -331,14 +335,14 @@ entry and the record of `weaver-admin`'s initial contact. One emission per event
 authored against the durable event schema, feeding the outbound stream and the
 working structure together.
 
-**Sole writer means sole enforcer of verbosity.** `weaver-trace-PRD` section 5 defines
-a floor that is always recorded and a ceiling elected per agent, and the recorder holds
-no policy, so nothing but the harness can decide that a ceiling event is not emitted.
-The harness reads the election from the agent config at every load and applies it
-for that run, and it authors the run's level into the run's own events so the stream
-states verbosity per run and elected brevity and silent loss stay distinguishable. A
-later run finding the file changed adopts the new value as its own load condition,
-which is the mechanism working rather than a conflict to refuse.
+**Sole writer means the harness authors whatever occurs, and filters nothing.**
+`weaver-trace-PRD` section 5 carries no recording level since the ruling of
+2026-08-02, so there is no class of event the harness declines to emit and no
+policy for it to apply on the recorder's behalf. What an operator elects at load
+governs what the agent produces, the residual readout being the reference case, and
+the harness authors what production yields. A later run finding the file changed
+adopts the new value as its own load condition, which is the mechanism working
+rather than a conflict to refuse.
 
 ```graph
 edge: writes

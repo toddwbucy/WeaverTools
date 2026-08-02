@@ -26,6 +26,11 @@ holds.
 thirteen to fourteen, per the fault-carrier ruling of this date: the stream is the
 program's one fault carrier, the coordination seam's alert exchange retiring in
 the same act.
+**Revised:** 2026-08-02. The trace carries no recording level, per the human's
+ruling of this date: section 5 becomes instrumentation, elections governing
+production rather than recording, section 3.1's floor and ceiling tables become one
+flat set of fourteen kinds, and replay becomes universal. The elected-brevity
+against silent-loss ambiguity dissolves with the levels that created it.
 **Revised:** 2026-08-01, third entry this date. The relational projection retires,
 per the human's ruling: the working structure holds the same canonical NDJSON the
 stream carries, one rendering held and handed, so the deterministic-projection
@@ -72,10 +77,10 @@ to: weaver-harness
 
 **It does not produce the trace.** The harness authors. This crate is the mechanism the
 harness authors through, and the distinction is the whole of the charter. `weaver-trace`
-decides nothing about what is worth recording, when a session begins, what a turn is, or
-at what verbosity a run records. Every one of those is policy and every one is the
-harness's. This crate guarantees that what it is handed is recorded faithfully, ordered
-correctly, and readable afterward.
+decides nothing about what is worth recording, when a session begins, or what a turn
+is. Every one of those is policy and every one is the harness's. This crate
+guarantees that what it is handed is recorded faithfully, ordered correctly, and
+readable afterward.
 
 The previous tree had no document governing production at all. It had a schema
 contract, an access contract, and a draft custody contract, and nothing binding the
@@ -280,7 +285,7 @@ The kind vocabulary is closed, and this is where it lives. A set declared closed
 held nowhere cannot be checked against, and the compile-time pin above is argued from
 its closure.
 
-**Floor, always recorded:**
+**The set is flat, and every kind is recorded when it occurs**, per section 5:
 
 | Kind | Meaning |
 |---|---|
@@ -293,11 +298,6 @@ its closure.
 | `message.tool_result` | a tool result entering the conversation |
 | `tool.call.started` / `tool.call.completed` | the tool bracket |
 | `fault` | a fault the worker survived, reported by an organ and authored by the harness |
-
-**Ceiling, added when elected:**
-
-| Kind | Meaning |
-|---|---|
 | `model.request` | the decode boundary, request side |
 | `model.output` | the decode boundary, response side |
 | `model.measurement` | input and output token identifiers, entropies, sampler parameters, model identity with its weights hash, the prompt-block partition, residual reductions |
@@ -306,8 +306,8 @@ Fourteen kinds. Adding one is an edit to this charter and to every contract whos
 vocabulary clause names the set, because consumers key on the closure. `fault` is
 the fourteenth, added under that rule by the fault-carrier ruling of 2026-08-01:
 the stream is the program's one fault carrier, so a fault the worker survives is an
-event like every other, floor rather than ceiling because a fault invisible at
-floor verbosity would be the silently partial account this charter forbids. The
+event like every other, recorded whenever it occurs because a fault absent from an
+account would be the silently partial record this charter forbids. The
 operator's tooling keys on it from the stream and comes back through the operator
 surface with a verb. Its payload names the raising organ and carries what that
 organ reported, and the case set behind it is deferred to the token workflow with
@@ -323,12 +323,12 @@ identity says which bytes were loaded without saying what was loaded, which is e
 to detect that two runs differ and not enough to reconstitute either, and a payload
 without the partition cannot tell a replay where one block ended and the next began.
 
-**Replay is a ceiling capability, and the apex's requirement is scoped to it.** All
-three `model.*` kinds are elected, so a run recorded at the floor carries no
-measurement payload and is not replayable. What the apex forbids is a measurement
-payload missing one of those fields. It does not oblige a floor run to carry the kind,
-and a reader who takes the requirement as universal has read a condition on the
-payload as a condition on the record.
+**Replay is universal since the ruling of 2026-08-02, and the apex's requirement
+reads straight.** Every run carries its measurement payload, so every run is
+replayable and every record names the model that served it. What the apex forbids
+is a measurement payload missing one of its required fields, and with no elected
+subset there is no longer a class of run to which the requirement does not
+apply.
 
 **There is no `session.started`.** A session begins when `run0` begins, so a separate
 kind would fire at the same moment as `run0`'s `load` and mean the same thing. The
@@ -532,51 +532,49 @@ not, indexed or not, is the operator's tooling's business on the operator's side
 the sink. `session.closed` is content, authored by the harness like every other
 event, and the stream simply ends where the session did.
 
-## 5. Verbosity
+## 5. Instrumentation
 
-Two levels, **floor** and **ceiling**, and they add rather than exclude.
+**The trace carries no recording level, and the recorder filters nothing.** Per the
+human's ruling of 2026-08-02: whatever the agent produces reaches the record, and
+what an operator elects at load is what the program *does* rather than what it
+writes down. There is no floor and no ceiling here, because those named a filter
+between the working structure and the stream, and the stream is a copy of the
+working structure rather than a selection from it.
 
-**The floor is always recorded and cannot be switched off.** It is what the turn
-needs to run: the turn brackets, the message sequence, and enough of the tool events
-to carry results into the next iteration. It is derived rather than chosen, because
-the harness reasons over the working structure and an event the turn depends on is
-not elective. Nothing below the floor is a quieter agent. It is a broken one.
+**The ruling follows the one that placed durability with the operator.** The cut of
+2026-08-01 ended this program's obligation at the tee and left retention to the
+party that owns the storage. A recording level is that same decision taken one
+layer earlier, the program choosing what an operator is permitted to keep before
+the operator chooses what to keep. Removing it is the durable-record ruling read
+consistently rather than a new position.
 
-**The ceiling is elected per agent in its config file.** It adds the measurement
-payloads with their token identifiers and entropies, the decode boundary, and the
-residual reductions when readout is enabled. The cost is real and the election is the
-operator's.
+**Elections live at the source, and the residual readout is the reference case.**
+It is elected per agent in the config file, read at load, fixed for the life of the
+run, and what it changes is what the SPU computes. When it is on, the reductions
+exist and are recorded. When it is off, there are none to record. That is the shape
+every instrumentation election takes: it governs production, and production governs
+the record.
 
-**Verbosity is a property of the run.** It is read from the config file at every load,
-fixed for the life of that run, and scoped to nothing wider. A session holds one run
-or many, each with its own load conditions, so a run recorded at the floor places no
-constraint on a later run recorded at the ceiling and an operator editing the file
-between runs is exercising the mechanism rather than defeating it.
+**What this dissolves is an ambiguity rather than only a mechanism.** An earlier
+version of this section had the harness author each run's level into the run's own
+events, because elected brevity and silent loss otherwise looked identical to a
+consumer. With no level to elect, anything missing from an account is loss, which
+is a stronger property than a reader consulting a recorded level to interpret a
+gap.
 
-The scope stops at the run because the measurement does. Ceiling events describe one
-load of one model under one set of sampler parameters, and they are read against the
-run that produced them rather than against the session. What crosses a run boundary
-is the conversation, which is the floor, replayed so a later run can rebuild context
-by re-tokenizing what was said. A run recorded at the floor therefore leaves its
-successor a whole conversation, which is the only thing a successor draws from it.
+**Two consequences follow, both improvements.** Every run is replayable, because
+the token identifiers and sampler parameters apex section 8 rests replay on are in
+every run's measurement payload rather than in an elected subset. And every record
+names the model that served it, along with its weights hash, which closes the cell
+`weaver-spu-PRD` section 10 held open on the premise that a floor run named
+neither.
 
-Two consequences. **The stream states the verbosity of each run**, authored by the
-harness into the run's own events, or elected brevity and silent loss look identical
-to a consumer of the account. **Replay requires the ceiling**, because the token
-identifiers and sampler parameters it needs live in the measurement payload, so a
-run recorded at the floor is reproduced rather than diagnosed, and a reader makes
-that judgment per run.
-
-**There is no seal, and the residual election needs none.** An earlier version of this
-section fixed the ceiling at `run0` and had later runs read the record rather than the
-file, arguing that a session with a verbosity discontinuity is one every consumer has
-to reason about. Recording verbosity per run answers that argument at its source,
-since no reader is left inferring one value for a session that had several. The seal
-also created a conflict it could not settle, because the residual-readout election of
-`weaver-types-PRD` section 2.1 is read per load and its reductions ride inside a
-ceiling payload, so a sealed floor-only session had no licensed home for them. Per-run
-verbosity dissolves that case rather than adjudicating it. Readout belongs to whichever
-run elected the ceiling.
+**The cost is stated rather than prevented.** Measurement payloads are per-token,
+so every run grows the working structure at the rate an elected run grew it before,
+and RAM is the one thing an operator cannot reclaim downstream. The lever is the
+production election, which is the honest place for a lever: not producing a
+measurement is cheaper than producing and discarding it, and discarding it after
+the fact is the operator's to do on the operator's own compute.
 
 ## 6. What this crate guarantees
 
@@ -641,9 +639,9 @@ writer, and an analysis artifact is a separate file.
 substrate. The event kinds that serve those exist when their emitters do.
 
 **Redaction, at write time.** The recorder never filters, so it never scrubs. The
-harness authors what it authors and its only filtering mechanism is the verbosity
-election of section 5, and a recorder that dropped or altered content because it
-judged the payload would have taken policy the harness holds. There is no third
+harness authors what it authors and the recorder never filters, so a recorder that
+dropped or altered content because it judged the payload would have taken policy
+the harness holds. There is no third
 place on the write path where redaction could occur, so the record is raw by
 construction rather than by an unmade decision. Scrubbing, if ever wanted, is a
 formatter election on export and downstream of everything here. What an operator

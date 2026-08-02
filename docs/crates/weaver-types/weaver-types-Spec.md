@@ -14,6 +14,10 @@ being octets, the satellite types are shaped with `Position` corrected against t
 drawn material, the YAML election carries the maintenance fact, the truncation
 obligation lands with the socket election, the test placements are named per
 crate, and one pin reclassifies from the compiler to review.
+**Revised:** 2026-08-02. `verbosity_ceiling_election` and the `VerbosityElection`
+enum leave the config, per the human's ruling of this date that the trace carries
+no recording level. Six fields rather than seven, and what an operator elects at
+load governs production alone.
 **Revised:** 2026-08-01, again, per the human's G2 ruling: the format and encoding
 elections cite the criteria `weaver-types-PRD` sections 2.1 and 2.3 now carry,
 rather than developing those grounds here. Revised again the same day, on the
@@ -50,7 +54,7 @@ disk, and what octets the loop 0 vocabulary becomes on the wire. Where this
 document and the charter disagree the charter yields nothing.
 
 **This document declares no graph records,** per Document Format section 1. The
-charter is the source of the crate node, the `agent-config` artifact, its seven
+charter is the source of the crate node, the `agent-config` artifact, its six
 `holds` edges, and the eleven vocabulary definitions.
 
 ## 1. The crate
@@ -58,7 +62,7 @@ charter is the source of the crate node, the `agent-config` artifact, its seven
 **Layout.** One module per charter subsection, re-exported at the root.
 
     src/lib.rs        re-exports, and nothing else
-    src/config.rs     the agent config and its seven fields, section 2
+    src/config.rs     the agent config and its six fields, section 2
     src/identity.rs   peer identity and the authorization predicate, section 3
     src/wire.rs       the loop 0 vocabulary and the envelope, section 4
 
@@ -126,14 +130,8 @@ pub struct AgentConfig {
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,
     pub residual_readout_election: bool,
-    pub verbosity_ceiling_election: VerbosityElection,
     pub gate_instruction: GateInstruction,
     pub trace_sink: TraceSink,
-}
-
-pub enum VerbosityElection {
-    Floor,
-    Ceiling,
 }
 
 pub enum TraceSink {
@@ -168,12 +166,12 @@ same way on a page.
 **Every field is required and absence is a refusal, with the temptation named.**
 Charter section 5 rules that absence is never read as a default unless the charter
 says a field is optional and says what its absence means. No field here is
-optional. The two elections are what a builder will reach to default, to off and
-to floor, and they are exactly the two that must not: an operator who stated no
-verbosity ceiling has not thereby chosen the floor, and admin refusing the load is
-how that operator learns the file is incomplete rather than discovering it in a
-record quieter than expected. This is why `AgentConfig` derives no `Default` and
-`parse` returns no partial value.
+optional. The residual-readout election is what a builder will reach to default,
+to off, and it is exactly the one that must not: an operator who stated no readout
+has not thereby declined it, and admin refusing the load is how that operator
+learns the file is incomplete rather than discovering it in a record with no
+reductions in it. This is why `AgentConfig` derives no `Default` and `parse`
+returns no partial value.
 
 **`trace-sink` names a sink and not only a path.** A file, a pipe, or a socket are
 all conforming sinks, per `weaver-admin-operator-contract` section 3, so the field
@@ -585,7 +583,7 @@ build-time assertion over the resolved external tree rather than by H2.
 - In this crate: the denial-precedence test of section 3, confirmed by watching
   the agent uid pass when denial stops preceding permission.
 - In this crate: a missing required field refuses the parse, run separately for
-  each of the two elections, since those are the two a builder is most likely to
+  the residual-readout election, since it is the one a builder is most likely to
   make optional.
 - In this crate: a misspelled key refuses, confirmed by watching a mistyped
   `permission-mode` vanish when `deny_unknown_fields` is removed.
