@@ -22,7 +22,10 @@ the fix verified against serde 1.x, the directive-to-answer mapping is stated,
 `RefusingOrgan` replaces `Opener` in the aggregate, the two election fields take
 their charter names, the sink's creation-flag asymmetry gains its argument, the
 surviving working-list citation leaves, and two open elections split by whether a
-contract constrains them.
+contract constrains them. Revised once more the same day, on the third return:
+the answering-case claim states one answer per request rather than one case per
+directive, `Stop` having two cases and the earlier wording contradicting itself
+two lines on.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -438,14 +441,19 @@ own:** enter, leave, and stop at coordination, admit and release at residency,
 raise and lower at the gate, and the verbs with the observations at the operator
 surface. The answer and the refusal follow the same rule.
 
-**Every directive has exactly one answering case, and the mapping is stated
-because the operator contract requires one answer per request.** `Enter` answers
+**Every directive receives exactly one answer, and the mapping from directive to
+answering case is stated because the operator contract requires that and a
+builder would otherwise invent it.** The case is determined per directive, and
+for `Stop` by what it interrupted. `Enter` answers
 `Ready`, `Leave` answers `Left`, `Stop` answers `TurnAborted` or `AtRest`,
 `Admit` answers `Admitted`, `Release` answers `Released`, `Raise` answers
 `GateReady`, `Lower` answers `GateStopped`, `Validate` answers `Validated`,
-`Load`, `Unload`, and `Show` answer `State`, and `List` answers `Agents`. Any of
-them may answer a `LifecycleRefusal` instead, which is the second half of what
-one answer per request means. `Validated` exists because validation reports an
+`Load`, `Unload`, and `Show` answer `State`, and `List` answers `Agents`. Eleven
+of the twelve have a single answering case. `Stop` has two, `TurnAborted` or
+`AtRest`, selected by whether a turn was in flight, and both are clean closes
+rather than a refusal, per `weaver-admin-harness-contract` section 3. Any
+directive may answer a `LifecycleRefusal` instead, which is the second half of
+what one answer per request means. `Validated` exists because validation reports an
 outcome without transitioning anything, per `weaver-admin-PRD` section 4.3, and
 answering it with a state would report a transition that did not happen.
 
