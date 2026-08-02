@@ -38,6 +38,11 @@ gate's scope, the `config` feature gating the parser and the `parse` surface
 alone and never a type, `ModelBinding` and `GateInstruction` compiling with
 the feature off, the owed placement of the harness Spec review landing here
 after the harness branch rather than beside it.
+**Revised:** 2026-08-02, a fourth entry this date, the token trio's landing at
+the charter. Section 0's count reads fifteen, section 4 scopes itself to the
+loop 0 subset with the trio's representation named as the token workflow's,
+and the open election on the decode seam drops the channel half the
+decoder-cut ruling closed, an unswept remnant of that act caught here.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -63,7 +68,7 @@ document and the charter disagree the charter yields nothing.
 
 **This document declares no graph records,** per Document Format section 1. The
 charter is the source of the crate node, the `agent-config` artifact, its six
-`holds` edges, and the twelve vocabulary definitions.
+`holds` edges, and the fifteen vocabulary definitions.
 
 ## 1. The crate
 
@@ -311,9 +316,13 @@ test this crate can pretend to run.
 
 ## 4. The loop 0 wire vocabulary
 
-Four definitions, per charter section 2.3: the envelope every organ channel
+The loop 0 subset of charter section 2.3, four of its seven definitions: the
+envelope every organ channel
 carries, and loop 0's trio named for the loop whose traffic it carries rather than
-for a sender, per the naming ruling of 2026-08-01.
+for a sender, per the naming ruling of 2026-08-01. The token trio landed at the
+charter on 2026-08-02 under that ruling's ratified extension, and nothing of it
+is shaped here: its representation is the token workflow's, elected with the
+hot-path measurement, per this section's own decode rule.
 
 ### 4.1 The envelope
 
@@ -622,8 +631,10 @@ build-time assertion over the resolved external tree rather than by H2.
 - **The YAML implementation.** A maintained one, confirmed at the moment the
   manifest is written, per section 2. If none exists the format election re-runs
   against TOML on the writer-audience grounds.
-- **The decode seam's encoding, and whether it shares the organ channel.** The
-  token workflow's, with a measurement, per section 4.3.
+- **The decode seam's encoding, and the token trio's representation.** The
+  token workflow's, with the hot-path measurement, per section 4.3, the
+  channel question having closed with the decoder-cut ruling, decode on its
+  own socket.
 - **The `tool-set` field's element shape.** It elects from `tool-trait`, which
   `weaver-traits-PRD` section 3.1 holds blocked, so the field is a list of names
   today and gains its element type with the tool workflow.
