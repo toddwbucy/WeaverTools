@@ -7,6 +7,13 @@ per Working Process section 6.
 **Date filed:** 2026-08-01
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
+**Revised:** 2026-08-02, on the review seat's return. Every kind takes an explicit
+rename so the wire carries the charter's dotted names, `Payload` gains its
+representation with `RawValue` splicing the message kinds and the deferred shapes
+listed with their settlers, `Recorder` appears as the crate's principal type with
+the receive site declared, the verbosity section states that this crate holds no
+level and reports the contract's residual sentence, the close-on-exec test is owed
+to `weaver-harness-Spec`, and the satellite types are listed as open.
 **Editorial:** Per the Working Rules.
 
 ---
@@ -49,8 +56,11 @@ reading what a different program built against different obligations.
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
 
-**The dependency set is two crates and no internal one.** `serde` with `derive` and
-`serde_json` for the canonical rendering of section 2. **No `weaver-*` dependency at
+**The dependency set is two crates and no internal one.** `serde` with `derive`,
+and `serde_json` with `derive`'s companion feature **`raw_value`**, which section 3
+elects for splicing the harness's pre-rendered message payloads without
+re-encoding them. The feature is named here rather than discovered at build time,
+the same way the floor Specs name `derive`. **No `weaver-*` dependency at
 all**, which is the charter's section 1 claim read as a manifest property: this
 crate depends on nothing internal, and gate H2 reads that against a graph in which
 it declares no `floor-link` and one `seam` tagged `link`.
@@ -113,15 +123,52 @@ pub struct Envelope {
     pub monotonic_ns: MonotonicNs,
 }
 
+#[serde(rename_all = "snake_case")]
+pub enum Subsystem { Admin, Harness, Spu, Gate, Tool }
+
 pub enum Kind {
-    Load, Unload, SessionClosed,
-    TurnStarted, TurnClosed,
-    MessageUser, MessageAssistant, MessageToolResult,
-    ToolCallStarted, ToolCallCompleted,
-    Fault,
-    ModelRequest, ModelOutput, ModelMeasurement,
+    #[serde(rename = "load")]                 Load,
+    #[serde(rename = "unload")]               Unload,
+    #[serde(rename = "session.closed")]       SessionClosed,
+    #[serde(rename = "turn.started")]         TurnStarted,
+    #[serde(rename = "turn.closed")]          TurnClosed,
+    #[serde(rename = "message.user")]         MessageUser,
+    #[serde(rename = "message.assistant")]    MessageAssistant,
+    #[serde(rename = "message.tool_result")]  MessageToolResult,
+    #[serde(rename = "tool.call.started")]    ToolCallStarted,
+    #[serde(rename = "tool.call.completed")]  ToolCallCompleted,
+    #[serde(rename = "fault")]                Fault,
+    #[serde(rename = "model.request")]        ModelRequest,
+    #[serde(rename = "model.output")]         ModelOutput,
+    #[serde(rename = "model.measurement")]    ModelMeasurement,
+}
+
+pub enum Payload {
+    Message(Box<serde_json::value::RawValue>),
+    TurnClosed(TurnClose),
+    Bracket,
+    Deferred(Box<serde_json::value::RawValue>),
+}
+
+pub enum TurnClose {
+    Clean,
+    Stopped { reason: StopReason },
 }
 ```
+
+**Every kind carries an explicit rename, because no scheme produces the charter's
+names.** Charter section 3.1 spells them with dots, and verified against serde 1.x
+the derive default emits `"MessageUser"` and `rename_all = "snake_case"` emits
+`"message_user"`, while only a per-variant rename emits `"message.user"`. Leaving
+it to a scheme would put a second spelling of every kind on the wire, which is the
+one-name-two-nodes defect the Document Format rules against for identifiers and
+which reads the same way for a consumer keying on a kind. The mapping is total:
+fourteen variants, fourteen renames, and the wire spelling is the charter's.
+
+**`Subsystem` names the producing party and takes the plain snake-case scheme**,
+its values being single words with no dotted spelling to match. `Tool` is a
+producing subsystem rather than a crate, because a tool's report reaches the record
+through the harness and the record should say what produced it.
 
 **Fourteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
@@ -134,12 +181,35 @@ run-level event belongs to no turn, which is what the option expresses, and the
 recorder never infers one, per the contract's section 3. A malformed submission
 carrying no turn on a turn-level kind is refused rather than defaulted.
 
-**The payload is opaque for the three message kinds and typed for the rest.**
-`Payload` holds pre-rendered canonical bytes the harness supplies for
-`MessageUser`, `MessageAssistant`, and `MessageToolResult`, because this crate
-neither defines the message model nor decodes it, per charter section 3. For every
-other kind the payload is a shape this crate defines, since the kind's content is
-trace vocabulary rather than conversation content.
+**The message payloads splice rather than nest, and the mechanism is elected
+rather than assumed.** This crate neither defines the message model nor decodes
+it, per charter section 3, so the harness supplies those three payloads
+pre-rendered. Verified against serde_json 1.x: holding them as a `String` and
+rendering the enclosing event escapes them into a JSON string,
+`"payload":"{\"role\":\"user\"...}"`, which every consumer must then unescape
+and which is a second representation arriving by the back door.
+`serde_json::value::RawValue` splices the bytes as they stand,
+`"payload":{"role":"user",...}`, and it is what `Payload::Message` holds.
+
+**That election sharpens why admission precedes the fan-out.** `RawValue` splices
+whatever bytes it holds, so a malformed rendering from the harness would become a
+corrupt line rather than a refused submission. The octet well-formedness check of
+the admission step is the only thing standing between the two, which is a
+concrete reason for an ordering the charter states abstractly. `RawValue`
+construction validates, so the check has a mechanism rather than a promise.
+
+**`Bracket` carries nothing and `TurnClosed` carries the close kind.** The run and
+session brackets are identified entirely by their envelope, so a payload for them
+would be a field with no content. `turn.closed` states whether the close was clean
+or stopped and with what reason, per `weaver-harness-trace-contract` section 3 and
+charter section 3.1, which is the one payload shape the merged corpus fixes today.
+
+**`Deferred` holds the payloads whose shapes their own workflows settle**, the tool
+bracket, the fault, and the three model kinds. Each is listed in section 11 with
+what settles it. The variant holds raw bytes in the interim rather than a
+placeholder struct, because a struct shaped against no chartered content would be
+the reserved slot apex section 9 forbids, and because a kind whose payload has no
+chartered shape cannot be submitted with a shape this crate invented.
 
 **What admission may judge is bounded by that split**, per the contract's refusal
 case: the envelope binds, the required fields are present, the kind is known, and
@@ -206,8 +276,25 @@ The four steps of charter section 4.2, in order, always, with admission ahead of
 the fan-out.
 
 ```rust
-pub fn submit(&mut self, event: Event) -> Result<Sequence, Failure>
+pub struct Recorder { /* private */ }
+
+impl Recorder {
+    /// The crate's one constructor and its one receive site.
+    pub fn receive(sink: OwnedFd, run: RunOrdinal, session: SessionRef)
+        -> Result<Self, Failure>
+
+    pub fn submit(&mut self, event: Event) -> Result<Sequence, Failure>
+    pub fn structure(&self) -> &WorkingStructure
+    pub fn boundary(&self) -> Boundary
+    pub fn drain(&mut self) -> Result<(), Failure>
+}
 ```
+
+**`Recorder` is the crate's principal type and owns both sinks.** The emit path
+fans out to the working structure and the writer's queue in one act, so one item
+holds both, and that item is this one. Nothing else in the crate can append to the
+structure or enqueue to the writer, which is what makes the fan-out's atomicity a
+property of the type rather than of a caller's discipline.
 
 1. **Admit or refuse.** The envelope binds, required fields are present for the
    kind, and the payload is well-formed octets. A refusal returns `Failure` and has
@@ -226,7 +313,7 @@ proceeds on the return, with the stream write still in flight, which is the trad
 charter section 4.2 makes deliberately. A submission that cannot append is a failure
 before anything is queued, so the two sinks cannot disagree about what was admitted.
 
-**`submit` takes `&mut self` and there is one of it.** The recorder is not shared
+**`submit` takes `&mut self` and there is one `Recorder`.** It is not shared
 across threads and the harness is its one caller, per charter section 1, so
 ordering needs no lock and the sequence cannot interleave. A `Send` handle to the
 writer's queue is the only part that crosses a thread.
@@ -292,11 +379,13 @@ section 4.1 makes the absence the custody model's API consequence, and the previ
 tree's trace-root resolver with zero production callers is the failure it names.
 This is a compile-fail pin, per section 10.
 
-**The receive site is one function taking no flag argument.** Close-on-exec is
-supplied by the harness at its receive, per `weaver-admin-harness-contract` section
-5, and append-only rides the open file description from admin's open. Neither flag
-is a type property, so neither is pinned: what the pin reaches is the shape, one
-receive site returning a handle the rest of the crate cannot construct another way.
+**The receive site is `Recorder::receive`, declared in section 5, and it takes no
+flag argument.** It accepts an `OwnedFd` and nothing that could name a path.
+Close-on-exec is supplied by the harness at its own receive, per
+`weaver-admin-harness-contract` section 5, and append-only rides the open file
+description from admin's open. Neither flag is a type property of this crate, so
+neither is pinned here: what the pin reaches is the shape, one constructor
+returning a `Recorder` the rest of the crate cannot build another way.
 
 **Drain empties the queue and returns.** At unload the harness calls `drain` before
 answering left, so a left answer means everything admitted reached the sink, per the
@@ -306,11 +395,26 @@ one that died.
 
 ## 8. Verbosity
 
-**The recorder applies the level and never chooses it.** The harness filters at
-authoring, per the contract's section 3, so an event above an unelected ceiling is
-never submitted. This crate holds the run's level to answer questions about what
-was recorded and applies no filter of its own, because a recorder that dropped an
-event because it judged the level would have taken policy the harness holds.
+**This crate holds no verbosity level, and the reason is that nothing is left for
+it to hold.** The harness filters at authoring, per
+`weaver-harness-trace-contract` section 3, so an event above an unelected ceiling
+is never submitted and the recorder never sees one to drop. The harness also
+authors the run's level into the run's own events, per `weaver-harness-PRD`
+section 5, so the stream states the verbosity of each run as content rather than
+as recorder state. A level held here would answer a question nothing asks and
+would be a second copy of a fact the record already carries.
+
+**One consequence worth stating, because it removes a tension rather than
+resolving one.** `weaver-harness-trace-contract` names the level under what the
+harness owes the recorder, and the same section then rules that the harness does
+not submit above-ceiling events and that the recorder never filters. If nothing
+above the ceiling is submitted there is nothing to apply, so the two sentences
+cannot both be operative and this Spec implements the second. The consequence is
+that no drawn vocabulary crosses this seam into this crate, which is why the
+`verbosity-ceiling-election` draw raises no H4 question here: the definition is
+read by the harness, which links `weaver-types`, and never by the recorder. **The
+contract's owed-policy sentence is a residue this Spec cannot correct**, being a
+merged two-party document, and it is reported rather than patched, per section 11.
 
 ## 9. The failure vocabulary
 
@@ -377,9 +481,14 @@ build-time `cargo tree` assertion the floor Specs share.
   the writer re-renders from the event.
 - Gapless run-scoped sequence under the run's whole traffic, confirmed by watching
   a gap appear when a refused submission consumes a sequence.
-- Close-on-exec on every descriptor this crate writes through, confirmed by
-  watching a spawned child inherit the handle when the flag is removed, per apex
-  section 11's requirement that the test be watched to fail.
+- Close-on-exec on the descriptors the worker receives, **owed to
+  `weaver-harness-Spec`** rather than run here, the flag being supplied at the
+  harness's receive site per `weaver-admin-harness-contract` section 5. The test
+  spawns a child and confirms it does not inherit the handle, watched to fail when
+  the flag is removed. What this crate's own suite can exercise is narrower and is
+  run here: a `Recorder` refuses construction from a descriptor whose flags are
+  wrong, which checks the receiving end's precondition rather than the harness's
+  obligation to establish it.
 
 **This crate's threat walk.** The adversary is the agent reaching its own account
 through a tool it elected, and the mechanism is that this crate offers no way to
@@ -398,6 +507,26 @@ which fails because there is no call that takes what it learned.
   than the depth of the queue itself. Settled by a measurement against a real sink
   at a real rate, which is the same measurement the back-pressure election of
   `weaver-admin-operator-contract` section 3 waits on, and the two settle together.
+- **The satellite types.** `Sequence`, `MonotonicNs`, `Subsystem`'s Rust
+  spelling, `FieldName`, `WriteError`, `StopReason`, and `OwnedFd`'s wrapper if
+  one is taken. Identifier and newtype choices with no cross-crate consequence,
+  listed so what this Spec leaves to a builder is complete rather than implied.
+  `Sequence` and `MonotonicNs` carry the decimal-string rendering of section 2,
+  which is a constraint on their serde implementation rather than on their Rust
+  shape.
+- **The deferred payload shapes**, each with what settles it. The tool bracket's
+  content waits on the tool workflow, which `weaver-traits-PRD` section 3.1 holds
+  blocked. The fault payload's case set waits on the organs' charters naming what
+  they raise, per `weaver-spu-PRD` section 10. The three model payloads wait on
+  the token workflow, whose measurement content charter section 3.1 already
+  enumerates but whose wire shape that workflow settles. Until each lands, its
+  kind cannot be submitted with a shape this crate invented, which is the
+  half-chartered discipline read forward.
+- **The contract's owed-policy sentence**, reported rather than patched.
+  `weaver-harness-trace-contract` section 3 names the verbosity level under what
+  the harness owes the recorder, and the same section's filtering rule leaves
+  nothing for the recorder to apply. Settled by an edit to that contract, which is
+  a two-party document and not this pair's to change.
 - **The weight this crate carries at all.** The charter stages the question of how
   much durability machinery survives its obligations. This Spec's answer is the
   five modules of section 1 and nothing further, and the entry condition is the
