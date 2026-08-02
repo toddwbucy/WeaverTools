@@ -64,6 +64,16 @@ admin standing outside every agent per section 12.
 **Revised:** 2026-08-01, ninth entry. Prose adopts `agent-config`, the artifact
 renamed on the human's ruling of this date, the config file being configuration
 and the agent's state being the trace.
+**Revised:** 2026-08-02, a tenth entry, the replayability correction of the
+composability batch. Section 8 restates completeness as claim-relative: what a
+record supports follows from what the deployment declared and produced, the
+replay arrangements are named and none is ranked, and the run-again claim stays
+unmade in every one of them. Discovered at spec time, where the trace first
+became concrete enough for the modes to be visible, and landed up the stack per
+the operator's ruling, which is the process working. On the review seat's
+return the same day, the section states that its conditions are presently
+vacuous on purpose: the first two arrangements are always available on this
+corpus, and the rule governs arrangements not yet built.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -467,23 +477,41 @@ The trace is not only the record of a session. It is the source from which a
 session can be re-run under close observation.
 
 The loop is stochastic and does not reproduce, and this program makes no
-run-again claim. Replay does not need one. Because the trace records the
-sampler's **actual tokens** rather than a seed, a recorded scenario is replayed
-by feeding the recorded token sequence back through the forward pass. Nothing
-is re-sampled. The residuals are deterministic given the same weights, within
-GPU float tolerance.
+run-again claim, in any arrangement below. Replay does not need one.
+
+**What a record supports follows from what the deployment declared and
+produced, per the ruling of 2026-08-02, and the arrangements are not ranked.**
+Re-analysis over the frozen record is always available, because everything
+produced is recorded. Deterministic re-feed is available when the record holds
+the token path: because the trace records the sampler's **actual tokens**
+rather than a seed, a recorded scenario is replayed by feeding the recorded
+token sequence back through the forward pass. Nothing is re-sampled. The
+residuals are deterministic given the same weights, within GPU float
+tolerance. And stochastic re-entry from the same starting field is available
+when the binary declares one, the setup surface frozen at the worker's
+composition root, seed and sampling parameters baked immutable. A frozen seed
+narrows variance and buys audit rather than determinism, which is why the
+run-again claim stays unmade there too. The conditions are stated for the
+requirement's shape, and on the corpus this lands into the first two
+arrangements are always available, every record holding the token path since
+the levels retired, so the third alone waits on a binary's declared
+disposition and the claim-relative rule governs arrangements not yet built
+rather than forking the present.
 
 This makes residual readout a **production troubleshooting and interpretability
 instrument** rather than a research aside. When visibility is needed it is
 enabled and the agent runs slower. When it is not, the agent loads without it.
 The cost is real and it is the operator's to elect, per load.
 
-For replay to be worth anything the trace must record, exactly: input token
-ids, output token ids, model identity and weights hash, sampling parameters,
-and the prompt-block partition. Tokenization must be reproducible from what is
-recorded. These are requirements on `weaver-trace-PRD`, derived from a
-`weaver-spu-PRD` capability, and they are not optional - a replay missing any
-of them observes a forward pass that never happened.
+**Completeness is claim-relative rather than a fixed bar.** Deterministic
+re-feed requires, exactly: input token ids, output token ids, model identity
+and weights hash, sampling parameters, and the prompt-block partition, with
+tokenization reproducible from what is recorded. These are requirements on
+`weaver-trace-PRD`, derived from a `weaver-spu-PRD` capability. A record
+claiming a replay arrangement carries everything that arrangement requires,
+and a replay missing an input its claim requires observes a forward pass that
+never happened. A deployment claiming only re-analysis owes nothing beyond
+the record itself, because it claims nothing more.
 
 Custody places the replay driver outside the agent. The agent must not own or
 even read its own trace, so a tool that reads the operator-held stream and drives
