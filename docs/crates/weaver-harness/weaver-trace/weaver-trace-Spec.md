@@ -268,8 +268,8 @@ charter section 6.
 **Whole events only.** The writer hands the sink one complete line plus its
 terminator per write and never a partial line, so a consumer's account truncates at
 an event boundary. Where the sink is a file opened append-only, the kernel's append
-semantics carry that; where it is a pipe or a socket, the writer's own framing does,
-and a short write is retried to completion rather than reported as success.
+semantics carry that, and where it is a pipe or a socket the writer's own framing
+does, a short write being retried to completion rather than reported as success.
 
 **Pressure is reported to the harness and never authored by this crate.** When the
 queue exceeds its high-water mark while the sink remains writable, the recorder
