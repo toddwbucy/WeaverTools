@@ -70,7 +70,10 @@ record supports follows from what the deployment declared and produced, the
 replay arrangements are named and none is ranked, and the run-again claim stays
 unmade in every one of them. Discovered at spec time, where the trace first
 became concrete enough for the modes to be visible, and landed up the stack per
-the operator's ruling, which is the process working.
+the operator's ruling, which is the process working. On the review seat's
+return the same day, the section states that its conditions are presently
+vacuous on purpose: the first two arrangements are always available on this
+corpus, and the rule governs arrangements not yet built.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -488,7 +491,12 @@ tolerance. And stochastic re-entry from the same starting field is available
 when the binary declares one, the setup surface frozen at the worker's
 composition root, seed and sampling parameters baked immutable. A frozen seed
 narrows variance and buys audit rather than determinism, which is why the
-run-again claim stays unmade there too.
+run-again claim stays unmade there too. The conditions are stated for the
+requirement's shape, and on the corpus this lands into the first two
+arrangements are always available, every record holding the token path since
+the levels retired, so the third alone waits on a binary's declared
+disposition and the claim-relative rule governs arrangements not yet built
+rather than forking the present.
 
 This makes residual readout a **production troubleshooting and interpretability
 instrument** rather than a research aside. When visibility is needed it is
