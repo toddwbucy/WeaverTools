@@ -14,6 +14,13 @@ listed with their settlers, `Recorder` appears as the crate's principal type wit
 the receive site declared, the verbosity section states that this crate holds no
 level and reports the contract's residual sentence, the close-on-exec test is owed
 to `weaver-harness-Spec`, and the satellite types are listed as open.
+**Revised:** 2026-08-02, on the second return: `Payload` is untagged with the
+envelope's kind as discriminant and admission enforcing the pairing, a bracket
+kind carries no payload member rather
+than a null one, `TurnClose` is internally tagged under the shared test, the
+kind-to-payload mapping is stated as total, `Subsystem`'s case set names its
+grounds, and the flag-validating receive is dropped on the corpus's set-not-check
+rule.
 **Editorial:** Per the Working Rules.
 
 ---
@@ -107,8 +114,10 @@ sorting them at render time.
 
 ```rust
 pub struct Event {
+    #[serde(flatten)]
     pub envelope: Envelope,
-    pub payload: Payload,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payload: Option<Payload>,
 }
 
 pub struct Envelope {
@@ -143,13 +152,14 @@ pub enum Kind {
     #[serde(rename = "model.measurement")]    ModelMeasurement,
 }
 
+#[serde(untagged)]
 pub enum Payload {
     Message(Box<serde_json::value::RawValue>),
     TurnClosed(TurnClose),
-    Bracket,
     Deferred(Box<serde_json::value::RawValue>),
 }
 
+#[serde(tag = "close", rename_all = "snake_case")]
 pub enum TurnClose {
     Clean,
     Stopped { reason: StopReason },
@@ -166,9 +176,14 @@ which reads the same way for a consumer keying on a kind. The mapping is total:
 fourteen variants, fourteen renames, and the wire spelling is the charter's.
 
 **`Subsystem` names the producing party and takes the plain snake-case scheme**,
-its values being single words with no dotted spelling to match. `Tool` is a
-producing subsystem rather than a crate, because a tool's report reaches the record
-through the harness and the record should say what produced it.
+its values being single words with no dotted spelling to match. **The case set is
+this Spec's election and the charter fixes only that the field exists**, so the
+grounds are stated here rather than assumed: the four crates that can produce a
+report are `weaver-admin`, `weaver-harness`, `weaver-spu`, and `weaver-gate`, and
+`Tool` is the fifth because a tool's result reaches the record through the harness
+and a record that attributed it to the harness would lose the one fact an operator
+reading a tool result wants first. A sixth case arrives when a crate that can
+produce a report is chartered, which is a floor edit in the same act.
 
 **Fourteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
@@ -198,11 +213,41 @@ the admission step is the only thing standing between the two, which is a
 concrete reason for an ordering the charter states abstractly. `RawValue`
 construction validates, so the check has a mechanism rather than a promise.
 
-**`Bracket` carries nothing and `TurnClosed` carries the close kind.** The run and
-session brackets are identified entirely by their envelope, so a payload for them
-would be a field with no content. `turn.closed` states whether the close was clean
-or stopped and with what reason, per `weaver-harness-trace-contract` section 3 and
-charter section 3.1, which is the one payload shape the merged corpus fixes today.
+**`Payload` is untagged and the envelope's `kind` is its discriminant, which is a
+fourth case the floor Specs' shared test does not cover.** That test elects a
+tagging scheme from a variant's shape, and it has no case for an enum that may not
+be tagged at all. This one may not: a tag would wrap the spliced message bytes in
+an object of this crate's making, which is the double encoding the `RawValue`
+election exists to avoid. So the scheme is untagged, the `kind` already present in
+the envelope selects the variant, and **admission is what enforces the pairing**,
+since serde no longer can. A submission whose kind and payload shape disagree is
+refused at step one of section 5 rather than rendered, which is another thing the
+ordering buys.
+
+**A bracket kind carries no payload member at all, rather than a null one.** The
+run and session brackets and the turn's opening are identified entirely by their
+envelope, so `payload` is `Option<Payload>` and those kinds carry `None` with
+`skip_serializing_if`, emitting `{"kind":"load"}`. Verified against serde_json
+1.x: a unit variant inside an untagged enum renders `"payload":null` instead,
+which is a member whose only content is the statement that there is no content,
+and a consumer keying on member presence would see two stream shapes for one
+absence.
+
+**`TurnClosed` carries the close kind, internally tagged under the shared test.**
+`Clean` is fieldless and `Stopped` is struct-shaped, so the enum falls in the
+test's second case and renders `{"close":"clean"}` and `{"close":"stopped",
+"reason":...}`, one shape for both closes. Verified that the default emits a bare
+string for the first and an object for the second, which is two shapes for one
+field. This is the one payload the merged corpus fixes today, per
+`weaver-harness-trace-contract` section 3 and charter section 3.1.
+
+**The kind-to-payload mapping is total, fourteen kinds and four dispositions.**
+`load`, `unload`, `session.closed`, and `turn.started` carry `None`. The three
+message kinds carry `Message`. `turn.closed` carries `TurnClosed`. The tool
+bracket's two, `fault`, and the three model kinds carry `Deferred`. Four plus
+three plus one plus six is fourteen, which is the whole of charter section 3.1's
+set, and the count is stated because an earlier draft of this paragraph assigned
+thirteen and left `turn.started` homeless.
 
 **`Deferred` holds the payloads whose shapes their own workflows settle**, the tool
 bracket, the fault, and the three model kinds. Each is listed in section 11 with
@@ -485,10 +530,14 @@ build-time `cargo tree` assertion the floor Specs share.
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test
   spawns a child and confirms it does not inherit the handle, watched to fail when
-  the flag is removed. What this crate's own suite can exercise is narrower and is
-  run here: a `Recorder` refuses construction from a descriptor whose flags are
-  wrong, which checks the receiving end's precondition rather than the harness's
-  obligation to establish it.
+  the flag is removed. This crate runs no part of it, and the reason is
+  the corpus's own rule rather than a dependency budget: `weaver-admin-harness-
+  contract` section 2 makes close-on-exec **a set and not a check**, because a step
+  that finds the flag clear and reports rather than repairs leaves the descriptor
+  inheritable anyway. A recorder that validated on receive would be that step. An
+  earlier draft promised the validation, which would also have required `fcntl`
+  through a third dependency this crate's manifest does not carry, so the promise
+  and the dependency set contradicted each other before the doctrine settled it.
 
 **This crate's threat walk.** The adversary is the agent reaching its own account
 through a tool it elected, and the mechanism is that this crate offers no way to
