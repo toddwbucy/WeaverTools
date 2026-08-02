@@ -5,6 +5,17 @@ floor. No code is written against it until phase three is ratified, per Working
 Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-02, on the review seat's return. The child's handoff gains
+an unconditional flag clear and the fork bound counts three calls, the
+equal-descriptor `dup2` corner having been compiled and run by the review and
+verified again by this seat. The featureless `weaver-types` link states its
+true ground, this crate reading no field from the config file, and names the
+placement it rests on as owed to `weaver-types-Spec` on the working list.
+Descriptor 3 is owned as this Spec's election rather than credited to the
+apex. The gate pair's creation states its wait on confirmed residency, which
+the run state's invariant rests on. The sink descriptor's count names the
+coordination contract's plural as a surfaced question rather than absorbing
+it. Two interior citations correct their targets in the same act.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -65,10 +76,21 @@ feature used.
 argued.** `weaver-traits` and `weaver-types` are the floor links the charter
 declares, the first for the message model the authoring path licenses, the
 second for the wire vocabulary of loop 0 and the identity types the envelope
-carries. `weaver-types` is taken **without its `config` feature**: no field of
-the agent config is consumed by any workflow chartered today, the elections the
-enter directive carries arrive over the seam instead, and section 8 holds the
-config read as the tool workflow's question. `weaver-trace` is the seam tagged
+carries. `weaver-types` is taken **without its `config` feature**: this crate
+reads no field from the agent config's file, so it links no parser. The model
+binding and the gate instruction are config fields this crate does consume,
+arriving over the coordination seam inside the enter directive, already
+validated, which is the file read staying admin's. The elections the file
+carries beyond them, the permission mode, the tool set, and the residual
+readout, are consumed by no workflow chartered today, and section 9 holds the
+config read as the tool workflow's question. **The featureless link rests on a
+placement owed to `weaver-types-Spec`.** `ModelBinding` and `GateInstruction`
+are config fields and wire types at once, that Spec defines them in the module
+its `config` feature gates while ruling the wire types unconditional, and this
+crate can construct a directive with the feature off only if the two types sit
+on the unconditional side. The owed edit is filed on the working list rather
+than made here, a correction to a merged document landing after this branch
+rather than beside it. `weaver-trace` is the seam tagged
 `link`, the recorder this crate authors through. `serde_json` encodes and
 decodes the loop 0 envelopes, whose JSON election is `weaver-types-Spec`
 section 4.3's. `nix` is the OS surface, elected in section 2 where the grounds
@@ -129,23 +151,34 @@ inherited end of the residency seam hands the tool surface a release directive.
 Verified: `socketpair` with `SOCK_CLOEXEC` yields both descriptors flagged with
 no interval between them.
 
-**The child's end crosses the final exec by `dup2` to descriptor 3, because a
-duplicate carries the flag clear.** Close-on-exec would otherwise close the
-child's own end at the exec that starts the organ binary. Between fork and
-exec the child duplicates its end to descriptor 3, the first after the standard
-streams, and `dup2`'s copy is born with the flag clear, verified rather than
-recalled, so the copy survives the final exec while the original closes at it.
-The organ binary finds its channel end at descriptor 3 from its first
-instruction, which is apex section 12's topology made mechanical. **The number
-is owed to `weaver-spu-Spec` and `weaver-gate-Spec`**, each of which inherits
-it rather than re-deciding it, the same owing shape `weaver-types-Spec` section
-4 used to reach this document.
+**The child's end crosses the final exec by `dup2` to descriptor 3 and an
+unconditional clear of the flag, because the duplicate law has a corner.**
+Close-on-exec would otherwise close the child's own end at the exec that
+starts the organ binary. A duplicate made by `dup2` is born with the flag
+clear, but only when the two descriptors differ: `dup2` onto the same number
+is a no-op that returns the descriptor with its flag untouched, so a child
+whose end already sat at descriptor 3 would keep the flag, lose the end at
+`execve`, and start the organ with no channel, silently, on whatever layout
+the deployment happens to produce. Both halves are verified rather than
+recalled, the clear-on-copy law for differing descriptors and the
+equal-descriptor no-op that defeats it, each run by both seats. So the child
+duplicates its end to descriptor 3, the first after the standard streams,
+clears the flag on 3 by `fcntl` whether or not the duplication moved
+anything, and execs, and the organ binary finds its channel end at descriptor
+3 from its first instruction. This realizes apex section 12's topology, the
+number being this Spec's own election. **The number is owed to
+`weaver-spu-Spec` and `weaver-gate-Spec`**, each of which inherits it rather
+than re-deciding it, the same owing shape `weaver-types-Spec` section 4 used
+to reach this document.
 
-**Between fork and exec the child performs two calls, `dup2` and `execve`, and
-nothing else.** Both are async-signal-safe, and the bound is stated because the
-worker holds the writer's thread at every fork: a child of a multithreaded
-process may safely run only async-signal-safe calls before its exec, so the
-enumeration is the safety argument and not a style.
+**Between fork and exec the child performs three calls, `dup2`, `fcntl`, and
+`execve`, and nothing else.** All three are async-signal-safe, and the bound
+is stated because the worker holds the writer's thread at every fork: a child
+of a multithreaded process may safely run only async-signal-safe calls before
+its exec, so the enumeration is the safety argument and not a style. An
+earlier draft elected two calls and leaned on the duplicate law without its
+corner, and the review caught that the tight bound and the silent corner were
+one defect, so the middle call is the corner's repair made unconditional.
 
 ### 2.3 The receive site, and adoption
 
@@ -253,13 +286,22 @@ directive: the directive works because the harness knows what stands.
 
 **Enter runs four steps in the charter's order, and the answer is the
 aggregate.** Receive the sink descriptor from the directive's own message and
-construct the `Recorder`, which stands the empty working structure up. Author
+construct the `Recorder`, which stands the empty working structure up. The
+count is a surfaced question: `weaver-admin-harness-contract` sections 3 and 5
+say the trace descriptors, plural, `weaver-trace-Spec` section 5's receive
+takes exactly one, and this Spec builds to the one while naming the divergence
+rather than absorbing it, the reconciliation being the human's across a
+two-party contract and filed on the working list. Author
 the `load` event, the run's opening and the origin of its monotonic clock.
 Create the residency pair, fork the SPU binary, and open the admit exchange
-carrying the model binding uninterpreted. Create the gate pair, fork the gate
-binary, and open the raise exchange carrying the gate instruction
-uninterpreted, the gate last so no work arrives before the interior serves,
-per apex section 6. Ready is answered when the last arm confirms. A refusing
+carrying the model binding uninterpreted. Create the gate pair only after the
+SPU's answer has confirmed residency, per `weaver-harness-gate-contract`
+section 1, then fork the gate binary and open the raise exchange carrying the
+gate instruction uninterpreted, the gate last so no work arrives before the
+interior serves, per apex section 6. The wait is what the run state's
+invariant rests on: `gate` is set only ever after a confirmed `spu`, so the
+unwind's reverse order is a property of construction order rather than of
+timing. Ready is answered when the last arm confirms. A refusing
 arm's reason is wrapped `OrganRefused` and carried into the aggregate
 unchanged, per `weaver-admin-harness-contract` section 6, and the scoped
 account holds: a refusal before the `load` event leaves the stream clean and
@@ -325,8 +367,8 @@ message carrying only `Text`, an `Assistant` message carrying `Text` and
 `ToolCall`, a `ToolResult` message carrying only `ToolResult` blocks, and an
 unlicensed message is refused by this crate and never submitted. The recorder
 cannot hold this rule, per that Spec, so the harness is the party the
-perturbation test of section 7 binds, which is where the test that Spec owed
-this document lands.
+perturbation test of `weaver-traits-Spec` section 7 binds, and the test lands
+in this document's section 8 set.
 
 **A refused submission is handled as the contract orders.** It is not treated
 as recorded, not projected, and not retried under a new sequence, per
