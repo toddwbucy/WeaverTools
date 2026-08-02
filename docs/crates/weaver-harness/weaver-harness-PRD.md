@@ -65,6 +65,13 @@ seat's return the same day: the termination sentence splits, the final-answer
 half describing the shipped demonstrations rather than binding a builder's
 loop, and section 2 names the extension seam so the children list's term has
 its antecedent.
+**Revised:** 2026-08-02, a third entry this date, the framing ruling of the
+token workflow's act, ratified by the operator and landed with its reason in
+one act. Section 2's assembly paragraph rescopes: the deterministic floor
+stays this crate's, the family template's render seats in the SPU's family
+library per `weaver-spu-PRD` sections 13.4 and 14, and the rendered reality
+returns on the report path so the harness authors what the model saw without
+having rendered it.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -146,14 +153,22 @@ a class of action. Stating this plainly is the point. A permission mode that rea
 as a security control when the kernel is the actual control is a thing that gets
 trusted wrongly later.
 
-**Prompt assembly.** The harness composes what the decoder sees: the identity
-prefix, which is the system prompt together with the agent's fixed identity
-material, then the session's message sequence read from the working structure, then
-the tool schemas. Assembly is **per-model and does not transfer**. Phrasing that
-reliably elicits a tool call from one decoder does not from another, so this layer
-is re-erected for each model integrated into the SPU rather than written once and
-reused. No model may become a build or run dependency of it. The deterministic
-assembly floor stands alone, always.
+**Prompt assembly's deterministic floor, with the family render across the
+seam.** The harness composes the canonical conversation: the identity prefix,
+which is the system prompt together with the agent's fixed identity material,
+then the session's message sequence read from the working structure, then the
+tool schemas, in that order, always. What moved on the framing ruling of
+2026-08-02, ratified with the token workflow's act, is the per-model half:
+the family template's application, the phrasing layer that reliably elicits a
+tool call from one decoder and not another, seats in the SPU's family library
+per `weaver-spu-PRD` sections 13.4 and 14, because family knowledge lives in
+one home and the harness links nothing of any model's. The harness sends
+canonical messages, the family library renders, and the rendered reality
+returns on the report path, template identity, token identifiers, and block
+partition, so the harness authors what the model saw without having rendered
+it. No model is a build or run dependency of this crate, now stronger than a
+discipline: the per-model knowledge lives across a seam entirely. The
+deterministic assembly floor stands alone, always.
 
 **Decode against a resident session.** The harness issues decode requests over the
 decode socket against a resident KV session rather than resending the conversation

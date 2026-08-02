@@ -659,12 +659,11 @@ landed reads as settled and an entry landed and not cleared reads as outstanding
   vocabulary this seam draws, named for the loop whose traffic it carries per
   the naming ruling, defined at the floor because both parties need it and
   neither may depend on the other.
-- `weaver-harness-PRD` section 2, conditional on the framing candidate of
-  section 13.4 ratifying as drafted: the per-model assembly paragraph rescopes,
-  the deterministic floor staying the harness's and the family template's
-  render seating in the family library, with the rendered reality returning on
-  the report path. Owed only if ratified, and named now so the reach is
-  readable, per gate G7.
+- `weaver-harness-PRD` section 2: landed in this same act. The framing
+  candidate of section 13.4 ratified, the per-model assembly paragraph
+  rescopes, the deterministic floor staying the harness's and the family
+  template's render seating in the family library, with the rendered reality
+  returning on the report path.
 - `weaver-trace-PRD` section 3.1, by the token workflow's trace act: the three
   `model.*` payload shapes, produced against section 13.6's obligations.
 
@@ -758,7 +757,8 @@ overflow and the harness decides what a full context means for the turn.
 
 ### 13.4 Framing, and where it is performed
 
-**PENDING, ruling candidate for ratification.** The family library renders.
+**Ratified by the operator, 2026-08-02, in this act.** The family library
+renders.
 The harness sends canonical messages, the message model of `weaver-traits`,
 and the submodule renders them through the family's template into what the
 model sees. The rendered reality returns on the report path of 13.6, the
@@ -776,10 +776,10 @@ floor is untouched: order of parts, the message sequence read from the
 working structure, and everything `weaver-harness-PRD` section 2 fixes stay
 the harness's, and what moves is only the family template's application. The
 trace's authorship is untouched, because the render reports back and the
-harness authors the report. If this candidate ratifies, the
-`weaver-harness-PRD` edit registered in section 11 lands in the same act,
-and if it is overturned the harness renders and this section restates,
-either way through the front door.
+harness authors the report. The operator ratified the candidate with this
+act and directed the whole change in one place, so the
+`weaver-harness-PRD` edit lands in this same act rather than riding the
+register as a condition, the change tied to its reason.
 
 ### 13.5 The turn, and the stop
 

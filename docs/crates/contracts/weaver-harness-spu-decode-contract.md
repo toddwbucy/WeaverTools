@@ -1,7 +1,8 @@
 # weaver-harness / weaver-spu - decode contract
 
-**Status:** MERGED. In `main` and the source of truth for now. Written with the
-token-workflow act of `weaver-spu-PRD` sections 13 and 14, per apex section 10,
+**Status:** DRAFT. Cut with the token-workflow act of `weaver-spu-PRD` sections
+13 and 14, per apex section 10, and merged on the human's call like every
+document, the header flipping at that call per the Working Process. Written
 and it governs the token seam: the second seam between the same parties, on its
 own socket per the decoder-cut ruling of 2026-08-02. The residency seam keeps
 its own contract, `weaver-harness-spu-contract`, and neither document restates
@@ -91,15 +92,14 @@ the faults it carries are decode-domain traffic.
 **Open the session.** Opened by the harness, once per residency, after
 residency is confirmed on the lifecycle seam. It carries the session's
 identity material, the canonical messages the identity prefix is rendered
-from, per the framing candidate of `weaver-spu-PRD` section 13.4, PENDING
-and marked as such: if that candidate is overturned the harness sends the
-rendered prefix instead and this exchange restates, through the front
-door. The SPU establishes the resident session with the prefix resident
-and answers opened, or refuses, typed.
+from, per the framing ruling of `weaver-spu-PRD` section 13.4, ratified by
+the operator with this act. The SPU renders through the family library,
+establishes the resident session with the prefix resident, and answers
+opened, or refuses, typed.
 
 **Append and generate.** Opened by the harness, one per turn, carrying the
 turn's context per apex section 5.2, the turn's delta as canonical
-messages under the same PENDING candidate, and the turn's sampling values
+messages under the same framing ruling, and the turn's sampling values
 for whatever knobs the binary left operator-tunable, per the dispositions
 of `weaver-spu-PRD` section 13.8. The SPU appends the delta at the
 resident end, generates, and answers with the generation and its
@@ -143,8 +143,8 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
 - One generation is in flight at a time. A second append-and-generate
   while one is outstanding is refused and not queued, one turn behind
   one intent, per the grammar.
-- Cancel is valid only while a generation is in flight, and at rest it
-  answers at rest.
+- Cancel is valid only after the session opens, and at rest it answers at
+  rest, the validity window being the session rather than the generation.
 - Flush is valid only between turns. A flush while a generation is in
   flight is refused, the cancel existing for exactly that case.
 - The fault report may open at any time after the session opens.
@@ -237,9 +237,16 @@ Every contract names the vocabulary it depends on, grouped by the crate
 that defines it, and a group is stated even when empty.
 
 **Drawn from `weaver-types`:** the token trio, `token-directive`,
-`token-answer`, and `token-refusal`, named for the loop whose traffic
-this seam carries per the naming ruling, with the cases section 2
-enumerates. The definitions land in `weaver-types-PRD` section 2.3 and
+`token-answer`, and `token-refusal`, with the cases section 2 enumerates.
+**The name extends the naming ruling and the extension is ratified with
+this act.** The ruling names wire vocabulary for the loop whose traffic
+it carries, and this seam's loop is loop 1, the builder's and variable
+since the composability ruling, so a loop name is exactly what this seam
+cannot take. The trio is named for the seam's currency instead, the
+token, which is the naming ruling's second case, vocabulary for a seam
+whose loop varies, ruled by the human at this act's merge and carried
+into the floor's act with the definitions. The definitions land in
+`weaver-types-PRD` section 2.3 and
 are owed by this act, the demand existing now, and the records are
 written unfenced deliberately so a mapper reading this document does not
 ingest records this document is not the source of:
@@ -265,15 +272,17 @@ ingest records this document is not the source of:
     from: weaver-types
     to: token-refusal
 
-Also drawn: `session-id` and `turn-key`, the identity pair the floor
-already holds for the wire, carried on every ask per apex section 5.2.
+The session and turn identities ride inside the trio's cases rather than
+being drawn as vocabulary of their own: the floor holds `SessionId` and
+`TurnKey` as satellite types, no vocabulary node exists for either, and
+this contract draws none, the turn context of apex section 5.2 crossing
+as fields of the cases the trio enumerates.
 
 **Drawn from `weaver-traits`:** the message model, under the framing
-candidate of `weaver-spu-PRD` section 13.4 and PENDING with it: the
+ruling of `weaver-spu-PRD` section 13.4, ratified with this act: the
 canonical messages cross this seam into the family library's render, so
 the name crosses in one direction, the harness supplying and the SPU
-consuming. If the candidate is overturned this draw empties and the
-clause restates, which is why it is marked rather than silent.
+consuming.
 
 **Drawn from `weaver-trace`:** nothing. The SPU reports and the harness
 authors, so no event kind and no envelope field crosses this seam. What
@@ -311,8 +320,8 @@ a trap. The authoritative register is `weaver-spu-PRD` section 11.
 
 - `weaver-types-PRD` section 2.3: the token trio, owed by this act, per
   section 7.
-- `weaver-harness-PRD` section 2: conditional on the framing candidate
-  ratifying, per the register.
+- `weaver-harness-PRD` section 2: landed in this same act, the framing
+  ruling ratified, per the register.
 - `weaver-trace-PRD` section 3.1: the three `model.*` payload shapes, by
   the token workflow's trace act, aligned with section 2's answers.
 - `basic-inference-loop`: the turn path's decode tine now has its seam
