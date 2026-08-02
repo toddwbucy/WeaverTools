@@ -10,6 +10,10 @@ set into the graph, and it belongs to the set rather than to this document.
 of this date, one word and no other change.
 **Revised:** 2026-08-01, again. Section 2 adopts `agent-config`, the artifact
 renamed on the human's ruling of this date.
+**Revised:** 2026-08-01, a third entry. Section 3.1 states the `tool-trait` block
+as a ruling of this charter, per the review seat's finding that the Spec pass was
+citing an untracked working list as authority for a structural decision. The
+substance is unchanged and its home is now a merged document.
 **Document ID:** `weaver-traits-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -107,6 +111,17 @@ what the model may call it with.
 The vocabulary its signature names comes with it: the schema a tool advertises, the
 input it accepts, the output and outcome it produces, and the error it returns. These
 are pure data the contract requires, with no dependency on anything that does work.
+
+**This definition is blocked rather than open, and the block is a ruling this
+charter states rather than a note a working list carries.** Tool dispatch is
+harness-internal and no seam crosses it, so no vocabulary clause draws
+`tool-trait` and G4's union check cannot fail against it before phase close. The
+shape therefore waits on the workflow that will demand it, and until then it is
+neither settled nor opened: a definition shaped here would be shaped against no
+consumer, which is the anticipatory contract section 4 forbids. The reasoning was
+recorded on the working list from 2026-07-29 and lands here on 2026-08-01, because
+a working list is never ratified and a Spec that cited one would rest a structural
+decision on a document the mapper never reads.
 
 **What this contract deliberately does not carry is a safety classification.** The
 previous tree made `Tool::invocation_properties` the crate's flagship enforcement type,
