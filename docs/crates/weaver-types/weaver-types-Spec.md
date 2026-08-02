@@ -14,6 +14,9 @@ being octets, the satellite types are shaped with `Position` corrected against t
 drawn material, the YAML election carries the maintenance fact, the truncation
 obligation lands with the socket election, the test placements are named per
 crate, and one pin reclassifies from the compiler to review.
+**Revised:** 2026-08-01, again, per the human's G2 ruling: the format and encoding
+elections cite the criteria `weaver-types-PRD` sections 2.1 and 2.3 now carry,
+rather than developing those grounds here.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.

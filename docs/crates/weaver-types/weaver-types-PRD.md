@@ -33,6 +33,11 @@ anywhere leaving with it. And section 2.3 adopts loop naming: wire vocabulary is
 named for the loop whose traffic it carries, `lifecycle-directive` and
 `lifecycle-answer` renaming the sender-named pair, the owed seam pairs dissolving
 into the one trio every loop 0 contract draws.
+**Revised:** 2026-08-01, a fifth entry this date, per the human's G2 ruling that
+rationale is developed in the PRD and restated in the Spec. Section 2.1 states the
+config's reader as a human author and section 2.3 states loop 0's volume and
+audience, the two criteria the Spec pass was electing against without the charter
+holding them.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -217,6 +222,16 @@ so the config file is already a declared dependency of a contract this crate is 
 party to. That is the normal shape: this crate supplies vocabulary that agreements
 between other crates are written in.
 
+**The file's reader is a human writing it, and that is a requirement rather than
+a preference.** The operator hand-authors this declaration, often on a box under
+load and often while diagnosing why a load refused, and the fields it carries nest
+by nature: a binding with its settings, a set that is a list, elections, an
+instruction, a sink. So the format this crate elects for it answers to a writer
+rather than to a parser, carrying nesting without ceremony and surviving the
+comments an operator leaves for the next reader. That criterion is stated here
+because it is a fact about who uses the artifact, and the Spec elects against it
+rather than inventing the ground it elects on.
+
 **A field takes effect at load and is fixed for the life of the run.** A session
 whose configuration changed mid-run is one every consumer afterward has to reason
 about, and the lifecycle already provides the place to change it. Unload, edit, load.
@@ -328,6 +343,16 @@ carries this envelope. The mechanics this record serves live in `weaver-organ-ch
 as of the lift of 2026-07-31, and that document declares no records of its own, so this
 record stays here with the other four and each organ contract draws it in its own
 vocabulary clause.
+
+**Loop 0's traffic is low in volume and diagnostic in audience, which is the
+criterion its encoding answers to.** A residency carries a handful of these
+messages, twice per run and once per stop, so the latency doctrine has nothing to
+bite on here and compactness buys nothing measurable. What the traffic is for,
+when it matters, is telling an operator why a load refused for a reason nobody
+expected, which is read from a capture or a strace rather than from a decoder.
+The Spec elects an encoding against that criterion. Decode traffic is the
+opposite case on both counts and its encoding is the token workflow's, with a
+measurement behind it.
 
 The meaning of each, its ordering against the others, and the failure modes are the
 contract's and are not restated here. This crate holds the representation the two
