@@ -790,7 +790,7 @@ register as a condition, the change tied to its reason.
 appends the turn's delta and the generation returns with its measurement,
 the two crossings of the fork the basic loop's section 4 draws.
 
-**PENDING, ruling candidate for ratification.** The stop lands at the token
+**Ratified at the act's merge, 2026-08-02.** The stop lands at the token
 boundary. The generation checks for the harness's cancel between sampled
 tokens, which at production decode rates bounds the stop's latency well
 under the operator's perception, and a mid-kernel abort would buy

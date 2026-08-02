@@ -42,6 +42,14 @@ holding them.
 its node, its `defines` edge, and its `holds` edge, per the human's ruling of this
 date that the trace carries no recording level. The field count goes from seven to
 six, and what an operator elects at load now governs production alone.
+**Revised:** 2026-08-02, a second entry this date, the token trio's landing.
+Section 2.3 goes from four definitions to seven, the decode contract's demand
+having fired: `token-directive`, `token-answer`, and `token-refusal` arrive
+named for the seam's currency under the naming ruling's ratified extension,
+the seam's loop being loop 1, the builder's and variable, and the identities
+riding inside the cases as satellite types. The subsection retitles from the
+first socket contract to the socket contracts, and the envelope's scope
+sentence names the decode socket as outside it.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -303,12 +311,14 @@ from: weaver-types
 to: authorization-predicate
 ```
 
-### 2.3 The wire vocabulary the first socket contract draws
+### 2.3 The wire vocabulary the socket contracts draw
 
-**These four arrived on demand and not in advance.** Section 4 held wire protocol
-vocabulary out of this crate until a written contract needed it.
-`weaver-admin-harness-contract` section 8 was that contract, and nothing else
-enters this subsection until another contract draws it, a fifth definition
+**Everything here arrived on demand and not in advance.** Section 4 held wire
+protocol vocabulary out of this crate until a written contract needed it.
+`weaver-admin-harness-contract` section 8 was the first, arriving with four,
+and `weaver-harness-spu-decode-contract` section 7 the second, arriving with
+the token trio on 2026-08-02. Nothing else enters this subsection until
+another contract draws it, a definition
 arriving without a contract behind it being the reserved-slot error apex section
 9 forbids, in schema form. `harness-alert` was
 drawn here until the fault-carrier ruling of 2026-08-01 retired the alert exchange,
@@ -328,10 +338,21 @@ free string. Each closed case set lives here and every loop 0 contract draws the
 cases that cross its own seam: enter, leave, and stop at coordination, admit and
 release at residency, raise and lower at the gate, the verbs and observations at
 the operator surface. One owner, four drawers, no drift, which is the shape
-`lifecycle-refusal` already proved across three seams. A later loop names its
-own traffic the same way.
+`lifecycle-refusal` already proved across three seams.
 
-**The fourth belongs to the floor and not to any loop.** `organ-envelope` is the
+**The token trio is named for the seam's currency, under the naming ruling's
+ratified extension of 2026-08-02.** `token-directive`, `token-answer`, and
+`token-refusal` carry the decode seam's traffic, and that seam's loop is loop
+1, the builder's and variable since the composability ruling, so a loop name
+is exactly what the seam cannot take and the ruling gained its second case:
+vocabulary for a seam whose loop varies is named for the seam's currency.
+The cases are the decode contract's enumeration, one owner and one drawer
+today, and the session and turn identities ride inside the cases as the
+floor's satellite types rather than as vocabulary of their own. The
+representation is the token workflow's, elected with the hot-path
+measurement, per the criterion below.
+
+**One of the seven belongs to the floor and not to any loop.** `organ-envelope` is the
 carrier every organ channel draws, holding the exchange a message belongs to, that
 message's position in the exchange, and the type of its payload. It is defined here
 because the coordination seam was the first channel to need it, and it is the one
@@ -339,8 +360,10 @@ value in this subsection no later contract draws as new, because apex section 5.
 makes a duplex channel with the harness the test of an organ and every such channel
 carries this envelope. The mechanics this record serves live in `weaver-organ-channel`
 as of the lift of 2026-07-31, and that document declares no records of its own, so this
-record stays here with the other four and each organ contract draws it in its own
-vocabulary clause.
+record stays here with the others and each organ contract draws it in its own
+vocabulary clause. The decode socket is not an organ channel, per
+`weaver-spu-PRD` section 13.2, so the every-channel sentence above stays
+scoped and the envelope does not cross that seam.
 
 **Loop 0's traffic is low in volume and diagnostic in audience, which is the
 criterion its encoding answers to.** A residency carries a handful of these
@@ -384,6 +407,27 @@ to: lifecycle-answer
 edge: defines
 from: weaver-types
 to: lifecycle-refusal
+
+node: token-directive
+kind: vocabulary
+
+node: token-answer
+kind: vocabulary
+
+node: token-refusal
+kind: vocabulary
+
+edge: defines
+from: weaver-types
+to: token-directive
+
+edge: defines
+from: weaver-types
+to: token-answer
+
+edge: defines
+from: weaver-types
+to: token-refusal
 ```
 
 ## 3. What it must not hold
