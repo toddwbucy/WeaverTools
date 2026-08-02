@@ -55,6 +55,16 @@ artifact renamed on the human's ruling of this date.
 recording levels, per the human's ruling of this date: the harness authors whatever
 occurs and filters nothing, and the run's level is no longer authored into the
 run's events because there is no level to state.
+**Revised:** 2026-08-02, a second entry this date, the composability ruling.
+Section 2's engine paragraph rescopes: the harness owns loop 0 and the engine
+machinery loop 1 composes against, the loop itself being the builder's, written
+at the worker composition root, compiled into the worker binary, and immutable
+there, which loop an agent runs being which binary its unit starts. Section 6's
+children list names the extension seam in place of the engine. On the review
+seat's return the same day: the termination sentence splits, the final-answer
+half describing the shipped demonstrations rather than binding a builder's
+loop, and section 2 names the extension seam so the children list's term has
+its antecedent.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -110,9 +120,23 @@ which is why it is stated rather than assumed.
 
 ## 2. What the harness owns
 
-**The agentic engine.** The query loop, tool dispatch, and batch partitioning. The
-loop runs until the model returns a final answer or the operator interrupts it, the
-interrupt arriving as the stop exchange of `weaver-admin-harness-contract` section 3.
+**Loop 0, and the machinery loop 1 composes against.** The harness owns the
+lifecycle interior of loop 0, the load and the unload, the same for every agent,
+together with the engine machinery a loop is built from: tool dispatch, batch
+partitioning, and the surfaces the rest of this section names. The loop itself,
+loop 1, is the builder's, per the composability ruling of 2026-08-02: written at
+the worker composition root against what this crate exposes, which is the
+extension seam the children list of section 6 names, compiled into the worker
+binary, and immutable there, so which loop an agent runs is which binary its
+unit starts, a provisioning fact rather than a configuration field. What holds
+for every loop 1 alike is loop 0's bracket discipline: the operator's interrupt
+arrives as the stop exchange of `weaver-admin-harness-contract` section 3,
+aborts whatever is in flight, and returns the agent to loaded and idle,
+whatever the loop's own semantics. The basic loops this program ships are
+demonstrations built by the same path, native in the same way, and they run
+until the model returns a final answer or that interrupt arrives, which
+describes the demonstrations rather than constraining a builder's loop, a
+judgment loop or a fixed-turn loop being licensed by the same ruling.
 
 **The tool system.** The registry, the execution context, and the permission modes.
 Permission modes are operator policy and not a safety boundary. What a tool can
@@ -426,7 +450,8 @@ path to the content.
 Specs to be written against this charter once the PRD set is ratified. Named here
 so the set is bounded, not drafted here.
 
-- The engine and the query loop.
+- The extension seam where loop 1 composes, and the machinery it composes
+  against.
 - Prompt assembly, including the per-model scaffolding this layer is re-erected
   from for each decoder integrated into the SPU.
 - The tool system, the execution context, and permission modes as policy.
