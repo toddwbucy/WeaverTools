@@ -6,6 +6,12 @@ arriving via the token workflow. No code is written against it until phase
 three is ratified, per Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-02, on the review seat's return. The parent-death
+election states its guarantee at the width the kernel gives it, the signal
+firing on the forking thread's termination rather than the harness process's,
+the case compiled and run by the review and verified again by this seat, and
+the thread-lifetime obligation the backing rests on is owed to
+`weaver-harness-Spec` on the working list rather than claimed silently.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -97,11 +103,20 @@ sets and never checks, per charter section 7 and the set-not-check rule of
 `weaver-organ-channel` section 2: this crate spawns nothing, so the flag is
 defense against a compromise's exec rather than a planned fork, and it costs
 one call. The election is the parent-death signal, which the charter leaves
-to this Spec: taken, one `prctl` naming `SIGTERM`, so a gate blocked
-anywhere other than the channel read still dies with the interior it
-protects. It backs the closure observation rather than replacing it, the
-requirement standing on closure alone per charter section 4, and the signal
-covering the window where the gate is not reading.
+to this Spec: taken, one `prctl` naming `SIGTERM`, with its guarantee stated
+at the width the kernel gives it and no wider. The signal fires on the
+termination of the thread that forked this process, not of the harness
+process, verified by both seats against a live kernel with the forking
+thread exited and the process fully alive. So the backing is real exactly
+while the gate is forked from a harness thread whose lifetime is the
+worker's, an obligation owed to `weaver-harness-Spec` the way descriptor 3
+was owed in the other direction, filed on the working list: that Spec's
+everything-on-the-caller's-thread posture already implies it, and the
+sentence makes it a stated constraint a later threading change must answer.
+It backs the closure observation rather than replacing it, the requirement
+standing on closure alone per charter section 4, and it covers the window
+where the gate is blocked anywhere other than the channel read, for as long
+as that constraint holds.
 
 **The exchange service is a serial loop over the channel.** Directives
 arrive as `OrganEnvelope` JSON, one message per envelope, on the
