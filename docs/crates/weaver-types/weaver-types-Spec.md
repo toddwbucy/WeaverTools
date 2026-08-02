@@ -14,10 +14,6 @@ being octets, the satellite types are shaped with `Position` corrected against t
 drawn material, the YAML election carries the maintenance fact, the truncation
 obligation lands with the socket election, the test placements are named per
 crate, and one pin reclassifies from the compiler to review.
-**Revised:** 2026-08-02. `verbosity_ceiling_election` and the `VerbosityElection`
-enum leave the config, per the human's ruling of this date that the trace carries
-no recording level. Six fields rather than seven, and what an operator elects at
-load governs production alone.
 **Revised:** 2026-08-01, again, per the human's G2 ruling: the format and encoding
 elections cite the criteria `weaver-types-PRD` sections 2.1 and 2.3 now carry,
 rather than developing those grounds here. Revised again the same day, on the
@@ -30,6 +26,10 @@ contract constrains them. Revised once more the same day, on the third return:
 the answering-case claim states one answer per request rather than one case per
 directive, `Stop` having two cases and the earlier wording contradicting itself
 two lines on.
+**Revised:** 2026-08-02. `verbosity_ceiling_election` and the `VerbosityElection`
+enum leave the config, per the human's ruling of this date that the trace carries
+no recording level. Six fields rather than seven, and what an operator elects at
+load governs production alone.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -55,7 +55,7 @@ document and the charter disagree the charter yields nothing.
 
 **This document declares no graph records,** per Document Format section 1. The
 charter is the source of the crate node, the `agent-config` artifact, its six
-`holds` edges, and the eleven vocabulary definitions.
+`holds` edges, and the twelve vocabulary definitions.
 
 ## 1. The crate
 

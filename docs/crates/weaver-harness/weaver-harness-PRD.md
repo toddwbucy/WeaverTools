@@ -32,7 +32,7 @@ human's ruling of this date.
 **Revised:** 2026-08-01, a seventh entry, the durable-record cut. Section 5's
 custody prose restates from the admin-owned file to the operator's sink, per the
 ruling at `weaver-admin-operator-contract` section 3: the disk paragraphs become
-stream paragraphs, the manifest citation leaves the elections clause, and the
+stream paragraphs, the manifest citation leaves the verbosity clause, and the
 descriptor discipline stands unchanged as the half that never depended on who
 persists the record.
 **Revised:** 2026-08-01, an eighth entry, the fault-carrier ruling. The alert

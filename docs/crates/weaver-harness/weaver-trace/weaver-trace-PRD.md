@@ -26,11 +26,6 @@ holds.
 thirteen to fourteen, per the fault-carrier ruling of this date: the stream is the
 program's one fault carrier, the coordination seam's alert exchange retiring in
 the same act.
-**Revised:** 2026-08-02. The trace carries no recording level, per the human's
-ruling of this date: section 5 becomes instrumentation, elections governing
-production rather than recording, section 3.1's floor and ceiling tables become one
-flat set of fourteen kinds, and replay becomes universal. The elected-brevity
-against silent-loss ambiguity dissolves with the levels that created it.
 **Revised:** 2026-08-01, third entry this date. The relational projection retires,
 per the human's ruling: the working structure holds the same canonical NDJSON the
 stream carries, one rendering held and handed, so the deterministic-projection
@@ -42,6 +37,11 @@ proposed as similarity through the SPU's encode side.
 proto-stateful, per the human's rename of this date.
 **Revised:** 2026-08-01, a fifth entry this date. Section 5 adopts `agent-config`,
 the artifact renamed on the human's ruling of this date.
+**Revised:** 2026-08-02. The trace carries no recording level, per the human's
+ruling of this date: section 5 becomes instrumentation, elections governing
+production rather than recording, section 3.1's floor and ceiling tables become one
+flat set of fourteen kinds, and replay becomes universal. The elected-brevity
+against silent-loss ambiguity dissolves with the levels that created it.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document

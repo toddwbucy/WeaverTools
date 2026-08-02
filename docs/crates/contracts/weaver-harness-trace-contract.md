@@ -23,12 +23,6 @@ run, and the conformance list keeps what the tee still promises.
 **Revised:** 2026-08-01, again. The kind set this contract draws grew by `fault`,
 thirteen to fourteen, per the fault-carrier ruling of this date and the change
 protocol of section 7, the entry recorded here in the same act as the charter's.
-**Revised:** 2026-08-02. The recording levels retire, per the human's ruling of
-this date: the harness filters nothing and the recorder holds no level, the
-`weaver-types` draw empties with `verbosity-ceiling-election` leaving the agent
-config, and the owed-policy sentence that contradicted its own filtering rule
-dissolves with the subject rather than being adjudicated. `weaver-trace-Spec`
-section 11 reported that residue and it needs no separate act.
 **Revised:** 2026-08-01, once more. The relational projection retires per the
 human's ruling of this date: the recorder holds the working structure as the RAM
 copy of the same canonical form the stream carries, the deterministic-projection
@@ -36,6 +30,12 @@ obligation becomes one-rendering-held-and-handed, and the projection-failure cas
 becomes an append failure.
 **Revised:** 2026-08-01, further. The vocabulary clause adopts `agent-config`, the
 artifact renamed on the human's ruling of this date.
+**Revised:** 2026-08-02. The recording levels retire, per the human's ruling of
+this date: the harness filters nothing and the recorder holds no level, the
+`weaver-types` draw empties with `verbosity-ceiling-election` leaving the agent
+config, and the owed-policy sentence that contradicted its own filtering rule
+dissolves with the subject rather than being adjudicated. `weaver-trace-Spec`
+section 11 reported that residue and it needs no separate act.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -50,8 +50,8 @@ contract is done.
 ## Parties
 
 - **`weaver-harness`, the author.** Sole producer of trace content. Decides what is
-  worth recording, when a session begins and ends, what a turn is, and at what
-  Holds every descriptor.
+  worth recording, when a session begins and ends, and what a turn is. Holds every
+  descriptor.
 - **`weaver-trace`, the recorder.** Assigns ordering, produces canonical form,
   holds the working structure, and hands the same rendering to the outbound
   stream. Holds no policy and decides nothing about content.

@@ -33,15 +33,15 @@ anywhere leaving with it. And section 2.3 adopts loop naming: wire vocabulary is
 named for the loop whose traffic it carries, `lifecycle-directive` and
 `lifecycle-answer` renaming the sender-named pair, the owed seam pairs dissolving
 into the one trio every loop 0 contract draws.
-**Revised:** 2026-08-02. `verbosity-ceiling-election` leaves section 2.1 entire,
-its node, its `defines` edge, and its `holds` edge, per the human's ruling of this
-date that the trace carries no recording level. The field count goes from seven to
-six, and what an operator elects at load now governs production alone.
 **Revised:** 2026-08-01, a fifth entry this date, per the human's G2 ruling that
 rationale is developed in the PRD and restated in the Spec. Section 2.1 states the
 config's reader as a human author and section 2.3 states loop 0's volume and
 audience, the two criteria the Spec pass was electing against without the charter
 holding them.
+**Revised:** 2026-08-02. `verbosity-ceiling-election` leaves section 2.1 entire,
+its node, its `defines` edge, and its `holds` edge, per the human's ruling of this
+date that the trace carries no recording level. The field count goes from seven to
+six, and what an operator elects at load now governs production alone.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -233,8 +233,12 @@ about, and the lifecycle already provides the place to change it. Unload, edit, 
 is read at every load and the value it carries governs that run and nothing wider. An
 operator editing between runs of a live session is using the mechanism the lifecycle
 provides rather than working around one. A consumer needing to know how a given run
-was configured reads it from that run's own events, the harness authoring the
-conditions it loaded under.
+was configured reads what that run produced: the model identity and the sampler
+parameters ride `model.measurement`, and the residual election is legible from the
+presence or absence of the reductions. That is the elections-govern-production
+rule read from the reader's end, and it is narrower than a claim that the run's
+conditions are authored somewhere, which no mechanism does since the ruling of
+2026-08-02.
 
 Run scope is what this crate declares. Whether a particular consumer wants a
 particular field held steady across the runs of one session is that consumer's

@@ -5,15 +5,15 @@ floor's build order. No code is written against it until phase three is ratified
 per Working Process section 6.
 
 **Date filed:** 2026-08-01
-**Document ID:** `weaver-trace-Spec`
-**Parent:** `weaver-trace-PRD`
 **Revised:** 2026-08-02, on the review seat's return. Every kind takes an explicit
 rename so the wire carries the charter's dotted names, `Payload` gains its
 representation with `RawValue` splicing the message kinds and the deferred shapes
 listed with their settlers, `Recorder` appears as the crate's principal type with
-the receive site declared, the recording-level section states that this crate
-holds no level, the close-on-exec test is owed
+the receive site declared, the verbosity section states that this crate holds no
+level and reports the contract's residual sentence, the close-on-exec test is owed
 to `weaver-harness-Spec`, and the satellite types are listed as open.
+**Document ID:** `weaver-trace-Spec`
+**Parent:** `weaver-trace-PRD`
 **Revised:** 2026-08-02, on the second return: `Payload` is untagged with the
 envelope's kind as discriminant and admission enforcing the pairing, a bracket
 kind carries no payload member rather
@@ -22,9 +22,13 @@ kind-to-payload mapping is stated as total, `Subsystem`'s case set names its
 grounds, and the flag-validating receive is dropped on the corpus's set-not-check
 rule. Revised once more the same day: the envelope's flatten election gains its
 argument, its no-collision ground, and the forward constraint on envelope fields.
-**Revised:** 2026-08-02. Section 8 restates against the ruling that retired the
-recording levels: no level exists to hold, and the contract residue this Spec
-reported dissolves with its subject rather than needing the act section 11 named.
+**Revised:** 2026-08-02. Section 8 restates and retitles against the ruling that
+retired the recording levels: no level exists to hold, and the contract residue
+this Spec reported dissolves with its subject rather than needing the act section
+11 named. On the review seat's return the same day, three earlier changelog
+entries were restored to what their own acts said and the entries of this date
+were moved to the end of this list, filing order having been broken and history
+having been edited to match a later ruling.
 **Editorial:** Per the Working Rules.
 
 ---
@@ -468,7 +472,7 @@ coordination contract's ordering. At process death nothing drains and the tail i
 forfeited, which this crate cannot report because the process reporting it is the
 one that died.
 
-## 8. Verbosity
+## 8. Instrumentation
 
 **This crate holds no recording level, because none exists.** The ruling of
 2026-08-02 retired them: what an operator elects at load governs what the agent

@@ -26,9 +26,6 @@ rather than reaching admin as an alert, and the section 10 cell restates its exi
 against the event kind's case set.
 **Revised:** 2026-08-01, a fifth entry. Sections 2 and 8 adopt the proto-stateful
 vocabulary, per the human's rename of this date.
-**Revised:** 2026-08-02. The section 10 model-naming cell closes with the
-recording levels, per the human's ruling of this date, and sections 0 and 8 drop
-verbosity from what the token workflow carries.
 **Revised:** 2026-08-01, a seventh entry, the naming ruling. The section 10 naming
 cell closes, the collision governing and wire vocabulary naming for the loop, this
 seam drawing loop 0's trio with its refusal cases settling as `lifecycle-refusal`
@@ -37,6 +34,9 @@ register.
 **Revised:** 2026-08-01, a sixth entry, on review. Section 3 stops claiming the
 gate binds a network socket, the demotion of 2026-07-31 having made it a local
 hook, and the only-listener claim scopes to the agent.
+**Revised:** 2026-08-02. The section 10 model-naming cell closes with the
+recording levels, per the human's ruling of this date, and sections 0 and 8 drop
+verbosity from what the token workflow carries.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
