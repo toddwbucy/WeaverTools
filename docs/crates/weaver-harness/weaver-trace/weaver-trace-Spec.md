@@ -20,7 +20,8 @@ kind carries no payload member rather
 than a null one, `TurnClose` is internally tagged under the shared test, the
 kind-to-payload mapping is stated as total, `Subsystem`'s case set names its
 grounds, and the flag-validating receive is dropped on the corpus's set-not-check
-rule.
+rule. Revised once more the same day: the envelope's flatten election gains its
+argument, its no-collision ground, and the forward constraint on envelope fields.
 **Editorial:** Per the Working Rules.
 
 ---
@@ -212,6 +213,32 @@ corrupt line rather than a refused submission. The octet well-formedness check o
 the admission step is the only thing standing between the two, which is a
 concrete reason for an ordering the charter states abstractly. `RawValue`
 construction validates, so the check has a mechanism rather than a promise.
+
+**The envelope flattens into the event and the payload does not, which is an
+election and takes an argument.** An event renders as one flat object,
+`{"session":...,"run":0,"kind":"load","subsystem":"harness"}`, rather than nesting
+the envelope under a member of its own. The reason is the reader: this line is what
+an operator's tooling consumes, and every such consumer keys on `kind` first, so a
+nesting level between the line and its kind is a level every consumer pays on every
+event. Verified against serde 1.x that the flatten path preserves what section 2
+claims, one line with no interior newline, declaration order with `payload` last,
+and byte-identical output across renders, since flatten serializes through a map
+and the determinism claim had to survive that.
+
+**Nothing collides because no `Envelope` field is named `payload`, and that becomes
+a constraint on every later envelope edit.** Flattening puts the envelope's members
+and the payload member in one object, so a field added to `Envelope` later and
+named `payload` would produce two members of one name. The constraint lives here
+rather than nowhere: **no field added to `Envelope` may be named `payload`.**
+
+**The sibling Spec's envelope elects the opposite layout, and the difference is
+principled rather than accidental.** `weaver-types-Spec` section 4.1 states that
+nothing is flattened in `OrganEnvelope`, because its payload is adjacently tagged
+and carries `kind` and `body` members of its own, so flattening would put two
+layers' keys in one object and widen the collision surface the adjacent tagging was
+elected to close. This crate's payload is untagged and contributes exactly one
+member, so the same flatten costs nothing and buys the reader a level. Two
+envelopes, two exposures, two elections, and each says why.
 
 **`Payload` is untagged and the envelope's `kind` is its discriminant, which is a
 fourth case the floor Specs' shared test does not cover.** That test elects a
