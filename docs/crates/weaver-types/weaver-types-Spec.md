@@ -43,6 +43,11 @@ the charter. Section 0's count reads fifteen, section 4 scopes itself to the
 loop 0 subset with the trio's representation named as the token workflow's,
 and the open election on the decode seam drops the channel half the
 decoder-cut ruling closed, an unswept remnant of that act caught here.
+**Revised:** 2026-08-02, a fifth entry this date, the token workflow's gate
+act. `Payload` gains `Frame`, the enum's own later-loop rule taking its first
+exercise, with the frame's shape left as an election against the octets-in-
+JSON constraint this document already recorded. Section 0's count reads
+sixteen and section 4 scopes to four of eight.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -68,7 +73,7 @@ document and the charter disagree the charter yields nothing.
 
 **This document declares no graph records,** per Document Format section 1. The
 charter is the source of the crate node, the `agent-config` artifact, its six
-`holds` edges, and the fifteen vocabulary definitions.
+`holds` edges, and the sixteen vocabulary definitions.
 
 ## 1. The crate
 
@@ -316,7 +321,7 @@ test this crate can pretend to run.
 
 ## 4. The loop 0 wire vocabulary
 
-The loop 0 subset of charter section 2.3, four of its seven definitions: the
+The loop 0 subset of charter section 2.3, four of its eight definitions: the
 envelope every organ channel
 carries, and loop 0's trio named for the loop whose traffic it carries rather than
 for a sender, per the naming ruling of 2026-08-01. The token trio landed at the
@@ -355,6 +360,7 @@ pub enum Payload {
     Directive(LifecycleDirective),
     Answer(LifecycleAnswer),
     Refusal(LifecycleRefusal),
+    Frame(TurnFrame),
 }
 
 pub enum RefusingOrgan {
@@ -384,6 +390,20 @@ types live on the floor already, so naming them here adds no dependency and
 removes a layer of encoding. It also removed a defect, since octets inside a JSON
 envelope render as an array of numbers by default, tripling the size and
 destroying exactly the legibility the JSON election rests on.
+
+**`Frame` is that rule's first exercise, from the token workflow's gate act of
+2026-08-02.** The gate's turn exchanges cross the same organ channel the
+lifecycle directives do, so the frame enters this enum rather than taking a
+carrier of its own, and every consumer's match sees the addition, which is
+what the rule below is for. **Its shape is an open election with a stated
+constraint,** per section 6: a frame is opaque to the gate, so it is whatever
+the client sent, and an earlier draft of this Spec already recorded what
+happens to raw octets inside a JSON envelope, an array of numbers that
+triples the size and destroys the legibility the encoding election rests on.
+The frame is therefore not held as a byte vector, and which of the two honest
+answers it takes, a splice of the line as it stands where the world contract's
+own NDJSON shape makes that safe, or an encoding that survives arbitrary
+octets, is elected against a measurement rather than assumed here.
 
 **A later loop's vocabulary enters this enum in the act that charters that loop,**
 which is the same loudness the trio's own case sets carry: one owner, contracts
@@ -635,6 +655,10 @@ build-time assertion over the resolved external tree rather than by H2.
   token workflow's, with the hot-path measurement, per section 4.3, the
   channel question having closed with the decoder-cut ruling, decode on its
   own socket.
+- **`TurnFrame`'s shape.** Elected against the constraint section 4.1 states,
+  a frame being opaque and octets inside a JSON envelope being the defect this
+  crate already refused once. Settled with a measurement over real client
+  traffic, which the gate's own Spec produces.
 - **The `tool-set` field's element shape.** It elects from `tool-trait`, which
   `weaver-traits-PRD` section 3.1 holds blocked, so the field is a list of names
   today and gains its element type with the tool workflow.

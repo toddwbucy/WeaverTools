@@ -592,8 +592,10 @@ which fails because there is no call that takes what it learned.
   shape.
 - **The deferred payload shapes**, each with what settles it. The tool bracket's
   content waits on the tool workflow, which `weaver-traits-PRD` section 3.1 holds
-  blocked. The fault payload's case set waits on the organs' charters naming what
-  they raise, per `weaver-spu-PRD` section 10. The three model payloads wait on
+  blocked. The fault payload's case set closed on 2026-08-02 with the
+  organs' enumerations, `weaver-spu-PRD` section 13.10 and `weaver-gate-PRD`
+  section 13.4, so its shape is elected against a closed set by the token
+  workflow's trace act. The three model payloads wait on
   the token workflow, whose measurement content charter section 3.1 already
   enumerates but whose wire shape that workflow settles. Until each lands, its
   kind cannot be submitted with a shape this crate invented, which is the

@@ -20,6 +20,16 @@ the event kind's case set.
 **Revised:** 2026-08-01, further, the naming ruling. This seam draws loop 0's
 trio, the seam-owned pair it awaited dissolving with the sender convention, and
 section 7's drift defense restates against the floor's single ownership.
+**Revised:** 2026-08-02, the token workflow's gate act. The gate's own
+direction arrives: section 2 gains the turn exchange it opens per client
+request, carrying the `turn-frame` opaque in both directions, the
+serialization ruling that the harness serves one turn at a time in arrival
+order while the gate relays rather than refuses, and the fault report. Drain
+resolves rather than deferring, leave waiting on rest. Section 3 gains the
+window and the concurrency line, section 4 both parties' further guarantees,
+section 7 the `turn-frame` draw owed to the floor, and section 8's deferral
+becomes a closure, the corpus-wide fault case set closing with the gate's
+cases named at `weaver-gate-PRD` section 13.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -45,11 +55,12 @@ external boundary, its job simplified by the demotion and its standing unchanged
 This is an organ channel, so sections 1 and 2 draw `weaver-organ-channel` the way the
 coordination and residency contracts do, keeping only what is this seam's own.
 
-**Both of this pass's exchanges are opened by the harness.** The gate's own
-direction, the turn exchanges that carry a client's work inward, arrives with the
-token workflow, deferred rather than forbidden, the same half-chartered shape the
-residency seam carries. The name records the initiator of the governed signals and
-stands when that direction arrives, per `weaver-gate-PRD` section 6.
+**The gate's own direction arrived with the token workflow's act of
+2026-08-02.** The lifecycle pair stays the harness's, and the gate now opens
+the turn exchange that carries a client's work inward and the fault report,
+the channel carrying two initiators exactly as this section anticipated. The
+name records the initiator of the governed lifecycle signals and stands, per
+`weaver-gate-PRD` section 6.
 
 ```graph
 node: weaver-harness-gate-contract
@@ -115,7 +126,9 @@ close-on-exec after its final exec and clears its dumpable flag in the same act,
 
 ## 2. The exchanges
 
-Two, and no others in this pass. Both are opened by the harness.
+Four, and no others. Two are opened by the harness, raise and lower, and two
+by the gate, the turn and the fault report, which is the duplex channel
+carrying both its initiators as of the token workflow's gate act.
 
 **Raise the hook.** Opened by the harness, last in the enter fan-out, carrying the
 gate instruction admin supplied in the enter directive, uninterpreted by the harness.
@@ -130,8 +143,38 @@ way, closes the exchange.
 **Lower the hook.** Opened by the harness, first in the leave fan-out. The gate
 closes the listener and answers stopped. **Stopped is sent only after the close has
 returned,** so nothing new can arrive anywhere in the interior once the harness
-proceeds, which is what stopped-first protects. In this pass no traffic exists, so
-the close is the whole of it, and drain arrives with the token workflow.
+proceeds, which is what stopped-first protects. Drain is modest by
+construction, per the token workflow's act: leave waits on rest, so no turn
+is in flight at a lower, and the gate closes its accepted connections after
+the listener, holding nothing that needs finishing.
+
+**Carry a turn.** Opened by the gate, one exchange per client request, from
+the token workflow's act of 2026-08-02. The gate relays the client's line
+inward as a `turn-frame`, opaque octets it has not read, and the exchange's
+identity, the opening party and its ordinal per the channel's own mechanics,
+is the correlation the response returns on. The harness interprets the line,
+runs the turn, and answers with the response frame, which the gate relays to
+the client by the path the request took. The gate carries no `turn_key`
+inward and mints nothing, the turn not existing until the harness opens it,
+per `weaver-gate-PRD` section 9. A line the harness cannot parse answers as
+a refused turn inside the frame, content to the client and an ordinary
+answer on this seam, per `weaver-gate-world-contract` section 2.
+
+**Turns serialize at the harness, and the ruling is ratified with this
+act.** The channel's layer permits concurrent exchanges, so the gate opens
+one per request as clients speak, and the harness serves one turn at a time
+in arrival order, answers returning as turns close. Order per connection is
+the gate's own relay discipline, per the world contract, and no promise is
+made across clients. A gate that refused instead of relaying while a turn
+was in flight would push the one-turn loop's shape onto every client as an
+error surface, where waiting is what a conversation already means.
+
+**Report a fault.** Opened by the gate, carrying a fault of
+`weaver-gate-PRD` section 13 that arose outside any exchange, the listener
+lost above all. A failure inside a turn exchange, the client gone before its
+response above all, is that exchange's own account instead. The harness
+authors what it is handed as the `fault` event, per the fault-carrier
+ruling, and answers received, promising authorship and nothing else.
 
 **The instruction crosses once, in the raise.** It is not re-sent, revoked, or
 replaced. A gate that needs an instruction it was not given has a failed raise rather
@@ -153,6 +196,10 @@ rather than a new one.
 - Lower is last, happens at most once, and is terminal on the channel.
 - A lower with no completed raise before it is refused and is not queued, because
   there is no listener for it to close.
+- Turn exchanges and fault reports are valid only between a completed raise
+  and a lower, the window being the raised hook.
+- More than one turn exchange may be open at once, the harness serving them
+  one at a time in arrival order, per section 2.
 - Messages within one exchange are ordered.
 - A directive that arrives out of this order is refused and is not queued.
 - An answer to raise arrives only after the bind has returned, and an answer to
@@ -180,8 +227,20 @@ last and lowers it first within the fan-outs, per apex section 6. It guarantees 
 it does not treat an answer as authorization for anything beyond the exchange that
 produced it.
 
-**The gate supplies** its confirmation of ready, its confirmation of stopped, and its
-refusal with the reason.
+**The gate supplies** its confirmation of ready, its confirmation of stopped, its
+refusal with the reason, the turn frames it relays inward, and its fault
+reports.
+
+**The gate further guarantees**, from the token workflow's act: that every
+frame it relays crossed its predicate's admission, that order holds per
+connection in both directions, that it opens one exchange per client request
+and correlates the response to it, that it reads no frame and retains none
+past its answer, and that a delivery it cannot complete becomes the turn
+exchange's own account rather than silence.
+
+**The harness further guarantees** that it serves turn exchanges one at a
+time in arrival order, and that every answer is the turn's close rendered as
+the frame the world contract fixes, clean or stopped with its kind named.
 
 **The gate guarantees** that ready follows the bind and stopped follows the close. It
 guarantees that a refusal leaves nothing held, no listener and no half-bound socket,
@@ -228,8 +287,8 @@ fork other than this seam's. It does not treat the gate as a peer of the organs 
 sequences: the gate confirms inside the aggregate like every other arm of the
 fan-out.
 
-**On the gate.** It opens no exchange this document does not enumerate, which in this
-pass means it opens none, the turn direction deferred rather than forbidden. It reads
+**On the gate.** It opens no exchange this document does not enumerate, the
+turn exchange and the fault report being its two. It reads
 no content and translates nothing, in either direction. It authors no trace event and
 holds no descriptor to the record. It dials no interior socket and
 holds no channel to `weaver-admin` or the SPU. It binds no second listener. It
@@ -245,7 +304,15 @@ Every contract names the vocabulary it depends on, grouped by the crate that def
 it, and a group is stated even when empty.
 
 **Drawn from `weaver-types`:** `organ-envelope`, `gate-instruction`,
-`lifecycle-directive`, `lifecycle-answer`, and `lifecycle-refusal`.
+`lifecycle-directive`, `lifecycle-answer`, `lifecycle-refusal`, and
+`turn-frame`, the last from the token workflow's act: one definition for
+both directions, a client line carried opaque, inward as the ask and outward
+as the answer, refusals riding inside it as content the harness authored.
+The definition is owed to `weaver-types-PRD` section 2.3 by this act and
+lands with it, entering the envelope's payload in the same act per that
+crate's rule that a later loop's vocabulary enters in the act chartering its
+loop, named for the seam's currency, the turn, under the naming ruling's
+ratified extension.
 
 `organ-envelope` is the carrier every organ channel draws, drawn here as the
 coordination and residency contracts draw it.
@@ -271,8 +338,10 @@ invited cannot occur.
 because `weaver-types-PRD` section 5 asks for it even when it is empty.
 
 **Drawn from `weaver-trace` and `weaver-harness`:** nothing. The gate reports and the
-harness authors, and no event kind, envelope field, or frame crosses this seam in
-this pass.
+harness authors, and no event kind or envelope field crosses this seam. The
+turn frame is the floor's definition above rather than the trace's, and what
+the record holds of a turn is authored inside, on the other side of this
+seam.
 
 ## 8. What this document changes elsewhere
 
@@ -288,7 +357,9 @@ register under G5.
   crate is chartered resolves by pointing at this contract, gaining no record there,
   the organ declaring in its own charter. On merge.
 
-**What this document does not close.** The fault cases a running hook raises arrive
-with the token workflow and land as `fault` events, the shape the fault-carrier
-ruling of 2026-08-01 gave them, their case set closing with the organs' charters
-per `weaver-spu-PRD` section 10.
+**What this act closes.** The fault cases a running hook raises are named at
+`weaver-gate-PRD` section 13, and with them the corpus-wide case set behind
+the `fault` event closes: the SPU's at its section 13.10, the gate's at its
+section 13, and the harness's own pressure case per `weaver-trace-Spec`
+section 6. The payload's shape lands with the trace act against the closed
+set.

@@ -39,6 +39,13 @@ of the batch of this date, the trace pair citing the stop exchange through the
 coordination contract instead. It argues no edges of its own. The
 seams it walks are declared in the crate charters per Document Format section 4, and a
 graph block here would duplicate a record that already has a home.
+**Revised:** 2026-08-02, on the token workflow's acts, by the sweep this
+document's cells earn: section 7's stop-mechanics cell closes at the token
+boundary per `weaver-spu-PRD` section 13.5, an unswept remnant of the
+charter act caught by the gate act, and the turn path of section 4 now has
+both its seams chartered, decode at `weaver-harness-spu-decode-contract` and
+the gate's turn direction at `weaver-harness-gate-contract` section 2, which
+a later revision walks in full rather than this entry claiming it walked.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -337,10 +344,13 @@ Each cell names the ruling or measurement it awaits.
 - **Session close ordering.** The shape of `session.closed` is proposed at
   `weaver-admin-PRD` section 4.4 and only its ordering is open. Awaits an
   architecture ruling, and nothing in the basic loop depends on it.
-- **Stop mechanics at the decoder.** Whether stop cancels a generation mid-decode
-  or takes effect at the next boundary the SPU offers. The trace semantics are
-  settled either way, the turn closes with the reason marked. Awaits the spec
-  seat against the SPU's cancellation surface.
+- **Stop mechanics at the decoder is closed.** The stop lands at the token
+  boundary, per `weaver-spu-PRD` section 13.5, ratified at the token
+  workflow's act of 2026-08-02, and the generation leaves the session
+  well-framed with the family's turn terminator resident before it answers.
+  The trace semantics were settled either way and are unchanged, the turn
+  closing with the reason marked. Recorded as closed rather than deleted,
+  this document's cells naming what settled them.
 - **Tee back-pressure.** The tee has two sinks, the RAM working structure and the
   output stream, and the RAM copy always lands. The option space narrowed when the
   tee promise merged: `weaver-admin-operator-contract` section 3 makes a silent

@@ -50,6 +50,11 @@ the seam's loop being loop 1, the builder's and variable, and the identities
 riding inside the cases as satellite types. The subsection retitles from the
 first socket contract to the socket contracts, and the envelope's scope
 sentence names the decode socket as outside it.
+**Revised:** 2026-08-02, a third entry this date, the token workflow's gate
+act. Section 2.3 goes from seven definitions to eight, `turn-frame` arriving
+on the gate contract's demand: one definition for both directions, opaque to
+the crate that relays it, named for the seam's currency under the naming
+ruling's ratified extension.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -316,9 +321,10 @@ to: authorization-predicate
 **Everything here arrived on demand and not in advance.** Section 4 held wire
 protocol vocabulary out of this crate until a written contract needed it.
 `weaver-admin-harness-contract` section 8 was the first, arriving with four,
-and `weaver-harness-spu-decode-contract` section 7 the second, arriving with
-the token trio on 2026-08-02. Nothing else enters this subsection until
-another contract draws it, a definition
+`weaver-harness-spu-decode-contract` section 7 the second, arriving with the
+token trio on 2026-08-02, and `weaver-harness-gate-contract` section 7 the
+third, arriving with `turn-frame` in the same workflow's gate act. Nothing
+else enters this subsection until another contract draws it, a definition
 arriving without a contract behind it being the reserved-slot error apex section
 9 forbids, in schema form. `harness-alert` was
 drawn here until the fault-carrier ruling of 2026-08-01 retired the alert exchange,
@@ -352,7 +358,20 @@ floor's satellite types rather than as vocabulary of their own. The
 representation is the token workflow's, elected with the hot-path
 measurement, per the criterion below.
 
-**One of the seven belongs to the floor and not to any loop.** `organ-envelope` is the
+**The turn frame is one definition for two directions, and its opacity is the
+point.** `turn-frame` arrives on `weaver-harness-gate-contract` section 7's
+demand with the token workflow's gate act of 2026-08-02, named for the seam's
+currency under the naming ruling's ratified extension. It carries a client's
+line inward and the turn's answer outward, unread by the crate that relays it
+in either direction, so one definition serves both: a frame is what crossed,
+and which way it was going is the exchange's position rather than the value's
+type. A refused turn rides inside it as content the harness authored, which is
+why no refusal case is added for it here. What a frame's octets mean is the
+harness's, per `weaver-gate-PRD` section 3, and what they look like on the
+wire is the Spec's, against a constraint that subsection states rather than
+waves at.
+
+**One of the eight belongs to the floor and not to any loop.** `organ-envelope` is the
 carrier every organ channel draws, holding the exchange a message belongs to, that
 message's position in the exchange, and the type of its payload. It is defined here
 because the coordination seam was the first channel to need it, and it is the one
@@ -428,6 +447,13 @@ to: token-answer
 edge: defines
 from: weaver-types
 to: token-refusal
+
+node: turn-frame
+kind: vocabulary
+
+edge: defines
+from: weaver-types
+to: turn-frame
 ```
 
 ## 3. What it must not hold

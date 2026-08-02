@@ -33,6 +33,13 @@ seam's wire pair dissolves, the contract drawing loop 0's trio.
 **Revised:** 2026-08-01, once more, on review. Section 2's one-listening-socket
 claim scopes from the program to the agent, admin's operator surface having
 falsified the wider wording.
+**Revised:** 2026-08-02, the token workflow's gate act. Section 13 arrives with
+the workflow, chartering the relay, the concurrency resolution, the lower with
+traffic present, and the fault cases this crate raises, which closes the
+corpus-wide `fault` case set. Section 8's deferred list resolves to what
+section 13 now carries, keeping streaming and its backpressure deferred by
+name, and section 9's staged list is ratified in place rather than awaiting a
+pass that has arrived.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -260,17 +267,20 @@ mechanic's clothes.
 
 ## 8. What does not cross, and what waits
 
-**Deferred to the token workflow, stated as deferred rather than open:** the turn
-exchanges this crate opens toward the harness and their shapes, how a turn is
-identified across the boundary, what a client's bytes mean and how they are framed per
-the section 10 cell, streaming responses and the connection the hook holds open while
-the interior generates, concurrent clients against the one-turn loop, backpressure,
-cancellation, and drain on stop.
+**Chartered by the token workflow's act of 2026-08-02, no longer deferred:** the
+turn exchange this crate opens toward the harness, how a turn is identified
+across the boundary, concurrent clients against the one-turn loop, drain on
+stop, and the fault cases a running hook raises. Each lands in section 13,
+which is this charter's next section arriving with its workflow.
 
-**Staged:** the separate-uid arm of the section 7 cell. Fault cases a running hook
-raises toward the harness, which arrive when there is a running hook to raise them
-and land as the `fault` events of `weaver-trace-PRD` section 3.1, per the
-fault-carrier ruling of 2026-08-01.
+**Still deferred, and named rather than omitted:** streaming responses and the
+connection the hook holds open while the interior generates, and the
+backpressure that rides them. `weaver-gate-world-contract` section 3 makes one
+line in and one line out the resting shape and streaming an extension to that
+page rather than a replacement, so it arrives when a client needs it and this
+crate gains nothing in anticipation.
+
+**Staged:** the separate-uid arm of the section 7 cell.
 
 None of these acquires a trait, a variant, a feature flag, or a config field in this
 pass. A charter naming a domain boundary is a decided boundary. An unbuilt interface
@@ -278,13 +288,12 @@ waiting to be filled is the thing apex section 9 forbids.
 
 ## 9. Staged requirements
 
-**When the token workflow arrives,** the requirements already visible from here, so
-the later pass starts from a list rather than a blank page: the forwarded prompt
-reaches the harness with the turn not yet in existence, so this crate cannot carry a
-`turn_key` inward and does not mint one. Responses return by the path the request
-took. This crate sees octets and nothing of the model, the trace, or the session.
-Each of these is restated here from the apex path and binds nothing until that pass
-ratifies it in place.
+**The token workflow arrived on 2026-08-02 and ratified this list in place.**
+The forwarded prompt reaches the harness with the turn not yet in existence, so
+this crate carries no `turn_key` inward and mints none. Responses return by the
+path the request took. This crate sees octets and nothing of the model, the
+trace, or the session. Section 13 is where each of these now binds, and this
+section keeps them as the record of what the earlier pass could already see.
 
 ## 10. Open cells
 
@@ -345,3 +354,81 @@ set is bounded, not drafted here, and incomplete for the same reason the charter
   refusal set.
 - The fork and the descriptor discipline of section 7.
 - Stop, covering the close and the confirmation ordering.
+
+## 13. Serving the turn
+
+Arrived with the token workflow's act of 2026-08-02, filed after the children
+for the reason `weaver-spu-PRD` section 13 states: sections 8 through 12 are
+cited by number across the merged corpus, and arrival order is filing order.
+Everything here is derived from `weaver-harness-gate-contract` section 2 as
+that act extends it, `weaver-gate-world-contract`, and the turn grammar of
+`basic-inference-loop`.
+
+### 13.1 The relay
+
+**One exchange per client request, opened by this crate, opaque both ways.**
+A request admitted at the hook becomes an exchange opened toward the harness
+carrying the client's line as octets this crate has not read. The response
+returns on that exchange and goes back out the connection it came in on. The
+exchange's own identity is the correlation, so this crate holds no table of
+its own and invents no identifier: what it needs to route a response is the
+thing the channel already gives it.
+
+**The turn is not this crate's to name.** No `turn_key` crosses inward,
+because the turn does not exist until the harness opens it, per section 9,
+and nothing here mints one. What this crate knows about a turn is that a
+line went in and a line came out.
+
+**Retention ends at the answer.** Per section 3, nothing about a turn
+survives the response returning through it, and the exchange's close is where
+that is enforced rather than promised.
+
+### 13.2 Concurrency, and where it resolves
+
+**Clients may speak at once and this crate relays as they do.** More than one
+exchange may be open toward the harness, and the harness serves them one turn
+at a time in arrival order, per the contract's ratified ruling. This crate
+refuses nothing on the grounds that the interior is busy, because waiting is
+what a conversation already means and a busy interior is not a boundary
+condition. Order per connection holds in both directions, which is what a
+client is owed and the whole of what it is owed: no promise is made across
+clients, and none is needed, since a client sees only its own connection.
+
+### 13.3 Lowering with traffic present
+
+**Drain is modest by construction and this section states why.** A lower
+arrives only when the run is at rest, per the coordination seam's own rule
+that leave refuses while a turn is in flight, so no turn is outstanding when
+the listener closes. What remains is connections a client is holding open,
+which this crate closes after the listener and before answering stopped. A
+client that reconnects finds no listener, which is refusal by absence and the
+boundary the lifecycle protects.
+
+### 13.4 The faults this crate raises
+
+The enumeration section 8 deferred, each a fault the worker survives,
+reported to the harness on the exchange the contract names and authored by
+the harness as the `fault` event:
+
+- **The listener is lost.** The bound socket became unusable while the hook
+  was raised, so the agent is unreachable with its interior healthy. This is
+  the reference case, and it is why the fault direction exists at all: the
+  harness cannot observe this from its side, the channel being fine while
+  the boundary is gone.
+- **A client connection failed mid-turn.** The response could not be
+  delivered because the client is gone. The record already holds the turn's
+  close, per `weaver-gate-world-contract` section 3, so this reports a lost
+  delivery rather than a lost turn, which is the distinction that keeps a
+  consumer from reading a delivered answer where none arrived.
+- **Admission is failing systematically.** The predicate is refusing every
+  peer, which is either a boundary the operator misconfigured or something
+  probing it, and either way the operator wants it in the record.
+
+A peer failing the predicate is not a fault. It is the boundary working, and
+a fault event per refused dial would make the record noisiest exactly when
+the boundary is doing its job.
+
+**With these named the corpus-wide case set closes.** The `fault` event's
+cases are the SPU's at `weaver-spu-PRD` section 13.10, this crate's here, and
+the harness's own pressure case, and the payload's shape lands with the trace
+act against the closed set rather than against a guess.
