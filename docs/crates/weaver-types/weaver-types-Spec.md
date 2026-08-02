@@ -46,8 +46,13 @@ decoder-cut ruling closed, an unswept remnant of that act caught here.
 **Revised:** 2026-08-02, a fifth entry this date, the token workflow's gate
 act. `Payload` gains `Frame`, the enum's own later-loop rule taking its first
 exercise, with the frame's shape left as an election against the octets-in-
-JSON constraint this document already recorded. Section 0's count reads
-sixteen and section 4 scopes to four of eight.
+JSON constraint this document already recorded. On the review seat's return
+the same day, `Payload` gains `Fault` on grounds the entry states are not the
+loop rule's, `FaultReport`'s shape joins the elections against the closed
+case set, and section 4's lead states the boundary it had been keeping
+without saying: loop 0 in full, the envelope's carriage for what it carries,
+and nothing of the decode socket's. The counts read seventeen and four of
+nine.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -73,7 +78,7 @@ document and the charter disagree the charter yields nothing.
 
 **This document declares no graph records,** per Document Format section 1. The
 charter is the source of the crate node, the `agent-config` artifact, its six
-`holds` edges, and the sixteen vocabulary definitions.
+`holds` edges, and the seventeen vocabulary definitions.
 
 ## 1. The crate
 
@@ -321,13 +326,22 @@ test this crate can pretend to run.
 
 ## 4. The loop 0 wire vocabulary
 
-The loop 0 subset of charter section 2.3, four of its eight definitions: the
-envelope every organ channel
+**What this section owns is loop 0's definitions in full, plus the carriage of
+anything the envelope carries,** which is a boundary the act of 2026-08-02
+made visible and worth stating rather than leaving to be inferred. Loop 0's
+four definitions are shaped here entire. `turn-frame` and `fault-report` are
+shaped here only as far as the envelope carries them, their payload variants
+and, for the frame, the election section 6 holds, because
+`organ-envelope`'s representation is this document's. The token trio is shaped
+here not at all: it rides the decode socket, which is not an organ channel per
+`weaver-spu-PRD` section 13.2, so its representation is the token workflow's
+with the hot-path measurement and none of this document's business. A later
+workflow reads that boundary and knows which side its vocabulary lands on
+before it asks.
+
+Four of the charter's nine definitions, then: the envelope every organ channel
 carries, and loop 0's trio named for the loop whose traffic it carries rather than
-for a sender, per the naming ruling of 2026-08-01. The token trio landed at the
-charter on 2026-08-02 under that ruling's ratified extension, and nothing of it
-is shaped here: its representation is the token workflow's, elected with the
-hot-path measurement, per this section's own decode rule.
+for a sender, per the naming ruling of 2026-08-01.
 
 ### 4.1 The envelope
 
@@ -361,6 +375,7 @@ pub enum Payload {
     Answer(LifecycleAnswer),
     Refusal(LifecycleRefusal),
     Frame(TurnFrame),
+    Fault(FaultReport),
 }
 
 pub enum RefusingOrgan {
@@ -404,6 +419,15 @@ The frame is therefore not held as a byte vector, and which of the two honest
 answers it takes, a splice of the line as it stands where the world contract's
 own NDJSON shape makes that safe, or an encoding that survives arbitrary
 octets, is elected against a measurement rather than assumed here.
+
+**`Fault` enters on different grounds and the difference is worth stating.**
+It is not a loop's vocabulary, so the rule below does not reach it: a fault
+report is what any organ hands the harness across whatever channel it holds,
+and it enters this enum because the gate's channel is an organ channel and
+the gate has no second socket to carry it. The decode socket carries the same
+floor definition inside its own trio rather than inside this envelope, which
+is what makes `fault-report` one definition with two carriages instead of two
+definitions that would drift.
 
 **A later loop's vocabulary enters this enum in the act that charters that loop,**
 which is the same loudness the trio's own case sets carry: one owner, contracts
@@ -655,6 +679,11 @@ build-time assertion over the resolved external tree rather than by H2.
   token workflow's, with the hot-path measurement, per section 4.3, the
   channel question having closed with the decoder-cut ruling, decode on its
   own socket.
+- **`FaultReport`'s shape.** Elected by the token workflow's trace act
+  against the closed case set of `weaver-spu-PRD` section 13.10,
+  `weaver-gate-PRD` section 13.4, and `weaver-harness-PRD` section 5, since
+  the same shape serves the wire and the `fault` event's payload and electing
+  it twice would be two shapes for one fact.
 - **`TurnFrame`'s shape.** Elected against the constraint section 4.1 states,
   a frame being opaque and octets inside a JSON envelope being the defect this
   crate already refused once. Settled with a measurement over real client

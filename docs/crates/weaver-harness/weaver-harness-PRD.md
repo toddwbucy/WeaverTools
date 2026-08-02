@@ -72,6 +72,12 @@ stays this crate's, the family template's render seats in the SPU's family
 library per `weaver-spu-PRD` sections 13.4 and 14, and the rendered reality
 returns on the report path so the harness authors what the model saw without
 having rendered it.
+**Revised:** 2026-08-02, a fourth entry this date, on the gate act's review.
+Section 5 enumerates the fault sources this crate itself raises, commit
+pressure, a write failure against a live process, and an organ death observed
+as closure, the review seat having found the corpus-wide case set declared
+closed with this organ's cases uncounted and the death case underivable from
+the organs' own enumerations.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -448,6 +454,20 @@ receive: one receive site, taking no flag argument, returning a handle the rest 
 the crate cannot construct another way. That pin is real and it is a different claim.
 The flag itself takes the perturbation-verified test of apex section 11, and the test
 counts only when it has been watched to fail with the flag removed.
+
+**What this crate itself raises, which the organs' enumerations cannot
+cover.** The harness is an organ too, per apex section 5.4, the one whose
+domain is coordination, so the `fault` event's case set is incomplete without
+its sources and they are named here with the organs': the recorder surfacing
+commit pressure while the sink stays writable, a stream write failing against
+a live process, and an organ's death observed as channel closure after the
+enter aggregate was answered. The third is why this enumeration cannot be
+derived from the organs' own: a dead party is exactly the one that cannot
+report, so the SPU's cases at `weaver-spu-PRD` section 13.10 and the gate's
+at `weaver-gate-PRD` section 13.4 are silent about their own deaths by
+construction, and the harness's observation is the only account there is.
+With these three named the corpus-wide case set closes across all three
+organs, and the payload's shape is the trace act's to elect against it.
 
 **The harness reads, the model does not.** The harness reads the trace continuously,
 because the working structure is its own copy of the record and every prompt

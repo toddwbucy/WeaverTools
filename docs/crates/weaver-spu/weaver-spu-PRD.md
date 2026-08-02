@@ -619,9 +619,10 @@ workflow that charters the traffic rather than to this closure.
 fault-carrier ruling of 2026-08-01 made the stream the fault's carrier and the
 `fault` event kind its shape, with this charter named as the first of the
 organs owing an enumeration. Section 13.10 carries it, the token workflow's
-act having chartered the run this crate's faults occur in, and the gate's
-half landed at `weaver-gate-PRD` section 13.4 in the same workflow's gate
-act of 2026-08-02, which closed the set. What remains is the payload's
+act having chartered the run this crate's faults occur in, and the remaining
+two organs landed in the same workflow's gate act of 2026-08-02, the gate's
+at `weaver-gate-PRD` section 13.4 and the harness's at `weaver-harness-PRD`
+section 5, which closed the set across all three. What remains is the payload's
 shape, which the trace act elects against the closed set rather than against
 a guess, and that is the trace's work rather than a cell of this charter's.
 

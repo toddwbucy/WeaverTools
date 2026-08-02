@@ -51,10 +51,12 @@ riding inside the cases as satellite types. The subsection retitles from the
 first socket contract to the socket contracts, and the envelope's scope
 sentence names the decode socket as outside it.
 **Revised:** 2026-08-02, a third entry this date, the token workflow's gate
-act. Section 2.3 goes from seven definitions to eight, `turn-frame` arriving
-on the gate contract's demand: one definition for both directions, opaque to
-the crate that relays it, named for the seam's currency under the naming
-ruling's ratified extension.
+act. Section 2.3 goes from seven definitions to nine. `turn-frame` arrives on
+the gate contract's demand, one definition for both directions, opaque to the
+crate that relays it, named for the seam's currency under the naming ruling's
+ratified extension. `fault-report` arrives with it on the review seat's
+finding that the gate's fault had no carriage, one definition for every
+reporting seam because the harness authors all of them into one event kind.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -323,7 +325,8 @@ protocol vocabulary out of this crate until a written contract needed it.
 `weaver-admin-harness-contract` section 8 was the first, arriving with four,
 `weaver-harness-spu-decode-contract` section 7 the second, arriving with the
 token trio on 2026-08-02, and `weaver-harness-gate-contract` section 7 the
-third, arriving with `turn-frame` in the same workflow's gate act. Nothing
+third, arriving with `turn-frame` and `fault-report` in the same workflow's
+gate act. Nothing
 else enters this subsection until another contract draws it, a definition
 arriving without a contract behind it being the reserved-slot error apex section
 9 forbids, in schema form. `harness-alert` was
@@ -371,7 +374,20 @@ harness's, per `weaver-gate-PRD` section 3, and what they look like on the
 wire is the Spec's, against a constraint that subsection states rather than
 waves at.
 
-**One of the eight belongs to the floor and not to any loop.** `organ-envelope` is the
+**The fault report is the carriage a reporting organ needs, and it belongs to
+no loop either.** `fault-report` arrives with the gate act on the same
+demand-driven terms, because the gate raises faults across the organ channel
+and the channel's payload set was closed before a gate fault existed. It is
+one definition rather than one per seam: what an organ hands the harness when
+something it survived has to reach the record is the same fact whichever
+socket carries it, and the harness authors all of them into the one `fault`
+event kind `weaver-trace-PRD` section 3.1 defines. So both reporting seams
+draw it, the gate's inside the envelope and the decode socket's inside its
+own trio, which is the one-owner-many-drawers shape this subsection already
+runs on. The case set it carries is the organs' enumerations, closed on
+2026-08-02, and its shape is the trace act's to elect against them.
+
+**One of the nine belongs to the floor and not to any loop.** `organ-envelope` is the
 carrier every organ channel draws, holding the exchange a message belongs to, that
 message's position in the exchange, and the type of its payload. It is defined here
 because the coordination seam was the first channel to need it, and it is the one
@@ -451,9 +467,16 @@ to: token-refusal
 node: turn-frame
 kind: vocabulary
 
+node: fault-report
+kind: vocabulary
+
 edge: defines
 from: weaver-types
 to: turn-frame
+
+edge: defines
+from: weaver-types
+to: fault-report
 ```
 
 ## 3. What it must not hold

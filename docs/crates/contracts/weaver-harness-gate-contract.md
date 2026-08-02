@@ -169,9 +169,9 @@ made across clients. A gate that refused instead of relaying while a turn
 was in flight would push the one-turn loop's shape onto every client as an
 error surface, where waiting is what a conversation already means.
 
-**Report a fault.** Opened by the gate, carrying a fault of
-`weaver-gate-PRD` section 13 that arose outside any exchange, the listener
-lost above all. A failure inside a turn exchange, the client gone before its
+**Report a fault.** Opened by the gate, carrying a `fault-report` naming a
+case of `weaver-gate-PRD` section 13.4 that arose outside any exchange, the
+listener lost above all. A failure inside a turn exchange, the client gone before its
 response above all, is that exchange's own account instead. The harness
 authors what it is handed as the `fault` event, per the fault-carrier
 ruling, and answers received, promising authorship and nothing else.
@@ -305,14 +305,17 @@ it, and a group is stated even when empty.
 
 **Drawn from `weaver-types`:** `organ-envelope`, `gate-instruction`,
 `lifecycle-directive`, `lifecycle-answer`, `lifecycle-refusal`, and
-`turn-frame`, the last from the token workflow's act: one definition for
-both directions, a client line carried opaque, inward as the ask and outward
-as the answer, refusals riding inside it as content the harness authored.
-The definition is owed to `weaver-types-PRD` section 2.3 by this act and
-lands with it, entering the envelope's payload in the same act per that
-crate's rule that a later loop's vocabulary enters in the act chartering its
-loop, named for the seam's currency, the turn, under the naming ruling's
-ratified extension.
+`turn-frame` and `fault-report`, the last two from the token workflow's act.
+`turn-frame` is one definition for both directions, a client line carried
+opaque, inward as the ask and outward as the answer, refusals riding inside
+it as content the harness authored, named for the seam's currency under the
+naming ruling's ratified extension. `fault-report` is what section 2's fault
+exchange carries, and it is drawn rather than invented here because every
+reporting seam hands the harness the same fact and the harness authors all of
+them into one event kind. Both are owed to `weaver-types-PRD` section 2.3 by
+this act and land with it, entering the envelope's payload as the variants
+that carry them, the frame under that enum's later-loop rule and the fault
+report on the different ground that Spec's section 4.1 states.
 
 `organ-envelope` is the carrier every organ channel draws, drawn here as the
 coordination and residency contracts draw it.
@@ -358,8 +361,8 @@ register under G5.
   the organ declaring in its own charter. On merge.
 
 **What this act closes.** The fault cases a running hook raises are named at
-`weaver-gate-PRD` section 13, and with them the corpus-wide case set behind
-the `fault` event closes: the SPU's at its section 13.10, the gate's at its
-section 13, and the harness's own pressure case per `weaver-trace-Spec`
-section 6. The payload's shape lands with the trace act against the closed
-set.
+`weaver-gate-PRD` section 13.4, and with them the corpus-wide case set behind
+the `fault` event closes across all three organs: the SPU's at its section
+13.10, the gate's at its 13.4, and the harness's three at
+`weaver-harness-PRD` section 5, landed in this same act. The payload's shape
+lands with the trace act against the closed set.

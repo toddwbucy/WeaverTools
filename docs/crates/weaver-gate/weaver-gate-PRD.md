@@ -428,7 +428,11 @@ A peer failing the predicate is not a fault. It is the boundary working, and
 a fault event per refused dial would make the record noisiest exactly when
 the boundary is doing its job.
 
-**With these named the corpus-wide case set closes.** The `fault` event's
-cases are the SPU's at `weaver-spu-PRD` section 13.10, this crate's here, and
-the harness's own pressure case, and the payload's shape lands with the trace
-act against the closed set rather than against a guess.
+**With these named the corpus-wide case set closes across all three organs.**
+The `fault` event's cases are the SPU's at `weaver-spu-PRD` section 13.10,
+this crate's here, and the harness's own three at `weaver-harness-PRD`
+section 5, that last enumeration landing in this same act on the review
+seat's finding, and it cannot be derived from the other two because an organ
+death is reported by the party that survives rather than the one that died.
+The payload's shape lands with the trace act against the closed set rather
+than against a guess.

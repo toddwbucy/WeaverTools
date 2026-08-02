@@ -9,6 +9,10 @@ its own contract, `weaver-harness-spu-contract`, and neither document restates
 the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-02, on the same workflow's gate act. The fault exchange
+carries the floor's `fault-report`, one definition for every reporting seam,
+the gate act having found that the gate's fault had no carriage and settled
+the question for both seams at once.
 **Document ID:** `weaver-harness-spu-decode-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -123,8 +127,9 @@ mechanism the Spec's per family, per `weaver-spu-PRD` section 13.9. The
 answer confirms after the outcome holds.
 
 **Report a fault.** Opened by the SPU, the seam's one SPU-opened
-exchange, carrying a fault of `weaver-spu-PRD` section 13.10 that arose
-outside any outstanding exchange, residency degraded above all. A fault
+exchange, carrying a `fault-report` naming a case of `weaver-spu-PRD`
+section 13.10 that arose outside any outstanding exchange, residency
+degraded above all. A fault
 arising inside a generation is that exchange's typed answer instead, so
 one fact never travels twice. The harness authors what it is handed as
 the `fault` event, per the fault-carrier ruling, and answers received,
@@ -271,6 +276,12 @@ ingest records this document is not the source of:
     edge: defines
     from: weaver-types
     to: token-refusal
+
+**Also drawn: `fault-report`**, added on the gate act of 2026-08-02, which
+found that the gate's fault had no carriage and settled one definition for
+every reporting seam. This seam carries it inside the trio's cases rather
+than inside an envelope, the decode socket carrying none, which is the same
+definition with a second carriage rather than a second definition.
 
 The session and turn identities ride inside the trio's cases rather than
 being drawn as vocabulary of their own: the floor holds `SessionId` and
