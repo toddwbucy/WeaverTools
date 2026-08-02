@@ -41,7 +41,11 @@ verbosity from what the token workflow carries.
 composability batch. The section 10 head-of-line cell closes: decode does not
 share the lifecycle channel, taking its own socket owned by this crate, the
 sockets multiplying while the organ does not, and the measurement the cell
-waited on is superseded by the structural answer.
+waited on is superseded by the structural answer. On the review seat's return
+the same day, the closure defers one more thing by name: whether the decode
+socket carries the organ envelope, and under what encoding, goes to the token
+workflow, the every-channel sentence of `weaver-types-PRD` section 2.3 meeting
+its first unclassified instance there rather than silently.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -557,7 +561,15 @@ the lifecycle channel is that channel, the decode socket is additional surface
 this crate owns, and the sockets multiply while the organ does not. The
 measurement this cell once waited on is superseded, because the risk it would
 have measured is answered structurally. How the decode socket reaches the
-harness, and the exchanges that cross it, are the token workflow's to charter.
+harness, the exchanges that cross it, and whether it carries the organ envelope
+at all, under what encoding, are the token workflow's to charter. The last is
+named because `weaver-types-PRD` section 2.3 has every duplex channel with the
+harness carrying that envelope, and this socket is the universal's first
+unclassified instance: either it is such a channel and the envelope's encoding
+on the hot path becomes a live question, the JSON election stopping short of
+the decode seam by `weaver-types-Spec` section 4's own rule, or the universal
+gains its first exception and says so, and that classification belongs to the
+workflow that charters the traffic rather than to this closure.
 
 **What this crate raises, which the `fault` event is waiting on.** The fault-carrier
 ruling of 2026-08-01 made the stream the fault's carrier and the `fault` event kind
