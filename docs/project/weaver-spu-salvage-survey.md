@@ -226,7 +226,8 @@ new work rather than salvage. The disposition knobs, where the
 quarry's seed exists only as a hardcoded default and a determinism test,
 never wire-configurable, so the disposition principle's type,
 `Disposition<T>` the natural candidate and the SPU Spec's to take or
-leave, is the seed's first real home. And the backend-peers seam as the decoder's interior, GGUF and
+leave, is the seed's first real home. And the backend-peers seam as the
+decoder's interior, GGUF and
 candle-native first-class under the umbrella.
 
 The SPU Spec then follows the workflow, residency plus the decoder per the
