@@ -12,8 +12,6 @@ listed with their settlers, `Recorder` appears as the crate's principal type wit
 the receive site declared, the verbosity section states that this crate holds no
 level and reports the contract's residual sentence, the close-on-exec test is owed
 to `weaver-harness-Spec`, and the satellite types are listed as open.
-**Document ID:** `weaver-trace-Spec`
-**Parent:** `weaver-trace-PRD`
 **Revised:** 2026-08-02, on the second return: `Payload` is untagged with the
 envelope's kind as discriminant and admission enforcing the pairing, a bracket
 kind carries no payload member rather
@@ -25,10 +23,13 @@ argument, its no-collision ground, and the forward constraint on envelope fields
 **Revised:** 2026-08-02. Section 8 restates and retitles against the ruling that
 retired the recording levels: no level exists to hold, and the contract residue
 this Spec reported dissolves with its subject rather than needing the act section
-11 named. On the review seat's return the same day, three earlier changelog
-entries were restored to what their own acts said and the entries of this date
-were moved to the end of this list, filing order having been broken and history
-having been edited to match a later ruling.
+11 named. On the review seat's return the same day, two earlier changelog entries
+were restored to what their own acts said, this document's and
+`weaver-harness-PRD`'s, and the entries of this date were moved to the end of
+this list, filing order having been broken and history having been edited to
+match a later ruling.
+**Document ID:** `weaver-trace-Spec`
+**Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
 
 ---
