@@ -5,6 +5,18 @@ development teaches what the next one looks like. It is never ratified and nothi
 is written against it.
 
 **Date started:** 2026-07-28
+**Revised:** 2026-08-02, the composability batch. Four sections land from the
+tape-trace session's candidate edit, corrected on the spec seat's evaluation and
+ruled by the operator: every organ as a composability framework, loop zero and
+loop one with the loop compiled into the binary, the SPU umbrella, and the
+builder's end state carrying the disposition principle and the batch's motive,
+variance in behavior held to a predictable range. Section 0 gains the register
+note, section 2 gains the sentence reconciling the judgment organs with the
+umbrella, and the closing section renumbers from 7 to 11. On the review seat's
+return the same day, section 7's orchestration sentence splits its verb: the
+binary carries the organs and the configuration declares the bindings, one
+word having read against the compiled-not-configured ruling landing in the
+same act.
 **Document ID:** `weaver-tools-vision`
 **Editorial:** ASCII, no em-dashes, no semicolons.
 
@@ -34,6 +46,12 @@ One rule governs the boundary between the two documents. This document speaks in
 biology, cortex and brainstem and hippocampus, because the organism model is the
 clearest way to say what the architecture is for. The PRD never does. Biology
 explains why the architecture is shaped the way it is. It never becomes a spec term.
+
+The registers are three, and the ambition lives in exactly one of them. The
+readme stays grounded on engineering principles, with one theory claim conceded
+and defended, that latency is the enemy of agency, and agentic-performance claims
+stay out of it entirely. The spec corpus carries only what is current work. This
+document carries the destination.
 
 ## 1. The staged arc
 
@@ -96,7 +114,10 @@ there.
 
 The organs that arrive later are filtration and judgment. A classifier or a small
 activation network that filters prompts or queries is a kidney or a liver, an organ
-that decides what passes and what does not. The memory leg, drey together with the
+that decides what passes and what does not. Where such an organ's judgment runs as
+a model, the model's compute resides in the SPU under the same residency accounting
+as the decoder, per the umbrella of section 9: the organ is the judgment function,
+and the SPU is where its model lives. The memory leg, drey together with the
 consolidation pass, is the hippocampus, the organ that turns momentary experience
 into lasting memory. None of these exist in stage one, because a body with no
 bloodstream needs no kidney, and an agent whose record ends with its session has no
@@ -237,7 +258,102 @@ Stated at the level of the program, this is the Level A claim in operational dre
 per-agent OS individuation is not only how agents are told apart, it is how they are
 made safe.
 
-## 7. What this document does not commit
+## 7. Every organ is a framework for composability
+
+Each core crate is separated out the way it is so that a builder can extend it in
+place without touching anything above it. The SPU is separated so new models and
+model families drop in under one umbrella, and so decoder, encoder, classifier,
+reranker, and small-activation-network operations are distinct concerns managed
+under that umbrella rather than one tangled surface. The harness is separated so
+new capability connects by a hook the loop reaches, not by surgery on the board.
+Admin authorizes and never executes the interior: it verifies what the operator
+declared, directs the transition across its one seam, and the harness orchestrates
+the loading of the organs the agent's binary carries, against the bindings its
+configuration declares. Memory and state are deliberately
+not core. Memory arrives later as a built organ with harness hooks the loop
+connects to, and it is left out of the core set on purpose, to be the first
+demonstration of how a brand new organ is added and connected. That is a feature
+of the plan, not a gap.
+
+The bar each organ answers to is the reversibility test. If a builder has to go
+the other way inside an organ later, the cost is that organ and nothing above it.
+An organ that passes is a composability framework. An organ that fails leaks the
+cost outward, and the leak names the boundary that is wrong.
+
+## 8. Loop zero and loop one
+
+Loop zero is the guaranteed reach point and the responsibility the framework
+takes. A proper configuration file is the price of admission. Admin authorizes
+and provisions against it, the harness orchestrates the interior, and what the
+framework delivers is the agent up, model loaded, sitting at loop zero waiting
+for instructions. Loop zero is the load and the unload, the same for everyone,
+and it never leaves the framework's hands.
+
+Loop one is the builder's. It is whatever the builder decides it is, written
+inside loop zero, bounded only by what the harness exposes and what can be
+hooked through it. Loop zero is why the agent runs. Loop one is why the agent is
+not everyone else's. And loop one is compiled, not loaded: the builder writes
+the loop in narrow Rust at the worker's composition root, composes it against
+the ports the harness offers, and recompiles. The behavior is immutable in the
+binary, and that is a feature rather than a cost. A config immutable at
+deployment cannot drift, what the binary declared is what it was, and swapping
+the loop is swapping which binary the agent's unit starts. The basic loops the
+framework ships are demonstrations of that motion, written by the same path any
+builder's loop takes, native in exactly the same way.
+
+## 9. The SPU umbrella, fully grown
+
+The SPU's destination is prehooks standing ready for five operation types:
+decoder, encoder, classifier, reranker, and small activation network. Each ships
+wired to a representative model so the claim is demonstrated rather than
+asserted: a reranker loads, takes traffic, and a loop routes through it end to
+end. The demonstration matters because a deployed assistant is not one model
+anyone points at. It is a decoder with rerankers and classifiers sitting in
+front of it, sorting traffic before the token everyone calls the answer. Showing
+all five operation types live is what proves the umbrella is real and not a
+decoder with aspirations.
+
+The growth path is incremental by construction. Each operation type is internal
+organization of the SPU, piping out its own Unix socket, and every such socket
+is the SPU's own: the SPU remains the party to every contract those sockets
+carry, the harness is told where a socket is and when to route to it, and the
+organ test of the apex is untouched because the sockets multiply while the organ
+does not. Adding an operation type is a bounded job: write it, pipe it out its
+own socket, tell the harness where and when. A loop that does not call an
+operation up simply does not use it. Decoder and encoder are split precisely
+because the many decoder families need more ongoing support than the fewer
+encoder and reranker families, and the split keeps add and subtract clean.
+
+## 10. The builder's end state
+
+A builder edits one directory. They write their loop where the scaffolding
+already reaches, point at a model the way any config-driven loader points at
+one, add the state they need, and plug in at the harness. Narrow Rust and a
+recompile is the expected cost today, and pointing at a safetensors file with
+plain YAML configuration is the aim, a framework question the SPU's own charter
+reserves for its Spec with candle as the illustrative candidate rather than a
+commitment. When that level is reached and the visibility inside the model is
+standing, that is where the payoff arrives.
+
+Every knob in the builder's assembly carries a disposition, and the disposition
+is the builder's election at the composition root: frozen, the value baked into
+the binary, or operator-tunable, the value routed from the agent's configuration
+at load. Seed and temperature are the reference cases. Freeze them and the
+binary declares a re-enterable starting field, leave them tunable and the
+operator elects per load, and either way the trace records the effective values,
+because a disposition changes who sets a value and never whether it is recorded.
+
+The point of all of it is variance held to a predictable range. The engine stays
+stochastic on purpose, every condition around it is frozen or declared, and so
+the variance that remains is attributable to the thing under study. An immutable
+binary makes repeated runs a sample of a characterizable distribution, which is
+what turns agent behavior into an object of measurement rather than anecdote.
+This is the payoff half of the readme's substrate claim that nothing varies that
+we did not set. The basic loops and the memory-organ demonstration are what gets
+published upstream to show exactly that motion: build what you need, not the
+scaffolding, because the scaffolding is what shipped.
+
+## 11. What this document does not commit
 
 The value of this document depends on it not hardening into design. It names organs
 that do not exist, an order of stages it does not fix, and questions it does not
