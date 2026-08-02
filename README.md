@@ -42,7 +42,10 @@ is no reason anyone should have to choose our eventual memory system over
 someone else's, and the architecture is built so nobody ever has to. Our memory
 arrives as one more peer on the board, behind the same kind of socket and the
 same kind of contract as anything you would write yourself. Yank it and put
-something else in. The same goes for the loops: they are held as workflow
+something else in. That flexibility is measured in time: drop your own memory
+or state system in, spend an afternoon on the code, and you are experimenting
+before dinner, instead of spending a week writing one more Python script to
+test a single idea. The same goes for the loops: they are held as workflow
 documents, not baked into the switchboard, and an agent running your loop is as
 native as one running ours. The model sits behind the SPU for the same reason.
 Swapping the decoder is a change to the agent's configuration, not surgery on
@@ -116,6 +119,27 @@ forward pass with nothing re-sampled, and when deeper visibility is needed an
 agent can be reloaded with residual readout enabled by a change to its
 configuration alone, per-layer activations reduced in place at production time.
 Observation is a deployment decision, not a rebuild.
+
+## Why the name
+
+Warren Weaver, introducing Shannon's mathematical theory of communication in
+1949, drew three levels at which communication can fail. Level A is technical:
+were the symbols transmitted accurately. Level B is semantic: did the symbols
+carry the meaning intended. Level C is effectiveness: did the received meaning
+change conduct the way the sender needed. Those three levels are this program's
+diagnostic and architectural inspiration, and the architecture is the frame
+made structural. The substrate pins Level A, one machine, kernel-enforced
+identity, boundaries preserved on every seam, so transmission stops being a
+variable. The trace captures Level B, every symbol that crossed every seam, in
+order, in one canonical form. What remains is Level C, whether the agent
+behaves the way we need it to, and that is the question this apparatus exists
+to make answerable rather than guessable. When an agent fails, the useful
+question is which level it failed at, and a conventional setup cannot ask that
+question, because its levels are smeared across a network nobody controls.
+
+The big foundation labs have tooling of this class and keep it in house. The
+rest of us, working on the outside, have had to improvise ours one script at a
+time. That is the thing WeaverTools is built to change.
 
 ## What is here today
 
