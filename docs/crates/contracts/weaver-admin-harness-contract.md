@@ -65,6 +65,12 @@ nameless, and possession of the connected end remains the authentication.
 `lifecycle-directive` and `lifecycle-answer`, loop 0's trio with the refusal, wire
 vocabulary naming for the loop whose traffic it carries rather than the sender,
 and section 8's records follow.
+**Revised:** 2026-08-02, fourteenth, the descriptor recount. The count corrects
+to the singular, per the human's ruling of this date: one trace descriptor
+crosses in the enter exchange, the sink's, and the plural was residue of the
+retired live view and the durable record, each retirement having removed a
+descriptor without the collective noun being recounted. Surfaced by the harness
+Spec pass, which built to the one and named the divergence.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -176,7 +182,7 @@ what made the handoff safe, and the clause that said the drop does not gate what
 cross is now a statement about a uid that never changes.
 
 **Clearing the dumpable flag is what stops a same-uid process from attaching** to the
-worker and driving this channel and the trace descriptors directly, and it closes
+worker and driving this channel and the trace descriptor directly, and it closes
 `/proc/[pid]/fd` as a second route to them by reparenting the directory to root. **The
 flag resets on `execve`,** so the requirement is stated against the last exec. This is
 the whole of what the removed ordering was protecting and it stands unchanged.
@@ -186,7 +192,7 @@ cannot verify from outside the process, which is what a contract is for, so
 `weaver-admin-PRD` section 7 points here rather than restating it.
 
 **On this seam the close-on-exec obligation of `weaver-organ-channel` section 2 lands
-on the trace descriptors and this channel's own.** Close-on-exec rides the descriptor
+on the trace descriptor and this channel's own.** Close-on-exec rides the descriptor
 rather than the open file description, so a
 receiver calling `recvmsg` without `MSG_CMSG_CLOEXEC` accepts a handle with the flag
 clear, and every subprocess a tool call spawns from that point inherits a writable
@@ -207,7 +213,7 @@ reopened, and not shared with a second worker.
 Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
-session identity, the run ordinal, the trace descriptors, the
+session identity, the run ordinal, the trace descriptor, the
 model binding, and the gate instruction. The last two are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU or the gate, so
 if admin's intent for either does not cross this seam it crosses nowhere. The harness
@@ -259,7 +265,7 @@ closes when the organs that can raise a fault have charters naming what they rai
 and the first of those is `weaver-spu-PRD`. This document binds nothing of it, the
 shape now being the event kind's, per `weaver-trace-PRD` section 3.1.
 
-**The descriptors cross once, in the enter exchange.** They are not re-sent, not
+**The trace descriptor crosses once, in the enter exchange.** It is not re-sent, not
 revoked, and not replaced. A harness that needs a descriptor it was not given has a
 failed load rather than a second request to make, because there is no exchange in
 which it asks for one.
@@ -295,10 +301,10 @@ exchange payload change is a supplies change by construction, and a Spec writer 
 this list.
 
 **Admin supplies** the session identity and run ordinal for the run being entered, the
-trace descriptors, the model binding the fan-out admits,
+trace descriptor, the model binding the fan-out admits,
 the gate instruction the fan-out starts, and the intent to stop.
 
-**Admin guarantees** that every trace descriptor it passes refers to the sink the
+**Admin guarantees** that the trace descriptor it passes refers to the sink the
 session's configuration declares, that the run ordinal is the next one for that
 session, and
 that the boundary the worker runs inside exists and is correct, because
@@ -312,7 +318,7 @@ confirmation of departure, and the turn's fate on a stop.
 **The harness guarantees** that every descriptor it accepts is accepted close-on-exec,
 per section 2, which is an obligation on the receiving call and cannot be met by the
 sender. It guarantees that it authors the run's bracket
-events, that it writes only through the descriptors it was handed, that it resolves no
+events, that it writes only through the descriptor it was handed, that it resolves no
 path, and that a ready answer is given only after a standing working structure, an
 admitted model, and a started gate. It guarantees that a refusal names where the
 fan-out stopped, so that admin rolls back on the answer alone. It guarantees that a
@@ -338,7 +344,7 @@ so an answer to leave covers what was drained and an abrupt exit covers nothing.
 Refusals are typed and enumerable, and every one of them is the harness refusing an
 ask, because admin answers nothing. The cases:
 
-- the descriptors are absent, unusable, or do not carry the required flags
+- the descriptor is absent, unusable, or does not carry the required flags
 - an organ the enter fans out to refused, and the refusal names which organ and
   carries its reason, so the aggregate answer is one refusal rather than a report to
   parse

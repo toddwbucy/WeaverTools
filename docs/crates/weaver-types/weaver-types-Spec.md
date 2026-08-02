@@ -33,6 +33,11 @@ load governs production alone.
 **Revised:** 2026-08-02, a second entry this date. Section 4's decode sentence
 cites the closed cell rather than holding it open, decode taking its own socket
 per the decoder-cut ruling of this date recorded at `weaver-spu-PRD` section 10.
+**Revised:** 2026-08-02, a third entry this date. Section 2 states the feature
+gate's scope, the `config` feature gating the parser and the `parse` surface
+alone and never a type, `ModelBinding` and `GateInstruction` compiling with
+the feature off, the owed placement of the harness Spec review landing here
+after the harness branch rather than beside it.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -192,7 +197,14 @@ must already be listening, so a creation flag would promise an act admin cannot
 perform. A missing socket sink therefore always refuses.
 
 **`ModelBinding` and `GateInstruction` are defined here and are the same types the
-wire carries.** Both travel two paths, into the config from the operator and
+wire carries, and the feature gate never reaches them.** The `config` feature
+gates the parser and the `parse` surface alone, and never a type: the two are
+wire types the loop 0 directives carry, so they compile with the feature off,
+which the harness's featureless link constructs directives against, per
+`weaver-harness-Spec` section 1. A build with the feature off holds every type
+of this crate and no YAML dependency, which is section 1's unconditional-wire
+sentence stated as the gate's mechanical scope. Both travel two paths, into the
+config from the operator and
 across a seam inside a directive, and one type for both is what keeps admin from
 re-encoding what it validated. `ToolName` is a name today and gains its element
 type with the tool workflow, because it elects from `tool-trait`, which
