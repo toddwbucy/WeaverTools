@@ -1,6 +1,8 @@
 # WeaverTools Working Process
 
-**Version:** v0.14, 2026-08-01, seventh entry this date. The v0.14 change is
+**Version:** v0.15, 2026-08-01, eighth entry this date. The v0.15 change is gate
+G2 gaining the rationale clause, per the human's ruling: developed in the PRD,
+restated in the Spec. The v0.14 change was
 section 1's seat assignment, per the human's ruling: authoring moves to the seat
 holding the working tree and review to the remote session, formalizing the
 practice phase one's close ran on. The v0.13 change was
@@ -188,6 +190,18 @@ live in the Working Rules section 1.
 **G2, level.** Nothing in the document belongs to a different level. A PRD carrying
 protocol, a contract carrying representation, or a spec carrying rationale fails this
 gate, and the material relocates rather than being trimmed.
+
+**Rationale is developed in the PRD and may be restated in the Spec,** per the
+human's ruling of 2026-08-01, which is what the spec clause above means and what
+it failed to say. A Spec elects a representation, and an election with no stated
+ground cannot be reviewed, so the Spec names the ground it answers to. What it may
+not do is develop that ground: a criterion argued first in a Spec has been settled
+outside the context that governs it, which is how a PRD and its Spec drift into
+saying different things about the same crate. The test is mechanical. Where a
+Spec's reasoning traces to a charter clause it is restatement and passes. Where it
+does not, the criterion lands in the PRD in the same act, and the Spec cites it.
+This is the alignment the colocation rule exists for, one PRD and one Spec in one
+crate directory, moving through one branch and one pull request together.
 
 **G3, graph facts.** The crate has exactly one parent edge, naming its domain parent:
 the domain root for a member crate, and `WeaverTools` for a domain root. It carries no
