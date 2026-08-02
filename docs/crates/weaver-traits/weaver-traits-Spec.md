@@ -10,7 +10,10 @@ combinations are stated and its refusing party named, the enum representation is
 elected, the absence pins reclassify to compile-fail tests with the instrument
 named, the tool block cites the charter rather than the untracked working list,
 the `Send` bound joins the inherited constraints, and two citations and two
-wordings are corrected.
+wordings are corrected. Revised again the same day, on the second return: the
+tagging election becomes a stated mechanical test shared with
+`weaver-types-Spec`, `Role` drops its tag as a fieldless enum, and two
+instrument overclaims in section 7 are corrected.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
@@ -160,16 +163,29 @@ section 5 holds blocked. This Spec fixes that they exist as blocks and defers wh
 they carry, which is the half-chartered discipline the SPU and gate charters
 already run on.
 
-**The wire shape is internally tagged, and every variant is a struct variant so
-that it can be.** `#[serde(tag = "type", rename_all = "snake_case")]` on both
-enums, and `#[serde(rename_all = "snake_case")]` on the structs, so a block reads
-as `{"type": "text", "text": "..."}` rather than as `{"Text": "..."}`. The
-election is about the reader: these payloads reach the operator's tooling through
-the stream, where a non-Rust consumer keys on a stable member name, and serde's
-default external tagging makes the variant name a key, which is the shape that
-breaks silently when a variant is renamed. `ContentBlock::Text` takes a struct
-variant rather than a newtype for the mechanical reason that internal tagging
-cannot represent a newtype variant wrapping a primitive.
+**The tagging election follows one mechanical test, stated here and applied
+identically in `weaver-types-Spec` so the two floor Specs cannot drift.** A
+fieldless enum serializes as a plain renamed string. An enum whose every variant
+is struct-shaped or wraps a struct is internally tagged. An enum with any variant
+wrapping a primitive, a sequence, or another tagged enum is adjacently tagged,
+because internal tagging cannot represent those shapes and fails at
+serialization time rather than at compile time.
+
+`Role` is fieldless, so it takes `#[serde(rename_all = "snake_case")]` and no tag,
+serializing as `"user"`. Tagging it would yield `{"type": "user"}`, a nesting
+level that buys nothing and costs a level in every recorded message.
+`ContentBlock` passes the second case, `Text` being struct-shaped and the other
+two wrapping structs, so it takes `#[serde(tag = "type", rename_all =
+"snake_case")]` and a block reads as `{"type": "text", "text": "..."}` rather
+than as `{"Text": "..."}`. The election is about the reader: these payloads reach
+the operator's tooling through the stream, where a non-Rust consumer keys on a
+stable member name, and serde's default external tagging makes the variant name a
+key, which is the shape that breaks silently when a variant is renamed.
+
+**`ContentBlock::Text` takes a struct variant rather than a newtype** for the
+mechanical reason the test states: internal tagging cannot represent a newtype
+variant wrapping a primitive. No variant of either enum wraps a bare primitive,
+which is what keeps the second case available here.
 
 **A tool result appears in two positions and the redundancy is only apparent.**
 `Role::ToolResult` says which of the three event kinds the message becomes, and
@@ -277,10 +293,13 @@ what it errors on and it errors on nothing for a thing that was never written.
 how an absence becomes mechanical rather than remembered.
 
 - No `Default` on any type here: a doctest requiring `Message: Default` fails to
-  compile, and it starts passing the day someone adds the derive, which is the
-  test firing.
-- No method on `PermissionMode`: a doctest calling any method beyond the data
-  derives fails to compile.
+  compile. The day someone adds the derive that code starts compiling and the
+  `compile_fail` test starts failing, which is the instrument firing.
+- No adjudicating method on `PermissionMode`: doctests naming the tempting
+  candidates, `is_allowed` and `check`, fail to compile. A finite set of doctests
+  pins the named methods and not the open set of all possible methods, so the
+  general prohibition stays review's, which is the same honest split this section
+  makes for the manifest rules below.
 - No safety classification on the eventual tool trait, when that trait exists.
 
 **Enforced by the manifest, with the instrument named rather than assumed.** The
