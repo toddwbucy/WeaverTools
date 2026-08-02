@@ -42,6 +42,12 @@ ruling of this date: section 5 becomes instrumentation, elections governing
 production rather than recording, section 3.1's floor and ceiling tables become one
 flat set of fourteen kinds, and replay becomes universal. The elected-brevity
 against silent-loss ambiguity dissolves with the levels that created it.
+**Revised:** 2026-08-02, a second entry this date, the replayability correction
+of the composability batch. Section 3.1's universality paragraph restates
+against apex section 8 as corrected: the deterministic re-feed mode's inputs
+are in every record, and which further arrangements a record supports follows
+from what the deployment declared and produced, elections at the source
+governing production and production governing the record.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -323,12 +329,16 @@ identity says which bytes were loaded without saying what was loaded, which is e
 to detect that two runs differ and not enough to reconstitute either, and a payload
 without the partition cannot tell a replay where one block ended and the next began.
 
-**Replay is universal since the ruling of 2026-08-02, and the apex's requirement
-reads straight.** Every run carries its measurement payload, so every run is
-replayable and every record names the model that served it. What the apex forbids
-is a measurement payload missing one of its required fields, and with no elected
-subset there is no longer a class of run to which the requirement does not
-apply.
+**Replay is universal since the levels retired on 2026-08-02, and the apex's
+requirement is claim-relative since the correction of the same date.** Every run
+carries its measurement payload, so the deterministic re-feed arrangement's
+inputs are in every record and every record names the model that served it.
+What the apex forbids, per its section 8 as corrected, is a record missing an
+input of an arrangement it claims. Which further arrangements a record
+supports, stochastic re-entry above all, follows from what the deployment
+declared and produced, elections at the source governing production and
+production governing the record, which is this charter's own section 5
+instrumentation rule read forward.
 
 **There is no `session.started`.** A session begins when `run0` begins, so a separate
 kind would fire at the same moment as `run0`'s `load` and mean the same thing. The
