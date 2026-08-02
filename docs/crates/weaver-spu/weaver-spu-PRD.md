@@ -37,6 +37,15 @@ hook, and the only-listener claim scopes to the agent.
 **Revised:** 2026-08-02. The section 10 model-naming cell closes with the
 recording levels, per the human's ruling of this date, and sections 0 and 8 drop
 verbosity from what the token workflow carries.
+**Revised:** 2026-08-02, a second entry this date, the decoder-cut ruling of the
+composability batch. The section 10 head-of-line cell closes: decode does not
+share the lifecycle channel, taking its own socket owned by this crate, the
+sockets multiplying while the organ does not, and the measurement the cell
+waited on is superseded by the structural answer. On the review seat's return
+the same day, the closure defers one more thing by name: whether the decode
+socket carries the organ envelope, and under what encoding, goes to the token
+workflow, the every-channel sentence of `weaver-types-PRD` section 2.3 meeting
+its first unclassified instance there rather than silently.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -543,12 +552,24 @@ ruling of 2026-08-02 retired the recording levels, so every run carries one and
 every record names its model and weights hash. The question had no answer to give
 once its premise left, which is a cell closing rather than being settled.
 
-**Whether decode shares this channel.** Section 6 charters one channel because the organ
-test names one, and names the head-of-line question it leaves open: a
-boundary-preserving ordered channel puts a lifecycle directive behind whatever decode
-traffic precedes it. **Settled by:** a measurement taken when there is decode traffic to
-measure, which is the token workflow. Named here so the seam is inherited as a question
-rather than rediscovered as a surprise.
+**Whether decode shares this channel is closed: it does not, per the decoder-cut
+ruling of 2026-08-02.** Decode traffic takes its own Unix socket, owned by this
+crate and distinct from the lifecycle channel, so no lifecycle directive ever
+queues behind decode traffic and the head-of-line question dissolves rather than
+being measured. The organ test still names one duplex channel and still holds:
+the lifecycle channel is that channel, the decode socket is additional surface
+this crate owns, and the sockets multiply while the organ does not. The
+measurement this cell once waited on is superseded, because the risk it would
+have measured is answered structurally. How the decode socket reaches the
+harness, the exchanges that cross it, and whether it carries the organ envelope
+at all, under what encoding, are the token workflow's to charter. The last is
+named because `weaver-types-PRD` section 2.3 has every duplex channel with the
+harness carrying that envelope, and this socket is the universal's first
+unclassified instance: either it is such a channel and the envelope's encoding
+on the hot path becomes a live question, the JSON election stopping short of
+the decode seam by `weaver-types-Spec` section 4's own rule, or the universal
+gains its first exception and says so, and that classification belongs to the
+workflow that charters the traffic rather than to this closure.
 
 **What this crate raises, which the `fault` event is waiting on.** The fault-carrier
 ruling of 2026-08-01 made the stream the fault's carrier and the `fault` event kind
