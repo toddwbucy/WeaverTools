@@ -615,15 +615,16 @@ the decode seam by `weaver-types-Spec` section 4's own rule, or the universal
 gains its first exception and says so, and that classification belongs to the
 workflow that charters the traffic rather than to this closure.
 
-**What this crate raises is named, and the corpus-wide cell half-closes.** The
+**What this crate raises is named, and the corpus-wide cell is closed.** The
 fault-carrier ruling of 2026-08-01 made the stream the fault's carrier and the
 `fault` event kind its shape, with this charter named as the first of the
-organs owing an enumeration. Section 13.10 now carries it, the token
-workflow's act having chartered the run this crate's faults occur in. What
-keeps the corpus-wide case set open is the gate's half, arriving with the
-turn direction of `weaver-harness-gate-contract`, and the `fault` payload's
-shape at `weaver-trace-Spec` section 11 waits on that remainder rather than
-on this crate. **Settled by:** the gate's turn-direction act.
+organs owing an enumeration. Section 13.10 carries it, the token workflow's
+act having chartered the run this crate's faults occur in, and the remaining
+two organs landed in the same workflow's gate act of 2026-08-02, the gate's
+at `weaver-gate-PRD` section 13.4 and the harness's at `weaver-harness-PRD`
+section 5, which closed the set across all three. What remains is the payload's
+shape, which the trace act elects against the closed set rather than against
+a guess, and that is the trace's work rather than a cell of this charter's.
 
 **Device-state reporting, which the old tree answers in a way this corpus has not ruled
 on.** That tree read free memory from the device driver through a command-line tool and

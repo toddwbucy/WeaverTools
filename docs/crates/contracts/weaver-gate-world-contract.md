@@ -10,6 +10,10 @@ crate, the second instance of the category that ruling settles.
 **Revised:** 2026-08-01, second entry. The filename gains the `-contract` suffix on
 the human's correction, per `weaver-admin-operator-contract`, and every citation in
 the corpus follows the rename in the same act.
+**Revised:** 2026-08-02, the token workflow's gate act. Section 4's
+concurrency cell settles: a second request waits rather than refusing,
+clients may speak at once, and the harness serves turns one at a time in
+arrival order, per `weaver-harness-gate-contract` sections 2 and 3.
 **Document ID:** `weaver-gate-world-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -91,9 +95,12 @@ response path, as extensions to this page rather than replacements of it.
 
 - Order is preserved per connection, in both directions.
 - A response returns by the path its request took, and by no other.
-- One turn is in flight per agent, per the basic loop. What happens to a second
-  request while a turn is in flight, and to concurrent clients against the one-turn
-  loop, is the token workflow's, deferred rather than settled here.
+- One turn is in flight per agent, per the basic loop, and a second request
+  waits rather than being refused. The token workflow's gate act of 2026-08-02
+  settled it: clients may speak at once, the gate relays each as its own
+  exchange, and the harness serves them one at a time in arrival order, per
+  `weaver-harness-gate-contract` sections 2 and 3. A client is owed order on
+  its own connection and is promised nothing across clients.
 
 ## 5. Failure
 
