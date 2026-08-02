@@ -168,7 +168,8 @@ open the sink per section 5, bind and listen the coordination channel per
 section 7, start the unit per section 6, accept the worker's connection and
 direct enter per section 7, publish. The channel's first two acts precede the
 unit and its last two follow it, per section 7's split, because the worker
-connects at its start and a name not yet listening is a race. Each step's failure returns a
+connects at its start and a name not yet listening is a race. Each step's
+failure returns a
 typed `lifecycle-refusal` to the operator and enters the rollback below
 carrying the step's name.
 
