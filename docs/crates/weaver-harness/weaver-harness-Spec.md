@@ -26,6 +26,12 @@ the port blade enforced structurally by the compiled form.
 ruled one, the contract's plural corrected as live-view residue in the same
 act, and sections 2.3 and 3 restate from the surfaced question to the ruled
 fact.
+**Revised:** 2026-08-02, a fourth entry this date. Section 1's thread posture
+gains the constraint the gate Spec's review surfaced: the organ forks run on a
+thread whose lifetime is the worker's, the parent-death backing firing on the
+forking thread's termination rather than the process's, so what the posture
+satisfied by construction is now stated as what a threading change must
+answer. Landed after the gate branch per the working list's rule.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -119,7 +125,15 @@ is checked by the same build-time `cargo tree` assertion the floor Specs share.
 is the stream writer's, and it belongs to `weaver-trace`, per that Spec's
 section 5. Everything this crate does in this pass runs on the caller's thread,
 and the writer's existence is why the fork sites of section 2 state their
-safety bound rather than assuming a single-threaded process.
+safety bound rather than assuming a single-threaded process. **The organ forks
+run on a thread whose lifetime is the worker's, and the sentence is a
+constraint rather than a description.** The gate's parent-death backing fires
+on the forking thread's termination rather than the process's, per
+`weaver-gate-Spec` section 2 as verified by both seats, so a later threading
+change that moved the enter fan-out onto a short-lived thread would kill the
+gate spuriously while the interior it guards is healthy. Today the posture
+above satisfies the constraint by construction, and this sentence is what a
+change to that posture must answer.
 
 ## 2. The channels, and custody as code
 
