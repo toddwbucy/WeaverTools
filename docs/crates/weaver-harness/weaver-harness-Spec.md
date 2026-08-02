@@ -22,6 +22,10 @@ charter's rescope of this date: the loop is the builder's, compiled at the
 worker composition root and immutable in the binary, and this crate holds the
 seat, the granted surface, and the extension seam crossed at loaded-and-idle,
 the port blade enforced structurally by the compiled form.
+**Revised:** 2026-08-02, a third entry this date. The descriptor count is
+ruled one, the contract's plural corrected as live-view residue in the same
+act, and sections 2.3 and 3 restate from the surfaced question to the ruled
+fact.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -189,7 +193,7 @@ one defect, so the middle call is the corner's repair made unconditional.
 ### 2.3 The receive site, and adoption
 
 **Descriptors enter this crate at exactly one call, and it asks for the flag in
-the receive itself.** The trace descriptors cross once, as ancillary data on
+the receive itself.** The trace descriptor crosses once, as ancillary data on
 the enter directive's own message, per `weaver-admin-harness-contract` section
 3, so the one `recvmsg` site on the coordination channel carries
 `MSG_CMSG_CLOEXEC`. Verified both ways: a descriptor received with the flag
@@ -293,11 +297,10 @@ directive: the directive works because the harness knows what stands.
 **Enter runs four steps in the charter's order, and the answer is the
 aggregate.** Receive the sink descriptor from the directive's own message and
 construct the `Recorder`, which stands the empty working structure up. The
-count is a surfaced question: `weaver-admin-harness-contract` sections 3 and 5
-say the trace descriptors, plural, `weaver-trace-Spec` section 5's receive
-takes exactly one, and this Spec builds to the one while naming the divergence
-rather than absorbing it, the reconciliation being the human's across a
-two-party contract and filed on the working list. Author
+count is one, per the human's ruling of 2026-08-02: the coordination
+contract's plural was residue of the retired live view, corrected to the
+singular in the same act as this sentence, and `weaver-trace-Spec` section
+5's receive takes the one sink descriptor this Spec builds to. Author
 the `load` event, the run's opening and the origin of its monotonic clock.
 Create the residency pair, fork the SPU binary, and open the admit exchange
 carrying the model binding uninterpreted. Create the gate pair only after the
