@@ -20,7 +20,12 @@ the event kind's case set.
 **Revised:** 2026-08-01, further, the naming ruling. This seam draws loop 0's
 trio, the seam-owned pair it awaited dissolving with the sender convention, and
 section 7's drift defense restates against the floor's single ownership.
-**Revised:** 2026-08-02, the token workflow's gate act. The gate's own
+**Revised:** 2026-08-02, the token workflow's gate act. On the review seat's
+return the same day, section 0's block gains the four `draws` edges its
+vocabulary clause names and it lacked: `turn-frame` and `fault-report` from
+this act, and `lifecycle-directive` and `lifecycle-answer` from an earlier
+one, the block being open and the sweep discipline taking them together, so
+the clause and its projection agree at seven. The gate's own
 direction arrives: section 2 gains the turn exchange it opens per client
 request, carrying the `turn-frame` opaque in both directions, the
 serialization ruling that the harness serves one turn at a time in arrival
@@ -85,6 +90,22 @@ to: gate-instruction
 edge: draws
 from: weaver-harness-gate-contract
 to: lifecycle-refusal
+
+edge: draws
+from: weaver-harness-gate-contract
+to: lifecycle-directive
+
+edge: draws
+from: weaver-harness-gate-contract
+to: lifecycle-answer
+
+edge: draws
+from: weaver-harness-gate-contract
+to: turn-frame
+
+edge: draws
+from: weaver-harness-gate-contract
+to: fault-report
 ```
 
 **The seam edge is declared by the organ and appears in `weaver-gate-PRD` section
