@@ -12,7 +12,11 @@ loop one with the loop compiled into the binary, the SPU umbrella, and the
 builder's end state carrying the disposition principle and the batch's motive,
 variance in behavior held to a predictable range. Section 0 gains the register
 note, section 2 gains the sentence reconciling the judgment organs with the
-umbrella, and the closing section renumbers from 7 to 11.
+umbrella, and the closing section renumbers from 7 to 11. On the review seat's
+return the same day, section 7's orchestration sentence splits its verb: the
+binary carries the organs and the configuration declares the bindings, one
+word having read against the compiled-not-configured ruling landing in the
+same act.
 **Document ID:** `weaver-tools-vision`
 **Editorial:** ASCII, no em-dashes, no semicolons.
 
@@ -264,7 +268,8 @@ under that umbrella rather than one tangled surface. The harness is separated so
 new capability connects by a hook the loop reaches, not by surgery on the board.
 Admin authorizes and never executes the interior: it verifies what the operator
 declared, directs the transition across its one seam, and the harness orchestrates
-the loading of the organs the agent declares. Memory and state are deliberately
+the loading of the organs the agent's binary carries, against the bindings its
+configuration declares. Memory and state are deliberately
 not core. Memory arrives later as a built organ with harness hooks the loop
 connects to, and it is left out of the core set on purpose, to be the first
 demonstration of how a brand new organ is added and connected. That is a feature
