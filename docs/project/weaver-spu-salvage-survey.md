@@ -124,26 +124,31 @@ run: admit on enter, release on leave, the device freed. The cache that
 stays hot across turns inside a run survives, which is the property apex
 section 2 protects. Hot across agents does not.
 
-**Chat-template framing has an unresolved owner, and the ruling is larger
-than an ownership call, because the render must land in the record.** Each
-model carries its own chat template, so two representations of one
-conversation exist: the canonical message model the trace records as its
-three message kinds, and the template-rendered token sequence the model
-saw, which is the Level B reality. A record holding only the canonical
-messages forces replay to re-render through the template, and a template
-that changed since the run observes a forward pass that never happened,
-which is the failure apex section 8 already names in its rule that
-tokenization is reproducible from what is recorded. So the requirement
-that binds whichever way the ownership falls, per the operator's ruling of
-2026-08-02: the mapping from the canonical messages to the rendered
-reality is trace content. The measurement payload's input token
-identifiers and prompt-block partition are that mapping's mechanism, the
-quarry's `tokenize_with_offsets` is its working ancestor, and the party
-that renders, whichever it is, puts the rendered form on the report path
-that reaches the record. The quarry's session Spec ruled the server owns
-framing, the merged harness charter owns assembly per model, and the token
-workflow adjudicates the owner with the mapping requirement in hand rather
-than before it.
+**Chat templates are an end-to-end correctness requirement in both
+directions, per the operator's ruling of 2026-08-02, and the ownership
+call sits inside it.** Each model carries its own template and its own
+output style, so the requirement reads in two halves. Inbound: what a
+client sends crosses the gate opaque, the harness interprets and
+assembles it per model, and the SPU receives it, and the whole chain must
+deliver input formatted correctly for that model's family, a property
+verified per family rather than assumed, the quarry's marker-promotion
+test being the reference shape, every control marker tokenizing to
+exactly one token because a degraded marker is structure the model reads
+as prose. Outbound: the model emits in its family's own style,
+think-blocks, Harmony channels, family tool-call markers, and the trace
+must handle that style by holding both layers, the verbatim family-styled
+emission in `model.output`, the quarry's `raw` kept as the training
+target, and the canonical parsed form in the message kinds, with the
+per-family parsers and their never-collapsed failure flags as the
+recorded bridge between them, never a flattening that loses the raw.
+Inside this sits the replay half: the mapping from canonical messages to
+the rendered token reality is trace content, carried by the measurement
+payload's token identifiers and prompt-block partition, the quarry's
+`tokenize_with_offsets` its working ancestor, per apex section 8's rule
+that tokenization is reproducible from what is recorded. The quarry's
+session Spec ruled the server owns framing and the merged harness charter
+owns assembly per model, and the token workflow adjudicates that owner
+with the whole requirement in hand rather than before it.
 
 **Protocol compatibility sits in front of the gate, outside the program,
 per the operator's ruling of 2026-08-02.** The quarry's own late ruling
