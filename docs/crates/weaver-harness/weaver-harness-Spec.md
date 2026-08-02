@@ -20,8 +20,8 @@ it. Two interior citations correct their targets in the same act.
 ratification. Section 6 recasts the engine placement as loop 1's seat, per the
 charter's rescope of this date: the loop is the builder's, compiled at the
 worker composition root and immutable in the binary, and this crate holds the
-seat, the granted surface, and the extension point at loaded-and-idle, the port
-blade enforced structurally by the compiled form.
+seat, the granted surface, and the extension seam crossed at loaded-and-idle,
+the port blade enforced structurally by the compiled form.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -70,7 +70,7 @@ leftovers.
     src/authorship.rs  trace authorship, section 4
     src/assembly.rs    prompt assembly's deterministic floor, section 5
     src/tools.rs       the tool system, blocked, section 6
-    src/engine.rs      loop 1's seat, the extension point, section 6
+    src/engine.rs      loop 1's seat, the extension seam, section 6
 
 Seven files, two of them placements, the way `weaver-traits-Spec` section 1
 places its blocked and deferred modules.
@@ -434,7 +434,8 @@ the worker binary, and immutable there, which binary the unit starts being a
 provisioning fact. What this crate holds is the seat and the granted surface
 the loop composes against, which is the whole of sections 2 through 5, the
 channels and their custody, the run state, trace authorship, and assembly's
-deterministic floor. **The extension point is loaded-and-idle itself:** loop 0
+deterministic floor. **The extension seam is crossed at loaded-and-idle
+itself,** the name being the charter's per its sections 2 and 6: loop 0
 hands a standing interior to whatever loop 1 the binary carries, and takes it
 back at the stop and at the leave, the bracket discipline being loop 0's for
 every loop alike. A loop that composes what this surface offers costs nothing
