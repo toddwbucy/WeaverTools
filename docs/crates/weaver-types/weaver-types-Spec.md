@@ -16,7 +16,13 @@ obligation lands with the socket election, the test placements are named per
 crate, and one pin reclassifies from the compiler to review.
 **Revised:** 2026-08-01, again, per the human's G2 ruling: the format and encoding
 elections cite the criteria `weaver-types-PRD` sections 2.1 and 2.3 now carry,
-rather than developing those grounds here.
+rather than developing those grounds here. Revised again the same day, on the
+second return: the tag collision and the unrepresentable variants are fixed and
+the fix verified against serde 1.x, the directive-to-answer mapping is stated,
+`RefusingOrgan` replaces `Opener` in the aggregate, the two election fields take
+their charter names, the sink's creation-flag asymmetry gains its argument, the
+surviving working-list citation leaves, and two open elections split by whether a
+contract constrains them.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -87,11 +93,12 @@ The declarative document that defines an agent, per charter section 2.1: written
 by the operator, validated by admin before a process exists, read by the harness
 for the elections it carries.
 
-**The format is YAML, the election is about the writer, and the maintenance fact
-is part of the argument rather than a discovery a builder makes.** The operator
-hand-authors this file, often on a box under load, the fields nest by nature, and
-YAML carries nested structure with the least ceremony, survives comments across an
-edit, and is what a system administrator already reads. TOML was the alternative
+**The format is YAML, elected against the charter's criterion, and the
+maintenance fact is part of the argument rather than a discovery a builder
+makes.** `weaver-types-PRD` section 2.1 states the ground: the file's reader is a
+human writing it, so the format answers to a writer rather than a parser, carries
+nesting without ceremony, and survives an operator's comments. YAML meets that
+criterion, being what a system administrator already reads. TOML was the alternative
 and is the Rust-native choice, and it loses on deep nesting for a reader who is
 not a Rust programmer. JSON was never a candidate: no comments, and a
 trailing-comma error at three in the morning on a file that gates a load is a bad
@@ -115,8 +122,8 @@ pub struct AgentConfig {
     pub model_binding: ModelBinding,
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,
-    pub residual_readout: bool,
-    pub verbosity_ceiling: VerbosityElection,
+    pub residual_readout_election: bool,
+    pub verbosity_ceiling_election: VerbosityElection,
     pub gate_instruction: GateInstruction,
     pub trace_sink: TraceSink,
 }
@@ -170,8 +177,15 @@ all conforming sinks, per `weaver-admin-operator-contract` section 3, so the fie
 carries a discriminated shape and admin opens by the discriminant. A bare path
 would force admin to guess from the filesystem what the operator meant, and the
 guess is wrong exactly when the operator meant a named pipe that does not exist
-yet, which is why `File` carries the creation flag the charter's validate step
-reads.
+yet, which is the discriminant's whole argument.
+
+**`File` and `Pipe` carry a creation flag and `Socket` does not, and the
+asymmetry has a reason rather than an oversight.** Admin can create either of the
+first two, an empty file or a `mkfifo`, and the charter's validate step reads the
+flag to decide whether a missing sink refuses the load or is made. A socket sink
+is different in kind: admin connects to it and something on the operator's side
+must already be listening, so a creation flag would promise an act admin cannot
+perform. A missing socket sink therefore always refuses.
 
 **`ModelBinding` and `GateInstruction` are defined here and are the same types the
 wire carries.** Both travel two paths, into the config from the operator and
@@ -255,7 +269,10 @@ careless call away from the exact substitution `SO_PEERCRED` exists to prevent.
 Serialization stays, because a refusal that names the peer it refused is worth
 recording.
 
-**The threat walk, per the rule the working list carries.** The adversary is a
+**The threat walk.** This Spec names the adversary each security mechanism
+defeats and derives that mechanism's test from the attack, which is how a
+perturbation test under apex section 11 becomes a scenario rather than an
+assertion. The adversary is a
 process on the host that is not a front-end principal and dials one of the two
 named sockets: an elected tool running as the agent uid reaching for the agent's
 own mouth, or any local account reaching the operator surface. The mechanism is
@@ -314,6 +331,11 @@ pub enum Payload {
     Answer(LifecycleAnswer),
     Refusal(LifecycleRefusal),
 }
+
+pub enum RefusingOrgan {
+    Spu,
+    Gate,
+}
 ```
 
 **`Position` is three, per `weaver-organ-channel` section 1**, which defines a
@@ -346,18 +368,18 @@ drawing rather than growing, and a floor edit every consumer's match then sees.
 
 ```rust
 pub enum LifecycleDirective {
-    Enter(EnterPayload),
+    Enter { payload: EnterPayload },
     Leave,
     Stop,
-    Admit(ModelBinding),
+    Admit { binding: ModelBinding },
     Release,
-    Raise(GateInstruction),
+    Raise { instruction: GateInstruction },
     Lower,
-    Load(AgentName),
-    Unload(AgentName),
-    Validate(AgentName),
+    Load { agent: AgentName },
+    Unload { agent: AgentName },
+    Validate { agent: AgentName },
     List,
-    Show(AgentName),
+    Show { agent: AgentName },
 }
 
 pub enum LifecycleAnswer {
@@ -369,8 +391,9 @@ pub enum LifecycleAnswer {
     Released,
     GateReady,
     GateStopped,
-    State(AgentState),
-    Agents(Vec<AgentSummary>),
+    Validated,
+    State { state: AgentState },
+    Agents { agents: Vec<AgentSummary> },
 }
 
 pub enum LifecycleRefusal {
@@ -387,7 +410,7 @@ pub enum LifecycleRefusal {
     DeviceCannotAdmit,
     NoResidency,
     BindFailed,
-    OrganRefused { organ: Opener, reason: Box<LifecycleRefusal> },
+    OrganRefused { organ: RefusingOrgan, reason: Box<LifecycleRefusal> },
     ActivityNotAtRest,
 }
 
@@ -415,6 +438,17 @@ own:** enter, leave, and stop at coordination, admit and release at residency,
 raise and lower at the gate, and the verbs with the observations at the operator
 surface. The answer and the refusal follow the same rule.
 
+**Every directive has exactly one answering case, and the mapping is stated
+because the operator contract requires one answer per request.** `Enter` answers
+`Ready`, `Leave` answers `Left`, `Stop` answers `TurnAborted` or `AtRest`,
+`Admit` answers `Admitted`, `Release` answers `Released`, `Raise` answers
+`GateReady`, `Lower` answers `GateStopped`, `Validate` answers `Validated`,
+`Load`, `Unload`, and `Show` answer `State`, and `List` answers `Agents`. Any of
+them may answer a `LifecycleRefusal` instead, which is the second half of what
+one answer per request means. `Validated` exists because validation reports an
+outcome without transitioning anything, per `weaver-admin-PRD` section 4.3, and
+answering it with a state would report a transition that did not happen.
+
 **A receiving party matches its own cases and refuses the rest as `OutOfOrder`,
 which is a real obligation rather than a formality.** The gate receiving an
 `Admit` is not a case the gate implements, and the contracts already rule that a
@@ -427,7 +461,11 @@ refusing arms rather than a wildcard.
 unchanged.** `weaver-admin-harness-contract` section 6 requires a refusing organ's
 reason to reach admin without translation, so the harness wraps rather than
 re-encodes, and the box is what keeps the enum's size from being set by its
-deepest case.
+deepest case. **It names a `RefusingOrgan` rather than an `Opener`**, because
+only the SPU and the gate refuse inside a fan-out: admin does not refuse to
+itself and the harness returns the aggregate rather than appearing inside it, so
+reusing the four-case `Opener` would let a well-typed aggregate claim that admin
+refused as an organ.
 
 **The refusal cases are drawn from the merged contracts and the set is closed at
 this crate.** Whether the SPU's admit cases needed a type of their own was the
@@ -436,13 +474,42 @@ extension: they are loop 0 refusals because they refuse loop 0's directives.
 
 ### 4.3 The encoding
 
-**Loop 0's traffic is JSON, one envelope to one message, internally tagged.**
-`#[serde(tag = "kind", rename_all = "snake_case")]` on `Payload` and on each of
-the trio, so an envelope reads as one object whose payload members sit inline
-rather than nested inside a string or an array of numbers. The election is about
-volume and audience: loop 0 carries a handful of messages per run, the latency
-doctrine has nothing to bite on at that volume, and this traffic is what an
-operator's capture reads first when a load refuses for reasons nobody expected.
+**Loop 0's traffic is JSON, one envelope to one message, elected against the
+charter's criterion.** `weaver-types-PRD` section 2.3 states the ground: this
+traffic is low in volume, so compactness buys nothing measurable, and diagnostic
+in audience, read from a capture when a load refuses unexpectedly.
+
+**The tagging follows the same mechanical test `weaver-traits-Spec` section 3
+states, and the two floor Specs share it so they cannot drift.** A fieldless enum
+is a plain renamed string. An enum whose every variant is struct-shaped or wraps
+a struct is internally tagged. An enum with any variant wrapping a primitive, a
+sequence, or another tagged enum is adjacently tagged, because internal tagging
+cannot represent those shapes and fails at serialization rather than at compile
+time.
+
+Applied here: `Position`, `Opener`, and `RefusingOrgan` are fieldless and
+serialize as plain renamed strings. **The trio is internally tagged**, which is
+why every case carrying a value in 4.2 takes a struct variant, `Load { agent }`
+rather than `Load(AgentName)`. **`Payload` is adjacently tagged**, `#[serde(tag =
+"kind", content = "body")]`, because its variants wrap enums that carry a tag of
+their own.
+
+**The envelope's layout is stated rather than left to a reader.** Nothing is
+flattened. `exchange`, `position`, and `payload` are three members of one object,
+and the adjacent tagging nests the payload's own tagged object under `body`, so
+no two layers can contribute one key:
+
+    {"exchange":{"opener":"admin","ordinal":7},
+     "position":"open",
+     "payload":{"kind":"directive","body":{"kind":"load","agent":"alpha"}}}
+
+**Both halves of this election were verified against serde 1.x rather than
+reasoned from memory, because an earlier draft got both wrong.** That draft
+tagged `Payload` and the trio with the same `kind` name, which emits two `kind`
+members into one object and fails to deserialize with a duplicate-field error,
+and it used newtype variants, which fail at serialization for any case wrapping a
+name or a sequence. The wire shape section 0 claims this Spec settles has to
+round-trip, and the shape above does, including the sequence-carrying cases.
 
 **This election does not reach the decode seam and must not be read as reaching
 it.** Decode traffic is the hot path, its volume is per token rather than per run,
@@ -538,8 +605,15 @@ build-time assertion over the resolved external tree rather than by H2.
 - **The `tool-set` field's element shape.** It elects from `tool-trait`, which
   `weaver-traits-PRD` section 3.1 holds blocked, so the field is a list of names
   today and gains its element type with the tool workflow.
-- **`SessionId`, `TurnKey`, `AgentName`, `AgentState`, `AgentSummary`, and
-  `FieldName`.** Named in the signatures above and shaped in this crate, their
-  representations being identifier and enumeration choices with no cross-crate
-  consequence. They are listed here so the list of what this Spec leaves to a
-  builder is complete rather than implied.
+- **`SessionId`, `TurnKey`, `AgentName`, and `FieldName`.** Named in the
+  signatures above and shaped in this crate, their representations being
+  identifier choices with no cross-crate consequence.
+- **`AgentState` and `AgentSummary`, whose case sets are not free.** Their Rust
+  representations are this crate's, but they ride a `lifecycle-answer` to the
+  operator surface, so what an operator can be told about an agent is exactly
+  what these enumerate. The lifecycle's four states, per apex section 6, are the
+  floor of that set, and whether it carries more is settled with the operator
+  surface's own design rather than by a builder.
+- **`EnterPayload`'s field list**, which follows what admin supplies in the enter
+  directive, per `weaver-admin-harness-contract` sections 3 and 5, and moves when
+  that contract does.
