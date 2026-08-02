@@ -16,6 +16,12 @@ apex. The gate pair's creation states its wait on confirmed residency, which
 the run state's invariant rests on. The sink descriptor's count names the
 coordination contract's plural as a surfaced question rather than absorbing
 it. Two interior citations correct their targets in the same act.
+**Revised:** 2026-08-02, a second entry this date, on the composability batch's
+ratification. Section 6 recasts the engine placement as loop 1's seat, per the
+charter's rescope of this date: the loop is the builder's, compiled at the
+worker composition root and immutable in the binary, and this crate holds the
+seat, the granted surface, and the extension point at loaded-and-idle, the port
+blade enforced structurally by the compiled form.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -64,7 +70,7 @@ leftovers.
     src/authorship.rs  trace authorship, section 4
     src/assembly.rs    prompt assembly's deterministic floor, section 5
     src/tools.rs       the tool system, blocked, section 6
-    src/engine.rs      the query loop, deferred, section 6
+    src/engine.rs      loop 1's seat, the extension point, section 6
 
 Seven files, two of them placements, the way `weaver-traits-Spec` section 1
 places its blocked and deferred modules.
@@ -410,7 +416,7 @@ root, per `weaver-traits-Spec` section 6, and every deferred decode shape in
 this document defers to the same place that trait's signature does, the token
 workflow.
 
-## 6. The tool system, blocked, and the engine, deferred
+## 6. The tool system, blocked, and loop 1's seat
 
 **Tool dispatch is blocked, and this Spec obeys the block.** `tool-trait` is
 held by `weaver-traits-PRD` section 3.1 until the tool workflow, so
@@ -421,12 +427,26 @@ safety classification exists here or is coming, per `weaver-harness-PRD`
 section 3. The tool subprocess inherits no descriptor this program holds,
 which section 2 delivers by construction rather than by a per-tool argument.
 
-**The engine is deferred with the decode seam.** The query loop runs until the
-model returns a final answer or the operator's stop arrives, per
-`weaver-harness-PRD` section 2, and everything the loop crosses, the decode
-exchanges, sessions, sampling, the flush call, is deferred to the token
-workflow by `weaver-spu-PRD` section 8. `src/engine.rs` is the second
-placement, and the executor election deferred with it, per section 1.
+**`src/engine.rs` is loop 1's seat, and the seam it composes across is this
+crate's public surface.** The loop itself is the builder's, per the charter's
+rescope of 2026-08-02: written at the worker composition root, compiled into
+the worker binary, and immutable there, which binary the unit starts being a
+provisioning fact. What this crate holds is the seat and the granted surface
+the loop composes against, which is the whole of sections 2 through 5, the
+channels and their custody, the run state, trace authorship, and assembly's
+deterministic floor. **The extension point is loaded-and-idle itself:** loop 0
+hands a standing interior to whatever loop 1 the binary carries, and takes it
+back at the stop and at the leave, the bracket discipline being loop 0's for
+every loop alike. A loop that composes what this surface offers costs nothing
+anywhere else, and a loop that needs a port this surface does not offer is a
+capability change entering through the front door as a charter and contract
+edit. The compiled form enforces that blade structurally: there is no call by
+which a loop mints a port, because the ports are types these crates own. The
+decode surface a real loop needs, the exchanges, sessions, sampling, and the
+flush call, arrives with the token workflow per `weaver-spu-PRD` section 8,
+the basic loops this program ships land in their binaries by the same path as
+any builder's, and the executor election stays deferred with that workflow,
+per section 1.
 
 ## 7. The failure vocabulary
 
