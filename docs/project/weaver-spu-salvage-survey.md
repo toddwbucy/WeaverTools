@@ -124,12 +124,26 @@ run: admit on enter, release on leave, the device freed. The cache that
 stays hot across turns inside a run survives, which is the property apex
 section 2 protects. Hot across agents does not.
 
-**Chat-template framing has an unresolved owner, and the token workflow
-must adjudicate it.** The quarry's session Spec ruled the server owns
-framing, the client sending text and role. The merged harness charter owns
-prompt assembly, per model, harness-side. This survey's read is that the
-merged charter wins and the SPU takes what the harness assembled, but that
-is a ruling for the front door and not this document's.
+**Chat-template framing has an unresolved owner, and the ruling is larger
+than an ownership call, because the render must land in the record.** Each
+model carries its own chat template, so two representations of one
+conversation exist: the canonical message model the trace records as its
+three message kinds, and the template-rendered token sequence the model
+saw, which is the Level B reality. A record holding only the canonical
+messages forces replay to re-render through the template, and a template
+that changed since the run observes a forward pass that never happened,
+which is the failure apex section 8 already names in its rule that
+tokenization is reproducible from what is recorded. So the requirement
+that binds whichever way the ownership falls, per the operator's ruling of
+2026-08-02: the mapping from the canonical messages to the rendered
+reality is trace content. The measurement payload's input token
+identifiers and prompt-block partition are that mapping's mechanism, the
+quarry's `tokenize_with_offsets` is its working ancestor, and the party
+that renders, whichever it is, puts the rendered form on the report path
+that reaches the record. The quarry's session Spec ruled the server owns
+framing, the merged harness charter owns assembly per model, and the token
+workflow adjudicates the owner with the mapping requirement in hand rather
+than before it.
 
 **Protocol compatibility sits in front of the gate, outside the program,
 per the operator's ruling of 2026-08-02.** The quarry's own late ruling
@@ -181,7 +195,11 @@ The decoder cut is the workflow's brief, and this survey fills in its
 material. The workflow charters: the decode socket's native verbs, open
 and append-generate and close, drawn from the session protocol minus its
 tenancy. The measurement payload's wire shape, mostly done in section 1's
-terms. The framing-ownership ruling of section 3. Stop at the decoder,
+terms. The framing-ownership ruling of section 3, taken together with the
+template-to-trace mapping that section binds: who renders, how the
+rendered form and its block partition reach `model.request` and
+`model.measurement`, and how a template's identity is visible in the
+record rather than silently re-rendered at replay. Stop at the decoder,
 where the quarry offers nothing: no cancellation surface exists in the
 archived tree, a generation cannot be aborted mid-loop, so that cell is
 new work rather than salvage. The disposition knobs, where the
