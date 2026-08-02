@@ -10,6 +10,11 @@ four acts state where the unit's start falls between them, bind-and-listen
 before it and accept-and-close after, and the load's step list carries the
 split, the review having caught that the uninterrupted presentation had a
 literal build binding after the worker's connect and racing an unbound name.
+On the second return the same day, the load's lead counts the merged sequence
+it introduces, eight actions being the charter's seven with bind-and-listen
+interleaved, the earlier wording having kept the old count over the grown
+enumeration, the standing check's own case arriving inside the edit the check
+should have covered.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -161,14 +166,15 @@ floor's `AgentState` for the `State` and `Agents` answers. Loaded-and-idle is
 published only on a ready aggregate and never earlier, per charter section
 4.1 step 7, and a failed anything publishes nothing, per section 5.
 
-**`load` runs the charter's seven steps in order, and the order is code
-rather than convention.** Authorize, validate through section 4's one
+**`load` runs the charter's seven steps in order, with the channel's four
+acts interleaved at the split section 7 states, and the merged sequence is
+code rather than convention.** Authorize, validate through section 4's one
 inventory, verify the boundary in the same inventory, resolve the session and
-open the sink per section 5, bind and listen the coordination channel per
-section 7, start the unit per section 6, accept the worker's connection and
-direct enter per section 7, publish. The channel's first two acts precede the
-unit and its last two follow it, per section 7's split, because the worker
-connects at its start and a name not yet listening is a race. Each step's
+open the sink per section 5, bind and listen the coordination channel, start
+the unit per section 6, accept the worker's connection and direct enter per
+section 7, publish. Eight actions, the charter's seven with bind-and-listen
+standing as its own act before the unit, because the worker connects at its
+start and a name not yet listening is a race. Each step's
 failure returns a
 typed `lifecycle-refusal` to the operator and enters the rollback below
 carrying the step's name.
