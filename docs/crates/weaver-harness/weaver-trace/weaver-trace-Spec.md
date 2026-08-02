@@ -5,8 +5,6 @@ floor's build order. No code is written against it until phase three is ratified
 per Working Process section 6.
 
 **Date filed:** 2026-08-01
-**Document ID:** `weaver-trace-Spec`
-**Parent:** `weaver-trace-PRD`
 **Revised:** 2026-08-02, on the review seat's return. Every kind takes an explicit
 rename so the wire carries the charter's dotted names, `Payload` gains its
 representation with `RawValue` splicing the message kinds and the deferred shapes
@@ -22,6 +20,16 @@ kind-to-payload mapping is stated as total, `Subsystem`'s case set names its
 grounds, and the flag-validating receive is dropped on the corpus's set-not-check
 rule. Revised once more the same day: the envelope's flatten election gains its
 argument, its no-collision ground, and the forward constraint on envelope fields.
+**Revised:** 2026-08-02. Section 8 restates and retitles against the ruling that
+retired the recording levels: no level exists to hold, and the contract residue
+this Spec reported dissolves with its subject rather than needing the act section
+11 named. On the review seat's return the same day, two earlier changelog entries
+were restored to what their own acts said, this document's and
+`weaver-harness-PRD`'s, and the entries of this date were moved to the end of
+this list, filing order having been broken and history having been edited to
+match a later ruling.
+**Document ID:** `weaver-trace-Spec`
+**Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
 
 ---
@@ -465,28 +473,20 @@ coordination contract's ordering. At process death nothing drains and the tail i
 forfeited, which this crate cannot report because the process reporting it is the
 one that died.
 
-## 8. Verbosity
+## 8. Instrumentation
 
-**This crate holds no verbosity level, and the reason is that nothing is left for
-it to hold.** The harness filters at authoring, per
-`weaver-harness-trace-contract` section 3, so an event above an unelected ceiling
-is never submitted and the recorder never sees one to drop. The harness also
-authors the run's level into the run's own events, per `weaver-harness-PRD`
-section 5, so the stream states the verbosity of each run as content rather than
-as recorder state. A level held here would answer a question nothing asks and
-would be a second copy of a fact the record already carries.
+**This crate holds no recording level, because none exists.** The ruling of
+2026-08-02 retired them: what an operator elects at load governs what the agent
+produces, and everything produced is recorded, per `weaver-trace-PRD` section 5.
+The harness submits every event it authors and this crate records every event it
+admits, so neither party holds a level and neither drops an event for being one.
 
-**One consequence worth stating, because it removes a tension rather than
-resolving one.** `weaver-harness-trace-contract` names the level under what the
-harness owes the recorder, and the same section then rules that the harness does
-not submit above-ceiling events and that the recorder never filters. If nothing
-above the ceiling is submitted there is nothing to apply, so the two sentences
-cannot both be operative and this Spec implements the second. The consequence is
-that no drawn vocabulary crosses this seam into this crate, which is why the
-`verbosity-ceiling-election` draw raises no H4 question here: the definition is
-read by the harness, which links `weaver-types`, and never by the recorder. **The
-contract's owed-policy sentence is a residue this Spec cannot correct**, being a
-merged two-party document, and it is reported rather than patched, per section 11.
+**No drawn vocabulary crosses this seam into this crate**, which is what keeps the
+no-internal-dependency rule of section 1 free of an H4 question.
+`weaver-harness-trace-contract`'s `weaver-types` clause is empty: the recorder
+receives events and never reads the operator's declaration. An earlier draft of
+this Spec reported the contract's owed-policy sentence as a residue needing its own
+act, and the ruling dissolved the subject instead.
 
 ## 9. The failure vocabulary
 
@@ -598,11 +598,6 @@ which fails because there is no call that takes what it learned.
   enumerates but whose wire shape that workflow settles. Until each lands, its
   kind cannot be submitted with a shape this crate invented, which is the
   half-chartered discipline read forward.
-- **The contract's owed-policy sentence**, reported rather than patched.
-  `weaver-harness-trace-contract` section 3 names the verbosity level under what
-  the harness owes the recorder, and the same section's filtering rule leaves
-  nothing for the recorder to apply. Settled by an edit to that contract, which is
-  a two-party document and not this pair's to change.
 - **The weight this crate carries at all.** The charter stages the question of how
   much durability machinery survives its obligations. This Spec's answer is the
   five modules of section 1 and nothing further, and the entry condition is the

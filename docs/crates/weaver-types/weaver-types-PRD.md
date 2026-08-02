@@ -38,6 +38,10 @@ rationale is developed in the PRD and restated in the Spec. Section 2.1 states t
 config's reader as a human author and section 2.3 states loop 0's volume and
 audience, the two criteria the Spec pass was electing against without the charter
 holding them.
+**Revised:** 2026-08-02. `verbosity-ceiling-election` leaves section 2.1 entire,
+its node, its `defines` edge, and its `holds` edge, per the human's ruling of this
+date that the trace carries no recording level. The field count goes from seven to
+six, and what an operator elects at load now governs production alone.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -116,9 +120,6 @@ kind: vocabulary
 node: residual-readout-election
 kind: vocabulary
 
-node: verbosity-ceiling-election
-kind: vocabulary
-
 node: gate-instruction
 kind: vocabulary
 
@@ -143,10 +144,6 @@ to: residual-readout-election
 
 edge: defines
 from: weaver-types
-to: verbosity-ceiling-election
-
-edge: defines
-from: weaver-types
 to: gate-instruction
 
 edge: defines
@@ -168,10 +165,6 @@ to: permission-mode
 edge: holds
 from: agent-config
 to: residual-readout-election
-
-edge: holds
-from: agent-config
-to: verbosity-ceiling-election
 
 edge: holds
 from: agent-config
@@ -198,8 +191,8 @@ argument the floor's structure rests on is prose the graph cannot see.
 
 Each field is a vocabulary node this crate defines and the artifact holds, because a
 contract's clause draws a field rather than the whole file and an edge needs
-something to point at. The seven records above are the seven fields this section
-lists, so a clause naming an eighth has no target and the mapping says so.
+something to point at. The six records above are the six fields this section
+lists, so a clause naming a seventh has no target and the mapping says so.
 
 There is no `writes` edge from any crate, because the writer is the operator and the
 operator is not a node the graph carries. Both crates that touch the file declare
@@ -207,9 +200,9 @@ operator is not a node the graph carries. Both crates that touch the file declar
 rather than deferring it.
 
 Known fields, from the passes already done: the model binding, the tool set, the
-permission mode, the residual-readout election, the verbosity ceiling election, the
-gate instruction, and the trace sink. The last four arrived from the trace, harness,
-gate, and operator-contract passes rather than from this crate's own reasoning,
+permission mode, the residual-readout election, the gate instruction, and the trace
+sink. The last three arrived from the gate and operator-contract passes and from
+the trace pass rather than from this crate's own reasoning,
 which is the demand rule working as intended. The gate instruction names the socket
 the gate binds, and it travels the way the model binding does: the operator writes
 it, admin validates it, the harness carries it uninterpreted, and the gate resolves
@@ -240,8 +233,12 @@ about, and the lifecycle already provides the place to change it. Unload, edit, 
 is read at every load and the value it carries governs that run and nothing wider. An
 operator editing between runs of a live session is using the mechanism the lifecycle
 provides rather than working around one. A consumer needing to know how a given run
-was configured reads it from that run's record, which is why `weaver-trace-PRD`
-section 4.3 records verbosity per run rather than once for the session.
+was configured reads what that run produced: the model identity and the sampler
+parameters ride `model.measurement`, and the residual election is legible from the
+presence or absence of the reductions. That is the elections-govern-production
+rule read from the reader's end, and it is narrower than a claim that the run's
+conditions are authored somewhere, which no mechanism does since the ruling of
+2026-08-02.
 
 Run scope is what this crate declares. Whether a particular consumer wants a
 particular field held steady across the runs of one session is that consumer's
@@ -249,10 +246,11 @@ concern, argued in its own charter against its own harm, and it does not become 
 property of this file by being wanted.
 
 An earlier version of this section made some fields session-scoped and sealed at
-`run0`, naming the verbosity ceiling election as the instance. That scope is
-withdrawn. It also left the residual-readout election, which was never sealed, able to
-enable readout against a session sealed floor-only, producing reductions no event kind
-was licensed to carry. That interaction closes with the scope that created it.
+`run0`, naming a recording level as the instance. That scope is withdrawn, and the
+level itself left the file entirely under the ruling of 2026-08-02. The seal also
+left the residual-readout election, which was never sealed, able to enable readout
+against a session whose recording level licensed no home for the reductions. Both
+interactions close with the scopes that created them.
 
 ### 2.2 Peer identity, and one bounded policy carve-out
 
@@ -404,9 +402,8 @@ Crossing it is somebody else's crate.
 
 **No anticipatory schema.** A field added because something will probably want it is a
 reserved slot in data form, which apex section 9 forbids as plainly as the interface
-kind. The residual election and the verbosity ceiling are here because two completed
-passes demanded them, not because a configuration file felt incomplete without
-them.
+kind. The residual election is here because a completed pass demanded it, not
+because a configuration file felt incomplete without it.
 
 ## 4. What does not cross
 

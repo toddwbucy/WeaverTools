@@ -34,6 +34,9 @@ register.
 **Revised:** 2026-08-01, a sixth entry, on review. Section 3 stops claiming the
 gate binds a network socket, the demotion of 2026-07-31 having made it a local
 hook, and the only-listener claim scopes to the agent.
+**Revised:** 2026-08-02. The section 10 model-naming cell closes with the
+recording levels, per the human's ruling of this date, and sections 0 and 8 drop
+verbosity from what the token workflow carries.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -58,7 +61,7 @@ enter and leave directives of `weaver-admin-harness-contract` section 3 fan out 
 the residency those exchanges move between, and the process facts a charter has to state
 before another crate can build against it. It does not reach the decode seam or anything
 crossing it, sessions, turn processing, measurement payloads, residual readout,
-verbosity, sampling, or the fault cases this crate raises. Each of those is named as
+sampling, or the fault cases this crate raises. Each of those is named as
 deferred in section 8 or as a cell in section 10 rather than left out, because an
 omission and a deferral read alike to a later reader and only one of them is a decision.
 
@@ -492,7 +495,7 @@ construction.
 
 **Deferred to the token workflow, and named as deferred rather than omitted.** The
 decode seam and everything that crosses it, sessions and their append-only protocol,
-turn processing, the measurement payload, residual readout, verbosity as it reaches this
+turn processing, the measurement payload, residual readout as it reaches this
 crate, sampling, and the flush mechanism. Each of these is real, each is this crate's,
 and each depends on a workflow that starts at the gate. The charter's next sections
 arrive with that workflow.
@@ -534,15 +537,11 @@ naming ruling of 2026-08-01, the cases extending `lifecycle-refusal` as loop 0
 cases, and the enumeration itself still arrives with the decode workflow's
 measurements.
 
-**Whether the record names the model that served the run.** Section 4.4 leaves it open.
-A run recorded at the floor carries no `model.measurement`, so its record names no model
-and no weights hash, and the run is not replayable by construction under
-`weaver-trace-PRD` section 5. Whether that is correct, or whether the `load` event
-should carry the admitted model's identity so that a floor run at least says what it
-ran, is a question about `weaver-trace-PRD` rather than about this seam. The cost of the
-second reading is an edit to a closed payload shape and to the contract that names it.
-**Settled by:** the human's ruling, weighing a record that cannot say what served it
-against an edit to a floor event's payload.
+**Whether the record names the model that served the run is closed.** The cell
+rested on a run recorded at the floor carrying no `model.measurement`, and the
+ruling of 2026-08-02 retired the recording levels, so every run carries one and
+every record names its model and weights hash. The question had no answer to give
+once its premise left, which is a cell closing rather than being settled.
 
 **Whether decode shares this channel.** Section 6 charters one channel because the organ
 test names one, and names the head-of-line question it leaves open: a

@@ -30,6 +30,12 @@ obligation becomes one-rendering-held-and-handed, and the projection-failure cas
 becomes an append failure.
 **Revised:** 2026-08-01, further. The vocabulary clause adopts `agent-config`, the
 artifact renamed on the human's ruling of this date.
+**Revised:** 2026-08-02. The recording levels retire, per the human's ruling of
+this date: the harness filters nothing and the recorder holds no level, the
+`weaver-types` draw empties with `verbosity-ceiling-election` leaving the agent
+config, and the owed-policy sentence that contradicted its own filtering rule
+dissolves with the subject rather than being adjudicated. `weaver-trace-Spec`
+section 11 reported that residue and it needs no separate act.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -44,8 +50,8 @@ contract is done.
 ## Parties
 
 - **`weaver-harness`, the author.** Sole producer of trace content. Decides what is
-  worth recording, when a session begins and ends, what a turn is, and at what
-  verbosity each run records. Holds every descriptor.
+  worth recording, when a session begins and ends, and what a turn is. Holds every
+  descriptor.
 - **`weaver-trace`, the recorder.** Assigns ordering, produces canonical form,
   holds the working structure, and hands the same rendering to the outbound
   stream. Holds no policy and decides nothing about content.
@@ -89,10 +95,11 @@ crate defines, and this contract does not redefine them. The harness draws it. T
 recorder does not, because those three payloads are opaque to it per `weaver-trace-PRD`
 section 3, so this name crosses the seam in one direction only.
 
-**From `weaver-types`.** One field of the agent config. The verbosity ceiling
-election of section 3 is read from the file at every load and fixed for the life of
-that run, so it is run-scoped and a later run finding the file changed adopts the new
-value as its own load condition. It is not interpreted here beyond being carried.
+**From `weaver-types`.** Nothing. The clause is present with that answer because
+`weaver-types-PRD` section 5 asks for it even when it is empty. An earlier version
+drew the verbosity ceiling election, which left the agent config entirely under the
+ruling of 2026-08-02, and no other field of that artifact crosses this seam: the
+recorder receives events and never reads the operator's declaration.
 
 **From `weaver-trace`.** The event envelope and its field set, the closed event-kind
 vocabulary, the per-kind payload shapes, the three commit-boundary states, the
@@ -108,10 +115,6 @@ and touches no third.
 edge: draws
 from: weaver-harness-trace-contract
 to: message-model
-
-edge: draws
-from: weaver-harness-trace-contract
-to: verbosity-ceiling-election
 
 edge: draws
 from: weaver-harness-trace-contract
@@ -236,13 +239,18 @@ microsecond instrument. No field is ever read for the one job it cannot do.
 descriptor, obtained from `weaver-admin` in the enter directive. The harness never
 asks the recorder to open a path, and the recorder offers no way to.
 
-**Policy.** The verbosity level for the run. The recorder applies it and does not
-choose it.
+**Everything authored, and no filtering at either end.** The harness submits every
+event it authors and the recorder records every event it admits, per the ruling of
+2026-08-02 that retired the recording levels. What an operator elects at load
+governs what the agent produces rather than what reaches the record, so neither
+party holds a level and neither drops an event for being one. A recorder that
+dropped an event because it judged its kind would be taking a policy nobody holds.
 
-**Verbosity filtering at authoring time.** The floor is always authored. When the
-ceiling is not elected, the harness does not submit the events above it. The
-recorder records what it is given and never filters, so a recorder that drops an
-event because it judged the level has taken policy the harness holds.
+An earlier version of this section carried both halves of a filter: the level named
+under what the harness owes, and a rule that the harness does not submit events
+above it. The two could not both be operative even before the ruling, since nothing
+above an unelected ceiling was ever submitted for the recorder to apply a level to,
+and the ruling removed the subject rather than adjudicating between them.
 
 **The close kind on `turn.closed`.** The payload carries which kind of close it was,
 clean or stopped, and a stopped close carries the reason, authored when the abort of
@@ -316,8 +324,8 @@ to read back.
 ## 6. What neither party may do
 
 **The recorder may not hold policy.** It does not decide what is worth recording,
-what constitutes a turn or a session, or what verbosity means. A
-recorder that acquires any of these has taken cognition into the floor.
+what constitutes a turn or a session. A recorder that acquires either of these has
+taken cognition into the floor.
 
 **The recorder may not offer a path-taking write surface.** Not as a convenience,
 not for tests, not behind a feature. A path-taking function is a way around the
