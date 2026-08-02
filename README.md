@@ -35,6 +35,27 @@ organ that holds the model, while keeping the agent as the thing under study.
 Local, legible, and honest about the difference between the model and the agent
 it serves.
 
+## Bring your own organs
+
+The switchboard framing is the offer, not a modesty. Looked at squarely, there
+is no reason anyone should have to choose our eventual memory system over
+someone else's, and the architecture is built so nobody ever has to. Our memory
+arrives as one more peer on the board, behind the same kind of socket and the
+same kind of contract as anything you would write yourself. Yank it and put
+something else in. The same goes for the loops: they are held as workflow
+documents, not baked into the switchboard, and an agent running your loop is as
+native as one running ours. The model sits behind the SPU for the same reason.
+Swapping the decoder is a change to the agent's configuration, not surgery on
+the framework, and a second model in the assembly, an embedder, a classifier,
+an instrument of your own, is another port turned on and a contract written for
+what crosses it, with the traffic routed the same way all traffic is routed.
+
+What WeaverTools offers, then, is not a better memory or a better loop. It is
+the framework in which you build your own agent, locally, in a controlled
+environment: the same mental model as the network, abstracted down one level so
+that the noise in the wire is something you set rather than something you
+tolerate.
+
 ## Why not the network?
 
 Every seam that crosses a process line in WeaverTools is a Unix domain socket on
