@@ -166,7 +166,20 @@ encoder arrives.
 ## 4. The doors
 
 Per the workspace's carry rule, each crossing names its door at the moment
-it crosses. This survey pre-classifies candidates and binds nothing.
+it crosses. This survey pre-classifies candidates and binds nothing, with
+one ranking recorded above the classification.
+
+**The operator's ranking, ruled 2026-08-02: three parts are the salvage's
+spine, the ones not to hand-roll again.** The CUDA kernels, hand-rolled
+once and salvaged verbatim twice already, so a third carry is a proven
+motion. The GGUF integration, which carries the append-only session core
+with it, the two being one body of code in the decoder backend. And the
+residual stream tap this program's lineage built, the candle fork's
+`forward_with_intermediates` with its working probe on one side and the
+llama-cpp fork's eval-callback seam on the other. The third is the one
+whose existence rests entirely on the fork pins of the preconditions
+below, which is why those pins are verified at first use rather than
+assumed.
 
 **Live-code candidates, a completed turn's path nameable through each:**
 the CUDA kernels and `build.rs`, the per-family forwards and sharding, the
