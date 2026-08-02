@@ -30,6 +30,9 @@ two lines on.
 enum leave the config, per the human's ruling of this date that the trace carries
 no recording level. Six fields rather than seven, and what an operator elects at
 load governs production alone.
+**Revised:** 2026-08-02, a second entry this date. Section 4's decode sentence
+cites the closed cell rather than holding it open, decode taking its own socket
+per the decoder-cut ruling of this date recorded at `weaver-spu-PRD` section 10.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -520,8 +523,9 @@ round-trip, and the shape above does, including the sequence-carrying cases.
 **This election does not reach the decode seam and must not be read as reaching
 it.** Decode traffic is the hot path, its volume is per token rather than per run,
 and its encoding is the token workflow's election with a measurement behind it.
-Whether decode even shares this channel is the head-of-line cell
-`weaver-spu-PRD` section 10 holds.
+Decode does not share this channel, per the decoder-cut ruling of 2026-08-02
+recorded at `weaver-spu-PRD` section 10: it takes its own socket, owned by that
+crate, so the head-of-line question this sentence once held open is closed.
 
 **The envelope is length-free, because the socket type carries boundaries.**
 `weaver-organ-channel` section 2 requires one write to be one read and rules that
