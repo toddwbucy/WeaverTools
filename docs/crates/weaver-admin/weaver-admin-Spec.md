@@ -5,6 +5,11 @@ the agent. No code is written against it until phase three is ratified, per
 Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-02, on the review seat's return. The coordination channel's
+four acts state where the unit's start falls between them, bind-and-listen
+before it and accept-and-close after, and the load's step list carries the
+split, the review having caught that the uninterrupted presentation had a
+literal build binding after the worker's connect and racing an unbound name.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -159,8 +164,11 @@ published only on a ready aggregate and never earlier, per charter section
 **`load` runs the charter's seven steps in order, and the order is code
 rather than convention.** Authorize, validate through section 4's one
 inventory, verify the boundary in the same inventory, resolve the session and
-open the sink per section 5, start the unit per section 6, direct enter and
-await the aggregate per section 7, publish. Each step's failure returns a
+open the sink per section 5, bind and listen the coordination channel per
+section 7, start the unit per section 6, accept the worker's connection and
+direct enter per section 7, publish. The channel's first two acts precede the
+unit and its last two follow it, per section 7's split, because the worker
+connects at its start and a name not yet listening is a race. Each step's failure returns a
 typed `lifecycle-refusal` to the operator and enters the rollback below
 carrying the step's name.
 
@@ -296,11 +304,18 @@ The connected pair that Spec speaks of is what an accept produces, the
 bind-and-declared-open route having superseded the forked pair on the
 charter's fourteenth-entry ruling.
 
-**The channel is built in four acts, and each carries a verified property.**
-The socket is created with the close-on-exec flag in the creating call and
+**The channel is built in four acts, the acts straddle the unit's start, and
+the split is the ordering.** The first two acts run before the unit starts,
+because the worker connects at its start through the declared open and a
+connect against a name not yet listening is the race the ordering exists to
+prevent, and the last two run after it, because there is no peer to accept
+until the worker exists. Each act carries a verified property. The socket is
+created with the close-on-exec flag in the creating call and
 bound to a per-agent name inside an admin-owned directory of mode 0700, the
-unsearchable home the charter's section 6 requires. The listener accepts
-exactly once, the accepting call setting close-on-exec on the connection.
+unsearchable home the charter's section 6 requires, listening before the
+unit is asked for. The listener accepts
+exactly once, after the unit's start, the accepting call setting
+close-on-exec on the connection.
 The peer credential is read at that accept and checked against the agent's
 expected uid, the check the charter names as available and this Spec elects
 because it costs one call: possession remains the authentication, and the
