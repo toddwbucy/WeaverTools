@@ -656,8 +656,9 @@ landed reads as settled and an entry landed and not cleared reads as outstanding
   where staged and excluded work belonging to a crate lives once the crate has a
   charter to hold it.
 - `weaver-types-PRD` section 2.3, owed by the decode contract's act: the token
-  vocabulary this seam draws, named for the loop whose traffic it carries per
-  the naming ruling, defined at the floor because both parties need it and
+  vocabulary this seam draws, named for the seam's currency under the naming
+  ruling's ratified extension, this seam's loop being loop 1, the builder's
+  and variable, defined at the floor because both parties need it and
   neither may depend on the other.
 - `weaver-harness-PRD` section 2: landed in this same act. The framing
   candidate of section 13.4 ratified, the per-model assembly paragraph
@@ -721,7 +722,9 @@ section 5.4's test names one duplex channel and the lifecycle channel is it.
 This socket is operation surface, so the organ envelope does not cross it,
 `weaver-types-PRD` section 2.3's every-channel sentence stays scoped to organ
 channels with no exception admitted, and the seam's vocabulary is its own,
-named for the loop whose traffic it carries per the naming ruling, defined at
+named for the seam's currency under the naming ruling's ratified extension,
+a loop name being what this seam cannot take with loop 1 the builder's and
+variable, defined at
 the floor, and owed to `weaver-types-PRD` section 2.3 by the contract's act.
 
 **Every request on this seam belongs to a turn and carries its context.**
