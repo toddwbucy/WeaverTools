@@ -15,14 +15,17 @@ tagging election becomes a stated mechanical test shared with
 `weaver-types-Spec`, `Role` drops its tag as a fieldless enum, and two
 instrument overclaims in section 7 are corrected.
 **Revised:** 2026-08-03, the assertion pass, second of the seven and the second
-of the two floor crates, both taken by hand rather than in the fan-out. Twenty-one
-assertion records land at the clauses that argue them, nine from section 7's
+of the two floor crates, both taken by hand rather than in the fan-out. Twenty-two
+assertion records land at the clauses that argue them, ten from section 7's
 enforcement sorting and twelve from the elections outside it. Section 0's
 boilerplate records what this document now sources and names its one exception,
 the shared tagging test whose node and both edges live at `weaver-types-Spec`
 section 4.3, which is the mirroring clause that Spec settled from its own side.
 Section 7 states where the records sit and which of its bullets another crate
-declares.
+declares. On the review seat's return the same day, the adjudicating-method
+claim divides into the two records its own bullet always described, the pinned
+candidates and the prohibition, the latter moving to the section 4 clause that
+argues it.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
@@ -362,6 +365,16 @@ that decides, which charter section 4 forbids. The absence is enforced by the
 compile-fail test of section 7, because an absence is what a runtime test
 structurally cannot demonstrate.
 
+```graph
+node: traits-no-adjudicating-method
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-no-adjudicating-method
+```
+
 **The relationship to the agent config runs one way.** `weaver-types-PRD` section
 2.1 defines a `permission-mode` field that elects one of these, and that charter
 declares the `elects` edge. This crate defines the vocabulary and learns nothing
@@ -487,7 +500,13 @@ how an absence becomes mechanical rather than remembered.
   candidates, `is_allowed` and `check`, fail to compile. A finite set of doctests
   pins the named methods and not the open set of all possible methods, so the
   general prohibition stays review's, which is the same honest split this section
-  makes for the manifest rules below.
+  makes for the manifest rules below. **The split is two assertions rather than
+  one,** the pinned candidates here and the prohibition itself at the section 4
+  clause that argues it: a single record tagged for the mechanical half would
+  claim the instrument for the whole, which is the overclaim this corpus refuses
+  in prose and has no reason to admit in a graph. Any clause naming one
+  instrument for a claim's core and another for its periphery divides the same
+  way.
 - No safety classification on the eventual tool trait, when that trait exists.
 
 **Enforced by the manifest, with the instrument named rather than assumed.** The
@@ -499,14 +518,16 @@ a claim nothing runs.
 
 **Where the records sit, and the one claim another crate declares.** The
 assertion records are at the clauses that argue the claims, across sections 1
-through 6, rather than gathered here, per Document Format section 6. Three
+through 6, rather than gathered here, per Document Format section 6. Four
 claims are argued only in this section and carry their records at the end of
-it. **The licensed combinations of section 3 are declared by `weaver-harness`,**
-whose Spec section 8 carries the test and has discharged the owing, because an
-assertion belongs where its test lives. **The tagging test shared with
-`weaver-types` is declared there,** node and both edges, per that Spec's section
-4.3 and the pilot's rule: one claim is one node, and this crate's edge is
-already stated beside the shared statement rather than restated here.
+it, the fourth being the doctest pinning of the adjudicator candidates, whose
+prohibition is section 4's. **The licensed combinations of section 3 are
+declared by `weaver-harness`,** whose Spec section 8 carries the test and has
+discharged the owing, because an assertion belongs where its test lives. **The
+tagging test shared with `weaver-types` is declared there,** node and both
+edges, per that Spec's section 4.3 and the pilot's rule: one claim is one node,
+and this crate's edge is already stated beside the shared statement rather than
+restated here.
 
 **Requiring a perturbation-verified test.**
 
@@ -552,13 +573,13 @@ edge: asserts
 from: weaver-traits
 to: traits-unknown-tag-refuses
 
-node: traits-no-adjudicating-method
+node: traits-adjudicators-pinned-by-doctest
 kind: assertion
 tag: compile-fail
 
 edge: asserts
 from: weaver-traits
-to: traits-no-adjudicating-method
+to: traits-adjudicators-pinned-by-doctest
 ```
 
 ## 8. Open elections
