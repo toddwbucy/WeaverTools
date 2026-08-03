@@ -16,8 +16,8 @@ tagging election becomes a stated mechanical test shared with
 instrument overclaims in section 7 are corrected.
 **Revised:** 2026-08-03, the assertion pass, second of the seven and the second
 of the two floor crates, both taken by hand rather than in the fan-out. Twenty-two
-assertion records land at the clauses that argue them, ten from section 7's
-enforcement sorting and twelve from the elections outside it. Section 0's
+assertion records land at the clauses that argue them, eleven from section 7's
+enforcement sorting and eleven from the elections outside it. Section 0's
 boilerplate records what this document now sources and names its one exception,
 the shared tagging test whose node and both edges live at `weaver-types-Spec`
 section 4.3, which is the mirroring clause that Spec settled from its own side.
@@ -28,6 +28,11 @@ candidates and the prohibition, the latter moving to the section 4 clause that
 argues it. On the second return the same day, that clause's own closing sentence
 adopts the split it had been moved beside, having given the whole claim to the
 instrument the split took from it.
+**Revised:** 2026-08-03, the provenance convention, per the operator's ruling of
+this date and Document Format v0.10 section 3: the two halves of a divided claim
+both count as the enforcement section's, neither having been elected and one
+having been divided out of a bullet that section already carried. No record
+moves and no tag changes, only the provenance the counts report.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.

@@ -38,9 +38,11 @@ with the kind-first consumer as its ground, and section 11's deferred-shapes
 entry goes to the singular.
 **Revised:** 2026-08-03, the assertion pass, third of the seven and the first
 outside the floor. Thirty-eight assertion records land at the clauses that argue
-them, fifteen from section 10's enforcement sorting and twenty-three from the
+them, sixteen from section 10's enforcement sorting and twenty-two from the
 elections outside it, per the ruling that elections take nodes because gate H1
-would otherwise leave the largest decisions untraceable. Section 0's boilerplate
+would otherwise leave the largest decisions untraceable, the path-taking
+prohibition counting with the sorting because it was divided out of a bullet
+there rather than elected, per Document Format section 3. Section 0's boilerplate
 records what this document now sources, the notation of 2026-08-03 having retired
 the no-records sentence it replaces, and names the two claims another document
 declares. Section 10 states where the records sit and repeats the two, one of
@@ -48,6 +50,11 @@ them a bullet of its own. Two clauses divide under the rule `weaver-traits-Spec`
 section 7 states, the path-taking pin and the working structure's mutation
 surface, and the prose at both destinations of each adopts the split rather than
 leaving the whole claim with one instrument.
+**Revised:** 2026-08-03, the provenance convention, per the operator's ruling of
+this date and Document Format v0.10 section 3: the two halves of a divided claim
+both count as the enforcement section's, neither having been elected and one
+having been divided out of a bullet that section already carried. No record
+moves and no tag changes, only the provenance the counts report.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
@@ -1036,8 +1043,11 @@ assertion records are at the clauses that argue the claims, across sections 1
 through 9, rather than gathered here, per Document Format section 6: this section
 sorts by instrument and the arguments are elsewhere, so a block here would sit
 apart from the prose that earns it. Thirty-six sit there and two sit at the end of
-this section, being the claims argued only here. Fifteen of the thirty-eight come
-from this section's own sorting and twenty-three from the elections outside it.
+this section, being the claims argued only here. Sixteen of the thirty-eight come
+from this section's own sorting and twenty-two from the elections outside it, the
+path-taking prohibition counting here rather than as an election because it was
+divided out of this section's own bullet and never elected, per Document Format
+section 3.
 **The close-on-exec test below is declared by `weaver-harness`,** whose Spec
 section 8 carries it as the first of its threat walks and has discharged the
 owing, because an assertion belongs where its test lives. **The tagging test
