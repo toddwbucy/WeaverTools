@@ -1,6 +1,13 @@
 # WeaverTools Document Format
 
-**Version:** v0.10, 2026-08-03, third entry this date. The v0.10 change is
+**Version:** v0.11, 2026-08-03, fourth entry this date. The v0.11 change is the axiom
+layer, per the operator's ruling of this date: section 3 gains the `axiom` node kind
+for the apex's four invariants, and section 4 gains the `grounds` edge from an
+assertion to the axiom it serves, which retires the one key the fixed set carried
+without a definition or a use. The section 4 entry states that a missing `grounds`
+edge is representation rather than an omission, because the prior program's basis
+covered seven of seventy-one claims and kept the layer instead of asking what the
+layer was for. Previously v0.10, 2026-08-03, third entry this date. The v0.10 change is
 section 3's assertion entry gaining the provenance rule for a divided claim, per
 the operator's ruling of this date: the two halves of a split both count as the
 enforcement section's, because neither was elected and one was divided out. It
@@ -216,6 +223,12 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
+**axiom.** One of the apex's four invariants, declared by `WeaverTools-PRD` at the
+subsection that states it. An axiom is not a claim about a crate and binds no code
+directly. It is what a claim can be grounded in, so a query can ask which claims serve
+an invariant and which invariant a claim serves. There are four and the set is closed:
+a fifth would be an apex act, not a Format one.
+
 **assertion.** A claim a Spec makes that code must conform to, named so a source
 file can cite it and a query can return it. Two kinds of clause qualify and both
 are the same node: what a Spec's enforcement section lists, which is already a
@@ -278,6 +291,22 @@ edge, and giving seams identifiers so that contracts could address them would bu
 inverse edge that carries no fact the seam's own `via` does not already carry. The
 governing relation is stated once, on the seam, from the declaring side. The
 contract's `party` records are what make the pair checkable from the other direction.
+
+Between an assertion and an axiom:
+
+- `grounds`, from an assertion to the axiom it serves, declared by the Spec that
+  argues the assertion, in the same block. This is the third term of apex section 11's
+  chain read upward: code cites an assertion, an assertion grounds in an invariant.
+
+**An assertion with no `grounds` edge is not a defect and G3 does not fail on one.**
+Most of this corpus is representation election - a format, a name shape, a tagging
+rule, a bound - which code must conform to as surely and which serves no invariant
+because the invariants are not about representation. An axiom layer that demanded
+total coverage would collect edges drawn to satisfy the demand, which is the failure
+mode the prior program's basis reached at seven of seventy-one claims: the number was
+low and the response was to keep the layer rather than ask what the layer was for.
+What the edge is for is the query, and a query is only worth its answer if a missing
+edge means the claim is representation rather than that nobody got to it.
 
 Between a contract and what it binds:
 

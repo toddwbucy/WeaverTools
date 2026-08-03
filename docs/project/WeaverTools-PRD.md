@@ -236,6 +236,20 @@ retained state to decide when to fire belongs to the later stateful program.
 These bind every crate PRD, every Spec, and every contract. A document that
 violates one of them is wrong, not merely inconsistent.
 
+**Each is declared here as an `axiom` node, and a Spec's assertion grounds in one
+by naming it,** per Document Format sections 3 and 4. The edge runs from the claim
+to the invariant, so the chain apex section 11 states reads upward without a break:
+code cites an assertion, an assertion grounds in an invariant. The set is closed at
+four and a fifth is an act on this document rather than on the format.
+
+**A claim that grounds in no invariant is representation, not an omission.** Most of
+what a Spec elects is a format, a name shape, a tagging rule, or a bound, and none of
+those serves an invariant because the invariants are not about representation. The
+coverage number is a fact to read rather than a target to reach, and it is stated
+that way here so it cannot later be argued down: the prior program's basis reached
+seven of seventy-one claims and the answer was to keep the layer rather than to ask
+what the layer was for.
+
 **The named exception to Working Process section 7 ran its course and is
 closed.** The 5.1 restatement and 5.4 were taken early on 2026-07-31, further
 entries followed as collisions with merged charters demanded, and the
@@ -288,6 +302,12 @@ re-architecture. Memory behind a socket is a new socket, a new contract, and a
 schema extension. Memory as a linked crate is surgery on the harness's
 dependency graph and on every call site.
 
+
+```graph
+node: axiom-floor-is-vocabulary-behavior-is-socket
+kind: axiom
+```
+
 ### 5.2 The join key travels with the work
 
 **Every request that belongs to an existing turn carries, at every seam it
@@ -305,6 +325,12 @@ one turn in flight the harness cannot recover the association afterward. This
 is what turns the trace from a set of per-process logs into a coordination
 substrate, and it must be designed into every wire format at the moment the
 wire is specified.
+
+
+```graph
+node: axiom-join-key-travels-with-the-work
+kind: axiom
+```
 
 ### 5.3 A contract is a complete interface
 
@@ -329,6 +355,12 @@ Two mechanical consequences:
   what the other side does. This is not an aspiration - it is the property
   that permits crates to be built in parallel once the floor is merged.
 
+
+```graph
+node: axiom-contract-is-a-complete-interface
+kind: axiom
+```
+
 ### 5.4 Organ and submodule
 
 **An organ is a crate that governs a domain and holds a duplex channel with the
@@ -351,6 +383,11 @@ amending an enumeration.
 Section 6 already names organs and the harness as the coordinating center, and
 5.1 already carries the floor half of the same three-way distinction. This
 harvests what those two imply rather than importing a new frame.
+
+```graph
+node: axiom-organ-and-submodule
+kind: axiom
+```
 
 ## 6. The agent lifecycle
 
