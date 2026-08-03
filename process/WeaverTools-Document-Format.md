@@ -1,6 +1,10 @@
 # WeaverTools Document Format
 
-**Version:** v0.9, 2026-08-03. The v0.9 change is the assertion notation, per the
+**Version:** v0.9, 2026-08-03, second entry this date. The second change is
+section 4's identifier rule gaining its qualifier, no *positional* number, on the
+pilot act's review: the flat rule would have refused a slug naming loop 0 and a
+slug carrying a stated bound, neither of which renumbers, which is the only thing
+the rule guards against. The v0.9 change is the assertion notation, per the
 ruling of this date: section 3 gains the `assertion` node kind with its
 index-not-copy rule, section 4 gains the `asserts` edge with the identifier
 convention and the statement that a Spec states records the way a PRD does, and
@@ -295,11 +299,20 @@ from the contract itself. What changes is that the Spec joins the PRD as a docum
 that states its subject crate's records, which is why this format's placement rule
 reaches it without amendment.
 
-**Assertion identifiers are `<crate>-<slug>` and carry no number.** The crate prefix
-is what keeps two Specs from naming one thing twice, and the absence of a number is
-deliberate: a numbered identifier is a position, positions renumber when something is
+**Assertion identifiers are `<crate>-<slug>` and carry no positional number.** The
+crate prefix is what keeps two Specs from naming one thing twice, and the bar on
+positions is the load-bearing half: a positional number renumbers when something is
 inserted, and every citation of one then points at the wrong claim. The slug says
 what the claim is rather than where it sits.
+
+**A figure that is part of a name or a value is not a position and is admitted.**
+The qualifier arrived on 2026-08-03 with the pilot act, where the flat rule would
+have refused `types-loop0-encoding-json` and `types-envelope-bound-64k`, one naming
+the loop this corpus calls loop 0 and the other carrying a stated bound. Neither
+renumbers when a claim is inserted, which is the whole of what the rule guards
+against, and a rule that forbade them would leave a slug unable to name the thing
+its own corpus named. The test is mechanical enough to apply: ask whether the figure
+would change if a neighbouring claim were added, and refuse it only then.
 
 ## 5. The block
 

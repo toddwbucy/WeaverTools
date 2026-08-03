@@ -64,6 +64,13 @@ outside it, per the ruling that elections take nodes because gate H1 would
 otherwise leave the largest decisions untraceable. Section 0's boilerplate
 records what this document now sources, and section 5 states where the records
 sit and which of its bullets are owings another crate declares.
+**Revised:** 2026-08-03, on the pilot's review the same day. Three closing
+fences carried the prose that followed them, which a markdown parser reads as
+one unclosed block and the notation's own validator cannot see, so the fencing
+discipline the six followers inherit is stated by being correct here: a fence
+line carries nothing else. Section 0's boilerplate names its one exception, the
+shared tagging test's second edge, and settles the traits Spec's mirroring
+clause with it.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -87,8 +94,16 @@ questions the corpus deliberately left here: what shape the agent config takes o
 disk, and what octets the loop 0 vocabulary becomes on the wire. Where this
 document and the charter disagree the charter yields nothing.
 
-**This document declares its crate's assertion records and no others,** per
-Document Format sections 3 and 4 as of the notation of 2026-08-03. The charter
+**This document declares its crate's assertion records, and one edge that is
+another crate's,** per Document Format sections 3 and 4 as of the notation of
+2026-08-03. The exception is the shared tagging test of section 4.3: one claim
+is one node with an `asserts` edge per crate bound by it, the node lives at the
+statement both floor Specs share, and `weaver-traits`' edge is therefore
+declared here beside it. **`weaver-traits-Spec` declares its own assertion
+records except that edge,** and says so, which is the other half of the same
+rule: without both halves the traits act either redeclares an edge already
+declared here, which is the duplicate the format forbids, or drops part of its
+crate's assertion set with nothing recording where it went. The charter
 stays the source of the crate node, the `agent-config` artifact, its six
 `holds` edges, and the seventeen vocabulary definitions. What this document
 sources is the claims code must conform to, declared at the clauses that argue
@@ -176,7 +191,9 @@ tag: review
 edge: asserts
 from: weaver-types
 to: types-config-format-yaml
-``` **What this election must survive is that `serde_yaml`
+```
+
+**What this election must survive is that `serde_yaml`
 was archived and deprecated by its author in 2024**, so the implementation is a
 maintained one and the Spec pass names that as a requirement rather than a
 preference. A builder confirms maintenance status at the moment of writing the
@@ -342,7 +359,9 @@ tag: compile-pin
 edge: asserts
 from: weaver-types
 to: types-config-parse-total
-``` What admin adds beyond the parse is
+```
+
+What admin adds beyond the parse is
 existence, that the model artifact resolves, the sink exists or its creation flag
 is set, and the boundary is as the operator wrote it, per `weaver-admin-PRD`
 section 4.3. The parse answers well-formed and the checks answer real, and this
@@ -660,7 +679,9 @@ tag: compile-pin
 edge: asserts
 from: weaver-types
 to: types-wire-enums-exhaustive
-``` An earlier draft of this Spec carried the
+```
+
+An earlier draft of this Spec carried the
 attribute beside this same argument, which the review seat caught as the
 contradiction it was.
 
