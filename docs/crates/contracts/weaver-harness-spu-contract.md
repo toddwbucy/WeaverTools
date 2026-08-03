@@ -26,6 +26,9 @@ the loop whose traffic it carries: this contract draws loop 0's trio,
 sender-named pair it owed the floor dissolving with the convention that collided
 on the harness, and this seam's refusal cases settling as `lifecycle-refusal`
 cases.
+**Revised:** 2026-08-02, the descriptor recount's sweep. Section 1's fork
+paragraph adopts the singular, one trace descriptor the harness holds at the
+fork.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -121,7 +124,7 @@ this channel has lost the residency, not a connection to it, and section 5 says 
 that means.
 
 **The fork carries this end and nothing else.** At the moment of the fork the
-harness holds the trace descriptors and its channel to admin, both close-on-exec under
+harness holds the trace descriptor and its channel to admin, both close-on-exec under
 the receiver rule of `weaver-organ-channel` section 2, bound on that seam by
 `weaver-admin-harness-contract` section 2 and `weaver-harness-PRD` section 5. That
 discipline is what keeps them out of the SPU's process, and this contract binds the

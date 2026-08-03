@@ -46,6 +46,10 @@ charter act caught by the gate act, and the turn path of section 4 now has
 both its seams chartered, decode at `weaver-harness-spu-decode-contract` and
 the gate's turn direction at `weaver-harness-gate-contract` section 2, which
 a later revision walks in full rather than this entry claiming it walked.
+**Revised:** 2026-08-02, a second entry this date, the descriptor recount's
+sweep. Section 3's enter supply list adopts the singular, and on the sweep's
+review the sentence two lines below it, which said the same thing with a
+plural verb.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -234,9 +238,9 @@ then, all crossing at admin, carried by the exchanges of
 
 **Enter the run.** Admin resolves the session, opens the stream's sink under its
 own principal, and directs the harness to enter, supplying the session identity,
-the run ordinal, the trace descriptors, the
+the run ordinal, the trace descriptor, the
 model binding, and the gate instruction. The harness never resolves a path and
-never learns a name. Descriptors cross once, in this directive, and are not
+never learns a name. It crosses once, in this directive, and is not
 re-sent, revoked, or replaced. The harness stands up an empty working structure,
 authors its load event, which is the run opening, asks the SPU to admit
 the model binding it was handed, and starts Gate last. It answers ready only when

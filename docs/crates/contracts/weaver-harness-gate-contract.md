@@ -35,6 +35,8 @@ window and the concurrency line, section 4 both parties' further guarantees,
 section 7 the `turn-frame` draw owed to the floor, and section 8's deferral
 becomes a closure, the corpus-wide fault case set closing with the gate's
 cases named at `weaver-gate-PRD` section 13.
+**Revised:** 2026-08-02, a second entry this date, the descriptor recount's
+sweep. Section 1's fork paragraph adopts the singular.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -135,7 +137,7 @@ means. A gate that observes closure closes its listener and exits, which is how 
 gate process never outlives the interior it fronts.
 
 **The fork carries this end and nothing else.** At the moment of the gate fork the
-harness holds the trace descriptors, its channel to admin,
+harness holds the trace descriptor, its channel to admin,
 and its channel to the SPU, every one close-on-exec, the received ones by the receive
 rule and the created ones from creation, per `weaver-admin-harness-contract` section
 5 and `weaver-harness-spu-contract` section 1. That discipline is what keeps all of
