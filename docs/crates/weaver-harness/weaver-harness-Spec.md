@@ -39,6 +39,14 @@ plural, the sentence beneath it having said one since the first pass.
 2.2's handoff places an organ's ends from descriptor 3 upward in the channels'
 own order rather than naming one number, the decoder cut having given the SPU
 a second channel and the paragraph having been written when an organ held one.
+On that act's review the same day, the two passages that create and hold the
+second end follow: section 2.2 counts three pairs across a run, section 3's
+fan-out creates the residency and decode pairs in one act before the fork that
+carries both, and the run state's SPU arm becomes a pair of channels in one
+field, the decode end taking its own type because that socket is not an organ
+channel. The first correction reached the paragraph the finding named and left
+the paragraphs beside it, which is the class this corpus has been catching all
+day.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -172,8 +180,11 @@ receiver holds is a bound the sender discovers in production.
 
 ### 2.2 Creation, and the atomic flag
 
-**Both ends of a created pair carry close-on-exec from the creating act, by
-`SOCK_CLOEXEC` in the `socketpair` call rather than by a later `fcntl`.**
+**Both ends of every created pair carry close-on-exec from the creating act,
+by `SOCK_CLOEXEC` in the `socketpair` call rather than by a later `fcntl`.**
+This crate creates three pairs across a run, the residency and decode pairs in
+one act before the SPU fork and the gate pair before the gate fork, and the
+rule is the same at each.
 `weaver-harness-spu-contract` section 1 requires the harness's own end flagged
 from the pair's creation. The atomic form is elected because the alternative
 has a window: this process forks a subprocess per tool call, a fork between
@@ -307,9 +318,14 @@ unwind total.**
 ```rust
 struct Run {
     recorder: Recorder,
-    spu: Option<OrganChannel>,
+    spu: Option<SpuChannels>,
     gate: Option<OrganChannel>,
     turn_in_flight: bool,
+}
+
+struct SpuChannels {
+    lifecycle: OrganChannel,
+    decode: DecodeChannel,
 }
 ```
 
@@ -317,7 +333,16 @@ Each `Option` is an arm of the enter fan-out that has or has not stood up, so a
 leave arriving after a refused enter unwinds exactly what stands, stopping the
 gate where a gate was raised and releasing the SPU where a model was admitted,
 and the compiler's match on the options is what makes a forgotten arm
-unrepresentable rather than unlikely. This is the mechanical form of
+unrepresentable rather than unlikely. **The SPU's arm is a pair of channels
+rather than one, and they are one field because they stand up and fall
+together.** The decoder cut of 2026-08-02 gave that organ a second socket, and
+the two are created in one act and cross one fork, per
+`weaver-harness-spu-decode-contract` section 1, so an option over the pair
+keeps the arm's all-or-nothing shape where two options would admit a half-stood
+arm the unwind would have to reason about. The decode end takes its own type
+rather than `OrganChannel`, because `weaver-spu-PRD` section 13.2 rules that
+socket not an organ channel and a shared name would carry the envelope's
+assumptions onto a seam that does not take them. This is the mechanical form of
 `load-unload-loop` section 4's rule that admin's unwind is a reap plus one
 directive: the directive works because the harness knows what stands.
 
@@ -329,8 +354,12 @@ contract's plural was residue of the retired live view, corrected to the
 singular in the same act as this sentence, and `weaver-trace-Spec` section
 5's receive takes the one sink descriptor this Spec builds to. Author
 the `load` event, the run's opening and the origin of its monotonic clock.
-Create the residency pair, fork the SPU binary, and open the admit exchange
-carrying the model binding uninterpreted. Create the gate pair only after the
+Create the residency pair and the decode pair in one act, per
+`weaver-harness-spu-decode-contract` section 1, fork the SPU binary carrying
+both ends, and open the admit exchange on the lifecycle pair carrying the
+model binding uninterpreted. The decode socket is created here rather than at
+first use because it crosses the same fork, and a socket the child was not
+given at its exec cannot be handed to it afterward. Create the gate pair only after the
 SPU's answer has confirmed residency, per `weaver-harness-gate-contract`
 section 1, then fork the gate binary and open the raise exchange carrying the
 gate instruction uninterpreted, the gate last so no work arrives before the
@@ -619,7 +648,8 @@ Each names what settles it, and none is this Spec's to settle alone.
   enforcement point.** Blocked with `tool-trait`, per `weaver-traits-PRD`
   section 3.1.
 - **The satellite types.** `AdoptionFault`'s case set, `OrganChannel`'s
-  exchange-surface spelling, the licensing error's shape, and the
+  exchange-surface spelling, `DecodeChannel`'s and `SpuChannels`' names, the
+  licensing error's shape, and the
   channel-state enum's name. Identifier and shape choices with no
   cross-crate consequence, listed so what this Spec leaves to a builder is
   complete rather than implied.

@@ -27,8 +27,8 @@ charter and the contracts state rather than developing grounds of its own.
 Where this document and the charter disagree the charter yields nothing.
 
 **This document declares no graph records,** per Document Format section 1.
-The charter is the source of this crate's node, its parent edge, its floor
-link, and its two declared seams.
+The charter is the source of this crate's node, its parent edge, its two floor
+links as this act corrects them, and its two declared seams.
 
 **It is written from the merged corpus, with the salvage survey as its quarry
 map.** `docs/project/weaver-spu-salvage-survey.md` records what the archived
