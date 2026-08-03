@@ -52,6 +52,19 @@ thirty carrying `review` where thirty-five did. What stays on prose in the
 residency half is what reads a driver, the room and reach conditions and the
 release ordering, and section 10 states the absent driver seam as their ground
 rather than leaving the tags to be read as impossibility.
+**Revised:** 2026-08-03, a fourth entry this date, closing this crate's half of
+issue 32. Section 9 stops recording the out-of-order refusal as an owing it
+cannot discharge and states the behaviour on both seams, each against the state
+its own contract's section 3 rules: three positions with a terminal release on
+the residency seam, and open-after-residency with one generation in flight and a
+between-turns flush on the decode seam. The order is judged against the channel's
+recorded position before the directive reaches residency or the session, which is
+what makes not-queued mean anything and what puts every position inside a fixture
+holding no residency. Two records land, one per seam, because the two states fail
+independently and one record would report a single instrument for both. Section
+10 buys both. Fifty-eight records now, twenty-seven from that section's sorting
+and thirty-one from the elections outside it, with thirty still carrying
+`review`.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -1216,17 +1229,63 @@ from: weaver-spu
 to: spu-fault-below-the-exchange-layer
 ```
 
-**The out-of-order refusal is owed to this crate and is stated nowhere in this
-document,** which this pass records rather than repairs. `weaver-types-Spec`
-section 5 owes it to each organ and enforces it nowhere, and section 3 of
-`weaver-harness-spu-contract` and section 3 of
-`weaver-harness-spu-decode-contract` both bind it here. Both of
-this crate's seams hold the ordered state the owing reaches: admit once with
-release terminal on the first, and open before any generation with one
-generation in flight on the second. Stating the behaviour and buying its test
-are Spec edits rather than an indexing, so they arrive in an act of their own,
-filed as issue 32, the way `weaver-gate-Spec` section 6 discharged the gate's
-side of the same owing.
+**A directive out of order for its seam's state answers `OutOfOrder` and is not
+queued, on both seams.** `weaver-types-Spec` section 5 owes the refusal to each
+organ and enforces it nowhere, and section 3 of `weaver-harness-spu-contract` and
+section 3 of `weaver-harness-spu-decode-contract` each bind it here against a
+state of their own, so this document states it twice rather than once in the
+abstract. **The order is judged against the channel's recorded position before
+the directive reaches residency or the session,** which is what makes not-queued
+mean anything at all, a refusal that had already run the work being a refusal
+about nothing, and it is what puts every position inside a test with no artifact
+resolved and no device taken.
+
+**The residency seam has three positions and the last is terminal,** per that
+contract's section 3: before-admit, admitted, released. Admit is first and
+happens exactly once, so a second admit answers `OutOfOrder` whatever the first
+answered, this crate admitting once and dying per section 3 rather than matching
+a prior residency against a later request. A release with no completed admit
+before it is refused and not queued, there being no residency for it to end, and
+a directive of any kind arriving after a release answers the same.
+
+**The decode seam holds the richer state and the decode contract rules all of
+it.** Open is first, happens once, and is valid only after the residency it
+serves is confirmed, so an open before residency answers `OutOfOrder`. One
+generation is in flight at a time, so a second append-and-generate while one is
+outstanding answers the same, one turn behind one intent. Flush is valid only
+between turns, so a flush arriving mid-generation answers the same, the cancel of
+section 4.3 being what that case has instead. **Cancel is the one directive whose
+window is the session rather than the generation,** and a cancel at rest answers
+at rest rather than refusing, which is the contract's own reading and not a
+fourth position this document adds.
+
+**Each seam carries its own refusal type and neither carries a twin of the
+other's,** per the split above: the residency seam answers a `lifecycle-refusal`
+and the decode seam a `token-refusal`, both drawn from the floor with the
+`OutOfOrder` case the floor already holds. **The two are two records,** because
+the two seams hold two different ordered states watched by two different
+fixtures, and one record would report a single instrument for behaviours that
+fail independently. Section 10 buys both, which discharges this crate's side of
+the owing on both seams, the way `weaver-gate-Spec` section 6 discharged the
+gate's on its one.
+
+```graph
+node: spu-out-of-order-refused-on-residency
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-out-of-order-refused-on-residency
+
+node: spu-out-of-order-refused-on-decode
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-out-of-order-refused-on-decode
+```
 
 **The admit refusal cases are the charter's enumeration and this Spec adds
 none.** Charter section 10 holds the set open with a candidate list and names
@@ -1320,6 +1379,29 @@ than a code fact.
   `weaver-gate-Spec` section 6 each buy, and until issue 37 closed this crate was
   the only one of the four receiving crates carrying the obligation on prose
   alone.
+- A lifecycle directive out of order is refused and not queued: a release before
+  any admit answers `OutOfOrder`, a second admit answers the same whatever the
+  first answered, and any directive after a release answers the same, the
+  released position being terminal. Confirmed by watching the second admit reach
+  the resolution step when the admitted position is allowed to accept one, and by
+  watching a held release run at the next directive when the refusal is replaced
+  by a queue. The positions are driven against the channel's recorded state, per
+  section 9, so the fixture resolves no artifact and takes no device. **The
+  second-admit arm watches the refusal and not the idempotence claim beside it,**
+  section 3's no-matching rule being about what a completed residency would be
+  compared against, which this fixture never produces.
+- A decode directive out of order is refused and not queued: an open before the
+  residency it serves is confirmed answers `OutOfOrder`, a second
+  append-and-generate while one is in flight answers the same, and a flush
+  arriving mid-generation answers the same. Confirmed by watching the second
+  generation reach the session when the in-flight position is dropped, and by
+  watching the flush reach the session's truncation path when the between-turns
+  condition is removed. What each arm reads is whether the directive was
+  dispatched or refused, which is what not-queued means and what the recorded
+  state puts within reach of a fixture holding no residency. **The flush arm is
+  the one worth having,** its perturbation corrupting a session rather than
+  answering wrong, which the next turn's framing reports and the flush's own
+  answer does not.
 - The cheap refusals precede the device judgment: against a fixture family
   declaring the widths one and two, with a binding naming three devices, a
   binding whose artifact resolves to nothing answers the resolution refusal
@@ -1394,12 +1476,12 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Fifty-six records in all,
-twenty-five from this section's sorting with the walks and the kernels counted
+general prohibition, and the kernels' comparisons. Fifty-eight records in all,
+twenty-seven from this section's sorting with the walks and the kernels counted
 in, and thirty-one from the elections outside it, the elections taking nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable. A divided claim's two halves both count with the sorting, per
-Document Format section 3. Two of the twenty-five are tagged for review and
+Document Format section 3. Two of the twenty-seven are tagged for review and
 every other one of them carries a mechanical instrument: the loader's general
 prohibition, which is the review half of the one split that still has one, and
 the kernels' comparisons, which the paragraph above argues. **One bullet
@@ -1425,10 +1507,14 @@ the ground is that no instrument was bought rather than that none exists. The tw
 exceptions say so where they sit, the absence of anything laid in for an
 operation type that does not exist and the kernels' comparisons above.
 
-**The out-of-order refusal is the owing this act does not reach.** It reaches
-both of this crate's seams and this document states it nowhere, per section 9,
-and stating it is a Spec edit of its own rather than an instrument added to a
-claim already made.
+**The out-of-order refusal is stated and bought on both seams, per section 9,
+and this crate's side of the owing is discharged.** `weaver-types-Spec` section
+5 owes it to each organ and enforces it nowhere, the gate discharged its one seam
+at `weaver-gate-Spec` section 6, and the two bullets above are the residency and
+decode seams answering the same demand against two different ordered states. What
+made this crate's half the largest of the three is that the gate and the harness
+each state the behaviour and lack only a test, while this document stated it
+nowhere, so the act had to write the claim before it could buy one.
 
 ```graph
 node: spu-eval-callback-pinned-by-doctest
