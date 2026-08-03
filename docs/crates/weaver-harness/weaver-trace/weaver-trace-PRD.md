@@ -337,10 +337,11 @@ the organs' own charters, per `weaver-spu-PRD` section 10.
 **Apex section 8's deterministic re-feed rests on five inputs, and since the
 trace act of 2026-08-02 they span two kinds of one turn rather than one
 payload.** Replay feeds recorded tokens back through a forward pass rather
-than re-sampling, which needs the input and output token identifiers, the
-model identity and its weights hash, the prompt-block partition, and the
-sampling parameters. **The first four are `model.measurement`'s and the fifth
-is `model.request`'s,** the sampling values having moved to the request in
+than re-sampling, which needs the input token identifiers, the output token
+identifiers, the model identity and its weights hash, the prompt-block
+partition, and the sampling parameters, five items displayed as five because
+the apex splits the identifiers and joins the identity to its hash. **The
+first four are `model.measurement`'s and the fifth is `model.request`'s,** the sampling values having moved to the request in
 that act because an input to a decode belongs with what was asked rather than
 with what was read off it. The join is the turn: both kinds carry the same
 turn in the envelope, so a replay driver reads the pair rather than one
