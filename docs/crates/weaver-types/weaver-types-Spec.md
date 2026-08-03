@@ -57,6 +57,20 @@ nine.
 `ModelBinding` as the artifact and an ordered set of devices, the order being
 the shard order, with an empty set a parse error rather than a default because
 defaulting placement is the decision this crate exists not to make.
+**Revised:** 2026-08-03, the assertion pass, first of the seven and the pattern
+the rest follow. Seventeen assertion records land at the clauses that argue them,
+nine from the enforcement sorting of section 5 and eight from the elections
+outside it, per the ruling that elections take nodes because gate H1 would
+otherwise leave the largest decisions untraceable. Section 0's boilerplate
+records what this document now sources, and section 5 states where the records
+sit and which of its bullets are owings another crate declares.
+**Revised:** 2026-08-03, on the pilot's review the same day. Three closing
+fences carried the prose that followed them, which a markdown parser reads as
+one unclosed block and the notation's own validator cannot see, so the fencing
+discipline the six followers inherit is stated by being correct here: a fence
+line carries nothing else. Section 0's boilerplate names its one exception, the
+shared tagging test's second edge, and settles the traits Spec's mirroring
+clause with it.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -80,9 +94,22 @@ questions the corpus deliberately left here: what shape the agent config takes o
 disk, and what octets the loop 0 vocabulary becomes on the wire. Where this
 document and the charter disagree the charter yields nothing.
 
-**This document declares no graph records,** per Document Format section 1. The
-charter is the source of the crate node, the `agent-config` artifact, its six
-`holds` edges, and the seventeen vocabulary definitions.
+**This document declares its crate's assertion records, and one edge that is
+another crate's,** per Document Format sections 3 and 4 as of the notation of
+2026-08-03. The exception is the shared tagging test of section 4.3: one claim
+is one node with an `asserts` edge per crate bound by it, the node lives at the
+statement both floor Specs share, and `weaver-traits`' edge is therefore
+declared here beside it. **`weaver-traits-Spec` declares its own assertion
+records except that edge,** and says so, which is the other half of the same
+rule: without both halves the traits act either redeclares an edge already
+declared here, which is the duplicate the format forbids, or drops part of its
+crate's assertion set with nothing recording where it went. The charter
+stays the source of the crate node, the `agent-config` artifact, its six
+`holds` edges, and the seventeen vocabulary definitions. What this document
+sources is the claims code must conform to, declared at the clauses that argue
+them rather than gathered in one place, per that format's section 6, and
+`asserts` runs from the crate rather than from this document, which is why the
+document needs no node of its own.
 
 ## 1. The crate
 
@@ -106,6 +133,24 @@ maintained YAML implementation for the config file, per the election of section
 2, **behind a non-default `config` cargo feature**. Nothing else, and specifically
 no socket crate, no async runtime, and no logging: this crate defines what crosses
 a boundary and crossing it is somebody else's crate, per charter section 3.
+
+```graph
+node: types-one-floor-link
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-types
+to: types-one-floor-link
+
+node: types-no-socket-no-runtime-no-io
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-types
+to: types-no-socket-no-runtime-no-io
+```
 
 **The feature gate is thinness applied where the floor is widest.** Every crate in
 the program links this one, and only admin and the harness parse the config file,
@@ -136,7 +181,19 @@ criterion, being what a system administrator already reads. TOML was the alterna
 and is the Rust-native choice, and it loses on deep nesting for a reader who is
 not a Rust programmer. JSON was never a candidate: no comments, and a
 trailing-comma error at three in the morning on a file that gates a load is a bad
-way to learn about JSON. **What this election must survive is that `serde_yaml`
+way to learn about JSON.
+
+```graph
+node: types-config-format-yaml
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-config-format-yaml
+```
+
+**What this election must survive is that `serde_yaml`
 was archived and deprecated by its author in 2024**, so the implementation is a
 maintained one and the Spec pass names that as a requirement rather than a
 preference. A builder confirms maintenance status at the moment of writing the
@@ -190,6 +247,16 @@ idiomatic. Without the rename the two spellings diverge, which is the collision
 Document Format section 5 rules against for graph identifiers and which reads the
 same way on a page.
 
+```graph
+node: types-config-names-kebab
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-config-names-kebab
+```
+
 **Every field is required and absence is a refusal, with the temptation named.**
 Charter section 5 rules that absence is never read as a default unless the charter
 says a field is optional and says what its absence means. No field here is
@@ -200,12 +267,40 @@ learns the file is incomplete rather than discovering it in a record with no
 reductions in it. This is why `AgentConfig` derives no `Default` and `parse`
 returns no partial value.
 
+```graph
+node: types-required-field-refuses
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-types
+to: types-required-field-refuses
+
+node: types-no-default-derive
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-no-default-derive
+```
+
 **`trace-sink` names a sink and not only a path.** A file, a pipe, or a socket are
 all conforming sinks, per `weaver-admin-operator-contract` section 3, so the field
 carries a discriminated shape and admin opens by the discriminant. A bare path
 would force admin to guess from the filesystem what the operator meant, and the
 guess is wrong exactly when the operator meant a named pipe that does not exist
 yet, which is the discriminant's whole argument.
+
+```graph
+node: types-trace-sink-discriminated
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-trace-sink-discriminated
+```
 
 **`File` and `Pipe` carry a creation flag and `Socket` does not, and the
 asymmetry has a reason rather than an oversight.** Admin can create either of the
@@ -254,7 +349,19 @@ type with the tool workflow, because it elects from `tool-trait`, which
 crate exposes `parse` and nothing partial: no builder, no field-by-field accessor
 over a half-read document. A partially valid config is the shape that lets a load
 proceed on half a declaration, and the type system is where that is prevented
-rather than in admin remembering to check. What admin adds beyond the parse is
+rather than in admin remembering to check.
+
+```graph
+node: types-config-parse-total
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-types
+to: types-config-parse-total
+```
+
+What admin adds beyond the parse is
 existence, that the model artifact resolves, the sink exists or its creation flag
 is set, and the boundary is as the operator wrote it, per `weaver-admin-PRD`
 section 4.3. The parse answers well-formed and the checks answer real, and this
@@ -264,6 +371,16 @@ crate owns the first only.
 supplies. An ignored field is an operator's declaration silently discarded, and a
 typo in `permission-mode` that parses as an unknown field and vanishes is the
 failure this rejection exists to prevent.
+
+```graph
+node: types-unknown-key-refuses
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-types
+to: types-unknown-key-refuses
+```
 
 ## 3. Peer identity and the authorization predicate
 
@@ -305,11 +422,31 @@ broad group grant would otherwise admit it, per `weaver-gate-PRD` section 2, and
 rule evaluated permission-first would let a group membership readmit the one
 principal the boundary exists to keep out.
 
+```graph
+node: types-denial-precedes-permission
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-types
+to: types-denial-precedes-permission
+```
+
 **The predicate is a free function over data and reaches nothing.** No file, no
 environment, no clock, no global. Where the rule comes from, how a failure is
 handled, and what happens on refusal live in the consuming crates, per charter
 section 2.2, and a predicate that loaded its own access list would have taken the
 first of those back.
+
+```graph
+node: types-one-policy-function
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-one-policy-function
+```
 
 **`pid` is carried and is never the basis of a decision.** `SO_PEERCRED` reports
 it, so the type would be lying by omission to drop it, and it is unsound as an
@@ -324,6 +461,16 @@ constructing a peer identity from bytes that arrived over a socket, which is one
 careless call away from the exact substitution `SO_PEERCRED` exists to prevent.
 Serialization stays, because a refusal that names the peer it refused is worth
 recording.
+
+```graph
+node: types-peer-identity-no-deserialize
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-types
+to: types-peer-identity-no-deserialize
+```
 
 **The threat walk.** This Spec names the adversary each security mechanism
 defeats and derives that mechanism's test from the attack, which is how a
@@ -522,7 +669,19 @@ consumer to carry a wildcard arm, and a case added later would land in that
 wildcard silently, which is the opposite of the property the naming ruling bought.
 Exhaustive, a new case breaks every consumer's match at compile time, in the same
 act that edits the floor, and every contract's drawn subset is re-read by a human
-because the compiler made them look. An earlier draft of this Spec carried the
+because the compiler made them look.
+
+```graph
+node: types-wire-enums-exhaustive
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-types
+to: types-wire-enums-exhaustive
+```
+
+An earlier draft of this Spec carried the
 attribute beside this same argument, which the review seat caught as the
 contradiction it was.
 
@@ -578,6 +737,16 @@ charter's criterion.** `weaver-types-PRD` section 2.3 states the ground: this
 traffic is low in volume, so compactness buys nothing measurable, and diagnostic
 in audience, read from a capture when a load refuses unexpectedly.
 
+```graph
+node: types-loop0-encoding-json
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-loop0-encoding-json
+```
+
 **The tagging follows the same mechanical test `weaver-traits-Spec` section 3
 states, and the two floor Specs share it so they cannot drift.** A fieldless enum
 is a plain renamed string. An enum whose every variant is struct-shaped or wraps
@@ -585,6 +754,20 @@ a struct is internally tagged. An enum with any variant wrapping a primitive, a
 sequence, or another tagged enum is adjacently tagged, because internal tagging
 cannot represent those shapes and fails at serialization rather than at compile
 time.
+
+```graph
+node: types-tagging-test
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-tagging-test
+
+edge: asserts
+from: weaver-traits
+to: types-tagging-test
+```
 
 Applied here: `Position`, `Opener`, and `RefusingOrgan` are fieldless and
 serialize as plain renamed strings. **The trio is internally tagged**, which is
@@ -643,6 +826,24 @@ was elected to prevent. The bound is generous against loop 0's traffic, whose
 largest case is an enter payload of identifiers, and it is stated as a number so
 that a builder sizing a buffer has one to use.
 
+```graph
+node: types-socket-seqpacket
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-socket-seqpacket
+
+node: types-envelope-bound-64k
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-types
+to: types-envelope-bound-64k
+```
+
 ## 5. What is enforced, and by which instrument
 
 **Enforced by the compiler.**
@@ -671,6 +872,19 @@ apex's enforcement section exists to prevent.
 **Enforced by the manifest.** No socket crate, no runtime, no I/O in the
 dependency tree, checked as `weaver-traits-Spec` section 7 checks its own, by a
 build-time assertion over the resolved external tree rather than by H2.
+
+**Where the assertion records sit, and which of these this crate declares.**
+The records are at the clauses that argue the claims, across sections 1 through
+4, rather than gathered here, per Document Format section 6: this section sorts
+by instrument and the arguments are elsewhere, so a block here would sit apart
+from the prose that earns it. **A claim this section owes to another crate is
+declared by that crate,** not here, because the assertion belongs where its test
+lives and a node declared twice is the one-name-two-nodes defect the format
+forbids for identifiers. Three of the bullets below are such owings and carry no
+record in this document: the out-of-order refusal owed to each organ, the
+boundary and truncation tests owed to the pair-creating crates, and the
+accept-time refusal owed to the gate, which `weaver-gate-Spec` section 6 has
+already discharged.
 
 **Requiring a perturbation-verified test, with the owning crate named.**
 
