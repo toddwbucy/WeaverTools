@@ -20,6 +20,10 @@ declared-open lead and section 7's `sendmsg` sentence adopt the singular, the
 first pass having swept the retired wording and left the claim standing in
 other clothes, plural verb agreement inside a sentence whose other clause
 already said one.
+**Revised:** 2026-08-03, the device-assignment ruling. Section 4 states what
+the inventory does not check, the devices a binding assigns, the parse having
+answered well-formed and ruling C keeping hardware out of this crate's
+reasoning.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -229,6 +233,18 @@ the owner, holds no group search bit through any membership, and the other
 bits carry no search. Any failure refuses with `BoundaryUnverified` or the
 artifact case that names it, nothing is repaired, and nothing is built, per
 charter section 2.
+
+**The devices the binding assigns are not checked here, and the absence is
+stated rather than left to be inferred.** The parse has already answered that
+the assignment is present and well-formed, per `weaver-types-Spec` section 2,
+which is the whole of what this crate needs to know about it. Whether those
+devices exist on the host, whether they have room, and whether they can reach
+each other are questions about hardware, and admin reasons about the device at
+no point, per ruling C of 2026-07-31, so they belong to the one authority on
+the device and are answered at admission. The check would be easy to write
+here and that is what makes stating its absence worth the sentence: an admin
+that verified the GPU would be the second arbitrator ruling C removed,
+reintroduced as a convenience.
 
 **The allow-list is consulted before anything else is touched.** The agent
 name is validated against the fleet's allow-list and the constructed identity

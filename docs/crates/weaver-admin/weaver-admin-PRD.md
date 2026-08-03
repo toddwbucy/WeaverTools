@@ -90,6 +90,10 @@ settled at `weaver-admin-harness-contract`: one trace descriptor crosses in
 the enter directive, the sink's. The ruling landed in the contract and the
 harness Spec and was left standing in seven other documents, which the
 loop-0 question of this date exposed.
+**Revised:** 2026-08-03, the device-assignment ruling. Section 4.3's inventory
+sentence stops promising that every setting a binding carries resolves to a
+real thing, the devices it assigns being hardware this crate does not reason
+about, per ruling C.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -493,8 +497,11 @@ which is one code path entered two ways rather than two checks free to drift apa
 
 What it inventories is what a load depends on and cannot discover later. The
 configuration file is present and parses. Its required fields are there. The model it
-names and the settings it carries for that model resolve to real things in the format
-those things are expected to be in. The stream sink it declares exists, or the flag
+names resolves to a real artifact in the format it is expected to be in, and the
+settings it carries resolve the same way **except for the devices it assigns,
+which this crate does not reason about at all**, per ruling C and the
+device-assignment ruling of 2026-08-03: their existence is the SPU's to answer
+at admission. The stream sink it declares exists, or the flag
 that orders one created is set. The boundary checks of load step 3 run against the
 operator's provisioning. Every one of these is a question about whether a named
 thing exists and is what it claims to be, and admin answers it by looking rather

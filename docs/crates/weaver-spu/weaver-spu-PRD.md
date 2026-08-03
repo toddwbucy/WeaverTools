@@ -72,6 +72,13 @@ the harness's canonical messages, so this crate draws the message model and
 links `weaver-traits`, which the paragraph's own closing sentence left to the
 decode workflow to settle. The declared-surface paragraph leaves with its
 subject, and the graph block carries the second `floor-link`.
+**Revised:** 2026-08-03, the device-assignment ruling. Section 4.1 step 3
+judges the devices the binding assigns rather than an unnamed device, adding
+the reachability and shard-width conditions a set larger than one carries.
+Section 3 states that this crate selects no device, the archived tree's
+selector being the seventh place its working code yields. Section 10's
+candidate refusal list gains the two cases a set introduces, and section 14's
+capability declaration gains the shard width admission judges against.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -225,7 +232,20 @@ there is nowhere for it to be kept.
 not know what other agents exist, what they hold, or whether one of them would
 rather have this device, and it does not need to: it is the one authority on the
 device, per ruling C, and it judges the device it can see rather than the fleet it
-cannot. Whether the fleet should spend this device on this agent is the operator's
+cannot.
+
+**Device selection, which is the operator's and is nobody's at load.** The
+binding names the devices a model runs on, per the ruling of 2026-08-03, so
+this crate judges an assignment rather than making one. It surveys no devices
+looking for a fit, ranks none, and falls back to none: an assignment that does
+not admit is a refusal the operator answers by editing the file, not a search
+this crate performs on the operator's behalf. The archived tree carried the
+opposite, a selector that placed a model on whichever device had room, and it
+is the seventh place that tree's working code yields to a merged ruling, per
+the salvage survey. A program that placed models dynamically would be deciding
+hardware policy at load, which is the arbitration ruling C removed from admin
+rather than relocated into this crate. Whether the fleet should spend this
+device on this agent is the operator's
 question, answered in the configuration before a load is directed at all.
 
 **The agent's configuration file.** `weaver-types-PRD` section 2.1 has one writer, the
@@ -273,10 +293,17 @@ It ends in residency confirmed or in a typed refusal.
    touching the device. That is a mechanic worth keeping, because it converts the
    most common shape of a bad binding, an artifact that is present and wrong, into a
    refusal that costs no device work.
-3. **Judge the device against what admission requires.** What the artifact needs
-   plus the working headroom the residency requires must fit what the device has
-   free. This is the one check on the device, per section 2, and nothing upstream
-   performed an earlier one.
+3. **Judge the assigned devices against what admission requires.** The binding
+   names the devices, per `weaver-types-PRD` section 2.1 and the ruling of
+   2026-08-03, and this crate judges those and selects none. What the
+   artifact's shard needs plus the working headroom the residency requires must
+   fit what each assigned device has free, which is the same inequality read
+   per device rather than a new one. Where the set is larger than one the
+   devices must also be able to reach each other, since a sharded forward
+   exchanges activations between them and a set that cannot is a set that
+   cannot serve. And the backend must be able to shard across that many, per
+   section 14's capability declaration. This is the one check on the devices,
+   per section 2, and nothing upstream performed an earlier one.
 4. **Take the device and load the weights.**
 5. **Confirm residency.** The answer confirms and carries nothing else, per section
    4.4.
@@ -603,9 +630,14 @@ rather than a hole, and a draft with no cells has hidden them.
 refuse and this charter does not enumerate the reasons. The old tree's device authority
 carried a usable candidate list, which is offered as mechanics rather than as the
 answer: the artifact does not resolve, the artifact does not parse or declares a shape
-this crate cannot serve, the artifact is present and unreadable by the agent uid, the
-device ordinal is not present, the device is occupied by something this program did not
-put there, and what admission requires exceeds what the device has free. Every device
+this crate cannot serve, the artifact is present and unreadable by the agent uid, an
+assigned device ordinal is not present on this host, an assigned
+device is occupied by something this program did not
+put there, and what admission requires exceeds what an assigned device has free.
+The device-assignment ruling of 2026-08-03 adds two candidates to that list, an
+assigned set the devices of which cannot reach each other and an assigned set
+the backend cannot shard across, both of which are the same kind of fact as the
+others, discovered here and nowhere earlier. Every device
 case is caught here and nowhere earlier, per ruling C. **Settled by:** the type
 half settled with the
 naming ruling of 2026-08-01, the cases extending `lifecycle-refusal` as loop 0
@@ -938,7 +970,8 @@ destinations live rather than here.
 
 **A family declares its capabilities and the declaration is consulted at
 admit.** What operations a family's models serve, what template identity
-it renders, and whether its engine can tap for readout are facts the
+it renders, whether its engine can tap for readout, and **how many devices its
+backend can shard a model across** are facts the
 family module states, and admission judges a binding against them, which
-is how 13.7's refusal knows to fire. The declaration's shape is the
-Spec's.
+is how 13.7's refusal knows to fire and how section 4.1 step 3 knows whether an
+assigned set is servable. The declaration's shape is the Spec's.
