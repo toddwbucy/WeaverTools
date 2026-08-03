@@ -47,6 +47,16 @@ this date and Document Format v0.10 section 3: the two halves of a divided claim
 both count as the enforcement section's, neither having been elected and one
 having been divided out of a bullet that section already carried. No record
 moves and no tag changes, only the provenance the counts report.
+**Revised:** 2026-08-03, a third entry this date, the boundary half of the pair
+test, per issue 35. Section 7 gains `admin-one-write-is-one-read` at the clause
+that argues one write is one message, and section 10 names its test with the
+`SOCK_STREAM` substitution its watch turns on and the two-message setup that
+makes the watch reachable. The truncation half has stood alone since the pass
+and is blind to that substitution, which is the corpus testing the consequence
+of the boundary election and never the election's own reason. Thirty-six
+records now, eighteen from section 10's sorting and eighteen from the
+elections. The election itself stays `weaver-types-Spec`'s and is deferred to
+rather than restated.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -690,6 +700,29 @@ neither takes a record here. The connected pair that Spec speaks of is what
 an accept produces, the bind-and-declared-open route having superseded the
 forked pair on the charter's fourteenth-entry ruling.
 
+**The boundary the type buys is tested where the pair is made, and that test
+is this crate's.** The election is that Spec's record and the conduct at it
+is this crate's, the division the receive discipline below already takes:
+`weaver-types-Spec` section 5 owes the pair-creating crates a test with two
+halves, and the boundary half is that one envelope written on this channel
+is one envelope read, arriving neither split nor merged with its neighbour.
+Section 10 names it with the substitution its watch turns on, `SOCK_STREAM`
+at the creating call leaving every truncation test passing while the
+framing every contract that draws this channel rests on is gone. The half
+stood unwritten from the pass until this act, filed as issue 35 and closed
+across both pair-creating crates in one act because the property and its
+watch are the same on either side.
+
+```graph
+node: admin-one-write-is-one-read
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-one-write-is-one-read
+```
+
 **The channel is built in four acts, the acts straddle the unit's start, and
 the split is the ordering.** The first two acts run before the unit starts,
 because the worker connects at its start through the declared open and a
@@ -944,16 +977,16 @@ no bus crate, and no logging crate in the resolved tree, by the build-time
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-five records in all,
-seventeen from this section's sorting and eighteen from the elections outside
+would sit apart from the prose that earns it. Thirty-six records in all,
+eighteen from this section's sorting and eighteen from the elections outside
 it, the elections taking nodes because gate H1 would otherwise leave the
-largest decisions in this Spec untraceable. The eighteen are all tagged for
-review, and two more review tags come from the sorting rather than from an
-election: the verb's stopping short of any seam and the existence checks no
-test reaches are the review halves of splits this section's own bullets take,
-and a divided half counts with the bullet it divided out of, per Document
-Format section 3. Every other record drawn from the sorting carries a
-mechanical instrument.
+largest decisions in this Spec untraceable. The eighteen elections are all
+tagged for review, and two more review tags come from the sorting rather than
+from an election: the verb's stopping short of any seam and the existence
+checks no test reaches are the review halves of splits this section's own
+bullets take, and a divided half counts with the bullet it divided out of,
+per Document Format section 3. Every other record drawn from the sorting
+carries a mechanical instrument.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live
@@ -990,6 +1023,18 @@ run happens.
 - Truncation is a fault: an over-bound envelope on the coordination channel
   produces the fault and no directive, confirmed by watching a silently
   shortened answer decode when the `MSG_TRUNC` check is removed.
+- One write is one read: two envelopes are written back to back on the
+  coordination channel and both writes complete before either read, and two
+  reads return exactly one envelope each, confirmed by watching the first
+  read return both when the socket is created as `SOCK_STREAM`. **Two
+  messages are what make the watch reachable.** The truncation bullet above
+  cannot see that substitution at all, `MSG_TRUNC` handling being untouched
+  by it, and a single small envelope crosses a stream socket whole, so a
+  one-message test would pass under the substitution and pin nothing, which
+  is the never-failing perturbation apex section 11 counts as worse than no
+  test. This is the boundary half of the pair test `weaver-types-Spec`
+  section 5 owes the pair-creating crates, argued at section 7, and it
+  discharges this crate's side of that owing alone.
 
 ## 11. Open elections
 
