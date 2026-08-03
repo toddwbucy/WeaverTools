@@ -30,8 +30,8 @@ cases.
 paragraph adopts the singular, one trace descriptor the harness holds at the
 fork.
 **Revised:** 2026-08-03, the device-assignment ruling, in two sites. Section 2's
-admit walk takes the devices the binding assigns, in shard order, rather than a
-device, the binding having carried an assignment since that ruling and this seam
+admit walk judges and takes the devices the binding assigns, in shard order,
+rather than a device, the binding having carried an assignment since that ruling and this seam
 being where both parties read the walk. Section 5's failure sentence follows: an
 admit that fails after taking any assigned device frees every taken device before
 answering, a set taken in order making a partial take ordinary where a single take
@@ -161,8 +161,8 @@ Two, and no others in this pass. Both are opened by the harness.
 
 **Admit the model.** Opened by the harness during the enter fan-out, carrying the model
 binding admin supplied in the enter directive. The SPU resolves the binding, reads what
-the artifact declares about itself without loading it, judges the device against what
-admission requires, takes the assigned devices in the binding's shard order, and
+the artifact declares about itself without loading it, judges the assigned devices
+against what admission requires, takes them in the binding's shard order, and
 loads the weights. It answers residency
 confirmed, or it refuses. **The refusal carries a reason the harness places in the enter
 aggregate without translation,** which is what makes `weaver-admin-harness-contract`
