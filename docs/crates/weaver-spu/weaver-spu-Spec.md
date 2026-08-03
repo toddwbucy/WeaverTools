@@ -36,6 +36,22 @@ reachable claim states non-purchase as its ground rather than impossibility. The
 out-of-order refusal `weaver-types-Spec` section 5 owes each organ reaches both
 of this crate's seams and this Spec states it nowhere, which is a Spec edit
 rather than an indexing and is reported against issue 32 rather than taken here.
+**Revised:** 2026-08-03, a third entry this date, closing issue 37. Section 10's
+perturbation list gains five bullets and five records retag from `review` to
+`perturbation`, all five reachable with a fixture and none of them touching a
+device: the cheap refusals that precede the device judgment, the registry's
+refusal to substitute a family, the width refusal read against a declared set,
+the truncation fault three sibling Specs already buy, and the outbound parse the
+assertion pass demoted rather than instrumented. Section 3 gains the ordering
+election the width test rests on, the three admission conditions judged cheapest
+first, which charter section 4.1 step 3 enumerates and does not sequence. Section
+5's template clause stops reading as a split with an unbought half. The counts
+move with the tags: fifty-six records still, twenty-five from section 10's
+sorting where twenty-one were and thirty-one from the elections outside it, with
+thirty carrying `review` where thirty-five did. What stays on prose in the
+residency half is what reads a driver, the room and reach conditions and the
+release ordering, and section 10 states the absent driver seam as their ground
+rather than leaving the tags to be read as impossibility.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -358,15 +374,16 @@ sized to the envelope bound on the lifecycle channel, a read returning with
 bound asserted on this crate's own writes. The election and its bound are
 `weaver-types-Spec` section 4.3's, declared there as two records rather than
 one, the bound sitting beside the election rather than inside it, and this crate
-carries the obligation without redeclaring either. **Both claims stated here are
-review's by non-purchase, and the two are not unbought for the same reason.**
+carries the obligation without redeclaring either. **The two claims stated here
+carry two instruments, and the reason they differ is the reason one was unbought.**
 The envelope's confinement to the first end becomes watchable the day the decode
 socket's encoding is settled, which section 11 holds open, so no capture test has
-a settled shape to assert against yet. The truncation fault is reachable today
-and three sibling Specs buy the instrument for it, `weaver-harness-Spec` section
-8, `weaver-admin-Spec` section 10, and `weaver-gate-Spec` section 6 each naming
-the same watch, and section 10 of this document names none, which is a bullet
-owed rather than a property out of reach.
+a settled shape to assert against yet, and it stays review's by non-purchase on
+that ground. The truncation fault was reachable all along and three sibling Specs
+buy the instrument for it, `weaver-harness-Spec` section 8, `weaver-admin-Spec`
+section 10, and `weaver-gate-Spec` section 6 each naming the same watch. Section
+10 names it here too, in the act that closed issue 37, which leaves no receiving
+crate in the corpus carrying this obligation on prose alone.
 
 ```graph
 node: spu-envelope-on-lifecycle-only
@@ -379,7 +396,7 @@ to: spu-envelope-on-lifecycle-only
 
 node: spu-truncation-is-a-fault
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu
@@ -409,18 +426,21 @@ to: spu-service-serial-one-loop
 
 The two exchanges of `weaver-harness-spu-contract`, in the charter's order.
 
-**Eight of this section's nine records are review's, and the ground is
+**Seven of this section's nine records are review's, and the ground is
 non-purchase rather than reach.** Section 10's perturbation list was written
 before the device-assignment ruling of 2026-08-03 reshaped this section and was
-not revisited, so what it buys for residency is the weights hash of the third
-walk and nothing else. Most of what follows is reachable with no device present:
-a declaration of shard widths refuses a wider set by arithmetic, an artifact
-whose header names an uncarried family refuses by table lookup, and a binding
-that resolves to nothing refuses before any device call is made. What wants
-hardware is narrower than it looks, the peer-access query and the free-memory
-reading, and even those reach a driver seam a suite could double
-and this Spec does not introduce. Stating that here once is what keeps eight
-review tags from reading as eight findings that no instrument exists.
+revisited in the act that closed issue 37, which bought what needs no hardware
+and no seam work: the cheap refusals below, and, in section 5, the family lookup
+against an artifact header and the width refusal against a declared set. What is
+left standing on prose divides in two, and the division is worth stating because
+the two halves are unbought for different reasons. The room condition, the peer
+reachability condition, and the release's free-before-answer ordering each read a
+driver, and they reach it through a seam a suite could double and this Spec does
+not introduce, so buying them is a larger act than the three this one takes. The
+remainder needs no device at all and is simply unbought: the devices coming from
+the binding, the headroom's placement, the hash's failure sentinel, and the
+once-only admit. Stating that here once is what keeps seven review tags from
+reading as seven findings that no instrument exists.
 
 **Admit runs the charter's five steps, and the first three are free.**
 Resolve the binding to an artifact, read what the artifact declares about
@@ -430,12 +450,16 @@ The header read is the salvaged mechanic the survey names: parsing an
 artifact's header and metadata answers what family this is and what its
 dimensions are without touching tensor data or the device, which converts the
 common shape of a bad binding, an artifact present and wrong, into a refusal
-costing no device work.
+costing no device work. **What section 10 buys is the ordering rather than the
+parsing,** per the charter's rule that every step before the fourth is refusable
+at no cost: a fixture that would fail the judgment as well as the resolution is
+what makes the refusal's identity report which step ran first, and a test that
+asserted only that the header parses would pass with the whole ordering inverted.
 
 ```graph
 node: spu-header-read-touches-no-device
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu
@@ -474,6 +498,22 @@ two-device implementation, `forward_tp2` with an all-reduce kernel written for
 a pair, per the survey. A wider set refuses against the declaration rather than
 against a hidden limit, so the day an N-way path lands the declaration changes
 and nothing else does.
+
+**The three are judged cheapest first, and the ordering is this document's to
+elect.** Charter section 4.1 step 3 enumerates the three conditions and sequences
+none of them, so the order is a representation question, and it takes the
+charter's own before-the-fourth-step rule one level inward: the width condition
+is a comparison between the binding's count and the family's declaration and
+reads nothing, while the room and reach conditions each cost a driver query, so
+the width is judged first and a set failing more than one condition is refused on
+the cheapest. That ordering is what puts the width refusal inside a test on a
+machine with no device, which is why it is elected here rather than left to a
+builder. **This record stays review's and the ground is the seam rather than the
+purchase.** Two of its three conditions read a driver, a suite could reach them
+through a double, and this Spec introduces no such seam, so the judgment taken
+whole has no instrument here yet. The width condition alone is watched, at the
+section 5 clause that declares the set, and dividing it out here would mint a
+second record for a property that clause already carries with the same test.
 
 ```graph
 node: spu-admission-judges-room-reach-and-width
@@ -801,14 +841,18 @@ model across**. That last is a set of widths rather than a maximum, because a
 backend that serves one device and a pair is not thereby serving three, and a
 maximum would imply it does. The surface's membership is the charter's
 enumeration and takes no record. The declaration's shape does, being this
-document's own and what section 3 judges against, and it is review's by
-non-purchase: a declared set with a pair in it and a binding naming three
-devices is arithmetic that runs with no device present.
+document's own and what section 3 judges against, and section 10 buys the test:
+a declared set with a pair in it and a binding naming three devices is arithmetic
+that runs with no device present. **The fixture the test uses declares a
+non-contiguous set on purpose,** because the set reading and the maximum reading
+answer alike on every contiguous declaration, so a fixture declaring one and two
+would leave the perturbation that matters unwatchable while the test went on
+passing.
 
 ```graph
 node: spu-shard-widths-are-a-set
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu
@@ -820,13 +864,15 @@ families this binary carries, keyed by what the artifact's header declares,
 with no default and no fallback: an artifact whose family this binary does not
 carry is a refused admit naming the family, which is the archived tree's
 own no-silent-substitution ruling carried forward from its encoder registry.
-Review's by non-purchase, an artifact header naming a family the binary does
-not carry being a fixture and the refusal arriving before any device call.
+Section 10 buys the test, an artifact header naming a family the binary does
+not carry being a fixture and the refusal arriving before any device call, and
+what the test reads is the family the refusal names rather than the load's
+outcome, so a refusal arriving on some other ground does not satisfy it.
 
 ```graph
 node: spu-registry-no-silent-substitution
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu
@@ -834,20 +880,23 @@ to: spu-registry-no-silent-substitution
 ```
 
 **Both directions of the template requirement bind here, per the charter, and
-one of the two is bought.** Inbound, the reference test shape is the archived
-tree's marker promotion: every control marker of a family tokenizes to exactly
-one token under the family's tokenizer, because a marker that degrades to
-subword text is structure the model reads as prose. Outbound, the parsers are
+both are bought.** Inbound, the reference test shape is the archived tree's
+marker promotion: every control marker of a family tokenizes to exactly one
+token under the family's tokenizer, because a marker that degrades to subword
+text is structure the model reads as prose. Outbound, the parsers are
 the recorded bridge from the verbatim emission to the canonical form, and a
 parse that recognizes no call where the emission attempted one is its own
 reported fact rather than a clean turn, which is the archived tree's
 distinction between a call that could not be rendered and a call whose name
-could not be recovered. **The two directions are two records,** the inbound
-one carrying section 10's perturbation bullet and the outbound one carrying no
-bullet there, so it is review's by non-purchase until one lands: an emission
-that attempts a call the parser cannot recover is a fixture rather than a
-device. An earlier wording of this clause said both directions are tested here,
-which handed the outbound half an instrument the suite never bought.
+could not be recovered. **The two directions are two records and each carries its
+own bullet in section 10,** the two being separate behaviours of one module
+rather than the halves of one claim: a marker that tokenizes cleanly says nothing
+about what the parser does with an emission it cannot recover. The outbound
+bullet lands in the act that closed issue 37, an emission attempting a call the
+parser cannot recover being a fixture rather than a device. An earlier wording of
+this clause said both directions are tested here while the suite bought only one,
+and the assertion pass demoted the outbound half to review rather than naming a
+test, which is the position this act closes from the other end.
 
 ```graph
 node: spu-marker-promotion
@@ -860,7 +909,7 @@ to: spu-marker-promotion
 
 node: spu-parse-reports-unrecovered-call
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu
@@ -1264,6 +1313,22 @@ than a code fact.
 
 **Requiring a perturbation-verified test.**
 
+- Truncation is a fault: an envelope over the 64 kibibyte bound on the lifecycle
+  channel produces `Truncated` and no directive, confirmed by watching a silently
+  shortened directive decode when the `MSG_TRUNC` check is removed. This is the
+  watch `weaver-harness-Spec` section 8, `weaver-admin-Spec` section 10, and
+  `weaver-gate-Spec` section 6 each buy, and until issue 37 closed this crate was
+  the only one of the four receiving crates carrying the obligation on prose
+  alone.
+- The cheap refusals precede the device judgment: against a fixture family
+  declaring the widths one and two, with a binding naming three devices, a
+  binding whose artifact resolves to nothing answers the resolution refusal
+  rather than the width refusal, and an artifact whose header cannot be read
+  answers on the header rather than on the devices. Confirmed by watching both
+  fixtures answer on the width when the resolve and header steps move below the
+  judgment. **The three-device set is what makes the watch a watch,** since it
+  fixes what the reordered path would answer, so the two arms differ by the
+  ordering alone and neither reaches a device under either arrangement.
 - The session never rewinds: a multi-turn session's resident length is
   monotonic and each turn's prompt tokens are the delta's alone, confirmed by
   watching the count return to the full history when the append path is
@@ -1277,9 +1342,30 @@ than a code fact.
 - Marker promotion, per family: every control marker tokenizes to exactly one
   token, confirmed by watching a marker degrade to subword text when the
   special-token path is bypassed. **This is the inbound direction of section 5
-  and only that,** the outbound direction's parse carrying no bullet here and
-  staying review's at the clause that states it, which is why that clause reads
-  as two records.
+  and only that,** the outbound direction taking the bullet below, which is why
+  that clause reads as two records.
+- The parse reports an unrecovered call: an emission opening a family's call
+  marker and naming nothing the parser can recover answers with that fact rather
+  than with a clean turn's content, confirmed by watching the fragment arrive as
+  ordinary assistant text when the unrecovered case collapses into the text path.
+  The fixture is a rendered string against a family module, so the watch reads
+  the parse's own answer and reaches neither a model nor a device.
+- The registry substitutes nothing: an artifact whose header names a family this
+  binary does not carry refuses at admit naming that family, confirmed by
+  watching the admit proceed on a carried family's module when the table gains a
+  nearest-match fallback. The watch reads the family the refusal names rather
+  than the fact of a refusal, so a refusal arriving on some other ground does not
+  pass it.
+- The width condition refuses against the declared set: a fixture family
+  declaring the widths one, two, and four refuses a binding naming three devices,
+  and the refusal names the width. Confirmed twice, by watching the binding pass
+  the condition when the width test is dropped from the judgment, and by watching
+  it pass when the declaration is read as a maximum. **The non-contiguous fixture
+  is what makes the second watch able to fail,** a declaration of one and two
+  answering alike under both readings, so a contiguous fixture would leave that
+  perturbation unwatchable while the test still passed. The width is judged
+  before either driver query, per section 3, which is what keeps the whole test
+  on a machine with no device.
 - Signals are pre-sampler: the entropy of a step matches the distribution
   before sampling, confirmed by watching it collapse when the computation moves
   after the sampler.
@@ -1309,15 +1395,14 @@ here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
 general prohibition, and the kernels' comparisons. Fifty-six records in all,
-twenty-one from this section's sorting with the walks and the kernels counted
-in, and thirty-five from the elections outside it, the elections taking nodes
+twenty-five from this section's sorting with the walks and the kernels counted
+in, and thirty-one from the elections outside it, the elections taking nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable. A divided claim's two halves both count with the sorting, per
-Document Format section 3. Three of the twenty-one are tagged for review and
+Document Format section 3. Two of the twenty-five are tagged for review and
 every other one of them carries a mechanical instrument: the loader's general
-prohibition and the outbound direction of section 5's template requirement are
-the review halves of the two splits this pass makes, and the kernels'
-comparisons are the paragraph above. **One bullet
+prohibition, which is the review half of the one split that still has one, and
+the kernels' comparisons, which the paragraph above argues. **One bullet
 above is a claim another crate argues,** and carries no record here: the floor's
 exhaustive wire enums, which `weaver-types-Spec` section 4.2 declares. Eight
 more claims this Spec cites and another Spec argues are named where the sections
@@ -1325,24 +1410,25 @@ use them and listed in section 0, and the shape behind all nine is that this
 crate holds neither the floor's definitions nor the fork that creates its
 channels.
 
-**Thirty-five records carry `review`, and that number is a finding rather than
-a convenience.** The decode half of this crate is well bought, seven
-perturbation tests and the session's own compile-fail pin reaching the session,
-the sampler, and the tap. The residency half is not: this section's
-perturbation list predates the device-assignment ruling of 2026-08-03 and was
-not revisited, so the device judgment, the width refusal, the release ordering,
-the registry's refusal, and the receive obligation's truncation fault all stand
-on prose. Every `review` tag in this document states its ground at its own
-clause, and outside two cases the ground is that no instrument was bought
-rather than that none exists: a claim about ordinal handling, a refusal against
-a declared width, or a header that names an uncarried family runs with no
-device present. The two exceptions say so where they sit, the absence of
-anything laid in for an operation type that does not exist and the kernels'
-comparisons above.
+**Thirty records carry `review`, five fewer than the assertion pass left, and
+what moved is what needed neither hardware nor seam work.** The five are the
+cheap refusals of section 3, the registry's refusal and the width refusal of
+section 5, the truncation fault of section 2, and the outbound parse of section
+5, all of them reachable with a fixture and none of them touching a device. What
+remains on prose in the residency half is what reads a driver: the room and reach
+conditions of the admission judgment and the release's free-before-answer
+ordering. Those reach the driver through a seam a suite could double and this
+Spec does not introduce, so they are unbought for the seam rather than for the
+watch, and introducing that seam is a larger act than this one. Every `review`
+tag in this document states its ground at its own clause, and outside two cases
+the ground is that no instrument was bought rather than that none exists. The two
+exceptions say so where they sit, the absence of anything laid in for an
+operation type that does not exist and the kernels' comparisons above.
 
-**The out-of-order refusal is the one owing this pass could not discharge.** It
-reaches both of this crate's seams and this document states it nowhere, per
-section 9, and stating it is a Spec edit rather than an indexing.
+**The out-of-order refusal is the owing this act does not reach.** It reaches
+both of this crate's seams and this document states it nowhere, per section 9,
+and stating it is a Spec edit of its own rather than an instrument added to a
+claim already made.
 
 ```graph
 node: spu-eval-callback-pinned-by-doctest
