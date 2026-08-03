@@ -5,8 +5,8 @@ checklist, which gains a fifth item and renumbers the two below it: the graph mu
 answer a build question and not only a structural one. It exists because the items
 before it are all satisfiable by a graph built from charters and contracts alone,
 which carries nothing from any Spec, so the checklist could close over a graph that
-cannot serve phase three, per issue 24. The assertion notation it reads is the
-Document Format's v0.9 of the same date. Previously v0.15, 2026-08-01, eighth entry
+cannot serve phase three. The assertion notation it reads is the Document Format's
+v0.9 of the same date. Previously v0.15, 2026-08-01, eighth entry
 this date. The v0.15 change is gate
 G2 gaining the rationale clause, per the human's ruling: developed in the PRD,
 restated in the Spec. The v0.14 change was

@@ -7,8 +7,8 @@ convention and the statement that a Spec states records the way a PRD does, and
 section 5 records that `tag` carries the enforcing instrument on an assertion. The
 change is vocabulary rather than structure, because `asserts` runs from the crate and
 section 1's rule about which document sources an edge is untouched. It exists because
-the graph carried nothing from any Spec, so phase three had no query to ask, per issue
-24. Previously v0.8, 2026-08-01, second entry this date. The v0.8 change follows
+the graph carried nothing from any Spec, so phase three had no query to ask.
+Previously v0.8, 2026-08-01, second entry this date. The v0.8 change follows
 the artifact rename of this date, the section 3 examples reading `agent-config`
 where they read the state file. The v0.7 change is the `Loops/` entry's holder rule:
 loops belong to the harness unless specific to one domain and no other, per the
@@ -335,7 +335,15 @@ differ by one character are a G1 visual collision as much as a mapping hazard, s
 seam it is `socket` or `link`. On an assertion it is the instrument that enforces the
 claim, `compile-pin`, `compile-fail`, `perturbation`, `manifest`, or `review`, which
 is the sorting every Spec already performs in its own enforcement section and which
-apex section 11 requires a claim to state. A second key for the instrument would grow
+apex section 11 requires a claim to state. **A threat walk's test tags
+`perturbation`**, settled here rather than seven times: the Specs phrase their
+walks as a category beside the perturbation-verified list, and apex section 11's
+third device is written as a blanket obligation on behavioral tests, always
+confirm the test fails when the property is removed, so a walk's test is
+perturbation-verified by that obligation whatever a section calls it. The walk
+itself is prose that derives the test and takes no node.
+
+A second key for the instrument would grow
 the fixed set for a fact the existing key already carries, and the point of the fixed
 set is that the mapper never guesses.
 
