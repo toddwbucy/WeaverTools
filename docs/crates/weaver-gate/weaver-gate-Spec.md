@@ -35,6 +35,14 @@ operator's ruling of the same day, filed as issue 32, the out-of-order refusal
 this crate states and no organ enforced gains the perturbation test section 6
 had never named and the record that test holds, which is a Spec edit rather
 than an indexing and is why it arrives as its own act on a held branch.
+**Revised:** 2026-08-03, a fourth entry this date, the out-of-order bullet
+gaining its second watch. The bullet this document landed earlier today named
+two cases and confirmed one, collapsing the terminal arm and leaving the
+pre-raise case with no perturbation at all, so half of a claim written to close
+an enforcement gap was itself claimed and unenforced. The sibling act on
+`weaver-harness-Spec` wrote the same bullet with one watch per case, which is
+what exposed it. An early lower now has its own watch, driving the channel to
+the terminal position when the before-raise arm stops refusing it.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
