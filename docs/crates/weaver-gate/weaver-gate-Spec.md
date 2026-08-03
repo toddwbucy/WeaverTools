@@ -13,8 +13,8 @@ the case compiled and run by the review and verified again by this seat, and
 the thread-lifetime obligation the backing rests on is owed to
 `weaver-harness-Spec` on the working list rather than claimed silently.
 **Revised:** 2026-08-03, the assertion pass, taken in the fan-out that follows
-the two floor crates. Twenty-two assertion records land at the clauses that
-argue them, sixteen from the enforcement sorting of section 6 and six from the
+the two floor crates. Twenty-three assertion records land at the clauses that
+argue them, seventeen from the enforcement sorting of section 6 and six from the
 elections outside it, per the ruling that elections take nodes because gate H1
 would otherwise leave the largest decisions untraceable. Section 0's boilerplate
 stops saying this document declares no records and states what it now sources,
@@ -30,7 +30,11 @@ return the same day, the backing's `review` tag regrounds from impossibility
 to election, the reach existing by way of a double that forks from a thread
 and exits it, the third walk's perturbation is stated against closing the
 harness end rather than killing the double, without which the watch cannot
-fail, and the close-on-exec set gains the ground its paired flag had.
+fail, and the close-on-exec set gains the ground its paired flag had. On the
+operator's ruling of the same day, filed as issue 32, the out-of-order refusal
+this crate states and no organ enforced gains the perturbation test section 6
+had never named and the record that test holds, which is a Spec edit rather
+than an indexing and is why it arrives as its own act on a held branch.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -253,6 +257,14 @@ tag: perturbation
 edge: asserts
 from: weaver-gate
 to: gate-truncation-is-a-fault
+
+node: gate-out-of-order-refused
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-out-of-order-refused
 
 node: gate-channel-state-three-positions
 kind: assertion
@@ -552,13 +564,15 @@ sections 1 through 5, rather than gathered here, per Document Format section
 block here would sit apart from the prose that earns it. One record is the
 exception and sits at the end of this section, the doctest pinning of the two
 bind-site shapes, whose argument is nowhere else and whose general
-prohibition is section 3's. Twenty-two records in all, sixteen from this
+prohibition is section 3's. Twenty-three records in all, seventeen from this
 section's sorting with the walks counted in and six from the elections
-outside it. **Two of the bullets above are claims another crate argues,** and
-carry no record here: the floor's three exhaustive wire enums and
-`PeerIdentity`'s missing `Deserialize`, both `weaver-types-Spec`'s. An
-assertion belongs where its argument and its instrument live, and a node
-declared twice is the defect that format forbids.
+outside it, a split's two halves both counting as this section's because
+neither was elected and one was divided out. **Two of the bullets above are
+claims another crate argues,** and carry no record here: the floor's three
+exhaustive wire enums and `PeerIdentity`'s missing `Deserialize`, both
+`weaver-types-Spec`'s. An assertion belongs where its argument and its
+instrument live, and a node declared twice is the defect that format
+forbids.
 
 **Requiring a perturbation-verified test, beyond the walks.**
 
@@ -573,6 +587,17 @@ declared twice is the defect that format forbids.
 - Truncation is a fault: an over-bound envelope produces `Truncated` and
   no directive, confirmed by watching a silently shortened directive
   decode when the `MSG_TRUNC` check is removed.
+- A directive out of order is refused and not queued: a lower arriving
+  before any raise answers `OutOfOrder` with no listener standing after
+  it, and a directive of any kind arriving after a lower answers the
+  same, the lowered position being terminal. The compiler bullet above
+  pins that the refusal reaches a match arm rather than a flag check,
+  and this pins what the arm then does, an arm being free to queue or to
+  answer the wrong refusal while compiling exactly as well. Confirmed by
+  watching a lowered channel accept a second raise when the terminal arm
+  is collapsed into the raised one. The refusal is owed to each organ by
+  `weaver-types-Spec` section 5, which states it and enforces it nowhere,
+  and this discharges the gate's side of that owing alone.
 - The unparseable-line refusal path stays whole-cloth deferred: no test
   here parses a client line, and a test that did would be the opacity rule
   breached by the suite, which review checks for.
