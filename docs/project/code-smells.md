@@ -75,6 +75,59 @@ leaves the shape of that channel unconstrained and makes it the organ's business
 a submodule-to-organ call is in bounds by construction and only an organ-to-organ
 call is the pattern.
 
+### 1.2 One socket carrying two services
+
+**Identifier:** `smell-multiplexed-seam`
+**Grounds:** `axiom-contract-is-a-complete-interface`, with
+`axiom-floor-is-vocabulary-behavior-is-socket`
+
+**The pattern.** A single socket carrying more than one service or modality. An
+encoder and a decoder sharing one channel is the reference case. The correct shape is
+two sockets, one per service, each with its own contract.
+
+**What it breaks.** Apex section 5.3 requires a contract to name, for each party, the
+vocabulary that crosses, the errors it can return, and the ordering guarantees it
+relies on and provides. A socket carrying two services forces one of two wrongs: one
+contract describing both, or two contracts describing one socket. The first destroys
+the property 5.3 states outright, that an agent handed one side of a contract can
+build that side without asking what the other side does, because an encoder builder
+must now read the decoder's vocabulary, its errors, and its ordering to know which of
+them reach the wire it is writing to. The second has no home in 5.1, which governs a
+seam by **a** named contract and not by two.
+
+The ordering clause is where it bites first. Two services on one channel share one
+ordering regime, so a rule that exists for one constrains the other for no reason a
+reader can find. A flush ordering written for decode traffic silently becomes a rule
+about encode traffic, and nobody wrote that rule or can say why it holds.
+
+There is a second cost the apex does not have to carry, because the Working Rules
+already do. Service is serial per channel, so a multiplexed socket puts a long
+operation in front of a short one that shares nothing with it. Latency is the enemy
+of agency, and head-of-line blocking between unrelated services is that cost taken
+for no gain.
+
+**The corpus already has the correct shape, which is why this is a code smell and not
+an open question.** `weaver-spu` holds two channel ends at descriptors 3 and 4 and
+declares two `seam` edges to `weaver-harness`, one via `weaver-harness-spu-contract`
+and one via `weaver-harness-spu-decode-contract`, both tagged `socket`. The decision
+is made. The smell guards it against code that merges what the documents separated.
+
+**How it is found.**
+
+- **The count.** A crate holding fewer channel ends than it has seam edges. The two
+  numbers are stated in every organ's Spec and are a direct comparison.
+- **The dispatch.** A read loop whose first act is to branch on a field naming which
+  service the message is for. That branch is the multiplexing, and it is visible at
+  the top of the loop rather than buried.
+- **The vocabulary.** One envelope enum whose variants span two contracts. If the
+  wire type names both a residency directive and a decode ask, the socket beneath it
+  carries both.
+
+**Note for the graph.** Two `seam` edges between the same crate pair is correct here
+and a query that treats a crate pair as unique would report this program's own
+intended shape as a duplicate. The seam's identity is its `via` contract, not its
+endpoints.
+
 ---
 
 ## 2. Smells earned from repetition
