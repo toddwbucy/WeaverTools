@@ -36,6 +36,11 @@ this date: the harness filters nothing and the recorder holds no level, the
 config, and the owed-policy sentence that contradicted its own filtering rule
 dissolves with the subject rather than being adjudicated. `weaver-trace-Spec`
 section 11 reported that residue and it needs no separate act.
+**Revised:** 2026-08-02, a second entry this date, the token workflow's trace
+act. Section 3 gains what the harness owes for the newly shaped payloads:
+both layers of a decode with neither standing for the other, the rendered
+form and its template identity with `model.request`, and faults submitted as
+the floor's `fault-report` unchanged.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -252,6 +257,29 @@ above it. The two could not both be operative even before the ruling, since noth
 above an unelected ceiling was ever submitted for the recorder to apply a level to,
 and the ruling removed the subject rather than adjudicating between them.
 
+**Both layers of a decode, and neither standing for the other.** From the
+token workflow's trace act of 2026-08-02: the harness submits the emission
+verbatim as `model.output`, family-styled and before any parse, and the
+canonical parse of it as the message kinds, and it submits both. A harness
+that submitted only the parse would leave the record unable to answer what
+the model said, and one that submitted only the verbatim would make every
+consumer a parser of every family. The recorder judges neither, per section
+6, so this is an obligation on the party that can meet it.
+
+**The rendered form and its template identity, with `model.request`.** The
+harness submits what the model was asked as the model received it, the
+rendered prompt and the identity of the template that produced it, beside the
+effective sampling values for the turn. It has the rendered form because the
+family library returns it on the report path, per `weaver-spu-PRD` section
+13.4, and it submits it because a record holding only canonical messages
+forces a replay through a template that may have changed, per
+`weaver-trace-PRD` section 3.2.
+
+**Faults as the floor's report.** A fault the worker survives is submitted as
+a `fault` event carrying `weaver-types`' `fault-report`, the same shape the
+reporting organ handed the harness, against the case set closed across the
+three organs on 2026-08-02. The harness authors it and does not translate it.
+
 **The close kind on `turn.closed`.** The payload carries which kind of close it was,
 clean or stopped, and a stopped close carries the reason, authored when the abort of
 `weaver-admin-harness-contract` section 3's stop exchange lands. The charter is
@@ -376,4 +404,8 @@ How each check is implemented is Spec work. What must be checkable is stated her
 - Commit pressure is surfaced as an event while the sink remains writable and is
   fatal when it is not.
 - Every `turn.closed` states its close kind, clean or stopped with reason.
+- A decode reaches the record as both layers, the verbatim emission and the
+  canonical parse, neither standing for the other.
+- A measurement's per-token vectors are positionally paired with its token
+  identifiers, and an unproduced reading is absent rather than zero.
 - No stored span appears on the stream.
