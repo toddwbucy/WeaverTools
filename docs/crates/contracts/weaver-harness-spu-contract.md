@@ -29,10 +29,13 @@ cases.
 **Revised:** 2026-08-02, the descriptor recount's sweep. Section 1's fork
 paragraph adopts the singular, one trace descriptor the harness holds at the
 fork.
-**Revised:** 2026-08-03, the device-assignment ruling. Section 2's admit walk
-takes the devices the binding assigns, in shard order, rather than a device, the
-binding having carried an assignment since that ruling and this seam being where
-both parties read the walk.
+**Revised:** 2026-08-03, the device-assignment ruling, in two sites. Section 2's
+admit walk takes the devices the binding assigns, in shard order, rather than a
+device, the binding having carried an assignment since that ruling and this seam
+being where both parties read the walk. Section 5's failure sentence follows: an
+admit that fails after taking any assigned device frees every taken device before
+answering, a set taken in order making a partial take ordinary where a single take
+made it impossible.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.

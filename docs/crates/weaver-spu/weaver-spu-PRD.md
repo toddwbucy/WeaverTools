@@ -76,7 +76,8 @@ subject, and the graph block carries the second `floor-link`.
 return of the same day folded in: section 4.1 step 4 takes the assigned devices
 in shard order rather than a device, and section 5's threshold sentences account
 for a partial take, which an ordered set makes ordinary where a single take made
-it impossible. Section 4.1 step 3
+it impossible, step 5's ordering pointer following on the second return.
+Section 4.1 step 3
 judges the devices the binding assigns rather than an unnamed device, adding
 the reachability and shard-width conditions a set larger than one carries.
 Section 3 states that this crate selects no device, the archived tree's
@@ -317,8 +318,8 @@ It ends in residency confirmed or in a typed refusal.
 
 **Every step before the fourth is refusable at no cost, and that ordering is the
 substance.** A refusal reaching the harness before any device work has happened is a
-refusal the enter fan-out can unwind cheaply, and a load that fails after the device is
-taken is the case section 5 is written for.
+refusal the enter fan-out can unwind cheaply, and a load that fails after any device
+is taken is the case section 5 is written for, whether one was taken or several.
 
 **Exactly one model is admitted, because exactly one binding crosses.** The agent's
 configuration file carries a model binding, singular, per `weaver-types-PRD` section
