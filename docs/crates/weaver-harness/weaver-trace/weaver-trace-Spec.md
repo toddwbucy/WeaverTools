@@ -337,6 +337,11 @@ readings, the finish condition, and the identities that join them. The rule is
 the charter's section 2.5 read mechanically, this crate defines the record's
 own schema and carries everything else opaque.
 
+**`ModelRequest` holds the sampling values and `ModelMeasurement` does not,
+which is the charter's corrected row rather than this Spec's choice.** Apex
+section 8's five re-feed inputs therefore span the pair, four here and the
+fifth in the request, joined by the turn both carry, per charter section 3.1.
+
 **The measurement's optional members are absent rather than zero, which is a
 serde election with a stated reason.** `skip_serializing_if` on the two signal
 vectors and on the reductions means an unproduced reading emits no member at

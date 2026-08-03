@@ -47,7 +47,11 @@ socket carries the organ envelope, and under what encoding, goes to the token
 workflow, the every-channel sentence of `weaver-types-PRD` section 2.3 meeting
 its first unclassified instance there rather than silently.
 **Revised:** 2026-08-02, a third entry this date, the token workflow's charter
-act. The decode half arrives: section 13 charters the decode submodule and the
+act, with one register discharge folded in from that workflow's trace act on
+the review seat's finding: section 11's entry for the `model.*` shapes records
+where they landed, which was `weaver-trace-PRD` section 3.2 rather than the
+3.1 it named, and that they numbered four rather than three. The decode half
+arrives: section 13 charters the decode submodule and the
 token seam, the crate's second seam to the harness on its own socket per the
 decoder-cut ruling, and section 14 charters the family libraries, the module
 discipline the operator's ruling of this date shapes the crate around. The two
@@ -666,8 +670,16 @@ landed reads as settled and an entry landed and not cleared reads as outstanding
   rescopes, the deterministic floor staying the harness's and the family
   template's render seating in the family library, with the rendered reality
   returning on the report path.
-- `weaver-trace-PRD` section 3.1, by the token workflow's trace act: the three
-  `model.*` payload shapes, produced against section 13.6's obligations.
+- `weaver-trace-PRD`, by the token workflow's trace act: **landed 2026-08-02**
+  at that charter's section 3.2 rather than 3.1, which is where the shapes
+  went, and covering four payloads rather than the three this entry
+  anticipated, the `fault` shape having landed in the same act against the
+  case set section 10 records as closed. Section 3.1's measurement row was
+  corrected in that act too, the sampling values moving to `model.request`,
+  so section 13.6's obligations are satisfied across the pair of kinds rather
+  than one. Recorded as discharged rather than deleted, because the entry
+  named a section the content did not land in and a reader of the earlier
+  register should be able to see where it went.
 
 ## 12. Children
 
