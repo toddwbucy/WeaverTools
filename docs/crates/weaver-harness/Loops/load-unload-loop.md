@@ -12,6 +12,8 @@ document: it composes merged charters and contracts, binds no crate, and decides
 no seam. Where it and a merged document disagree, the charter yields nothing and
 this document is corrected, because the charters are the decision record and this
 is their composition read back as one motion.
+**Revised:** 2026-08-02, the descriptor recount's sweep. Section 3's enter
+supply list adopts the singular, one trace descriptor.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -65,7 +67,7 @@ implied.
 ## 3. Opening the loop
 
 Admin directs enter across its one seam, supplying the session identity, the run
-ordinal, the trace descriptors, the model binding, and the gate instruction, per
+ordinal, the trace descriptor, the model binding, and the gate instruction, per
 `weaver-admin-harness-contract` section 3. The harness fans out along its own
 seams, in its own order:
 

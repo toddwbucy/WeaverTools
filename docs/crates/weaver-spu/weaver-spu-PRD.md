@@ -62,6 +62,9 @@ record, section 7 counts two channel ends across the fork, section 8's
 deferred list shrinks to what stays deferred, and section 10's fault cell
 closes its half here, the cases this crate raises named in 13.10 with the
 gate's cases still owed.
+**Revised:** 2026-08-02, a fourth entry this date, the descriptor recount's
+sweep. Section 3's route paragraph adopts the singular, one trace descriptor
+in the worker's address space at the fork.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -192,7 +195,7 @@ this charter names no event kind.
 
 **Trace authorship, and any route to the record.** It authors no event, holds no event
 kind, and holds no descriptor to the stream's sink. The route it must not have is
-concrete rather than abstract: the worker holds the trace descriptors and the
+concrete rather than abstract: the worker holds the trace descriptor and the
 coordination channel to admin in its address space at the moment it forks, so an SPU
 that inherited either would hold a writable handle to the record its own agent produces
 and a channel to the supervisor of that agent. What stops it is the close-on-exec

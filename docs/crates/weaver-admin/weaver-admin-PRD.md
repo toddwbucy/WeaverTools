@@ -84,6 +84,12 @@ renames to `agent-config` across the corpus, the section 11 register emptying wi
 its last entry, and the coordination seam's wire pair renames to loop 0's
 `lifecycle-directive` and `lifecycle-answer` under the naming ruling, wire
 vocabulary naming for the loop whose traffic it carries.
+**Revised:** 2026-08-02, the descriptor recount's sweep. Seven sites in
+sections 2, 4.1, 6, 7, and 10 adopt the singular the ruling of this date
+settled at `weaver-admin-harness-contract`: one trace descriptor crosses in
+the enter directive, the sink's. The ruling landed in the contract and the
+harness Spec and was left standing in seven other documents, which the
+loop-0 question of this date exposed.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -203,7 +209,7 @@ is a different act from coordinating a turn, and the two never run at the same t
 owns no record, per the ruling of 2026-08-01 at `weaver-admin-operator-contract`
 section 3, and durability is the operator's. What admin owns is the connection: it
 opens the sink the agent's configuration declares under its own principal and
-passes descriptors into the enter directive, so the worker writes a stream it could
+passes the descriptor into the enter directive, so the worker writes a stream it could
 not have opened for itself. Where the sink is a file, the operator's provisioning
 keeps the agent uid off it by ownership, mode, and the directory's search bit,
 which admin's boundary check verifies rather than builds, the same posture as
@@ -401,7 +407,7 @@ order is the substance.
    is repaired, and nothing here is built.
 4. **Resolve the session and open the sink.** Admin decides which session is being
    loaded, a decision the harness is structurally unable to make because it never
-   learns a path, and opens the sink the configuration declares. The descriptors are
+   learns a path, and opens the sink the configuration declares. The descriptor is
    obtained here, under admin's own principal, which is what lets the worker write a
    stream its uid could not open. Close-on-exec is not admin's to confer on a passed
    descriptor and is the harness's obligation at the receive, per the contract.
@@ -410,13 +416,13 @@ order is the substance.
    process that already holds that authority, per section 7, and the unit's cgroup
    arrives with the unit rather than being shaped in advance.
 6. **Direct enter, and receive the aggregate.** The directive carries the session
-   identity, the run ordinal, the descriptors, the model binding, and the gate
-   instruction, per the contract. The descriptors ride inside the directive over the
-   coordination channel as `SCM_RIGHTS` ancillary payload, the trace descriptors,
-   per `weaver-harness-PRD` section 5, so the worker receives handles and never
-   paths and accepts them close-on-exec at its one receive site. What section 10
+   identity, the run ordinal, the trace descriptor, the model binding, and the gate
+   instruction, per the contract. It rides inside the directive over the
+   coordination channel as `SCM_RIGHTS` ancillary payload,
+   per `weaver-harness-PRD` section 5, so the worker receives a handle and never
+   a path and accepts it close-on-exec at its one receive site. What section 10
    holds open is how the channel's own end reaches a unit admin did not fork, and
-   not how the descriptors cross a channel that exists. Everything after the
+   not how the descriptor crosses a channel that exists. Everything after the
    directive and before the answer is the harness's: it stands up an empty working
    structure, authors its `load` event, which is the record of admin's contact and
    the origin of the run's monotonic clock, asks the SPU to admit the model, and
@@ -573,7 +579,7 @@ an end of.
 
 | Seam | Peer | What crosses |
 |---|---|---|
-| Coordination | `weaver-harness` | Admin directs the run to be entered and left, hands the trace descriptors inside the enter directive, and conveys the operator's intent to stop. The harness confirms, refuses, or answers a stop with the turn's fate. A fault the worker survives crosses nowhere here, travelling as the `fault` event on the stream. |
+| Coordination | `weaver-harness` | Admin directs the run to be entered and left, hands the trace descriptor inside the enter directive, and conveys the operator's intent to stop. The harness confirms, refuses, or answers a stop with the turn's fate. A fault the worker survives crosses nowhere here, travelling as the `fault` event on the stream. |
 
 ```graph
 edge: seam
@@ -637,8 +643,8 @@ longer implies the credential mechanism and a reader who takes one for the other
 this seam wrong. Section 11 files the correction, as a restatement of the invariant
 rather than as an exception admitted to it.
 
-**The channel descriptor carries close-on-exec, and the trace descriptors it delivers
-acquire it at the receive rather than in transit.** Admin sets the flag on its own end
+**The channel descriptor carries close-on-exec, and the trace descriptor it delivers
+acquires it at the receive rather than in transit.** Admin sets the flag on its own end
 before the channel is handed across, and the worker sets it again after its last exec.
 The second is a set and not a check. `execve` can clear the flag, so a step that finds
 it clear and reports rather than repairs leaves the channel to the supervisor
@@ -738,7 +744,7 @@ and the trace directory is admin-owned and not searchable by the agent uid.
 
 **Same-uid reach is a live hole and the flag that closes it is a requirement stated
 elsewhere.** If an external tool process runs as the agent uid, it can attach to the
-worker and drive the coordination channel and the trace descriptors directly, which
+worker and drive the coordination channel and the trace descriptor directly, which
 defeats descriptor scoping. The worker's dumpable flag is what closes it, and
 `weaver-admin-harness-contract` section 2 is authoritative for both the requirement
 and its ordering, because the flag is a property admin relies on and cannot verify
@@ -852,9 +858,9 @@ channel design restates as section 6 now carries it: the coordination socket is
 bound by admin inside an admin-owned unsearchable directory, connected once at
 the worker's start, unreachable by the agent's tool surface, with possession of
 the connected end the authentication and the peer credential available as a
-check the Spec elects. The sink's descriptors travel the same way, the unit
-opening what its declaration names and the worker receiving handles and never
-resolving paths.
+check the Spec elects. The sink's descriptor travels the same way, the unit
+opening what its declaration names and the worker receiving a handle and never
+resolving a path.
 
 **Session close.** Section 4.4 puts `session.closed` with the harness, at the cost
 of requiring the agent loaded for the authoring. What cues that authoring inside the

@@ -78,6 +78,10 @@ pressure, a write failure against a live process, and an organ death observed
 as closure, the review seat having found the corpus-wide case set declared
 closed with this organ's cases uncounted and the death case underivable from
 the organs' own enumerations.
+**Revised:** 2026-08-02, a fifth entry this date, the descriptor recount's
+sweep. Section 4's seam table and section 5's close-on-exec heading adopt the
+singular the ruling of this date settled, one trace descriptor rather than a
+plural the retired live view left behind.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -307,7 +311,7 @@ The three sockets:
 |---|---|---|
 | Turn ingress | `weaver-gate` | Receives authenticated work. Gate never reaches past it. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
-| Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptors of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens no exchange of its own, the fault travelling as a `fault` event on the stream per the fault-carrier ruling of 2026-08-01. |
+| Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptor of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens no exchange of its own, the fault travelling as a `fault` event on the stream per the fault-carrier ruling of 2026-08-01. |
 
 **A fault the worker survives is a `fault` event, and the stream is its carrier.**
 The fault-carrier ruling of 2026-08-01 retired the alert exchange: with one
@@ -436,7 +440,7 @@ resolves a path holds no path to disclose and cannot be induced to open one. The
 write capability rides the descriptor rather than the mode, so custody takes
 nothing the agent needs for its own home directory and work.
 
-**Trace descriptors are close-on-exec, and the crate is broken without it.**
+**The trace descriptor is close-on-exec, and the crate is broken without it.**
 
 Without `O_CLOEXEC`, every subprocess the harness spawns for a tool call inherits a
 writable handle to the trace, and the agent edits its own audit record through a
