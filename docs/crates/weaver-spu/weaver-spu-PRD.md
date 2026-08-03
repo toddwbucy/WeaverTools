@@ -65,6 +65,13 @@ gate's cases still owed.
 **Revised:** 2026-08-02, a fourth entry this date, the descriptor recount's
 sweep. Section 3's route paragraph adopts the singular, one trace descriptor
 in the worker's address space at the fork.
+**Revised:** 2026-08-02, a fifth entry this date, with the Spec that could not
+be written against the old wording. Section 6's non-link becomes a second
+floor link: the framing ruling of this date has the family library rendering
+the harness's canonical messages, so this crate draws the message model and
+links `weaver-traits`, which the paragraph's own closing sentence left to the
+decode workflow to settle. The declared-surface paragraph leaves with its
+subject, and the graph block carries the second `floor-link`.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -417,6 +424,10 @@ tag: socket
 edge: floor-link
 from: weaver-spu
 to: weaver-types
+
+edge: floor-link
+from: weaver-spu
+to: weaver-traits
 ```
 
 **The token seam is the second seam to the same peer, on its own socket, and it
@@ -460,17 +471,21 @@ directive behind whatever decode traffic is ahead of it, and this program's own
 principle is that latency is the enemy of agency. Section 10 files it against the
 workflow that can measure it.
 
-**This crate links `weaver-types` and does not link `weaver-traits`.** It draws the
-carrier and the binding it is asked to admit from the floor, and it draws no trait. The
-`provider-trait` of `weaver-traits-PRD` section 3.2 is the abstraction the harness
-issues decode requests through, constructed at the worker composition root and injected
-there, so it is the far side of this seam's transport rather than something this crate
-implements. Whether the decode workflow changes that answer is that workflow's to state.
-
-**The non-link is a declared surface rather than a build exclusion.** `weaver-types`
-floor-links `weaver-traits`, so those definitions sit in this crate's dependency tree
-whatever this charter says. What the declaration buys is a checkable statement that
-nothing draws them on this crate's behalf.
+**This crate links both floor crates, and the second link is the decode
+workflow's answer to the question this paragraph used to leave open.** It
+draws the carrier and the binding it is asked to admit from `weaver-types`,
+and it draws the message model from `weaver-traits`, because the framing
+ruling of 2026-08-02 has the family library rendering the harness's canonical
+messages and `weaver-harness-spu-decode-contract` section 7 draws that model
+across this crate's second seam. The link follows the draw, per apex section
+5.3. Until that workflow this crate drew no trait and this paragraph said so,
+ending by leaving the answer to the workflow that could give one, which is the
+half-chartered discipline working rather than a claim overturned.
+`provider-trait` is still not implemented here and the reason is unchanged:
+the `provider-trait` of `weaver-traits-PRD` section 3.2 is the abstraction the
+harness issues decode requests through, constructed at the worker composition
+root and injected there, so it is the far side of this seam's transport rather
+than something this crate implements.
 
 ## 7. Identity, process boundaries, and the model artifact
 

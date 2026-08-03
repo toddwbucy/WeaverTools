@@ -35,6 +35,10 @@ answer. Landed after the gate branch per the working list's rule.
 **Revised:** 2026-08-02, a fifth entry this date, the descriptor recount's
 second pass. Section 2.3's lead names the trace descriptor rather than a
 plural, the sentence beneath it having said one since the first pass.
+**Revised:** 2026-08-02, a sixth entry this date, with the SPU Spec. Section
+2.2's handoff places an organ's ends from descriptor 3 upward in the channels'
+own order rather than naming one number, the decoder cut having given the SPU
+a second channel and the paragraph having been written when an organ held one.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -189,14 +193,20 @@ whose end already sat at descriptor 3 would keep the flag, lose the end at
 the deployment happens to produce. Both halves are verified rather than
 recalled, the clear-on-copy law for differing descriptors and the
 equal-descriptor no-op that defeats it, each run by both seats. So the child
-duplicates its end to descriptor 3, the first after the standard streams,
-clears the flag on 3 by `fcntl` whether or not the duplication moved
-anything, and execs, and the organ binary finds its channel end at descriptor
-3 from its first instruction. This realizes apex section 12's topology, the
-number being this Spec's own election. **The number is owed to
+duplicates each end it is given to a descriptor from 3 upward, the first
+after the standard streams, clears the flag on each by `fcntl` whether or not
+a duplication moved anything, and execs, so the organ binary finds its ends at
+3 and, where it has a second, at 4 from its first instruction. **The order is
+the channels' own:** the lifecycle channel every organ holds takes 3, and an
+organ's further channel takes the next number, so the gate's single end sits
+where the SPU's first does. Until the decoder cut of 2026-08-02 an organ held
+one end and this paragraph named one number, and the SPU's second channel is
+what made the order need stating. This realizes apex section 12's topology,
+the numbering being this Spec's own election. **The numbering is owed to
 `weaver-spu-Spec` and `weaver-gate-Spec`**, each of which inherits it rather
 than re-deciding it, the same owing shape `weaver-types-Spec` section 4 used
-to reach this document.
+to reach this document, and `weaver-spu-Spec` section 2 states the order from
+the receiving side.
 
 **Between fork and exec the child performs three calls, `dup2`, `fcntl`, and
 `execve`, and nothing else.** All three are async-signal-safe, and the bound
