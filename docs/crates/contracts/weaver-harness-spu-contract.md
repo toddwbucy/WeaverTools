@@ -29,6 +29,10 @@ cases.
 **Revised:** 2026-08-02, the descriptor recount's sweep. Section 1's fork
 paragraph adopts the singular, one trace descriptor the harness holds at the
 fork.
+**Revised:** 2026-08-03, the device-assignment ruling. Section 2's admit walk
+takes the devices the binding assigns, in shard order, rather than a device, the
+binding having carried an assignment since that ruling and this seam being where
+both parties read the walk.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -155,7 +159,8 @@ Two, and no others in this pass. Both are opened by the harness.
 **Admit the model.** Opened by the harness during the enter fan-out, carrying the model
 binding admin supplied in the enter directive. The SPU resolves the binding, reads what
 the artifact declares about itself without loading it, judges the device against what
-admission requires, takes the device, and loads the weights. It answers residency
+admission requires, takes the assigned devices in the binding's shard order, and
+loads the weights. It answers residency
 confirmed, or it refuses. **The refusal carries a reason the harness places in the enter
 aggregate without translation,** which is what makes `weaver-admin-harness-contract`
 section 6's refusing-organ case one refusal rather than a report to parse. The answer,
@@ -272,9 +277,12 @@ the enter aggregate unchanged.
 admit means no model was admitted and no device memory is held, which is what keeps a
 refused load from leaving a device occupied against the next admission.
 
-**An admit that fails after taking the device frees it before answering.** The two
+**An admit that fails after taking any assigned device frees every taken device
+before answering.** The two
 failures are one refusal to the harness and two different obligations on the SPU, and
-naming only the first would leave the expensive case unstated.
+naming only the first would leave the expensive case unstated. A set taken in shard
+order makes a partial take ordinary, so what the refusal owes is all of what it took
+rather than the last of it.
 
 **An SPU that dies has refused nothing, and what the harness reports depends on when.**
 The harness observes the process exit and the channel closure together, and no typed

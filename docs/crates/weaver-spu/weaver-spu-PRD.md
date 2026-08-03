@@ -72,7 +72,11 @@ the harness's canonical messages, so this crate draws the message model and
 links `weaver-traits`, which the paragraph's own closing sentence left to the
 decode workflow to settle. The declared-surface paragraph leaves with its
 subject, and the graph block carries the second `floor-link`.
-**Revised:** 2026-08-03, the device-assignment ruling. Section 4.1 step 3
+**Revised:** 2026-08-03, the device-assignment ruling, with the review seat's
+return of the same day folded in: section 4.1 step 4 takes the assigned devices
+in shard order rather than a device, and section 5's threshold sentences account
+for a partial take, which an ordered set makes ordinary where a single take made
+it impossible. Section 4.1 step 3
 judges the devices the binding assigns rather than an unnamed device, adding
 the reachability and shard-width conditions a set larger than one carries.
 Section 3 states that this crate selects no device, the archived tree's
@@ -304,7 +308,10 @@ It ends in residency confirmed or in a typed refusal.
    cannot serve. And the backend must be able to shard across that many, per
    section 14's capability declaration. This is the one check on the devices,
    per section 2, and nothing upstream performed an earlier one.
-4. **Take the device and load the weights.**
+4. **Take the assigned devices and load the weights.** Where the set is one this
+   is one take and one load. Where it is larger the takes and the loads run in
+   the binding's shard order, so a failure partway is a partial take rather than
+   none, which section 5 accounts for.
 5. **Confirm residency.** The answer confirms and carries nothing else, per section
    4.4.
 
@@ -401,10 +408,15 @@ rather than about this seam, and section 10 files it where it can be answered.
 Stated by where it failed, because the obligations differ and a charter that says a
 refusal leaves nothing has not yet said what nothing means at a device.
 
-**A refusal at any step before the device is taken leaves nothing.** No allocation, no
+**A refusal at any step before the first device is taken leaves nothing.** No
+allocation, no
 handle, no residency, and an answer the harness can place in its aggregate.
 
-**A failure after the device is taken leaves the device freed before the answer.** Per
+**A failure after any device is taken leaves every taken device freed before the
+answer, and a partial take is the ordinary case rather than an exception.** An
+assigned set is taken in shard order, per section 4.1 step 4, so a failure on the
+second device finds the first already held, and what the refusal owes is the same
+either way: give back what was taken, all of it, before answering. Per
 section 4.3, whatever was taken is given back first. The cost of getting this wrong is
 that a device is held by an agent that failed to load, and the next load is refused
 against a conflict that does not exist.
@@ -618,8 +630,9 @@ against a real device, which the decode workflow produces as a side effect of ex
 **Whether the artifact's declared shape is trusted or verified.** Section 4.1 step 2
 reads what the artifact says about itself. An artifact that declares one shape and holds
 another is a load that fails late rather than early, and whether this crate checks the
-declaration against the tensor data before taking the device is a cost this pass cannot
-price. **Entry condition:** the Spec pass, with a measurement of what the check costs.
+declaration against the tensor data before taking the assigned devices is a
+cost this pass cannot price. **Entry condition:** the Spec pass, with a measurement of
+what the check costs.
 
 ## 10. Open cells
 

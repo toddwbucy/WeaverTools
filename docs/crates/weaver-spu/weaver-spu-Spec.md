@@ -38,8 +38,9 @@ links as this act corrects them, and its two declared seams.
 
 **It is written from the merged corpus, with the salvage survey as its quarry
 map.** `docs/project/weaver-spu-salvage-survey.md` records what the archived
-tree holds, what maps across, and the six places its working code yields to
-merged rulings. This document elects against the merged corpus and cites the
+tree holds, what maps across, and the seven places its working code yields to
+merged rulings, the seventh filed with the device-assignment ruling. This
+document elects against the merged corpus and cites the
 survey where a mechanic's provenance matters, per the ruling of 2026-08-01
 that keeps the old tree's Specs out of the pass.
 
@@ -200,7 +201,8 @@ The two exchanges of `weaver-harness-spu-contract`, in the charter's order.
 
 **Admit runs the charter's five steps, and the first three are free.**
 Resolve the binding to an artifact, read what the artifact declares about
-itself without loading it, judge the device, take the device and load, confirm.
+itself without loading it, judge the assigned devices, take them in shard order
+and load each shard, confirm.
 The header read is the salvaged mechanic the survey names: parsing an
 artifact's header and metadata answers what family this is and what its
 dimensions are without touching tensor data or the device, which converts the

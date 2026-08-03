@@ -1,6 +1,8 @@
 # weaver-spu - salvage survey
 
-**Status:** SURVEY, 2026-08-02. Outside the document set, filed at `docs/project/`
+**Status:** SURVEY, 2026-08-02, revised 2026-08-03 when the device-assignment
+ruling added a seventh yielding to section 3. Outside the document set, filed
+at `docs/project/`
 beside the other documents the mapping does not read. Reference, not prescription:
 this document describes what the archived tree's SPU holds and how it bears on the
 token workflow and the SPU Spec, and it decides nothing. Where it and a merged
@@ -102,8 +104,11 @@ The load-bearing parts, by location in the archived tree:
 
 ## 3. What yields to merged rulings
 
-Working code loses to merged intent at six places, and naming them is what
-integrating properly means.
+Working code loses to merged intent at seven places, and naming them is what
+integrating properly means. The seventh was filed on 2026-08-03 with the
+device-assignment ruling, this section's own sentence being the reason it could
+not be left as a citation in the documents that yielded: a yielding named
+nowhere is a yielding integrated without being named.
 
 **The tenancy apparatus dissolves entirely, and it is the largest
 simplification available.** The quarry's SPU was a fleet daemon: one process
@@ -162,6 +167,18 @@ and worth keeping: everything past the sink is the operator's, everything
 before the gate is the operator's, and the program's two external surfaces
 both end at NDJSON lines. The quarry's OpenAI server surface stays behind
 in its entirety as reference.
+
+**Device selection does not cross, per the ruling of 2026-08-03.** The quarry
+placed a model on whichever device had room, by a selector beside its slot
+policy, and this program has the operator assign the devices in the agent's
+configuration and no crate select. The two are separable and both yield: the
+eviction half is the auto-evict entry above, and this is the selection half.
+What replaces it is an assignment the binding carries and admission judges, per
+`weaver-spu-PRD` sections 3 and 4.1, so a set that does not admit is a refusal
+the operator answers by editing the file rather than a search this program
+performs on the operator's behalf. The sharding machinery beneath it crosses
+untouched, since sharding across an assigned set is the same work as sharding
+across a chosen one.
 
 **Small frictions.** The quarry SPU carries tracing with a subscriber, which
 this corpus's no-second-account rule declines. It carries tokio, where the
