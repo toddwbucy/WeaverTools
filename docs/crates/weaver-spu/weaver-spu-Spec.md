@@ -65,6 +65,15 @@ independently and one record would report a single instrument for both. Section
 10 buys both. Fifty-eight records now, twenty-seven from that section's sorting
 and thirty-one from the elections outside it, with thirty still carrying
 `review`.
+**Revised:** 2026-08-03, a fifth entry this date, closing issue 38 on this
+document's side, the charter carrying the heavier half. Section 1.1's stays-out
+list names the shape it excludes rather than the serving model it excludes it by,
+no apparatus for holding more than one agent's model in one process. The guard is
+the publish boundary rather than repo privacy, this crate being what the
+open-core plan extracts, and the architectural fact is what survives the edit:
+one SPU per agent reads the same without the comparison and is publishable on its
+own. No multi-model catalog reads clean and is untouched. No record moves and no
+count changes.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -273,7 +282,8 @@ the operator's own artifact. No logging crate, per the corpus's one-account
 rule. No async runtime in this pass, the service being one directive at a time
 against one resident session, and the executor question belonging to the
 measurement `weaver-traits-Spec` section 6 names. No multi-model catalog and no
-tenancy apparatus, both dissolved by one SPU per agent, per the survey.
+apparatus for holding more than one agent's model in one process, both dissolved
+by one SPU per agent, per the survey.
 
 ```graph
 node: spu-no-runtime-no-logging-no-http
