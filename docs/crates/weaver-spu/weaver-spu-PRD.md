@@ -84,6 +84,16 @@ Section 3 states that this crate selects no device, the archived tree's
 selector being the seventh place its working code yields. Section 10's
 candidate refusal list gains the two cases a set introduces, and section 14's
 capability declaration gains the shard width admission judges against.
+**Revised:** 2026-08-03, a second entry this date, closing issue 38 on this
+document's side, which the sweep found to be the heavier of the two. Section 8's
+throughput entry stops organizing itself around who is being served and keeps the
+mechanisms with the architectural consequence, continuous batching, paged
+attention, and prefix sharing named as what they are and one agent per residency
+stated as the reason the question does not arise. The framework entry drops the
+market-side half of its account of what the old tree decided against and keeps
+the workspace, which is a fact about that tree. The guard is the publish boundary
+rather than repo privacy, this crate being what the open-core plan extracts and
+this charter being the design document that travels with it.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -596,14 +606,14 @@ returns it returns as a socket peer under its own contract, per apex 5.1.
 
 **The framework migration argument, entirely.** The old tree's charter for this crate is
 substantially an argument about which tensor framework to depend on and how to relate to
-it, decided against a workspace and a customer profile this program does not have. It is
-mechanics at best and shape never, and nothing in it crosses. What framework this crate
-uses is a Spec question in a program whose apex names one deliverable.
+it, decided against a workspace this program does not have. It is mechanics at best and
+shape never, and nothing in it crosses. What framework this crate uses is a Spec
+question in a program whose apex names one deliverable.
 
-**Multi-tenant serving infrastructure.** Continuous batching, paged attention, prefix
-sharing across unrelated clients. These answer how one device is shared among many
-concurrent network clients, and this architecture has one agent per residency by
-construction.
+**Throughput machinery for many concurrent requests on one device.** Continuous
+batching, paged attention, and prefix sharing across unrelated requests. These answer
+how one device serves many requests at once, and this architecture has one agent per
+residency by construction, so the question they answer does not arise here.
 
 **Chartered by the token workflow's act of 2026-08-02, no longer deferred.** The
 decode seam, sessions and their append-only protocol, turn processing, the
