@@ -416,9 +416,9 @@ not revisited, so what it buys for residency is the weights hash of the third
 walk and nothing else. Most of what follows is reachable with no device present:
 a declaration of shard widths refuses a wider set by arithmetic, an artifact
 whose header names an uncarried family refuses by table lookup, and a binding
-that resolves to nothing refuses before any device call is made. What genuinely
-wants hardware is narrower than it looks, the peer-access query and the
-free-memory reading, and even those reach a driver seam a suite could double
+that resolves to nothing refuses before any device call is made. What wants
+hardware is narrower than it looks, the peer-access query and the free-memory
+reading, and even those reach a driver seam a suite could double
 and this Spec does not introduce. Stating that here once is what keeps eight
 review tags from reading as eight findings that no instrument exists.
 
