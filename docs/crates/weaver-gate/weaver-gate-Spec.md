@@ -567,12 +567,12 @@ bind-site shapes, whose argument is nowhere else and whose general
 prohibition is section 3's. Twenty-three records in all, seventeen from this
 section's sorting with the walks counted in and six from the elections
 outside it, a split's two halves both counting as this section's because
-neither was elected and one was divided out, per Document Format section 3. **Two of the bullets above are
-claims another crate argues,** and carry no record here: the floor's three
-exhaustive wire enums and `PeerIdentity`'s missing `Deserialize`, both
-`weaver-types-Spec`'s. An assertion belongs where its argument and its
-instrument live, and a node declared twice is the defect that format
-forbids.
+neither was elected and one was divided out, per Document Format section 3.
+**Two of the bullets above are claims another crate argues,** and carry no
+record here: the floor's three exhaustive wire enums and `PeerIdentity`'s
+missing `Deserialize`, both `weaver-types-Spec`'s. An assertion belongs where
+its argument and its instrument live, and a node declared twice is the defect
+that format forbids.
 
 **Requiring a perturbation-verified test, beyond the walks.**
 
