@@ -82,6 +82,33 @@ each organ carries no record, this Spec naming no test for it, and the boundary
 half of the pair-test that Spec owes the pair-creating crates is unnamed here as
 well, both recorded in section 8 as gaps rather than answered with tests an
 assertion pass may not write.
+**Revised:** 2026-08-03, a second entry this date, the boundary half of the pair
+test, per issue 35. Section 2.1 gains `harness-one-write-is-one-read` at the
+clause that argues one write is one message, and section 8 names its test with
+the `SOCK_STREAM` substitution its watch turns on and the two-message setup that
+makes the watch reachable, a one-message test crossing a stream socket whole and
+pinning nothing. The truncation half has stood alone since the pass and is blind
+to that substitution, which is the corpus testing the consequence of the
+boundary election and never the election's own reason. Forty-five records now,
+nineteen from section 8's sorting and twenty-six from the elections. That
+section's owing paragraph is recast around the three owings `weaver-types-Spec`
+section 5 files against this document, two of them now discharged and the
+out-of-order refusal still open as issue 32. The election itself stays that
+Spec's record and is deferred to rather than restated.
+**Revised:** 2026-08-03, a third entry this date, the out-of-order refusal, per
+issue 32. Section 3 gains `harness-out-of-order-refused` beside the channel
+state's compile pin, the two halves splitting by instrument on the shape
+`weaver-gate-Spec` section 6 settled: the pin holds that a directive out of
+order reaches a match arm rather than a flag check, and the perturbation holds
+what the arm then does, an arm being free to queue or to answer the wrong
+refusal while compiling exactly as well. Section 8 names the test with two
+watches, an early leave reaching the unwind path when the before-enter arm
+stops refusing it and a left channel accepting an enter when the terminal arm
+is collapsed into the entered one, and that section's owing paragraph records
+all three of `weaver-types-Spec` section 5's owings against this document as
+discharged. Forty-six records now, twenty from section 8's
+sorting and twenty-six from the elections. Issue 32 stays open for the organs
+whose side is unwritten, this act discharging the harness's alone.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -301,7 +328,27 @@ to: harness-truncation-is-a-fault
 **One write is one message and one message is one envelope.** The wire carries
 `OrganEnvelope` as one JSON document per write, per `weaver-types-Spec` section
 4.3, and the socket type is what keeps the framing out of this crate, per
-`weaver-organ-channel` section 2.
+`weaver-organ-channel` section 2. **This is the property the type was elected
+to buy, and it takes a test of its own.** It is the boundary half of the pair
+test `weaver-types-Spec` section 5 owes the pair-creating crates, whose
+truncation half stands above: a substitution of `SOCK_STREAM` at the
+`socketpair` call leaves every truncation test in this crate passing,
+`MSG_TRUNC` handling being untouched by it, while the framing every contract
+that draws these channels rests on is gone. So the consequence of the election
+was tested here from the pass and the election's own reason was not, filed as
+issue 35 and closed in one act across both pair-creating crates because the
+property and its watch are the same on either side. Section 8 names the test
+with its watch, and the election stays that Spec's record.
+
+```graph
+node: harness-one-write-is-one-read
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-one-write-is-one-read
+```
 
 ### 2.2 Creation, and the atomic flag
 
@@ -583,12 +630,17 @@ at a time arrives, is judged against the channel's state, and is answered or
 refused, per the ordering rules of `weaver-admin-harness-contract` section 4. A
 directive out of order for the state answers `OutOfOrder` and is not queued.
 The state has three positions, before enter, entered, and left, the last
-terminal, and the middle one carries the run. **The state's positions are a type
-and take the compiler, and the refusal carries no record,** this Spec naming no
-test for what the arm then does, an arm being free to queue or to answer the
-wrong refusal while compiling exactly as well. The refusal is owed to each organ
-by `weaver-types-Spec` section 5, which states it and enforces it nowhere, and
-section 8 records the gap rather than inventing the test that closes it.
+terminal, and the middle one carries the run. **The positions and the refusal
+take two records and two instruments,** the split `weaver-gate-Spec` section 6
+takes on the same channel state. The positions are a type and take the
+compiler, which pins that a directive out of order for the state reaches a
+match arm rather than a flag check. What the arm then does is a behaviour and
+takes a perturbation, an arm being free to queue or to answer the wrong refusal
+while compiling exactly as well, so the pin alone would leave the refusal
+claimed and unenforced. The refusal is owed to each organ by
+`weaver-types-Spec` section 5, which states it and enforces it nowhere, and
+this discharges this crate's side of that owing alone, section 8 naming the
+test with its two watches.
 
 ```graph
 node: harness-channel-state-three-positions
@@ -598,6 +650,14 @@ tag: compile-pin
 edge: asserts
 from: weaver-harness
 to: harness-channel-state-three-positions
+
+node: harness-out-of-order-refused
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-out-of-order-refused
 ```
 
 **The run state is the fan-out's progress held as data, which is what makes the
@@ -1176,41 +1236,65 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. One record is the exception
 and sits at the end of this section, the doctest pinning of the three
 path-taking shapes, whose argument is nowhere else and whose general
-prohibition is section 2.3's. Forty-four records in all, eighteen from this
+prohibition is section 2.3's. Forty-six records in all, twenty from this
 section's sorting with the four walks counted in and twenty-six from the
 elections outside it, the elections taking nodes because gate H1 would
 otherwise leave the largest decisions in this Spec untraceable. Two of the
-eighteen carry a review tag rather than a mechanical one, the path-taking
+twenty carry a review tag rather than a mechanical one, the path-taking
 prohibition and the child handoff's unconditional flag clear, each being the
 half a split divided out of a bullet this section already carried, and a
 divided half counts with the bullet it came from, per Document Format section
 3. **One bullet above is a claim another crate argues,** and carries no record
 here: the floor's three exhaustive wire enums, which are `weaver-types-Spec`
-section 4.2's. **Three of the claims sorted here discharge owings other merged
-Specs filed against this document,** and each record sits at the clause that
-argues it rather than at the sorting: the first walk's close-on-exec test that
-`weaver-trace-Spec` section 10 owes, at section 2.3, the licensed combinations
-that `weaver-traits-Spec` section 7 owes, at section 4, and the second walk's
-descriptor placement with the fork discipline that `weaver-gate-Spec` section 0
-cites as this document's, at section 2.2.
+section 4.2's. **Three of the claims sorted here discharge owings that Specs
+other than `weaver-types-Spec` filed against this document,** the three that
+Spec files being the paragraph below's, and each record sits at the clause
+that argues it rather than at the sorting: the first walk's close-on-exec test
+that `weaver-trace-Spec` section 10 owes, at section 2.3, the licensed
+combinations that `weaver-traits-Spec` section 7 owes, at section 4, and the
+second walk's descriptor placement with the fork discipline that
+`weaver-gate-Spec` section 0 cites as this document's, at section 2.2.
 
-**Two claims this Spec states carry no record, and the gaps are stated rather
-than closed here.** The out-of-order refusal of section 3 is owed to each organ
-by `weaver-types-Spec` section 5, which enforces it nowhere, and this section
-names no test for what the refusing arm does, so the claim is sorted by no
-instrument and is filed as issue 32 rather than answered with a test an
-assertion pass may not write. The boundary half of the pair-test that Spec owes
-the pair-creating crates, one envelope write arriving as one envelope read, is
-unnamed here in the same way, the truncation half alone appearing below. Both
-are Spec edits and belong to their own acts, and stating them here is what
-keeps a claim with no instrument from reading as enforced because it sits
-beside claims that are.
+**`weaver-types-Spec` section 5 files three owings against this document, and
+all three now carry a record.** The truncation half of the pair test has been
+this crate's since the Spec was cut, argued and recorded at section 2.1. The
+boundary half of that same test, one envelope write arriving as one envelope
+read, was unnamed here until this act, filed as issue 35 and landed at the
+section 2.1 clause that argues it with its perturbation named below. The
+out-of-order refusal is the third: it was stated at section 3 and sorted by no
+instrument, filed as issue 32, and it lands at that clause on the shape
+`weaver-gate-Spec` section 6 settled for the gate, the compile pin holding that
+the refusal reaches a match arm and the perturbation holding what the arm then
+does. Each record is this crate's side of an owing and no other organ's, so
+issue 35 closes on the pair-creating crates together while issue 32 stays open
+for the organs whose side is unwritten.
 
 **Requiring a perturbation-verified test, beyond the four walks.**
 
 - Truncation is a fault: an envelope over the 64 kibibyte bound produces
   `Truncated` and no directive, confirmed by watching a silently shortened
   directive decode when the `MSG_TRUNC` check is removed.
+- One write is one read: two envelopes are written back to back on a created
+  pair and both writes complete before either read, and two reads return
+  exactly one envelope each, confirmed by watching the first read return both
+  when `SOCK_SEQPACKET` is changed to `SOCK_STREAM` at the `socketpair` call.
+  **Two messages are what make the watch reachable.** A single small envelope
+  crosses a stream socket whole, so a one-message test would pass under the
+  substitution and pin nothing, which is the never-failing perturbation apex
+  section 11 counts as worse than no test. The truncation bullet above cannot
+  see the substitution at all, which is why the boundary the type was elected
+  to buy needs a watch of its own, per section 2.1.
+- A directive out of order is refused and not queued: a leave arriving before
+  any enter answers `OutOfOrder` and reaches no unwind, and a directive of any
+  kind arriving after a leave answers the same, the left position being
+  terminal. The compile pin of section 3 holds that the refusal reaches a match
+  arm rather than a flag check, and this holds what the arm then does, an arm
+  being free to queue or to answer the wrong refusal while compiling exactly as
+  well. Confirmed twice, by watching the early leave reach the unwind path when
+  the before-enter arm stops refusing it, and by watching a left channel accept
+  an enter when the terminal arm is collapsed into the entered one. The refusal
+  is owed to each organ by `weaver-types-Spec` section 5, which enforces it
+  nowhere, and this discharges this crate's side of that owing alone.
 - Announce-after-record: a stop's answer follows the close event's placement,
   confirmed by watching the answer precede the record when the two are
   reordered.

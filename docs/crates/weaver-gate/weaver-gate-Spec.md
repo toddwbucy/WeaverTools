@@ -35,6 +35,14 @@ operator's ruling of the same day, filed as issue 32, the out-of-order refusal
 this crate states and no organ enforced gains the perturbation test section 6
 had never named and the record that test holds, which is a Spec edit rather
 than an indexing and is why it arrives as its own act on a held branch.
+**Revised:** 2026-08-03, a fourth entry this date, the out-of-order bullet
+gaining its second watch. The bullet this document landed earlier today named
+two cases and confirmed one, collapsing the terminal arm and leaving the
+pre-raise case with no perturbation at all, so half of a claim written to close
+an enforcement gap was itself claimed and unenforced. The sibling act on
+`weaver-harness-Spec` wrote the same bullet with one watch per case, which is
+what exposed it. An early lower now has its own watch, driving the channel to
+the terminal position when the before-raise arm stops refusing it.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -593,9 +601,14 @@ that format forbids.
   same, the lowered position being terminal. The compiler bullet above
   pins that the refusal reaches a match arm rather than a flag check,
   and this pins what the arm then does, an arm being free to queue or to
-  answer the wrong refusal while compiling exactly as well. Confirmed by
-  watching a lowered channel accept a second raise when the terminal arm
-  is collapsed into the raised one. The refusal is owed to each organ by
+  answer the wrong refusal while compiling exactly as well. Confirmed
+  twice, once per case, by watching an early lower drive the channel to
+  the terminal position when the before-raise arm stops refusing it,
+  after which a legitimate raise is refused and no listener ever stood,
+  and by watching a lowered channel accept a second raise when the
+  terminal arm is collapsed into the raised one. One watch would leave
+  whichever case it misses claimed and unenforced, which is the reading
+  this bullet exists to refuse. The refusal is owed to each organ by
   `weaver-types-Spec` section 5, which states it and enforces it nowhere,
   and this discharges the gate's side of that owing alone.
 - The unparseable-line refusal path stays whole-cloth deferred: no test
