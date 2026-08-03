@@ -57,6 +57,10 @@ crate that relays it, named for the seam's currency under the naming ruling's
 ratified extension. `fault-report` arrives with it on the review seat's
 finding that the gate's fault had no carriage, one definition for every
 reporting seam because the harness authors all of them into one event kind.
+**Revised:** 2026-08-03, the device-assignment ruling. Section 2.1 states that
+the model binding carries the devices a model is assigned to, a set rather than
+one because tensor parallelism is in scope from the start, the operator
+assigning and no crate selecting.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -118,6 +122,24 @@ harness consumes the elections it carries.
 and fixed for the run, and the agent's state is the trace, so the old name
 pointed at the wrong artifact. The node, its seven `holds` edges, and every
 citation in the corpus moved in one act.
+
+**The model binding carries the device assignment, per the human's ruling of
+2026-08-03.** An operator declares which hardware a model runs on and the
+program does not choose: placement is a fact the operator states in this file,
+not a negotiation the program conducts at load. The binding therefore names
+the artifact and the devices together, because a binding that named an
+artifact alone would leave the placement to be decided somewhere, and every
+somewhere is a crate reasoning about hardware the corpus has already ruled it
+does not reason about. **The assignment is a set rather than one device,**
+because tensor parallelism is in scope from the start and a model may be
+sharded across the devices it is given. A set of one is the ordinary case and
+carries no special shape.
+
+What the set means to each reader is theirs: the operator states it, admin
+validates that it is present and well-formed and never that the devices exist,
+per `weaver-admin-PRD` section 2 and ruling C of 2026-07-31, and the SPU judges
+the devices it was assigned at admission, per `weaver-spu-PRD` section 4.1.
+Nothing selects.
 
 ```graph
 node: agent-config

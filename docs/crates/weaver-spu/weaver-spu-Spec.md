@@ -5,6 +5,12 @@ set. No code is written against it until phase three is ratified, per Working
 Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-03, the device-assignment ruling. Section 3 takes the
+devices from the binding and selects none, judging a set on room, peer
+reachability, and the backend's declared shard width, with two the width the
+salvaged path proves. Section 5's family surface gains that declaration as a
+set of widths rather than a maximum, and section 11 files the N-way path as
+work rather than salvage.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -32,8 +38,9 @@ links as this act corrects them, and its two declared seams.
 
 **It is written from the merged corpus, with the salvage survey as its quarry
 map.** `docs/project/weaver-spu-salvage-survey.md` records what the archived
-tree holds, what maps across, and the six places its working code yields to
-merged rulings. This document elects against the merged corpus and cites the
+tree holds, what maps across, and the seven places its working code yields to
+merged rulings, the seventh filed with the device-assignment ruling. This
+document elects against the merged corpus and cites the
 survey where a mechanic's provenance matters, per the ruling of 2026-08-01
 that keeps the old tree's Specs out of the pass.
 
@@ -69,7 +76,7 @@ own submodule. One submodule exists.
     src/decoder/native.rs   the candle-native backend
     src/decoder/measure.rs  measurement production, section 6
     src/decoder/readout.rs  the residual tap, section 7
-    src/gpu/                the CUDA forward path and its kernels
+    src/gpu/                the CUDA forward path, sharding, and its kernels
     kernels/transformer.cu  the salvaged kernels, section 10
 
 **A later operation type is a sibling of `decoder/`, in its own process.**
@@ -194,12 +201,34 @@ The two exchanges of `weaver-harness-spu-contract`, in the charter's order.
 
 **Admit runs the charter's five steps, and the first three are free.**
 Resolve the binding to an artifact, read what the artifact declares about
-itself without loading it, judge the device, take the device and load, confirm.
+itself without loading it, judge the assigned devices, take them in shard order
+and load each shard, confirm.
 The header read is the salvaged mechanic the survey names: parsing an
 artifact's header and metadata answers what family this is and what its
 dimensions are without touching tensor data or the device, which converts the
 common shape of a bad binding, an artifact present and wrong, into a refusal
 costing no device work.
+
+**The devices are the binding's and this crate selects none.** The assignment
+arrives inside the model binding, per `weaver-types-Spec` section 2, ordered,
+with the order the shard order. There is no device survey, no ranking, and no
+fallback in this crate: the archived tree's `auto_select_gpu` does not cross,
+per charter section 3 and the salvage survey's seventh yielding. What this
+crate does with the set is judge it, in the order section 3's steps state.
+
+**A set larger than one is judged on three things rather than one.** Each
+assigned device must have room for its shard plus the residency's headroom,
+which is the one inequality read per device. The devices must be able to reach
+each other, checked by asking the driver whether peer access holds between each
+pair in the set, because a sharded forward exchanges activations across them
+and a set without peer access is a set that cannot serve, discovered at admit
+rather than at the first turn. And the family's declaration must say the
+backend can shard across that many, per section 5. **Today that number is two
+where it is greater than one,** because the salvaged tensor-parallel path is a
+two-device implementation, `forward_tp2` with an all-reduce kernel written for
+a pair, per the survey. A wider set refuses against the declaration rather than
+against a hidden limit, so the day an N-way path lands the declaration changes
+and nothing else does.
 
 **The device judgment reads the driver rather than this crate's own
 accounting, and the charter's cell is settled that way.** Charter section 10
@@ -333,7 +362,11 @@ archived tree's share-kernels-own-orchestration rule promoted to structure.
 prefix from canonical messages, render a turn's delta, parse an emission into
 canonical content with the family's markers recognized, declare the stop
 conditions, declare whether the session's state permits truncation, and
-declare the capabilities admission judges against, per charter section 14.
+declare the capabilities admission judges against, per charter section 14,
+which are the readout tap and **the device counts the backend can shard a
+model across**. That last is a set of widths rather than a maximum, because a
+backend that serves one device and a pair is not thereby serving three, and a
+maximum would imply it does.
 
 **The registry is compile-time and admission consults it.** A table of the
 families this binary carries, keyed by what the artifact's header declares,
@@ -586,6 +619,11 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The family set this binary carries.** Which families ship is a
   deployment's question rather than this Spec's, and the registry of section 5
   is what makes the answer a list rather than a rewrite.
+- **Shard widths beyond two.** The salvaged path is a two-device
+  implementation and the capability declaration is what a wider one would
+  change, so an N-way forward and its all-reduce are work this program does
+  rather than salvage it inherits, entered when a deployment needs a model
+  wider than a pair.
 - **The executor.** Deferred with `weaver-traits-Spec` section 6's
   measurement, and this crate is where the latency it would buy or cost is
   measurable.

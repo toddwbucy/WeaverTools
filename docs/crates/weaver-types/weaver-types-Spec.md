@@ -53,6 +53,10 @@ case set, and section 4's lead states the boundary it had been keeping
 without saying: loop 0 in full, the envelope's carriage for what it carries,
 and nothing of the decode socket's. The counts read seventeen and four of
 nine.
+**Revised:** 2026-08-03, the device-assignment ruling. Section 2 shapes
+`ModelBinding` as the artifact and an ordered set of devices, the order being
+the shard order, with an empty set a parse error rather than a default because
+defaulting placement is the decision this crate exists not to make.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -210,6 +214,27 @@ flag to decide whether a missing sink refuses the load or is made. A socket sink
 is different in kind: admin connects to it and something on the operator's side
 must already be listening, so a creation flag would promise an act admin cannot
 perform. A missing socket sink therefore always refuses.
+
+**`ModelBinding` carries the artifact and the devices it is assigned to, and
+the devices are a set.**
+
+```rust
+pub struct ModelBinding {
+    pub artifact: ArtifactRef,
+    pub devices: Vec<DeviceOrdinal>,
+}
+```
+
+Per charter section 2.1 as the ruling of 2026-08-03 states it. The vector is
+ordered and the order is the shard order, so a two-device assignment says which
+device holds which half rather than leaving a builder to pick, and a set of one
+is the ordinary case with no special shape. **An empty set is a parse error
+rather than a default**, because a binding assigning no device is a
+declaration the operator did not finish, and defaulting it to device zero is
+the placement decision this crate exists not to make. Whether the devices
+exist, whether they can reach each other, and whether the backend can shard
+across that many are all admission's, per `weaver-spu-Spec` section 3, and
+this crate answers well-formed and nothing more.
 
 **`ModelBinding` and `GateInstruction` are defined here and are the same types the
 wire carries, and the feature gate never reaches them.** The `config` feature
@@ -679,6 +704,11 @@ build-time assertion over the resolved external tree rather than by H2.
   token workflow's, with the hot-path measurement, per section 4.3, the
   channel question having closed with the decoder-cut ruling, decode on its
   own socket.
+- **`DeviceOrdinal` and `ArtifactRef`.** Satellites of section 2 with no
+  cross-crate consequence beyond being well-formed: the first is an unsigned
+  device number, so a negative one is a parse error rather than a check, and
+  the second is what an operator writes to name an artifact, whose resolution
+  is admin's and whose readability is the SPU's.
 - **`FaultReport`'s shape.** Elected by the token workflow's trace act
   against the closed case set of `weaver-spu-PRD` section 13.10,
   `weaver-gate-PRD` section 13.4, and `weaver-harness-PRD` section 5, since
