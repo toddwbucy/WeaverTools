@@ -25,7 +25,9 @@ Section 7 states where the records sit and which of its bullets another crate
 declares. On the review seat's return the same day, the adjudicating-method
 claim divides into the two records its own bullet always described, the pinned
 candidates and the prohibition, the latter moving to the section 4 clause that
-argues it.
+argues it. On the second return the same day, that clause's own closing sentence
+adopts the split it had been moved beside, having given the whole claim to the
+instrument the split took from it.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
@@ -361,9 +363,11 @@ to: traits-permission-mode-exhaustive
 no trait implementation beyond the data derives of section 2. No `is_allowed`, no
 `check`, no predicate of any kind. The mode is what the operator declared and the
 harness reads it, and a helper here would be the first step toward a floor type
-that decides, which charter section 4 forbids. The absence is enforced by the
-compile-fail test of section 7, because an absence is what a runtime test
-structurally cannot demonstrate.
+that decides, which charter section 4 forbids. **The named candidates are pinned
+by the compile-fail doctests of section 7,** because an absence is what a runtime
+test structurally cannot demonstrate, **and the prohibition itself is review's,**
+a finite set of doctests reaching the methods it names and not the open set of
+all of them. The two are two records for that reason, per section 7.
 
 ```graph
 node: traits-no-adjudicating-method
