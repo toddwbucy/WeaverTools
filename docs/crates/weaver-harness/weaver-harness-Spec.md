@@ -35,6 +35,27 @@ answer. Landed after the gate branch per the working list's rule.
 **Revised:** 2026-08-02, a fifth entry this date, the descriptor recount's
 second pass. Section 2.3's lead names the trace descriptor rather than a
 plural, the sentence beneath it having said one since the first pass.
+**Revised:** 2026-08-02, a sixth entry this date, with the SPU Spec. Section
+2.2's handoff places an organ's ends from descriptor 3 upward in the channels'
+own order rather than naming one number, the decoder cut having given the SPU
+a second channel and the paragraph having been written when an organ held one.
+On that act's review the same day, in two rounds, the passages that create,
+hold, lead, and test the second end follow: section 2.2 counts three pairs
+across a run, section 3's
+fan-out creates the residency and decode pairs in one act before the fork that
+carries both, and the run state's SPU arm becomes a pair of channels in one
+field, the decode end taking its own type because that socket is not an organ
+channel. Section 2.2's own lead and section 8's second walk follow in the
+second round, the walk's test naming the ends each organ fork carries and its
+attack naming what a decode end would hand a tool. Section 9 sweeps in the
+same act: the stop-mechanics and fault-payload entries close against the
+token workflow's acts, the engine entry narrows to the executor alone, and
+section 3's gating language lifts with the shape that landed. Three rounds on
+one claim, and the lesson each earned is the same at a different depth, that a
+claim lives in its heading, its body, and its
+test. A fourth round adds the last depth, the one site that cited the gating
+rather than stating it, section 4's pressure paragraph pointing at a section 3
+that now answers the opposite.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -168,8 +189,11 @@ receiver holds is a bound the sender discovers in production.
 
 ### 2.2 Creation, and the atomic flag
 
-**Both ends of a created pair carry close-on-exec from the creating act, by
-`SOCK_CLOEXEC` in the `socketpair` call rather than by a later `fcntl`.**
+**Both ends of every created pair carry close-on-exec from the creating act,
+by `SOCK_CLOEXEC` in the `socketpair` call rather than by a later `fcntl`.**
+This crate creates three pairs across a run, the residency and decode pairs in
+one act before the SPU fork and the gate pair before the gate fork, and the
+rule is the same at each.
 `weaver-harness-spu-contract` section 1 requires the harness's own end flagged
 from the pair's creation. The atomic form is elected because the alternative
 has a window: this process forks a subprocess per tool call, a fork between
@@ -178,8 +202,9 @@ inherited end of the residency seam hands the tool surface a release directive.
 Verified: `socketpair` with `SOCK_CLOEXEC` yields both descriptors flagged with
 no interval between them.
 
-**The child's end crosses the final exec by `dup2` to descriptor 3 and an
-unconditional clear of the flag, because the duplicate law has a corner.**
+**The child's ends cross the final exec by `dup2` from descriptor 3 upward
+and an unconditional clear of the flag on each, because the duplicate law has
+a corner.**
 Close-on-exec would otherwise close the child's own end at the exec that
 starts the organ binary. A duplicate made by `dup2` is born with the flag
 clear, but only when the two descriptors differ: `dup2` onto the same number
@@ -189,14 +214,20 @@ whose end already sat at descriptor 3 would keep the flag, lose the end at
 the deployment happens to produce. Both halves are verified rather than
 recalled, the clear-on-copy law for differing descriptors and the
 equal-descriptor no-op that defeats it, each run by both seats. So the child
-duplicates its end to descriptor 3, the first after the standard streams,
-clears the flag on 3 by `fcntl` whether or not the duplication moved
-anything, and execs, and the organ binary finds its channel end at descriptor
-3 from its first instruction. This realizes apex section 12's topology, the
-number being this Spec's own election. **The number is owed to
+duplicates each end it is given to a descriptor from 3 upward, the first
+after the standard streams, clears the flag on each by `fcntl` whether or not
+a duplication moved anything, and execs, so the organ binary finds its ends at
+3 and, where it has a second, at 4 from its first instruction. **The order is
+the channels' own:** the lifecycle channel every organ holds takes 3, and an
+organ's further channel takes the next number, so the gate's single end sits
+where the SPU's first does. Until the decoder cut of 2026-08-02 an organ held
+one end and this paragraph named one number, and the SPU's second channel is
+what made the order need stating. This realizes apex section 12's topology,
+the numbering being this Spec's own election. **The numbering is owed to
 `weaver-spu-Spec` and `weaver-gate-Spec`**, each of which inherits it rather
 than re-deciding it, the same owing shape `weaver-types-Spec` section 4 used
-to reach this document.
+to reach this document, and `weaver-spu-Spec` section 2 states the order from
+the receiving side.
 
 **Between fork and exec the child performs three calls, `dup2`, `fcntl`, and
 `execve`, and nothing else.** All three are async-signal-safe, and the bound
@@ -297,9 +328,14 @@ unwind total.**
 ```rust
 struct Run {
     recorder: Recorder,
-    spu: Option<OrganChannel>,
+    spu: Option<SpuChannels>,
     gate: Option<OrganChannel>,
     turn_in_flight: bool,
+}
+
+struct SpuChannels {
+    lifecycle: OrganChannel,
+    decode: DecodeChannel,
 }
 ```
 
@@ -307,7 +343,16 @@ Each `Option` is an arm of the enter fan-out that has or has not stood up, so a
 leave arriving after a refused enter unwinds exactly what stands, stopping the
 gate where a gate was raised and releasing the SPU where a model was admitted,
 and the compiler's match on the options is what makes a forgotten arm
-unrepresentable rather than unlikely. This is the mechanical form of
+unrepresentable rather than unlikely. **The SPU's arm is a pair of channels
+rather than one, and they are one field because they stand up and fall
+together.** The decoder cut of 2026-08-02 gave that organ a second socket, and
+the two are created in one act and cross one fork, per
+`weaver-harness-spu-decode-contract` section 1, so an option over the pair
+keeps the arm's all-or-nothing shape where two options would admit a half-stood
+arm the unwind would have to reason about. The decode end takes its own type
+rather than `OrganChannel`, because `weaver-spu-PRD` section 13.2 rules that
+socket not an organ channel and a shared name would carry the envelope's
+assumptions onto a seam that does not take them. This is the mechanical form of
 `load-unload-loop` section 4's rule that admin's unwind is a reap plus one
 directive: the directive works because the harness knows what stands.
 
@@ -319,8 +364,12 @@ contract's plural was residue of the retired live view, corrected to the
 singular in the same act as this sentence, and `weaver-trace-Spec` section
 5's receive takes the one sink descriptor this Spec builds to. Author
 the `load` event, the run's opening and the origin of its monotonic clock.
-Create the residency pair, fork the SPU binary, and open the admit exchange
-carrying the model binding uninterpreted. Create the gate pair only after the
+Create the residency pair and the decode pair in one act, per
+`weaver-harness-spu-decode-contract` section 1, fork the SPU binary carrying
+both ends, and open the admit exchange on the lifecycle pair carrying the
+model binding uninterpreted. The decode socket is created here rather than at
+first use because it crosses the same fork, and a socket the child was not
+given at its exec cannot be handed to it afterward. Create the gate pair only after the
 SPU's answer has confirmed residency, per `weaver-harness-gate-contract`
 section 1, then fork the gate binary and open the raise exchange carrying the
 gate instruction uninterpreted, the gate last so no work arrives before the
@@ -354,10 +403,12 @@ semantics are settled either way, which is what `basic-inference-loop` section
 failure reports the recorder surfaces, and the organ deaths observed through
 closure after the enter aggregate, reach the operator as the `fault` event on
 the stream, per the fault-carrier ruling of 2026-08-01. No run blocks on
-anything downstream of the emission. The fault payload's shape is deferred
-with the organs' charters, per section 8, so in this pass the path is shaped
-and its submission gated on that landing, stated plainly rather than left to
-be discovered at the first fault.
+anything downstream of the emission. The payload is the floor's
+`fault-report`, carried unchanged from the reporting organ and authored
+without translation, per `weaver-harness-trace-contract` section 3, and this
+crate's own three sources are enumerated at `weaver-harness-PRD` section 5.
+The gating an earlier draft of this Spec described lifted when that shape
+landed on 2026-08-02.
 
 **Loop 0 takes neither a type nor a trait, and the cell closes here.**
 `load-unload-loop` section 8 holds the question for the Spec pass,
@@ -403,7 +454,8 @@ a defect in the author, and it surfaces as a fault rather than a retry.
 
 **Pressure becomes an event, authored by this crate.** When the recorder
 surfaces `CommitPressure`, the harness authors the `fault` event in response,
-per `weaver-trace-Spec` section 6, gated in this pass as section 3 states.
+per `weaver-trace-Spec` section 6, carrying the floor's `fault-report` as
+section 3 states.
 Nothing on any turn path waits on the sink, per `weaver-harness-PRD` section
 5, and the working structure's return is the acknowledgment the interior
 proceeds on.
@@ -512,11 +564,14 @@ flag is removed from the receive, which is the test `weaver-trace-Spec`
 section 10 owed this document, landed.
 
 **The second walk: the same tool inherits a channel end.** The attack is an
-inherited residency or gate end handing the tool surface a lifecycle
-directive, a release above all. The mechanism is the atomic `SOCK_CLOEXEC` of
-section 2.2, no window between creation and flag. The test forks a child and
-enumerates its descriptors, confirming exactly the intended end crosses each
-organ fork and nothing crosses a tool fork, watched to fail when the atomic
+inherited end handing the tool surface a capability that varies by which end
+it got: a residency or gate end carries a lifecycle directive, a release
+above all, and a decode end carries a resident session's traffic, which is a
+different capability rather than a smaller one. The mechanism is the atomic
+`SOCK_CLOEXEC` of section 2.2, no window between creation and flag. The test
+forks a child and enumerates its descriptors, confirming that each organ fork
+carries exactly the ends that organ is owed, two at the SPU's and one at the
+gate's, and that nothing crosses a tool fork, watched to fail when the atomic
 flag is dropped to a later `fcntl`.
 
 **The third walk: a same-uid process attaches.** The attack reads or drives
@@ -580,21 +635,25 @@ by the build-time `cargo tree` assertion the floor Specs share.
 
 Each names what settles it, and none is this Spec's to settle alone.
 
-- **The engine's shape and the executor.** Deferred to the token workflow
-  with a latency measurement on the decode path, per `weaver-traits-Spec`
-  section 6 and section 1's no-runtime rule, which that measurement may
-  overturn.
-- **Stop mechanics at the decoder.** Whether stop cancels mid-decode or at
-  the next boundary the SPU offers, per `basic-inference-loop` section 7.
-  Settled against the SPU's cancellation surface when the token workflow
-  charters it.
+- **The executor.** The engine's shape closed with the token workflow's
+  acts, loop 1's seat and the decode surface it composes against both being
+  chartered, and what remains open is whether this crate takes a runtime at
+  all, deferred with the latency measurement on the decode path per
+  `weaver-traits-Spec` section 6, which may overturn section 1's no-runtime
+  rule.
+- **Stop mechanics at the decoder is closed.** The stop lands at the token
+  boundary, ratified at the token workflow's charter act of 2026-08-02 and
+  carried at `weaver-spu-PRD` section 13.5, with the family's turn terminator
+  made resident before the answer returns. Recorded as closed rather than
+  deleted, this list naming what settled each entry.
 - **The tee back-pressure election.** Blocking, shedding marked, or detaching
   marked, per `weaver-admin-operator-contract` section 3. A measurement
   against a real consumer at a real rate, taken with the queue's high-water
   mark of `weaver-trace-Spec` section 11, the two settling together.
-- **The fault payload's shape.** Awaits the organs' charters naming what they
-  raise, per `weaver-spu-PRD` section 10, and until it lands the fault path
-  of section 3 is shaped and gated.
+- **The fault payload's shape is closed.** The case set closed across all
+  three organs on 2026-08-02 and the shape landed at `weaver-trace-PRD`
+  section 3.2 as the floor's `fault-report`, so section 3's fault path is
+  shaped and ungated.
 - **The config read, and the sink field's custody question.** The charter's
   `reads` edge to `agent-config` is exercised by no chartered workflow, so
   the read arrives with the tool workflow, which consumes the tool set and
@@ -609,7 +668,8 @@ Each names what settles it, and none is this Spec's to settle alone.
   enforcement point.** Blocked with `tool-trait`, per `weaver-traits-PRD`
   section 3.1.
 - **The satellite types.** `AdoptionFault`'s case set, `OrganChannel`'s
-  exchange-surface spelling, the licensing error's shape, and the
+  exchange-surface spelling, `DecodeChannel`'s and `SpuChannels`' names, the
+  licensing error's shape, and the
   channel-state enum's name. Identifier and shape choices with no
   cross-crate consequence, listed so what this Spec leaves to a builder is
   complete rather than implied.
