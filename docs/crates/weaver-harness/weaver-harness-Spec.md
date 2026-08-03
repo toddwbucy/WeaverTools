@@ -53,7 +53,9 @@ token workflow's acts, the engine entry narrows to the executor alone, and
 section 3's gating language lifts with the shape that landed. Three rounds on
 one claim, and the lesson each earned is the same at a different depth, that a
 claim lives in its heading, its body, and its
-test.
+test. A fourth round adds the last depth, the one site that cited the gating
+rather than stating it, section 4's pressure paragraph pointing at a section 3
+that now answers the opposite.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -452,7 +454,8 @@ a defect in the author, and it surfaces as a fault rather than a retry.
 
 **Pressure becomes an event, authored by this crate.** When the recorder
 surfaces `CommitPressure`, the harness authors the `fault` event in response,
-per `weaver-trace-Spec` section 6, gated in this pass as section 3 states.
+per `weaver-trace-Spec` section 6, carrying the floor's `fault-report` as
+section 3 states.
 Nothing on any turn path waits on the sink, per `weaver-harness-PRD` section
 5, and the working structure's return is the acknowledgment the interior
 proceeds on.
