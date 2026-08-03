@@ -12,6 +12,29 @@ firing on the forking thread's termination rather than the harness process's,
 the case compiled and run by the review and verified again by this seat, and
 the thread-lifetime obligation the backing rests on is owed to
 `weaver-harness-Spec` on the working list rather than claimed silently.
+**Revised:** 2026-08-03, the assertion pass, taken in the fan-out that follows
+the two floor crates. Twenty-three assertion records land at the clauses that
+argue them, seventeen from the enforcement sorting of section 6 and six from the
+elections outside it, per the ruling that elections take nodes because gate H1
+would otherwise leave the largest decisions untraceable. Section 0's boilerplate
+stops saying this document declares no records and states what it now sources,
+naming what it leans on and does not argue with the crates that argue it. Two
+clauses divide under the floor Specs' split: the bind-site absence, whose two
+named shapes are the doctests' and whose general prohibition is review's at the
+section 3 clause that argues it, and the third walk, whose test reaches the
+closure handling while the parent-death backing stays review's, the signal
+keying on the forking thread's termination rather than the harness process's.
+The prose at all four destinations adopts the split rather than leaving the
+whole claim with the instrument the split took from it. On the review seat's
+return the same day, the backing's `review` tag regrounds from impossibility
+to election, the reach existing by way of a double that forks from a thread
+and exits it, the third walk's perturbation is stated against closing the
+harness end rather than killing the double, without which the watch cannot
+fail, and the close-on-exec set gains the ground its paired flag had. On the
+operator's ruling of the same day, filed as issue 32, the out-of-order refusal
+this crate states and no organ enforced gains the perturbation test section 6
+had never named and the record that test holds, which is a Spec edit rather
+than an indexing and is why it arrives as its own act on a held branch.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -32,9 +55,24 @@ says how it is represented, and per gate G2 it elects against grounds the
 charter and the contracts state rather than developing grounds of its own.
 Where this document and the charter disagree the charter yields nothing.
 
-**This document declares no graph records,** per Document Format section 1.
-The charter is the source of this crate's node, its parent edge, its one floor
-link, and its one declared seam.
+**This document declares its crate's assertion records,** per Document Format
+sections 3 and 4 as of the notation of 2026-08-03. The charter stays the source
+of this crate's node, its parent edge, its one floor link, and its one declared
+seam, and a Spec that restated them would give the mapper two sources for one
+record, per Document Format section 1. What this document sources is the claims
+code must conform to, declared at the clauses that argue them rather than
+gathered in one place, per that format's section 6, and `asserts` runs from the
+crate rather than from this document, which is why the document needs no node of
+its own. **What this document leans on and does not argue is declared by the
+crate that argues it,** and carries no record here. The descriptor's number and
+the fork discipline that leaves this process one inherited descriptor are
+`weaver-harness-Spec`'s, per its sections 2.2 and 8. The floor's three
+exhaustive wire enums, `PeerIdentity`'s missing `Deserialize`, the socket-type
+election with the boundary and truncation tests it owes the pair-creating
+crates, and the one policy function with denial before permission are
+`weaver-types-Spec`'s, per its sections 3, 4.2, and 4.3. A node declared twice
+is the one-name-two-nodes defect that format forbids, and a reliance stays prose
+because a citation is what it is.
 
 **It is written from the merged corpus alone,** per the ruling of 2026-08-01
 that keeps the old tree's Specs out of the Spec pass.
@@ -49,6 +87,16 @@ token workflow, per charter section 8, each waiting rather than missing.
 
 **One binary.** The gate is its own executable, forked and exec'd by the
 harness during the enter fan-out, per apex section 12, and nothing links it.
+
+```graph
+node: gate-one-binary
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-gate
+to: gate-one-binary
+```
 
 **Layout.** One module per obligation, with one placement.
 
@@ -77,11 +125,31 @@ opacity rule. `nix` is the OS surface, on the grounds
 `listen`, `accept`, `getsockopt` for the peer credential, `fcntl`, and the
 two `prctl` sets of section 2.
 
+```graph
+node: gate-floor-link-types-without-config
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-gate
+to: gate-floor-link-types-without-config
+```
+
 **No async runtime, no logging crate, nothing else.** The lifecycle traffic
 is two exchanges and the client traffic is deferred, so nothing here needs an
 executor, and this crate writes no account of anything, per charter section
 1: a logging crate would be a second author's first step. The absences are
 checked by the build-time `cargo tree` assertion the floor Specs share.
+
+```graph
+node: gate-no-runtime-no-logging-no-yaml
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-gate
+to: gate-no-runtime-no-logging-no-yaml
+```
 
 ## 2. The seam end, and the process facts
 
@@ -95,7 +163,20 @@ begins with beyond the standard streams, per the fork discipline of
 crate holds a trace, coordination, or residency handle broken whether or not
 it uses one. That property is the harness's to enforce at the fork and this
 crate's to rely on, and the reliance is stated rather than re-tested here,
-the enforcing test living in the harness Spec's section 8.
+the enforcing test living in the harness Spec's section 8. **The wrap is not
+a formality.** Descriptors are owned types end to end in this crate, the
+listener and the accepted connection of section 3 included, so no raw number
+outlives the thing it names and no close happens twice.
+
+```graph
+node: gate-descriptors-owned-types
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-gate
+to: gate-descriptors-owned-types
+```
 
 **Entry performs two hygiene sets and one election, before the first read.**
 The dumpable flag is cleared and the channel end is set close-on-exec, both
@@ -116,7 +197,46 @@ sentence makes it a stated constraint a later threading change must answer.
 It backs the closure observation rather than replacing it, the requirement
 standing on closure alone per charter section 4, and it covers the window
 where the gate is blocked anywhere other than the channel read, for as long
-as that constraint holds.
+as that constraint holds. **The backing is review's by election and not by
+impossibility,** the third walk's test reaching the closure half alone. A
+harness double that forks the gate from a thread of its own and then ends
+that thread while its process lives and holds its channel end open produces
+the condition the signal keys on, which is the case both seats compiled on
+2026-08-02 to narrow the guarantee in the first place, so the reach exists
+and this suite simply does not buy it. The signal's presence, the width of
+its guarantee, and the thread-lifetime constraint the backing rests on are
+review's on that ground, while the closure requirement they back is the
+walk's, which is the same split the bind-site absence takes in section 3.
+**The channel end's close-on-exec is review's on that ground and not a
+weaker one,** an `fcntl` reading it as cheaply as a `prctl` reads the flag
+set beside it: the two hygiene sets differ in the instrument bought, walk 2
+taking the flag, and not in the instrument available.
+
+```graph
+node: gate-dumpable-flag-cleared
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-dumpable-flag-cleared
+
+node: gate-channel-end-close-on-exec
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-channel-end-close-on-exec
+
+node: gate-parent-death-signal-thread-scoped
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-parent-death-signal-thread-scoped
+```
 
 **The exchange service is a serial loop over the channel.** Directives
 arrive as `OrganEnvelope` JSON, one message per envelope, on the
@@ -129,10 +249,46 @@ directive out of order for the channel's state answers `OutOfOrder`, per
 `weaver-harness-gate-contract` section 3, and the state has three positions,
 before-raise, raised, and lowered, the last terminal.
 
+```graph
+node: gate-truncation-is-a-fault
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-truncation-is-a-fault
+
+node: gate-out-of-order-refused
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-out-of-order-refused
+
+node: gate-channel-state-three-positions
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-gate
+to: gate-channel-state-three-positions
+```
+
 **Closure is death, and the response is the charter's.** A read that returns
 closure means the interior is gone: this crate closes its listener if one
 stands and exits, per charter section 4, never treating closure as an
 answer, per the drawn material.
+
+```graph
+node: gate-closure-is-death
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-closure-is-death
+```
 
 ## 3. The hook
 
@@ -143,6 +299,16 @@ exactly two things from it: the socket path to bind and the access rule the
 predicate judges against. The field list is the floor's satellite, per
 section 6, and the demand stated here is what that satellite must carry.
 
+```graph
+node: gate-instruction-two-fields-consumed
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-instruction-two-fields-consumed
+```
+
 **The client socket is `SOCK_STREAM`, elected on the same ground as the
 operator surface.** `weaver-gate-world-contract` section 2 fixes
 newline-delimited JSON, one request per line, so the newline is the framing
@@ -151,6 +317,16 @@ first. A stream is also what a local client's ordinary tooling dials, which
 is the audience that contract names. The opposite election from the organ
 channels, principled the same way twice now, per `weaver-admin-Spec`
 section 2.
+
+```graph
+node: gate-client-socket-stream
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-client-socket-stream
+```
 
 **The bind takes the path as given and refuses what it finds in the way.**
 The socket is created with the close-on-exec flag in the creating call and
@@ -161,7 +337,40 @@ death is the operator's to clear, and a gate that deleted filesystem
 entries to make room for itself would hold an authority its charter never
 grants. Ready is answered only after both the bind and the listen have
 returned, which is what makes ready a fact about the listener, per
-`weaver-harness-gate-contract` section 2.
+`weaver-harness-gate-contract` section 2. **`hook.rs` exposes the crate's one
+bind site,** taking the instruction's path, and a listener built anywhere
+else in this crate is out of bounds. The two named shapes are pinned by the
+compile-fail doctests of section 6, because an absence is what a runtime test
+structurally cannot demonstrate, **and the general prohibition stays
+review's,** a pair of doctests reaching the shapes they name and not the open
+set of every way a path becomes a listener. The pinning and the prohibition
+are two records for that reason, per section 6.
+
+```graph
+node: gate-ready-follows-bind
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-ready-follows-bind
+
+node: gate-unlinks-nothing
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-unlinks-nothing
+
+node: gate-one-bind-site
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-one-bind-site
+```
 
 **Every connection is authenticated at accept, before any byte is read.**
 The accepting call sets close-on-exec on the connection, the peer's
@@ -169,6 +378,16 @@ credential is read with `SO_PEERCRED`, and the identity is judged by the
 floor's one predicate against the instruction's rule. Verified on the
 admin Spec's pass and relied on here: the credential on an accepted
 connection reports the connecting peer's own uid, gid, and pid.
+
+```graph
+node: gate-authenticated-at-accept
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-authenticated-at-accept
+```
 
 **The agent uid is denied by construction, not by configuration.** This
 process runs as the agent uid, so it knows the one uid the boundary exists
@@ -180,6 +399,16 @@ by closure before any content is read, per `weaver-gate-world-contract`
 section 5, and nothing is written to it, an admitted-looking answer to a
 refused peer being a conversation the boundary already declined.
 
+```graph
+node: gate-agent-uid-denied-by-construction
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-agent-uid-denied-by-construction
+```
+
 **The lower closes the listener first and confirms after.** Stopped is
 answered only after the close has returned, per the contract, so nothing
 new can arrive anywhere in the interior once the harness proceeds. In this
@@ -187,11 +416,31 @@ pass no traffic exists, so the close is the whole of it, and what happens
 to an in-flight connection at lower is drain, deferred with the token
 workflow.
 
+```graph
+node: gate-stopped-follows-close
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-stopped-follows-close
+```
+
 **A refusal leaves nothing held.** A failed bind holds no listener and no
 half-bound socket, so the aggregate's rollback has nothing of this crate's
 to unwind, per charter section 5, and the refusal is answered rather than
 exited on, a party that exited replacing a typed reason with an observed
 death.
+
+```graph
+node: gate-refused-raise-holds-nothing
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-refused-raise-holds-nothing
+```
 
 ## 4. The relay, deferred
 
@@ -203,7 +452,20 @@ nothing is shaped here ahead of that charter, per apex section 9. What this
 Spec fixes about it is only what the merged contracts already fix: the
 relay reads no content, and a line that does not parse is refused by the
 harness with the refusal returning by the path the line took, the gate
-carrying both directions unread.
+carrying both directions unread. The claim binds the suite as much as the
+build, which is why section 6 has no test that parses a client line, and it
+is review's at both ends: no instrument distinguishes octets forwarded from
+octets read.
+
+```graph
+node: gate-client-content-unread
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-client-content-unread
+```
 
 ## 5. The failure vocabulary
 
@@ -221,6 +483,16 @@ answer on an exchange, every refusal this crate issues is a
 channel fault is a failure below the exchange layer. `Closed` is the one
 this crate does not survive: the exit path of section 2 is its handling,
 and the other two are answered as faults of the exchange in flight.
+
+```graph
+node: gate-fault-below-the-exchange-layer
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-fault-below-the-exchange-layer
+```
 
 ## 6. What is enforced, and by which instrument
 
@@ -246,9 +518,18 @@ set is removed.
 **The third walk: the boundary outlives its interior.** The adversary is
 timing, a client conversing with a gate whose harness is gone. The
 mechanisms are the closure observation, exit on a closed channel, and the
-elected parent-death signal backing it. The test kills the harness side of
-a standing pair and confirms the gate exits and the listener is gone,
-watched to fail when the closure handling is removed.
+elected parent-death signal backing it. The test closes the harness end of
+a standing pair, the double staying alive, and confirms the gate exits and
+the listener is gone, watched to fail when the closure handling is removed.
+**The double has to live for the watch to mean anything.** Killing it as a
+process ends the forking thread too, and the signal then exits the gate
+whether or not the closure handling stands, which is a perturbation that can
+never be seen to fail. **The test reaches the closure half and no further,**
+the signal's backing being reachable by a double that forks from a thread
+and exits it while its process lives, and simply not bought here. So this
+walk's perturbation record is the closure mechanism and the signal's backing
+is review's by election, at the section 2 clause that elects it, two records
+rather than one for the reason the bind-site absence divides below.
 
 **Enforced by the compiler.**
 
@@ -262,8 +543,12 @@ watched to fail when the closure handling is removed.
 `hook.rs` exposes one bind site taking the instruction's path, and a
 doctest constructing a listener from a bare `&str` or `PathBuf` anywhere
 else in the crate fails to compile, the two named shapes with the general
-prohibition staying review's, per the floor Specs' split. The
-load-bearing absence this crate relies on, `PeerIdentity` deriving no
+prohibition staying review's, per the floor Specs' split. **The split is two
+assertions rather than one,** the pinned shapes here and the prohibition
+itself at the section 3 clause that argues it: a single record tagged for the
+mechanical half would claim the doctests for the whole, which is the
+overclaim this corpus refuses in prose and has no reason to admit in a graph.
+The load-bearing absence this crate relies on, `PeerIdentity` deriving no
 `Deserialize`, is the floor's pin, per `weaver-types-Spec` section 3.
 
 **Enforced by the manifest.** The internal dependency is exactly
@@ -271,6 +556,23 @@ load-bearing absence this crate relies on, `PeerIdentity` deriving no
 floor-link under gate H2. No async runtime, no logging crate, and no YAML
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
+
+**Where the assertion records sit, and which of these bullets another crate
+declares.** The records are at the clauses that argue the claims, across
+sections 1 through 5, rather than gathered here, per Document Format section
+6: this section sorts by instrument and the arguments are elsewhere, so a
+block here would sit apart from the prose that earns it. One record is the
+exception and sits at the end of this section, the doctest pinning of the two
+bind-site shapes, whose argument is nowhere else and whose general
+prohibition is section 3's. Twenty-three records in all, seventeen from this
+section's sorting with the walks counted in and six from the elections
+outside it, a split's two halves both counting as this section's because
+neither was elected and one was divided out, per Document Format section 3.
+**Two of the bullets above are claims another crate argues,** and carry no
+record here: the floor's three exhaustive wire enums and `PeerIdentity`'s
+missing `Deserialize`, both `weaver-types-Spec`'s. An assertion belongs where
+its argument and its instrument live, and a node declared twice is the defect
+that format forbids.
 
 **Requiring a perturbation-verified test, beyond the walks.**
 
@@ -285,9 +587,30 @@ assertion the floor Specs share.
 - Truncation is a fault: an over-bound envelope produces `Truncated` and
   no directive, confirmed by watching a silently shortened directive
   decode when the `MSG_TRUNC` check is removed.
+- A directive out of order is refused and not queued: a lower arriving
+  before any raise answers `OutOfOrder` with no listener standing after
+  it, and a directive of any kind arriving after a lower answers the
+  same, the lowered position being terminal. The compiler bullet above
+  pins that the refusal reaches a match arm rather than a flag check,
+  and this pins what the arm then does, an arm being free to queue or to
+  answer the wrong refusal while compiling exactly as well. Confirmed by
+  watching a lowered channel accept a second raise when the terminal arm
+  is collapsed into the raised one. The refusal is owed to each organ by
+  `weaver-types-Spec` section 5, which states it and enforces it nowhere,
+  and this discharges the gate's side of that owing alone.
 - The unparseable-line refusal path stays whole-cloth deferred: no test
   here parses a client line, and a test that did would be the opacity rule
   breached by the suite, which review checks for.
+
+```graph
+node: gate-bind-shapes-pinned-by-doctest
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-gate
+to: gate-bind-shapes-pinned-by-doctest
+```
 
 ## 7. Open elections
 
