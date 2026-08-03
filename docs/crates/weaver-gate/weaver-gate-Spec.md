@@ -25,7 +25,12 @@ section 3 clause that argues it, and the third walk, whose test reaches the
 closure handling while the parent-death backing stays review's, the signal
 keying on the forking thread's termination rather than the harness process's.
 The prose at all four destinations adopts the split rather than leaving the
-whole claim with the instrument the split took from it.
+whole claim with the instrument the split took from it. On the review seat's
+return the same day, the backing's `review` tag regrounds from impossibility
+to election, the reach existing by way of a double that forks from a thread
+and exits it, the third walk's perturbation is stated against closing the
+harness end rather than killing the double, without which the watch cannot
+fail, and the close-on-exec set gains the ground its paired flag had.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -188,13 +193,20 @@ sentence makes it a stated constraint a later threading change must answer.
 It backs the closure observation rather than replacing it, the requirement
 standing on closure alone per charter section 4, and it covers the window
 where the gate is blocked anywhere other than the channel read, for as long
-as that constraint holds. **No mechanical instrument reaches the election
-itself,** and the third walk's test does not: it perturbs the closure
-handling, and no test in this crate can end a thread of a process this crate
-does not run. The signal's presence, the width of its guarantee, and the
-thread-lifetime constraint the backing rests on are review's, while the
-closure requirement they back is the walk's, which is the same split the
-bind-site absence takes in section 3.
+as that constraint holds. **The backing is review's by election and not by
+impossibility,** the third walk's test reaching the closure half alone. A
+harness double that forks the gate from a thread of its own and then ends
+that thread while its process lives and holds its channel end open produces
+the condition the signal keys on, which is the case both seats compiled on
+2026-08-02 to narrow the guarantee in the first place, so the reach exists
+and this suite simply does not buy it. The signal's presence, the width of
+its guarantee, and the thread-lifetime constraint the backing rests on are
+review's on that ground, while the closure requirement they back is the
+walk's, which is the same split the bind-site absence takes in section 3.
+**The channel end's close-on-exec is review's on that ground and not a
+weaker one,** an `fcntl` reading it as cheaply as a `prctl` reads the flag
+set beside it: the two hygiene sets differ in the instrument bought, walk 2
+taking the flag, and not in the instrument available.
 
 ```graph
 node: gate-dumpable-flag-cleared
@@ -494,15 +506,18 @@ set is removed.
 **The third walk: the boundary outlives its interior.** The adversary is
 timing, a client conversing with a gate whose harness is gone. The
 mechanisms are the closure observation, exit on a closed channel, and the
-elected parent-death signal backing it. The test kills the harness side of
-a standing pair and confirms the gate exits and the listener is gone,
-watched to fail when the closure handling is removed. **The test reaches the
-closure half and no further.** Killing the harness side closes the channel,
-and the elected signal fires on the termination of the forking thread, which
-no test in this crate can produce against a process it does not run. So this
+elected parent-death signal backing it. The test closes the harness end of
+a standing pair, the double staying alive, and confirms the gate exits and
+the listener is gone, watched to fail when the closure handling is removed.
+**The double has to live for the watch to mean anything.** Killing it as a
+process ends the forking thread too, and the signal then exits the gate
+whether or not the closure handling stands, which is a perturbation that can
+never be seen to fail. **The test reaches the closure half and no further,**
+the signal's backing being reachable by a double that forks from a thread
+and exits it while its process lives, and simply not bought here. So this
 walk's perturbation record is the closure mechanism and the signal's backing
-is review's, at the section 2 clause that elects it, two records rather than
-one for the reason the bind-site absence divides below.
+is review's by election, at the section 2 clause that elects it, two records
+rather than one for the reason the bind-site absence divides below.
 
 **Enforced by the compiler.**
 
