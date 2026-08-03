@@ -593,9 +593,14 @@ that format forbids.
   same, the lowered position being terminal. The compiler bullet above
   pins that the refusal reaches a match arm rather than a flag check,
   and this pins what the arm then does, an arm being free to queue or to
-  answer the wrong refusal while compiling exactly as well. Confirmed by
-  watching a lowered channel accept a second raise when the terminal arm
-  is collapsed into the raised one. The refusal is owed to each organ by
+  answer the wrong refusal while compiling exactly as well. Confirmed
+  twice, once per case, by watching an early lower drive the channel to
+  the terminal position when the before-raise arm stops refusing it,
+  after which a legitimate raise is refused and no listener ever stood,
+  and by watching a lowered channel accept a second raise when the
+  terminal arm is collapsed into the raised one. One watch would leave
+  whichever case it misses claimed and unenforced, which is the reading
+  this bullet exists to refuse. The refusal is owed to each organ by
   `weaver-types-Spec` section 5, which states it and enforces it nowhere,
   and this discharges the gate's side of that owing alone.
 - The unparseable-line refusal path stays whole-cloth deferred: no test
