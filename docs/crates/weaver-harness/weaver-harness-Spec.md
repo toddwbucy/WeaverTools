@@ -56,6 +56,32 @@ claim lives in its heading, its body, and its
 test. A fourth round adds the last depth, the one site that cited the gating
 rather than stating it, section 4's pressure paragraph pointing at a section 3
 that now answers the opposite.
+**Revised:** 2026-08-03, the assertion pass, taken in wave two's pair with the
+SPU's. Forty-four assertion records land at the clauses that argue them,
+eighteen from section 8's enforcement sorting with the four walks counted in and
+twenty-six from the elections outside it, per the ruling that elections take
+nodes because gate H1 would otherwise leave the largest decisions untraceable.
+Section 0's boilerplate stops saying this document declares no records and states
+what it now sources, naming the ten claims it leans on and does not argue with the
+crates that argue them. Three owings other merged Specs discharged to this
+document land as records: the close-on-exec test `weaver-trace-Spec` section 10
+owes, at section 2.3's receive site, the licensed combinations
+`weaver-traits-Spec` section 7 owes, at section 4's authoring clause, and
+descriptor 3 with the fork discipline `weaver-gate-Spec` cites, at section 2.2.
+Two clauses divide under the floor Specs' core-and-periphery split: the
+path-taking pin, whose three named shapes are the doctests' and whose general
+prohibition is review's at the section 2.3 clause that argues it, and the child's
+handoff, whose placement the second walk's test confirms and whose unconditional
+flag clear against the equal-descriptor corner is review's by election. The prose
+adopts each division at every destination it reaches, the path-taking pair across
+two sections and the handoff pair inside one paragraph, rather than leaving the
+whole claim with the instrument the split took from it. Every review tag whose
+claim a test could reach states its ground as an election, per the rule the
+gate's pass earned. The out-of-order refusal `weaver-types-Spec` section 5 owes
+each organ carries no record, this Spec naming no test for it, and the boundary
+half of the pair-test that Spec owes the pair-creating crates is unnamed here as
+well, both recorded in section 8 as gaps rather than answered with tests an
+assertion pass may not write.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -77,9 +103,31 @@ says how it is represented, and per gate G2 it elects against grounds the charte
 and the contracts state rather than developing grounds of its own. Where this
 document and the charter disagree the charter yields nothing.
 
-**This document declares no graph records,** per Document Format section 1. The
-charter is the source of this crate's node, its parent edge, its two floor links,
-its one declared seam, and its artifact edges.
+**This document declares its crate's assertion records and no other record,** per
+Document Format sections 3 and 4 as of the notation of 2026-08-03, which retired
+the no-records sentence this paragraph replaces. The charter stays the source of
+this crate's node, its parent edge, its two floor links, its one declared seam,
+and its artifact edges, and a Spec that restated any of them would give the mapper
+two sources for one record, per that format's section 1. What this document
+sources is the claims code must conform to, declared at the clauses that argue
+them rather than gathered in one place, per that format's section 6, and `asserts`
+runs from the crate rather than from this document, which is why the document
+needs no node of its own.
+
+**A claim this Spec leans on and another Spec argues carries no record here,** and
+there are ten of them. Four are `weaver-types-Spec`'s: the `SOCK_SEQPACKET`
+election of its section 4, the 64 kibibyte envelope bound that election carries,
+the three exhaustive wire enums of its section 4.2, and loop 0's JSON encoding of
+its section 4.3. Two are `weaver-traits-Spec`'s: the tool trait's absent safety
+classification of its section 5, leaned on in section 6, and the provider trait's
+dyn-compatibility of its section 6, leaned on in section 5. Three are
+`weaver-trace-Spec`'s: the identity newtypes whose conversion that Spec's section
+1 places at this crate's submit call, the envelope index its section 4 holds for
+the assembly read, and the recorder reporting pressure rather than authoring it,
+its section 6. One is `weaver-gate-Spec`'s, the parent-death signal's
+thread-scoped guarantee of its section 2, leaned on in section 1. A node declared
+twice is the one-name-two-nodes defect that format forbids, and a reliance stays
+prose because a citation is what it is.
 
 **It is written from the merged corpus alone,** per the ruling of 2026-08-01 that
 keeps the old tree's Specs out of the Spec pass. Where a question of fact about
@@ -133,8 +181,29 @@ than made here, a correction to a merged document landing after this branch
 rather than beside it. `weaver-trace` is the seam tagged
 `link`, the recorder this crate authors through. `serde_json` encodes and
 decodes the loop 0 envelopes, whose JSON election is `weaver-types-Spec`
-section 4.3's. `nix` is the OS surface, elected in section 2 where the grounds
-live.
+section 4.3's. `nix` is the OS surface, elected in section 2.4 where the grounds
+and the record live. **The set and the feature are two records rather than one.**
+Gate H2 reads the internal edges against the graph and reads no feature list, and
+the featureless take is a `Cargo.toml` fact of its own, so a single record would
+hand one instrument's read to a claim it does not cover.
+
+```graph
+node: harness-internal-dependency-set
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-harness
+to: harness-internal-dependency-set
+
+node: harness-types-without-config
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-harness
+to: harness-types-without-config
+```
 
 **No async runtime, no logging, no HTTP.** The old tree's harness carried tokio
 with every feature, `async-trait`, `tracing` with two subscriber crates, and an
@@ -144,6 +213,16 @@ charter, and the executor question belongs to the token workflow with a latency
 measurement in hand, per `weaver-traits-Spec` section 6. A logging crate would
 be a second account beside the one the program exists to produce. The absence
 is checked by the same build-time `cargo tree` assertion the floor Specs share.
+
+```graph
+node: harness-no-runtime-no-logging-no-http
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-harness
+to: harness-no-runtime-no-logging-no-http
+```
 
 **This crate spawns no thread.** The one auxiliary thread the merged set names
 is the stream writer's, and it belongs to `weaver-trace`, per that Spec's
@@ -157,7 +236,31 @@ on the forking thread's termination rather than the process's, per
 change that moved the enter fan-out onto a short-lived thread would kill the
 gate spuriously while the interior it guards is healthy. Today the posture
 above satisfies the constraint by construction, and this sentence is what a
-change to that posture must answer.
+change to that posture must answer. **Both are review's by election and not by
+impossibility.** A test enumerating this process's threads reaches the first and
+a test comparing the forking thread against the serving one reaches the second,
+so what holds them is that this suite buys neither rather than that no instrument
+exists. The second is the constraint `weaver-gate-Spec` section 2 filed against
+this document on the working list, stated here as a record rather than left as an
+implication of the posture above.
+
+```graph
+node: harness-spawns-no-thread
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-spawns-no-thread
+
+node: harness-organ-forks-on-worker-lifetime-thread
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-organ-forks-on-worker-lifetime-thread
+```
 
 ## 2. The channels, and custody as code
 
@@ -180,7 +283,20 @@ and the remainder discarded, so an unchecked flag turns a long directive into a
 silently shortened one, which is the failure the boundary property was elected
 to prevent. The same bound governs this crate's sends: no envelope this crate
 writes may exceed it, asserted at the write site, because a bound only the
-receiver holds is a bound the sender discovers in production.
+receiver holds is a bound the sender discovers in production. **The election and
+its bound are `weaver-types-Spec`'s records and the truncation test is this
+crate's,** that Spec owing the test to the pair-creating crates and section 8
+naming it, so what lands here is the obligation rather than the decision.
+
+```graph
+node: harness-truncation-is-a-fault
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-truncation-is-a-fault
+```
 
 **One write is one message and one message is one envelope.** The wire carries
 `OrganEnvelope` as one JSON document per write, per `weaver-types-Spec` section
@@ -201,6 +317,16 @@ creation and a separate `fcntl` would inherit an unflagged end, and an
 inherited end of the residency seam hands the tool surface a release directive.
 Verified: `socketpair` with `SOCK_CLOEXEC` yields both descriptors flagged with
 no interval between them.
+
+```graph
+node: harness-atomic-cloexec-at-creation
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-atomic-cloexec-at-creation
+```
 
 **The child's ends cross the final exec by `dup2` from descriptor 3 upward
 and an unconditional clear of the flag on each, because the duplicate law has
@@ -227,7 +353,34 @@ the numbering being this Spec's own election. **The numbering is owed to
 `weaver-spu-Spec` and `weaver-gate-Spec`**, each of which inherits it rather
 than re-deciding it, the same owing shape `weaver-types-Spec` section 4 used
 to reach this document, and `weaver-spu-Spec` section 2 states the order from
-the receiving side.
+the receiving side. **The placement and the corner's repair take separate
+records.** The second walk's test of section 8 forks a child and enumerates its
+descriptors, confirming the ends each organ is owed and where they sit, which
+reaches the number and the order, and the equal-descriptor corner is not what
+that test varies. So the unconditional clear is review's by election and not by
+impossibility: a double placing an end at descriptor 3 before the handoff
+produces the corner deterministically, which is the shape both seats ran to find
+it, and this suite does not buy it. One record for the pair would claim the
+walk's test for a half it does not reach, which is the overclaim this corpus
+refuses in prose and has no reason to admit in a graph.
+
+```graph
+node: harness-organ-ends-from-descriptor-three
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-organ-ends-from-descriptor-three
+
+node: harness-child-flag-clear-unconditional
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-child-flag-clear-unconditional
+```
 
 **Between fork and exec the child performs three calls, `dup2`, `fcntl`, and
 `execve`, and nothing else.** All three are async-signal-safe, and the bound
@@ -236,7 +389,20 @@ of a multithreaded process may safely run only async-signal-safe calls before
 its exec, so the enumeration is the safety argument and not a style. An
 earlier draft elected two calls and leaned on the duplicate law without its
 corner, and the review caught that the tight bound and the silent corner were
-one defect, so the middle call is the corner's repair made unconditional.
+one defect, so the middle call is the corner's repair made unconditional. **The
+bound is review's by election,** a seccomp filter or a traced exec reaching the
+call list between fork and exec, and this suite buying the walks of section 8
+instead.
+
+```graph
+node: harness-fork-to-exec-three-calls
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-fork-to-exec-three-calls
+```
 
 ### 2.3 The receive site, and adoption
 
@@ -249,7 +415,19 @@ arrives close-on-exec, and one received without it arrives clear, which is the
 window `weaver-organ-channel` section 2 describes and the reason the obligation
 is the receiver's. The site takes no flag argument and returns owned handles
 the rest of the crate cannot construct another way, which is the pinned shape
-`weaver-admin-harness-contract` section 5 names.
+`weaver-admin-harness-contract` section 5 names. This is the claim
+`weaver-trace-Spec` section 10 owes this document, its test standing as the
+first walk of section 8 and the owing discharged there.
+
+```graph
+node: harness-trace-fd-cloexec-at-receive
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-trace-fd-cloexec-at-receive
+```
 
 **Adoption is the constructor, and it performs the worker's hygiene as sets and
 not checks.** The coordination end reaches the worker by the unit's declared
@@ -259,14 +437,53 @@ set-again-after-the-last-exec obligation of that section landed in code, and
 clears the process's dumpable flag, the same section's attach defense. Both are
 sets because a check that finds the flag wrong and reports leaves the
 descriptor inheritable and the process attachable, which is the set-not-check
-rule stated at the contract and applied here.
+rule stated at the contract and applied here. **The two sets take two records and
+two instruments.** The dumpable flag is the third walk's mechanism and its test,
+and the adopted end's close-on-exec is review's by election and not by
+impossibility: an `fcntl` reads that flag as cheaply as the `prctl` beside it
+reads the dumpable one, so the two hygiene sets differ in the instrument bought
+and not in the instrument available. What the composition root does with the
+coordination end once the declared open delivers it is asserted here, per
+`weaver-admin-Spec` section 6.
+
+```graph
+node: harness-dumpable-flag-cleared
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-dumpable-flag-cleared
+
+node: harness-coordination-end-close-on-exec
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-coordination-end-close-on-exec
+```
 
 **No path is taken anywhere in this crate.** There is no call that resolves,
 opens, or stores a filesystem path to the trace, per `weaver-harness-PRD`
 section 5, and the organ binaries of section 3 are the one exception, supplied
 by the composition root as a construction parameter the way `weaver-trace-Spec`
 section 6 takes its queue depth: a deployment fact, not an operator election
-and not a discovery.
+and not a discovery. **The three named shapes are pinned by the compile-fail
+doctests of section 8, and the general prohibition stays review's,** three
+doctests reaching the shapes they name and not the open set of every way a path
+becomes a call argument. The pinning and the prohibition are two records for
+that reason, per section 8, and neither claims the other's instrument.
+
+```graph
+node: harness-no-path-taken
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-no-path-taken
+```
 
 ### 2.4 The OS surface, elected
 
@@ -281,7 +498,32 @@ custody discipline this crate exists to hold. `rustix` holds the same io-safety
 posture and declines to offer process forking as a supported surface, and the
 fork is not optional here: the topology of apex section 12 has this crate
 forking both organ binaries. One crate covering the whole surface beats two
-crates covering it between them, on the floor's own thinness doctrine.
+crates covering it between them, on the floor's own thinness doctrine. **The
+election is a manifest property and the record is this crate's,**
+`weaver-admin-Spec` section 1, `weaver-gate-Spec` section 1, and
+`weaver-spu-Spec` section 1 each inheriting these grounds rather than re-arguing
+them: the manifest carries one OS crate and no `libc` or `rustix` line of this
+crate's own. The ownership the election buys is the other claim in this
+paragraph and it is a type property, so it takes the compiler under section 8's
+first sorting rather than the manifest read.
+
+```graph
+node: harness-os-surface-nix
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-harness
+to: harness-os-surface-nix
+
+node: harness-descriptors-owned-types
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-descriptors-owned-types
+```
 
 ## 3. The lifecycle interior
 
@@ -313,14 +555,50 @@ impl Harness {
 construction.** A hygiene call that errors leaves the worker attachable or the
 end inheritable, so `adopt` returns the fault naming the set rather than
 proceeding unset, and a `Harness` in hand means the hygiene held. The fault's
-shape is a satellite of section 9.
+shape is a satellite of section 9. **The one constructor is the compile-fail
+doctest of section 8 and the refusal is review's by election,** an absence being
+what a runtime test structurally cannot demonstrate, and a test failing a hygiene
+call on a closed descriptor reaching the refusal that this suite does not buy.
+
+```graph
+node: harness-one-constructor
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-harness
+to: harness-one-constructor
+
+node: harness-failed-set-refuses-construction
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-failed-set-refuses-construction
+```
 
 **The service is a serial loop and the channel state is a type.** One directive
 at a time arrives, is judged against the channel's state, and is answered or
 refused, per the ordering rules of `weaver-admin-harness-contract` section 4. A
 directive out of order for the state answers `OutOfOrder` and is not queued.
 The state has three positions, before enter, entered, and left, the last
-terminal, and the middle one carries the run.
+terminal, and the middle one carries the run. **The state's positions are a type
+and take the compiler, and the refusal carries no record,** this Spec naming no
+test for what the arm then does, an arm being free to queue or to answer the
+wrong refusal while compiling exactly as well. The refusal is owed to each organ
+by `weaver-types-Spec` section 5, which states it and enforces it nowhere, and
+section 8 records the gap rather than inventing the test that closes it.
+
+```graph
+node: harness-channel-state-three-positions
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-channel-state-three-positions
+```
 
 **The run state is the fan-out's progress held as data, which is what makes the
 unwind total.**
@@ -356,6 +634,32 @@ assumptions onto a seam that does not take them. This is the mechanical form of
 `load-unload-loop` section 4's rule that admin's unwind is a reap plus one
 directive: the directive works because the harness knows what stands.
 
+```graph
+node: harness-run-state-options-checked-unwind
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-run-state-options-checked-unwind
+
+node: harness-spu-channels-one-field
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-spu-channels-one-field
+
+node: harness-decode-end-own-type
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-decode-end-own-type
+```
+
 **Enter runs four steps in the charter's order, and the answer is the
 aggregate.** Receive the sink descriptor from the directive's own message and
 construct the `Recorder`, which stands the empty working structure up. The
@@ -381,14 +685,67 @@ arm's reason is wrapped `OrganRefused` and carried into the aggregate
 unchanged, per `weaver-admin-harness-contract` section 6, and the scoped
 account holds: a refusal before the `load` event leaves the stream clean and
 the state at before-enter, and a refusal after it leaves the authored bracket
-standing and the run in place for the leave that unwinds it.
+standing and the run in place for the leave that unwinds it. **Three of this
+paragraph's four records are review's by election.** A test counting the
+ancillary descriptors on an enter directive reaches the sink's count, a test
+exec'ing a probe in the SPU's place reaches the decode pair's crossing of the
+same fork, and a test holding a double SPU's answer reaches the gate pair's wait
+on confirmed residency, and this suite buys none of the three. The scoped
+account is the fourth and section 8 names its test.
+
+```graph
+node: harness-one-sink-descriptor
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-one-sink-descriptor
+
+node: harness-decode-pair-created-before-the-fork
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-decode-pair-created-before-the-fork
+
+node: harness-gate-pair-waits-on-residency
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-gate-pair-waits-on-residency
+
+node: harness-scoped-refusal-account
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-scoped-refusal-account
+```
 
 **Leave runs the reverse order and drains before it answers.** Lower the gate
 first, refuse `ActivityNotAtRest` while a turn is in flight, author the
 `unload` event, drain the writer's queue, and release the SPU. Left is
 answered only after the drain returns, which is what makes the answer mean
 what `weaver-admin-harness-contract` section 4 says it means, that everything
-admitted reached the stream.
+admitted reached the stream. **The ordering is review's by election,** a double
+sink that drains slowly reaching it, which is the shape the gate's
+ready-follows-bind test takes for its own ordering, and this suite not buying
+one.
+
+```graph
+node: harness-left-follows-drain
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-left-follows-drain
+```
 
 **Stop answers after the record holds the close.** The stop directive aborts
 the turn in flight, the turn's close event is placed with the stop reason, and
@@ -399,6 +756,16 @@ decoder is deferred with the decode seam, per section 8, and the trace
 semantics are settled either way, which is what `basic-inference-loop` section
 7 already records.
 
+```graph
+node: harness-announce-after-record
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-announce-after-record
+```
+
 **A fault the worker survives is authored, not signalled.** The pressure and
 failure reports the recorder surfaces, and the organ deaths observed through
 closure after the enter aggregate, reach the operator as the `fault` event on
@@ -408,7 +775,30 @@ anything downstream of the emission. The payload is the floor's
 without translation, per `weaver-harness-trace-contract` section 3, and this
 crate's own three sources are enumerated at `weaver-harness-PRD` section 5.
 The gating an earlier draft of this Spec described lifted when that shape
-landed on 2026-08-02.
+landed on 2026-08-02. **The two records this paragraph carries are review's by
+election,** the never-blocks sentence being section 4's. A test driving a double
+organ's fault report to the stream reaches the authoring and the payload alike,
+comparing the reported bytes against the authored ones, and this suite buys the
+trace side of that pair instead, where `weaver-trace-Spec` section 6 asserts
+that the recorder reports pressure and does not author it.
+
+```graph
+node: harness-faults-authored-as-events
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-faults-authored-as-events
+
+node: harness-fault-payload-carried-unchanged
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-fault-payload-carried-unchanged
+```
 
 **Loop 0 takes neither a type nor a trait, and the cell closes here.**
 `load-unload-loop` section 8 holds the question for the Spec pass,
@@ -418,7 +808,20 @@ its control flow is the serial service, so an abstraction would have no second
 implementor and no caller that varies, which is the reserved slot apex section
 9 forbids. The inference loop inside it may yet demand one, and that demand
 arrives with the token workflow, which may reopen this with the engine's shape
-in hand.
+in hand. **The absence is review's by election,** the named-candidate doctest
+the floor Specs buy for absences reaching a trait this Spec could name, and the
+claim here being that no demand exists rather than that one named item is
+missing, which is the open set a doctest does not close.
+
+```graph
+node: harness-loop-zero-takes-no-abstraction
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-loop-zero-takes-no-abstraction
+```
 
 ## 4. Trace authorship
 
@@ -429,14 +832,29 @@ with one submit path.
 identifies the session, run, and turn as `weaver-trace`'s opaque newtypes, and
 this crate holds the floor's `SessionId` and `TurnKey`, so the conversion the
 no-dependency rule of `weaver-trace-Spec` section 1 forces is a total function
-at the one call site that submits, exactly as that Spec places it.
+at the one call site that submits, exactly as that Spec places it, which is why
+the record for the conversion sits there and not here: one claim is one node, and
+that Spec elects the newtypes and places the conversion in the same clause.
 
 **Both timestamps are stamped at authoring, from the standard library's two
 clocks.** Wall-clock milliseconds from the system clock, and the monotonic
 reading as nanoseconds elapsed since the run's origin, an instant captured
 when the `load` event is authored, per `weaver-harness-trace-contract` section
 3. No OS crate is needed for either, and the recorder's clock is never
-consulted because the contract denies it the fields.
+consulted because the contract denies it the fields. **The stamping site is
+review's by election,** a double recorder comparing an event's monotonic reading
+against the run's origin reaching it, and this suite buying the trace side's
+canonical-form tests instead.
+
+```graph
+node: harness-timestamps-stamped-at-authoring
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-timestamps-stamped-at-authoring
+```
 
 **The licensed combinations are enforced here, before submit.** A message is
 judged against the licensing rule of `weaver-traits-Spec` section 3, a `User`
@@ -445,12 +863,36 @@ message carrying only `Text`, an `Assistant` message carrying `Text` and
 unlicensed message is refused by this crate and never submitted. The recorder
 cannot hold this rule, per that Spec, so the harness is the party the
 perturbation test of `weaver-traits-Spec` section 7 binds, and the test lands
-in this document's section 8 set.
+in this document's section 8 set. That Spec names this document as the declaring
+side, and the record below discharges the owing.
+
+```graph
+node: harness-licensed-combinations-refused-before-submit
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-licensed-combinations-refused-before-submit
+```
 
 **A refused submission is handled as the contract orders.** It is not treated
 as recorded, not projected, and not retried under a new sequence, per
 `weaver-harness-trace-contract` section 3. A refusal on the authoring path is
-a defect in the author, and it surfaces as a fault rather than a retry.
+a defect in the author, and it surfaces as a fault rather than a retry. **The
+handling is review's by election,** a double recorder refusing one submission
+reaching it and the trace side's gapless-sequence test watching the same
+property from the recorder's end, which is the test this program buys.
+
+```graph
+node: harness-refused-submission-not-retried
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-refused-submission-not-retried
+```
 
 **Pressure becomes an event, authored by this crate.** When the recorder
 surfaces `CommitPressure`, the harness authors the `fault` event in response,
@@ -458,7 +900,20 @@ per `weaver-trace-Spec` section 6, carrying the floor's `fault-report` as
 section 3 states.
 Nothing on any turn path waits on the sink, per `weaver-harness-PRD` section
 5, and the working structure's return is the acknowledgment the interior
-proceeds on.
+proceeds on. The authoring itself is section 3's record and is not restated
+here. **The never-waits property is review's by election,** a double sink that
+never drains reaching it while a turn proceeds, and this suite buying the
+back-pressure measurement section 9 defers instead.
+
+```graph
+node: harness-nothing-waits-on-the-sink
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-nothing-waits-on-the-sink
+```
 
 ## 5. Prompt assembly's deterministic floor
 
@@ -471,7 +926,18 @@ custody events never enter a prompt because the assembly path cannot see them:
 the filter is the kind set at the read site, not a judgment applied after a
 full read. This is
 the seam `weaver-harness-PRD` section 2 names as what a later recall feature
-would breach, held today by one match a reviewer can find.
+would breach, held today by one match a reviewer can find and by the fourth
+walk's test of section 8.
+
+```graph
+node: harness-assembly-kind-filter-at-read-site
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-assembly-kind-filter-at-read-site
+```
 
 **The per-model layer is deferred with the token workflow, and the floor
 beneath it is fixed.** What phrasing elicits a tool call from a given decoder
@@ -480,13 +946,49 @@ crate. What does not vary and is fixed now is the order of parts, the identity
 prefix, then the message sequence, then the tool schemas, per apex section 3
 step 4, and the property that assembly is deterministic over the working
 structure's contents: the same records assemble the same prompt, byte for
-byte, which is what makes a replayed run's prompts comparable at all.
+byte, which is what makes a replayed run's prompts comparable at all. **The two
+claims take two instruments.** Determinism is section 8's perturbation bullet,
+and the order of parts is review's by election, a test reading the three parts
+out of an assembled prompt reaching it and this suite buying the byte-for-byte
+comparison that holds whatever order landed.
+
+```graph
+node: harness-prompt-part-order
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-prompt-part-order
+
+node: harness-deterministic-assembly
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-deterministic-assembly
+```
 
 **The provider is injected, and this crate names no wire format.** Decode
 requests leave through `provider-trait`, constructed at the worker composition
 root, per `weaver-traits-Spec` section 6, and every deferred decode shape in
 this document defers to the same place that trait's signature does, the token
-workflow.
+workflow. **The absence of a wire format here is review's by election,** a
+manifest read reaching a named HTTP or provider client and section 8's own
+manifest bullet buying exactly that, while what this clause claims beyond it is
+that no format is named in source either, which the manifest does not see and a
+grep at review does.
+
+```graph
+node: harness-provider-injected-no-wire-format
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-provider-injected-no-wire-format
+```
 
 ## 6. The tool system, blocked, and loop 1's seat
 
@@ -497,7 +999,10 @@ already fixes: permission modes are consultation policy and not a boundary,
 the kernel bounds what a tool reaches through the uid it runs as, and no
 safety classification exists here or is coming, per `weaver-harness-PRD`
 section 3. The tool subprocess inherits no descriptor this program holds,
-which section 2 delivers by construction rather than by a per-tool argument.
+which section 2 delivers by construction rather than by a per-tool argument and
+asserts there rather than again here. The absent safety classification is
+`weaver-traits-Spec` section 5's record, that trait being where the absence is
+pinned, and this clause obeys it rather than restating it.
 
 **`src/engine.rs` is loop 1's seat, and the seam it composes across is this
 crate's public surface.** The loop itself is the builder's, per the charter's
@@ -519,7 +1024,31 @@ decode surface a real loop needs, the exchanges, sessions, sampling, and the
 flush call, arrives with the token workflow per `weaver-spu-PRD` section 8,
 the basic loops this program ships land in their binaries by the same path as
 any builder's, and the executor election stays deferred with that workflow,
-per section 1.
+per section 1. **The blade takes the compiler and the seam's position takes
+review.** A port is a type this crate owns with a constructor no consumer can
+reach, so a loop composes against the granted surface or does not compile, which
+is the same type property section 8's sorting holds for descriptor ownership,
+elected here rather than listed there. Where the seam falls
+is an election a test could read only by asserting what a loop is handed, which
+this suite does not buy.
+
+```graph
+node: harness-loop-mints-no-port
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-loop-mints-no-port
+
+node: harness-extension-seam-at-loaded-and-idle
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-extension-seam-at-loaded-and-idle
+```
 
 ## 7. The failure vocabulary
 
@@ -544,7 +1073,30 @@ not decode to an envelope and so cannot be attributed to any exchange for a
 refusal to answer, and closure, which `weaver-organ-channel` section 2 rules
 is observed as death and never synthesized into an answer. `Outcome` names the
 two ways service ends, the leave answered or the far process gone, so the
-composition root branches on a value rather than a guess.
+composition root branches on a value rather than a guess. **The split is
+review's by election and the outcome enum is a type property.** A test can watch
+a refusal answer where a fault should have ended the service, which is the reach
+this suite declines while `weaver-gate-Spec` section 5 and `weaver-spu-Spec`
+section 9 adopt the same split from their own sides, and the enum's two cases
+are exhaustive so a third reaches every caller loudly.
+
+```graph
+node: harness-fault-below-the-exchange-layer
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-fault-below-the-exchange-layer
+
+node: harness-outcome-two-cases
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-outcome-two-cases
+```
 
 ## 8. What is enforced, and by which instrument
 
@@ -606,12 +1158,53 @@ none of their content appears, watched to fail when the filter widens.
 - No path-taking surface: doctests handing `channel.rs` a `&str`, a `String`,
   and a `PathBuf` where it takes owned descriptors each fail to compile,
   three named shapes with the general prohibition staying review's, per the
-  split the floor Specs make.
+  split the floor Specs make. **The split is two assertions rather than one,**
+  the pinned shapes here and the prohibition itself at the section 2.3 clause
+  that argues it: a single record tagged for the mechanical half would claim
+  the doctests for the whole, which is the overclaim this corpus refuses in
+  prose and has no reason to admit in a graph.
 
 **Enforced by the manifest.** The internal dependency set is exactly the two
 floor links and the trace seam, read against the graph under gate H2. No async
 runtime, no logging crate, and no HTTP client in the resolved external tree,
 by the build-time `cargo tree` assertion the floor Specs share.
+
+**Where the assertion records sit, and which of these bullets another crate
+declares.** The records are at the clauses that argue the claims, across
+sections 1 through 7, rather than gathered here, per Document Format section 6:
+this section sorts by instrument and the arguments are elsewhere, so a block
+here would sit apart from the prose that earns it. One record is the exception
+and sits at the end of this section, the doctest pinning of the three
+path-taking shapes, whose argument is nowhere else and whose general
+prohibition is section 2.3's. Forty-four records in all, eighteen from this
+section's sorting with the four walks counted in and twenty-six from the
+elections outside it, the elections taking nodes because gate H1 would
+otherwise leave the largest decisions in this Spec untraceable. Two of the
+eighteen carry a review tag rather than a mechanical one, the path-taking
+prohibition and the child handoff's unconditional flag clear, each being the
+half a split divided out of a bullet this section already carried, and a
+divided half counts with the bullet it came from, per Document Format section
+3. **One bullet above is a claim another crate argues,** and carries no record
+here: the floor's three exhaustive wire enums, which are `weaver-types-Spec`
+section 4.2's. **Three of the claims sorted here discharge owings other merged
+Specs filed against this document,** and each record sits at the clause that
+argues it rather than at the sorting: the first walk's close-on-exec test that
+`weaver-trace-Spec` section 10 owes, at section 2.3, the licensed combinations
+that `weaver-traits-Spec` section 7 owes, at section 4, and the second walk's
+descriptor placement with the fork discipline that `weaver-gate-Spec` section 0
+cites as this document's, at section 2.2.
+
+**Two claims this Spec states carry no record, and the gaps are stated rather
+than closed here.** The out-of-order refusal of section 3 is owed to each organ
+by `weaver-types-Spec` section 5, which enforces it nowhere, and this section
+names no test for what the refusing arm does, so the claim is sorted by no
+instrument and is filed as issue 32 rather than answered with a test an
+assertion pass may not write. The boundary half of the pair-test that Spec owes
+the pair-creating crates, one envelope write arriving as one envelope read, is
+unnamed here in the same way, the truncation half alone appearing below. Both
+are Spec edits and belong to their own acts, and stating them here is what
+keeps a claim with no instrument from reading as enforced because it sits
+beside claims that are.
 
 **Requiring a perturbation-verified test, beyond the four walks.**
 
@@ -630,6 +1223,16 @@ by the build-time `cargo tree` assertion the floor Specs share.
 - Deterministic assembly: one working structure assembles one prompt,
   byte-identical across runs, confirmed by watching the comparison fail when
   iteration order stops being sequence order.
+
+```graph
+node: harness-path-shapes-pinned-by-doctest
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-harness
+to: harness-path-shapes-pinned-by-doctest
+```
 
 ## 9. Open elections
 
