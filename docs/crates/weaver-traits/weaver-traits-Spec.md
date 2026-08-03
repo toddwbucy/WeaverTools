@@ -14,6 +14,15 @@ wordings are corrected. Revised again the same day, on the second return: the
 tagging election becomes a stated mechanical test shared with
 `weaver-types-Spec`, `Role` drops its tag as a fieldless enum, and two
 instrument overclaims in section 7 are corrected.
+**Revised:** 2026-08-03, the assertion pass, second of the seven and the second
+of the two floor crates, both taken by hand rather than in the fan-out. Twenty-one
+assertion records land at the clauses that argue them, nine from section 7's
+enforcement sorting and twelve from the elections outside it. Section 0's
+boilerplate records what this document now sources and names its one exception,
+the shared tagging test whose node and both edges live at `weaver-types-Spec`
+section 4.3, which is the mirroring clause that Spec settled from its own side.
+Section 7 states where the records sit and which of its bullets another crate
+declares.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
@@ -33,9 +42,17 @@ document says how it is represented, and it is the only kind of document in this
 corpus permitted to name a Rust item. Where this document and the charter disagree
 the charter yields nothing and this document is corrected.
 
-**This document declares no graph records.** The charter is the source of this
+**This document declares its crate's assertion records, less one edge stated
+elsewhere,** per Document Format sections 3 and 4 as of the notation of
+2026-08-03. The charter stays the source of this
 crate's node and its four vocabulary definitions, and a Spec that restated them
 would give the mapper two sources for one record, per Document Format section 1.
+The exception is the tagging test this crate shares with `weaver-types`: one
+claim is one node with an `asserts` edge per bound crate, the node lives at the
+shared statement, and `weaver-types-Spec` section 4.3 declares both edges
+including this crate's. Declaring it again here would be the duplicate that
+format forbids, and dropping it silently would leave part of this crate's
+assertion set with nothing recording where it went.
 
 **What this Spec can settle is bounded by what is chartered, and the bound is not
 a gap.** Two of the four definitions are fully specifiable today because the
@@ -63,6 +80,17 @@ workspace `rust-toolchain.toml`. This crate uses no nightly feature and would
 compile on stable, which is worth keeping true: the floor is the one crate every
 other links, and a nightly feature here is a nightly requirement everywhere.
 
+```graph
+node: traits-compiles-on-stable
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-compiles-on-stable
+```
+
+
 **The dependency set is one crate and it is argued.** `serde` with the `derive`
 feature, because the message model crosses the trace seam as payload content and
 something must render it. `serde` alone, with no format crate: the recorder
@@ -74,10 +102,40 @@ decision onto the floor. Nothing else is admitted, and specifically **no async
 runtime, no `async-trait`, no `futures`**, per section 5's boxing election and the
 charter's prohibition on anything that does work.
 
+```graph
+node: traits-no-format-crate
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-traits
+to: traits-no-format-crate
+
+node: traits-no-async-runtime
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-traits
+to: traits-no-async-runtime
+```
+
+
 **No internal dependency, and the manifest is the check.** The crate's
 `Cargo.toml` names no `weaver-*` dependency, which gate H2 reads against the
 graph: this crate declares no `floor-link` and no `seam`, so any Cargo edge at all
 is a defect.
+
+```graph
+node: traits-no-internal-dependency
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-traits
+to: traits-no-internal-dependency
+```
+
 
 ## 2. Representation posture, stated once
 
@@ -89,6 +147,25 @@ about what an absent value means, and `weaver-types-PRD` section 5 rules that
 absence is never read as a default unless a charter says so and says what it
 means. A `Default` impl on a floor type is that ruling defeated by a derive.
 
+```graph
+node: traits-data-derive-set
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-data-derive-set
+
+node: traits-no-default
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-traits
+to: traits-no-default
+```
+
+
 **Enumerations are non-exhaustive where the charter says the set grows, and
 exhaustive where the charter says it is closed.** The permission modes are a
 closed operator-facing set, so their enum is exhaustive and a consumer's match is
@@ -97,6 +174,17 @@ those enums carry `#[non_exhaustive]` and consumers keep a wildcard arm. The
 attribute is elected per type against that test rather than applied as a house
 style, because it buys forward compatibility at the cost of exactly the
 compile-time loudness that makes a closed set worth closing.
+
+```graph
+node: traits-non-exhaustive-per-charter
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-non-exhaustive-per-charter
+```
+
 
 ## 3. The message model
 
@@ -133,6 +221,17 @@ pub enum ContentBlock {
 mapping to no kind or to two would put a judgment on the authoring path that the
 kind set has already made. The mapping is one to one and total.
 
+```graph
+node: traits-role-set-three
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-role-set-three
+```
+
+
 **The licensed combinations are stated, because the shape cannot state them.** A
 `User` message carries `Text` blocks. An `Assistant` message carries `Text` and
 `ToolCall` blocks, in the order the model emitted them. A `ToolResult` message
@@ -156,6 +255,16 @@ the call, which is the shape the previous tree's emitters got wrong. The block
 enum is where a turn's parts stay distinguishable from authoring through to the
 trace.
 
+```graph
+node: traits-content-is-block-sequence
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-content-is-block-sequence
+```
+
 **`ToolCall` and `ToolResultBlock` are named here and shaped with the tool
 workflow.** They are the conversation's view of a tool interaction, which is the
 message model's business, but their field lists follow the tool protocol that
@@ -174,6 +283,17 @@ serialization time rather than at compile time.
 `Role` is fieldless, so it takes `#[serde(rename_all = "snake_case")]` and no tag,
 serializing as `"user"`. Tagging it would yield `{"type": "user"}`, a nesting
 level that buys nothing and costs a level in every recorded message.
+
+```graph
+node: traits-role-plain-string
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-role-plain-string
+```
+
 `ContentBlock` passes the second case, `Text` being struct-shaped and the other
 two wrapping structs, so it takes `#[serde(tag = "type", rename_all =
 "snake_case")]` and a block reads as `{"type": "text", "text": "..."}` rather
@@ -186,6 +306,17 @@ key, which is the shape that breaks silently when a variant is renamed.
 mechanical reason the test states: internal tagging cannot represent a newtype
 variant wrapping a primitive. No variant of either enum wraps a bare primitive,
 which is what keeps the second case available here.
+
+```graph
+node: traits-content-block-internally-tagged
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-content-block-internally-tagged
+```
+
 
 **A tool result appears in two positions and the redundancy is only apparent.**
 `Role::ToolResult` says which of the three event kinds the message becomes, and
@@ -211,6 +342,17 @@ operator before a class of action, permit it without asking, refuse it. A fourth
 mode would be a policy this program does not hold, and the enum is exhaustive so
 a fourth cannot arrive without every consumer's match failing to compile, which is
 the loudness charter section 5 asks for.
+
+```graph
+node: traits-permission-mode-exhaustive
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-traits
+to: traits-permission-mode-exhaustive
+```
+
 
 **The type carries no method that adjudicates anything:** no inherent method and
 no trait implementation beyond the data derives of section 2. No `is_allowed`, no
@@ -247,6 +389,33 @@ a transport decision leaking onto the floor. And the trait carries **no safety
 classification of any kind**, per charter section 3.1 and apex section 3 step 7,
 which the tool workflow may not weaken.
 
+```graph
+node: traits-tool-dyn-compatible
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-tool-dyn-compatible
+
+node: traits-tool-boxed-future-send
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-tool-boxed-future-send
+
+node: traits-tool-no-safety-classification
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-traits
+to: traits-tool-no-safety-classification
+```
+
+
 **The tool taxonomy of `weaver-tools-vision` section 6 reaches this trait when the
 workflow charters it.** An internal tool is an organ function the harness
 dispatches inside the body and an external tool is world engagement crossing the
@@ -272,6 +441,25 @@ keeps the floor free of an async ecosystem crate that everything above would the
 carry. If the token workflow finds that shape costs measurable latency on the
 decode path, the dependency is a decision that pass makes with the measurement in
 hand, which is the only ground on which the floor takes a second dependency.
+
+```graph
+node: traits-provider-dyn-compatible
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-provider-dyn-compatible
+
+node: traits-provider-no-futures-dep
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-traits
+to: traits-provider-no-futures-dep
+```
+
 
 ## 7. What is enforced, and by which instrument
 
@@ -309,6 +497,17 @@ takes a build-time assertion over the resolved external tree, a `cargo tree` che
 in the workspace's own automation, and naming it here is what keeps it from being
 a claim nothing runs.
 
+**Where the records sit, and the one claim another crate declares.** The
+assertion records are at the clauses that argue the claims, across sections 1
+through 6, rather than gathered here, per Document Format section 6. Three
+claims are argued only in this section and carry their records at the end of
+it. **The licensed combinations of section 3 are declared by `weaver-harness`,**
+whose Spec section 8 carries the test and has discharged the owing, because an
+assertion belongs where its test lives. **The tagging test shared with
+`weaver-types` is declared there,** node and both edges, per that Spec's section
+4.3 and the pilot's rule: one claim is one node, and this crate's edge is
+already stated beside the shared statement rather than restated here.
+
 **Requiring a perturbation-verified test.**
 
 - The licensed combinations of section 3: the harness refuses an `Assistant`
@@ -327,6 +526,40 @@ and descriptors do, which is not here. The rule that every security mechanism's
 Spec names its adversary and derives its test from the attack applies to the
 crates that hold them, and a floor of definitions has no adversary beyond a
 consumer that ignores the vocabulary, which the compiler handles.
+
+```graph
+node: traits-serde-from-derives
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-traits
+to: traits-serde-from-derives
+
+node: traits-message-round-trip
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-traits
+to: traits-message-round-trip
+
+node: traits-unknown-tag-refuses
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-traits
+to: traits-unknown-tag-refuses
+
+node: traits-no-adjudicating-method
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-traits
+to: traits-no-adjudicating-method
+```
 
 ## 8. Open elections
 
