@@ -423,7 +423,8 @@ Six of the fourteen kinds carried no chartered shape, and this subsection
 settles four of them on the token workflow's acts of 2026-08-02: `fault` and
 the three `model.*` kinds. The tool bracket's two are the remaining pair and
 stay deferred with the tool workflow, per section 9. What follows is content
-and its obligations, which is this document's level. How any of it is represented is the Spec's.
+and its obligations, which is this document's level. How any of it is
+represented is the Spec's.
 
 **`fault` carries the floor's report and this crate defines no second shape.**
 `fault-report` is `weaver-types`' definition as of the gate act, one shape for
