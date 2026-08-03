@@ -32,6 +32,9 @@ thread whose lifetime is the worker's, the parent-death backing firing on the
 forking thread's termination rather than the process's, so what the posture
 satisfied by construction is now stated as what a threading change must
 answer. Landed after the gate branch per the working list's rule.
+**Revised:** 2026-08-02, a fifth entry this date, the descriptor recount's
+second pass. Section 2.3's lead names the trace descriptor rather than a
+plural, the sentence beneath it having said one since the first pass.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -206,8 +209,8 @@ one defect, so the middle call is the corner's repair made unconditional.
 
 ### 2.3 The receive site, and adoption
 
-**Descriptors enter this crate at exactly one call, and it asks for the flag in
-the receive itself.** The trace descriptor crosses once, as ancillary data on
+**The trace descriptor enters this crate at exactly one call, and that call
+asks for the flag itself.** The trace descriptor crosses once, as ancillary data on
 the enter directive's own message, per `weaver-admin-harness-contract` section
 3, so the one `recvmsg` site on the coordination channel carries
 `MSG_CMSG_CLOEXEC`. Verified both ways: a descriptor received with the flag

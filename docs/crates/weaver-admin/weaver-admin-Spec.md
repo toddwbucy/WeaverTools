@@ -15,6 +15,11 @@ it introduces, eight actions being the charter's seven with bind-and-listen
 interleaved, the earlier wording having kept the old count over the grown
 enumeration, the standing check's own case arriving inside the edit the check
 should have covered.
+**Revised:** 2026-08-02, the descriptor recount's second pass. Section 6's
+declared-open lead and section 7's `sendmsg` sentence adopt the singular, the
+first pass having swept the retired wording and left the claim standing in
+other clothes, plural verb agreement inside a sentence whose other clause
+already said one.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -283,7 +288,7 @@ only value interpolated is the validated agent name of section 4, so the
 delegated authority stays bounded by the allow-list exactly as charter
 section 7 requires.
 
-**The declared open is the route the descriptors take, and the worker's end
+**The declared open is the route the coordination end takes, and it
 arrives by the listen-fds convention.** The unit's declaration names the
 coordination socket's path, the init system connects it at the worker's
 start, and the worker receives the connected end at its first instruction
@@ -341,7 +346,7 @@ own terms, and the same bound is asserted on this crate's sends.
 **The enter directive and its ancillary payload are one message.** The
 envelope is rendered to JSON and sent with the sink's descriptor as
 `SCM_RIGHTS` control data on the same `sendmsg`, which is what makes the
-descriptors cross once, in the enter exchange, with no separate delivery to
+descriptor cross once, in the enter exchange, with no separate delivery to
 order against anything. The exchange identity is the floor's
 `ExchangeId { opener: Admin, ordinal }`, ordinals assigned serially by this
 crate, per `weaver-organ-channel` section 1.

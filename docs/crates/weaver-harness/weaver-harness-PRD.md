@@ -81,7 +81,9 @@ the organs' own enumerations.
 **Revised:** 2026-08-02, a fifth entry this date, the descriptor recount's
 sweep. Section 4's seam table and section 5's close-on-exec heading adopt the
 singular the ruling of this date settled, one trace descriptor rather than a
-plural the retired live view left behind.
+plural the retired live view left behind. On the sweep's own review, section
+5's custody paragraph follows, the first pass having matched the retired
+wording and missed the claim's other clothes.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -429,10 +431,10 @@ operator's provisioning, where the sink is a file: ownership, mode, and the
 directory's search bit deny the agent uid the path, verified by admin at load, so a
 tool the agent elects, `bash` above all, cannot traverse to it. The kernel refuses
 the path lookup before anything else is consulted. The second is the descriptor
-discipline. **The harness never resolves a trace path.** Descriptors are opened by
+discipline. **The harness never resolves a trace path.** The descriptor is opened by
 a `weaver-admin` principal and passed to the worker over the coordination socket
-using `SCM_RIGHTS`, so the harness receives handles, never paths, and writes
-through them. The agent is never told the name and could not act on it if it were.
+using `SCM_RIGHTS`, so the harness receives a handle, never a path, and writes
+through it. The agent is never told the name and could not act on it if it were.
 Neither lock is redundant, because they answer different adversaries. The
 provisioning stops the agent's tool surface from reaching the sink. The descriptor
 discipline stops the harness from being the leak, since a component that never
