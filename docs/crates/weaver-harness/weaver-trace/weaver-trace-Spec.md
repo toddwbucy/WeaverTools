@@ -36,6 +36,18 @@ mechanically. The dispositions recount from four to eight, the absent-not-zero
 obligation lands as a serde election, `Payload` is stated as serialize-only
 with the kind-first consumer as its ground, and section 11's deferred-shapes
 entry goes to the singular.
+**Revised:** 2026-08-03, the assertion pass, third of the seven and the first
+outside the floor. Thirty-eight assertion records land at the clauses that argue
+them, fifteen from section 10's enforcement sorting and twenty-three from the
+elections outside it, per the ruling that elections take nodes because gate H1
+would otherwise leave the largest decisions untraceable. Section 0's boilerplate
+records what this document now sources, the notation of 2026-08-03 having retired
+the no-records sentence it replaces, and names the two claims another document
+declares. Section 10 states where the records sit and repeats the two, one of
+them a bullet of its own. Two clauses divide under the rule `weaver-traits-Spec`
+section 7 states, the path-taking pin and the working structure's mutation
+surface, and the prose at both destinations of each adopts the split rather than
+leaving the whole claim with one instrument.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
@@ -55,9 +67,21 @@ how it is represented, and per gate G2 as ruled on 2026-08-01 it elects against
 grounds the charter states rather than developing grounds of its own. Where this
 document and the charter disagree the charter yields nothing.
 
-**This document declares no graph records,** per Document Format section 1. The
-charter is the source of this crate's node, its parent edge, and its six vocabulary
-definitions.
+**This document declares its crate's assertion records, less two claims stated
+elsewhere,** per Document Format sections 3 and 4 as of the notation of 2026-08-03,
+which retired the no-records sentence this paragraph replaces. It sources no other
+record. The charter stays the source of this crate's node, its parent edge, and its
+six vocabulary definitions, and a Spec that restated them would give the mapper two
+sources for one record, per Document Format section 1. `asserts` runs from the crate
+rather than from this document, so the document still needs no node of its own.
+**Two claims this Spec states are declared elsewhere and carry no record here.** The
+close-on-exec test of section 10 is owed to `weaver-harness-Spec` and discharged at
+that document's section 8, an assertion belonging where its test lives. The tagging
+test section 3 applies to `TurnClose` is the one `weaver-types-Spec` section 4.3
+declares, node and both edges, as the test the two floor Specs share so they cannot
+drift, and this crate applying it is not a third party to it. Declaring either here
+would be the duplicate the format forbids, and dropping either silently would leave
+part of this crate's set with nothing recording where it went.
 
 **It is written from the merged corpus alone.** The old tree carried four Specs for
 this crate, including one for the durability primitive, and the ruling of
@@ -89,6 +113,24 @@ all**, which is the charter's section 1 claim read as a manifest property: this
 crate depends on nothing internal, and gate H2 reads that against a graph in which
 it declares no `floor-link` and one `seam` tagged `link`.
 
+```graph
+node: trace-serde-json-raw-value-feature
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-trace
+to: trace-serde-json-raw-value-feature
+
+node: trace-no-internal-dependency
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-trace
+to: trace-no-internal-dependency
+```
+
 **The identity fields are opaque newtypes here, and the harness converts, which is
 the election the no-dependency rule forces.** The envelope identifies a session, a
 run, and a turn, and `weaver-types` owns `SessionId` and `TurnKey` for the wire.
@@ -102,6 +144,16 @@ names in two crates. The alternative costs the charter's central structural clai
 and the conversion is a total function at one call site rather than a judgment
 spread across the crate.
 
+```graph
+node: trace-identity-newtypes-harness-converts
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-identity-newtypes-harness-converts
+```
+
 ## 2. Canonical form
 
 One rule, used everywhere, per charter section 4.2.
@@ -112,6 +164,16 @@ stream NDJSON without a framing layer above it. Verified against serde_json 1.x:
 `to_string` emits no raw newline for any value, escaping an embedded newline in a
 string to `\n`, so a payload carrying prose cannot split one event into two lines.
 
+```graph
+node: trace-one-line-per-event
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-one-line-per-event
+```
+
 **Every integer that can exceed the double-safe range serializes as a decimal
 string.** That is the monotonic reading in nanoseconds and the sequence, and it is
 elected because a consumer parsing JSON numbers as doubles gets a silently
@@ -120,12 +182,34 @@ rendered bare and read as a double returns `9007199254740992`, and the same valu
 rendered as `"9007199254740993"` round-trips exactly. The wall-clock stamp in
 milliseconds stays a bare number, being far below the range where the loss begins.
 
+```graph
+node: trace-large-integers-as-decimal-strings
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-large-integers-as-decimal-strings
+```
+
 **Field order is declaration order and the renderer is deterministic.** The same
 event renders to the same bytes on every run of every build, because the working
 structure and the stream hold that one rendering and a consumer comparing two
 copies of one event is comparing bytes. Serde's derive emits struct fields in
 declaration order, so this is a property of not reordering fields rather than of
-sorting them at render time.
+sorting them at render time. **No instrument reaches byte-identity across builds,
+so the property is review's,** a suite running inside one build being able to
+confirm that one rendering reaches two holders and not that two builds agree.
+
+```graph
+node: trace-render-deterministic
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-render-deterministic
+```
 
 ## 3. The event
 
@@ -222,6 +306,16 @@ one-name-two-nodes defect the Document Format rules against for identifiers and
 which reads the same way for a consumer keying on a kind. The mapping is total:
 fourteen variants, fourteen renames, and the wire spelling is the charter's.
 
+```graph
+node: trace-kind-explicit-renames
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-kind-explicit-renames
+```
+
 **`Subsystem` names the producing party and takes the plain snake-case scheme**,
 its values being single words with no dotted spelling to match. **The case set is
 this Spec's election and the charter fixes only that the field exists**, so the
@@ -232,16 +326,46 @@ and a record that attributed it to the harness would lose the one fact an operat
 reading a tool result wants first. A sixth case arrives when a crate that can
 produce a report is chartered, which is a floor edit in the same act.
 
+```graph
+node: trace-subsystem-case-set
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-subsystem-case-set
+```
+
 **Fourteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
 attribute that let a consumer absorb a fifteenth kind into a wildcard would defeat
 the closure the corpus keys on.
 
+```graph
+node: trace-kind-enum-exhaustive
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-trace
+to: trace-kind-enum-exhaustive
+```
+
 **`turn` is optional and `causal_parent` is optional, and nothing else is.** A
 run-level event belongs to no turn, which is what the option expresses, and the
 recorder never infers one, per the contract's section 3. A malformed submission
 carrying no turn on a turn-level kind is refused rather than defaulted.
+
+```graph
+node: trace-turn-optional-never-inferred
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-turn-optional-never-inferred
+```
 
 **The message payloads splice rather than nest, and the mechanism is elected
 rather than assumed.** This crate neither defines the message model nor decodes
@@ -252,6 +376,16 @@ rendering the enclosing event escapes them into a JSON string,
 and which is a second representation arriving by the back door.
 `serde_json::value::RawValue` splices the bytes as they stand,
 `"payload":{"role":"user",...}`, and it is what `Payload::Message` holds.
+
+```graph
+node: trace-message-payloads-splice
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-message-payloads-splice
+```
 
 **That election sharpens why admission precedes the fan-out.** `RawValue` splices
 whatever bytes it holds, so a malformed rendering from the harness would become a
@@ -271,11 +405,31 @@ claims, one line with no interior newline, declaration order with `payload` last
 and byte-identical output across renders, since flatten serializes through a map
 and the determinism claim had to survive that.
 
+```graph
+node: trace-envelope-flattens
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-envelope-flattens
+```
+
 **Nothing collides because no `Envelope` field is named `payload`, and that becomes
 a constraint on every later envelope edit.** Flattening puts the envelope's members
 and the payload member in one object, so a field added to `Envelope` later and
 named `payload` would produce two members of one name. The constraint lives here
 rather than nowhere: **no field added to `Envelope` may be named `payload`.**
+
+```graph
+node: trace-no-envelope-field-named-payload
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-no-envelope-field-named-payload
+```
 
 **The sibling Spec's envelope elects the opposite layout, and the difference is
 principled rather than accidental.** `weaver-types-Spec` section 4.1 states that
@@ -297,6 +451,16 @@ since serde no longer can. A submission whose kind and payload shape disagree is
 refused at step one of section 5 rather than rendered, which is another thing the
 ordering buys.
 
+```graph
+node: trace-payload-untagged-kind-discriminant
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-payload-untagged-kind-discriminant
+```
+
 **A bracket kind carries no payload member at all, rather than a null one.** The
 run and session brackets and the turn's opening are identified entirely by their
 envelope, so `payload` is `Option<Payload>` and those kinds carry `None` with
@@ -306,13 +470,36 @@ which is a member whose only content is the statement that there is no content,
 and a consumer keying on member presence would see two stream shapes for one
 absence.
 
+```graph
+node: trace-bracket-kind-omits-payload
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-bracket-kind-omits-payload
+```
+
 **`TurnClosed` carries the close kind, internally tagged under the shared test.**
 `Clean` is fieldless and `Stopped` is struct-shaped, so the enum falls in the
 test's second case and renders `{"close":"clean"}` and `{"close":"stopped",
 "reason":...}`, one shape for both closes. Verified that the default emits a bare
 string for the first and an object for the second, which is two shapes for one
 field. This is the one payload the merged corpus fixes today, per
-`weaver-harness-trace-contract` section 3 and charter section 3.1.
+`weaver-harness-trace-contract` section 3 and charter section 3.1. **The test
+itself is not this crate's claim,** its node and both its edges living at
+`weaver-types-Spec` section 4.3 where the two floor Specs share it so they cannot
+drift, and what this clause asserts is the election the test yields here.
+
+```graph
+node: trace-turn-close-internally-tagged
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-turn-close-internally-tagged
+```
 
 **The kind-to-payload mapping is total, fourteen kinds and eight
 dispositions.** `load`, `unload`, `session.closed`, and `turn.started` carry
@@ -324,6 +511,16 @@ charter section 3.1's set. The count is stated because an earlier draft of this
 paragraph assigned thirteen and left `turn.started` homeless, and it is
 recounted here because the token workflow's trace act of 2026-08-02 moved four
 kinds out of `Deferred` and the dispositions went from four to eight.
+
+```graph
+node: trace-kind-payload-mapping-total
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-kind-payload-mapping-total
+```
 
 **What is spliced and what is shaped, and the line between them is the
 charter's own.** `Fault` splices, because `fault-report` is `weaver-types`'
@@ -337,6 +534,16 @@ readings, the finish condition, and the identities that join them. The rule is
 the charter's section 2.5 read mechanically, this crate defines the record's
 own schema and carries everything else opaque.
 
+```graph
+node: trace-splice-or-shape
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-splice-or-shape
+```
+
 **`ModelRequest` holds the sampling values and `ModelMeasurement` does not,
 which is the charter's corrected row rather than this Spec's choice.** Apex
 section 8's five re-feed inputs therefore span the pair, four here and the
@@ -349,6 +556,16 @@ all, per the charter's producing obligation. A zero-length vector rendered
 would say the reading was taken and found empty, and a zeroed vector would say
 the model was certain, and neither is what an absent instrument means.
 
+```graph
+node: trace-measurement-absent-not-zero
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-measurement-absent-not-zero
+```
+
 **Untagged with seven variants is a serialization device, and the deserializing
 consumer keys on `kind`.** Serde resolves an untagged enum by trying variants in
 order, which is unambiguous while writing and ambiguous while reading once more
@@ -360,7 +577,20 @@ line for exactly this reason, so the discriminant a reader needs is available
 before the payload is reached. **`Payload` therefore derives `Serialize` and not
 `Deserialize`,** which makes the asymmetry a compile property rather than a
 convention, and admission's kind-to-shape check remains what enforces the
-pairing on the writing side.
+pairing on the writing side. **The instrument is a compile-fail doctest,** the
+missing half being an absence and an absence being what a runtime test
+structurally cannot demonstrate, the same reading `weaver-types-Spec` section 3
+gives the missing `Deserialize` on `PeerIdentity`.
+
+```graph
+node: trace-payload-serialize-only
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-trace
+to: trace-payload-serialize-only
+```
 
 **`Deferred` holds the payloads whose shapes their own workflows settle**, which
 since the trace act of 2026-08-02 is the tool bracket's two alone, the fault and
@@ -382,6 +612,16 @@ and a recorder that parsed one would have taken a judgment the charter denies it
 reader selects on.** Per the ruling of 2026-08-01 the structure holds the same
 canonical NDJSON the stream carries, so the stored value is the rendered line
 itself and not a second representation of it.
+
+```graph
+node: trace-structure-holds-rendered-lines
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-structure-holds-rendered-lines
+```
 
 ```rust
 pub struct WorkingStructure { /* private */ }
@@ -409,13 +649,47 @@ can extend the structure, so a caller holding a `&WorkingStructure` has no
 expressible way to alter what landed. Charter section 2.2 rests this on the agent
 running as its own uid with bash, and a mutation surface reachable from that uid is
 a surface the agent could reach, so the guarantee has to be architectural rather
-than a discipline.
+than a discipline. **Two instruments hold this and they hold different halves.**
+Every public accessor yields a shared reference and the append is crate-private,
+which a compiling test pins over the signatures, and that is what makes alteration
+after landing unrepresentable rather than merely absent. **The named methods are
+pinned by the compile-fail doctests of section 10,** a finite set reaching
+`remove`, `truncate`, and `get_mut` and not the open set of all the mutators
+someone could write. The two are two records for that reason, per section 10.
+
+```graph
+node: trace-structure-no-mutation-surface
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-trace
+to: trace-structure-no-mutation-surface
+
+node: trace-structure-mutators-pinned-by-doctest
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-trace
+to: trace-structure-mutators-pinned-by-doctest
+```
 
 **The index is the envelope fields and never the payload.** `sequence`, `kind`, and
 `turn` are lifted out of the line so a reader selects without parsing, which is what
 keeps the harness's per-turn reads from scanning the whole run. Nothing else is
 lifted, because every further field would be a second copy of data the line already
 holds.
+
+```graph
+node: trace-index-envelope-fields-only
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-index-envelope-fields-only
+```
 
 **Reads are sequential and the cost is stated rather than hidden.** The harness
 assembles a prompt by taking the message-kind records in sequence order and
@@ -429,6 +703,16 @@ turn path costing more than a stated fraction of the decode it precedes.**
 **`Arc<str>` rather than `String` for the line**, because the same rendering goes to
 the structure and to the writer's queue in one act and the two must not be two
 copies of one line. This is the mechanical form of one rendering, held and handed.
+
+```graph
+node: trace-one-rendering-two-holders
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-one-rendering-two-holders
+```
 
 ## 5. The emit path
 
@@ -468,10 +752,30 @@ property of the type rather than of a caller's discipline.
    to the writer's queue in the same act, then returning the assigned sequence to
    the harness.
 
+```graph
+node: trace-sequence-gapless
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-sequence-gapless
+```
+
 **The structure lands first and the return is the acknowledgment.** The turn
 proceeds on the return, with the stream write still in flight, which is the trade
 charter section 4.2 makes deliberately. A submission that cannot append is a failure
 before anything is queued, so the two sinks cannot disagree about what was admitted.
+
+```graph
+node: trace-admission-precedes-fan-out
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-admission-precedes-fan-out
+```
 
 **`submit` takes `&mut self` and there is one `Recorder`.** It is not shared
 across threads and the harness is its one caller, per charter section 1, so
@@ -506,17 +810,47 @@ composition root at construction rather than read from the agent config. That ke
 it a deployment fact without making it an operator election, which is the
 distinction the charter draws.
 
+```graph
+node: trace-queue-depth-not-config
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-queue-depth-not-config
+```
+
 **The three boundary states are derived rather than stored.** Committed is the
 highest sequence handed to the sink, admitted is the highest assigned, queued is
 the difference, and a failed write is the last error. A reader interrogates the
 boundary while the process lives, and nothing about it survives the process, per
 charter section 6.
 
+```graph
+node: trace-boundary-derived-not-stored
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-boundary-derived-not-stored
+```
+
 **Whole events only.** The writer hands the sink one complete line plus its
 terminator per write and never a partial line, so a consumer's account truncates at
 an event boundary. Where the sink is a file opened append-only, the kernel's append
 semantics carry that, and where it is a pipe or a socket the writer's own framing
 does, a short write being retried to completion rather than reported as success.
+
+```graph
+node: trace-whole-events-only
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-whole-events-only
+```
 
 **Pressure is reported to the harness and never authored by this crate.** When the
 queue exceeds its high-water mark while the sink remains writable, the recorder
@@ -525,6 +859,16 @@ response, per the fault-carrier ruling of 2026-08-01, which is the only way a
 pressure condition reaches the record: this crate authors no event and holds no
 event kind, per charter section 2, and a recorder that emitted its own pressure
 event would have ended the sole-writer property in the act of reporting on it.
+
+```graph
+node: trace-pressure-reported-not-authored
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-pressure-reported-not-authored
+```
 
 **A write that fails against a live process is named and surfaced, never
 swallowed**, per charter section 4.2. A tail lost to process death is the different
@@ -537,7 +881,21 @@ the second.
 `open<P: AsRef<Path>>` in this crate, not behind a feature, not for tests. Charter
 section 4.1 makes the absence the custody model's API consequence, and the previous
 tree's trace-root resolver with zero production callers is the failure it names.
-This is a compile-fail pin, per section 10.
+**The three named shapes are pinned by the compile-fail doctests of section 10,**
+because an absence is what a runtime test structurally cannot demonstrate, **and
+the prohibition itself is review's,** a finite set of doctests reaching `&str`,
+`String`, and `PathBuf` and not the open set of every type a path could arrive as.
+The two are two records for that reason, per section 10.
+
+```graph
+node: trace-no-path-taking-constructor
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-no-path-taking-constructor
+```
 
 **The receive site is `Recorder::receive`, declared in section 5, and it takes no
 flag argument.** It accepts an `OwnedFd` and nothing that could name a path.
@@ -546,6 +904,16 @@ Close-on-exec is supplied by the harness at its own receive, per
 description from admin's open. Neither flag is a type property of this crate, so
 neither is pinned here: what the pin reaches is the shape, one constructor
 returning a `Recorder` the rest of the crate cannot build another way.
+
+```graph
+node: trace-receive-site-takes-no-flag
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-receive-site-takes-no-flag
+```
 
 **Drain empties the queue and returns.** At unload the harness calls `drain` before
 answering left, so a left answer means everything admitted reached the sink, per the
@@ -560,6 +928,16 @@ one that died.
 produces, and everything produced is recorded, per `weaver-trace-PRD` section 5.
 The harness submits every event it authors and this crate records every event it
 admits, so neither party holds a level and neither drops an event for being one.
+
+```graph
+node: trace-holds-no-recording-level
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-holds-no-recording-level
+```
 
 **No drawn vocabulary crosses this seam into this crate**, which is what keeps the
 no-internal-dependency rule of section 1 free of an H4 question.
@@ -588,21 +966,45 @@ pub enum SubmitRefusal {
 
 Five cases, matching `weaver-harness-trace-contract` section 5 one to one. Nothing
 returns a partial result with a success status, and every refusal names its case
-rather than carrying a string, so a caller branches on a value.
+rather than carrying a string, so a caller branches on a value. `Failure` is
+exhaustive, so a sixth case reaches every caller at compile time in the act that
+adds it.
+
+```graph
+node: trace-failure-enum-exhaustive
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-trace
+to: trace-failure-enum-exhaustive
+```
 
 **`AppendFailed` fails loudly and does not attempt recovery.** The contract gives
 the recorder the resolution and there is no record to rebuild from since the cut of
 2026-08-01, so the only honest response is to fail rather than continue against a
 structure that is missing what the stream holds.
 
+```graph
+node: trace-append-failed-no-recovery
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-append-failed-no-recovery
+```
+
 ## 10. What is enforced, and by which instrument
 
 **Enforced by the compiler.**
 
 - The kind enum is exhaustive, so a fifteenth kind breaks every consumer's match.
-- `WorkingStructure` exposes no mutation surface: no method returns `&mut Record`
-  and the append is crate-private, so alteration after landing is unrepresentable
-  rather than merely forbidden.
+- `WorkingStructure` exposes no mutation surface: every public accessor yields a
+  shared reference and the append is crate-private, so alteration after landing is
+  unrepresentable rather than merely forbidden. This is the signature half of the
+  claim, the named mutators being the compile-fail bullet below, per the split
+  section 4 states.
 - The failure enum is exhaustive, so a new case reaches every caller.
 
 **Enforced by compile-fail tests, because the property is an absence.**
@@ -610,12 +1012,41 @@ structure that is missing what the stream holds.
 - No path-taking write surface: doctests attempting to construct a writer from a
   `&str`, a `String`, and a `PathBuf` each fail to compile. Three named shapes
   rather than a claim about all possible shapes, with the general prohibition
-  staying review's, per the split `weaver-traits-Spec` section 7 makes.
-- No `remove`, `truncate`, or `get_mut` on the working structure.
+  staying review's, per the split `weaver-traits-Spec` section 7 makes. **The
+  split is two assertions rather than one,** the pinned shapes here and the
+  prohibition itself at the section 7 clause that argues it: a single record
+  tagged for the mechanical half would claim the instrument for the whole, which
+  is the overclaim this corpus refuses in prose and has no reason to admit in a
+  graph.
+- No `remove`, `truncate`, or `get_mut` on the working structure. **These are the
+  named half of the mutation-surface claim,** its signature half being the
+  compiler bullet above, and the two are two records for the same reason the
+  path-taking pair are.
+- No `Deserialize` on `Payload`, per section 3, this crate reading no event back.
 
 **Enforced by the manifest.** No `weaver-*` dependency, read against the graph
 under gate H2. No async runtime and no socket crate in the resolved tree, by the
-build-time `cargo tree` assertion the floor Specs share.
+build-time `cargo tree` assertion the floor Specs share. The `serde_json`
+`raw_value` feature of section 1 is the same instrument read the other way, a
+feature the manifest must carry rather than one it must not, and its record sits
+at the dependency clause with the rest of that election.
+
+**Where the records sit, and the two claims another document declares.** The
+assertion records are at the clauses that argue the claims, across sections 1
+through 9, rather than gathered here, per Document Format section 6: this section
+sorts by instrument and the arguments are elsewhere, so a block here would sit
+apart from the prose that earns it. Thirty-six sit there and two sit at the end of
+this section, being the claims argued only here. Fifteen of the thirty-eight come
+from this section's own sorting and twenty-three from the elections outside it.
+**The close-on-exec test below is declared by `weaver-harness`,** whose Spec
+section 8 carries it as the first of its threat walks and has discharged the
+owing, because an assertion belongs where its test lives. **The tagging test
+section 3 applies is declared by `weaver-types-Spec` section 4.3,** node and both
+edges, as the test the two floor Specs share, and what this document records is
+the election that test yields for `TurnClose`. The threat walk closing this
+section takes no node of its own, per Document Format section 5, and it names no
+test of its own either, its instrument being the compile-fail set already
+recorded.
 
 **Requiring a perturbation-verified test.**
 
@@ -656,6 +1087,24 @@ name the sink: no path-taking constructor, no path stored, nothing to disclose a
 nothing to reopen. The perturbation test is the compile-fail set above, and the
 attack it defeats is a tool that has read `/proc/self/fd` and wants a second handle,
 which fails because there is no call that takes what it learned.
+
+```graph
+node: trace-no-async-runtime-no-socket-crate
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-trace
+to: trace-no-async-runtime-no-socket-crate
+
+node: trace-path-shapes-pinned-by-doctest
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-trace
+to: trace-path-shapes-pinned-by-doctest
+```
 
 ## 11. Open elections
 
