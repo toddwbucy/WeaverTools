@@ -1,6 +1,13 @@
 # WeaverTools Working Process
 
-**Version:** v0.15, 2026-08-01, eighth entry this date. The v0.15 change is gate
+**Version:** v0.16, 2026-08-03. The v0.16 change is section 5's closing
+checklist, which gains a fifth item and renumbers the two below it: the graph must
+answer a build question and not only a structural one. It exists because the items
+before it are all satisfiable by a graph built from charters and contracts alone,
+which carries nothing from any Spec, so the checklist could close over a graph that
+cannot serve phase three, per issue 24. The assertion notation it reads is the
+Document Format's v0.9 of the same date. Previously v0.15, 2026-08-01, eighth entry
+this date. The v0.15 change is gate
 G2 gaining the rationale clause, per the human's ruling: developed in the PRD,
 restated in the Spec. The v0.14 change was
 section 1's seat assignment, per the human's ruling: authoring moves to the seat
@@ -264,13 +271,22 @@ ratifies the set.
 3. Floor layer present as a layer and not as tree edges.
 4. Conformance queries answered: one parent per crate, no lateral edges, every
    vocabulary name resolving to a definition site.
-5. The set-level record marks the document set RATIFIED.
-6. Old code removed from the workspace, confirmed gone.
+5. **A build question answered, not only a structural one.** Every crate's
+   assertions present as nodes with their enforcing instrument, and a query
+   naming a crate returning the claims that bind it, per Document Format
+   sections 3 and 4. This item exists because the items above it are all
+   satisfiable by a graph built from charters and contracts alone, which
+   carries nothing from any Spec, so the checklist could close over a graph
+   that is complete by its own terms and cannot serve the phase it exists to
+   enable. Phase three reads the graph, and a graph that answers only where a
+   crate sits tells a coder nothing about what to build.
+6. The set-level record marks the document set RATIFIED.
+7. Old code removed from the workspace, confirmed gone.
 
-Item 6 is last for a reason. The old tree is still legitimately reachable through
+Item 7 is last for a reason. The old tree is still legitimately reachable through
 phase one drafting and through fact checks during authoring. It stops being reachable
 the moment everything it had to offer has been extracted into artifacts this project
-trusts, which is what G6 certifies and what the built graph demonstrates. After item 6
+trusts, which is what G6 certifies and what the built graph demonstrates. After item 7
 the only sources are the documents, the graph, and the specs. Fresh code has nothing to
 copy from, by accident or otherwise. The test is not whether the coding seat intends to
 avoid the old tree. The test is whether it can reach it, and the answer must be no.
