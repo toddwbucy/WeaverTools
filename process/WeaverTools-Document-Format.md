@@ -1,6 +1,14 @@
 # WeaverTools Document Format
 
-**Version:** v0.8, 2026-08-01, second entry this date. The v0.8 change follows
+**Version:** v0.9, 2026-08-03. The v0.9 change is the assertion notation, per the
+ruling of this date: section 3 gains the `assertion` node kind with its
+index-not-copy rule, section 4 gains the `asserts` edge with the identifier
+convention and the statement that a Spec states records the way a PRD does, and
+section 5 records that `tag` carries the enforcing instrument on an assertion. The
+change is vocabulary rather than structure, because `asserts` runs from the crate and
+section 1's rule about which document sources an edge is untouched. It exists because
+the graph carried nothing from any Spec, so phase three had no query to ask.
+Previously v0.8, 2026-08-01, second entry this date. The v0.8 change follows
 the artifact rename of this date, the section 3 examples reading `agent-config`
 where they read the state file. The v0.7 change is the `Loops/` entry's holder rule:
 loops belong to the harness unless specific to one domain and no other, per the
@@ -198,6 +206,20 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
+**assertion.** A claim a Spec makes that code must conform to, named so a source
+file can cite it and a query can return it. Two kinds of clause qualify and both
+are the same node: what a Spec's enforcement section lists, which is already a
+discrete checkable claim, and the load-bearing elections outside those sections,
+the socket type or the descriptor placement or a stated bound, which code must
+conform to as surely and which gate H1 would otherwise leave untraceable.
+
+**An assertion node names and locates a clause and never carries it.** The graph
+is an index into the Specs rather than a copy of them: a reader queries what binds
+the module in hand, receives identifiers with their sections, and reads those
+clauses. Carrying the clause would put its content in two places, which is the
+duplication G5 makes someone adjudicate, and it would grow the graph into the
+topology document this format has refused twice.
+
 **document.** A PRD, a Spec, or a contract. Working Process section 4 produces
 three kinds and no fourth, and the two documents this format types that are none of
 the three do not breach that: drawn material is contract material stated once,
@@ -261,6 +283,23 @@ Between a crate and what it owns or touches:
   the owning crate defines, and the artifact holds it. Without this the config's
   fields are drawable in prose and unaddressable in the graph.
 - `writes` and `reads`, from a crate to an artifact.
+- `asserts`, from a crate to an assertion node. The Spec declares the assertion
+  node with a `node` record beside the edge, at the clause the assertion names,
+  the same shape `defines` takes at a definition site.
+
+**A Spec states records and is not their source, which is the shape a PRD already
+has.** `asserts` runs from the crate rather than from the document, so a Spec needs
+no `node` record of its own and section 1's rule stands unchanged: a contract is
+still the one document kind that sources an edge, because `party` and `draws` run
+from the contract itself. What changes is that the Spec joins the PRD as a document
+that states its subject crate's records, which is why this format's placement rule
+reaches it without amendment.
+
+**Assertion identifiers are `<crate>-<slug>` and carry no number.** The crate prefix
+is what keeps two Specs from naming one thing twice, and the absence of a number is
+deliberate: a numbered identifier is a position, positions renumber when something is
+inserted, and every citation of one then points at the wrong claim. The slug says
+what the claim is rather than where it sits.
 
 ## 5. The block
 
@@ -291,6 +330,22 @@ is how a graph acquires two nodes for one definition, and a rule that says follo
 source spelling produces exactly that on the day a trait is renamed. Identifiers that
 differ by one character are a G1 visual collision as much as a mapping hazard, so
 `permission-modes` and `permission-mode` do not both exist.
+
+**`tag` carries one vocabulary per record kind and the kind disambiguates.** On a
+seam it is `socket` or `link`. On an assertion it is the instrument that enforces the
+claim, `compile-pin`, `compile-fail`, `perturbation`, `manifest`, or `review`, which
+is the sorting every Spec already performs in its own enforcement section and which
+apex section 11 requires a claim to state. **A threat walk's test tags
+`perturbation`**, settled here rather than seven times: the Specs phrase their
+walks as a category beside the perturbation-verified list, and apex section 11's
+third device is written as a blanket obligation on behavioral tests, always
+confirm the test fails when the property is removed, so a walk's test is
+perturbation-verified by that obligation whatever a section calls it. The walk
+itself is prose that derives the test and takes no node.
+
+A second key for the instrument would grow
+the fixed set for a fact the existing key already carries, and the point of the fixed
+set is that the mapper never guesses.
 
 Keys are `node`, `kind`, `edge`, `from`, `to`, `via`, `tag`, and `grounds`. A record
 begins with `node` or with `edge` and no record carries both. Unknown keys are a defect
