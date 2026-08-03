@@ -341,9 +341,10 @@ than re-sampling, which needs the input token identifiers, the output token
 identifiers, the model identity and its weights hash, the prompt-block
 partition, and the sampling parameters, five items displayed as five because
 the apex splits the identifiers and joins the identity to its hash. **The
-first four are `model.measurement`'s and the fifth is `model.request`'s,** the sampling values having moved to the request in
-that act because an input to a decode belongs with what was asked rather than
-with what was read off it. The join is the turn: both kinds carry the same
+first four are `model.measurement`'s and the fifth is `model.request`'s,**
+the sampling values having moved to the request in that act because an input
+to a decode belongs with what was asked rather than with what was read off
+it. The join is the turn: both kinds carry the same
 turn in the envelope, so a replay driver reads the pair rather than one
 payload, and this sentence exists because a driver built against the earlier
 single-payload reading would find four of five and conclude the record does
