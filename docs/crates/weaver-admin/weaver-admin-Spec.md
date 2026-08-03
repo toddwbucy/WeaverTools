@@ -956,8 +956,10 @@ Three are cited in this section: the exhaustive wire enums and the missing
 pins on the worker's side of the seams. Seven more are cited where the
 sections use them. Five are `weaver-types-Spec`'s: the denial ordering of
 section 2, the parse's totality of section 4, the sink's discriminated shape
-with the socket case's absent creation flag of section 5, and the boundary
-election with its envelope bound of section 7. Two are `weaver-harness-Spec`'s:
+with the socket case's absent creation flag of section 5, the boundary
+election of section 7, and the envelope bound that election carries, which
+that Spec declares as its own record beside the election rather than inside
+it. Two are `weaver-harness-Spec`'s:
 the OS-surface election of that Spec's section 2.4, cited in section 1, and
 its section 2.3 adoption of the coordination end, cited in section 6. The
 shape behind the list is the crate's own: admin authorizes and does not
