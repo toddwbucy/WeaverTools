@@ -25,10 +25,12 @@ the inventory does not check, the devices a binding assigns, the parse having
 answered well-formed and ruling C keeping hardware out of this crate's
 reasoning.
 **Revised:** 2026-08-03, a second entry this date, the assertion pass.
-Thirty-five assertion records land at the clauses that argue them, fifteen
-from section 10's enforcement sorting and twenty from the elections outside
-it, per the ruling that elections take nodes because gate H1 would otherwise
-leave the largest decisions untraceable. Section 0 replaces its
+Thirty-five assertion records land at the clauses that argue them,
+seventeen from section 10's enforcement sorting and eighteen from the
+elections outside it, per the ruling that elections take nodes because gate
+H1 would otherwise leave the largest decisions untraceable, the two review
+halves of this section's own splits counting with the sorting rather than as
+elections, per Document Format section 3. Section 0 replaces its
 declares-no-records sentence, which the notation of this date retired, and
 states that the ten claims this Spec cites and another Spec argues carry no
 record here. Section 10 states where the records sit and names each owing
@@ -40,6 +42,11 @@ short of any seam left to review, and the boundary verification, whose
 traversal denial the second walk tests and whose remaining existence checks
 are review's. The prose at each of the six halves adopts its own instrument
 rather than handing the whole claim to the stronger one.
+**Revised:** 2026-08-03, the provenance convention, per the operator's ruling of
+this date and Document Format v0.10 section 3: the two halves of a divided claim
+both count as the enforcement section's, neither having been elected and one
+having been divided out of a bullet that section already carried. No record
+moves and no tag changes, only the provenance the counts report.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -938,14 +945,15 @@ The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
 would sit apart from the prose that earns it. Thirty-five records in all,
-fifteen from this section's sorting and twenty from the elections outside it,
-the elections taking nodes because gate H1 would otherwise leave the largest
-decisions in this Spec untraceable. The twenty are exactly the records tagged
-for review, every record drawn from the sorting carrying a mechanical
-instrument instead, and two of the twenty reached that tag by division rather
-than by election: the verb's stopping short of any seam and the existence
-checks no test reaches are the review halves of splits this section's own
-bullets take.
+seventeen from this section's sorting and eighteen from the elections outside
+it, the elections taking nodes because gate H1 would otherwise leave the
+largest decisions in this Spec untraceable. The eighteen are all tagged for
+review, and two more review tags come from the sorting rather than from an
+election: the verb's stopping short of any seam and the existence checks no
+test reaches are the review halves of splits this section's own bullets take,
+and a divided half counts with the bullet it divided out of, per Document
+Format section 3. Every other record drawn from the sorting carries a
+mechanical instrument.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live

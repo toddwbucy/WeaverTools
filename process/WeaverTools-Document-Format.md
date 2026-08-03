@@ -1,6 +1,12 @@
 # WeaverTools Document Format
 
-**Version:** v0.9, 2026-08-03, second entry this date. The second change is
+**Version:** v0.10, 2026-08-03, third entry this date. The v0.10 change is
+section 3's assertion entry gaining the provenance rule for a divided claim, per
+the operator's ruling of this date: the two halves of a split both count as the
+enforcement section's, because neither was elected and one was divided out. It
+exists because the first three assertion passes stated the same provenance split
+three different ways, every sentence true of its own document and no two
+comparable. Previously v0.9, 2026-08-03, second entry this date. The second change is
 section 4's identifier rule gaining its qualifier, no *positional* number, on the
 pilot act's review: the flat rule would have refused a slug naming loop 0 and a
 slug carrying a stated bound, neither of which renumbers, which is the only thing
@@ -216,6 +222,14 @@ are the same node: what a Spec's enforcement section lists, which is already a
 discrete checkable claim, and the load-bearing elections outside those sections,
 the socket type or the descriptor placement or a stated bound, which code must
 conform to as surely and which gate H1 would otherwise leave untraceable.
+**A claim that divides into two records counts wholly as the first kind.** Where a
+clause names one instrument for a claim's core and another for its periphery, the
+two records it becomes both belong to the enforcement section for any provenance a
+Spec states, whichever sections they sit in, because neither half was elected and
+one was divided out of a bullet the enforcement section already carried. Counting
+the review half as an election would make the same document report a different
+split depending on how many of its claims happened to divide, which is a fact
+about the division and not about the document.
 
 **An assertion node names and locates a clause and never carries it.** The graph
 is an index into the Specs rather than a copy of them: a reader queries what binds
