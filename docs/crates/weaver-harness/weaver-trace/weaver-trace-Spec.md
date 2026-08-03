@@ -28,6 +28,14 @@ were restored to what their own acts said, this document's and
 `weaver-harness-PRD`'s, and the entries of this date were moved to the end of
 this list, filing order having been broken and history having been edited to
 match a later ruling.
+**Revised:** 2026-08-02, a fourth entry this date, the token workflow's trace
+act. `Payload` gains four variants against charter section 3.2, the fault
+splicing the floor's report and the three model kinds taking shapes this crate
+defines, with the splice-or-shape line stated as the charter's own rule read
+mechanically. The dispositions recount from four to eight, the absent-not-zero
+obligation lands as a serde election, `Payload` is stated as serialize-only
+with the kind-first consumer as its ground, and section 11's deferred-shapes
+entry goes to the singular.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
@@ -165,7 +173,37 @@ pub enum Kind {
 pub enum Payload {
     Message(Box<serde_json::value::RawValue>),
     TurnClosed(TurnClose),
+    Fault(Box<serde_json::value::RawValue>),
+    ModelRequest(ModelRequest),
+    ModelOutput(ModelOutput),
+    ModelMeasurement(ModelMeasurement),
     Deferred(Box<serde_json::value::RawValue>),
+}
+
+pub struct ModelRequest {
+    pub rendered: Box<serde_json::value::RawValue>,
+    pub template: TemplateId,
+    pub sampling: Box<serde_json::value::RawValue>,
+}
+
+pub struct ModelOutput {
+    pub emission: String,
+    pub finish: Finish,
+}
+
+pub struct ModelMeasurement {
+    pub model: ModelId,
+    pub weights_hash: WeightsHash,
+    pub input_tokens: Vec<TokenId>,
+    pub output_tokens: Vec<TokenId>,
+    pub blocks: Vec<PromptBlock>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub entropies: Vec<Bits>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub surprisals: Vec<Bits>,
+    pub timings: DecodeTimings,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reductions: Option<Box<serde_json::value::RawValue>>,
 }
 
 #[serde(tag = "close", rename_all = "snake_case")]
@@ -276,17 +314,59 @@ string for the first and an object for the second, which is two shapes for one
 field. This is the one payload the merged corpus fixes today, per
 `weaver-harness-trace-contract` section 3 and charter section 3.1.
 
-**The kind-to-payload mapping is total, fourteen kinds and four dispositions.**
-`load`, `unload`, `session.closed`, and `turn.started` carry `None`. The three
-message kinds carry `Message`. `turn.closed` carries `TurnClosed`. The tool
-bracket's two, `fault`, and the three model kinds carry `Deferred`. Four plus
-three plus one plus six is fourteen, which is the whole of charter section 3.1's
-set, and the count is stated because an earlier draft of this paragraph assigned
-thirteen and left `turn.started` homeless.
+**The kind-to-payload mapping is total, fourteen kinds and eight
+dispositions.** `load`, `unload`, `session.closed`, and `turn.started` carry
+`None`. The three message kinds carry `Message`. `turn.closed` carries
+`TurnClosed`. `fault` carries `Fault`. The three model kinds carry their three
+own shapes, one each. The tool bracket's two carry `Deferred`. Four plus three
+plus one plus one plus three plus two is fourteen, which is the whole of
+charter section 3.1's set. The count is stated because an earlier draft of this
+paragraph assigned thirteen and left `turn.started` homeless, and it is
+recounted here because the token workflow's trace act of 2026-08-02 moved four
+kinds out of `Deferred` and the dispositions went from four to eight.
 
-**`Deferred` holds the payloads whose shapes their own workflows settle**, the tool
-bracket, the fault, and the three model kinds. Each is listed in section 11 with
-what settles it. The variant holds raw bytes in the interim rather than a
+**What is spliced and what is shaped, and the line between them is the
+charter's own.** `Fault` splices, because `fault-report` is `weaver-types`'
+definition and this crate links no internal crate, so the harness renders the
+floor's shape and hands the bytes exactly as it does for a message. The
+`sampling` member splices for the same reason, the knobs being the floor's and
+the SPU's. The `rendered` member splices because it is the model's prompt as
+the family library produced it, which is that library's shape and not this
+crate's. What is shaped here is what no other crate defines: the measurement's
+readings, the finish condition, and the identities that join them. The rule is
+the charter's section 2.5 read mechanically, this crate defines the record's
+own schema and carries everything else opaque.
+
+**`ModelRequest` holds the sampling values and `ModelMeasurement` does not,
+which is the charter's corrected row rather than this Spec's choice.** Apex
+section 8's five re-feed inputs therefore span the pair, four here and the
+fifth in the request, joined by the turn both carry, per charter section 3.1.
+
+**The measurement's optional members are absent rather than zero, which is a
+serde election with a stated reason.** `skip_serializing_if` on the two signal
+vectors and on the reductions means an unproduced reading emits no member at
+all, per the charter's producing obligation. A zero-length vector rendered
+would say the reading was taken and found empty, and a zeroed vector would say
+the model was certain, and neither is what an absent instrument means.
+
+**Untagged with seven variants is a serialization device, and the deserializing
+consumer keys on `kind`.** Serde resolves an untagged enum by trying variants in
+order, which is unambiguous while writing and ambiguous while reading once more
+than one variant is struct-shaped. This crate never reads an event back: the
+working structure holds rendered lines, per section 4, and no resume path
+survived the cut of 2026-08-01. A consumer that decodes does so kind-first,
+which the flatten election of this section already put at the top level of every
+line for exactly this reason, so the discriminant a reader needs is available
+before the payload is reached. **`Payload` therefore derives `Serialize` and not
+`Deserialize`,** which makes the asymmetry a compile property rather than a
+convention, and admission's kind-to-shape check remains what enforces the
+pairing on the writing side.
+
+**`Deferred` holds the payloads whose shapes their own workflows settle**, which
+since the trace act of 2026-08-02 is the tool bracket's two alone, the fault and
+the three model kinds having landed at charter section 3.2. It is listed in
+section 11 with what settles it. The variant holds raw bytes in the interim
+rather than a
 placeholder struct, because a struct shaped against no chartered content would be
 the reserved slot apex section 9 forbids, and because a kind whose payload has no
 chartered shape cannot be submitted with a shape this crate invented.
@@ -553,6 +633,10 @@ build-time `cargo tree` assertion the floor Specs share.
   the writer re-renders from the event.
 - Gapless run-scoped sequence under the run's whole traffic, confirmed by watching
   a gap appear when a refused submission consumes a sequence.
+- Absent rather than zero: an event whose measurement carries no signal
+  vectors emits no member for them, confirmed by watching an empty array
+  appear when the skip election is removed, since an empty array and an
+  absent instrument are the two facts the charter separates.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test
@@ -584,24 +668,24 @@ which fails because there is no call that takes what it learned.
   at a real rate, which is the same measurement the back-pressure election of
   `weaver-admin-operator-contract` section 3 waits on, and the two settle together.
 - **The satellite types.** `Sequence`, `MonotonicNs`, `Subsystem`'s Rust
-  spelling, `FieldName`, `WriteError`, `StopReason`, and `OwnedFd`'s wrapper if
-  one is taken. Identifier and newtype choices with no cross-crate consequence,
+  spelling, `FieldName`, `WriteError`, `StopReason`, `OwnedFd`'s wrapper if
+  one is taken, and from the trace act, `TemplateId`, `ModelId`,
+  `WeightsHash`, `TokenId`, `Bits`, `Finish`, `PromptBlock`, and
+  `DecodeTimings`. The last two carry shape rather than only a name:
+  a block names the span of the token sequence it covers, and the timings
+  carry what the charter's row enumerates. Identifier and newtype choices with
+  no cross-crate consequence,
   listed so what this Spec leaves to a builder is complete rather than implied.
   `Sequence` and `MonotonicNs` carry the decimal-string rendering of section 2,
   which is a constraint on their serde implementation rather than on their Rust
   shape.
-- **The deferred payload shapes**, each with what settles it. The tool bracket's
-  content waits on the tool workflow, which `weaver-traits-PRD` section 3.1 holds
-  blocked. The fault payload's case set closed on 2026-08-02 with all
-  three organs' enumerations, `weaver-spu-PRD` section 13.10,
-  `weaver-gate-PRD` section 13.4, and `weaver-harness-PRD` section 5, so its
-  shape is elected against a closed set by the token workflow's trace act,
-  and it is the floor's `fault-report` shape rather than a second one. The
-  three model payloads wait on the token workflow, whose measurement content
-  charter section 3.1 already
-  enumerates but whose wire shape that workflow settles. Until each lands, its
-  kind cannot be submitted with a shape this crate invented, which is the
-  half-chartered discipline read forward.
+- **The deferred payload shape**, singular since the trace act of 2026-08-02.
+  The tool bracket's content waits on the tool workflow, which
+  `weaver-traits-PRD` section 3.1 holds blocked, and until it lands its two
+  kinds cannot be submitted with a shape this crate invented, which is the
+  half-chartered discipline read forward. The fault and the three model
+  payloads left this entry with that act, shaped in section 3 against charter
+  section 3.2.
 - **The weight this crate carries at all.** The charter stages the question of how
   much durability machinery survives its obligations. This Spec's answer is the
   five modules of section 1 and nothing further, and the entry condition is the

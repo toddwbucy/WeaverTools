@@ -48,6 +48,21 @@ against apex section 8 as corrected: the deterministic re-feed mode's inputs
 are in every record, and which further arrangements a record supports follows
 from what the deployment declared and produced, elections at the source
 governing production and production governing the record.
+**Revised:** 2026-08-02, a third entry this date, the token workflow's trace
+act, with the review seat's return of the same day folded in: section 3.1's
+measurement row loses the sampler parameters to the request payload and gains
+the surprisals and the timings, and the apex-8 paragraph names the join the
+relocation creates, that arrangement's five inputs spanning two kinds of one
+turn rather than one payload. Section 3.2 arrives, settling the four payload
+shapes this charter
+deferred: `fault` carrying the floor's `fault-report` against a case set
+closed across three organs the same day, `model.request` carrying the
+rendered prompt and its template identity beside the effective sampling
+values, `model.output` carrying the emission verbatim with the record holding
+both it and the canonical parse, and `model.measurement` gaining the
+producing obligations that make its readings trustworthy, pre-sampler,
+positionally paired, and absent rather than zero. The tool bracket's two stay
+deferred with their workflow.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -306,7 +321,7 @@ its closure.
 | `fault` | a fault the worker survived, reported by an organ and authored by the harness |
 | `model.request` | the decode boundary, request side |
 | `model.output` | the decode boundary, response side |
-| `model.measurement` | input and output token identifiers, entropies, sampler parameters, model identity with its weights hash, the prompt-block partition, residual reductions |
+| `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
 
 Fourteen kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure. `fault` is
@@ -319,11 +334,22 @@ surface with a verb. Its payload names the raising organ and carries what that
 organ reported, and the case set behind it is deferred to the token workflow with
 the organs' own charters, per `weaver-spu-PRD` section 10.
 
-**The measurement payload is what apex section 8 rests replay on, so its field list
-is not this charter's to choose freely.** Replay feeds recorded tokens back through a
-forward pass rather than re-sampling, which needs the input and output token
-identifiers, the model identity and its weights hash, the sampling parameters, and
-the prompt-block partition. The prompt-block partition and the explicit identity were
+**Apex section 8's deterministic re-feed rests on five inputs, and since the
+trace act of 2026-08-02 they span two kinds of one turn rather than one
+payload.** Replay feeds recorded tokens back through a forward pass rather
+than re-sampling, which needs the input token identifiers, the output token
+identifiers, the model identity and its weights hash, the prompt-block
+partition, and the sampling parameters, five items displayed as five because
+the apex splits the identifiers and joins the identity to its hash. **The
+first four are `model.measurement`'s and the fifth is `model.request`'s,**
+the sampling values having moved to the request in that act because an input
+to a decode belongs with what was asked rather than with what was read off
+it. The join is the turn: both kinds carry the same
+turn in the envelope, so a replay driver reads the pair rather than one
+payload, and this sentence exists because a driver built against the earlier
+single-payload reading would find four of five and conclude the record does
+not support the arrangement every record supports. The prompt-block partition
+and the explicit identity were
 absent from an earlier version of this row. A payload carrying a weights hash and no
 identity says which bytes were loaded without saying what was loaded, which is enough
 to detect that two runs differ and not enough to reconstitute either, and a payload
@@ -406,6 +432,73 @@ stop exchange lands. Every open has a close and the close says which kind it was
 a reader never infers an abort from an absence. This adds a field to one payload
 shape and no kind to the set, and it edits this charter and the contract in the same
 act, per the rule of this section.
+
+### 3.2 The payload shapes the token workflow settles
+
+Six of the fourteen kinds carried no chartered shape, and this subsection
+settles four of them on the token workflow's acts of 2026-08-02: `fault` and
+the three `model.*` kinds. The tool bracket's two are the remaining pair and
+stay deferred with the tool workflow, per section 9. What follows is content
+and its obligations, which is this document's level. How any of it is
+represented is the Spec's.
+
+**`fault` carries the floor's report and this crate defines no second shape.**
+`fault-report` is `weaver-types`' definition as of the gate act, one shape for
+every reporting seam because what an organ hands the harness is the same fact
+whichever socket carried it. The case set behind it closed the same day across
+all three organs, `weaver-spu-PRD` section 13.10, `weaver-gate-PRD` section
+13.4, and `weaver-harness-PRD` section 5, so this payload is elected against a
+closed enumeration rather than a guess. Which subsystem raised it is the
+envelope's field and is not repeated in the payload. A fault the worker does
+not survive is not this kind, per the contracts, because the party that would
+report it is the one that died.
+
+**`model.request` carries what the model was asked, including what it saw.**
+The rendered prompt as the model received it, the identity of the template
+that produced it, and the sampling values in effect for the turn, effective
+values whichever side set them, per the disposition rule of `weaver-spu-PRD`
+section 13.8. The rendered form is here rather than nowhere because of the
+end-to-end requirement of 2026-08-02: each model carries its own template, so
+the conversation exists twice, as the canonical messages this crate's message
+kinds hold and as the rendered token sequence the model was given, and a
+record holding only the first forces a replay to re-render through a template
+that may have changed since, which observes a forward pass that never
+happened. Recording both is what makes apex section 8's rule that
+tokenization is reproducible from what is recorded true rather than hopeful.
+
+**`model.output` carries the emission verbatim, before any parse.** The
+model's own family-styled output, the reasoning blocks and channel markers
+and tool-call markers exactly as emitted, and how the generation ended,
+completed or stopped. **The record holds both layers and never flattens
+one into the other:** this payload is the verbatim reality and the message
+kinds hold the canonical parse of it, with the family parsers as the recorded
+bridge between them, which is the outbound half of the same end-to-end
+requirement. A record that kept only the parse could not answer what the
+model said, and one that kept only the verbatim would make every consumer a
+parser of every family.
+
+**`model.measurement` carries the instrument readings, and its field list is
+section 3.1's row as this act corrects it.** The row loses the sampler
+parameters, which move to the request above because an input to a decode is
+part of what was asked, and gains the surprisals and the decode timings, which
+were readings the row had never named. What this subsection adds is the
+producing obligations
+that make those readings trustworthy, stated as content because a reading
+produced wrongly is not the same fact recorded imperfectly. The per-token
+signals are computed against the pre-sampler distribution, because a signal
+taken after the sampler measures the sampler. They are positionally paired
+with the token identifiers, so a consumer joins by position rather than by
+inference. And an unproduced reading is absent rather than zero, because an
+empty vector and a confident model are different facts and a zero that means
+neither is the silently partial account this charter forbids everywhere else.
+The residual reductions appear exactly when the residency was admitted with
+readout elected, per `weaver-spu-PRD` section 13.7, and a tap that failed
+while elected is a fault rather than an absence.
+
+**These four shapes close the deferral this charter carried, and the tool
+bracket's two are what remain.** Section 9's staged list keeps them, and
+nothing here shapes them, because a payload shaped against an unchartered
+protocol is the reserved slot apex section 9 forbids.
 
 ## 4. What producing the trace requires
 
@@ -573,8 +666,10 @@ is a stronger property than a reader consulting a recorded level to interpret a
 gap.
 
 **Two consequences follow, both improvements.** Every run is replayable, because
-the token identifiers and sampler parameters apex section 8 rests replay on are in
-every run's measurement payload rather than in an elected subset. And every record
+the token identifiers apex section 8 rests replay on are in every run's
+measurement payload rather than in an elected subset, with the sampling
+parameters in the same turn's request payload since the trace act of
+2026-08-02, per section 3.1. And every record
 names the model that served it, along with its weights hash, which closes the cell
 `weaver-spu-PRD` section 10 held open on the premise that a floor run named
 neither.
