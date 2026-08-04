@@ -74,6 +74,20 @@ open-core plan extracts, and the architectural fact is what survives the edit:
 one SPU per agent reads the same without the comparison and is publishable on its
 own. No multi-model catalog reads clean and is untouched. No record moves and no
 count changes.
+**Revised:** 2026-08-03, a sixth entry this date, the labelling pass. Eight
+`grounds` edges land beside the records that carry them, four to the contract
+invariant, three to the socket invariant, and one to the organ invariant, per
+Document Format v0.11 sections 3 and 4. Section 10 states the test the pass
+applied, whether the axiom is the reason the claim exists, and states that fifty
+claims grounding in nothing is the expected result for a document whose bulk is
+decode mechanics rather than a gap. The join-key invariant takes nothing: its
+residency half is exempted by the invariant's own scope and its decode half is
+asserted nowhere here while section 11 holds that seam's encoding open. Prose lands
+at the four clauses whose grounding a reader would not derive, the envelope's
+confinement with the truncation fault beside it, the cancel's carrier, the failure
+vocabulary, and the two out-of-order refusals. The other two sites carry their
+reason in the prose already there and take no new sentence. No record moves, no tag
+changes, no assertion added, and the count stays fifty-eight.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -154,6 +168,10 @@ tag: manifest
 edge: asserts
 from: weaver-spu
 to: spu-one-binary
+
+edge: grounds
+from: spu-one-binary
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **Layout.** The crate is the umbrella's substrate, per charter section 2: the
@@ -230,6 +248,10 @@ tag: manifest
 edge: asserts
 from: weaver-spu
 to: spu-two-floor-links-types-without-config
+
+edge: grounds
+from: spu-two-floor-links-types-without-config
+to: axiom-contract-is-a-complete-interface
 ```
 
 **External, the model half.** The two fork pins are the load-bearing
@@ -406,7 +428,16 @@ that ground. The truncation fault was reachable all along and three sibling Spec
 buy the instrument for it, `weaver-harness-Spec` section 8, `weaver-admin-Spec`
 section 10, and `weaver-gate-Spec` section 6 each naming the same watch. Section
 10 names it here too, in the act that closed issue 37, which leaves no receiving
-crate in the corpus carrying this obligation on prose alone.
+crate in the corpus carrying this obligation on prose alone. **The two also ground
+in two different invariants, along the same line their instruments took.** The
+envelope's confinement is apex section 5.4 read at this crate's two ends: the
+lifecycle channel is the duplex channel with the harness that makes this crate an
+organ, and the decode socket is a second end its own contract governs, so an
+envelope crossing it would put the organ channel's carriage on a channel that is
+not one and leave the organ line unreadable from a capture. The truncation fault
+grounds in apex section 5.1 instead, the obligation existing at all only because a
+boundary-preserving socket type was elected under that invariant and a short read is
+what defeats it.
 
 ```graph
 node: spu-envelope-on-lifecycle-only
@@ -417,6 +448,10 @@ edge: asserts
 from: weaver-spu
 to: spu-envelope-on-lifecycle-only
 
+edge: grounds
+from: spu-envelope-on-lifecycle-only
+to: axiom-organ-and-submodule
+
 node: spu-truncation-is-a-fault
 kind: assertion
 tag: perturbation
@@ -424,6 +459,10 @@ tag: perturbation
 edge: asserts
 from: weaver-spu
 to: spu-truncation-is-a-fault
+
+edge: grounds
+from: spu-truncation-is-a-fault
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The service is serial per channel and the two channels are one loop.** One
@@ -792,7 +831,11 @@ tokens rather than waiting on it, which is why the check is a boundary check
 rather than a signal handler: nothing asynchronous is needed to make a
 token-boundary stop, and nothing asynchronous is introduced. The bound this
 buys is section 10's test and the carrier election beneath it is review's by
-non-purchase, the two being separate claims about one loop.
+non-purchase, the two being separate claims about one loop. **The carrier election
+grounds in apex section 5.1,** which is why a signal is not the alternative it looks
+like: a cancel is the harness asking this process to stop, so it is a seam, and that
+invariant admits no seam across a process line that is not a socket. Remove it and a
+signal handler becomes a shape a builder could reach for on latency grounds alone.
 
 ```graph
 node: spu-cancel-polled-not-signalled
@@ -802,6 +845,10 @@ tag: review
 edge: asserts
 from: weaver-spu
 to: spu-cancel-polled-not-signalled
+
+edge: grounds
+from: spu-cancel-polled-not-signalled
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **A cancelled generation answers with what it produced, marked stopped, after
@@ -1227,7 +1274,11 @@ section 5 adopts it with a record of its own, so one node with three edges would
 say the wrong thing: what each crate asserts is which floor type its own seams
 carry, and this crate is the only one of the three holding two seams and two
 refusal types. The principle is cited and the mapping is recorded. Review's by
-non-purchase, a refusal raised on each seam being reachable without a device.
+non-purchase, a refusal raised on each seam being reachable without a device. **It
+grounds in apex section 5.3.** A contract names the errors each party can return, so
+a crate that twinned a local error type beside the floor's would answer with a case
+its own contract does not describe, and the completeness that invariant claims would
+hold for the document and not for the code.
 
 ```graph
 node: spu-fault-below-the-exchange-layer
@@ -1237,6 +1288,10 @@ tag: review
 edge: asserts
 from: weaver-spu
 to: spu-fault-below-the-exchange-layer
+
+edge: grounds
+from: spu-fault-below-the-exchange-layer
+to: axiom-contract-is-a-complete-interface
 ```
 
 **A directive out of order for its seam's state answers `OutOfOrder` and is not
@@ -1277,7 +1332,10 @@ the two seams hold two different ordered states watched by two different
 fixtures, and one record would report a single instrument for behaviours that
 fail independently. Section 10 buys both, which discharges this crate's side of
 the owing on both seams, the way `weaver-gate-Spec` section 6 discharged the
-gate's on its one.
+gate's on its one. **Both ground in apex section 5.3,** whose completeness reaches
+the ordering guarantees a party relies on and provides: an interface that names its
+vocabulary and its errors and leaves what happens outside its ordered state to the
+implementation has a hole in it, and a queue is what fills that hole silently.
 
 ```graph
 node: spu-out-of-order-refused-on-residency
@@ -1288,6 +1346,10 @@ edge: asserts
 from: weaver-spu
 to: spu-out-of-order-refused-on-residency
 
+edge: grounds
+from: spu-out-of-order-refused-on-residency
+to: axiom-contract-is-a-complete-interface
+
 node: spu-out-of-order-refused-on-decode
 kind: assertion
 tag: perturbation
@@ -1295,6 +1357,10 @@ tag: perturbation
 edge: asserts
 from: weaver-spu
 to: spu-out-of-order-refused-on-decode
+
+edge: grounds
+from: spu-out-of-order-refused-on-decode
+to: axiom-contract-is-a-complete-interface
 ```
 
 **The admit refusal cases are the charter's enumeration and this Spec adds
@@ -1478,6 +1544,37 @@ kernel fires when the kernel drifts, and no suite can watch a comparison that
 was left behind, a test being unable to detect its own absence. Whether the
 comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
+
+**Which invariant each claim serves, and why most serve none.** Eight of the
+fifty-eight carry a `grounds` edge: four to
+`axiom-contract-is-a-complete-interface`, three to
+`axiom-floor-is-vocabulary-behavior-is-socket`, and one to
+`axiom-organ-and-submodule`. **The test applied is whether the axiom is the reason
+the claim exists.** Remove the socket invariant and this crate has no reason to be
+a process the harness starts rather than a library it calls, no reason to carry a
+truncation obligation attached to a socket type nobody would have elected, and no
+reason to refuse a signal-borne cancel, so those three ground in it. Remove it and
+the session is still append-only, the registry still substitutes nothing, and every
+sampling knob still carries a disposition, so those ground in nothing.
+`axiom-join-key-travels-with-the-work` takes nothing from this crate, and the
+absence is that invariant's own scope rather than a gap: every directive on the
+residency seam belongs to no turn and apex section 5.2 exempts it by name, and on
+the decode seam, where the work does belong to a turn, this document asserts
+nothing about attribution because that seam's encoding is section 11's open
+election. The nine claims section 0 names are another Spec's to ground, including
+the socket election and the envelope bound the truncation obligation rests on.
+
+**Fifty claims grounding in no invariant is the expected result and not a gap**,
+per Document Format section 4, and the ratio is low here for a structural reason
+rather than an unfinished one. The bulk of this document is decode mechanics,
+sampling, family libraries, kernels, device judgment, residency bookkeeping, and
+session monotonicity, and none of that is a question the four invariants ask. Much
+of what makes this crate correct is not an invariant question. The one claim a
+reader will look for and not find is `spu-nothing-retained-after-the-answer`, this
+crate's face of the program's statelessness: the apex states that at section 2, as
+what proto-stateful means, and its section 5 declares four invariants that do not
+include it. An edge there would point at the nearest heading rather than at a
+reason.
 
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
