@@ -3,11 +3,16 @@
 **Version:** v0.11, 2026-08-03, fourth entry this date. The v0.11 change is the axiom
 layer, per the operator's ruling of this date: section 3 gains the `axiom` node kind
 for the apex's four invariants, and section 4 gains the `grounds` edge from an
-assertion to the axiom it serves, which retires the one key the fixed set carried
-without a definition or a use. The section 4 entry states that a missing `grounds`
+assertion to the axiom it serves. The section 4 entry states that a missing `grounds`
 edge is representation rather than an omission, because the prior program's basis
 covered seven of seventy-one claims and kept the layer instead of asking what the
-layer was for. Previously v0.10, 2026-08-03, third entry this date. The v0.10 change is
+layer was for. **The record key of the same name is retired in the same act,** on the
+review seat's finding that this act first claimed a retirement it had not performed.
+Section 6 defined `grounds:` as an escape hatch for a block whose argument lives
+elsewhere, which hedges the rule the same paragraph argues absolutely, and 285 nodes
+were placed without ever writing it. The key leaves section 5's set and section 6
+states that position is the only pointer, so one name means one thing again.
+Previously v0.10, 2026-08-03, third entry this date. The v0.10 change is
 section 3's assertion entry gaining the provenance rule for a divided claim, per
 the operator's ruling of this date: the two halves of a split both count as the
 enforcement section's, because neither was elected and one was divided out. It
@@ -403,7 +408,7 @@ A second key for the instrument would grow
 the fixed set for a fact the existing key already carries, and the point of the fixed
 set is that the mapper never guesses.
 
-Keys are `node`, `kind`, `edge`, `from`, `to`, `via`, `tag`, and `grounds`. A record
+Keys are `node`, `kind`, `edge`, `from`, `to`, `via`, and `tag`. A record
 begins with `node` or with `edge` and no record carries both. Unknown keys are a defect
 rather than an extension, because the point of the fixed set is that the mapper never
 guesses.
@@ -423,10 +428,11 @@ of the file, two screens from the paragraph that justifies it, so a rewrite of t
 paragraph and a stale line in the header cannot be seen together. G3 asks for grounds
 per edge, and grounds are prose.
 
-So the grounds are the containing section, and `grounds:` is written only when the
-argument lives somewhere else. Position is the pointer. This is the vocabulary clause's
-own argument applied one level out: a clause is checked at the seam, by the people
-writing that seam, while they are thinking about it.
+So the grounds are the containing section, with no way to write them anywhere else.
+Position is the pointer, and a key that let a block point at a remote argument would
+be the header block's failure admitted one record at a time. This is the
+vocabulary clause's own argument applied one level out: a clause is checked at
+the seam, by the people writing that seam, while they are thinking about it.
 
 ## 7. Where a block and its prose disagree
 
