@@ -8,6 +8,13 @@ was read from, and a pinned SHA would go stale the moment a later act revised th
 document's own claims. First filed against `ad9d807`.
 **Document ID:** `HANDOFF-2026-08-04-hades-graph-build`
 **Parent:** `WeaverTools-Working-Process`, section 5
+**Revised:** 2026-08-04, a third entry this date. Section 3 gains the fifth parser
+rule, found live by the first mapper build: `tag` carries one vocabulary per record
+kind, and a parser modeling it as seam-only reports every assertion in the corpus as
+a defect. On the review seat's return before the merge, section 4's second trap
+recasts to the past tense G4's closure left it in, and the rule's tally restates as
+the relation rather than the count, the promotion pass in flight being about to move
+the count.
 **Revised:** 2026-08-04, a second entry this date. G4's third half closes, the five
 definitions gaining their statements at their definition sites, and section 0 gains
 the map-not-build-order framing per the operator's ruling of this date: the graph
@@ -107,10 +114,10 @@ will reasonably write both report false defects against this:
 This is the same class as the seam-identity trap in section 4. Both are shapes the
 program means, and both look like defects from the query side.
 
-## 3. The notation, and the four rules a parser will get wrong
+## 3. The notation, and the five rules a parser will get wrong
 
 `WeaverTools-Document-Format` is the authority, sections 3 through 6. A parser that
-reads only the fences will still get these four wrong, so they are stated here.
+reads only the fences will still get these five wrong, so they are stated here.
 
 **Records are blank-line separated inside one fence.** A ` ```graph ` block holds one or
 more records. A record begins with `node` or with `edge` and never carries both. Unknown
@@ -152,6 +159,19 @@ contract is the one kind that qualifies.
 A mapper built on the flat form would conclude no document is ever an edge source and
 mis-handle 134 of 425 edges.
 
+**`tag` carries one vocabulary per record kind, and the record kind disambiguates.**
+On a seam it is `socket` or `link`. On an assertion it is the enforcing instrument,
+`compile-pin`, `compile-fail`, `perturbation`, `manifest`, or `review`, per Document
+Format section 5, and every assertion in the corpus carries one. This rule earned its
+place the way the others did not: the first mapper build modeled `tag` as seam-only
+and reported all 240 assertions as defects in one run. The arithmetic that catches it
+in advance is one relation rather than a count, the corpus's `tag` keys less its seam
+edges equaling its assertion nodes, which any head can verify against itself and no
+assertion pass can stale. The instrument tags are what checklist item 5 queries
+against, so a parser that
+drops them satisfies the structural half of the checklist while silently discarding
+the build half.
+
 ## 4. What the graph has to answer
 
 `WeaverTools-Working-Process` section 5 carries the closing checklist. **Closing it is
@@ -180,12 +200,13 @@ crate pair as unique will report this program's intended shape as a defect.
 
 **A second trap for item 4, and it is the one section 5's warning is about.** Item 4
 asks that every vocabulary name resolve to a definition site. There are 27 vocabulary
-nodes and 27 `defines` edges, so **that query returns clean today and will keep
-returning clean while G4 fails.** G4's third half asks a different question the
+nodes and 27 `defines` edges, so **that query returned clean through the whole span in
+which G4's third half stood open.** G4's third half asks a different question the
 checklist never asks: whether every definition is either drawn by some clause or stated
-to be internal. Seven are drawn by no clause and five of those state no reason. **Item 4
-passing is not evidence that G4 holds, and a receiving side reporting item 4 green has
-said nothing about the five.**
+to be internal. Seven were drawn by no clause and five of those stated no reason, until
+the act of 2026-08-04 closed the half, per section 6. **Item 4 passing was never
+evidence that G4 held, and a receiving side reporting item 4 green would have said
+nothing about the five for as long as they stood.**
 
 **The structural reason is an authorship asymmetry, and it generalizes.** `defines` is
 authored by the definer and `draws` is authored by the consumer. A completeness query
