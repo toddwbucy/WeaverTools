@@ -1,6 +1,11 @@
 # WeaverTools Document Format
 
-**Version:** v0.12, 2026-08-03, fifth entry this date. The v0.12 change is section 4
+**Version:** v0.13, 2026-08-03, sixth entry this date. The v0.13 change follows the
+apex to five invariants, per the operator's ruling of this date: section 3's axiom entry
+and its closed-set sentence both count five. The apex gained 5.5, the harness integrates
+and the loop is the mechanism, which is the invariant this format's own section 7 rule
+was reaching for when it said a seam question belongs in the contract.
+Previously v0.12, 2026-08-03, fifth entry this date. The v0.12 change is section 4
 stating the second way a claim grounds, that it is a precondition of the axiom's own
 stated reason, and section 7 stating that a disagreement between two Specs about an
 invariant's reach is read against the contract before the invariant, both per the
@@ -235,11 +240,12 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
-**axiom.** One of the apex's four invariants, declared by `WeaverTools-PRD` at the
+**axiom.** One of the apex's five invariants, declared by `WeaverTools-PRD` at the
 subsection that states it. An axiom is not a claim about a crate and binds no code
 directly. It is what a claim can be grounded in, so a query can ask which claims serve
-an invariant and which invariant a claim serves. There are four and the set is closed:
-a fifth would be an apex act, not a Format one.
+an invariant and which invariant a claim serves. There are five and the set is closed: a
+sixth would be an apex act, not a Format one. It grew from four on 2026-08-03, so a
+version of this format saying four is behind the apex rather than ahead of it.
 
 **assertion.** A claim a Spec makes that code must conform to, named so a source
 file can cite it and a query can return it. Two kinds of clause qualify and both

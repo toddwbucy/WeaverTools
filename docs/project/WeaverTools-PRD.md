@@ -231,7 +231,7 @@ alone, a model-elected call whose result the harness supplies deterministically,
 and it makes no claim about the finished behavior. A tool call that requires
 retained state to decide when to fire belongs to the later stateful program.
 
-## 5. The four invariants
+## 5. The five invariants
 
 These bind every crate PRD, every Spec, and every contract. A document that
 violates one of them is wrong, not merely inconsistent.
@@ -240,7 +240,9 @@ violates one of them is wrong, not merely inconsistent.
 by naming it,** per Document Format sections 3 and 4. The edge runs from the claim
 to the invariant, so the chain apex section 11 states reads upward without a break:
 code cites an assertion, an assertion grounds in an invariant. The set is closed at
-four and a fifth is an act on this document rather than on the format.
+five, and a sixth is an act on this document rather than on the format. It grew from
+four on 2026-08-03, when a labelling batch found two Specs disagreeing about a seam and
+the corpus had no stated forum for the disagreement.
 
 **A claim that grounds in no invariant is representation, not an omission.** Most of
 what a Spec elects is a format, a name shape, a tagging rule, or a bound, and none of
@@ -421,6 +423,48 @@ harvests what those two imply rather than importing a new frame.
 node: axiom-organ-and-submodule
 kind: axiom
 ```
+
+### 5.5 The harness integrates, and the loop is the mechanism
+
+**The harness is the integrator.** Section 5.4 makes it the hub every organ is duplex
+with, which is a statement about topology. This is the role that topology exists to
+serve. The harness is answerable for the whole working, and an organ is answerable for
+its own domain and for nothing outside it. A hub that only carried traffic would leave
+integration to whichever organ noticed it was missing, which is how an organ starts
+reasoning about a domain that is not its own.
+
+**The loop is the integrating mechanism.** Integration is not a property the parts have
+when assembled correctly, it is work something does, and the loop running in the harness
+is the thing that does it. This is why the composition root is new code rather than
+carried code, and why loop 0 is the framework's rather than a builder's: the mechanism
+that makes the parts one program cannot itself be a part.
+
+**Each organ presents its contract to the harness and presents nothing to any other
+organ.** A contract is what an organ offers the integrator, being the vocabulary it
+speaks, the errors it returns, and the ordering it relies on and provides, per section
+5.3. That is the whole of what an organ exposes and the whole of what the loop has to
+work from, which is what lets an organ be built against its own contract alone.
+
+**The loop is answerable for correctness and for timing.** It ensures that point A talks
+to point B correctly and at the right time. Correctly means the vocabulary each contract
+names, in the direction that contract states. At the right time means the ordering each
+contract relies on still holds when two organs' orderings have to be reconciled against
+each other, which no organ can do from inside its own domain, because no organ can see
+the other's. **Reconciliation is the loop's work by construction and not by
+convention.**
+
+**So a conflict between organs is settled in the contracts they hold with the harness.**
+There is no organ-to-organ contract to settle it in, by 5.4, and no other party sees
+both sides. A seam question two organs answer differently is not a hard case calling for
+a ruling, it is an incomplete contract, which 5.3 forbids by name. The obligation runs
+toward the contract rather than away from it, and Document Format section 7 states the
+order a reader follows.
+
+```graph
+node: axiom-harness-integrates-by-the-loop
+kind: axiom
+```
+
 
 ## 6. The agent lifecycle
 
