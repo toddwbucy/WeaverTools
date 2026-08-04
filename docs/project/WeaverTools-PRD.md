@@ -79,6 +79,15 @@ to the plural, and the one-seam-per-service rule it implied is stated. The secti
 first written read as one contract per organ, which the corpus contradicts in four
 documents and which `weaver-spu` has never done, holding residency at one end and
 decode at the other under two contracts. The plural is the general case.
+**Revised:** 2026-08-04, the grip, per the operator. Section 9 states that external
+tooling is out entirely and stays out, that what this program owns is the boundary
+contract a tool is built to fit, and that the grip is not a reserved slot because its
+reader exists today. Section 12 states that the gate's far side is experience rather
+than the world, whatever stands out there holding its own contract with the
+environment, and that opacity does three jobs rather than one: confinement, a tool
+call being indistinguishable from any other output, and a boundary that relocates
+because a gate which parsed content would have to know what produced it. Each
+describes what the program already does and none adds a requirement.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -672,9 +681,22 @@ structural, not policy.
 
 ## 9. Out of scope, and how it returns
 
-**Out entirely:** the memory leg in every form - belief graph, consolidation,
-sleep and nap passes, recall, and any memory substrate. Also out: offline
-analysis, training, and the desktop frontend.
+**Out entirely:** the memory leg in every form - belief graph, consolidation, sleep
+and nap passes, recall, and any memory substrate. Also out: offline analysis,
+training, and the desktop frontend.
+
+**External tooling is out entirely as well, and stays out.** This program builds no
+tool crate and holds no tool. What it owns is the **grip**: the interface a tool is
+built to be gripped by, which is `weaver-gate-world-contract`. A hammer is not
+installed into a carpenter, it is shaped so a hand can hold it, and the boundary
+contract is that hand stated as a specification. A bash tool, a database client, an
+API caller are all things built to fit the grip and none of them is a crate here.
+
+**The grip is not a reserved slot and is the clearest case of the difference.** A
+reserved slot is a shape carried for a reader that does not exist. The grip has a
+reader today: every client that dials the gate uses it, and the tool case is that
+same path with a different thing on the far side. Nothing is carried in
+anticipation, because nothing is added at all.
 
 Statefulness returns as a **feature add**, not as a retrofit. The mechanism is
 fixed now, in three parts:
@@ -782,6 +804,23 @@ architecture gets by construction: horizontal scale, failover to a healthy
 replica, and rolling replacement of a degraded node. A deployment that needs
 those is building a different system than this one, and should say so rather
 than treating the difference as configuration.
+
+**The gate's far side is experience and never the world.** Whatever stands out
+there - a client, a tool process, an appendage - meets the environment under its own
+contract with that environment, and hands back what the meeting produced. Physics,
+protocol, timeout, and failure mode are settled on the far side of the grip and reach
+this program already rendered as data. Nothing here holds a contract with the world
+itself, at any depth.
+
+**Opacity is what makes that true, and it does three jobs rather than one.** The gate
+carries octets it must not read, opaque both ways. Stated as confinement, that is the
+familiar reason: a boundary cannot leak what it cannot parse. It is also why a tool
+call is indistinguishable from any other output, which is what keeps the gate from
+growing a tool vocabulary. And it is why the boundary is relocatable: **a gate that
+parsed content would have to know what kind of thing produced it**, and because it
+does not, it cannot tell a human client from an appendage. The same crate therefore
+sits unchanged wherever the outermost boundary happens to be. That property is a
+consequence and not a plan, and this program builds nothing to exploit it.
 
 What it buys is that the locus of regulation moves up to the agent. Because an
 agent is an operating-system user, what it may touch is bounded once, at the
