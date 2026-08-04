@@ -88,6 +88,21 @@ confinement with the truncation fault beside it, the cancel's carrier, the failu
 vocabulary, and the two out-of-order refusals. The other two sites carry their
 reason in the prose already there and take no new sentence. No record moves, no tag
 changes, no assertion added, and the count stays fifty-eight.
+**Revised:** 2026-08-03, a seventh entry this date, the apex's fifth invariant
+reaching this document. Three `grounds` edges land at
+`axiom-harness-integrates-by-the-loop`, per Document Format v0.13 sections 3 and 4:
+the two out-of-order refusals, which now carry two edges each because the contracts
+state the ordering and the loop is answerable for that ordering holding between
+domains, and the overflow refusal, whose reason is that what a full context means is
+the harness's to decide and not this crate's. Prose lands at both clauses. Section
+10 states where the invariant stops, this crate's interior being outside it by that
+section's own scope limit, and names the two candidates refused, the envelope's
+confinement and the descriptor count check. Eleven edges from nine of the
+fifty-eight records now, four to the contract invariant, three to the socket
+invariant, three to the loop invariant, and one to the organ invariant, with
+forty-nine grounding in nothing. Section 10's two readings of the apex as four
+invariants become five. No record moves, no tag changes, and no assertion is added
+or removed.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -776,7 +791,13 @@ account of itself, the harness deciding what a full context means. This crate
 evicts and compacts nothing, per the charter, because either would be this
 crate deciding which part of the agent's context matters. Review's by
 non-purchase, an overflowing delta being a fixture the family libraries can
-produce with no device present.
+produce with no device present. **It grounds in apex section 5.5.** What a full
+context means is a question about the turn, which is the harness's domain, and
+an organ that evicted to make room would be reasoning about a domain that is
+not its own, which that invariant names as what a hub carrying traffic alone
+invites. The refusal carrying the session's own account is what lets the loop
+decide with the fact rather than without it, so the claim is this crate handing
+a decision back rather than withholding one.
 
 ```graph
 node: spu-overflow-refuses-sheds-nothing
@@ -786,6 +807,10 @@ tag: review
 edge: asserts
 from: weaver-spu
 to: spu-overflow-refuses-sheds-nothing
+
+edge: grounds
+from: spu-overflow-refuses-sheds-nothing
+to: axiom-harness-integrates-by-the-loop
 ```
 
 **The turn terminator is made resident before the answer returns, on every
@@ -1336,6 +1361,15 @@ gate's on its one. **Both ground in apex section 5.3,** whose completeness reach
 the ordering guarantees a party relies on and provides: an interface that names its
 vocabulary and its errors and leaves what happens outside its ordered state to the
 implementation has a hole in it, and a queue is what fills that hole silently.
+**Both also ground in apex section 5.5, and that is a second reason rather than the
+first one restated.** A directive out of order arrived in an order this crate did
+not choose, the harness driving both seams and no organ ordering its own traffic, so
+the mis-ordering is a timing failure between domains and that invariant makes the
+loop answerable for it. Queueing would be this crate reconciling that failure inside
+its own domain, which is the reconciliation 5.5 assigns to the loop by construction,
+and the refusal is what returns the failure to the party answerable for it. The
+decode seam carries the sharper case, an open being valid only after the residency
+it serves is confirmed, which is one contract's ordering read against the other's.
 
 ```graph
 node: spu-out-of-order-refused-on-residency
@@ -1350,6 +1384,10 @@ edge: grounds
 from: spu-out-of-order-refused-on-residency
 to: axiom-contract-is-a-complete-interface
 
+edge: grounds
+from: spu-out-of-order-refused-on-residency
+to: axiom-harness-integrates-by-the-loop
+
 node: spu-out-of-order-refused-on-decode
 kind: assertion
 tag: perturbation
@@ -1361,6 +1399,10 @@ to: spu-out-of-order-refused-on-decode
 edge: grounds
 from: spu-out-of-order-refused-on-decode
 to: axiom-contract-is-a-complete-interface
+
+edge: grounds
+from: spu-out-of-order-refused-on-decode
+to: axiom-harness-integrates-by-the-loop
 ```
 
 **The admit refusal cases are the charter's enumeration and this Spec adds
@@ -1545,17 +1587,21 @@ was left behind, a test being unable to detect its own absence. Whether the
 comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
 
-**Which invariant each claim serves, and why most serve none.** Eight of the
-fifty-eight carry a `grounds` edge: four to
+**Which invariant each claim serves, and why most serve none.** Eleven `grounds`
+edges run from nine of the fifty-eight: four to
 `axiom-contract-is-a-complete-interface`, three to
-`axiom-floor-is-vocabulary-behavior-is-socket`, and one to
-`axiom-organ-and-submodule`. **The test applied is whether the axiom is the reason
-the claim exists.** Remove the socket invariant and this crate has no reason to be
-a process the harness starts rather than a library it calls, no reason to carry a
-truncation obligation attached to a socket type nobody would have elected, and no
-reason to refuse a signal-borne cancel, so those three ground in it. Remove it and
-the session is still append-only, the registry still substitutes nothing, and every
-sampling knob still carries a disposition, so those ground in nothing.
+`axiom-floor-is-vocabulary-behavior-is-socket`, three to
+`axiom-harness-integrates-by-the-loop`, and one to
+`axiom-organ-and-submodule`, the two out-of-order refusals carrying two edges each
+because the contract states the ordering and the loop is answerable for that
+ordering holding. **The test applied is whether the axiom is the reason the claim
+exists, or the claim a precondition of the axiom's own stated reason.** Remove the
+socket invariant and this crate has no reason to be a process the harness starts
+rather than a library it calls, no reason to carry a truncation obligation attached
+to a socket type nobody would have elected, and no reason to refuse a signal-borne
+cancel, so those three ground in it. Remove it and the session is still append-only,
+the registry still substitutes nothing, and every sampling knob still carries a
+disposition, so those ground in nothing.
 `axiom-join-key-travels-with-the-work` takes nothing from this crate, and the
 absence is that invariant's own scope rather than a gap: every directive on the
 residency seam belongs to no turn and apex section 5.2 exempts it by name, and on
@@ -1564,15 +1610,31 @@ nothing about attribution because that seam's encoding is section 11's open
 election. The nine claims section 0 names are another Spec's to ground, including
 the socket election and the envelope bound the truncation obligation rests on.
 
-**Fifty claims grounding in no invariant is the expected result and not a gap**,
+**The loop invariant reaches three claims and stops at this crate's interior.** It
+binds what crosses between domains and says nothing about what happens inside one,
+so the decode submodule's relationship with its own organ, the one service loop over
+two channels, and the placement of each family's code are outside it whatever they
+resemble one level up. The three claims are on the other side of that line, each
+being this crate declining what the harness orchestrates rather than settling it
+here, and each argued at its own clause: the two out-of-order refusals of section 9,
+where the mis-ordering is a timing failure the loop is answerable for, and the
+overflow refusal of section 4.2, where what a full context means is the harness's to
+decide. **Two candidates were weighed and refused.** The envelope's confinement to
+the lifecycle channel grounds in the organ axiom, which is the reason it exists, and
+the loop invariant adds no second reason to it. The entry check on the descriptor
+count exists for the first walk above, a writable handle to the agent's own record
+sitting inside the agent's model server, and the discipline it checks is the
+harness's at the fork rather than the loop's at a seam.
+
+**Forty-nine claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4, and the ratio is low here for a structural reason
 rather than an unfinished one. The bulk of this document is decode mechanics,
 sampling, family libraries, kernels, device judgment, residency bookkeeping, and
-session monotonicity, and none of that is a question the four invariants ask. Much
+session monotonicity, and none of that is a question the five invariants ask. Much
 of what makes this crate correct is not an invariant question. The one claim a
 reader will look for and not find is `spu-nothing-retained-after-the-answer`, this
 crate's face of the program's statelessness: the apex states that at section 2, as
-what proto-stateful means, and its section 5 declares four invariants that do not
+what proto-stateful means, and its section 5 declares five invariants that do not
 include it. An edge there would point at the nearest heading rather than at a
 reason.
 
