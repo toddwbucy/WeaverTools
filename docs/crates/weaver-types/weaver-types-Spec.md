@@ -73,8 +73,7 @@ shared tagging test's second edge, and settles the traits Spec's mirroring
 clause with it.
 **Revised:** 2026-08-03, the labelling pass, first of the seven and the pilot.
 Seven `grounds` edges land beside the records that carry them, five to the socket
-invariant and two to the contract invariant, per Document Format v0.11 sections 3
-and 4. Section 5 states the test the pass applied, whether the axiom is the reason
+invariant and two to the contract invariant, per Document Format sections 3 and 4. Section 5 states the test the pass applied, whether the axiom is the reason
 the claim exists, and states that ten claims grounding in nothing is the expected
 result for a floor crate rather than a gap. No record moves, no tag changes, and
 the assertion count is unchanged at seventeen.
@@ -911,8 +910,12 @@ build-time assertion over the resolved external tree rather than by H2.
 **Which invariant each claim serves, and why most serve none.** Seven of the
 seventeen carry a `grounds` edge, five to
 `axiom-floor-is-vocabulary-behavior-is-socket` and two to
-`axiom-contract-is-a-complete-interface`. The other two axioms take nothing from
-this crate: the floor states no claim about a turn key, and it is not an organ.
+`axiom-contract-is-a-complete-interface`. The other three axioms take nothing from this crate. The floor states no claim about
+a turn key, it is not an organ, and it is not integrated: the fifth invariant binds
+what crosses between domains and the floor crosses nothing, being linked rather than
+reached. **A crate can be drawn by every domain and still be the subject of none of
+the invariants about domains**, which is the floor's whole character stated from the
+graph's side.
 **The test applied is whether the axiom is the reason the claim exists.** Remove
 the socket invariant and this crate has no reason to elect a socket type, no
 reason to bound an envelope, and no reason to withhold a deserializer from a
