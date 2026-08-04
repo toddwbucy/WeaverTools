@@ -64,6 +64,12 @@ claims grounding in nothing is the expected result for a crate that is mostly an
 event schema rather than a gap. The never-inferred turn gains the prose its edge
 needs. No record moves, no tag changes, and the assertion count is unchanged at
 thirty-eight.
+**Revised:** 2026-08-04, the promotion pass, per the operator's election of this
+date. Section 7's no-flag claim divides, the receive shape taking a compile-pin
+doctest argued at section 10's compiler list, the prohibition itself staying
+review's, per the division rule. The count moves to thirty-nine, seventeen with
+the sorting, and the new record sits at the end of section 10 with the two
+argued only there.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
@@ -938,6 +944,11 @@ Close-on-exec is supplied by the harness at its own receive, per
 description from admin's open. Neither flag is a type property of this crate, so
 neither is pinned here: what the pin reaches is the shape, one constructor
 returning a `Recorder` the rest of the crate cannot build another way.
+**That shape takes its pin in section 10, and the flag prohibition itself stays
+review's,** a call with the three declared arguments compiling being mechanical
+where the absence of every argument a flag could arrive as is not. The two are
+two records for that reason, per the split this document already makes for the
+path shapes, and the pin's record sits with the bullet that argues it.
 
 ```graph
 node: trace-receive-site-takes-no-flag
@@ -1044,6 +1055,12 @@ to: trace-append-failed-no-recovery
   claim, the named mutators being the compile-fail bullet below, per the split
   section 4 states.
 - The failure enum is exhaustive, so a new case reaches every caller.
+- The receive shape of section 5 is read by a doctest: a call passing an
+  `OwnedFd`, a `RunOrdinal`, and a `SessionRef` and binding a `Recorder`
+  compiles, so an argument added to the one constructor stops the build loudly.
+  This is the pinned half of section 7's no-flag claim, the prohibition itself
+  staying review's per the split stated there, an absence being what a positive
+  doctest structurally cannot demonstrate.
 
 **Enforced by compile-fail tests, because the property is an absence.**
 
@@ -1073,8 +1090,8 @@ at the dependency clause with the rest of that election.
 assertion records are at the clauses that argue the claims, across sections 1
 through 9, rather than gathered here, per Document Format section 6: this section
 sorts by instrument and the arguments are elsewhere, so a block here would sit
-apart from the prose that earns it. Thirty-six sit there and two sit at the end of
-this section, being the claims argued only here. Sixteen of the thirty-eight come
+apart from the prose that earns it. Thirty-six sit there and three sit at the end of
+this section, being the claims argued only here. Seventeen of the thirty-nine come
 from this section's own sorting and twenty-two from the elections outside it, the
 path-taking prohibition counting here rather than as an election because it was
 divided out of this section's own bullet and never elected, per Document Format
@@ -1090,7 +1107,7 @@ test of its own either, its instrument being the compile-fail set already
 recorded.
 
 **Which invariant each claim serves, and why most serve none.** Four of the
-thirty-eight carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
+thirty-nine carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
 and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
 nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
 none of it because this crate is not floor, so the vocabulary clause governs none
@@ -1103,8 +1120,8 @@ the join-key invariant and this crate has no reason to refuse to infer a turn an
 no reason to report pressure rather than author it, so those two ground in it.
 Remove it and the kind renames are still dotted, the subsystem set is still five
 cases, and the payload is still untagged, so those ground in nothing.
-**Thirty-four claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: fourteen of the thirty-eight are section 3's
+**Thirty-five claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: fourteen of the thirty-nine are section 3's
 event schema and twelve of those fourteen ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
@@ -1178,6 +1195,14 @@ tag: compile-fail
 edge: asserts
 from: weaver-trace
 to: trace-path-shapes-pinned-by-doctest
+
+node: trace-receive-shape-pinned-by-doctest
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-trace
+to: trace-receive-shape-pinned-by-doctest
 ```
 
 ## 11. Open elections
