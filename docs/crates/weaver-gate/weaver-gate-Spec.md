@@ -50,9 +50,24 @@ sections 3 and 4. Section 6 states the test the pass applied, whether the
 axiom is the reason the claim exists, names the two axioms that take nothing
 from this crate, and states the two calls the pass refused, the agent-uid
 denial and the two hygiene sets, whose reason is a charter walk rather than
-an invariant. Twelve claims grounding in nothing is the expected result and
+an invariant. Ten claims grounding in nothing is the expected result and
 not a gap. No record moves, no tag changes, and no assertion is added or
 removed.
+**Revised:** 2026-08-03, a sixth entry this date, the apex's fifth invariant
+reaching this document. Three `grounds` edges land at
+`axiom-harness-integrates-by-the-loop`, per Document Format v0.13 sections 3
+and 4: the out-of-order refusal, which now carries two edges because the
+contract states the ordering and the loop is answerable for that ordering
+holding across organs, the refused raise holding nothing, and the relay
+carrying both directions unread. Section 6 states the reason at all three and
+states where the line falls, ready and stopped being this crate's own
+sequencing inside its own domain and the channel state's three positions being
+the representation beneath the refusal rather than what crosses. Sixteen edges
+from fifteen of the twenty-three records now, eight to the socket invariant,
+five to the contract invariant, and three to the loop invariant, with eight
+grounding in nothing. The entry above also loses a count the sweep of that act
+left at twelve where it had settled on ten. No record moves, no tag changes,
+and no assertion is added or removed.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -304,6 +319,10 @@ edge: grounds
 from: gate-out-of-order-refused
 to: axiom-contract-is-a-complete-interface
 
+edge: grounds
+from: gate-out-of-order-refused
+to: axiom-harness-integrates-by-the-loop
+
 node: gate-channel-state-three-positions
 kind: assertion
 tag: compile-pin
@@ -502,6 +521,10 @@ tag: perturbation
 edge: asserts
 from: weaver-gate
 to: gate-refused-raise-holds-nothing
+
+edge: grounds
+from: gate-refused-raise-holds-nothing
+to: axiom-harness-integrates-by-the-loop
 ```
 
 ## 4. The relay, deferred
@@ -527,6 +550,10 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-client-content-unread
+
+edge: grounds
+from: gate-client-content-unread
+to: axiom-harness-integrates-by-the-loop
 ```
 
 ## 5. The failure vocabulary
@@ -628,11 +655,14 @@ floor-link under gate H2. No async runtime, no logging crate, and no YAML
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
-**Which invariant each claim serves, and why ten serve none.** Thirteen of
-the twenty-three carry a `grounds` edge, eight to
-`axiom-floor-is-vocabulary-behavior-is-socket` and five to
-`axiom-contract-is-a-complete-interface`. **The test applied is whether the
-axiom is the reason the claim exists.** Remove the socket invariant and this
+**Which invariant each claim serves, and why eight serve none.** Sixteen
+`grounds` edges run from fifteen of the twenty-three, eight to
+`axiom-floor-is-vocabulary-behavior-is-socket`, five to
+`axiom-contract-is-a-complete-interface`, and three to
+`axiom-harness-integrates-by-the-loop`, with one claim carrying two edges
+because two invariants each give it a reason. **The test applied is whether the
+axiom is the reason the claim exists, or the claim a precondition of the
+axiom's own stated reason.** Remove the socket invariant and this
 crate has no reason to authenticate at accept, no reason to elect a socket
 type for the world seam, no reason to carry a truncation obligation, and no
 reason to confine socket creation to one site, so those ground in it. Remove
@@ -645,7 +675,7 @@ channel state grounds in the contract invariant because
 `weaver-harness-gate-contract` section 3 states the ordering outright, that
 lower is last and terminal and that turn exchanges are valid only between a
 completed raise and a lower, so the claim was never the internal
-representation that invariant excludes. **Ten claims grounding
+representation that invariant excludes. **Eight claims grounding
 in no invariant is the expected result and not a gap**, per Document Format
 section 4: most of what this document elects is a representation, a
 placement, or a hygiene set the charter's walks argue, and representation is
@@ -661,7 +691,7 @@ the one claim it would reach here, that this process holds a channel with the
 harness and no other organ's handle, is `weaver-harness-Spec`'s to enforce at
 the fork and carries no record in this document, per section 0.
 
-**Three groups among the thirteen are worth stating rather than leaving to be
+**Three groups among the sixteen are worth stating rather than leaving to be
 read.** The two manifest claims ground in the socket invariant because both
 are the linkage facts that invariant defines: the gate is a separate
 executable nothing links because its behavior is reached over a socket, and
@@ -670,12 +700,44 @@ crates every domain draws from and no domain contains. The bind site's two
 records ground there for a reason both halves share, the pinned shapes and
 the general prohibition being halves of a divided claim: a listener built
 anywhere but the one site is a socket the accept predicate never guards,
-which is the exception that invariant states it does not admit. The four
-contract edges are the ordering half and the error half of a complete
+which is the exception that invariant states it does not admit. Four of the
+five contract edges are the ordering half and the error half of a complete
 interface, ready and stopped being answers the harness builds against
 without asking what this crate does, out of order being an ordering
 guarantee refused rather than queued, and the fault split being what keeps
 the refusal vocabulary drawn from the floor rather than invented here.
+
+**The three loop edges are the places this crate hands work back to the
+integrator rather than settling it here.** Apex section 5.5 makes the harness
+answerable for correctness and for timing across domains and leaves each organ
+answerable inside its own, so a claim grounds in it when the claim is this crate
+declining what the loop is answerable for. A directive out of order arrived in an
+order this crate did not choose, and a gate that queued it would be reconciling a
+timing failure across domains, which that invariant assigns to the loop by
+construction. **That record carries two edges and both are real.** Apex section
+5.3 requires the contract to state the ordering it relies on, which is why the
+refusal is specifiable at all, and apex section 5.5 makes the loop answerable for
+that ordering still holding when this crate's ordering meets the SPU's in one
+fan-out. A refused raise holding nothing is what lets the fan-out's rollback stay
+the loop's work, a half-bound listener left behind being state the harness cannot
+see and would have to be told about, which is the organ-to-organ arrangement that
+invariant exists to prevent. The relay carrying both directions unread draws the
+same line at the world seam: a gate that read a client's line would be deciding
+something about the turn, which is the harness's domain, and the refusal of an
+unparseable line returning from the harness by the path the line took is that
+decision staying where it belongs.
+
+**What the loop invariant did not reach, and why the line falls there.** Ready
+follows the bind and stopped follows the close are this crate's own sequencing
+inside its own domain, presented at its edge as guarantees the contract states,
+and apex section 5.5 says nothing about what happens inside a domain. The channel
+state's three positions are the representation that makes the refusal mechanical
+rather than the refusal itself, and grounding a representation in an invariant
+about what crosses would read the scope limit backwards. The one claim that
+invariant's presents-nothing-to-any-peer clause would reach here, that this
+process holds a channel with the harness and no other organ's handle, is the same
+claim the organ axiom would reach and is `weaver-harness-Spec`'s to enforce at the
+fork, carrying no record in this document, per section 0.
 
 **Two calls the labelling refused, and why.** The agent uid denied by
 construction is this crate's centerpiece and it grounds in nothing. The
