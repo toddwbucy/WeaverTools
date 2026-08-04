@@ -463,11 +463,19 @@ completed raise and a lower. Those are ordering guarantees a contract is require
 name, so the claim was never internal representation, and a doctrinal argument between
 two Specs was about to decide a question the seam's own governing document answers.
 
-**The order is contract, then charter, then invariant, and a reading is only needed
-where all three are silent.** Reaching for the invariant first inverts the corpus, since
-an invariant binds every crate and a contract binds the two parties that meet at the
-seam. It is also the cheaper check, being one document and one clause rather than a
-comparison across Specs.
+**Where the contract is silent, the answer is to settle it in the contract, not to
+reason around it.** A seam question two parties answer differently is not a hard case
+calling for a ruling. It is an incomplete contract, which apex section 5.3 forbids by
+name: a contract states the ordering guarantees it relies on and provides, and a
+disagreement about ordering is that clause missing. **Settling such a question anywhere
+but the contract leaves the defect in place and adds a second statement of the answer**,
+which is the duplication G5 then has to adjudicate. The obligation runs the other way
+from how it feels in the moment: the disagreement is the finding, and the contract is
+where it is owed.
+
+Reaching for the invariant first inverts the corpus, since an invariant binds every
+crate and a contract binds the two parties that meet at the seam. It is also the cheaper
+check, being one document and one clause rather than a comparison across Specs.
 
 ## 8. What this does not do
 
