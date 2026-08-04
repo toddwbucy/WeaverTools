@@ -83,12 +83,12 @@ decode at the other under two contracts. The plural is the general case.
 tooling is out entirely and stays out, that what this program owns outward is the
 boundary contract a tool is built to fit, that inward what an older reading called an
 internal tool is a function loop located with the control loops in the harness, and
-that the grip is not a reserved slot because its reader exists today. Section 12 states that the gate's far side is experience rather
-than the world, whatever stands out there holding its own contract with the
-environment, and that opacity does three jobs rather than one: confinement, a tool
-call being indistinguishable from any other output, and a boundary that relocates
-because a gate which parsed content would have to know what produced it. Each
-describes what the program already does and none adds a requirement.
+that the grip is not a reserved slot because its reader exists today. Section 12 states
+that the gate's far side is experience rather than the world, whatever stands out there
+holding its own contract with the environment, and that opacity does three jobs rather
+than one: confinement, a tool call being indistinguishable from any other output, and a
+boundary that relocates because a gate which parsed content would have to know what
+produced it. Each describes what the program already does and none adds a requirement.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
