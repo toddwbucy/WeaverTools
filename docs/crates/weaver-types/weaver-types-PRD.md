@@ -61,6 +61,11 @@ reporting seam because the harness authors all of them into one event kind.
 the model binding carries the devices a model is assigned to, a set rather than
 one because tensor parallelism is in scope from the start, the operator
 assigning and no crate selecting.
+**Revised:** 2026-08-04, G4's third half, per the operator's rulings of this date.
+Section 2.1 states which fields a contract draws and why the other four are internal
+rather than owed, each with its reader named, and states that definitions and their
+coding are sequenced separately: the graph maps the documented set whole, roadmap
+included, and the first coding run is scoped against the graph after it exists.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -268,8 +273,29 @@ argument the floor's structure rests on is prose the graph cannot see.
 
 Each field is a vocabulary node this crate defines and the artifact holds, because a
 contract's clause draws a field rather than the whole file and an edge needs
-something to point at. The six records above are the six fields this section
-lists, so a clause naming a seventh has no target and the mapping says so.
+something to point at.
+
+**Which fields a contract draws, and why the rest are internal rather than owed.** Two
+are drawn: `model-binding` by `weaver-harness-spu-contract` and `gate-instruction` by
+its two contracts. The other four are read from the artifact rather than across a
+seam, which `weaver-admin-PRD` section 3 distinguishes in its own words, a field read
+out of a file and a definition drawn by a contract being answerable to different
+checks. `trace-sink` is consumed by admin at load, demanded into this section by
+`weaver-admin-operator-contract` and named by the builder-extension ruling as the
+un-freezable bound admin holds. `permission-mode` elects the floor's mode vocabulary,
+which is the argument the two-crate floor rests on, and the harness reads the mode.
+`tool-set` elects `tool-trait` by the same argument, and its element shape arrives
+with the tool workflow. `residual-readout-election` is judged by the SPU at admission,
+per apex section 4's definition of done and that Spec's admit test.
+
+**The definitions and their coding are sequenced separately, per the operator's ruling
+of 2026-08-04.** The graph maps the documented set whole, and material whose coding
+follows loop 0, the readout above all, is roadmap the graph carries rather than a
+commitment the first build answers for. What the first coding run builds is scoped
+against the graph after it exists, and the per-binary registration of section 2.1
+already makes the config surface honest at every stage: a binary that does not
+register a field does not carry it. The six records above are the six fields this
+section lists, so a clause naming a seventh has no target and the mapping says so.
 
 There is no `writes` edge from any crate, because the writer is the operator and the
 operator is not a node the graph carries. Both crates that touch the file declare
