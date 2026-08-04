@@ -97,12 +97,11 @@ domains, and the overflow refusal, whose reason is that what a full context mean
 the harness's to decide and not this crate's. Prose lands at both clauses. Section
 10 states where the invariant stops, this crate's interior being outside it by that
 section's own scope limit, and names the two candidates refused, the envelope's
-confinement and the descriptor count check. Eleven edges from nine of the
-fifty-eight records now, four to the contract invariant, three to the socket
-invariant, three to the loop invariant, and one to the organ invariant, with
-forty-nine grounding in nothing. Section 10's two readings of the apex as four
-invariants become five. No record moves, no tag changes, and no assertion is added
-or removed.
+confinement and the descriptor count check. Twelve edges from nine of the fifty-eight
+records now, four to the contract invariant, four to the socket invariant, three to the
+loop invariant, and one to the organ invariant, with forty-nine grounding in nothing.
+Section 10's two readings of the apex as four invariants become five. No record moves,
+no tag changes, and no assertion is added or removed.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -249,11 +248,16 @@ and ended by leaving the answer to the decode workflow, and the decode workflow
 changed it: the framing ruling of 2026-08-02 has the family library rendering
 the harness's canonical messages, and
 `weaver-harness-spu-decode-contract` section 7 draws the message model from
-`weaver-traits` into this crate accordingly. The link follows the draw, per
-apex section 5.3, which is what makes the party list checkable against the
-dependency graph. `provider-trait` is still not implemented here and the
-charter's reasoning for that stands untouched: the abstraction lives at the
-harness's composition root, on the far side of this seam's transport.
+`weaver-traits` into this crate accordingly. The link follows the draw, per apex section
+5.3, which is what makes the party list checkable against the dependency graph. **This
+record carries both floor edges.** That the crate links the floor at all is 5.1's, the
+floor being shared vocabulary a socket cannot carry, and that `weaver-traits` in
+particular is linked is 5.3's, the draw determining the set. The feature the
+`weaver-types` link is taken without grounds in nothing, being a build election that
+would read the same under any invariant, per 5.1 as corrected on 2026-08-04.
+`provider-trait` is still not implemented here and the charter's reasoning for that
+stands untouched: the abstraction lives at the harness's composition root, on the far
+side of this seam's transport.
 
 ```graph
 node: spu-two-floor-links-types-without-config
@@ -263,6 +267,10 @@ tag: manifest
 edge: asserts
 from: weaver-spu
 to: spu-two-floor-links-types-without-config
+
+edge: grounds
+from: spu-two-floor-links-types-without-config
+to: axiom-floor-is-vocabulary-behavior-is-socket
 
 edge: grounds
 from: spu-two-floor-links-types-without-config
@@ -1587,10 +1595,9 @@ was left behind, a test being unable to detect its own absence. Whether the
 comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
 
-**Which invariant each claim serves, and why most serve none.** Eleven `grounds`
-edges run from nine of the fifty-eight: four to
-`axiom-contract-is-a-complete-interface`, three to
-`axiom-floor-is-vocabulary-behavior-is-socket`, three to
+**Which invariant each claim serves, and why most serve none.** Twelve `grounds` edges
+run from nine of the fifty-eight: four to `axiom-contract-is-a-complete-interface`, four
+to `axiom-floor-is-vocabulary-behavior-is-socket`, three to
 `axiom-harness-integrates-by-the-loop`, and one to
 `axiom-organ-and-submodule`, the two out-of-order refusals carrying two edges each
 because the contract states the ordering and the loop is answerable for that
