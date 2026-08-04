@@ -89,6 +89,11 @@ holding its own contract with the environment, and that opacity does three jobs 
 than one: confinement, a tool call being indistinguishable from any other output, and a
 boundary that relocates because a gate which parsed content would have to know what
 produced it. Each describes what the program already does and none adds a requirement.
+**Revised:** 2026-08-04, the tool axes. Section 4 states that initiation
+and dispatch are separate questions and that neither is answered by where a capability
+sits, which the section already implied by calling autonomic action harness-initiated
+and protoautonomic a model-elected call. The vision's section 6 carried the older
+inside-versus-outside cut and is re-cut against this in the same act.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -243,8 +248,17 @@ A proto-stateful agent that:
 Autonomic action, in the sense this program reserves the word, is
 harness-initiated and out of scope here. Protoautonomic names the mechanic
 alone, a model-elected call whose result the harness supplies deterministically,
-and it makes no claim about the finished behavior. A tool call that requires
-retained state to decide when to fire belongs to the later stateful program.
+and it makes no claim about the finished behavior. A tool call that requires retained
+state to decide when to fire belongs to the later stateful program.
+
+**Initiation is what these words name, and dispatch is a separate question.** Whether
+an action was elected or initiated is settled by who moved first, which the trace
+records, so it is a fact rather than a reading. Where the harness then routes it,
+inward to the organ whose domain it belongs to or outward through the gate as
+ordinary output, follows from what the action is for and changes nothing about what
+it was. **Neither question is answered by where the capability sits**, and an action
+that reaches a network is classified by who moved first exactly as one that never
+leaves the process is. `weaver-tools-vision` section 6 works the cross of the two.
 
 ## 5. The five invariants
 

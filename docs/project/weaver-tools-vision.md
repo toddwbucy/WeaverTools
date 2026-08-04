@@ -17,6 +17,13 @@ return the same day, section 7's orchestration sentence splits its verb: the
 binary carries the organs and the configuration declares the bindings, one
 word having read against the compiled-not-configured ruling landing in the
 same act.
+**Revised:** 2026-08-04, the tool section re-cuts onto two axes, per the operator.
+The earlier cut ran initiation and dispatch together as one inside-versus-outside
+axis, which cannot classify a memory lookup that reaches a database over a network
+and which the apex already avoids, calling the calculator a model-elected call and
+reserving autonomic for harness-initiated action. Initiation is now the primary axis
+and dispatch the second, the four corners are named with one of them empty, and the
+elected-inward corner carries a latency requirement rather than a taxonomy note.
 **Document ID:** `weaver-tools-vision`
 **Editorial:** ASCII, no em-dashes, no semicolons.
 
@@ -234,24 +241,63 @@ cannot reach the file. Confinement is not a policy layered on top. It is the OS
 trust model the agent inherits as an ordinary user, and the home directory is the
 whole of what that user owns.
 
-Two tool classes exist and the word tool must not blur them. An internal tool is
-constitutive of the agent, an organ function reached inside the body: the
-protoautonomic calculator is one, an autonomic memory lookup is another, and
-their calls are the harness's interior dispatch, never gate traffic. An external
-tool is the agent engaging the world, a call over the network, a database API, a
-hand reaching outside the body, and the paragraph below is about these alone.
-Which class a given capability belongs to, and how external dispatch is
-chartered, is the token workflow's question and is deliberately not settled here.
+**Two questions hide inside the word tool and they are independent.** Who initiated
+the action, and where it was dispatched. An earlier cut of this section ran them
+together as one inside-versus-outside axis, which cannot classify the ordinary case
+of a memory lookup that reaches a database over a network, and which the apex already
+avoids: `WeaverTools-PRD` section 4 calls the calculator **a model-elected call whose
+result the harness supplies deterministically**, and reserves autonomic for
+**harness-initiated** action.
 
-An external tool is external to the agent, not constitutive of it. Its call
-leaves as
-ordinary model output, crossing the gate opaque and logged, and the harness owns
-dispatch on the far side, so the gate never distinguishes a tool call from any
-other output. The return is symmetric: the result re-enters through the gate,
-opaque and logged, and reaches the model only as part of the next prompt.
-Outbound reach to other machines, over SSH or any other means the agent's
-credentials permit, is ordinary user capability on the OS trust model rather than
-a crate surface, so the rule that no crate exposes a network surface stands
+**Initiation is the primary axis.** An action is elected when the model emits it as
+ordinary output, and autonomic when the loop fires it because a condition the loop
+set was met. Nothing about where the work happens enters that judgment, and the
+judgment is a fact about the trace rather than a reading: the trace shows who moved
+first.
+
+**Dispatch is the second axis and it is a consequence.** The harness routes an
+elected action inward to the organ whose domain it belongs to, or outward through the
+gate as ordinary output. Autonomic action is dispatched by the loop that fired it,
+usually inward, to the organ whose condition was met.
+
+The two axes cross rather than nest, and the corners are all occupied except one:
+
+- **Elected and dispatched inward.** The protoautonomic calculator. The model asks,
+  the harness answers deterministically, and nothing crosses the gate.
+- **Elected and dispatched outward.** A bash tool, a database client, an API call.
+  The model asks and the gate carries it, opaque, as any other output.
+- **Autonomic and dispatched inward.** A memory surfacing because the loop's
+  condition was met, entering the decoder's path without the model having asked.
+- **Autonomic and dispatched outward** is the empty corner. The loop reaching the
+  world unprompted is out of scope with the rest of autonomic action.
+
+**Why initiation rather than location.** It classifies the hard case, since a
+networked autonomic lookup is autonomic by initiation and unclassifiable by location.
+It is checkable, since who moved first is in the record. And it survives the boundary
+moving: encapsulate this whole body inside a larger one and every location claim
+flips at once, while every initiation claim stays true.
+
+**One consequence is a latency requirement rather than a taxonomy note.** An elected
+inward action must not leave the body, because an agent that reasons its way to
+asking what it remembers should get an answer at close to the speed of the same
+memory surfacing autonomically. Both ride the organ's own channels. Neither is gate
+traffic, and a design that sent elected recall out through the gate and back would be
+bounded by the world for an answer that never left the machine.
+
+How dispatch is chartered for the outward case remains the token workflow's question.
+Which corner a given capability sits in is no longer a question at all, which is what
+changing the axis bought.
+
+**The outward corner, elected and dispatched through the gate, is what the rest of
+this section is about.** A tool there is external to the agent and not constitutive
+of it, and this program builds none of them: what it owns is the grip they are built
+to fit, per `WeaverTools-PRD` section 9. Its call leaves as ordinary model output,
+crossing the gate opaque and logged, and the harness owns dispatch on the far side, so
+the gate never distinguishes a tool call from any other output. The return is symmetric:
+the result re-enters through the gate, opaque and logged, and reaches the model only as
+part of the next prompt. Outbound reach to other machines, over SSH or any other means
+the agent's credentials permit, is ordinary user capability on the OS trust model rather
+than a crate surface, so the rule that no crate exposes a network surface stands
 untouched, because nothing listens.
 
 Stated at the level of the program, this is the Level A claim in operational dress:
