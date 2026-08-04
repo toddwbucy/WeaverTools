@@ -406,14 +406,9 @@ It is the organ whose domain is coordination, so the hub is what it is rather th
 shape it elected, and no efficacy argument reaches it. Every other organ is a spoke
 by construction and cannot trade that away.
 
-**The hub and spoke model is the core, and other organs should mirror it in their own
-operations where it serves them.** A submodule reaching its organ, a family library
-reaching its loader, an interior fan-out and its returns: each is the same shape one
-level down, and an organ adopting it inherits an argument already made rather than
-inventing one. This is a should and not a must. The invariant binds the program's
-topology and not an organ's interior, so an organ that departs from the model on
-efficacy or need answers to its own Spec rather than to this section, and says why
-there.
+**Whether an organ mirrors this shape inside its own domain is section 5.5's, not
+this section's.** The topology here is fixed. What an organ does one level down is a
+question about integration and is answered where integration is.
 
 Section 6 already names organs and the harness as the coordinating center, and
 5.1 already carries the floor half of the same three-way distinction. This
@@ -450,8 +445,9 @@ to point B correctly and at the right time. Correctly means the vocabulary each 
 names, in the direction that contract states. At the right time means the ordering each
 contract relies on still holds when two organs' orderings have to be reconciled against
 each other, which no organ can do from inside its own domain, because no organ can see
-the other's. **Reconciliation is the loop's work by construction and not by
-convention.**
+the other's. **Reconciliation across domains is the loop's work by construction and not
+by convention.** Reconciliation inside one domain is the organ's own and this section
+does not reach it.
 
 **So a conflict between organs is settled in the contracts they hold with the harness.**
 There is no organ-to-organ contract to settle it in, by 5.4, and no other party sees
@@ -459,6 +455,28 @@ both sides. A seam question two organs answer differently is not a hard case cal
 a ruling, it is an incomplete contract, which 5.3 forbids by name. The obligation runs
 toward the contract rather than away from it, and Document Format section 7 states the
 order a reader follows.
+
+**This invariant binds what crosses between domains and says nothing about what
+happens inside one.** An organ integrates its own parts however its domain demands,
+and it may well arrive at this same shape one level down, a submodule reaching its
+organ and an interior loop making the organ's parts one thing. That is emulation and
+not obligation. An organ that adopts the pattern inherits an argument already made,
+and an organ that departs from it answers to its own Spec and says why there.
+
+**Demand is the pressure and the domain is where it acts.** An organ develops as its
+domain's demands dictate, the way an organism develops under selection, and the shape
+it arrives at is answerable to those demands rather than to this section. What the
+program fixes is the environment that development happens in, which is the harness's
+form and the contracts at each organ's edge. **The harness's form is not negotiable
+for the same reason the environment is not: it is what the organs develop against,
+not an organism developing alongside them.** An environment that changed shape under
+the same pressure would leave nothing for anything to adapt to, and every organ would
+be adapting to every other organ's adaptations, which is the peer coupling 5.4 forbids
+arriving by a slower route.
+
+So the constraint is narrow and it is the whole of it. What an organ exposes is its
+contract. What crosses between organs is the loop's. **Everything else inside a domain
+is that domain's to evolve.**
 
 ```graph
 node: axiom-harness-integrates-by-the-loop
