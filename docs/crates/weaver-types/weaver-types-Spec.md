@@ -71,6 +71,13 @@ discipline the six followers inherit is stated by being correct here: a fence
 line carries nothing else. Section 0's boilerplate names its one exception, the
 shared tagging test's second edge, and settles the traits Spec's mirroring
 clause with it.
+**Revised:** 2026-08-03, the labelling pass, first of the seven and the pilot.
+Seven `grounds` edges land beside the records that carry them, five to the socket
+invariant and two to the contract invariant, per Document Format v0.11 sections 3
+and 4. Section 5 states the test the pass applied, whether the axiom is the reason
+the claim exists, and states that ten claims grounding in nothing is the expected
+result for a floor crate rather than a gap. No record moves, no tag changes, and
+the assertion count is unchanged at seventeen.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -143,6 +150,10 @@ edge: asserts
 from: weaver-types
 to: types-one-floor-link
 
+edge: grounds
+from: types-one-floor-link
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: types-no-socket-no-runtime-no-io
 kind: assertion
 tag: manifest
@@ -150,6 +161,10 @@ tag: manifest
 edge: asserts
 from: weaver-types
 to: types-no-socket-no-runtime-no-io
+
+edge: grounds
+from: types-no-socket-no-runtime-no-io
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The feature gate is thinness applied where the floor is widest.** Every crate in
@@ -300,6 +315,10 @@ tag: review
 edge: asserts
 from: weaver-types
 to: types-trace-sink-discriminated
+
+edge: grounds
+from: types-trace-sink-discriminated
+to: axiom-contract-is-a-complete-interface
 ```
 
 **`File` and `Pipe` carry a creation flag and `Socket` does not, and the
@@ -470,6 +489,10 @@ tag: compile-fail
 edge: asserts
 from: weaver-types
 to: types-peer-identity-no-deserialize
+
+edge: grounds
+from: types-peer-identity-no-deserialize
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The threat walk.** This Spec names the adversary each security mechanism
@@ -679,6 +702,10 @@ tag: compile-pin
 edge: asserts
 from: weaver-types
 to: types-wire-enums-exhaustive
+
+edge: grounds
+from: types-wire-enums-exhaustive
+to: axiom-contract-is-a-complete-interface
 ```
 
 An earlier draft of this Spec carried the
@@ -835,6 +862,10 @@ edge: asserts
 from: weaver-types
 to: types-socket-seqpacket
 
+edge: grounds
+from: types-socket-seqpacket
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: types-envelope-bound-64k
 kind: assertion
 tag: review
@@ -842,6 +873,10 @@ tag: review
 edge: asserts
 from: weaver-types
 to: types-envelope-bound-64k
+
+edge: grounds
+from: types-envelope-bound-64k
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 ## 5. What is enforced, and by which instrument
@@ -872,6 +907,28 @@ apex's enforcement section exists to prevent.
 **Enforced by the manifest.** No socket crate, no runtime, no I/O in the
 dependency tree, checked as `weaver-traits-Spec` section 7 checks its own, by a
 build-time assertion over the resolved external tree rather than by H2.
+
+**Which invariant each claim serves, and why most serve none.** Seven of the
+seventeen carry a `grounds` edge, five to
+`axiom-floor-is-vocabulary-behavior-is-socket` and two to
+`axiom-contract-is-a-complete-interface`. The other two axioms take nothing from
+this crate: the floor states no claim about a turn key, and it is not an organ.
+**The test applied is whether the axiom is the reason the claim exists.** Remove
+the socket invariant and this crate has no reason to elect a socket type, no
+reason to bound an envelope, and no reason to withhold a deserializer from a
+credential, so those three ground in it. Remove it and the config format is still
+YAML, the names are still kebab-case, and the parse is still total, so those three
+ground in nothing. **Ten claims grounding in no invariant is the expected result
+and not a gap**, per Document Format section 4: a floor crate is mostly
+representation, and representation is what the invariants are not about.
+
+The two edges to the contract invariant are the ones worth stating rather than
+leaving to be read. The wire enums are exhaustive so that every case a contract
+can return reaches a match loudly, which is that invariant's completeness enforced
+at the type level rather than asserted in prose. The sink is a discriminated shape
+rather than a bare path for the same reason at the vocabulary layer: a bare path
+is vocabulary without meaning, and the consumer would have to guess what the
+operator meant, which is the guess the discriminant exists to refuse.
 
 **Where the assertion records sit, and which of these this crate declares.**
 The records are at the clauses that argue the claims, across sections 1 through
