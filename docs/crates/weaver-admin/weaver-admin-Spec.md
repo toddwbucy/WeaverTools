@@ -57,6 +57,29 @@ of the boundary election and never the election's own reason. Thirty-six
 records now, eighteen from section 10's sorting and eighteen from the
 elections. The election itself stays `weaver-types-Spec`'s and is deferred to
 rather than restated.
+**Revised:** 2026-08-03, a fourth entry this date, the labelling pass. Twelve
+`grounds` edges land beside the records that carry them, eight to the socket
+invariant, two to the contract invariant, and two to the organ invariant, per
+Document Format v0.11 sections 3 and 4. Section 10 states the test the pass
+applied, whether the axiom is the reason the claim exists, names the join-key
+invariant as taking nothing from a crate whose every message belongs to no turn,
+and states that twenty-four claims grounding in nothing is the expected result
+rather than a gap. Section 2's socket election and section 7's listener closure
+carry the prose their edges need, the first because it grounds in the contract
+invariant where the coordination channel grounds in the socket one. No record
+moves, no tag changes, and the assertion count is unchanged at thirty-six.
+**Revised:** 2026-08-03, a fifth entry this date, the grounding pass for the
+apex's fifth invariant. Three `grounds` edges land to
+`axiom-harness-integrates-by-the-loop`, at the stop answer's relay, at the
+device check, and at the operations log's supervision bound, per Document
+Format v0.13 sections 3 and 4. **One edge moves.** The stop answer's edge to
+the organ invariant becomes an edge to the integration one, the labelling pass
+having placed it at the nearest section the apex then held about domains, and
+the device check keeps its organ edge and gains a second beside it. Thirteen of
+the thirty-six records now carry a grounding and they carry fourteen edges
+between them, twenty-three claims grounding in nothing. Section 10 argues the
+move and names the ordering claim this pass declined. No record is added or
+removed and no tag changes.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -124,6 +147,10 @@ tag: review
 edge: asserts
 from: weaver-admin
 to: admin-no-library-surface
+
+edge: grounds
+from: admin-no-library-surface
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **Layout.** One module per obligation.
@@ -165,6 +192,10 @@ tag: manifest
 edge: asserts
 from: weaver-admin
 to: admin-one-floor-link-types-config
+
+edge: grounds
+from: admin-one-floor-link-types-config
+to: axiom-floor-is-vocabulary-behavior-is-socket
 
 node: admin-no-direct-traits-line
 kind: assertion
@@ -227,6 +258,14 @@ same way the two envelope layouts were: the organ channel has no in-band
 framing and buys boundaries from the type, this surface has in-band framing
 from its contract and buys nothing from packet boundaries.
 
+**This record grounds in the contract invariant and not in the socket one.**
+What decides the type here is that the contract already fixes the framing
+completely, so what this Spec elects is a type that carries that framing and
+adds nothing under it. The socket invariant settles that this seam is a socket
+and authenticates its peer, and it leaves the choice between the two types
+open, which is why the coordination channel's opposite election is argued from
+boundaries and this one is not.
+
 ```graph
 node: admin-operator-socket-stream
 kind: assertion
@@ -235,6 +274,10 @@ tag: review
 edge: asserts
 from: weaver-admin
 to: admin-operator-socket-stream
+
+edge: grounds
+from: admin-operator-socket-stream
+to: axiom-contract-is-a-complete-interface
 ```
 
 **The socket lives in an admin-owned directory the operator's group can
@@ -267,6 +310,10 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-surface-refuses-at-accept
+
+edge: grounds
+from: admin-surface-refuses-at-accept
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **A peer that fails the predicate is refused by closure, unanswered, and the
@@ -284,6 +331,10 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-refusal-by-closure-unanswered
+
+edge: grounds
+from: admin-refusal-by-closure-unanswered
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **One thread per accepted connection, requests served serially within it.**
@@ -340,6 +391,10 @@ tag: review
 edge: asserts
 from: weaver-admin
 to: admin-surface-carries-no-envelope
+
+edge: grounds
+from: admin-surface-carries-no-envelope
+to: axiom-contract-is-a-complete-interface
 ```
 
 ## 3. The verbs, the fleet state, and rollback
@@ -424,6 +479,16 @@ deciding what a stop found are different acts, the second is the harness's,
 and a relay that translated the answer would be admin ruling on a run it does
 not conduct.
 
+**This record's edge moves to the integration invariant.** The labelling pass
+placed it at `axiom-organ-and-submodule`, that being the nearest thing the apex
+then held to a statement about domains, and apex section 5.4 settles what an
+organ is rather than what an organ is answerable for. This claim turns on the
+second question. An organ is answerable for its own domain and for nothing
+outside it, per apex section 5.5, and what a stop found is a fact about a run
+the harness conducts. A translated answer is the organ starting to reason about
+a domain that is not its own, which is the harm that section states as its own
+reason for existing.
+
 ```graph
 node: admin-stop-answer-relayed-unchanged
 kind: assertion
@@ -432,6 +497,10 @@ tag: review
 edge: asserts
 from: weaver-admin
 to: admin-stop-answer-relayed-unchanged
+
+edge: grounds
+from: admin-stop-answer-relayed-unchanged
+to: axiom-harness-integrates-by-the-loop
 ```
 
 **Rollback is the reap plus one directive, as data.** What a failed load can
@@ -515,6 +584,14 @@ here and that is what makes stating its absence worth the sentence: an admin
 that verified the GPU would be the second arbitrator ruling C removed,
 reintroduced as a convenience.
 
+**This record grounds in the integration invariant as well, and the two edges
+are separate reasons.** That the device has one authority is the domain
+partition `axiom-organ-and-submodule` draws, and it is what gives the question
+somewhere else to belong. That admin forms no view of it anyway is apex section
+5.5's bound, an organ being answerable for its own domain and for nothing
+outside it, with what the device can carry reaching a load through the harness
+rather than through a second check here.
+
 ```graph
 node: admin-checks-no-device
 kind: assertion
@@ -523,6 +600,14 @@ tag: review
 edge: asserts
 from: weaver-admin
 to: admin-checks-no-device
+
+edge: grounds
+from: admin-checks-no-device
+to: axiom-organ-and-submodule
+
+edge: grounds
+from: admin-checks-no-device
+to: axiom-harness-integrates-by-the-loop
 ```
 
 **The allow-list is consulted before anything else is touched.** The agent
@@ -721,6 +806,10 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-one-write-is-one-read
+
+edge: grounds
+from: admin-one-write-is-one-read
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The channel is built in four acts, the acts straddle the unit's start, and
@@ -770,6 +859,15 @@ the search bit already does. Section 10's fourth walk tests the credential
 check and its first walk tests the closure, so both are behaviours with a
 perturbation behind them rather than elections.
 
+**Both records ground in the socket invariant, and the closure does so for a
+reason worth stating.** The credential check is that invariant's named mechanism
+at a channel reached by a path. The closure is what leaves possession meaning
+something at this channel: an elected tool running as the agent uid passes the
+credential check, being the uid the check expects, and what refuses it is that
+no listener remains to answer a second dial. The 0700 directory of the
+paragraph above is a fence in front of the check rather than the check itself,
+so it takes no edge.
+
 ```graph
 node: admin-coordination-peer-credential-checked
 kind: assertion
@@ -779,6 +877,10 @@ edge: asserts
 from: weaver-admin
 to: admin-coordination-peer-credential-checked
 
+edge: grounds
+from: admin-coordination-peer-credential-checked
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: admin-listener-closed-after-one-accept
 kind: assertion
 tag: perturbation
@@ -786,6 +888,10 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-listener-closed-after-one-accept
+
+edge: grounds
+from: admin-listener-closed-after-one-accept
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The receive discipline is the shared obligation.** The receive buffer is
@@ -804,6 +910,10 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-truncation-is-a-channel-fault
+
+edge: grounds
+from: admin-truncation-is-a-channel-fault
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The enter directive and its ancillary payload are one message.** The
@@ -873,6 +983,15 @@ one has found a defect. The instrument is named in that sentence and is the
 only one available, no mechanism being able to tell a line about supervision
 from a line about conduct.
 
+**The line between supervision and conduct is a domain line, and that is what
+this record grounds in.** What an agent did is a fact about the working the
+harness is answerable for, and the trace is where that working is recorded. A
+line describing conduct would make this crate a second author of an account it
+sees only a part of, which is an organ reasoning about a domain that is not its
+own, per apex section 5.5. What stays is supervision, which is this crate's own
+domain: the transitions it directed, the refusals it issued, and the units it
+started and stopped.
+
 ```graph
 node: admin-log-never-records-agent-conduct
 kind: assertion
@@ -881,6 +1000,10 @@ tag: review
 edge: asserts
 from: weaver-admin
 to: admin-log-never-records-agent-conduct
+
+edge: grounds
+from: admin-log-never-records-agent-conduct
+to: axiom-harness-integrates-by-the-loop
 ```
 
 **Retention and rotation are deferred with a named settler.** The charter
@@ -972,6 +1095,88 @@ floor-link under gate H2, and no direct `weaver-traits` line exists, which
 is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
+
+**Which invariant each claim serves, and why most serve none.** Thirteen of the
+thirty-six carry a `grounds` edge and those thirteen carry fourteen edges, one
+record grounding in two invariants. Eight run to
+`axiom-floor-is-vocabulary-behavior-is-socket`, two to
+`axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
+and three to `axiom-harness-integrates-by-the-loop`.
+**The test applied is whether the axiom is the reason the claim exists, or
+whether the claim is a precondition of the axiom's own stated reason,** per
+Document Format v0.12 section 4. Remove the socket invariant and this crate has
+no reason to publish no library and no reason to hold one internal dependency,
+no credential is read at either accept, and no envelope has to arrive whole or a
+truncation to count as a fault, so those eight ground in it. Remove it and the
+log is still NDJSON, the FIFO still opens nonblocking, the inventory still
+repairs nothing, and the identity is still built from the validated name, so
+those ground in nothing.
+**Twenty-three claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: most of what this Spec elects is a
+rendering, a mode, an ordering, or a route, and representation is what the
+invariants are not about.
+
+**`axiom-join-key-travels-with-the-work` takes nothing from this crate,** and
+the reason is that invariant's own scope rather than an oversight in this pass.
+A lifecycle directive belongs to no turn and carries no turn key, and every
+message this crate sends is one, so there is no seam here at which the key
+travels. The trace this crate opens a sink for is written by the harness and
+admin authors no event in it.
+
+The two edges to the contract invariant are the operator surface's, and they
+are where this crate's two seams part company. The surface is `SOCK_STREAM`
+because its contract fixes the framing completely and a boundary-preserving type
+would carry a second framing under the first, and it carries no envelope because
+the contract draws none, an explicit nothing being what that invariant makes an
+assertion rather than a silence. The coordination channel's opposite election is
+`weaver-types-Spec`'s record and grounds there. What lands here is the conduct
+at it, one write read as one message and a truncation read as a fault, and both
+of those ground in the socket invariant instead.
+
+The organ invariant keeps one edge and it is the device check's, the device
+having one authority and that authority not being this crate, which is the
+domain partition apex section 5.4 draws.
+
+**The three edges to the integration invariant are this crate's charter
+position stated from the other side.** Admin authorizes and does not execute,
+and the reason it does not is that integrating is the loop's: the stop answer is
+relayed unchanged because what a stop found is a fact about a run the harness
+conducts, the devices a binding assigns are unchecked because forming a view of
+them would be this crate reasoning about a domain it cannot see, and the
+operations log stops at supervision because conduct is recorded in the trace the
+harness authors. The ten owings below are the same rule at the document level.
+
+**One edge moved and one was added beside an existing one.** Both of the organ
+invariant's edges were placed in the labelling pass, before the apex held a
+fifth invariant, and apex section 5.4 was the nearest section then saying
+anything about domains. That section settles what an organ is and apex section
+5.5 settles what an organ is answerable for, and a claim about declining another
+domain's question turns on the second. So the stop relay carries the new edge
+alone, nothing in the classification of organs being a reason to relay an answer
+rather than to read it, and the device check carries both, the single authority
+it defers to being 5.4's partition and the declining being 5.5's bound.
+
+Two calls in the pass are worth a reviewer's eye. The coordination directory's
+0700 grounds in nothing, because what the socket invariant turns on is that a
+peer is known rather than that a stranger cannot resolve a name, per the
+operator contract's own reading that reachability is not the authentication, and
+the listener's closure grounds where the directory does not for the reason
+section 7 states at it. The descriptor routes ground in nothing on the apex's
+own terms: which party creates a pair and how a far end travels to the process
+that holds it belong to the contract governing that seam and are not the apex's
+to settle, so the declared open and the ancillary payload elect a route the
+invariant left open.
+
+**The sharpest decline against the integration invariant is the published
+state.** Waiting on a ready aggregate reads at first like this crate deferring
+to the harness's domain, and it takes no edge. The aggregate is a value this
+crate's contract delivers, keying on it is what a contract's vocabulary is for,
+and the record written is admin's own and sits wholly inside admin's domain.
+Apex section 5.5 binds what crosses between domains and does not reach what an
+organ does inside one, so an ordering held at the fleet state grounds in
+nothing. The same reading leaves the load's act ordering, the inventory's one
+function, and the one exchange in flight per agent unedged, each of them a
+sequence this crate holds rather than a reconciliation between two domains.
 
 **Where the assertion records sit, and which of these this crate declares.**
 The records are at the clauses that argue the claims, across sections 1
