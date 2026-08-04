@@ -272,7 +272,11 @@ from: weaver-types
 to: types-config-names-kebab
 ```
 
-**Every field is required and absence is a refusal, with the temptation named.**
+**Every field of the declared surface is required and absence is a refusal, with the
+temptation named.** The surface is the union of what the organs register, per
+`weaver-types-PRD` section 2.1, so what is required is a per-binary fact rather than
+one struct's field list, and the refusal is against that surface rather than against a
+fixed type. The property below is unchanged by that and is why the rule exists.
 Charter section 5 rules that absence is never read as a default unless the charter
 says a field is optional and says what its absence means. No field here is
 optional. The residual-readout election is what a builder will reach to default,
@@ -386,10 +390,12 @@ is set, and the boundary is as the operator wrote it, per `weaver-admin-PRD`
 section 4.3. The parse answers well-formed and the checks answer real, and this
 crate owns the first only.
 
-**Unknown fields refuse rather than being ignored**, which `deny_unknown_fields`
-supplies. An ignored field is an operator's declaration silently discarded, and a
-typo in `permission-mode` that parses as an unknown field and vanishes is the
-failure this rejection exists to prevent.
+**A field no organ registered refuses rather than being ignored.** Unknown is measured
+against the declared surface, per `weaver-types-PRD` section 2.1, so a derive that
+denies unknown fields on one fixed type is the mechanism for a fixed surface and not
+for this one. What holds here is the property rather than the derive. An ignored field
+is an operator's declaration silently discarded, and a typo in `permission-mode` that
+parses as an unknown field and vanishes is the failure this rejection exists to prevent.
 
 ```graph
 node: types-unknown-key-refuses

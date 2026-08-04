@@ -150,6 +150,13 @@ this surface adds to the lifecycle's own:
 - the request is malformed, refused before any field is acted on
 - the request names an agent the fleet does not hold
 - the request carries work
+- the config omits a field an organ registered, or carries one no organ registered,
+  refused at load before a process exists, per `weaver-types-PRD` section 2.1
+
+An organ refusing a field it registered and found wrong is not on this list. That
+refusal is the organ's, travels back through the harness as a `lifecycle-refusal` on
+its own seam, and reaches the operator inside the aggregate rather than as admin's own
+answer.
 
 A refusal answers the request that provoked it and closes nothing. The connection
 survives its own refused requests.
