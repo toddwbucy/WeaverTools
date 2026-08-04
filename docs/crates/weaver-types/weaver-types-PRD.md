@@ -114,8 +114,48 @@ the floor in the same act.
 The declarative document that defines an agent. The operator produces it, and both
 `weaver-admin` and the harness read it. Neither crate in this program authors it,
 because creating an agent is an operator act and the file is its declaration, per
-`weaver-admin-PRD` section 1. Admin validates it before a process exists and the
-harness consumes the elections it carries.
+`weaver-admin-PRD` section 1. Admin validates it before a process exists and the harness
+consumes the elections it carries.
+
+**Validation divides by binding time, per the operator's ruling of 2026-08-02.** The
+compiler verifies the frozen half at build, an immutable binary needing no load-time
+check of what it baked, and admin verifies the tunable remainder at load, at whatever
+size the builder left it. Everything baked but a weights location gives admin one field
+to verify. Everything left open gives admin all of it. The earlier
+worker-validates-at-enter sketch is superseded.
+
+**Each organ registers the surface it needs to run, and the registration is declared at
+build.** Admin runs before any organ process exists, so it can never ask one what it
+needs, and the binary's declared surface is therefore emitted at build rather than
+answered at load. The config rides one common syntax: the declared surface is a template
+the operator completes, and a builder's fields extend the same dialect the core uses
+rather than inventing a second.
+
+**So refusal divides three ways and each way has an owner**, per the operator's ruling
+of 2026-08-04:
+
+- **A registered field the config omits is admin's refusal.** The operator learns the
+  file is incomplete before a process exists.
+- **A field the config carries that no organ registered is admin's refusal.** This is
+  the typo case, and it is why an unknown field is refused rather than ignored.
+- **A field present, registered, and wrong is the organ's refusal**, travelling back
+  through the harness as a `lifecycle-refusal` on that organ's own seam. Admin checks
+  presence and needs no domain knowledge to do it. What a good value looks like is the
+  organ's to know, per apex section 5.5, and an organ answering for its own domain is
+  what keeps admin from having to hold a view of every domain at once.
+
+**The file's readers are still admin and the harness and no organ reads it.** An organ
+receives the slice it registered across its own seam, handed to it by the harness at
+enter, which is the integration the loop performs rather than a second reader of the
+operator's declaration.
+
+**What the ruling leaves for the spec round, named rather than implied.** The
+un-freezable bound: knobs admin consumes on its side of the load, `trace-sink` above
+all, cannot be frozen into the worker binary without handing the agent the sink's name.
+The trace-kind parallel: builder event kinds as compile-time extensions, closed
+per-binary the way the config surface is declared per-binary. And the per-seam case:
+each organ contract owes the config-refusal case on its own `lifecycle-refusal` set,
+since the case set is settled per seam rather than in the floor.
 
 **The identifier corrected on 2026-08-01, from `agent-state-file` to
 `agent-config`, on the human's ruling.** The file is configuration, read at load
