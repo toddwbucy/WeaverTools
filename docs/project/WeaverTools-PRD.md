@@ -686,11 +686,18 @@ and nap passes, recall, and any memory substrate. Also out: offline analysis,
 training, and the desktop frontend.
 
 **External tooling is out entirely as well, and stays out.** This program builds no
-tool crate and holds no tool. What it owns is the **grip**: the interface a tool is
-built to be gripped by, which is `weaver-gate-world-contract`. A hammer is not
-installed into a carpenter, it is shaped so a hand can hold it, and the boundary
-contract is that hand stated as a specification. A bash tool, a database client, an
-API caller are all things built to fit the grip and none of them is a crate here.
+tool crate and holds no **external** tool. What it owns is the **grip**: the interface
+a tool is built to be gripped by, which is `weaver-gate-world-contract`.
+
+**The scope on that sentence is load-bearing and the corpus already contradicts the
+flat form.** Section 4's definition of done requires this agent to fire a
+protoautonomic tool call with the calculator as the reference case, so a capability
+the body dispatches inside itself is not merely anticipated, it is required now.
+What this rule reaches is the far side of the grip. A hand grips what is outside it,
+and nothing dispatched inside the body was ever on the far side of anything. A hammer is
+not installed into a carpenter, it is shaped so a hand can hold it, and the boundary
+contract is that hand stated as a specification. A bash tool, a database client, an API
+caller are all things built to fit the grip and none of them is a crate here.
 
 **The grip is not a reserved slot and is the clearest case of the difference.** A
 reserved slot is a shape carried for a reader that does not exist. The grip has a
