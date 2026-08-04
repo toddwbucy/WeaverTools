@@ -302,14 +302,19 @@ crate calling a crate inside one binary.
 **A crate outside the floor links the floor for the reason this section gives, and
 takes from it only what it draws.** The link is licensed here: the floor is shared
 vocabulary and a type definition cannot be sent over a socket, so every consumer links
-it and no consumer is asking it to do anything. Which of its features a consumer takes
-is settled by section 5.3's mechanical consequence, that a party links the crate
-defining what it emits, so a crate drawing no configuration vocabulary takes the floor
-without its configuration feature. **The two halves are one claim and a Spec grounds
-both rather than choosing**, the link here and the selectivity there. A Spec whose
-clause argues only the link carries the one edge, and a Spec that argues the
-selectivity as well carries both, which is what lets a crate expand the general
-statement locally without inventing a different reason for the same shape.
+it and no consumer is asking it to do anything. **Which floor crates it links follows
+from what it draws**, per section 5.3's mechanical consequence that a party links the
+crate defining what it emits, which is what makes the party list checkable against the
+dependency graph. So a Spec whose clause argues only that it links the floor carries the
+one edge here, and a Spec whose clause argues that a particular floor crate is linked
+because a contract draws from it carries that one too.
+
+**Which features a floor link is taken with grounds in nothing.** It is a build
+election that would read the same under any invariant, and a crate takes the
+configuration feature or leaves it because of what that crate does rather than because
+of anything this section or 5.3 requires. Stated because the shape invites the opposite
+reading: a feature named for what the crate does not draw looks like the draw rule
+speaking, and it is not.
 
 This invariant is what makes statefulness a feature add rather than a
 re-architecture. Memory behind a socket is a new socket, a new contract, and a
