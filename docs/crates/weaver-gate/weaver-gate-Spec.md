@@ -247,6 +247,10 @@ edge: asserts
 from: weaver-gate
 to: gate-dumpable-flag-cleared
 
+edge: grounds
+from: gate-dumpable-flag-cleared
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: gate-channel-end-close-on-exec
 kind: assertion
 tag: review
@@ -307,6 +311,10 @@ tag: compile-pin
 edge: asserts
 from: weaver-gate
 to: gate-channel-state-three-positions
+
+edge: grounds
+from: gate-channel-state-three-positions
+to: axiom-contract-is-a-complete-interface
 ```
 
 **Closure is death, and the response is the charter's.** A read that returns
@@ -628,11 +636,16 @@ axiom is the reason the claim exists.** Remove the socket invariant and this
 crate has no reason to authenticate at accept, no reason to elect a socket
 type for the world seam, no reason to carry a truncation obligation, and no
 reason to confine socket creation to one site, so those ground in it. Remove
-it and the dumpable flag is still cleared, the descriptors are still owned
-types, and the parent-death signal is still elected, so those ground in
-nothing. Remove the contract invariant and the channel state is still three
-positions in a type, how a party represents its state internally appearing
-in no contract by that invariant's own sentence. **Twelve claims grounding
+it and the descriptors are still owned types and the parent-death signal is
+still elected, so those ground in nothing. **Two claims this act first refused
+are grounded on the operator's rulings of this date.** The dumpable flag holds
+a premise the socket invariant argues from rather than a rule it states, which
+is the second grounding relation Document Format section 4 now names. The
+channel state grounds in the contract invariant because
+`weaver-harness-gate-contract` section 3 states the ordering outright, that
+lower is last and terminal and that turn exchanges are valid only between a
+completed raise and a lower, so the claim was never the internal
+representation that invariant excludes. **Ten claims grounding
 in no invariant is the expected result and not a gap**, per Document Format
 section 4: most of what this document elects is a representation, a
 placement, or a hygiene set the charter's walks argue, and representation is
@@ -669,13 +682,16 @@ construction is this crate's centerpiece and it grounds in nothing. The
 socket invariant protects the second party knowing who the first is, which
 the credential at accept discharges in full, and what the boundary then does
 with that knowledge is the charter's reference walk rather than the
-invariant's. The two hygiene sets go the same way. Clearing the dumpable flag
-and setting close-on-exec on the channel end defend this process against an
-attach and against a compromise's exec, which is the second walk's ground and
-the charter's section 7, and the seam's identity property stands or falls
-with the credential either way. Both were weighed on the removal test rather
-than on proximity to a socket, since a claim near a seam is not a claim the
-seam's invariant argues.
+invariant's. **The two hygiene sets do not go the same way, and the sentence this act
+first wrote here answered for the wrong seam.** This process holds two seams of
+different kinds. The world socket is named and its identity property does stand
+or fall with the credential. The channel end at descriptor 3 is an unnamed pair
+with no credential at all, authenticated by possession, and the socket invariant
+rests that case on a premise rather than a rule: no third party can reach a
+socket that has no address. A same-uid process reaches it through this process's
+own descriptor table unless the flag is cleared, so clearing it holds the premise
+true and grounds on the second relation. The channel end's close-on-exec is
+review's by election, per section 6, and grounds on the same footing.
 
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
