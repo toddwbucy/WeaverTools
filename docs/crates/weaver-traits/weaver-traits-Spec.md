@@ -33,6 +33,16 @@ this date and Document Format v0.10 section 3: the two halves of a divided claim
 both count as the enforcement section's, neither having been elected and one
 having been divided out of a bullet that section already carried. No record
 moves and no tag changes, only the provenance the counts report.
+**Revised:** 2026-08-03, the labelling pass, per Document Format v0.11 sections 3
+and 4. Six `grounds` edges land beside the records that carry them, all six to
+`axiom-floor-is-vocabulary-behavior-is-socket`, the other three axioms taking
+nothing from a floor crate that holds no turn key, is not an organ, and settles
+no contract's completeness. Section 7 states the test the pass applied, whether
+the axiom is the reason the claim exists, states the four edges a reader would
+otherwise reconstruct and the two neighbouring absences that take none, and
+records that sixteen claims grounding in nothing is the expected result rather
+than a gap. No record moves, no tag changes, and the assertion count is unchanged
+at twenty-two.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
@@ -128,6 +138,10 @@ tag: manifest
 edge: asserts
 from: weaver-traits
 to: traits-no-async-runtime
+
+edge: grounds
+from: traits-no-async-runtime
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 
@@ -144,6 +158,10 @@ tag: manifest
 edge: asserts
 from: weaver-traits
 to: traits-no-internal-dependency
+
+edge: grounds
+from: traits-no-internal-dependency
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 
@@ -382,6 +400,10 @@ tag: review
 edge: asserts
 from: weaver-traits
 to: traits-no-adjudicating-method
+
+edge: grounds
+from: traits-no-adjudicating-method
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The relationship to the agent config runs one way.** `weaver-types-PRD` section
@@ -427,6 +449,10 @@ tag: review
 edge: asserts
 from: weaver-traits
 to: traits-tool-boxed-future-send
+
+edge: grounds
+from: traits-tool-boxed-future-send
+to: axiom-floor-is-vocabulary-behavior-is-socket
 
 node: traits-tool-no-safety-classification
 kind: assertion
@@ -480,6 +506,10 @@ tag: review
 edge: asserts
 from: weaver-traits
 to: traits-provider-no-futures-dep
+
+edge: grounds
+from: traits-provider-no-futures-dep
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 
@@ -524,6 +554,45 @@ The no-async-runtime rule is **not** H2, which checks `weaver-*` edges only: it
 takes a build-time assertion over the resolved external tree, a `cargo tree` check
 in the workspace's own automation, and naming it here is what keeps it from being
 a claim nothing runs.
+
+**Which invariant each claim serves, and why most serve none.** Six of the
+twenty-two carry a `grounds` edge and all six run to
+`axiom-floor-is-vocabulary-behavior-is-socket`. The other three axioms take
+nothing from this crate: it makes no claim about a turn key, it is not an organ,
+and the one contract that draws it draws the message model rather than anything
+this Spec settles about representing it. **The test applied is whether the axiom
+is the reason the claim exists.** Remove the floor invariant and this crate has no
+reason to refuse an internal dependency, no reason to keep an async runtime out of
+its manifest, no reason to bound a boxed future with `Send` or to hold `futures`
+off the floor, and no reason to deny `PermissionMode` a method that decides.
+Remove it and the derive set is still the data derives, the tagging test still
+yields the same two shapes, the role set is still three, and the enums are still
+non-exhaustive where the charter says the set grows, so those ground in nothing.
+**Sixteen claims grounding in no invariant is the expected result and not a gap**,
+per Document Format section 4: section 2 of this Spec is named for representation,
+a floor crate is mostly that, and representation is what the invariants are not
+about.
+
+**The four edges a reader would otherwise have to reconstruct.** The `Send` bound
+and the refusal of a `futures` dependency read as async-ecosystem preference and
+are not. An executor bound written into a floor signature is a transport decision
+taken on the floor, and an async crate the floor carries is one everything above
+carries, which is behavior arriving by linkage rather than from behind a socket.
+The prohibition on an adjudicating method is the same invariant at the type level,
+a floor type that decides being what its first half rules out, and the doctest
+pinning of the named candidates carries the edge for the same reason: the two are
+one claim divided by instrument, per Document Format section 3, and grounding one
+half and not the other would make the division carry a difference it does not
+hold.
+
+**Two neighbours that look like they belong and do not.** The absence of a safety
+classification sits in the same clause as the boxed future's bound and grounds in
+nothing, because its reason is apex section 3 step 7, where what a tool reaches is
+bounded by the kernel rather than by a judgment, and that reason stands whether or
+not the floor holds only vocabulary. The bar on a format crate sits beside the bar
+on an async runtime and grounds in nothing for a like reason: a format crate does
+no work, and the argument against it is that rendering is decided where the
+rendering happens, per `weaver-trace-PRD` section 4.2.
 
 **Where the records sit, and the one claim another crate declares.** The
 assertion records are at the clauses that argue the claims, across sections 1
@@ -589,6 +658,10 @@ tag: compile-fail
 edge: asserts
 from: weaver-traits
 to: traits-adjudicators-pinned-by-doctest
+
+edge: grounds
+from: traits-adjudicators-pinned-by-doctest
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 ## 8. Open elections
