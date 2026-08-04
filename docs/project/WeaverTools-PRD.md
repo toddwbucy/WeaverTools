@@ -297,6 +297,18 @@ harness-to-trace seam is the one such seam in the base set. What the invariant
 forbids is a behavior reached by path dependency across a process line, not a
 crate calling a crate inside one binary.
 
+**A crate outside the floor links the floor for the reason this section gives, and
+takes from it only what it draws.** The link is licensed here: the floor is shared
+vocabulary and a type definition cannot be sent over a socket, so every consumer links
+it and no consumer is asking it to do anything. Which of its features a consumer takes
+is settled by section 5.3's mechanical consequence, that a party links the crate
+defining what it emits, so a crate drawing no configuration vocabulary takes the floor
+without its configuration feature. **The two halves are one claim and a Spec grounds
+both rather than choosing**, the link here and the selectivity there. A Spec whose
+clause argues only the link carries the one edge, and a Spec that argues the
+selectivity as well carries both, which is what lets a crate expand the general
+statement locally without inventing a different reason for the same shape.
+
 This invariant is what makes statefulness a feature add rather than a
 re-architecture. Memory behind a socket is a new socket, a new contract, and a
 schema extension. Memory as a linked crate is surgery on the harness's
@@ -379,6 +391,27 @@ every other organ is duplex with rather than a spoke. This is written as a test 
 candidate passes and not as a list of the organs that exist today, so a crate
 chartered later is classified by reading it against the test rather than by
 amending an enumeration.
+
+**No crate holds an allowance another crate could not have.** What a Spec elects for
+one organ is available to any organ that later finds the need or the capability, and
+a reader meeting an election in one document should not read it as that crate's
+privilege. The classification above is written as a test for the same reason, and an
+election that could only ever be one crate's is a sign the election is really a
+charter fact wearing a Spec's clothes.
+
+**The harness is the one exception, and its form and function are not negotiable.**
+It is the organ whose domain is coordination, so the hub is what it is rather than a
+shape it elected, and no efficacy argument reaches it. Every other organ is a spoke
+by construction and cannot trade that away.
+
+**The hub and spoke model is the core, and other organs should mirror it in their own
+operations where it serves them.** A submodule reaching its organ, a family library
+reaching its loader, an interior fan-out and its returns: each is the same shape one
+level down, and an organ adopting it inherits an argument already made rather than
+inventing one. This is a should and not a must. The invariant binds the program's
+topology and not an organ's interior, so an organ that departs from the model on
+efficacy or need answers to its own Spec rather than to this section, and says why
+there.
 
 Section 6 already names organs and the harness as the coordinating center, and
 5.1 already carries the floor half of the same three-way distinction. This

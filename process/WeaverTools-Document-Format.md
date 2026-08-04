@@ -1,6 +1,11 @@
 # WeaverTools Document Format
 
-**Version:** v0.11, 2026-08-03, fourth entry this date. The v0.11 change is the axiom
+**Version:** v0.12, 2026-08-03, fifth entry this date. The v0.12 change is section 4
+stating the second way a claim grounds, that it is a precondition of the axiom's own
+stated reason, per the operator's ruling on the labelling batch. Two acts applied two
+tests and only one was briefed, which the batch made visible rather than either act
+getting it wrong.
+Previously v0.11, 2026-08-03, fourth entry this date. The v0.11 change is the axiom
 layer, per the operator's ruling of this date: section 3 gains the `axiom` node kind
 for the apex's four invariants, and section 4 gains the `grounds` edge from an
 assertion to the axiom it serves. The section 4 entry states that a missing `grounds`
