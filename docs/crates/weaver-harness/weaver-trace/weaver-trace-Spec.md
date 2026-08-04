@@ -55,6 +55,15 @@ this date and Document Format v0.10 section 3: the two halves of a divided claim
 both count as the enforcement section's, neither having been elected and one
 having been divided out of a bullet that section already carried. No record
 moves and no tag changes, only the provenance the counts report.
+**Revised:** 2026-08-03, the labelling pass, following the pilot at
+`weaver-types-Spec`. Four `grounds` edges land beside the records that carry them,
+two to the join-key invariant and two to the contract invariant, per Document
+Format v0.11 sections 3 and 4. Section 10 states the test the pass applied,
+whether the axiom is the reason the claim exists, and states that thirty-four
+claims grounding in nothing is the expected result for a crate that is mostly an
+event schema rather than a gap. The never-inferred turn gains the prose its edge
+needs. No record moves, no tag changes, and the assertion count is unchanged at
+thirty-eight.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
@@ -357,12 +366,22 @@ tag: compile-pin
 edge: asserts
 from: weaver-trace
 to: trace-kind-enum-exhaustive
+
+edge: grounds
+from: trace-kind-enum-exhaustive
+to: axiom-contract-is-a-complete-interface
 ```
 
 **`turn` is optional and `causal_parent` is optional, and nothing else is.** A
 run-level event belongs to no turn, which is what the option expresses, and the
 recorder never infers one, per the contract's section 3. A malformed submission
 carrying no turn on a turn-level kind is refused rather than defaulted.
+
+**The never-inferred half is what the join-key invariant asks of a recorder.** A
+turn the recorder supplied would be a key that never travelled with the work, and
+an event carrying one would be attributed by the recorder's guess rather than by
+the key the harness held. The option is therefore the absence of a turn and never
+a turn the recorder has yet to work out.
 
 ```graph
 node: trace-turn-optional-never-inferred
@@ -372,6 +391,10 @@ tag: review
 edge: asserts
 from: weaver-trace
 to: trace-turn-optional-never-inferred
+
+edge: grounds
+from: trace-turn-optional-never-inferred
+to: axiom-join-key-travels-with-the-work
 ```
 
 **The message payloads splice rather than nest, and the mechanism is elected
@@ -875,6 +898,10 @@ tag: review
 edge: asserts
 from: weaver-trace
 to: trace-pressure-reported-not-authored
+
+edge: grounds
+from: trace-pressure-reported-not-authored
+to: axiom-join-key-travels-with-the-work
 ```
 
 **A write that fails against a live process is named and surfaced, never
@@ -985,6 +1012,10 @@ tag: compile-pin
 edge: asserts
 from: weaver-trace
 to: trace-failure-enum-exhaustive
+
+edge: grounds
+from: trace-failure-enum-exhaustive
+to: axiom-contract-is-a-complete-interface
 ```
 
 **`AppendFailed` fails loudly and does not attempt recovery.** The contract gives
@@ -1057,6 +1088,39 @@ the election that test yields for `TurnClose`. The threat walk closing this
 section takes no node of its own, per Document Format section 5, and it names no
 test of its own either, its instrument being the compile-fail set already
 recorded.
+
+**Which invariant each claim serves, and why most serve none.** Four of the
+thirty-eight carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
+and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
+nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
+none of it because this crate is not floor, so the vocabulary clause governs none
+of its manifest, and its one seam does not cross a process line, so the socket
+clause governs none of its elections. `axiom-organ-and-submodule` reaches none of
+it because a submodule's channel with its own organ is that organ's business by
+the invariant's own words, which leaves this document nothing to claim under it.
+**The test applied is whether the axiom is the reason the claim exists.** Remove
+the join-key invariant and this crate has no reason to refuse to infer a turn and
+no reason to report pressure rather than author it, so those two ground in it.
+Remove it and the kind renames are still dotted, the subsystem set is still five
+cases, and the payload is still untagged, so those ground in nothing.
+**Thirty-four claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: fourteen of the thirty-eight are section 3's
+event schema and twelve of those fourteen ground in nothing, a schema being
+representation and representation being what the invariants are not about.
+
+**Two calls are worth stating rather than leaving to be read.** The two contract
+edges are the closure of drawn vocabulary. `weaver-harness-trace-contract` draws
+the event-kind set and the failure vocabulary, and an enum that let a consumer
+absorb a new case into a wildcard would leave the drawn set complete in prose and
+open in code, which is that invariant's completeness enforced at the type level.
+The kind-to-payload mapping's totality reads like the same claim and is not: it is
+this document's bookkeeping over its own schema, and no contract is less complete
+for it. The second call is section 1's manifest claim. `weaver-types-Spec` grounds
+its look-alike no-socket-no-runtime claim in the floor invariant, and the
+resemblance does not carry, because that edge runs through the floor-is-vocabulary
+clause and this crate is not floor. The apex names this crate's independence where
+it classifies it, which is the apex citing a fact rather than supplying the reason
+the fact exists.
 
 **Requiring a perturbation-verified test.**
 
