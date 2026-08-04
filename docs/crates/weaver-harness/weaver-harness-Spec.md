@@ -109,6 +109,34 @@ all three of `weaver-types-Spec` section 5's owings against this document as
 discharged. Forty-six records now, twenty from section 8's
 sorting and twenty-six from the elections. Issue 32 stays open for the organs
 whose side is unwritten, this act discharging the harness's alone.
+**Revised:** 2026-08-03, a fourth entry this date, the labelling pass, following
+the pilot `weaver-types-Spec` took the same day. Fourteen `grounds` edges land
+beside the records that carry them, eight to the socket invariant, three to the
+join-key invariant, and three to the contract invariant, per Document Format
+v0.11 sections 3 and 4. Section 8 states the test the pass applied, whether the
+axiom is the reason the claim exists, records that the organ invariant takes
+nothing from this crate because the hub property is topology the charter sources
+and not an interior this Spec argues, and states that thirty-two claims
+grounding in nothing is the expected result rather than a gap. Four calls are
+stated at that section rather than left to be read, the descriptor numbering
+declined on the apex's own delegation of how a far end travels, the dumpable
+flag taken because 5.1's possession argument assumes the route `/proc/[pid]/fd`
+opens is shut, the authorship claims separated from what an event carries, and
+conformance to a single contract clause held short of 5.3. No record moves, no
+tag changes, and the assertion count is unchanged at forty-six.
+**Revised:** 2026-08-03, a fifth entry this date, the fifth invariant's pass,
+following the apex's growth to five. Four `grounds` edges land on
+`axiom-harness-integrates-by-the-loop`, per Document Format v0.13 sections 3 and 4
+and apex section 5.5: the gate pair's wait on confirmed residency and the run
+state's options at section 3, the thread the organ forks run on at section 1, and
+the port blade at section 6, which gains a second edge beside the socket
+invariant's rather than trading it. Eighteen edges from seventeen claims now, and
+twenty-nine claims ground in nothing. Section 8 states what the scope limit refused,
+left-follows-drain and announce-after-record naming one organ apiece and the
+descriptor numbering staying the contract's, and states why the crate 5.5 names
+still takes nothing from 5.4. Section 3's four-record call recounts from one
+grounded to two. No record moves, no tag changes, and the assertion count is
+unchanged at forty-six.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -212,7 +240,12 @@ section 4.3's. `nix` is the OS surface, elected in section 2.4 where the grounds
 and the record live. **The set and the feature are two records rather than one.**
 Gate H2 reads the internal edges against the graph and reads no feature list, and
 the featureless take is a `Cargo.toml` fact of its own, so a single record would
-hand one instrument's read to a claim it does not cover.
+hand one instrument's read to a claim it does not cover. **The set grounds in the
+socket invariant and the feature grounds in nothing.** Apex section 5.1 is the
+reason the two organs appear nowhere in this list: a crate this one asks to do
+something is reached over a socket, so the internal set is the floor plus the one
+seam tagged `link`. Which features a floor link is taken with is a build election
+that would read the same under any invariant.
 
 ```graph
 node: harness-internal-dependency-set
@@ -222,6 +255,10 @@ tag: manifest
 edge: asserts
 from: weaver-harness
 to: harness-internal-dependency-set
+
+edge: grounds
+from: harness-internal-dependency-set
+to: axiom-floor-is-vocabulary-behavior-is-socket
 
 node: harness-types-without-config
 kind: assertion
@@ -269,7 +306,12 @@ a test comparing the forking thread against the serving one reaches the second,
 so what holds them is that this suite buys neither rather than that no instrument
 exists. The second is the constraint `weaver-gate-Spec` section 2 filed against
 this document on the working list, stated here as a record rather than left as an
-implication of the posture above.
+implication of the posture above. **The constraint grounds in apex section 5.5 and
+the posture does not.** The parent-death backing is a timing guarantee the gate
+relies on and cannot hold from inside its own domain, because which thread forks it
+is a fact only the harness has, so keeping that guarantee true while the interior
+runs is the loop's work by that section's division of answerability. That this crate
+spawns no thread of its own is an interior posture no other organ's ordering reads.
 
 ```graph
 node: harness-spawns-no-thread
@@ -287,6 +329,10 @@ tag: review
 edge: asserts
 from: weaver-harness
 to: harness-organ-forks-on-worker-lifetime-thread
+
+edge: grounds
+from: harness-organ-forks-on-worker-lifetime-thread
+to: axiom-harness-integrates-by-the-loop
 ```
 
 ## 2. The channels, and custody as code
@@ -313,7 +359,10 @@ writes may exceed it, asserted at the write site, because a bound only the
 receiver holds is a bound the sender discovers in production. **The election and
 its bound are `weaver-types-Spec`'s records and the truncation test is this
 crate's,** that Spec owing the test to the pair-creating crates and section 8
-naming it, so what lands here is the obligation rather than the decision.
+naming it, so what lands here is the obligation rather than the decision. **The
+obligation grounds where the election does,** in apex section 5.1. Remove the rule
+that a seam crossing a process line is a socket and this channel is not a bounded
+datagram at all, so a flagged short read is nothing to rule on.
 
 ```graph
 node: harness-truncation-is-a-fault
@@ -323,6 +372,10 @@ tag: perturbation
 edge: asserts
 from: weaver-harness
 to: harness-truncation-is-a-fault
+
+edge: grounds
+from: harness-truncation-is-a-fault
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **One write is one message and one message is one envelope.** The wire carries
@@ -338,7 +391,9 @@ that draws these channels rests on is gone. So the consequence of the election
 was tested here from the pass and the election's own reason was not, filed as
 issue 35 and closed in one act across both pair-creating crates because the
 property and its watch are the same on either side. Section 8 names the test
-with its watch, and the election stays that Spec's record.
+with its watch, and the election stays that Spec's record. **It grounds in the
+same invariant as the truncation rule above,** framing being what the socket seam
+buys and what every contract drawing these channels reads as given.
 
 ```graph
 node: harness-one-write-is-one-read
@@ -348,6 +403,10 @@ tag: perturbation
 edge: asserts
 from: weaver-harness
 to: harness-one-write-is-one-read
+
+edge: grounds
+from: harness-one-write-is-one-read
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 ### 2.2 Creation, and the atomic flag
@@ -363,7 +422,11 @@ has a window: this process forks a subprocess per tool call, a fork between
 creation and a separate `fcntl` would inherit an unflagged end, and an
 inherited end of the residency seam hands the tool surface a release directive.
 Verified: `socketpair` with `SOCK_CLOEXEC` yields both descriptors flagged with
-no interval between them.
+no interval between them. **The atomicity grounds in apex section 5.1's second
+authentication case.** A pair with no name is authenticated by possession of the
+descriptor and by nothing else, so an end that crosses an exec is a credential
+handed to whatever runs next, and the window a later `fcntl` opens is exactly
+where it is handed over.
 
 ```graph
 node: harness-atomic-cloexec-at-creation
@@ -373,6 +436,10 @@ tag: perturbation
 edge: asserts
 from: weaver-harness
 to: harness-atomic-cloexec-at-creation
+
+edge: grounds
+from: harness-atomic-cloexec-at-creation
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The child's ends cross the final exec by `dup2` from descriptor 3 upward
@@ -464,7 +531,13 @@ is the receiver's. The site takes no flag argument and returns owned handles
 the rest of the crate cannot construct another way, which is the pinned shape
 `weaver-admin-harness-contract` section 5 names. This is the claim
 `weaver-trace-Spec` section 10 owes this document, its test standing as the
-first walk of section 8 and the owing discharged there.
+first walk of section 8 and the owing discharged there. **It grounds in apex
+section 5.2 rather than in the socket invariant.** What crosses this receive is
+the sink handle and not a channel end, so possession authenticates nothing here.
+A tool subprocess holding it writes the record without being the harness, which
+is the sole-authorship half of 5.2 defeated by a descriptor, and a second writer
+does not merely add events, it adds events belonging to no turn the harness can
+attribute them to.
 
 ```graph
 node: harness-trace-fd-cloexec-at-receive
@@ -474,6 +547,10 @@ tag: perturbation
 edge: asserts
 from: weaver-harness
 to: harness-trace-fd-cloexec-at-receive
+
+edge: grounds
+from: harness-trace-fd-cloexec-at-receive
+to: axiom-join-key-travels-with-the-work
 ```
 
 **Adoption is the constructor, and it performs the worker's hygiene as sets and
@@ -491,7 +568,14 @@ impossibility: an `fcntl` reads that flag as cheaply as the `prctl` beside it
 reads the dumpable one, so the two hygiene sets differ in the instrument bought
 and not in the instrument available. What the composition root does with the
 coordination end once the declared open delivers it is asserted here, per
-`weaver-admin-Spec` section 6.
+`weaver-admin-Spec` section 6. **Both sets ground in apex section 5.1, and the
+dumpable one is the less obvious of the two.** That invariant rests
+possession-as-authentication on the claim that no third party can reach a socket
+with no address, and `/proc/[pid]/fd` is an address for exactly such a socket, so
+clearing the flag is what closes the one route the invariant's own argument
+assumes shut. The adopted end's flag is the same property at the exec rather than
+at the attach, and it reaches an end this crate was handed rather than one it
+created.
 
 ```graph
 node: harness-dumpable-flag-cleared
@@ -502,6 +586,10 @@ edge: asserts
 from: weaver-harness
 to: harness-dumpable-flag-cleared
 
+edge: grounds
+from: harness-dumpable-flag-cleared
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: harness-coordination-end-close-on-exec
 kind: assertion
 tag: review
@@ -509,6 +597,10 @@ tag: review
 edge: asserts
 from: weaver-harness
 to: harness-coordination-end-close-on-exec
+
+edge: grounds
+from: harness-coordination-end-close-on-exec
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **No path is taken anywhere in this crate.** There is no call that resolves,
@@ -640,7 +732,14 @@ while compiling exactly as well, so the pin alone would leave the refusal
 claimed and unenforced. The refusal is owed to each organ by
 `weaver-types-Spec` section 5, which states it and enforces it nowhere, and
 this discharges this crate's side of that owing alone, section 8 naming the
-test with its two watches.
+test with its two watches. **Both halves ground in apex section 5.3.** An
+ordering guarantee is one of the three things that invariant requires of a
+contract, so the coordination channel's order is a stated guarantee rather than
+a convention this crate inherited, and a state type holding it is that guarantee
+made structural. The pin reaches the completeness half, every out-of-order case
+arriving at an arm, and the perturbation reaches what the arm returns, which is
+the contract's own named error. Grounding one and not the other would say the
+invariant is a reason for the type and not for the behaviour, which is backwards.
 
 ```graph
 node: harness-channel-state-three-positions
@@ -651,6 +750,10 @@ edge: asserts
 from: weaver-harness
 to: harness-channel-state-three-positions
 
+edge: grounds
+from: harness-channel-state-three-positions
+to: axiom-contract-is-a-complete-interface
+
 node: harness-out-of-order-refused
 kind: assertion
 tag: perturbation
@@ -658,6 +761,10 @@ tag: perturbation
 edge: asserts
 from: weaver-harness
 to: harness-out-of-order-refused
+
+edge: grounds
+from: harness-out-of-order-refused
+to: axiom-contract-is-a-complete-interface
 ```
 
 **The run state is the fan-out's progress held as data, which is what makes the
@@ -692,7 +799,14 @@ rather than `OrganChannel`, because `weaver-spu-PRD` section 13.2 rules that
 socket not an organ channel and a shared name would carry the envelope's
 assumptions onto a seam that does not take them. This is the mechanical form of
 `load-unload-loop` section 4's rule that admin's unwind is a reap plus one
-directive: the directive works because the harness knows what stands.
+directive: the directive works because the harness knows what stands. **The options
+ground in apex section 5.5 and the two SPU-shaped records beside them do not.** A
+leave has to undo across domains what an enter built across them, and no organ can
+see whether the other stood up, so either the loop holds that knowledge or the unwind
+is a guess about a domain nobody is looking at. That is the reconciliation 5.5 places
+with the loop by construction rather than by convention, and the run state is the
+form the knowledge takes. The SPU's arm being one field and the decode end taking its
+own type are shapes inside one organ's arm, which that section leaves to the domain.
 
 ```graph
 node: harness-run-state-options-checked-unwind
@@ -702,6 +816,10 @@ tag: compile-pin
 edge: asserts
 from: weaver-harness
 to: harness-run-state-options-checked-unwind
+
+edge: grounds
+from: harness-run-state-options-checked-unwind
+to: axiom-harness-integrates-by-the-loop
 
 node: harness-spu-channels-one-field
 kind: assertion
@@ -751,7 +869,19 @@ ancillary descriptors on an enter directive reaches the sink's count, a test
 exec'ing a probe in the SPU's place reaches the decode pair's crossing of the
 same fork, and a test holding a double SPU's answer reaches the gate pair's wait
 on confirmed residency, and this suite buys none of the three. The scoped
-account is the fourth and section 8 names its test.
+account is the fourth and section 8 names its test. **Two of the four ground in
+an invariant and two do not.** The decode pair's creation before the fork is
+apex section 5.1's second authentication case read as a construction rule: a
+socket with no address cannot be reached later by resolving one, so the only
+moment it can reach a child is before that child exists, and the sentence above
+about a socket the child was not given is that invariant and not a POSIX
+accident. **The gate pair's wait grounds in apex section 5.5.** One organ's
+confirmed readiness gates another organ's construction, which is two organs'
+orderings reconciled against each other, and neither can perform that reconciliation
+because neither can see the other's domain. The reverse unwind order the paragraph
+below opens with is the same fact read backwards and is argued here rather than
+there. The sink's count and the scoped account are a count and an ordering of this
+crate's interior, which no invariant is about.
 
 ```graph
 node: harness-one-sink-descriptor
@@ -770,6 +900,10 @@ edge: asserts
 from: weaver-harness
 to: harness-decode-pair-created-before-the-fork
 
+edge: grounds
+from: harness-decode-pair-created-before-the-fork
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: harness-gate-pair-waits-on-residency
 kind: assertion
 tag: review
@@ -777,6 +911,10 @@ tag: review
 edge: asserts
 from: weaver-harness
 to: harness-gate-pair-waits-on-residency
+
+edge: grounds
+from: harness-gate-pair-waits-on-residency
+to: axiom-harness-integrates-by-the-loop
 
 node: harness-scoped-refusal-account
 kind: assertion
@@ -840,7 +978,12 @@ election,** the never-blocks sentence being section 4's. A test driving a double
 organ's fault report to the stream reaches the authoring and the payload alike,
 comparing the reported bytes against the authored ones, and this suite buys the
 trace side of that pair instead, where `weaver-trace-Spec` section 6 asserts
-that the recorder reports pressure and does not author it.
+that the recorder reports pressure and does not author it. **The authoring
+grounds in apex section 5.2 and the payload does not.** That invariant's
+sole-writer half is this paragraph's rule stated at the apex, a component
+reports and the harness authors the event, and a fault an organ signalled for
+itself would be a record entry no turn key attributes to anything. What the
+event then carries is trace content, and content is where the invariants stop.
 
 ```graph
 node: harness-faults-authored-as-events
@@ -850,6 +993,10 @@ tag: review
 edge: asserts
 from: weaver-harness
 to: harness-faults-authored-as-events
+
+edge: grounds
+from: harness-faults-authored-as-events
+to: axiom-join-key-travels-with-the-work
 
 node: harness-fault-payload-carried-unchanged
 kind: assertion
@@ -904,7 +1051,12 @@ when the `load` event is authored, per `weaver-harness-trace-contract` section
 consulted because the contract denies it the fields. **The stamping site is
 review's by election,** a double recorder comparing an event's monotonic reading
 against the run's origin reaching it, and this suite buying the trace side's
-canonical-form tests instead.
+canonical-form tests instead. **The site grounds in apex section 5.2 and the
+choice of clocks does not.** The monotonic reading is nanoseconds since the run's
+origin, an origin only the author holds, so a component stamping its own report
+would carry a reading placeable in no run, which is the attribution that
+invariant's sole-writer half exists to buy. Which two clocks supply the numbers
+is representation and would read the same under any invariant.
 
 ```graph
 node: harness-timestamps-stamped-at-authoring
@@ -914,6 +1066,10 @@ tag: review
 edge: asserts
 from: weaver-harness
 to: harness-timestamps-stamped-at-authoring
+
+edge: grounds
+from: harness-timestamps-stamped-at-authoring
+to: axiom-join-key-travels-with-the-work
 ```
 
 **The licensed combinations are enforced here, before submit.** A message is
@@ -1090,7 +1246,19 @@ reach, so a loop composes against the granted surface or does not compile, which
 is the same type property section 8's sorting holds for descriptor ownership,
 elected here rather than listed there. Where the seam falls
 is an election a test could read only by asserting what a loop is handed, which
-this suite does not buy.
+this suite does not buy. **The blade grounds in two invariants and the seam's
+position grounds in neither.** Apex section 5.1 admits no exception for crates
+arriving later, and a loop 1 that could mint a port would be a later arrival reaching
+another process by a route no contract governs. The blade is that clause held at
+the type level against code the builder writes rather than against a crate this
+program ships. **It grounds in apex section 5.5 as well, and for the second reason
+rather than a restatement of the first.** That section makes the loop the mechanism
+that integrates and holds that the mechanism cannot itself be a part, so a builder's
+loop minting its own port would be a part doing its own integrating, reaching a
+domain by a route the loop never granted and settling a crossing in code no contract
+sees. The blade is what leaves loop 1 composing the granted surface, which is where
+5.5 puts the crossing. Where in the lifecycle the seam falls is a charter election
+that would read the same under any invariant.
 
 ```graph
 node: harness-loop-mints-no-port
@@ -1100,6 +1268,14 @@ tag: compile-pin
 edge: asserts
 from: weaver-harness
 to: harness-loop-mints-no-port
+
+edge: grounds
+from: harness-loop-mints-no-port
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
+edge: grounds
+from: harness-loop-mints-no-port
+to: axiom-harness-integrates-by-the-loop
 
 node: harness-extension-seam-at-loaded-and-idle
 kind: assertion
@@ -1138,7 +1314,13 @@ review's by election and the outcome enum is a type property.** A test can watch
 a refusal answer where a fault should have ended the service, which is the reach
 this suite declines while `weaver-gate-Spec` section 5 and `weaver-spu-Spec`
 section 9 adopt the same split from their own sides, and the enum's two cases
-are exhaustive so a third reaches every caller loudly.
+are exhaustive so a third reaches every caller loudly. **The split grounds in
+apex section 5.3 and the outcome enum does not.** A contract naming the errors
+it can return is what makes its refusal set closed, so a failure below the
+exchange layer sits outside that set by construction rather than by taste, and
+dressing one as a refusal would put a case on the wire the vocabulary clause
+never drew. `Outcome` crosses no seam and is drawn by no contract, and its
+exhaustiveness serves this crate's own caller.
 
 ```graph
 node: harness-fault-below-the-exchange-layer
@@ -1148,6 +1330,10 @@ tag: review
 edge: asserts
 from: weaver-harness
 to: harness-fault-below-the-exchange-layer
+
+edge: grounds
+from: harness-fault-below-the-exchange-layer
+to: axiom-contract-is-a-complete-interface
 
 node: harness-outcome-two-cases
 kind: assertion
@@ -1228,6 +1414,70 @@ none of their content appears, watched to fail when the filter widens.
 floor links and the trace seam, read against the graph under gate H2. No async
 runtime, no logging crate, and no HTTP client in the resolved external tree,
 by the build-time `cargo tree` assertion the floor Specs share.
+
+**Which invariant each claim serves, and why most serve none.** Seventeen of the
+forty-six carry a `grounds` edge and one of the seventeen carries two, so the edges
+number eighteen: eight to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
+`axiom-harness-integrates-by-the-loop`, three to
+`axiom-join-key-travels-with-the-work`, and three to
+`axiom-contract-is-a-complete-interface`. **`axiom-organ-and-submodule` takes
+nothing from this crate,** which reads oddly for the hub that invariant names and
+is right: the hub property is topology, which crate holds a duplex channel with
+which, and this document sources no topological record. The charter sources this
+crate's node, its parent edge, its floor links, and its one declared seam, per
+section 0, and everything below that line is this crate's interior or its
+channels' mechanics. A crate is an organ or is not by a test read against the
+apex, and no claim here is that reading. **That 5.4 still takes nothing while 5.5
+takes four is the two sections' own division working rather than an inconsistency.**
+5.4 fixes the topology and the charter is where the topology is stated, so a Spec has
+nothing to add to it. 5.5 is the work the topology exists for, and a Spec saying how
+the loop stands the organs up and takes them down is arguing exactly that work.
+
+**The test applied is whether the axiom is the reason the claim exists, or whether
+the claim is a precondition of the axiom's own stated reason,** the second relation
+per Document Format v0.13 section 4. Remove the socket invariant and this crate has
+no reason to bound a receive, to demand that one write arrive as one read, to flag a
+descriptor before an exec, to create a pair before a fork, or to keep a loop from
+minting a port, so those ground in it. Remove it and `nix` is still the OS crate,
+descriptors are still owned types, the child's ends still land at 3 and 4, and the
+fork still runs three calls, so those ground in nothing. **Twenty-nine claims
+grounding in no invariant is the expected result and not a gap**, per Document
+Format section 4: most of what a Spec elects is a format, a name shape, a count, or
+an ordering of its own interior, and representation is what the invariants are not
+about.
+
+**Four calls are worth stating rather than left to be read.** The descriptor
+numbering is ungrounded on the apex's own words, 5.1 leaving how a far end
+travels to the contract governing that seam, so the number and the order are
+contract material while the flag on the end is the invariant's. The dumpable
+flag is grounded where a process-hardening set might have been passed over,
+because 5.1 rests possession-as-authentication on no third party reaching an
+unaddressed socket and `/proc/[pid]/fd` is that address. The authorship claims
+of sections 2.3, 3, and 4 ground in 5.2 while their neighbours do not, who
+stamps and who authors being the sole-writer half and what an event carries
+being content. And conformance to one contract clause draws no edge, or every
+citation in this document would draw one: what 5.3 grounds is completeness, so
+the channel state's totality carries an edge while left-follows-drain and
+announce-after-record do not.
+
+**The fifth invariant reaches four claims here, and the scope limit is what keeps
+it to four.** 5.5 binds what crosses between domains and leaves what happens inside
+one to the organ, so a claim reaches it only where the reason cannot be stated
+without naming a second organ's ordering. The gate pair's wait on confirmed
+residency is the plainest, one organ's readiness gating another's construction. The
+run state's options are the same fact held as data, the loop knowing across domains
+what it must later undo across them. The thread the organ forks run on is a timing
+property the gate relies on and cannot hold from where it sits. The port blade is
+the fourth and takes a second edge rather than a moved one. **Three near misses are
+worth naming, because the crate this invariant names is where a wide reading would
+do the most damage.** Left-follows-drain reconciles the drain against admin's
+answer and the drain is this crate's own domain, so one organ is named and not two,
+and the reverse unwind order its paragraph opens with is argued at the gate pair's
+wait instead. Announce-after-record is that same shape at the stop. The descriptor
+numbering stays declined for the reason the labelling pass gave, 5.1 delegating how
+a far end travels to the contract governing the seam, and 5.5 does not take it back:
+where an organ finds its end is contract material the organ presents rather than an
+ordering the loop reconciles.
 
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
