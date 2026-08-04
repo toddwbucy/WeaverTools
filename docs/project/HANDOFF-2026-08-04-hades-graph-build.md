@@ -2,7 +2,10 @@
 
 **Status:** OPEN. Work leaves this workspace for the server and does not return to it.
 **Date filed:** 2026-08-04
-**Base commit:** `ad9d807`, `main`
+**Base commit:** `main` at the commit that carries this document as read. The handoff
+travels inside the corpus it describes, so the checkout target is wherever this file
+was read from, and a pinned SHA would go stale the moment a later act revised this
+document's own claims. First filed against `ad9d807`.
 **Document ID:** `HANDOFF-2026-08-04-hades-graph-build`
 **Parent:** `WeaverTools-Working-Process`, section 5
 **Revised:** 2026-08-04, a second entry this date. G4's third half closes, the five
@@ -220,8 +223,8 @@ not.
 - **G4 holds, as of 2026-08-04.** Every drawn name resolves, every vocabulary node
   has a definition site, and every definition no clause draws now states its reason
   at its definition site: `weaver-types-PRD` section 2.1 covers the four config
-  fields and `weaver-traits-PRD` covers the mode vocabulary, with `tool-trait` and
-  `provider-trait` already stated.
+fields and `weaver-traits-PRD` covers the mode vocabulary, with `tool-trait` already
+stated and `provider-trait` gaining its statement in the same act that closed the rest.
 - **G6 has not run.** Nothing the graph or code will need still lives only in the old
   tree. The three-lens quarry survey of 2026-08-03 is a substantial down payment.
 - **G2 and G5 have not run** as phase-close sweeps.

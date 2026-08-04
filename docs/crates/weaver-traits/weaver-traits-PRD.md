@@ -145,9 +145,11 @@ answer is load-bearing.
 `Provider` is the abstraction that keeps the engine transport-agnostic. The harness
 issues decode requests without naming a wire format, and the concrete transport is
 constructed at the worker composition root and injected. That injection has to be
-against something, and this is that something.
-
-Its vocabulary comes with it: the request, the streamed response, and the error.
+against something, and this is that something. Its vocabulary comes with it: the
+request, the streamed response, and the error. **No vocabulary clause draws
+`provider-trait`, and the reason is the same shape as `tool-trait`'s:** its consumer is
+the composition root's injection, inside the body, on the near side of the seam's
+transport, so no seam crosses it and no contract has a clause to draw it with.
 
 ### 3.3 The message model
 
