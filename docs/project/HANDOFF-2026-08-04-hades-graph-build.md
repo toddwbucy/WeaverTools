@@ -5,6 +5,11 @@
 **Base commit:** `ad9d807`, `main`
 **Document ID:** `HANDOFF-2026-08-04-hades-graph-build`
 **Parent:** `WeaverTools-Working-Process`, section 5
+**Revised:** 2026-08-04, a second entry this date. G4's third half closes, the five
+definitions gaining their statements at their definition sites, and section 0 gains
+the map-not-build-order framing per the operator's ruling of this date: the graph
+carries the roadmap as content, and coding is scoped against the graph after it
+exists.
 **Revised:** 2026-08-04, four corrections on the operator's review before this document
 travels. The edge-source rule was stated as a two-way split and is a five-kind table.
 The two external-boundary contracts' single party edge is named as correct rather than
@@ -34,6 +39,14 @@ than a prompt would be: **it has to survive being read without the sender presen
 
 **The graph is built on the server and not here.** Nothing in this workspace stands one
 up, `.hades/` does not exist here, and the corpus is the deliverable this hands over.
+
+**The graph is a map of the documented set, not a build order, per the operator's
+ruling of 2026-08-04.** The corpus carries roadmap - the deferred tool workflow, the
+residual readout that follows loop 0, the memory leg's return path - and the graph
+maps all of it as content. Deferred material is not a defect to trim and not a
+commitment the first build answers for. **What the first coding run builds is scoped
+against the graph after the graph exists**, which is the order the Working Process
+already states and the reason the current task is the graph rather than the code.
 
 ---
 
@@ -204,11 +217,11 @@ Phase one closes when every crate PRD, every seam contract, and every Spec is me
 **and G4 and G6 hold across the whole set**. The first three are done. The gates are
 not.
 
-- **G4 fails today, in its third half.** Every drawn name resolves and every vocabulary
-  node has a definition site, both verified. But five definitions are drawn by no clause
-  and state no internal reason: `permission-mode`, `permission-mode-vocabulary`,
-  `residual-readout-election`, `tool-set`, `trace-sink`. `tool-trait` and
-  `provider-trait` do carry statements. Five sentences, not yet written.
+- **G4 holds, as of 2026-08-04.** Every drawn name resolves, every vocabulary node
+  has a definition site, and every definition no clause draws now states its reason
+  at its definition site: `weaver-types-PRD` section 2.1 covers the four config
+  fields and `weaver-traits-PRD` covers the mode vocabulary, with `tool-trait` and
+  `provider-trait` already stated.
 - **G6 has not run.** Nothing the graph or code will need still lives only in the old
   tree. The three-lens quarry survey of 2026-08-03 is a substantial down payment.
 - **G2 and G5 have not run** as phase-close sweeps.

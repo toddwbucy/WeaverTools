@@ -14,6 +14,9 @@ renamed on the human's ruling of this date.
 as a ruling of this charter, per the review seat's finding that the Spec pass was
 citing an untracked working list as authority for a structural decision. The
 substance is unchanged and its home is now a merged document.
+**Revised:** 2026-08-04, G4's third half. The mode vocabulary states why no contract
+draws it, its consumer being the config's election per the `elects` edge, which makes
+the definition internal to the floor's own argument rather than seam vocabulary.
 **Document ID:** `weaver-traits-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -93,7 +96,11 @@ to: permission-mode-vocabulary
 ```
 
 Identifiers are kebab-case per the Document Format, so the `Tool` and `Provider`
-traits are `tool-trait` and `provider-trait` here. The mode vocabulary is
+traits are `tool-trait` and `provider-trait` here. **`permission-mode-vocabulary` is
+drawn by no contract and the reason is the `elects` edge**: its consumer is the
+config's `permission-mode` field, the floor's own argument in edge form per
+`weaver-types-PRD` section 2.1, so the definition is internal to that argument rather
+than seam vocabulary a contract could draw. The mode vocabulary is
 `permission-mode-vocabulary` rather than `permission-modes`, because the agent state
 file holds a `permission-mode` field electing one of them and two identifiers a
 character apart are a collision in the graph and on the page both.
