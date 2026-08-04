@@ -67,8 +67,9 @@ sixteen of the twenty-three records now, nine to the socket invariant, five to t
 contract invariant, and three to the loop invariant, with seven grounding in nothing.
 The entry above also loses a count the sweep of that act left at twelve where it had
 settled on ten. No record moves, no tag changes, and no assertion is added or removed.
-**Document ID:** `weaver-gate-Spec` **Parent:** `weaver-gate-PRD` **Editorial:** Per the
-Working Rules.
+**Document ID:** `weaver-gate-Spec`
+**Parent:** `weaver-gate-PRD`
+**Editorial:** Per the Working Rules.
 
 ---
 
