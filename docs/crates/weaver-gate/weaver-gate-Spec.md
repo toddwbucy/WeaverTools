@@ -43,9 +43,9 @@ an enforcement gap was itself claimed and unenforced. The sibling act on
 `weaver-harness-Spec` wrote the same bullet with one watch per case, which is
 what exposed it. An early lower now has its own watch, driving the channel to
 the terminal position when the before-raise arm stops refusing it.
-**Revised:** 2026-08-03, a fifth entry this date, the labelling pass. Eleven
-`grounds` edges land beside the records that carry them, seven to the socket
-invariant and four to the contract invariant, per Document Format v0.11
+**Revised:** 2026-08-03, a fifth entry this date, the labelling pass. Thirteen
+`grounds` edges land beside the records that carry them, eight to the socket
+invariant and five to the contract invariant, per Document Format v0.12
 sections 3 and 4. Section 6 states the test the pass applied, whether the
 axiom is the reason the claim exists, names the two axioms that take nothing
 from this crate, and states the two calls the pass refused, the agent-uid
@@ -628,9 +628,9 @@ floor-link under gate H2. No async runtime, no logging crate, and no YAML
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
-**Which invariant each claim serves, and why twelve serve none.** Eleven of
-the twenty-three carry a `grounds` edge, seven to
-`axiom-floor-is-vocabulary-behavior-is-socket` and four to
+**Which invariant each claim serves, and why ten serve none.** Thirteen of
+the twenty-three carry a `grounds` edge, eight to
+`axiom-floor-is-vocabulary-behavior-is-socket` and five to
 `axiom-contract-is-a-complete-interface`. **The test applied is whether the
 axiom is the reason the claim exists.** Remove the socket invariant and this
 crate has no reason to authenticate at accept, no reason to elect a socket
@@ -661,7 +661,7 @@ the one claim it would reach here, that this process holds a channel with the
 harness and no other organ's handle, is `weaver-harness-Spec`'s to enforce at
 the fork and carries no record in this document, per section 0.
 
-**Three groups among the eleven are worth stating rather than leaving to be
+**Three groups among the thirteen are worth stating rather than leaving to be
 read.** The two manifest claims ground in the socket invariant because both
 are the linkage facts that invariant defines: the gate is a separate
 executable nothing links because its behavior is reached over a socket, and
