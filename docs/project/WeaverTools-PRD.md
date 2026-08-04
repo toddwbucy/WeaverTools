@@ -74,6 +74,11 @@ the operator's ruling, which is the process working. On the review seat's
 return the same day, the section states that its conditions are presently
 vacuous on purpose: the first two arrangements are always available on this
 corpus, and the rule governs arrangements not yet built.
+**Revised:** 2026-08-04, section 5.5's presenting sentence corrects from the singular
+to the plural, and the one-seam-per-service rule it implied is stated. The section as
+first written read as one contract per organ, which the corpus contradicts in four
+documents and which `weaver-spu` has never done, holding residency at one end and
+decode at the other under two contracts. The plural is the general case.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -439,11 +444,21 @@ is the thing that does it. This is why the composition root is new code rather t
 carried code, and why loop 0 is the framework's rather than a builder's: the mechanism
 that makes the parts one program cannot itself be a part.
 
-**Each organ presents its contract to the harness and presents nothing to any other
+**Each organ presents its contracts to the harness and presents nothing to any other
 organ.** A contract is what an organ offers the integrator, being the vocabulary it
 speaks, the errors it returns, and the ordering it relies on and provides, per section
 5.3. That is the whole of what an organ exposes and the whole of what the loop has to
 work from, which is what lets an organ be built against its own contract alone.
+
+**An organ presents one seam per service within its domain, and the plural is the
+general case rather than an exception.** A socket serves one service, so an organ with
+two kinds of traffic holds two ends under two contracts, which is what `weaver-spu`
+already does with residency at one end and decode at the other. The alternative is one
+channel carrying two services, where a flush ordering written for one silently becomes
+a rule about the other and neither party can say why it holds. **The seam's identity is
+the contract governing it and not the pair of crates it runs between**, which is why
+two seams between one pair need two names and why a reader counting crate pairs would
+miscount this program's shape.
 
 **The loop is answerable for correctness and for timing.** It ensures that point A talks
 to point B correctly and at the right time. Correctly means the vocabulary each contract
