@@ -43,6 +43,30 @@ an enforcement gap was itself claimed and unenforced. The sibling act on
 `weaver-harness-Spec` wrote the same bullet with one watch per case, which is
 what exposed it. An early lower now has its own watch, driving the channel to
 the terminal position when the before-raise arm stops refusing it.
+**Revised:** 2026-08-03, a fifth entry this date, the labelling pass. Thirteen
+`grounds` edges land beside the records that carry them, eight to the socket
+invariant and five to the contract invariant, per Document Format v0.12
+sections 3 and 4. Section 6 states the test the pass applied, whether the
+axiom is the reason the claim exists, names the two axioms that take nothing
+from this crate, and states the two calls the pass refused, the agent-uid
+denial and the two hygiene sets, whose reason is a charter walk rather than
+an invariant. Ten claims grounding in nothing is the expected result and
+not a gap. No record moves, no tag changes, and no assertion is added or
+removed.
+**Revised:** 2026-08-03, a sixth entry this date, the apex's fifth invariant
+reaching this document. Three `grounds` edges land at
+`axiom-harness-integrates-by-the-loop`, per Document Format v0.13 sections 3
+and 4: the out-of-order refusal, which now carries two edges because the
+contract states the ordering and the loop is answerable for that ordering
+holding across organs, the refused raise holding nothing, and the relay
+carrying both directions unread. Section 6 states the reason at all three and
+states where the line falls, ready and stopped being this crate's own
+sequencing inside its own domain and the channel state's three positions being
+the representation beneath the refusal rather than what crosses. Seventeen edges from
+sixteen of the twenty-three records now, nine to the socket invariant, five to the
+contract invariant, and three to the loop invariant, with seven grounding in nothing.
+The entry above also loses a count the sweep of that act left at twelve where it had
+settled on ten. No record moves, no tag changes, and no assertion is added or removed.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -104,6 +128,10 @@ tag: manifest
 edge: asserts
 from: weaver-gate
 to: gate-one-binary
+
+edge: grounds
+from: gate-one-binary
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **Layout.** One module per obligation, with one placement.
@@ -141,6 +169,10 @@ tag: manifest
 edge: asserts
 from: weaver-gate
 to: gate-floor-link-types-without-config
+
+edge: grounds
+from: gate-floor-link-types-without-config
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **No async runtime, no logging crate, nothing else.** The lifecycle traffic
@@ -229,6 +261,10 @@ edge: asserts
 from: weaver-gate
 to: gate-dumpable-flag-cleared
 
+edge: grounds
+from: gate-dumpable-flag-cleared
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: gate-channel-end-close-on-exec
 kind: assertion
 tag: review
@@ -236,6 +272,10 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-channel-end-close-on-exec
+
+edge: grounds
+from: gate-channel-end-close-on-exec
+to: axiom-floor-is-vocabulary-behavior-is-socket
 
 node: gate-parent-death-signal-thread-scoped
 kind: assertion
@@ -266,6 +306,10 @@ edge: asserts
 from: weaver-gate
 to: gate-truncation-is-a-fault
 
+edge: grounds
+from: gate-truncation-is-a-fault
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: gate-out-of-order-refused
 kind: assertion
 tag: perturbation
@@ -274,6 +318,14 @@ edge: asserts
 from: weaver-gate
 to: gate-out-of-order-refused
 
+edge: grounds
+from: gate-out-of-order-refused
+to: axiom-contract-is-a-complete-interface
+
+edge: grounds
+from: gate-out-of-order-refused
+to: axiom-harness-integrates-by-the-loop
+
 node: gate-channel-state-three-positions
 kind: assertion
 tag: compile-pin
@@ -281,6 +333,10 @@ tag: compile-pin
 edge: asserts
 from: weaver-gate
 to: gate-channel-state-three-positions
+
+edge: grounds
+from: gate-channel-state-three-positions
+to: axiom-contract-is-a-complete-interface
 ```
 
 **Closure is death, and the response is the charter's.** A read that returns
@@ -334,6 +390,10 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-client-socket-stream
+
+edge: grounds
+from: gate-client-socket-stream
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The bind takes the path as given and refuses what it finds in the way.**
@@ -363,6 +423,10 @@ edge: asserts
 from: weaver-gate
 to: gate-ready-follows-bind
 
+edge: grounds
+from: gate-ready-follows-bind
+to: axiom-contract-is-a-complete-interface
+
 node: gate-unlinks-nothing
 kind: assertion
 tag: review
@@ -378,6 +442,10 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-one-bind-site
+
+edge: grounds
+from: gate-one-bind-site
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **Every connection is authenticated at accept, before any byte is read.**
@@ -395,6 +463,10 @@ tag: perturbation
 edge: asserts
 from: weaver-gate
 to: gate-authenticated-at-accept
+
+edge: grounds
+from: gate-authenticated-at-accept
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The agent uid is denied by construction, not by configuration.** This
@@ -432,6 +504,10 @@ tag: perturbation
 edge: asserts
 from: weaver-gate
 to: gate-stopped-follows-close
+
+edge: grounds
+from: gate-stopped-follows-close
+to: axiom-contract-is-a-complete-interface
 ```
 
 **A refusal leaves nothing held.** A failed bind holds no listener and no
@@ -448,6 +524,10 @@ tag: perturbation
 edge: asserts
 from: weaver-gate
 to: gate-refused-raise-holds-nothing
+
+edge: grounds
+from: gate-refused-raise-holds-nothing
+to: axiom-harness-integrates-by-the-loop
 ```
 
 ## 4. The relay, deferred
@@ -473,6 +553,10 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-client-content-unread
+
+edge: grounds
+from: gate-client-content-unread
+to: axiom-harness-integrates-by-the-loop
 ```
 
 ## 5. The failure vocabulary
@@ -491,6 +575,11 @@ answer on an exchange, every refusal this crate issues is a
 channel fault is a failure below the exchange layer. `Closed` is the one
 this crate does not survive: the exit path of section 2 is its handling,
 and the other two are answered as faults of the exchange in flight.
+**The split is what keeps the contract's refusal set closed,** which is the
+grounding the block below carries: a refusal is drawn from the floor's
+enumeration and named by the contract, so a failure that is not one of
+those is classified below the exchange layer rather than admitted as a new
+refusal the other party never agreed to read.
 
 ```graph
 node: gate-fault-below-the-exchange-layer
@@ -500,6 +589,10 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-fault-below-the-exchange-layer
+
+edge: grounds
+from: gate-fault-below-the-exchange-layer
+to: axiom-contract-is-a-complete-interface
 ```
 
 ## 6. What is enforced, and by which instrument
@@ -565,6 +658,106 @@ floor-link under gate H2. No async runtime, no logging crate, and no YAML
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
+**Which invariant each claim serves, and why seven serve none.** Seventeen `grounds`
+edges run from sixteen of the twenty-three, nine to
+`axiom-floor-is-vocabulary-behavior-is-socket`, five to
+`axiom-contract-is-a-complete-interface`, and three to
+`axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two
+invariants each give it a reason. **The test applied is whether the axiom is the reason
+the claim exists, or the claim a precondition of the axiom's own stated reason.** Remove
+the socket invariant and this crate has no reason to authenticate at accept, no reason
+to elect a socket type for the world seam, no reason to carry a truncation obligation,
+and no reason to confine socket creation to one site, so those ground in it. Remove it
+and the descriptors are still owned types and the parent-death signal is still elected,
+so those ground in nothing. **Two claims this act first refused are grounded on the
+operator's rulings of this date.** The dumpable flag holds a premise the socket
+invariant argues from rather than a rule it states, which is the second grounding
+relation Document Format section 4 now names. The channel state grounds in the contract
+invariant because
+`weaver-harness-gate-contract` section 3 states the ordering outright, that
+lower is last and terminal and that turn exchanges are valid only between a
+completed raise and a lower, so the claim was never the internal
+representation that invariant excludes. **Eight claims grounding
+in no invariant is the expected result and not a gap**, per Document Format
+section 4: most of what this document elects is a representation, a
+placement, or a hygiene set the charter's walks argue, and representation is
+what the invariants are not about.
+
+**The other two axioms take nothing from this crate.** The join key binds a
+request belonging to an existing turn, and every exchange this document
+specifies is a lifecycle directive belonging to none and carrying none, per
+apex section 5.2. The turn exchanges that will carry a key are the token
+workflow's and defer with the relay, so that edge lands when they are specced
+rather than now. The organ test is a classification the charter passes, and
+the one claim it would reach here, that this process holds a channel with the
+harness and no other organ's handle, is `weaver-harness-Spec`'s to enforce at
+the fork and carries no record in this document, per section 0.
+
+**Three groups among the sixteen are worth stating rather than leaving to be
+read.** The two manifest claims ground in the socket invariant because both
+are the linkage facts that invariant defines: the gate is a separate
+executable nothing links because its behavior is reached over a socket, and
+its one internal dependency is a floor link because the floor is the two
+crates every domain draws from and no domain contains. The bind site's two
+records ground there for a reason both halves share, the pinned shapes and
+the general prohibition being halves of a divided claim: a listener built
+anywhere but the one site is a socket the accept predicate never guards,
+which is the exception that invariant states it does not admit. Four of the
+five contract edges are the ordering half and the error half of a complete
+interface, ready and stopped being answers the harness builds against
+without asking what this crate does, out of order being an ordering
+guarantee refused rather than queued, and the fault split being what keeps
+the refusal vocabulary drawn from the floor rather than invented here.
+
+**The three loop edges are the places this crate hands work back to the
+integrator rather than settling it here.** Apex section 5.5 makes the harness
+answerable for correctness and for timing across domains and leaves each organ
+answerable inside its own, so a claim grounds in it when the claim is this crate
+declining what the loop is answerable for. A directive out of order arrived in an
+order this crate did not choose, and a gate that queued it would be reconciling a
+timing failure across domains, which that invariant assigns to the loop by
+construction. **That record carries two edges and both are real.** Apex section
+5.3 requires the contract to state the ordering it relies on, which is why the
+refusal is specifiable at all, and apex section 5.5 makes the loop answerable for
+that ordering still holding when this crate's ordering meets the SPU's in one
+fan-out. A refused raise holding nothing is what lets the fan-out's rollback stay
+the loop's work, a half-bound listener left behind being state the harness cannot
+see and would have to be told about, which is the organ-to-organ arrangement that
+invariant exists to prevent. The relay carrying both directions unread draws the
+same line at the world seam: a gate that read a client's line would be deciding
+something about the turn, which is the harness's domain, and the refusal of an
+unparseable line returning from the harness by the path the line took is that
+decision staying where it belongs.
+
+**What the loop invariant did not reach, and why the line falls there.** Ready
+follows the bind and stopped follows the close are this crate's own sequencing
+inside its own domain, presented at its edge as guarantees the contract states,
+and apex section 5.5 says nothing about what happens inside a domain. The channel
+state's three positions are the representation that makes the refusal mechanical
+rather than the refusal itself, and grounding a representation in an invariant
+about what crosses would read the scope limit backwards. The one claim that
+invariant's presents-nothing-to-any-peer clause would reach here, that this
+process holds a channel with the harness and no other organ's handle, is the same
+claim the organ axiom would reach and is `weaver-harness-Spec`'s to enforce at the
+fork, carrying no record in this document, per section 0.
+
+**Two calls the labelling first refused, and why.** The agent uid denied by
+construction is this crate's centerpiece and it grounds in nothing. The
+socket invariant protects the second party knowing who the first is, which
+the credential at accept discharges in full, and what the boundary then does
+with that knowledge is the charter's reference walk rather than the
+invariant's. **The two hygiene sets do not go the same way, and the sentence this act
+first wrote here answered for the wrong seam.** This process holds two seams of
+different kinds. The world socket is named and its identity property does stand
+or fall with the credential. The channel end at descriptor 3 is an unnamed pair
+with no credential at all, authenticated by possession, and the socket invariant
+rests that case on a premise rather than a rule: no third party can reach a
+socket that has no address. A same-uid process reaches it through this process's
+own descriptor table unless the flag is cleared, so clearing it holds the premise
+true and grounds on the second relation. The channel end's close-on-exec is review's by
+election, per section 6, and grounds on the same footing, an exec'd image holding the
+end being a third party in possession of a socket with no address.
+
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
 sections 1 through 5, rather than gathered here, per Document Format section
@@ -623,6 +816,10 @@ tag: compile-fail
 edge: asserts
 from: weaver-gate
 to: gate-bind-shapes-pinned-by-doctest
+
+edge: grounds
+from: gate-bind-shapes-pinned-by-doctest
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 ## 7. Open elections
