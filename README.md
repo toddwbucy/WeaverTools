@@ -53,6 +53,14 @@ the framework, and a second model in the assembly, an embedder, a classifier,
 an instrument of your own, is another port turned on and a contract written for
 what crosses it, with the traffic routed the same way all traffic is routed.
 
+The same offer runs outward, and there it is smaller than you might expect. We
+build no tools. A bash tool, a database client, an API caller are not crates
+here and never will be, because a hammer is not installed into a carpenter, it
+is shaped so a hand can grip it. What the framework owns is the grip: the
+boundary contract a tool is built to fit. That is why external tooling can stay
+external at no cost to the agent, and why the thing on the far side of that
+contract can change without the agent changing at all.
+
 What WeaverTools offers, then, is not a better memory or a better loop. It is
 the framework in which you build your own agent, locally, in a controlled
 environment: the same mental model as the network, abstracted down one level so
