@@ -21,6 +21,12 @@ one fault carrier, per the fault-carrier ruling of this date: faults ride it as
 `fault` events, the coordination seam's alert exchange retired in the same act.
 **Revised:** 2026-08-01, fifth entry, the naming ruling. Section 7 draws loop 0's
 trio, the surface's owed pair dissolving, the verbs and stop as directive cases.
+**Revised:** 2026-08-04, the vocabulary clause gains its edge form. Five `draws` edges,
+the three the types clause names plus loop 0's directive and answer that the paragraph
+beneath it draws. The `weaver-trace` draw takes no edge and says why, being a published
+format rather than a linked type. Filed 2026-08-02 by the audit the gate act's review
+provoked, and landed now because G4 runs at phase close over the whole set and cannot
+see a clause that exists only as prose.
 **Document ID:** `weaver-admin-operator-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -187,10 +193,45 @@ is the contract-coupled reading `weaver-admin-PRD` section 8 states.
 because `weaver-types-PRD` section 5 asks for it even when it is empty.
 
 This surface draws loop 0's `lifecycle-directive` and `lifecycle-answer` beside
-the refusal, per the naming ruling of 2026-08-01: the verbs and the stop are
-directive cases entering at this surface, the answers are answer cases, and the
-observations ride the same shapes while transitioning nothing, section 2's
-enumeration naming which cases cross. Nothing is owed to the floor.
+the refusal, per the naming ruling of 2026-08-01: the verbs and the stop are directive
+cases entering at this surface, the answers are answer cases, and the observations ride
+the same shapes while transitioning nothing, section 2's enumeration naming which cases
+cross. Nothing is owed to the floor.
+
+**The clause above is stated in edge form here**, per Document Format section 4, which
+makes `draws` the vocabulary clause a query can walk and is what turns G4 from a
+reading into a query. The block sits at the clause it argues rather than in section 0
+beside the party edge, per that format's section 6.
+
+```graph
+edge: draws
+from: weaver-admin-operator-contract
+to: peer-identity
+
+edge: draws
+from: weaver-admin-operator-contract
+to: authorization-predicate
+
+edge: draws
+from: weaver-admin-operator-contract
+to: lifecycle-refusal
+
+edge: draws
+from: weaver-admin-operator-contract
+to: lifecycle-directive
+
+edge: draws
+from: weaver-admin-operator-contract
+to: lifecycle-answer
+```
+
+**The draw from `weaver-trace` takes no edge and the reason is stated rather than
+left to be inferred.** What crosses here is the durable event schema as published
+format rather than as a linked type, per `weaver-admin-PRD` section 8, so the clause
+names a format an external reader consumes and not a vocabulary node this contract
+binds a party to. An edge would assert a coupling the contract spends a paragraph
+denying. Whether G4 wants a form for a published-format draw is a question for that
+gate rather than a defect in this clause.
 
 ## 8. What this document changes elsewhere
 

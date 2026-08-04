@@ -14,6 +14,11 @@ the corpus follows the rename in the same act.
 concurrency cell settles: a second request waits rather than refusing,
 clients may speak at once, and the harness serves turns one at a time in
 arrival order, per `weaver-harness-gate-contract` sections 2 and 3.
+**Revised:** 2026-08-04, the vocabulary clause gains its edge form. Three `draws` edges,
+the whole of what this boundary takes from the floor. The turn frames it implies stay
+edgeless until they exist. Filed 2026-08-02 by the audit the gate act's review provoked,
+and landed now because G4 runs at phase close over the whole set and cannot see a clause
+that exists only as prose.
 **Document ID:** `weaver-gate-world-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -138,9 +143,29 @@ because `weaver-types-PRD` section 5 asks for it even when it is empty.
 shape crosses this boundary, and what the record holds about a turn is authored
 inside, by the harness, on the other side of the gate.
 
+**The clause above is stated in edge form here**, per Document Format section 4,
+which makes `draws` the vocabulary clause a query can walk and is what turns G4 from a
+reading into a query. The block sits at the clause it argues rather than in section 0
+beside the party edge, per that format's section 6.
+
+```graph
+edge: draws
+from: weaver-gate-world-contract
+to: peer-identity
+
+edge: draws
+from: weaver-gate-world-contract
+to: authorization-predicate
+
+edge: draws
+from: weaver-gate-world-contract
+to: gate-instruction
+```
+
 The turn frame definitions this boundary implies are owed on demand when the token
 workflow charters the turn exchanges, and nothing enters `weaver-types-PRD` section
-2.3 before that demand fires.
+2.3 before that demand fires. **They take no edge until they exist**, an edge to an
+undeclared node being the dangling target Document Format section 4 rules out.
 
 ## 8. What this document changes elsewhere
 
