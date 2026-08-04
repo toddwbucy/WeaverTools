@@ -5,6 +5,12 @@
 **Base commit:** `ad9d807`, `main`
 **Document ID:** `HANDOFF-2026-08-04-hades-graph-build`
 **Parent:** `WeaverTools-Working-Process`, section 5
+**Revised:** 2026-08-04, four corrections on the operator's review before this document
+travels. The edge-source rule was stated as a two-way split and is a five-kind table.
+The two external-boundary contracts' single party edge is named as correct rather than
+left to look like a defect. The `via` guarantee is stated, which types it as a
+reference. And checklist item 4 is connected to the G4 failure it cannot see, with the
+authorship asymmetry that explains why.
 **Editorial:** Per the Working Rules.
 
 ---
@@ -65,8 +71,25 @@ rely on rather than defend against:
   zero collisions. An identifier is a primary key without qualification by kind.
 - **No edge endpoint is undeclared, in either direction.** Every `from` and every `to`
   resolves to a node the corpus declares.
-- **Keys in use are exactly seven:** `edge`, `from`, `to`, `node`, `kind`, `tag`, `via`.
-  `grounds` was retired as a key on 2026-08-03 and now names an edge kind only.
+- **Keys in use are exactly seven:** `edge`, `from`, `to`, `node`, `kind`, `tag`,
+  `via`. `grounds` was retired as a key on 2026-08-03 and now names an edge kind only.
+- **Every `via` value resolves to a declared `document` node.** All five do at this
+  commit. `via` is a typed reference to a contract rather than a string annotation,
+  and that is a schema decision rather than a convenience.
+
+**Two contracts carry one party edge each and that is correct by design.** The party
+count runs 2, 2, 2, 2, 2, **1, 1** - `weaver-admin-operator-contract` and
+`weaver-gate-world-contract` each bind one crate and one principal outside the program,
+and an external principal is not a crate node. Two conformance queries a receiving side
+will reasonably write both report false defects against this:
+
+- **every contract has two parties** fails on two of seven, correctly.
+- **every contract is the `via` of a seam** finds five of seven, correctly. The two
+  boundary contracts govern no crate-to-crate seam because their far side is outside
+  the program.
+
+This is the same class as the seam-identity trap in section 4. Both are shapes the
+program means, and both look like defects from the query side.
 
 ## 3. The notation, and the four rules a parser will get wrong
 
@@ -89,10 +112,29 @@ at an axiom the apex declares. `weaver-traits` carries an `asserts` edge to a no
 `weaver-types-Spec` declares. Any resolver that scopes targets to the declaring file
 will report roughly eighty false dangling edges.
 
-**Edges run from the crate, not from the document.** `asserts` runs from a crate to an
-assertion. `grounds` runs from an assertion to an axiom. This is why a Spec sources
-records without needing a node of its own, and why Document Format section 1's
-one-document-one-source rule was never amended for Specs.
+**Five node kinds source edges, and a two-way rule will mis-model a third of them.**
+An earlier draft of this handoff said edges run from the crate rather than from the
+document. That is true of `asserts` and `grounds` and false of a third of the edge
+population. The full table at this commit:
+
+```
+crate       asserts 241 | defines 27 | seam 5 | parent 7
+            floor-link 7 | reads 2 | writes 2
+document    draws 36 | party 12
+assertion   grounds 78
+artifact    holds 6
+vocabulary  elects 2
+```
+
+**The real rule has two halves and they divide by document kind.** A **contract** gets
+a `document` node and sources edges from itself, which is why all twelve `party` edges
+and all thirty-six `draws` edges leave a document node. A **PRD or Spec** gets no node
+and sources edges from the crate it argues, which is Document Format section 1's rule
+that only a document which is itself the source of an edge needs a node record, and a
+contract is the one kind that qualifies.
+
+A mapper built on the flat form would conclude no document is ever an edge source and
+mis-handle 134 of 425 edges.
 
 ## 4. What the graph has to answer
 
@@ -119,6 +161,25 @@ tree, which is what G6 exists to make safe.
 duplicate: `weaver-spu` holds residency and decode under two contracts. **A seam's
 identity is its `via` contract, not its endpoints**, per apex 5.5. A query treating a
 crate pair as unique will report this program's intended shape as a defect.
+
+**A second trap for item 4, and it is the one section 5's warning is about.** Item 4
+asks that every vocabulary name resolve to a definition site. There are 27 vocabulary
+nodes and 27 `defines` edges, so **that query returns clean today and will keep
+returning clean while G4 fails.** G4's third half asks a different question the
+checklist never asks: whether every definition is either drawn by some clause or stated
+to be internal. Seven are drawn by no clause and five of those state no reason. **Item 4
+passing is not evidence that G4 holds, and a receiving side reporting item 4 green has
+said nothing about the five.**
+
+**The structural reason is an authorship asymmetry, and it generalizes.** `defines` is
+authored by the definer and `draws` is authored by the consumer. A completeness query
+over `defines` can only ever measure whether definers did their job. **Orphan detection
+lives entirely on the `draws` side, and no query written from the definition end can
+see it.** This is the shape that makes dead-code detection hard in a compiler:
+reachability is a property of the caller graph rather than of the declaration table. Any
+query in this corpus that starts from a declaration and asks whether it is well-formed
+will have the same blind spot, so the graph wants at least one query per relation
+written from the consuming end.
 
 ## 5. Non-negotiables
 
