@@ -316,6 +316,16 @@ Between an assertion and an axiom:
   argues the assertion, in the same block. This is the third term of apex section 11's
   chain read upward: code cites an assertion, an assertion grounds in an invariant.
 
+**A claim grounds in an axiom two ways, and the second is easy to miss.** The first is
+that the axiom is the reason the claim exists: remove the axiom and ask whether the
+claim still has a point. The second is that **the claim is a precondition of the
+axiom's stated reason.** Where an invariant argues from a premise about the world rather
+than from a rule, whatever holds that premise true serves it, and a corpus grounding
+only the first relation leaves the premise unguarded. The apex's possession case is the
+live instance: it rests authentication on no third party being able to reach a socket
+that has no address, and a process's own descriptor table is that address unless
+something closes it.
+
 **An assertion with no `grounds` edge is not a defect and G3 does not fail on one.**
 Most of this corpus is representation election - a format, a name shape, a tagging
 rule, a bound - which code must conform to as surely and which serves no invariant
