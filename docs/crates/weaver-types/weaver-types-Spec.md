@@ -258,9 +258,11 @@ pub enum ConfigErrorKind {
 explicit election rather than a convention.** `#[serde(rename_all = "kebab-case",
 deny_unknown_fields)]` on the struct, so the operator writes `model-binding` and
 `trace-sink` as the charter's vocabulary names them and the Rust field names stay
-idiomatic. Without the rename the two spellings diverge, which is the collision
-Document Format section 5 rules against for graph identifiers and which reads the
-same way on a page.
+idiomatic. The `deny_unknown_fields` half is the fixed-surface mechanism of section 2
+and stands until the spec round
+`weaver-types-PRD` section 2.1 names. Without the rename the two spellings diverge,
+which is the collision Document Format section 5 rules against for graph identifiers and
+which reads the same way on a page.
 
 ```graph
 node: types-config-names-kebab
@@ -391,11 +393,15 @@ section 4.3. The parse answers well-formed and the checks answer real, and this
 crate owns the first only.
 
 **A field no organ registered refuses rather than being ignored.** Unknown is measured
-against the declared surface, per `weaver-types-PRD` section 2.1, so a derive that
-denies unknown fields on one fixed type is the mechanism for a fixed surface and not
-for this one. What holds here is the property rather than the derive. An ignored field
-is an operator's declaration silently discarded, and a typo in `permission-mode` that
-parses as an unknown field and vanishes is the failure this rejection exists to prevent.
+against the declared surface, per `weaver-types-PRD` section 2.1. **The derive this
+crate carries denies unknown fields against one fixed type, which is the mechanism for a
+fixed surface, and it is what holds the property today.** It stands until the spec round
+that charter section names, and what survives that round is the property rather than the
+derive. The three sites below that name the derive say the same and are qualified rather
+than rewritten, because the representation is that round's to change and not this act's.
+An ignored field is an operator's declaration silently discarded, and a typo in
+`permission-mode` that parses as an unknown field and vanishes is the failure this
+rejection exists to prevent.
 
 ```graph
 node: types-unknown-key-refuses
@@ -896,8 +902,8 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 - The config parse yields a fully typed value or a typed error and exposes no
   partial value, so a half-valid config is unrepresentable rather than merely
   refused.
-- `deny_unknown_fields` makes an unrecognized config key a parse error rather
-  than a silent discard.
+- `deny_unknown_fields` makes an unrecognized config key a parse error rather than a
+  silent discard, against the surface this crate declares as one type today.
 
 **Enforced by a compile-fail test, because the property is an absence.**
 `PeerIdentity` implements no `Deserialize`: a doctest attempting to deserialize
@@ -960,7 +966,8 @@ already discharged.
   the residual-readout election, since it is the one a builder is most likely to
   make optional.
 - In this crate: a misspelled key refuses, confirmed by watching a mistyped
-  `permission-mode` vanish when `deny_unknown_fields` is removed.
+  `permission-mode` vanish when `deny_unknown_fields` is removed. The watch is the
+  derive's removal while the surface is one type's, and it moves with the surface.
 - In each organ's crate: a directive case belonging to another seam is refused as
   `OutOfOrder` rather than acted on, confirmed per seam by watching a wildcard arm
   swallow it.
