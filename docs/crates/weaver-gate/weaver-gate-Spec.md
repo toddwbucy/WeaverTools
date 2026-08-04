@@ -62,15 +62,13 @@ holding across organs, the refused raise holding nothing, and the relay
 carrying both directions unread. Section 6 states the reason at all three and
 states where the line falls, ready and stopped being this crate's own
 sequencing inside its own domain and the channel state's three positions being
-the representation beneath the refusal rather than what crosses. Sixteen edges
-from fifteen of the twenty-three records now, eight to the socket invariant,
-five to the contract invariant, and three to the loop invariant, with eight
-grounding in nothing. The entry above also loses a count the sweep of that act
-left at twelve where it had settled on ten. No record moves, no tag changes,
-and no assertion is added or removed.
-**Document ID:** `weaver-gate-Spec`
-**Parent:** `weaver-gate-PRD`
-**Editorial:** Per the Working Rules.
+the representation beneath the refusal rather than what crosses. Seventeen edges from
+sixteen of the twenty-three records now, nine to the socket invariant, five to the
+contract invariant, and three to the loop invariant, with seven grounding in nothing.
+The entry above also loses a count the sweep of that act left at twelve where it had
+settled on ten. No record moves, no tag changes, and no assertion is added or removed.
+**Document ID:** `weaver-gate-Spec` **Parent:** `weaver-gate-PRD` **Editorial:** Per the
+Working Rules.
 
 ---
 
@@ -273,6 +271,10 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-channel-end-close-on-exec
+
+edge: grounds
+from: gate-channel-end-close-on-exec
+to: axiom-floor-is-vocabulary-behavior-is-socket
 
 node: gate-parent-death-signal-thread-scoped
 kind: assertion
@@ -655,23 +657,22 @@ floor-link under gate H2. No async runtime, no logging crate, and no YAML
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
-**Which invariant each claim serves, and why eight serve none.** Sixteen
-`grounds` edges run from fifteen of the twenty-three, eight to
+**Which invariant each claim serves, and why seven serve none.** Seventeen `grounds`
+edges run from sixteen of the twenty-three, nine to
 `axiom-floor-is-vocabulary-behavior-is-socket`, five to
 `axiom-contract-is-a-complete-interface`, and three to
-`axiom-harness-integrates-by-the-loop`, with one claim carrying two edges
-because two invariants each give it a reason. **The test applied is whether the
-axiom is the reason the claim exists, or the claim a precondition of the
-axiom's own stated reason.** Remove the socket invariant and this
-crate has no reason to authenticate at accept, no reason to elect a socket
-type for the world seam, no reason to carry a truncation obligation, and no
-reason to confine socket creation to one site, so those ground in it. Remove
-it and the descriptors are still owned types and the parent-death signal is
-still elected, so those ground in nothing. **Two claims this act first refused
-are grounded on the operator's rulings of this date.** The dumpable flag holds
-a premise the socket invariant argues from rather than a rule it states, which
-is the second grounding relation Document Format section 4 now names. The
-channel state grounds in the contract invariant because
+`axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two
+invariants each give it a reason. **The test applied is whether the axiom is the reason
+the claim exists, or the claim a precondition of the axiom's own stated reason.** Remove
+the socket invariant and this crate has no reason to authenticate at accept, no reason
+to elect a socket type for the world seam, no reason to carry a truncation obligation,
+and no reason to confine socket creation to one site, so those ground in it. Remove it
+and the descriptors are still owned types and the parent-death signal is still elected,
+so those ground in nothing. **Two claims this act first refused are grounded on the
+operator's rulings of this date.** The dumpable flag holds a premise the socket
+invariant argues from rather than a rule it states, which is the second grounding
+relation Document Format section 4 now names. The channel state grounds in the contract
+invariant because
 `weaver-harness-gate-contract` section 3 states the ordering outright, that
 lower is last and terminal and that turn exchanges are valid only between a
 completed raise and a lower, so the claim was never the internal
@@ -739,7 +740,7 @@ process holds a channel with the harness and no other organ's handle, is the sam
 claim the organ axiom would reach and is `weaver-harness-Spec`'s to enforce at the
 fork, carrying no record in this document, per section 0.
 
-**Two calls the labelling refused, and why.** The agent uid denied by
+**Two calls the labelling first refused, and why.** The agent uid denied by
 construction is this crate's centerpiece and it grounds in nothing. The
 socket invariant protects the second party knowing who the first is, which
 the credential at accept discharges in full, and what the boundary then does
@@ -752,8 +753,9 @@ with no credential at all, authenticated by possession, and the socket invariant
 rests that case on a premise rather than a rule: no third party can reach a
 socket that has no address. A same-uid process reaches it through this process's
 own descriptor table unless the flag is cleared, so clearing it holds the premise
-true and grounds on the second relation. The channel end's close-on-exec is
-review's by election, per section 6, and grounds on the same footing.
+true and grounds on the second relation. The channel end's close-on-exec is review's by
+election, per section 6, and grounds on the same footing, an exec'd image holding the
+end being a third party in possession of a socket with no address.
 
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
