@@ -79,7 +79,7 @@ to the plural, and the one-seam-per-service rule it implied is stated. The secti
 first written read as one contract per organ, which the corpus contradicts in four
 documents and which `weaver-spu` has never done, holding residency at one end and
 decode at the other under two contracts. The plural is the general case.
-**Revised:** 2026-08-04, a second entry this date. Section 4 states that initiation
+**Revised:** 2026-08-04, the tool axes. Section 4 states that initiation
 and dispatch are separate questions and that neither is answered by where a capability
 sits, which the section already implied by calling autonomic action harness-initiated
 and protoautonomic a model-elected call. The vision's section 6 carried the older
