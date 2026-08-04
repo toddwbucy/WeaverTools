@@ -80,9 +80,10 @@ first written read as one contract per organ, which the corpus contradicts in fo
 documents and which `weaver-spu` has never done, holding residency at one end and
 decode at the other under two contracts. The plural is the general case.
 **Revised:** 2026-08-04, the grip, per the operator. Section 9 states that external
-tooling is out entirely and stays out, that what this program owns is the boundary
-contract a tool is built to fit, and that the grip is not a reserved slot because its
-reader exists today. Section 12 states that the gate's far side is experience rather
+tooling is out entirely and stays out, that what this program owns outward is the
+boundary contract a tool is built to fit, that inward what an older reading called an
+internal tool is a function loop located with the control loops in the harness, and
+that the grip is not a reserved slot because its reader exists today. Section 12 states that the gate's far side is experience rather
 than the world, whatever stands out there holding its own contract with the
 environment, and that opacity does three jobs rather than one: confinement, a tool
 call being indistinguishable from any other output, and a boundary that relocates
@@ -686,18 +687,28 @@ and nap passes, recall, and any memory substrate. Also out: offline analysis,
 training, and the desktop frontend.
 
 **External tooling is out entirely as well, and stays out.** This program builds no
-tool crate and holds no **external** tool. What it owns is the **grip**: the interface
-a tool is built to be gripped by, which is `weaver-gate-world-contract`.
+tool crate, and the reason differs on each side of the boundary.
 
-**The scope on that sentence is load-bearing and the corpus already contradicts the
-flat form.** Section 4's definition of done requires this agent to fire a
-protoautonomic tool call with the calculator as the reference case, so a capability
-the body dispatches inside itself is not merely anticipated, it is required now.
-What this rule reaches is the far side of the grip. A hand grips what is outside it,
-and nothing dispatched inside the body was ever on the far side of anything. A hammer is
-not installed into a carpenter, it is shaped so a hand can hold it, and the boundary
-contract is that hand stated as a specification. A bash tool, a database client, an API
-caller are all things built to fit the grip and none of them is a crate here.
+**Outward, what it owns is the grip:** the interface a tool is built to be gripped by,
+which is `weaver-gate-world-contract`. A hammer is not installed into a carpenter, it
+is shaped so a hand can hold it, and the boundary contract is that hand stated as a
+specification. A bash tool, a database client, an API caller are all things built to
+fit the grip, and none of them is a crate here.
+
+**Inward, what an older reading called an internal tool is a function loop, located
+with the control loops in the harness.** A control loop runs the turn and the
+lifecycle. A **function loop** is a function used in a predefined way when the correct
+signal is given, and the calculator section 4 requires is one: the harness injects a
+computed result where a stochastic one would otherwise go. Managing state and deciding
+when state enters the decoder's path are the same kind of thing. Routing the right
+work to the right part of the agent is what the loop is for, per invariant 5.5, and
+**a calculator small enough to be a few lines does not become an organ by being
+useful.**
+
+So the rule reaches the far side of the grip and nothing else. A hand grips what is
+outside it, and a function loop the harness runs was never on the far side of
+anything.
+
 
 **The grip is not a reserved slot and is the clearest case of the difference.** A
 reserved slot is a shape carried for a reader that does not exist. The grip has a
