@@ -231,7 +231,7 @@ alone, a model-elected call whose result the harness supplies deterministically,
 and it makes no claim about the finished behavior. A tool call that requires
 retained state to decide when to fire belongs to the later stateful program.
 
-## 5. The four invariants
+## 5. The five invariants
 
 These bind every crate PRD, every Spec, and every contract. A document that
 violates one of them is wrong, not merely inconsistent.
@@ -240,7 +240,9 @@ violates one of them is wrong, not merely inconsistent.
 by naming it,** per Document Format sections 3 and 4. The edge runs from the claim
 to the invariant, so the chain apex section 11 states reads upward without a break:
 code cites an assertion, an assertion grounds in an invariant. The set is closed at
-four and a fifth is an act on this document rather than on the format.
+five, and a sixth is an act on this document rather than on the format. It grew from
+four on 2026-08-03, when a labelling batch found two Specs disagreeing about a seam and
+the corpus had no stated forum for the disagreement.
 
 **A claim that grounds in no invariant is representation, not an omission.** Most of
 what a Spec elects is a format, a name shape, a tagging rule, or a bound, and none of
@@ -296,6 +298,23 @@ than `socket` so the difference is stated rather than inferred. The
 harness-to-trace seam is the one such seam in the base set. What the invariant
 forbids is a behavior reached by path dependency across a process line, not a
 crate calling a crate inside one binary.
+
+**A crate outside the floor links the floor for the reason this section gives, and
+takes from it only what it draws.** The link is licensed here: the floor is shared
+vocabulary and a type definition cannot be sent over a socket, so every consumer links
+it and no consumer is asking it to do anything. **Which floor crates it links follows
+from what it draws**, per section 5.3's mechanical consequence that a party links the
+crate defining what it emits, which is what makes the party list checkable against the
+dependency graph. So a Spec whose clause argues only that it links the floor carries the
+one edge here, and a Spec whose clause argues that a particular floor crate is linked
+because a contract draws from it carries that one too.
+
+**Which features a floor link is taken with grounds in nothing.** It is a build
+election that would read the same under any invariant, and a crate takes the
+configuration feature or leaves it because of what that crate does rather than because
+of anything this section or 5.3 requires. Stated because the shape invites the opposite
+reading: a feature named for what the crate does not draw looks like the draw rule
+speaking, and it is not.
 
 This invariant is what makes statefulness a feature add rather than a
 re-architecture. Memory behind a socket is a new socket, a new contract, and a
@@ -380,6 +399,22 @@ candidate passes and not as a list of the organs that exist today, so a crate
 chartered later is classified by reading it against the test rather than by
 amending an enumeration.
 
+**No crate holds an allowance another crate could not have.** What a Spec elects for
+one organ is available to any organ that later finds the need or the capability, and
+a reader meeting an election in one document should not read it as that crate's
+privilege. The classification above is written as a test for the same reason, and an
+election that could only ever be one crate's is a sign the election is really a
+charter fact wearing a Spec's clothes.
+
+**The harness is the one exception, and its form and function are not negotiable.**
+It is the organ whose domain is coordination, so the hub is what it is rather than a
+shape it elected, and no efficacy argument reaches it. Every other organ is a spoke
+by construction and cannot trade that away.
+
+**Whether an organ mirrors this shape inside its own domain is section 5.5's, not
+this section's.** The topology here is fixed. What an organ does one level down is a
+question about integration and is answered where integration is.
+
 Section 6 already names organs and the harness as the coordinating center, and
 5.1 already carries the floor half of the same three-way distinction. This
 harvests what those two imply rather than importing a new frame.
@@ -388,6 +423,71 @@ harvests what those two imply rather than importing a new frame.
 node: axiom-organ-and-submodule
 kind: axiom
 ```
+
+### 5.5 The harness integrates, and the loop is the mechanism
+
+**The harness is the integrator.** Section 5.4 makes it the hub every organ is duplex
+with, which is a statement about topology. This is the role that topology exists to
+serve. The harness is answerable for the whole working, and an organ is answerable for
+its own domain and for nothing outside it. A hub that only carried traffic would leave
+integration to whichever organ noticed it was missing, which is how an organ starts
+reasoning about a domain that is not its own.
+
+**The loop is the integrating mechanism.** Integration is not a property the parts have
+when assembled correctly, it is work something does, and the loop running in the harness
+is the thing that does it. This is why the composition root is new code rather than
+carried code, and why loop 0 is the framework's rather than a builder's: the mechanism
+that makes the parts one program cannot itself be a part.
+
+**Each organ presents its contract to the harness and presents nothing to any other
+organ.** A contract is what an organ offers the integrator, being the vocabulary it
+speaks, the errors it returns, and the ordering it relies on and provides, per section
+5.3. That is the whole of what an organ exposes and the whole of what the loop has to
+work from, which is what lets an organ be built against its own contract alone.
+
+**The loop is answerable for correctness and for timing.** It ensures that point A talks
+to point B correctly and at the right time. Correctly means the vocabulary each contract
+names, in the direction that contract states. At the right time means the ordering each
+contract relies on still holds when two organs' orderings have to be reconciled against
+each other, which no organ can do from inside its own domain, because no organ can see
+the other's. **Reconciliation across domains is the loop's work by construction and not
+by convention.** Reconciliation inside one domain is the organ's own and this section
+does not reach it.
+
+**So a conflict between organs is settled in the contracts they hold with the harness.**
+There is no organ-to-organ contract to settle it in, by 5.4, and no other party sees
+both sides. A seam question two organs answer differently is not a hard case calling for
+a ruling, it is an incomplete contract, which 5.3 forbids by name. The obligation runs
+toward the contract rather than away from it, and Document Format section 7 states the
+order a reader follows.
+
+**This invariant binds what crosses between domains and says nothing about what
+happens inside one.** An organ integrates its own parts however its domain demands,
+and it may well arrive at this same shape one level down, a submodule reaching its
+organ and an interior loop making the organ's parts one thing. That is emulation and
+not obligation. An organ that adopts the pattern inherits an argument already made,
+and an organ that departs from it answers to its own Spec and says why there.
+
+**Demand is the pressure and the domain is where it acts.** An organ develops as its
+domain's demands dictate, the way an organism develops under selection, and the shape
+it arrives at is answerable to those demands rather than to this section. What the
+program fixes is the environment that development happens in, which is the harness's
+form and the contracts at each organ's edge. **The harness's form is not negotiable
+for the same reason the environment is not: it is what the organs develop against,
+not an organism developing alongside them.** An environment that changed shape under
+the same pressure would leave nothing for anything to adapt to, and every organ would
+be adapting to every other organ's adaptations, which is the peer coupling 5.4 forbids
+arriving by a slower route.
+
+So the constraint is narrow and it is the whole of it. What an organ exposes is its
+contract. What crosses between organs is the loop's. **Everything else inside a domain
+is that domain's to evolve.**
+
+```graph
+node: axiom-harness-integrates-by-the-loop
+kind: axiom
+```
+
 
 ## 6. The agent lifecycle
 

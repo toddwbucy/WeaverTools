@@ -1,6 +1,18 @@
 # WeaverTools Document Format
 
-**Version:** v0.11, 2026-08-03, fourth entry this date. The v0.11 change is the axiom
+**Version:** v0.13, 2026-08-03, sixth entry this date. The v0.13 change follows the
+apex to five invariants, per the operator's ruling of this date: section 3's axiom entry
+and its closed-set sentence both count five. The apex gained 5.5, the harness integrates
+and the loop is the mechanism, which is the invariant this format's own section 7 rule
+was reaching for when it said a seam question belongs in the contract.
+Previously v0.12, 2026-08-03, fifth entry this date. The v0.12 change is section 4
+stating the second way a claim grounds, that it is a precondition of the axiom's own
+stated reason, and section 7 stating that a disagreement between two Specs about an
+invariant's reach is read against the contract before the invariant, both per the
+operator's rulings on the labelling batch. Two acts applied two
+tests and only one was briefed, which the batch made visible rather than either act
+getting it wrong.
+Previously v0.11, 2026-08-03, fourth entry this date. The v0.11 change is the axiom
 layer, per the operator's ruling of this date: section 3 gains the `axiom` node kind
 for the apex's four invariants, and section 4 gains the `grounds` edge from an
 assertion to the axiom it serves. The section 4 entry states that a missing `grounds`
@@ -228,11 +240,12 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
-**axiom.** One of the apex's four invariants, declared by `WeaverTools-PRD` at the
+**axiom.** One of the apex's five invariants, declared by `WeaverTools-PRD` at the
 subsection that states it. An axiom is not a claim about a crate and binds no code
 directly. It is what a claim can be grounded in, so a query can ask which claims serve
-an invariant and which invariant a claim serves. There are four and the set is closed:
-a fifth would be an apex act, not a Format one.
+an invariant and which invariant a claim serves. There are five and the set is closed: a
+sixth would be an apex act, not a Format one. It grew from four on 2026-08-03, so a
+version of this format saying four is behind the apex rather than ahead of it.
 
 **assertion.** A claim a Spec makes that code must conform to, named so a source
 file can cite it and a query can return it. Two kinds of clause qualify and both
@@ -302,6 +315,16 @@ Between an assertion and an axiom:
 - `grounds`, from an assertion to the axiom it serves, declared by the Spec that
   argues the assertion, in the same block. This is the third term of apex section 11's
   chain read upward: code cites an assertion, an assertion grounds in an invariant.
+
+**A claim grounds in an axiom two ways, and the second is easy to miss.** The first is
+that the axiom is the reason the claim exists: remove the axiom and ask whether the
+claim still has a point. The second is that **the claim is a precondition of the
+axiom's stated reason.** Where an invariant argues from a premise about the world rather
+than from a rule, whatever holds that premise true serves it, and a corpus grounding
+only the first relation leaves the premise unguarded. The apex's possession case is the
+live instance: it rests authentication on no third party being able to reach a socket
+that has no address, and a process's own descriptor table is that address unless
+something closes it.
 
 **An assertion with no `grounds` edge is not a defect and G3 does not fail on one.**
 Most of this corpus is representation election - a format, a name shape, a tagging
@@ -443,6 +466,32 @@ defect and is fixed by rewriting the block.
 This is a G5 authority statement and it is written here once rather than at every
 block, because the relationship is the same at every block. It is the only duplication
 in the corpus that needs no local authority line.
+
+**Where two Specs disagree about what an invariant reaches, read the contract before
+arguing the invariant.** A disagreement between two documents about the scope of a rule
+looks like a question of doctrine and is usually a question of fact, and the contract
+governing the seam is where the fact lives. The labelling batch of 2026-08-03 is the
+worked case: two Specs divided a claim by instrument and one refused to ground its
+compile-time half, citing this format's rule that internal representation appears in no
+contract. The reading was reasonable and the contract had already settled it, stating
+that lower is last and terminal and that turn exchanges are valid only between a
+completed raise and a lower. Those are ordering guarantees a contract is required to
+name, so the claim was never internal representation, and a doctrinal argument between
+two Specs was about to decide a question the seam's own governing document answers.
+
+**Where the contract is silent, the answer is to settle it in the contract, not to
+reason around it.** A seam question two parties answer differently is not a hard case
+calling for a ruling. It is an incomplete contract, which apex section 5.3 forbids by
+name: a contract states the ordering guarantees it relies on and provides, and a
+disagreement about ordering is that clause missing. **Settling such a question anywhere
+but the contract leaves the defect in place and adds a second statement of the answer**,
+which is the duplication G5 then has to adjudicate. The obligation runs the other way
+from how it feels in the moment: the disagreement is the finding, and the contract is
+where it is owed.
+
+Reaching for the invariant first inverts the corpus, since an invariant binds every
+crate and a contract binds the two parties that meet at the seam. It is also the cheaper
+check, being one document and one clause rather than a comparison across Specs.
 
 ## 8. What this does not do
 

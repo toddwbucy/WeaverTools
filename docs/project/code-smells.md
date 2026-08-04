@@ -5,8 +5,8 @@ as they are found and nothing here is retired without a note saying why.
 
 **Date filed:** 2026-08-03
 **Revised:** 2026-08-03, the quarry survey. Thirteen entries land from a three-lens
-read of the archived tree, and the document gains a category for smells that fall out
-of the deliverable rather than out of one of the four invariants.
+read of the archived tree, and the document gains a category for smells that fall out of
+the deliverable rather than out of one of the four invariants.
 **Document ID:** `code-smells`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -508,7 +508,7 @@ inside a spawned task whose handle is dropped on the floor.
 
 The deliverable is a deployable proto-stateful agent emitting a clean, turn-bracketed,
 correctly-custodied trace, and the trace is the primary artifact rather than a
-diagnostic. These ground there rather than in one of the four invariants, and say so.
+diagnostic. These ground there rather than in one of the invariants, and say so.
 
 ### 2.1 A defined event with no producer
 
