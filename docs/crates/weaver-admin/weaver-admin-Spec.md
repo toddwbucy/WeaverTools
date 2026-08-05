@@ -1029,7 +1029,7 @@ record grounding in two invariants. Eight run to
 and three to `axiom-harness-integrates-by-the-loop`.
 **The test applied is whether the axiom is the reason the claim exists, or
 whether the claim is a precondition of the axiom's own stated reason,** per
-Document Format v0.12 section 4. Remove the socket invariant and this crate has
+Document Format section 4. Remove the socket invariant and this crate has
 no reason to publish no library and no reason to hold one internal dependency,
 no credential is read at either accept, and no envelope has to arrive whole or a
 truncation to count as a fault, so those eight ground in it. Remove it and the

@@ -1303,7 +1303,7 @@ the loop stands the organs up and takes them down is arguing exactly that work.
 
 **The test applied is whether the axiom is the reason the claim exists, or whether
 the claim is a precondition of the axiom's own stated reason,** the second relation
-per Document Format v0.13 section 4. Remove the socket invariant and this crate has
+per Document Format section 4. Remove the socket invariant and this crate has
 no reason to bound a receive, to demand that one write arrive as one read, to flag a
 descriptor before an exec, to create a pair before a fork, or to keep a loop from
 minting a port, so those ground in it. Remove it and `nix` is still the OS crate,
