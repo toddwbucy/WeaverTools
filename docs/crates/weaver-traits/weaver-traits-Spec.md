@@ -631,8 +631,9 @@ through 6, rather than gathered here, per Document Format section 6. Six
 claims are argued only in this section and carry their records at the end of
 it, among them the doctest pinning of the adjudicator candidates, whose
 prohibition is section 4's, and the two pins divided out of section 2's
-posture and election claims, whose remainders are that section's. **The licensed combinations of section 3 are
-declared by `weaver-harness`,** whose Spec section 8 carries the test and has
+posture and election claims, whose remainders are that section's. **The
+licensed combinations of section 3 are declared by `weaver-harness`,** whose
+Spec section 8 carries the test and has
 discharged the owing, because an assertion belongs where its test lives. **The
 tagging test shared with `weaver-types` is declared there,** node and both
 edges, per that Spec's section 4.3 and the pilot's rule: one claim is one node,
