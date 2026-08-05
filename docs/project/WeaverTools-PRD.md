@@ -1,9 +1,10 @@
 # WeaverTools - Primary PRD
 
-**Status:** MERGED 2026-07-28. In `main` and the source of truth for now. Nothing
-in this corpus is ratified until the whole document set maps into the graph, which
-is the Working Process section 2 definition and belongs to the set rather than to
-any one document.
+**Status:** MERGED 2026-07-28. RATIFIED 2026-08-04 as a member of the document set,
+per the operator's ruling of that date: the whole set mapped into the graph on the
+HADES server and ratifies as the complete document set for the toolless inference
+deliverable. Ratification belongs to the set rather than to any one document, per
+Working Process section 2, and section 0's system record carries the set-level mark.
 
 **Date filed:** 2026-07-28
 **Revised:** 2026-07-31. Section 5 carries a fourth invariant and 5.1 is restated.
@@ -94,6 +95,12 @@ and dispatch are separate questions and that neither is answered by where a capa
 sits, which the section already implied by calling autonomic action harness-initiated
 and protoautonomic a model-elected call. The vision's section 6 carried the older
 inside-versus-outside cut and is re-cut against this in the same act.
+**Revised:** 2026-08-04, ratification. The Status line records the set RATIFIED per
+the operator's ruling of this date, and section 0's system record gains
+`tag: ratified`, so the graph's set-level mark is generated from a document rather
+than hand-edited. The tool workflow's later arrival is a planned re-entry to
+authoring rather than a defect, per the same ruling, recorded with its argument at
+Working Process section 5.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -116,6 +123,7 @@ weaver-trace    weaver-traits    weaver-types
 ```graph
 node: WeaverTools
 kind: system
+tag: ratified
 ```
 
 Every crate's parent edge points here. This document declares no other edge,

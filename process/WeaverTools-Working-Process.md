@@ -1,6 +1,12 @@
 # WeaverTools Working Process
 
-**Version:** v0.16, 2026-08-03. The v0.16 change is section 5's closing
+**Version:** v0.17, 2026-08-04. The v0.17 change is ratification: section 5 records
+the operator's ruling of this date, that the set ratifies as the complete document
+set for the toolless inference deliverable with the tool workflow's arrival a
+planned re-entry to authoring, and the mechanism for checklist item 6, the apex's
+system record bearing `tag: ratified`. Section 7 is redrawn to the position the
+ruling creates, having last been drawn before any Spec existed.
+Previously v0.16, 2026-08-03. The v0.16 change is section 5's closing
 checklist, which gains a fifth item and renumbers the two below it: the graph must
 answer a build question and not only a structural one. It exists because the items
 before it are all satisfiable by a graph built from charters and contracts alone,
@@ -291,6 +297,26 @@ the only sources are the documents, the graph, and the specs. Fresh code has not
 copy from, by accident or otherwise. The test is not whether the coding seat intends to
 avoid the old tree. The test is whether it can reach it, and the answer must be no.
 
+### The ratification of 2026-08-04
+
+The operator ruled on 2026-08-04 that the set is ratified, and the ruling answers
+the question open since 2026-08-02: the set ratifies as the complete document set
+for the toolless inference deliverable, and the tool workflow's later arrival is a
+planned re-entry to authoring rather than a defect. The half-chartered discipline
+anticipated this - crates are chartered workflow by workflow and two charters say
+so on their faces - so a re-entry adds a workflow to a settled set rather than
+reopening the set's meaning.
+
+The graph was built on the HADES server the same day, per
+`HANDOFF-2026-08-04-hades-graph-build`, and the checklist was reported item by
+item, with item 1 owing its drop-and-rebuild audit trail. Item 6 is carried by the
+apex: section 0's system record bears `tag: ratified`, so the set-level mark is
+generated from a document and the never-hand-edited rule reaches the mark itself.
+The mark lands in the graph on the next rebuild. Item 7 stands open and is the one
+item that outlives ratification: it certifies workspace hygiene rather than the
+set's coherence, it waits on G6, and the quarry's deletion being irreversible is
+the reason it is not hurried.
+
 ## 6. Phase three, coding
 
 This section is a draft of candidates. Nothing in it is in force.
@@ -329,47 +355,41 @@ known gap with a named owner.
 
 ## 7. Current position
 
-Phase one. Seven charters are merged: `weaver-harness` with `weaver-trace` as its
-member, `weaver-traits` and `weaver-types` as the floor, `weaver-admin`,
-`weaver-spu`, half chartered by ruling to the end of the lifecycle workflow, and
-`weaver-gate`, chartered to the same boundary. Six contracts are merged beside them,
-coordination, trace production, residency, the gate seam, and the two external
-boundaries, `weaver-admin-operator-contract` and `weaver-gate-world-contract`, with
-`weaver-organ-channel` as the drawn material the organ contracts share.
+The set is RATIFIED, 2026-08-04, per the operator's ruling recorded in section 5.
+Phase one closed with the whole set merged: seven charters, seven Specs, the
+contract layer, and 245 assertion records under their instruments. Phase two ran
+on the HADES server per `HANDOFF-2026-08-04-hades-graph-build`: the graph stood up
+from the merged set, the closing checklist was reported item by item, and the
+set-level mark now rides the apex's system record. Checklist item 1 owes its
+drop-and-rebuild audit trail and item 7 stands open behind G6.
 
-The batch of 2026-07-31 merged to `main` on 2026-08-01: the stop exchange and the
-close kind, the subtraction rulings retiring the live view, the integrity witness,
-and admin's device arbitration, the apex's conflict binding relocated to SPU
-admission, and the `basic-inference-loop` workflow pair under the harness's
-`Loops/` directory. The `weaver-gate` pair merged on 2026-08-01 on the human's
-ruling that a document on `main` is merged, and the external boundaries took their
-contracts the same day, `weaver-admin-operator-contract` and
-`weaver-gate-world-contract`, written as blockers before any Spec.
+The floor probe of 2026-08-04 is the evidence the entry into code rests on: a
+commissioned session with no repository access rebuilt both floor crates from the
+graph and the corpus text, both compiled, the suite passed whole, and all 41 floor
+assertion slugs landed under their instruments. Its three divergences return as
+review findings for the first code act, not as defects in the set, and they are
+named here because the seat that must apply them reads them from the corpus. One,
+the probe inverted the non-exhaustive election and re-aimed the compile-fail pin at
+the inverted claim: the real Specs elect the attribute per type, growing sets
+carrying it and closed sets not. Two, the probe elected two permission modes where
+the floor Spec enumerates three, Ask, Allow, and Deny, the enumeration being
+uncited by any sibling and so unreachable from the graph. Three, the probe filled
+the fault report's deliberately open election with an invented shape: the deferral
+is the corpus's and stands, and the first code act preserves the blank rather than
+the invention.
 
-The durable-record cut of 2026-08-01 landed the same day: the program owns no
-record, per `weaver-admin-operator-contract` section 3, and the trace pair, the
-coordination contract, the admin and harness charters, the apex, and the loop
-document all restate against the stream, the enter question left as the cell
-`weaver-admin-PRD` section 10 holds.
+The build workspace is a fresh clone on the server, carrying none of the probe's
+code. Seat assignment follows section 1's rule unchanged: the seat holding the
+working tree authors, so the server session authors code and the session holding
+the document tree reviews.
 
-The fault-carrier ruling landed 2026-08-01: the stream is the program's one fault
-carrier, a fault the worker survives travelling as the `fault` event, the
-coordination seam's alert exchange retired, and the bracket semantic having
-already narrowed under the durable-record cut to the truthful-account reading.
-The working-structure ruling landed the same day: the relational projection
-retired, the RAM copy holding the same canonical NDJSON the stream carries, one
-rendering with two holders and nothing to reconcile, recall over past runs
-proposed to the memory round as similarity through the SPU's encode side.
-
-The apex re-authoring landed 2026-08-01, the last held item of this section:
-`WeaverTools-PRD` is rewritten as one act against the settled set, the collected
-corrections and the register items filed against it drained in the same act.
-
-What remains in this phase: the Specs, written last against the settled set, and
-then the mapping of phase two, which is the ratification.
-
-Nothing ratifies until the whole set maps, so no milestone here is a ratification.
-Merged means the work may move forward, which is what merged is for.
+What remains before the first code merge: section 6 ratified by the operator,
+which the entry gate requires beside phase two's close, and a conformance header
+per Document Format sections 3 and 4 on every file the first act carries. What
+remains from the phase behind: G6 and then item 7, the G2 and G5 phase-close
+sweeps, and the
+DRAFT-header ruling. Nothing here reopens the set - a change the build or a review
+finds in a ratified document is a phase one re-entry, deliberate and named.
 
 ## 8. What this document does not do
 

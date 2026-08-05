@@ -152,14 +152,15 @@ time. That is the thing WeaverTools is built to change.
 ## What is here today
 
 This repository runs a strict order of work: documents first, then a knowledge
-graph built from those documents, then code. It is in the first of those phases
-now, so what `main` holds is the document corpus: a charter per crate, a
-contract for every seam, the Specs arriving crate by crate, the workflow
-documents that read the set back as one motion, and the process documents the
-corpus governs itself by. No code
-is written until the document set is ratified, and ratification is mechanical:
-the documents carry their nodes and edges in a fixed notation, and the graph is
-generated from them rather than maintained beside them.
+graph built from those documents, then code. The first two phases are complete:
+`main` holds the document corpus - a charter per crate, a contract for every
+seam, a Spec per crate carrying its assertion records, the workflow documents
+that read the set back as one motion, and the process documents the corpus
+governs itself by - and the graph has been built from that corpus, with the set
+ratified on 2026-08-04. Ratification is mechanical: the documents carry their
+nodes and edges in a fixed notation, and the graph is generated from them
+rather than maintained beside them. Code arrives next, each source file citing
+the assertions it conforms to and accruing into the same graph as it merges.
 
 ## Reading the corpus
 
