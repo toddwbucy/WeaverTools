@@ -1,6 +1,9 @@
 # HANDOFF 2026-08-04, the HADES graph build
 
-**Status:** OPEN. Work leaves this workspace for the server and does not return to it.
+**Status:** SERVED 2026-08-04. The build this document commissioned ran the same day:
+the graph stood up as `WeaverTools_v3`, the checklist was reported item by item, and
+the set was ratified per the operator's ruling recorded at Working Process section 5.
+The document stays as the record of what the build was asked to honor.
 **Date filed:** 2026-08-04
 **Base commit:** `main` at the commit that carries this document as read. The handoff
 travels inside the corpus it describes, so the checkout target is wherever this file
@@ -8,6 +11,10 @@ was read from, and a pinned SHA would go stale the moment a later act revised th
 document's own claims. First filed against `ad9d807`.
 **Document ID:** `HANDOFF-2026-08-04-hades-graph-build`
 **Parent:** `WeaverTools-Working-Process`, section 5
+**Revised:** 2026-08-04, after the build. The Status line records the handoff SERVED,
+the tag rule's vocabulary list gains the system record's `ratified` mark with the
+relation gaining the matching term, per Document Format v0.14 and the ratification
+recorded at Working Process section 5.
 **Revised:** 2026-08-04, a third entry this date. Section 3 gains the fifth parser
 rule, found live by the first mapper build: `tag` carries one vocabulary per record
 kind, and a parser modeling it as seam-only reports every assertion in the corpus as
@@ -64,17 +71,21 @@ already states and the reason the current task is the graph rather than the code
 
 ---
 
-## 1. The one thing that is not settled, and it blocks the build
+## 1. The one thing that was not settled, and it blocked the build
 
-**HADES's ingestion contract is undefined in this corpus.** The name appears exactly
+**HADES's ingestion contract was undefined in this corpus** when this handoff was
+filed. The build ran on the server, where the mapper and its parser rules now live,
+and the rules the build discovered came back and landed, the fifth of them in
+section 3. The name appears exactly
 twice: `WeaverTools-Working-Process` section 5 says "a HADES database is stood up from
 the merged documents," and the vision mentions a Hades-backed retrieval tool. There is
 no schema, no collection naming, no edge representation, and no idempotency rule
 anywhere in the tree.
 
-**So the first act on the server is to write that contract, not to write a mapper.** A
-mapper written against a guessed target is a mapper rewritten. What follows in sections
-2 through 4 is everything the corpus side can state without knowing the answer.
+**The first act asked of the server was to write that contract, not a mapper.** A
+mapper written against a guessed target is a mapper rewritten, and the first mapper
+build proved the point by modeling `tag` as seam-only. What follows in sections 2
+through 4 is everything the corpus side could state without knowing the answer.
 
 ---
 
@@ -167,15 +178,16 @@ census and the same class at any later one.
 **`tag` carries one vocabulary per record kind, and the record kind disambiguates.**
 On a seam it is `socket` or `link`. On an assertion it is the enforcing instrument,
 `compile-pin`, `compile-fail`, `perturbation`, `manifest`, or `review`, per Document
-Format section 5, and every assertion in the corpus carries one. This rule earned its
+Format section 5, and every assertion in the corpus carries one. On the system record
+it is `ratified`, carried since the ruling of 2026-08-04 and read on rebuild as
+checklist item 6's mark. This rule earned its
 place the way the others did not: the first mapper build modeled `tag` as seam-only
 and reported all 240 assertions as defects in one run. The arithmetic that catches it
 in advance is one relation rather than a count, the corpus's `tag` keys less its seam
-edges equaling its assertion nodes, which any head can verify against itself and no
-assertion pass can stale. The instrument tags are what checklist item 5 queries
-against, so a parser that
-drops them satisfies the structural half of the checklist while silently discarding
-the build half.
+edges and its system record equaling its assertion nodes, which any head can verify
+against itself and no assertion pass can stale. The instrument tags are what
+checklist item 5 queries against, so a parser that drops them satisfies the
+structural half of the checklist while silently discarding the build half.
 
 ## 4. What the graph has to answer
 

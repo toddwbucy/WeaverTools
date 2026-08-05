@@ -1,6 +1,13 @@
 # WeaverTools Document Format
 
-**Version:** v0.13, 2026-08-03, sixth entry this date. The v0.13 change follows the
+**Version:** v0.14, 2026-08-04. The v0.14 change is the code layer, landed with the
+set's ratification and before any code merges: section 3 gains the `code` node kind,
+section 4 gains the `cites` edge with the header shape the mapper reads, and section
+5's tag rule gains the system record's `ratified` vocabulary, which is how checklist
+item 6's set-level mark is generated rather than hand-edited. The layer lands now
+because the graph accrues code nodes as work merges, per Working Process section 5,
+and a kind invented after the first code merge would leave that merge unmapped.
+Previously v0.13, 2026-08-03, sixth entry this date. The v0.13 change follows the
 apex to five invariants, per the operator's ruling of this date: section 3's axiom entry
 and its closed-set sentence both count five. The apex gained 5.5, the harness integrates
 and the loop is the mechanism, which is the invariant this format's own section 7 rule
@@ -277,6 +284,16 @@ workflow document walks a settled set and authors no edges of its own. The three
 kinds author the graph. These two add no authored record to it, which is what the
 Working Process's count is a count of.
 
+**code.** A source unit carrying a conformance header, arriving in phase three and
+never before. A code node is declared by its own header rather than by any fenced
+block, the way a child declares its own parent edge: the header at the top of the
+file names the assertion identifiers the unit conforms to. The mapper reads headers
+at merge, so code accrues into the graph as work merges and no document restates
+what source already carries. Its identifier is the source path relative to the
+repository root, the one spelling the filesystem already enforces. The kebab-case
+rule governs names this format invents, and a path is not invented, so
+`crates/weaver-types/src/role.rs` is a node identifier as it stands.
+
 ## 4. Edge kinds
 
 Between crates:
@@ -335,6 +352,24 @@ mode the prior program's basis reached at seven of seventy-one claims: the numbe
 low and the response was to keep the layer rather than ask what the layer was for.
 What the edge is for is the query, and a query is only worth its answer if a missing
 edge means the claim is representation rather than that nobody got to it.
+
+Between code and an assertion:
+
+- `cites`, from a code node to an assertion it conforms to, declared by the source
+  file's conformance header. This is the first term of apex section 11's chain, and
+  it arrives in phase three: no document authors a `cites` edge, because a document
+  stating what code conforms to would be a claim about code that only the code can
+  make. The header is the declaration and the mapper reads it at merge.
+
+**The code layer authors no fenced block and the seven keys do not grow.** A code
+node and its `cites` edges are read from the conformance header, which is source
+rather than notation, so section 5's block grammar is untouched and a `graph` fence
+appearing in source is a defect. The header's shape is fixed the way the keys are
+fixed, so the mapper never guesses: one line per citation, each reading
+`//! conforms: <crate>-<slug>`, at the top of the file above any other doc comment.
+A header naming an assertion the corpus does not declare is a dangling edge and the
+mapping pass fails on it, which is the no-dangling-endpoint precondition reaching
+code.
 
 Between a contract and what it binds:
 
@@ -425,7 +460,10 @@ walks as a category beside the perturbation-verified list, and apex section 11's
 third device is written as a blanket obligation on behavioral tests, always
 confirm the test fails when the property is removed, so a walk's test is
 perturbation-verified by that obligation whatever a section calls it. The walk
-itself is prose that derives the test and takes no node.
+itself is prose that derives the test and takes no node. On the system record the
+vocabulary is `ratified`, present only after the set ratifies and absent before,
+which is what lets the graph's set-level mark be generated from the apex rather
+than hand-edited, per Working Process section 5's checklist item 6.
 
 A second key for the instrument would grow
 the fixed set for a fact the existing key already carries, and the point of the fixed
