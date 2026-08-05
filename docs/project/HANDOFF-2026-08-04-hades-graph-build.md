@@ -14,7 +14,10 @@ document's own claims. First filed against `ad9d807`.
 **Revised:** 2026-08-04, after the build. The Status line records the handoff SERVED,
 the tag rule's vocabulary list gains the system record's `ratified` mark with the
 relation gaining the matching term, per Document Format v0.14 and the ratification
-recorded at Working Process section 5.
+recorded at Working Process section 5. On the review of the same act, the remaining
+present-tense sites recast to the past the build left them in: section 0's current
+task, section 1's settled question and the twice-counted name, and section 6's open
+question, which the ruling of 2026-08-04 answered.
 **Revised:** 2026-08-04, a third entry this date. Section 3 gains the fifth parser
 rule, found live by the first mapper build: `tag` carries one vocabulary per record
 kind, and a parser modeling it as seam-only reports every assertion in the corpus as
@@ -67,7 +70,9 @@ residual readout that follows loop 0, the memory leg's return path - and the gra
 maps all of it as content. Deferred material is not a defect to trim and not a
 commitment the first build answers for. **What the first coding run builds is scoped
 against the graph after the graph exists**, which is the order the Working Process
-already states and the reason the current task is the graph rather than the code.
+already states and the reason the task this document commissioned was the graph
+rather than the code. The graph now exists and the code is the current task, per
+Working Process section 7.
 
 ---
 
@@ -76,10 +81,10 @@ already states and the reason the current task is the graph rather than the code
 **HADES's ingestion contract was undefined in this corpus** when this handoff was
 filed. The build ran on the server, where the mapper and its parser rules now live,
 and the rules the build discovered came back and landed, the fifth of them in
-section 3. The name appears exactly
-twice: `WeaverTools-Working-Process` section 5 says "a HADES database is stood up from
-the merged documents," and the vision mentions a Hades-backed retrieval tool. There is
-no schema, no collection naming, no edge representation, and no idempotency rule
+section 3. The name appeared exactly twice when this was filed:
+`WeaverTools-Working-Process` section 5 said "a HADES database is stood up from
+the merged documents," and the vision mentioned a Hades-backed retrieval tool. There
+was no schema, no collection naming, no edge representation, and no idempotency rule
 anywhere in the tree.
 
 **The first act asked of the server was to write that contract, not a mapper.** A
@@ -269,10 +274,12 @@ stated and `provider-trait` gaining its statement in the same act that closed th
 - **G2 and G5 have not run** as phase-close sweeps.
 - **G7 ran** and found one unlanded ruling, since landed.
 
-**And one question is open that the graph cannot answer**: whether the set ratifies over
-a document set that deliberately defers the tool workflow. It has been open since
-2026-08-02. If the answer is no, the checklist cannot close, and the build is premature
-rather than wrong.
+**And one question was open that the graph could not answer**: whether the set
+ratifies over a document set that deliberately defers the tool workflow. It had been
+open since 2026-08-02, and the operator's ruling of 2026-08-04 answered it, recorded
+at Working Process section 5: the set ratifies as the complete document set for the
+toolless inference deliverable, and the tool workflow's arrival is a planned
+re-entry to authoring rather than a defect.
 
 ## 7. Reading order for whoever picks this up
 

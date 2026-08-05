@@ -292,8 +292,9 @@ three kinds and no fourth, and the two documents this format types that are none
 the three do not breach that: drawn material is contract material stated once,
 holding what the organ contracts share and deciding nothing they do not draw, and a
 workflow document walks a settled set and authors no edges of its own. The three
-kinds author the graph. These two add no authored record to it, which is what the
-Working Process's count is a count of.
+kinds author the graph's document-sourced records. These two add no authored record
+to it, which is what the Working Process's count is a count of, and the code layer
+authors its own through the conformance header rather than through any document.
 
 **code.** A source unit carrying a conformance header, arriving in phase three and
 never before. A code node is declared by its own header rather than by any fenced

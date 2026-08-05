@@ -367,7 +367,16 @@ The floor probe of 2026-08-04 is the evidence the entry into code rests on: a
 commissioned session with no repository access rebuilt both floor crates from the
 graph and the corpus text, both compiled, the suite passed whole, and all 41 floor
 assertion slugs landed under their instruments. Its three divergences return as
-review findings for the first code act, not as defects in the set.
+review findings for the first code act, not as defects in the set, and they are
+named here because the seat that must apply them reads them from the corpus. One,
+the probe inverted the non-exhaustive election and re-aimed the compile-fail pin at
+the inverted claim: the real Specs elect the attribute per type, growing sets
+carrying it and closed sets not. Two, the probe elected two permission modes where
+the floor Spec enumerates three, Ask, Allow, and Deny, the enumeration being
+uncited by any sibling and so unreachable from the graph. Three, the probe filled
+the fault report's deliberately open election with an invented shape: the deferral
+is the corpus's and stands, and the first code act preserves the blank rather than
+the invention.
 
 The build workspace is a fresh clone on the server, carrying none of the probe's
 code. Seat assignment follows section 1's rule unchanged: the seat holding the
@@ -375,9 +384,10 @@ working tree authors, so the server session authors code and the session holding
 the document tree reviews.
 
 What remains before the first code merge: section 6 ratified by the operator,
-which is the entry gate's second condition, and a conformance header per Document
-Format sections 3 and 4 on every file the first act carries. What remains from the
-phase behind: G6 and then item 7, the G2 and G5 phase-close sweeps, and the
+which the entry gate requires beside phase two's close, and a conformance header
+per Document Format sections 3 and 4 on every file the first act carries. What
+remains from the phase behind: G6 and then item 7, the G2 and G5 phase-close
+sweeps, and the
 DRAFT-header ruling. Nothing here reopens the set - a change the build or a review
 finds in a ratified document is a phase one re-entry, deliberate and named.
 
