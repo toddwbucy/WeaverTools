@@ -374,8 +374,10 @@ the invention.
 
 The build workspace is a fresh clone on the server, carrying none of the probe's
 code. Seat assignment follows section 1's rule unchanged: the seat holding the
-working tree authors, so the server session authors code and the session holding
-the document tree reviews.
+working tree authors. The floor act is authored by the session holding the
+document tree, per the operator's ruling of 2026-08-05, which is the same rule
+applied to where that act's working tree sits, and review runs through the PR's
+review seats. Later code acts sit where the operator points them.
 
 Section 6 ratified 2026-08-04, so the entry gate stands satisfied. What remains
 before the first code merge: a conformance header per Document Format sections 3
