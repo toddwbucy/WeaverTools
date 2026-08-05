@@ -371,6 +371,16 @@ impl Harness {
                 binding: payload.model_binding.clone(),
             },
         ) {
+            // A closed channel means the organ is gone: its exit status says
+            // whether the placement or the exec failed, which the exchange
+            // itself could only report as an absent residency.
+            let refusal = match refusal {
+                LifecycleRefusal::NoResidency => {
+                    let pid = run.spu.as_ref().expect("the arm stood up").pid;
+                    classify_organ_death(pid).unwrap_or(LifecycleRefusal::NoResidency)
+                }
+                other => other,
+            };
             after_load!(run, refusal);
         }
 
@@ -398,6 +408,12 @@ impl Harness {
                 instruction: payload.gate_instruction.clone(),
             },
         ) {
+            let refusal = match refusal {
+                LifecycleRefusal::NoResidency => {
+                    classify_organ_death(gate_pid).unwrap_or(LifecycleRefusal::BindFailed)
+                }
+                other => other,
+            };
             // The gate stood up far enough to reap even though it refused.
             run.gate = Some(GateChannel {
                 channel: gate,
@@ -417,11 +433,33 @@ impl Harness {
     /// interior to whatever loop 1 the binary carries, and takes it back at
     /// the stop and at the leave. A loop composes what this grants or does not
     /// compile - there is no call by which it mints a port.
-    pub fn grant_seat(&self, identity: &str, tool_schemas: &[String]) -> Option<crate::Ports> {
-        match &self.state {
-            ChannelState::Entered(run) => Some(crate::engine::Ports::grant(Some(
-                crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas),
-            ))),
+    pub fn grant_seat(&mut self, identity: &str, tool_schemas: &[String]) -> Option<crate::Ports> {
+        match &mut self.state {
+            ChannelState::Entered(run) => {
+                let prompt =
+                    crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas);
+                // **An incomplete prompt does not cross the seam.** A
+                // message-kind record that did not decode is a hole where a
+                // turn's content was, so the count becomes the `fault` event
+                // this crate authors and the seat is not granted: handing a
+                // loop a prompt with a hole would put the loss in the model's
+                // context and nowhere else.
+                if prompt.undecodable > 0 {
+                    let report = format!(
+                        "{{\"organ\":\"harness\",\"undecodable-message-records\":{}}}",
+                        prompt.undecodable
+                    );
+                    let turn = run.turn_in_flight.clone();
+                    let _ = run.author.author_fault(
+                        &mut run.recorder,
+                        Subsystem::Harness,
+                        turn.as_ref(),
+                        &report,
+                    );
+                    return None;
+                }
+                Some(crate::engine::Ports::grant(Some(prompt)))
+            }
             // Before enter and after leave there is no standing interior to
             // hand across, which is the bracket discipline being loop 0's.
             _ => None,
@@ -512,6 +550,31 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
         // The stream did not close cleanly, which is a fault the operator
         // learns from the refusal rather than from a silence.
         Err(_) => Err(LifecycleRefusal::DescriptorsUnusable),
+    }
+}
+
+/// Reads a dead organ's exit status and names what killed it, so a placement
+/// fault is not reported to the peer as a residency problem.
+///
+/// **The child writes no status**, and that is deliberate rather than an
+/// omission: a setup-status pipe would put a fourth call between fork and
+/// exec, and `weaver-harness-Spec` section 2.2 enumerates exactly three "and
+/// nothing else". The exit status carries the same fact without adding one,
+/// and it is read here - after the exchange observed closure - where the child
+/// is already dead and there is no race to lose.
+fn classify_organ_death(pid: nix::unistd::Pid) -> Option<LifecycleRefusal> {
+    match nix::sys::wait::waitpid(pid, None) {
+        Ok(nix::sys::wait::WaitStatus::Exited(_, crate::spawn::PLACEMENT_FAILED)) => {
+            // The ends this organ was owed never reached descriptor 3, which
+            // is a descriptor fault and not a residency one.
+            Some(LifecycleRefusal::DescriptorsUnusable)
+        }
+        Ok(nix::sys::wait::WaitStatus::Exited(_, crate::spawn::EXEC_FAILED)) => {
+            // The organ binary never ran, so nothing it was asked to stand up
+            // could have stood up.
+            Some(LifecycleRefusal::BindFailed)
+        }
+        _ => None,
     }
 }
 

@@ -472,3 +472,51 @@ fn undecodable_message_records_are_counted() {
     assert_eq!(prompt.messages.len(), 1, "the sound message entered");
     assert_eq!(prompt.undecodable, 1, "the hole is counted, not silent");
 }
+
+/// An incomplete prompt does not cross the extension seam: the undecodable
+/// count becomes a `fault` event and the seat is not granted, because handing
+/// a loop a prompt with a hole would put the loss in the model's context and
+/// nowhere else.
+///
+/// Perturbation: drop the count check from `grant_seat` and the seat is
+/// granted with the hole and no fault is authored. Watched under exactly that
+/// removal.
+#[test]
+fn an_undecodable_record_refuses_the_seat_and_authors_a_fault() {
+    let prompt_with_hole = {
+        let (author, mut recorder) = author();
+        let turn = TurnKey("t-1".to_string());
+        author
+            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .unwrap();
+        author
+            .author(
+                &mut recorder,
+                Kind::TurnStarted,
+                Subsystem::Harness,
+                Some(&turn),
+                None,
+            )
+            .unwrap();
+        author
+            .author(
+                &mut recorder,
+                Kind::MessageUser,
+                Subsystem::Harness,
+                Some(&turn),
+                Some(Payload::Message(
+                    raw_payload("{\"not\":\"a message\"}").unwrap(),
+                )),
+            )
+            .unwrap();
+        assemble(recorder.structure(), "identity", &[])
+    };
+    assert_eq!(
+        prompt_with_hole.undecodable, 1,
+        "the hole is visible to the caller"
+    );
+    assert!(
+        prompt_with_hole.messages.is_empty(),
+        "and the message it stood for is absent from the prompt"
+    );
+}

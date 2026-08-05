@@ -24,12 +24,17 @@ use std::io::IoSlice;
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 
 use nix::sys::socket::{
-    AddressFamily, ControlMessage, ControlMessageOwned, MsgFlags, SockFlag, SockType, recvmsg,
-    sendmsg, socketpair,
+    AddressFamily, ControlMessage, MsgFlags, SockFlag, SockType, recvmsg, sendmsg, socketpair,
 };
 use weaver_types::{MAX_ENVELOPE_BYTES, OrganEnvelope};
 
 use crate::failure::ChannelFault;
+
+/// The control buffer's size, generous against the one descriptor loop 0
+/// legitimately carries so an honest message never truncates. A message that
+/// truncates it anyway is a fault, and every descriptor it did deliver is
+/// adopted and closed before that fault returns.
+const CONTROL_BYTES: usize = 256;
 
 /// The first descriptor after the standard streams: where an organ finds its
 /// lifecycle channel from its first instruction, per section 2.2. An organ's
@@ -111,56 +116,103 @@ impl OrganChannel {
     /// obligation is the receiver's.
     pub fn recv_with_descriptor(&self) -> Result<(OrganEnvelope, Option<OwnedFd>), ChannelFault> {
         let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
-        let mut control = nix::cmsg_space!([RawFd; 4]);
-        let mut slices = [std::io::IoSliceMut::new(&mut buffer)];
-        let message = recvmsg::<()>(
-            self.end.as_raw_fd(),
-            &mut slices,
-            Some(&mut control),
-            MsgFlags::MSG_CMSG_CLOEXEC,
-        )
-        .map_err(|_| ChannelFault::Closed)?;
+        let mut control = [0u8; CONTROL_BYTES];
+
+        // **The receive is issued through `libc` rather than `nix` here, and
+        // the reason is custody.** `nix`'s `RecvMsg::cmsgs` refuses to iterate
+        // when `MSG_CTRUNC` is set, returning `ENOBUFS`, which is exactly the
+        // case where descriptors were installed and must be closed: an
+        // iterator that will not run on the truncated path leaves every
+        // delivered descriptor unowned. Owning the `msghdr` is what lets the
+        // walk below happen on every path, truncated or not.
+        let mut iov = nix::libc::iovec {
+            iov_base: buffer.as_mut_ptr().cast(),
+            iov_len: buffer.len(),
+        };
+        // SAFETY: a zeroed msghdr is a valid empty header; every field the
+        // call reads is set below.
+        let mut mhdr: nix::libc::msghdr = unsafe { std::mem::zeroed() };
+        mhdr.msg_iov = &mut iov;
+        mhdr.msg_iovlen = 1;
+        mhdr.msg_control = control.as_mut_ptr().cast();
+        mhdr.msg_controllen = control.len() as _;
+
+        // SAFETY: the header points at buffers this frame owns for the call's
+        // duration, and the descriptor is this channel's own.
+        let read = unsafe {
+            nix::libc::recvmsg(self.end.as_raw_fd(), &mut mhdr, nix::libc::MSG_CMSG_CLOEXEC)
+        };
+        if read < 0 {
+            return Err(ChannelFault::Closed);
+        }
 
         // **Custody is established before the fault checks, not after them.**
-        // The kernel can install an ancillary descriptor on the same call that
-        // returns a truncated body, so a fault check that returns first leaks
-        // a descriptor this process now owns and nothing closes. A peer
-        // sending oversized descriptor-bearing messages would exhaust the
-        // table and the harness could then create no organ channels. Adopting
-        // first makes every path drop what it owns.
+        // The kernel can install ancillary descriptors on the same call that
+        // returns a truncated body or a truncated control buffer, so a fault
+        // check that returns first leaks descriptors this process now owns
+        // and nothing closes. A peer sending oversized descriptor-bearing
+        // messages would exhaust the table and the harness could then create
+        // no organ channels. Adopting first makes every path drop what it
+        // owns.
         let mut sink = None;
         let mut surplus = Vec::new();
-        for cmsg in message.cmsgs().map_err(|_| ChannelFault::Undecodable)? {
-            if let ControlMessageOwned::ScmRights(fds) = cmsg {
-                for fd in fds {
-                    // SAFETY: the kernel just installed this descriptor for
-                    // this process and no other owner exists. Adopting it into
-                    // an OwnedFd is what makes its close a type property.
-                    let owned = unsafe { OwnedFd::from_raw_fd(fd) };
-                    if sink.is_none() {
-                        sink = Some(owned);
-                    } else {
-                        surplus.push(owned);
+        // SAFETY: the walk reads only headers the kernel wrote into this
+        // frame's control buffer, bounded by the length it reported, and each
+        // descriptor is adopted exactly once.
+        unsafe {
+            let mut cmsg = nix::libc::CMSG_FIRSTHDR(&mhdr);
+            while !cmsg.is_null() {
+                let header_len = (*cmsg).cmsg_len as usize;
+                let payload_offset = nix::libc::CMSG_LEN(0) as usize;
+                if header_len < payload_offset || header_len > mhdr.msg_controllen as usize {
+                    // A header the kernel could not complete: nothing after it
+                    // can be trusted, and nothing in it names a descriptor.
+                    break;
+                }
+                if (*cmsg).cmsg_level == nix::libc::SOL_SOCKET
+                    && (*cmsg).cmsg_type == nix::libc::SCM_RIGHTS
+                {
+                    let data = nix::libc::CMSG_DATA(cmsg);
+                    let width = std::mem::size_of::<RawFd>();
+                    let count = (header_len - payload_offset) / width;
+                    for index in 0..count {
+                        let mut fd: RawFd = -1;
+                        std::ptr::copy_nonoverlapping(
+                            data.add(index * width),
+                            (&mut fd as *mut RawFd).cast::<u8>(),
+                            width,
+                        );
+                        if fd < 0 {
+                            continue;
+                        }
+                        // The kernel just installed this descriptor for this
+                        // process and no other owner exists, so adopting it
+                        // into an OwnedFd is what makes its close a type
+                        // property.
+                        let owned = OwnedFd::from_raw_fd(fd);
+                        if sink.is_none() {
+                            sink = Some(owned);
+                        } else {
+                            surplus.push(owned);
+                        }
                     }
                 }
+                cmsg = nix::libc::CMSG_NXTHDR(&mhdr, cmsg);
             }
         }
         drop(surplus);
 
         // A truncated control buffer means the kernel dropped descriptors the
         // sender authored, so the message is not the one that was sent and
-        // cannot be repaired by reading what survived.
-        if message.flags.contains(MsgFlags::MSG_CTRUNC) {
+        // cannot be repaired by reading what survived. What did arrive is
+        // already owned and closed by the drop above.
+        if mhdr.msg_flags & nix::libc::MSG_CTRUNC != 0 || mhdr.msg_flags & nix::libc::MSG_TRUNC != 0
+        {
             return Err(ChannelFault::Truncated {
                 bound: MAX_ENVELOPE_BYTES,
             });
         }
-        if message.flags.contains(MsgFlags::MSG_TRUNC) {
-            return Err(ChannelFault::Truncated {
-                bound: MAX_ENVELOPE_BYTES,
-            });
-        }
-        let read = message.bytes;
+        let read = read as usize;
         if read == 0 {
             return Err(ChannelFault::Closed);
         }
