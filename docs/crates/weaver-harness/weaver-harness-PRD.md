@@ -6,6 +6,11 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-05, loop 0 named as the running agent service. Per the operator:
+loop 0 is not a document set and not a milestone but the object itself, the sealed
+agent that boots under its unit and holds its sockets, which is why it is seated in
+this crate directly rather than in the loop container, and why a builder's drop-in
+reaches loop 1 and above and never loop 0.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -60,6 +65,24 @@ harness runs as the agent leaves the mechanism protecting the trace unexplained,
 which is why it is stated rather than assumed.
 
 ## 2. What the harness owns
+
+**Loop 0 is the running agent service, per the operator's ruling of 2026-08-05.**
+It is not a document set, not a milestone to reach and pass, and not a loop a
+builder supplies. It is the object itself: the thing that boots under its unit,
+comes up as the statically provisioned agent identity, adopts the coordination
+end it was handed, creates the unnamed pairs its organs are reached over, and
+sits there being one sealed agent. **It binds nothing and listens on nothing**:
+the named socket is admin's, this crate adopts one end and makes the rest, which
+is why nothing here is dialable. **That is why it is seated in this crate
+directly and not in the loop container.** The container under `Loops/` holds the
+agent's internal logic, which the running loop 0 service executes, and a loop 0
+filed beside those documents would read as one more supplied loop rather than as
+the service that executes them. **Both builder-facing surfaces are limited to
+loop 1 and above and exclude loop 0**, not one of the two: the extension seam of
+section 6, composed against and compiled into the worker binary, and the socket
+binding the working list holds open, dropped in beside a running agent. Loop 0
+is the service that runs a builder's loop under either surface, and is not
+itself supplied through either.
 
 **Loop 0, and the machinery loop 1 composes against.** The harness owns the
 lifecycle interior of loop 0, the load and the unload, the same for every agent,
