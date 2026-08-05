@@ -4,6 +4,16 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-05, the role ruling. Per the operator: `weaver-admin-role` is
+assumed by a human and never by an AI or an automation, a statement of design intent
+and not a guarantee about conduct. `weaver-admin-user` is a static service account
+rather than a login account and is where the delegation attaches, and the crate is the
+peer organ that account runs, whose narrow domain includes custody of where the record
+leaves the system. One unit per agent is named as the sandbox pattern rather than a
+fleet, and the agent's uid is statically provisioned, a dynamic identity excluded for
+two independent reasons. The sandbox's properties are required and its directives stay
+the operator's. Section 10's descriptor-route cell reopens with the sudo measurement
+attached.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -772,16 +782,18 @@ to: admin-coordination-directory-unsearchable
 listener accepts exactly once, after the unit's start, the accepting call
 setting close-on-exec on the connection.
 The peer credential is read at that accept and checked against the agent's
-expected uid, the check the charter names as available and this Spec elects
-because it costs one call: possession remains the authentication, and the
-credential confirms the possessor is the worker the unit started rather
-than a surprise, refusing the connection on a mismatch. And the listener is
-closed after the one accept, verified: a later dial is refused by the
-kernel while the accepted connection lives on, so no second opener exists
-even for a process that somehow resolved the name, structure doing the work
-the search bit already does. Section 10's fourth walk tests the credential
-check and its first walk tests the closure, so both are behaviours with a
-perturbation behind them rather than elections.
+expected uid, **which the reopened cell of `weaver-admin-PRD` section 10 now
+holds open**: the party that performs the connect under the declared-open route
+is not the agent, so what uid this check should expect follows from whichever
+route that cell settles on, and is not settled here. the check the charter names as
+available and this Spec elects because it costs one call: possession remains the
+authentication, and the credential confirms the possessor is the worker the unit started
+rather than a surprise, refusing the connection on a mismatch. And the listener is
+closed after the one accept, verified: a later dial is refused by the kernel while the
+accepted connection lives on, so no second opener exists even for a process that somehow
+resolved the name, structure doing the work the search bit already does. Section 10's
+fourth walk tests the credential check and its first walk tests the closure, so both are
+behaviours with a perturbation behind them rather than elections.
 
 **Both records ground in the socket invariant, and the closure does so for a
 reason worth stating.** The credential check is that invariant's named mechanism
@@ -1187,4 +1199,15 @@ Each names what settles it, and none is this Spec's to settle alone.
   the fixed template carries is the operator's policy surface, named in
   section 9's configuration and deliberately not enumerated by this Spec,
   because a hardening list frozen in a Spec is a security posture that
-  cannot track its host.
+  cannot track its host. **The properties the sandbox must
+  deliver are required and their directives are not**, per the operator's
+  ruling of 2026-08-05 and `weaver-admin-PRD` section 7: no privilege
+  escalation from inside, no reach into another principal's home, and a bound
+  on what the agent may consume. The operator owns the posture the way an
+  operator owns a firewall configuration.
+- **Whether the unit restricts the agent's address families to `AF_UNIX`.**
+  Open with a stated cost rather than required, per the same ruling. It is
+  **not** a restatement of the rule that no crate here exposes a network
+  surface: that rule binds what these crates link, and this would bind what an
+  agent's tools may reach, so an agent whose tools fetch anything would break
+  under it. Settled by an operator who knows which tools their agents carry.
