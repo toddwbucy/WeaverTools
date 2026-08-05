@@ -6,15 +6,16 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-08-05, the role ruling and the grant mechanism's reopening. Per the
-operator: `weaver-admin-role` is assumed by a human and never by an AI or an
-automation, a statement of design intent and not a guarantee about conduct;
-`weaver-admin-user` is a service account rather than a login account and is where the
-delegation attaches; and the crate is the peer organ that account runs, whose narrow
-domain includes custody of where the record leaves the system. The grant mechanism
-reopens from the init system and re-closes on `sudo`, admin becoming the worker's
-parent, which dissolves the cell asking how the coordination end reaches a process
-admin did not fork.
+**Revised:** 2026-08-05, the role ruling. Per the operator: `weaver-admin-role` is
+assumed by a human and never by an AI or an automation, a statement of design intent
+and not a guarantee about conduct. `weaver-admin-user` is a static service account
+rather than a login account and is where the delegation attaches, and the crate is the
+peer organ that account runs, whose narrow domain includes custody of where the record
+leaves the system. One unit per agent is named as the sandbox pattern rather than a
+fleet, and the agent's uid is statically provisioned, a dynamic identity excluded for
+two independent reasons. The sandbox's properties are required and its directives stay
+the operator's. Section 10's descriptor-route cell reopens with the sudo measurement
+attached.
 **Document ID:** `weaver-admin-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
@@ -336,10 +337,10 @@ order is the substance.
    obtained here, under admin's own principal, which is what lets the worker write a
    stream its uid could not open. Close-on-exec is not admin's to confer on a passed
    descriptor and is the harness's obligation at the receive, per the contract.
-5. **Ask `sudo` to start the worker under the agent's identity.** Admin does not put
-   the worker under the agent uid itself. It asks a party that already holds that
-   authority, per section 7, and the coordination end is inherited across the fork
-   admin performs rather than delivered by a declaration admin does not control.
+5. **Ask the init system to start the worker as a transient unit carrying the agent's
+   `User=`.** Admin does not put the worker under the agent uid itself. It asks a
+   process that already holds that authority, per section 7, and the unit's cgroup
+   arrives with the unit rather than being shaped in advance.
 6. **Direct enter, and receive the aggregate.** The directive carries the session
    identity, the run ordinal, the trace descriptor, the model binding, and the gate
    instruction, per the contract. It rides inside the directive over the
@@ -365,9 +366,9 @@ conflict discovered at model admission is such a refusal, named by the SPU insid
 the aggregate, and admin holds no earlier check to catch it, per ruling C.
 
 **The worker never holds a principal above the agent's, which removes a window rather
-than narrowing one.** Under the delegation of section 7 the delegating party starts
-the process already as `weaver-<n>`, so there is no interval in which worker code runs
-as anything else and no drop for the ordering of an earlier draft to get right. The
+than narrowing one.** Under the delegation of section 7 the init system starts the
+process already as `weaver-<n>`, so there is no interval in which worker code runs as
+anything else and no drop for the ordering of an earlier draft to get right. The
 privilege window that section 10 once carried as an open cell has no subject.
 
 **Steps 1 through 5 produce no trace entry, and neither does the rollback path.** That
@@ -551,12 +552,13 @@ state.
 requirement, restated from namelessness on 2026-08-01.** A dialable socket the
 worker's tools could reach would let an elected `bash` open the agent's own
 supervisory channel, and namelessness was the first mechanism that denied the
-dial. Under the sudo delegation of section 7 admin
-forks the worker itself, so the channel is a pair created before that fork and
-inherited across it, never named and therefore never dialable from tool code.
-Namelessness is the whole mechanism rather than one of two: there is no path for
-the kernel to deny a lookup on, which is stronger than a name the agent cannot
-reach. The name exists and reachability does not, one stone for both
+dial. The check of the init system's transient-unit interface, run per the
+section 10 cell, settled the mechanism: descriptors reach a unit by the unit's
+own declared opens rather than by a raw handle from the caller, so the channel
+is a socket admin binds inside an admin-owned directory the agent uid cannot
+search, connected once at the worker's start by the init system's facility and
+never dialable from tool code, the kernel denying the path lookup exactly as it
+does for the sink. The name exists and reachability does not, one stone for both
 birds, and the channel still collapses to one peer for the whole of the worker's
 life, possession of the connected end remaining the authentication with the
 peer credential now real and available as a check the Spec elects.
@@ -612,14 +614,80 @@ uid and has nothing to escalate into. That is a stronger position than partition
 capabilities inside one privileged identity, because it removes the surface rather
 than bounding what the surface can reach once it is taken.
 
+**Three things carry this crate's name and they are not one thing, per the operator's
+ruling of 2026-08-05.** A single name for all three made the topology and the trust
+model contradict each other, and the corpus needed them apart.
+
+**`weaver-admin-role` is what a human assumes.** It is the seat: the acts the supervisor
+may perform, and the thing a person takes on and later drops. **Only a human assumes it,
+and never an AI or an automation.** That is a statement about what this program is
+designed for and **not a guarantee about conduct** - assuming the role does not make its
+holder careful, and nothing here prevents a human from doing something unwise inside the
+bound they hold. What it fixes is who occupies the seat, so scripted fleet management or
+an agent driving the fleet is a **new role with its own ruling** rather than a quiet
+reuse of this one.
+
+**`weaver-admin-user` is a service account and not a login account.** It is the OS
+principal the role resolves to, and **the delegation of this section attaches there** -
+not to a person, who comes and goes, and not to the artifact, which carries no
+capability. The account runs whether or not anyone has assumed the role, which is what
+lets the coordination channel of section 6 and the sink's custody of section 5 outlive
+any human session.
+
+**The crate is the peer organ that account runs.** It is duplex with the harness like
+every other organ, per apex section 5.4, and its narrow domain is authorization, the
+lifecycle's direction, and **custody of where the record leaves the system**. That last
+is the organ's reason rather than its bookkeeping: the trace exits through a sink admin
+opened under its own principal, and routing it through `weaver-gate` instead would put
+the agent's own account on the one surface the agent reaches.
+
+**What the operator does with the record past that descriptor is the operator's.** The
+sink's three shapes are a file, a pipe, and a socket, so an operator names `/dev/null`,
+a FIFO their own loader drains, or a listener they hold. This program opens what was
+declared, passes the handle, implements no transport, and elects no destination.
+
+**One unit per agent is not a fleet, and the distinction is the one this program keeps
+getting wrong.** The smell this corpus rejected was a shared service accepting many
+agents and routing commands among them. A unit running one statically provisioned agent
+identity inside a kernel-enforced sandbox is the opposite of that: it is the wall drawn
+around exactly one agent, built from OS primitives rather than from a supervisor's
+bookkeeping. **It is also the honest answer to keep-alive.** The agent must outlive the
+human's login session, and a unit started by the one principal permitted to open that
+session is what delivers it - not a backgrounded orphan and not a terminal multiplexer,
+both of which tie an agent's life to a shell that was never meant to hold it.
+
+**The agent's uid is statically provisioned, and a dynamic identity is excluded for two
+reasons that are independent and are recorded as independent.** The first is durability:
+the drey and the trace are tied to one individuated principal, and an identity minted
+per start and discarded at stop would destroy the individuation they rest on. The second
+is mechanical and would hold even if nothing durable existed: **every `SO_PEERCRED`
+predicate in this program takes a uid as its subject**, so a principal that changes
+between runs leaves those checks with nothing stable to name. Either reason alone
+excludes the dynamic form.
+
+**The sandbox is required and its directives are not enumerated, which are two different
+statements.** What this charter requires is that the unit deliver the properties: no
+privilege escalation from inside, no reach into another principal's home, a bound on
+what the agent may consume. Which directives name those properties, and at what values,
+is the operator's deployment posture the way a firewall configuration is - and section
+11's refusal to freeze a list stands, because a list frozen in a document is a posture
+that cannot track its host.
+
+**One property is a question rather than a requirement, and it has a real cost.**
+Restricting the address families the unit may open to `AF_UNIX` is **not** a restatement
+of this program's no-network-surface rule: that rule binds what these crates link, and
+this would bind what an agent's tools may reach. An agent whose tools fetch anything
+would break under it. It goes on section 10's list as an open question with the cost
+named rather than onto this list as a requirement.
+
 **There is one act left to authorize, and admin holds no capability of its own to
 perform it.** An earlier reading of this paragraph argued two authorities that needed
 different grants, provisioning against supervision, and weighed capability sets,
 sudoers entries, file capabilities, and unit-supplied capabilities as ways to separate
 them. Provisioning has left the program, so there is nothing to separate. What remains
 is starting and stopping a worker under an existing agent identity, and this crate does
-that by asking a party that already holds that authority rather than by exercising
-any privilege itself. Admin chowns nothing, creates no account, and
+that by asking the init system for a transient unit carrying `User=weaver-<n>` rather
+than by exercising any privilege itself. Admin chowns nothing, creates no account, and
 carries no capability on its binary.
 
 **Holding no capability is not the same as holding no authority, and the difference is
@@ -629,8 +697,8 @@ exists. The authority is delegated, either by admin running as a system service 
 operator installs with the narrow right to manage its worker units or by a policy rule
 scoping exactly that verb to admin's identity. So the accurate claim is that the
 authority is bounded, lives in operator configuration rather than in the artifact, and
-is enforced by the delegating party rather than by this crate. The argless requirement
-below is what keeps it from widening.
+is enforced by the init system rather than by this crate. The argless requirement below
+is what keeps it from widening.
 
 **What a compromise of admin reaches, stated because the delegation invites the
 question.** The bounded form of the grant is a fixed unit template and an agent name
@@ -663,11 +731,11 @@ admin's, and a boundary between two admin processes is a process line like any o
 
 **Posture through a load, which is simpler than it was.** Admin runs as itself
 throughout and never as an agent. The worker holds the agent uid from its first
-instruction, because the delegating party starts it there, so no ordering of a drop
-against a handoff has to be gotten right and no window exists for one to be gotten
-wrong. The trace file is owned by `weaver-admin` and grouped to the group the operator
-shares with it, the agent uid holds no bit on it and reaches it only through a passed
-descriptor, and the trace directory is admin-owned and not searchable by the agent uid.
+instruction, because the init system starts it there, so no ordering of a drop against
+a handoff has to be gotten right and no window exists for one to be gotten wrong. The
+trace file is owned by `weaver-admin` and grouped to the group the operator shares with
+it, the agent uid holds no bit on it and reaches it only through a passed descriptor,
+and the trace directory is admin-owned and not searchable by the agent uid.
 
 **Same-uid reach is a live hole and the flag that closes it is a requirement stated
 elsewhere.** If an external tool process runs as the agent uid, it can attach to the
@@ -754,13 +822,11 @@ Each names what settles it. A cell with a proposed reading and a named test is a
 handoff rather than a hole. Four cells closed in this pass and are recorded as closed
 where the closure is recent enough that a reader would otherwise look for them.
 
-**The grant mechanism reopened and re-closed on 2026-08-05, and the second answer is
-`sudo`.** The first closure chose the init system from four candidates and set sudoers
-aside among the three. What changed its standing is the role ruling of that date: a
-delegation to a service account a human assumes is ordinary administration, and the
-grant is per act rather than per unit. Section 7 carries the argument and the
-consequence, and this entry records the reopening rather than hiding it, a cell closed
-and reopened being a fact a later reader is owed.
+**The grant mechanism is closed.** Delegation to the init system, by a transient unit
+carrying the agent's `User=`. It was the fourth of four candidates and the ruling that
+moved provisioning out of the program left it the only one with a subject, since the
+choice was between ways of separating two authorities and one of the two is gone.
+Section 7 carries the consequence.
 
 **The layout is closed with it.** One binary. The choice decided the layout rather than
 the other way round, and a delegation that holds no capability leaves a second
@@ -768,27 +834,37 @@ executable separating nothing.
 
 **The cgroup is closed, and by neither of the two candidates.** It was posed as a
 provisioning artifact that load populates against a residency artifact created at load
-and torn down at unload. Under the sudo delegation the worker is a child of the admin
-service and shares its cgroup, so no residency artifact is created or torn down per load
-and this program shapes none. The cell is closed by the mechanism rather than by a
-ruling on the cell.
+and torn down at unload. Under delegation the init system creates a cgroup for the
+transient unit and removes it when the unit stops, so the second shape holds and this
+program does not shape it. The cell is closed by the mechanism rather than by a ruling
+on the cell.
 
 **Drop-first is closed and its subject is gone.** The worker starts as the agent uid,
 so there is no privilege window to order a handoff against.
 
-**How the descriptors reach the worker is closed.** The check this cell named ran on
-2026-08-01 against the init system's interface and settled it there, and the
-ruling of 2026-08-05 dissolved the question instead: **admin forks the worker
-under the sudo delegation, so it is no longer a unit admin did not fork.** The
-end travels by a pair created before the fork and inherited across it, which is
-the route every other channel in this program uses. A raw descriptor from the caller
-does not cross, so the unnamed-pair route died with the fork it needed, and the channel
-design restates as section 6 now carries it: the coordination socket is bound by admin
-inside an admin-owned unsearchable directory, connected once at the worker's start,
-unreachable by the agent's tool surface, with possession of the connected end the
-authentication and the peer credential available as a check the Spec elects. The sink's
-descriptor travels the same way, the unit opening what its declaration names and the
-worker receiving a handle and never resolving a path.
+**How the descriptors reach a process admin did not fork reopens on 2026-08-05,
+with a measurement attached.** The 2026-08-01 check settled it on the init
+system's declared opens and that route stands as the mechanism. What reopens the
+cell is that the alternative examined on 2026-08-05 was **falsified rather than
+weighed**: passing the end by inheritance across a `sudo` exec does not work,
+because `sudo` closes descriptors above the standard streams by default and the
+`-C` override needs a `closefrom_override` grant this corpus does not require.
+Measured that date: a direct fork and exec delivers the descriptor, the same exec
+through `sudo` does not, and `sudo -C` is refused without the grant. **No
+candidate yet passes a descriptor across a privilege-changing exec performed by a
+party admin does not control**, which is the shape of the question. Candidates:
+the declared open that holds today, a `closefrom_override` grant with the
+widening it implies, and a named socket in a `0711` directory under an
+unguessable per-run name, where reachability is denied by the name rather than by
+the search bit and `SO_PEERCRED` remains the check that counts. The measurement
+is recorded so the next pass weighs against a fact rather than re-deriving it. A raw
+descriptor from the caller does not cross, so the unnamed-pair route died with the fork
+it needed, and the channel design restates as section 6 now carries it: the coordination
+socket is bound by admin inside an admin-owned unsearchable directory, connected once at
+the worker's start, unreachable by the agent's tool surface, with possession of the
+connected end the authentication and the peer credential available as a check the Spec
+elects. The sink's descriptor travels the same way, the unit opening what its
+declaration names and the worker receiving a handle and never resolving a path.
 
 **Session close.** Section 4.4 puts `session.closed` with the harness, at the cost
 of requiring the agent loaded for the authoring. What cues that authoring inside the
@@ -875,7 +951,7 @@ set is bounded, not drafted here.
 
 - Boundary verification, covering identity, home, and the trace directory.
 - Lifecycle sequencing and the rollback of section 5.
-- The coordination channel, covering the worker's start and descriptor handoff.
+- The coordination channel, covering the transient unit and descriptor handoff.
 - The operator surface of section 8.
 
 Contracts this crate is party to are written with the PRDs of their other parties,

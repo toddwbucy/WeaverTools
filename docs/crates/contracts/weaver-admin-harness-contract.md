@@ -5,15 +5,6 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-08-05, the role ruling and the grant mechanism's reopening. Per the
-operator: `weaver-admin-role` is assumed by a human and never by an AI or an
-automation, a statement of design intent and not a guarantee about conduct;
-`weaver-admin-user` is a service account rather than a login account and is where the
-delegation attaches; and the crate is the peer organ that account runs, whose narrow
-domain includes custody of where the record leaves the system. The grant mechanism
-reopens from the init system and re-closes on `sudo`, admin becoming the worker's
-parent, which dissolves the cell asking how the coordination end reaches a process
-admin did not fork.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -92,19 +83,18 @@ exists before the unit starts.** This is the creating-party rule of
 `weaver-organ-channel` section 2 landing on this seam, and the creating party is not
 the initiating party.
 
-**How the worker's end arrives is settled, per the ruling of 2026-08-01.** Admin forks
-the worker under the sudo delegation of `weaver-admin-PRD` section 7, per the operator's
-ruling of 2026-08-05, so the channel is a pair admin creates before that fork and the
-worker inherits across it, nameless and therefore undialable, per that charter's
-sections 6 and 10. Namelessness restates as unreachability: the name exists, the agent's
-tool surface cannot traverse to it, and no second opener exists in practice because the
-kernel denies the path lookup, which is the same property the unnamed pair bought and
+**How the worker's end arrives is settled, per the ruling of 2026-08-01.** The
+transient-unit check ran and the interface carries declared opens rather than
+raw caller descriptors, so the channel is a socket admin binds inside an
+admin-owned unsearchable directory, connected once at the worker's start by the
+unit's own declaration, per `weaver-admin-PRD` sections 6 and 10. Namelessness
+restates as unreachability: the name exists, the agent's tool surface cannot
+traverse to it, and no second opener exists in practice because the kernel
+denies the path lookup, which is the same property the unnamed pair bought and
 the second-opener case `weaver-organ-channel` section 2 rejects stays rejected.
 
-**No third party holds the end in transit,** the ruling of 2026-08-05 having
-retired the intermediary this clause once named: admin creates the pair and the
-worker inherits it, so `weaver-organ-channel` section 2's retention rule has two
-parties and no carrier between them. It may
+**The init system is a holder in transit and not a peer,** which is
+`weaver-organ-channel` section 2's retention rule with its intermediary named. It may
 touch the end while placing it and does not retain one.
 
 **Possession is this seam's authentication, per apex 5.1's second case.** The
@@ -113,10 +103,10 @@ it has none, restated on 2026-07-31 with this seam as the case that forced it, s
 the seam is an instance of the rule rather than an exception admitted to it.
 
 **The worker holds the agent uid from its first instruction and clears its dumpable
-flag after its final exec.** There is no drop, because the delegating party execs the
-worker at `weaver-<n>` under the delegation `weaver-admin-PRD` section 7 rules. An
-earlier form of this clause ordered a drop against the handoff, and the ordering had a
-subject only while the worker began life holding a higher principal.
+flag after its final exec.** There is no drop, because the init system starts the unit
+at `weaver-<n>` under the delegation `weaver-admin-PRD` section 7 rules. An earlier
+form of this clause ordered a drop against the handoff, and the ordering had a subject
+only while the worker began life holding a higher principal.
 
 **Nothing about the handoff rested on the drop, which is why removing it costs nothing
 here.** A descriptor passed by `SCM_RIGHTS` is a capability, the kernel installs it

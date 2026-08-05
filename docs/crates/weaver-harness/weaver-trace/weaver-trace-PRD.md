@@ -6,15 +6,6 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-08-05, the role ruling and the grant mechanism's reopening. Per the
-operator: `weaver-admin-role` is assumed by a human and never by an AI or an
-automation, a statement of design intent and not a guarantee about conduct;
-`weaver-admin-user` is a service account rather than a login account and is where the
-delegation attaches; and the crate is the peer organ that account runs, whose narrow
-domain includes custody of where the record leaves the system. The grant mechanism
-reopens from the init system and re-closes on `sudo`, admin becoming the worker's
-parent, which dissolves the cell asking how the coordination end reaches a process
-admin did not fork.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -458,10 +449,10 @@ protocol is the reserved slot apex section 9 forbids.
 
 The sink is opened by `weaver-admin` while it holds that principal, per
 `weaver-admin-operator-contract` section 3, and the descriptor is passed to a worker
-that has held the agent uid from its first instruction, because the delegating party
-execs the worker under the agent's identity and there is no drop to order, per
-`weaver-admin-harness-contract` section 2. The receiving uid confers nothing either way:
-a descriptor crossing a Unix socket is a capability and the kernel rechecks no
+that has held the agent uid from its first instruction, because the init system
+starts the unit under `User=` and there is no drop to order, per
+`weaver-admin-harness-contract` section 2. The receiving uid confers nothing either
+way: a descriptor crossing a Unix socket is a capability and the kernel rechecks no
 permission at receipt. `weaver-admin` resolves which session is being loaded. The
 harness never learns a path or a sink's nature.
 

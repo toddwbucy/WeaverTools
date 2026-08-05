@@ -4,15 +4,6 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-05, the role ruling and the grant mechanism's reopening. Per the
-operator: `weaver-admin-role` is assumed by a human and never by an AI or an
-automation, a statement of design intent and not a guarantee about conduct;
-`weaver-admin-user` is a service account rather than a login account and is where the
-delegation attaches; and the crate is the peer organ that account runs, whose narrow
-domain includes custody of where the record leaves the system. The grant mechanism
-reopens from the init system and re-closes on `sudo`, admin becoming the worker's
-parent, which dissolves the cell asking how the coordination end reaches a process
-admin did not fork.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -430,25 +421,27 @@ to: axiom-join-key-travels-with-the-work
 ```
 
 **Adoption is the constructor, and it performs the worker's hygiene as sets and
-not checks.** The coordination end reaches the worker by inheritance across the fork
-admin performs, per `weaver-admin-harness-contract` section 2, and the composition root
+not checks.** The coordination end reaches the worker by the unit's declared
+open, per `weaver-admin-harness-contract` section 2, and the composition root
 hands it to `Harness::adopt`, which sets close-on-exec on the adopted end, the
-set-again-after-the-last-exec obligation of that section landed in code, and clears the
-process's dumpable flag, the same section's attach defense. Both are sets because a
-check that finds the flag wrong and reports leaves the descriptor inheritable and the
-process attachable, which is the set-not-check rule stated at the contract and applied
-here. **The two sets take two records and two instruments.** The dumpable flag is the
-third walk's mechanism and its test, and the adopted end's close-on-exec is review's by
-election and not by impossibility: an `fcntl` reads that flag as cheaply as the `prctl`
-beside it reads the dumpable one, so the two hygiene sets differ in the instrument
-bought and not in the instrument available. What the composition root does with the
-coordination end once it arrives is asserted here, per `weaver-admin-Spec` section 6.
-**Both sets ground in apex section 5.1, and the dumpable one is the less obvious of the
-two.** That invariant rests possession-as-authentication on the claim that no third
-party can reach a socket with no address, and `/proc/[pid]/fd` is an address for exactly
-such a socket, so clearing the flag is what closes the one route the invariant's own
-argument assumes shut. The adopted end's flag is the same property at the exec rather
-than at the attach, and it reaches an end this crate was handed rather than one it
+set-again-after-the-last-exec obligation of that section landed in code, and
+clears the process's dumpable flag, the same section's attach defense. Both are
+sets because a check that finds the flag wrong and reports leaves the
+descriptor inheritable and the process attachable, which is the set-not-check
+rule stated at the contract and applied here. **The two sets take two records and
+two instruments.** The dumpable flag is the third walk's mechanism and its test,
+and the adopted end's close-on-exec is review's by election and not by
+impossibility: an `fcntl` reads that flag as cheaply as the `prctl` beside it
+reads the dumpable one, so the two hygiene sets differ in the instrument bought
+and not in the instrument available. What the composition root does with the
+coordination end once the declared open delivers it is asserted here, per
+`weaver-admin-Spec` section 6. **Both sets ground in apex section 5.1, and the
+dumpable one is the less obvious of the two.** That invariant rests
+possession-as-authentication on the claim that no third party can reach a socket
+with no address, and `/proc/[pid]/fd` is an address for exactly such a socket, so
+clearing the flag is what closes the one route the invariant's own argument
+assumes shut. The adopted end's flag is the same property at the exec rather than
+at the attach, and it reaches an end this crate was handed rather than one it
 created.
 
 ```graph
@@ -553,8 +546,8 @@ pub struct OrganBinaries {
 }
 
 impl Harness {
-    /// The crate's one constructor. Adopts the coordination end the fork
-    /// delivered and performs the hygiene of section 2.3.
+    /// The crate's one constructor. Adopts the coordination end the unit's
+    /// declared open delivered and performs the hygiene of section 2.3.
     pub fn adopt(coordination: OwnedFd, organs: OrganBinaries)
         -> Result<Self, AdoptionFault>
 

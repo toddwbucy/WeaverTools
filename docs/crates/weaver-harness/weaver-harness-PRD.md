@@ -6,15 +6,6 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
-**Revised:** 2026-08-05, the role ruling and the grant mechanism's reopening. Per the
-operator: `weaver-admin-role` is assumed by a human and never by an AI or an
-automation, a statement of design intent and not a guarantee about conduct;
-`weaver-admin-user` is a service account rather than a login account and is where the
-delegation attaches; and the crate is the peer organ that account runs, whose narrow
-domain includes custody of where the record leaves the system. The grant mechanism
-reopens from the init system and re-closes on `sudo`, admin becoming the worker's
-parent, which dissolves the cell asking how the coordination end reaches a process
-admin did not fork.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -50,11 +41,11 @@ reached over the decode socket behind a provider interface, so the harness drive
 generation without hosting it.
 
 **There is no privilege window.** The harness runs inside the worker process, and the
-worker runs as the agent uid for the whole of its life. `weaver-admin-PRD` section 7 has
-admin holding no capability of its own and asking the delegating party to start the
-worker under the agent's identity, so the process begins at `weaver-<name>` and never
-holds anything above it. Everything the harness does happens under that identity, and
-the descriptors arrive into it.
+worker runs as the agent uid for the whole of its life. `weaver-admin-PRD` section 7
+has admin holding no capability of its own and asking the init system to start the
+worker as a transient unit carrying the agent's `User=`, so the process begins at
+`weaver-<name>` and never holds anything above it. Everything the harness does happens
+under that identity, and the descriptors arrive into it.
 
 **Custody rests on possession and not on the receiving identity.** An earlier reading
 of this section had the worker begin under the admin principal, receive its
