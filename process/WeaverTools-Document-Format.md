@@ -1,77 +1,7 @@
 # WeaverTools Document Format
 
-**Version:** v0.14, 2026-08-04. The v0.14 change is the code layer, landed with the
-set's ratification and before any code merges: section 1 admits the layer and scopes
-its no-edge rule to the two document-side layers, section 3 gains the `code` node
-kind, section 4 gains the `cites` edge with the header shape the mapper reads, and
-section 5's tag rule gains the system record's `ratified` vocabulary, which is how
-checklist item 6's set-level mark is generated rather than hand-edited. The layer
-lands now because the graph accrues code nodes as work merges, per Working Process
-section 5,
-and a kind invented after the first code merge would leave that merge unmapped.
-Previously v0.13, 2026-08-03, sixth entry this date. The v0.13 change follows the
-apex to five invariants, per the operator's ruling of this date: section 3's axiom entry
-and its closed-set sentence both count five. The apex gained 5.5, the harness integrates
-and the loop is the mechanism, which is the invariant this format's own section 7 rule
-was reaching for when it said a seam question belongs in the contract.
-Previously v0.12, 2026-08-03, fifth entry this date. The v0.12 change is section 4
-stating the second way a claim grounds, that it is a precondition of the axiom's own
-stated reason, and section 7 stating that a disagreement between two Specs about an
-invariant's reach is read against the contract before the invariant, both per the
-operator's rulings on the labelling batch. Two acts applied two
-tests and only one was briefed, which the batch made visible rather than either act
-getting it wrong.
-Previously v0.11, 2026-08-03, fourth entry this date. The v0.11 change is the axiom
-layer, per the operator's ruling of this date: section 3 gains the `axiom` node kind
-for the apex's four invariants, and section 4 gains the `grounds` edge from an
-assertion to the axiom it serves. The section 4 entry states that a missing `grounds`
-edge is representation rather than an omission, because the prior program's basis
-covered seven of seventy-one claims and kept the layer instead of asking what the
-layer was for. **The record key of the same name is retired in the same act,** on the
-review seat's finding that this act first claimed a retirement it had not performed.
-Section 6 defined `grounds:` as an escape hatch for a block whose argument lives
-elsewhere, which hedges the rule the same paragraph argues absolutely, and 285 nodes
-were placed without ever writing it. The key leaves section 5's set and section 6
-states that position is the only pointer, so one name means one thing again.
-Previously v0.10, 2026-08-03, third entry this date. The v0.10 change is
-section 3's assertion entry gaining the provenance rule for a divided claim, per
-the operator's ruling of this date: the two halves of a split both count as the
-enforcement section's, because neither was elected and one was divided out. It
-exists because the first three assertion passes stated the same provenance split
-three different ways, every sentence true of its own document and no two
-comparable. Previously v0.9, 2026-08-03, second entry this date. The second change is
-section 4's identifier rule gaining its qualifier, no *positional* number, on the
-pilot act's review: the flat rule would have refused a slug naming loop 0 and a
-slug carrying a stated bound, neither of which renumbers, which is the only thing
-the rule guards against. The v0.9 change is the assertion notation, per the
-ruling of this date: section 3 gains the `assertion` node kind with its
-index-not-copy rule, section 4 gains the `asserts` edge with the identifier
-convention and the statement that a Spec states records the way a PRD does, and
-section 5 records that `tag` carries the enforcing instrument on an assertion. The
-change is vocabulary rather than structure, because `asserts` runs from the crate and
-section 1's rule about which document sources an edge is untouched. It exists because
-the graph carried nothing from any Spec, so phase three had no query to ask.
-Previously v0.8, 2026-08-01, second entry this date. The v0.8 change follows
-the artifact rename of this date, the section 3 examples reading `agent-config`
-where they read the state file. The v0.7 change is the `Loops/` entry's holder rule:
-loops belong to the harness unless specific to one domain and no other, per the
-human's ruling of 2026-08-01, landed on the merge of `load-unload-loop` per that
-document's section 0. Previously v0.6, 2026-07-31. Companion to the Working
-Process. Project documents
-carry a version and a date and no state, per Working Process section 2. The v0.6
-change is six entries in one act, the sixth restating the stub paragraph of section
-2 to the v0.6 stub ruling of the Working Process, live stubs at `.stub` and consumed
-stubs leaving the tree. Four more were ruled on this date and never landed,
-found when three merged charters cited rules this document did not state: the
-contract-by-suffix sentence with its drawn-material reading and the container
-table's gloss, per the filing ruling `weaver-organ-channel` section 5 records, the
-section 3 reconciliation of the kinds outside the Working Process's three, and the
-section 4 declaration rule scoped to the declaring side with the organ-channel
-case, per the rule `weaver-admin-harness-contract` section 0 states. The fifth is
-the `Loops/` container entry, per the filing ruling of this date. The v0.5 change
-was one entry: the artifact example in section 3 stops naming `weaver-admin` as the
-state file's writer and stops citing the deferred state-file contract, both retired
-by the admin pass.
+**Version:** v0.14, 2026-08-04. Companion to the Working Process. Project
+documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
 The Working Process says who is primary and in what order the work moves. This says

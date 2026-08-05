@@ -5,42 +5,6 @@
 separately.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-07-31. Section 3 gains the close kind on `turn.closed`, clean or
-stopped with reason, matching the charter's revision of this date.
-**Revised:** 2026-07-31, again, the subtraction batch. The integrity witness is
-retired under ruling B: hashing leaves admission, the turn hash and the integrity
-request leave both parties' obligations, the turn-hash-mismatch fault leaves the
-vocabulary, and the conformance list keeps close-on-exec while the hash and
-append-only items go. Read-time validation beyond the payload-hash check, the
-divergence artifact, and the companion charter's cut stand untouched pending the
-durable-record ruling.
-**Revised:** 2026-08-01, the durable-record cut. The ruling recorded at
-`weaver-admin-operator-contract` section 3 places durability with the operator, so
-the resume exchange leaves section 2 entire, validation on read, run integrity, and
-the divergence artifact leave the recorder's obligations and the prohibitions, the
-record-based entries leave the failure vocabulary, sequence scope narrows to the
-run, and the conformance list keeps what the tee still promises.
-**Revised:** 2026-08-01, again. The kind set this contract draws grew by `fault`,
-thirteen to fourteen, per the fault-carrier ruling of this date and the change
-protocol of section 7, the entry recorded here in the same act as the charter's.
-**Revised:** 2026-08-01, once more. The relational projection retires per the
-human's ruling of this date: the recorder holds the working structure as the RAM
-copy of the same canonical form the stream carries, the deterministic-projection
-obligation becomes one-rendering-held-and-handed, and the projection-failure case
-becomes an append failure.
-**Revised:** 2026-08-01, further. The vocabulary clause adopts `agent-config`, the
-artifact renamed on the human's ruling of this date.
-**Revised:** 2026-08-02. The recording levels retire, per the human's ruling of
-this date: the harness filters nothing and the recorder holds no level, the
-`weaver-types` draw empties with `verbosity-ceiling-election` leaving the agent
-config, and the owed-policy sentence that contradicted its own filtering rule
-dissolves with the subject rather than being adjudicated. `weaver-trace-Spec`
-section 11 reported that residue and it needs no separate act.
-**Revised:** 2026-08-02, a second entry this date, the token workflow's trace
-act. Section 3 gains what the harness owes for the newly shaped payloads:
-both layers of a decode with neither standing for the other, the rendered
-form and its template identity with `model.request`, and faults submitted as
-the floor's `fault-report` unchanged.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.

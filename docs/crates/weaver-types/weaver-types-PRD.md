@@ -6,66 +6,6 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-07-31. Section 2.3 goes from three wire definitions to five, adding
-`organ-envelope` and `harness-alert` owed by `weaver-admin-harness-contract` section 8,
-and section 4's departure paragraph follows the count. Revised again the same day:
-sections 5 and 6 stop resting on admin writing the configuration file, the writer
-being the operator and the readers two, and the deferred state-file contract is
-recorded as ruled out rather than pending. Revised a third time: section 2.1's edge
-sentence, wrong on both halves, now states that no writes edge exists and that the
-contract is ruled out.
-**Revised:** 2026-08-01. Section 2.1 gains `gate-instruction` as the sixth field,
-owed by the gate pair's merge of this date, and section 2.2 names the scoped claim's
-two consumers, the gate's client socket and the operator surface of
-`weaver-admin-operator-contract`, both credentialed seams.
-**Revised:** 2026-08-01, second entry this date. Section 2.1 gains `trace-sink` as
-the seventh field, the sink the stream is connected to at load, demanded by
-`weaver-admin-operator-contract` section 3 and carried by the durable-record cut of
-this date.
-**Revised:** 2026-08-01, third entry this date. `harness-alert` leaves section 2.3,
-five definitions to four, per the fault-carrier ruling of this date: the alert
-exchange retired and the fault travels as the `fault` event kind, so no contract
-draws the definition and G4 rules it off the floor.
-**Revised:** 2026-08-01, a fourth entry this date, two rulings in one act. The
-artifact renames from `agent-state-file` to `agent-config`, the node, its seven
-`holds` edges, and every corpus citation moving together, the last register entry
-anywhere leaving with it. And section 2.3 adopts loop naming: wire vocabulary is
-named for the loop whose traffic it carries, `lifecycle-directive` and
-`lifecycle-answer` renaming the sender-named pair, the owed seam pairs dissolving
-into the one trio every loop 0 contract draws.
-**Revised:** 2026-08-01, a fifth entry this date, per the human's G2 ruling that
-rationale is developed in the PRD and restated in the Spec. Section 2.1 states the
-config's reader as a human author and section 2.3 states loop 0's volume and
-audience, the two criteria the Spec pass was electing against without the charter
-holding them.
-**Revised:** 2026-08-02. `verbosity-ceiling-election` leaves section 2.1 entire,
-its node, its `defines` edge, and its `holds` edge, per the human's ruling of this
-date that the trace carries no recording level. The field count goes from seven to
-six, and what an operator elects at load now governs production alone.
-**Revised:** 2026-08-02, a second entry this date, the token trio's landing.
-Section 2.3 goes from four definitions to seven, the decode contract's demand
-having fired: `token-directive`, `token-answer`, and `token-refusal` arrive
-named for the seam's currency under the naming ruling's ratified extension,
-the seam's loop being loop 1, the builder's and variable, and the identities
-riding inside the cases as satellite types. The subsection retitles from the
-first socket contract to the socket contracts, and the envelope's scope
-sentence names the decode socket as outside it.
-**Revised:** 2026-08-02, a third entry this date, the token workflow's gate
-act. Section 2.3 goes from seven definitions to nine. `turn-frame` arrives on
-the gate contract's demand, one definition for both directions, opaque to the
-crate that relays it, named for the seam's currency under the naming ruling's
-ratified extension. `fault-report` arrives with it on the review seat's
-finding that the gate's fault had no carriage, one definition for every
-reporting seam because the harness authors all of them into one event kind.
-**Revised:** 2026-08-03, the device-assignment ruling. Section 2.1 states that
-the model binding carries the devices a model is assigned to, a set rather than
-one because tensor parallelism is in scope from the start, the operator
-assigning and no crate selecting.
-**Revised:** 2026-08-04, G4's third half, per the operator's rulings of this date.
-Section 2.1 states which fields a contract draws and why the other four are internal
-rather than owed, each with its reader named, and states that definitions and their
-coding are sequenced separately: the graph maps the documented set whole, roadmap
-included, and the first coding run is scoped against the graph after it exists.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`

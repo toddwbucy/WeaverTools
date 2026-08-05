@@ -5,25 +5,6 @@ development teaches what the next one looks like. It is never ratified and nothi
 is written against it.
 
 **Date started:** 2026-07-28
-**Revised:** 2026-08-02, the composability batch. Four sections land from the
-tape-trace session's candidate edit, corrected on the spec seat's evaluation and
-ruled by the operator: every organ as a composability framework, loop zero and
-loop one with the loop compiled into the binary, the SPU umbrella, and the
-builder's end state carrying the disposition principle and the batch's motive,
-variance in behavior held to a predictable range. Section 0 gains the register
-note, section 2 gains the sentence reconciling the judgment organs with the
-umbrella, and the closing section renumbers from 7 to 11. On the review seat's
-return the same day, section 7's orchestration sentence splits its verb: the
-binary carries the organs and the configuration declares the bindings, one
-word having read against the compiled-not-configured ruling landing in the
-same act.
-**Revised:** 2026-08-04, the tool section re-cuts onto two axes, per the operator.
-The earlier cut ran initiation and dispatch together as one inside-versus-outside
-axis, which cannot classify a memory lookup that reaches a database over a network
-and which the apex already avoids, calling the calculator a model-elected call and
-reserving autonomic for harness-initiated action. Initiation is now the primary axis
-and dispatch the second, the four corners are named with one of them empty, and the
-elected-inward corner carries a latency requirement rather than a taxonomy note.
 **Document ID:** `weaver-tools-vision`
 **Editorial:** ASCII, no em-dashes, no semicolons.
 

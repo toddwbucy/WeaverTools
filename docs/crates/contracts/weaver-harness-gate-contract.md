@@ -7,36 +7,6 @@ v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise a
 the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
-**Revised:** 2026-07-31. The live-view write end leaves the fork enumeration and the
-prohibitions, the live view retired under ruling A of the subtraction batch.
-**Revised:** 2026-08-01. The status moves from draft to merged on the human's ruling
-of this date, with the register landings recorded at `weaver-gate-PRD` section 11.
-The client socket this seam raises gains its own contract, `weaver-gate-world-contract`,
-written the same date.
-**Revised:** 2026-08-01, again, the fault-carrier ruling. A gate death after the
-aggregate is authored to the stream as the `fault` event rather than handled in a
-shape a pending ruling would give it, and section 8's deferral restates against
-the event kind's case set.
-**Revised:** 2026-08-01, further, the naming ruling. This seam draws loop 0's
-trio, the seam-owned pair it awaited dissolving with the sender convention, and
-section 7's drift defense restates against the floor's single ownership.
-**Revised:** 2026-08-02, the token workflow's gate act. On the review seat's
-return the same day, section 0's block gains the four `draws` edges its
-vocabulary clause names and it lacked: `turn-frame` and `fault-report` from
-this act, and `lifecycle-directive` and `lifecycle-answer` from an earlier
-one, the block being open and the sweep discipline taking them together, so
-the clause and its projection agree at seven. The gate's own
-direction arrives: section 2 gains the turn exchange it opens per client
-request, carrying the `turn-frame` opaque in both directions, the
-serialization ruling that the harness serves one turn at a time in arrival
-order while the gate relays rather than refuses, and the fault report. Drain
-resolves rather than deferring, leave waiting on rest. Section 3 gains the
-window and the concurrency line, section 4 both parties' further guarantees,
-section 7 the `turn-frame` draw owed to the floor, and section 8's deferral
-becomes a closure, the corpus-wide fault case set closing with the gate's
-cases named at `weaver-gate-PRD` section 13.
-**Revised:** 2026-08-02, a second entry this date, the descriptor recount's
-sweep. Section 1's fork paragraph adopts the singular.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.

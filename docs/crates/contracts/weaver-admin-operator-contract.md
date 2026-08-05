@@ -8,25 +8,6 @@ which is the seam category `weaver-admin-PRD` section 10 held open, settled by t
 same ruling.
 
 **Date filed:** 2026-08-01
-**Revised:** 2026-08-01, second entry. The filename gains the `-contract` suffix on
-the human's correction, a contract being named as one whatever its parties, and
-every citation in the corpus follows the rename in the same act.
-**Revised:** 2026-08-01, third entry. Section 3's tee promise states its own bounds,
-on the human's instruction: the tail forfeited to process death, the pressure
-election named and left to the spec seat, and a silent shed a broken build rather
-than a policy. The earlier wording promised every committed event to the stream,
-which no election but blocking could have kept.
-**Revised:** 2026-08-01, fourth entry. Section 3 names the stream the program's
-one fault carrier, per the fault-carrier ruling of this date: faults ride it as
-`fault` events, the coordination seam's alert exchange retired in the same act.
-**Revised:** 2026-08-01, fifth entry, the naming ruling. Section 7 draws loop 0's
-trio, the surface's owed pair dissolving, the verbs and stop as directive cases.
-**Revised:** 2026-08-04, the vocabulary clause gains its edge form. Five `draws` edges,
-the three the types clause names plus loop 0's directive and answer that the paragraph
-beneath it draws. The `weaver-trace` draw takes no edge and says why, being a published
-format rather than a linked type. Filed 2026-08-02 by the audit the gate act's review
-provoked, and landed now because G4 runs at phase close over the whole set and cannot
-see a clause that exists only as prose.
 **Document ID:** `weaver-admin-operator-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
