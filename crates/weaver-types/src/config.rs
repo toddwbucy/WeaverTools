@@ -158,7 +158,39 @@ pub fn parse(source: &str) -> Result<AgentConfig, ConfigError> {
             kind: ConfigErrorKind::BadValue,
         });
     }
+    check_trace_sink_surface(source, &config.trace_sink)?;
     Ok(config)
+}
+
+/// The fixed-surface check the derive cannot carry: serde's
+/// `deny_unknown_fields` does not compose with an internally tagged enum, so an
+/// unknown key inside `trace-sink` would be silently discarded by the typed
+/// parse alone, which is the vanishing-declaration failure the refusal exists
+/// to prevent. The raw mapping is read back and its keys are judged against the
+/// selected variant's surface: `file` and `pipe` carry `kind`, `path`, and
+/// `create`, and `socket` carries `kind` and `path`.
+#[cfg(feature = "config")]
+fn check_trace_sink_surface(source: &str, sink: &TraceSink) -> Result<(), ConfigError> {
+    let malformed = || ConfigError { field: None, kind: ConfigErrorKind::Malformed };
+    let document: serde_yaml_ng::Value = serde_yaml_ng::from_str(source).map_err(|_| malformed())?;
+    let mapping = document
+        .get("trace-sink")
+        .and_then(|v| v.as_mapping())
+        .ok_or_else(malformed)?;
+    let allowed: &[&str] = match sink {
+        TraceSink::File { .. } | TraceSink::Pipe { .. } => &["kind", "path", "create"],
+        TraceSink::Socket { .. } => &["kind", "path"],
+    };
+    for key in mapping.keys() {
+        let key = key.as_str().ok_or_else(malformed)?;
+        if !allowed.contains(&key) {
+            return Err(ConfigError {
+                field: Some(FieldName(format!("trace-sink.{key}"))),
+                kind: ConfigErrorKind::UnknownField,
+            });
+        }
+    }
+    Ok(())
 }
 
 /// Sorts a serde_yaml_ng error message into the typed kinds. The messages are

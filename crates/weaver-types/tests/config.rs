@@ -105,3 +105,40 @@ fn unknown_permission_mode_refuses() {
     let err = parse(&source).expect_err("refuses");
     assert_eq!(err.kind, ConfigErrorKind::BadValue);
 }
+
+/// An unknown key inside the sink refuses, per variant, because the derive's
+/// `deny_unknown_fields` does not compose with an internally tagged enum and
+/// the surface check in `parse` is the mechanism instead.
+///
+/// Perturbation: remove the `check_trace_sink_surface` call from `parse` and
+/// all three parses succeed with the stray key silently discarded. Watched to
+/// fail under exactly that removal.
+#[test]
+fn unknown_key_inside_file_sink_refuses() {
+    let source = full_config().replace("  create: true\n", "  create: true\n  mode: append\n");
+    let err = parse(&source).expect_err("refuses");
+    assert_eq!(err.kind, ConfigErrorKind::UnknownField);
+    assert_eq!(err.field, Some(FieldName("trace-sink.mode".into())));
+}
+
+#[test]
+fn unknown_key_inside_pipe_sink_refuses() {
+    let source = full_config()
+        .replace("  kind: file\n", "  kind: pipe\n")
+        .replace("  create: true\n", "  create: true\n  buffered: true\n");
+    let err = parse(&source).expect_err("refuses");
+    assert_eq!(err.kind, ConfigErrorKind::UnknownField);
+    assert_eq!(err.field, Some(FieldName("trace-sink.buffered".into())));
+}
+
+/// The socket surface is two keys, so `create` itself is the stray here: a
+/// creation flag on a socket sink would promise an act admin cannot perform.
+#[test]
+fn unknown_key_inside_socket_sink_refuses() {
+    let source = full_config()
+        .replace("  kind: file\n", "  kind: socket\n")
+        .replace("  create: true\n", "  linger: false\n");
+    let err = parse(&source).expect_err("refuses");
+    assert_eq!(err.kind, ConfigErrorKind::UnknownField);
+    assert_eq!(err.field, Some(FieldName("trace-sink.linger".into())));
+}
