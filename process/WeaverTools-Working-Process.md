@@ -283,12 +283,22 @@ item that outlives ratification: it certifies workspace hygiene rather than the
 set's coherence, it waits on G6, and the quarry's deletion being irreversible is
 the reason it is not hurried.
 
+For section 6's entry gate, phase two's close reads as items 1 through 6, per the
+same ruling, so item 7 blocks neither phase-three entry nor a code merge. What
+item 7 protects is held meanwhile by the workspace: the build workspace is a fresh
+clone carrying neither the old tree nor the probe's code, so the coding seat has
+nothing in reach to copy from while the quarry still stands elsewhere. Item 7
+stays owed, and G6 followed by the deletion retire the reachability question
+rather than deferring it.
+
 ## 6. Phase three, coding
 
 Ratified by the operator, 2026-08-04, all five gates and the three cells below.
 The entry gate held until that date: no crate code was written until this section
 ratified and phase two closed, because a gate invented while looking at a diff is a
-gate shaped by that diff. Both conditions are met and the gates are in force.
+gate shaped by that diff. Both conditions are met, phase two's close reading as
+checklist items 1 through 6 with item 7 outliving it per section 5's ratification
+record, and the gates are in force.
 
 The gates:
 
