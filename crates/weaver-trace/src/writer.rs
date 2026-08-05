@@ -159,7 +159,9 @@ impl Writer {
         state
             .last_error
             .as_ref()
-            .map(|err| Failure::WriteTargetUnusable { source: err.clone() })
+            .map(|err| Failure::WriteTargetUnusable {
+                source: err.clone(),
+            })
     }
 
     fn wait_drained(&self) -> Result<(), Failure> {
@@ -173,7 +175,9 @@ impl Writer {
                 source: source.clone(),
             }),
             None => match &state.last_error {
-                Some(err) => Err(Failure::WriteTargetUnusable { source: err.clone() }),
+                Some(err) => Err(Failure::WriteTargetUnusable {
+                    source: err.clone(),
+                }),
                 None => Ok(()),
             },
         }
@@ -253,7 +257,9 @@ impl Recorder {
             // The queue is at its depth: the loss bound of the deployment. The
             // submission is refused before either sink is touched, so the two
             // stay consistent, and the report carries the depth reached.
-            return Err(Failure::CommitPressure { queued: self.writer.queued() });
+            return Err(Failure::CommitPressure {
+                queued: self.writer.queued(),
+            });
         }
         let sequence = Sequence(self.next);
         event.envelope.sequence = sequence;

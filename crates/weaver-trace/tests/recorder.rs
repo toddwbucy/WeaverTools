@@ -386,7 +386,9 @@ fn pretty_printed_payload_refuses() {
         .unwrap_err();
     assert!(matches!(
         err,
-        Failure::RefusedOnSubmit { reason: SubmitRefusal::PayloadMalformed }
+        Failure::RefusedOnSubmit {
+            reason: SubmitRefusal::PayloadMalformed
+        }
     ));
     assert_eq!(r.structure().len(), 1, "the refused event landed nowhere");
 }
@@ -402,18 +404,23 @@ fn turn_on_run_level_kind_refuses() {
         assert!(
             matches!(
                 err,
-                Failure::RefusedOnSubmit { reason: SubmitRefusal::PayloadMalformed }
+                Failure::RefusedOnSubmit {
+                    reason: SubmitRefusal::PayloadMalformed
+                }
             ),
             "{kind:?} with a turn must refuse"
         );
     }
     assert_eq!(r.structure().len(), 0);
     r.submit(event(Kind::Load, None, None)).unwrap();
-    r.submit(event(Kind::TurnStarted, Some("t-1"), None)).unwrap();
+    r.submit(event(Kind::TurnStarted, Some("t-1"), None))
+        .unwrap();
     let fault = raw_payload("{\"kind\":\"stub\"}").unwrap();
-    r.submit(event(Kind::Fault, Some("t-1"), Some(Payload::Fault(fault)))).unwrap();
+    r.submit(event(Kind::Fault, Some("t-1"), Some(Payload::Fault(fault))))
+        .unwrap();
     let fault2 = raw_payload("{\"kind\":\"stub\"}").unwrap();
-    r.submit(event(Kind::Fault, None, Some(Payload::Fault(fault2)))).unwrap();
+    r.submit(event(Kind::Fault, None, Some(Payload::Fault(fault2))))
+        .unwrap();
 }
 
 /// A failed write is terminal and named: committed never advances past the
@@ -432,10 +439,21 @@ fn failed_write_is_terminal_and_named() {
         other => panic!("drain names the failed record, got {other:?}"),
     }
     let b = r.boundary();
-    assert_eq!(b.committed, None, "committed never advances past the failure");
+    assert_eq!(
+        b.committed, None,
+        "committed never advances past the failure"
+    );
     assert_eq!(b.queued, 0, "accounting stays consistent");
-    let next = r.submit(event(Kind::TurnStarted, Some("t-1"), None)).unwrap_err();
-    assert!(matches!(next, Failure::CommitFailed { sequence: Sequence(0), .. }));
+    let next = r
+        .submit(event(Kind::TurnStarted, Some("t-1"), None))
+        .unwrap_err();
+    assert!(matches!(
+        next,
+        Failure::CommitFailed {
+            sequence: Sequence(0),
+            ..
+        }
+    ));
 }
 
 /// The queue's depth caps buffered records: at capacity a submission is
@@ -453,9 +471,11 @@ fn full_queue_refuses_and_sinks_stay_consistent() {
     r.submit(event(Kind::Load, None, None)).unwrap();
     let mut refused = 0usize;
     for _ in 0..5000 {
-        match r.submit(event(Kind::Fault, None, Some(Payload::Fault(
-            raw_payload("{\"kind\":\"stub\"}").unwrap(),
-        )))) {
+        match r.submit(event(
+            Kind::Fault,
+            None,
+            Some(Payload::Fault(raw_payload("{\"kind\":\"stub\"}").unwrap())),
+        )) {
             Ok(_) => {}
             Err(Failure::CommitPressure { .. }) => refused += 1,
             Err(other) => panic!("unexpected: {other:?}"),
@@ -464,13 +484,19 @@ fn full_queue_refuses_and_sinks_stay_consistent() {
     assert!(refused > 0, "the depth was reached and reported");
     let len_before = r.structure().len();
     let err = r
-        .submit(event(Kind::Fault, None, Some(Payload::Fault(
-            raw_payload("{\"kind\":\"stub\"}").unwrap(),
-        ))))
+        .submit(event(
+            Kind::Fault,
+            None,
+            Some(Payload::Fault(raw_payload("{\"kind\":\"stub\"}").unwrap())),
+        ))
         .unwrap_err();
     assert!(matches!(err, Failure::CommitPressure { .. }));
     assert_eq!(r.structure().len(), len_before, "at capacity nothing lands");
     drop(reader);
     let _ = r.drain();
-    assert_eq!(r.boundary().queued, 0, "discard keeps the accounting consistent");
+    assert_eq!(
+        r.boundary().queued,
+        0,
+        "discard keeps the accounting consistent"
+    );
 }

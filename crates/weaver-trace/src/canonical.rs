@@ -56,7 +56,9 @@ pub(crate) fn render(event: &Event) -> Result<Line, Failure> {
         reason: SubmitRefusal::PayloadMalformed,
     })?;
     if body.contains('\n') || body.contains('\r') {
-        return Err(Failure::RefusedOnSubmit { reason: SubmitRefusal::PayloadMalformed });
+        return Err(Failure::RefusedOnSubmit {
+            reason: SubmitRefusal::PayloadMalformed,
+        });
     }
     let mut line = String::with_capacity(body.len() + 1);
     line.push_str(&body);
