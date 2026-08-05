@@ -173,7 +173,16 @@ impl Harness {
                     return Err(ChannelFault::Undecodable);
                 }
             };
-            let answered = self.dispatch(exchange, directive, sink)?;
+            // A send failure inside dispatch is a fault below the exchange
+            // layer like any other, and the state it may already have entered
+            // is released the same way.
+            let answered = match self.dispatch(exchange, directive, sink) {
+                Ok(answered) => answered,
+                Err(fault) => {
+                    self.unwind_if_entered();
+                    return Err(fault);
+                }
+            };
             if let Some(outcome) = answered {
                 return Ok(outcome);
             }
@@ -409,8 +418,12 @@ impl Harness {
             },
         ) {
             let refusal = match refusal {
+                // Only a classified death replaces the exchange's own
+                // refusal: an unreadable status is not evidence of a failed
+                // bind, and claiming one would tell the peer something this
+                // crate does not know.
                 LifecycleRefusal::NoResidency => {
-                    classify_organ_death(gate_pid).unwrap_or(LifecycleRefusal::BindFailed)
+                    classify_organ_death(gate_pid).unwrap_or(LifecycleRefusal::NoResidency)
                 }
                 other => other,
             };
@@ -435,6 +448,11 @@ impl Harness {
     /// compile - there is no call by which it mints a port.
     pub fn grant_seat(&mut self, identity: &str, tool_schemas: &[String]) -> Option<crate::Ports> {
         match &mut self.state {
+            // **The extension seam is crossed at loaded-and-idle itself.** A
+            // turn in flight is the active state, not the idle one, and loop 0
+            // has not taken the interior back yet, so there is no standing
+            // interior to hand across.
+            ChannelState::Entered(run) if run.turn_in_flight.is_some() => None,
             ChannelState::Entered(run) => {
                 let prompt =
                     crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas);
@@ -563,7 +581,12 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
 /// and it is read here - after the exchange observed closure - where the child
 /// is already dead and there is no race to lose.
 fn classify_organ_death(pid: nix::unistd::Pid) -> Option<LifecycleRefusal> {
-    match nix::sys::wait::waitpid(pid, None) {
+    // **The wait does not block.** An organ that closed its end and kept
+    // running would otherwise hold the serving thread here forever, which is
+    // a worse failure than the misreport this classification exists to
+    // prevent. A child still running, or a status this call cannot read,
+    // yields nothing and the caller keeps the refusal the exchange produced.
+    match nix::sys::wait::waitpid(pid, Some(nix::sys::wait::WaitPidFlag::WNOHANG)) {
         Ok(nix::sys::wait::WaitStatus::Exited(_, crate::spawn::PLACEMENT_FAILED)) => {
             // The ends this organ was owed never reached descriptor 3, which
             // is a descriptor fault and not a residency one.
@@ -658,7 +681,7 @@ mod tests {
         }
     }
 
-    fn entered_run(turn: Option<&str>) -> (Run, OrganChannel) {
+    fn entered_run(turn: Option<&str>) -> (Run, OrganChannel, std::path::PathBuf) {
         let path = std::env::temp_dir().join(format!(
             "weaver-harness-stop-{}-{:?}",
             std::process::id(),
@@ -697,6 +720,7 @@ mod tests {
                 gate_ordinal: 0,
             },
             near,
+            path,
         )
     }
 
@@ -715,7 +739,7 @@ mod tests {
     /// for the operator rather than hidden behind a green test.
     #[test]
     fn stop_records_the_close_and_answers_turn_aborted() {
-        let (run, _spare) = entered_run(Some("t-1"));
+        let (run, _spare, _sink_path) = entered_run(Some("t-1"));
         let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
             coordination: harness_end,
@@ -757,7 +781,7 @@ mod tests {
     /// entered. Watched under exactly that removal.
     #[test]
     fn closure_from_entered_unwinds_the_run() {
-        let (run, _spare) = entered_run(None);
+        let (run, _spare, sink_path) = entered_run(None);
         let (harness_end, _peer) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
             coordination: harness_end,
@@ -772,13 +796,66 @@ mod tests {
             ChannelState::Left => {}
             _ => panic!("the position is terminal after an unwind"),
         }
+        // The transition alone would pass with an unwind that did nothing, so
+        // the effects are read off the sink: the bracket is closed and the
+        // drain that closes it ran.
+        let stream = std::fs::read_to_string(&sink_path).expect("the sink");
+        assert!(
+            stream.contains("\"kind\":\"unload\""),
+            "the unwind closes the bracket with an unload: {stream}"
+        );
+        assert!(
+            stream.contains("\"kind\":\"load\""),
+            "and the run it closes is the one that opened: {stream}"
+        );
+    }
+
+    /// **The seat is granted at loaded-and-idle and not mid-turn.** Loop 0
+    /// has not taken the interior back while a turn is in flight, so there is
+    /// no standing interior to hand across.
+    ///
+    /// Perturbation: drop the turn-in-flight guard from `grant_seat` and a
+    /// seat is handed over mid-turn. Watched under exactly that removal.
+    #[test]
+    fn no_seat_is_granted_while_a_turn_is_in_flight() {
+        let (run, _spare, _path) = entered_run(Some("t-1"));
+        let (harness_end, _peer) = OrganChannel::pair().expect("pair");
+        let mut harness = Harness {
+            coordination: harness_end,
+            organs: OrganBinaries {
+                spu: "/nonexistent/spu".into(),
+                gate: "/nonexistent/gate".into(),
+            },
+            state: ChannelState::Entered(Box::new(run)),
+        };
+        assert!(
+            harness.grant_seat("identity", &[]).is_none(),
+            "an active run hands nothing across the seam"
+        );
+
+        // ...and an idle one does, so the guard is the turn and not the
+        // position.
+        let (idle, _spare, _path) = entered_run(None);
+        let (harness_end, _peer) = OrganChannel::pair().expect("pair");
+        let mut harness = Harness {
+            coordination: harness_end,
+            organs: OrganBinaries {
+                spu: "/nonexistent/spu".into(),
+                gate: "/nonexistent/gate".into(),
+            },
+            state: ChannelState::Entered(Box::new(idle)),
+        };
+        assert!(
+            harness.grant_seat("identity", &[]).is_some(),
+            "a loaded-and-idle run grants the seat"
+        );
     }
 
     /// A stop at rest answers `AtRest`, a clean close and not a refusal, and
     /// places no close event because there was no turn to close.
     #[test]
     fn stop_at_rest_answers_at_rest() {
-        let (run, _spare) = entered_run(None);
+        let (run, _spare, _sink_path) = entered_run(None);
         let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
             coordination: harness_end,
