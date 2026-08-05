@@ -304,7 +304,12 @@ at merge, so code accrues into the graph as work merges and no document restates
 what source already carries. Its identifier is the source path relative to the
 repository root, the one spelling the filesystem already enforces. The kebab-case
 rule governs names this format invents, and a path is not invented, so
-`crates/weaver-types/src/role.rs` is a node identifier as it stands.
+`crates/weaver-types/src/role.rs` is a node identifier as it stands. One canonical
+form, so the path cannot do what two spellings of a name do: forward slashes, no
+leading `./`, exactly as `git ls-files` prints it. The mapper derives the node
+identifier and every `cites` edge's `from` value from that one form, so a second
+spelling of one file is a defect the same way `permission-modes` beside
+`permission-mode` would be.
 
 ## 4. Edge kinds
 
