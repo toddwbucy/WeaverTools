@@ -69,14 +69,20 @@ which is why it is stated rather than assumed.
 **Loop 0 is the running agent service, per the operator's ruling of 2026-08-05.**
 It is not a document set, not a milestone to reach and pass, and not a loop a
 builder supplies. It is the object itself: the thing that boots under its unit,
-comes up as the statically provisioned agent identity, opens its sockets, and
-sits there being one sealed agent. **That is why it is seated in this crate
+comes up as the statically provisioned agent identity, adopts the coordination
+end it was handed, creates the unnamed pairs its organs are reached over, and
+sits there being one sealed agent. **It binds nothing and listens on nothing**:
+the named socket is admin's, this crate adopts one end and makes the rest, which
+is why nothing here is dialable. **That is why it is seated in this crate
 directly and not in the loop container.** The container under `Loops/` holds the
 agent's internal logic, which is what runs once loop 0 is already running, and a
 loop 0 filed beside those documents would read as one more droppable loop rather
-than as the wall they run inside. The distinction also bounds the socket binding
-of the loop seat: **a builder may drop in loop 1 and above, and never loop 0**,
-because loop 0 is what the drop-in arrives inside of.
+than as the wall they run inside. The distinction bounds **both surfaces a builder
+reaches**, not just one. The extension seam of section 6, composed against and
+compiled into the worker binary, and the socket binding the working list holds
+open, dropped in beside a running agent, **each accept loop 1 and above and
+neither reaches loop 0**, because loop 0 is what a builder's loop arrives inside
+of by either route.
 
 **Loop 0, and the machinery loop 1 composes against.** The harness owns the
 lifecycle interior of loop 0, the load and the unload, the same for every agent,
