@@ -1,6 +1,6 @@
 # Basic Inference Loop
 
-**Status:** DRAFT v0.12, 2026-08-01. The workflow document for the basic inference
+**Status:** MERGED v0.12, 2026-08-01. The workflow document for the basic inference
 loop, filed under the harness's `Loops/` container per the Document Format's
 container entry. It argues no edges of its own: the seams it walks are declared in
 the crate charters per Document Format section 4, and a graph block here would

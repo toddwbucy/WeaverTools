@@ -1,8 +1,7 @@
 # weaver-admin - Spec
 
-**Status:** DRAFT. Cut 2026-08-02, fifth of the Spec pass and the first outside
-the agent. Code is written against it under the gates of
-Working Process section 6, ratified 2026-08-04.
+**Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
+agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
 **Document ID:** `weaver-admin-Spec`

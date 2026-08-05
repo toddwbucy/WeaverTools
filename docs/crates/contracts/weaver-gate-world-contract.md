@@ -1,6 +1,6 @@
 # weaver-gate / world - contract
 
-**Status:** MERGED. In `main` and the source of truth for now. Written on the human's
+**Status:** MERGED. In `main` and the source of truth. Written on the human's
 ruling of 2026-08-01: the two external boundaries take contracts before any Spec is
 written, this document and `weaver-admin-operator-contract` in one act, and both
 are blockers on the Spec phase. One party is an external principal rather than a

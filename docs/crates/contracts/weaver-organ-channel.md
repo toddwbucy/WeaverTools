@@ -1,6 +1,6 @@
 # weaver-organ-channel
 
-**Status:** MERGED. In `main` and the source of truth for now. Cut as the lift
+**Status:** MERGED. In `main` and the source of truth. Cut as the lift
 `weaver-admin-harness-contract` section 0 anticipated, when a second organ contract
 needed the same channel, and ruled in on 2026-07-31. This document is the one
 statement of the organ channel's mechanics and every organ contract draws it.

@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.18, 2026-08-04. Companion to the Working Rules, the Document
+**Version:** v0.19, 2026-08-04. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -85,6 +85,19 @@ is in a working state that allows the work to move forward, and it means nothing
 than that. It is not a verdict on the contents. Individual files and individual lines
 change after merge, and a correction to a merged document is an edit rather than a
 ceremony.
+
+**A header states the state its act lands it in**, per the operator's ruling of
+2026-08-04: a branch cut to merge carries MERGED, made true at the merge, rather
+than flipping in a follow-up act, and a header never outlives its state. The sweep
+of this date flipped the merged set's DRAFT headers, which had been wrong in the
+direction this rule closes, and the earlier finding against a branch pre-asserting
+MERGED resolves the other way: pre-asserting the post-merge state is the practice,
+and the defect would be merging without the human's call, not the header. The
+boundary of the flip is doctrinal rather than enumerated: every member header
+reads MERGED alone, ratification is represented only at the set level because no
+document ratifies alone, and the same sweep retired the source-of-truth "for now"
+from every member header, ratification having ended the provisionality the phrase
+carried.
 
 **RATIFIED.** The whole document set has been written and mapped into the graph. The
 mapping is the ratification. After it, a document does not change, and a change found
@@ -368,9 +381,8 @@ Section 6 ratified 2026-08-04, so the entry gate stands satisfied. What remains
 before the first code merge: a conformance header per Document Format sections 3
 and 4 on every file the first act carries, and the gates of section 6 applied at
 review. What
-remains from the phase behind: G6 and then item 7, the G2 and G5 phase-close
-sweeps, and the
-DRAFT-header ruling. Nothing here reopens the set - a change the build or a review
+remains from the phase behind: G6 and then item 7, and the G2 and G5 phase-close
+sweeps. Nothing here reopens the set - a change the build or a review
 finds in a ratified document is a phase one re-entry, deliberate and named.
 
 ## 8. What this document does not do

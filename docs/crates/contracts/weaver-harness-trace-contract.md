@@ -1,6 +1,6 @@
 # weaver-harness / weaver-trace - contract
 
-**Status:** MERGED. In `main` and the source of truth for now. Written with
+**Status:** MERGED. In `main` and the source of truth. Written with
 `weaver-trace-PRD` as one act, and ratified with the document set rather than
 separately.
 

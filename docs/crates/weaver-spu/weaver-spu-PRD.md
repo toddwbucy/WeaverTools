@@ -1,6 +1,6 @@
 # weaver-spu - PRD (crate charter)
 
-**Status:** MERGED. In `main` and the source of truth for now. It is chartered to the
+**Status:** MERGED. In `main` and the source of truth. It is chartered to the
 end of the lifecycle workflow, an agent loaded, idle, and traced, and its remaining
 sections arrive with the token workflow, gate to harness to SPU and back. **Half
 chartered by ruling rather than incomplete:** a crate is chartered workflow by workflow
