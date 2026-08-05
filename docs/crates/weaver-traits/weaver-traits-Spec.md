@@ -43,6 +43,12 @@ otherwise reconstruct and the two neighbouring absences that take none, and
 records that sixteen claims grounding in nothing is the expected result rather
 than a gap. No record moves, no tag changes, and the assertion count is unchanged
 at twenty-two.
+**Revised:** 2026-08-04, the promotion pass, per the operator's election of this
+date. Section 2's two claims divide: the derive set takes a compile-pin doctest
+and the non-exhaustive attribute a compile-fail pair, both argued in section 7,
+their remainders staying review's per the division rule. The count moves to
+twenty-four, and the two new records sit at the end of section 7 with the four
+argued only there.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
@@ -174,6 +180,11 @@ model and the permission modes, and no `Default` anywhere. A default is a decisi
 about what an absent value means, and `weaver-types-PRD` section 5 rules that
 absence is never read as a default unless a charter says so and says what it
 means. A `Default` impl on a floor type is that ruling defeated by a derive.
+**The named set is pinned by a doctest of section 7, and the posture itself is
+review's,** a finite list of bounds being mechanical where a claim about every
+invariant a type could own is not. The two are two records for that reason, per
+the division rule of Document Format section 3, and the pin's record sits with
+the bullet that argues it.
 
 ```graph
 node: traits-data-derive-set
@@ -202,6 +213,11 @@ those enums carry `#[non_exhaustive]` and consumers keep a wildcard arm. The
 attribute is elected per type against that test rather than applied as a house
 style, because it buys forward compatibility at the cost of exactly the
 compile-time loudness that makes a closed set worth closing.
+**The attribute's presence is pinned by the compile-fail doctests of section 7,
+and the election test itself is review's,** a wildcard arm demanded from the
+outside being mechanical where the judgment of which charter says a set grows is
+not. The two are two records for that reason, per the division rule of Document
+Format section 3, and the pin's record sits with the bullet that argues it.
 
 ```graph
 node: traits-non-exhaustive-per-charter
@@ -530,6 +546,12 @@ what it errors on and it errors on nothing for a thing that was never written.
 - The message model's serde representation comes from derives rather than
   hand-written implementations, so a field added to a struct cannot be silently
   dropped from the wire.
+- The data derives of section 2 are read by a doctest: a function bounded on
+  `Debug`, `Clone`, `PartialEq`, `Serialize`, and `Deserialize` accepts every
+  message-model type and the mode enum, so a derive dropped later stops the
+  build rather than a behavior. The named bounds are the pinned half of section
+  2's posture claim, the posture itself staying review's, per the split this
+  section already makes for the adjudicator candidates.
 
 **Enforced by compile-fail tests, because the property is an absence.** Each is a
 `compile_fail` doctest asserting that the offending code does not build, which is
@@ -550,6 +572,12 @@ how an absence becomes mechanical rather than remembered.
   instrument for a claim's core and another for its periphery divides the same
   way.
 - No safety classification on the eventual tool trait, when that trait exists.
+- The non-exhaustive elections of section 2, pinned from the outside: doctests
+  matching `Role` and `ContentBlock` without a wildcard arm fail to compile,
+  which is `#[non_exhaustive]` doing its work where a consumer would feel it.
+  The attribute's presence is the mechanical half of section 2's election claim,
+  the per-charter test staying review's, per the same split. The exhaustive half
+  of that claim needs no record here, being the first bullet of this section.
 
 **Enforced by the manifest, with the instrument named rather than assumed.** The
 no-internal-dependency rule is gate H2, which reads Cargo edges against the graph.
@@ -559,7 +587,7 @@ in the workspace's own automation, and naming it here is what keeps it from bein
 a claim nothing runs.
 
 **Which invariant each claim serves, and why most serve none.** Six of the
-twenty-two carry a `grounds` edge and all six run to
+twenty-four carry a `grounds` edge and all six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`. The other three axioms take
 nothing from this crate: it makes no claim about a turn key, it is not an organ,
 and the one contract that draws it draws the message model rather than anything
@@ -571,7 +599,7 @@ off the floor, and no reason to deny `PermissionMode` a method that decides.
 Remove it and the derive set is still the data derives, the tagging test still
 yields the same two shapes, the role set is still three, and the enums are still
 non-exhaustive where the charter says the set grows, so those ground in nothing.
-**Sixteen claims grounding in no invariant is the expected result and not a gap**,
+**Eighteen claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4: section 2 of this Spec is named for representation,
 a floor crate is mostly that, and representation is what the invariants are not
 about.
@@ -599,11 +627,13 @@ rendering happens, per `weaver-trace-PRD` section 4.2.
 
 **Where the records sit, and the one claim another crate declares.** The
 assertion records are at the clauses that argue the claims, across sections 1
-through 6, rather than gathered here, per Document Format section 6. Four
+through 6, rather than gathered here, per Document Format section 6. Six
 claims are argued only in this section and carry their records at the end of
-it, the fourth being the doctest pinning of the adjudicator candidates, whose
-prohibition is section 4's. **The licensed combinations of section 3 are
-declared by `weaver-harness`,** whose Spec section 8 carries the test and has
+it, among them the doctest pinning of the adjudicator candidates, whose
+prohibition is section 4's, and the two pins divided out of section 2's
+posture and election claims, whose remainders are that section's. **The
+licensed combinations of section 3 are declared by `weaver-harness`,** whose
+Spec section 8 carries the test and has
 discharged the owing, because an assertion belongs where its test lives. **The
 tagging test shared with `weaver-types` is declared there,** node and both
 edges, per that Spec's section 4.3 and the pilot's rule: one claim is one node,
@@ -665,6 +695,22 @@ to: traits-adjudicators-pinned-by-doctest
 edge: grounds
 from: traits-adjudicators-pinned-by-doctest
 to: axiom-floor-is-vocabulary-behavior-is-socket
+
+node: traits-derive-set-pinned-by-doctest
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-traits
+to: traits-derive-set-pinned-by-doctest
+
+node: traits-non-exhaustive-pinned-by-doctest
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-traits
+to: traits-non-exhaustive-pinned-by-doctest
 ```
 
 ## 8. Open elections

@@ -15,6 +15,10 @@ a defect. On the review seat's return before the merge, section 4's second trap
 recasts to the past tense G4's closure left it in, and the rule's tally restates as
 the relation rather than the count, the promotion pass in flight being about to move
 the count.
+**Revised:** 2026-08-04, a fourth entry this date, the reconciliation the
+promotion pass owes as the second of the pair to land: the two remaining fixed
+tallies recast to hold at any census, section 3's edge fraction anchored to its
+filing and section 5's rebuild argument freed of its node count.
 **Revised:** 2026-08-04, a second entry this date. G4's third half closes, the five
 definitions gaining their statements at their definition sites, and section 0 gains
 the map-not-build-order framing per the operator's ruling of this date: the graph
@@ -157,7 +161,8 @@ that only a document which is itself the source of an edge needs a node record, 
 contract is the one kind that qualifies.
 
 A mapper built on the flat form would conclude no document is ever an edge source and
-mis-handle 134 of 425 edges.
+mis-handle every edge a contract sources, 134 of the 425 at this document's filing
+census and the same class at any later one.
 
 **`tag` carries one vocabulary per record kind, and the record kind disambiguates.**
 On a seam it is `socket` or `link`. On an assertion it is the enforcing instrument,
@@ -226,8 +231,9 @@ is a second source of truth and drifts from the first, which is the failure phas
 exists to prevent.
 
 **Rebuild rather than upsert.** "Generated from the documents" reads as
-drop-and-rebuild. At 290 nodes that is cheap, and fixing it now is cheaper than
-discovering an incremental path has accumulated state no document accounts for.
+drop-and-rebuild. At this corpus's scale that is cheap at any census it will
+reach, and fixing it now is cheaper than discovering an incremental path has
+accumulated state no document accounts for.
 
 **A clean automated result is evidence the gate did not fire.** The prior program's
 graph returned zero code defects while accumulating 53 dangling edges of its own, and

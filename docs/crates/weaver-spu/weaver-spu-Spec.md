@@ -102,6 +102,14 @@ records now, four to the contract invariant, four to the socket invariant, three
 loop invariant, and one to the organ invariant, with forty-nine grounding in nothing.
 Section 10's two readings of the apex as four invariants become five. No record moves,
 no tag changes, and no assertion is added or removed.
+**Revised:** 2026-08-04, the promotion pass, per the operator's election of this
+date. Three claims take mechanical instruments. The knob set retags to
+compile-pin, its non-purchase ruling falling with the bullet section 10 now
+carries. Section 6's absence claim and section 5's width declaration divide,
+each yielding a compile-pin sibling whose doctest reads a field's type, their
+remainders staying review's and perturbation's. The count moves to sixty,
+thirty-one with the sorting and twenty-nine from the elections, and three of
+the sorting carry review.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -950,7 +958,12 @@ that runs with no device present. **The fixture the test uses declares a
 non-contiguous set on purpose,** because the set reading and the maximum reading
 answer alike on every contiguous declaration, so a fixture declaring one and two
 would leave the perturbation that matters unwatchable while the test went on
-passing.
+passing. **The declaration's field is a set type and that half is pinned, per
+the operator's election of 2026-08-04:** a doctest reads a declaration carrying
+a non-contiguous set literal, so a maximum can no longer be declared, only read
+wrongly, and the perturbation keeps the judgment honest where the type cannot
+reach. The two are two records for that reason, per the division rule of
+Document Format section 3.
 
 ```graph
 node: spu-shard-widths-are-a-set
@@ -960,6 +973,14 @@ tag: perturbation
 edge: asserts
 from: weaver-spu
 to: spu-shard-widths-are-a-set
+
+node: spu-widths-set-pinned-by-doctest
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-spu
+to: spu-widths-set-pinned-by-doctest
 ```
 
 **The registry is compile-time and admission consults it.** A table of the
@@ -1062,8 +1083,15 @@ when not produced,** per charter section 13.6 and `weaver-trace-PRD` section
 sends no vector, and the trace's own `skip_serializing_if` carries the absence
 to the record. The serialization half is `weaver-trace-Spec`'s, argued and
 tested at its sections 3 and 10, and this record is the production half, which
-is a different party's obligation and not a second copy of one claim. Review's
-by non-purchase, a generation with the readout unelected being the fixture.
+is a different party's obligation and not a second copy of one claim. **The
+absence takes a type instead of a fixture, per the operator's election of
+2026-08-04:** the vectors travel as an option of a non-empty vector, head and
+tail, so an empty vector meaning nothing was measured is unrepresentable rather
+than unproduced, and the earlier non-purchase ruling priced a fixture the shape
+now retires. The pairing itself stays review's, positional correspondence being
+a semantics no field type carries. The two are two records for that reason, per
+the division rule of Document Format section 3, and the pin's doctest reads the
+field's type at section 10's bullet.
 
 ```graph
 node: spu-absent-not-empty-vector
@@ -1073,6 +1101,14 @@ tag: review
 edge: asserts
 from: weaver-spu
 to: spu-absent-not-empty-vector
+
+node: spu-absent-shape-pinned-by-doctest
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-spu
+to: spu-absent-shape-pinned-by-doctest
 ```
 
 **What travels with a generation.** The token identifiers in and out, the two
@@ -1238,14 +1274,17 @@ window, and the seed.** The seed is a knob for the first time in this code's
 lineage: the archived tree carried it as a hardcoded default and a determinism
 test and never made it configurable, so the disposition mechanism is its first
 real home, and a frozen seed beside a frozen sampling surface is what makes a
-binary's declared starting field re-enterable, per apex section 8. Review's by
-non-purchase, the set's membership being what a builder would otherwise invent
-and no bullet in section 10 reading it.
+binary's declared starting field re-enterable, per apex section 8. Compile-pin
+on the operator's election of 2026-08-04, superseding this clause's earlier
+non-purchase ruling: the membership is a struct literal a doctest reads, every
+member riding its `Disposition`, so a knob added or dropped stops the build,
+and the bullet section 10 was missing is the bullet that now reads it. The
+ruling's premise was the missing bullet, so the ruling falls with it.
 
 ```graph
 node: spu-knob-set-includes-the-seed
 kind: assertion
-tag: review
+tag: compile-pin
 
 edge: asserts
 from: weaver-spu
@@ -1466,6 +1505,15 @@ across the change.
 - Descriptors are owned types end to end.
 - `Disposition<T>` makes a knob without an election a compile error, so a
   builder cannot leave one unstated.
+- The knob struct is a literal a doctest reads, every member named and the seed
+  among them, so section 8's set is membership the build checks rather than a
+  list a builder consults.
+- The signal vectors' field is an option of a non-empty vector, its doctest
+  reading the field's type, so the empty vector section 6 forbids is
+  unrepresentable and the pairing is what remains for review there.
+- The width declaration's field is a set type, its doctest reading a
+  non-contiguous set literal, so a maximum cannot be declared, and the admission
+  judgment against it is what remains for the perturbation below to watch.
 
 **Enforced by compile-fail tests, because the property is an absence.**
 
@@ -1596,7 +1644,7 @@ comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
 
 **Which invariant each claim serves, and why most serve none.** Twelve `grounds` edges
-run from nine of the fifty-eight: four to `axiom-contract-is-a-complete-interface`, four
+run from nine of the sixty: four to `axiom-contract-is-a-complete-interface`, four
 to `axiom-floor-is-vocabulary-behavior-is-socket`, three to
 `axiom-harness-integrates-by-the-loop`, and one to
 `axiom-organ-and-submodule`, the two out-of-order refusals carrying two edges each
@@ -1633,7 +1681,7 @@ count exists for the first walk above, a writable handle to the agent's own reco
 sitting inside the agent's model server, and the discipline it checks is the
 harness's at the fork rather than the loop's at a seam.
 
-**Forty-nine claims grounding in no invariant is the expected result and not a gap**,
+**Fifty-one claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4, and the ratio is low here for a structural reason
 rather than an unfinished one. The bulk of this document is decode mechanics,
 sampling, family libraries, kernels, device judgment, residency bookkeeping, and
@@ -1652,15 +1700,17 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Fifty-eight records in all,
-twenty-seven from this section's sorting with the walks and the kernels counted
-in, and thirty-one from the elections outside it, the elections taking nodes
+general prohibition, and the kernels' comparisons. Sixty records in all,
+thirty-one from this section's sorting with the walks and the kernels counted
+in, and twenty-nine from the elections outside it, the elections taking nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable. A divided claim's two halves both count with the sorting, per
-Document Format section 3. Two of the twenty-seven are tagged for review and
-every other one of them carries a mechanical instrument: the loader's general
-prohibition, which is the review half of the one split that still has one, and
-the kernels' comparisons, which the paragraph above argues. **One bullet
+Document Format section 3, which is where the absence and width divisions of
+the operator's 2026-08-04 election count. Three of the thirty-one are tagged
+for review and every other one of them carries a mechanical instrument: the
+loader's general prohibition, which is the review half of a split, the pairing
+half of section 6's absence claim, divided likewise, and the kernels'
+comparisons, which the paragraph above argues. **One bullet
 above is a claim another crate argues,** and carries no record here: the floor's
 exhaustive wire enums, which `weaver-types-Spec` section 4.2 declares. Eight
 more claims this Spec cites and another Spec argues are named where the sections
