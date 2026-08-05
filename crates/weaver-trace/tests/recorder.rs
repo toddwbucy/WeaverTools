@@ -364,3 +364,113 @@ fn foreign_session_refuses() {
     let err = r.submit(e).unwrap_err();
     assert!(matches!(err, Failure::RefusedOnSubmit { .. }));
 }
+
+/// A pretty-printed payload refuses: `RawValue` splices bytes verbatim, and
+/// pretty-printed JSON carries real newlines between tokens - valid JSON,
+/// fatal to the framing. The render check is the mechanism.
+///
+/// Perturbation: remove the interior-newline check from `render` and the
+/// stream gains two extra lines from one event. Watched under exactly that
+/// removal.
+#[test]
+fn pretty_printed_payload_refuses() {
+    let (mut r, _path) = recorder();
+    r.submit(event(Kind::Load, None, None)).unwrap();
+    let pretty = "{\n  \"role\": \"user\",\n  \"content\": []\n}";
+    let err = r
+        .submit(event(
+            Kind::MessageUser,
+            Some("t-1"),
+            Some(Payload::Message(raw_payload(pretty).unwrap())),
+        ))
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        Failure::RefusedOnSubmit { reason: SubmitRefusal::PayloadMalformed }
+    ));
+    assert_eq!(r.structure().len(), 1, "the refused event landed nowhere");
+}
+
+/// A run-level kind carrying a turn refuses: a join key the work never held
+/// would be a false attribution. `fault` stays exempt, its option being the
+/// caller's fact.
+#[test]
+fn turn_on_run_level_kind_refuses() {
+    let (mut r, _path) = recorder();
+    for kind in [Kind::Load, Kind::Unload, Kind::SessionClosed] {
+        let err = r.submit(event(kind, Some("t-1"), None)).unwrap_err();
+        assert!(
+            matches!(
+                err,
+                Failure::RefusedOnSubmit { reason: SubmitRefusal::PayloadMalformed }
+            ),
+            "{kind:?} with a turn must refuse"
+        );
+    }
+    assert_eq!(r.structure().len(), 0);
+    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::TurnStarted, Some("t-1"), None)).unwrap();
+    let fault = raw_payload("{\"kind\":\"stub\"}").unwrap();
+    r.submit(event(Kind::Fault, Some("t-1"), Some(Payload::Fault(fault)))).unwrap();
+    let fault2 = raw_payload("{\"kind\":\"stub\"}").unwrap();
+    r.submit(event(Kind::Fault, None, Some(Payload::Fault(fault2)))).unwrap();
+}
+
+/// A failed write is terminal and named: committed never advances past the
+/// first failed sequence, later queued records are discarded with the
+/// accounting kept consistent, and drain returns `CommitFailed` identifying
+/// the record.
+#[test]
+fn failed_write_is_terminal_and_named() {
+    let file = File::create("/dev/full").expect("dev full");
+    let mut r = Recorder::receive(OwnedFd::from(file), RunOrdinal(0), SessionRef("s-1".into()))
+        .expect("receives");
+    r.submit(event(Kind::Load, None, None)).unwrap();
+    let err = r.drain().unwrap_err();
+    match err {
+        Failure::CommitFailed { sequence, .. } => assert_eq!(sequence, Sequence(0)),
+        other => panic!("drain names the failed record, got {other:?}"),
+    }
+    let b = r.boundary();
+    assert_eq!(b.committed, None, "committed never advances past the failure");
+    assert_eq!(b.queued, 0, "accounting stays consistent");
+    let next = r.submit(event(Kind::TurnStarted, Some("t-1"), None)).unwrap_err();
+    assert!(matches!(next, Failure::CommitFailed { sequence: Sequence(0), .. }));
+}
+
+/// The queue's depth caps buffered records: at capacity a submission is
+/// refused before either sink is touched, so the structure plateaus and the
+/// two sinks stay consistent.
+#[test]
+fn full_queue_refuses_and_sinks_stay_consistent() {
+    let (reader, writer) = std::io::pipe().expect("pipe");
+    let mut r = Recorder::receive(
+        OwnedFd::from(writer),
+        RunOrdinal(0),
+        SessionRef("s-1".into()),
+    )
+    .expect("receives");
+    r.submit(event(Kind::Load, None, None)).unwrap();
+    let mut refused = 0usize;
+    for _ in 0..5000 {
+        match r.submit(event(Kind::Fault, None, Some(Payload::Fault(
+            raw_payload("{\"kind\":\"stub\"}").unwrap(),
+        )))) {
+            Ok(_) => {}
+            Err(Failure::CommitPressure { .. }) => refused += 1,
+            Err(other) => panic!("unexpected: {other:?}"),
+        }
+    }
+    assert!(refused > 0, "the depth was reached and reported");
+    let len_before = r.structure().len();
+    let err = r
+        .submit(event(Kind::Fault, None, Some(Payload::Fault(
+            raw_payload("{\"kind\":\"stub\"}").unwrap(),
+        ))))
+        .unwrap_err();
+    assert!(matches!(err, Failure::CommitPressure { .. }));
+    assert_eq!(r.structure().len(), len_before, "at capacity nothing lands");
+    drop(reader);
+    let _ = r.drain();
+    assert_eq!(r.boundary().queued, 0, "discard keeps the accounting consistent");
+}

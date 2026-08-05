@@ -20,7 +20,7 @@ use std::fs::File;
 use std::io::Write;
 use std::os::fd::OwnedFd;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::mpsc::{Receiver, Sender, channel};
+use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread::JoinHandle;
 
@@ -63,6 +63,7 @@ struct WriterShared {
 struct WriterState {
     committed: Option<Sequence>,
     last_error: Option<WriteError>,
+    failed: Option<(Sequence, WriteError)>,
 }
 
 /// The stream writer: one thread, one descriptor, whole events only. A short
@@ -71,18 +72,20 @@ struct WriterState {
 type QueueItem = (Sequence, Line);
 
 struct Writer {
-    queue: Sender<QueueItem>,
+    queue: SyncSender<QueueItem>,
     shared: Arc<WriterShared>,
     thread: Option<JoinHandle<()>>,
 }
 
 impl Writer {
     fn start(sink: OwnedFd) -> Writer {
-        let (queue, receiver): (Sender<QueueItem>, Receiver<QueueItem>) = channel();
+        let (queue, receiver): (SyncSender<QueueItem>, Receiver<QueueItem>) =
+            sync_channel(QUEUE_DEPTH);
         let shared = Arc::new(WriterShared {
             state: Mutex::new(WriterState {
                 committed: None,
                 last_error: None,
+                failed: None,
             }),
             drained: Condvar::new(),
             queued: AtomicUsize::new(0),
@@ -91,13 +94,28 @@ impl Writer {
         let mut file = File::from(sink);
         let thread = std::thread::spawn(move || {
             while let Ok((sequence, line)) = receiver.recv() {
-                let outcome = file.write_all(line.as_bytes());
-                let mut state = thread_shared.state.lock().expect("writer state");
-                match outcome {
-                    Ok(()) => state.committed = Some(sequence),
-                    Err(e) => state.last_error = Some(WriteError::from(&e)),
+                // A write failure is terminal: committed never advances past
+                // the first failed sequence, and every later queued record is
+                // discarded with its accounting kept consistent, so a drain
+                // returns rather than hanging on a dead sink.
+                let already_failed = thread_shared
+                    .state
+                    .lock()
+                    .expect("writer state")
+                    .failed
+                    .is_some();
+                if !already_failed {
+                    let outcome = file.write_all(line.as_bytes());
+                    let mut state = thread_shared.state.lock().expect("writer state");
+                    match outcome {
+                        Ok(()) => state.committed = Some(sequence),
+                        Err(e) => {
+                            let err = WriteError::from(&e);
+                            state.last_error = Some(err.clone());
+                            state.failed = Some((sequence, err));
+                        }
+                    }
                 }
-                drop(state);
                 thread_shared.queued.fetch_sub(1, Ordering::SeqCst);
                 thread_shared.drained.notify_all();
             }
@@ -111,9 +129,10 @@ impl Writer {
 
     fn enqueue(&self, sequence: Sequence, line: Line) {
         self.shared.queued.fetch_add(1, Ordering::SeqCst);
-        // The receiver lives as long as the thread; a send failure means the
-        // writer thread is gone, surfaced through the boundary's last error.
-        if self.queue.send((sequence, line)).is_err() {
+        // The capacity pre-check in submit keeps a full queue unreachable
+        // from the one caller, so a failure here means the writer thread is
+        // gone, surfaced through the boundary's last error.
+        if self.queue.try_send((sequence, line)).is_err() {
             self.shared.queued.fetch_sub(1, Ordering::SeqCst);
             let mut state = self.shared.state.lock().expect("writer state");
             state.last_error = Some(WriteError {
@@ -127,16 +146,36 @@ impl Writer {
         self.shared.queued.load(Ordering::SeqCst)
     }
 
+    /// The failure a later submission surfaces: the first failed write, named
+    /// with its record, or a dead writer thread.
+    fn standing_failure(&self) -> Option<Failure> {
+        let state = self.shared.state.lock().expect("writer state");
+        if let Some((sequence, source)) = &state.failed {
+            return Some(Failure::CommitFailed {
+                sequence: *sequence,
+                source: source.clone(),
+            });
+        }
+        state
+            .last_error
+            .as_ref()
+            .map(|err| Failure::WriteTargetUnusable { source: err.clone() })
+    }
+
     fn wait_drained(&self) -> Result<(), Failure> {
         let mut state = self.shared.state.lock().expect("writer state");
         while self.shared.queued.load(Ordering::SeqCst) > 0 {
             state = self.shared.drained.wait(state).expect("writer state");
         }
-        match &state.last_error {
-            Some(err) => Err(Failure::WriteTargetUnusable {
-                source: err.clone(),
+        match &state.failed {
+            Some((sequence, source)) => Err(Failure::CommitFailed {
+                sequence: *sequence,
+                source: source.clone(),
             }),
-            None => Ok(()),
+            None => match &state.last_error {
+                Some(err) => Err(Failure::WriteTargetUnusable { source: err.clone() }),
+                None => Ok(()),
+            },
         }
     }
 
@@ -155,7 +194,7 @@ impl Drop for Writer {
     fn drop(&mut self) {
         // Closing the channel ends the thread's loop; the join keeps the
         // descriptor's writes ordered before the process moves on.
-        let (closed, _) = channel::<QueueItem>();
+        let (closed, _) = sync_channel::<QueueItem>(1);
         let _ = std::mem::replace(&mut self.queue, closed);
         if let Some(thread) = self.thread.take() {
             let _ = thread.join();
@@ -207,8 +246,14 @@ impl Recorder {
     /// event kind.
     pub fn submit(&mut self, mut event: Event) -> Result<Sequence, Failure> {
         admit(&event, &self.session, self.run)?;
-        if let Some(err) = self.writer.boundary(None).last_error {
-            return Err(Failure::WriteTargetUnusable { source: err });
+        if let Some(failure) = self.writer.standing_failure() {
+            return Err(failure);
+        }
+        if self.writer.queued() >= QUEUE_DEPTH {
+            // The queue is at its depth: the loss bound of the deployment. The
+            // submission is refused before either sink is touched, so the two
+            // stay consistent, and the report carries the depth reached.
+            return Err(Failure::CommitPressure { queued: self.writer.queued() });
         }
         let sequence = Sequence(self.next);
         event.envelope.sequence = sequence;
@@ -267,6 +312,12 @@ fn admit(event: &Event, session: &SessionRef, run: RunOrdinal) -> Result<(), Fai
             field: FieldName("turn".to_string()),
         });
     }
+    if turn_forbidden(kind) && event.envelope.turn.is_some() {
+        // A run-level event carrying a turn would be a join key the work never
+        // held, a false attribution, refused as a malformed submission - the
+        // closest case the contract's vocabulary expresses.
+        return refuse(SubmitRefusal::PayloadMalformed);
+    }
     if !pairing_licensed(kind, event.payload.as_ref()) {
         return match event.payload {
             None => refuse(SubmitRefusal::RequiredFieldAbsent {
@@ -278,9 +329,13 @@ fn admit(event: &Event, session: &SessionRef, run: RunOrdinal) -> Result<(), Fai
     Ok(())
 }
 
-/// A run-level event belongs to no turn; a turn-level kind carries one, never
-/// inferred. `fault` may occur inside or outside a turn, so its option stays
-/// the caller's fact.
+/// A run-level event belongs to no turn and refuses one; a turn-level kind
+/// carries one, never inferred. `fault` may occur inside or outside a turn,
+/// so its option stays the caller's fact.
+fn turn_forbidden(kind: Kind) -> bool {
+    matches!(kind, Kind::Load | Kind::Unload | Kind::SessionClosed)
+}
+
 fn turn_required(kind: Kind) -> bool {
     match kind {
         Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Fault => false,

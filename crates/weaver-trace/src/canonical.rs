@@ -45,14 +45,19 @@ impl Serialize for MonotonicNs {
 }
 
 /// Renders an event to its one canonical line, newline-terminated. serde_json
-/// escapes an embedded newline in a string to `\n`, so a payload carrying
-/// prose cannot split one event into two lines - the debug assertion is the
-/// suite's witness, not the mechanism.
+/// escapes an embedded newline in a string to `\n`, so prose cannot split an
+/// event - but a spliced `RawValue` carries its bytes verbatim, and
+/// pretty-printed JSON holds real newlines between tokens, which are valid
+/// JSON and fatal to the framing. The check below is the mechanism: a body
+/// carrying an interior newline or carriage return refuses as malformed
+/// rather than splitting the stream.
 pub(crate) fn render(event: &Event) -> Result<Line, Failure> {
     let body = serde_json::to_string(event).map_err(|_| Failure::RefusedOnSubmit {
         reason: SubmitRefusal::PayloadMalformed,
     })?;
-    debug_assert!(!body.contains('\n'), "canonical form: no interior newline");
+    if body.contains('\n') || body.contains('\r') {
+        return Err(Failure::RefusedOnSubmit { reason: SubmitRefusal::PayloadMalformed });
+    }
     let mut line = String::with_capacity(body.len() + 1);
     line.push_str(&body);
     line.push('\n');
