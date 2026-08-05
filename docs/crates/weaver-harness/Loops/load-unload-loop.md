@@ -6,9 +6,9 @@ bracket. Loops belong to the harness unless specific to one domain and no other,
 per the human's ruling of 2026-08-01, so this document files beside
 `basic-inference-loop` under the harness's `Loops/` container. It is a workflow
 document: it composes merged charters and contracts, binds no crate, and decides
-no seam. Where it and a merged document disagree, the charter yields nothing and
-this document is corrected, because the charters are the decision record and this
-is their composition read back as one motion.
+no seam. Where it and a merged document disagree, the charter stands and this
+document is corrected, because the charters are the decision record and this is
+their composition read back as one motion.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 
