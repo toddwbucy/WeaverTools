@@ -1,8 +1,8 @@
 # weaver-types - Spec
 
 **Status:** DRAFT. Cut 2026-08-01 with `weaver-traits-Spec` as the floor pass of
-phase one's Spec pass. No code is written against it until phase three is
-ratified, per Working Process section 6.
+phase one's Spec pass. Code is written against it under the gates of
+Working Process section 6, ratified 2026-08-04.
 
 **Date filed:** 2026-08-01
 **Document ID:** `weaver-types-Spec`
