@@ -139,8 +139,16 @@ fn truncation_is_a_fault() {
         )
     };
     if written < 0 {
+        // **The branch under test was not reached**, and a silent return here
+        // would let the stated perturbation go undetected on this machine.
         // The kernel refused the oversized datagram outright, which is the
-        // same boundary holding one layer down.
+        // same boundary holding one layer down, so this is a skip and says so.
+        eprintln!(
+            "SKIP truncation_is_a_fault: the kernel refused a {} byte datagram \
+             (errno {}), so the MSG_TRUNC branch was not exercised here",
+            oversized.len(),
+            std::io::Error::last_os_error()
+        );
         return;
     }
     match near.recv() {
@@ -189,6 +197,18 @@ fn child_ends_land_from_descriptor_three() {
     let (_near_a, far_a) = OrganChannel::pair().expect("pair a");
     let (_near_b, far_b) = OrganChannel::pair().expect("pair b");
     let (report_r, report_w) = nix::unistd::pipe().expect("pipe");
+    // **The report pipe must sit above the range the placement overwrites.**
+    // `place_child_ends` targets 3 and 4, and `dup2` closes whatever occupies
+    // its target: a report end at either number would be closed by the very
+    // placement this test measures, and the parent would read nothing and
+    // report a flag problem that did not occur. Descriptor numbers are the
+    // lowest free number, so the pairs usually take the lower ones - usually
+    // is not a guarantee.
+    assert!(
+        report_r.as_raw_fd() > FIRST_ORGAN_DESCRIPTOR + 1
+            && report_w.as_raw_fd() > FIRST_ORGAN_DESCRIPTOR + 1,
+        "the report pipe sits above the placement's targets"
+    );
     // SAFETY: the child runs the handoff and then reports; async-signal-safe
     // calls only, then _exit.
     match unsafe { nix::unistd::fork() }.expect("fork") {

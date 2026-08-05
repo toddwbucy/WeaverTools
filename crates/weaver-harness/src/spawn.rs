@@ -39,7 +39,17 @@ pub unsafe fn fork_organ(
             // Call one and two, per the enumeration: dup2 each end into place
             // and clear the flag on each unconditionally.
             // SAFETY: in the child, before exec, with ends this process made.
-            let _ = unsafe { place_child_ends(ends) };
+            //
+            // **A failed placement does not reach the exec.** The child cannot
+            // return an error to the parent, but it can refuse to run the
+            // organ: an organ started with no channel at descriptor 3 would
+            // report as a residency problem at the parent's first exchange
+            // rather than as the placement fault it is. The distinct status
+            // is what lets the parent tell the two apart.
+            if unsafe { place_child_ends(ends) }.is_err() {
+                // SAFETY: _exit is async-signal-safe and does not unwind.
+                unsafe { nix::libc::_exit(PLACEMENT_FAILED) };
+            }
             // Call three.
             let argv = [program.as_ptr(), std::ptr::null()];
             let envp = [std::ptr::null()];
@@ -47,8 +57,15 @@ pub unsafe fn fork_organ(
             // return, and on failure the child exits without unwinding.
             unsafe {
                 nix::libc::execve(program.as_ptr(), argv.as_ptr(), envp.as_ptr());
-                nix::libc::_exit(127);
+                nix::libc::_exit(EXEC_FAILED);
             }
         }
     }
 }
+
+/// The child exited because it could not place the ends it was handed, which
+/// is a placement fault and not a residency one.
+pub const PLACEMENT_FAILED: i32 = 126;
+
+/// The child exited because the organ binary could not be exec'd.
+pub const EXEC_FAILED: i32 = 127;

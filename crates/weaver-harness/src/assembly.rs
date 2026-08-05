@@ -29,6 +29,13 @@ pub struct Prompt {
     pub identity: String,
     pub messages: Vec<Message>,
     pub tool_schemas: Vec<String>,
+    /// **Message-kind records that did not decode**, counted rather than
+    /// dropped in silence. Every message this crate authors renders as a
+    /// `Message`, so this is zero today - but a second producer of
+    /// `Payload::Message`, or a change to the message model, would otherwise
+    /// turn a decode failure into a context with a hole in it that nothing
+    /// reports. A non-zero count is a fault the caller authors.
+    pub undecodable: usize,
 }
 
 impl Prompt {
@@ -59,18 +66,21 @@ impl Prompt {
 /// deterministic over one structure's contents.
 pub fn assemble(structure: &WorkingStructure, identity: &str, tool_schemas: &[String]) -> Prompt {
     let mut messages = Vec::new();
+    let mut undecodable = 0;
     for record in structure.iter() {
         if !MESSAGE_KINDS.contains(&record.kind) {
             continue;
         }
-        if let Some(message) = decode_message(record.line.as_ref()) {
-            messages.push(message);
+        match decode_message(record.line.as_ref()) {
+            Some(message) => messages.push(message),
+            None => undecodable += 1,
         }
     }
     Prompt {
         identity: identity.to_string(),
         messages,
         tool_schemas: tool_schemas.to_vec(),
+        undecodable,
     }
 }
 

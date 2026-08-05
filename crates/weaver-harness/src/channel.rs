@@ -120,6 +120,41 @@ impl OrganChannel {
             MsgFlags::MSG_CMSG_CLOEXEC,
         )
         .map_err(|_| ChannelFault::Closed)?;
+
+        // **Custody is established before the fault checks, not after them.**
+        // The kernel can install an ancillary descriptor on the same call that
+        // returns a truncated body, so a fault check that returns first leaks
+        // a descriptor this process now owns and nothing closes. A peer
+        // sending oversized descriptor-bearing messages would exhaust the
+        // table and the harness could then create no organ channels. Adopting
+        // first makes every path drop what it owns.
+        let mut sink = None;
+        let mut surplus = Vec::new();
+        for cmsg in message.cmsgs().map_err(|_| ChannelFault::Undecodable)? {
+            if let ControlMessageOwned::ScmRights(fds) = cmsg {
+                for fd in fds {
+                    // SAFETY: the kernel just installed this descriptor for
+                    // this process and no other owner exists. Adopting it into
+                    // an OwnedFd is what makes its close a type property.
+                    let owned = unsafe { OwnedFd::from_raw_fd(fd) };
+                    if sink.is_none() {
+                        sink = Some(owned);
+                    } else {
+                        surplus.push(owned);
+                    }
+                }
+            }
+        }
+        drop(surplus);
+
+        // A truncated control buffer means the kernel dropped descriptors the
+        // sender authored, so the message is not the one that was sent and
+        // cannot be repaired by reading what survived.
+        if message.flags.contains(MsgFlags::MSG_CTRUNC) {
+            return Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES,
+            });
+        }
         if message.flags.contains(MsgFlags::MSG_TRUNC) {
             return Err(ChannelFault::Truncated {
                 bound: MAX_ENVELOPE_BYTES,
@@ -128,20 +163,6 @@ impl OrganChannel {
         let read = message.bytes;
         if read == 0 {
             return Err(ChannelFault::Closed);
-        }
-        let mut sink = None;
-        for cmsg in message.cmsgs().map_err(|_| ChannelFault::Undecodable)? {
-            if let ControlMessageOwned::ScmRights(fds) = cmsg {
-                for fd in fds {
-                    // SAFETY: the kernel just created this descriptor for this
-                    // process and no other owner exists. Adopting it into an
-                    // OwnedFd is what makes its close a type property.
-                    let owned = unsafe { OwnedFd::from_raw_fd(fd) };
-                    if sink.is_none() {
-                        sink = Some(owned);
-                    }
-                }
-            }
         }
         let envelope =
             serde_json::from_slice(&buffer[..read]).map_err(|_| ChannelFault::Undecodable)?;
@@ -273,18 +294,59 @@ fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
 /// Must be called only in a forked child, before its exec, and only with ends
 /// this process created.
 pub unsafe fn place_child_ends(ends: &[&ChildEnd]) -> Result<(), nix::Error> {
+    if ends.len() > MAX_PLACED_ENDS {
+        return Err(nix::Error::EINVAL);
+    }
+    let count = ends.len() as RawFd;
+    let target_end = FIRST_ORGAN_DESCRIPTOR + count;
+
+    // **A source sitting inside the target range is moved out of it first,
+    // because `dup2` onto a target closes whatever already occupies that
+    // number.** With ends at 4 and 3, placing the first at 3 would close the
+    // second before its own turn, and placing the second at 4 would then
+    // duplicate the first: both numbers would name one channel and the other
+    // would be gone. Descriptor numbers are the lowest free number, so a
+    // descending layout is reachable whenever an earlier close left a hole.
+    let mut sources = [0 as RawFd; MAX_PLACED_ENDS];
     for (index, end) in ends.iter().enumerate() {
+        let mut source = end.end.as_raw_fd();
+        if source >= FIRST_ORGAN_DESCRIPTOR && source < target_end {
+            // SAFETY: fcntl is async-signal-safe. F_DUPFD_CLOEXEC returns the
+            // lowest free descriptor at or above the floor, which is outside
+            // the range every dup2 below will overwrite.
+            let moved = unsafe { nix::libc::fcntl(source, nix::libc::F_DUPFD_CLOEXEC, target_end) };
+            if moved == -1 {
+                return Err(nix::Error::last());
+            }
+            source = moved;
+        }
+        sources[index] = source;
+    }
+
+    for (index, source) in sources.iter().take(ends.len()).enumerate() {
         let target = FIRST_ORGAN_DESCRIPTOR + index as RawFd;
-        let source = end.end.as_raw_fd();
-        if source != target {
+        if *source != target {
             // SAFETY: dup2 is async-signal-safe and both numbers are this
             // child's own. The duplicate is born with the flag clear.
-            unsafe { nix::libc::dup2(source, target) };
+            if unsafe { nix::libc::dup2(*source, target) } == -1 {
+                // **A failed placement must not reach the exec.** The organ
+                // would start with no channel at 3, or with whatever
+                // unrelated descriptor sat there, which is the silent
+                // no-channel start this whole design exists to prevent.
+                return Err(nix::Error::last());
+            }
         }
         // The unconditional clear: the no-op case above leaves the flag set,
         // so this runs whether or not a duplication moved anything.
         // SAFETY: fcntl is async-signal-safe.
-        unsafe { nix::libc::fcntl(target, nix::libc::F_SETFD, 0) };
+        if unsafe { nix::libc::fcntl(target, nix::libc::F_SETFD, 0) } == -1 {
+            return Err(nix::Error::last());
+        }
     }
     Ok(())
 }
+
+/// The most ends any organ is handed: the SPU's two. A fixed array keeps the
+/// pre-move bookkeeping allocation-free, which the async-signal-safe bound
+/// between fork and exec requires.
+const MAX_PLACED_ENDS: usize = 8;

@@ -20,6 +20,14 @@ use weaver_types::{
 /// test can drive directives and read answers. The harness's own fork sites
 /// are not reached by these directives, which is what keeps the service
 /// testable without organ binaries.
+///
+/// **`adopt` clears the dumpable flag for this whole test process**, since
+/// `prctl(PR_SET_DUMPABLE, 0)` is process-wide and this stands the harness up
+/// on a thread rather than in a forked child. The first test to run therefore
+/// disables core dumps and same-uid `ptrace` for this binary and every test
+/// after it. A maintainer who cannot attach a debugger to these tests is owed
+/// the reason, and the containment a forked child would buy is not taken
+/// because the peer must outlive the harness to drive it.
 struct Peer {
     channel: OrganChannel,
 }
@@ -91,15 +99,15 @@ fn leave_before_enter_is_refused() {
     let _ = handle.join().expect("thread");
 }
 
-/// **The left position is terminal**, so a directive of any kind arriving
-/// after a leave answers the same refusal.
+/// A stop arriving before any enter is out of order for the position, which
+/// is the before-enter arm rather than the at-rest answer.
 ///
-/// Perturbation two: collapse the terminal arm into the entered one and a left
-/// channel accepts an enter. This test reaches the terminal position through
-/// an enter that refuses (no organ binaries exist), which leaves the state at
-/// before-enter, then drives the position directly.
+/// **The at-rest close and the terminal position are not this test's**, and
+/// saying so beats a name that overstates: `AtRest` needs an entered run and
+/// is tested in `lifecycle.rs`, and the terminal arm needs a completed leave,
+/// which needs organ doubles this suite does not buy.
 #[test]
-fn stop_at_rest_is_a_clean_close_not_a_refusal() {
+fn stop_before_enter_is_out_of_order() {
     let (peer, handle) = Peer::stand_up();
     // A stop before any enter is out of order for the position, which is the
     // before-enter arm rather than the at-rest answer.
@@ -195,14 +203,42 @@ fn non_directive_payload_is_a_fault() {
     drop(peer);
 }
 
-/// The adopted end is owned: the harness holds it for the thread's lifetime
-/// and its close is a type property rather than an integer left behind.
+/// The adopted end is owned: dropping the `Harness` closes it, which is the
+/// close being a type property rather than an integer left behind.
+///
+/// The previous version of this test asserted that a descriptor number was
+/// above 2, which the kernel guarantees for any process with the standard
+/// streams open - it never constructed a `Harness` and could not fail. This
+/// one adopts, drops, and observes the descriptor is gone. Run in a forked
+/// child because `adopt` clears the dumpable flag process-wide.
 #[test]
-fn the_harness_owns_its_end() {
-    let (harness_end, _peer) = OrganChannel::pair().expect("pair");
-    let raw = harness_end.as_fd();
-    assert!(
-        raw.as_raw_fd() > 2,
-        "a real descriptor above the standard streams"
-    );
+fn dropping_the_harness_closes_the_adopted_end() {
+    let (report_r, report_w) = nix::unistd::pipe().expect("pipe");
+    // SAFETY: the child adopts, drops, probes, reports, and _exits.
+    match unsafe { nix::unistd::fork() }.expect("fork") {
+        nix::unistd::ForkResult::Child => {
+            let (r, _w) = nix::unistd::pipe().expect("pipe");
+            let raw = r.as_raw_fd();
+            let harness = Harness::adopt(
+                r,
+                OrganBinaries {
+                    spu: "/nonexistent/spu".into(),
+                    gate: "/nonexistent/gate".into(),
+                },
+            )
+            .expect("adopt");
+            drop(harness);
+            let flags = unsafe { nix::libc::fcntl(raw, nix::libc::F_GETFD) };
+            let closed = (flags == -1) as u8;
+            let _ = nix::unistd::write(report_w.as_fd(), &[closed]);
+            unsafe { nix::libc::_exit(0) };
+        }
+        nix::unistd::ForkResult::Parent { child } => {
+            drop(report_w);
+            let mut byte = [0u8; 1];
+            let _ = nix::unistd::read(report_r.as_fd(), &mut byte);
+            let _ = nix::sys::wait::waitpid(child, None);
+            assert_eq!(byte[0], 1, "the adopted end is closed when its owner drops");
+        }
+    }
 }

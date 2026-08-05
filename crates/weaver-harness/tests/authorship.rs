@@ -293,9 +293,11 @@ fn assembly_sees_only_message_kinds() {
 /// **Deterministic assembly:** one working structure assembles one prompt,
 /// byte-identical across runs.
 ///
-/// Perturbation: iterate the structure in any order but sequence order - the
-/// comparison fails as soon as two messages swap. Watched by assembling from a
-/// reversed record order.
+/// Two identical assembles cannot detect an ordering change - a reversed
+/// iteration would reverse both renders equally and the comparison would still
+/// pass. **The watch is the order assertion below**, which pins the message
+/// sequence to what was authored, and the identical-render comparison is the
+/// determinism half beside it.
 #[test]
 fn assembly_is_deterministic() {
     let (author, mut recorder) = author();
@@ -420,4 +422,53 @@ fn fault_payload_is_carried_unchanged() {
         line.contains("\"subsystem\":\"spu\""),
         "attributed to the reporting organ"
     );
+}
+
+/// A message-kind record that does not decode is counted rather than dropped
+/// in silence: the prompt would otherwise carry a hole nothing reports.
+#[test]
+fn undecodable_message_records_are_counted() {
+    let (author, mut recorder) = author();
+    let turn = TurnKey("t-1".to_string());
+    author
+        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .unwrap();
+    author
+        .author(
+            &mut recorder,
+            Kind::TurnStarted,
+            Subsystem::Harness,
+            Some(&turn),
+            None,
+        )
+        .unwrap();
+    author
+        .author_message(
+            &mut recorder,
+            &Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "sound".into(),
+                }],
+            },
+            &turn,
+        )
+        .unwrap()
+        .unwrap();
+    // A message-kind event whose payload is not a message: the shape a second
+    // producer, or a change to the message model, would introduce.
+    author
+        .author(
+            &mut recorder,
+            Kind::MessageUser,
+            Subsystem::Harness,
+            Some(&turn),
+            Some(Payload::Message(
+                raw_payload("{\"not\":\"a message\"}").unwrap(),
+            )),
+        )
+        .unwrap();
+    let prompt = assemble(recorder.structure(), "identity", &[]);
+    assert_eq!(prompt.messages.len(), 1, "the sound message entered");
+    assert_eq!(prompt.undecodable, 1, "the hole is counted, not silent");
 }
