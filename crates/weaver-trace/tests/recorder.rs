@@ -105,7 +105,10 @@ fn raw_newline_octets_refuse_construction() {
     assert!(raw_payload("{\"text\":\"a\nb\"}").is_none());
     assert!(raw_payload("{\n  \"role\": \"user\"\n}").is_none());
     assert!(raw_payload("{\r\n\"role\":\"user\"}").is_none());
-    assert!(raw_payload("{\"text\":\"a\\nb\"}").is_some(), "an escaped newline is two octets");
+    assert!(
+        raw_payload("{\"text\":\"a\\nb\"}").is_some(),
+        "an escaped newline is two octets"
+    );
 }
 
 /// The monotonic reading beyond the double-safe range serializes as a decimal
@@ -384,7 +387,11 @@ fn pretty_printed_payload_refuses_at_render() {
     let bypassed = serde_json::value::RawValue::from_string(pretty.to_string())
         .expect("valid JSON, construction alone admits it");
     let err = r
-        .submit(event(Kind::MessageUser, Some("t-1"), Some(Payload::Message(bypassed))))
+        .submit(event(
+            Kind::MessageUser,
+            Some("t-1"),
+            Some(Payload::Message(bypassed)),
+        ))
         .unwrap_err();
     assert!(matches!(
         err,
@@ -506,5 +513,9 @@ fn high_water_reports_on_recorded_events() {
     );
     drop(reader);
     let _ = r.drain();
-    assert_eq!(r.boundary().queued, 0, "discard keeps the accounting consistent");
+    assert_eq!(
+        r.boundary().queued,
+        0,
+        "discard keeps the accounting consistent"
+    );
 }
