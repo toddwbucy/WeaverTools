@@ -50,14 +50,13 @@ whose shape would demand a loop abstraction is not yet written.
 
 Five acts precede the loop, all admin's, per `weaver-admin-PRD` section 4.1:
 authorize the intent, validate the configuration file, verify the boundary,
-resolve the session and open the sink, and ask the init system to start the
-worker under the agent's `User=`. They run before the harness exists, so they sit
-outside the trace by construction, per `weaver-trace-PRD` section 3.1, and their
-record is admin's own log, per `weaver-admin-PRD` section 2. Loop 0 opens where
-the record opens, at the `load` event. A document that filed these steps inside
-the loop would have the harness managing acts that predate it, which is the one
-place the loop framing would strain, so the boundary is stated rather than
-implied.
+resolve the session and open the sink, and ask the delegating party to start the worker
+under the agent's identity. They run before the harness exists, so they sit outside the
+trace by construction, per `weaver-trace-PRD` section 3.1, and their record is admin's
+own log, per `weaver-admin-PRD` section 2. Loop 0 opens where the record opens, at the
+`load` event. A document that filed these steps inside the loop would have the harness
+managing acts that predate it, which is the one place the loop framing would strain, so
+the boundary is stated rather than implied.
 
 ## 3. Opening the loop
 

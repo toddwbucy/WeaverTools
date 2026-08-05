@@ -4,6 +4,15 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-05, the role ruling and the grant mechanism's reopening. Per the
+operator: `weaver-admin-role` is assumed by a human and never by an AI or an
+automation, a statement of design intent and not a guarantee about conduct;
+`weaver-admin-user` is a service account rather than a login account and is where the
+delegation attaches; and the crate is the peer organ that account runs, whose narrow
+domain includes custody of where the record leaves the system. The grant mechanism
+reopens from the init system and re-closes on `sudo`, admin becoming the worker's
+parent, which dissolves the cell asking how the coordination end reaches a process
+admin did not fork.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -13,12 +22,11 @@ agent. Code is written against it under the gates of Working Process section 6.
 ## 0. What this document is
 
 Build instructions for `weaver-admin`: the binary's layout, the operator surface's
-mechanics, the verb sequencing, the sink openings, the transient unit's
-invocation, the coordination channel's construction, and the elections a builder
-would otherwise invent. It is derived from `weaver-admin-PRD` and from the two
-contracts this crate is party to, `weaver-admin-harness-contract` and
-`weaver-admin-operator-contract`, together with `weaver-organ-channel`, the drawn
-material the first of them draws.
+mechanics, the verb sequencing, the sink openings, the worker's start, the coordination
+channel's construction, and the elections a builder would otherwise invent. It is
+derived from `weaver-admin-PRD` and from the two contracts this crate is party to,
+`weaver-admin-harness-contract` and `weaver-admin-operator-contract`, together with
+`weaver-organ-channel`, the drawn material the first of them draws.
 
 Level discipline. The charter says what the crate needs and why. This document
 says how it is represented, and per gate G2 it elects against grounds the charter
@@ -84,7 +92,7 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
     src/verbs.rs      load, unload, validate, stop, and rollback, section 3
     src/inventory.rs  config validation and boundary verification, section 4
     src/sink.rs       sink resolution and opening, section 5
-    src/unit.rs       the transient unit and its declared opens, section 6
+    src/unit.rs       the worker's start under the delegation, section 6
     src/channel.rs    the coordination channel, section 7
     src/log.rs        the operations log, section 8
 
@@ -150,13 +158,12 @@ to: admin-descriptors-owned-types
 **No async runtime, no D-Bus crate, no logging crate.** The surface's traffic
 is operator-paced and the coordination traffic is per-load, so nothing here
 needs an executor, and threads from the standard library carry the concurrency
-section 2 needs. The init system is reached by its command-line interface, per
-section 6, so no bus library enters the tree. The operations log of section 8
-is this crate's own file with this crate's own writer, and a logging framework
-would be a second account with its own schema, which is the arrangement charter
-section 2 rules out for the trace and this Spec declines for the log. The
-absences are checked by the build-time `cargo tree` assertion the floor Specs
-share.
+section 2 needs. The delegating party is reached by its command-line
+interface, per section 6, so no bus library enters the tree. The operations log of
+section 8 is this crate's own file with this crate's own writer, and a logging framework
+would be a second account with its own schema, which is the arrangement charter section
+2 rules out for the trace and this Spec declines for the log. The absences are checked
+by the build-time `cargo tree` assertion the floor Specs share.
 
 ```graph
 node: admin-no-runtime-no-bus-no-logging
@@ -622,15 +629,14 @@ to: admin-sink-path-dies-at-open-site
 
 ## 6. The unit
 
-**The init system is asked over its command-line interface, and the election
-is argued.** Starting the worker is one invocation per load of the system's
-own run tool, with the unit's properties declared on the invocation: the
-agent's `User=`, the fixed template's hardening, and the declared open that
-connects the coordination socket. Stopping it is one invocation of the stop
-verb. The alternative is a bus library, and it loses on the tree: a D-Bus
+**The delegating party is `sudo`, asked over its command-line interface, per
+the operator's ruling of 2026-08-05.** Starting the worker is one invocation
+per load naming the agent's identity and the worker binary, and stopping and
+interrupting are separately named acts under their own sudoers entries, which
+is the per-act grant `weaver-admin-PRD` section 7 argues. The alternative
+weighed and set aside is a bus library, and it loses on the tree: a D-Bus
 crate brings an async runtime or its own event loop into a binary that
-otherwise needs neither, for two invocations per lifecycle that are neither
-hot nor latency-bound.
+otherwise needs neither.
 
 ```graph
 node: admin-init-system-over-command-line
@@ -666,18 +672,16 @@ only value interpolated is the validated agent name of section 4, so the
 delegated authority stays bounded by the allow-list exactly as charter
 section 7 requires.
 
-**The declared open is the route the coordination end takes, and it
-arrives by the listen-fds convention.** The unit's declaration names the
-coordination socket's path, the init system connects it at the worker's
-start, and the worker receives the connected end at its first instruction
-through the listen-fds interface, which is where the composition root takes
-the `OwnedFd` it hands `Harness::adopt`, per `weaver-harness-Spec` section
-2.3. What the composition root does with that end once it has it is the
-harness's claim and asserted there. The sink's descriptor does not travel
-this way: it crosses inside the enter directive as ancillary data, per
-charter section 4.1 step 6, so the unit declares exactly one open, which is
-what this clause asserts and what a builder adding a second declaration would
-breach.
+**Inheritance is the route the coordination end takes.** Admin creates the
+pair before the fork, `sudo` execs the worker under the agent's identity, and
+the worker finds its end at the descriptor the placement put it at, which is
+where the composition root takes the `OwnedFd` it hands `Harness::adopt`, per
+`weaver-harness-Spec` section 2.3. What the composition root does with that
+end once it has it is the harness's claim and asserted there. The sink's
+descriptor does not travel this way: it crosses inside the enter directive as
+ancillary data, per charter section 4.1 step 6, so **exactly one end is
+inherited**, which is what this clause asserts and what a builder passing a
+second would breach.
 
 ```graph
 node: admin-unit-declares-one-open
@@ -737,18 +741,16 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The channel is built in four acts, the acts straddle the unit's start, and
-the split is the ordering.** The first two acts run before the unit starts,
-because the worker connects at its start through the declared open and a
-connect against a name not yet listening is the race the ordering exists to
-prevent, and the last two run after it, because there is no peer to accept
-until the worker exists. Each of the four acts carries a verified property,
-and the first two are these. The socket is created with the close-on-exec
-flag in the creating call and bound to a per-agent name inside an
-admin-owned directory of mode 0700, the unsearchable home the charter's
-section 6 requires, listening before the
-unit is asked for. The ordering is the record the load of section 3 cites,
-one claim declared once, and the directory's mode is the first walk's first
-mechanism, held by review because no test below reaches it.
+the split is the ordering.** The first two acts run before the fork,
+because a socket with no address cannot be reached later by resolving one and
+the only moment it can reach a child is before that child exists, and the last
+two run after it, because there is no peer to accept until the worker exists. Each of
+the four acts carries a verified property, and the first two are these. The socket is
+created with the close-on-exec flag in the creating call and bound to a per-agent name
+inside an admin-owned directory of mode 0700, the unsearchable home the charter's
+section 6 requires, listening before the unit is asked for. The ordering is the record
+the load of section 3 cites, one claim declared once, and the directory's mode is the
+first walk's first mechanism, held by review because no test below reaches it.
 
 ```graph
 node: admin-bind-and-listen-precedes-unit-start
@@ -986,10 +988,10 @@ downgraded to a later `fcntl`.
 
 **The fourth walk: a stranger answers on the coordination channel.** The
 adversary is any process that is not the started worker holding the
-channel's far end. The mechanisms are possession, the declared open placing
-the end only in the unit, and the elected credential check at accept
-refusing a peer whose uid is not the agent's. The test: a connection from a
-wrong uid is refused at accept, watched to fail when the check is removed.
+channel's far end. The mechanisms are possession, inheritance placing the end only in
+the forked worker, and the elected credential check at accept refusing a peer whose uid
+is not the agent's. The test: a connection from a wrong uid is refused at accept,
+watched to fail when the check is removed.
 
 **Enforced by the compiler.**
 
@@ -1088,8 +1090,8 @@ the listener's closure grounds where the directory does not for the reason
 section 7 states at it. The descriptor routes ground in nothing on the apex's
 own terms: which party creates a pair and how a far end travels to the process
 that holds it belong to the contract governing that seam and are not the apex's
-to settle, so the declared open and the ancillary payload elect a route the
-invariant left open.
+to settle, so inheritance and the ancillary payload elect a route the invariant left
+open.
 
 **The sharpest decline against the integration invariant is the published
 state.** Waiting on a ready aggregate reads at first like this crate deferring
