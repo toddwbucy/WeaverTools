@@ -97,11 +97,15 @@ fn one_line_per_event() {
     );
 }
 
-/// A raw newline in submitted octets cannot enter: `RawValue` construction
-/// validates JSON, and JSON holds no raw newline inside a string.
+/// A raw newline in submitted octets cannot enter, in either position: JSON
+/// forbids one inside a string, and the separator check refuses one between
+/// tokens, where pretty-printing legally puts it.
 #[test]
 fn raw_newline_octets_refuse_construction() {
     assert!(raw_payload("{\"text\":\"a\nb\"}").is_none());
+    assert!(raw_payload("{\n  \"role\": \"user\"\n}").is_none());
+    assert!(raw_payload("{\r\n\"role\":\"user\"}").is_none());
+    assert!(raw_payload("{\"text\":\"a\\nb\"}").is_some(), "an escaped newline is two octets");
 }
 
 /// The monotonic reading beyond the double-safe range serializes as a decimal
@@ -365,24 +369,22 @@ fn foreign_session_refuses() {
     assert!(matches!(err, Failure::RefusedOnSubmit { .. }));
 }
 
-/// A pretty-printed payload refuses: `RawValue` splices bytes verbatim, and
-/// pretty-printed JSON carries real newlines between tokens - valid JSON,
-/// fatal to the framing. The render check is the mechanism.
+/// A pretty-printed payload that bypasses `raw_payload` still refuses at
+/// render: the two layers hold the same line, construction first and the
+/// render choke point as the backstop for a `RawValue` built any other way.
 ///
 /// Perturbation: remove the interior-newline check from `render` and the
-/// stream gains two extra lines from one event. Watched under exactly that
+/// stream gains extra lines from one event. Watched under exactly that
 /// removal.
 #[test]
-fn pretty_printed_payload_refuses() {
+fn pretty_printed_payload_refuses_at_render() {
     let (mut r, _path) = recorder();
     r.submit(event(Kind::Load, None, None)).unwrap();
     let pretty = "{\n  \"role\": \"user\",\n  \"content\": []\n}";
+    let bypassed = serde_json::value::RawValue::from_string(pretty.to_string())
+        .expect("valid JSON, construction alone admits it");
     let err = r
-        .submit(event(
-            Kind::MessageUser,
-            Some("t-1"),
-            Some(Payload::Message(raw_payload(pretty).unwrap())),
-        ))
+        .submit(event(Kind::MessageUser, Some("t-1"), Some(Payload::Message(bypassed))))
         .unwrap_err();
     assert!(matches!(
         err,
@@ -428,6 +430,7 @@ fn turn_on_run_level_kind_refuses() {
 /// accounting kept consistent, and drain returns `CommitFailed` identifying
 /// the record.
 #[test]
+#[cfg(target_os = "linux")]
 fn failed_write_is_terminal_and_named() {
     let file = File::create("/dev/full").expect("dev full");
     let mut r = Recorder::receive(OwnedFd::from(file), RunOrdinal(0), SessionRef("s-1".into()))
@@ -456,47 +459,52 @@ fn failed_write_is_terminal_and_named() {
     ));
 }
 
-/// The queue's depth caps buffered records: at capacity a submission is
-/// refused before either sink is touched, so the structure plateaus and the
-/// two sinks stay consistent.
+/// `CommitPressure` has one meaning: the high-water report on a recorded
+/// event. The test drives a real pipe past the mark, confirms every reported
+/// submission landed in the structure, reads the depth at the report, then
+/// kills the sink and confirms the terminal-failure discard keeps the
+/// accounting consistent. The absolute-full case blocks by design and is not
+/// driven here, the block being backpressure a test cannot observe ending.
 #[test]
-fn full_queue_refuses_and_sinks_stay_consistent() {
-    let (reader, writer) = std::io::pipe().expect("pipe");
+fn high_water_reports_on_recorded_events() {
+    use weaver_trace::HIGH_WATER_MARK;
+    let (reader, pipe_writer) = std::io::pipe().expect("pipe");
     let mut r = Recorder::receive(
-        OwnedFd::from(writer),
+        OwnedFd::from(pipe_writer),
         RunOrdinal(0),
         SessionRef("s-1".into()),
     )
     .expect("receives");
     r.submit(event(Kind::Load, None, None)).unwrap();
-    let mut refused = 0usize;
-    for _ in 0..5000 {
+    let mut submitted = 1usize;
+    let mut reported = 0usize;
+    let mut depth_at_first_report = None;
+    while reported == 0 && submitted < 4 * HIGH_WATER_MARK {
         match r.submit(event(
             Kind::Fault,
             None,
             Some(Payload::Fault(raw_payload("{\"kind\":\"stub\"}").unwrap())),
         )) {
-            Ok(_) => {}
-            Err(Failure::CommitPressure { .. }) => refused += 1,
+            Ok(_) => submitted += 1,
+            Err(Failure::CommitPressure { queued }) => {
+                submitted += 1;
+                reported += 1;
+                depth_at_first_report = Some(queued);
+            }
             Err(other) => panic!("unexpected: {other:?}"),
         }
     }
-    assert!(refused > 0, "the depth was reached and reported");
-    let len_before = r.structure().len();
-    let err = r
-        .submit(event(
-            Kind::Fault,
-            None,
-            Some(Payload::Fault(raw_payload("{\"kind\":\"stub\"}").unwrap())),
-        ))
-        .unwrap_err();
-    assert!(matches!(err, Failure::CommitPressure { .. }));
-    assert_eq!(r.structure().len(), len_before, "at capacity nothing lands");
+    assert!(reported > 0, "the mark was crossed and reported");
+    assert!(
+        depth_at_first_report.unwrap() > HIGH_WATER_MARK,
+        "the report carries the depth that crossed the mark"
+    );
+    assert_eq!(
+        r.structure().len(),
+        submitted,
+        "every reported submission landed: the report is not a refusal"
+    );
     drop(reader);
     let _ = r.drain();
-    assert_eq!(
-        r.boundary().queued,
-        0,
-        "discard keeps the accounting consistent"
-    );
+    assert_eq!(r.boundary().queued, 0, "discard keeps the accounting consistent");
 }

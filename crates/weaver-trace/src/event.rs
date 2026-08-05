@@ -271,9 +271,17 @@ pub struct DecodeTimings {
 }
 
 /// A pre-rendered payload arrives as validated octets: `RawValue` construction
-/// validates, so admission's well-formedness check has a mechanism rather than
-/// a promise.
+/// validates JSON, and the separator check ahead of it closes the hole
+/// validation leaves - JSON holds no raw newline inside a string, but holds
+/// them freely between tokens, so pretty-printed octets are valid JSON that
+/// would split the frame. A legitimately escaped newline inside a string is
+/// the two octets `\` `n`, so scanning for the raw byte has zero false
+/// positives on well-formed payloads. The render path holds the same check as
+/// the backstop for a `RawValue` built any other way.
 pub fn raw_payload(octets: &str) -> Option<Box<RawValue>> {
+    if octets.contains('\n') || octets.contains('\r') {
+        return None;
+    }
     RawValue::from_string(octets.to_string()).ok()
 }
 

@@ -129,10 +129,13 @@ impl Writer {
 
     fn enqueue(&self, sequence: Sequence, line: Line) {
         self.shared.queued.fetch_add(1, Ordering::SeqCst);
-        // The capacity pre-check in submit keeps a full queue unreachable
-        // from the one caller, so a failure here means the writer thread is
+        // A full queue blocks here until the writer frees space: the
+        // deployment's loss bound expressed as backpressure rather than loss,
+        // reached only after the high-water report warned the harness. After a
+        // terminal write failure the writer discards, so the block cannot
+        // outlive a dead sink. A send failure means the writer thread is
         // gone, surfaced through the boundary's last error.
-        if self.queue.try_send((sequence, line)).is_err() {
+        if self.queue.send((sequence, line)).is_err() {
             self.shared.queued.fetch_sub(1, Ordering::SeqCst);
             let mut state = self.shared.state.lock().expect("writer state");
             state.last_error = Some(WriteError {
@@ -243,23 +246,18 @@ impl Recorder {
     /// than trusted, since a gapless run-scoped order cannot be authored by
     /// the caller.
     ///
-    /// An `Err(CommitPressure)` is a report and not a refusal: the event was
+    /// An `Err(CommitPressure)` has exactly one meaning: the event was
     /// admitted, appended, and queued, and the queue has crossed the
     /// high-water mark while the sink remains writable. The harness authors a
     /// `fault` event in response; this crate authors no event and holds no
-    /// event kind.
+    /// event kind. At the queue's full depth a submission blocks instead,
+    /// which is the deployment's loss bound expressed as backpressure - the
+    /// high-water report warned first, and a terminal write failure frees the
+    /// block by discarding.
     pub fn submit(&mut self, mut event: Event) -> Result<Sequence, Failure> {
         admit(&event, &self.session, self.run)?;
         if let Some(failure) = self.writer.standing_failure() {
             return Err(failure);
-        }
-        if self.writer.queued() >= QUEUE_DEPTH {
-            // The queue is at its depth: the loss bound of the deployment. The
-            // submission is refused before either sink is touched, so the two
-            // stay consistent, and the report carries the depth reached.
-            return Err(Failure::CommitPressure {
-                queued: self.writer.queued(),
-            });
         }
         let sequence = Sequence(self.next);
         event.envelope.sequence = sequence;
