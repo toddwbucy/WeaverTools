@@ -1,11 +1,13 @@
 # WeaverTools Document Format
 
 **Version:** v0.14, 2026-08-04. The v0.14 change is the code layer, landed with the
-set's ratification and before any code merges: section 3 gains the `code` node kind,
-section 4 gains the `cites` edge with the header shape the mapper reads, and section
-5's tag rule gains the system record's `ratified` vocabulary, which is how checklist
-item 6's set-level mark is generated rather than hand-edited. The layer lands now
-because the graph accrues code nodes as work merges, per Working Process section 5,
+set's ratification and before any code merges: section 1 admits the layer and scopes
+its no-edge rule to the two document-side layers, section 3 gains the `code` node
+kind, section 4 gains the `cites` edge with the header shape the mapper reads, and
+section 5's tag rule gains the system record's `ratified` vocabulary, which is how
+checklist item 6's set-level mark is generated rather than hand-edited. The layer
+lands now because the graph accrues code nodes as work merges, per Working Process
+section 5,
 and a kind invented after the first code merge would leave that merge unmapped.
 Previously v0.13, 2026-08-03, sixth entry this date. The v0.13 change follows the
 apex to five invariants, per the operator's ruling of this date: section 3's axiom entry
@@ -92,7 +94,7 @@ still not a form a mapper can read.
 This document does not invent the edges. It picks one notation for edges that are
 already being written and says where the notation goes.
 
-## 1. Two node layers
+## 1. Two node layers, and the third code adds
 
 The document layer is what the corpus is made of. The subject layer is what the corpus
 is about. These are different graphs sharing one file set, and a file can sit in both
@@ -109,10 +111,19 @@ by reading a block, and only a document that is itself the source of an edge nee
 run from the contract rather than from either crate. A PRD states its subject crate's
 edges and is not their source.
 
-No edge joins the layers. A document's subject is its directory and its filename,
-which the walk already has, so a `describes` edge would carry a fact nothing had to
-look up. The same argument retired `governs`: an edge no rule can emit, restating
-what another record already holds.
+No edge joins these two layers. A document's subject is its directory and its
+filename, which the walk already has, so a `describes` edge would carry a fact
+nothing had to look up. The same argument retired `governs`: an edge no rule can
+emit, restating what another record already holds.
+
+Phase three adds the code layer, per section 3's `code` kind. A source unit is a
+file in the tree and is still not a document node: the document layer holds what the
+Working Process's three kinds produce, and a source file enters the graph only
+through the node its own conformance header declares. The `cites` edge of section 4
+is the one relation that leaves the layer, running from a code node to an assertion
+in the subject layer, which is apex section 11's chain in graph form. The no-edge
+rule between the document and subject layers stands unchanged: code cites a claim,
+and nothing cites a file.
 
 State is not a graph property. It answers no query the phase two checklist names, it
 lives in the status header where the merge process reads it, and a second copy in a
@@ -460,7 +471,7 @@ walks as a category beside the perturbation-verified list, and apex section 11's
 third device is written as a blanket obligation on behavioral tests, always
 confirm the test fails when the property is removed, so a walk's test is
 perturbation-verified by that obligation whatever a section calls it. The walk
-itself is prose that derives the test and takes no node. On the system record the
+itself is prose that derives the test and takes no node. On the system record, the
 vocabulary is `ratified`, present only after the set ratifies and absent before,
 which is what lets the graph's set-level mark be generated from the apex rather
 than hand-edited, per Working Process section 5's checklist item 6.
