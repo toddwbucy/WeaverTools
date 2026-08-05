@@ -6,6 +6,11 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-05, loop 0 named as the running agent service. Per the operator:
+loop 0 is not a document set and not a milestone but the object itself, the sealed
+agent that boots under its unit and holds its sockets, which is why it is seated in
+this crate directly rather than in the loop container, and why a builder's drop-in
+reaches loop 1 and above and never loop 0.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -60,6 +65,18 @@ harness runs as the agent leaves the mechanism protecting the trace unexplained,
 which is why it is stated rather than assumed.
 
 ## 2. What the harness owns
+
+**Loop 0 is the running agent service, per the operator's ruling of 2026-08-05.**
+It is not a document set, not a milestone to reach and pass, and not a loop a
+builder supplies. It is the object itself: the thing that boots under its unit,
+comes up as the statically provisioned agent identity, opens its sockets, and
+sits there being one sealed agent. **That is why it is seated in this crate
+directly and not in the loop container.** The container under `Loops/` holds the
+agent's internal logic, which is what runs once loop 0 is already running, and a
+loop 0 filed beside those documents would read as one more droppable loop rather
+than as the wall they run inside. The distinction also bounds the socket binding
+of the loop seat: **a builder may drop in loop 1 and above, and never loop 0**,
+because loop 0 is what the drop-in arrives inside of.
 
 **Loop 0, and the machinery loop 1 composes against.** The harness owns the
 lifecycle interior of loop 0, the load and the unload, the same for every agent,
