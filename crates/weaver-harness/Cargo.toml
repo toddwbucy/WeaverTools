@@ -1,0 +1,24 @@
+[package]
+name = "weaver-harness"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "The hub: loop 0, the channels and their custody, trace authorship, and loop 1's seat"
+
+# The internal set is the two floor links and the trace seam tagged `link`, per
+# weaver-harness-Spec section 1. weaver-types is taken WITHOUT its `config`
+# feature: this crate reads no field from the agent config's file, and the
+# model binding and gate instruction arrive over the coordination seam already
+# validated. serde_json encodes the loop 0 envelopes, whose JSON election is
+# weaver-types-Spec section 4.3's. nix is the OS surface elected in section
+# 2.4: socketpair, recvmsg with control messages, fcntl, fork, dup2, execve,
+# and the dumpable prctl, over the standard library's owned descriptor types.
+# No async runtime, no logging crate, no HTTP client - the manifest test reads
+# the resolved tree and this comment is not the instrument.
+[dependencies]
+weaver-traits = { path = "../weaver-traits" }
+weaver-types = { path = "../weaver-types", default-features = false }
+weaver-trace = { path = "../weaver-trace" }
+serde_json.workspace = true
+nix = { version = "0.31", features = ["socket", "fs", "process", "uio"] }

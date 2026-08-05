@@ -1,0 +1,423 @@
+//! conforms: harness-licensed-combinations-refused-before-submit
+//! conforms: harness-timestamps-stamped-at-authoring
+//! conforms: harness-assembly-kind-filter-at-read-site
+//! conforms: harness-deterministic-assembly
+//! conforms: harness-prompt-part-order
+//!
+//! The authorship and assembly tests of `weaver-harness-Spec` section 8,
+//! including the fourth walk. Each names its perturbation.
+
+use std::fs::File;
+use std::os::fd::OwnedFd;
+
+use weaver_harness::{Author, assemble, licensed};
+use weaver_trace::{Kind, Payload, Recorder, RunOrdinal, SessionRef, Subsystem, raw_payload};
+use weaver_traits::{ContentBlock, Message, Role, ToolCall, ToolResultBlock};
+use weaver_types::{SessionId, TurnKey};
+
+fn recorder() -> Recorder {
+    let path = std::env::temp_dir().join(format!(
+        "weaver-harness-author-{}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
+    ));
+    let file = File::create(&path).expect("sink");
+    Recorder::receive(OwnedFd::from(file), RunOrdinal(0), SessionRef("s-1".into()))
+        .expect("receives")
+}
+
+fn author() -> (Author, Recorder) {
+    let session = SessionId("s-1".to_string());
+    (Author::new(&session, 0), recorder())
+}
+
+/// **The licensed combinations are enforced here, before submit.** The
+/// recorder cannot hold this rule - it judges the envelope and never the
+/// interior - so the harness is the party the rule binds.
+///
+/// Perturbation: remove the `licensed` call from `author_message` and the
+/// unlicensed message reaches the recorder, which admits it. Watched under
+/// exactly that removal.
+#[test]
+fn unlicensed_message_is_refused_before_submit() {
+    let (author, mut recorder) = author();
+    author
+        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .expect("load");
+    let turn = TurnKey("t-1".to_string());
+    author
+        .author(
+            &mut recorder,
+            Kind::TurnStarted,
+            Subsystem::Harness,
+            Some(&turn),
+            None,
+        )
+        .expect("turn started");
+
+    let unlicensed = Message {
+        role: Role::Assistant,
+        content: vec![ContentBlock::ToolResult(ToolResultBlock {})],
+    };
+    let before = recorder.structure().len();
+    let refused = author.author_message(&mut recorder, &unlicensed, &turn);
+    assert!(
+        refused.is_err(),
+        "an assistant message carrying a tool result is unlicensed"
+    );
+    assert_eq!(
+        recorder.structure().len(),
+        before,
+        "it never reached the recorder"
+    );
+
+    let licensed_message = Message {
+        role: Role::Assistant,
+        content: vec![
+            ContentBlock::Text {
+                text: "calling the calculator".into(),
+            },
+            ContentBlock::ToolCall(ToolCall {}),
+        ],
+    };
+    author
+        .author_message(&mut recorder, &licensed_message, &turn)
+        .expect("licensed")
+        .expect("submitted");
+    assert_eq!(recorder.structure().len(), before + 1);
+}
+
+/// Every licensed pairing is admitted and every unlicensed one refused, which
+/// is the rule stated as a table rather than as one example.
+#[test]
+fn the_licensing_table_holds_in_both_directions() {
+    let text = || ContentBlock::Text { text: "x".into() };
+    let call = || ContentBlock::ToolCall(ToolCall {});
+    let result = || ContentBlock::ToolResult(ToolResultBlock {});
+
+    assert!(
+        licensed(&Message {
+            role: Role::User,
+            content: vec![text()]
+        })
+        .is_ok()
+    );
+    assert!(
+        licensed(&Message {
+            role: Role::Assistant,
+            content: vec![text(), call()]
+        })
+        .is_ok()
+    );
+    assert!(
+        licensed(&Message {
+            role: Role::ToolResult,
+            content: vec![result()]
+        })
+        .is_ok()
+    );
+
+    assert!(
+        licensed(&Message {
+            role: Role::User,
+            content: vec![call()]
+        })
+        .is_err()
+    );
+    assert!(
+        licensed(&Message {
+            role: Role::User,
+            content: vec![result()]
+        })
+        .is_err()
+    );
+    assert!(
+        licensed(&Message {
+            role: Role::Assistant,
+            content: vec![result()]
+        })
+        .is_err()
+    );
+    assert!(
+        licensed(&Message {
+            role: Role::ToolResult,
+            content: vec![text()]
+        })
+        .is_err()
+    );
+}
+
+/// Both timestamps are stamped at authoring: the monotonic reading is
+/// nanoseconds since the run's origin, an origin only the author holds, and it
+/// advances across events within one run.
+#[test]
+fn timestamps_are_stamped_at_authoring() {
+    let (author, mut recorder) = author();
+    author
+        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .expect("load");
+    author
+        .author(
+            &mut recorder,
+            Kind::SessionClosed,
+            Subsystem::Harness,
+            None,
+            None,
+        )
+        .expect("second");
+    let lines: Vec<String> = recorder
+        .structure()
+        .iter()
+        .map(|r| r.line.to_string())
+        .collect();
+    let readings: Vec<u64> = lines
+        .iter()
+        .map(|l| {
+            let v: serde_json::Value = serde_json::from_str(l).expect("line");
+            v["monotonic_ns"]
+                .as_str()
+                .expect("decimal string")
+                .parse()
+                .expect("u64")
+        })
+        .collect();
+    assert!(
+        readings[1] >= readings[0],
+        "the monotonic reading advances within the run"
+    );
+    let first: serde_json::Value = serde_json::from_str(&lines[0]).expect("line");
+    assert!(first["wall_ms"].as_u64().expect("bare number") > 1_700_000_000_000);
+}
+
+/// **The fourth walk: the model reaches its own record through the prompt.**
+/// The assembly path cannot see measurement, lifecycle, or custody events -
+/// the filter is the kind set at the read site, not a judgment applied after a
+/// full read.
+///
+/// Perturbation: widen the filter (or drop it and iterate every record) and
+/// the measurement's content appears in the assembled prompt. Watched under
+/// exactly that widening.
+#[test]
+fn assembly_sees_only_message_kinds() {
+    use weaver_trace::{
+        Bits, DecodeTimings, ModelId, ModelMeasurement, MonotonicNs, PromptBlock, TokenId,
+        WeightsHash,
+    };
+    let (author, mut recorder) = author();
+    let turn = TurnKey("t-1".to_string());
+    author
+        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .unwrap();
+    author
+        .author(
+            &mut recorder,
+            Kind::TurnStarted,
+            Subsystem::Harness,
+            Some(&turn),
+            None,
+        )
+        .unwrap();
+    author
+        .author_message(
+            &mut recorder,
+            &Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "hello".into(),
+                }],
+            },
+            &turn,
+        )
+        .unwrap()
+        .unwrap();
+    author
+        .author(
+            &mut recorder,
+            Kind::ModelMeasurement,
+            Subsystem::Spu,
+            Some(&turn),
+            Some(Payload::ModelMeasurement(ModelMeasurement {
+                model: ModelId("qwen3-4b-instruct".into()),
+                weights_hash: WeightsHash("sha256:secret-witness".into()),
+                input_tokens: vec![TokenId(1)],
+                output_tokens: vec![TokenId(2)],
+                blocks: vec![PromptBlock {
+                    label: "system".into(),
+                    start: 0,
+                    end: 1,
+                }],
+                entropies: vec![Bits(0.5)],
+                surprisals: vec![],
+                timings: DecodeTimings {
+                    prefill_ns: MonotonicNs(1),
+                    decode_ns: MonotonicNs(2),
+                },
+                reductions: None,
+            })),
+        )
+        .unwrap();
+
+    // The watch's teeth: a fault event whose payload happens to be a valid
+    // Message. Only the kind filter keeps it out - a decode-after-read would
+    // admit it, which is exactly the difference the Spec's read-site rule
+    // draws and an earlier version of this test could not see.
+    let message_shaped = serde_json::to_string(&Message {
+        role: Role::User,
+        content: vec![ContentBlock::Text {
+            text: "smuggled-through-a-fault".into(),
+        }],
+    })
+    .expect("renders");
+    author
+        .author_fault(&mut recorder, Subsystem::Spu, Some(&turn), &message_shaped)
+        .expect("fault authored");
+
+    let prompt = assemble(recorder.structure(), "you are an agent", &[]);
+    let rendered = prompt.render();
+    assert_eq!(prompt.messages.len(), 1, "only the message kind entered");
+    assert!(
+        !rendered.contains("secret-witness"),
+        "no measurement content reaches the prompt: {rendered}"
+    );
+    assert!(
+        !rendered.contains("model.measurement"),
+        "no measurement event at all"
+    );
+    assert!(
+        !rendered.contains("smuggled-through-a-fault"),
+        "a message-shaped payload on a non-message kind stays out: {rendered}"
+    );
+    assert!(rendered.contains("hello"), "the message did enter");
+}
+
+/// **Deterministic assembly:** one working structure assembles one prompt,
+/// byte-identical across runs.
+///
+/// Perturbation: iterate the structure in any order but sequence order - the
+/// comparison fails as soon as two messages swap. Watched by assembling from a
+/// reversed record order.
+#[test]
+fn assembly_is_deterministic() {
+    let (author, mut recorder) = author();
+    let turn = TurnKey("t-1".to_string());
+    author
+        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .unwrap();
+    author
+        .author(
+            &mut recorder,
+            Kind::TurnStarted,
+            Subsystem::Harness,
+            Some(&turn),
+            None,
+        )
+        .unwrap();
+    for text in ["first", "second", "third"] {
+        author
+            .author_message(
+                &mut recorder,
+                &Message {
+                    role: Role::User,
+                    content: vec![ContentBlock::Text { text: text.into() }],
+                },
+                &turn,
+            )
+            .unwrap()
+            .unwrap();
+    }
+    let a = assemble(recorder.structure(), "identity", &["schema".to_string()]);
+    let b = assemble(recorder.structure(), "identity", &["schema".to_string()]);
+    assert_eq!(
+        a.render(),
+        b.render(),
+        "the same records assemble the same prompt"
+    );
+    let order: Vec<&str> = a
+        .messages
+        .iter()
+        .map(|m| match &m.content[0] {
+            ContentBlock::Text { text } => text.as_str(),
+            _ => "?",
+        })
+        .collect();
+    assert_eq!(
+        order,
+        ["first", "second", "third"],
+        "sequence order, not landing accident"
+    );
+}
+
+/// The order of parts is the identity prefix, then the message sequence, then
+/// the tool schemas.
+#[test]
+fn prompt_part_order_is_fixed() {
+    let (author, mut recorder) = author();
+    let turn = TurnKey("t-1".to_string());
+    author
+        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .unwrap();
+    author
+        .author(
+            &mut recorder,
+            Kind::TurnStarted,
+            Subsystem::Harness,
+            Some(&turn),
+            None,
+        )
+        .unwrap();
+    author
+        .author_message(
+            &mut recorder,
+            &Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "body".into(),
+                }],
+            },
+            &turn,
+        )
+        .unwrap()
+        .unwrap();
+    let rendered = assemble(recorder.structure(), "IDENTITY", &["SCHEMA".to_string()]).render();
+    let identity = rendered.find("IDENTITY").expect("identity present");
+    let body = rendered.find("body").expect("message present");
+    let schema = rendered.find("SCHEMA").expect("schema present");
+    assert!(
+        identity < body && body < schema,
+        "identity, then messages, then schemas"
+    );
+}
+
+/// A fault is authored by this crate and its payload is carried unchanged:
+/// what the reporting organ handed over reaches the record without
+/// translation.
+#[test]
+fn fault_payload_is_carried_unchanged() {
+    let (author, mut recorder) = author();
+    author
+        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .unwrap();
+    let report = "{\"organ\":\"spu\",\"detail\":\"device unavailable\"}";
+    assert!(
+        raw_payload(report).is_some(),
+        "the report is well-formed octets"
+    );
+    author
+        .author_fault(&mut recorder, Subsystem::Spu, None, report)
+        .expect("authored");
+    let line = recorder
+        .structure()
+        .by_kind(Kind::Fault)
+        .next()
+        .expect("the fault landed")
+        .line
+        .to_string();
+    assert!(
+        line.contains("\"payload\":{\"organ\":\"spu\""),
+        "spliced unchanged: {line}"
+    );
+    assert!(
+        line.contains("\"subsystem\":\"spu\""),
+        "attributed to the reporting organ"
+    );
+}
