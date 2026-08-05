@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/weaver-traits", "crates/weaver-types"]
+members = ["crates/weaver-traits", "crates/weaver-types", "crates/weaver-trace"]
 
 [workspace.package]
 edition = "2024"
