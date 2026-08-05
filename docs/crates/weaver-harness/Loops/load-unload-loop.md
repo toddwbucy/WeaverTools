@@ -1,6 +1,6 @@
 # Load/Unload Loop
 
-**Status:** DRAFT v0.2, 2026-08-01. Loop 0, the outermost loop: opened by the load
+**Status:** MERGED v0.2, 2026-08-01. Loop 0, the outermost loop: opened by the load
 event, closed by the unload event, with every other loop nesting inside its
 bracket. Loops belong to the harness unless specific to one domain and no other,
 per the human's ruling of 2026-08-01, so this document files beside

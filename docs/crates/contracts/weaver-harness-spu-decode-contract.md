@@ -1,12 +1,12 @@
 # weaver-harness / weaver-spu - decode contract
 
-**Status:** DRAFT. Cut with the token-workflow act of `weaver-spu-PRD` sections
-13 and 14, per apex section 10, and merged on the human's call like every
-document, the header flipping at that call per the Working Process. Written
-and it governs the token seam: the second seam between the same parties, on its
-own socket per the decoder-cut ruling of 2026-08-02. The residency seam keeps
-its own contract, `weaver-harness-spu-contract`, and neither document restates
-the other.
+**Status:** MERGED, and RATIFIED 2026-08-04 with the set. Cut with the token-workflow
+act of `weaver-spu-PRD` sections 13 and 14, per apex section 10, and merged on the
+human's call like every document, the header flipping at that call per the Working
+Process. Written and it governs the token seam: the second seam between the same
+parties, on its own socket per the decoder-cut ruling of 2026-08-02. The residency seam
+keeps its own contract, `weaver-harness-spu-contract`, and neither document restates the
+other.
 
 **Date filed:** 2026-08-02
 **Document ID:** `weaver-harness-spu-decode-contract`

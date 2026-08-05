@@ -1,8 +1,8 @@
 # weaver-spu - Spec
 
-**Status:** DRAFT. Cut 2026-08-02, seventh of the Spec pass and the last of the
-set. Code is written against it under the gates of
-Working Process section 6, ratified 2026-08-04.
+**Status:** MERGED, and RATIFIED 2026-08-04 with the set. Cut 2026-08-02, seventh of the
+Spec pass and the last of the set. Code is written against it under the gates of Working
+Process section 6, ratified 2026-08-04.
 
 **Date filed:** 2026-08-02
 **Document ID:** `weaver-spu-Spec`
