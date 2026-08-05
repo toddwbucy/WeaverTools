@@ -1,8 +1,8 @@
 # weaver-harness - Spec
 
-**Status:** MERGED, and RATIFIED 2026-08-04 with the set. Cut 2026-08-02, fourth of the
-Spec pass and the first above the floor. Code is written against it under the gates of
-Working Process section 6, ratified 2026-08-04.
+**Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
+floor. Code is written against it under the gates of Working Process section 6, ratified
+2026-08-04.
 
 **Date filed:** 2026-08-02
 **Document ID:** `weaver-harness-Spec`
