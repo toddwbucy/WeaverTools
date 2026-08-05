@@ -9,13 +9,6 @@ its own contract, `weaver-harness-spu-contract`, and neither document restates
 the other.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-02, on the same workflow's gate act. The fault exchange
-carries the floor's `fault-report`, one definition for every reporting seam,
-the gate act having found that the gate's fault had no carriage and settled
-the question for both seams at once. On that act's review, section 0's block
-gains the five `draws` edges this document was cut without, the trio, the
-fault report, and the message model, so the vocabulary clause of section 7 is
-a query rather than a reading, per Document Format section 4.
 **Document ID:** `weaver-harness-spu-decode-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.

@@ -1,6 +1,6 @@
 # WeaverTools Working Rules
 
-**Version:** v0.3, 2026-07-30. Companion to the Working Process, the Document Format,
+**Version:** v0.4, 2026-08-04. Companion to the Working Process, the Document Format,
 and the Handoff Format. Project documents carry a version and a date and no state, per
 Working Process section 2.
 **Parent:** WeaverTools Working Process
@@ -18,6 +18,18 @@ batch takes when it moves between seats. This says how we write.
 - Dense prose over bullet lists. Use a list only when the content is a true
   enumeration.
 - No filler openers. Open on the substance.
+- A header carries no history, and nothing accumulates there. The fields are drawn
+  from a fixed set - Status, Version, Date filed, Document ID, Parent, Editorial -
+  and each document kind carries the ones it uses: a process document carries
+  Version and Parent and no state, per Working Process section 2, a corpus
+  document carries Status with the identification fields, the apex carries no
+  Parent because it has none, and a workflow document's version and date ride its
+  Status line. The rule binds what accumulates, not which fields a kind elects.
+  The change narrative lives in the commit that makes the change, and git is the
+  archive, which is the stub ruling of 2026-07-31 applied to headers: history is
+  the archive and the tree is not. Attributions inside the body stay, because a
+  sentence marking a claim as a ruling is content rather than history. Per the
+  operator's ruling of 2026-08-04, which swept the standing stacks.
 - Avoid visual collisions, repeated adjacent tokens or abbreviations that run
   together when read. The reader is dyslexic, so "HAH. HAH" reads as "HAHA" and is
   rewritten. Two identifiers differing by one character are the same defect in a

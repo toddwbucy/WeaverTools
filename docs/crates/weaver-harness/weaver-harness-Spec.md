@@ -5,138 +5,6 @@ floor. No code is written against it until phase three is ratified, per Working
 Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-02, on the review seat's return. The child's handoff gains
-an unconditional flag clear and the fork bound counts three calls, the
-equal-descriptor `dup2` corner having been compiled and run by the review and
-verified again by this seat. The featureless `weaver-types` link states its
-true ground, this crate reading no field from the config file, and names the
-placement it rests on as owed to `weaver-types-Spec` on the working list.
-Descriptor 3 is owned as this Spec's election rather than credited to the
-apex. The gate pair's creation states its wait on confirmed residency, which
-the run state's invariant rests on. The sink descriptor's count names the
-coordination contract's plural as a surfaced question rather than absorbing
-it. Two interior citations correct their targets in the same act.
-**Revised:** 2026-08-02, a second entry this date, on the composability batch's
-ratification. Section 6 recasts the engine placement as loop 1's seat, per the
-charter's rescope of this date: the loop is the builder's, compiled at the
-worker composition root and immutable in the binary, and this crate holds the
-seat, the granted surface, and the extension seam crossed at loaded-and-idle,
-the port blade enforced structurally by the compiled form.
-**Revised:** 2026-08-02, a third entry this date. The descriptor count is
-ruled one, the contract's plural corrected as live-view residue in the same
-act, and sections 2.3 and 3 restate from the surfaced question to the ruled
-fact.
-**Revised:** 2026-08-02, a fourth entry this date. Section 1's thread posture
-gains the constraint the gate Spec's review surfaced: the organ forks run on a
-thread whose lifetime is the worker's, the parent-death backing firing on the
-forking thread's termination rather than the process's, so what the posture
-satisfied by construction is now stated as what a threading change must
-answer. Landed after the gate branch per the working list's rule.
-**Revised:** 2026-08-02, a fifth entry this date, the descriptor recount's
-second pass. Section 2.3's lead names the trace descriptor rather than a
-plural, the sentence beneath it having said one since the first pass.
-**Revised:** 2026-08-02, a sixth entry this date, with the SPU Spec. Section
-2.2's handoff places an organ's ends from descriptor 3 upward in the channels'
-own order rather than naming one number, the decoder cut having given the SPU
-a second channel and the paragraph having been written when an organ held one.
-On that act's review the same day, in two rounds, the passages that create,
-hold, lead, and test the second end follow: section 2.2 counts three pairs
-across a run, section 3's
-fan-out creates the residency and decode pairs in one act before the fork that
-carries both, and the run state's SPU arm becomes a pair of channels in one
-field, the decode end taking its own type because that socket is not an organ
-channel. Section 2.2's own lead and section 8's second walk follow in the
-second round, the walk's test naming the ends each organ fork carries and its
-attack naming what a decode end would hand a tool. Section 9 sweeps in the
-same act: the stop-mechanics and fault-payload entries close against the
-token workflow's acts, the engine entry narrows to the executor alone, and
-section 3's gating language lifts with the shape that landed. Three rounds on
-one claim, and the lesson each earned is the same at a different depth, that a
-claim lives in its heading, its body, and its
-test. A fourth round adds the last depth, the one site that cited the gating
-rather than stating it, section 4's pressure paragraph pointing at a section 3
-that now answers the opposite.
-**Revised:** 2026-08-03, the assertion pass, taken in wave two's pair with the
-SPU's. Forty-four assertion records land at the clauses that argue them,
-eighteen from section 8's enforcement sorting with the four walks counted in and
-twenty-six from the elections outside it, per the ruling that elections take
-nodes because gate H1 would otherwise leave the largest decisions untraceable.
-Section 0's boilerplate stops saying this document declares no records and states
-what it now sources, naming the ten claims it leans on and does not argue with the
-crates that argue them. Three owings other merged Specs discharged to this
-document land as records: the close-on-exec test `weaver-trace-Spec` section 10
-owes, at section 2.3's receive site, the licensed combinations
-`weaver-traits-Spec` section 7 owes, at section 4's authoring clause, and
-descriptor 3 with the fork discipline `weaver-gate-Spec` cites, at section 2.2.
-Two clauses divide under the floor Specs' core-and-periphery split: the
-path-taking pin, whose three named shapes are the doctests' and whose general
-prohibition is review's at the section 2.3 clause that argues it, and the child's
-handoff, whose placement the second walk's test confirms and whose unconditional
-flag clear against the equal-descriptor corner is review's by election. The prose
-adopts each division at every destination it reaches, the path-taking pair across
-two sections and the handoff pair inside one paragraph, rather than leaving the
-whole claim with the instrument the split took from it. Every review tag whose
-claim a test could reach states its ground as an election, per the rule the
-gate's pass earned. The out-of-order refusal `weaver-types-Spec` section 5 owes
-each organ carries no record, this Spec naming no test for it, and the boundary
-half of the pair-test that Spec owes the pair-creating crates is unnamed here as
-well, both recorded in section 8 as gaps rather than answered with tests an
-assertion pass may not write.
-**Revised:** 2026-08-03, a second entry this date, the boundary half of the pair
-test, per issue 35. Section 2.1 gains `harness-one-write-is-one-read` at the
-clause that argues one write is one message, and section 8 names its test with
-the `SOCK_STREAM` substitution its watch turns on and the two-message setup that
-makes the watch reachable, a one-message test crossing a stream socket whole and
-pinning nothing. The truncation half has stood alone since the pass and is blind
-to that substitution, which is the corpus testing the consequence of the
-boundary election and never the election's own reason. Forty-five records now,
-nineteen from section 8's sorting and twenty-six from the elections. That
-section's owing paragraph is recast around the three owings `weaver-types-Spec`
-section 5 files against this document, two of them now discharged and the
-out-of-order refusal still open as issue 32. The election itself stays that
-Spec's record and is deferred to rather than restated.
-**Revised:** 2026-08-03, a third entry this date, the out-of-order refusal, per
-issue 32. Section 3 gains `harness-out-of-order-refused` beside the channel
-state's compile pin, the two halves splitting by instrument on the shape
-`weaver-gate-Spec` section 6 settled: the pin holds that a directive out of
-order reaches a match arm rather than a flag check, and the perturbation holds
-what the arm then does, an arm being free to queue or to answer the wrong
-refusal while compiling exactly as well. Section 8 names the test with two
-watches, an early leave reaching the unwind path when the before-enter arm
-stops refusing it and a left channel accepting an enter when the terminal arm
-is collapsed into the entered one, and that section's owing paragraph records
-all three of `weaver-types-Spec` section 5's owings against this document as
-discharged. Forty-six records now, twenty from section 8's
-sorting and twenty-six from the elections. Issue 32 stays open for the organs
-whose side is unwritten, this act discharging the harness's alone.
-**Revised:** 2026-08-03, a fourth entry this date, the labelling pass, following
-the pilot `weaver-types-Spec` took the same day. Fourteen `grounds` edges land
-beside the records that carry them, eight to the socket invariant, three to the
-join-key invariant, and three to the contract invariant, per Document Format
-v0.11 sections 3 and 4. Section 8 states the test the pass applied, whether the
-axiom is the reason the claim exists, records that the organ invariant takes
-nothing from this crate because the hub property is topology the charter sources
-and not an interior this Spec argues, and states that thirty-two claims
-grounding in nothing is the expected result rather than a gap. Four calls are
-stated at that section rather than left to be read, the descriptor numbering
-declined on the apex's own delegation of how a far end travels, the dumpable
-flag taken because 5.1's possession argument assumes the route `/proc/[pid]/fd`
-opens is shut, the authorship claims separated from what an event carries, and
-conformance to a single contract clause held short of 5.3. No record moves, no
-tag changes, and the assertion count is unchanged at forty-six.
-**Revised:** 2026-08-03, a fifth entry this date, the fifth invariant's pass,
-following the apex's growth to five. Four `grounds` edges land on
-`axiom-harness-integrates-by-the-loop`, per Document Format v0.13 sections 3 and 4
-and apex section 5.5: the gate pair's wait on confirmed residency and the run
-state's options at section 3, the thread the organ forks run on at section 1, and
-the port blade at section 6, which gains a second edge beside the socket
-invariant's rather than trading it. Eighteen edges from seventeen claims now, and
-twenty-nine claims ground in nothing. Section 8 states what the scope limit refused,
-left-follows-drain and announce-after-record naming one organ apiece and the
-descriptor numbering staying the contract's, and states why the crate 5.5 names
-still takes nothing from 5.4. Section 3's four-record call recounts from one
-grounded to two. No record moves, no tag changes, and the assertion count is
-unchanged at forty-six.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -1435,7 +1303,7 @@ the loop stands the organs up and takes them down is arguing exactly that work.
 
 **The test applied is whether the axiom is the reason the claim exists, or whether
 the claim is a precondition of the axiom's own stated reason,** the second relation
-per Document Format v0.13 section 4. Remove the socket invariant and this crate has
+per Document Format section 4. Remove the socket invariant and this crate has
 no reason to bound a receive, to demand that one write arrive as one read, to flag a
 descriptor before an exec, to create a pair before a fork, or to keep a loop from
 minting a port, so those ground in it. Remove it and `nix` is still the OS crate,

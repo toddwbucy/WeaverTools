@@ -6,36 +6,6 @@ only, which is the residency half of what this pair will eventually agree on. Th
 exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
-**Revised:** 2026-07-31. The topology ruling landed as drafted, the SPU a child the
-harness forks during the enter fan-out over a pair the harness creates before the
-fork, and the markers that priced the ruling are removed.
-**Revised:** 2026-07-31, second. The harness's own end of the channel carries
-close-on-exec from the pair's creation, closing the tool-fork inheritance the review
-found, and the possession sentence in section 1 recovers the argument the first
-revision compressed away.
-**Revised:** 2026-07-31, third. The residue framing rewrites to sole authority under
-ruling C, admission being the one check on the device with nothing upstream
-arbitrating, and the prohibitions carry the relocated no-evict binding.
-**Revised:** 2026-08-01, fourth. The fault-carrier ruling of this date reshapes the
-deferred direction: an SPU death after the aggregate is authored to the stream as
-the `fault` event rather than carried to admin as an alert, and section 8's exit
-condition restates against the event kind's case set.
-**Revised:** 2026-08-01, fifth, the naming ruling. Wire vocabulary is named for
-the loop whose traffic it carries: this contract draws loop 0's trio,
-`lifecycle-directive`, `lifecycle-answer`, and `lifecycle-refusal`, the
-sender-named pair it owed the floor dissolving with the convention that collided
-on the harness, and this seam's refusal cases settling as `lifecycle-refusal`
-cases.
-**Revised:** 2026-08-02, the descriptor recount's sweep. Section 1's fork
-paragraph adopts the singular, one trace descriptor the harness holds at the
-fork.
-**Revised:** 2026-08-03, the device-assignment ruling, in two sites. Section
-2's admit walk judges and takes the devices the binding assigns, in shard
-order, rather than a device, the binding having carried an assignment since
-that ruling and this seam being where both parties read the walk. Section 5's
-failure sentence follows: an admit that fails after taking any assigned device
-frees every taken device before answering, a set taken in order making a
-partial take ordinary where a single take made it impossible.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.

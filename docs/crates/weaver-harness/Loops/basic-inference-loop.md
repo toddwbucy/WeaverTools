@@ -1,55 +1,10 @@
 # Basic Inference Loop
 
-**Status:** DRAFT v0.12, 2026-08-01, fifth entry this date. The working-structure
-ruling lands in section 5: one rendering with two holders, the relational
-projection retired, the derivation language leaving with it. Previously v0.11,
-fourth entry this date. The durable-record cut
-lands: enter stands up an empty working structure, leave drains and validates
-nothing, section 5 places the record with the operator, and the register's ruling B
-paragraph gains its resolution note. Previously v0.10, third entry this date. The
-tee back-pressure
-cell narrows to the marked elections of `weaver-admin-operator-contract` section 3,
-the tee promise now stating its bounds, a silent drop contractually impossible.
-Previously v0.9, second entry this date. The gate pair merged on
-the human's ruling, so section 2's proposal note resolves, and the wire-framing cell
-leaves section 7, settled by `weaver-gate-world-contract` at the delimiter level
-with the field shapes staying with the spec seat. Previously v0.8, the post-merge
-sweep of the open-items list: the
-batch of 2026-07-31 merged to main, the rulings register below is struck as landed,
-section 3 stops counting the stop exchange as unmerged, and the diagram redraws
-carrying the enter ordering of v0.5, the live view's retirement under ruling A, and
-the label collision fix. Previously v0.7, 2026-07-31. The register gains ruling C's
-entry, held apart
-from rulings A and B because it overturns an apex binding and they do not, the
-device-arbitration subtraction touching no content in this document. Previously
-v0.6, the subtraction batch: the live view is retired
-under ruling A, its introducing ruling overturned, and the integrity witness is
-retired under ruling B, the derivations counting two and the tee back-pressure cell
-replacing the frame-schema cell. The diagram redraws for the batch and for the enter
-ordering of v0.5, whose note this entry carries forward. Previously v0.5, section
-3's enter ordering projection before the load event, and v0.4, the workflow
-document for the basic inference loop,
-revised against the merged charters after the ten-item review of this date, with the
-five rider items of the v0.2 review folded in. Files at
-`docs/crates/weaver-harness/Loops/` under the container ruling of this date, the
-Format's `Loops/` entry landing in the v0.6 of this batch, which also carries four
-rulings of this date found never to have landed, per the human's ruling on the
-review. Two charters and one contract cite this document in their revision notes as
-of the batch of this date, the trace pair citing the stop exchange through the
-coordination contract instead. It argues no edges of its own. The
-seams it walks are declared in the crate charters per Document Format section 4, and a
-graph block here would duplicate a record that already has a home.
-**Revised:** 2026-08-02, on the token workflow's acts, by the sweep this
-document's cells earn: section 7's stop-mechanics cell closes at the token
-boundary per `weaver-spu-PRD` section 13.5, an unswept remnant of the
-charter act caught by the gate act, and the turn path of section 4 now has
-both its seams chartered, decode at `weaver-harness-spu-decode-contract` and
-the gate's turn direction at `weaver-harness-gate-contract` section 2, which
-a later revision walks in full rather than this entry claiming it walked.
-**Revised:** 2026-08-02, a second entry this date, the descriptor recount's
-sweep. Section 3's enter supply list adopts the singular, and on the sweep's
-review the sentence two lines below it, which said the same thing with a
-plural verb.
+**Status:** DRAFT v0.12, 2026-08-01. The workflow document for the basic inference
+loop, filed under the harness's `Loops/` container per the Document Format's
+container entry. It argues no edges of its own: the seams it walks are declared in
+the crate charters per Document Format section 4, and a graph block here would
+duplicate a record that already has a home.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 

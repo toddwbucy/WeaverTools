@@ -6,67 +6,6 @@ arriving via the token workflow. No code is written against it until phase
 three is ratified, per Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-02, on the review seat's return. The parent-death
-election states its guarantee at the width the kernel gives it, the signal
-firing on the forking thread's termination rather than the harness process's,
-the case compiled and run by the review and verified again by this seat, and
-the thread-lifetime obligation the backing rests on is owed to
-`weaver-harness-Spec` on the working list rather than claimed silently.
-**Revised:** 2026-08-03, the assertion pass, taken in the fan-out that follows
-the two floor crates. Twenty-three assertion records land at the clauses that
-argue them, seventeen from the enforcement sorting of section 6 and six from the
-elections outside it, per the ruling that elections take nodes because gate H1
-would otherwise leave the largest decisions untraceable. Section 0's boilerplate
-stops saying this document declares no records and states what it now sources,
-naming what it leans on and does not argue with the crates that argue it. Two
-clauses divide under the floor Specs' split: the bind-site absence, whose two
-named shapes are the doctests' and whose general prohibition is review's at the
-section 3 clause that argues it, and the third walk, whose test reaches the
-closure handling while the parent-death backing stays review's, the signal
-keying on the forking thread's termination rather than the harness process's.
-The prose at all four destinations adopts the split rather than leaving the
-whole claim with the instrument the split took from it. On the review seat's
-return the same day, the backing's `review` tag regrounds from impossibility
-to election, the reach existing by way of a double that forks from a thread
-and exits it, the third walk's perturbation is stated against closing the
-harness end rather than killing the double, without which the watch cannot
-fail, and the close-on-exec set gains the ground its paired flag had. On the
-operator's ruling of the same day, filed as issue 32, the out-of-order refusal
-this crate states and no organ enforced gains the perturbation test section 6
-had never named and the record that test holds, which is a Spec edit rather
-than an indexing and is why it arrives as its own act on a held branch.
-**Revised:** 2026-08-03, a fourth entry this date, the out-of-order bullet
-gaining its second watch. The bullet this document landed earlier today named
-two cases and confirmed one, collapsing the terminal arm and leaving the
-pre-raise case with no perturbation at all, so half of a claim written to close
-an enforcement gap was itself claimed and unenforced. The sibling act on
-`weaver-harness-Spec` wrote the same bullet with one watch per case, which is
-what exposed it. An early lower now has its own watch, driving the channel to
-the terminal position when the before-raise arm stops refusing it.
-**Revised:** 2026-08-03, a fifth entry this date, the labelling pass. Thirteen
-`grounds` edges land beside the records that carry them, eight to the socket
-invariant and five to the contract invariant, per Document Format v0.12
-sections 3 and 4. Section 6 states the test the pass applied, whether the
-axiom is the reason the claim exists, names the two axioms that take nothing
-from this crate, and states the two calls the pass refused, the agent-uid
-denial and the two hygiene sets, whose reason is a charter walk rather than
-an invariant. Ten claims grounding in nothing is the expected result and
-not a gap. No record moves, no tag changes, and no assertion is added or
-removed.
-**Revised:** 2026-08-03, a sixth entry this date, the apex's fifth invariant
-reaching this document. Three `grounds` edges land at
-`axiom-harness-integrates-by-the-loop`, per Document Format v0.13 sections 3
-and 4: the out-of-order refusal, which now carries two edges because the
-contract states the ordering and the loop is answerable for that ordering
-holding across organs, the refused raise holding nothing, and the relay
-carrying both directions unread. Section 6 states the reason at all three and
-states where the line falls, ready and stopped being this crate's own
-sequencing inside its own domain and the channel state's three positions being
-the representation beneath the refusal rather than what crosses. Seventeen edges from
-sixteen of the twenty-three records now, nine to the socket invariant, five to the
-contract invariant, and three to the loop invariant, with seven grounding in nothing.
-The entry above also loses a count the sweep of that act left at twelve where it had
-settled on ten. No record moves, no tag changes, and no assertion is added or removed.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.

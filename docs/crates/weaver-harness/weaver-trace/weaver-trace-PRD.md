@@ -6,63 +6,6 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-07-31. The `model.measurement` payload gains the prompt-block
-partition and explicit model identity, which apex section 8 requires for replay and
-this charter did not carry. Revised again the same day: section 4.1's drop ordering
-is retired, the worker holding the agent uid from its first instruction. Revised a
-third time the same day: the `turn.closed` payload states its close kind, clean or
-stopped with reason, per the stop exchange of `weaver-admin-harness-contract`
-section 3.
-**Revised:** 2026-08-01, the durable-record cut. Durability is the operator's, per
-the ruling recorded at `weaver-admin-operator-contract` section 3, and the program
-owns no record: the durable file becomes the outbound stream, recreation-as-resume
-dissolves with every run beginning empty, the checksum, the manifest, read-time
-validation, and run integrity on read leave entire, the gated hash material of
-ruling B leaves with them, and the sequence scope narrows from the session to the
-run, session-wide order being the consumer's to assemble from admin's ordinal.
-What enter becomes without a record is the cell `weaver-admin-PRD` section 10
-holds.
-**Revised:** 2026-08-01, second entry this date. The kind set gains `fault`,
-thirteen to fourteen, per the fault-carrier ruling of this date: the stream is the
-program's one fault carrier, the coordination seam's alert exchange retiring in
-the same act.
-**Revised:** 2026-08-01, third entry this date. The relational projection retires,
-per the human's ruling: the working structure holds the same canonical NDJSON the
-stream carries, one rendering held and handed, so the deterministic-projection
-guarantee, the projection version, and the staged relational engine all dissolve,
-nothing existing to reconcile. The loop's reads are sequential, a consumer wanting
-rows builds a derived view, and recall over past runs is the memory round's,
-proposed as similarity through the SPU's encode side.
-**Revised:** 2026-08-01, a fourth entry this date. Sections 2.1 and 8 adopt
-proto-stateful, per the human's rename of this date.
-**Revised:** 2026-08-01, a fifth entry this date. Section 5 adopts `agent-config`,
-the artifact renamed on the human's ruling of this date.
-**Revised:** 2026-08-02. The trace carries no recording level, per the human's
-ruling of this date: section 5 becomes instrumentation, elections governing
-production rather than recording, section 3.1's floor and ceiling tables become one
-flat set of fourteen kinds, and replay becomes universal. The elected-brevity
-against silent-loss ambiguity dissolves with the levels that created it.
-**Revised:** 2026-08-02, a second entry this date, the replayability correction
-of the composability batch. Section 3.1's universality paragraph restates
-against apex section 8 as corrected: the deterministic re-feed mode's inputs
-are in every record, and which further arrangements a record supports follows
-from what the deployment declared and produced, elections at the source
-governing production and production governing the record.
-**Revised:** 2026-08-02, a third entry this date, the token workflow's trace
-act, with the review seat's return of the same day folded in: section 3.1's
-measurement row loses the sampler parameters to the request payload and gains
-the surprisals and the timings, and the apex-8 paragraph names the join the
-relocation creates, that arrangement's five inputs spanning two kinds of one
-turn rather than one payload. Section 3.2 arrives, settling the four payload
-shapes this charter
-deferred: `fault` carrying the floor's `fault-report` against a case set
-closed across three organs the same day, `model.request` carrying the
-rendered prompt and its template identity beside the effective sampling
-values, `model.output` carrying the emission verbatim with the record holding
-both it and the canonical parse, and `model.measurement` gaining the
-producing obligations that make its readings trustworthy, pre-sampler,
-positionally paired, and absent rather than zero. The tool bracket's two stay
-deferred with their workflow.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document

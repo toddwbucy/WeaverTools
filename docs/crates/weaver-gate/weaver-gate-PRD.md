@@ -6,40 +6,6 @@ lifecycle half of this crate, the hook the enter and leave directives raise and
 lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
-**Revised:** 2026-07-31. The full re-draft the edit register of this date orders. The
-network face, the external dialect ruling, and the acquired-parts argument for the
-domain die. The local hook, the opaque pass-through, the boundary predicate, and the
-lifecycle position live, and the prior draft's lifecycle mechanics, refusal
-discipline, identity posture, and open cells are carried where the demotion does not
-reach them.
-**Revised:** 2026-07-31, again, on the human's correction. The gate is its own organ
-with its job simplified, not a member of the harness domain: the re-draft had read
-the dying domain-root argument as a demotion out of organ standing, and the crate
-returns to its own root, its parent to the apex, and its seam to its own declaration
-under the organ rule.
-**Revised:** 2026-07-31, once more. The live-view mention leaves section 3, the live
-view retired under ruling A of the subtraction batch.
-**Revised:** 2026-08-01. The status moves from draft to merged on the human's ruling
-of this date, and the on-merge edits of section 11 land in the same act:
-`gate-instruction` enters `weaver-types-PRD` section 2.1, the predicate citation
-lands in 2.2, and `weaver-harness-PRD` section 4 resolves turn ingress through the
-contract. Section 10's client-boundary and wire-framing cells close against
-`weaver-gate-world-contract`, written this date on the same ruling.
-**Revised:** 2026-08-01, again, the fault-carrier ruling. Section 8's staged fault
-cases land as `fault` events on the stream rather than in a shape a pending ruling
-would give them.
-**Revised:** 2026-08-01, further, the naming ruling. The section 11 entry for the
-seam's wire pair dissolves, the contract drawing loop 0's trio.
-**Revised:** 2026-08-01, once more, on review. Section 2's one-listening-socket
-claim scopes from the program to the agent, admin's operator surface having
-falsified the wider wording.
-**Revised:** 2026-08-02, the token workflow's gate act. Section 13 arrives with
-the workflow, chartering the relay, the concurrency resolution, the lower with
-traffic present, and the fault cases this crate raises, which closes the
-corpus-wide `fault` case set. Section 8's deferred list resolves to what
-section 13 now carries, keeping streaming and its backpressure deferred by
-name, and section 9's staged list is ratified in place rather than awaiting a
-pass that has arrived.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.

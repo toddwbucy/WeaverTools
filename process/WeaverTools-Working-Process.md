@@ -1,45 +1,11 @@
 # WeaverTools Working Process
 
-**Version:** v0.17, 2026-08-04. The v0.17 change is ratification: section 5 records
-the operator's ruling of this date, that the set ratifies as the complete document
-set for the toolless inference deliverable with the tool workflow's arrival a
-planned re-entry to authoring, and the mechanism for checklist item 6, the apex's
-system record bearing `tag: ratified`. Section 7 is redrawn to the position the
-ruling creates, having last been drawn before any Spec existed.
-Previously v0.16, 2026-08-03. The v0.16 change is section 5's closing
-checklist, which gains a fifth item and renumbers the two below it: the graph must
-answer a build question and not only a structural one. It exists because the items
-before it are all satisfiable by a graph built from charters and contracts alone,
-which carries nothing from any Spec, so the checklist could close over a graph that
-cannot serve phase three. The assertion notation it reads is the Document Format's
-v0.9 of the same date. Previously v0.15, 2026-08-01, eighth entry
-this date. The v0.15 change is gate
-G2 gaining the rationale clause, per the human's ruling: developed in the PRD,
-restated in the Spec. The v0.14 change was
-section 1's seat assignment, per the human's ruling: authoring moves to the seat
-holding the working tree and review to the remote session, formalizing the
-practice phase one's close ran on. The v0.13 change was
-section 7 recording the apex re-authoring as landed, the Specs standing alone in
-what remains. The v0.12 change was section
-7 recording the working-structure ruling, the relational projection retired. The
-v0.11 change was
-section 7 again, the fault-carrier ruling moving from what remains to landed, the
-apex re-authoring standing alone before the Specs. The v0.10 change was section
-7 once more, the durable-record cut moving from what remains to landed. The v0.9
-change was section 7
-again: the gate pair merged on the human's ruling, the two external-boundary
-contracts arrived as blockers before any Spec, and the durable-record cut entered
-what remains. The v0.8 change was section 7's post-merge redraw, the batch of
-2026-07-31 moving from the working tree to merged and the gate pair standing as the
-draft it then was. The v0.7 change redrew section 7's map to the tree
-of 2026-07-31, three passes having merged against a map that still read the admin
-pass as next, and corrected this header's pointer at that section from six to seven.
-The v0.6 change was section 2's stub ruling and gate G7.
-Companion to the Working Rules, the Document Format, and
-the Handoff Format. The apex says what we are building. The Working Rules say how we
-write. The Document Format says what shape a document takes. The Handoff Format says
-what shape a batch takes when it moves between seats. This says who is primary, in what
-order the work moves, and what must be true before it moves.
+**Version:** v0.17, 2026-08-04. Companion to the Working Rules, the Document
+Format, and the Handoff Format. The apex says what we are building. The Working
+Rules say how we write. The Document Format says what shape a document takes. The
+Handoff Format says what shape a batch takes when it moves between seats. This says
+who is primary, in what order the work moves, and what must be true before it
+moves.
 
 This document is the boot prompt for every fresh session on this project, in either
 seat. Read it first. Section 7 says where the work currently sits on the map.

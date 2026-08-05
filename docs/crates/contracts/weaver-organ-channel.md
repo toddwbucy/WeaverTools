@@ -6,8 +6,6 @@ needed the same channel, and ruled in on 2026-07-31. This document is the one
 statement of the organ channel's mechanics and every organ contract draws it.
 
 **Date filed:** 2026-07-31
-**Revised:** 2026-07-31. One word in section 5, a live stub rather than a preserved
-one, aligning to the v0.6 stub ruling of the Working Process.
 **Document ID:** `weaver-organ-channel`
 **Parent:** `WeaverTools-PRD`, invariant 5.4
 **Editorial:** Per the Working Rules.

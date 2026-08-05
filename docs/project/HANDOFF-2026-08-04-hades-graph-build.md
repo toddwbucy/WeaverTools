@@ -11,35 +11,6 @@ was read from, and a pinned SHA would go stale the moment a later act revised th
 document's own claims. First filed against `ad9d807`.
 **Document ID:** `HANDOFF-2026-08-04-hades-graph-build`
 **Parent:** `WeaverTools-Working-Process`, section 5
-**Revised:** 2026-08-04, after the build. The Status line records the handoff SERVED,
-the tag rule's vocabulary list gains the system record's `ratified` mark with the
-relation gaining the matching term, per Document Format v0.14 and the ratification
-recorded at Working Process section 5. On the review of the same act, the remaining
-present-tense sites recast to the past the build left them in: section 0's current
-task, section 1's settled question and the twice-counted name, and section 6's open
-question, which the ruling of 2026-08-04 answered.
-**Revised:** 2026-08-04, a third entry this date. Section 3 gains the fifth parser
-rule, found live by the first mapper build: `tag` carries one vocabulary per record
-kind, and a parser modeling it as seam-only reports every assertion in the corpus as
-a defect. On the review seat's return before the merge, section 4's second trap
-recasts to the past tense G4's closure left it in, and the rule's tally restates as
-the relation rather than the count, the promotion pass in flight being about to move
-the count.
-**Revised:** 2026-08-04, a fourth entry this date, the reconciliation the
-promotion pass owes as the second of the pair to land: the two remaining fixed
-tallies recast to hold at any census, section 3's edge fraction anchored to its
-filing and section 5's rebuild argument freed of its node count.
-**Revised:** 2026-08-04, a second entry this date. G4's third half closes, the five
-definitions gaining their statements at their definition sites, and section 0 gains
-the map-not-build-order framing per the operator's ruling of this date: the graph
-carries the roadmap as content, and coding is scoped against the graph after it
-exists.
-**Revised:** 2026-08-04, four corrections on the operator's review before this document
-travels. The edge-source rule was stated as a two-way split and is a five-kind table.
-The two external-boundary contracts' single party edge is named as correct rather than
-left to look like a defect. The `via` guarantee is stated, which types it as a
-reference. And checklist item 4 is connected to the G4 failure it cannot see, with the
-authorship asymmetry that explains why.
 **Editorial:** Per the Working Rules.
 
 ---

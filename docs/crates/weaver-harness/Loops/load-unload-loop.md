@@ -1,19 +1,14 @@
 # Load/Unload Loop
 
-**Status:** DRAFT v0.2, 2026-08-01, second entry this date. The fault-carrier
-ruling lands: section 5's alert paragraph becomes the `fault` event on the stream
-and the section 8 cell narrows to the kind's case set. Previously v0.1, 2026-08-01.
-Loop 0, the outermost loop: opened by the load
+**Status:** DRAFT v0.2, 2026-08-01. Loop 0, the outermost loop: opened by the load
 event, closed by the unload event, with every other loop nesting inside its
-bracket. Drafted on the human's ruling of this date that loops belong to the
-harness unless specific to one domain and no other, so this document files beside
+bracket. Loops belong to the harness unless specific to one domain and no other,
+per the human's ruling of 2026-08-01, so this document files beside
 `basic-inference-loop` under the harness's `Loops/` container. It is a workflow
 document: it composes merged charters and contracts, binds no crate, and decides
-no seam. Where it and a merged document disagree, the charter yields nothing and
-this document is corrected, because the charters are the decision record and this
-is their composition read back as one motion.
-**Revised:** 2026-08-02, the descriptor recount's sweep. Section 3's enter
-supply list adopts the singular, one trace descriptor.
+no seam. Where it and a merged document disagree, the charter stands and this
+document is corrected, because the charters are the decision record and this is
+their composition read back as one motion.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 

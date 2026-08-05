@@ -5,50 +5,6 @@ the merged charter. No code is written against it until phase three is ratified,
 per Working Process section 6.
 
 **Date filed:** 2026-08-01
-**Revised:** 2026-08-01, on the review seat's return. The message model's licensed
-combinations are stated and its refusing party named, the enum representation is
-elected, the absence pins reclassify to compile-fail tests with the instrument
-named, the tool block cites the charter rather than the untracked working list,
-the `Send` bound joins the inherited constraints, and two citations and two
-wordings are corrected. Revised again the same day, on the second return: the
-tagging election becomes a stated mechanical test shared with
-`weaver-types-Spec`, `Role` drops its tag as a fieldless enum, and two
-instrument overclaims in section 7 are corrected.
-**Revised:** 2026-08-03, the assertion pass, second of the seven and the second
-of the two floor crates, both taken by hand rather than in the fan-out. Twenty-two
-assertion records land at the clauses that argue them, eleven from section 7's
-enforcement sorting and eleven from the elections outside it. Section 0's
-boilerplate records what this document now sources and names its one exception,
-the shared tagging test whose node and both edges live at `weaver-types-Spec`
-section 4.3, which is the mirroring clause that Spec settled from its own side.
-Section 7 states where the records sit and which of its bullets another crate
-declares. On the review seat's return the same day, the adjudicating-method
-claim divides into the two records its own bullet always described, the pinned
-candidates and the prohibition, the latter moving to the section 4 clause that
-argues it. On the second return the same day, that clause's own closing sentence
-adopts the split it had been moved beside, having given the whole claim to the
-instrument the split took from it.
-**Revised:** 2026-08-03, the provenance convention, per the operator's ruling of
-this date and Document Format v0.10 section 3: the two halves of a divided claim
-both count as the enforcement section's, neither having been elected and one
-having been divided out of a bullet that section already carried. No record
-moves and no tag changes, only the provenance the counts report.
-**Revised:** 2026-08-03, the labelling pass, per Document Format v0.11 sections 3
-and 4. Six `grounds` edges land beside the records that carry them, all six to
-`axiom-floor-is-vocabulary-behavior-is-socket`, the other three axioms taking
-nothing from a floor crate that holds no turn key, is not an organ, and settles
-no contract's completeness. Section 7 states the test the pass applied, whether
-the axiom is the reason the claim exists, states the four edges a reader would
-otherwise reconstruct and the two neighbouring absences that take none, and
-records that sixteen claims grounding in nothing is the expected result rather
-than a gap. No record moves, no tag changes, and the assertion count is unchanged
-at twenty-two.
-**Revised:** 2026-08-04, the promotion pass, per the operator's election of this
-date. Section 2's two claims divide: the derive set takes a compile-pin doctest
-and the non-exhaustive attribute a compile-fail pair, both argued in section 7,
-their remainders staying review's per the division rule. The count moves to
-twenty-four, and the two new records sit at the end of section 7 with the four
-argued only there.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.

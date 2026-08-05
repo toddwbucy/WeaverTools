@@ -6,17 +6,6 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-08-01. Section 5 adopts proto-stateful, per the human's rename
-of this date, one word and no other change.
-**Revised:** 2026-08-01, again. Section 2 adopts `agent-config`, the artifact
-renamed on the human's ruling of this date.
-**Revised:** 2026-08-01, a third entry. Section 3.1 states the `tool-trait` block
-as a ruling of this charter, per the review seat's finding that the Spec pass was
-citing an untracked working list as authority for a structural decision. The
-substance is unchanged and its home is now a merged document.
-**Revised:** 2026-08-04, G4's third half. The mode vocabulary states why no contract
-draws it, its consumer being the config's election per the `elects` edge, which makes
-the definition internal to the floor's own argument rather than seam vocabulary.
 **Document ID:** `weaver-traits-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
