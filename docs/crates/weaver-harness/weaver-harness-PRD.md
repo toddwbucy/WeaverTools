@@ -75,14 +75,14 @@ sits there being one sealed agent. **It binds nothing and listens on nothing**:
 the named socket is admin's, this crate adopts one end and makes the rest, which
 is why nothing here is dialable. **That is why it is seated in this crate
 directly and not in the loop container.** The container under `Loops/` holds the
-agent's internal logic, which is what runs once loop 0 is already running, and a
-loop 0 filed beside those documents would read as one more droppable loop rather
-than as the wall they run inside. The distinction bounds **both surfaces a builder
-reaches**, not just one. The extension seam of section 6, composed against and
-compiled into the worker binary, and the socket binding the working list holds
-open, dropped in beside a running agent, **each accept loop 1 and above and
-neither reaches loop 0**, because loop 0 is what a builder's loop arrives inside
-of by either route.
+agent's internal logic, which the running loop 0 service executes, and a loop 0
+filed beside those documents would read as one more supplied loop rather than as
+the service that executes them. **Both builder-facing surfaces are limited to
+loop 1 and above and exclude loop 0**, not one of the two: the extension seam of
+section 6, composed against and compiled into the worker binary, and the socket
+binding the working list holds open, dropped in beside a running agent. Loop 0
+is the service that runs a builder's loop under either surface, and is not
+itself supplied through either.
 
 **Loop 0, and the machinery loop 1 composes against.** The harness owns the
 lifecycle interior of loop 0, the load and the unload, the same for every agent,
