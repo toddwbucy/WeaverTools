@@ -627,12 +627,16 @@ bound they hold. What it fixes is who occupies the seat, so scripted fleet manag
 an agent driving the fleet is a **new role with its own ruling** rather than a quiet
 reuse of this one.
 
-**`weaver-admin-user` is a service account and not a login account.** It is the OS
-principal the role resolves to, and **the delegation of this section attaches there** -
-not to a person, who comes and goes, and not to the artifact, which carries no
-capability. The account runs whether or not anyone has assumed the role, which is what
-lets the coordination channel of section 6 and the sink's custody of section 5 outlive
-any human session.
+**`weaver-admin-user` is a service account and not a login account.** The three names
+above are **layers of this crate's own vocabulary and not new identifier spellings**:
+the OS account and the operator group both remain `weaver-admin`, every ownership and
+peer-credential clause in this corpus keeps naming them that way, and `weaver-<n>`
+continues to name the agent. What the vocabulary buys is that a sentence can now say
+which layer it means. It is the OS principal the role resolves to, and **the delegation
+of this section attaches there** - not to a person, who comes and goes, and not to the
+artifact, which carries no capability. The account runs whether or not anyone has
+assumed the role, which is what lets the coordination channel of section 6 and the
+sink's custody of section 5 outlive any human session.
 
 **The crate is the peer organ that account runs.** It is duplex with the harness like
 every other organ, per apex section 5.4, and its narrow domain is authorization, the
@@ -863,8 +867,11 @@ it needed, and the channel design restates as section 6 now carries it: the coor
 socket is bound by admin inside an admin-owned unsearchable directory, connected once at
 the worker's start, unreachable by the agent's tool surface, with possession of the
 connected end the authentication and the peer credential available as a check the Spec
-elects. The sink's descriptor travels the same way, the unit opening what its
-declaration names and the worker receiving a handle and never resolving a path.
+elects. **The sink's descriptor does not travel that way**, and the difference is the
+one-open contract: it is opened by admin under its own principal and crosses as
+`SCM_RIGHTS` ancillary payload on the enter directive itself, per section 4.1
+step 6, so the unit declares exactly one open and the worker receives a handle
+without resolving the declared path or reopening the sink.
 
 **Session close.** Section 4.4 puts `session.closed` with the harness, at the cost
 of requiring the agent loaded for the authoring. What cues that authoring inside the

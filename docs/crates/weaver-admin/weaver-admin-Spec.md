@@ -782,16 +782,18 @@ to: admin-coordination-directory-unsearchable
 listener accepts exactly once, after the unit's start, the accepting call
 setting close-on-exec on the connection.
 The peer credential is read at that accept and checked against the agent's
-expected uid, the check the charter names as available and this Spec elects
-because it costs one call: possession remains the authentication, and the
-credential confirms the possessor is the worker the unit started rather
-than a surprise, refusing the connection on a mismatch. And the listener is
-closed after the one accept, verified: a later dial is refused by the
-kernel while the accepted connection lives on, so no second opener exists
-even for a process that somehow resolved the name, structure doing the work
-the search bit already does. Section 10's fourth walk tests the credential
-check and its first walk tests the closure, so both are behaviours with a
-perturbation behind them rather than elections.
+expected uid, **which the reopened cell of `weaver-admin-PRD` section 10 now
+holds open**: the party that performs the connect under the declared-open route
+is not the agent, so what uid this check should expect follows from whichever
+route that cell settles on, and is not settled here. the check the charter names as
+available and this Spec elects because it costs one call: possession remains the
+authentication, and the credential confirms the possessor is the worker the unit started
+rather than a surprise, refusing the connection on a mismatch. And the listener is
+closed after the one accept, verified: a later dial is refused by the kernel while the
+accepted connection lives on, so no second opener exists even for a process that somehow
+resolved the name, structure doing the work the search bit already does. Section 10's
+fourth walk tests the credential check and its first walk tests the closure, so both are
+behaviours with a perturbation behind them rather than elections.
 
 **Both records ground in the socket invariant, and the closure does so for a
 reason worth stating.** The credential check is that invariant's named mechanism
