@@ -748,6 +748,32 @@ mod tests {
         }
     }
 
+    /// **A closure observed from the entered position unwinds before it
+    /// returns.** The recorder is drained and the bracket closed with an
+    /// `unload`, rather than the run being dropped with events still queued
+    /// and the organs left as orphans of a living parent.
+    ///
+    /// Perturbation: empty `unwind_if_entered` and the position stays
+    /// entered. Watched under exactly that removal.
+    #[test]
+    fn closure_from_entered_unwinds_the_run() {
+        let (run, _spare) = entered_run(None);
+        let (harness_end, _peer) = OrganChannel::pair().expect("pair");
+        let mut harness = Harness {
+            coordination: harness_end,
+            organs: OrganBinaries {
+                spu: "/nonexistent/spu".into(),
+                gate: "/nonexistent/gate".into(),
+            },
+            state: ChannelState::Entered(Box::new(run)),
+        };
+        harness.unwind_if_entered();
+        match &harness.state {
+            ChannelState::Left => {}
+            _ => panic!("the position is terminal after an unwind"),
+        }
+    }
+
     /// A stop at rest answers `AtRest`, a clean close and not a refusal, and
     /// places no close event because there was no turn to close.
     #[test]
