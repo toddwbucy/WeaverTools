@@ -171,8 +171,12 @@ pub fn parse(source: &str) -> Result<AgentConfig, ConfigError> {
 /// `create`, and `socket` carries `kind` and `path`.
 #[cfg(feature = "config")]
 fn check_trace_sink_surface(source: &str, sink: &TraceSink) -> Result<(), ConfigError> {
-    let malformed = || ConfigError { field: None, kind: ConfigErrorKind::Malformed };
-    let document: serde_yaml_ng::Value = serde_yaml_ng::from_str(source).map_err(|_| malformed())?;
+    let malformed = || ConfigError {
+        field: None,
+        kind: ConfigErrorKind::Malformed,
+    };
+    let document: serde_yaml_ng::Value =
+        serde_yaml_ng::from_str(source).map_err(|_| malformed())?;
     let mapping = document
         .get("trace-sink")
         .and_then(|v| v.as_mapping())
