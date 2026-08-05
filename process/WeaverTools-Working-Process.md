@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.17, 2026-08-04. Companion to the Working Rules, the Document
+**Version:** v0.18, 2026-08-04. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -10,8 +10,8 @@ moves.
 This document is the boot prompt for every fresh session on this project, in either
 seat. Read it first. Section 7 says where the work currently sits on the map.
 
-Phase three is unratified. That is deliberate and it is itself a gate. No crate code
-is written until phase three is ratified.
+Phase three is ratified, 2026-08-04, gates H1 through H5 in force per section 6.
+Code merges against them and against nothing invented at review time.
 
 ## 1. Standing rules
 
@@ -283,14 +283,24 @@ item that outlives ratification: it certifies workspace hygiene rather than the
 set's coherence, it waits on G6, and the quarry's deletion being irreversible is
 the reason it is not hurried.
 
+For section 6's entry gate, phase two's close reads as items 1 through 6, per the
+same ruling, so item 7 blocks neither phase-three entry nor a code merge. What
+item 7 protects is held meanwhile by the workspace: the build workspace is a fresh
+clone carrying neither the old tree nor the probe's code, so the coding seat has
+nothing in reach to copy from while the quarry still stands elsewhere. Item 7
+stays owed, and G6 followed by the deletion retire the reachability question
+rather than deferring it.
+
 ## 6. Phase three, coding
 
-This section is a draft of candidates. Nothing in it is in force.
+Ratified by the operator, 2026-08-04, all five gates and the three cells below.
+The entry gate held until that date: no crate code was written until this section
+ratified and phase two closed, because a gate invented while looking at a diff is a
+gate shaped by that diff. Both conditions are met, phase two's close reading as
+checklist items 1 through 6 with item 7 outliving it per section 5's ratification
+record, and the gates are in force.
 
-**Entry gate.** No crate code is written until this section is ratified and phase two
-has closed. A gate invented while looking at a diff is a gate shaped by that diff.
-
-Candidates, offered for ratification:
+The gates:
 
 **H1, authorization.** No code without a ratified spec. Behavior in a diff that traces
 to no spec clause is out of scope and returns to phase one rather than being argued at
@@ -315,9 +325,14 @@ local redefinition of the same shape.
 contract, the spec, and the graph, and returns advice in the standard shape. The
 implementation seat holds the merge call and answers the advice in its decision.
 
-Open cells: whether H2 runs as a build script or as review, what the mechanical bar is
-under H1 for tests and lints, and whether a failing H3 case blocks merge or files as a
-known gap with a named owner.
+The three cells, settled with the ratification. H2 runs as a review query against
+the graph for now, a build script being a later mechanization of the same check.
+H1's mechanical bar is the Spec's own instruments: the doctests, compile pins, and
+perturbation tests land with the code they pin, with clippy and fmt as the floor.
+A failing H3 case files as a known gap with a named owner rather than blocking
+merge, for the loop 0 act only, because the bare-minimum milestone does not wait
+on refusal-path coverage - and the gaps are named at filing so the exception does
+not become the permanent state. After loop 0, a failing H3 case blocks merge.
 
 ## 7. Current position
 
@@ -349,9 +364,10 @@ code. Seat assignment follows section 1's rule unchanged: the seat holding the
 working tree authors, so the server session authors code and the session holding
 the document tree reviews.
 
-What remains before the first code merge: section 6 ratified by the operator,
-which the entry gate requires beside phase two's close, and a conformance header
-per Document Format sections 3 and 4 on every file the first act carries. What
+Section 6 ratified 2026-08-04, so the entry gate stands satisfied. What remains
+before the first code merge: a conformance header per Document Format sections 3
+and 4 on every file the first act carries, and the gates of section 6 applied at
+review. What
 remains from the phase behind: G6 and then item 7, the G2 and G5 phase-close
 sweeps, and the
 DRAFT-header ruling. Nothing here reopens the set - a change the build or a review
