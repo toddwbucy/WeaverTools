@@ -1,8 +1,7 @@
 # weaver-traits - Spec
 
 **Status:** MERGED. The first Spec of phase one's Spec pass, cut 2026-08-01 against the
-merged charter. Code is written against it under the gates of Working Process section 6,
-ratified 2026-08-04.
+merged charter. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
 **Document ID:** `weaver-traits-Spec`

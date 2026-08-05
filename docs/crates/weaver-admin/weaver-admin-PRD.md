@@ -1,6 +1,6 @@
 # weaver-admin - PRD (crate charter)
 
-**Status:** MERGED. In `main` and the source of truth for now. The rulings that
+**Status:** MERGED. In `main` and the source of truth. The rulings that
 reshaped this charter are recorded in it rather than pending against it, and section
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.

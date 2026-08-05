@@ -1,6 +1,6 @@
 # weaver-harness / weaver-spu - contract
 
-**Status:** MERGED. In `main` and the source of truth for now. Written with
+**Status:** MERGED. In `main` and the source of truth. Written with
 `weaver-spu-PRD` as one act, per apex section 10. It governs the coordination seam
 only, which is the residency half of what this pair will eventually agree on. The
 exchanges that carry work arrive with the token workflow.

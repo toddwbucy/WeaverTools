@@ -2,8 +2,7 @@
 
 **Status:** MERGED. Cut 2026-08-02, sixth of the Spec pass, specced to the same boundary
 its charter is chartered to: the lifecycle half, with the traffic arriving via the token
-workflow. Code is written against it under the gates of Working Process section 6,
-ratified 2026-08-04.
+workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
 **Document ID:** `weaver-gate-Spec`

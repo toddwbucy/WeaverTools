@@ -1,6 +1,6 @@
 # weaver-harness / weaver-gate - contract
 
-**Status:** MERGED. In `main` and the source of truth for now, per the human's ruling
+**Status:** MERGED. In `main` and the source of truth, per the human's ruling
 of 2026-08-01 that a document on `main` is merged and not a draft. This content
 replaces the placeholder of 2026-07-29 at its own name, which is the consumption the
 v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise and

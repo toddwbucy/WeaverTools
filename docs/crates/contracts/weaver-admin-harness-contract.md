@@ -1,6 +1,6 @@
 # weaver-admin-harness-contract
 
-**Status:** MERGED. In `main` and the source of truth for now. Written with
+**Status:** MERGED. In `main` and the source of truth. Written with
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 

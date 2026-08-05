@@ -92,7 +92,12 @@ than flipping in a follow-up act, and a header never outlives its state. The swe
 of this date flipped the merged set's DRAFT headers, which had been wrong in the
 direction this rule closes, and the earlier finding against a branch pre-asserting
 MERGED resolves the other way: pre-asserting the post-merge state is the practice,
-and the defect would be merging without the human's call, not the header.
+and the defect would be merging without the human's call, not the header. The
+boundary of the flip is doctrinal rather than enumerated: every member header
+reads MERGED alone, ratification is represented only at the set level because no
+document ratifies alone, and the same sweep retired the source-of-truth "for now"
+from every member header, ratification having ended the provisionality the phrase
+carried.
 
 **RATIFIED.** The whole document set has been written and mapped into the graph. The
 mapping is the ratification. After it, a document does not change, and a change found

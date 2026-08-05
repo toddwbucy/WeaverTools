@@ -1,6 +1,6 @@
 # weaver-trace - PRD (crate charter)
 
-**Status:** MERGED. In `main` and the source of truth for now. The crate PRD set is
+**Status:** MERGED. In `main` and the source of truth. The crate PRD set is
 written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.

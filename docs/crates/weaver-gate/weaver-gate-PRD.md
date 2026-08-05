@@ -1,6 +1,6 @@
 # weaver-gate - PRD (crate charter)
 
-**Status:** MERGED. In `main` and the source of truth for now, per the human's ruling
+**Status:** MERGED. In `main` and the source of truth, per the human's ruling
 of 2026-08-01 that a document on `main` is merged and not a draft. It reaches the
 lifecycle half of this crate, the hook the enter and leave directives raise and
 lower. The exchanges that carry work arrive with the token workflow.
