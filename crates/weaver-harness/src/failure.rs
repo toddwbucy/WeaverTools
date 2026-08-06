@@ -21,6 +21,16 @@ pub enum ChannelFault {
     },
     Undecodable,
     Closed,
+    /// The coordination socket's name could not be bound: it is not a usable
+    /// Unix address, or the bind or listen refused it. **An occupied name
+    /// reaches here rather than being unlinked**, because the only ways a name
+    /// is occupied are that a live worker holds it, where unlinking would
+    /// strand the running agent's supervisor, or that the manager did not
+    /// honor the runtime directory, where this crate's assumption is wrong and
+    /// it should say so rather than repair.
+    SocketPathUnusable {
+        errno: i32,
+    },
     /// The dialing peer is not root, refused at the accept before any byte.
     /// The socket is reachable from inside the sandbox by construction, so
     /// this is the check that refuses an elected tool rather than a name it
@@ -30,16 +40,21 @@ pub enum ChannelFault {
     },
 }
 
-/// The two ways service ends, so the composition root branches on a value
-/// rather than a guess. Exhaustive: a third case reaches every caller loudly.
+/// How service ends ordinarily, so the composition root branches on a value
+/// rather than a guess. Exhaustive: a second case reaches every caller loudly.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Outcome {
+    /// Leave was answered, which is the one ordinary ending. **A connection
+    /// closing is not an ending**: admin is per-invocation, so each verb's
+    /// connection closes when the verb answers and the worker accepts again,
+    /// per `weaver-admin-harness-contract` section 4.
+    ///
+    /// Everything else that ends service is a fault and travels as the error
+    /// half of `serve`'s result, so this enum carries the ordinary endings and
+    /// no others. A second variant would be a case nothing constructs, which
+    /// is the reserved slot the apex forbids in data as firmly as in an
+    /// interface.
     Left,
-    /// The listener itself failed, which ends service. **A connection closing
-    /// is not this**: admin is per-invocation, so each verb's connection
-    /// closes when the verb answers and the worker accepts again, per
-    /// `weaver-admin-harness-contract` section 4.
-    ListenerFailed,
 }
 
 /// Why adoption refused. Adoption fails only when a set fails: a hygiene call
@@ -49,7 +64,6 @@ pub enum Outcome {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AdoptionFault {
     /// The close-on-exec set on the adopted coordination end failed.
-    CloseOnExecUnset { errno: i32 },
     /// The dumpable clear failed, leaving the worker attachable.
     DumpableNotCleared { errno: i32 },
 }
@@ -62,6 +76,9 @@ impl std::fmt::Display for ChannelFault {
             }
             ChannelFault::Undecodable => write!(f, "octets do not decode to an envelope"),
             ChannelFault::Closed => write!(f, "channel closed"),
+            ChannelFault::SocketPathUnusable { errno } => {
+                write!(f, "the coordination socket's name is unusable ({errno})")
+            }
             ChannelFault::WrongPeer { uid } => {
                 write!(f, "dialing peer is uid {uid} and not root")
             }
@@ -74,12 +91,6 @@ impl std::error::Error for ChannelFault {}
 impl std::fmt::Display for AdoptionFault {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AdoptionFault::CloseOnExecUnset { errno } => {
-                write!(
-                    f,
-                    "close-on-exec could not be set on the adopted end ({errno})"
-                )
-            }
             AdoptionFault::DumpableNotCleared { errno } => {
                 write!(f, "the dumpable flag could not be cleared ({errno})")
             }

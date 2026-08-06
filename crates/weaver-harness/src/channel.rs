@@ -108,9 +108,15 @@ pub fn bind_coordination(
         None,
     )
     .map_err(|_| ChannelFault::Closed)?;
-    let address = UnixAddr::new(socket_path).map_err(|_| ChannelFault::Undecodable)?;
-    bind(fd.as_raw_fd(), &address).map_err(|_| ChannelFault::Closed)?;
-    listen(&fd, nix::sys::socket::Backlog::new(1).unwrap()).map_err(|_| ChannelFault::Closed)?;
+    // The path faults carry their own case: `Undecodable` is about envelope
+    // octets, and reusing it for a name that cannot be a Unix address would
+    // report one thing as another.
+    let address = UnixAddr::new(socket_path)
+        .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
+    bind(fd.as_raw_fd(), &address)
+        .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
+    listen(&fd, nix::sys::socket::Backlog::new(1).unwrap())
+        .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
     Ok(CoordinationListener { fd })
 }
 
@@ -133,8 +139,16 @@ impl CoordinationListener {
     /// **The listener is not closed after an accept**, because admin is
     /// per-invocation and every later verb dials again.
     pub fn accept_root(&self) -> Result<OrganChannel, ChannelFault> {
-        let fd = accept4(self.fd.as_raw_fd(), SockFlag::SOCK_CLOEXEC)
-            .map_err(|_| ChannelFault::Closed)?;
+        // **A signal is not an ending.** `accept4` returns `EINTR` when one
+        // arrives while it waits, and a worker that read that as a closed
+        // listener would stop serving because something unrelated happened.
+        let fd = loop {
+            match accept4(self.fd.as_raw_fd(), SockFlag::SOCK_CLOEXEC) {
+                Ok(fd) => break fd,
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(_) => return Err(ChannelFault::Closed),
+            }
+        };
         // SAFETY: the kernel just created this descriptor and no other owner
         // exists.
         let connection = unsafe { OwnedFd::from_raw_fd(fd) };
@@ -334,7 +348,7 @@ impl OrganChannel {
     }
 
     /// Yields the owned descriptor, for a composition root that created a pair
-    /// here and hands one end to `Harness::adopt`. Ownership moves with it.
+    /// here and hands one end to its consumer. Ownership moves with it.
     pub fn into_fd(self) -> OwnedFd {
         self.end
     }

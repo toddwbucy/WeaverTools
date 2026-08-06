@@ -265,7 +265,7 @@ fn adoption_clears_the_dumpable_flag() {
             let _ = std::fs::remove_dir_all(&dir);
             let _ = std::fs::create_dir_all(&dir);
             let listener = weaver_harness::bind_coordination(&dir.join("c.sock")).expect("bind");
-            let adopted = Harness::listen(
+            let constructed = Harness::listen(
                 listener,
                 OrganBinaries {
                     spu: "/nonexistent/spu".into(),
@@ -273,7 +273,7 @@ fn adoption_clears_the_dumpable_flag() {
                 },
             );
             let dumpable = unsafe { nix::libc::prctl(nix::libc::PR_GET_DUMPABLE, 0, 0, 0, 0) };
-            let ok = (adopted.is_ok() && dumpable == 0) as u8;
+            let ok = (constructed.is_ok() && dumpable == 0) as u8;
             let _ = nix::unistd::write(report_w.as_fd(), &[ok]);
             unsafe { nix::libc::_exit(0) };
         }
@@ -282,10 +282,7 @@ fn adoption_clears_the_dumpable_flag() {
             let mut byte = [0u8; 1];
             let _ = nix::unistd::read(report_r.as_fd(), &mut byte);
             let _ = nix::sys::wait::waitpid(child, None);
-            assert_eq!(
-                byte[0], 1,
-                "adopt clears the dumpable flag and the adopted end is flagged"
-            );
+            assert_eq!(byte[0], 1, "construction clears the dumpable flag");
         }
     }
 }
@@ -297,4 +294,4 @@ fn adoption_clears_the_dumpable_flag() {
 // accepted connection carries it from `accept4`. A test kept over a deleted
 // mechanism would assert that the mechanism still existed. The property that
 // replaced it, that the socket this crate creates is flagged atomically, is
-// held by `atomic_cloexec_at_creation` above.
+// held by `pairs_are_close_on_exec_from_creation` above.

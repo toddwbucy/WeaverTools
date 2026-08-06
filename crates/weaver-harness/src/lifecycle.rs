@@ -695,6 +695,9 @@ mod tests {
         let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let dir =
             std::env::temp_dir().join(format!("weaver-harness-unit-{}-{n}", std::process::id()));
+        // Removed first: a directory left by an earlier run would hold a
+        // stale socket, and the bind would refuse a name nothing is using.
+        let _ = std::fs::remove_dir_all(&dir);
         let _ = std::fs::create_dir_all(&dir);
         crate::channel::bind_coordination(&dir.join("c.sock")).expect("bind")
     }

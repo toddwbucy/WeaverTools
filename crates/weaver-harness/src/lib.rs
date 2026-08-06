@@ -77,7 +77,6 @@
 //! fn name(outcome: Outcome) -> &'static str {
 //!     match outcome {
 //!         Outcome::Left => "left",
-//!         Outcome::ListenerFailed => "listener_failed",
 //!     }
 //! }
 //! ```

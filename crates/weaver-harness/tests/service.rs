@@ -68,8 +68,10 @@ fn bound_listener() -> (CoordinationListener, std::path::PathBuf, Scratch) {
     (listener, path, Scratch(dir))
 }
 
-/// Admin's part: dial the name the worker bound.
-fn dial_as_root(path: &std::path::Path) -> OwnedFd {
+/// Admin's part: dial the name the worker bound. It carries whatever
+/// credentials this process holds, which is what makes both halves of the
+/// accept's check reachable: root under `unshare -r`, and not root outside it.
+fn dial(path: &std::path::Path) -> OwnedFd {
     let fd = nix::sys::socket::socket(
         nix::sys::socket::AddressFamily::Unix,
         nix::sys::socket::SockType::SeqPacket,
@@ -106,7 +108,7 @@ impl Peer {
             harness.serve()
         });
         let peer = Peer {
-            fd: dial_as_root(&path),
+            fd: dial(&path),
             path,
             _dir: dir,
         };
@@ -118,24 +120,7 @@ impl Peer {
     /// convenience this crate would otherwise have no production reason to
     /// publish.
     fn send(&self, ordinal: u64, directive: LifecycleDirective) {
-        let envelope = OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Admin,
-                ordinal,
-            },
-            position: Position::Open,
-            payload: Payload::Directive(directive),
-        };
-        let body = serde_json::to_vec(&envelope).expect("render");
-        let slices = [std::io::IoSlice::new(&body)];
-        nix::sys::socket::sendmsg::<()>(
-            self.fd.as_raw_fd(),
-            &slices,
-            &[],
-            nix::sys::socket::MsgFlags::empty(),
-            None,
-        )
-        .expect("directive sent");
+        self.send_payload(ordinal, Payload::Directive(directive));
     }
 
     /// Sends any payload, for the tests that put something other than a
@@ -181,7 +166,7 @@ impl Peer {
     /// does between verbs: each invocation brings its own connection and the
     /// run outlives all of them.
     fn hang_up_and_redial(&mut self) {
-        let fresh = dial_as_root(&self.path);
+        let fresh = dial(&self.path);
         let old = std::mem::replace(&mut self.fd, fresh);
         drop(old);
     }
@@ -436,7 +421,7 @@ fn the_accept_refuses_a_peer_that_is_not_root() {
         return;
     }
     let (listener, path, _dir) = bound_listener();
-    let dialer = std::thread::spawn(move || dial_as_root(&path));
+    let dialer = std::thread::spawn(move || dial(&path));
     let refused = listener.accept_root();
     let _held = dialer.join().expect("thread");
     match refused {
@@ -463,12 +448,12 @@ fn the_listener_survives_an_accept() {
         return;
     }
     let (listener, path, _dir) = bound_listener();
-    let first = dial_as_root(&path);
+    let first = dial(&path);
     let accepted = listener.accept_root().expect("first accept");
     drop(accepted);
     drop(first);
     // The listener stands, so a second verb reaches it.
-    let second = dial_as_root(&path);
+    let second = dial(&path);
     let again = listener.accept_root();
     assert!(
         again.is_ok(),
