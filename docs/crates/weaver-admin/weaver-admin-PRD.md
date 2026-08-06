@@ -27,9 +27,10 @@ uid is refused by the check rather than by a closed listener. The sink is opened
 under root and crosses unchanged as ancillary payload on the enter directive. The
 operator surface of section 8 loses its subject, the operator being root running the
 crate rather than a group member asking a service, and
-`weaver-admin-operator-contract` retires with its citations. Section 10's descriptor
-cell closes by dissolution, the measurement of this date recorded there. The prior
-Revised entry's service-account reading is superseded in whole.
+`weaver-admin-operator-contract` narrows to the trace's exit, the one external
+boundary that survives. Section 10's descriptor cell closes by dissolution, the
+measurement of this date recorded there. The prior Revised entry's service-account
+reading is superseded in whole.
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
 **Editorial:** Per the Working Rules.

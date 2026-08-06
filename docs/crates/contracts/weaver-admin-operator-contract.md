@@ -8,6 +8,16 @@ which is the seam category `weaver-admin-PRD` section 10 held open, settled by t
 same ruling.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-05, narrowed to the trace's exit by the admin recut. The
+operator reaches the program by running the crate with root rather than by dialing a
+service, so the socket this document governed, its peer predicate, and the request
+format that entered across it have no subject and retire from sections 1, 2, 4, 5,
+and 6. What survives is the boundary that still crosses a principal line: the output
+stream, its tee promise, its sink shapes, and the custody either side may rely on,
+which is section 3 and the clauses that serve it. The document is narrowed rather
+than retired because that boundary is real and because the 2026-08-01 durability
+ruling it carries is cited across the corpus. `peer-identity` and
+`authorization-predicate` are no longer drawn.
 **Document ID:** `weaver-admin-operator-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -16,9 +26,10 @@ same ruling.
 
 ## 0. What this document is
 
-The agreement over the operator surface: how an operator's asks enter the program and
-how the program's state and its one output leave it. It governs the socket
-`weaver-admin-PRD` section 8 names, and it is read alongside that charter.
+The agreement over the trace's exit: how the program's one output leaves it, where it
+lands, and what either side may rely on at that boundary. It is read alongside
+`weaver-admin-PRD`, whose section 8 names the interface the operator's asks now enter
+by, which is running the crate rather than a channel this document governs.
 
 It carries no representation beyond the two format rulings of sections 2 and 3. Those
 are stated here rather than in a Spec because the party on the far end is outside the
@@ -41,43 +52,37 @@ from: weaver-admin-operator-contract
 to: weaver-admin
 ```
 
-The second party is the operator, a human role reaching the service through
-membership in the `weaver-admin` group, per `weaver-admin-PRD` section 7. The graph
-carries no node for a principal outside the program, so the party is named in prose
-and the missing category is registered rather than improvised.
+The second party is the operator, a human role holding root on the machine, per
+`weaver-admin-PRD` section 7. The graph carries no node for a principal outside the
+program, so the party is named in prose and the missing category is registered rather
+than improvised.
 
-## 1. The channel
+## 1. The boundary
 
-A localhost Unix socket, named, bound by the `weaver-admin` service, reachable only
-from the host. It authenticates every connection by peer credential and admits
-members of the `weaver-admin` group, which is the `peer-identity` and
-`authorization-predicate` pair of `weaver-types-PRD` section 2.2 finding one of its
-two consumers, the other being the gate's client socket. It is not network ingress
-and breaches nothing Gate holds, on the grounds `weaver-admin-PRD` section 3 states.
+**The stream's sink is where this contract binds, and it is the one crossing left.**
+The operator's asks reach the program by an invocation the operating system already
+governs, per `weaver-admin-PRD` section 8, and an executed program is no seam by the
+Working Process test, so the socket this section carried until 2026-08-05 has no
+subject. What remains is a real crossing: the program writes a descriptor, something
+of the operator's stands behind it, and neither side sees the other's interior. It is
+not network ingress and breaches nothing Gate holds, on the grounds
+`weaver-admin-PRD` section 3 states.
 
-## 2. What crosses in, and its format
+## 2. What crosses in
 
-The operator's asks, and no work. The ask set is the surface the admin charter's
-section 8 names:
+**Nothing.** The ask set this section enumerated until 2026-08-05, the three verbs,
+the stop conveyance, and the two observations, still exists and no longer crosses
+here: it arrives as an invocation's arguments, per `weaver-admin-PRD` section 8, and
+its shape is that charter's and its Spec's rather than this contract's. No prompt,
+turn, task, or run crosses, per apex section 6, and the stream is one-way by
+construction, so what an operator decides after reading it re-enters by running a
+verb rather than by answering on this boundary.
 
-- the three verbs, `load`, `unload`, and `validate`, each naming an agent
-- the stop conveyance, one bit and no work, naming an agent
-- the observations, `list` and `show`, which transition nothing
-
-**The format is newline-delimited JSON, UTF-8, one request per line.** The field list
-of each request is the Spec's. The framing is this document's, because the operator's
-tooling is built against it. A request that does not parse as one JSON value on one
-line is refused as malformed, before any field is read.
-
-No prompt, turn, task, or run crosses, per apex section 6, and a request carrying
-work is refused whole rather than partially served.
+**The section is kept with that answer rather than deleted,** because a contract
+states what crosses in even when the answer is nothing, and because the numbering of
+what follows is cited across the corpus.
 
 ## 3. What crosses out, and its format
-
-**Answers.** Every request receives exactly one answer: the state asked for, the
-aggregate of a directed transition, the turn's fate on a stop, or a typed
-`lifecycle-refusal`. Answers are newline-delimited JSON on the same connection, one
-answer per request, in request order.
 
 **The output stream, which is the program's one output.** Per the human's ruling of
 2026-08-01: the program tees the exact content of the working structure to an NDJSON
@@ -102,69 +107,71 @@ confusable, and a silent drop is a broken build rather than a policy.
 
 **Where the stream lands is the operator's declaration.** The sink is named in the
 agent's configuration, validated by admin at load like every other field, and the
-stream is connected to it under admin's own principal. A file, a pipe, and a socket
+stream is connected to it under root, the role's principal. A file, a pipe, and a socket
 into the operator's tooling are all conforming sinks, and the program treats them
 alike: it writes the stream and holds no opinion about what stands behind the
 descriptor. The mechanism is the Spec's.
 
-**Custody survives the ruling.** The agent uid reaches neither this socket nor the
-stream's sink, per the boundary `weaver-admin-PRD` section 2 constructs, so the
-record's exclusion of the agent does not depend on who persists it.
+**Custody survives the ruling and survives the recut.** The agent uid does not reach
+the stream's sink, per the boundary `weaver-admin-PRD` section 2 verifies, so the
+record's exclusion of the agent does not depend on who persists it. What the recut of
+2026-08-05 changed is the principal holding the descriptor, from a service account to
+root, which narrows the set of parties that can reach the record rather than widening
+it. What it did not change is the direction of the exclusion: the agent writes
+through a handle and reaches nothing behind it.
 
 **The stream is also the program's one fault carrier,** per the fault-carrier
 ruling of 2026-08-01. A fault the worker survives rides it as the `fault` event of
 `weaver-trace-PRD` section 3.1, in order with everything else, and the operator's
 tooling keys on the fault fields for its own purposes. There is no second alert
 path anywhere in the program, and tooling that decides a fault warrants action
-comes back through this socket with a verb, per section 6.
+comes back by running a verb, per section 6.
 
 ## 4. Ordering
 
-- Requests on one connection are served in order, and answers return in that order.
-- A transition directive is refused while another transition for the same agent is
-  in flight, one directive behind one operator intent, per the coordination seam.
 - The stream is ordered by the writer's queue and trails the working structure, with
   no cadence to elect and no window to tune.
-- Closure of the operator's connection cancels nothing. A directed transition runs
-  to its aggregate, and the answer is lost rather than the act undone.
+- The stream's order is independent of any invocation's lifetime. An operator's verb
+  answers and its process exits while the stream continues, because the writer is
+  the worker's and the sink is held by whatever the operator put behind it.
+- The request-ordering rules this section carried retired with the socket. What
+  ordered two asks was one connection serving them in turn, and what orders them now
+  is that each is a process the operator starts, per `weaver-admin-Spec` section 3.
 
 ## 5. Failure
 
-Every refusal is admin refusing an ask, typed as `lifecycle-refusal`, and the cases
-this surface adds to the lifecycle's own:
+**This boundary has one failure and it is the sink's.** A sink that cannot be opened
+refuses the load, per `weaver-admin-PRD` section 4.1 step 4, and a sink that fails
+mid-run is the tee's bounded loss of section 3 rather than a refusal, because a run
+does not stop for its reader.
 
-- the peer fails the predicate, refused before any content is read
-- the request is malformed, refused before any field is acted on
-- the request names an agent the fleet does not hold
-- the request carries work
-- the config omits a field an organ registered, or carries one no organ registered,
-  refused at load before a process exists, per `weaver-types-PRD` section 2.1
-
-An organ refusing a field it registered and found wrong is not on this list. That
-refusal is the organ's, travels back through the harness as a `lifecycle-refusal` on
-its own seam, and reaches the operator inside the aggregate rather than as admin's own
-answer.
-
-A refusal answers the request that provoked it and closes nothing. The connection
-survives its own refused requests.
+The ask-side cases this section enumerated until 2026-08-05 travelled with the socket
+to `weaver-admin-PRD` section 8 and its Spec: the malformed request, the unknown
+agent, the request carrying work, and the config's registered-field failure are all
+still refusals, typed as `lifecycle-refusal` and returned by the invocation. The peer
+predicate is not among them anywhere, having retired with the surface that applied
+it. An organ refusing a field it registered is still not on any of these lists: that
+refusal is the organ's, travels back through the harness on its own seam, and reaches
+the operator inside the aggregate.
 
 ## 6. Prohibitions
 
-**On admin.** It carries no work inward, however the request frames it. It answers
-no request from a peer that fails the predicate, and it does not degrade the
-predicate to a warning. It emits the stream to the declared sink and to no other
-reader, and it repairs, reconciles, and adjudicates nothing on the way through, per
-`weaver-admin-PRD` section 2.
+**On admin.** It carries no work inward, however an invocation frames it. It emits
+the stream to the declared sink and to no other reader, and it repairs, reconciles,
+and adjudicates nothing on the way through, per `weaver-admin-PRD` section 2.
 
 **On the operator's tooling.** Nothing behind the sink reaches back. The stream is
-one-way, and tooling that wants to act on what it reads comes back through this
-socket as an ask. The monitoring is the outside's job and the verb is admin's, per
-the basic loop's section 2.
+one-way, and tooling that wants to act on what it reads comes back by running a verb.
+The monitoring is the outside's job and the verb is admin's, per the basic loop's
+section 2.
 
 ## 7. Vocabulary
 
-**Drawn from `weaver-types`:** `peer-identity`, `authorization-predicate`,
-`lifecycle-refusal`.
+**Drawn from `weaver-types`:** `lifecycle-refusal`, and nothing else as of
+2026-08-05. `peer-identity` and `authorization-predicate` left this clause with the
+socket that read them, and the consequence for `weaver-types-PRD` section 2.2 is
+named in section 8: that pair now finds its consumers at the gate's client boundary
+and at the coordination seam, and not here.
 
 **Drawn from `weaver-trace`:** the durable event schema, as the content of the
 output stream. It is drawn as published format rather than as a linked type, which
@@ -173,11 +180,11 @@ is the contract-coupled reading `weaver-admin-PRD` section 8 states.
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer
 because `weaver-types-PRD` section 5 asks for it even when it is empty.
 
-This surface draws loop 0's `lifecycle-directive` and `lifecycle-answer` beside
-the refusal, per the naming ruling of 2026-08-01: the verbs and the stop are directive
-cases entering at this surface, the answers are answer cases, and the observations ride
-the same shapes while transitioning nothing, section 2's enumeration naming which cases
-cross. Nothing is owed to the floor.
+The directive and answer draws left this clause with the asks, per the recut: the
+verbs and the stop are directive cases still, and they enter as an invocation's
+arguments where `weaver-admin-PRD` section 8 governs them rather than crossing here.
+The refusal stays drawn, because a sink that cannot be opened refuses a load and that
+refusal reaches the operator as the floor's own type. Nothing is owed to the floor.
 
 **The clause above is stated in edge form here**, per Document Format section 4, which
 makes `draws` the vocabulary clause a query can walk and is what turns G4 from a
@@ -187,23 +194,7 @@ beside the party edge, per that format's section 6.
 ```graph
 edge: draws
 from: weaver-admin-operator-contract
-to: peer-identity
-
-edge: draws
-from: weaver-admin-operator-contract
-to: authorization-predicate
-
-edge: draws
-from: weaver-admin-operator-contract
 to: lifecycle-refusal
-
-edge: draws
-from: weaver-admin-operator-contract
-to: lifecycle-directive
-
-edge: draws
-from: weaver-admin-operator-contract
-to: lifecycle-answer
 ```
 
 **The draw from `weaver-trace` takes no edge and the reason is stated rather than
@@ -223,6 +214,12 @@ gate rather than a defect in this clause.
   operator-to-service cell closes. Landed in the same act.
 - `weaver-types-PRD` section 2.3: the request and answer pair, pending the naming
   ruling, per section 7.
+- `weaver-types-PRD` section 2.2, owed by the recut of 2026-08-05 and landing in the
+  same act. That section rests its scoped claim about `peer-identity` and
+  `authorization-predicate` on this contract being one of the pair's two consumers,
+  and this contract stopped drawing them. The pair's consumers are now the gate's
+  client boundary and the coordination seam, whose credential check the inversion
+  gave a real subject, so the claim is re-aimed rather than weakened.
 - The durable-record cut this ruling scopes landed on 2026-08-01 as its own batch:
   the program-side checksum, the manifest, the leave-time comparison, and
   record-based session resume left the corpus, `weaver-types-PRD` section 2.1
