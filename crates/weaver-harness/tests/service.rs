@@ -8,12 +8,12 @@
 //! run can be built directly.
 #![cfg(target_os = "linux")]
 
-use std::os::fd::{AsFd, AsRawFd};
+use std::os::fd::{AsFd, AsRawFd, OwnedFd};
 
-use weaver_harness::{Harness, OrganBinaries, OrganChannel, Outcome};
+use weaver_harness::{CoordinationListener, Harness, OrganBinaries, Outcome, bind_coordination};
 use weaver_types::{
-    ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope,
-    Payload, Position,
+    ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener,
+    OrganEnvelope, Payload, Position,
 };
 
 /// Stands a coordination peer up against a harness serving on a thread, so a
@@ -28,8 +28,64 @@ use weaver_types::{
 /// after it. A maintainer who cannot attach a debugger to these tests is owed
 /// the reason, and the containment a forked child would buy is not taken
 /// because the peer must outlive the harness to drive it.
+/// The suite drives the harness through its real listener, so the dialing peer
+/// must be root: the accept refuses every other uid, which is the property
+/// under test elsewhere in this file.
+///
+/// **Run these under a user namespace to exercise them without privilege:**
+/// `unshare -r cargo test -p weaver-harness`. Measured 2026-08-06, `unshare -r`
+/// maps the caller to uid 0 and `SO_PEERCRED` reads 0 across a socket inside
+/// it, so the whole suite runs unprivileged that way. Without it they skip
+/// loudly rather than passing vacuously.
+fn root_or_skip(what: &str) -> bool {
+    if nix::unistd::getuid().is_root() {
+        return true;
+    }
+    eprintln!("SKIP {what}: the harness accepts root alone. Run `unshare -r cargo test`.");
+    false
+}
+
+/// A scratch directory standing in for the unit's runtime directory, which the
+/// init system creates and removes in production.
+struct Scratch(std::path::PathBuf);
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+fn bound_listener() -> (CoordinationListener, std::path::PathBuf, Scratch) {
+    let dir = std::env::temp_dir().join(format!(
+        "weaver-harness-{}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
+    ));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).expect("scratch");
+    let path = dir.join("coordination.sock");
+    let listener = bind_coordination(&path).expect("bind");
+    (listener, path, Scratch(dir))
+}
+
+/// Admin's part: dial the name the worker bound.
+fn dial_as_root(path: &std::path::Path) -> OwnedFd {
+    let fd = nix::sys::socket::socket(
+        nix::sys::socket::AddressFamily::Unix,
+        nix::sys::socket::SockType::SeqPacket,
+        nix::sys::socket::SockFlag::SOCK_CLOEXEC,
+        None,
+    )
+    .expect("socket");
+    let address = nix::sys::socket::UnixAddr::new(path).expect("address");
+    nix::sys::socket::connect(fd.as_raw_fd(), &address).expect("connect");
+    fd
+}
+
 struct Peer {
-    channel: OrganChannel,
+    fd: OwnedFd,
+    path: std::path::PathBuf,
+    _dir: Scratch,
 }
 
 impl Peer {
@@ -37,41 +93,97 @@ impl Peer {
         Peer,
         std::thread::JoinHandle<Result<Outcome, weaver_harness::ChannelFault>>,
     ) {
-        let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
-        let peer = Peer {
-            channel: peer_end.into_channel(),
-        };
-        // SAFETY: the harness owns its end for the thread's lifetime.
-        let fd = harness_end.into_fd();
+        let (listener, path, dir) = bound_listener();
         let handle = std::thread::spawn(move || {
-            let harness = Harness::adopt(
-                fd,
+            let harness = Harness::listen(
+                listener,
                 OrganBinaries {
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
             )
-            .expect("adopt");
+            .expect("listen");
             harness.serve()
         });
+        let peer = Peer {
+            fd: dial_as_root(&path),
+            path,
+            _dir: dir,
+        };
         (peer, handle)
     }
 
+    /// **The peer plays admin, and hand-rolls its two calls.** Admin's own
+    /// channel lives in its own crate, so nothing here reaches for a
+    /// convenience this crate would otherwise have no production reason to
+    /// publish.
     fn send(&self, ordinal: u64, directive: LifecycleDirective) {
-        self.channel
-            .send(&OrganEnvelope {
-                exchange: ExchangeId {
-                    opener: Opener::Admin,
-                    ordinal,
-                },
-                position: Position::Open,
-                payload: Payload::Directive(directive),
-            })
-            .expect("directive sent");
+        let envelope = OrganEnvelope {
+            exchange: ExchangeId {
+                opener: Opener::Admin,
+                ordinal,
+            },
+            position: Position::Open,
+            payload: Payload::Directive(directive),
+        };
+        let body = serde_json::to_vec(&envelope).expect("render");
+        let slices = [std::io::IoSlice::new(&body)];
+        nix::sys::socket::sendmsg::<()>(
+            self.fd.as_raw_fd(),
+            &slices,
+            &[],
+            nix::sys::socket::MsgFlags::empty(),
+            None,
+        )
+        .expect("directive sent");
+    }
+
+    /// Sends any payload, for the tests that put something other than a
+    /// directive on the channel.
+    fn send_payload(&self, ordinal: u64, payload: Payload) {
+        let envelope = OrganEnvelope {
+            exchange: ExchangeId {
+                opener: Opener::Admin,
+                ordinal,
+            },
+            position: Position::Open,
+            payload,
+        };
+        let body = serde_json::to_vec(&envelope).expect("render");
+        let slices = [std::io::IoSlice::new(&body)];
+        nix::sys::socket::sendmsg::<()>(
+            self.fd.as_raw_fd(),
+            &slices,
+            &[],
+            nix::sys::socket::MsgFlags::empty(),
+            None,
+        )
+        .expect("sent");
     }
 
     fn read(&self) -> Payload {
-        self.channel.recv().expect("answer received").payload
+        let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
+        let mut slices = [std::io::IoSliceMut::new(&mut buffer)];
+        let message = nix::sys::socket::recvmsg::<()>(
+            self.fd.as_raw_fd(),
+            &mut slices,
+            None,
+            nix::sys::socket::MsgFlags::empty(),
+        )
+        .expect("answer received");
+        let read = message.bytes;
+        let envelope: OrganEnvelope =
+            serde_json::from_slice(&buffer[..read]).expect("answer decodes");
+        envelope.payload
+    }
+
+    /// Closes this verb's connection and dials again, which is what admin
+    /// does between verbs: each invocation brings its own connection and the
+    /// run outlives all of them.
+    fn hang_up_and_redial(&mut self) {
+        let fresh = dial_as_root(&self.path);
+        let old = std::mem::replace(&mut self.fd, fresh);
+        drop(old);
     }
 }
 
@@ -83,6 +195,9 @@ impl Peer {
 /// under exactly that change.
 #[test]
 fn leave_before_enter_is_refused() {
+    if !root_or_skip("leave_before_enter_is_refused") {
+        return;
+    }
     let (peer, handle) = Peer::stand_up();
     peer.send(1, LifecycleDirective::Leave);
     match peer.read() {
@@ -96,7 +211,12 @@ fn leave_before_enter_is_refused() {
         Payload::Refusal(LifecycleRefusal::OutOfOrder)
     ));
     drop(peer);
-    let _ = handle.join().expect("thread");
+    // **The worker is still serving and the thread does not end**, because a
+    // closed connection is not an ending: it accepts again and waits for the
+    // next verb. Joining here would block forever, which is the property
+    // rather than a leak, so the handle is dropped and the test process
+    // reaps the thread on exit.
+    drop(handle);
 }
 
 /// A stop arriving before any enter is out of order for the position, which
@@ -108,6 +228,9 @@ fn leave_before_enter_is_refused() {
 /// which needs organ doubles this suite does not buy.
 #[test]
 fn stop_before_enter_is_out_of_order() {
+    if !root_or_skip("stop_before_enter_is_out_of_order") {
+        return;
+    }
     let (peer, handle) = Peer::stand_up();
     // A stop before any enter is out of order for the position, which is the
     // before-enter arm rather than the at-rest answer.
@@ -117,7 +240,12 @@ fn stop_before_enter_is_out_of_order() {
         "a stop before enter is out of order, not an at-rest close"
     );
     drop(peer);
-    let _ = handle.join().expect("thread");
+    // **The worker is still serving and the thread does not end**, because a
+    // closed connection is not an ending: it accepts again and waits for the
+    // next verb. Joining here would block forever, which is the property
+    // rather than a leak, so the handle is dropped and the test process
+    // reaps the thread on exit.
+    drop(handle);
 }
 
 /// **The scoped refusal account:** a refusal before the `load` event leaves the
@@ -130,6 +258,9 @@ fn stop_before_enter_is_out_of_order() {
 /// moving the authoring point ahead of the receive.
 #[test]
 fn refused_enter_leaves_the_state_at_before_enter() {
+    if !root_or_skip("refused_enter_leaves_the_state_at_before_enter") {
+        return;
+    }
     let (peer, handle) = Peer::stand_up();
     // An enter with no ancillary sink descriptor cannot construct a recorder,
     // so it refuses before anything is authored.
@@ -166,35 +297,60 @@ fn refused_enter_leaves_the_state_at_before_enter() {
         "the state stayed at before-enter"
     );
     drop(peer);
-    let _ = handle.join().expect("thread");
+    // **The worker is still serving and the thread does not end**, because a
+    // closed connection is not an ending: it accepts again and waits for the
+    // next verb. Joining here would block forever, which is the property
+    // rather than a leak, so the handle is dropped and the test process
+    // reaps the thread on exit.
+    drop(handle);
 }
 
-/// Closure is observed as death and never synthesized into an answer: when the
-/// peer drops its end, service ends with `ChannelClosed` rather than a
-/// refusal.
+/// **A connection closing is not an ending, and the run outlives it.** Admin is
+/// per-invocation, so each verb arrives on its own connection and closes it
+/// when the verb answers, per `weaver-admin-harness-contract` section 4: the
+/// ordering is the worker's rather than any connection's.
+///
+/// Perturbation: return an outcome when `serve_connection` reports a close,
+/// which is what the pre-inversion code did, and the second directive below
+/// reaches a worker that has stopped serving. Watched under exactly that
+/// change.
 #[test]
-fn closure_ends_service_as_an_outcome() {
-    let (peer, handle) = Peer::stand_up();
+fn a_closed_connection_does_not_end_service() {
+    if !root_or_skip("a_closed_connection_does_not_end_service") {
+        return;
+    }
+    let (mut peer, handle) = Peer::stand_up();
+    // A leave before an enter is refused deterministically, which is enough to
+    // prove the worker answered on this connection.
+    peer.send(1, LifecycleDirective::Leave);
+    assert!(matches!(
+        peer.read(),
+        Payload::Refusal(LifecycleRefusal::OutOfOrder)
+    ));
+
+    // Admin's verb ends: the connection closes and a new one is dialed.
+    peer.hang_up_and_redial();
+
+    // The worker is still serving, and still in the same state.
+    peer.send(2, LifecycleDirective::Leave);
+    assert!(
+        matches!(peer.read(), Payload::Refusal(LifecycleRefusal::OutOfOrder)),
+        "the run survived the close and the state came with it"
+    );
     drop(peer);
-    let outcome = handle.join().expect("thread").expect("no fault");
-    assert_eq!(outcome, Outcome::ChannelClosed);
+    // Still serving, per the note above.
+    drop(handle);
 }
 
 /// A message that is not a directive cannot be attributed to an exchange for a
 /// refusal to answer, so it is a fault below the exchange layer.
 #[test]
 fn non_directive_payload_is_a_fault() {
+    if !root_or_skip("non_directive_payload_is_a_fault") {
+        return;
+    }
     let (peer, handle) = Peer::stand_up();
-    peer.channel
-        .send(&OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Admin,
-                ordinal: 1,
-            },
-            position: Position::Open,
-            payload: Payload::Answer(LifecycleAnswer::Ready),
-        })
-        .expect("sent");
+    peer.send_payload(1, Payload::Answer(LifecycleAnswer::Ready));
     let result = handle.join().expect("thread");
     assert!(
         matches!(result, Err(weaver_harness::ChannelFault::Undecodable)),
@@ -209,24 +365,37 @@ fn non_directive_payload_is_a_fault() {
 /// The previous version of this test asserted that a descriptor number was
 /// above 2, which the kernel guarantees for any process with the standard
 /// streams open - it never constructed a `Harness` and could not fail. This
-/// one adopts, drops, and observes the descriptor is gone. Run in a forked
-/// child because `adopt` clears the dumpable flag process-wide.
+/// one constructs, drops, and observes the descriptor is gone. Run in a forked
+/// child because `listen` clears the dumpable flag process-wide.
 #[test]
-fn dropping_the_harness_closes_the_adopted_end() {
+fn dropping_the_harness_closes_the_listener() {
     let (report_r, report_w) = nix::unistd::pipe().expect("pipe");
     // SAFETY: the child adopts, drops, probes, reports, and _exits.
     match unsafe { nix::unistd::fork() }.expect("fork") {
         nix::unistd::ForkResult::Child => {
-            let (r, _w) = nix::unistd::pipe().expect("pipe");
-            let raw = r.as_raw_fd();
-            let harness = Harness::adopt(
-                r,
+            // A fresh directory per run: a pid-named one outlives the run
+            // that made it, and a recycled pid would then meet a stale
+            // socket and fail the bind.
+            let dir = std::env::temp_dir().join(format!(
+                "weaver-drop-{}-{:?}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_nanos())
+                    .unwrap_or(0)
+            ));
+            let _ = std::fs::remove_dir_all(&dir);
+            let _ = std::fs::create_dir_all(&dir);
+            let listener = bind_coordination(&dir.join("c.sock")).expect("bind");
+            let raw = listener.as_fd().as_raw_fd();
+            let harness = Harness::listen(
+                listener,
                 OrganBinaries {
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
             )
-            .expect("adopt");
+            .expect("listen");
             drop(harness);
             let flags = unsafe { nix::libc::fcntl(raw, nix::libc::F_GETFD) };
             let closed = (flags == -1) as u8;
@@ -241,4 +410,69 @@ fn dropping_the_harness_closes_the_adopted_end() {
             assert_eq!(byte[0], 1, "the adopted end is closed when its owner drops");
         }
     }
+}
+
+/// **The accept refuses a peer that is not root.** The socket lives inside the
+/// agent's sandbox and is reachable from it by construction, so an elected tool
+/// at the agent uid can dial it, and what refuses that tool is the credential
+/// rather than a name it could not resolve. The earlier design expected the
+/// agent's own uid here, which every tool of the agent's satisfies.
+///
+/// **This runs unprivileged and only unprivileged**, which is the inverse of
+/// the guard everything above carries: the dialing peer must not be root for
+/// the refusal to be reachable, so under `unshare -r` it skips and outside it
+/// runs. Between the two, both sides of the check are exercised.
+///
+/// Perturbation: remove the uid comparison from `accept_root` and this test
+/// fails, because the connection is accepted and answered. Watched under
+/// exactly that removal.
+#[test]
+fn the_accept_refuses_a_peer_that_is_not_root() {
+    if nix::unistd::getuid().is_root() {
+        eprintln!(
+            "SKIP the_accept_refuses_a_peer_that_is_not_root: needs a non-root dialer, \
+             so run this one without `unshare -r`"
+        );
+        return;
+    }
+    let (listener, path, _dir) = bound_listener();
+    let dialer = std::thread::spawn(move || dial_as_root(&path));
+    let refused = listener.accept_root();
+    let _held = dialer.join().expect("thread");
+    match refused {
+        Err(weaver_harness::ChannelFault::WrongPeer { uid }) => {
+            assert_eq!(uid, nix::unistd::getuid().as_raw(), "the dialer's own uid");
+        }
+        other => panic!("a non-root dialer is refused at the accept, got {other:?}"),
+    }
+}
+
+/// **The listener is not closed after an accept.** Admin is per-invocation and
+/// every later verb dials again, so a listener that closed after one accept
+/// would leave every verb after the load with nothing to dial. This is the
+/// property that replaced the pre-inversion closure.
+///
+/// Perturbation: close the listener inside `accept_root` so it does not
+/// survive, and this test stops passing. Watched under exactly that change,
+/// where it aborts on the runtime's own IO-safety check for a descriptor
+/// closed twice rather than failing an assertion. The abort is the failure,
+/// and it is named here so a reader is not surprised by the shape of it.
+#[test]
+fn the_listener_survives_an_accept() {
+    if !root_or_skip("the_listener_survives_an_accept") {
+        return;
+    }
+    let (listener, path, _dir) = bound_listener();
+    let first = dial_as_root(&path);
+    let accepted = listener.accept_root().expect("first accept");
+    drop(accepted);
+    drop(first);
+    // The listener stands, so a second verb reaches it.
+    let second = dial_as_root(&path);
+    let again = listener.accept_root();
+    assert!(
+        again.is_ok(),
+        "a second dial is accepted on the same listener, got {again:?}"
+    );
+    drop(second);
 }

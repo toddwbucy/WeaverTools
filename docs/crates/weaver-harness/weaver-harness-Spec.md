@@ -622,11 +622,29 @@ impl Harness {
     pub fn listen(coordination: OwnedFd, organs: OrganBinaries)
         -> Result<Self, AdoptionFault>
 
-    /// Serves the coordination channel until leave is answered or closure
-    /// is observed, or fails on a fault below the exchange layer.
+    /// Accepts connections and serves the directives on each until leave is
+    /// answered, or fails on a fault below the exchange layer.
     pub fn serve(self) -> Result<Outcome, ChannelFault>
 }
 ```
+
+**Serving spans connections, and a connection closing is not an ending.** Admin
+is per-invocation, so each verb arrives on its own connection and closes it when
+the verb answers, and `weaver-admin-harness-contract` section 4 states the
+consequence: the ordering is the worker's rather than any connection's, because
+connections come and go with verbs and the run does not. So `serve` accepts,
+serves the directives that arrive, observes the close, and accepts again, with
+the channel state of section 3 held across the whole of it.
+
+**What ends the worker is leave and nothing else.** The earlier form unwound a
+standing run when the channel closed, which was right while the channel lived as
+long as the worker and is wrong now: a routine close after every verb would tear
+down the run the next verb expects to find. **The loss that reading defended
+against is gone rather than ignored**, because admin no longer holds a channel
+whose closure could report its death. A loaded agent with no admin attached is
+the ordinary resting state, waiting for work through the gate, and an operator
+who never returns leaves an agent running, which is what a supervisor that exits
+after each verb means.
 
 **Construction fails only when a set fails, and a failed set refuses
 construction.** A hygiene call that errors leaves the worker attachable or the

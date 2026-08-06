@@ -1,6 +1,9 @@
 //! conforms: harness-truncation-is-a-fault
 //! conforms: harness-one-write-is-one-read
 //! conforms: harness-atomic-cloexec-at-creation
+//! conforms: harness-binds-coordination-socket-first
+//! conforms: harness-coordination-accept-refuses-non-root
+//! conforms: harness-bind-never-unlinks
 //! conforms: harness-organ-ends-from-descriptor-three
 //! conforms: harness-child-flag-clear-unconditional
 //! conforms: harness-fork-to-exec-three-calls
@@ -16,15 +19,19 @@
 //! the maximum envelope and a read returning `MSG_TRUNC` is a channel fault
 //! and never a message.
 //!
-//! No path is taken anywhere in this module. Every entry point takes owned
-//! descriptors, and the organ binaries of section 3 are the one exception,
-//! supplied by the composition root as a construction parameter.
+//! **One path is taken, and it is not the trace's.** The coordination socket
+//! is bound to a name the composition root supplies, per section 2.3 and the
+//! inversion ruling of 2026-08-05, which is a deployment fact of the same kind
+//! as the organ binaries of section 3. The prohibition `weaver-harness-PRD`
+//! section 5 states is about the trace, and the trace still reaches this crate
+//! as a descriptor and never as a name.
 
 use std::io::IoSlice;
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 
 use nix::sys::socket::{
-    AddressFamily, ControlMessage, MsgFlags, SockFlag, SockType, recvmsg, sendmsg, socketpair,
+    AddressFamily, ControlMessage, MsgFlags, SockFlag, SockType, UnixAddr, accept4, bind,
+    getsockopt, listen, recvmsg, sendmsg, socket, socketpair, sockopt,
 };
 use weaver_types::{MAX_ENVELOPE_BYTES, OrganEnvelope};
 
@@ -65,6 +72,82 @@ pub struct DecodeChannel {
 #[derive(Debug)]
 pub struct ChildEnd {
     end: OwnedFd,
+}
+
+/// The coordination listener, bound inside the agent's own runtime directory
+/// and held for the worker's whole life.
+#[derive(Debug)]
+pub struct CoordinationListener {
+    fd: OwnedFd,
+}
+
+/// Binds the coordination socket and listens, which is the worker's first act.
+///
+/// **Any socket connecting to the harness is an internal connection**, per
+/// `weaver-admin-harness-contract` section 2, so this crate creates and binds
+/// it rather than adopting a handed end. The socket carries close-on-exec from
+/// its creating call, so no window exists between creation and flag.
+///
+/// **The bind never unlinks.** A Unix socket's pathname outlives the process
+/// that bound it, and the directory this socket lives in is created by the init
+/// system at the unit's start and removed with the unit, per
+/// `weaver-admin-systemd-contract` sections 2 and 5, so the name cannot be
+/// inherited from a previous run and there is nothing to clear. **A bind that
+/// finds its name occupied is a fault and never a thing to remove**, because
+/// the only ways a name is occupied are that a live worker holds it, where
+/// unlinking would strand the running agent's supervisor, or that the manager
+/// did not honor the directory, where this crate's assumption is wrong and it
+/// should say so rather than repair.
+pub fn bind_coordination(
+    socket_path: &std::path::Path,
+) -> Result<CoordinationListener, ChannelFault> {
+    let fd = socket(
+        AddressFamily::Unix,
+        SockType::SeqPacket,
+        SockFlag::SOCK_CLOEXEC,
+        None,
+    )
+    .map_err(|_| ChannelFault::Closed)?;
+    let address = UnixAddr::new(socket_path).map_err(|_| ChannelFault::Undecodable)?;
+    bind(fd.as_raw_fd(), &address).map_err(|_| ChannelFault::Closed)?;
+    listen(&fd, nix::sys::socket::Backlog::new(1).unwrap()).map_err(|_| ChannelFault::Closed)?;
+    Ok(CoordinationListener { fd })
+}
+
+impl AsFd for CoordinationListener {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        self.fd.as_fd()
+    }
+}
+
+impl CoordinationListener {
+    /// Accepts one connection, reading the peer credential before any byte.
+    ///
+    /// **Every accept refuses what is not root.** The socket is reachable from
+    /// inside the sandbox by construction, so an elected tool at the agent uid
+    /// can dial it, and what refuses that tool is that it is not root. The
+    /// earlier design expected the agent's own uid here, which every tool of
+    /// the agent's satisfies, and leaned on a listener closed after one accept
+    /// to do the refusing.
+    ///
+    /// **The listener is not closed after an accept**, because admin is
+    /// per-invocation and every later verb dials again.
+    pub fn accept_root(&self) -> Result<OrganChannel, ChannelFault> {
+        let fd = accept4(self.fd.as_raw_fd(), SockFlag::SOCK_CLOEXEC)
+            .map_err(|_| ChannelFault::Closed)?;
+        // SAFETY: the kernel just created this descriptor and no other owner
+        // exists.
+        let connection = unsafe { OwnedFd::from_raw_fd(fd) };
+        let peer =
+            getsockopt(&connection, sockopt::PeerCredentials).map_err(|_| ChannelFault::Closed)?;
+        if peer.uid() != 0 {
+            // Refused at the connection rather than written to: no answer
+            // crosses to a peer the check rejected.
+            drop(connection);
+            return Err(ChannelFault::WrongPeer { uid: peer.uid() });
+        }
+        Ok(OrganChannel { end: connection })
+    }
 }
 
 impl OrganChannel {
@@ -248,11 +331,6 @@ impl OrganChannel {
         )
         .map_err(|_| ChannelFault::Closed)?;
         Ok(())
-    }
-
-    /// Adopts an end this process was handed rather than one it created.
-    pub(crate) fn adopt(end: OwnedFd) -> Self {
-        OrganChannel { end }
     }
 
     /// Yields the owned descriptor, for a composition root that created a pair

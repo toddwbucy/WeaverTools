@@ -16,9 +16,18 @@
 /// and never synthesized into an answer.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChannelFault {
-    Truncated { bound: usize },
+    Truncated {
+        bound: usize,
+    },
     Undecodable,
     Closed,
+    /// The dialing peer is not root, refused at the accept before any byte.
+    /// The socket is reachable from inside the sandbox by construction, so
+    /// this is the check that refuses an elected tool rather than a name it
+    /// could not resolve.
+    WrongPeer {
+        uid: u32,
+    },
 }
 
 /// The two ways service ends, so the composition root branches on a value
@@ -26,7 +35,11 @@ pub enum ChannelFault {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Outcome {
     Left,
-    ChannelClosed,
+    /// The listener itself failed, which ends service. **A connection closing
+    /// is not this**: admin is per-invocation, so each verb's connection
+    /// closes when the verb answers and the worker accepts again, per
+    /// `weaver-admin-harness-contract` section 4.
+    ListenerFailed,
 }
 
 /// Why adoption refused. Adoption fails only when a set fails: a hygiene call
@@ -49,6 +62,9 @@ impl std::fmt::Display for ChannelFault {
             }
             ChannelFault::Undecodable => write!(f, "octets do not decode to an envelope"),
             ChannelFault::Closed => write!(f, "channel closed"),
+            ChannelFault::WrongPeer { uid } => {
+                write!(f, "dialing peer is uid {uid} and not root")
+            }
         }
     }
 }

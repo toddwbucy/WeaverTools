@@ -13,14 +13,13 @@
 //!
 //! Descriptors are owned types end to end
 //! (`harness-descriptors-owned-types`): a handle that escapes its owner is a
-//! move the borrow checker sees, not an integer copied silently. `adopt`
-//! consumes the `OwnedFd` it is handed, so this compiles:
+//! move the borrow checker sees, not an integer copied silently. `listen`
+//! consumes the listener it is handed, so this compiles:
 //!
 //! ```
-//! use std::os::fd::OwnedFd;
-//! use weaver_harness::{AdoptionFault, Harness, OrganBinaries};
-//! fn shape(end: OwnedFd, organs: OrganBinaries) {
-//!     let _adopted: Result<Harness, AdoptionFault> = Harness::adopt(end, organs);
+//! use weaver_harness::{AdoptionFault, CoordinationListener, Harness, OrganBinaries};
+//! fn shape(listener: CoordinationListener, organs: OrganBinaries) {
+//!     let _served: Result<Harness, AdoptionFault> = Harness::listen(listener, organs);
 //! }
 //! ```
 //!
@@ -78,7 +77,7 @@
 //! fn name(outcome: Outcome) -> &'static str {
 //!     match outcome {
 //!         Outcome::Left => "left",
-//!         Outcome::ChannelClosed => "channel_closed",
+//!         Outcome::ListenerFailed => "listener_failed",
 //!     }
 //! }
 //! ```
@@ -107,7 +106,8 @@ mod tools;
 pub use assembly::{Prompt, assemble};
 pub use authorship::{Author, licensed};
 pub use channel::{
-    ChildEnd, DecodeChannel, FIRST_ORGAN_DESCRIPTOR, OrganChannel, place_child_ends,
+    ChildEnd, CoordinationListener, DecodeChannel, FIRST_ORGAN_DESCRIPTOR, OrganChannel,
+    bind_coordination, place_child_ends,
 };
 pub use engine::Ports;
 pub use failure::{AdoptionFault, ChannelFault, Outcome, UnlicensedMessage};
