@@ -173,7 +173,17 @@ pub enum ChannelFault {
     Truncated,
     /// This crate's own write exceeds the bound it asserts on its reads.
     TooLarge { bytes: usize },
-    /// The peer is gone or the socket refused the operation.
+    /// The peer closed its end.
+    ///
+    /// On a `SOCK_SEQPACKET` socket a shutdown peer reads as a zero-length
+    /// datagram rather than as an error, so it is distinguished here rather
+    /// than left to look like a message. Every message in this protocol is a
+    /// JSON envelope and none is empty, so a zero-length read is unambiguous.
+    /// Folding this into [`ChannelFault::Malformed`] would make an orderly
+    /// shutdown indistinguishable from a peer sending garbage, and the process
+    /// would answer a refusal into a closed socket and exit as a failure.
+    PeerGone,
+    /// The socket refused the operation.
     Unusable,
     /// The octets read are not an envelope.
     Malformed,
@@ -246,6 +256,9 @@ fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
         // buffer is the truncation report.
         return Err(ChannelFault::Truncated);
     }
+    if read == 0 {
+        return Err(ChannelFault::PeerGone);
+    }
     buffer.truncate(read);
     Ok(buffer)
 }
@@ -264,4 +277,80 @@ pub fn lifecycle_from_owned(end: OwnedFd) -> LifecycleChannel {
 #[doc(hidden)]
 pub fn decode_from_owned(end: OwnedFd) -> DecodeSocket {
     DecodeSocket { end }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use nix::sys::socket::{AddressFamily, SockFlag, SockType, socketpair};
+
+    fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
+        socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("a socketpair")
+    }
+
+    /// **A read returning `MSG_TRUNC` is a channel fault and never a message.**
+    ///
+    /// A message larger than the envelope bound is written directly to the
+    /// socket, bypassing this crate's own send-side bound, which is exactly the
+    /// case a misbehaving or mismatched peer produces. The receiver must fault
+    /// rather than hand a silently shortened body to a parser.
+    ///
+    /// Perturbation: delete the `read > buffer.len()` branch from `recv_octets`
+    /// and this test fails, because the oversized message then returns as a
+    /// truncated body instead of a fault. Watched under exactly that removal.
+    #[test]
+    fn an_oversized_message_is_a_fault_rather_than_a_short_body() {
+        let (writer, reader) = seqpacket_pair();
+        let socket = decode_from_owned(reader);
+
+        let oversized = vec![b'x'; MAX_ENVELOPE_BYTES + 1];
+        // Written past this crate's own send bound on purpose: the receive
+        // obligation is what is under test, not the send assertion.
+        send(writer.as_raw_fd(), &oversized, MsgFlags::empty()).expect("the datagram is sent");
+
+        assert_eq!(
+            socket.recv_octets(),
+            Err(ChannelFault::Truncated),
+            "an oversized datagram faults rather than arriving short"
+        );
+    }
+
+    /// A message of exactly the bound fits and reads clean, which is what makes
+    /// the buffer exactly the bound rather than the bound plus one.
+    #[test]
+    fn a_message_of_exactly_the_bound_reads_clean() {
+        let (writer, reader) = seqpacket_pair();
+        let socket = decode_from_owned(reader);
+
+        let exact = vec![b'y'; MAX_ENVELOPE_BYTES];
+        send(writer.as_raw_fd(), &exact, MsgFlags::empty()).expect("the datagram is sent");
+
+        assert_eq!(socket.recv_octets(), Ok(exact));
+    }
+
+    /// **This crate asserts the bound on its own writes too.** A writer that can
+    /// exceed the receiver's buffer produces the truncation the receiver is
+    /// obliged to fault on.
+    ///
+    /// Perturbation: delete the `body.len() > MAX_ENVELOPE_BYTES` branch from
+    /// `DecodeSocket::send_octets` and this test fails. Watched under exactly
+    /// that removal.
+    #[test]
+    fn a_write_past_the_bound_refuses_before_it_reaches_the_socket() {
+        let (writer, _reader) = seqpacket_pair();
+        let socket = decode_from_owned(writer);
+        let oversized = vec![b'z'; MAX_ENVELOPE_BYTES + 1];
+        assert_eq!(
+            socket.send_octets(&oversized),
+            Err(ChannelFault::TooLarge {
+                bytes: MAX_ENVELOPE_BYTES + 1
+            })
+        );
+    }
 }

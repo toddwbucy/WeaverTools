@@ -83,10 +83,15 @@ fn serve(inherited: Inherited) -> ExitCode {
                 }
                 continue;
             }
-            Err(_) => {
-                // The peer is gone. The harness owns this process's lifetime,
-                // so a closed channel is an exit rather than a retry.
+            Err(ChannelFault::PeerGone) => {
+                // The harness owns this process's lifetime, so a closed channel
+                // is an orderly exit rather than a retry or a failure.
                 return ExitCode::SUCCESS;
+            }
+            Err(_) => {
+                // The socket refused the read. Nothing can be answered over a
+                // channel that cannot be read, so this exits rather than loops.
+                return ExitCode::FAILURE;
             }
         };
 
