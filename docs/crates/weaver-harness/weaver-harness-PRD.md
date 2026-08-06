@@ -6,6 +6,14 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-05, second this date, the socket inversion and the admin recut.
+Per the operator: any socket connecting to the harness is an internal connection, so
+this crate binds the coordination socket inside the agent's sandbox and listens,
+where it adopted a handed end before, and refuses every dialing peer that is not
+root. Admin is a role and a crate the operator runs with root rather than a service
+account, so the long-lived party in an agent's lifetime is the init system. Section 2
+carries the bind, section 4 carries the seam's authentication case, and the Spec's
+section 2.3 carries the mechanism.
 **Revised:** 2026-08-05, loop 0 named as the running agent service. Per the operator:
 loop 0 is not a document set and not a milestone but the object itself, the sealed
 agent that boots under its unit and holds its sockets, which is why it is seated in
@@ -52,15 +60,18 @@ worker as a transient unit carrying the agent's `User=`, so the process begins a
 `weaver-<name>` and never holds anything above it. Everything the harness does happens
 under that identity, and the descriptors arrive into it.
 
-**Custody rests on possession and not on the receiving identity.** An earlier reading
-of this section had the worker begin under the admin principal, receive its
-descriptors, and drop, and it argued the ordering of that drop. The drop is retired:
-under the delegation above there is no interval in which worker code runs as anything
-but the agent, so the ordering has no subject. What survives, and what this paragraph
-is kept to say, is the reason the ordering never mattered. A descriptor passed over a
-Unix socket is a capability rather than a permission, the kernel runs no permission
-check at the receiving end, and possession is what custody rests on, so the worker
-appends to a file its own uid could not open. A charter that says only that the
+**Custody rests on possession of the passed descriptor and not on the receiving
+identity.** An earlier reading of this section had the worker begin under the admin
+principal, receive its descriptors, and drop, and it argued the ordering of that
+drop. The drop is retired: the init system starts the unit at the agent identity, so
+there is no interval in which worker code runs as anything else and the ordering has
+no subject. What survives, and what this paragraph is kept to say, is the reason the
+ordering never mattered. A descriptor passed over a Unix socket is a capability
+rather than a permission, the kernel runs no permission check at the receiving end,
+and possession is what custody of the sink rests on, so the worker appends to a file
+its own uid could not open. This is the sink's mechanism and not the coordination
+channel's, which authenticates by credential since the inversion. A charter that
+says only that the
 harness runs as the agent leaves the mechanism protecting the trace unexplained,
 which is why it is stated rather than assumed.
 
@@ -69,11 +80,17 @@ which is why it is stated rather than assumed.
 **Loop 0 is the running agent service, per the operator's ruling of 2026-08-05.**
 It is not a document set, not a milestone to reach and pass, and not a loop a
 builder supplies. It is the object itself: the thing that boots under its unit,
-comes up as the statically provisioned agent identity, adopts the coordination
-end it was handed, creates the unnamed pairs its organs are reached over, and
-sits there being one sealed agent. **It binds nothing and listens on nothing**:
-the named socket is admin's, this crate adopts one end and makes the rest, which
-is why nothing here is dialable. **That is why it is seated in this crate
+comes up as the statically provisioned agent identity, binds the coordination
+socket inside its own sandbox and listens on it, creates the unnamed pairs its
+organs are reached over, and sits there being one sealed agent. **It binds
+exactly one name and listens on exactly one socket**, per the inversion ruling
+of 2026-08-05: any socket connecting to the harness is an internal connection,
+so the coordination socket lives inside the sandbox and this crate is the party
+that creates it. It is dialable by construction and the credential check is what
+refuses, root or refused, per `weaver-admin-harness-contract` section 2, where
+the earlier form's unreachability did the refusing and could not tell an elected
+tool from the worker. Nothing else here is dialable: the organ pairs have no
+names. **That is why it is seated in this crate
 directly and not in the loop container.** The container under `Loops/` holds the
 agent's internal logic, which the running loop 0 service executes, and a loop 0
 filed beside those documents would read as one more supplied loop rather than as
@@ -171,10 +188,13 @@ them unloads it. Activity is the only lifecycle layer the harness owns.
 **The lifecycle transition goes to `weaver-admin`, and the fan-out inside it comes
 back.** Authorizing a load or unload, opening the record, starting and stopping the
 worker unit, rolling back what its own acts built, and supervising worker and gate
-lifetimes are `weaver-admin`'s, which is long-lived where the harness is mortal. The
-harness is one of the things a load assembles, not the thing that assembles it, and
-it cannot drive the early steps of its own creation, because the worker spawn and the
-descriptor handoff run before the harness is running as the harness at all. What the
+lifetimes are `weaver-admin`'s, which the operator runs with root, one invocation per
+verb, per that charter's section 1 as recut on 2026-08-05. The party that is
+long-lived where the harness is mortal is the init system, which holds the unit and
+outlives every invocation that drives it. The harness is one of the things a load
+assembles, not the thing that assembles it, and it cannot drive the early steps of
+its own creation, because the worker spawn runs before the harness is running as the
+harness at all. What the
 harness does own is the interior of the enter and leave directives: admin holds one
 seam and no channel to the SPU or the gate, per `weaver-admin-PRD` section 6, so the
 harness fans admin's directive out along its own seams, collects each organ's
@@ -237,10 +257,10 @@ own contract, per apex 5.1, and this crate gains a seam rather than a dependency
 The harness is party to four seams, and every one of them is governed by a named
 contract, per apex 5.1. Three cross a process line and are Unix sockets that
 authenticate their peer, by credential where the channel has a name and by possession
-where it has none. The coordination seam is a connected pair with no name and
-authenticates by possession, per `weaver-admin-harness-contract` section 2. Which case
-the other two fall under follows from process topology, which no document in the set
-states yet.
+where it has none. The coordination seam is a named socket this crate binds and
+authenticates by credential, root or refused, per `weaver-admin-harness-contract`
+section 2 as of the inversion of 2026-08-05. The other two are unnamed pairs this
+crate creates at its organ forks and authenticate by possession.
 
 The fourth is the seam to `weaver-trace`. It crosses no process line, so it is a
 library boundary tagged `link` rather than `socket`, and it authenticates nothing
@@ -265,8 +285,8 @@ The fault-carrier ruling of 2026-08-01 retired the alert exchange: with one
 outbound path carrying every event in order to the operator's sink, a second
 carrier for the same fact earned nothing. The harness authors the fault like every
 other event, no run blocks on anything downstream of the emission, and the
-operator's tooling keys on the fault fields and comes back through the operator
-surface with a verb, per `weaver-admin-operator-contract` section 6.
+operator's tooling keys on the fault fields and comes back by running a verb, per
+`weaver-admin-operator-contract` section 6.
 
 The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and links
 `weaver-trace` as a member of its own domain under a contract. It links no other
@@ -365,9 +385,10 @@ silently, because the trace is measurement data and a silently partial account
 renders a plausible and wrong story of the turn.
 
 **Custody is structural, not policy.** The stream's sink is opened by
-`weaver-admin` under its own principal, per `weaver-admin-operator-contract`
-section 3, and the record the stream accumulates lives on the operator's side of
-it. So the record is readable there with no harness involved, replay and audit are
+`weaver-admin` under root, the role's principal, per
+`weaver-admin-operator-contract` section 3, and the record the stream accumulates
+lives on the operator's side of it. So the record is readable there with no
+harness involved, replay and audit are
 the operator's acts over the operator's storage, per `weaver-admin-PRD` sections 7
 and 8, and the agent that produced it holds nothing of its own.
 
