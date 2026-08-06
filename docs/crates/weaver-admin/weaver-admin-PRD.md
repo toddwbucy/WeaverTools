@@ -16,10 +16,12 @@ fleet, and the agent's uid is statically provisioned, a dynamic identity exclude
 two independent reasons. The sandbox's properties are required and its directives stay
 the operator's. Section 10's descriptor-route cell reopens with the sudo measurement
 attached.
-**Revised:** 2026-08-06, the register clears. The act of 2026-08-05 merged, so its
-landed entries leave section 11 per that section's own leave-when-landed rule, and
-what remains there is the two the act did not land: the `AgentState` gap owed to
-`weaver-types` and the recut of the merged code. No other change.
+**Revised:** 2026-08-06, section 11's landed entries leave and **the register is not
+empty.** The act of 2026-08-05 merged, so the entries it landed leave that section
+per its own leave-when-landed rule, and two entries the act did not land remain
+outstanding there: the `AgentState` gap owed to `weaver-types` and the recut of the
+merged code. Read the section for what is owed rather than this note. No other
+change.
 **Revised:** 2026-08-05, second this date, the admin recut and the socket inversion,
 one act of three rulings. Per the operator: there is no `weaver-admin-user` and no
 service account. The role is what the operator, who holds root, assumes at install,
