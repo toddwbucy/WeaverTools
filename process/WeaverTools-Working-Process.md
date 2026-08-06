@@ -387,11 +387,11 @@ documents alone.
 
 **A phase one re-entry is under way as of 2026-08-05, deliberate and named,**
 which is the mechanism this section describes rather than an exception to it.
-The operator ruled three things in one act: any socket connecting to the harness
+The operator ruled three things in one act. Any socket connecting to the harness
 is an internal connection, so the harness binds and admin dials and the
-credential check refuses every peer that is not root; `weaver-admin-user` is
+credential check refuses every peer that is not root. `weaver-admin-user` is
 struck, admin being a role the operator assumes with root and a crate that role
-runs one invocation per verb; and loop 0's composition leaves the `Loops/`
+runs one invocation per verb. And loop 0's composition leaves the `Loops/`
 shelf, the loop taxonomy reaching loop 1 and above and never loop 0. The act
 branches from `76102ad` as `docs/admin-recut-socket-inversion` and touches the
 admin pair, both contracts admin is party to, the harness pair, the types pair,
