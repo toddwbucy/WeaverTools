@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-06, `lifecycle-refusal` gains `StateNotObservable`. The
+`weaver-admin` code act found sections 2 and 3 of `weaver-admin-Spec` jointly
+unsatisfiable for `show` and `list`: the answer must be one of the floor's two
+enums, and the only fitting answer cases carry an `AgentState` the corpus has no
+source for. The case is the honest third door, per section 4.2, and it retires
+with the observation exchange that closes the gap.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -621,6 +627,7 @@ pub enum LifecycleRefusal {
     BindFailed,
     OrganRefused { organ: RefusingOrgan, reason: Box<LifecycleRefusal> },
     ActivityNotAtRest,
+    StateNotObservable,
 }
 
 pub struct EnterPayload {
@@ -701,6 +708,26 @@ refused as an organ.
 this crate.** Whether the SPU's admit cases needed a type of their own was the
 cell `weaver-spu-PRD` section 10 held, and the naming ruling settled it as
 extension: they are loop 0 refusals because they refuse loop 0's directives.
+
+**`StateNotObservable` joins the set on 2026-08-06, and it refuses a question
+rather than an act.** Every other case here says an act could not be performed.
+This one says an answer cannot be formed: the party that knows an agent's
+lifecycle state is the harness, which holds the run, and
+`weaver-admin-harness-contract` section 3 charters enter, leave, and stop with
+no observation, so nothing asks it. Admin can read residency from the init
+system and residency is not lifecycle state, per `weaver-admin-Spec` section 3,
+so `show` and `list` refuse with this case rather than construct an `AgentState`
+the corpus has no source for.
+
+**It is a marker with a scheduled death, which is why it is a refusal and not a
+new answer.** Growing `AgentState` to carry a service manager's vocabulary would
+settle this crate's vocabulary from another party's representation, which gate
+G2 forbids, and adding an answer case for residency would make permanent a shape
+the observation exchange is expected to replace. A refusal states the absence
+plainly, reaches an operator as a typed value rather than as an empty result,
+and leaves exactly one thing to delete when the exchange lands. **Whoever
+charters that exchange retires this case in the same act**, and a corpus still
+carrying it afterwards has left a marker for a gap that closed.
 
 ### 4.3 The encoding
 

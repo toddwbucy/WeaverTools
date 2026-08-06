@@ -1,131 +1,28 @@
-//! conforms: admin-publishes-only-on-ready
-//! conforms: admin-validate-starts-no-process
 //! conforms: admin-stop-answer-relayed-unchanged
-//! conforms: admin-one-exchange-in-flight-per-agent
+//! conforms: admin-rollback-logs-its-account
 //!
-//! The verbs, the fleet state, and rollback, per `weaver-admin-Spec` section
-//! 3. **Admin authorizes and does not execute**: what a run does after the
-//! enter directive is the harness's, and every verb here stops at the seam.
+//! The verbs' shared parts, per `weaver-admin-Spec` section 3: what a failed
+//! load leaves standing, the rollback that walks it, and the stop relay.
+//! **Admin authorizes and does not execute**: what a run does after the enter
+//! directive is the harness's, and every verb stops at the seam.
 
-use std::collections::BTreeMap;
-use std::sync::Mutex;
-
-#[cfg(test)]
 use weaver_types::LifecycleAnswer;
-use weaver_types::{AgentName, AgentState, AgentSummary, LifecycleRefusal};
 
-/// One agent's entry: the published state and whether a transition holds it.
-#[derive(Debug, Clone)]
-struct Entry {
-    published: AgentState,
-    in_flight: bool,
-}
-
-/// The fleet state: a locked map, one entry per provisioned agent.
-///
-/// **Loaded-and-idle is published only on a ready aggregate and never
-/// earlier**, and a failed anything publishes nothing. This map is where that
-/// holds: one write of the published state per transition and none on any
-/// other path.
-///
-/// **One exchange in flight per agent**, by this lock. The channel's layer
-/// permits concurrency and this crate's contract forbids a second transition
-/// for the same agent, so the serialization is admin's discipline at the fleet
-/// state rather than a property claimed of the wire.
-#[derive(Debug, Default)]
-pub struct Fleet {
-    entries: Mutex<BTreeMap<String, Entry>>,
-}
-
-/// A transition's claim on an agent, released when it drops.
-pub struct Claim<'fleet> {
-    fleet: &'fleet Fleet,
-    agent: String,
-}
-
-impl Fleet {
-    pub fn new(provisioned: impl IntoIterator<Item = String>) -> Self {
-        let entries = provisioned
-            .into_iter()
-            .map(|name| {
-                (
-                    name,
-                    Entry {
-                        published: AgentState::Unloaded,
-                        in_flight: false,
-                    },
-                )
-            })
-            .collect();
-        Fleet {
-            entries: Mutex::new(entries),
-        }
-    }
-
-    /// Takes the agent's entry for a transition, or refuses because one is
-    /// already in flight. A second directive for the same agent refuses rather
-    /// than queueing.
-    pub fn claim(&self, agent: &AgentName) -> Result<Claim<'_>, LifecycleRefusal> {
-        let mut entries = self.entries.lock().expect("fleet state");
-        let entry = entries
-            .get_mut(&agent.0)
-            .ok_or(LifecycleRefusal::NoSuchAgent)?;
-        if entry.in_flight {
-            return Err(LifecycleRefusal::OutOfOrder);
-        }
-        entry.in_flight = true;
-        Ok(Claim {
-            fleet: self,
-            agent: agent.0.clone(),
-        })
-    }
-
-    /// Publishes a state. The only caller is a completed transition.
-    fn publish(&self, agent: &str, state: AgentState) {
-        let mut entries = self.entries.lock().expect("fleet state");
-        if let Some(entry) = entries.get_mut(agent) {
-            entry.published = state;
-        }
-    }
-
-    pub fn state_of(&self, agent: &AgentName) -> Option<AgentState> {
-        let entries = self.entries.lock().expect("fleet state");
-        entries.get(&agent.0).map(|e| e.published.clone())
-    }
-
-    pub fn summaries(&self) -> Vec<AgentSummary> {
-        let entries = self.entries.lock().expect("fleet state");
-        entries
-            .iter()
-            .map(|(name, entry)| AgentSummary {
-                name: AgentName(name.clone()),
-                state: entry.published.clone(),
-            })
-            .collect()
-    }
-}
-
-impl Claim<'_> {
-    /// Publishes loaded-and-idle. **Called only on a ready aggregate**: every
-    /// other outcome leaves the claim to drop with nothing published.
-    pub fn publish_loaded(&self) {
-        self.fleet.publish(&self.agent, AgentState::Idle);
-    }
-
-    /// Publishes provisioned-and-unloaded, after a completed unload.
-    pub fn publish_unloaded(&self) {
-        self.fleet.publish(&self.agent, AgentState::Unloaded);
-    }
-}
-
-impl Drop for Claim<'_> {
-    fn drop(&mut self) {
-        let mut entries = self.fleet.entries.lock().expect("fleet state");
-        if let Some(entry) = entries.get_mut(&self.agent) {
-            entry.in_flight = false;
-        }
-    }
-}
+// **The fleet map retired with the service account on 2026-08-06.**
+//
+// A per-invocation crate has nowhere to keep a map across verbs, and the map
+// is not missed for what it truly knew: whether an agent's unit is running is
+// a question the init system answers authoritatively, per Spec section 3, and
+// a map of admin's own would be a second account of a fact the process
+// manager already holds.
+//
+// **What the in-flight flag held is delegated rather than dropped.** Starting
+// a transient unit whose name already exists fails at the init system, so two
+// concurrent loads of one agent cannot both start a worker. Two concurrent
+// unloads reach a worker that answers leave once and refuses the second by
+// the channel's own ordering. Neither race is prevented by a lock of this
+// crate's, and the honest statement is that the ordering is delegated to the
+// two parties that already serialize: the process manager and the worker.
 
 /// What a load left standing, walked in reverse by the rollback.
 #[derive(Debug, Default, Clone)]
@@ -182,16 +79,18 @@ where
 
 /// **`stop` is a conveyance and its answer is a relay.**
 ///
-/// Reachable only from this module's tests today, because the floor's `Stop`
-/// carries no agent name and the operator surface therefore has no target to
-/// convey it to - the routing gap named at the composition root. The relay's
-/// rule is written and watched here so it does not have to be rediscovered
-/// when the contract's next opening restores the route.
 /// The harness's answer returns to the operator as received: admin holds no
 /// opinion about which, because authorizing a stop and deciding what a stop
 /// found are different acts, and the second is the harness's. A relay that
 /// translated the answer would be admin ruling on a run it does not conduct.
-#[cfg(test)]
+///
+/// **This was `#[cfg(test)]` until 2026-08-06 and is now on the verb's own
+/// path.** The routing gap it waited on was the operator surface having no
+/// target to convey a stop to, since the floor's `Stop` carries no agent name.
+/// The recut closed that from the other side: the operator names the agent as
+/// an argument and the invocation dials that agent's own socket, so the
+/// directive reaches one worker by construction. A relay reachable only from
+/// its own test pinned nothing, which is why it moved rather than staying.
 pub fn relay_stop_answer(from_harness: LifecycleAnswer) -> LifecycleAnswer {
     from_harness
 }
@@ -262,46 +161,12 @@ mod tests {
         assert_eq!(full.len(), 3, "the reverse order is walked whole");
     }
 
-    /// A second transition for the same agent refuses rather than queueing,
-    /// and the claim releases when it drops.
-    #[test]
-    fn one_transition_in_flight_per_agent() {
-        let fleet = Fleet::new(["alpha".to_string(), "beta".to_string()]);
-        let name = AgentName("alpha".to_string());
-        let claim = fleet.claim(&name).expect("first claim");
-        assert!(
-            matches!(fleet.claim(&name), Err(LifecycleRefusal::OutOfOrder)),
-            "a second directive for the same agent refuses"
-        );
-        // A different agent is unaffected: the lock is per entry.
-        let other = fleet.claim(&AgentName("beta".into())).expect("other agent");
-        drop(other);
-        drop(claim);
-        assert!(fleet.claim(&name).is_ok(), "the claim released on drop");
-    }
-
-    /// **Loaded-and-idle is published only on a ready aggregate.** A claim
-    /// that drops without publishing leaves the state as it was.
-    #[test]
-    fn a_failed_transition_publishes_nothing() {
-        let fleet = Fleet::new(["alpha".to_string()]);
-        let name = AgentName("alpha".to_string());
-        assert_eq!(fleet.state_of(&name), Some(AgentState::Unloaded));
-        {
-            let _claim = fleet.claim(&name).expect("claim");
-            // The transition fails: nothing is published.
-        }
-        assert_eq!(
-            fleet.state_of(&name),
-            Some(AgentState::Unloaded),
-            "a failed anything publishes nothing"
-        );
-        {
-            let claim = fleet.claim(&name).expect("claim");
-            claim.publish_loaded();
-        }
-        assert_eq!(fleet.state_of(&name), Some(AgentState::Idle));
-    }
+    // **The two fleet-map tests retired here on 2026-08-06** with the map they
+    // read: one asserted a second transition refused while one was in flight,
+    // and one asserted a failed transition published nothing. Both properties
+    // survive, delegated per this module's head, and neither is this crate's
+    // to hold any more. A test kept over a deleted mechanism would assert the
+    // mechanism still existed.
 
     /// The stop answer is relayed unchanged: admin holds no opinion about what
     /// a stop found.

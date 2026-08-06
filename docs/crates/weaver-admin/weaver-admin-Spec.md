@@ -278,11 +278,22 @@ signal and nothing more. Reading it as loaded-and-idle would also contradict the
 charter's own rule that the state publishes only on a ready aggregate, since a
 unit is running well before any aggregate returns.
 
-**So `show` and `list` report residency, and say so.** The answer carries the
-manager's own three values under the manager's own names, `active`, `failed`, and
-`inactive`, the last covering the several cases section 6's measurement records it
-cannot separate. They are carried rather than translated because a translation is
-where the invention would enter.
+**So `show` and `list` refuse, with the residency they could read named in the
+refusal's own prose rather than dressed as a state.** They return
+`StateNotObservable`, the floor case `weaver-types-Spec` section 4.2 adds for
+exactly this, because the answer they would otherwise carry does not exist: the
+two fitting cases of `lifecycle-answer` both take an `AgentState`, and this crate
+has no source for one. What admin can read is the manager's three values under
+the manager's own names, `active`, `failed`, and `inactive`, the last covering
+the several cases section 6's measurement records it cannot separate. That is
+residency, it is carried rather than translated because a translation is where
+the invention would enter, and it is not what these verbs were asked for.
+
+**The refusal is the smallest honest answer available and it is temporary.**
+An operator running `show` learns that the state is not observable from here
+rather than receiving a value the program guessed, and the refusal is typed, so
+tooling keys on it rather than parsing prose. It goes when the observation
+exchange lands, and the record below is what a reviewer checks to find it gone.
 
 **Those three values do not map onto `AgentState`, and that is a gap this act
 names rather than closes.** The floor enumerates `Absent`, `Unloaded`, `Idle`, and
@@ -303,10 +314,17 @@ the party that holds the run, and `weaver-admin-harness-contract` section 3
 charters enter, leave, and stop with no observation. One exchange answers both this
 gap and that one, so section 11 files a single open election rather than two.
 
+**The record's instrument is a test rather than review, because the refusal is
+checkable.** `show` on a provisioned agent returns `StateNotObservable` and
+constructs no `AgentState`, watched to fail when the verb is made to answer with
+a state read from the unit, which is the invention this clause forbids. Review
+could confirm the absence of a mapping and could not confirm that the verb
+refuses rather than returning something plausible.
+
 ```graph
 node: admin-residency-is-not-lifecycle-state
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-admin
@@ -839,6 +857,19 @@ exists, per its section 4.1 step 6. A retry loop with no ceiling is what this
 election exists to refuse, because a worker that never binds would otherwise
 hang the operator's terminal rather than answering.
 
+**The connect is nonblocking, and this is a requirement of the bound rather
+than a preference.** Measured 2026-08-06: with the listener's backlog full, a
+blocking `connect` on an `AF_UNIX` socket was still blocked after three seconds
+against a one second ceiling, while the same connect on a nonblocking socket
+returned at once with the transient error a retry is for. **A full backlog is
+reachable rather than theoretical**, because the harness serves one connection
+at a time, so a second verb arriving while one is in flight meets exactly that.
+A blocking connect would therefore leave the bound stated here and unheld,
+which is the failure the election exists to prevent, reached by a different
+road. The flag is cleared once the connection is made, because the enter
+directive and the answer it waits for are blocking work and a nonblocking read
+would report an empty channel as a fault rather than waiting.
+
 ```graph
 node: admin-dial-retries-within-a-bound
 kind: assertion
@@ -1169,9 +1200,10 @@ domains.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-one records in all as of
-the recut of 2026-08-05, fifteen tagged for review, eleven for perturbation,
-three for the manifest, and two for a compile pin. The elections take nodes
+would sit apart from the prose that earns it. Thirty-one records in all,
+fourteen tagged for review, twelve for perturbation, three for the manifest,
+and two for a compile pin. The residency record moved from review to
+perturbation on 2026-08-06, when the code act gave it a test. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable, and two review tags come from the sorting rather than from an
 election: the verb's stopping short of any seam and the existence checks no
