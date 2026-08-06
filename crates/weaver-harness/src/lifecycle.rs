@@ -12,7 +12,7 @@
 //! conforms: harness-left-follows-drain
 //! conforms: harness-announce-after-record
 //! conforms: harness-dumpable-flag-cleared
-//! conforms: harness-coordination-end-close-on-exec
+//! conforms: harness-binds-coordination-socket-first
 //! conforms: harness-loop-zero-takes-no-abstraction
 //! conforms: harness-spawns-no-thread
 //! conforms: harness-organ-forks-on-worker-lifetime-thread
@@ -30,7 +30,7 @@
 //! organ forks run on a thread whose lifetime is the worker's, which is the
 //! timing guarantee the gate's parent-death backing relies on.
 
-use std::os::fd::{AsRawFd, OwnedFd};
+use std::os::fd::OwnedFd;
 use std::path::PathBuf;
 
 use weaver_trace::{Kind, Payload, Recorder, RunOrdinal, SessionRef, Subsystem, TurnClose};
@@ -40,7 +40,7 @@ use weaver_types::{
 };
 
 use crate::authorship::Author;
-use crate::channel::{DecodeChannel, OrganChannel};
+use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 use crate::failure::{AdoptionFault, ChannelFault, Outcome};
 
 /// Where the organ binaries live: a deployment fact supplied by the
@@ -114,7 +114,7 @@ struct GateChannel {
 /// The hub. Adopts the coordination end the unit's declared open delivered,
 /// performs the worker's hygiene as sets and not checks, and serves loop 0.
 pub struct Harness {
-    coordination: OrganChannel,
+    coordination: CoordinationListener,
     organs: OrganBinaries,
     state: ChannelState,
 }
@@ -128,11 +128,13 @@ impl Harness {
     /// attachable. Clearing the dumpable flag reparents the proc entries to
     /// root and refuses a same-uid attach, which is what closes the one route
     /// apex 5.1's possession-as-authentication argument assumes shut.
-    pub fn adopt(coordination: OwnedFd, organs: OrganBinaries) -> Result<Self, AdoptionFault> {
-        set_close_on_exec(&coordination)?;
+    pub fn listen(
+        coordination: CoordinationListener,
+        organs: OrganBinaries,
+    ) -> Result<Self, AdoptionFault> {
         clear_dumpable()?;
         Ok(Harness {
-            coordination: OrganChannel::adopt(coordination),
+            coordination,
             organs,
             state: ChannelState::BeforeEnter,
         })
@@ -146,45 +148,62 @@ impl Harness {
     /// answers `OutOfOrder` and is not queued.
     pub fn serve(mut self) -> Result<Outcome, ChannelFault> {
         loop {
-            let (envelope, sink) = match self.coordination.recv_with_descriptor() {
-                Ok(received) => received,
-                // **A closure or fault observed from the entered position
-                // unwinds before it returns.** The arms a leave would release
-                // are standing, and dropping the run would leave the recorder
-                // undrained, the gate un-lowered, and the SPU un-released -
-                // orphans whose parent is still alive, which the gate's
-                // parent-death backing does not cover.
-                Err(ChannelFault::Closed) => {
-                    self.unwind_if_entered();
-                    return Ok(Outcome::ChannelClosed);
-                }
+            // **One connection at a time**, which is what holds the contract's
+            // one-exchange-in-flight rule now that no fleet map does.
+            let connection = match self.coordination.accept_root() {
+                Ok(connection) => connection,
+                // A peer that is not root never reaches an exchange. The
+                // listener stands and the next dial is accepted, because
+                // refusing one caller is not a reason to stop serving the one
+                // party that may call.
+                Err(ChannelFault::WrongPeer { .. }) => continue,
+                // The listener itself failed, which is the one thing that ends
+                // service without a leave.
                 Err(fault) => {
                     self.unwind_if_entered();
                     return Err(fault);
                 }
+            };
+            match self.serve_connection(connection) {
+                Ok(Some(outcome)) => return Ok(outcome),
+                // **The connection closed and the run did not.** Admin is
+                // per-invocation, so each verb's connection closes when the
+                // verb answers, and the state of section 3 is held across it,
+                // per `weaver-admin-harness-contract` section 4. Unwinding
+                // here would tear down the run the next verb expects to find.
+                Ok(None) => continue,
+                Err(fault) => {
+                    self.unwind_if_entered();
+                    return Err(fault);
+                }
+            }
+        }
+    }
+
+    /// Serves the directives arriving on one connection. Returns `Some` when
+    /// service ends, and `None` when the connection closed with the run still
+    /// standing.
+    fn serve_connection(
+        &mut self,
+        connection: OrganChannel,
+    ) -> Result<Option<Outcome>, ChannelFault> {
+        loop {
+            let (envelope, sink) = match connection.recv_with_descriptor() {
+                Ok(received) => received,
+                // The verb answered and admin closed. Ordinary, and not an
+                // ending.
+                Err(ChannelFault::Closed) => return Ok(None),
+                Err(fault) => return Err(fault),
             };
             let exchange = envelope.exchange.clone();
             let directive = match envelope.payload {
                 weaver_types::Payload::Directive(directive) => directive,
                 // Anything else on this channel is not a directive this crate
                 // can attribute to an exchange for a refusal to answer.
-                _ => {
-                    self.unwind_if_entered();
-                    return Err(ChannelFault::Undecodable);
-                }
+                _ => return Err(ChannelFault::Undecodable),
             };
-            // A send failure inside dispatch is a fault below the exchange
-            // layer like any other, and the state it may already have entered
-            // is released the same way.
-            let answered = match self.dispatch(exchange, directive, sink) {
-                Ok(answered) => answered,
-                Err(fault) => {
-                    self.unwind_if_entered();
-                    return Err(fault);
-                }
-            };
-            if let Some(outcome) = answered {
-                return Ok(outcome);
+            if let Some(outcome) = self.dispatch_on(&connection, exchange, directive, sink)? {
+                return Ok(Some(outcome));
             }
         }
     }
@@ -201,8 +220,9 @@ impl Harness {
     /// ends. The exchange the directive opened is carried through, because an
     /// answer closes the exchange the directive named rather than one this
     /// crate invents.
-    fn dispatch(
+    fn dispatch_on(
         &mut self,
+        connection: &OrganChannel,
         exchange: ExchangeId,
         directive: LifecycleDirective,
         sink: Option<OwnedFd>,
@@ -212,26 +232,26 @@ impl Harness {
                 match self.enter(payload, sink) {
                     Ok(run) => {
                         self.state = ChannelState::Entered(Box::new(run));
-                        self.answer(&exchange, LifecycleAnswer::Ready)?;
+                        self.answer(connection, &exchange, LifecycleAnswer::Ready)?;
                     }
                     Err(EnterFailure::BeforeLoad(refusal)) => {
                         // Nothing was authored and nothing stood up, so the
                         // stream is clean and the position holds.
-                        self.refuse(&exchange, refusal)?;
+                        self.refuse(connection, &exchange, refusal)?;
                     }
                     Err(EnterFailure::AfterLoad(run, refusal)) => {
                         // The bracket stands, so the run stays in place for
                         // the leave that unwinds it. Dropping it here would
                         // orphan what forked and leave the bracket unclosed.
                         self.state = ChannelState::Entered(run);
-                        self.refuse(&exchange, refusal)?;
+                        self.refuse(connection, &exchange, refusal)?;
                     }
                 }
                 Ok(None)
             }
             (ChannelState::Entered(run), LifecycleDirective::Leave) => {
                 if run.turn_in_flight.is_some() {
-                    self.refuse(&exchange, LifecycleRefusal::ActivityNotAtRest)?;
+                    self.refuse(connection, &exchange, LifecycleRefusal::ActivityNotAtRest)?;
                     return Ok(None);
                 }
                 let mut run = match std::mem::replace(&mut self.state, ChannelState::Left) {
@@ -244,12 +264,12 @@ impl Harness {
                 };
                 match leave(&mut run) {
                     Ok(()) => {
-                        self.answer(&exchange, LifecycleAnswer::Left)?;
+                        self.answer(connection, &exchange, LifecycleAnswer::Left)?;
                     }
                     // Everything admitted did not reach the stream, so the
                     // answer says so rather than claiming a clean close.
                     Err(refusal) => {
-                        self.refuse(&exchange, refusal)?;
+                        self.refuse(connection, &exchange, refusal)?;
                     }
                 }
                 Ok(Some(Outcome::Left))
@@ -276,14 +296,14 @@ impl Harness {
                     // A stop at rest is a clean close and not a refusal.
                     None => LifecycleAnswer::AtRest,
                 };
-                self.answer(&exchange, answer)?;
+                self.answer(connection, &exchange, answer)?;
                 Ok(None)
             }
             // Every other pairing is out of order for the position. The left
             // position is terminal, so a directive of any kind arriving after
             // a leave answers the same refusal.
             _ => {
-                self.refuse(&exchange, LifecycleRefusal::OutOfOrder)?;
+                self.refuse(connection, &exchange, LifecycleRefusal::OutOfOrder)?;
                 Ok(None)
             }
         }
@@ -487,12 +507,16 @@ impl Harness {
     /// Closes the exchange the directive opened. Admin opens every
     /// coordination exchange, so the answer carries the identity that arrived
     /// rather than a fresh one this crate numbered.
+    /// The answer goes to the connection the directive arrived on, not to a
+    /// channel this crate holds: the listener is what it holds, and each verb
+    /// brings its own connection.
     fn answer(
         &mut self,
+        connection: &OrganChannel,
         exchange: &ExchangeId,
         answer: LifecycleAnswer,
     ) -> Result<(), ChannelFault> {
-        self.coordination.send(&OrganEnvelope {
+        connection.send(&OrganEnvelope {
             exchange: exchange.clone(),
             position: Position::Close,
             payload: weaver_types::Payload::Answer(answer),
@@ -501,10 +525,11 @@ impl Harness {
 
     fn refuse(
         &mut self,
+        connection: &OrganChannel,
         exchange: &ExchangeId,
         refusal: LifecycleRefusal,
     ) -> Result<(), ChannelFault> {
-        self.coordination.send(&OrganEnvelope {
+        connection.send(&OrganEnvelope {
             exchange: exchange.clone(),
             position: Position::Close,
             payload: weaver_types::Payload::Refusal(refusal),
@@ -641,18 +666,6 @@ fn exchange(
     }
 }
 
-fn set_close_on_exec(end: &OwnedFd) -> Result<(), AdoptionFault> {
-    // SAFETY: fcntl on a descriptor this process owns.
-    let rc =
-        unsafe { nix::libc::fcntl(end.as_raw_fd(), nix::libc::F_SETFD, nix::libc::FD_CLOEXEC) };
-    if rc == -1 {
-        return Err(AdoptionFault::CloseOnExecUnset {
-            errno: std::io::Error::last_os_error().raw_os_error().unwrap_or(0),
-        });
-    }
-    Ok(())
-}
-
 fn clear_dumpable() -> Result<(), AdoptionFault> {
     // SAFETY: prctl with PR_SET_DUMPABLE affects only this process.
     let rc = unsafe { nix::libc::prctl(nix::libc::PR_SET_DUMPABLE, 0, 0, 0, 0) };
@@ -673,6 +686,21 @@ mod tests {
     use super::*;
     use std::fs::File;
     use weaver_trace::Kind;
+
+    /// A bound listener for tests that exercise `dispatch_on` directly. The
+    /// listener is never accepted on: these tests supply the connection, and
+    /// the field exists because the type does.
+    fn test_listener() -> CoordinationListener {
+        static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let dir =
+            std::env::temp_dir().join(format!("weaver-harness-unit-{}-{n}", std::process::id()));
+        // Removed first: a directory left by an earlier run would hold a
+        // stale socket, and the bind would refuse a name nothing is using.
+        let _ = std::fs::remove_dir_all(&dir);
+        let _ = std::fs::create_dir_all(&dir);
+        crate::channel::bind_coordination(&dir.join("c.sock")).expect("bind")
+    }
 
     fn test_exchange() -> ExchangeId {
         ExchangeId {
@@ -742,7 +770,7 @@ mod tests {
         let (run, _spare, _sink_path) = entered_run(Some("t-1"));
         let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
-            coordination: harness_end,
+            coordination: test_listener(),
             organs: OrganBinaries {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
@@ -750,7 +778,12 @@ mod tests {
             state: ChannelState::Entered(Box::new(run)),
         };
         harness
-            .dispatch(test_exchange(), LifecycleDirective::Stop, None)
+            .dispatch_on(
+                &harness_end,
+                test_exchange(),
+                LifecycleDirective::Stop,
+                None,
+            )
             .expect("stop dispatches");
 
         // The close is in the record.
@@ -782,9 +815,8 @@ mod tests {
     #[test]
     fn closure_from_entered_unwinds_the_run() {
         let (run, _spare, sink_path) = entered_run(None);
-        let (harness_end, _peer) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
-            coordination: harness_end,
+            coordination: test_listener(),
             organs: OrganBinaries {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
@@ -819,9 +851,8 @@ mod tests {
     #[test]
     fn no_seat_is_granted_while_a_turn_is_in_flight() {
         let (run, _spare, _path) = entered_run(Some("t-1"));
-        let (harness_end, _peer) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
-            coordination: harness_end,
+            coordination: test_listener(),
             organs: OrganBinaries {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
@@ -836,9 +867,8 @@ mod tests {
         // ...and an idle one does, so the guard is the turn and not the
         // position.
         let (idle, _spare, _path) = entered_run(None);
-        let (harness_end, _peer) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
-            coordination: harness_end,
+            coordination: test_listener(),
             organs: OrganBinaries {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
@@ -858,7 +888,7 @@ mod tests {
         let (run, _spare, _sink_path) = entered_run(None);
         let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
         let mut harness = Harness {
-            coordination: harness_end,
+            coordination: test_listener(),
             organs: OrganBinaries {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
@@ -866,7 +896,12 @@ mod tests {
             state: ChannelState::Entered(Box::new(run)),
         };
         harness
-            .dispatch(test_exchange(), LifecycleDirective::Stop, None)
+            .dispatch_on(
+                &harness_end,
+                test_exchange(),
+                LifecycleDirective::Stop,
+                None,
+            )
             .expect("stop");
         let peer = peer_end.into_channel();
         assert!(matches!(

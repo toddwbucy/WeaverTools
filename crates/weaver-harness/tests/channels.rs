@@ -251,16 +251,29 @@ fn adoption_clears_the_dumpable_flag() {
     // SAFETY: the child adopts, reads the flag, reports, and _exits.
     match unsafe { nix::unistd::fork() }.expect("fork") {
         nix::unistd::ForkResult::Child => {
-            let (r, _w) = nix::unistd::pipe().expect("pipe");
-            let adopted = Harness::adopt(
-                r,
+            // A fresh directory per run: a pid-named one outlives the run
+            // that made it, and a recycled pid would then meet a stale
+            // socket and fail the bind.
+            let dir = std::env::temp_dir().join(format!(
+                "weaver-dumpable-{}-{:?}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_nanos())
+                    .unwrap_or(0)
+            ));
+            let _ = std::fs::remove_dir_all(&dir);
+            let _ = std::fs::create_dir_all(&dir);
+            let listener = weaver_harness::bind_coordination(&dir.join("c.sock")).expect("bind");
+            let constructed = Harness::listen(
+                listener,
                 OrganBinaries {
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
             );
             let dumpable = unsafe { nix::libc::prctl(nix::libc::PR_GET_DUMPABLE, 0, 0, 0, 0) };
-            let ok = (adopted.is_ok() && dumpable == 0) as u8;
+            let ok = (constructed.is_ok() && dumpable == 0) as u8;
             let _ = nix::unistd::write(report_w.as_fd(), &[ok]);
             unsafe { nix::libc::_exit(0) };
         }
@@ -269,49 +282,16 @@ fn adoption_clears_the_dumpable_flag() {
             let mut byte = [0u8; 1];
             let _ = nix::unistd::read(report_r.as_fd(), &mut byte);
             let _ = nix::sys::wait::waitpid(child, None);
-            assert_eq!(
-                byte[0], 1,
-                "adopt clears the dumpable flag and the adopted end is flagged"
-            );
+            assert_eq!(byte[0], 1, "construction clears the dumpable flag");
         }
     }
 }
 
-/// The adopted coordination end carries close-on-exec after adoption: the same
-/// property at the exec rather than at the attach, reaching an end this crate
-/// was handed rather than one it created.
-#[test]
-fn adopted_end_is_close_on_exec() {
-    let (report_r, report_w) = nix::unistd::pipe().expect("pipe");
-    // SAFETY: as above.
-    match unsafe { nix::unistd::fork() }.expect("fork") {
-        nix::unistd::ForkResult::Child => {
-            // A pipe end stands in for the unit's declared open: an owned
-            // descriptor this process did not create with the flag.
-            let (r, _w) = nix::unistd::pipe().expect("pipe");
-            let raw = r.as_raw_fd();
-            unsafe { nix::libc::fcntl(raw, nix::libc::F_SETFD, 0) };
-            let adopted = Harness::adopt(
-                r,
-                OrganBinaries {
-                    spu: "/nonexistent/spu".into(),
-                    gate: "/nonexistent/gate".into(),
-                },
-            );
-            let flags = unsafe { nix::libc::fcntl(raw, nix::libc::F_GETFD) };
-            let ok = (adopted.is_ok() && flags != -1 && (flags & nix::libc::FD_CLOEXEC) != 0) as u8;
-            let _ = nix::unistd::write(report_w.as_fd(), &[ok]);
-            unsafe { nix::libc::_exit(0) };
-        }
-        nix::unistd::ForkResult::Parent { child } => {
-            drop(report_w);
-            let mut byte = [0u8; 1];
-            let _ = nix::unistd::read(report_r.as_fd(), &mut byte);
-            let _ = nix::sys::wait::waitpid(child, None);
-            assert_eq!(
-                byte[0], 1,
-                "the adopted end is flagged by the set at adoption"
-            );
-        }
-    }
-}
+// **The adopted end's close-on-exec test retired on 2026-08-06** with the
+// assertion it read, `harness-coordination-end-close-on-exec`. There is no
+// adopted end: this crate creates the coordination listener itself with the
+// flag in its creating call, per `weaver-harness-Spec` section 2.3, and every
+// accepted connection carries it from `accept4`. A test kept over a deleted
+// mechanism would assert that the mechanism still existed. The property that
+// replaced it, that the socket this crate creates is flagged atomically, is
+// held by `pairs_are_close_on_exec_from_creation` above.
