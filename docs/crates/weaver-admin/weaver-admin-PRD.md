@@ -1010,12 +1010,13 @@ of 2026-08-05 and neither landed by it.
   representation. **Settled by:** the observation exchange
   `weaver-admin-Spec` section 11 names, which fixes what can be observed before
   the floor is asked to enumerate it.
-- **The merged code of `weaver-admin` and `weaver-harness`.** The coordination
-  channel's direction, the operator surface's retirement, the fleet map's
-  removal, and the harness constructor's move from `Harness::adopt` to
-  `Harness::listen` with the bound listener it now takes, each contradict what
-  `main` builds. Thirteen conformance headers in that code cite assertions this
-  act retired, which is the divergence stated as a number a check can read. This
+- **The merged code of `weaver-admin` and `weaver-harness`.** Four things
+  contradict what `main` builds: the coordination channel's direction, the
+  operator surface's retirement, the fleet map's removal, and the harness
+  constructor's move from `Harness::adopt` to `Harness::listen` with the bound
+  listener it now takes. Thirteen conformance headers in that code cite
+  assertions this act retired, which is the divergence stated as a number a
+  check can read. This
   is the expected shape of a phase one re-entry, per Working Process section 2,
   and it is named as owed rather than left for a reader to discover by compiling.
   **Settled by:** the code acts, which follow this act rather than riding it.
