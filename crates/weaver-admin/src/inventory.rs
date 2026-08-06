@@ -20,6 +20,8 @@ use weaver_types::{AgentConfig, AgentName, ConfigErrorKind, LifecycleRefusal, Tr
 pub struct Boundary {
     /// The agent's uid, resolved from the validated name.
     pub agent_uid: u32,
+    /// The admin principal's uid, for the custody half of the sink boundary.
+    pub admin_uid: u32,
     /// The agent's groups, for the search-bit reasoning below.
     pub agent_gids: Vec<u32>,
     /// The agent's home, which must exist.
@@ -110,10 +112,23 @@ pub fn take_inventory(
         return Err(LifecycleRefusal::BoundaryUnverified);
     }
 
-    // **The one check held mechanically rather than by review**: the sink
-    // path's containing directory denies the agent uid the search bit, so the
-    // kernel refuses the lookup before any mode on the file is consulted.
-    if agent_can_traverse(sink_directory(&config.trace_sink), boundary) {
+    // **The sink boundary has two halves and neither implies the other.**
+    //
+    // Denial: the containing directory denies the agent uid the search bit, so
+    // the kernel refuses the lookup before any mode on the file is consulted.
+    //
+    // Custody: the directory is owned by root or by the admin principal. A
+    // directory owned by some third principal at mode 0700 satisfies the
+    // denial and defeats the custody, because that owner can chmod, replace,
+    // or remove the file admin opened - and custody of where the record leaves
+    // the system is admin's by charter. Ownership does not by itself deny a
+    // traversal that mode grants, and denial does not by itself establish
+    // custody, so both are checked.
+    let directory = sink_directory(&config.trace_sink);
+    if agent_can_traverse(directory, boundary) {
+        return Err(LifecycleRefusal::BoundaryUnverified);
+    }
+    if !admin_holds_custody(directory, boundary) {
         return Err(LifecycleRefusal::BoundaryUnverified);
     }
 
@@ -148,6 +163,19 @@ fn sink_present_or_creatable(sink: &TraceSink) -> bool {
         // operator's must already be listening.
         TraceSink::Socket { path } => path.exists(),
     }
+}
+
+/// Whether the sink directory is held by a principal whose custody the charter
+/// recognizes: root, or the admin principal itself. Any other owner controls
+/// the file admin opened, whatever the mode currently reads.
+pub fn admin_holds_custody(directory: &Path, boundary: &Boundary) -> bool {
+    use std::os::unix::fs::MetadataExt;
+    let Ok(meta) = std::fs::metadata(directory) else {
+        // A directory this crate cannot resolve establishes no custody, the
+        // same reading the traversal half takes for the same reason.
+        return false;
+    };
+    meta.uid() == 0 || meta.uid() == boundary.admin_uid
 }
 
 /// Whether the agent uid could traverse into the directory: it is the owner,
@@ -200,6 +228,7 @@ mod tests {
     fn boundary(home: &std::path::Path, agent_uid: u32) -> Boundary {
         Boundary {
             agent_uid,
+            admin_uid: nix::unistd::getuid().as_raw(),
             // The agent is deliberately NOT in the directory's group: an agent
             // that were a member would be admitted by the group search bit,
             // and correctly so - the boundary the operator draws is exactly
@@ -295,6 +324,54 @@ mod tests {
             "an agent that owns the directory can restore the search bit itself"
         );
         let _ = std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700));
+    }
+
+    /// **The sink boundary has two halves and neither implies the other.** A
+    /// directory owned by a third principal at mode 0700 denies the agent its
+    /// traversal and still defeats custody, because that owner controls the
+    /// file admin opened.
+    ///
+    /// Perturbation: drop the custody check from the inventory and the
+    /// third-party case loads. Watched under exactly that removal.
+    #[test]
+    fn a_third_party_owned_sink_directory_refuses_the_load() {
+        let root = scratch("custody");
+        let sink_dir = root.join("sink");
+        std::fs::create_dir_all(&sink_dir).expect("sink dir");
+        std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o750)).expect("mode");
+        let home = root.join("home");
+        std::fs::create_dir_all(&home).expect("home");
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".to_string());
+
+        // This process owns the directory, so it holds custody and the load
+        // is admitted: the denial half already passes at 0750.
+        let held = boundary(&home, 65533);
+        assert!(
+            take_inventory(&name, &config_source(&sink_dir), &allow, &held).is_ok(),
+            "an admin-owned directory holds custody"
+        );
+
+        // Now present the same directory to a boundary whose admin principal
+        // is somebody else. The agent still cannot traverse it - nothing about
+        // the directory changed - and custody is now a third party's, which is
+        // exactly the case the traversal check alone admits.
+        let third_party = Boundary {
+            agent_uid: 65533,
+            admin_uid: 65532,
+            agent_gids: vec![65531],
+            home: home.clone(),
+        };
+        assert!(
+            !agent_can_traverse(&sink_dir, &third_party),
+            "the denial half still passes, which is what makes this case reachable"
+        );
+        let refused = take_inventory(&name, &config_source(&sink_dir), &allow, &third_party);
+        assert!(
+            matches!(refused, Err(LifecycleRefusal::BoundaryUnverified)),
+            "a directory a third principal owns refuses the load, got {refused:?}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     /// The allow-list is consulted before anything else is touched, and the

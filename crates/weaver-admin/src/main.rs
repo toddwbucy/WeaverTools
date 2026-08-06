@@ -187,6 +187,9 @@ impl Supervisor {
             .ok_or(LifecycleRefusal::BoundaryUnverified)?;
         let boundary = inventory::Boundary {
             agent_uid: user.uid.as_raw(),
+            // The admin principal is this process: custody is held by whoever
+            // opens the sink, and that is this crate under its own account.
+            admin_uid: nix::unistd::getuid().as_raw(),
             agent_gids: agent_gids(&identity),
             home: user.dir.clone(),
         };
