@@ -263,27 +263,43 @@ obligation lands now.
 
 ## 3. The verbs, the agent's state, and rollback
 
-**The state is read from the init system rather than held, per the recut of
+**Residency is read from the init system rather than held, per the recut of
 2026-08-05.** A per-invocation crate has nowhere to keep a map across verbs, and
-the map is not missed: whether an agent's unit is running is a question the init
-system answers authoritatively, through the same command-line interface section
-6 uses, where a map of admin's own would be a second account of a fact the
-process manager already holds. The charter's two published states are read from
-that answer, a running unit rendering loaded-and-idle and an absent one
-provisioned-and-unloaded, both as the floor's `AgentState` for the `State` and
-`Agents` answers. What publishing means is now the log entry of section 8 and the
-answer returned, so the charter's rule that nothing is published before a ready
-aggregate lands as the rule that a load which did not reach ready leaves no
-running unit behind, which the rollback below enforces.
+the map is not missed for what it truly knew: whether an agent's unit is
+running is a question the init system answers authoritatively, through the same
+command-line interface section 6 uses, where a map of admin's own would be a
+second account of a fact the process manager already holds.
+
+**What that answer is not is the agent's lifecycle state, and conflating them
+would be this crate inventing a fact.** A running unit may be one that has not
+yet answered enter, one serving a turn, or one unwinding after leave, and apex
+section 6's states distinguish exactly those. The unit's presence is a residency
+signal and nothing more. Reading it as loaded-and-idle would also contradict the
+charter's own rule that the state publishes only on a ready aggregate, since a
+unit is running well before any aggregate returns.
+
+**So `show` and `list` report residency, and say so.** The answer carries whether
+a unit is running, absent, or in a state the manager could not report, and it
+does not claim the lifecycle's four states from a source that cannot distinguish
+them. `AgentState`'s richer set is reachable only from the party that holds the
+run, which is the harness, and no exchange asks it for one:
+`weaver-admin-harness-contract` section 3 charters enter, leave, and stop and no
+observation. Filed as an open election in section 11 with that exchange as its
+settler, rather than answered here by a mapping that would read true and be
+false.
 
 ```graph
-node: admin-state-read-from-init-system
+node: admin-residency-is-not-lifecycle-state
 kind: assertion
 tag: review
 
 edge: asserts
 from: weaver-admin
-to: admin-state-read-from-init-system
+to: admin-residency-is-not-lifecycle-state
+
+edge: grounds
+from: admin-residency-is-not-lifecycle-state
+to: axiom-harness-integrates-by-the-loop
 ```
 
 **Two invocations for one agent are ordered by the init system, and the
@@ -1059,7 +1075,7 @@ and the record written is admin's own and sits wholly inside admin's domain.
 Apex section 5.5 binds what crosses between domains and does not reach what an
 organ does inside one, so an ordering held inside a verb grounds in nothing.
 The same reading leaves the load's step ordering, the inventory's one function,
-and the state read from the init system unedged, each of them a sequence this
+and the residency read from the init system unedged, each of them a sequence this
 crate holds or a fact it consults rather than a reconciliation between two
 domains.
 
@@ -1087,7 +1103,7 @@ the one exchange in flight per agent, the last four retiring with the acts and
 the map they described. Moved: the credential check, to
 `weaver-harness-Spec` section 2.3, where the accept now happens. Added: the
 root check and the answer-and-status agreement of section 2, the dial's bound
-of section 7, the state read from the init system of section 3, and the state
+of section 7, the residency read from the init system of section 3, and the state
 ask that follows a failed dial, of section 6. The unit's declared open inverted
 to a declared absence rather than retiring, so it is neither. A rebuild of the
 graph reads this movement as the act's assertion
@@ -1150,6 +1166,12 @@ directive is asserted where the run happens.
 
 Each names what settles it, and none is this Spec's to settle alone.
 
+- **How an agent's lifecycle state is observed.** Section 3 reports residency
+  because that is what the init system can answer, and apex section 6's four
+  states are the harness's to know. **Settled by:** an observation exchange on
+  `weaver-admin-harness-contract`, which charters enter, leave, and stop and no
+  query, so the answer arrives with that contract's next opening rather than
+  from a mapping this Spec could invent.
 - **The session-close cue and the enter question.** Charter section 10's two
   cells, settled by the human's ruling and the memory-and-state round
   respectively, carried here only so this list is complete.

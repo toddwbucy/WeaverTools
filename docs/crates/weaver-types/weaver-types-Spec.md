@@ -343,9 +343,12 @@ to: types-unknown-key-refuses
 ## 3. Peer identity and the authorization predicate
 
 The identity type, the rule it is judged against, and the one policy function, per
-charter section 2.2, drawn by the two seams that admit an outside principal: the
-gate's client socket, governed by `weaver-gate-world-contract`, and the operator
-surface, governed by `weaver-admin-operator-contract`.
+charter section 2.2, drawn by the two seams that judge a peer by credential: the
+gate's client socket, governed by `weaver-gate-world-contract`, and the
+coordination socket the harness binds, governed by
+`weaver-admin-harness-contract`. The second was the operator surface until the
+recut of 2026-08-05 retired it, and the coordination seam took its place when the
+inversion gave that seam a name and a credential to check.
 
 ```rust
 pub struct PeerIdentity {

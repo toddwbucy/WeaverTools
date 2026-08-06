@@ -433,8 +433,35 @@ worker's first act.** Per the inversion ruling of 2026-08-05 and
 `weaver-admin-harness-contract` section 2, any socket connecting to the harness
 is an internal connection: the composition root creates a `SOCK_SEQPACKET`
 socket with close-on-exec in the creating call, binds it to the per-agent name
-the operator's configuration places inside the agent's own runtime directory,
-and listens, before any directive can arrive. It runs before the serving loop
+inside the unit's own runtime directory, and listens, before any directive can
+arrive.
+
+**The bind never unlinks, and the runtime directory is why it does not have to.**
+A Unix socket's pathname outlives the process that bound it, so a bind against a
+name a dead worker left would fail. The directory this socket lives in is created
+by the init system at the unit's start and removed with the unit, per
+`weaver-admin-systemd-contract` sections 2 and 5, so the name cannot be inherited
+from a previous run and there is nothing to clear. **A bind that finds its name
+occupied is a fault and never a thing to remove**, because the only ways a name is
+occupied are that a live worker holds it, in which case unlinking would strand the
+running agent's supervisor, or that the manager did not honor the directory, in
+which case the program's assumption is wrong and it should say so rather than
+repair. The instrument is review, no test in this crate being able to produce a
+manager that misbehaves.
+
+```graph
+node: harness-bind-never-unlinks
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-bind-never-unlinks
+
+edge: grounds
+from: harness-bind-never-unlinks
+to: axiom-floor-is-vocabulary-behavior-is-socket
+``` It runs before the serving loop
 because an admin invocation dials immediately after starting the unit and a
 name not yet bound is the race the ordering exists to prevent, admin's bounded
 retry covering what remains. `Harness::adopt` becomes `Harness::listen`, taking
@@ -1326,9 +1353,9 @@ floor links and the trace seam, read against the graph under gate H2. No async
 runtime, no logging crate, and no HTTP client in the resolved external tree,
 by the build-time `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Eighteen of the
-forty-seven carry a `grounds` edge and one of the eighteen carries two, so the edges
-number nineteen: nine to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
+**Which invariant each claim serves, and why most serve none.** Nineteen of the
+forty-eight carry a `grounds` edge and one of the nineteen carries two, so the edges
+number twenty: ten to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
 `axiom-harness-integrates-by-the-loop`, three to
 `axiom-join-key-travels-with-the-work`, and three to
 `axiom-contract-is-a-complete-interface`. **`axiom-organ-and-submodule` takes
@@ -1397,12 +1424,12 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. One record is the exception
 and sits at the end of this section, the doctest pinning of the three
 path-taking shapes, whose argument is nowhere else and whose general
-prohibition is section 2.3's. Forty-seven records in all as of the inversion of
+prohibition is section 2.3's. Forty-eight records in all as of the inversion of
 2026-08-05, which retired the adopted end's close-on-exec, that end no longer
-existing, and added the coordination bind and the accept's credential check,
-both of section 2.3. Twenty come from this section's sorting with the four
-walks counted in and twenty-seven from the elections outside it, the elections
-taking nodes because gate H1 would
+existing, and added the coordination bind, the accept's credential check, and
+the bind's refusal to unlink, all three of section 2.3. Twenty come from this
+section's sorting with the four walks counted in and twenty-eight from the
+elections outside it, the elections taking nodes because gate H1 would
 otherwise leave the largest decisions in this Spec untraceable. Two of the
 twenty carry a review tag rather than a mechanical one, the path-taking
 prohibition and the child handoff's unconditional flag clear, each being the

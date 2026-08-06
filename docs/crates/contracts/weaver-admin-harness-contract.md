@@ -406,7 +406,8 @@ the counterexample having inverted.
 **Drawn from `weaver-trace`:** nothing. No event kind, envelope field, or payload
 shape crosses this seam, and this contract names no field of the record's envelope.
 
-**The five definitions land in `weaver-types` and are owed by this act.**
+**The definitions land in `weaver-types` and were owed by the act that wrote this
+section, four of them, the fifth having left with `harness-alert`.**
 `weaver-types-PRD` section 4 rules that wire vocabulary is absent on demand and that
 the shared representation arrives when the first socket contract is written. This is
 that contract, so the demand exists now and the definitions belong to the floor rather
@@ -462,11 +463,18 @@ section 11's register.
   statement about admin being an organ rather than a statement about alerts.
 - `weaver-admin-PRD` section 10. The descriptor cell is unchanged in count, because one
   pair still carries the seam, and unchanged in its exit condition.
-- The G4 union grows from three values to five, because the duplex rewrite of this
-  contract draws `organ-envelope` and `harness-alert` where the simplex form drew
-  three. The count of contracts is unchanged, both crates remain party to one, and an
-  earlier form of this line said the union was unchanged by reading the first fact for
-  the second.
+- The G4 union grew from three values to five with the duplex rewrite of this
+  contract, which drew `organ-envelope` and `harness-alert` where the simplex form
+  drew three. The count of contracts is unchanged, both crates remain party to one,
+  and an earlier form of this line said the union was unchanged by reading the first
+  fact for the second.
+- **The union stands at five again by a different route, as of 2026-08-05.** The
+  fault-carrier ruling of 2026-08-01 retired `harness-alert` and left four, and the
+  inversion of this act adds `peer-identity`, the identity the harness reads at
+  every accept. No definition is owed to the floor by either move: `peer-identity`
+  is defined at `weaver-types-PRD` section 2.2 and `harness-alert`'s definition left
+  that charter with the exchange. The four definitions section 8 lists unfenced are
+  what this contract's own act owed and remain four.
 
 **Three of these landed on 2026-07-31 and are struck rather than deleted, so that a
 reader of an earlier revision can tell a closed item from one that was never there.**

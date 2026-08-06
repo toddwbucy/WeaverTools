@@ -48,8 +48,10 @@ shared. A harness serving many agents would put the regulated behavior of severa
 principals inside one principal, which is the arrangement the architecture exists
 to avoid.
 
-The harness holds control. It holds no substrate storage, binds no listening
-socket, and implements no model of any kind. Model weights are resident in the SPU and
+The harness holds control. It holds no substrate storage, binds no socket work
+arrives on, and implements no model of any kind. The one name it binds is the
+coordination socket admin dials, inward and inside the sandbox, per section 2.
+Model weights are resident in the SPU and
 reached over the decode socket behind a provider interface, so the harness drives
 generation without hosting it.
 
@@ -202,8 +204,13 @@ confirmation, and returns one aggregate. Sequencing the organs is the harness's
 because the seams are, and the previous tree carried roughly four and a half thousand
 lines of multi-agent coordination inside the opposite reading.
 
-**Network ingress goes to `weaver-gate`.** The harness binds no listening socket
-and has no first-contact surface. Work arrives already authenticated.
+**Network ingress goes to `weaver-gate`.** The harness binds no socket the world
+can reach and has no first-contact surface. Work arrives already authenticated.
+**The coordination listener of section 2 is not a counterexample and the
+distinction is the direction.** It faces admin rather than the world, it lives
+inside the agent's sandbox, and it admits root alone, so no work and no external
+principal reaches it. The gate holds the door that faces out and this crate holds
+the one that faces in, which is one door each rather than two owners of one.
 
 **Boundary verification and lifecycle supervision go to `weaver-admin`.** Provisioning
 is the operator's rather than admin's, per `weaver-admin-PRD` section 1, and there is

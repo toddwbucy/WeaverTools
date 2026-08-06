@@ -82,9 +82,21 @@ recut struck.
 
 ## 2. What crosses in, from admin to the init system
 
-**A start ask.** One transient unit for one agent, carrying the agent's `User=` and
-the sandbox properties the operator's template fixes. The unit's name is derived from
+**A start ask.** One transient unit for one agent, carrying the agent's `User=`, the
+sandbox properties the operator's template fixes, and the runtime-directory
+declaration the coordination socket is bound inside. The unit's name is derived from
 the validated agent name and nothing else crosses that could widen it.
+
+**The runtime directory is asked for here because its removal is the answer to a
+stale socket.** A Unix socket's pathname outlives the process that bound it, so a
+worker's death would otherwise leave a name behind and the next start would fail to
+bind it. The program does not solve that by unlinking: a blind unlink races a live
+successor and can remove the socket of the agent it is trying to start. It is solved
+by asking for the directory to be the unit's, created at start and destroyed with the
+unit, so the pathname cannot outlive the worker and no cleanup path exists to get
+wrong. Measured 2026-08-05 against a live manager: the directory is created before
+the unit's first instruction, owned by the unit's user, and removed with its contents
+when the unit stops.
 
 **A stop ask.** One unit named, stopped.
 
@@ -154,9 +166,16 @@ this program should have refused.
 a started unit runs at the declared `User=` from its first instruction with no
 interval at any other identity, that the declared sandbox properties are in force
 before that instruction rather than applied after, that a unit name is unique so a
-second start for a live agent fails rather than racing, that the unit's cgroup
-arrives with the unit and is removed with it, and that a stopped unit stays stopped
-without the program watching it.
+second start for a live agent fails rather than racing, that the unit's runtime
+directory exists before that first instruction and is removed with its contents when
+the unit stops, that the unit's cgroup arrives with the unit and is removed with it,
+and that a stopped unit stays stopped without the program watching it.
+
+**The runtime directory's removal is the load-bearing half of that list**, because
+it is what makes the coordination socket's pathname unable to outlive its worker.
+A manager that left the directory standing would return the stale-path problem to
+the program, and the program's only answers would be an unlink that races or a name
+that changes per run.
 
 **What neither party guarantees.** Nothing here promises that a started unit will
 run to readiness, which is what the dial proves, and nothing here promises anything
