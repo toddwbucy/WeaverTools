@@ -4,6 +4,11 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-06, the fork pins get a home. The G6 sweep found the two
+revisions recorded nowhere in the corpus, delegated by the salvage survey to a
+workspace note under no version control and otherwise present only in the
+archived manifest that checklist item 7 deletes. Section 1.1 now carries both in
+full. No election changes and no record moves.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -194,6 +199,35 @@ path. `cudarc` is caret-pinned rather than exact, so Cargo unifies this crate's
 device handles with candle's inside one minor line, exactness coming from the
 lock file rather than from a requirement that becomes unsatisfiable the day
 candle raises its floor.
+
+**The pins, recorded here because nowhere in the corpus held them until
+2026-08-06.** `llama-cpp-2` and `llama-cpp-sys-2` both resolve to
+`https://github.com/toddwbucy/llama-cpp-rs` at revision
+`277e4100fd0846efb09d2c18f1b99f30681dcdd8`. `candle-core`, `candle-nn`,
+`candle-transformers`, and `candle-flash-attn` all resolve to
+`https://github.com/toddwbucy/candle` at revision
+`d24381efff07cb2c79419369d74605f112d2cff7`. Both are full revisions rather than
+abbreviations, because an abbreviation is unambiguous only until the repository
+it names grows a collision, and this Spec is the durable record.
+
+**Why the values sit in a Spec at all, which is a question worth answering.** A
+revision is representation and belongs here rather than in the charter. What
+made recording them urgent is that they lived in exactly two places, the
+archived tree's own manifest and a workshop note under no version control, and
+the first of those is what phase two's closing checklist deletes. The survey
+delegated them, saying both pins are named in the workspace's standing notes,
+which was true and is not a home: a note outside every repository is outside
+every gate. The G6 sweep of 2026-08-06 found the delegation and this clause
+closes it. The forks themselves are external and survive the deletion, so what
+was at risk was never the code, only the two numbers that say which commit of
+it this program was built against.
+
+**They are verified at first use and not assumed from this page.** The survey's
+precondition stands: the llama-cpp fork is confirmed to expose the eval-callback
+seam and the candle fork to carry `forward_with_intermediates` at the moment the
+crate first builds against them, per section 7's compile-time pin, because a
+revision recorded in a document and a revision that still does what the document
+claims are two different facts.
 
 ```graph
 node: spu-fork-pins-resolve-as-pinned

@@ -223,8 +223,13 @@ tooling under the rulings of section 3.
 the load-bearing external facts. The llama-cpp fork exposes the eval
 callback seam, guarded in-tree by a compile-fail test. The candle fork
 carries `forward_with_intermediates` for the models the readout needs.
-Both pins are named in the workspace's standing notes and both are
-verified at the moment of first use rather than assumed from this survey.
+Both pins are recorded in full at `weaver-spu-Spec` section 1.1 as of
+2026-08-06 and both are verified at the moment of first use rather than
+assumed from this survey. An earlier form of this clause delegated them to
+the workspace's standing notes, which is a file under no version control and
+so outside every gate, and the G6 sweep of that date closed the delegation:
+the pins are load-bearing external facts and the archived manifest that also
+held them is what checklist item 7 deletes.
 
 ## 5. What the token workflow inherits
 
