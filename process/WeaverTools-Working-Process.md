@@ -404,7 +404,7 @@ owed as code acts after the documents merge.
 What remains from the phase behind: G6 and then item 7, and the G2 and G5
 phase-close sweeps. The graph is owed a rebuild once this act merges, and its
 expected census is stated as a number rather than as a delta so a rebuild can
-detect a change nobody intended: **242 assertion records**, against the 245 the
+detect a change nobody intended: **243 assertion records**, against the 245 the
 2026-08-04 build carried. The movement is this act's and is enumerated at
 `weaver-admin-Spec` section 10 and `weaver-harness-Spec` section 8. A rebuild
 returning any other figure has found either an unlanded edit or an assertion this

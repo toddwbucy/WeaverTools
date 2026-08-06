@@ -141,10 +141,11 @@ to: agent-config
 ```
 
 **The node renamed to `agent-config` on 2026-08-01, the human's ruling and the
-last register entry anywhere.** The artifact is configuration rather than state,
-the agent's state is the trace, and the old `agent-state-file` identifier pointed
-at the wrong artifact. The record above and `weaver-types-PRD` section 2.1 moved
-in one act, and this charter's section 11 register is empty.
+last register entry of that pass.** The artifact is configuration rather than
+state, the agent's state is the trace, and the old `agent-state-file` identifier
+pointed at the wrong artifact. The record above and `weaver-types-PRD` section
+2.1 moved in one act, which emptied section 11's register until the act of
+2026-08-05 filled it again. What that register holds now is section 11's to say.
 
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its
@@ -1026,8 +1027,24 @@ the `weaver-types-PRD` section 2.2 motivating case with the external-boundary
 contracts, the Document Format's state-file clause with that document's v0.5, and
 both `open-items` entries as that list shrank. The last entry, the
 `weaver-types-PRD` section 2.1 rename to `agent-config`, landed on 2026-08-01 on
-the human's ruling, and the register is empty. An entry entering here now enters
-an empty list, which is the state a register earns.
+the human's ruling, and the register stood empty from that date until the act of
+2026-08-05 filled it.
+
+**Where the register stands now, stated because a reader who took the paragraph
+above for the present tense would read two owed items as settled.** Two entries
+of the 2026-08-05 act are owed and outstanding: the `weaver-types` edit for the
+`AgentState` gap, which waits on the observation exchange that settles it, and
+the recut of the merged `weaver-admin` and `weaver-harness` code, which waits on
+this act's merge. They leave this register when they land and not before.
+
+**The entries marked landed are carried until this act merges and then leave,
+which is the leave-when-landed rule applied to an act still open.** Every edit
+this act names landed inside the act itself rather than in a later one, so by
+that rule each should already be gone. They are held because a register that
+emptied itself as its own act proceeded would leave a reviewer nothing to check
+the act against, and the act is what is under review. At the merge they go and
+the two above remain, so a reader after that date finds a register holding
+exactly what is outstanding.
 
 ## 12. Children
 

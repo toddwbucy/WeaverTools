@@ -379,10 +379,33 @@ from: weaver-admin
 to: admin-validate-starts-no-process
 ```
 
-**`unload` runs the charter's three steps.** Direct leave and await the
-aggregate, stop the unit through section 6's interface, publish
-provisioned-and-unloaded. A refusal on leave, `ActivityNotAtRest` above all,
-returns to the operator unchanged and publishes nothing.
+**`unload` runs the charter's three steps, and the third waits on the second.**
+Direct leave and await the aggregate, stop the unit through section 6's
+interface, and answer provisioned-and-unloaded **only once the stop has been
+confirmed**. A refusal on leave, `ActivityNotAtRest` above all, returns to the
+operator unchanged and answers nothing further.
+
+**A stop that is accepted is not a stop that has happened, and this verb waits
+for the difference.** `weaver-admin-systemd-contract` section 4 promises that a
+stop ask is answered when the unit has stopped rather than when the stop was
+accepted, so the ask itself is the confirmation and this Spec elects no timeout
+of its own beside it. What the verb owes is not to run ahead of that answer: a
+stop ask that fails, or that returns over a unit a following state ask still
+finds `active`, refuses with the failure carried and answers no state, because
+an agent reported unloaded while its worker still runs is the one report this
+verb must never produce. Where the stop refuses, the run has already left and
+the unit stands, which the rollback of this section records as an act it could
+not undo, per charter section 5.
+
+```graph
+node: admin-unload-answers-after-confirmed-stop
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-unload-answers-after-confirmed-stop
+```
 
 **`stop` is a conveyance and its answer is a relay.** The operator runs the
 verb, admin dials and opens the stop exchange on the coordination channel, and
@@ -1005,11 +1028,27 @@ none of admin's crossed, watched to fail when any single atomic flag is
 downgraded to a later `fcntl`.
 
 **The fourth walk: a stranger speaks on the coordination channel.** The
-adversary is any process that is not an admin invocation dialing the worker's
-socket. The mechanism is the harness's credential check at accept, root or
-refused, and both the mechanism and its test belong to the crate that performs
-them, per `weaver-harness-Spec` section 2.3, so this crate cites the walk and
-declares no record for it. What this crate owes the walk is the dial itself
+adversary is a process running as the agent's uid, or as any uid on the host
+that is not root, dialing the worker's socket. The mechanism is the harness's
+credential check at accept, root or refused, and both the mechanism and its test
+belong to the crate that performs them, per `weaver-harness-Spec` section 2.3, so
+this crate cites the walk and declares no record for it.
+
+**The check separates root from everything else and does not separate this crate
+from other root processes, which is stated rather than implied.** `SO_PEERCRED`
+yields a uid, so what the harness can know is that its peer holds root, not that
+its peer is `weaver-admin`. Any root process on the host may therefore dial an
+agent's coordination socket and direct its lifecycle. **That is not an
+additional exposure and the reason is worth naming**: a root process already may
+`ptrace` the worker, read and write its memory, replace the binary the unit
+starts, or kill it, so a channel that admitted root adds nothing to what root
+held before it. The boundary this program draws is between the agent and root,
+and it is drawn where the agent cannot cross it. A check that separated admin
+from other root processes would need a credential the operating system does not
+supply at a socket and would defend against a party the trust model already
+trusts, per `weaver-admin-PRD` section 2's statement that the program secures
+the agent against reaching its own record and secures nothing against the
+operator. What this crate owes the walk is the dial itself
 being the only route it takes: no second connection is opened, none is kept
 across verbs, and the connection closes when the verb answers, so a descriptor
 to a running agent's supervisor exists only for the life of one invocation.
@@ -1044,7 +1083,7 @@ no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Ten of the
-thirty carry a `grounds` edge and those ten carry eleven edges, one
+thirty-one carry a `grounds` edge and those ten carry eleven edges, one
 record grounding in two invariants. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
@@ -1059,7 +1098,7 @@ nothing to bound, so those six ground in it. Remove it and the log is still
 NDJSON, the FIFO still opens nonblocking, the inventory still repairs nothing,
 and the identity is still built from the validated name, so those ground in
 nothing.
-**Twenty claims grounding in no invariant is the expected result and not a
+**Twenty-one claims grounding in no invariant is the expected result and not a
 gap**, per Document Format section 4: most of what this Spec elects is a
 rendering, a mode, an ordering, or a route, and representation is what the
 invariants are not about.
@@ -1130,8 +1169,8 @@ domains.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty records in all as of
-the recut of 2026-08-05, fifteen tagged for review, ten for perturbation,
+would sit apart from the prose that earns it. Thirty-one records in all as of
+the recut of 2026-08-05, fifteen tagged for review, eleven for perturbation,
 three for the manifest, and two for a compile pin. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable, and two review tags come from the sorting rather than from an
@@ -1140,7 +1179,7 @@ test reaches are the review halves of splits this section's own bullets take,
 and a divided half counts with the bullet it divided out of, per Document
 Format section 3.
 
-**Ten records retired with the recut, one moved, and five were added, which is
+**Ten records retired with the recut, one moved, and six were added, which is
 the count's whole movement from thirty-six.** Retired: the operator surface's
 six, its stream election, its accept-time refusal, its refusal-by-closure, its
 serial answering, its bounded request line, and its bare wire shapes, each
@@ -1150,8 +1189,9 @@ the one exchange in flight per agent, the last four retiring with the acts and
 the map they described. Moved: the credential check, to
 `weaver-harness-Spec` section 2.3, where the accept now happens. Added: the
 root check and the answer-and-status agreement of section 2, the dial's bound
-of section 7, the residency read from the init system of section 3, and the state
-ask that follows a failed dial, of section 6. The unit's declared open inverted
+of section 7, the residency read from the init system of section 3, the state
+ask that follows a failed dial, of section 6, and the unload's wait on a
+confirmed stop, of section 3. The unit's declared open inverted
 to a declared absence rather than retiring, so it is neither. A rebuild of the
 graph reads this movement as the act's assertion
 delta.
