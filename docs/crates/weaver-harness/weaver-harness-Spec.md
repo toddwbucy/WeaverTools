@@ -434,7 +434,12 @@ worker's first act.** Per the inversion ruling of 2026-08-05 and
 is an internal connection: the composition root creates a `SOCK_SEQPACKET`
 socket with close-on-exec in the creating call, binds it to the per-agent name
 inside the unit's own runtime directory, and listens, before any directive can
-arrive.
+arrive. It runs before the serving loop because an admin invocation dials
+immediately after starting the unit and a name not yet bound is the race the
+ordering exists to prevent, admin's bounded retry covering what remains.
+`Harness::adopt` becomes `Harness::listen`, taking the bound listener rather
+than a handed end, and the earlier declared-open route retires with the party
+that placed it.
 
 **The bind never unlinks, and the runtime directory is why it does not have to.**
 A Unix socket's pathname outlives the process that bound it, so a bind against a
@@ -461,12 +466,7 @@ to: harness-bind-never-unlinks
 edge: grounds
 from: harness-bind-never-unlinks
 to: axiom-floor-is-vocabulary-behavior-is-socket
-``` It runs before the serving loop
-because an admin invocation dials immediately after starting the unit and a
-name not yet bound is the race the ordering exists to prevent, admin's bounded
-retry covering what remains. `Harness::adopt` becomes `Harness::listen`, taking
-the bound listener rather than a handed end, and the earlier declared-open route
-retires with the party that placed it.
+```
 
 ```graph
 node: harness-binds-coordination-socket-first
