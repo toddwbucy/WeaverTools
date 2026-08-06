@@ -17,8 +17,7 @@ fn admin() -> Command {
 /// The suite runs as an ordinary uid, so the root check is reachable exactly
 /// as an operator without root would meet it.
 fn running_as_root() -> bool {
-    // SAFETY: getuid is always safe and never fails.
-    unsafe { nix::libc::getuid() == 0 }
+    nix::unistd::getuid().is_root()
 }
 
 /// **The invocation runs as root or performs nothing.** Authorization is the
@@ -75,14 +74,18 @@ fn a_refusal_writes_one_object_and_exits_non_zero() {
     );
 }
 
-/// **`show` and `list` refuse rather than construct an `AgentState`.** The
-/// party that knows an agent's lifecycle state is the harness and no chartered
-/// exchange asks it, so these verbs report the absence rather than a value the
-/// program guessed.
+/// `show` and `list` refuse, and emit no state or agents object.
 ///
-/// Perturbation: make `show` answer with a state read from the unit's
-/// residency and this test fails, which is the invention Spec section 3
-/// forbids. Watched under exactly that substitution.
+/// **This test does not watch the residency substitution, and saying so is the
+/// point.** The invention Spec section 3 forbids, answering `show` with a
+/// state read from the unit, is carried by
+/// `show_and_list_construct_no_agent_state` in `main.rs`, which tests
+/// `dispatch` directly. This one cannot: the root guard answers before
+/// `dispatch` is reached in an unprivileged suite, so the `show` arm is
+/// unreachable from the binary and this test passed unchanged under that
+/// substitution when it was run. What it does hold is narrower and still worth
+/// holding: these verbs refuse, and no `state` or `agents` object leaves the
+/// binary on any path a non-root operator can reach.
 #[test]
 fn show_and_list_refuse_as_not_observable() {
     if running_as_root() {

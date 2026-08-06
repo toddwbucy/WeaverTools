@@ -36,12 +36,19 @@ pub struct UnitTemplate {
 /// What the init system answers about a unit, per
 /// `weaver-admin-systemd-contract` section 3.
 ///
-/// **Three values, and they separate less than they look.** `Active` and
-/// `Failed` each mean one thing, a running unit and one whose process exited
-/// non-zero. `Inactive` means at least three: a unit that stopped cleanly, one
-/// that never existed, and one whose exec never succeeded. Measured against a
-/// live manager on 2026-08-05. A party reading this learns that a worker is
-/// not running and does not learn why.
+/// **The init system answers three values and this enum carries four.**
+/// `Active`, `Failed`, and `Inactive` are the manager's own, carried under its
+/// own names because a translation is where the invention would enter.
+/// `Unknown` is this crate's and never the manager's: it is what an ask that
+/// itself failed yields, kept distinct so a query that could not run is not
+/// read as an answer that came back.
+///
+/// **The three separate less than they look.** `Active` and `Failed` each mean
+/// one thing, a running unit and one whose process exited non-zero. `Inactive`
+/// means at least three: a unit that stopped cleanly, one that never existed,
+/// and one whose exec never succeeded. Measured against a live manager on
+/// 2026-08-05. A party reading this learns that a worker is not running and
+/// does not learn why.
 ///
 /// **This is residency and not lifecycle state.** Constructing an `AgentState`
 /// from it would be inventing a fact, per Spec section 3.

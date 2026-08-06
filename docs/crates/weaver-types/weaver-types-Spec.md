@@ -627,6 +627,7 @@ pub enum LifecycleRefusal {
     BindFailed,
     OrganRefused { organ: RefusingOrgan, reason: Box<LifecycleRefusal> },
     ActivityNotAtRest,
+    StateNotObservable,
 }
 
 pub struct EnterPayload {

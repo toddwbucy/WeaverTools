@@ -65,6 +65,8 @@ pub fn dial(socket_path: &Path) -> Result<Coordination, ChannelFault> {
     loop {
         match dial_once(socket_path) {
             Ok(connection) => return Ok(connection),
+            // Not a transient absence: the name itself is unusable.
+            Err(ChannelFault::Undecodable) => return Err(ChannelFault::Undecodable),
             Err(fault) => {
                 if Instant::now() >= deadline {
                     return Err(fault);
@@ -83,7 +85,10 @@ fn dial_once(socket_path: &Path) -> Result<Coordination, ChannelFault> {
         None,
     )
     .map_err(|_| ChannelFault::NotDialable)?;
-    let address = UnixAddr::new(socket_path).map_err(|_| ChannelFault::NotDialable)?;
+    // **A path a Unix address cannot be built from is not a race**, so it
+    // returns a fault the caller does not retry: waiting out the ceiling on a
+    // name that can never be valid spends a second to reach the same answer.
+    let address = UnixAddr::new(socket_path).map_err(|_| ChannelFault::Undecodable)?;
     connect(fd.as_raw_fd(), &address).map_err(|_| ChannelFault::NotDialable)?;
     Ok(Coordination { fd, ordinal: 0 })
 }

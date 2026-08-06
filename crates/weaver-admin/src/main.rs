@@ -128,16 +128,14 @@ fn validate(
     Ok(LifecycleAnswer::Validated)
 }
 
-/// The one inventory, called by both `validate` and `load`, so the two cannot
-/// drift.
-fn take_inventory(
-    config: &ServiceConfig,
-    agent: &AgentName,
-) -> Result<inventory::Inventory, LifecycleRefusal> {
-    // **The name is authorized before it reaches the filesystem.** `AgentName`
-    // wraps a bare string, so a name carrying `/` or `..` would otherwise be
-    // interpolated into a config path and traverse out of the directory the
-    // operator placed.
+/// **The name is authorized before it reaches the filesystem**, and every verb
+/// that builds a path from it calls this.
+///
+/// `AgentName` wraps a bare string, so a name carrying `/` or `..` would
+/// otherwise be interpolated into a config path or a socket path and traverse
+/// out of the directory the operator placed. The allow-list is consulted here
+/// too, so what a verb may name has one answer rather than one per verb.
+fn admissible(config: &ServiceConfig, agent: &AgentName) -> Result<(), LifecycleRefusal> {
     if !config.allow_list.admits(agent)
         || agent.0.is_empty()
         || !agent
@@ -147,6 +145,16 @@ fn take_inventory(
     {
         return Err(LifecycleRefusal::NoSuchAgent);
     }
+    Ok(())
+}
+
+/// The one inventory, called by both `validate` and `load`, so the two cannot
+/// drift.
+fn take_inventory(
+    config: &ServiceConfig,
+    agent: &AgentName,
+) -> Result<inventory::Inventory, LifecycleRefusal> {
+    admissible(config, agent)?;
     let identity = inventory::identity_for(agent);
     let source_path = config
         .agent_config_directory
@@ -165,7 +173,9 @@ fn take_inventory(
         // Custody is held by whoever opens the sink, and that is this
         // invocation under root, the role's principal.
         admin_uid: nix::unistd::getuid().as_raw(),
-        agent_gids: agent_gids(&identity),
+        // From the user already resolved above rather than a second lookup of
+        // the same identity.
+        agent_gids: vec![user.gid.as_raw()],
         home: user.dir.clone(),
     };
     inventory::take_inventory(agent, &source, &config.allow_list, &boundary)
@@ -199,7 +209,13 @@ fn load(config: &ServiceConfig, agent: &AgentName) -> Result<LifecycleAnswer, Li
             // **Rollback walks what stands**, and its account is logged.
             let account = verbs::rollback(
                 &standing,
-                || true,
+                // **No leave is directed on this path**, so the account says
+                // so rather than claiming an act nobody performed. A failed
+                // load that entered leaves a run the harness unwinds when its
+                // channel closes, and a rollback that reported a leave it
+                // never sent would put a false act in the one record of the
+                // privileged half of the lifecycle.
+                || false,
                 || unit::stop(&config.unit, &agent.0).is_ok(),
                 || true,
             );
@@ -231,19 +247,22 @@ fn run_load(
 
     // The unit starts bare and binds its own coordination socket as its first
     // act, so nothing is placed into it here.
-    unit::start(&config.unit, &inventory.identity, &agent.0)
-        .map_err(|_| LifecycleRefusal::BindFailed)?;
+    // **A start ask that returns non-zero started nothing**, and the status is
+    // what carries that. Unit-name uniqueness is the concurrency guard
+    // `weaver-admin-systemd-contract` section 5 relies on, so a second load of
+    // a live agent fails here, and a discarded status would let it proceed to
+    // dial the first load's worker.
+    started(unit::start(&config.unit, &inventory.identity, &agent.0))?;
     standing.unit_started = true;
 
     // **The dial races the worker's bind and the bound covers it.** A bound
     // exceeded is not an absent residency, so the refusal consults the unit's
     // state before returning and carries what the manager said.
     let socket_path = config.coordination_socket(&agent.0);
-    let coordination = match channel::dial(&socket_path) {
+    let mut coordination = match channel::dial(&socket_path) {
         Ok(coordination) => coordination,
         Err(_) => return Err(refusal_for_absent_worker(config, &agent.0)),
     };
-    let mut coordination = coordination;
 
     let ordinal = coordination.next_ordinal();
     let envelope = weaver_types::OrganEnvelope {
@@ -279,6 +298,24 @@ fn run_load(
     // no standing end.
 }
 
+/// Whether a start ask started anything.
+///
+/// **A start ask that returns non-zero started nothing**, and the status is
+/// what carries that. Unit-name uniqueness is the concurrency guard
+/// `weaver-admin-systemd-contract` section 5 relies on, so a second load of a
+/// live agent fails here, and a discarded status would let that load proceed
+/// to dial the first load's worker and direct a second enter at it.
+///
+/// It is a function rather than a match inside `run_load` so that the decision
+/// is reachable by a test: discarding the status compiles, so nothing but a
+/// watch catches it.
+fn started(asked: std::io::Result<std::process::ExitStatus>) -> Result<(), LifecycleRefusal> {
+    match asked {
+        Ok(status) if status.success() => Ok(()),
+        _ => Err(LifecycleRefusal::BindFailed),
+    }
+}
+
 /// **A failed dial is followed by a state ask, so a refusal names the right
 /// thing.** A start ask can succeed over a unit that never runs, so the dial's
 /// bound is what proves liveness, and the bound alone would report an absent
@@ -290,8 +327,13 @@ fn run_load(
 /// the value.
 fn refusal_for_absent_worker(config: &ServiceConfig, agent: &str) -> LifecycleRefusal {
     match unit::residency(&config.unit, agent) {
+        // The unit ran and exited non-zero: the worker is not there to bind.
         unit::Residency::Failed => LifecycleRefusal::BindFailed,
-        _ => LifecycleRefusal::NoResidency,
+        // The unit is running and its socket was not reachable, so what failed
+        // is the bind rather than the residency. Reporting no residency here
+        // would name the one thing the manager just said was present.
+        unit::Residency::Active => LifecycleRefusal::BindFailed,
+        unit::Residency::Inactive | unit::Residency::Unknown => LifecycleRefusal::NoResidency,
     }
 }
 
@@ -355,6 +397,10 @@ fn unload(config: &ServiceConfig, agent: &AgentName) -> Result<LifecycleAnswer, 
 /// about which fate the harness reports: authorizing a stop and deciding what
 /// a stop found are different acts, and the second is the harness's.
 fn stop(config: &ServiceConfig, agent: &AgentName) -> Result<LifecycleAnswer, LifecycleRefusal> {
+    // This verb reaches no inventory, so the name check is called directly:
+    // a path is built from the name below, and an unchecked name would
+    // traverse out of the runtime root.
+    admissible(config, agent)?;
     let socket_path = config.coordination_socket(&agent.0);
     let mut coordination =
         channel::dial(&socket_path).map_err(|_| LifecycleRefusal::NoResidency)?;
@@ -413,14 +459,6 @@ fn load_service_config() -> Result<ServiceConfig, String> {
     })
 }
 
-fn agent_gids(identity: &str) -> Vec<u32> {
-    nix::unistd::User::from_name(identity)
-        .ok()
-        .flatten()
-        .map(|user| vec![user.gid.as_raw()])
-        .unwrap_or_default()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -459,6 +497,72 @@ mod tests {
     /// Perturbation: make the `Show` arm answer with a state read from
     /// `unit::residency` and this test fails. Watched under exactly that
     /// substitution.
+    /// **Every verb that builds a path from a name checks the name first.**
+    /// `stop` reaches no inventory, so it calls the shared check directly: a
+    /// name carrying a separator or `..` would otherwise be interpolated into
+    /// the runtime path and traverse out of the root the operator placed.
+    ///
+    /// Perturbation: remove the `admissible` call from `stop` and the
+    /// traversal names below reach `coordination_socket`. Watched under
+    /// exactly that removal.
+    /// **A start ask that returns non-zero started nothing.** The manager
+    /// reports a duplicate unit name that way, which is the concurrency guard
+    /// this crate leans on, so a discarded status would let a second load of a
+    /// live agent dial the first load's worker.
+    ///
+    /// Perturbation: replace `started` with a discard and this test fails.
+    /// Watched under exactly that removal, which compiles, which is why the
+    /// decision is a function rather than a match.
+    #[test]
+    fn a_non_success_start_starts_nothing() {
+        use std::os::unix::process::ExitStatusExt;
+        let ok = std::process::ExitStatus::from_raw(0);
+        assert_eq!(started(Ok(ok)), Ok(()));
+        // The manager's own answer for a duplicate unit name is a non-zero
+        // status, measured 2026-08-05.
+        let refused = std::process::ExitStatus::from_raw(1 << 8);
+        assert_eq!(started(Ok(refused)), Err(LifecycleRefusal::BindFailed));
+        assert_eq!(
+            started(Err(std::io::Error::other("no such tool"))),
+            Err(LifecycleRefusal::BindFailed)
+        );
+    }
+
+    #[test]
+    fn stop_checks_the_name_before_building_a_path() {
+        let config = unread_config();
+        for hostile in ["../../etc", "alpha/../beta", "a/b", "..", ""] {
+            let refused = dispatch(
+                &config,
+                surface::Request::Stop(AgentName(hostile.to_string())),
+            );
+            assert_eq!(
+                refused,
+                Err(LifecycleRefusal::NoSuchAgent),
+                "{hostile:?} is refused before any path is built"
+            );
+        }
+        // And a well-formed name off the allow-list is refused by the same
+        // check, so what a verb may name has one answer.
+        let refused = dispatch(&config, surface::Request::Stop(AgentName("beta".into())));
+        assert_eq!(refused, Err(LifecycleRefusal::NoSuchAgent));
+    }
+
+    /// The shared check admits exactly what the allow-list carries and refuses
+    /// every shape that could leave the directory.
+    #[test]
+    fn the_name_check_is_one_answer_for_every_verb() {
+        let config = unread_config();
+        assert_eq!(admissible(&config, &AgentName("alpha".into())), Ok(()));
+        for bad in ["alpha/", "/alpha", "al pha", "alpha\u{0}", "ALPHA/../x"] {
+            assert_eq!(
+                admissible(&config, &AgentName(bad.to_string())),
+                Err(LifecycleRefusal::NoSuchAgent),
+                "{bad:?} is not admissible"
+            );
+        }
+    }
+
     #[test]
     fn show_and_list_construct_no_agent_state() {
         let config = unread_config();
