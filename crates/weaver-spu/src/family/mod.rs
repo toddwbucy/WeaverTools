@@ -23,6 +23,7 @@
 //!     family: "sparse-example",
 //!     shard_widths: &[1, 4],
 //!     template: "{message}",
+//!     flush: weaver_spu::decoder::backend::FlushMechanism::TruncateToPosition,
 //! };
 //! assert!(SPARSE.shards_across(4));
 //! assert!(!SPARSE.shards_across(2));
@@ -30,6 +31,8 @@
 //! ```
 
 use weaver_types::LifecycleRefusal;
+
+use crate::decoder::backend::FlushMechanism;
 
 /// A family's name, as the artifact header declares it.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -47,6 +50,11 @@ pub struct Declaration {
     /// The template this family renders the harness's canonical messages
     /// through.
     pub template: &'static str,
+    /// **How this family's flush reaches its fixed outcome**, per Spec section
+    /// 4.4. Declared here rather than inferred from a version string, because
+    /// a truncation that returns success while recurrent state stays is the
+    /// silent failure the append-only discipline exists to prevent.
+    pub flush: FlushMechanism,
 }
 
 impl Declaration {
@@ -78,16 +86,19 @@ pub const REGISTRY: &[Declaration] = &[
         family: "llama",
         shard_widths: &[1, 2],
         template: "<|start_header_id|>{role}<|end_header_id|>\n\n{message}<|eot_id|>",
+        flush: FlushMechanism::TruncateToPosition,
     },
     Declaration {
         family: "qwen2",
         shard_widths: &[1, 2],
         template: "<|im_start|>{role}\n{message}<|im_end|>\n",
+        flush: FlushMechanism::TruncateToPosition,
     },
     Declaration {
         family: "gptoss",
         shard_widths: &[1, 2],
         template: "<|start|>{role}<|message|>{message}<|end|>",
+        flush: FlushMechanism::TruncateToPosition,
     },
 ];
 
@@ -194,6 +205,7 @@ mod tests {
             family: "sparse",
             shard_widths: &[1, 4],
             template: "{message}",
+            flush: FlushMechanism::TruncateToPosition,
         };
         assert!(SPARSE.shards_across(1));
         assert!(!SPARSE.shards_across(2), "a bound would admit this");
