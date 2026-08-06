@@ -48,8 +48,13 @@ fn spawn_holding(child_ends: Vec<RawFd>) -> Child {
     // another thread may hold the allocator lock at the moment of the fork, so
     // an allocation inside it can deadlock. Nothing in the closure allocates.
     let mut sources = [0 as RawFd; 8];
-    let count = child_ends.len().min(sources.len());
-    sources[..count].copy_from_slice(&child_ends[..count]);
+    let count = child_ends.len();
+    assert!(
+        count <= sources.len(),
+        "spawn_holding takes at most {} descriptors, got {count}",
+        sources.len()
+    );
+    sources[..count].copy_from_slice(&child_ends);
     unsafe {
         command.pre_exec(move || {
             // Pass one: lift every source clear of the target range.

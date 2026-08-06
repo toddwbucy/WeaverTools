@@ -110,6 +110,12 @@ pub struct Session {
     prefix: Vec<TokenId>,
     capacity: usize,
     opened: bool,
+    /// Set by the close over a backend fault and never cleared. `opened` alone
+    /// cannot carry this: a fresh session and a poisoned one both read as not
+    /// opened, and `open` must refuse the second while serving the first,
+    /// because the poisoned session's backend has been closed and a re-open
+    /// would decode against a closed engine.
+    poisoned: bool,
     flush_mechanism: FlushMechanism,
 }
 
@@ -126,6 +132,7 @@ impl Session {
             prefix: Vec::new(),
             capacity,
             opened: false,
+            poisoned: false,
             flush_mechanism,
         }
     }
@@ -156,6 +163,11 @@ impl Session {
         // rewind the module header forbids.
         if self.opened {
             return Err(DecodeFault::AlreadyOpen);
+        }
+        // A poisoned session is not a fresh one: its backend is closed, so
+        // there is nothing here to open over.
+        if self.poisoned {
+            return Err(DecodeFault::NotOpen);
         }
         if prefix.len() > self.capacity {
             return Err(DecodeFault::Overflow {
@@ -307,6 +319,7 @@ impl Session {
     /// forward. Every later operation answers [`DecodeFault::NotOpen`], which
     /// is the truth: no serviceable prefix stands.
     fn poison(&mut self, fault: DecodeFault) -> DecodeFault {
+        self.poisoned = true;
         self.backend.close();
         self.opened = false;
         self.resident_len = 0;
@@ -674,6 +687,11 @@ mod tests {
             session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel),
             Err(DecodeFault::NotOpen),
             "and the session no longer serves"
+        );
+        assert_eq!(
+            session.open(&[TokenId(1)]),
+            Err(DecodeFault::NotOpen),
+            "and cannot be reopened over its closed backend"
         );
     }
 }

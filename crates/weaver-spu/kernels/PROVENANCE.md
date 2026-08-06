@@ -70,8 +70,8 @@ and `sm_120`, plus the `compute_86` PTX fallback. That is a stronger fact than
 a clean nvcc exit, because it says the code for each target is present in the
 artifact that links rather than merely that the compiler accepted the flags.
 The fatbins on the two machines are identical, so the compiles-and-links column
-is the same fact on both rows: every build emits all four lines, and which line
-a machine can execute is the device-side column's question. The Ada line has no
+is the same fact on both rows: both verified builds emitted all four lines, and
+which line a machine can execute is the device-side column's question. The Ada line has no
 machine behind it and rides on the `cuobjdump` evidence alone.
 
 **No device-side execution has happened on Blackwell.** The kernels are known to
