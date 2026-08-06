@@ -168,6 +168,16 @@ fn sink_present_or_creatable(sink: &TraceSink) -> bool {
 /// Whether the sink directory is held by a principal whose custody the charter
 /// recognizes: root, or the admin principal itself. Any other owner controls
 /// the file admin opened, whatever the mode currently reads.
+/// **The window between this check and the sink's open is not closed here, and
+/// the reason is the trust model rather than an oversight.** The path is
+/// resolved twice, once for this validation and once when the sink is opened,
+/// so a party able to write in the directory could replace the target or
+/// redirect it by symlink between them. Every such party is root or the admin
+/// principal, because the check below is what refuses any other owner, and the
+/// charter secures the agent against reaching its own record while securing
+/// nothing against the operator, who is trusted by construction. Descriptor
+/// relative resolution would close the window against an untrusted writer that
+/// this check has already excluded.
 pub fn admin_holds_custody(directory: &Path, boundary: &Boundary) -> bool {
     use std::os::unix::fs::MetadataExt;
     let Ok(meta) = std::fs::metadata(directory) else {
@@ -335,6 +345,19 @@ mod tests {
     /// third-party case loads. Watched under exactly that removal.
     #[test]
     fn a_third_party_owned_sink_directory_refuses_the_load() {
+        // **Unreachable as root, and skipped rather than asserted anyway.**
+        // A directory this test creates is owned by whoever runs it, and the
+        // custody check admits root by name, so under root the third-party
+        // case cannot be constructed without a second real uid to chown to.
+        // Asserting through it would be a watch that reports on the runner
+        // rather than on the check.
+        if nix::unistd::getuid().is_root() {
+            eprintln!(
+                "SKIP a_third_party_owned_sink_directory_refuses_the_load: run as root, \
+                 so a created directory is root-owned and holds custody by name"
+            );
+            return;
+        }
         let root = scratch("custody");
         let sink_dir = root.join("sink");
         std::fs::create_dir_all(&sink_dir).expect("sink dir");
