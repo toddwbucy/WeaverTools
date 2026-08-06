@@ -26,6 +26,13 @@ path = "src/lib.rs"
 name = "weaver-spu"
 path = "src/main.rs"
 
+# The salvaged build script compiles kernels/transformer.cu, and only when the
+# `cuda` feature is on: it reads CARGO_FEATURE_CUDA and returns without doing
+# anything when that is absent, which is what keeps the no-feature build free of
+# a CUDA toolchain requirement.
+[build-dependencies]
+cc = "1"
+
 [features]
 default = []
 # Each gate names what it buys, per Spec section 1.1. A build with neither

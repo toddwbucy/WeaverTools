@@ -1706,6 +1706,7 @@ dependencies = [
  "candle-core",
  "candle-nn",
  "candle-transformers",
+ "cc",
  "cudarc",
  "half",
  "llama-cpp-2",
