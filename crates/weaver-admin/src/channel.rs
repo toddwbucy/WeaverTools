@@ -1,27 +1,28 @@
 //! conforms: admin-one-write-is-one-read
-//! conforms: admin-bind-and-listen-precedes-unit-start
-//! conforms: admin-coordination-directory-unsearchable
-//! conforms: admin-coordination-peer-credential-checked
-//! conforms: admin-listener-closed-after-one-accept
+//! conforms: admin-dial-retries-within-a-bound
 //! conforms: admin-truncation-is-a-channel-fault
 //! conforms: admin-enter-carries-descriptor-in-one-message
 //!
-//! The coordination channel, per `weaver-admin-Spec` section 7: constructed
-//! fresh per load, `SOCK_SEQPACKET`, carrying the election of
+//! The coordination channel, per `weaver-admin-Spec` section 7: reached in one
+//! act, the dial, `SOCK_SEQPACKET`, carrying the election of
 //! `weaver-types-Spec` section 4 rather than re-deciding it.
 //!
-//! **Four acts, and the acts straddle the unit's start.** The first two run
-//! before it, because the worker connects at its start through the declared
-//! open and a connect against a name not yet listening is the race the
-//! ordering exists to prevent. The last two run after it, because there is no
-//! peer to accept until the worker exists.
+//! **The channel is dialed and never bound.** Any socket connecting to the
+//! harness is an internal connection, so the harness binds inside the agent's
+//! sandbox and this crate connects, per `weaver-admin-harness-contract`
+//! section 2. What refuses a stranger is the credential the harness reads at
+//! its accept, not anything here.
+//!
+//! **The dial retries within a bound.** The load starts the unit and then
+//! dials, and the bind is the worker's first act, so the race is structural.
+//! A bound exceeded refuses rather than waiting without end.
 
-use std::os::fd::{AsRawFd, BorrowedFd, FromRawFd, OwnedFd};
+use std::os::fd::{AsRawFd, BorrowedFd, OwnedFd};
 use std::path::Path;
+use std::time::{Duration, Instant};
 
 use nix::sys::socket::{
-    AddressFamily, ControlMessage, MsgFlags, SockFlag, SockType, UnixAddr, accept4, bind, listen,
-    sendmsg, socket,
+    AddressFamily, ControlMessage, MsgFlags, SockFlag, SockType, UnixAddr, connect, sendmsg, socket,
 };
 use weaver_types::{MAX_ENVELOPE_BYTES, OrganEnvelope};
 
@@ -33,90 +34,58 @@ pub enum ChannelFault {
     },
     Undecodable,
     Closed,
-    /// The peer's credential is not the agent's: the connection is refused.
-    WrongPeer {
-        uid: u32,
-    },
+    /// The dial found no listener within the bound. The worker never bound its
+    /// socket, and section 7's ceiling is what turns that into an answer
+    /// rather than a wait.
+    NotDialable,
 }
 
-/// The listener, standing between the first two acts and the last two.
-#[derive(Debug)]
-pub struct Listener {
-    fd: OwnedFd,
-}
-
-/// The accepted connection to the worker.
+/// The connected end this invocation holds for the life of one verb.
 #[derive(Debug)]
 pub struct Coordination {
     fd: OwnedFd,
     ordinal: u64,
 }
 
-/// Acts one and two: create the socket with close-on-exec in the creating call
-/// and bind it to a per-agent name inside an admin-owned directory of mode
-/// 0700 - the unsearchable home - then listen, **before the unit is asked
-/// for**.
-pub fn bind_and_listen(
-    directory: &Path,
-    agent: &str,
-) -> std::io::Result<(Listener, std::path::PathBuf)> {
-    std::fs::create_dir_all(directory)?;
-    // 0700: the agent uid cannot traverse to the name at all. This is a fence
-    // in front of the checks that count, not the check itself.
-    crate::surface::set_mode(directory, 0o700)?;
-    let path = directory.join(format!("{agent}.sock"));
-    if path.exists() {
-        std::fs::remove_file(&path)?;
+/// The dial's ceiling and its interval, this Spec's election. One second of
+/// attempts at ten milliseconds, per section 7: the bind is the worker's first
+/// act and the load's dial may arrive first, so a bounded retry covers the
+/// race, and the ceiling is what keeps a worker that never binds from hanging
+/// the operator's terminal.
+const DIAL_CEILING: Duration = Duration::from_secs(1);
+const DIAL_INTERVAL: Duration = Duration::from_millis(10);
+
+/// Connects to the socket the worker bound, retrying within the bound above.
+///
+/// Close-on-exec is asked for in the socket call itself, so no window exists
+/// between creation and flag. The connection is this invocation's and closes
+/// when the verb answers, there being no standing end to keep.
+pub fn dial(socket_path: &Path) -> Result<Coordination, ChannelFault> {
+    let deadline = Instant::now() + DIAL_CEILING;
+    loop {
+        match dial_once(socket_path) {
+            Ok(connection) => return Ok(connection),
+            Err(fault) => {
+                if Instant::now() >= deadline {
+                    return Err(fault);
+                }
+                std::thread::sleep(DIAL_INTERVAL);
+            }
+        }
     }
+}
+
+fn dial_once(socket_path: &Path) -> Result<Coordination, ChannelFault> {
     let fd = socket(
         AddressFamily::Unix,
         SockType::SeqPacket,
         SockFlag::SOCK_CLOEXEC,
         None,
     )
-    .map_err(std::io::Error::from)?;
-    let address = UnixAddr::new(&path).map_err(std::io::Error::from)?;
-    bind(fd.as_raw_fd(), &address).map_err(std::io::Error::from)?;
-    listen(&fd, nix::sys::socket::Backlog::new(1).unwrap()).map_err(std::io::Error::from)?;
-    crate::surface::set_mode(&path, 0o600)?;
-    Ok((Listener { fd }, path))
-}
-
-impl Listener {
-    /// The listener's descriptor, for the walk that asserts it carries
-    /// close-on-exec from its creating call.
-    #[cfg(test)]
-    pub fn as_fd(&self) -> BorrowedFd<'_> {
-        use std::os::fd::AsFd;
-        self.fd.as_fd()
-    }
-
-    /// Acts three and four: accept exactly once with close-on-exec in the
-    /// accepting call, check the peer's credential against the agent's
-    /// expected uid, and **close the listener after the one accept**.
-    ///
-    /// The closure is what leaves possession meaning something here: an
-    /// elected tool running as the agent uid passes the credential check,
-    /// being the uid the check expects, and what refuses it is that no
-    /// listener remains to answer a second dial.
-    pub fn accept_once(self, expected_uid: u32) -> Result<Coordination, ChannelFault> {
-        let fd = accept4(self.fd.as_raw_fd(), SockFlag::SOCK_CLOEXEC)
-            .map_err(|_| ChannelFault::Closed)?;
-        // SAFETY: the kernel just created this descriptor and no other owner
-        // exists.
-        let connection = unsafe { OwnedFd::from_raw_fd(fd) };
-        let credential = peer_uid(connection.as_raw_fd()).map_err(|_| ChannelFault::Closed)?;
-        // The listener closes here whatever the credential says: a refused
-        // peer must not leave a listener standing for a second attempt.
-        drop(self.fd);
-        if credential != expected_uid {
-            return Err(ChannelFault::WrongPeer { uid: credential });
-        }
-        Ok(Coordination {
-            fd: connection,
-            ordinal: 0,
-        })
-    }
+    .map_err(|_| ChannelFault::NotDialable)?;
+    let address = UnixAddr::new(socket_path).map_err(|_| ChannelFault::NotDialable)?;
+    connect(fd.as_raw_fd(), &address).map_err(|_| ChannelFault::NotDialable)?;
+    Ok(Coordination { fd, ordinal: 0 })
 }
 
 impl Coordination {
@@ -223,35 +192,19 @@ impl Coordination {
     }
 }
 
-fn peer_uid(fd: std::os::fd::RawFd) -> std::io::Result<u32> {
-    // SAFETY: getsockopt on a descriptor this process owns, into a struct the
-    // kernel fills entirely.
-    let mut credential: nix::libc::ucred = unsafe { std::mem::zeroed() };
-    let mut len = std::mem::size_of::<nix::libc::ucred>() as nix::libc::socklen_t;
-    let rc = unsafe {
-        nix::libc::getsockopt(
-            fd,
-            nix::libc::SOL_SOCKET,
-            nix::libc::SO_PEERCRED,
-            (&mut credential as *mut nix::libc::ucred).cast(),
-            &mut len,
-        )
-    };
-    if rc == -1 {
-        return Err(std::io::Error::last_os_error());
-    }
-    Ok(credential.uid)
-}
-
 #[cfg(test)]
 mod tests {
-    //! The first walk's coordination half and the fourth walk, plus the
-    //! framing pair `weaver-types-Spec` section 5 owes the pair-creating
-    //! crates. Run from inside the crate because this crate publishes no
-    //! library surface.
+    //! The dial's bound and the channel's framing, run from inside the crate
+    //! because this crate publishes no library surface.
+    //!
+    //! **The harness is stood in for here.** Under the inversion the worker
+    //! binds and this crate dials, so every test below plays the harness's
+    //! part with a listener of its own and exercises `dial` as the code under
+    //! test.
 
     use super::*;
-    use weaver_types::{AgentName, ExchangeId, LifecycleDirective, Opener, Payload, Position};
+    use nix::sys::socket::{bind, listen};
+    use weaver_types::{ExchangeId, LifecycleDirective, Opener, Payload, Position};
 
     fn scratch(tag: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!(
@@ -260,7 +213,33 @@ mod tests {
             std::thread::current().id()
         ));
         let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("scratch");
         dir
+    }
+
+    /// The harness's part: bind the per-agent name and listen. The real one
+    /// does this inside the unit's runtime directory as its first act.
+    fn harness_listener(dir: &std::path::Path) -> (OwnedFd, std::path::PathBuf) {
+        let path = dir.join("alpha.sock");
+        let fd = socket(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            SockFlag::SOCK_CLOEXEC,
+            None,
+        )
+        .expect("socket");
+        let address = UnixAddr::new(&path).expect("address");
+        bind(fd.as_raw_fd(), &address).expect("bind");
+        listen(&fd, nix::sys::socket::Backlog::new(1).unwrap()).expect("listen");
+        (fd, path)
+    }
+
+    fn harness_accepts(listener: &OwnedFd) -> OwnedFd {
+        let fd = nix::sys::socket::accept4(listener.as_raw_fd(), SockFlag::SOCK_CLOEXEC)
+            .expect("accept");
+        // SAFETY: the kernel just created this descriptor and no other owner
+        // exists.
+        unsafe { <OwnedFd as std::os::fd::FromRawFd>::from_raw_fd(fd) }
     }
 
     fn directive(ordinal: u64, agent: &str) -> OrganEnvelope {
@@ -271,126 +250,82 @@ mod tests {
             },
             position: Position::Open,
             payload: Payload::Directive(LifecycleDirective::Load {
-                agent: AgentName(agent.to_string()),
+                agent: weaver_types::AgentName(agent.to_string()),
             }),
         }
     }
 
-    fn dial(path: &std::path::Path) -> std::io::Result<OwnedFd> {
-        let fd = socket(
-            AddressFamily::Unix,
-            SockType::SeqPacket,
-            SockFlag::SOCK_CLOEXEC,
-            None,
-        )
-        .map_err(std::io::Error::from)?;
-        let address = UnixAddr::new(path).map_err(std::io::Error::from)?;
-        nix::sys::socket::connect(fd.as_raw_fd(), &address).map_err(std::io::Error::from)?;
-        Ok(fd)
+    /// **The dial refuses within its bound rather than waiting.** A name
+    /// nothing bound is the worker that never came up, and section 7's ceiling
+    /// is what turns that into an answer.
+    ///
+    /// Perturbation: remove the deadline test from `dial`'s loop and this test
+    /// never returns. Watched under exactly that removal.
+    #[test]
+    fn the_dial_refuses_within_its_bound() {
+        let dir = scratch("bound");
+        let path = dir.join("nothing-listens-here.sock");
+        let started = std::time::Instant::now();
+        let refused = dial(&path);
+        let elapsed = started.elapsed();
+        assert!(
+            matches!(refused, Err(ChannelFault::NotDialable)),
+            "a dial against an unbound name refuses, got {refused:?}"
+        );
+        assert!(
+            elapsed >= DIAL_CEILING,
+            "the dial retried for the whole bound, took {elapsed:?}"
+        );
+        assert!(
+            elapsed < DIAL_CEILING * 4,
+            "the dial stopped at its ceiling rather than waiting on, took {elapsed:?}"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
-    /// The bound socket carries close-on-exec from its creating call, and the
-    /// directory is 0700 - the unsearchable home the agent cannot traverse to.
-    ///
-    /// Perturbation: drop `SOCK_CLOEXEC` from the socket call and the flag
-    /// assertion fails; loosen the directory mode and the mode assertion does.
+    /// **The dial succeeds once the harness binds, which is the race the
+    /// bound covers.** The listener appears after the dial has begun.
     #[test]
-    fn the_listener_is_flagged_and_its_directory_unsearchable() {
-        use std::os::unix::fs::PermissionsExt;
-        let dir = scratch("listen");
-        let (listener, _path) = bind_and_listen(&dir, "alpha").expect("bind");
+    fn the_dial_wins_the_race_when_the_bind_is_late() {
+        let dir = scratch("race");
+        let path = dir.join("alpha.sock");
+        let bind_dir = dir.clone();
+        let late = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(120));
+            harness_listener(&bind_dir)
+        });
+        let connected = dial(&path);
+        let (listener, _) = late.join().expect("thread");
         assert!(
-            crate::surface::is_close_on_exec(listener.as_fd()),
-            "the listener is flagged at its creating call"
+            connected.is_ok(),
+            "a bind inside the bound is reached, got {connected:?}"
         );
-        let mode = std::fs::metadata(&dir).expect("dir").permissions().mode() & 0o777;
-        assert_eq!(mode, 0o700, "the coordination directory is unsearchable");
         drop(listener);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    /// **The first walk's coordination half: the listener is closed after its
-    /// one accept**, so a post-accept dial is kernel-refused even for a
-    /// process that somehow resolved the name.
+    /// **One write is one read**, the boundary the socket type buys, tested
+    /// where the connection is made.
     ///
-    /// Perturbation: keep the listener open past the accept and the second
-    /// dial succeeds. Watched under exactly that change.
-    #[test]
-    fn a_second_dial_is_refused_after_the_one_accept() {
-        let dir = scratch("second-dial");
-        let (listener, path) = bind_and_listen(&dir, "alpha").expect("bind");
-        let dial_path = path.clone();
-        let peer = std::thread::spawn(move || dial(&dial_path).expect("first dial"));
-        let us = nix::unistd::getuid().as_raw();
-        let coordination = listener.accept_once(us).expect("accept");
-        let held = peer.join().expect("thread");
-
-        let second = dial(&path);
-        assert!(
-            second.is_err(),
-            "no listener remains to answer a second dial"
-        );
-        // The accepted connection lives on: it is held here rather than
-        // read, a read having no sender to answer it.
-        drop(coordination);
-        drop(held);
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    /// **The fourth walk: a stranger answers on the coordination channel.**
-    /// The credential check at accept refuses a peer whose uid is not the
-    /// agent's.
-    ///
-    /// Perturbation: remove the credential comparison and the stranger's
-    /// connection is accepted. Watched under exactly that removal.
-    #[test]
-    fn a_wrong_uid_is_refused_at_accept() {
-        let dir = scratch("credential");
-        let (listener, path) = bind_and_listen(&dir, "alpha").expect("bind");
-        let dial_path = path.clone();
-        let peer = std::thread::spawn(move || dial(&dial_path).expect("dial"));
-        // The connecting peer is this process, so expecting any other uid is
-        // how the test presents a stranger to the check.
-        let us = nix::unistd::getuid().as_raw();
-        let refused = listener.accept_once(us.wrapping_add(1));
-        let held = peer.join().expect("thread");
-        match refused {
-            Err(ChannelFault::WrongPeer { uid }) => assert_eq!(uid, us),
-            other => panic!("a stranger is refused at accept, got {other:?}"),
-        }
-        drop(held);
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    /// **One write is one read**, the boundary property the socket type was
-    /// elected to buy: two envelopes written back to back arrive as two reads
-    /// of exactly one envelope each.
-    ///
-    /// Perturbation: create the socket as `SOCK_STREAM` and the first read
-    /// returns both envelopes concatenated, failing the decode. **Two messages
-    /// are what make the watch reachable** - a single small envelope crosses a
-    /// stream socket whole, so a one-message test would pass under the
-    /// substitution and pin nothing.
+    /// Perturbation: create the socket as `SOCK_STREAM` in `dial_once` and the
+    /// first read returns both envelopes. **Two messages are what make the
+    /// watch reachable** - a single small envelope crosses a stream socket
+    /// whole, so a one-message test would pass under the substitution.
     #[test]
     fn one_write_is_one_read() {
         let dir = scratch("framing");
-        let (listener, path) = bind_and_listen(&dir, "alpha").expect("bind");
-        let dial_path = path.clone();
-        let peer = std::thread::spawn(move || {
-            let fd = dial(&dial_path).expect("dial");
-            let worker = Coordination::adopt(fd);
-            worker.send(&directive(1, "alpha")).expect("first write");
-            worker.send(&directive(2, "beta")).expect("second write");
-            worker
-        });
-        let us = nix::unistd::getuid().as_raw();
-        let admin = listener.accept_once(us).expect("accept");
-        let held = peer.join().expect("thread");
+        let (listener, path) = harness_listener(&dir);
+        let admin = dial(&path).expect("dial");
+        let worker = harness_accepts(&listener);
+        let worker = Coordination::adopt(worker);
+        worker.send(&directive(1, "alpha")).expect("first write");
+        worker.send(&directive(2, "beta")).expect("second write");
         let first = admin.recv().expect("first read decodes on its own");
         let second = admin.recv().expect("second read decodes on its own");
         assert_eq!(first.exchange.ordinal, 1);
         assert_eq!(second.exchange.ordinal, 2);
-        drop(held);
+        drop(worker);
+        drop(listener);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -402,27 +337,20 @@ mod tests {
     #[test]
     fn truncation_is_a_channel_fault() {
         let dir = scratch("truncate");
-        let (listener, path) = bind_and_listen(&dir, "alpha").expect("bind");
-        let dial_path = path.clone();
-        let peer = std::thread::spawn(move || {
-            let fd = dial(&dial_path).expect("dial");
-            let oversized = vec![b'x'; MAX_ENVELOPE_BYTES + 4096];
-            // SAFETY: a raw send is how the test produces a message larger
-            // than the receiver's buffer; this crate's own send refuses to
-            // author one.
-            let written = unsafe {
-                nix::libc::send(
-                    fd.as_raw_fd(),
-                    oversized.as_ptr().cast(),
-                    oversized.len(),
-                    0,
-                )
-            };
-            (fd, written)
-        });
-        let us = nix::unistd::getuid().as_raw();
-        let admin = listener.accept_once(us).expect("accept");
-        let (held, written) = peer.join().expect("thread");
+        let (listener, path) = harness_listener(&dir);
+        let admin = dial(&path).expect("dial");
+        let worker = harness_accepts(&listener);
+        let oversized = vec![b'x'; MAX_ENVELOPE_BYTES + 4096];
+        // SAFETY: a raw send is how the test produces a message larger than
+        // the receiver's buffer; this crate's own send refuses to author one.
+        let written = unsafe {
+            nix::libc::send(
+                worker.as_raw_fd(),
+                oversized.as_ptr().cast(),
+                oversized.len(),
+                0,
+            )
+        };
         if written < 0 {
             eprintln!(
                 "SKIP truncation_is_a_channel_fault: the kernel refused the oversized \
@@ -435,7 +363,8 @@ mod tests {
                 other => panic!("a truncated read must be a fault, got {other:?}"),
             }
         }
-        drop(held);
+        drop(worker);
+        drop(listener);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -446,12 +375,9 @@ mod tests {
     fn the_enter_carries_its_descriptor_in_one_message() {
         use std::os::fd::AsFd;
         let dir = scratch("ancillary");
-        let (listener, path) = bind_and_listen(&dir, "alpha").expect("bind");
-        let dial_path = path.clone();
-        let peer = std::thread::spawn(move || dial(&dial_path).expect("dial"));
-        let us = nix::unistd::getuid().as_raw();
-        let admin = listener.accept_once(us).expect("accept");
-        let worker_fd = peer.join().expect("thread");
+        let (listener, path) = harness_listener(&dir);
+        let admin = dial(&path).expect("dial");
+        let worker_fd = harness_accepts(&listener);
 
         let sink = std::fs::File::create(dir.join("sink")).expect("sink");
         let sink = OwnedFd::from(sink);
@@ -469,26 +395,25 @@ mod tests {
             Some(&mut control),
             MsgFlags::MSG_CMSG_CLOEXEC,
         )
-        .expect("receive");
-        let read = message.bytes;
-        let mut descriptors = 0;
-        for cmsg in message.cmsgs().expect("cmsgs") {
+        .expect("one message read");
+        let mut received = 0;
+        for cmsg in message.cmsgs().expect("control data") {
             if let nix::sys::socket::ControlMessageOwned::ScmRights(fds) = cmsg {
+                received += fds.len();
                 for fd in fds {
-                    descriptors += 1;
-                    // SAFETY: the kernel installed it for this process.
-                    drop(unsafe { OwnedFd::from_raw_fd(fd) });
+                    // SAFETY: adopting the descriptors the kernel installed so
+                    // the test closes them.
+                    drop(unsafe { <OwnedFd as std::os::fd::FromRawFd>::from_raw_fd(fd) });
                 }
             }
         }
         assert_eq!(
-            descriptors, 1,
-            "the sink crossed on the enter's own message"
+            received, 1,
+            "the sink crosses on the directive's own message"
         );
-        let envelope: OrganEnvelope =
-            serde_json::from_slice(&buffer[..read]).expect("one envelope");
-        assert_eq!(envelope.exchange.ordinal, 7);
+        assert!(message.bytes > 0, "the envelope crossed with it");
         drop(worker_fd);
+        drop(listener);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

@@ -1187,9 +1187,10 @@ domains.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-one records in all as of
-the recut of 2026-08-05, fifteen tagged for review, eleven for perturbation,
-three for the manifest, and two for a compile pin. The elections take nodes
+would sit apart from the prose that earns it. Thirty-one records in all,
+fourteen tagged for review, twelve for perturbation, three for the manifest,
+and two for a compile pin. The residency record moved from review to
+perturbation on 2026-08-06, when the code act gave it a test. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable, and two review tags come from the sorting rather than from an
 election: the verb's stopping short of any seam and the existence checks no
