@@ -857,6 +857,19 @@ exists, per its section 4.1 step 6. A retry loop with no ceiling is what this
 election exists to refuse, because a worker that never binds would otherwise
 hang the operator's terminal rather than answering.
 
+**The connect is nonblocking, and this is a requirement of the bound rather
+than a preference.** Measured 2026-08-06: with the listener's backlog full, a
+blocking `connect` on an `AF_UNIX` socket was still blocked after three seconds
+against a one second ceiling, while the same connect on a nonblocking socket
+returned at once with the transient error a retry is for. **A full backlog is
+reachable rather than theoretical**, because the harness serves one connection
+at a time, so a second verb arriving while one is in flight meets exactly that.
+A blocking connect would therefore leave the bound stated here and unheld,
+which is the failure the election exists to prevent, reached by a different
+road. The flag is cleared once the connection is made, because the enter
+directive and the answer it waits for are blocking work and a nonblocking read
+would report an empty channel as a fault rather than waiting.
+
 ```graph
 node: admin-dial-retries-within-a-bound
 kind: assertion

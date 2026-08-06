@@ -60,18 +60,35 @@ const DIAL_INTERVAL: Duration = Duration::from_millis(10);
 /// Close-on-exec is asked for in the socket call itself, so no window exists
 /// between creation and flag. The connection is this invocation's and closes
 /// when the verb answers, there being no standing end to keep.
+///
+/// **The socket is nonblocking for the connect and blocking afterwards, and
+/// the reason is that a blocking connect defeats the ceiling.** Measured
+/// 2026-08-06: with the listener's backlog full, a blocking `connect` on an
+/// `AF_UNIX` socket was still blocked after three seconds, three times the
+/// bound this election exists to keep, while the same connect on a nonblocking
+/// socket returned `EAGAIN` at once. A full backlog is reachable here rather
+/// than theoretical, because the harness serves one connection at a time, so a
+/// verb arriving while another is in flight meets exactly that. The flag is
+/// cleared once connected, because everything after the dial, the enter
+/// directive and the answer it waits for, is blocking work.
 pub fn dial(socket_path: &Path) -> Result<Coordination, ChannelFault> {
     let deadline = Instant::now() + DIAL_CEILING;
     loop {
         match dial_once(socket_path) {
             Ok(connection) => return Ok(connection),
-            // Not a transient absence: the name itself is unusable.
+            // Not a transient absence: the name itself is unusable, so the
+            // ceiling would spend a second reaching the same answer.
             Err(ChannelFault::Undecodable) => return Err(ChannelFault::Undecodable),
             Err(fault) => {
-                if Instant::now() >= deadline {
+                // **The wait never outlives the deadline.** Sleeping a fixed
+                // interval would overshoot the bound by up to one interval,
+                // and a bound that is approximately kept is not the bound the
+                // Spec states.
+                let remaining = deadline.saturating_duration_since(Instant::now());
+                if remaining.is_zero() {
                     return Err(fault);
                 }
-                std::thread::sleep(DIAL_INTERVAL);
+                std::thread::sleep(DIAL_INTERVAL.min(remaining));
             }
         }
     }
@@ -81,16 +98,47 @@ fn dial_once(socket_path: &Path) -> Result<Coordination, ChannelFault> {
     let fd = socket(
         AddressFamily::Unix,
         SockType::SeqPacket,
-        SockFlag::SOCK_CLOEXEC,
+        SockFlag::SOCK_CLOEXEC | SockFlag::SOCK_NONBLOCK,
         None,
     )
     .map_err(|_| ChannelFault::NotDialable)?;
     // **A path a Unix address cannot be built from is not a race**, so it
-    // returns a fault the caller does not retry: waiting out the ceiling on a
-    // name that can never be valid spends a second to reach the same answer.
+    // returns a fault the caller does not retry.
     let address = UnixAddr::new(socket_path).map_err(|_| ChannelFault::Undecodable)?;
-    connect(fd.as_raw_fd(), &address).map_err(|_| ChannelFault::NotDialable)?;
+    match connect(fd.as_raw_fd(), &address) {
+        Ok(()) => {}
+        // The listener's backlog is full: a transient absence like any other,
+        // and the one this crate would otherwise block on.
+        Err(nix::errno::Errno::EAGAIN) | Err(nix::errno::Errno::EINPROGRESS) => {
+            return Err(ChannelFault::NotDialable);
+        }
+        Err(_) => return Err(ChannelFault::NotDialable),
+    }
+    clear_nonblocking(&fd)?;
     Ok(Coordination { fd, ordinal: 0 })
+}
+
+/// Returns the connected end to blocking mode. Everything after the dial waits
+/// on the harness, and a nonblocking read would report an empty channel as a
+/// fault rather than waiting for the answer.
+fn clear_nonblocking(fd: &OwnedFd) -> Result<(), ChannelFault> {
+    // SAFETY: fcntl on a descriptor this frame owns.
+    let flags = unsafe { nix::libc::fcntl(fd.as_raw_fd(), nix::libc::F_GETFL) };
+    if flags == -1 {
+        return Err(ChannelFault::NotDialable);
+    }
+    // SAFETY: as above.
+    let rc = unsafe {
+        nix::libc::fcntl(
+            fd.as_raw_fd(),
+            nix::libc::F_SETFL,
+            flags & !nix::libc::O_NONBLOCK,
+        )
+    };
+    if rc == -1 {
+        return Err(ChannelFault::NotDialable);
+    }
+    Ok(())
 }
 
 impl Coordination {
@@ -285,6 +333,45 @@ mod tests {
             elapsed < DIAL_CEILING * 4,
             "the dial stopped at its ceiling rather than waiting on, took {elapsed:?}"
         );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **A full backlog does not defeat the ceiling.** The harness serves one
+    /// connection at a time, so a verb arriving while another is in flight
+    /// meets a full backlog, and a blocking connect on an `AF_UNIX` socket
+    /// blocks there without bound: measured 2026-08-06, still blocked after
+    /// three seconds against a one second ceiling. The nonblocking connect is
+    /// what turns that into a refusal.
+    ///
+    /// Perturbation: drop `SOCK_NONBLOCK` from `dial_once` and this test
+    /// blocks past its own assertion rather than failing an equality, which is
+    /// the hang the flag prevents. Watched under exactly that removal.
+    #[test]
+    fn a_full_backlog_refuses_within_the_bound() {
+        let dir = scratch("backlog");
+        let (listener, path) = harness_listener(&dir);
+        // Fill the backlog: the listener never accepts, so these queue and
+        // then the queue closes.
+        let mut held = Vec::new();
+        for _ in 0..8 {
+            match dial(&path) {
+                Ok(c) => held.push(c),
+                Err(_) => break,
+            }
+        }
+        let started = std::time::Instant::now();
+        let refused = dial(&path);
+        let elapsed = started.elapsed();
+        assert!(
+            matches!(refused, Err(ChannelFault::NotDialable)),
+            "a full backlog refuses rather than blocking, got {refused:?}"
+        );
+        assert!(
+            elapsed < DIAL_CEILING * 3,
+            "and it refuses within the bound, took {elapsed:?}"
+        );
+        drop(held);
+        drop(listener);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
