@@ -1,14 +1,23 @@
-# Load/Unload Loop
+# Load/Unload Path
 
-**Status:** MERGED v0.2, 2026-08-01. Loop 0, the outermost loop: opened by the load
-event, closed by the unload event, with every other loop nesting inside its
-bracket. Loops belong to the harness unless specific to one domain and no other,
-per the human's ruling of 2026-08-01, so this document files beside
-`basic-inference-loop` under the harness's `Loops/` container. It is a workflow
-document: it composes merged charters and contracts, binds no crate, and decides
-no seam. Where it and a merged document disagree, the charter stands and this
-document is corrected, because the charters are the decision record and this is
-their composition read back as one motion.
+**Status:** MERGED v0.3, 2026-08-05. Loop 0's composition, opened by the load event,
+closed by the unload event, with every loop nesting inside its bracket. It composes
+merged charters and contracts, binds no crate, and decides no seam. Where it and a
+merged document disagree, the charter stands and this document is corrected, because
+the charters are the decision record and this is their composition read back as one
+motion.
+**Revised:** 2026-08-05, first this date, on the operator's ruling that loop 0 leaves
+the loop taxonomy's shelf. Loop 0 is the running agent service, the harness's own
+mechanism initiated through admin, per the recut `weaver-harness-PRD` section 2
+carries, and the loop taxonomy reaches loop 1 and above and never loop 0. A mechanism
+is not a chapter in the operator's booklet, so this document leaves the `Loops/`
+container, renames from `load-unload-loop` to `load-unload-path`, and files at the
+project level outside the set, beside the other compositions that bind nothing. The
+v0.2 header read this document as the outermost loop filed beside
+`basic-inference-loop` under the 2026-08-01 filing ruling. That ruling stands for
+loops and no longer reaches this document, which is not one. `Loops/` holds the basic
+inference loop alone, and that loop running end to end is the proof-of-concept
+milestone.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -23,24 +32,27 @@ one of those documents' own section 5. This document holds the composition: one
 complete cycle, load to unload, with each refusal and both kinds of close walked
 in order.
 
-**The filing is a ruling and it generalizes.** Loops belong to the harness unless
-specific to one domain and no other, per the human's ruling of 2026-08-01. The
-loop-holder question is decided by authorship rather than by who stands at the
-crossing: admin brackets the run the way the gate brackets the turn, the harness
-authors both bracket events at both scopes, and provenance picks no organ, per
-`basic-inference-loop` section 2. A loop confined to one domain files under that
-domain's own root, and this one runs through five. The Document Format's container
-entry inherits this refinement when this document merges.
+**The filing followed the type, and the type was corrected.** The v0.2 filing under
+`Loops/` rested on the 2026-08-01 ruling that loops belong to the harness unless
+specific to one domain and no other. That ruling stands and governs the booklet, and
+this document left its reach when the operator ruled loop 0 out of the loop taxonomy:
+what is composed here is the harness's own mechanism, driven through admin, not a
+circuit an operator wires. The holder question it answered remains true of the
+mechanism, since the harness authors both bracket events at both scopes and
+provenance picks no organ, per `basic-inference-loop` section 2. The Document
+Format's container entry carries the correction with this document's move.
 
 ## 1. Loop 0
 
-The run is the loop. `load` opens it, `unload` closes it, and the trace grammar of
-`weaver-trace-PRD` section 2.1 is its record: session over run over turn, the run
-bracket enclosing every turn and every turn enclosing its interior events. The
-inference loop of `basic-inference-loop` runs inside loop 0, and later loops,
-memory and embedding and whatever the corpus grows, nest inside both. Numbering
-from zero says exactly that: loop 0 is the loop the others happen within, and a
-loop that has not been opened by a `load` has nowhere to run.
+The run is loop 0's bracket. `load` opens it, `unload` closes it, and the trace
+grammar of `weaver-trace-PRD` section 2.1 is its record: session over run over
+turn, the run bracket enclosing every turn and every turn enclosing its interior
+events. The inference loop of `basic-inference-loop` runs inside that bracket, and
+later loops nest the same way. The name keeps its zero because everything else
+happens within it, and the taxonomy of loops the operator wires reaches loop 1 and
+above and never loop 0 itself: the bracket is the mechanism the loops run inside,
+not a circuit among them, and a loop that has not been opened by a `load` has
+nowhere to run.
 
 Whether loop 0 takes a type or a trait is the Spec pass's question and is
 deliberately not reserved here. `weaver-traits` is demand-derived, and the engine

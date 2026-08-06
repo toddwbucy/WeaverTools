@@ -534,7 +534,7 @@ to: harness-descriptors-owned-types
 ## 3. The lifecycle interior
 
 The harness type, the run state, and the fan-out of loop 0, per
-`weaver-admin-harness-contract` section 3 and the composition `load-unload-loop`
+`weaver-admin-harness-contract` section 3 and the composition `load-unload-path`
 reads back.
 
 ```rust
@@ -665,7 +665,7 @@ arm the unwind would have to reason about. The decode end takes its own type
 rather than `OrganChannel`, because `weaver-spu-PRD` section 13.2 rules that
 socket not an organ channel and a shared name would carry the envelope's
 assumptions onto a seam that does not take them. This is the mechanical form of
-`load-unload-loop` section 4's rule that admin's unwind is a reap plus one
+`load-unload-path` section 4's rule that admin's unwind is a reap plus one
 directive: the directive works because the harness knows what stands. **The options
 ground in apex section 5.5 and the two SPU-shaped records beside them do not.** A
 leave has to undo across domains what an enter built across them, and no organ can
@@ -875,7 +875,7 @@ to: harness-fault-payload-carried-unchanged
 ```
 
 **Loop 0 takes neither a type nor a trait, and the cell closes here.**
-`load-unload-loop` section 8 holds the question for the Spec pass,
+`load-unload-path` section 8 holds the question for the Spec pass,
 demand-derived rather than reserved. The demand does not exist: the loop is
 the interval between two directives, its state is the `Run` struct above, and
 its control flow is the serial service, so an abstraction would have no second
