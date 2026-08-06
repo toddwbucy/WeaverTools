@@ -5,7 +5,7 @@ Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
 **Revised:** 2026-08-06, the fork pins get a home. The G6 sweep found the two
-revisions recorded nowhere in the corpus, delegated by the salvage survey to a
+revisions recorded in no document of this corpus, delegated by the survey to a
 workspace note under no version control and otherwise present only in the
 archived manifest that checklist item 7 deletes. Section 1.1 now carries both in
 full. No election changes and no record moves.
@@ -200,8 +200,8 @@ device handles with candle's inside one minor line, exactness coming from the
 lock file rather than from a requirement that becomes unsatisfiable the day
 candle raises its floor.
 
-**The pins, recorded here because nowhere in the corpus held them until
-2026-08-06.** `llama-cpp-2` and `llama-cpp-sys-2` both resolve to
+**The pins, recorded here because no document of this corpus carried them
+until 2026-08-06.** `llama-cpp-2` and `llama-cpp-sys-2` both resolve to
 `https://github.com/toddwbucy/llama-cpp-rs` at revision
 `277e4100fd0846efb09d2c18f1b99f30681dcdd8`. `candle-core`, `candle-nn`,
 `candle-transformers`, and `candle-flash-attn` all resolve to
