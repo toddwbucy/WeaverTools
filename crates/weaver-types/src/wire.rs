@@ -179,6 +179,13 @@ pub enum LifecycleRefusal {
         reason: Box<LifecycleRefusal>,
     },
     ActivityNotAtRest,
+    /// The answer cannot be formed, where every case above says an act could
+    /// not be performed. The party that knows an agent's lifecycle state is the
+    /// harness, and no chartered exchange asks it, so `show` and `list` refuse
+    /// with this rather than construct an `AgentState` from residency, which is
+    /// a different fact. Retired by the observation exchange that closes the
+    /// gap, per `weaver-types-Spec` section 4.2.
+    StateNotObservable,
 }
 
 /// What admin supplies in the enter directive, per

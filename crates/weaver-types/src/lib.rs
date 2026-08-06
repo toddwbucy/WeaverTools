@@ -76,6 +76,7 @@
 //!         LifecycleRefusal::BindFailed => "bind_failed",
 //!         LifecycleRefusal::OrganRefused { .. } => "organ_refused",
 //!         LifecycleRefusal::ActivityNotAtRest => "activity_not_at_rest",
+//!         LifecycleRefusal::StateNotObservable => "state_not_observable",
 //!     }
 //! }
 //! ```

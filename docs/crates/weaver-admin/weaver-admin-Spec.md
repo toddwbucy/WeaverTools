@@ -278,11 +278,22 @@ signal and nothing more. Reading it as loaded-and-idle would also contradict the
 charter's own rule that the state publishes only on a ready aggregate, since a
 unit is running well before any aggregate returns.
 
-**So `show` and `list` report residency, and say so.** The answer carries the
-manager's own three values under the manager's own names, `active`, `failed`, and
-`inactive`, the last covering the several cases section 6's measurement records it
-cannot separate. They are carried rather than translated because a translation is
-where the invention would enter.
+**So `show` and `list` refuse, with the residency they could read named in the
+refusal's own prose rather than dressed as a state.** They return
+`StateNotObservable`, the floor case `weaver-types-Spec` section 4.2 adds for
+exactly this, because the answer they would otherwise carry does not exist: the
+two fitting cases of `lifecycle-answer` both take an `AgentState`, and this crate
+has no source for one. What admin can read is the manager's three values under
+the manager's own names, `active`, `failed`, and `inactive`, the last covering
+the several cases section 6's measurement records it cannot separate. That is
+residency, it is carried rather than translated because a translation is where
+the invention would enter, and it is not what these verbs were asked for.
+
+**The refusal is the smallest honest answer available and it is temporary.**
+An operator running `show` learns that the state is not observable from here
+rather than receiving a value the program guessed, and the refusal is typed, so
+tooling keys on it rather than parsing prose. It goes when the observation
+exchange lands, and the record below is what a reviewer checks to find it gone.
 
 **Those three values do not map onto `AgentState`, and that is a gap this act
 names rather than closes.** The floor enumerates `Absent`, `Unloaded`, `Idle`, and
@@ -303,10 +314,17 @@ the party that holds the run, and `weaver-admin-harness-contract` section 3
 charters enter, leave, and stop with no observation. One exchange answers both this
 gap and that one, so section 11 files a single open election rather than two.
 
+**The record's instrument is a test rather than review, because the refusal is
+checkable.** `show` on a provisioned agent returns `StateNotObservable` and
+constructs no `AgentState`, watched to fail when the verb is made to answer with
+a state read from the unit, which is the invention this clause forbids. Review
+could confirm the absence of a mapping and could not confirm that the verb
+refuses rather than returning something plausible.
+
 ```graph
 node: admin-residency-is-not-lifecycle-state
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-admin

@@ -1000,16 +1000,22 @@ the human's ruling, and the register stood empty from that date until the act of
 **What this register holds, as of 2026-08-06.** Two entries, both from the act
 of 2026-08-05 and neither landed by it.
 
-- **`weaver-types-PRD` section 2.3 and `weaver-types-Spec` section 6, the
-  `AgentState` gap.** The residency answer of `weaver-admin-Spec` section 3
-  carries the init system's three values, and they do not map onto
-  `AgentState`'s four cases: a running unit covers both `Idle` and `Active`, and
-  a failed one has no case. So `lifecycle-answer`'s `State` case has no producer
-  for `show` and `list`. The enumeration is not grown to fit what a service
-  manager happens to report, which would settle a vocabulary from a
-  representation. **Settled by:** the observation exchange
-  `weaver-admin-Spec` section 11 names, which fixes what can be observed before
-  the floor is asked to enumerate it.
+- **`weaver-types-Spec` section 4.2, the `AgentState` gap, partly discharged
+  2026-08-06.** The `weaver-admin` code act found the gap load-bearing rather
+  than theoretical: `show` and `list` had no writable implementation, since the
+  answer must be one of the floor's two enums and the only fitting cases carry an
+  `AgentState`. The floor gained `StateNotObservable` and those verbs refuse with
+  it, so the gap has an honest surface. **What stays owed is the gap itself**, not
+  its marker: the enumeration is still unable to say what a running unit is doing,
+  and the marker is what a reviewer greps for to find the hole.
+  The residency answer of `weaver-admin-Spec` section 3 carries the init
+  system's three values, and they do not map onto `AgentState`'s four cases: a
+  running unit covers both `Idle` and `Active`, and a failed one has no case.
+  The enumeration is still not grown to fit what a service manager happens to
+  report, which would settle a vocabulary from a representation. **Settled by:**
+  the observation exchange `weaver-admin-Spec` section 11 names, which fixes
+  what can be observed before the floor is asked to enumerate it, and which
+  retires `StateNotObservable` in the same act.
 - **The merged code of `weaver-admin` and `weaver-harness`.** Four things
   contradict what `main` builds: the coordination channel's direction, the
   operator surface's retirement, the fleet map's removal, and the harness
