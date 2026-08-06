@@ -16,6 +16,12 @@ fleet, and the agent's uid is statically provisioned, a dynamic identity exclude
 two independent reasons. The sandbox's properties are required and its directives stay
 the operator's. Section 10's descriptor-route cell reopens with the sudo measurement
 attached.
+**Revised:** 2026-08-06, section 11's landed entries leave and **the register is not
+empty.** The act of 2026-08-05 merged, so the entries it landed leave that section
+per its own leave-when-landed rule, and two entries the act did not land remain
+outstanding there: the `AgentState` gap owed to `weaver-types` and the recut of the
+merged code. Read the section for what is owed rather than this note. No other
+change.
 **Revised:** 2026-08-05, second this date, the admin recut and the socket inversion,
 one act of three rulings. Per the operator: there is no `weaver-admin-user` and no
 service account. The role is what the operator, who holds root, assumes at install,
@@ -969,52 +975,13 @@ it keeps the departure argument. Both were edited. The harness clause on opening
 exchanges landed in `weaver-harness-PRD` section 4. Nothing else in this register
 moved while the apex re-authoring waited on all seven charters.
 
-**The act of 2026-08-05 fills this register, and every entry lands in the same
-act.** The three rulings are the socket inversion, the admin recut, and loop 0's
-departure from the loop taxonomy, and gate G7 reads this list against the tree.
-
-- `weaver-admin-systemd-contract`, cut in this act on the operator's ruling that
-  root and the init system are external and the interfacing is settled by contract.
-  Section 6's seam table gains its row, and the reliance set the Spec was carrying
-  implicitly moves there. Landed.
-- `weaver-admin-Spec`. The invocation's interface replaces the operator surface,
-  the state is read from the init system, the channel is dialed, the unit
-  declares no open, and the record count moves from thirty-six to twenty-nine.
-  Landed.
-- `weaver-admin-harness-contract` sections 2, 4, 5, 6, and 8. The creating party
-  inverts, the credential replaces possession, the ordering restates against the
-  worker rather than the connection, and `peer-identity` is drawn. Landed.
-- `weaver-admin-operator-contract`. Narrowed to the trace's exit, its section
-  numbering held stable so the fifty citations across the corpus still resolve,
-  and `peer-identity` and `authorization-predicate` undrawn. Landed.
-- `weaver-harness-PRD` sections 2 and 4, and `weaver-harness-Spec` section 2.3
-  and section 8's counts. The harness binds and listens, the constructor becomes
-  `Harness::listen`, and the accept refuses every peer that is not root. Landed.
-- `weaver-types-PRD` section 2.2 and section 5, and `weaver-types-Spec` sections
-  3 and 6. The scoped claim's second consumer moves from the operator surface to
-  the coordination seam, and the drawer count falls from four to three. Landed.
-- `weaver-trace-PRD` section 4.1, `weaver-gate-PRD` section 2, `weaver-gate-Spec`
-  section 5, `basic-inference-loop` section 1, and `load-unload-path` throughout.
-  The sink opens under root, the gate holds the outward door where the harness
-  holds the inward one, and the approach gains its dial. Landed.
-- `WeaverTools-PRD` sections 6 and 12. The supervisor is an invocation rather
-  than a standing process, and the topology says so. Landed.
-- `WeaverTools-Working-Process` section 7 and `WeaverTools-Document-Format`
-  section 2's container entry. The re-entry is recorded and `Loops/` holds the
-  inference loop alone. Landed.
-- `weaver-types-PRD` section 2.3 and `weaver-types-Spec` section 6, owed and **not
-  landed in this act, named as owed rather than left to be noticed.** The
-  residency answer of `weaver-admin-Spec` section 3 carries the init system's
-  three values, and they do not map onto `AgentState`'s four cases: a running unit
-  covers both `Idle` and `Active`, and a failed one has no case. So
-  `lifecycle-answer`'s `State` case has no producer for `show` and `list` today.
-  The enumeration is not grown here, because fitting a floor vocabulary to what a
-  manager happens to report would settle the vocabulary from the representation.
-  It is settled with the observation exchange the Spec's section 11 names.
-- The merged code of `weaver-admin` and `weaver-harness`. Owed as code acts after
-  this act merges, and named as owed rather than left to be noticed: the
-  coordination channel's direction, the operator surface's retirement, and the
-  fleet map's removal each contradict what `main` currently builds.
+**The act of 2026-08-05 landed and its entries left this register on 2026-08-06,
+per the rule above.** The three rulings were the socket inversion, the admin recut,
+and loop 0's departure from the loop taxonomy, with the init system's contract cut
+during the act's review. Every document that act named carries its change in `main`
+at the merge commit, which is where a reader checks them rather than here: a
+register that kept landed lines as a changelog would be the second stale-line
+failure this section names. What the act left outstanding stays below.
 
 **The re-authoring of 2026-08-01 drained this register.** Every entry that filed
 with it landed in that act: the verb-set restatement, the
@@ -1030,21 +997,32 @@ both `open-items` entries as that list shrank. The last entry, the
 the human's ruling, and the register stood empty from that date until the act of
 2026-08-05 filled it.
 
-**Where the register stands now, stated because a reader who took the paragraph
-above for the present tense would read two owed items as settled.** Two entries
-of the 2026-08-05 act are owed and outstanding: the `weaver-types` edit for the
-`AgentState` gap, which waits on the observation exchange that settles it, and
-the recut of the merged `weaver-admin` and `weaver-harness` code, which waits on
-this act's merge. They leave this register when they land and not before.
+**What this register holds, as of 2026-08-06.** Two entries, both from the act
+of 2026-08-05 and neither landed by it.
 
-**The entries marked landed are carried until this act merges and then leave,
-which is the leave-when-landed rule applied to an act still open.** Every edit
-this act names landed inside the act itself rather than in a later one, so by
-that rule each should already be gone. They are held because a register that
-emptied itself as its own act proceeded would leave a reviewer nothing to check
-the act against, and the act is what is under review. At the merge they go and
-the two above remain, so a reader after that date finds a register holding
-exactly what is outstanding.
+- **`weaver-types-PRD` section 2.3 and `weaver-types-Spec` section 6, the
+  `AgentState` gap.** The residency answer of `weaver-admin-Spec` section 3
+  carries the init system's three values, and they do not map onto
+  `AgentState`'s four cases: a running unit covers both `Idle` and `Active`, and
+  a failed one has no case. So `lifecycle-answer`'s `State` case has no producer
+  for `show` and `list`. The enumeration is not grown to fit what a service
+  manager happens to report, which would settle a vocabulary from a
+  representation. **Settled by:** the observation exchange
+  `weaver-admin-Spec` section 11 names, which fixes what can be observed before
+  the floor is asked to enumerate it.
+- **The merged code of `weaver-admin` and `weaver-harness`.** The coordination
+  channel's direction, the operator surface's retirement, and the fleet map's
+  removal each contradict what `main` builds. This is the expected shape of a
+  phase one re-entry, per Working Process section 2, and it is named as owed
+  rather than left for a reader to discover by compiling. **Settled by:** the
+  code acts, which follow this act rather than riding it.
+
+**Why the landed entries are gone rather than kept as a changelog.** The rule
+above is that an entry leaves when its edit lands, and it has a second half worth
+stating once: a register that kept its landed lines would be a changelog, and a
+reader checking it would find every line already done and stop trusting the two
+that are not. Where the 2026-08-05 act landed is the merge commit and the
+documents themselves, and this section is for what is still owed.
 
 ## 12. Children
 
