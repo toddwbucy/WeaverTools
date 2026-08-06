@@ -54,9 +54,26 @@ and the fact belongs with the carry either way.
 
 The four `-gencode` lines are `sm_86` (A6000, Ampere), `sm_89` (RTX Ada),
 `sm_120` (RTX PRO Blackwell, needing CUDA >= 12.8), and a `compute_86` PTX
-fallback that JITs to any architecture at or above 86. Verified compiling at
-`sm_86` under CUDA 13.0 and across all four lines under CUDA 13.3 on a
-Blackwell laptop, 2026-08-06.
+fallback that JITs to any architecture at or above 86.
+
+**What has been verified, and on what, 2026-08-06.** Two machines, and the
+coverage they give is uneven in a way worth stating rather than averaging.
+
+| Machine | Toolkit | Compiles and links | Suite runs | Device-side |
+|---|---|---|---|---|
+| A6000 pair, Ampere | CUDA 13.0 | yes, `sm_86` | yes, 14 tests | yes, three device tests |
+| RTX PRO Blackwell laptop | CUDA 13.3 | yes, all four lines | not run | not run |
+
+On the Blackwell box the linked archive was read back with `cuobjdump`: both
+members of `libweaver_cuda_kernels.a` carry native SASS for `sm_86`, `sm_89`,
+and `sm_120`, plus the `compute_86` PTX fallback. That is a stronger fact than
+a clean nvcc exit, because it says the code for each target is present in the
+artifact that links rather than merely that the compiler accepted the flags.
+The Ada line has no machine behind it and rides on that evidence alone.
+
+**No device-side execution has happened on Blackwell.** The kernels are known to
+be present and linkable there and are not known to produce correct numbers
+there. That gap closes when the comparison code below crosses, not before.
 
 ## What has not crossed yet, named so the gap is not read as completeness
 
