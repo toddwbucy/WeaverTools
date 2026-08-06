@@ -124,6 +124,14 @@ unit failing asynchronously where the ask never looks. So this boundary reports 
 an ask failed and does not reliably report which failure it was, and a successful
 start ask is not by itself evidence that a worker is running.
 
+**The state ask is narrower than its three values suggest, measured the same date.**
+`active` and `failed` each mean one thing, a running unit and one whose process
+exited non-zero. `inactive` means at least three: a unit that stopped cleanly, a
+unit that never existed, and a unit whose exec never succeeded because the binary it
+named was absent. A party reading this boundary may therefore learn that a worker is
+not running and may not learn why, and a program that rendered `inactive` as any one
+of the three would be asserting what the boundary did not say.
+
 **Two things carry what the outcome cannot, and both are the program's own.** The
 identity, the home, and the boundary are verified by admin before any ask is made,
 per `weaver-admin-PRD` section 4.1 step 3, which is why the account case is refused

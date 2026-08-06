@@ -278,8 +278,9 @@ signal and nothing more. Reading it as loaded-and-idle would also contradict the
 charter's own rule that the state publishes only on a ready aggregate, since a
 unit is running well before any aggregate returns.
 
-**So `show` and `list` report residency, and say so.** The answer carries whether
-a unit is running, absent, or in a state the manager could not report, and it
+**So `show` and `list` report residency, and say so.** The answer carries the
+manager's own three values and no more, running, failed, or not running, the last
+covering the several cases section 6's measurement records it cannot separate. It
 does not claim the lifecycle's four states from a source that cannot distinguish
 them. `AgentState`'s richer set is reachable only from the party that holds the
 run, which is the harness, and no exchange asks it for one:
@@ -601,13 +602,23 @@ to: admin-sink-path-dies-at-open-site
 **The init system is asked over its command-line interface, and the election
 is argued.** Starting the worker is one invocation per load of the system's
 own run tool, with the unit's properties declared on the invocation: the
-agent's `User=`, the fixed template's hardening, and the standard-output
-declaration that places the trace's far end. Stopping it is one invocation of
-the stop verb, and the same interface answers the state query of section 3.
-The alternative is a bus library, and it loses on the tree: a D-Bus crate
-brings an async runtime or its own event loop into a binary that otherwise
-needs neither, for a handful of invocations per lifecycle that are neither hot
-nor latency-bound.
+agent's `User=`, the fixed template's hardening, and the runtime-directory
+declaration the coordination socket is bound inside, per
+`weaver-admin-systemd-contract` section 2. Stopping it is one invocation of the
+stop verb, and the same interface answers the state query of section 3. The
+alternative is a bus library, and it loses on the tree, for a handful of
+invocations per lifecycle that are neither hot nor latency-bound.
+
+**No descriptor is declared on the invocation, and the negative is the point.**
+The trace's sink is opened by this crate under root and crosses inside the enter
+directive, per section 5 and section 7, so nothing about the record reaches the
+unit's properties. An earlier form of this clause named a standard-output
+declaration placing the trace's far end, written while that route was under
+consideration and left standing after it was declined. It is struck:
+`weaver-admin-systemd-contract` section 0 rejects the route because the unit's
+standard output is inherited across fork and exec, which would hand every organ
+the harness forks a writable handle to the agent's own record. One record path,
+and it is the descriptor.
 
 **What this crate relies on from the init system is the contract's and not this
 election's.** `weaver-admin-systemd-contract` section 5 states the reliance set,
@@ -631,11 +642,32 @@ contract's section 3 and not defended here.
 **A failed dial is followed by a state ask, so a refusal names the right thing.**
 The contract's section 3 records the measurement: a start ask can succeed over a
 unit that never runs, so the dial's bound is what proves liveness and the bound
-alone would report an absent residency where the truth is a unit that failed.
-Section 7's refusal therefore consults the unit's state before returning, and the
-refusal carries the unit's failure where there is one. The instrument is a test
-starting a unit whose binary does not exist and watching the refusal name the
-unit rather than the residency, watched to fail when the state ask is removed.
+alone would report an absent residency where the truth is a unit that is not
+running. Section 7's refusal therefore consults the unit's state before
+returning.
+
+**What that ask yields is a state and never a reason, and what the state
+separates is narrower than it looks.** `weaver-admin-systemd-contract` section 3
+says outcomes carry status and not the failure's cause, so this clause promises no
+diagnostic, and why a unit failed is the manager's journal to answer where this
+program does not read, per that contract's section 7. Measured 2026-08-05 against
+a live manager, the activity value separates three cases and conflates several:
+a unit whose process ran and exited non-zero reads `failed`, a running one reads
+`active`, and `inactive` covers a unit that stopped cleanly, one that never
+existed, and one whose exec never succeeded because its binary was absent. So the
+refusal carries the value and claims nothing beyond it. A dial that timed out
+over a unit reading `failed` refuses naming that state, and one over a unit
+reading `inactive` refuses saying the worker is not running without asserting
+which of the three reasons applies, because the boundary cannot tell them apart
+and a refusal that guessed would be inventing a fact.
+
+**The instrument is a test whose watch turns on the state it names.** A unit
+started against a binary that exits non-zero reaches `failed`, and the test
+watches the refusal carry that state rather than the absent residency, watched to
+fail when the state ask is removed. The obvious test, a binary that does not
+exist, is the one this clause must not use: that case reads `inactive` and would
+pass whether or not the state ask ran, which is the never-failing perturbation
+apex section 11 counts as worse than no test.
 
 ```graph
 node: admin-failed-dial-consults-unit-state
@@ -681,7 +713,8 @@ only value interpolated is the validated agent name of section 4, so the
 delegated authority stays bounded by the allow-list exactly as charter
 section 7 requires.
 
-**The unit declares no open, and the absence is the assertion.** Under the
+**The unit declares no descriptor-bearing open, and the absence is the
+assertion.** Under the
 inversion the worker starts bare and builds its own coordination socket inside
 the sandbox, per `weaver-harness-Spec` section 2.3, so nothing is placed into
 the unit at start and no descriptor crosses the init system at all. The sink's
