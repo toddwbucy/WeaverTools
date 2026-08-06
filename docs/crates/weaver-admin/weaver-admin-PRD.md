@@ -33,6 +33,8 @@ measurement of this date recorded there. The prior Revised entry's service-accou
 reading is superseded in whole.
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
+**External boundaries:** `weaver-admin-operator-contract` for the record's exit and
+`weaver-admin-systemd-contract` for the unit, both parties outside the program
 **Editorial:** Per the Working Rules.
 
 ---
@@ -533,15 +535,25 @@ of those can itself fail, and a rollback that cannot complete reports what it co
 not undo and does not publish any state, which is the same rule as a partial load
 and not a second one.
 
-## 6. The seam
+## 6. The seams
 
-This crate holds one seam. It is a duplex channel to `weaver-harness`, governed by
-`weaver-admin-harness-contract`, and it is the only pathway admin constructs or holds
-an end of.
+This crate holds one seam to another crate and two contracted boundaries to parties
+outside the program. The one-seam claim this section carried until 2026-08-05 was
+true of crate-to-crate seams and is restated as such rather than dropped: admin
+reaches exactly one crate, and what changed is that the boundaries it already had to
+root and to the operator are now written down.
 
 | Seam | Peer | What crosses |
 |---|---|---|
-| Coordination | `weaver-harness` | Admin directs the run to be entered and left, hands the trace descriptor inside the enter directive, and conveys the operator's intent to stop. The harness confirms, refuses, or answers a stop with the turn's fate. A fault the worker survives crosses nowhere here, travelling as the `fault` event on the stream. |
+| Coordination | `weaver-harness` | Admin dials the socket the worker bound and directs the run to be entered and left, hands the trace descriptor inside the enter directive, and conveys the operator's intent to stop. The harness confirms, refuses, or answers a stop with the turn's fate. A fault the worker survives crosses nowhere here, travelling as the `fault` event on the stream. |
+| The unit | the init system, as root | Admin asks for a transient unit under the agent's `User=` with the sandbox properties the operator's template fixes, asks for it to be stopped, and asks what state it is in. The init system starts, holds, and reaps the unit, and it is what keeps an agent alive past the operator's login session. No descriptor crosses. Governed by `weaver-admin-systemd-contract`. |
+| The record's exit | the operator | The stream leaves to the sink the operator declared, one event per line, with durability the operator's. Governed by `weaver-admin-operator-contract`. |
+
+**The two outward boundaries carry no seam edge, and the absence is the graph's rule
+rather than an omission.** A seam edge runs between two crate nodes, and neither the
+init system nor the operator has one, the graph carrying no node for a principal
+outside the program. Each is declared by its contract's party edge instead, the same
+shape `weaver-gate-world-contract` takes.
 
 ```graph
 edge: seam
@@ -874,17 +886,22 @@ caller-held end, the passing path being the manager's own and shared between
 instances. Neither mechanism is needed by the design as ruled, and both are kept
 so a later pass weighs against facts rather than re-deriving them.
 
-**Whether the sink's write side becomes a socketpair with a root-held read end,
-opened 2026-08-05 against a measured fact.** As chartered, a file sink's
-descriptor permits `ftruncate` by any holder open for writing, `O_APPEND`
-notwithstanding, so the written past is destructible from inside the wall, during
-the fork window and by the harness itself. A pair whose read end stays root-side
-would make everything already crossed unreachable from inside, the membrane
-gaining a direction. The cost is the shape of admin: a per-invocation tool holds
-no process to keep a read end open across a run, so the upgrade needs a standing
-root-side holder, and naming that holder is the question. An operator who wants
-the property today elects a socket sink and holds the listener themselves.
-**Settled by:** the human's ruling, with the holder named.
+**A file sink is truncatable from inside the wall and the other two shapes are
+not, which is a fact about the sink's kind rather than an open cell.** Stated here
+because it was weighed on 2026-08-05 and settled rather than deferred. A file
+descriptor open for writing permits `ftruncate` whatever `O_APPEND` says, so an
+agent holding a file sink's descriptor can destroy the written past, and the fork
+window widens that to any same-uid child before its exec. A pipe or a socket sink
+hands the agent a descriptor with no such operation, so everything already written
+is beyond reach from inside by construction.
+
+**Custody of the past is therefore an operator election and the corpus names it
+rather than forcing it.** An operator who needs the record immutable against the
+agent elects a pipe or a socket, and one who elects a file has a sink the agent can
+append to and truncate. Moving the open to the init system was examined the same
+date and declined, per `weaver-admin-systemd-contract` section 0: it bought nothing
+the sink's kind does not already buy, and it would have put the record on the unit's
+standard output, which every forked organ inherits.
 
 **Session close.** Section 4.4 puts `session.closed` with the harness, at the cost
 of requiring the agent loaded for the authoring. What cues that authoring inside the
@@ -955,6 +972,10 @@ moved while the apex re-authoring waited on all seven charters.
 act.** The three rulings are the socket inversion, the admin recut, and loop 0's
 departure from the loop taxonomy, and gate G7 reads this list against the tree.
 
+- `weaver-admin-systemd-contract`, cut in this act on the operator's ruling that
+  root and the init system are external and the interfacing is settled by contract.
+  Section 6's seam table gains its row, and the reliance set the Spec was carrying
+  implicitly moves there. Landed.
 - `weaver-admin-Spec`. The invocation's interface replaces the operator surface,
   the state is read from the init system, the channel is dialed, the unit
   declares no open, and the record count moves from thirty-six to twenty-nine.

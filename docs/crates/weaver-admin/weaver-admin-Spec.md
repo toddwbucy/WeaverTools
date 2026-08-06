@@ -21,8 +21,11 @@ service account that held them, section 2 becoming the invocation's interface an
 section 3 reading the init system for state. The coordination channel inverts, so
 section 7 dials where it bound, the four acts becoming one connect with a bounded
 retry, and the credential check moves to the harness's accept where its record now
-lives. Section 6's unit declares no open. Section 10's walks and counts are
-restated against the surviving set.
+lives. Section 6's unit declares no open, its reliance set moving to
+`weaver-admin-systemd-contract` and its election's ground restated to what holds,
+and a failed dial now consults the unit's state so a refusal names the right
+failure.
+Section 10's walks and counts are restated against the surviving set.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -34,11 +37,12 @@ restated against the surviving set.
 Build instructions for `weaver-admin`: the binary's layout, the invocation's
 interface, the verb sequencing, the sink openings, the transient unit's
 invocation, the coordination channel's dial, and the elections a builder
-would otherwise invent. It is derived from `weaver-admin-PRD` and from the two
-contracts this crate is party to, `weaver-admin-harness-contract` and
+would otherwise invent. It is derived from `weaver-admin-PRD` and from the three
+contracts this crate is party to, `weaver-admin-harness-contract`,
 `weaver-admin-operator-contract`, the second now bounding the trace's exit alone,
-together with `weaver-organ-channel`, the drawn material the first of them draws
-in part.
+and `weaver-admin-systemd-contract`, cut this date for the boundary the recut made
+load-bearing, together with `weaver-organ-channel`, the drawn material the first
+of them draws in part.
 
 Level discipline. The charter says what the crate needs and why. This document
 says how it is represented, and per gate G2 it elects against grounds the charter
@@ -581,12 +585,51 @@ to: admin-sink-path-dies-at-open-site
 **The init system is asked over its command-line interface, and the election
 is argued.** Starting the worker is one invocation per load of the system's
 own run tool, with the unit's properties declared on the invocation: the
-agent's `User=` and the fixed template's hardening. Stopping it is one
-invocation of the stop verb, and the same interface answers the state query of
-section 3. The alternative is a bus library, and it loses on the tree: a D-Bus
-crate brings an async runtime or its own event loop into a binary that
-otherwise needs neither, for a handful of invocations per lifecycle that are
-neither hot nor latency-bound.
+agent's `User=`, the fixed template's hardening, and the standard-output
+declaration that places the trace's far end. Stopping it is one invocation of
+the stop verb, and the same interface answers the state query of section 3.
+The alternative is a bus library, and it loses on the tree: a D-Bus crate
+brings an async runtime or its own event loop into a binary that otherwise
+needs neither, for a handful of invocations per lifecycle that are neither hot
+nor latency-bound.
+
+**What this crate relies on from the init system is the contract's and not this
+election's.** `weaver-admin-systemd-contract` section 5 states the reliance set,
+the identity holding from the first instruction, the sandbox in force before it,
+unit-name uniqueness as the concurrency guard, and the cgroup's arrival and
+removal with the unit. This Spec elects only how those asks are carried, so a
+builder replacing the command line with a bus library would change this election
+and breach nothing in that contract.
+
+**The election's ground is no new dependency, stated exactly because a looser
+ground was written first.** The clause above said a bus crate brings an async
+runtime, and that is not true as written: `zbus` publishes a blocking API and
+`dbus-rs` is synchronous over a C library. What holds is narrower and enough.
+`zbus` carries async machinery into the resolved tree whatever its surface API,
+which this crate's own manifest assertion forbids, and `dbus-rs` trades that for
+a C library dependency in a binary that otherwise links none. The command line
+costs neither, at a handful of invocations per lifecycle that are neither hot nor
+latency-bound. What it costs instead is failure discrimination, named at the
+contract's section 3 and not defended here.
+
+**A failed dial is followed by a state ask, so a refusal names the right thing.**
+The contract's section 3 records the measurement: a start ask can succeed over a
+unit that never runs, so the dial's bound is what proves liveness and the bound
+alone would report an absent residency where the truth is a unit that failed.
+Section 7's refusal therefore consults the unit's state before returning, and the
+refusal carries the unit's failure where there is one. The instrument is a test
+starting a unit whose binary does not exist and watching the refusal name the
+unit rather than the residency, watched to fail when the state ask is removed.
+
+```graph
+node: admin-failed-dial-consults-unit-state
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-failed-dial-consults-unit-state
+```
 
 ```graph
 node: admin-init-system-over-command-line
@@ -938,7 +981,7 @@ no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Ten of the
-twenty-nine carry a `grounds` edge and those ten carry eleven edges, one
+thirty carry a `grounds` edge and those ten carry eleven edges, one
 record grounding in two invariants. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
@@ -953,7 +996,7 @@ nothing to bound, so those six ground in it. Remove it and the log is still
 NDJSON, the FIFO still opens nonblocking, the inventory still repairs nothing,
 and the identity is still built from the validated name, so those ground in
 nothing.
-**Nineteen claims grounding in no invariant is the expected result and not a
+**Twenty claims grounding in no invariant is the expected result and not a
 gap**, per Document Format section 4: most of what this Spec elects is a
 rendering, a mode, an ordering, or a route, and representation is what the
 invariants are not about.
@@ -1024,8 +1067,8 @@ domains.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Twenty-nine records in all as of
-the recut of 2026-08-05, fifteen tagged for review, nine for perturbation,
+would sit apart from the prose that earns it. Thirty records in all as of
+the recut of 2026-08-05, fifteen tagged for review, ten for perturbation,
 three for the manifest, and two for a compile pin. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable, and two review tags come from the sorting rather than from an
@@ -1034,7 +1077,7 @@ test reaches are the review halves of splits this section's own bullets take,
 and a divided half counts with the bullet it divided out of, per Document
 Format section 3.
 
-**Ten records retired with the recut, one moved, and four were added, which is
+**Ten records retired with the recut, one moved, and five were added, which is
 the count's whole movement from thirty-six.** Retired: the operator surface's
 six, its stream election, its accept-time refusal, its refusal-by-closure, its
 serial answering, its bounded request line, and its bare wire shapes, each
@@ -1044,9 +1087,10 @@ the one exchange in flight per agent, the last four retiring with the acts and
 the map they described. Moved: the credential check, to
 `weaver-harness-Spec` section 2.3, where the accept now happens. Added: the
 root check and the answer-and-status agreement of section 2, the dial's bound
-of section 7, and the state read from the init system of section 3. The unit's
-declared open inverted to a declared absence rather than retiring, so it is
-neither. A rebuild of the graph reads this movement as the act's assertion
+of section 7, the state read from the init system of section 3, and the state
+ask that follows a failed dial, of section 6. The unit's declared open inverted
+to a declared absence rather than retiring, so it is neither. A rebuild of the
+graph reads this movement as the act's assertion
 delta.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
