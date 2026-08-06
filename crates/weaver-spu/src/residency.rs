@@ -1,10 +1,7 @@
 //! conforms: spu-header-read-touches-no-device
 //! conforms: spu-devices-from-the-binding
 //! conforms: spu-admission-judges-room-reach-and-width
-//! conforms: spu-device-authority-is-the-driver
 //! conforms: spu-headroom-is-a-construction-parameter
-//! conforms: spu-weights-hash-at-admit
-//! conforms: spu-hash-failure-sentinel
 //! conforms: spu-release-frees-before-answering
 //! conforms: spu-no-idempotence-no-retry
 //!
@@ -69,7 +66,8 @@ impl WeightsHash {
 pub enum AdmitRefusal {
     /// Step one: the binding did not resolve to an artifact.
     Unresolvable,
-    /// Step two: the artifact is present and its header could not be read.
+    /// Step two: the artifact is present and could not be read, its header or
+    /// its size on disk. Both reads are of the artifact and both are free.
     Unreadable,
     /// Step three, on the condition that reads nothing. Carries the family,
     /// because the no-silent-substitution test reads the name.
@@ -77,6 +75,11 @@ pub enum AdmitRefusal {
     /// Step three, on a condition that reads the driver, where no driver is
     /// compiled in to read.
     Device,
+    /// Step three, on the set's own shape: an ordinal that appears twice. Two
+    /// shards of one artifact on one card is not a two-device admission, and
+    /// judging the pair as distinct would pass room on half the real demand and
+    /// skip the peer check the pair would need. Free, so judged with the width.
+    DuplicateDevice { ordinal: u32 },
     /// Step three, on a condition the driver answered. Carries which device and
     /// which condition, because an operator meeting this needs to know whether
     /// to free a card or to reassign the binding.
@@ -97,6 +100,7 @@ impl From<AdmitRefusal> for LifecycleRefusal {
             AdmitRefusal::Unreadable => LifecycleRefusal::ArtifactUnreadable,
             AdmitRefusal::Family(inner) => inner.into(),
             AdmitRefusal::Device => LifecycleRefusal::DeviceCannotAdmit,
+            AdmitRefusal::DuplicateDevice { .. } => LifecycleRefusal::DeviceCannotAdmit,
             #[cfg(feature = "cuda")]
             AdmitRefusal::DeviceRefused(_) => LifecycleRefusal::DeviceCannotAdmit,
             // The floor's closed set carries no case for a step this binary did
@@ -163,6 +167,7 @@ impl Residency {
         // what puts the width refusal inside a test on a machine with no device.
         family::judge_width(&header.family, binding.devices.len() as u32)
             .map_err(AdmitRefusal::Family)?;
+        judge_distinct(&binding.devices)?;
         // The shard each device must hold, read from the filesystem rather than
         // declared by the artifact. The width was judged above, so the divisor
         // is known non-zero.
@@ -206,6 +211,16 @@ impl Residency {
         drop(resident);
         Ok(())
     }
+}
+
+/// The set's ordinals must be distinct, judged with the free conditions.
+fn judge_distinct(devices: &[DeviceOrdinal]) -> Result<(), AdmitRefusal> {
+    for (index, device) in devices.iter().enumerate() {
+        if devices[..index].contains(device) {
+            return Err(AdmitRefusal::DuplicateDevice { ordinal: device.0 });
+        }
+    }
+    Ok(())
 }
 
 /// The room and reach conditions, each of which costs a driver query.
@@ -318,6 +333,58 @@ mod tests {
     fn release_without_residency_refuses() {
         let mut residency = Residency::new();
         assert_eq!(residency.release(), Err(LifecycleRefusal::NoResidency));
+    }
+
+    /// A GGUF whose header carries exactly the one key the family lookup
+    /// needs, so an admit against it walks past steps one and two.
+    fn llama_gguf() -> std::path::PathBuf {
+        use std::io::Write;
+        let dir = std::env::temp_dir().join(format!("weaver-spu-residency-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        let path = dir.join("llama.gguf");
+        let mut file = Vec::new();
+        file.extend_from_slice(b"GGUF");
+        file.extend_from_slice(&3u32.to_le_bytes());
+        file.extend_from_slice(&0u64.to_le_bytes());
+        file.extend_from_slice(&1u64.to_le_bytes());
+        let key = b"general.architecture";
+        file.extend_from_slice(&(key.len() as u64).to_le_bytes());
+        file.extend_from_slice(key);
+        file.extend_from_slice(&8u32.to_le_bytes());
+        let value = b"llama";
+        file.extend_from_slice(&(value.len() as u64).to_le_bytes());
+        file.extend_from_slice(value);
+        let mut handle = std::fs::File::create(&path).expect("a fixture file");
+        handle.write_all(&file).expect("the fixture is written");
+        path
+    }
+
+    /// **An ordinal that appears twice refuses on the set's shape, on the admit
+    /// path.** Two shards of one artifact on one card is not a two-device
+    /// admission: judged as distinct, the pair would pass room on half the real
+    /// demand and skip the peer check.
+    ///
+    /// The fixture resolves and its header reads, so the admit walks past the
+    /// free steps and the refusal read here is the shape judgment's own. A
+    /// first version of this test called `judge_distinct` directly and could
+    /// not fail under the call-site removal, which is why this one drives
+    /// `admit`.
+    ///
+    /// Perturbation: remove the `judge_distinct` call from `admit` and this
+    /// test fails, because the refusal becomes the driver condition's rather
+    /// than the shape's. Watched under exactly that removal.
+    #[test]
+    fn a_duplicate_ordinal_refuses_on_the_admit_path() {
+        let mut residency = Residency::new();
+        let binding = ModelBinding {
+            artifact: ArtifactRef(llama_gguf().to_string_lossy().into_owned()),
+            devices: vec![DeviceOrdinal(0), DeviceOrdinal(0)],
+        };
+        assert_eq!(
+            residency.admit(&binding, Headroom(0)).err(),
+            Some(AdmitRefusal::DuplicateDevice { ordinal: 0 }),
+            "the refusal is the set's shape, before any driver condition"
+        );
     }
 
     /// The floor's refusal set carries no family-naming case, so the name is

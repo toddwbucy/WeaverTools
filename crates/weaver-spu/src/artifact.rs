@@ -1,3 +1,6 @@
+//! conforms: spu-weights-hash-at-admit
+//! conforms: spu-hash-failure-sentinel
+//!
 //! The artifact: resolution, the header read, and the weights hash.
 //!
 //! These are the free steps of the admit, per `weaver-spu-Spec` section 3.
@@ -95,10 +98,13 @@ fn container_within(dir: &Path) -> Result<PathBuf, LifecycleRefusal> {
             found.push(path);
         }
     }
-    found.sort();
     match found.len() {
         0 => Err(LifecycleRefusal::ArtifactUnresolvable),
-        _ => Ok(found.remove(0)),
+        1 => Ok(found.remove(0)),
+        // A directory holding several containers is ambiguous, and picking one
+        // would be this crate deciding which artifact the operator meant. The
+        // binding names one artifact; a directory that does not is refused.
+        _ => Err(LifecycleRefusal::ArtifactUnresolvable),
     }
 }
 
@@ -108,12 +114,19 @@ fn read_gguf_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Lifecycle
     let _version = read_u32(reader)?;
     let _tensor_count = read_u64(reader)?;
     let kv_count = read_u64(reader)?;
+    // The caps refuse rather than truncate. A walk cut short mid-structure
+    // leaves the reader misaligned, so an oversized-but-valid header would
+    // parse garbage instead of refusing, and a header claiming more metadata
+    // than any real artifact carries is not an artifact this crate reads.
+    if kv_count > 4096 {
+        return Err(LifecycleRefusal::ArtifactUnreadable);
+    }
 
     let mut family = None;
     let mut hidden_size = None;
     let mut layer_count = None;
 
-    for _ in 0..kv_count.min(4096) {
+    for _ in 0..kv_count {
         let key = read_gguf_string(reader)?;
         let value = read_gguf_value(reader)?;
         match (key.as_str(), &value) {
@@ -209,14 +222,25 @@ fn read_gguf_string<R: Read>(reader: &mut R) -> Result<String, LifecycleRefusal>
     String::from_utf8(body).map_err(|_| LifecycleRefusal::ArtifactUnreadable)
 }
 
+/// How deep a nested GGUF array may go before the read refuses. GGUF metadata
+/// has no legitimate deep case, and without a bound a crafted file of repeated
+/// array-of-array headers drives the recursion to a stack overflow, an abort
+/// reachable from an untrusted artifact at step two of the admit. Every other
+/// malformation on this path is a clean refusal, and this one must be too.
+const MAX_ARRAY_DEPTH: u32 = 8;
+
 /// Read one typed GGUF value, skipping what this header read does not use. The
 /// type codes are GGUF's own.
 fn read_gguf_value<R: Read>(reader: &mut R) -> Result<GgufValue, LifecycleRefusal> {
     let kind = read_u32(reader)?;
-    read_gguf_typed(reader, kind)
+    read_gguf_typed(reader, kind, 0)
 }
 
-fn read_gguf_typed<R: Read>(reader: &mut R, kind: u32) -> Result<GgufValue, LifecycleRefusal> {
+fn read_gguf_typed<R: Read>(
+    reader: &mut R,
+    kind: u32,
+    depth: u32,
+) -> Result<GgufValue, LifecycleRefusal> {
     let mut skip = |n: usize| -> Result<(), LifecycleRefusal> {
         let mut sink = vec![0u8; n];
         reader
@@ -250,11 +274,19 @@ fn read_gguf_typed<R: Read>(reader: &mut R, kind: u32) -> Result<GgufValue, Life
         8 => Ok(GgufValue::Text(read_gguf_string(reader)?)),
         9 => {
             // An array: element type, count, then the elements. Walked rather
-            // than skipped wholesale, because element widths vary.
+            // than skipped wholesale, because element widths vary. Depth and
+            // count refuse rather than truncate, on the same ground the
+            // kv-count cap does: a walk cut short leaves the reader misaligned.
+            if depth >= MAX_ARRAY_DEPTH {
+                return Err(LifecycleRefusal::ArtifactUnreadable);
+            }
             let element = read_u32(reader)?;
             let count = read_u64(reader)?;
-            for _ in 0..count.min(1024 * 1024) {
-                read_gguf_typed(reader, element)?;
+            if count > 1024 * 1024 {
+                return Err(LifecycleRefusal::ArtifactUnreadable);
+            }
+            for _ in 0..count {
+                read_gguf_typed(reader, element, depth + 1)?;
             }
             Ok(GgufValue::Other)
         }
@@ -298,10 +330,13 @@ pub fn on_disk_bytes(path: &Path) -> Option<u64> {
 /// [`WeightsHash::sentinel`] rather than an error: a caller cannot accidentally
 /// treat a failure as a value, because the failure is a value it can test.
 ///
-/// The hash is computed from the bytes this process loaded rather than from a
-/// manifest handed to it, and it is computed fresh on each call with no cache
+/// The hash is computed at admit by reading the artifact, never from a manifest
+/// handed to this process, and it is computed fresh on each call with no cache
 /// across an artifact change, which is what makes the third walk's alteration
-/// visible.
+/// visible. It is a second read of the artifact rather than a hash of the load,
+/// so a swap between the load and this read would go unseen: binding the hash
+/// to the loaded bytes themselves arrives with the loader, and until then this
+/// is the honest statement of what is hashed.
 pub fn weights_hash(path: &Path) -> crate::residency::WeightsHash {
     match hash_canonical(path) {
         Ok(value) => crate::residency::WeightsHash(value),
@@ -344,4 +379,106 @@ fn hash_file_into(path: &Path, hasher: &mut blake3::Hasher) -> Result<(), ()> {
         hasher.update(&buffer[..read]);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    /// A minimal GGUF whose one metadata value is an array nested past the
+    /// depth bound: each level is `element_type=9` and `count=1`, so the file
+    /// is small while the recursion it asks for is not.
+    fn nested_gguf(depth: u32) -> Vec<u8> {
+        let mut file = Vec::new();
+        file.extend_from_slice(b"GGUF");
+        file.extend_from_slice(&3u32.to_le_bytes()); // version
+        file.extend_from_slice(&0u64.to_le_bytes()); // tensor count
+        file.extend_from_slice(&1u64.to_le_bytes()); // kv count
+        let key = b"a";
+        file.extend_from_slice(&(key.len() as u64).to_le_bytes());
+        file.extend_from_slice(key);
+        file.extend_from_slice(&9u32.to_le_bytes()); // the value is an array
+        for _ in 0..depth {
+            file.extend_from_slice(&9u32.to_le_bytes()); // of arrays
+            file.extend_from_slice(&1u64.to_le_bytes()); // one element each
+        }
+        file.extend_from_slice(&0u32.to_le_bytes()); // ending in u8
+        file.extend_from_slice(&0u64.to_le_bytes()); // of zero elements
+        file
+    }
+
+    /// **A crafted GGUF refuses instead of aborting.** Without the depth bound
+    /// a file of repeated array-of-array headers drives the recursion to a
+    /// stack overflow, an abort reachable from an untrusted artifact at step
+    /// two of the admit. Every other malformation on this path is a clean
+    /// refusal, and this one must be too.
+    ///
+    /// Perturbation: remove the `depth >= MAX_ARRAY_DEPTH` branch from the
+    /// array arm and this test dies by stack overflow rather than failing an
+    /// assertion, which is the abort the bound exists to prevent. Watched
+    /// under exactly that removal.
+    #[test]
+    fn a_deeply_nested_gguf_refuses_rather_than_aborting() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-spu-artifact-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        let path = dir.join("nested.gguf");
+        let mut handle = File::create(&path).expect("a fixture file");
+        handle
+            .write_all(&nested_gguf(200_000))
+            .expect("the fixture is written");
+        drop(handle);
+
+        assert_eq!(
+            read_header(&path),
+            Err(LifecycleRefusal::ArtifactUnreadable),
+            "a nesting no real artifact carries is a refusal, never an abort"
+        );
+
+        // A shallow nesting inside the bound still reads to the family error,
+        // which is what shows the bound refuses depth rather than arrays.
+        let shallow = dir.join("shallow.gguf");
+        let mut handle = File::create(&shallow).expect("a fixture file");
+        handle
+            .write_all(&nested_gguf(3))
+            .expect("the fixture is written");
+        drop(handle);
+        assert_eq!(
+            read_header(&shallow),
+            Err(LifecycleRefusal::ArtifactUnreadable),
+            "no general.architecture key, so the refusal is the absent family"
+        );
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// **A directory holding several containers refuses on ambiguity** rather
+    /// than silently resolving to the alphabetically first.
+    ///
+    /// Perturbation: restore the sort-and-take-first and this test fails,
+    /// because the header read succeeds against whichever file sorts first.
+    /// Watched under exactly that restoration.
+    #[test]
+    fn an_ambiguous_directory_refuses() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-spu-artifact-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        for name in ["a.gguf", "b.gguf"] {
+            let mut handle = File::create(dir.join(name)).expect("a fixture file");
+            handle.write_all(&super::tests::nested_gguf(0)).expect("written");
+        }
+        assert_eq!(
+            read_header(&dir),
+            Err(LifecycleRefusal::ArtifactUnresolvable),
+            "two containers is an ambiguity, not a choice"
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
 }

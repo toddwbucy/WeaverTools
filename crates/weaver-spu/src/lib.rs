@@ -1,5 +1,4 @@
 //! conforms: spu-one-binary
-//! conforms: spu-nothing-laid-in-for-later-operations
 //! conforms: spu-two-floor-links-types-without-config
 //! conforms: spu-fork-pins-resolve-as-pinned
 //! conforms: spu-cudarc-caret-pinned

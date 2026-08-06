@@ -43,19 +43,26 @@ fn spawn_holding(child_ends: Vec<RawFd>) -> Child {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    // The sources are copied into a fixed-size array before the fork: the
+    // closure below runs in the child of a multithreaded test process, where
+    // another thread may hold the allocator lock at the moment of the fork, so
+    // an allocation inside it can deadlock. Nothing in the closure allocates.
+    let mut sources = [0 as RawFd; 8];
+    let count = child_ends.len().min(sources.len());
+    sources[..count].copy_from_slice(&child_ends[..count]);
     unsafe {
         command.pre_exec(move || {
             // Pass one: lift every source clear of the target range.
-            let mut lifted = Vec::with_capacity(child_ends.len());
-            for source in &child_ends {
+            let mut lifted = [0 as RawFd; 8];
+            for (slot, source) in lifted[..count].iter_mut().zip(&sources[..count]) {
                 let high = libc::fcntl(*source, libc::F_DUPFD, 32);
                 if high < 0 {
                     return Err(std::io::Error::last_os_error());
                 }
-                lifted.push(high);
+                *slot = high;
             }
             // Pass two: write the targets, which also clears close-on-exec.
-            for (offset, high) in lifted.iter().enumerate() {
+            for (offset, high) in lifted[..count].iter().enumerate() {
                 if libc::dup2(*high, 3 + offset as RawFd) < 0 {
                     return Err(std::io::Error::last_os_error());
                 }
@@ -63,8 +70,8 @@ fn spawn_holding(child_ends: Vec<RawFd>) -> Child {
             // `F_DUPFD` CLEARS close-on-exec on the copy rather than inheriting
             // it, so these would survive the exec and inflate the very count
             // the child checks. Closing them is required, not tidiness.
-            for high in lifted {
-                libc::close(high);
+            for high in &lifted[..count] {
+                libc::close(*high);
             }
             Ok(())
         });
@@ -81,19 +88,23 @@ fn spawn_holding(child_ends: Vec<RawFd>) -> Child {
 /// refers to, so this test leaks a third socket rather than anything meaningful.
 ///
 /// Perturbation: remove the `held != 2` branch from `adopt` and this test
-/// fails, because the process proceeds to serve and blocks on its first read
-/// instead of exiting. Watched under exactly that removal.
+/// fails, because the process proceeds to serve, meets its closed lifecycle
+/// end, and exits clean. The parent's ends are dropped before the wait for
+/// exactly that reason: an earlier version held them open, so the perturbed
+/// binary blocked in its first read and the property was caught by a hang
+/// rather than a failure. Watched under exactly that removal.
 #[test]
 fn a_leaked_descriptor_refuses_to_serve() {
-    let (_lifecycle, child_lifecycle) = seqpacket_pair();
-    let (_decode, child_decode) = seqpacket_pair();
-    let (_leaked, child_leaked) = seqpacket_pair();
+    let (lifecycle, child_lifecycle) = seqpacket_pair();
+    let (decode, child_decode) = seqpacket_pair();
+    let (leaked, child_leaked) = seqpacket_pair();
 
     let child = spawn_holding(vec![
         child_lifecycle.as_raw_fd(),
         child_decode.as_raw_fd(),
         child_leaked.as_raw_fd(),
     ]);
+    drop((lifecycle, decode, leaked));
     let out = child.wait_with_output().expect("the binary exits");
 
     assert!(
@@ -115,15 +126,12 @@ fn exactly_two_descriptors_serve() {
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
 
-    let mut child = spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
+    let child = spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
 
     // A served process blocks on its first read rather than exiting. Closing
-    // the parent's end is what ends it, and a clean exit is the proof it got
-    // past entry.
-    assert!(
-        child.try_wait().expect("a wait succeeds").is_none(),
-        "the process is still running, which means entry passed"
-    );
+    // the parent's end is what ends it, and the clean exit below is the whole
+    // proof it got past entry: an immediate liveness poll would race the exec
+    // and assert nothing either way.
     drop(lifecycle);
     let out = child.wait_with_output().expect("the binary exits");
     assert!(
@@ -150,6 +158,14 @@ fn exactly_two_descriptors_serve() {
 #[test]
 fn the_dumpable_flag_is_clear_after_entry() {
     use std::os::unix::fs::MetadataExt;
+
+    // Under uid 0 the observation is vacuous: /proc/[pid]/fd is root-owned
+    // whether or not the flag was cleared, so the test would pass with the
+    // clear removed. The suite skips loudly rather than attesting to nothing.
+    if nix::unistd::geteuid().is_root() {
+        eprintln!("SKIP the_dumpable_flag_is_clear_after_entry: root owns /proc either way");
+        return;
+    }
 
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();

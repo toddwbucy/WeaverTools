@@ -163,30 +163,29 @@ fn descriptors_beyond_the_standard_streams() -> Result<usize, EntryFault> {
     Ok(held)
 }
 
-/// What a channel read or write refuses on.
+/// What a channel operation faults on, per `weaver-spu-Spec` section 9, which
+/// declares this enum's three cases and no fourth. Refusals are the floor's and
+/// faults are below the exchange layer, so nothing here carries an exchange.
 #[derive(Debug, PartialEq)]
 pub enum ChannelFault {
-    /// The kernel reported a short read. Per the `SOCK_SEQPACKET` election of
-    /// `weaver-types-Spec` section 4.3, a read returning `MSG_TRUNC` is a
-    /// channel fault and never a message: a silently shortened directive is the
-    /// failure mode the boundary property was elected to prevent.
-    Truncated,
-    /// This crate's own write exceeds the bound it asserts on its reads.
-    TooLarge { bytes: usize },
-    /// The peer closed its end.
+    /// The message exceeded the envelope bound, in either direction: a read
+    /// returning `MSG_TRUNC`, or this crate's own write exceeding the bound it
+    /// asserts on its reads. A silently shortened directive is the failure mode
+    /// the boundary property was elected to prevent, and a writer that can
+    /// exceed the receiver's buffer produces the truncation the receiver is
+    /// obliged to fault on.
+    Truncated { bound: usize },
+    /// The octets read are not an envelope.
+    Undecodable,
+    /// The peer's end is closed.
     ///
     /// On a `SOCK_SEQPACKET` socket a shutdown peer reads as a zero-length
     /// datagram rather than as an error, so it is distinguished here rather
     /// than left to look like a message. Every message in this protocol is a
     /// JSON envelope and none is empty, so a zero-length read is unambiguous.
-    /// Folding this into [`ChannelFault::Malformed`] would make an orderly
-    /// shutdown indistinguishable from a peer sending garbage, and the process
-    /// would answer a refusal into a closed socket and exit as a failure.
-    PeerGone,
-    /// The socket refused the operation.
-    Unusable,
-    /// The octets read are not an envelope.
-    Malformed,
+    /// A send the socket refuses lands here too, the peer being unreachable
+    /// either way.
+    Closed,
 }
 
 impl LifecycleChannel {
@@ -194,9 +193,11 @@ impl LifecycleChannel {
     /// only on what it reads, because a writer that can exceed the receiver's
     /// buffer produces the truncation the receiver is obliged to fault on.
     pub fn send(&self, envelope: &OrganEnvelope) -> Result<(), ChannelFault> {
-        let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Malformed)?;
+        let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Undecodable)?;
         if body.len() > MAX_ENVELOPE_BYTES {
-            return Err(ChannelFault::TooLarge { bytes: body.len() });
+            return Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES,
+            });
         }
         send_octets(self.end.as_fd(), &body)
     }
@@ -204,7 +205,7 @@ impl LifecycleChannel {
     /// Receive one envelope, faulting on truncation.
     pub fn recv(&self) -> Result<OrganEnvelope, ChannelFault> {
         let body = recv_octets(self.end.as_fd())?;
-        serde_json::from_slice(&body).map_err(|_| ChannelFault::Malformed)
+        serde_json::from_slice(&body).map_err(|_| ChannelFault::Undecodable)
     }
 
     pub fn as_fd(&self) -> BorrowedFd<'_> {
@@ -217,7 +218,9 @@ impl DecodeSocket {
     /// socket is not an organ channel and the confinement is the absent surface.
     pub fn send_octets(&self, body: &[u8]) -> Result<(), ChannelFault> {
         if body.len() > MAX_ENVELOPE_BYTES {
-            return Err(ChannelFault::TooLarge { bytes: body.len() });
+            return Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES,
+            });
         }
         send_octets(self.end.as_fd(), body)
     }
@@ -235,8 +238,15 @@ impl DecodeSocket {
 }
 
 fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
-    send(end.as_raw_fd(), body, MsgFlags::empty()).map_err(|_| ChannelFault::Unusable)?;
-    Ok(())
+    loop {
+        match send(end.as_raw_fd(), body, MsgFlags::empty()) {
+            Ok(_) => return Ok(()),
+            // A signal landing mid-call is not the peer's doing: retry rather
+            // than report a closed channel that is not closed.
+            Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => return Err(ChannelFault::Closed),
+        }
+    }
 }
 
 /// The receive obligation the `SOCK_SEQPACKET` election attaches: a buffer sized
@@ -248,16 +258,23 @@ fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
 /// fits and reads clean, and anything past it sets the flag.
 fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
     let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
-    let read = recv(end.as_raw_fd(), &mut buffer, MsgFlags::MSG_TRUNC)
-        .map_err(|_| ChannelFault::Unusable)?;
+    let read = loop {
+        match recv(end.as_raw_fd(), &mut buffer, MsgFlags::MSG_TRUNC) {
+            Ok(read) => break read,
+            Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => return Err(ChannelFault::Closed),
+        }
+    };
     if read > buffer.len() {
         // With MSG_TRUNC on a SEQPACKET socket the kernel returns the real
         // datagram length rather than the copied length, so a return above the
         // buffer is the truncation report.
-        return Err(ChannelFault::Truncated);
+        return Err(ChannelFault::Truncated {
+            bound: MAX_ENVELOPE_BYTES,
+        });
     }
     if read == 0 {
-        return Err(ChannelFault::PeerGone);
+        return Err(ChannelFault::Closed);
     }
     buffer.truncate(read);
     Ok(buffer)
@@ -316,8 +333,10 @@ mod tests {
 
         assert_eq!(
             socket.recv_octets(),
-            Err(ChannelFault::Truncated),
-            "an oversized datagram faults rather than arriving short"
+            Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES
+            }),
+            "an oversized datagram faults rather than arriving short, naming the bound"
         );
     }
 
@@ -348,8 +367,8 @@ mod tests {
         let oversized = vec![b'z'; MAX_ENVELOPE_BYTES + 1];
         assert_eq!(
             socket.send_octets(&oversized),
-            Err(ChannelFault::TooLarge {
-                bytes: MAX_ENVELOPE_BYTES + 1
+            Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES
             })
         );
     }

@@ -95,7 +95,10 @@ pub const REGISTRY: &[Declaration] = &[
         flush: FlushMechanism::TruncateToPosition,
     },
     Declaration {
-        family: "gptoss",
+        // The key is what llama.cpp writes into `general.architecture`, which
+        // is hyphenated. A key spelled any other way is a family no artifact
+        // header ever selects, unreachable rather than wrong-looking.
+        family: "gpt-oss",
         shard_widths: &[1, 2],
         template: "<|start|>{role}<|message|>{message}<|end|>",
         flush: FlushMechanism::TruncateToPosition,

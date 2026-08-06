@@ -60,7 +60,13 @@ pub enum DecodeFault {
     /// This build was not compiled to serve this artifact's container.
     ContainerNotBuilt { container: Container },
     /// The session has not been opened, so there is no prefix to append to.
+    /// A session an engine fault or a failed flush left unusable answers this
+    /// too: what it says is that no serviceable prefix stands.
     NotOpen,
+    /// Open is first and happens once, per the decode contract's ordering. A
+    /// second open would silently rewind the resident length over accumulated
+    /// turns, which is the exact failure the append-only discipline forbids.
+    AlreadyOpen,
 }
 
 /// The primitives a backend supplies. The loop above them is `session.rs`'s.

@@ -120,20 +120,23 @@ fn binding() -> ModelBinding {
     }
 }
 
-/// **A release with no completed admit before it is refused and is not
-/// queued.** The refusal returns on the same exchange rather than the directive
-/// being held until an admit arrives.
+/// **A release before any admit answers `OutOfOrder` and is not queued,** per
+/// Spec sections 9 and 10: the order is judged against the seam's recorded
+/// position before the directive reaches residency, and the refusal returns on
+/// the exchange that asked rather than the directive being held.
 ///
-/// Perturbation: make `Residency::release` answer `Released` when nothing is
-/// resident and this test fails. Watched under exactly that change.
+/// Perturbation: route the before-admit release through `Residency::release`
+/// and this test fails, because the answer becomes `NoResidency`, which is
+/// residency's account rather than the position's. Watched under exactly that
+/// change.
 #[test]
-fn a_release_without_an_admit_is_refused_on_the_seam() {
+fn a_release_before_any_admit_answers_out_of_order_on_the_seam() {
     let (mut harness, mut child) = started();
     let answer = harness.ask(LifecycleDirective::Release);
     assert_eq!(
         answer.payload,
-        Payload::Refusal(LifecycleRefusal::NoResidency),
-        "a release with no admit before it refuses"
+        Payload::Refusal(LifecycleRefusal::OutOfOrder),
+        "a release before any admit is out of order for the seam's position"
     );
     assert_eq!(answer.exchange.ordinal, 1, "on the exchange that asked");
     drop(harness);

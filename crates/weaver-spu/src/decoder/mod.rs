@@ -1,3 +1,5 @@
+//! conforms: spu-nothing-laid-in-for-later-operations
+//!
 //! The decode submodule, per `weaver-spu-Spec` section 4.
 //!
 //! **One submodule exists**, and a later operation type is a sibling of this

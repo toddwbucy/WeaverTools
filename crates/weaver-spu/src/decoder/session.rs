@@ -99,9 +99,10 @@ impl CancelPoll for NeverCancels {
 /// The resident session.
 ///
 /// **`resident_len` is monotonic except across a flush.** It is private, and
-/// the only path that reduces it is [`Session::flush`]. Nothing else in this
-/// type writes it downward, which is the discipline the perturbation test
-/// watches from outside.
+/// the paths that reduce it are [`Session::flush`] and the close over a backend
+/// fault, which zeroes it alongside `opened` because a closed session accounts
+/// for nothing. Nothing writes it downward over a session that keeps serving,
+/// which is the discipline the perturbation test watches from outside.
 pub struct Session {
     backend: Box<dyn Backend>,
     resident_len: usize,
@@ -149,6 +150,13 @@ impl Session {
     /// Render the identity prefix resident, once, and record the length it
     /// produced.
     pub fn open(&mut self, prefix: &[TokenId]) -> Result<(), DecodeFault> {
+        // Open is first and happens once. Without this guard a second open
+        // writes the resident length back down over accumulated turns with no
+        // backend truncate or reestablish beneath it, which is the silent
+        // rewind the module header forbids.
+        if self.opened {
+            return Err(DecodeFault::AlreadyOpen);
+        }
         if prefix.len() > self.capacity {
             return Err(DecodeFault::Overflow {
                 resident: 0,
@@ -198,7 +206,9 @@ impl Session {
             });
         }
 
-        self.backend.decode_at(delta, self.resident_len)?;
+        if let Err(fault) = self.backend.decode_at(delta, self.resident_len) {
+            return Err(self.poison(fault));
+        }
         self.resident_len += delta.len();
 
         let mut produced = Vec::new();
@@ -219,20 +229,30 @@ impl Session {
                 break Stopped::CapacityReached;
             }
 
-            let token = self.backend.sample()?;
+            let token = match self.backend.sample() {
+                Ok(token) => token,
+                Err(fault) => return Err(self.poison(fault)),
+            };
             if stop.stop_tokens.contains(&token) {
                 break Stopped::Complete;
             }
             produced.push(token);
-            self.backend.decode_at(&[token], self.resident_len)?;
+            if let Err(fault) = self.backend.decode_at(&[token], self.resident_len) {
+                return Err(self.poison(fault));
+            }
             self.resident_len += 1;
         };
 
         // Every path above converges here. The terminator lands on the clean
         // path and the cancelled path alike, which is what makes the cancel of
-        // charter section 13.5 leave a well-framed session.
-        self.backend
-            .decode_at(&[stop.terminator], self.resident_len)?;
+        // charter section 13.5 leave a well-framed session. The engine-fault
+        // paths do not reach here and do not pretend to: a backend that just
+        // faulted cannot be asked to decode a terminator, so those paths close
+        // the session instead, and a closed session is the honest state where a
+        // well-framed one cannot be produced.
+        if let Err(fault) = self.backend.decode_at(&[stop.terminator], self.resident_len) {
+            return Err(self.poison(fault));
+        }
         self.resident_len += 1;
 
         Ok(Generated {
@@ -251,14 +271,22 @@ impl Session {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
         }
-        match self.flush_mechanism {
-            FlushMechanism::TruncateToPosition => {
-                self.backend.truncate_to(self.prefix_len)?;
-            }
-            FlushMechanism::ReestablishAndReprefill => {
-                self.backend.reestablish()?;
-                self.backend.decode_at(&self.prefix, 0)?;
-            }
+        let outcome = match self.flush_mechanism {
+            FlushMechanism::TruncateToPosition => self.backend.truncate_to(self.prefix_len),
+            FlushMechanism::ReestablishAndReprefill => self
+                .backend
+                .reestablish()
+                .and_then(|()| self.backend.decode_at(&self.prefix, 0)),
+        };
+        // A flush that fails partway leaves the backend's state and the
+        // session's account disagreeing: a reestablish that succeeded before a
+        // re-prefill that failed is an empty backend under a large resident
+        // length, and the next append would decode at an absolute position far
+        // past the backend's real state, the position-error-far-from-cause
+        // failure the append-only discipline exists to prevent. The session
+        // closes instead of carrying the disagreement.
+        if let Err(fault) = outcome {
+            return Err(self.poison(fault));
         }
         // The one place in this type that reduces the resident length, and it
         // reduces it to the prefix rather than to an arbitrary position.
@@ -269,6 +297,20 @@ impl Session {
     pub fn close(&mut self) {
         self.backend.close();
         self.opened = false;
+    }
+
+    /// Close the session over a backend fault and hand the fault back.
+    ///
+    /// After an engine fault or a failed flush the backend's state and this
+    /// session's account of it can no longer be trusted to agree, so the
+    /// session stops being appendable rather than carrying the disagreement
+    /// forward. Every later operation answers [`DecodeFault::NotOpen`], which
+    /// is the truth: no serviceable prefix stands.
+    fn poison(&mut self, fault: DecodeFault) -> DecodeFault {
+        self.backend.close();
+        self.opened = false;
+        self.resident_len = 0;
+        fault
     }
 }
 
@@ -289,6 +331,10 @@ mod tests {
         /// What `sample` returns, in order. Exhausting it yields token 0.
         script: Vec<TokenId>,
         sampled: usize,
+        /// Fail the nth `decode_at` call, counting from zero.
+        fail_decode_call: Option<usize>,
+        /// Fail every `sample`.
+        fail_sample: bool,
     }
 
     /// A backend that records what it was asked to do. The seam this doubles is
@@ -298,11 +344,23 @@ mod tests {
 
     impl Backend for Recorder {
         fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
-            self.0.borrow_mut().decoded.push((tokens.to_vec(), position));
+            let mut log = self.0.borrow_mut();
+            let call = log.decoded.len();
+            log.decoded.push((tokens.to_vec(), position));
+            if log.fail_decode_call == Some(call) {
+                return Err(DecodeFault::Engine {
+                    detail: "scripted".into(),
+                });
+            }
             Ok(())
         }
         fn sample(&mut self) -> Result<TokenId, DecodeFault> {
             let mut log = self.0.borrow_mut();
+            if log.fail_sample {
+                return Err(DecodeFault::Engine {
+                    detail: "scripted".into(),
+                });
+            }
             let token = log.script.get(log.sampled).copied().unwrap_or(TokenId(0));
             log.sampled += 1;
             Ok(token)
@@ -543,4 +601,79 @@ mod tests {
         assert_eq!(log.borrow().truncated.clone(), Vec::<usize>::new());
     }
 
+
+    /// **Open is first and happens once.** A second open refuses rather than
+    /// silently rewinding the resident length over accumulated turns.
+    ///
+    /// Perturbation: remove the `opened` guard from `open` and this test fails,
+    /// because the second open succeeds and the length rewinds to the prefix.
+    /// Watched under exactly that removal.
+    #[test]
+    fn a_second_open_refuses_rather_than_rewinding() {
+        let (mut session, _log) = opened(vec![TokenId(99)], 128);
+        let mut cancel = NeverCancels;
+        session
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+            .expect("a turn");
+        let grown = session.resident_len();
+        assert_eq!(
+            session.open(&[TokenId(1)]),
+            Err(DecodeFault::AlreadyOpen),
+            "a second open refuses"
+        );
+        assert_eq!(session.resident_len(), grown, "and rewinds nothing");
+    }
+
+    /// **A flush that fails partway closes the session** rather than leaving a
+    /// large resident length over an empty backend, where the next append would
+    /// decode far past the backend's real state.
+    ///
+    /// Perturbation: remove the poisoning from `flush` and this test fails,
+    /// because the session stays open with its pre-flush length and the append
+    /// runs. Watched under exactly that removal.
+    #[test]
+    fn a_failed_flush_closes_the_session() {
+        let (mut session, log) = with_mechanism(
+            vec![TokenId(99)],
+            128,
+            FlushMechanism::ReestablishAndReprefill,
+        );
+        // The re-prefill after the reestablish is the next decode call.
+        let next_call = log.borrow().decoded.len();
+        log.borrow_mut().fail_decode_call = Some(next_call);
+        assert!(session.flush().is_err(), "the flush reports its failure");
+        let mut cancel = NeverCancels;
+        assert_eq!(
+            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel),
+            Err(DecodeFault::NotOpen),
+            "the session no longer serves"
+        );
+    }
+
+    /// **An engine fault mid-generation closes the session.** The terminator
+    /// discipline covers the clean path and the cancelled path; a backend that
+    /// just faulted cannot be asked to decode a terminator, so the fault path
+    /// closes the session instead of leaving a terminator-less prefix open for
+    /// the next append.
+    ///
+    /// Perturbation: propagate the sample fault without the poison and this
+    /// test fails on the second append, which runs against the mid-message
+    /// state. Watched under exactly that removal.
+    #[test]
+    fn an_engine_fault_mid_generation_closes_the_session() {
+        let (mut session, log) = opened(vec![], 128);
+        log.borrow_mut().fail_sample = true;
+        let mut cancel = NeverCancels;
+        assert!(
+            session
+                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+                .is_err(),
+            "the fault surfaces"
+        );
+        assert_eq!(
+            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel),
+            Err(DecodeFault::NotOpen),
+            "and the session no longer serves"
+        );
+    }
 }

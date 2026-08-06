@@ -1,3 +1,5 @@
+//! conforms: spu-device-authority-is-the-driver
+//!
 //! The device queries the admission judgment reads, per `weaver-spu-Spec`
 //! section 3.
 //!
