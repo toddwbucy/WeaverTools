@@ -279,15 +279,29 @@ charter's own rule that the state publishes only on a ready aggregate, since a
 unit is running well before any aggregate returns.
 
 **So `show` and `list` report residency, and say so.** The answer carries the
-manager's own three values and no more, running, failed, or not running, the last
-covering the several cases section 6's measurement records it cannot separate. It
-does not claim the lifecycle's four states from a source that cannot distinguish
-them. `AgentState`'s richer set is reachable only from the party that holds the
-run, which is the harness, and no exchange asks it for one:
-`weaver-admin-harness-contract` section 3 charters enter, leave, and stop and no
-observation. Filed as an open election in section 11 with that exchange as its
-settler, rather than answered here by a mapping that would read true and be
-false.
+manager's own three values under the manager's own names, `active`, `failed`, and
+`inactive`, the last covering the several cases section 6's measurement records it
+cannot separate. They are carried rather than translated because a translation is
+where the invention would enter.
+
+**Those three values do not map onto `AgentState`, and that is a gap this act
+names rather than closes.** The floor enumerates `Absent`, `Unloaded`, `Idle`, and
+`Active`, per `weaver-types-Spec` section 6. A manager reading `active` covers both
+`Idle` and `Active`, because a running unit is one that may be at rest or serving a
+turn and the manager cannot tell which. A manager reading `failed` has no case at
+all. So the residency answer is not an `AgentState` and this crate does not
+construct one, which leaves `lifecycle-answer`'s `State` case without a producer
+for these verbs until the gap is closed. **The edit is owed to `weaver-types`** and
+named in the charter's section 11 register, and it is deliberately not made here: a
+Spec that grew the floor's enumeration to fit what a manager happens to report
+would be settling the vocabulary from the representation, which is the direction
+gate G2 forbids.
+
+**What closes it is the observation exchange, which is also what the richer state
+needs.** `AgentState`'s distinction between idle and active is reachable only from
+the party that holds the run, and `weaver-admin-harness-contract` section 3
+charters enter, leave, and stop with no observation. One exchange answers both this
+gap and that one, so section 11 files a single open election rather than two.
 
 ```graph
 node: admin-residency-is-not-lifecycle-state
@@ -1199,11 +1213,17 @@ directive is asserted where the run happens.
 
 Each names what settles it, and none is this Spec's to settle alone.
 
-- **How an agent's lifecycle state is observed.** Section 3 reports residency
-  because that is what the init system can answer, and apex section 6's four
-  states are the harness's to know. **Settled by:** an observation exchange on
-  `weaver-admin-harness-contract`, which charters enter, leave, and stop and no
-  query, so the answer arrives with that contract's next opening rather than
+- **How an agent's lifecycle state is observed, and what the `State` answer
+  carries meanwhile.** Section 3 reports residency in the manager's own three
+  values because that is what the init system can answer, and apex section 6's
+  four states are the harness's to know. The two halves are one election: the
+  manager's `active` covers both `Idle` and `Active` and its `failed` has no
+  `AgentState` case, so `lifecycle-answer`'s `State` case has no producer for
+  these verbs until an observation reaches the party that holds the run.
+  **Settled by:** an observation exchange on `weaver-admin-harness-contract`,
+  which charters enter, leave, and stop and no query, together with whatever
+  `weaver-types` owes its enumeration once that exchange fixes what can be
+  observed. The answer arrives with that contract's next opening rather than
   from a mapping this Spec could invent.
 - **The session-close cue and the enter question.** Charter section 10's two
   cells, settled by the human's ruling and the memory-and-state round

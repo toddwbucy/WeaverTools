@@ -1001,6 +1001,15 @@ departure from the loop taxonomy, and gate G7 reads this list against the tree.
 - `WeaverTools-Working-Process` section 7 and `WeaverTools-Document-Format`
   section 2's container entry. The re-entry is recorded and `Loops/` holds the
   inference loop alone. Landed.
+- `weaver-types-PRD` section 2.3 and `weaver-types-Spec` section 6, owed and **not
+  landed in this act, named as owed rather than left to be noticed.** The
+  residency answer of `weaver-admin-Spec` section 3 carries the init system's
+  three values, and they do not map onto `AgentState`'s four cases: a running unit
+  covers both `Idle` and `Active`, and a failed one has no case. So
+  `lifecycle-answer`'s `State` case has no producer for `show` and `list` today.
+  The enumeration is not grown here, because fitting a floor vocabulary to what a
+  manager happens to report would settle the vocabulary from the representation.
+  It is settled with the observation exchange the Spec's section 11 names.
 - The merged code of `weaver-admin` and `weaver-harness`. Owed as code acts after
   this act merges, and named as owed rather than left to be noticed: the
   coordination channel's direction, the operator surface's retirement, and the
