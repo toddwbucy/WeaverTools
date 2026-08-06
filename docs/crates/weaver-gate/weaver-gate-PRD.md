@@ -88,10 +88,12 @@ the only thing that enters is work.
 
 ## 2. What this crate owns
 
-**The hook.** This crate binds the one listening socket the agent has, of any
-kind: a named local Unix socket. The claim is scoped to the agent deliberately,
-the operator surface of `weaver-admin-operator-contract` being a listening local
-socket that stands outside every agent, per apex section 12. Ready means bound.
+**The hook.** This crate binds the one listening socket the agent exposes
+outward, of any kind: a named local Unix socket. The claim is scoped to the
+outward direction deliberately, since the inversion of 2026-08-05 has the
+harness binding a coordination socket inward, inside the same sandbox, which
+faces admin rather than the world and admits root alone. One door out and one
+door in, and this crate holds the one that faces out. Ready means bound.
 Stopped means closed. The socket it binds is not this crate's decision: it
 arrives as the gate instruction inside the
 enter fan-out, operator-declared and admin-validated, carried by the harness

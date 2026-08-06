@@ -110,7 +110,7 @@ Three levels, strictly nested. Session over run over turn.
 
 A **session** is opened by `run0`'s load event, there being no
 `session.started`, per `weaver-trace-PRD` section 3.1. Admin resolves the session
-identity and opens the stream's sink under its own principal before any run
+identity and opens the stream's sink under root before any run
 exists, per `weaver-admin-PRD` section 4.1, and the sink is a connection rather
 than the session. A sink connected and never written was never a session at all. A
 session spans runs in the stream's account, and what a later run holds of it is
@@ -122,7 +122,7 @@ the answer.
 A **run** is the agent's life. The load event opens it and the unload event closes
 it. One run, bookended, with its turns inside. Runs are monotonic under admin's
 ordinal, supplied in the enter directive. The ordinal is not a trace counter, and
-where it survives an admin restart is a face of the enter cell `weaver-admin-PRD`
+where it survives across invocations is a face of the enter cell `weaver-admin-PRD`
 section 10 holds.
 
 A **turn** is one external exchange, bounded by the boundary crossing. It opens at the

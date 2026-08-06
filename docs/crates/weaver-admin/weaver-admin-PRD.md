@@ -951,6 +951,40 @@ it keeps the departure argument. Both were edited. The harness clause on opening
 exchanges landed in `weaver-harness-PRD` section 4. Nothing else in this register
 moved while the apex re-authoring waited on all seven charters.
 
+**The act of 2026-08-05 fills this register, and every entry lands in the same
+act.** The three rulings are the socket inversion, the admin recut, and loop 0's
+departure from the loop taxonomy, and gate G7 reads this list against the tree.
+
+- `weaver-admin-Spec`. The invocation's interface replaces the operator surface,
+  the state is read from the init system, the channel is dialed, the unit
+  declares no open, and the record count moves from thirty-six to twenty-nine.
+  Landed.
+- `weaver-admin-harness-contract` sections 2, 4, 5, 6, and 8. The creating party
+  inverts, the credential replaces possession, the ordering restates against the
+  worker rather than the connection, and `peer-identity` is drawn. Landed.
+- `weaver-admin-operator-contract`. Narrowed to the trace's exit, its section
+  numbering held stable so the fifty citations across the corpus still resolve,
+  and `peer-identity` and `authorization-predicate` undrawn. Landed.
+- `weaver-harness-PRD` sections 2 and 4, and `weaver-harness-Spec` section 2.3
+  and section 8's counts. The harness binds and listens, the constructor becomes
+  `Harness::listen`, and the accept refuses every peer that is not root. Landed.
+- `weaver-types-PRD` section 2.2 and section 5, and `weaver-types-Spec` sections
+  3 and 6. The scoped claim's second consumer moves from the operator surface to
+  the coordination seam, and the drawer count falls from four to three. Landed.
+- `weaver-trace-PRD` section 4.1, `weaver-gate-PRD` section 2, `weaver-gate-Spec`
+  section 5, `basic-inference-loop` section 1, and `load-unload-path` throughout.
+  The sink opens under root, the gate holds the outward door where the harness
+  holds the inward one, and the approach gains its dial. Landed.
+- `WeaverTools-PRD` sections 6 and 12. The supervisor is an invocation rather
+  than a standing process, and the topology says so. Landed.
+- `WeaverTools-Working-Process` section 7 and `WeaverTools-Document-Format`
+  section 2's container entry. The re-entry is recorded and `Loops/` holds the
+  inference loop alone. Landed.
+- The merged code of `weaver-admin` and `weaver-harness`. Owed as code acts after
+  this act merges, and named as owed rather than left to be noticed: the
+  coordination channel's direction, the operator surface's retirement, and the
+  fleet map's removal each contradict what `main` currently builds.
+
 **The re-authoring of 2026-08-01 drained this register.** Every entry that filed
 with it landed in that act: the verb-set restatement, the
 verification-not-authorship clauses of apex sections 12 and 3, the trust model

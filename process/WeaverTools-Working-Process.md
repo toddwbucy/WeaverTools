@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.19, 2026-08-04. Companion to the Working Rules, the Document
+**Version:** v0.20, 2026-08-05. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -379,13 +379,32 @@ document tree, per the operator's ruling of 2026-08-05, which is the same rule
 applied to where that act's working tree sits, and review runs through the PR's
 review seats. Later code acts sit where the operator points them.
 
-Section 6 ratified 2026-08-04, so the entry gate stands satisfied. What remains
-before the first code merge: a conformance header per Document Format sections 3
-and 4 on every file the first act carries, and the gates of section 6 applied at
-review. What
-remains from the phase behind: G6 and then item 7, and the G2 and G5 phase-close
-sweeps. Nothing here reopens the set - a change the build or a review
-finds in a ratified document is a phase one re-entry, deliberate and named.
+Section 6 ratified 2026-08-04, so the entry gate stands satisfied, and five
+crates have merged against it: `weaver-traits`, `weaver-types`, `weaver-trace`,
+`weaver-harness`, and `weaver-admin`, each file carrying its conformance header
+per Document Format sections 3 and 4. `weaver-spu` and `weaver-gate` remain
+documents alone.
+
+**A phase one re-entry is under way as of 2026-08-05, deliberate and named,**
+which is the mechanism this section describes rather than an exception to it.
+The operator ruled three things in one act: any socket connecting to the harness
+is an internal connection, so the harness binds and admin dials and the
+credential check refuses every peer that is not root; `weaver-admin-user` is
+struck, admin being a role the operator assumes with root and a crate that role
+runs one invocation per verb; and loop 0's composition leaves the `Loops/`
+shelf, the loop taxonomy reaching loop 1 and above and never loop 0. The act
+branches from `76102ad` as `docs/admin-recut-socket-inversion` and touches the
+admin pair, both contracts admin is party to, the harness pair, the types pair,
+the gate pair, the trace charter, the apex, both loop documents, and this
+document's companion Format. The merged code of `weaver-admin` and
+`weaver-harness` now disagrees with its Specs at the coordination channel and
+the operator surface, which is the expected consequence of a re-entry and is
+owed as code acts after the documents merge.
+
+What remains from the phase behind: G6 and then item 7, and the G2 and G5
+phase-close sweeps. The graph is owed a rebuild once this act merges, its census
+reconciled to the act's assertion delta rather than held at the 245 of the
+2026-08-04 build.
 
 ## 8. What this document does not do
 

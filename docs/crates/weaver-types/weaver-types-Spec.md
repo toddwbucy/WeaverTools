@@ -369,9 +369,11 @@ rests the exception on one shared definition being the only way separate process
 provably enforce the same rule, and a predicate that took a rule shaped by its
 caller would deliver a shared signature over two different rules, which is the
 disagreement the carve-out exists to prevent. The three sets are what the two
-consumers need and no more: the gate admits front-end principals by uid or group,
-the operator surface admits by membership in the `weaver-admin` group, and both
-exclude the agent uid.
+consumers need and no more: the gate admits front-end principals by uid or group
+and excludes the agent uid, and the coordination seam admits root alone, per the
+inversion of 2026-08-05, which excludes the agent uid by the same reading. The
+operator surface was the second consumer until that date and retired with the
+service account it admitted to.
 
 **Denial wins over permission, and the ordering is the security property.**
 `authorized` returns false if the peer's uid is in `denied_uids`, whatever the
@@ -440,7 +442,8 @@ perturbation test under apex section 11 becomes a scenario rather than an
 assertion. The adversary is a
 process on the host that is not a front-end principal and dials one of the two
 named sockets: an elected tool running as the agent uid reaching for the agent's
-own mouth, or any local account reaching the operator surface. The mechanism is
+own mouth, or the same tool reaching the coordination socket its harness binds.
+The mechanism is
 that both sockets are named and therefore dialable by anything that can resolve
 the path, so admission cannot rest on reachability and must rest on identity. The
 kernel supplies that identity rather than the peer asserting it, which is what
@@ -939,11 +942,11 @@ already discharged.
   signatures above and shaped in this crate, their representations being
   identifier choices with no cross-crate consequence.
 - **`AgentState` and `AgentSummary`, whose case sets are not free.** Their Rust
-  representations are this crate's, but they ride a `lifecycle-answer` to the
-  operator surface, so what an operator can be told about an agent is exactly
+  representations are this crate's, but they ride a `lifecycle-answer` out of
+  admin's invocation, so what an operator can be told about an agent is exactly
   what these enumerate. The lifecycle's four states, per apex section 6, are the
   floor of that set, and whether it carries more is settled with the operator
-  surface's own design rather than by a builder.
+  interface's own design rather than by a builder.
 - **`EnterPayload`'s field list**, which follows what admin supplies in the enter
   directive, per `weaver-admin-harness-contract` sections 3 and 5, and moves when
   that contract does.

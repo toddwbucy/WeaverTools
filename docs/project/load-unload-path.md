@@ -60,23 +60,25 @@ whose shape would demand a loop abstraction is not yet written.
 
 ## 2. The approach, which is not the loop
 
-Five acts precede the loop, all admin's, per `weaver-admin-PRD` section 4.1:
-authorize the intent, validate the configuration file, verify the boundary,
-resolve the session and open the sink, and ask the init system to start the
-worker under the agent's `User=`. They run before the harness exists, so they sit
-outside the trace by construction, per `weaver-trace-PRD` section 3.1, and their
-record is admin's own log, per `weaver-admin-PRD` section 2. Loop 0 opens where
-the record opens, at the `load` event. A document that filed these steps inside
+Six acts precede the loop, all the load invocation's, per `weaver-admin-PRD`
+section 4.1: authorize the name, validate the configuration file, verify the
+boundary, resolve the session and open the sink under root, ask the init system to
+start the worker under the agent's `User=`, and dial the socket the worker binds
+as its first act, retrying within a bound because the dial may arrive before the
+bind. They run before the harness is serving, so they sit outside the trace by
+construction, per `weaver-trace-PRD` section 3.1, and their record is admin's own
+log, per `weaver-admin-PRD` section 2. Loop 0 opens where the record opens, at the
+`load` event. A document that filed these steps inside
 the loop would have the harness managing acts that predate it, which is the one
 place the loop framing would strain, so the boundary is stated rather than
 implied.
 
 ## 3. Opening the loop
 
-Admin directs enter across its one seam, supplying the session identity, the run
-ordinal, the trace descriptor, the model binding, and the gate instruction, per
-`weaver-admin-harness-contract` section 3. The harness fans out along its own
-seams, in its own order:
+Admin directs enter across its one seam, on the connection it dialed, supplying
+the session identity, the run ordinal, the trace descriptor, the model binding,
+and the gate instruction, per `weaver-admin-harness-contract` section 3. The
+harness fans out along its own seams, in its own order:
 
 1. **Stand up the empty working structure.** Nothing is projected, per the cut of
    2026-08-01, and what continuity a later run may hold is the enter cell
@@ -111,10 +113,11 @@ repair, per `weaver-admin-PRD` section 5. A device conflict discovered at
 admission is this case, arriving after the `load` in the fan-out's own order, per
 ruling C.
 
-The unwind is admin's reap plus one directive: direct leave where a run was
-entered, stop the unit, and nothing durable of the program's exists to remove. A
-rollback that cannot complete reports what it could not undo and publishes no
-state.
+The unwind is the invocation's reap plus one directive: direct leave where a run
+was entered, stop the unit, close the sink it opened, and nothing durable of the
+program's exists to remove. A rollback that cannot complete reports what it could
+not undo and publishes no state. The reap runs inside the same invocation that
+built, which is what makes it a reap rather than a later verb's cleanup.
 
 ## 5. Inside the loop
 
@@ -128,8 +131,8 @@ until leave closes it, however many turns run and however many are stopped.
 A fault the worker survives is a `fault` event, authored by the harness into the
 stream like every other event, per the fault-carrier ruling of 2026-08-01. It
 crosses no seam of its own: the operator's tooling keys on it from the stream and
-comes back through the operator surface with a verb, per
-`weaver-admin-operator-contract` section 6, and the case set behind the kind is
+comes back by running a verb, per `weaver-admin-operator-contract` section 6, and
+the case set behind the kind is
 deferred to the token workflow with the organs' charters.
 
 ## 6. Closing the loop
@@ -153,8 +156,11 @@ section 4.4, its cue the session-close cell that charter's section 10 holds.
 
 Process death ends loop 0 without closing it. The stream shows a `load` with no
 `unload`, the writer's queue's tail is forfeited, per `weaver-trace-PRD` section
-4.2, the device is reclaimed with the process, and admin observes the exit and
-the channel closure together, repairing nothing. What a consumer makes of the
+4.2, the device is reclaimed with the process, and the coordination socket dies
+with the listener that bound it, so the next verb's dial finds nothing and the
+death is observed as a refused connection rather than as a closure mid-exchange.
+An invocation in flight when the worker dies observes the closure directly. Admin
+repairs nothing on either. What a consumer makes of the
 open bracket is that consumer's reading over the operator's storage. Timing picks
 the report: before the enter aggregate is answered a death is a refusal on the
 enter exchange naming the dead arm, and after it the death is the loss the
@@ -169,6 +175,6 @@ Each cell names what settles it, and none is this document's to settle.
   token workflow's pass over the organs' charters, the fault-carrier ruling of
   2026-08-01 having settled the carrier and the kind.
 - **What enter becomes without a record.** Rides the cell `weaver-admin-PRD`
-  section 10 holds, including where the run ordinal survives an admin restart.
+  section 10 holds, including where the run ordinal survives across invocations.
 - **The loop abstraction.** Whether loop 0 takes a type or a trait. Awaits the
   Spec pass, demand-derived rather than reserved, per section 1.
