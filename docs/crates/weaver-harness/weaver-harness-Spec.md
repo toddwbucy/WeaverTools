@@ -4,6 +4,14 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-05, the socket inversion. Per the operator: any socket
+connecting to the harness is an internal connection, so this crate binds the
+coordination socket inside the agent's sandbox and listens where section 2.3
+adopted a handed end, the constructor becoming `Harness::listen`, and every accept
+reads the peer credential and refuses what is not root. The credential check arrives
+from `weaver-admin-Spec`, where the accept used to happen, and the adopted end's
+close-on-exec retires with the end. The listener is not closed after an accept,
+admin being per-invocation.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -420,29 +428,104 @@ from: harness-trace-fd-cloexec-at-receive
 to: axiom-join-key-travels-with-the-work
 ```
 
-**Adoption is the constructor, and it performs the worker's hygiene as sets and
-not checks.** The coordination end reaches the worker by the unit's declared
-open, per `weaver-admin-harness-contract` section 2, and the composition root
-hands it to `Harness::adopt`, which sets close-on-exec on the adopted end, the
-set-again-after-the-last-exec obligation of that section landed in code, and
-clears the process's dumpable flag, the same section's attach defense. Both are
-sets because a check that finds the flag wrong and reports leaves the
-descriptor inheritable and the process attachable, which is the set-not-check
-rule stated at the contract and applied here. **The two sets take two records and
-two instruments.** The dumpable flag is the third walk's mechanism and its test,
-and the adopted end's close-on-exec is review's by election and not by
-impossibility: an `fcntl` reads that flag as cheaply as the `prctl` beside it
-reads the dumpable one, so the two hygiene sets differ in the instrument bought
-and not in the instrument available. What the composition root does with the
-coordination end once the declared open delivers it is asserted here, per
-`weaver-admin-Spec` section 6. **Both sets ground in apex section 5.1, and the
-dumpable one is the less obvious of the two.** That invariant rests
+**The coordination socket is this crate's to create, and binding it is the
+worker's first act.** Per the inversion ruling of 2026-08-05 and
+`weaver-admin-harness-contract` section 2, any socket connecting to the harness
+is an internal connection: the composition root creates a `SOCK_SEQPACKET`
+socket with close-on-exec in the creating call, binds it to the per-agent name
+inside the unit's own runtime directory, and listens, before any directive can
+arrive.
+
+**The bind never unlinks, and the runtime directory is why it does not have to.**
+A Unix socket's pathname outlives the process that bound it, so a bind against a
+name a dead worker left would fail. The directory this socket lives in is created
+by the init system at the unit's start and removed with the unit, per
+`weaver-admin-systemd-contract` sections 2 and 5, so the name cannot be inherited
+from a previous run and there is nothing to clear. **A bind that finds its name
+occupied is a fault and never a thing to remove**, because the only ways a name is
+occupied are that a live worker holds it, in which case unlinking would strand the
+running agent's supervisor, or that the manager did not honor the directory, in
+which case the program's assumption is wrong and it should say so rather than
+repair. The instrument is review, no test in this crate being able to produce a
+manager that misbehaves.
+
+```graph
+node: harness-bind-never-unlinks
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-bind-never-unlinks
+
+edge: grounds
+from: harness-bind-never-unlinks
+to: axiom-floor-is-vocabulary-behavior-is-socket
+``` It runs before the serving loop
+because an admin invocation dials immediately after starting the unit and a
+name not yet bound is the race the ordering exists to prevent, admin's bounded
+retry covering what remains. `Harness::adopt` becomes `Harness::listen`, taking
+the bound listener rather than a handed end, and the earlier declared-open route
+retires with the party that placed it.
+
+```graph
+node: harness-binds-coordination-socket-first
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-binds-coordination-socket-first
+
+edge: grounds
+from: harness-binds-coordination-socket-first
+to: axiom-floor-is-vocabulary-behavior-is-socket
+```
+
+**Every accept reads the peer credential and refuses what is not root, before
+any byte.** `accept4` carries close-on-exec in the accepting call, `SO_PEERCRED`
+yields the dialing peer's uid, and a uid other than root closes the connection
+unanswered. This is the check that makes the inversion worth its churn: the
+socket is reachable from inside the sandbox by construction, so an elected tool
+at the agent uid can dial it, and what refuses that tool is that it is not root.
+The earlier design expected the agent's own uid at this check, which every tool
+of the agent's satisfies, and leaned on a listener closed after one accept to do
+the refusing. **The listener is not closed after one accept**, because admin is
+per-invocation and every later verb dials again, so the closure is retired and
+the check carries the property alone. One connection is served at a time, which
+is what holds the contract's one-exchange-in-flight rule now that no fleet map
+does.
+
+```graph
+node: harness-coordination-accept-refuses-non-root
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-coordination-accept-refuses-non-root
+
+edge: grounds
+from: harness-coordination-accept-refuses-non-root
+to: axiom-floor-is-vocabulary-behavior-is-socket
+```
+
+**The worker's hygiene is performed as sets and not checks, and it survives the
+inversion unchanged in substance.** The composition root clears the process's
+dumpable flag, the attach defense `weaver-admin-harness-contract` section 2
+states, and every descriptor this crate creates or accepts carries close-on-exec
+from its creating call. Both are sets because a check that finds the flag wrong
+and reports leaves the descriptor inheritable and the process attachable, which
+is the set-not-check rule stated at the contract and applied here. What the
+inversion removed is the set-again-after-the-last-exec ordering: the listener and
+every accepted connection are created after the worker's last exec, so no handed
+end exists whose flag an exec could have cleared. **The dumpable flag grounds in
+apex section 5.1 and it is the less obvious of the two.** That invariant rests
 possession-as-authentication on the claim that no third party can reach a socket
 with no address, and `/proc/[pid]/fd` is an address for exactly such a socket, so
 clearing the flag is what closes the one route the invariant's own argument
-assumes shut. The adopted end's flag is the same property at the exec rather than
-at the attach, and it reaches an end this crate was handed rather than one it
-created.
+assumes shut, and it reaches the organ pairs whether or not the coordination
+channel has a name.
 
 ```graph
 node: harness-dumpable-flag-cleared
@@ -455,18 +538,6 @@ to: harness-dumpable-flag-cleared
 
 edge: grounds
 from: harness-dumpable-flag-cleared
-to: axiom-floor-is-vocabulary-behavior-is-socket
-
-node: harness-coordination-end-close-on-exec
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-harness
-to: harness-coordination-end-close-on-exec
-
-edge: grounds
-from: harness-coordination-end-close-on-exec
 to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
@@ -534,7 +605,7 @@ to: harness-descriptors-owned-types
 ## 3. The lifecycle interior
 
 The harness type, the run state, and the fan-out of loop 0, per
-`weaver-admin-harness-contract` section 3 and the composition `load-unload-loop`
+`weaver-admin-harness-contract` section 3 and the composition `load-unload-path`
 reads back.
 
 ```rust
@@ -546,9 +617,9 @@ pub struct OrganBinaries {
 }
 
 impl Harness {
-    /// The crate's one constructor. Adopts the coordination end the unit's
-    /// declared open delivered and performs the hygiene of section 2.3.
-    pub fn adopt(coordination: OwnedFd, organs: OrganBinaries)
+    /// The crate's one constructor. Takes the coordination listener this
+    /// crate bound and performs the hygiene of section 2.3.
+    pub fn listen(coordination: OwnedFd, organs: OrganBinaries)
         -> Result<Self, AdoptionFault>
 
     /// Serves the coordination channel until leave is answered or closure
@@ -557,9 +628,9 @@ impl Harness {
 }
 ```
 
-**Adoption fails only when a set fails, and a failed set refuses
+**Construction fails only when a set fails, and a failed set refuses
 construction.** A hygiene call that errors leaves the worker attachable or the
-end inheritable, so `adopt` returns the fault naming the set rather than
+end inheritable, so `listen` returns the fault naming the set rather than
 proceeding unset, and a `Harness` in hand means the hygiene held. The fault's
 shape is a satellite of section 9. **The one constructor is the compile-fail
 doctest of section 8 and the refusal is review's by election,** an absence being
@@ -665,7 +736,7 @@ arm the unwind would have to reason about. The decode end takes its own type
 rather than `OrganChannel`, because `weaver-spu-PRD` section 13.2 rules that
 socket not an organ channel and a shared name would carry the envelope's
 assumptions onto a seam that does not take them. This is the mechanical form of
-`load-unload-loop` section 4's rule that admin's unwind is a reap plus one
+`load-unload-path` section 4's rule that admin's unwind is a reap plus one
 directive: the directive works because the harness knows what stands. **The options
 ground in apex section 5.5 and the two SPU-shaped records beside them do not.** A
 leave has to undo across domains what an enter built across them, and no organ can
@@ -875,7 +946,7 @@ to: harness-fault-payload-carried-unchanged
 ```
 
 **Loop 0 takes neither a type nor a trait, and the cell closes here.**
-`load-unload-loop` section 8 holds the question for the Spec pass,
+`load-unload-path` section 8 holds the question for the Spec pass,
 demand-derived rather than reserved. The demand does not exist: the loop is
 the interval between two directives, its state is the `Run` struct above, and
 its control flow is the serial service, so an abstraction would have no second
@@ -1282,9 +1353,9 @@ floor links and the trace seam, read against the graph under gate H2. No async
 runtime, no logging crate, and no HTTP client in the resolved external tree,
 by the build-time `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Seventeen of the
-forty-six carry a `grounds` edge and one of the seventeen carries two, so the edges
-number eighteen: eight to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
+**Which invariant each claim serves, and why most serve none.** Nineteen of the
+forty-eight carry a `grounds` edge and one of the nineteen carries two, so the edges
+number twenty: ten to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
 `axiom-harness-integrates-by-the-loop`, three to
 `axiom-join-key-travels-with-the-work`, and three to
 `axiom-contract-is-a-complete-interface`. **`axiom-organ-and-submodule` takes
@@ -1353,8 +1424,11 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. One record is the exception
 and sits at the end of this section, the doctest pinning of the three
 path-taking shapes, whose argument is nowhere else and whose general
-prohibition is section 2.3's. Forty-six records in all, twenty from this
-section's sorting with the four walks counted in and twenty-six from the
+prohibition is section 2.3's. Forty-eight records in all as of the inversion of
+2026-08-05, which retired the adopted end's close-on-exec, that end no longer
+existing, and added the coordination bind, the accept's credential check, and
+the bind's refusal to unlink, all three of section 2.3. Twenty come from this
+section's sorting with the four walks counted in and twenty-eight from the
 elections outside it, the elections taking nodes because gate H1 would
 otherwise leave the largest decisions in this Spec untraceable. Two of the
 twenty carry a review tag rather than a mechanical one, the path-taking

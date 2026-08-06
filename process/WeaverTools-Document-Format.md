@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.14, 2026-08-04. Companion to the Working Process. Project
+**Version:** v0.15, 2026-08-05. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -92,8 +92,11 @@ the absent `weaver-` prefix, the same exclusion `contracts/` takes. Loops file u
 organ that holds them, and the holder is decided by the human's ruling of 2026-08-01:
 loops belong to the harness unless specific to one domain and no other, a loop confined
 to one domain filing under that domain's own root. The first such directory is
-`docs/crates/weaver-harness/Loops/`, holding the inference loop and loop 0, the
-load/unload loop.
+`docs/crates/weaver-harness/Loops/`, holding the basic inference loop alone. Loop 0's
+composition is not a loop and files at the project level as `load-unload-path`, per
+the operator's ruling of 2026-08-05: the loop taxonomy reaches loop 1 and above, and
+the bracket the loops run inside is the harness's mechanism rather than a member of
+the taxonomy.
 
 **A contract is named for its parties, initiator first.** The name records which of the
 two nodes initiates the signal the contract governs, so `weaver-admin` asking the

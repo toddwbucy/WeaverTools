@@ -310,11 +310,16 @@ instead. That contract draws neither definition below and says so. A universal w
 counterexample is a weaker seat than a scoped claim that holds, and the scoped claim is
 what the carve-out rests on.
 
-**The scoped claim has its consumers named as of 2026-08-01.** The client socket of
-`weaver-gate-PRD` section 2 is the seam that admits an outside principal, and the
-operator surface `weaver-admin-operator-contract` governs is the seam the operator
-reaches the service on. Both authenticate by `SO_PEERCRED`, both judge by the one shared
-rule, and both draw the pair below.
+**The scoped claim has its consumers named as of 2026-08-01, and they are re-aimed
+by the recut of 2026-08-05.** The client socket of `weaver-gate-PRD` section 2 is the
+seam that admits an outside principal, and it is unchanged. The second consumer was
+the operator surface, which retired with the service account it authenticated to, and
+the coordination seam of `weaver-admin-harness-contract` section 2 takes its place:
+the socket inversion gave that seam a name and a real credential check, root or
+refused, where an inherited pair could distinguish nothing. Both surviving consumers
+authenticate by `SO_PEERCRED`, both judge by the one shared rule, and both draw the
+pair below. The claim is stronger for the exchange rather than weaker, the seam that
+left having been the one whose predicate a compromised group grant could widen.
 
 **Alongside the identity type, this crate carries the authorization predicate, and
 that is a deliberate exception to holding only data.** The rule that decides whether a
@@ -367,15 +372,17 @@ a seam, per the human's naming ruling of 2026-08-01.** Wire vocabulary is named
 for the loop whose traffic it carries: the channels are duplex, so direction is a
 fact about a loop's walk rather than about a name, and loops are unique where
 senders are not, which is what retired the sender convention after it collided on
-the harness. `lifecycle-directive` is the ask of the load/unload loop, entering
-at the operator surface and fanning out along the harness's seams.
+the harness. `lifecycle-directive` is the ask of the load/unload path, entering
+at admin's invocation and fanning out along the harness's seams.
 `lifecycle-answer` is its answer, aggregating back. `lifecycle-refusal` is the
 typed refusal, carrying why a lifecycle act could not be performed rather than a
 free string. Each closed case set lives here and every loop 0 contract draws the
 cases that cross its own seam: enter, leave, and stop at coordination, admit and
-release at residency, raise and lower at the gate, the verbs and observations at
-the operator surface. One owner, four drawers, no drift, which is the shape
-`lifecycle-refusal` already proved across three seams.
+release at residency, raise and lower at the gate. The verbs and observations
+entered at the operator surface until 2026-08-05 and now arrive as an
+invocation's arguments, so they are the charter's rather than a contract's, and
+the drawers number three. One owner, no drift, which is the shape
+`lifecycle-refusal` already proved.
 
 **The token trio is named for the seam's currency, under the naming ruling's
 ratified extension of 2026-08-02.** `token-directive`, `token-answer`, and

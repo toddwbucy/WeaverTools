@@ -14,6 +14,18 @@ fleet, and the agent's uid is statically provisioned, a dynamic identity exclude
 two independent reasons. The sandbox's properties are required and its directives stay
 the operator's. Section 10's descriptor-route cell reopens with the sudo measurement
 attached.
+**Revised:** 2026-08-05, second this date, the admin recut and the socket inversion,
+one act of three rulings. The crate becomes one invocation per verb run with root:
+the operator socket, its accept-time predicate, and the fleet map retire with the
+service account that held them, section 2 becoming the invocation's interface and
+section 3 reading the init system for state. The coordination channel inverts, so
+section 7 dials where it bound, the four acts becoming one connect with a bounded
+retry, and the credential check moves to the harness's accept where its record now
+lives. Section 6's unit declares no open, its reliance set moving to
+`weaver-admin-systemd-contract` and its election's ground restated to what holds,
+and a failed dial now consults the unit's state so a refusal names the right
+failure.
+Section 10's walks and counts are restated against the surviving set.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -22,13 +34,15 @@ attached.
 
 ## 0. What this document is
 
-Build instructions for `weaver-admin`: the binary's layout, the operator surface's
-mechanics, the verb sequencing, the sink openings, the transient unit's
-invocation, the coordination channel's construction, and the elections a builder
-would otherwise invent. It is derived from `weaver-admin-PRD` and from the two
-contracts this crate is party to, `weaver-admin-harness-contract` and
-`weaver-admin-operator-contract`, together with `weaver-organ-channel`, the drawn
-material the first of them draws.
+Build instructions for `weaver-admin`: the binary's layout, the invocation's
+interface, the verb sequencing, the sink openings, the transient unit's
+invocation, the coordination channel's dial, and the elections a builder
+would otherwise invent. It is derived from `weaver-admin-PRD` and from the three
+contracts this crate is party to, `weaver-admin-harness-contract`,
+`weaver-admin-operator-contract`, the second now bounding the trace's exit alone,
+and `weaver-admin-systemd-contract`, cut this date for the boundary the recut made
+load-bearing, together with `weaver-organ-channel`, the drawn material the first
+of them draws in part.
 
 Level discipline. The charter says what the crate needs and why. This document
 says how it is represented, and per gate G2 it elects against grounds the charter
@@ -89,13 +103,13 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 
 **Layout.** One module per obligation.
 
-    src/main.rs       entry and wiring, and nothing else
-    src/surface.rs    the operator socket, section 2
+    src/main.rs       entry, argument parsing, and wiring, and nothing else
+    src/surface.rs    the invocation's interface and the OS calls, section 2
     src/verbs.rs      load, unload, validate, stop, and rollback, section 3
     src/inventory.rs  config validation and boundary verification, section 4
     src/sink.rs       sink resolution and opening, section 5
-    src/unit.rs       the transient unit and its declared opens, section 6
-    src/channel.rs    the coordination channel, section 7
+    src/unit.rs       the transient unit, section 6
+    src/channel.rs    the coordination channel's dial, section 7
     src/log.rs        the operations log, section 8
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly
@@ -108,7 +122,7 @@ file, per that Spec's section 1, and the parser's whole audience is this
 module's inventory. `weaver-traits` is deliberately not a direct dependency, per
 charter section 3: it arrives transitively through `weaver-types` and nothing
 here draws it by name, which the manifest states by carrying no line for it.
-`serde_json` encodes and decodes the operator surface's lines and the
+`serde_json` renders the invocation's answers and encodes and decodes the
 coordination channel's envelopes. `nix` is the OS surface, on the grounds
 `weaver-harness-Spec` section 2.4 argued and this crate inherits rather than
 re-argues: descriptor custody is central, the io-safe owned types make it a
@@ -178,170 +192,141 @@ from: weaver-admin
 to: admin-no-runtime-no-bus-no-logging
 ```
 
-## 2. The operator surface
+## 2. The invocation's interface
 
-The socket of charter section 8, governed by `weaver-admin-operator-contract`.
+The interface of charter section 8: the operator runs the binary with root, one
+verb per run. The socket this section carried until 2026-08-05 retired with the
+service account, and what replaces it is the process boundary the operating
+system already draws around an executed program.
 
-**The socket is `SOCK_STREAM`, and the election is the contract's own framing
-rule read as a type.** The contract fixes newline-delimited JSON, one request
-per line, one answer per line, in order, on one connection. The newline is the
-framing, so a boundary-preserving socket type would carry a second framing
-under the first, and a stream is what the operator's ordinary tooling dials.
-This is the opposite election from the organ channels and it is principled the
-same way the two envelope layouts were: the organ channel has no in-band
-framing and buys boundaries from the type, this surface has in-band framing
-from its contract and buys nothing from packet boundaries.
+**The verb and its agent arrive as arguments.** One verb per invocation,
+`load`, `unload`, `validate`, `stop`, `show`, or `list`, with the agent name as
+the one further argument where the verb takes one. Arguments rather than a
+parsed request line, because the kernel already delivered them as a vector and
+re-encoding them into a wire format would be inventing a wire where no seam
+crosses. The service configuration's root is the one environment variable read,
+per section 9.
 
-**This record grounds in the contract invariant and not in the socket one.**
-What decides the type here is that the contract already fixes the framing
-completely, so what this Spec elects is a type that carries that framing and
-adds nothing under it. The socket invariant settles that this seam is a socket
-and authenticates its peer, and it leaves the choice between the two types
-open, which is why the coordination channel's opposite election is argued from
-boundaries and this one is not.
-
-```graph
-node: admin-operator-socket-stream
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-admin
-to: admin-operator-socket-stream
-
-edge: grounds
-from: admin-operator-socket-stream
-to: axiom-contract-is-a-complete-interface
-```
-
-**The socket lives in an admin-owned directory the operator's group can
-search.** The directory is owned by the `weaver-admin` service, group
-`weaver-admin`, mode 0750, and the socket file mode 0660, so a group member
-can dial and the agent uid cannot traverse to the name. Reachability is not
-the authentication, per the contract's section 1: it is one more fence in
-front of the check that counts.
-
-**Every connection is authenticated at accept, by peer credential, before any
-byte is read.** `accept` runs with the close-on-exec flag set in the accepting
-call, the peer's credential is read with `SO_PEERCRED`, and the identity is
-judged by the floor's one predicate, `authorized`, against a rule whose allow
-set is the `weaver-admin` group and whose deny set is every agent uid the
-fleet's allow-list names. Denial wins over permission, per
-`weaver-types-Spec` section 3, so an agent uid inside a misconfigured group
-grant is still refused. That ordering is argued and asserted at that Spec's
-section 3 and applied here, so it carries no second record. Verified against
-a live kernel: the credential on an accepted connection reports the
-connecting peer's own uid, gid, and pid, which is what makes this check real
-where an inherited pair's credential is not. The check itself is this
-crate's, and section 10's first walk derives its test from the attack it
-defeats.
+**Authorization is the kernel's, and what this crate checks is the name.** The
+invocation runs as root or performs nothing, so no predicate, no allow set, and
+no deny set exist here: the earlier form's `authorized` call, its group allow
+set, and its agent-uid deny set retired with the socket, the operator being the
+party the kernel already admitted. What survives is the allow-list check of
+section 4, which is about which agent may be named rather than about who may
+name it. The refusal is enacted before any verb touches anything, and the
+instrument is a test running the binary as a non-root uid and finding it
+refuses, watched to fail when the check is removed.
 
 ```graph
-node: admin-surface-refuses-at-accept
+node: admin-runs-as-root-or-performs-nothing
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-admin
-to: admin-surface-refuses-at-accept
+to: admin-runs-as-root-or-performs-nothing
 
 edge: grounds
-from: admin-surface-refuses-at-accept
+from: admin-runs-as-root-or-performs-nothing
 to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
-**A peer that fails the predicate is refused by closure, unanswered, and the
-two contract clauses are one behavior.** The contract's section 5 lists the
-failed predicate as a refusal and its section 6 forbids answering such a peer.
-Both hold: the refusal is enacted at the connection rather than written to it,
-the connection closing before any content is read, and no
-`lifecycle-refusal` value crosses to a peer the predicate rejected.
+**The answer is one JSON object on standard output and the exit status agrees
+with it.** One `lifecycle-answer` or one `lifecycle-refusal` in the floor's
+internally tagged rendering, the discriminant being the tag itself because the
+case sets are disjoint at the floor. Zero exits an answer and a non-zero status
+exits a refusal, so a shell reads the status and a tool reads the object and the
+two never disagree. No organ envelope appears here, because this is not an organ
+channel and no contract draws one across it. What the earlier form asserted of
+the wire, one answer per request in request order, is structural now: one
+invocation carries one verb and emits one object.
 
 ```graph
-node: admin-refusal-by-closure-unanswered
+node: admin-answer-and-exit-status-agree
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-admin
-to: admin-refusal-by-closure-unanswered
+to: admin-answer-and-exit-status-agree
 
 edge: grounds
-from: admin-refusal-by-closure-unanswered
-to: axiom-floor-is-vocabulary-behavior-is-socket
-```
-
-**One thread per accepted connection, requests served serially within it.**
-Serial-per-connection is what makes one answer per request in request order a
-structural property rather than a bookkeeping claim. Across connections the
-fleet state of section 3 is the synchronization point, and a transition holds
-its agent's entry so that a second directive for the same agent refuses
-`OutOfOrder`-shaped rather than queueing, per the contract's section 4, which
-section 7 argues as the fleet state's own discipline and records there. The
-threads are the standard library's, per section 1.
-
-```graph
-node: admin-one-answer-per-request-serially
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-admin
-to: admin-one-answer-per-request-serially
-```
-
-**A request line is bounded at 64 kibibytes, the program's one message bound.**
-A line longer than the bound is refused as malformed without being accumulated,
-because an unbounded line is an unbounded allocation handed to an
-unauthenticated-in-content peer. The number is the organ envelope's bound
-reused, one limit for the program rather than a second constant to justify, so
-the bound itself is `weaver-types-Spec` section 4.3's claim and what this
-clause asserts is the refusal, a line over the bound rejected rather than
-accumulated toward a message that never arrives.
-
-```graph
-node: admin-request-line-refused-unaccumulated
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-admin
-to: admin-request-line-refused-unaccumulated
-```
-
-**The wire shapes are the floor's own, bare.** One request line is one
-`lifecycle-directive` in the floor's internally tagged rendering, one answer
-line is one `lifecycle-answer` or one `lifecycle-refusal`, and the discriminant
-between the two is the tag itself: the case sets are disjoint at the floor, so
-a consumer keys on the tag and needs no wrapper. No organ envelope appears on
-this surface, because this is not an organ channel and the contract draws no
-envelope.
-
-```graph
-node: admin-surface-carries-no-envelope
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-admin
-to: admin-surface-carries-no-envelope
-
-edge: grounds
-from: admin-surface-carries-no-envelope
+from: admin-answer-and-exit-status-agree
 to: axiom-contract-is-a-complete-interface
 ```
 
-## 3. The verbs, the fleet state, and rollback
+**Concurrency left this crate with the surface that held it.** One invocation
+runs one verb and exits, so no threads, no accept loop, and no cross-connection
+synchronization remain. What kept two transitions for one agent from
+overlapping was the fleet map's in-flight flag, and section 3 states where that
+obligation lands now.
 
-**The fleet state is a locked map, one entry per provisioned agent, holding
-the published state and the in-flight flag.** The published states are the
-charter's two, provisioned-and-unloaded and loaded-and-idle, rendered to the
-floor's `AgentState` for the `State` and `Agents` answers. Loaded-and-idle is
-published only on a ready aggregate and never earlier, per charter section
-4.1 step 7, and a failed anything publishes nothing, per section 5. The map
-is where that holds, one write of the published state per transition and
-none on any other path, and no test below reaches it, so the instrument is
-review reading the transition sites against this rule.
+## 3. The verbs, the agent's state, and rollback
+
+**Residency is read from the init system rather than held, per the recut of
+2026-08-05.** A per-invocation crate has nowhere to keep a map across verbs, and
+the map is not missed for what it truly knew: whether an agent's unit is
+running is a question the init system answers authoritatively, through the same
+command-line interface section 6 uses, where a map of admin's own would be a
+second account of a fact the process manager already holds.
+
+**What that answer is not is the agent's lifecycle state, and conflating them
+would be this crate inventing a fact.** A running unit may be one that has not
+yet answered enter, one serving a turn, or one unwinding after leave, and apex
+section 6's states distinguish exactly those. The unit's presence is a residency
+signal and nothing more. Reading it as loaded-and-idle would also contradict the
+charter's own rule that the state publishes only on a ready aggregate, since a
+unit is running well before any aggregate returns.
+
+**So `show` and `list` report residency, and say so.** The answer carries the
+manager's own three values under the manager's own names, `active`, `failed`, and
+`inactive`, the last covering the several cases section 6's measurement records it
+cannot separate. They are carried rather than translated because a translation is
+where the invention would enter.
+
+**Those three values do not map onto `AgentState`, and that is a gap this act
+names rather than closes.** The floor enumerates `Absent`, `Unloaded`, `Idle`, and
+`Active`, per `weaver-types-Spec` section 6. A manager reading `active` covers both
+`Idle` and `Active`, because a running unit is one that may be at rest or serving a
+turn and the manager cannot tell which. A manager reading `failed` has no case at
+all. So the residency answer is not an `AgentState` and this crate does not
+construct one, which leaves `lifecycle-answer`'s `State` case without a producer
+for these verbs until the gap is closed. **The edit is owed to `weaver-types`** and
+named in the charter's section 11 register, and it is deliberately not made here: a
+Spec that grew the floor's enumeration to fit what a manager happens to report
+would be settling the vocabulary from the representation, which is the direction
+gate G2 forbids.
+
+**What closes it is the observation exchange, which is also what the richer state
+needs.** `AgentState`'s distinction between idle and active is reachable only from
+the party that holds the run, and `weaver-admin-harness-contract` section 3
+charters enter, leave, and stop with no observation. One exchange answers both this
+gap and that one, so section 11 files a single open election rather than two.
+
+```graph
+node: admin-residency-is-not-lifecycle-state
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-admin
+to: admin-residency-is-not-lifecycle-state
+
+edge: grounds
+from: admin-residency-is-not-lifecycle-state
+to: axiom-harness-integrates-by-the-loop
+```
+
+**Two invocations for one agent are ordered by the init system, and the
+consequence is stated rather than glossed.** The in-flight flag that held one
+transition per agent went with the map, and what remains is that starting a
+transient unit whose name already exists fails at the init system, so two
+concurrent loads of one agent cannot both start a worker. Two concurrent
+unloads reach a worker that answers leave once and refuses the second by the
+channel's own ordering, per the contract's section 4. Neither race is prevented
+by a lock of this crate's, and the honest statement is that the ordering is
+delegated to the two parties that already serialize: the process manager and
+the worker.
 
 ```graph
 node: admin-publishes-only-on-ready
@@ -353,19 +338,14 @@ from: weaver-admin
 to: admin-publishes-only-on-ready
 ```
 
-**`load` runs the charter's seven steps in order, with the channel's four
-acts interleaved at the split section 7 states, and the merged sequence is
-code rather than convention.** Authorize, validate through section 4's one
+**`load` runs the charter's seven steps in order and the sequence is code
+rather than convention.** Authorize the name, validate through section 4's one
 inventory, verify the boundary in the same inventory, resolve the session and
-open the sink per section 5, bind and listen the coordination channel, start
-the unit per section 6, accept the worker's connection and direct enter per
-section 7, publish. Eight actions, the charter's seven with bind-and-listen
-standing as its own act before the unit, because the worker connects at its
-start and a name not yet listening is a race. Each step's failure returns a
-typed `lifecycle-refusal` to the operator and enters the rollback below
-carrying the step's name. The ordering is one claim and carries one record,
-at the section 7 clause that argues where the split falls, so this sequence
-cites it rather than restating it.
+open the sink per section 5, start the unit per section 6, dial the worker's
+socket and direct enter per section 7, publish. Seven actions, the charter's
+own, the bind-and-listen act the earlier form interleaved here having moved to
+the worker with the inversion. Each step's failure returns a typed
+`lifecycle-refusal` and enters the rollback below carrying the step's name.
 
 **`validate` is the load's front half, and the pin is one function.** The
 inventory of section 4 is a single function that both the verb and the load
@@ -399,15 +379,38 @@ from: weaver-admin
 to: admin-validate-starts-no-process
 ```
 
-**`unload` runs the charter's three steps.** Direct leave and await the
-aggregate, stop the unit through section 6's interface, publish
-provisioned-and-unloaded. A refusal on leave, `ActivityNotAtRest` above all,
-returns to the operator unchanged and publishes nothing.
+**`unload` runs the charter's three steps, and the third waits on the second.**
+Direct leave and await the aggregate, stop the unit through section 6's
+interface, and answer provisioned-and-unloaded **only once the stop has been
+confirmed**. A refusal on leave, `ActivityNotAtRest` above all, returns to the
+operator unchanged and answers nothing further.
 
-**`stop` is a conveyance and its answer is a relay.** The operator's stop
-crosses the surface, admin opens the stop exchange on the coordination
-channel, and the harness's answer, `TurnAborted` or `AtRest`, returns to the
-operator as received. Admin holds no opinion about which, per charter section
+**A stop that is accepted is not a stop that has happened, and this verb waits
+for the difference.** `weaver-admin-systemd-contract` section 4 promises that a
+stop ask is answered when the unit has stopped rather than when the stop was
+accepted, so the ask itself is the confirmation and this Spec elects no timeout
+of its own beside it. What the verb owes is not to run ahead of that answer: a
+stop ask that fails, or that returns over a unit a following state ask still
+finds `active`, refuses with the failure carried and answers no state, because
+an agent reported unloaded while its worker still runs is the one report this
+verb must never produce. Where the stop refuses, the run has already left and
+the unit stands, which the rollback of this section records as an act it could
+not undo, per charter section 5.
+
+```graph
+node: admin-unload-answers-after-confirmed-stop
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-unload-answers-after-confirmed-stop
+```
+
+**`stop` is a conveyance and its answer is a relay.** The operator runs the
+verb, admin dials and opens the stop exchange on the coordination channel, and
+the harness's answer, `TurnAborted` or `AtRest`, returns to the operator as
+received. Admin holds no opinion about which, per charter section
 3. This is the crate's own rule read at a verb: authorizing a stop and
 deciding what a stop found are different acts, the second is the harness's,
 and a relay that translated the answer would be admin ruling on a run it does
@@ -488,7 +491,7 @@ to: admin-existence-checks-repair-nothing
 ```
 
 **One check in that list is the second walk's mechanism and is held
-mechanically instead.** The sink path's containing directory is admin-owned
+mechanically instead.** The sink path's containing directory is root-owned
 and not searchable by the agent uid, whatever the sink's kind: the agent uid
 is not the owner, holds no group search bit through any membership, and the
 other bits carry no search. Section 10's second walk derives a
@@ -545,12 +548,13 @@ to: axiom-harness-integrates-by-the-loop
 ```
 
 **The allow-list is consulted before anything else is touched.** The agent
-name is validated against the fleet's allow-list and the constructed identity
-is `weaver-<name>` from the validated name, never from a caller-supplied
-string, which is the argless-grant discipline of charter section 7 landing at
-the one site that constructs. It is the one site because the same validated
-name is what section 6 interpolates into the unit template, so the delegated
-authority has one origin and review reads that origin rather than every use.
+name is validated against the operator's allow-list and the constructed
+identity is `weaver-<name>` from the validated name, never from a
+caller-supplied string, which is the name-validation discipline of charter
+section 7 landing at the one site that constructs. It is the one site because
+the same validated name is what section 6 interpolates into the unit template,
+so a name reaching a path or a unit has one origin and review reads that origin
+rather than every use.
 
 ```graph
 node: admin-identity-from-validated-name
@@ -564,12 +568,12 @@ to: admin-identity-from-validated-name
 
 ## 5. The sink
 
-Opened by the discriminant the config carries, under admin's own principal,
-every descriptor close-on-exec in the opening call itself.
+Opened by the discriminant the config carries, under root, the role's
+principal, every descriptor close-on-exec in the opening call itself.
 
 **`File { path, create }`.** Opened write-only with `O_APPEND`, `O_CLOEXEC`,
-and, when the flag is set, `O_CREAT` at mode 0640, owned by the service and
-grouped to `weaver-admin`, which is the custody of charter section 7.
+and, when the flag is set, `O_CREAT` at mode 0640, owned by root, which is the
+custody of charter section 7.
 Append-only rides the open file description, verified: a duplicate of the
 descriptor carries the flag, so the worker's copy appends wherever it
 writes, which is what `weaver-trace-Spec` section 7 relies on from the far
@@ -635,12 +639,82 @@ to: admin-sink-path-dies-at-open-site
 **The init system is asked over its command-line interface, and the election
 is argued.** Starting the worker is one invocation per load of the system's
 own run tool, with the unit's properties declared on the invocation: the
-agent's `User=`, the fixed template's hardening, and the declared open that
-connects the coordination socket. Stopping it is one invocation of the stop
-verb. The alternative is a bus library, and it loses on the tree: a D-Bus
-crate brings an async runtime or its own event loop into a binary that
-otherwise needs neither, for two invocations per lifecycle that are neither
-hot nor latency-bound.
+agent's `User=`, the fixed template's hardening, and the runtime-directory
+declaration the coordination socket is bound inside, per
+`weaver-admin-systemd-contract` section 2. Stopping it is one invocation of the
+stop verb, and the same interface answers the state query of section 3. The
+alternative is a bus library, and it loses on the tree, for a handful of
+invocations per lifecycle that are neither hot nor latency-bound.
+
+**No descriptor is declared on the invocation, and the negative is the point.**
+The trace's sink is opened by this crate under root and crosses inside the enter
+directive, per section 5 and section 7, so nothing about the record reaches the
+unit's properties. An earlier form of this clause named a standard-output
+declaration placing the trace's far end, written while that route was under
+consideration and left standing after it was declined. It is struck:
+`weaver-admin-systemd-contract` section 0 rejects the route because the unit's
+standard output is inherited across fork and exec, which would hand every organ
+the harness forks a writable handle to the agent's own record. One record path,
+and it is the descriptor.
+
+**What this crate relies on from the init system is the contract's and not this
+election's.** `weaver-admin-systemd-contract` section 5 states the reliance set,
+the identity holding from the first instruction, the sandbox in force before it,
+unit-name uniqueness as the concurrency guard, and the cgroup's arrival and
+removal with the unit. This Spec elects only how those asks are carried, so a
+builder replacing the command line with a bus library would change this election
+and breach nothing in that contract.
+
+**The election's ground is no new dependency, stated exactly because a looser
+ground was written first.** The clause above said a bus crate brings an async
+runtime, and that is not true as written: `zbus` publishes a blocking API and
+`dbus-rs` is synchronous over a C library. What holds is narrower and enough.
+`zbus` carries async machinery into the resolved tree whatever its surface API,
+which this crate's own manifest assertion forbids, and `dbus-rs` trades that for
+a C library dependency in a binary that otherwise links none. The command line
+costs neither, at a handful of invocations per lifecycle that are neither hot nor
+latency-bound. What it costs instead is failure discrimination, named at the
+contract's section 3 and not defended here.
+
+**A failed dial is followed by a state ask, so a refusal names the right thing.**
+The contract's section 3 records the measurement: a start ask can succeed over a
+unit that never runs, so the dial's bound is what proves liveness and the bound
+alone would report an absent residency where the truth is a unit that is not
+running. Section 7's refusal therefore consults the unit's state before
+returning.
+
+**What that ask yields is a state and never a reason, and what the state
+separates is narrower than it looks.** `weaver-admin-systemd-contract` section 3
+says outcomes carry status and not the failure's cause, so this clause promises no
+diagnostic, and why a unit failed is the manager's journal to answer where this
+program does not read, per that contract's section 7. Measured 2026-08-05 against
+a live manager, the activity value separates three cases and conflates several:
+a unit whose process ran and exited non-zero reads `failed`, a running one reads
+`active`, and `inactive` covers a unit that stopped cleanly, one that never
+existed, and one whose exec never succeeded because its binary was absent. So the
+refusal carries the value and claims nothing beyond it. A dial that timed out
+over a unit reading `failed` refuses naming that state, and one over a unit
+reading `inactive` refuses saying the worker is not running without asserting
+which of the three reasons applies, because the boundary cannot tell them apart
+and a refusal that guessed would be inventing a fact.
+
+**The instrument is a test whose watch turns on the state it names.** A unit
+started against a binary that exits non-zero reaches `failed`, and the test
+watches the refusal carry that state rather than the absent residency, watched to
+fail when the state ask is removed. The obvious test, a binary that does not
+exist, is the one this clause must not use: that case reads `inactive` and would
+pass whether or not the state ask ran, which is the never-failing perturbation
+apex section 11 counts as worse than no test.
+
+```graph
+node: admin-failed-dial-consults-unit-state
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-failed-dial-consults-unit-state
+```
 
 ```graph
 node: admin-init-system-over-command-line
@@ -676,27 +750,30 @@ only value interpolated is the validated agent name of section 4, so the
 delegated authority stays bounded by the allow-list exactly as charter
 section 7 requires.
 
-**The declared open is the route the coordination end takes, and it
-arrives by the listen-fds convention.** The unit's declaration names the
-coordination socket's path, the init system connects it at the worker's
-start, and the worker receives the connected end at its first instruction
-through the listen-fds interface, which is where the composition root takes
-the `OwnedFd` it hands `Harness::adopt`, per `weaver-harness-Spec` section
-2.3. What the composition root does with that end once it has it is the
-harness's claim and asserted there. The sink's descriptor does not travel
-this way: it crosses inside the enter directive as ancillary data, per
-charter section 4.1 step 6, so the unit declares exactly one open, which is
-what this clause asserts and what a builder adding a second declaration would
-breach.
+**The unit declares no descriptor-bearing open, and the absence is the
+assertion.** Under the
+inversion the worker starts bare and builds its own coordination socket inside
+the sandbox, per `weaver-harness-Spec` section 2.3, so nothing is placed into
+the unit at start and no descriptor crosses the init system at all. The sink's
+descriptor crosses later and elsewhere, inside the enter directive as ancillary
+data over the connection admin dialed, per charter section 4.1 step 6. A
+builder adding a socket declaration to this invocation would be reviving the
+route the inversion retired, so what this clause asserts is that the start
+invocation carries no descriptor-bearing property.
+
+The earlier form of this clause named a listen-fds route, and the measurement
+of 2026-08-05 is kept in the charter's section 10 rather than here: the
+manager's own descriptor passing does deliver a caller-held end into a unit,
+and the design no longer needs it.
 
 ```graph
-node: admin-unit-declares-one-open
+node: admin-unit-declares-no-open
 kind: assertion
 tag: review
 
 edge: asserts
 from: weaver-admin
-to: admin-unit-declares-one-open
+to: admin-unit-declares-no-open
 ```
 
 **Worker death is observed, not reported.** The channel's closure is the
@@ -706,31 +783,28 @@ carries. Admin repairs nothing on either, per the charter.
 
 ## 7. The coordination channel
 
-The channel of charter section 6, constructed fresh per load.
+The channel of charter section 6, dialed fresh per verb.
 
 **The socket type is `SOCK_SEQPACKET`, carrying the election of
 `weaver-types-Spec` section 4 rather than re-deciding it.** That Spec named
 this document a landing site for the boundary-preserving election, and it
-lands here on the bound socket: one write is one message, one message is one
-JSON envelope, and no framing enters any contract that draws the channel. A
-landing site carries an election and does not declare it, so the election
-and its envelope bound are both asserted at that Spec's section 4.3 and
-neither takes a record here. The connected pair that Spec speaks of is what
-an accept produces, the bind-and-declared-open route having superseded the
-forked pair on the charter's fourteenth-entry ruling.
+lands here on the connection this crate dials: one write is one message, one
+message is one JSON envelope, and no framing enters any contract that draws
+the channel. A landing site carries an election and does not declare it, so
+the election and its envelope bound are both asserted at that Spec's section
+4.3 and neither takes a record here. The socket the harness binds carries the
+same type, per `weaver-harness-Spec` section 2.3, because a connect against a
+listener of another type fails at the kernel and the two sides elect one thing.
 
-**The boundary the type buys is tested where the pair is made, and that test
-is this crate's.** The election is that Spec's record and the conduct at it
-is this crate's, the division the receive discipline below already takes:
-`weaver-types-Spec` section 5 owes the pair-creating crates a test with two
-halves, and the boundary half is that one envelope written on this channel
-is one envelope read, arriving neither split nor merged with its neighbour.
-Section 10 names it with the substitution its watch turns on, `SOCK_STREAM`
-at the creating call leaving every truncation test passing while the
-framing every contract that draws this channel rests on is gone. The half
-stood unwritten from the pass until this act, filed as issue 35 and closed
-across both pair-creating crates in one act because the property and its
-watch are the same on either side.
+**The boundary the type buys is tested where the connection is made, and that
+test is this crate's.** The election is that Spec's record and the conduct at
+it is this crate's, the division the receive discipline below already takes:
+`weaver-types-Spec` section 5 owes the connecting and binding crates a test
+with two halves, and the boundary half is that one envelope written on this
+channel is one envelope read, arriving neither split nor merged with its
+neighbour. Section 10 names it with the substitution its watch turns on,
+`SOCK_STREAM` at the creating call leaving every truncation test passing while
+the framing every contract that draws this channel rests on is gone.
 
 ```graph
 node: admin-one-write-is-one-read
@@ -746,89 +820,50 @@ from: admin-one-write-is-one-read
 to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
-**The channel is built in four acts, the acts straddle the unit's start, and
-the split is the ordering.** The first two acts run before the unit starts,
-because the worker connects at its start through the declared open and a
-connect against a name not yet listening is the race the ordering exists to
-prevent, and the last two run after it, because there is no peer to accept
-until the worker exists. Each of the four acts carries a verified property,
-and the first two are these. The socket is created with the close-on-exec
-flag in the creating call and bound to a per-agent name inside an
-admin-owned directory of mode 0700, the unsearchable home the charter's
-section 6 requires, listening before the
-unit is asked for. The ordering is the record the load of section 3 cites,
-one claim declared once, and the directory's mode is the first walk's first
-mechanism, held by review because no test below reaches it.
+**The channel is reached in one act, the dial, and the retry bound is the
+whole of its subtlety.** The four acts this section carried until 2026-08-05
+were admin's bind, listen, accept, and close, and the inversion moved every one
+of them to the harness: the socket lives inside the agent's sandbox and the
+harness binds it as its first act, per `weaver-admin-harness-contract` section
+2. What admin does is connect, per verb, to the per-agent name the operator's
+configuration places, with the close-on-exec flag asked for in the socket call
+itself and the connection closed when the verb answers.
+
+**The dial retries within a bound because the bind is the worker's first act
+and the load's dial may arrive first.** The load starts the unit and then
+dials, so the race is real and structural rather than incidental: the elected
+bound is one second of attempts at ten millisecond intervals, and a bound
+exceeded refuses the load with `NoResidency` rather than waiting without end.
+The numbers are this Spec's election and the charter states only that a bound
+exists, per its section 4.1 step 6. A retry loop with no ceiling is what this
+election exists to refuse, because a worker that never binds would otherwise
+hang the operator's terminal rather than answering.
 
 ```graph
-node: admin-bind-and-listen-precedes-unit-start
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-admin
-to: admin-bind-and-listen-precedes-unit-start
-
-node: admin-coordination-directory-unsearchable
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-admin
-to: admin-coordination-directory-unsearchable
-```
-
-**The last two acts are the accept and the close, and each is tested.** The
-listener accepts exactly once, after the unit's start, the accepting call
-setting close-on-exec on the connection.
-The peer credential is read at that accept and checked against the agent's
-expected uid, **which the reopened cell of `weaver-admin-PRD` section 10 now
-holds open**: the party that performs the connect under the declared-open route
-is not the agent, so what uid this check should expect follows from whichever
-route that cell settles on, and is not settled here. the check the charter names as
-available and this Spec elects because it costs one call: possession remains the
-authentication, and the credential confirms the possessor is the worker the unit started
-rather than a surprise, refusing the connection on a mismatch. And the listener is
-closed after the one accept, verified: a later dial is refused by the kernel while the
-accepted connection lives on, so no second opener exists even for a process that somehow
-resolved the name, structure doing the work the search bit already does. Section 10's
-fourth walk tests the credential check and its first walk tests the closure, so both are
-behaviours with a perturbation behind them rather than elections.
-
-**Both records ground in the socket invariant, and the closure does so for a
-reason worth stating.** The credential check is that invariant's named mechanism
-at a channel reached by a path. The closure is what leaves possession meaning
-something at this channel: an elected tool running as the agent uid passes the
-credential check, being the uid the check expects, and what refuses it is that
-no listener remains to answer a second dial. The 0700 directory of the
-paragraph above is a fence in front of the check rather than the check itself,
-so it takes no edge.
-
-```graph
-node: admin-coordination-peer-credential-checked
+node: admin-dial-retries-within-a-bound
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-admin
-to: admin-coordination-peer-credential-checked
+to: admin-dial-retries-within-a-bound
 
 edge: grounds
-from: admin-coordination-peer-credential-checked
-to: axiom-floor-is-vocabulary-behavior-is-socket
-
-node: admin-listener-closed-after-one-accept
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-admin
-to: admin-listener-closed-after-one-accept
-
-edge: grounds
-from: admin-listener-closed-after-one-accept
+from: admin-dial-retries-within-a-bound
 to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
+
+**The credential check is the harness's and takes no record here.** What
+refuses a stranger on this channel is the peer credential read at the
+harness's accept, root or refused, per the contract's section 2, and the
+record for it is declared by the crate that performs it, per
+`weaver-harness-Spec` section 2.3. The four records this section carried for
+the earlier design, the bind ordering, the directory's mode, the credential
+check, and the listener's closure after one accept, retire with the acts they
+described. The closure is not merely relocated: a listener that answers one
+verb and closes would leave every later verb with nothing to dial, so the
+harness's listener lives as long as the worker and the property that replaced
+the closure is the check itself.
 
 **The receive discipline is the shared obligation.** The receive buffer is
 sized to the 64 kibibyte envelope bound and a read returning with
@@ -870,31 +905,24 @@ from: weaver-admin
 to: admin-enter-carries-descriptor-in-one-message
 ```
 
-**One exchange in flight per agent, by the fleet state's lock.** The
-channel's layer permits concurrency, per the drawn material, and this
-crate's own contract forbids a second transition for the same agent, so the
-serialization is admin's discipline at the fleet state rather than a
-property claimed of the wire. This is the claim section 2's threading
-paragraph cites, one record for one rule, and it is review's because the
-lock is read at the fleet state rather than exercised by a test named below.
-
-```graph
-node: admin-one-exchange-in-flight-per-agent
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-admin
-to: admin-one-exchange-in-flight-per-agent
-```
+**One exchange in flight per worker, and the serialization is now the
+harness's.** The channel's layer permits concurrency, per the drawn material,
+and the contract forbids a second transition for the same agent. What held
+that was admin's fleet map until 2026-08-05, and a per-invocation crate holds
+nothing, so the property lands where the standing party is: the harness serves
+one connection at a time and answers a directive arriving out of order with a
+refusal, per the contract's section 4 and `weaver-harness-Spec` section 2.3.
+This crate's obligation reduces to opening one exchange per invocation and
+closing the connection when the verb answers, which one verb per process makes
+structural rather than disciplined.
 
 ## 8. The operations log
 
 **The format is NDJSON, one act per line, and it shares no schema with the
 trace.** The charter fixes the custody, 0640 in a 0750 directory, both owned
-by the service and grouped to `weaver-admin`, fleet-scoped and never inside
-an agent home. What this Spec adds is the rendering: one JSON object per
-line, the same reading tools the stream's consumers already hold, and a
+by root, fleet-scoped and never inside an agent home. What this Spec adds is
+the rendering: one JSON object per line, the same reading tools the stream's
+consumers already hold, and a
 field set that is this crate's own and deliberately not the event envelope,
 because a shared schema is how a second author drifts into the first's
 record. The file opens with `O_APPEND` and `O_CLOEXEC` like every descriptor
@@ -951,32 +979,35 @@ accumulates, which is the charter's own grounds read forward.
 ## 9. The service's own configuration
 
 **Admin has operator-installed configuration of its own, and this Spec names
-it rather than leaving it implied.** The operator socket's path, the
-coordination directory, the log directory, the unit template, and the fleet
-allow-list are deployment facts of the service, installed by the operator
-beside the delegation policy of charter section 7. They are not the agent
-config, they cross no seam, and no crate but this one reads them. The shape
-is a satellite of section 11: what is fixed here is that these values exist,
-that they are the operator's to place, and that none of them is discovered
-at runtime by searching.
+it rather than leaving it implied.** The coordination socket's per-agent name,
+the log directory, the unit template, the agent config directory, and the
+allow-list are deployment facts the operator installs. The operator socket's
+path left this list with the socket on 2026-08-05, and the coordination name
+stayed but changed hands: the operator places it, the harness binds it, and
+admin dials it, so one value reaches two crates and the operator's file is
+where they agree. They are not the agent config, they cross no seam, and no
+crate but this one and the worker's composition root reads them. The shape is
+a satellite of section 11: what is fixed here is that these values exist, that
+they are the operator's to place, and that none of them is discovered at
+runtime by searching.
 
 ## 10. What is enforced, and by which instrument
 
 Per apex section 11, with the threat walks stated first and each test a walk
 made executable.
 
-**The first walk: the agent dials its own supervisor.** The adversary is an
-elected tool running as the agent uid, and the target is either named
-socket, the operator surface or the coordination listener. The mechanisms
-are layered: the coordination directory's 0700 denies the traversal, the
-listener is closed after its one accept, and the operator surface's
-predicate refuses the agent uid at accept, denial winning over any group
-grant. The tests: a connection attempt from a non-member uid is refused
-before any content is read, watched to fail when the predicate weakens, and
-a post-accept dial of the coordination name is kernel-refused, watched to
-fail when the listener is left open. The first test is the operator-surface
-twin of the walk `weaver-types-Spec` section 3 named for the gate, landing
-in this crate because this crate owns the second consumer.
+**The first walk: the agent drives its own lifecycle.** The adversary is an
+elected tool running as the agent uid, and the targets are the two ways a
+lifecycle verb could be reached. Running the binary is one, and it is refused
+because the invocation performs nothing unless it holds root, per section 2.
+Dialing the coordination socket is the other, and it is refused at the
+harness's accept, whose credential check expects root and holds the record for
+it, per `weaver-harness-Spec` section 2.3. The test on this crate's side: the
+binary run as a non-root uid refuses before touching any agent, watched to fail
+when the root check is removed. The walk lost two mechanisms with the recut,
+the operator socket's predicate and the coordination directory's 0700, and it
+is stronger for the exchange: both were fences in front of a check that could
+not tell the worker from a tool, and what stands now is a check that can.
 
 **The second walk: the agent reaches the sink by path.** The adversary is
 the same tool surface, the attack a path traversal to the sink the config
@@ -996,12 +1027,31 @@ and flag. The test: spawn the subprocess, enumerate its descriptors, confirm
 none of admin's crossed, watched to fail when any single atomic flag is
 downgraded to a later `fcntl`.
 
-**The fourth walk: a stranger answers on the coordination channel.** The
-adversary is any process that is not the started worker holding the
-channel's far end. The mechanisms are possession, the declared open placing
-the end only in the unit, and the elected credential check at accept
-refusing a peer whose uid is not the agent's. The test: a connection from a
-wrong uid is refused at accept, watched to fail when the check is removed.
+**The fourth walk: a stranger speaks on the coordination channel.** The
+adversary is a process running as the agent's uid, or as any uid on the host
+that is not root, dialing the worker's socket. The mechanism is the harness's
+credential check at accept, root or refused, and both the mechanism and its test
+belong to the crate that performs them, per `weaver-harness-Spec` section 2.3, so
+this crate cites the walk and declares no record for it.
+
+**The check separates root from everything else and does not separate this crate
+from other root processes, which is stated rather than implied.** `SO_PEERCRED`
+yields a uid, so what the harness can know is that its peer holds root, not that
+its peer is `weaver-admin`. Any root process on the host may therefore dial an
+agent's coordination socket and direct its lifecycle. **That is not an
+additional exposure and the reason is worth naming**: a root process already may
+`ptrace` the worker, read and write its memory, replace the binary the unit
+starts, or kill it, so a channel that admitted root adds nothing to what root
+held before it. The boundary this program draws is between the agent and root,
+and it is drawn where the agent cannot cross it. A check that separated admin
+from other root processes would need a credential the operating system does not
+supply at a socket and would defend against a party the trust model already
+trusts, per `weaver-admin-PRD` section 2's statement that the program secures
+the agent against reaching its own record and secures nothing against the
+operator. What this crate owes the walk is the dial itself
+being the only route it takes: no second connection is opened, none is kept
+across verbs, and the connection closes when the verb answers, so a descriptor
+to a running agent's supervisor exists only for the life of one invocation.
 
 **Enforced by the compiler.**
 
@@ -1032,22 +1082,23 @@ is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Thirteen of the
-thirty-six carry a `grounds` edge and those thirteen carry fourteen edges, one
-record grounding in two invariants. Eight run to
-`axiom-floor-is-vocabulary-behavior-is-socket`, two to
+**Which invariant each claim serves, and why most serve none.** Ten of the
+thirty-one carry a `grounds` edge and those ten carry eleven edges, one
+record grounding in two invariants. Six run to
+`axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
 and three to `axiom-harness-integrates-by-the-loop`.
 **The test applied is whether the axiom is the reason the claim exists, or
 whether the claim is a precondition of the axiom's own stated reason,** per
 Document Format section 4. Remove the socket invariant and this crate has
 no reason to publish no library and no reason to hold one internal dependency,
-no credential is read at either accept, and no envelope has to arrive whole or a
-truncation to count as a fault, so those eight ground in it. Remove it and the
-log is still NDJSON, the FIFO still opens nonblocking, the inventory still
-repairs nothing, and the identity is still built from the validated name, so
-those ground in nothing.
-**Twenty-three claims grounding in no invariant is the expected result and not a
+no reason for the verbs to sit behind a principal check, no envelope has to
+arrive whole or a truncation to count as a fault, and the dial's bound has
+nothing to bound, so those six ground in it. Remove it and the log is still
+NDJSON, the FIFO still opens nonblocking, the inventory still repairs nothing,
+and the identity is still built from the validated name, so those ground in
+nothing.
+**Twenty-one claims grounding in no invariant is the expected result and not a
 gap**, per Document Format section 4: most of what this Spec elects is a
 rendering, a mode, an ordering, or a route, and representation is what the
 invariants are not about.
@@ -1059,15 +1110,15 @@ message this crate sends is one, so there is no seam here at which the key
 travels. The trace this crate opens a sink for is written by the harness and
 admin authors no event in it.
 
-The two edges to the contract invariant are the operator surface's, and they
-are where this crate's two seams part company. The surface is `SOCK_STREAM`
-because its contract fixes the framing completely and a boundary-preserving type
-would carry a second framing under the first, and it carries no envelope because
-the contract draws none, an explicit nothing being what that invariant makes an
-assertion rather than a silence. The coordination channel's opposite election is
-`weaver-types-Spec`'s record and grounds there. What lands here is the conduct
-at it, one write read as one message and a truncation read as a fault, and both
-of those ground in the socket invariant instead.
+The one edge to the contract invariant is the invocation's answer agreeing with
+its exit status, which the recut left standing where the operator surface's two
+edges retired with the socket. A contract is a complete interface, so an
+interface that could answer one thing and exit another would be two interfaces
+disagreeing, and the agreement is what makes the invocation's boundary
+readable by a shell and a tool alike. The coordination channel's boundary
+election is `weaver-types-Spec`'s record and grounds there. What lands here is
+the conduct at it, one write read as one message and a truncation read as a
+fault, and both of those ground in the socket invariant instead.
 
 The organ invariant keeps one edge and it is the device check's, the device
 having one authority and that authority not being this crate, which is the
@@ -1092,16 +1143,15 @@ alone, nothing in the classification of organs being a reason to relay an answer
 rather than to read it, and the device check carries both, the single authority
 it defers to being 5.4's partition and the declining being 5.5's bound.
 
-Two calls in the pass are worth a reviewer's eye. The coordination directory's
-0700 grounds in nothing, because what the socket invariant turns on is that a
-peer is known rather than that a stranger cannot resolve a name, per the
-operator contract's own reading that reachability is not the authentication, and
-the listener's closure grounds where the directory does not for the reason
-section 7 states at it. The descriptor routes ground in nothing on the apex's
-own terms: which party creates a pair and how a far end travels to the process
-that holds it belong to the contract governing that seam and are not the apex's
-to settle, so the declared open and the ancillary payload elect a route the
-invariant left open.
+One call in the pass is worth a reviewer's eye, and the recut vindicated the
+reading behind it. The retired directory mode grounded in nothing, because what
+the socket invariant turns on is that a peer is known rather than that a
+stranger cannot resolve a name, and the inversion made that reading structural:
+the socket is now reachable by design and the check is the whole of the
+refusal. The descriptor route grounds in nothing on the apex's own terms, since
+which party creates a channel and how a descriptor travels belong to the
+contract governing that seam rather than to the apex, so the dial and the
+ancillary payload elect a route the invariant left open.
 
 **The sharpest decline against the integration invariant is the published
 state.** Waiting on a ready aggregate reads at first like this crate deferring
@@ -1109,52 +1159,74 @@ to the harness's domain, and it takes no edge. The aggregate is a value this
 crate's contract delivers, keying on it is what a contract's vocabulary is for,
 and the record written is admin's own and sits wholly inside admin's domain.
 Apex section 5.5 binds what crosses between domains and does not reach what an
-organ does inside one, so an ordering held at the fleet state grounds in
-nothing. The same reading leaves the load's act ordering, the inventory's one
-function, and the one exchange in flight per agent unedged, each of them a
-sequence this crate holds rather than a reconciliation between two domains.
+organ does inside one, so an ordering held inside a verb grounds in nothing.
+The same reading leaves the load's step ordering, the inventory's one function,
+and the residency read from the init system unedged, each of them a sequence this
+crate holds or a fact it consults rather than a reconciliation between two
+domains.
 
 **Where the assertion records sit, and which of these this crate declares.**
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-six records in all,
-eighteen from this section's sorting and eighteen from the elections outside
-it, the elections taking nodes because gate H1 would otherwise leave the
-largest decisions in this Spec untraceable. The eighteen elections are all
-tagged for review, and two more review tags come from the sorting rather than
-from an election: the verb's stopping short of any seam and the existence
-checks no test reaches are the review halves of splits this section's own
-bullets take, and a divided half counts with the bullet it divided out of,
-per Document Format section 3. Every other record drawn from the sorting
-carries a mechanical instrument.
+would sit apart from the prose that earns it. Thirty-one records in all as of
+the recut of 2026-08-05, fifteen tagged for review, eleven for perturbation,
+three for the manifest, and two for a compile pin. The elections take nodes
+because gate H1 would otherwise leave the largest decisions in this Spec
+untraceable, and two review tags come from the sorting rather than from an
+election: the verb's stopping short of any seam and the existence checks no
+test reaches are the review halves of splits this section's own bullets take,
+and a divided half counts with the bullet it divided out of, per Document
+Format section 3.
+
+**Ten records retired with the recut, one moved, and six were added, which is
+the count's whole movement from thirty-six.** Retired: the operator surface's
+six, its stream election, its accept-time refusal, its refusal-by-closure, its
+serial answering, its bounded request line, and its bare wire shapes, each
+dying with the socket rather than relocating. The coordination channel's bind
+ordering, its directory's mode, its listener's closure after one accept, and
+the one exchange in flight per agent, the last four retiring with the acts and
+the map they described. Moved: the credential check, to
+`weaver-harness-Spec` section 2.3, where the accept now happens. Added: the
+root check and the answer-and-status agreement of section 2, the dial's bound
+of section 7, the residency read from the init system of section 3, the state
+ask that follows a failed dial, of section 6, and the unload's wait on a
+confirmed stop, of section 3. The unit's declared open inverted
+to a declared absence rather than retiring, so it is neither. A rebuild of the
+graph reads this movement as the act's assertion
+delta.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live
 and a node declared twice is the one-name-two-nodes defect the format forbids
-for identifiers. Ten are such owings and carry no record in this document.
-Three are cited in this section: the exhaustive wire enums and the missing
-`Deserialize` on `PeerIdentity`, both `weaver-types-Spec`'s, and the no-path
-pins on the worker's side of the seams. Seven more are cited where the
-sections use them. Five are `weaver-types-Spec`'s: the denial ordering of
-section 2, the parse's totality of section 4, the sink's discriminated shape
-with the socket case's absent creation flag of section 5, the boundary
-election of section 7, and the envelope bound that election carries, which
-that Spec declares as its own record beside the election rather than inside
-it. Two are `weaver-harness-Spec`'s:
-the OS-surface election of that Spec's section 2.4, cited in section 1, and
-its section 2.3 adoption of the coordination end, cited in section 6. The
-shape behind the list is the crate's own: admin authorizes and does not
-execute, so what a run does after the enter directive is asserted where the
-run happens.
+for identifiers. Ten are such owings and carry no record in this document, the
+count holding across the recut because one left and one arrived. Two are cited
+in this section: the exhaustive wire enums and the missing `Deserialize` on
+`PeerIdentity`, both `weaver-types-Spec`'s, the no-path pins on the worker's
+side having left this list with the seam clause that cited them. Eight more are
+cited where the sections use them. Four are `weaver-types-Spec`'s: the parse's
+totality of section 4, the sink's discriminated shape with the socket case's
+absent creation flag of section 5, the boundary election of section 7, and the
+envelope bound that election carries, which that Spec declares as its own
+record beside the election rather than inside it. The denial ordering left the
+list with the predicate that applied it. Four are `weaver-harness-Spec`'s: the
+OS-surface election of that Spec's section 2.4, cited in section 1, its bind
+of the coordination socket and its credential check at accept, both of section
+2.3 and cited in sections 6 and 7, and its refusal of a directive arriving out
+of order, cited in section 7. The shape behind the list is the crate's own:
+admin authorizes and does not execute, so what a run does after the enter
+directive is asserted where the run happens.
 
 **Requiring a perturbation-verified test, beyond the walks.**
 
-- One answer per request, in request order, on one connection, confirmed by
-  watching interleaving appear when per-connection serialization is removed.
-- The refused-before-read property: a failing peer's connection closes with
-  no answer written, confirmed by watching a refusal value cross when the
-  closure is replaced by a reply.
+- The root check: the binary run as a non-root uid refuses before touching any
+  agent, confirmed by watching a verb proceed when the check is removed.
+- The answer and the exit status agree: a refusal exits non-zero and an answer
+  exits zero, confirmed by watching a refusal exit zero when the status is
+  taken from the wrong branch.
+- The dial's bound: a dial against a name nothing binds refuses within the
+  bound rather than waiting, confirmed by watching the invocation hang when the
+  ceiling is removed from the retry loop.
 - The FIFO refusal: a pipe sink with no reader refuses the load with
   `ENXIO` mapped to its case, confirmed by watching the load hang when the
   nonblocking open is made blocking.
@@ -1181,6 +1253,18 @@ run happens.
 
 Each names what settles it, and none is this Spec's to settle alone.
 
+- **How an agent's lifecycle state is observed, and what the `State` answer
+  carries meanwhile.** Section 3 reports residency in the manager's own three
+  values because that is what the init system can answer, and apex section 6's
+  four states are the harness's to know. The two halves are one election: the
+  manager's `active` covers both `Idle` and `Active` and its `failed` has no
+  `AgentState` case, so `lifecycle-answer`'s `State` case has no producer for
+  these verbs until an observation reaches the party that holds the run.
+  **Settled by:** an observation exchange on `weaver-admin-harness-contract`,
+  which charters enter, leave, and stop and no query, together with whatever
+  `weaver-types` owes its enumeration once that exchange fixes what can be
+  observed. The answer arrives with that contract's next opening rather than
+  from a mapping this Spec could invent.
 - **The session-close cue and the enter question.** Charter section 10's two
   cells, settled by the human's ruling and the memory-and-state round
   respectively, carried here only so this list is complete.

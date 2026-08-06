@@ -311,8 +311,8 @@ from: weaver-gate
 to: gate-instruction-two-fields-consumed
 ```
 
-**The client socket is `SOCK_STREAM`, elected on the same ground as the
-operator surface.** `weaver-gate-world-contract` section 2 fixes
+**The client socket is `SOCK_STREAM`, elected on its contract's framing.**
+`weaver-gate-world-contract` section 2 fixes
 newline-delimited JSON, one request per line, so the newline is the framing
 and a boundary-preserving type would carry a second framing under the
 first. A stream is also what a local client's ordinary tooling dials, which

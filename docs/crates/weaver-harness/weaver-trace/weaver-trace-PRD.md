@@ -447,7 +447,7 @@ protocol is the reserved slot apex section 9 forbids.
 
 ### 4.1 Open
 
-The sink is opened by `weaver-admin` while it holds that principal, per
+The sink is opened by `weaver-admin` under root, the role's principal, per
 `weaver-admin-operator-contract` section 3, and the descriptor is passed to a worker
 that has held the agent uid from its first instruction, because the init system
 starts the unit under `User=` and there is no drop to order, per

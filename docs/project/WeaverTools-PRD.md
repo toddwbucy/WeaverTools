@@ -489,9 +489,12 @@ coordinating center of the turn.** Admin authorizes the intent, verifies the
 boundary the operator wrote, opens the sink, starts the worker unit, and directs
 the transition across its one seam, rolling back its own acts where a directive
 refuses. The harness cannot drive the early steps of its own creation, because
-the worker spawn and the descriptor handoff run before the harness exists at
-all, and supervising worker lifetimes is long-lived and fleet-wide where the
-harness is mortal. What the harness owns is the interior of the directives:
+the worker spawn runs before the harness exists at all, and the acts a verb
+performs are root's, held by the operator in the admin role rather than by any
+standing process of the program's, per `weaver-admin-PRD` section 7 as recut on
+2026-08-05. What is long-lived where the harness is mortal is the init system,
+which holds the unit and outlives every invocation that drives it. What the
+harness owns is the interior of the directives:
 admin holds no channel to the SPU or the gate, so the harness fans the directive
 out along its own seams, collects each organ's confirmation, and returns one
 aggregate. Sequencing the organs is the harness's because the seams are, and
@@ -790,14 +793,18 @@ exclusion of the agent rather than evidence against the holder. A charter that
 appears to defend an artifact against its operator is misread.
 
 **The process topology, stated once so 5.1's test has something to read.** An
-agent is three processes and one supervisor outside them. The worker is the
-composition root: its binary compiles the harness, `weaver-trace` under its
-contract, and the floor. The SPU and the gate are each their own binary,
-forked by the harness during enter and holding one channel end each from their
-first instruction. `weaver-admin` stands outside every agent, compiles into its
-own processes, and is never linked into a worker. A crate calling a crate
-inside one of those binaries is a link seam. Anything else crosses a process
-line and is a socket, per 5.1.
+agent is three processes, with the supervisor outside them arriving as an
+invocation rather than standing beside them. The worker is the composition
+root: its binary compiles the harness, `weaver-trace` under its contract, and
+the floor, and it binds the coordination socket admin dials, per the inversion
+of 2026-08-05. The SPU and the gate are each their own binary, forked by the
+harness during enter and holding one channel end each from their first
+instruction. `weaver-admin` stands outside every agent, compiles into its own
+processes, and is never linked into a worker. Those processes are the
+operator's verb invocations: one runs, dials, directs, and exits, so the
+supervisor is outside every agent in space and intermittent in time. A crate
+calling a crate inside one of those binaries is a link seam. Anything else
+crosses a process line and is a socket, per 5.1.
 
 This is systems architecture at the OS level rather than at the network level,
 and the difference is not stylistic. At the network level the unit of

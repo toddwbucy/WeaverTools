@@ -5,6 +5,15 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-05, the socket inversion and the admin recut, one act. The
+creating party inverts: the harness binds the coordination socket inside the agent's
+sandbox as its first act and admin dials in, one connection per verb, so the channel
+authenticates by credential at the harness's accept, root or refused, apex 5.1's
+first case where the earlier form argued the second. The init system carries no
+descriptor, admin is per-invocation with no standing end, and the
+connection-lifetime rule restates against the listener. Section 5 gains the
+harness's refusal guarantee, section 6 its case, and section 8's possession
+negative inverts to a `peer-identity` draw.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -72,35 +81,41 @@ admin's today, per the fault-carrier ruling of 2026-08-01.
 
 ## 2. The channel
 
-`weaver-organ-channel` section 2 states the process-boundary layer: the unnamed
-connected pair, one pair for both directions, boundary preservation as a socket-type
-property, authentication by possession, the close-on-exec split, the holder in
-transit, the channel's life bound to the far process, and closure never read as an
-answer. What follows is this seam's own.
+`weaver-organ-channel` section 2 states the process-boundary layer for the organ
+channels, and this seam draws it in part since the inversion ruling of 2026-08-05.
+What lands here unchanged: boundary preservation as a socket-type property, the
+close-on-exec split, and closure never read as an answer. What does not: the
+unnamed connected pair, authentication by possession, the holder in transit, and
+the channel's life bound to the far process, each departed from below with the
+departure stated as this seam's own. The organ channels the harness creates keep
+the drawn shape whole, and this seam is the one that left it.
 
-**Admin creates the pair, before the unit starts, because admin is the only party that
-exists before the unit starts.** This is the creating-party rule of
-`weaver-organ-channel` section 2 landing on this seam, and the creating party is not
-the initiating party.
+**The harness creates the channel, per the inversion ruling of 2026-08-05, and the
+creating party is not the initiating party.** Any socket connecting to the harness
+is an internal connection and lives inside the agent's sandbox, so the harness
+binds the coordination socket and listens as its first act, before any directive
+can arrive, and admin dials in. The earlier form had admin binding before the unit
+started because admin was the only party that existed then, and the inversion
+retires the premise: nothing needs to exist before the worker, because the worker
+brings its own end.
 
-**How the worker's end arrives is settled, per the ruling of 2026-08-01.** The
-transient-unit check ran and the interface carries declared opens rather than
-raw caller descriptors, so the channel is a socket admin binds inside an
-admin-owned unsearchable directory, connected once at the worker's start by the
-unit's own declaration, per `weaver-admin-PRD` sections 6 and 10. Namelessness
-restates as unreachability: the name exists, the agent's tool surface cannot
-traverse to it, and no second opener exists in practice because the kernel
-denies the path lookup, which is the same property the unnamed pair bought and
-the second-opener case `weaver-organ-channel` section 2 rejects stays rejected.
+**How each connection arrives is the dial, one per verb.** Admin is per-invocation,
+per `weaver-admin-PRD` sections 1 and 7, so each verb's invocation connects to the
+socket the worker holds, is served, and closes with the verb. The bind is the
+worker's first act and the dial may arrive before it, so the dialing party retries
+within a bound the Spec states, and a bound exceeded is a refusal of the verb
+rather than a wait without end. The init system carries no descriptor and holds no
+end, in transit or otherwise: it starts the unit and that is the whole of its part.
 
-**The init system is a holder in transit and not a peer,** which is
-`weaver-organ-channel` section 2's retention rule with its intermediary named. It may
-touch the end while placing it and does not retain one.
-
-**Possession is this seam's authentication, per apex 5.1's second case.** The
+**The credential is this seam's authentication, per apex 5.1's first case.** The
 invariant reads by credential where the channel has a name and by possession where
-it has none, restated on 2026-07-31 with this seam as the case that forced it, so
-the seam is an instance of the rule rather than an exception admitted to it.
+it has none, and this channel has a name the harness bound. The harness reads
+`SO_PEERCRED` at every accept, before any byte, and refuses every peer that is not
+root. The name is reachable from inside the sandbox, so the check is what refuses
+an elected tool at the agent uid, and it discriminates where the earlier design's
+credential check could not: the expected peer is root, which no tool of the
+agent's holds. The second-opener case `weaver-organ-channel` section 2 rejects
+stays rejected, by refusal at accept rather than by an absent name.
 
 **The worker holds the agent uid from its first instruction and clears its dumpable
 flag after its final exec.** There is no drop, because the init system starts the unit
@@ -132,15 +147,18 @@ receiver calling `recvmsg` without `MSG_CMSG_CLOEXEC` accepts a handle with the 
 clear, and every subprocess a tool call spawns from that point inherits a writable
 handle to the trace. Admin can open the file correctly and still lose the property at
 the receive, so the obligation is the receiver's in section 5 rather than
-the sender's. The same holds for this channel's own descriptor, which
-reaches the supervisor rather than being received by it, so the flag is set on admin's
-end before the channel is handed across and set again after the worker's last exec. The
-second is a set and not a check, because `execve` can clear the flag and a step that
-reports rather than repairs leaves the channel inheritable by every tool subprocess.
+the sender's. This channel's own descriptors are the simple case since the
+inversion: the listener and every accepted connection are created after the
+worker's last exec with the flag asked for in the creating and accepting calls,
+so no set-again ordering exists on the worker's side, and admin's dialing end is
+flagged at its connect and dies with the verb.
 
-**The channel lives exactly as long as the worker,** which is `weaver-organ-channel`
-section 2's lifetime rule with its far process named. It is not reconnected, not
-reopened, and not shared with a second worker.
+**The listener lives exactly as long as the worker, and a connection lives exactly
+as long as its verb.** The lifetime rule of `weaver-organ-channel` section 2 lands
+on the listener: bound once at the worker's start, closed by the worker's death,
+shared with no second worker. Each accepted connection is one invocation's, closed
+by admin when the verb answers, and the harness serves one connection at a time, a
+second dial waiting at the listener rather than being answered concurrently.
 
 ## 3. The exchanges
 
@@ -183,8 +201,8 @@ decoder is the harness's interior and crosses nowhere.
 the worker survives is a `fault` event, authored by the harness into the stream
 like every other event, per `weaver-trace-PRD` section 3.1, and the stream is the
 program's one fault carrier: the operator's tooling keys on it there and comes back
-through the operator surface with a verb, per `weaver-admin-operator-contract`
-section 6 and the basic loop's section 2. Admin learns nothing of a fault, holding
+by running a verb, per the basic loop's section 2. Admin learns nothing of a fault,
+holding
 custody of the sink and comprehension of nothing. An earlier form of this section
 carried the fault to admin as a fourth exchange, the alert, and the ruling retired
 it: with one outbound path carrying every event in order, a second carrier for the
@@ -212,13 +230,16 @@ an obligation on the party that could break it.
 
 ## 4. Ordering
 
-- Enter is first and happens exactly once on a channel.
+- The ordering below is the worker's rather than any connection's: exchange state
+  survives a connection closing, because connections come and go with verbs and
+  the run does not.
+- Enter is first and happens exactly once in a worker's life.
 - Stop is valid only between a completed enter and a leave, and a stop arriving at
   rest answers at rest rather than refusing.
 - An organ fault before the enter aggregate is answered is a refusal on the enter
   exchange naming the arm, rather than a `fault` event, the report to admin and
   the account on the stream being two different things.
-- Leave is last, happens at most once, and is terminal on the channel.
+- Leave is last, happens at most once, and is terminal for the worker.
 - Messages within one exchange are ordered.
 - An answer to enter arrives only after the working structure is standing, the
   model is admitted, and Gate is started, so admin may rely on a ready answer meaning
@@ -249,7 +270,9 @@ operator's artifact. It guarantees that no directive carries work of any kind.
 **The harness supplies** its readiness as the aggregate of the enter fan-out, its
 confirmation of departure, and the turn's fate on a stop.
 
-**The harness guarantees** that every descriptor it accepts is accepted close-on-exec,
+**The harness guarantees** that every connection is credential-checked at its
+accept, before any byte is read, and that a peer that is not root is refused, per
+section 2. It guarantees that every descriptor it accepts is accepted close-on-exec,
 per section 2, which is an obligation on the receiving call and cannot be met by the
 sender. It guarantees that it authors the run's bracket
 events, that it writes only through the descriptor it was handed, that it resolves no
@@ -278,6 +301,8 @@ so an answer to leave covers what was drained and an abrupt exit covers nothing.
 Refusals are typed and enumerable, and every one of them is the harness refusing an
 ask, because admin answers nothing. The cases:
 
+- the dialing peer's credential is not root, and the connection is refused at the
+  accept before any exchange opens
 - the descriptor is absent, unusable, or does not carry the required flags
 - an organ the enter fans out to refused, and the refusal names which organ and
   carries its reason, so the aggregate answer is one refusal rather than a report to
@@ -334,9 +359,15 @@ the exchanges above are the whole of what either learns.
 ## 8. Vocabulary
 
 **Drawn from `weaver-types`:** `organ-envelope`, `lifecycle-directive`,
-`lifecycle-answer`, `lifecycle-refusal`.
+`lifecycle-answer`, `lifecycle-refusal`, and `peer-identity`, the last as of the
+inversion ruling of 2026-08-05, because the identity the harness reads at every
+accept is the floor's.
 
 ```graph
+edge: draws
+from: weaver-admin-harness-contract
+to: peer-identity
+
 edge: draws
 from: weaver-admin-harness-contract
 to: organ-envelope
@@ -363,17 +394,20 @@ between themselves. It is named here because this was the first contract to need
 definition stays in `weaver-types` and the mechanics it serves live in
 `weaver-organ-channel`, per `weaver-types-PRD` section 2.3.
 
-**`peer-identity` and `authorization-predicate` are not drawn here, and the negative is
-stated rather than left to the absence of an edge.** This seam authenticates by
-possession per section 2, so it reaches neither definition. `weaver-types-PRD` section
-2.2 rests its scoped claim on this contract being the counterexample to a universal,
-and a claim about what another document says is only checkable if that document says
-it.
+**`peer-identity` is drawn as of the inversion and `authorization-predicate` still
+is not, each stated rather than left to edges.** This seam authenticates by
+credential per section 2, and what the harness reads at accept is the floor's
+`peer-identity`. The rule it applies is fixed at root rather than configured, so no
+predicate definition is reached and `authorization-predicate` stays undrawn.
+`weaver-types-PRD` section 2.2 rested its scoped claim on this contract being the
+counterexample to a universal, and this act re-aims that claim in the same batch,
+the counterexample having inverted.
 
 **Drawn from `weaver-trace`:** nothing. No event kind, envelope field, or payload
 shape crosses this seam, and this contract names no field of the record's envelope.
 
-**The five definitions land in `weaver-types` and are owed by this act.**
+**The definitions land in `weaver-types` and were owed by the act that wrote this
+section, four of them, the fifth having left with `harness-alert`.**
 `weaver-types-PRD` section 4 rules that wire vocabulary is absent on demand and that
 the shared representation arrives when the first socket contract is written. This is
 that contract, so the demand exists now and the definitions belong to the floor rather
@@ -429,11 +463,18 @@ section 11's register.
   statement about admin being an organ rather than a statement about alerts.
 - `weaver-admin-PRD` section 10. The descriptor cell is unchanged in count, because one
   pair still carries the seam, and unchanged in its exit condition.
-- The G4 union grows from three values to five, because the duplex rewrite of this
-  contract draws `organ-envelope` and `harness-alert` where the simplex form drew
-  three. The count of contracts is unchanged, both crates remain party to one, and an
-  earlier form of this line said the union was unchanged by reading the first fact for
-  the second.
+- The G4 union grew from three values to five with the duplex rewrite of this
+  contract, which drew `organ-envelope` and `harness-alert` where the simplex form
+  drew three. The count of contracts is unchanged, both crates remain party to one,
+  and an earlier form of this line said the union was unchanged by reading the first
+  fact for the second.
+- **The union stands at five again by a different route, as of 2026-08-05.** The
+  fault-carrier ruling of 2026-08-01 retired `harness-alert` and left four, and the
+  inversion of this act adds `peer-identity`, the identity the harness reads at
+  every accept. No definition is owed to the floor by either move: `peer-identity`
+  is defined at `weaver-types-PRD` section 2.2 and `harness-alert`'s definition left
+  that charter with the exchange. The four definitions section 8 lists unfenced are
+  what this contract's own act owed and remain four.
 
 **Three of these landed on 2026-07-31 and are struck rather than deleted, so that a
 reader of an earlier revision can tell a closed item from one that was never there.**
