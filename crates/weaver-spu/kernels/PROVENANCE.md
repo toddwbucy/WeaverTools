@@ -34,6 +34,30 @@ Verify with `sha256sum` against either tree while the quarry stands. Phase two's
 closing checklist removes the quarry, which is why the values are recorded here
 rather than left to be recomputed from a tree that will not exist.
 
+## Building the kernels, and the one environment fact
+
+The compile is gated on the `cuda` feature. `build.rs` reads
+`CARGO_FEATURE_CUDA` and returns without doing anything when it is absent, so
+the no-feature build needs no CUDA toolchain and the suite runs on a machine
+with no device.
+
+**The carried script defaults `CUDA_PATH` to `/usr/local/cuda`, and that is
+wrong on some machines.** It falls back through `CUDA_PATH`, then `CUDA_ROOT`,
+then that literal. A CachyOS box keeps the toolkit at `/opt/cuda`, so the build
+needs the variable set:
+
+    CUDA_PATH=/opt/cuda cargo build -p weaver-spu --features cuda
+
+This is recorded rather than fixed because the script crosses verbatim, per the
+ruling of 2026-08-02. Changing the default would be an edit to a carried file,
+and the fact belongs with the carry either way.
+
+The four `-gencode` lines are `sm_86` (A6000, Ampere), `sm_89` (RTX Ada),
+`sm_120` (RTX PRO Blackwell, needing CUDA >= 12.8), and a `compute_86` PTX
+fallback that JITs to any architecture at or above 86. Verified compiling at
+`sm_86` under CUDA 13.0 and across all four lines under CUDA 13.3 on a
+Blackwell laptop, 2026-08-06.
+
 ## What has not crossed yet, named so the gap is not read as completeness
 
 The comparisons themselves live in the quarry at `src/core/gpu/kernels.rs`,

@@ -74,8 +74,18 @@ pub enum AdmitRefusal {
     /// Step three, on the condition that reads nothing. Carries the family,
     /// because the no-silent-substitution test reads the name.
     Family(FamilyRefusal),
-    /// Step three, on a condition that reads the driver.
+    /// Step three, on a condition that reads the driver, where no driver is
+    /// compiled in to read.
     Device,
+    /// Step three, on a condition the driver answered. Carries which device and
+    /// which condition, because an operator meeting this needs to know whether
+    /// to free a card or to reassign the binding.
+    #[cfg(feature = "cuda")]
+    DeviceRefused(crate::gpu::DeviceRefusal),
+    /// Step four, which is not written. Named distinctly so that a build with a
+    /// device attached is not told it has a device problem.
+    #[cfg(feature = "cuda")]
+    BackendNotBuilt,
     /// A second admit. This crate admits once.
     AlreadyAttempted,
 }
@@ -87,6 +97,14 @@ impl From<AdmitRefusal> for LifecycleRefusal {
             AdmitRefusal::Unreadable => LifecycleRefusal::ArtifactUnreadable,
             AdmitRefusal::Family(inner) => inner.into(),
             AdmitRefusal::Device => LifecycleRefusal::DeviceCannotAdmit,
+            #[cfg(feature = "cuda")]
+            AdmitRefusal::DeviceRefused(_) => LifecycleRefusal::DeviceCannotAdmit,
+            // The floor's closed set carries no case for a step this binary did
+            // not build, and inventing one would be a floor edit this act has no
+            // ruling for. It crosses as a device refusal, which is the nearest
+            // true statement: this process cannot take the devices it was given.
+            #[cfg(feature = "cuda")]
+            AdmitRefusal::BackendNotBuilt => LifecycleRefusal::DeviceCannotAdmit,
             AdmitRefusal::AlreadyAttempted => LifecycleRefusal::OutOfOrder,
         }
     }
@@ -145,7 +163,12 @@ impl Residency {
         // what puts the width refusal inside a test on a machine with no device.
         family::judge_width(&header.family, binding.devices.len() as u32)
             .map_err(AdmitRefusal::Family)?;
-        judge_room_and_reach(&binding.devices, &header, headroom)?;
+        // The shard each device must hold, read from the filesystem rather than
+        // declared by the artifact. The width was judged above, so the divisor
+        // is known non-zero.
+        let shard_bytes = artifact::on_disk_bytes(&path).ok_or(AdmitRefusal::Unreadable)?
+            / binding.devices.len() as u64;
+        judge_room_and_reach(&binding.devices, shard_bytes, headroom)?;
 
         // Step four. Take the devices in shard order and load each shard. The
         // binding's order is the shard order.
@@ -198,7 +221,7 @@ impl Residency {
 #[cfg(not(feature = "cuda"))]
 fn judge_room_and_reach(
     _devices: &[DeviceOrdinal],
-    _header: &ArtifactHeader,
+    _shard_bytes: u64,
     _headroom: Headroom,
 ) -> Result<(), AdmitRefusal> {
     // No driver is compiled in, so there is no device this build can admit to.
@@ -207,12 +230,52 @@ fn judge_room_and_reach(
     Err(AdmitRefusal::Device)
 }
 
+/// The room and reach conditions, asked of the driver.
+///
+/// The shard size is the artifact's bytes divided across the assigned set, read
+/// from the filesystem at admit. It is an over-estimate of what a shard costs
+/// in device memory for a quantized artifact and an under-estimate of the
+/// working allocations beside it, which is why the headroom term sits in the
+/// inequality and why charter section 9 stages a measurement to replace both.
+#[cfg(feature = "cuda")]
+fn judge_room_and_reach(
+    devices: &[DeviceOrdinal],
+    shard_bytes: u64,
+    headroom: Headroom,
+) -> Result<(), AdmitRefusal> {
+    crate::gpu::room_and_reach(devices, shard_bytes, headroom.0)
+        .map_err(AdmitRefusal::DeviceRefused)
+}
+
 #[cfg(not(feature = "cuda"))]
 fn load_shards(_path: &Path, _devices: &[DeviceOrdinal]) -> Result<(), AdmitRefusal> {
     Err(AdmitRefusal::Device)
 }
 
+/// Step four: take the devices in shard order and load each shard.
+///
+/// **This step is not written and refuses rather than pretending.** Loading a
+/// shard means driving a backend, and the backend seam is Spec section 4's, the
+/// decode submodule, which this act has not reached. The refusal names that
+/// rather than reporting a device condition, so an operator meeting it is told
+/// what is missing instead of being sent to look at a card.
+///
+/// The three steps before this one are real on this build: a binding that
+/// resolves wrongly, an artifact whose header will not read, a width outside
+/// the family's declaration, and a device set without room or reach are each
+/// refused here exactly as they would be once step four lands.
+#[cfg(feature = "cuda")]
+fn load_shards(_path: &Path, _devices: &[DeviceOrdinal]) -> Result<(), AdmitRefusal> {
+    Err(AdmitRefusal::BackendNotBuilt)
+}
+
 #[cfg(not(feature = "cuda"))]
+fn free_shards(_resident: &Resident) {}
+
+/// Nothing is allocated on a device by this build, because step four refuses
+/// before anything is taken, so there is nothing here to free. This is a
+/// no-operation with a stated ground rather than an empty function.
+#[cfg(feature = "cuda")]
 fn free_shards(_resident: &Resident) {}
 
 #[cfg(test)]

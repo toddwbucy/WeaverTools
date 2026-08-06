@@ -267,6 +267,27 @@ fn read_gguf_typed<R: Read>(reader: &mut R, kind: u32) -> Result<GgufValue, Life
     }
 }
 
+/// The artifact's size on disk, a single file or a walked directory.
+///
+/// This is what the admission inequality measures a shard against. It is read
+/// from the filesystem at admit rather than declared by the artifact, on the
+/// same grounds the weights hash is computed from the bytes loaded rather than
+/// from a manifest handed in: a number the artifact asserts about itself is a
+/// number a wrong artifact asserts just as easily.
+pub fn on_disk_bytes(path: &Path) -> Option<u64> {
+    if !path.is_dir() {
+        return std::fs::metadata(path).ok().map(|m| m.len());
+    }
+    let mut total = 0u64;
+    for entry in walkdir::WalkDir::new(path) {
+        let entry = entry.ok()?;
+        if entry.file_type().is_file() {
+            total = total.checked_add(entry.metadata().ok()?.len())?;
+        }
+    }
+    Some(total)
+}
+
 /// The weights hash: BLAKE3 over a canonical manifest, a single file or a
 /// walked directory.
 ///
