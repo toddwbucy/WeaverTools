@@ -19,7 +19,11 @@ use weaver_types::{
     Position,
 };
 
-/// The channel's state, as a type rather than a flag.
+/// The hook's state, as a type rather than a flag.
+///
+/// Named for the hook rather than the channel so it cannot be misread beside
+/// `weaver_types::Position`, which is an envelope's place in its exchange and
+/// a different thing entirely.
 ///
 /// **Three positions, the last terminal.** A directive against a lowered hook
 /// is refused by a match arm rather than by a flag check, which is what makes
@@ -29,7 +33,7 @@ use weaver_types::{
 /// The hook lives inside `Raised` rather than beside it, so a raised state
 /// without a listener and a lowered state still holding one are both
 /// unrepresentable.
-enum Position3 {
+enum HookState {
     /// No raise has arrived. Only a raise is in order.
     BeforeRaise,
     /// The hook stands. Only a lower is in order.
@@ -53,7 +57,9 @@ fn main() -> ExitCode {
 
 fn entry_refusal_line(fault: &EntryFault) -> String {
     match fault {
-        EntryFault::ChannelUnusable => "{\"refusal\":\"descriptors_unusable\"}".to_string(),
+        EntryFault::ChannelUnusable | EntryFault::AlreadyAdopted => {
+            "{\"refusal\":\"descriptors_unusable\"}".to_string()
+        }
         EntryFault::HygieneFailed => "{\"refusal\":\"boundary_unverified\"}".to_string(),
     }
 }
@@ -65,7 +71,7 @@ fn entry_refusal_line(fault: &EntryFault) -> String {
 /// closure as an answer. The listener's close is the drop of the position,
 /// which happens on the way out of this function.
 fn serve(channel: Channel) -> ExitCode {
-    let mut position = Position3::BeforeRaise;
+    let mut state = HookState::BeforeRaise;
 
     loop {
         let envelope = match channel.recv() {
@@ -73,7 +79,7 @@ fn serve(channel: Channel) -> ExitCode {
             Err(ChannelFault::Closed) => {
                 // The interior is gone. Dropping the position closes the
                 // listener if one stands, and this exits rather than answering.
-                drop(position);
+                drop(state);
                 return ExitCode::SUCCESS;
             }
             Err(fault) => {
@@ -81,12 +87,12 @@ fn serve(channel: Channel) -> ExitCode {
                 // so neither is answered on an exchange, and a channel this
                 // process cannot read faithfully is one it stops serving.
                 eprintln!("{}", fault_line(&fault));
-                drop(position);
+                drop(state);
                 return ExitCode::FAILURE;
             }
         };
 
-        let payload = dispatch(&mut position, &envelope);
+        let payload = dispatch(&mut state, &envelope);
         if channel
             .send(&OrganEnvelope {
                 exchange: envelope.exchange,
@@ -95,7 +101,7 @@ fn serve(channel: Channel) -> ExitCode {
             })
             .is_err()
         {
-            drop(position);
+            drop(state);
             return ExitCode::FAILURE;
         }
     }
@@ -121,7 +127,7 @@ fn fault_line(fault: &ChannelFault) -> String {
 ///
 /// The match carries no wildcard arm over the directive, so a case added to
 /// loop 0 breaks this crate loudly in the act that edits the floor.
-fn dispatch(position: &mut Position3, envelope: &OrganEnvelope) -> Payload {
+fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
     if envelope.position != Position::Open || envelope.exchange.opener != Opener::Harness {
         return Payload::Refusal(LifecycleRefusal::OutOfOrder);
     }
@@ -129,14 +135,14 @@ fn dispatch(position: &mut Position3, envelope: &OrganEnvelope) -> Payload {
         return Payload::Refusal(LifecycleRefusal::OutOfOrder);
     };
 
-    match (&*position, directive) {
-        (Position3::BeforeRaise, LifecycleDirective::Raise { instruction }) => {
+    match (&*state, directive) {
+        (HookState::BeforeRaise, LifecycleDirective::Raise { instruction }) => {
             match Hook::raise(instruction) {
                 Ok(hook) => {
                     // Ready is answered only after the bind and listen have
                     // returned, which is what makes ready a fact about the
                     // listener rather than a statement of intent.
-                    *position = Position3::Raised(hook);
+                    *state = HookState::Raised(hook);
                     Payload::Answer(LifecycleAnswer::GateReady)
                 }
                 Err(RaiseRefusal::BindFailed { detail }) => {
@@ -155,11 +161,11 @@ fn dispatch(position: &mut Position3, envelope: &OrganEnvelope) -> Payload {
                 }
             }
         }
-        (Position3::Raised(_), LifecycleDirective::Lower) => {
+        (HookState::Raised(_), LifecycleDirective::Lower) => {
             // The close happens here, before the answer is formed, so nothing
             // new can arrive once the harness reads stopped.
-            let previous = std::mem::replace(position, Position3::Lowered);
-            if let Position3::Raised(hook) = previous {
+            let previous = std::mem::replace(state, HookState::Lowered);
+            if let HookState::Raised(hook) = previous {
                 hook.lower();
             }
             Payload::Answer(LifecycleAnswer::GateStopped)
@@ -215,10 +221,14 @@ mod tests {
         }
     }
 
+    /// A scratch socket path, pre-cleaned, matching the boundary and entry
+    /// helpers so a previous run's leftover cannot make a raise refuse.
     fn scratch(name: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!("weaver-gate-{}-{name}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("a scratch dir");
-        dir.join("gate.sock")
+        let path = dir.join("gate.sock");
+        std::fs::remove_file(&path).ok();
+        path
     }
 
     /// **A lower before any raise answers `OutOfOrder`.** The order is judged
@@ -228,19 +238,19 @@ mod tests {
     /// `GateStopped` and this test fails. Watched under exactly that addition.
     #[test]
     fn a_lower_before_any_raise_answers_out_of_order() {
-        let mut position = Position3::BeforeRaise;
+        let mut state = HookState::BeforeRaise;
         assert_eq!(
-            dispatch(&mut position, &opened(LifecycleDirective::Lower)),
+            dispatch(&mut state, &opened(LifecycleDirective::Lower)),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
-        assert!(matches!(position, Position3::BeforeRaise), "and is not queued");
+        assert!(matches!(state, HookState::BeforeRaise), "and is not queued");
     }
 
     /// **The lowered position is terminal.** A directive of any kind arriving
     /// after a lower answers `OutOfOrder`.
     #[test]
     fn any_directive_after_a_lower_answers_out_of_order() {
-        let mut position = Position3::Lowered;
+        let mut state = HookState::Lowered;
         for case in [
             LifecycleDirective::Raise {
                 instruction: instruction(scratch("terminal")),
@@ -249,10 +259,10 @@ mod tests {
             LifecycleDirective::List,
         ] {
             assert_eq!(
-                dispatch(&mut position, &opened(case)),
+                dispatch(&mut state, &opened(case)),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder)
             );
-            assert!(matches!(position, Position3::Lowered), "terminal stays terminal");
+            assert!(matches!(state, HookState::Lowered), "terminal stays terminal");
         }
     }
 
@@ -261,23 +271,22 @@ mod tests {
     #[test]
     fn raise_then_lower_walks_the_three_positions() {
         let path = scratch("walk");
-        std::fs::remove_file(&path).ok();
-        let mut position = Position3::BeforeRaise;
+        let mut state = HookState::BeforeRaise;
 
         let ready = dispatch(
-            &mut position,
+            &mut state,
             &opened(LifecycleDirective::Raise {
                 instruction: instruction(path.clone()),
             }),
         );
         assert_eq!(ready, Payload::Answer(LifecycleAnswer::GateReady));
-        assert!(matches!(position, Position3::Raised(_)));
+        assert!(matches!(state, HookState::Raised(_)));
         assert!(path.exists(), "ready is a fact about a bound listener");
 
         // A second raise is out of order even though the first succeeded.
         assert_eq!(
             dispatch(
-                &mut position,
+                &mut state,
                 &opened(LifecycleDirective::Raise {
                     instruction: instruction(path.clone()),
                 }),
@@ -285,9 +294,9 @@ mod tests {
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
-        let stopped = dispatch(&mut position, &opened(LifecycleDirective::Lower));
+        let stopped = dispatch(&mut state, &opened(LifecycleDirective::Lower));
         assert_eq!(stopped, Payload::Answer(LifecycleAnswer::GateStopped));
-        assert!(matches!(position, Position3::Lowered));
+        assert!(matches!(state, HookState::Lowered));
         // **This crate unlinks nothing**: the path is the operator's artifact
         // and survives the lower.
         assert!(path.exists(), "the lower closes the listener and unlinks nothing");
@@ -298,16 +307,23 @@ mod tests {
     /// the aggregate's rollback has nothing of this crate's to unwind, and the
     /// refusal is answered rather than exited on.
     ///
-    /// Perturbation: move `*position = Position3::Raised(..)` before the bind's
+    /// Perturbation: move `*position = HookState::Raised(..)` before the bind's
     /// result is judged and this test fails. Watched under exactly that move.
     #[test]
     fn a_refused_raise_holds_nothing_and_is_answered() {
-        // A path inside a directory that does not exist cannot be bound.
-        let unbindable = std::path::PathBuf::from("/nonexistent/weaver-gate/gate.sock");
-        let mut position = Position3::BeforeRaise;
+        // A path inside a directory that does not exist cannot be bound. Built
+        // from this test's own scratch directory with a missing component in
+        // the middle, so the fixture does not rest on `/nonexistent` being
+        // absent on whatever machine runs it.
+        let unbindable = scratch("refused")
+            .parent()
+            .expect("the scratch dir")
+            .join("no-such-directory")
+            .join("gate.sock");
+        let mut state = HookState::BeforeRaise;
         assert_eq!(
             dispatch(
-                &mut position,
+                &mut state,
                 &opened(LifecycleDirective::Raise {
                     instruction: instruction(unbindable),
                 }),
@@ -316,7 +332,7 @@ mod tests {
             "the refusal is answered, never exited on"
         );
         assert!(
-            matches!(position, Position3::BeforeRaise),
+            matches!(state, HookState::BeforeRaise),
             "and nothing is held: no listener, no half-bound socket"
         );
     }
@@ -324,7 +340,7 @@ mod tests {
     /// Everything outside the drawn vocabulary refuses as out of order.
     #[test]
     fn a_directive_outside_the_drawn_vocabulary_refuses() {
-        let mut position = Position3::BeforeRaise;
+        let mut state = HookState::BeforeRaise;
         for case in [
             LifecycleDirective::Leave,
             LifecycleDirective::Stop,
@@ -335,7 +351,7 @@ mod tests {
             },
         ] {
             assert_eq!(
-                dispatch(&mut position, &opened(case)),
+                dispatch(&mut state, &opened(case)),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder)
             );
         }
@@ -344,15 +360,15 @@ mod tests {
     /// A mis-shapen exchange is refused before the directive's case is read.
     #[test]
     fn a_mis_shapen_exchange_refuses_before_the_directive_runs() {
-        let mut position = Position3::BeforeRaise;
+        let mut state = HookState::BeforeRaise;
         let mut closing = opened(LifecycleDirective::Raise {
             instruction: instruction(scratch("misshapen")),
         });
         closing.position = Position::Close;
         assert_eq!(
-            dispatch(&mut position, &closing),
+            dispatch(&mut state, &closing),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
-        assert!(matches!(position, Position3::BeforeRaise), "nothing was bound");
+        assert!(matches!(state, HookState::BeforeRaise), "nothing was bound");
     }
 }

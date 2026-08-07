@@ -21,6 +21,7 @@
 //! number outlives the thing it names and no close happens twice.
 
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use nix::fcntl::{FcntlArg, FdFlag, fcntl};
 use nix::sys::socket::{MsgFlags, recv, send};
@@ -35,6 +36,10 @@ pub const CHANNEL_FD: RawFd = 3;
 pub enum EntryFault {
     /// Descriptor 3 is not an open descriptor.
     ChannelUnusable,
+    /// Entry has already run. A second adoption would build a second owner for
+    /// one descriptor and close it twice on the way out, which is the hazard
+    /// owning the descriptor exists to remove.
+    AlreadyAdopted,
     /// A hygiene set failed. Both are sets and never checks, so a failure is a
     /// refusal rather than a report: a step that finds a flag wrong and
     /// continues leaves the process attachable.
@@ -87,6 +92,21 @@ pub struct Channel {
 /// signal covers the window where the gate is blocked anywhere other than the
 /// channel read.
 pub fn adopt() -> Result<Channel, EntryFault> {
+    // One process, one entry. Without this a second call builds a second owner
+    // for descriptor 3, and the two closes on the way out are a double close of
+    // a descriptor this process may no longer own.
+    //
+    // **This carries no instrument and the ground is stated.** A test process
+    // holds no inherited channel, so its first adoption already refuses as
+    // unusable and a second-call test passes whether or not this guard stands.
+    // Buying it needs a process that really was forked with a channel at 3,
+    // which is the harness's fork rather than a fixture, so the guard is
+    // review's by reach.
+    static ADOPTED: AtomicBool = AtomicBool::new(false);
+    if ADOPTED.swap(true, Ordering::SeqCst) {
+        return Err(EntryFault::AlreadyAdopted);
+    }
+
     let borrowed = unsafe { BorrowedFd::borrow_raw(CHANNEL_FD) };
     fcntl(borrowed, FcntlArg::F_GETFD).map_err(|_| EntryFault::ChannelUnusable)?;
 
@@ -150,12 +170,14 @@ impl Channel {
     }
 }
 
-/// Construct a channel from an already-owned descriptor, for the suite, which
-/// needs one over a socketpair it made rather than over an inherited number.
-/// Not an adoption path: [`adopt`] remains the one place an inherited number
-/// becomes owned.
-#[doc(hidden)]
-pub fn from_owned(end: OwnedFd) -> Channel {
+/// Construct a channel from an already-owned descriptor, for the unit suite,
+/// which needs one over a socketpair it made rather than over an inherited
+/// number.
+///
+/// Test builds only: [`adopt`] is the one ownership path a shipped binary has,
+/// and a constructor beside it that took any descriptor would be a second one.
+#[cfg(test)]
+fn from_owned(end: OwnedFd) -> Channel {
     Channel { end }
 }
 
@@ -203,9 +225,16 @@ mod tests {
         assert_eq!(channel.recv(), Err(ChannelFault::Closed));
     }
 
-    /// This crate asserts the bound on its own writes too.
+    /// A well-formed envelope inside the bound sends clean.
+    ///
+    /// **This does not exercise the refusal branch, and the name says so.** No
+    /// payload variant this floor carries can exceed the envelope bound today:
+    /// the frame and the fault report are both empty shapes, and the directive
+    /// and answer cases are small by construction. The send-side bound is
+    /// asserted in the code against the day a payload grows, and the receive
+    /// side, where a peer can produce an oversized message, carries the watch.
     #[test]
-    fn a_write_past_the_bound_refuses_before_it_reaches_the_socket() {
+    fn a_write_within_the_bound_reaches_the_socket() {
         use weaver_types::{ExchangeId, Opener, Payload, Position, TurnFrame};
         let (writer, _reader) = pair();
         let channel = from_owned(writer);
@@ -219,9 +248,6 @@ mod tests {
             position: Position::Open,
             payload: Payload::Frame(TurnFrame {}),
         };
-        // The empty frame encodes small, so this asserts the clean path; the
-        // oversized path is asserted on the receive side above, where a peer
-        // can produce it.
         assert_eq!(channel.send(&envelope), Ok(()));
     }
 }

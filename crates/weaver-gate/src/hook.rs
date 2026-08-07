@@ -19,24 +19,32 @@
 //! **This module exposes the crate's one bind site**, [`Hook::raise`], which
 //! takes the instruction. A listener built anywhere else in this crate is out
 //! of bounds, and the two named shapes are pinned here because an absence is
-//! what a runtime test structurally cannot demonstrate:
+//! what a runtime test structurally cannot demonstrate.
+//!
+//! **The pins name the real site and fail on its type**, which is what makes
+//! them mean anything. An earlier cut called a `Hook::bind` that never existed,
+//! so both pins failed to compile on the missing name and would have gone on
+//! passing if a path-taking constructor had been added beside it. These fail
+//! because a path is not an instruction, and the day `raise` grows a path-
+//! taking overload or a generic bound that admits one, they compile and fire:
 //!
 //! ```compile_fail
 //! fn pin(path: &str) -> weaver_gate::hook::Hook {
-//!     // No listener is built from a bare string.
-//!     weaver_gate::hook::Hook::bind(path)
+//!     // A bare string is not an instruction.
+//!     weaver_gate::hook::Hook::raise(path).unwrap()
 //! }
 //! ```
 //!
 //! ```compile_fail
 //! fn pin(path: std::path::PathBuf) -> weaver_gate::hook::Hook {
-//!     // Nor from a PathBuf outside the instruction.
-//!     weaver_gate::hook::Hook::bind(path)
+//!     // Nor is a PathBuf outside the instruction.
+//!     weaver_gate::hook::Hook::raise(&path).unwrap()
 //! }
 //! ```
 //!
 //! A compile-fail pin passes on any compile error, so this one compiles and
-//! names the site that must exist, failing loudly the day it is renamed away:
+//! names the site and its accessor, failing loudly the day either is renamed
+//! away and leaving the two above with nothing to fail against:
 //!
 //! ```
 //! fn reads(hook: &weaver_gate::hook::Hook) -> &std::path::Path {
@@ -44,7 +52,7 @@
 //! }
 //! ```
 
-use std::os::fd::{AsFd, AsRawFd, OwnedFd};
+use std::os::fd::AsFd;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
 
@@ -138,12 +146,19 @@ impl Hook {
     /// The connection is returned only when it passes, so a caller cannot hold
     /// a refused peer's stream by construction.
     pub fn accept(&self) -> Result<Admitted, AcceptOutcome> {
-        let (stream, _) = match self.listener.accept() {
-            Ok(accepted) => accepted,
-            Err(error) => {
-                return Err(AcceptOutcome::Unusable {
-                    detail: error.to_string(),
-                });
+        let (stream, _) = loop {
+            match self.listener.accept() {
+                Ok(accepted) => break accepted,
+                // A signal landing mid-call is not a peer's doing, and the
+                // channel's reads and writes already retry it. An accept that
+                // reported the listener unusable on a signal would refuse a
+                // peer that never arrived.
+                Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(error) => {
+                    return Err(AcceptOutcome::Unusable {
+                        detail: error.to_string(),
+                    });
+                }
             }
         };
         // Close-on-exec on the connection, on the same ground as the channel
@@ -221,19 +236,4 @@ fn peer_identity(stream: &UnixStream) -> Option<PeerIdentity> {
         gid: credential.gid(),
         pid: credential.pid(),
     })
-}
-
-/// The raw descriptor of a listener, for the suite to observe that a lower
-/// really closed it.
-#[doc(hidden)]
-pub fn listener_fd(hook: &Hook) -> std::os::fd::RawFd {
-    hook.listener.as_raw_fd()
-}
-
-/// Not a bind site: this exists so the compile-fail pins above have a name to
-/// fail against, and it takes the instruction like the real one.
-#[doc(hidden)]
-#[allow(dead_code)]
-fn _bind_site_is_named_raise(_: &GateInstruction) -> Option<OwnedFd> {
-    None
 }

@@ -84,10 +84,15 @@ fn the_agent_uid_is_refused_even_when_the_rule_permits_it() {
     client
         .set_read_timeout(Some(std::time::Duration::from_secs(5)))
         .expect("a read bound");
+    // Strictly `Ok(0)`: the peer wrote nothing before the refusal, so the
+    // close is orderly and the read reaches end-of-stream rather than a reset.
+    // Accepting any error here would have let a written answer followed by a
+    // reset pass as a refusal.
     let read = client.read_to_end(&mut answer);
-    assert!(
-        matches!(read, Ok(0)) || read.is_err(),
-        "the refused peer is closed on, never answered, got {answer:?}"
+    assert_eq!(
+        read.ok(),
+        Some(0),
+        "the refused peer reaches end-of-stream with nothing written, got {answer:?}"
     );
 
     hook.lower();

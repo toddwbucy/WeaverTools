@@ -71,7 +71,18 @@ fn spawn_gate(child_end: RawFd) -> (Child, PathBuf) {
                 return Err(std::io::Error::last_os_error());
             }
             libc::close(high);
-            libc::syscall(libc::SYS_close_range, 4u32, u32::MAX, libc::CLOSE_RANGE_CLOEXEC);
+            // Checked: an unchecked sweep that failed would leave the child
+            // holding inheritable descriptors and refusing to serve for a
+            // reason the test could not see. Failing the spawn says it here.
+            if libc::syscall(
+                libc::SYS_close_range,
+                4u32,
+                u32::MAX,
+                libc::CLOSE_RANGE_CLOEXEC,
+            ) != 0
+            {
+                return Err(std::io::Error::last_os_error());
+            }
             Ok(())
         });
     }
@@ -96,6 +107,15 @@ fn wait_bounded(child: &mut Child, seconds: u64, what: &str) -> std::process::Ex
 }
 
 fn ask(end: &OwnedFd, ordinal: u64, directive: LifecycleDirective) -> OrganEnvelope {
+    // Bounded, so a gate that never answers is a failure naming the exchange
+    // rather than a hang the harness cannot end.
+    nix::sys::socket::setsockopt(
+        end,
+        nix::sys::socket::sockopt::ReceiveTimeout,
+        &nix::sys::time::TimeVal::new(30, 0),
+    )
+    .expect("the receive timeout sets");
+
     let envelope = OrganEnvelope {
         exchange: ExchangeId {
             opener: Opener::Harness,
@@ -109,6 +129,10 @@ fn ask(end: &OwnedFd, ordinal: u64, directive: LifecycleDirective) -> OrganEnvel
     let mut buffer = vec![0u8; 64 * 1024];
     let read = recv(end.as_raw_fd(), &mut buffer, MsgFlags::empty())
         .unwrap_or_else(|errno| panic!("no answer to ordinal {ordinal}: {errno}"));
+    assert!(
+        read > 0,
+        "the gate closed without answering ordinal {ordinal}"
+    );
     buffer.truncate(read);
     serde_json::from_slice(&buffer).expect("the answer is an envelope")
 }

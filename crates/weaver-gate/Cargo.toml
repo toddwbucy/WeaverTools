@@ -28,10 +28,13 @@ path = "src/main.rs"
 # little. No direct weaver-traits line, matching the charter's floor-link set.
 # serde_json encodes the seam's envelopes and touches no client byte. nix is the
 # OS surface: bind, listen, accept, getsockopt for the peer credential, fcntl,
-# and the two prctl sets. No async runtime, no logging crate, no YAML - this
+# and the two prctl sets. No `uio`: this crate sends and receives whole
+# datagrams and passes no control message, so the scatter-gather surface the
+# harness needs for descriptor passing is weight it does not carry. No async
+# runtime, no logging crate, no YAML - this
 # crate writes no account of anything, a logging crate being a second author's
 # first step.
 [dependencies]
 weaver-types = { path = "../weaver-types", default-features = false }
 serde_json.workspace = true
-nix = { version = "0.31", features = ["socket", "fs", "process", "uio", "user"] }
+nix = { version = "0.31", features = ["socket", "fs", "process", "user"] }

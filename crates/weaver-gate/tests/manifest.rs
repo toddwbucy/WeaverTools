@@ -19,6 +19,11 @@ fn resolved_tree(edges: &str) -> String {
             edges,
             "--prefix",
             "none",
+            // The lock file is the subject: a resolution that fetched or
+            // updated would be asserting about a tree this repository does not
+            // record.
+            "--locked",
+            "--offline",
         ])
         .output()
         .expect("cargo tree runs");
@@ -27,6 +32,18 @@ fn resolved_tree(edges: &str) -> String {
         "cargo tree failed: {}",
         String::from_utf8_lossy(&out.stderr)
     );
+    String::from_utf8(out.stdout).expect("utf8")
+}
+
+fn resolved_tree_depth(edges: &str, depth: &str) -> String {
+    let out = Command::new(env!("CARGO"))
+        .args([
+            "tree", "-p", "weaver-gate", "--edges", edges, "--prefix", "none", "--depth", depth,
+            "--locked", "--offline",
+        ])
+        .output()
+        .expect("cargo tree runs");
+    assert!(out.status.success(), "cargo tree failed");
     String::from_utf8(out.stdout).expect("utf8")
 }
 
@@ -66,9 +83,12 @@ fn no_organ_is_in_the_resolved_tree() {
         vec!["weaver-traits", "weaver-types"],
         "the floor, reached directly and transitively, and no organ"
     );
+    // Read against the whole resolved tree rather than the filtered set above,
+    // which the assertion has already fixed: a loop over `internal` could
+    // never fail and would report a check nobody ran.
     for organ in ["weaver-harness", "weaver-spu", "weaver-admin", "weaver-trace"] {
         assert!(
-            !internal.iter().any(|n| n == organ),
+            !names.iter().any(|n| n == organ),
             "{organ} is a crate this one reaches over a socket, never a link"
         );
     }
@@ -80,13 +100,22 @@ fn no_organ_is_in_the_resolved_tree() {
 /// Perturbation: add a `weaver-traits` line to the dependency section and this
 /// test fails. Watched under exactly that addition.
 #[test]
-fn the_manifest_declares_no_traits_line() {
+fn the_direct_dependency_set_carries_no_traits_line() {
+    // Structural first: the resolved direct set, which catches a renamed or
+    // table-form declaration a text scan reads straight past.
+    let direct = crate_names(&resolved_tree_depth("normal", "1"));
+    assert!(
+        !direct.iter().any(|n| n == "weaver-traits"),
+        "weaver-traits is a direct dependency, and the floor-link set is \
+         weaver-types alone: found {direct:?}"
+    );
+    // And textually, because the manifest is what a reader edits.
     let manifest = manifest();
     assert!(
         !manifest
             .lines()
             .any(|l| l.trim_start().starts_with("weaver-traits")),
-        "the floor-link set is weaver-types alone, drawn by name"
+        "the manifest declares a weaver-traits line"
     );
 }
 
