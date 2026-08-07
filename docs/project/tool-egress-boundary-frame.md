@@ -15,12 +15,13 @@ tool workflow is there to decide.
 
 It states where the agent's boundary to the world sits, what authorizes a crossing, and
 what the boundary claim does not reach. It is the frame the tool workflow opens against,
-and it answers `weaver-gate-PRD` section 7's PENDING cell.
+and it frames the question `weaver-gate-PRD` section 7's PENDING cell holds open. It
+does not close that cell, which is the workflow's to do and the human's to rule.
 
 It bears on apex section 3 step 1 and step 7, which it contradicts. A gate edit may not
 revise a merged apex clause, so the change is apex-level and section 9 names it as such.
 
-**It does not answer that cell in the cell's own words, and the difference is this
+**It does not even address that cell in the cell's own words, and the difference is this
 frame's to declare rather than a reader's to discover.** Section 7 stages the cell
 awaiting the tool workflow chartering plus a stated **threat measurement**, on the
 ground that a boundary upgrade priced without a threat model is a motive wearing a
