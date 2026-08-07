@@ -18,8 +18,10 @@ later releasing it.
 ## 0. What this document is
 
 The charter of the crate that holds the model on the device. It is drafted together with
-`weaver-harness-spu-contract`, which governs the one seam this crate holds, and neither
-is complete without the other.
+`weaver-harness-spu-contract`, which governs the residency seam, the first of the two
+this crate holds, and neither is complete without the other. The token seam arrived with
+the decoder cut of 2026-08-02 under `weaver-harness-spu-decode-contract`, and section 6
+carries both.
 
 Level discipline, stated once. This document carries what the crate needs and why,
 including the order in which it admits and releases, because that order is this crate's
