@@ -289,6 +289,16 @@ library boundary tagged `link` rather than `socket`, and it authenticates nothin
 because there is no second process to identify. It is a seam under a contract all the
 same, which is why the count here is four and the table below is three.
 
+**The egress ruling of 2026-08-07 adds no seam here, and the count staying four is a
+claim worth checking rather than an omission.** Apex section 3 step 7 has the harness
+address a registered tool *through the gate's* agent-opened socket, so this crate's
+counterparty is the gate it already holds a seam with, and what is new is a direction
+on that seam rather than a party. The tool is the gate's peer and not this crate's,
+which is why no row is added below and why nothing here authenticates a tool. **The
+exchange that carries a tool call is owed by `weaver-harness-gate-contract`**, which
+closes its enumeration at four and is named as owed in the apex's revision entry, so
+this seam's traffic is chartered ahead of the document that must admit it.
+
 Every request carrying work across these seams carries the turn context and returns
 it, per apex 5.2. Lifecycle directives on the coordination seam carry no turn context
 because they belong to no turn, per 5.2 as scoped by the re-authoring of
@@ -298,7 +308,7 @@ The three sockets:
 
 | Seam | Peer | The harness's role |
 |---|---|---|
-| Turn ingress | `weaver-gate` | Receives authenticated work. Gate never reaches past it. |
+| Boundary | `weaver-gate` | Receives authenticated work inbound. Opens the exchange that carries a tool call outbound, per apex step 7, which the gate relays to the registered tool and never interprets. Gate never reaches past this seam in either direction. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
 | Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptor of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens no exchange of its own, the fault travelling as a `fault` event on the stream per the fault-carrier ruling of 2026-08-01. |
 
@@ -336,7 +346,8 @@ to: weaver-types
 
 The socket seams above carry no records here. A seam without the contract that
 governs it fails G3 rather than passing incompletely, and none is in that state now:
-the turn ingress seam resolves through `weaver-harness-gate-contract` as of the gate
+the boundary seam, named turn ingress until the egress ruling gave it a second
+direction, resolves through `weaver-harness-gate-contract` as of the gate
 pair's merge on 2026-08-01, and the decode seam through
 `weaver-harness-spu-contract`, each declared from the organ's side per the organ
 rule of Document Format section 4, with no record declared here on either crate's
