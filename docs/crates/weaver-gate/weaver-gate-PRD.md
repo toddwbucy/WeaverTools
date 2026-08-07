@@ -64,12 +64,12 @@ with that ruling, and what remains is the thinnest boundary that lets a local cl
 reach a loaded agent.
 
 **It is an organ with its job simplified, and a domain root with no members.** The
-organ test of apex section 5.4 is a domain and a duplex channel with the harness,
-both properties and neither alone, and this crate passes it: its domain is the
-agent's external boundary, the crossing that brackets every turn, and its channel
-with the harness is duplex, this pass chartering the direction the harness opens and
-the turn direction arriving with the token workflow, the same half-chartered shape
-the SPU carries. What the demotion kills is the acquired-parts argument, protocol
+organ test of apex section 5.4 is a domain and a two-initiator channel with the
+harness, both properties and neither alone, and this crate passes it: its domain is
+the agent's external boundary, the crossing that brackets every turn, and its channel
+with the harness has two initiators, this pass chartering the direction the harness
+opens and the turn direction arriving with the token workflow, the same half-chartered
+shape the SPU carries. What the demotion kills is the acquired-parts argument, protocol
 termination and authentication and translation as future member crates, so the root
 holds one PRD and no subtree, which the Document Format's depth rule names as the
 ordinary state of a root whose members have not been discovered. Admin brackets the
@@ -185,8 +185,8 @@ this charter as one act.
 
 **The organ declares, and the record is here.** This is an organ channel, so Document
 Format section 4's organ rule reaches it: the organ declares and the harness does
-not, because the harness is the hub every organ is duplex with and a hub that
-declared its own edges would carry the whole seam graph in one crate.
+not, because the harness is the hub every organ holds its two-initiator channel with
+and a hub that declared its own edges would carry the whole seam graph in one crate.
 `weaver-harness-PRD` section 4 points at the contract and gains no record, per
 section 11.
 

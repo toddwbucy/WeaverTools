@@ -325,9 +325,9 @@ kind: axiom
 
 ### 5.4 Organ and submodule
 
-**An organ is a crate that governs a domain and holds a duplex channel with the
+**An organ is a crate that governs a domain and holds a two-initiator channel with the
 harness.** Both properties, and neither alone. A crate that governs a domain and
-reaches the harness some other way is not an organ, and the duplex requirement
+reaches the harness some other way is not an organ, and the two-initiator requirement
 does not bend.
 
 **A submodule falls under an organ's domain with that organ as its consumer.** It
@@ -337,10 +337,10 @@ party to a lifecycle transition follows from its having no channel with the
 harness, rather than standing as a rule of its own.
 
 The harness is the organ whose domain is coordination, which is why it is the hub
-every other organ is duplex with rather than a spoke. This is written as a test a
-candidate passes and not as a list of the organs that exist today, so a crate
-chartered later is classified by reading it against the test rather than by
-amending an enumeration.
+every other organ holds its two-initiator channel with rather than a spoke. This is
+written as a test a candidate passes and not as a list of the organs that exist
+today, so a crate chartered later is classified by reading it against the test
+rather than by amending an enumeration.
 
 **No crate holds an allowance another crate could not have.** What a Spec elects for
 one organ is available to any organ that later finds the need or the capability, and
@@ -369,11 +369,12 @@ kind: axiom
 
 ### 5.5 The harness integrates, and the loop is the mechanism
 
-**The harness is the integrator.** Section 5.4 makes it the hub every organ is duplex
-with, which is a statement about topology. This is the role that topology exists to
-serve. The harness is answerable for the whole working, and an organ is answerable for
-its own domain and for nothing outside it. A hub that only carried traffic would leave
-integration to whichever organ noticed it was missing, which is how an organ starts
+**The harness is the integrator.** Section 5.4 makes it the hub every organ holds its
+two-initiator channel with, which is a statement about topology. This is the role that
+topology exists to serve. The harness is answerable for the whole working, and an
+organ is answerable for its own domain and for nothing outside it. A hub that only
+carried traffic would leave integration to whichever organ noticed it was missing,
+which is how an organ starts
 reasoning about a domain that is not its own.
 
 **The loop is the integrating mechanism.** Integration is not a property the parts have

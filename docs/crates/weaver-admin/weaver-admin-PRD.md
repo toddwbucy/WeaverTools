@@ -581,24 +581,25 @@ exchange on its one channel and the harness fanning that out along its own pathw
 Admin makes no admission decision at all, per ruling C: the device is the SPU's to
 judge, and what admin would have asked the SPU it learns from the aggregate instead.
 
-**The seam is duplex at the channel, because admin is an organ.** An organ governs a
-domain and holds a duplex channel with the harness, both properties and neither
-alone, and admin governs the lifecycle domain. Either party may open an exchange by
-the channel's mechanics, and the chartered census is admin's three, two that drive
-a transition and one that conveys the operator's intent to stop. The harness opens
-none since the fault-carrier ruling of 2026-08-01: a fault the worker survives
+**The seam has two initiators at the channel, because admin is an organ.** An organ
+governs a domain and holds a two-initiator channel with the harness, both properties
+and neither alone, and admin governs the lifecycle domain. Either party may open an
+exchange by the channel's mechanics, and the chartered census is admin's three, two
+that drive a transition and one that conveys the operator's intent to stop. The
+harness opens none since the fault-carrier ruling of 2026-08-01: a fault the worker
+survives
 travels as the `fault` event on the stream, the operator's tooling keys on it
-there, and the duplex property is the channel's rather than the census's, per the
-contract's section 0. A worker's death is observed through process exit rather
+there, and the two-initiator property is the channel's rather than the census's, per
+the contract's section 0. A worker's death is observed through process exit rather
 than reported over the channel, and readiness is a confirmation to a directive
 rather than a directive.
 
 **The seam edge is declared by the organ rather than by the harness.** It was declared
-by the party that asks, and both parties ask now. The harness is the hub every organ is
-duplex with, and a hub that declared its own edges would carry the whole seam graph in
-one crate, so the organ declares its seam and the rule generalizes to every organ the
-harness gains. Here the organ is `weaver-admin` and the record above is admin's to
-state.
+by the party that asks, and both parties ask now. The harness is the hub every organ
+holds its two-initiator channel with, and a hub that declared its own edges would carry
+the whole seam graph in one crate, so the organ declares its seam and the rule
+generalizes to every organ the harness gains. Here the organ is `weaver-admin` and the
+record above is admin's to state.
 
 **The channel is dialable and the check is what refuses, restated from
 unreachability on 2026-08-05.** The socket the harness binds lives inside the
@@ -660,10 +661,10 @@ scripted fleet management or an agent driving the fleet is a **new role with its
 own ruling** rather than a quiet reuse of this one.
 
 **The crate is the lifecycle tool the role runs.** One binary, run with root, one
-invocation per verb, exiting when the verb answers. It is duplex with the harness
-like every other organ, per apex section 5.4, the duplexity living at the channel
-the harness holds open rather than in any standing process of admin's, and its
-narrow domain is authorization, the lifecycle's direction, and **custody of where
+invocation per verb, exiting when the verb answers. It holds a two-initiator channel
+with the harness like every other organ, per apex section 5.4, the property living at
+the channel the harness holds open rather than in any standing process of admin's, and
+its narrow domain is authorization, the lifecycle's direction, and **custody of where
 the record leaves the system**. That last is the organ's reason rather than its
 bookkeeping: the trace exits through a sink opened under root, and routing it
 through `weaver-gate` instead would put the agent's own account on the one surface

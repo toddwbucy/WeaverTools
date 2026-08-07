@@ -1387,8 +1387,8 @@ number twenty: ten to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
 `axiom-join-key-travels-with-the-work`, and three to
 `axiom-contract-is-a-complete-interface`. **`axiom-organ-and-submodule` takes
 nothing from this crate,** which reads oddly for the hub that invariant names and
-is right: the hub property is topology, which crate holds a duplex channel with
-which, and this document sources no topological record. The charter sources this
+is right: the hub property is topology, which crate holds a two-initiator channel
+with which, and this document sources no topological record. The charter sources this
 crate's node, its parent edge, its floor links, and its one declared seam, per
 section 0, and everything below that line is this crate's interior or its
 channels' mechanics. A crate is an organ or is not by a test read against the
