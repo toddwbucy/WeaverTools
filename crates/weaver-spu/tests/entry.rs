@@ -9,24 +9,45 @@
 //! count check is about descriptors this process was handed, and the dumpable
 //! flag is read from outside by an observer the process cannot lie to.
 
+use std::fs::File;
 use std::os::fd::{AsRawFd, RawFd};
+use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
 mod common;
-use common::{place_inherited, seqpacket_pair};
+use common::{place_inherited, seqpacket_pair, wait_bounded};
 
 /// Start the binary holding exactly the descriptors named, placed at 3, 4, and
-/// upward in the order given. Streams stay piped here because these tests read
-/// the refusal the binary writes to standard error.
-fn spawn_holding(child_ends: Vec<RawFd>) -> Child {
+/// upward in the order given.
+///
+/// Standard error goes to a file rather than a pipe. These tests read what the
+/// binary writes there, and a pipe nobody drains until after the wait can fill
+/// and wedge the child mid-write, which is the deadlock the loaded suite met.
+/// A file has no such buffer and leaves the account on disk for a failure that
+/// needs it.
+fn spawn_holding(child_ends: Vec<RawFd>) -> (Child, PathBuf) {
+    let log_path = std::env::temp_dir().join(format!(
+        "weaver-spu-entry-{}-{}.log",
+        std::process::id(),
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    ));
+    let log = File::create(&log_path).expect("a child log file");
     let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
     command
         .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+        .stdout(Stdio::null())
+        .stderr(Stdio::from(log));
     place_inherited(&mut command, &child_ends);
-    command.spawn().expect("the binary starts")
+    (command.spawn().expect("the binary starts"), log_path)
+}
+
+/// Distinguishes the log files of children spawned within one test process.
+static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+fn complaint(log_path: &PathBuf) -> String {
+    std::fs::read_to_string(log_path).unwrap_or_default()
 }
 
 /// **Entry verifies that it holds exactly two descriptors beyond the standard
@@ -49,23 +70,24 @@ fn a_leaked_descriptor_refuses_to_serve() {
     let (decode, child_decode) = seqpacket_pair();
     let (leaked, child_leaked) = seqpacket_pair();
 
-    let child = spawn_holding(vec![
+    let (mut child, log_path) = spawn_holding(vec![
         child_lifecycle.as_raw_fd(),
         child_decode.as_raw_fd(),
         child_leaked.as_raw_fd(),
     ]);
     drop((lifecycle, decode, leaked));
-    let out = child.wait_with_output().expect("the binary exits");
+    let status = wait_bounded(&mut child, 30, "a_leaked_descriptor_refuses_to_serve");
 
     assert!(
-        !out.status.success(),
+        !status.success(),
         "a process holding a leaked descriptor refuses to serve"
     );
-    let complaint = String::from_utf8_lossy(&out.stderr);
+    let complaint = complaint(&log_path);
     assert!(
         complaint.contains("held_beyond_standard_streams\":3"),
         "the refusal reports the count it found, got {complaint}"
     );
+    std::fs::remove_file(&log_path).ok();
 }
 
 /// The clean case: exactly two descriptors, so the count check passes and the
@@ -76,19 +98,23 @@ fn exactly_two_descriptors_serve() {
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
 
-    let child = spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
+    let (mut child, log_path) = spawn_holding(vec![
+        child_lifecycle.as_raw_fd(),
+        child_decode.as_raw_fd(),
+    ]);
 
     // A served process blocks on its first read rather than exiting. Closing
     // the parent's end is what ends it, and the clean exit below is the whole
     // proof it got past entry: an immediate liveness poll would race the exec
     // and assert nothing either way.
     drop(lifecycle);
-    let out = child.wait_with_output().expect("the binary exits");
+    let status = wait_bounded(&mut child, 30, "exactly_two_descriptors_serve");
     assert!(
-        out.status.success(),
+        status.success(),
         "a process holding exactly two descriptors serves and exits clean, stderr: {}",
-        String::from_utf8_lossy(&out.stderr)
+        complaint(&log_path)
     );
+    std::fs::remove_file(&log_path).ok();
 }
 
 /// **The dumpable flag is cleared at entry.**
@@ -120,7 +146,10 @@ fn the_dumpable_flag_is_clear_after_entry() {
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
 
-    let mut child = spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
+    let (mut child, log_path) = spawn_holding(vec![
+        child_lifecycle.as_raw_fd(),
+        child_decode.as_raw_fd(),
+    ]);
     let pid = child.id();
 
     // Entry runs and then blocks on the first read. Poll rather than sleep a
@@ -138,7 +167,8 @@ fn the_dumpable_flag_is_clear_after_entry() {
     }
 
     drop(lifecycle);
-    let _ = child.wait();
+    wait_bounded(&mut child, 30, "the_dumpable_flag_is_clear_after_entry");
+    std::fs::remove_file(&log_path).ok();
 
     assert_eq!(
         owner,

@@ -48,7 +48,9 @@ pub enum Container {
 /// which is why no HTTP client is in the dependency set. A directory holding
 /// exactly one container file resolves to that file, which is the shape a
 /// safetensors export takes, and a directory holding several is refused as
-/// ambiguous.
+/// ambiguous. **What resolves is a regular file and nothing else**, so a
+/// named pipe cannot turn a bad binding into an admission that blocks forever
+/// on an open waiting for a writer.
 pub fn resolve(reference: &ArtifactRef) -> Result<PathBuf, LifecycleRefusal> {
     let path = PathBuf::from(&reference.0);
     if !path.exists() {
@@ -61,6 +63,13 @@ pub fn resolve(reference: &ArtifactRef) -> Result<PathBuf, LifecycleRefusal> {
     // condition three steps after the fact that caused it.
     if path.is_dir() {
         return container_within(&path);
+    }
+    // Only a regular file resolves. A FIFO with a container's name would open
+    // and then block until a writer connects, which turns a bad binding into
+    // an admission that never returns, where every other malformation on this
+    // path is a refusal costing no device work.
+    if !path.is_file() {
+        return Err(LifecycleRefusal::ArtifactUnresolvable);
     }
     Ok(path)
 }
@@ -96,10 +105,13 @@ fn container_within(dir: &Path) -> Result<PathBuf, LifecycleRefusal> {
     let entries = std::fs::read_dir(dir).map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
     for entry in entries.flatten() {
         let path = entry.path();
-        let is_container = path
-            .extension()
-            .and_then(|e| e.to_str())
-            .is_some_and(|e| e == "gguf" || e == "safetensors");
+        // Regular files only, on the same ground: a FIFO inside a directory
+        // artifact would be selected by name and block the open.
+        let is_container = path.is_file()
+            && path
+                .extension()
+                .and_then(|e| e.to_str())
+                .is_some_and(|e| e == "gguf" || e == "safetensors");
         if is_container {
             found.push(path);
         }
@@ -486,6 +498,37 @@ mod tests {
             resolve(&ArtifactRef(dir.to_string_lossy().into_owned())),
             Err(LifecycleRefusal::ArtifactUnresolvable),
             "two containers is an ambiguity, not a choice"
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// **A named pipe does not resolve.** `File::open` on a FIFO blocks until a
+    /// writer connects, so an artifact reference naming one would hold the
+    /// admit open indefinitely where every other malformation refuses.
+    ///
+    /// Perturbation: drop the `is_file` guard from `resolve` and this test
+    /// fails. Watched under exactly that removal.
+    #[test]
+    fn a_named_pipe_does_not_resolve() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-spu-artifact-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        let fifo = dir.join("pipe.gguf");
+        nix::unistd::mkfifo(&fifo, nix::sys::stat::Mode::S_IRWXU).expect("a fifo");
+
+        assert_eq!(
+            resolve(&ArtifactRef(fifo.to_string_lossy().into_owned())),
+            Err(LifecycleRefusal::ArtifactUnresolvable),
+            "a pipe named like a container is not an artifact"
+        );
+        // And the same inside a directory, where it would be selected by name.
+        assert_eq!(
+            resolve(&ArtifactRef(dir.to_string_lossy().into_owned())),
+            Err(LifecycleRefusal::ArtifactUnresolvable),
+            "a directory holding only a pipe holds no container"
         );
         std::fs::remove_dir_all(&dir).ok();
     }

@@ -157,9 +157,8 @@ mod seam_success {
     use super::*;
     use std::os::fd::AsRawFd;
     use std::process::{Command, Stdio};
-    use std::time::{Duration, Instant};
 
-    use crate::common::{ask, bound_receives, place_inherited, seqpacket_pair};
+    use crate::common::{ask, bound_receives, place_inherited, seqpacket_pair, wait_bounded};
     use weaver_types::{LifecycleAnswer, LifecycleDirective, Payload};
 
     /// **The contract's success path, whole:** admit answers `Admitted`,
@@ -236,22 +235,15 @@ mod seam_success {
         assert_eq!(released.exchange.ordinal, 2);
 
         drop(lifecycle);
-        let deadline = Instant::now() + Duration::from_secs(30);
-        let status = loop {
-            match child.try_wait().expect("a wait succeeds") {
-                Some(status) => break status,
-                None if Instant::now() > deadline => {
-                    child.kill().ok();
-                    child.wait().ok();
-                    panic!(
-                        "the child did not exit within 30s of its channel closing, \
-                         its stderr is at {}",
-                        log_path.display()
-                    );
-                }
-                None => std::thread::sleep(Duration::from_millis(50)),
-            }
-        };
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!(
+                "admit_then_release_round_trips, child stderr at {}",
+                log_path.display()
+            ),
+        );
         assert!(status.success(), "and the process exits clean");
+        std::fs::remove_file(&log_path).ok();
     }
 }

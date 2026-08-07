@@ -12,7 +12,8 @@
 
 use std::os::fd::{AsRawFd, OwnedFd, RawFd};
 use std::os::unix::process::CommandExt;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
+use std::time::{Duration, Instant};
 
 use nix::libc;
 use nix::sys::socket::{AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair};
@@ -85,8 +86,20 @@ pub fn place_inherited(command: &mut Command, child_ends: &[RawFd]) {
             let first = 3 + count as libc::c_uint;
             if libc::syscall(libc::SYS_close_range, first, libc::c_uint::MAX, 0) != 0 {
                 // The syscall is Linux 5.9+; this workshop is far past it, but
-                // a fallback loop keeps the helper honest elsewhere.
-                for fd in first as RawFd..1024 {
+                // a fallback loop keeps the helper honest elsewhere. It runs to
+                // the process's own descriptor limit rather than a round
+                // number, because a descriptor above that number is what the
+                // child would then count and refuse on.
+                let mut limit = libc::rlimit {
+                    rlim_cur: 0,
+                    rlim_max: 0,
+                };
+                let ceiling = if libc::getrlimit(libc::RLIMIT_NOFILE, &mut limit) == 0 {
+                    limit.rlim_cur as RawFd
+                } else {
+                    4096
+                };
+                for fd in first as RawFd..ceiling {
                     libc::close(fd);
                 }
             }
@@ -102,6 +115,25 @@ pub fn bound_receives(end: &OwnedFd, seconds: i64) {
     use nix::sys::time::TimeVal;
     nix::sys::socket::setsockopt(end, ReceiveTimeout, &TimeVal::new(seconds, 0))
         .expect("the receive timeout sets");
+}
+
+/// Wait for a child to exit, bounded, killing and reaping it on expiry.
+///
+/// An unbounded wait on a child that never exits is a hang the harness cannot
+/// end, and a hang reports nothing about which stage wedged.
+pub fn wait_bounded(child: &mut std::process::Child, seconds: u64, what: &str) -> ExitStatus {
+    let deadline = Instant::now() + Duration::from_secs(seconds);
+    loop {
+        match child.try_wait().expect("a wait succeeds") {
+            Some(status) => return status,
+            None if Instant::now() > deadline => {
+                child.kill().ok();
+                child.wait().ok();
+                panic!("{what}: the child did not exit within {seconds}s");
+            }
+            None => std::thread::sleep(Duration::from_millis(50)),
+        }
+    }
 }
 
 /// Send one directive as the harness and read the one answer, panicking with
