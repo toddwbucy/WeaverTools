@@ -24,10 +24,10 @@ It carries no representation. The types it names have a definition site and no f
 list here, the ordering it fixes is stated as a rule rather than as a state machine,
 and how any of it is encoded is the Spec's.
 
-**The seam is duplex and there is one document for it.** Either party may open an
-exchange. That is not a feature this seam happens to have, it is what makes the gate
-an organ under apex section 5.4, which requires a domain and a duplex channel with
-the harness, both properties and not either. The gate's domain is the agent's
+**The seam has two initiators and there is one document for it.** Either party may open
+an exchange. That is not a feature this seam happens to have, it is what makes the gate
+an organ under apex section 5.4, which requires a domain and a two-initiator channel
+with the harness, both properties and not either. The gate's domain is the agent's
 external boundary, its job simplified by the demotion and its standing unchanged.
 This is an organ channel, so sections 1 and 2 draw `weaver-organ-channel` the way the
 coordination and residency contracts do, keeping only what is this seam's own.
@@ -120,8 +120,8 @@ close-on-exec after its final exec and clears its dumpable flag in the same act,
 ## 2. The exchanges
 
 Four, and no others. Two are opened by the harness, raise and lower, and two
-by the gate, the turn and the fault report, which is the duplex channel
-carrying both its initiators as of the token workflow's gate act.
+by the gate, the turn and the fault report, which is the two-initiator channel
+carrying both of them as of the token workflow's gate act.
 
 **Raise the hook.** Opened by the harness, last in the enter fan-out, carrying the
 gate instruction admin supplied in the enter directive, uninterpreted by the harness.

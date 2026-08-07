@@ -267,9 +267,10 @@ A seam is declared once, from the declaring side. On a seam with one asking part
 the asker declares. On an organ channel both parties ask, so the asks rule has no
 unique answer there, and the organ declares rather than the harness, per the rule
 `weaver-admin-harness-contract` section 0 states: the harness is the hub every organ
-is duplex with, and a hub that declared its own edges would carry the whole seam
-graph in one crate. The other party's charter points at the contract and does not
-restate the edge, which is what keeps the party list checkable rather than doubled.
+holds its two-initiator channel with, and a hub that declared its own edges would
+carry the whole seam graph in one crate. The other party's charter points at the
+contract and does not restate the edge, which is what keeps the party list checkable
+rather than doubled.
 
 Nothing points back at a seam. A seam is an edge, an edge cannot be the target of an
 edge, and giving seams identifiers so that contracts could address them would buy an

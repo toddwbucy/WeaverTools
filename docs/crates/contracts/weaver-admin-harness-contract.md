@@ -26,11 +26,11 @@ The agreement over the coordination seam: what crosses it, what each crossing me
 what each party may rely on, and how it fails. It is read alongside `weaver-admin-PRD`
 and `weaver-harness-PRD`, and none of the three is complete without the other two.
 
-**The seam is duplex at the channel and there is one document for it.** Either party
-may open an exchange by the channel's mechanics, and the duplex channel is what
-makes admin an organ: an organ owns a domain and holds a duplex channel with the
-harness, both properties and not either, and admin owns the lifecycle domain. The
-property is the channel's rather than the exchange census's, the same reading the
+**The seam has two initiators at the channel and there is one document for it.** Either
+party may open an exchange by the channel's mechanics, and the two-initiator channel is
+what makes admin an organ: an organ owns a domain and holds a two-initiator channel
+with the harness, both properties and not either, and admin owns the lifecycle domain.
+The property is the channel's rather than the exchange census's, the same reading the
 half-chartered organ seams take, so the census standing at three exchanges, all
 admin's since the fault-carrier ruling of 2026-08-01 rerouted the fault to the
 stream, retires no half of what makes admin an organ. The invariant is authored in
@@ -38,7 +38,8 @@ the apex and this document is downstream of it.
 
 **Two layers meet in this document and the boundary between them is a draw.** Sections
 1 and 2 draw `weaver-organ-channel`, which states the channel mechanics once for every
-organ the harness is duplex with, and keep only what is this seam's own. Sections 3
+organ the harness holds a two-initiator channel with, and keep only what is this seam's
+own. Sections 3
 through 7 are admin's instance, which is the exchange list and its rules. The layering
 is the point: the channel does not know what a load directive is, in the way that IP
 does not know what a name lookup is. The lift that document's section 0 records was
@@ -62,13 +63,13 @@ to: weaver-harness
 ```
 
 **The seam edge is declared once, by the organ rather than by the harness.** Under a
-simplex reading the declaring crate was the one that asks, and both ask now. The rule
-that replaces it is that the organ declares, because the harness is the hub every organ
-is duplex with and a hub that declared its own edges would carry the whole seam graph
-in one crate. Here the organ is `weaver-admin`. This document names its parties and
-does not restate that edge.
+single-initiator reading the declaring crate was the one that asks, and both ask now.
+The rule that replaces it is that the organ declares, because the harness is the hub
+every organ holds its two-initiator channel with and a hub that declared its own edges
+would carry the whole seam graph in one crate. Here the organ is `weaver-admin`. This
+document names its parties and does not restate that edge.
 
-## 1. The channel is duplex
+## 1. The channel has two initiators
 
 `weaver-organ-channel` section 1 states the message layer: two initiators, the exchange
 as the unit, identity by opening party and ordinal, the minimal exchange, concurrent

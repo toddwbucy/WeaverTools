@@ -23,17 +23,18 @@ It carries no representation. The types it names have a definition site and no f
 list here, the ordering it fixes is stated as a rule rather than as a state machine, and
 how any of it is encoded is the Spec's.
 
-**The seam is duplex and there is one document for it.** Either party may open an
-exchange. That is not a feature this seam happens to have, it is what makes the SPU an
-organ under apex section 5.4, which requires a domain and a duplex channel with the
-harness, both properties and not either. This pass charters the exchanges the harness
-opens. The direction the SPU opens is the fault it raises, and its case set is deferred
-with the workflow that produces faults, per section 8.
+**The seam has two initiators and there is one document for it.** Either party may open
+an exchange. That is not a feature this seam happens to have, it is what makes the SPU
+an organ under apex section 5.4, which requires a domain and a two-initiator channel
+with the harness, both properties and not either. This pass charters the exchanges the
+harness opens. The direction the SPU opens is the fault it raises, and its case set is
+deferred with the workflow that produces faults, per section 8.
 
 **This document draws its channel from `weaver-organ-channel` rather than describing
 one.** The mechanics of an organ channel, the envelope, the exchange as the unit, what
-the layer does and does not provide, are the same for every organ the harness is duplex
-with, and they are stated once in `weaver-organ-channel` rather than in each contract.
+the layer does and does not provide, are the same for every organ the harness holds a
+two-initiator channel with, and they are stated once in `weaver-organ-channel` rather
+than in each contract.
 What stays here is what is specific to this seam, which is section 1.
 
 ```graph

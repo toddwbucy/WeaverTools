@@ -369,8 +369,8 @@ defines, and a definition no contract draws leaves the floor by G4's own test.
 
 **Three of the four are loop 0's trio, named for the loop and not for a sender or
 a seam, per the human's naming ruling of 2026-08-01.** Wire vocabulary is named
-for the loop whose traffic it carries: the channels are duplex, so direction is a
-fact about a loop's walk rather than about a name, and loops are unique where
+for the loop whose traffic it carries: the channels have two initiators, so direction
+is a fact about a loop's walk rather than about a name, and loops are unique where
 senders are not, which is what retired the sender convention after it collided on
 the harness. `lifecycle-directive` is the ask of the load/unload path, entering
 at admin's invocation and fanning out along the harness's seams.
@@ -427,9 +427,10 @@ carrier every organ channel draws, holding the exchange a message belongs to, th
 message's position in the exchange, and the type of its payload. It is defined here
 because the coordination seam was the first channel to need it, and it is the one
 value in this subsection no later contract draws as new, because apex section 5.4
-makes a duplex channel with the harness the test of an organ and every such channel
-carries this envelope. The mechanics this record serves live in `weaver-organ-channel`
-as of the lift of 2026-07-31, and that document declares no records of its own, so this
+makes a two-initiator channel with the harness the test of an organ and every such
+channel carries this envelope. The mechanics this record serves live in
+`weaver-organ-channel` as of the lift of 2026-07-31, and that document declares no
+records of its own, so this
 record stays here with the others and each organ contract draws it in its own
 vocabulary clause. The decode socket is not an organ channel, per
 `weaver-spu-PRD` section 13.2, so the every-channel sentence above stays
