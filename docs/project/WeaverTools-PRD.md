@@ -7,6 +7,14 @@ deliverable. Ratification belongs to the set rather than to any one document, pe
 Working Process section 2, and section 0's system record carries the set-level mark.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-07, the tool egress ruling. The gate carries a second socket,
+opened by the agent rather than by the world, and a tool call crosses it. Step 1's
+clause that outbound tool connections do not pass through Gate is reversed, step 7's
+forked-subprocess tool becomes a registered application the harness addresses, item 5
+of section 4 follows, and section 9's grip becomes two contracts rather than one. The
+ground is `tool-egress-boundary-frame`, which argued it and settled nothing, and the
+ruling is the human's. What does not change is invariant 5.1, which is what the new
+shape follows from rather than an exception to.
 **Document ID:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -89,12 +97,17 @@ they are not two things of a kind:
 This is the path the MVP must execute. Every requirement in every crate PRD
 states how it serves this path.
 
-1. A client reaches the agent's **Gate** at its local Unix socket hook, the one
-   listening socket the agent binds, of any kind, per the demotion ruling of
-   2026-07-31 and `weaver-gate-world-contract`. Admin's operator socket stands
-   outside every agent, per section 12, and there is no listening network socket
-   anywhere in the program. Outbound connections made by a tool under step 7 are
-   not ingress and do not pass through Gate.
+1. A client reaches the agent's **Gate** at its world-opened Unix socket hook,
+   per the demotion ruling of 2026-07-31 and `weaver-gate-world-contract`.
+   Admin's operator socket stands outside every agent, per section 12, and there
+   is no listening network socket anywhere in the program. **The gate carries a
+   second socket, opened by the agent rather than by the world, and step 7's
+   tool traffic crosses it**, per the egress ruling of 2026-08-07. The two are
+   told apart by which party may open an exchange, per `weaver-organ-channel`
+   section 1, and each is single-initiator where an organ channel is not. This
+   step's clause once said outbound tool connections do not pass through Gate,
+   which the ruling reverses: the gate is the agent's only boundary to the
+   world, and a tool call is world traffic that crosses it like any other.
 2. Gate authenticates the connection by peer credential under the boundary
    predicate, which admits front-end principals and excludes the agent uid, and
    relays the request to the harness unread: one NDJSON line in, per the world
@@ -112,15 +125,27 @@ states how it serves this path.
    the trace. If residual readout is enabled in this agent's config file, the
    eval callback reduces per-layer activations in place and the reduction
    returns by the same path.
-7. If the generation contains a tool call, the harness executes it as the
-   agent's own constrained Linux user. What that tool can reach is bounded by
-   the kernel through filesystem permissions, sudoers entries whose grants are
-   argless, and cgroups, rather than by any harness judgment about the command
-   it was handed, a grant carrying a wildcard in argument position being
-   unbounded by the path it appears to name, per `weaver-admin-PRD` section 7.
-   Bash and CLI access is the reference tool and a real MVP capability, safe
-   because the user it runs as cannot reach what it should not. The harness
-   emits `tool.call.started` and `tool.call.completed`, then returns to step 5.
+7. If the generation contains a tool call, **the harness addresses it to a
+   registered tool through the gate's agent-opened socket**, per the egress
+   ruling of 2026-08-07. The tool is a standing application the operator
+   provisions, holding its own identity and lifecycle outside the run, and the
+   harness reaches it rather than forking it. The seam is a Unix socket under a
+   named contract that authenticates its peer, per invariant 5.1, which is the
+   floor every other seam already meets and the reason this shape follows
+   rather than being elected. This step once had the harness execute the tool as
+   the agent's own constrained Linux user, bounded by filesystem permissions,
+   argless sudoers grants, and cgroups. What that model put inside the component
+   set was a process holding a network descriptor, which is what the socket
+   floor exists to prevent, and the ruling moves the network to the far side of
+   the socket where the agent never becomes it. The harness emits
+   `tool.call.started` and `tool.call.completed`, then returns to step 5.
+
+   **What the tool reaches on its own side is not this program's to bound.** The
+   gate selects the application and does not select that application's
+   destinations, and the kernel-enforced containment the old clause named
+   belongs to the network-facing layer this program is not building. The
+   distinction is `tool-egress-boundary-frame` section 5's and is why this step
+   states a boundary rather than a containment.
 8. On a final answer the harness emits `turn.closed`, closing the bracket in
    the stream, the close naming its kind.
 9. The response returns through Gate to the client, one NDJSON line out,
@@ -151,13 +176,23 @@ A proto-stateful agent that:
 3. hands that trace to a sink the agent cannot reach, durability being the
    operator's per `weaver-admin-operator-contract` section 3,
 4. keeps a hot KV cache across turns, flushed on the harness's terms,
-5. executes a real tool under kernel-enforced OS constraint, with bash as the
-   reference case,
+5. reaches a real registered tool across the gate's agent-opened socket, with
+   bash as the reference case, the tool provisioned outside the run rather than
+   forked inside it, per the egress ruling of 2026-08-07,
 6. fires at least one protoautonomic tool call, where the harness injects a
    deterministic result into the stream in place of a stochastic one, with the
    calculator as the reference case,
 7. can be reloaded with residual readout enabled or disabled by a change to its
    config file alone, with no rebuild.
+
+**Item 5 once read "executes a real tool under kernel-enforced OS constraint",
+and what the egress ruling moved is where that constraint lives rather than
+whether it holds.** A registered tool is provisioned by the operator with
+whatever containment its job wants, and the program's own claim is the seam it
+crosses rather than the bounding on its far side, per `tool-egress-boundary-frame`
+section 5. What the deliverable must show is a tool
+reached through the socket and answering, which the reference bash shows as an
+application the program addresses rather than one it ships.
 
 Autonomic action, in the sense this program reserves the word, is
 harness-initiated and out of scope here. Protoautonomic names the mechanic
@@ -620,11 +655,20 @@ training, and the desktop frontend.
 **External tooling is out entirely as well, and stays out.** This program builds no
 tool crate, and the reason differs on each side of the boundary.
 
-**Outward, what it owns is the grip:** the interface a tool is built to be gripped by,
-which is `weaver-gate-world-contract`. A hammer is not installed into a carpenter, it
-is shaped so a hand can hold it, and the boundary contract is that hand stated as a
-specification. A bash tool, a database client, an API caller are all things built to
-fit the grip, and none of them is a crate here.
+**Outward, what it owns is the grip:** the interface a tool is built to be gripped by.
+A hammer is not installed into a carpenter, it is shaped so a hand can hold it, and the
+boundary contract is that hand stated as a specification. A bash tool, a database
+client, an API caller are all things built to fit the grip, and none of them is a crate
+here.
+
+**The grip is two contracts and not one, as of the egress ruling of 2026-08-07.**
+`weaver-gate-world-contract` is the grip on the world-opened socket, where the world
+dials the agent and a client holds its own execution. The agent-opened socket is a
+second grip with the trust direction turned around, the agent reaching a registered tool
+and each end reading the other by kernel-supplied credential, and its contract is the
+tool workflow's to author. This paragraph once named the world contract alone and said
+the tool case was that same path with a different thing on the far side, which was true
+of a client-held tool and is not true of one the agent addresses.
 
 **Inward, what an older reading called an internal tool is a function loop, located
 with the control loops in the harness.** A control loop runs the turn and the
@@ -642,10 +686,12 @@ anything.
 
 
 **The grip is not a reserved slot and is the clearest case of the difference.** A
-reserved slot is a shape carried for a reader that does not exist. The grip has a
-reader today: every client that dials the gate uses it, and the tool case is that
-same path with a different thing on the far side. Nothing is carried in
-anticipation, because nothing is added at all.
+reserved slot is a shape carried for a reader that does not exist. The world-opened
+grip has a reader today: every client that dials the gate uses it. The agent-opened
+grip has none yet, and it is not carried in anticipation either, because nothing is
+built for it until the tool workflow charters its contract and a party to it exists.
+What the ruling of 2026-08-07 added is a requirement in this document, not a shape in
+a crate.
 
 Statefulness returns as a **feature add**, not as a retrofit. The mechanism is
 fixed now, in three parts:

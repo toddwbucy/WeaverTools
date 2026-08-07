@@ -318,8 +318,11 @@ defines what the record holds and this contract defines what the seam
 carries, with the harness converting as author.
 
 **No organ envelope.** Stated as a negative deliberately, per section 0:
-this is the one socket seam in the program that does not draw it, and the
-absence is the classification rather than an oversight.
+this is the one contracted socket seam in the program that does not draw it,
+and the absence is the classification rather than an oversight. The egress
+ruling of 2026-08-07 charters a second seam that will not draw it either, the
+gate's agent-opened socket, and this sentence narrows to contracted seams
+until the tool workflow authors that contract and the count is read again.
 
 ## 8. Conformance
 

@@ -6,6 +6,12 @@ lifecycle half of this crate, the hook the enter and leave directives raise and
 lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-07, the tool egress ruling lands here. Section 2's hook becomes
+two sockets split by which party opens an exchange, section 3's no-second-listener
+clause becomes two listeners and no third, section 13.1's relay gains its second leg,
+and section 7's cell closes for the world-reaching tool and stands for every other. The
+second socket's contract is the tool workflow's and nothing here shapes it. Per apex
+section 3 as revised in the same act.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -88,8 +94,16 @@ the only thing that enters is work.
 
 ## 2. What this crate owns
 
-**The hook.** This crate binds the one listening socket the agent exposes
-outward, of any kind: a named local Unix socket. The claim is scoped to the
+**The hook.** This crate binds the sockets the agent exposes outward, of any kind:
+named local Unix sockets. **There are two as of the egress ruling of 2026-08-07**, and
+the axis that separates them is which party may open an exchange, per
+`weaver-organ-channel` section 1. The world opens exchanges on one and the agent
+perceives and answers. The agent opens exchanges on the other and a registered tool
+answers. Each is single-initiator, which is what the interior's organ channels are not,
+and on a single-initiator socket the opening party is a fact about the socket rather
+than one carried per message, which is what lets this crate judge a crossing by reading
+no payload at all. The second socket is chartered here and its contract is the tool
+workflow's, per apex section 3 step 7. The claim is scoped to the
 outward direction deliberately, since the inversion of 2026-08-05 has the
 harness binding a coordination socket inward, inside the same sandbox, which
 faces admin rather than the world and admits root alone. One door out and one
@@ -133,8 +147,13 @@ seam. A crate that read the file would put a second reading of the operator's
 declaration beside admin's, the same argument the SPU charter makes for the model
 binding.
 
-**No process it spawns, and no second listener.** One socket, bound once per raise,
-is the whole of this crate's surface area.
+**No process it spawns, and two listeners and no third.** The two sockets of section
+2, each bound once per raise, are the whole of this crate's surface area. This clause
+once read one socket and no second listener, and the egress ruling of 2026-08-07 is
+what changed the count: the second listener is the agent's own door outward, not an
+acquired part. **What the clause still forbids is a listener this crate did not bind
+from an instruction**, and the reason is unchanged, a surface this crate opens on its
+own judgment being a surface nothing chartered.
 
 ## 4. Raising and lowering, from this crate's side
 
@@ -220,18 +239,27 @@ section 7, which names the agent-uid case as its assumption and files the cell h
 it is inherited as a constraint rather than rediscovered.
 
 **PENDING, ruling candidate for ratification.** Stage one ratifies the agent-uid
-case. Apex step 7 is merged and describes the reference tool running as the agent's
-own constrained Linux user, bounded by the kernel through filesystem permissions,
-sudoers, and cgroups, and this charter may not contradict a merged document. Under
-that case the boundary between the agent and its worker is hardening rather than
-kernel-enforced separation, and the hardening is named: the cleared dumpable flag on
-every process of the worker's family, and close-on-exec on every descriptor at every
-fork, including the creating party's own ends. The separate-uid arm, under which the
-worker's descriptors become unreachable from tool code by construction at the cost of
-an explicit grant for every reach into the agent's home, is staged in section 8, and
-what it awaits is the tool workflow chartering plus a stated threat measurement,
-because a boundary upgrade priced without a threat model is a motive wearing a
-mechanic's clothes.
+case. Under that case the boundary between the agent and its worker is hardening
+rather than kernel-enforced separation, and the hardening is named: the cleared
+dumpable flag on every process of the worker's family, and close-on-exec on every
+descriptor at every fork, including the creating party's own ends.
+
+**The cell closes for a world-reaching tool and stands for every other, per the egress
+ruling of 2026-08-07.** A tool that reaches the world is a registered application the
+agent addresses across the agent-opened socket of section 2, provisioned by the
+operator with its own identity, so the question of which uid this program forks it
+under does not arise: this program does not fork it. Apex step 7 carried the forked
+case until that ruling and now carries the addressed one, so the merged clause this
+cell deferred to has moved and the deferral moves with it.
+
+**What the cell still holds open is the tool that reaches nothing.** A tool touching no
+network is outside the egress frame's subject, per `tool-egress-boundary-frame` section
+6, and for that case the two arms stand as section 8 stages them: the agent uid, or a
+uid this crate owns at the cost of an explicit grant for every reach into the agent's
+home. What it awaits is unchanged, the tool workflow chartering plus a stated
+rationale, because a boundary upgrade priced without one is a motive wearing a
+mechanic's clothes. The egress ruling supplies that rationale for the world-reaching
+case alone and supplies none for this one.
 
 ## 8. What does not cross, and what waits
 
@@ -350,6 +378,16 @@ line went in and a line came out.
 **Retention ends at the answer.** Per section 3, nothing about a turn
 survives the response returning through it, and the exchange's close is where
 that is enforced rather than promised.
+
+**The relay has a second leg, and it runs the other way.** On the world-opened
+socket a request arrives and this crate opens an exchange toward the harness. On
+the agent-opened socket the harness opens the exchange and this crate carries it
+out to the registered tool, whose answer returns by the path it took. The
+opacity rule is the same on both legs and so is the retention rule: octets in
+order, nothing read, nothing kept past the answer. What differs is only which
+side opens, which is the axis section 2 draws. The exchanges this leg carries,
+how a tool is addressed among several, and what a tool's death mid-call means
+are the tool workflow's to charter, and nothing is shaped here ahead of it.
 
 ### 13.2 Concurrency, and where it resolves
 
