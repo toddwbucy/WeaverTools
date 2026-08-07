@@ -17,11 +17,40 @@ use weaver_types::{ArtifactRef, DeviceOrdinal, ModelBinding};
 
 /// A small real model this workshop holds. The test is about the load path,
 /// not the model, so the smallest artifact on the box is the right fixture.
+/// `WEAVER_TEST_GGUF` overrides the location for a machine laid out
+/// differently.
 const MODEL: &str = "/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf";
 
 fn model_present() -> Option<PathBuf> {
-    let path = Path::new(MODEL);
-    path.exists().then(|| path.to_path_buf())
+    match std::env::var_os("WEAVER_TEST_GGUF") {
+        // An explicit request that cannot be met is a failure rather than a
+        // skip: a runner that asked for the load path is told it did not run,
+        // instead of a green result claiming it did. The skip below survives
+        // only for the implicit case, where this machine simply is not one
+        // that holds the fixture.
+        Some(named) => {
+            let path = PathBuf::from(named);
+            assert!(
+                path.exists(),
+                "WEAVER_TEST_GGUF names {}, which does not exist",
+                path.display()
+            );
+            Some(path)
+        }
+        None => Path::new(MODEL).exists().then(|| PathBuf::from(MODEL)),
+    }
+}
+
+/// The device tests bind device 0 and read device-global free memory, so a
+/// parallel run would have one test's admit move another test's measurement,
+/// an intermittent failure about scheduling rather than about the property.
+/// They take this lock and run one at a time.
+static DEVICE: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn device_lock() -> std::sync::MutexGuard<'static, ()> {
+    // A poisoned lock means an earlier test panicked, which that test already
+    // reported. Cascading its failure into this one would report it twice.
+    DEVICE.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 fn device_free_bytes() -> Option<u64> {
@@ -39,6 +68,15 @@ fn device_free_bytes() -> Option<u64> {
 /// across the admit and returns across the release, which is the confirmation
 /// being a fact about the device rather than a statement of intent.
 ///
+/// The second-admit refusal is asserted inside the same lifecycle rather than
+/// in a second test, and the shape is load-bearing: one process performs one
+/// load, exactly as the shipped binary does. The engine hangs on a
+/// free-then-reload inside one process, found when the device lock serialized
+/// what the parallel run had overlapped, and the shipped binary cannot meet
+/// that hang because this crate begins empty, admits once, and dies. A second
+/// in-process lifecycle exists only in a harness, so the harness does not
+/// build one.
+///
 /// Perturbation: make `Residency::release` answer `Ok` without taking the
 /// resident and this test fails at the release assertion, because the weights
 /// stay on the device. Watched under exactly that change.
@@ -48,10 +86,12 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         eprintln!("SKIP a_real_admit_holds_the_device: no model at {MODEL}");
         return;
     };
-    let Some(before) = device_free_bytes() else {
+    if device_free_bytes().is_none() {
         eprintln!("SKIP a_real_admit_holds_the_device: no CUDA device");
         return;
-    };
+    }
+    let _device = device_lock();
+    let before = device_free_bytes().expect("the driver answers under the lock");
 
     let mut residency = Residency::new();
     let binding = ModelBinding {
@@ -79,37 +119,8 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         "the admit holds device memory: before {before}, held {held}"
     );
 
-    residency.release().expect("the release succeeds");
-    let after = device_free_bytes().expect("the driver still answers");
-    assert!(
-        after.saturating_sub(held) > 100 * 1024 * 1024,
-        "the release returns the memory before answering: held {held}, after {after}"
-    );
-}
-
-/// A second admit after a successful first refuses on the ordering, which the
-/// unit suite shows against a refused first admit and this shows against a
-/// completed one: nothing is idempotent, and a matching binding changes
-/// nothing.
-#[test]
-fn a_second_admit_after_a_completed_first_refuses() {
-    let Some(model) = model_present() else {
-        eprintln!("SKIP a_second_admit_after_a_completed_first: no model at {MODEL}");
-        return;
-    };
-    if device_free_bytes().is_none() {
-        eprintln!("SKIP a_second_admit_after_a_completed_first: no CUDA device");
-        return;
-    }
-
-    let mut residency = Residency::new();
-    let binding = ModelBinding {
-        artifact: ArtifactRef(model.to_string_lossy().into_owned()),
-        devices: vec![DeviceOrdinal(0)],
-    };
-    residency
-        .admit(&binding, Headroom(64 * 1024 * 1024))
-        .expect("the first admit succeeds");
+    // Nothing is idempotent: a second admit refuses on the ordering with an
+    // identical binding, while the first residency stands.
     let second = residency.admit(&binding, Headroom(64 * 1024 * 1024));
     assert!(
         matches!(
@@ -118,7 +129,13 @@ fn a_second_admit_after_a_completed_first_refuses() {
         ),
         "the second admit refuses on the ordering even with an identical binding"
     );
-    residency.release().expect("the release still succeeds");
+
+    residency.release().expect("the release succeeds");
+    let after = device_free_bytes().expect("the driver still answers");
+    assert!(
+        after.saturating_sub(held) > 100 * 1024 * 1024,
+        "the release returns the memory before answering: held {held}, after {after}"
+    );
 }
 
 mod seam_success {
@@ -153,10 +170,15 @@ mod seam_success {
 
     fn spawn_holding(child_ends: [RawFd; 2]) -> Child {
         let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        // The streams go to null rather than pipes: llama.cpp writes model
+        // metadata to stderr during the load, nothing here drains a pipe until
+        // after the exchanges, and a load chatty enough to fill the buffer
+        // would wedge the child mid-write against the parent mid-recv. This
+        // test reads answers and an exit status, never output.
         command
             .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
         unsafe {
             command.pre_exec(move || {
                 let mut lifted = [0 as RawFd; 2];
@@ -211,6 +233,9 @@ mod seam_success {
             eprintln!("SKIP admit_then_release_round_trips: no CUDA device");
             return;
         }
+        // Held across the whole spawn-and-wait, because the child process is
+        // what takes the device.
+        let _device = device_lock();
 
         let (lifecycle, child_lifecycle) = seqpacket_pair();
         let (_decode, child_decode) = seqpacket_pair();
@@ -242,7 +267,8 @@ mod seam_success {
         assert_eq!(released.exchange.ordinal, 2);
 
         drop(lifecycle);
-        let out = child.wait_with_output().expect("the binary exits");
-        assert!(out.status.success(), "and the process exits clean");
+        let mut child = child;
+        let status = child.wait().expect("the binary exits");
+        assert!(status.success(), "and the process exits clean");
     }
 }

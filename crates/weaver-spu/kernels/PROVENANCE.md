@@ -58,9 +58,16 @@ siblings of the profile dir, and a re-run meeting a survivor dies with
 `EEXIST` at its `build.rs:1110`. The archived tree records the same bug against
 the same crate. The sweep, run from the repo root before retrying:
 
-    find target/debug -maxdepth 1 -name 'lib*.so*' -delete
-    find target/debug \( -path '*/examples/lib*.so*' \
+    find target/debug -maxdepth 1 \
+      \( -name 'libllama.so*' -o -name 'libggml*.so*' \) -delete
+    find target/debug \( -path '*/examples/libllama.so*' \
+      -o -path '*/examples/libggml*.so*' \
       -o -path '*/deps/libllama.so*' -o -path '*/deps/libggml*.so*' \) -delete
+
+The sweep names only the two libraries the race hard-links, so it cannot take
+an unrelated shared object with it, and it names `target/debug`: a release
+build, or a run with `CARGO_TARGET_DIR` set, puts the survivors elsewhere and
+needs the same sweep against that directory.
 
 A build-script bug in the pinned revision, not a code fact, hit twice in this
 workshop on 2026-08-07: once on the first full build and once when clippy
