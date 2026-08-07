@@ -28,7 +28,10 @@ path = "src/main.rs"
 # little. No direct weaver-traits line, matching the charter's floor-link set.
 # serde_json encodes the seam's envelopes and touches no client byte. nix is the
 # OS surface: bind, listen, accept, getsockopt for the peer credential, fcntl,
-# and the two prctl sets. No `uio`: this crate sends and receives whole
+# `poll`, so the serve loop can wait on the channel and the hook's listener at
+# once: the boundary must judge a dialing peer during the raised window, and a
+# loop blocked on the channel alone never accepts one. And the two prctl sets.
+# No `uio`: this crate sends and receives whole
 # datagrams and passes no control message, so the scatter-gather surface the
 # harness needs for descriptor passing is weight it does not carry. No async
 # runtime, no logging crate, no YAML - this
@@ -37,4 +40,4 @@ path = "src/main.rs"
 [dependencies]
 weaver-types = { path = "../weaver-types", default-features = false }
 serde_json.workspace = true
-nix = { version = "0.31", features = ["socket", "fs", "process", "user"] }
+nix = { version = "0.31", features = ["socket", "fs", "process", "user", "poll"] }

@@ -12,8 +12,10 @@
 
 use std::process::ExitCode;
 
+use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
+
 use weaver_gate::channel::{self, Channel, ChannelFault, EntryFault};
-use weaver_gate::hook::{Hook, RaiseRefusal};
+use weaver_gate::hook::{AcceptOutcome, Admitted, Hook, RaiseRefusal};
 use weaver_types::{
     LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope, Payload,
     Position,
@@ -37,7 +39,12 @@ enum HookState {
     /// No raise has arrived. Only a raise is in order.
     BeforeRaise,
     /// The hook stands. Only a lower is in order.
-    Raised(Hook),
+    ///
+    /// The admitted connections ride with it, because they exist only while it
+    /// does: the lower drops the hook and them together, which is what makes
+    /// `weaver-gate-world-contract` section 5's "a request while the hook is
+    /// lowered finds no listener" true of a connection that was already open.
+    Raised(Hook, Vec<Admitted>),
     /// Terminal. A directive of any kind arriving here answers `OutOfOrder`.
     Lowered,
 }
@@ -99,18 +106,51 @@ fn serve(channel: Channel) -> ExitCode {
     let mut state = HookState::BeforeRaise;
 
     loop {
+        // **Wait on the channel and, while raised, the hook's listener.** A
+        // loop that waited on the channel alone would leave a dialing peer in
+        // the backlog unjudged for the whole raised window, which is the
+        // boundary not existing rather than the boundary being quiet.
+        let mut waiting = Vec::with_capacity(2);
+        waiting.push(PollFd::new(channel.as_fd(), PollFlags::POLLIN));
+        if let HookState::Raised(hook, _) = &state {
+            waiting.push(PollFd::new(hook.listener(), PollFlags::POLLIN));
+        }
+        match poll(&mut waiting, PollTimeout::NONE) {
+            Ok(_) => {}
+            Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => {
+                drop(state);
+                return ExitCode::FAILURE;
+            }
+        }
+
+        let channel_ready = waiting[0]
+            .revents()
+            .is_some_and(|r| r.intersects(PollFlags::POLLIN | PollFlags::POLLHUP));
+        let listener_ready = waiting
+            .get(1)
+            .and_then(|p| p.revents())
+            .is_some_and(|r| r.contains(PollFlags::POLLIN));
+
+        // The channel first: a lower waiting behind a queue of dials would let
+        // a caller hold the hook open by dialing it.
+        if !channel_ready {
+            if listener_ready && let HookState::Raised(hook, admitted) = &mut state {
+                judge_one(hook, admitted);
+            }
+            continue;
+        }
+
         let envelope = match channel.recv() {
             Ok(envelope) => envelope,
             Err(ChannelFault::Closed) => {
-                // The interior is gone. Dropping the position closes the
-                // listener if one stands, and this exits rather than answering.
+                // The interior is gone. Dropping the state closes the listener
+                // and every admitted connection with it, and this exits rather
+                // than answering.
                 drop(state);
                 return ExitCode::SUCCESS;
             }
             Err(fault) => {
-                // Truncated or undecodable: faults below the exchange layer,
-                // so neither is answered on an exchange, and a channel this
-                // process cannot read faithfully is one it stops serving.
                 eprintln!("{}", fault_line(&fault));
                 drop(state);
                 return ExitCode::FAILURE;
@@ -146,8 +186,35 @@ fn serve(channel: Channel) -> ExitCode {
     }
 }
 
-/// Every line this binary writes goes through the encoder it already depends
-/// on, so a renamed case or an added field cannot ship an unparseable line.
+/// Accept one dialing peer and judge it.
+///
+/// **The refusal half is what this act implements**, and it is what
+/// `weaver-gate-world-contract` section 5 specifies end to end: a peer that
+/// fails the predicate is refused at accept, before any content is read, by
+/// closure with nothing written back. `Hook::accept` returns no stream for a
+/// refused peer, so the closure is the drop inside it.
+///
+/// **An admitted peer is held rather than served or closed.** What it is owed
+/// is a conversation, which is the relay of Spec section 4 and is deferred, so
+/// closing it would refuse a peer the predicate admitted and answering it would
+/// be inventing the relay. Holding it is the truthful third thing: its request
+/// is pending. The connections ride with the hook and go when the lower does.
+/// In this pass no legitimate client traffic exists, so this is a path nothing
+/// takes, and the relay act is where it stops being one.
+fn judge_one(hook: &Hook, admitted: &mut Vec<Admitted>) {
+    match hook.accept() {
+        Ok(peer) => admitted.push(peer),
+        // Refused, and already closed by the accept that judged it.
+        Err(AcceptOutcome::Denied) => {}
+        Err(AcceptOutcome::Unusable { detail }) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({"fault": "accept_failed", "detail": detail})
+            );
+        }
+    }
+}
+
 fn fault_line(fault: &ChannelFault) -> String {
     match fault {
         ChannelFault::Truncated { bound } => {
@@ -183,7 +250,7 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
                     // Ready is answered only after the bind and listen have
                     // returned, which is what makes ready a fact about the
                     // listener rather than a statement of intent.
-                    *state = HookState::Raised(hook);
+                    *state = HookState::Raised(hook, Vec::new());
                     Payload::Answer(LifecycleAnswer::GateReady)
                 }
                 Err(RaiseRefusal::BindFailed { detail }) => {
@@ -202,11 +269,14 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
                 }
             }
         }
-        (HookState::Raised(_), LifecycleDirective::Lower) => {
+        (HookState::Raised(_, _), LifecycleDirective::Lower) => {
             // The close happens here, before the answer is formed, so nothing
             // new can arrive once the harness reads stopped.
             let previous = std::mem::replace(state, HookState::Lowered);
-            if let HookState::Raised(hook) = previous {
+            if let HookState::Raised(hook, admitted) = previous {
+                // The admitted connections close with the listener, which is
+                // what makes a lowered hook find nothing standing.
+                drop(admitted);
                 hook.lower();
             }
             Payload::Answer(LifecycleAnswer::GateStopped)
@@ -321,7 +391,7 @@ mod tests {
             }),
         );
         assert_eq!(ready, Payload::Answer(LifecycleAnswer::GateReady));
-        assert!(matches!(state, HookState::Raised(_)));
+        assert!(matches!(state, HookState::Raised(_, _)));
         assert!(path.exists(), "ready is a fact about a bound listener");
 
         // A second raise is out of order even though the first succeeded.

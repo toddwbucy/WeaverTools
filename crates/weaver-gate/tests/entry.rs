@@ -234,3 +234,72 @@ fn the_harness_teardown_sequence_ends_the_gate_cleanly() {
     std::fs::remove_file(&path).ok();
     std::fs::remove_file(&log_path).ok();
 }
+
+/// **The running binary refuses an unauthorized dial**, not only the in-process
+/// tests.
+///
+/// This is the reference walk against the shipped gate: the test process runs
+/// as the same uid the gate does, which is the adversary the boundary exists to
+/// exclude, and the instruction's rule permits that uid explicitly so the
+/// refusal cannot come from the operator's configuration. The gate adds its own
+/// uid to the deny set at raise, and denial wins.
+///
+/// Before this act the serve loop blocked on the channel and never accepted, so
+/// a dial sat in the backlog unjudged: `connect` succeeded and the peer waited
+/// forever, indistinguishable from an admitted one. What the test reads is that
+/// the connection is *closed on*, which is the contract's refusal by closure.
+///
+/// Perturbation: drop the listener from the poll set in `serve` and this test
+/// fails, the dial hanging unjudged until the read bound expires. Watched under
+/// exactly that removal.
+#[test]
+fn the_running_gate_refuses_an_unauthorized_dial() {
+    use std::collections::BTreeSet;
+    use std::io::Read;
+    use weaver_types::{AccessRule, GateInstruction};
+
+    let path = socket_path("refuses-dial");
+    let (harness, child_end) = seqpacket_pair();
+    let (mut child, log_path) = spawn_gate(child_end.as_raw_fd());
+    bound_receives(&harness, 30);
+
+    // A rule that explicitly permits this uid, so only the deny-by-construction
+    // can produce the refusal.
+    let mut allowed_uids = BTreeSet::new();
+    allowed_uids.insert(nix::unistd::getuid().as_raw());
+    let permissive = GateInstruction {
+        socket_path: path.clone(),
+        access_rule: AccessRule {
+            allowed_uids,
+            allowed_gids: BTreeSet::new(),
+            denied_uids: BTreeSet::new(),
+        },
+    };
+
+    let ready = ask(
+        &harness,
+        1,
+        LifecycleDirective::Raise {
+            instruction: permissive,
+        },
+    );
+    assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
+
+    let mut client = UnixStream::connect(&path).expect("the dial reaches the listener");
+    client
+        .set_read_timeout(Some(Duration::from_secs(10)))
+        .expect("a read bound");
+    let mut answer = Vec::new();
+    let read = client.read_to_end(&mut answer);
+    assert_eq!(
+        read.ok(),
+        Some(0),
+        "the running gate closes on the agent uid with nothing written, got {answer:?}"
+    );
+
+    tell(&harness, 2, LifecycleDirective::Lower);
+    drop(harness);
+    wait_bounded(&mut child, 30, "the_running_gate_refuses_an_unauthorized_dial");
+    std::fs::remove_file(&path).ok();
+    std::fs::remove_file(&log_path).ok();
+}

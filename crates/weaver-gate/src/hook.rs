@@ -125,6 +125,13 @@ impl Hook {
         })
     }
 
+    /// The listener, for a caller that must wait on it alongside the channel.
+    /// Borrowed rather than handed over: the hook owns it, and its close is the
+    /// lower.
+    pub fn listener(&self) -> std::os::fd::BorrowedFd<'_> {
+        self.listener.as_fd()
+    }
+
     /// The path this hook stands on. The instruction's, unchanged.
     pub fn bound_path(&self) -> &Path {
         &self.path
@@ -138,17 +145,12 @@ impl Hook {
 
     /// Accept one connection and judge it **before any byte is read**.
     ///
-    /// **Nothing in the shipped binary calls this yet, and that is a gap rather
-    /// than a design.** The serve loop of `main.rs` blocks on the channel, so
-    /// during the raised window a dialing peer sits in the listen backlog
-    /// unjudged: the kernel completes its handshake and the boundary never
-    /// answers. What this crate would do with an *admitted* connection is the
-    /// relay of Spec section 4, which is deferred, so wiring an accept here
-    /// today would mean inventing a disposal the Spec does not describe.
-    /// Section 6's assertions are exercised against this function directly by
-    /// `tests/boundary.rs`, and the distance between that and the running
-    /// binary is named in `weaver-gate-PRD`'s open items rather than papered
-    /// over.
+    /// The serve loop calls this whenever the listener is readable, so the
+    /// boundary answers during the whole raised window rather than only when a
+    /// test reaches it. What happens to an *admitted* connection is the relay
+    /// of Spec section 4 and is deferred: the refusal half is what
+    /// `weaver-gate-world-contract` section 5 specifies end to end, and it is
+    /// the half this act implements.
     ///
     /// The peer's credential is read with `SO_PEERCRED` and the identity is
     /// judged by the floor's one predicate. A peer that fails is refused by

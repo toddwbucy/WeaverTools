@@ -139,6 +139,11 @@ pub fn adopt() -> Result<Channel, EntryFault> {
 }
 
 impl Channel {
+    /// The end, for a caller that must wait on it alongside another descriptor.
+    pub fn as_fd(&self) -> BorrowedFd<'_> {
+        self.end.as_fd()
+    }
+
     /// Send one envelope. The bound is asserted on this crate's own writes, not
     /// only on what it reads, because a writer that can exceed the receiver's
     /// buffer produces the truncation the receiver is obliged to fault on.
