@@ -14,9 +14,14 @@
 pub mod backend;
 pub mod session;
 
-// `gguf.rs` and `native.rs` are the Spec's layout and are **not written**. They
-// are not declared here either: a module declaration for a file that does not
-// exist breaks the build the moment its feature is on, which is the defect the
-// Blackwell run caught in `residency.rs` and which this comment exists to keep
-// from recurring silently. `backend::for_container` refuses by container until
-// they land, and says why.
+/// The GGUF backend. Its residency half is real: llama.cpp holds the model
+/// and dropping the residency frees the device. Its decode half, the
+/// [`backend::Backend`] implementation, is the turn path's act, so
+/// `backend::for_container` still refuses both containers.
+#[cfg(feature = "gguf")]
+pub mod gguf;
+
+// `native.rs` is the Spec's layout and is **not written**, and it is not
+// declared either: a module declaration for a file that does not exist breaks
+// the build the moment its feature is on, which is the defect the Blackwell
+// run caught in `residency.rs`.

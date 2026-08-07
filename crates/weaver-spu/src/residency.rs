@@ -1,4 +1,6 @@
 //! conforms: spu-header-read-touches-no-device
+//! conforms: spu-loader-shapes-pinned-by-doctest
+//! conforms: spu-no-path-taking-loader
 //! conforms: spu-devices-from-the-binding
 //! conforms: spu-admission-judges-room-reach-and-width
 //! conforms: spu-headroom-is-a-construction-parameter
@@ -20,6 +22,38 @@
 //!
 //! **Nothing is idempotent and nothing retries.** This crate begins empty,
 //! admits once, and dies, so a second admit has no prior residency to match.
+//!
+//! **No path-taking model loader exists beyond the binding's own resolution.**
+//! The one door to a load is [`Admission`], which only `admit` constructs, so
+//! the loader cannot be handed a path that did not walk the free steps: the
+//! resolution, the header read, and the judgments run first or the load is not
+//! expressible. The two shapes the Spec names are pinned below, and the day
+//! either compiles, the pin fires.
+//!
+//! ```compile_fail
+//! fn pin(path: &str) -> weaver_spu::residency::Admission<'_> {
+//!     // A loader door from a bare string does not exist.
+//!     weaver_spu::residency::Admission::from(path)
+//! }
+//! ```
+//!
+//! ```compile_fail
+//! fn pin(path: std::path::PathBuf) -> weaver_spu::residency::Admission<'static> {
+//!     // Nor from a PathBuf outside the admission path.
+//!     weaver_spu::residency::Admission::from(path)
+//! }
+//! ```
+//!
+//! A compile-fail pin passes on any compile error, so the two above would go
+//! on passing if [`Admission`] were renamed or its accessors removed, proving
+//! nothing. This one compiles, names the door and its surface, and fails
+//! loudly the day either disappears:
+//!
+//! ```
+//! fn reads<'a>(admission: &'a weaver_spu::residency::Admission<'a>) -> &'a std::path::Path {
+//!     admission.path()
+//! }
+//! ```
 
 use std::path::{Path, PathBuf};
 
@@ -85,10 +119,13 @@ pub enum AdmitRefusal {
     /// to free a card or to reassign the binding.
     #[cfg(feature = "cuda")]
     DeviceRefused(crate::gpu::DeviceRefusal),
-    /// Step four, which is not written. Named distinctly so that a build with a
-    /// device attached is not told it has a device problem.
-    #[cfg(feature = "cuda")]
+    /// Step four, on a container whose backend this build does not carry.
+    /// Named distinctly so that a build with a device attached is not told it
+    /// has a device problem.
     BackendNotBuilt,
+    /// Step four, on the engine itself: the backend was asked to take the
+    /// weights and could not. The detail is the engine's own account.
+    LoadFailed { detail: String },
     /// A second admit. This crate admits once.
     AlreadyAttempted,
 }
@@ -107,9 +144,57 @@ impl From<AdmitRefusal> for LifecycleRefusal {
             // not build, and inventing one would be a floor edit this act has no
             // ruling for. It crosses as a device refusal, which is the nearest
             // true statement: this process cannot take the devices it was given.
-            #[cfg(feature = "cuda")]
             AdmitRefusal::BackendNotBuilt => LifecycleRefusal::DeviceCannotAdmit,
+            // The charter's enumeration maps step-four failures onto the device
+            // case: the admit was device work when it failed.
+            AdmitRefusal::LoadFailed { .. } => LifecycleRefusal::DeviceCannotAdmit,
             AdmitRefusal::AlreadyAttempted => LifecycleRefusal::OutOfOrder,
+        }
+    }
+}
+
+/// The admission's proof, and the loader's one door.
+///
+/// Only `admit` constructs this, after the free steps have run, so a load from
+/// a path that was never resolved, never header-read, and never judged is not
+/// expressible. The fields are read-only views into the admit that made them.
+pub struct Admission<'a> {
+    path: &'a Path,
+    header: &'a ArtifactHeader,
+    devices: &'a [DeviceOrdinal],
+    /// What makes the door a door: nothing outside this module constructs one.
+    _admitted: (),
+}
+
+impl Admission<'_> {
+    pub fn path(&self) -> &Path {
+        self.path
+    }
+    pub fn header(&self) -> &ArtifactHeader {
+        self.header
+    }
+    pub fn devices(&self) -> &[DeviceOrdinal] {
+        self.devices
+    }
+}
+
+/// The model a successful admit holds resident, one case per backend.
+///
+/// Holding it is the residency: dropping it is what frees the device, so the
+/// release ordering is by construction rather than by a comment.
+pub enum LoadedModel {
+    /// A GGUF model held by llama.cpp, weights on the assigned devices.
+    #[cfg(feature = "gguf")]
+    Gguf(crate::decoder::gguf::ResidentModel),
+}
+
+impl std::fmt::Debug for LoadedModel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            #[cfg(feature = "gguf")]
+            LoadedModel::Gguf(_) => f.write_str("LoadedModel::Gguf"),
+            #[allow(unreachable_patterns)]
+            _ => f.write_str("LoadedModel"),
         }
     }
 }
@@ -121,6 +206,19 @@ pub struct Resident {
     pub header: ArtifactHeader,
     pub devices: Vec<DeviceOrdinal>,
     pub weights_hash: WeightsHash,
+    /// The model itself. Private: what the rest of the crate may do with a
+    /// residency is a question for the decode acts, and nothing reaches the
+    /// engine around the seam.
+    model: LoadedModel,
+}
+
+impl Resident {
+    /// The held model, for the decode acts that follow. On a build carrying no
+    /// backend [`LoadedModel`] has no cases, which is the type stating that
+    /// such a build holds no residency to reach.
+    pub fn model(&self) -> &LoadedModel {
+        &self.model
+    }
 }
 
 /// The residency, which begins empty and admits once.
@@ -156,9 +254,19 @@ impl Residency {
         // Step one. Resolve the binding to an artifact. Free.
         let path = artifact::resolve(&binding.artifact).map_err(|_| AdmitRefusal::Unresolvable)?;
 
+        // Open it once and hold it. Every read after this, the header, the
+        // load, and the hash, goes through this descriptor, so a name replaced
+        // mid-admit cannot make the three observe three different files, and
+        // the kind check runs on what was opened rather than on the name.
+        let mut pinned = artifact::pin(&path).map_err(|refusal| match refusal {
+            LifecycleRefusal::ArtifactUnresolvable => AdmitRefusal::Unresolvable,
+            _ => AdmitRefusal::Unreadable,
+        })?;
+
         // Step two. Read what the artifact declares about itself, without
         // loading it and without touching a device. Free.
-        let header = artifact::read_header(&path).map_err(|_| AdmitRefusal::Unreadable)?;
+        let header =
+            artifact::read_header(&mut pinned).map_err(|_| AdmitRefusal::Unreadable)?;
 
         // Step three, cheapest first. The width condition is a comparison
         // between the binding's count and the family's declaration and reads
@@ -168,21 +276,47 @@ impl Residency {
         family::judge_width(&header.family, binding.devices.len() as u32)
             .map_err(AdmitRefusal::Family)?;
         judge_distinct(&binding.devices)?;
-        // The shard each device must hold, read from the filesystem rather than
-        // declared by the artifact. The width was judged above, so the divisor
-        // is known non-zero.
-        let shard_bytes = artifact::on_disk_bytes(&path).ok_or(AdmitRefusal::Unreadable)?
-            / binding.devices.len() as u64;
+        // The shard each device must hold, read from the held descriptor
+        // rather than from the name. The width was judged above, so the
+        // divisor is known non-zero.
+        let shard_bytes =
+            pinned.len().map_err(|_| AdmitRefusal::Unreadable)? / binding.devices.len() as u64;
         judge_room_and_reach(&binding.devices, shard_bytes, headroom)?;
 
         // Step four. Take the devices in shard order and load each shard. The
-        // binding's order is the shard order.
-        load_shards(&path, &binding.devices)?;
+        // binding's order is the shard order, and the loader's one door is the
+        // admission this function just proved.
+        // The loader is handed the descriptor's own path, not the operator's
+        // name, so it opens the file the judgments were made against.
+        //
+        // **This carries no instrument and the ground is stated.** Handing the
+        // operator's name here instead loads the same file on every path a
+        // fixture can build, so the perturbation passes: what the pin defends
+        // against is a replacement landing inside the load, and watching it
+        // needs a concurrent replacer this suite does not introduce. The kind
+        // check on the descriptor is watched, the identity of the descriptor
+        // is not.
+        let pinned_path = pinned.path();
+        let admission = Admission {
+            path: &pinned_path,
+            header: &header,
+            devices: &binding.devices,
+            _admitted: (),
+        };
+        let model = load(&admission)?;
 
-        // The weights hash is computed at admit from the bytes this process
-        // loaded rather than from a manifest handed to it, and computed fresh
-        // with no cache across an artifact change.
-        let weights_hash = artifact::weights_hash(&path);
+        // The weights hash is computed at admit by reading the artifact,
+        // never taken from a manifest handed in, and computed fresh with no
+        // cache across an artifact change. It is a read beside the load, not
+        // of it: a swap landing between the two records an identity the
+        // device does not hold, and binding the hash to the engine's own
+        // mapped bytes is named in the artifact module as the remaining
+        // distance.
+        // The hash's subject is the operator's reference, which may name a
+        // directory whose members beyond the container are part of the
+        // artifact's identity.
+        let reference = std::path::PathBuf::from(&binding.artifact.0);
+        let weights_hash = artifact::weights_hash(&reference, &mut pinned);
 
         // Step five. Confirm.
         self.resident = Some(Resident {
@@ -190,6 +324,7 @@ impl Residency {
             header,
             devices: binding.devices.clone(),
             weights_hash,
+            model,
         });
         Ok(self.resident.as_ref().expect("set immediately above"))
     }
@@ -207,7 +342,10 @@ impl Residency {
         let Some(resident) = self.resident.take() else {
             return Err(LifecycleRefusal::NoResidency);
         };
-        free_shards(&resident);
+        // The drop is the free: the weights, the working allocations, and the
+        // cache go together because they are one residency, and they go here,
+        // inside this function, so the caller cannot answer before the device
+        // is free. The engine's own drop is what returns the memory.
         drop(resident);
         Ok(())
     }
@@ -262,36 +400,23 @@ fn judge_room_and_reach(
         .map_err(AdmitRefusal::DeviceRefused)
 }
 
-#[cfg(not(feature = "cuda"))]
-fn load_shards(_path: &Path, _devices: &[DeviceOrdinal]) -> Result<(), AdmitRefusal> {
-    Err(AdmitRefusal::Device)
-}
-
-/// Step four: take the devices in shard order and load each shard.
+/// Step four: load by the container the header declared.
 ///
-/// **This step is not written and refuses rather than pretending.** Loading a
-/// shard means driving a backend, and the backend seam is Spec section 4's, the
-/// decode submodule, which this act has not reached. The refusal names that
-/// rather than reporting a device condition, so an operator meeting it is told
-/// what is missing instead of being sent to look at a card.
-///
-/// The three steps before this one are real on this build: a binding that
-/// resolves wrongly, an artifact whose header will not read, a width outside
-/// the family's declaration, and a device set without room or reach are each
-/// refused here exactly as they would be once step four lands.
-#[cfg(feature = "cuda")]
-fn load_shards(_path: &Path, _devices: &[DeviceOrdinal]) -> Result<(), AdmitRefusal> {
-    Err(AdmitRefusal::BackendNotBuilt)
+/// **The GGUF path is real where the build carries it.** The safetensors path
+/// is not written: driving it means the native forward machinery of the
+/// decode acts, and the refusal names that rather than reporting a device
+/// condition, so an operator with a healthy card is not sent to look at it. A
+/// container whose backend this build does not carry refuses the same way.
+fn load(admission: &Admission<'_>) -> Result<LoadedModel, AdmitRefusal> {
+    match admission.header().container {
+        #[cfg(feature = "gguf")]
+        crate::artifact::Container::Gguf => crate::decoder::gguf::ResidentModel::load(admission)
+            .map(LoadedModel::Gguf),
+        #[cfg(not(feature = "gguf"))]
+        crate::artifact::Container::Gguf => Err(AdmitRefusal::BackendNotBuilt),
+        crate::artifact::Container::Safetensors => Err(AdmitRefusal::BackendNotBuilt),
+    }
 }
-
-#[cfg(not(feature = "cuda"))]
-fn free_shards(_resident: &Resident) {}
-
-/// Nothing is allocated on a device by this build, because step four refuses
-/// before anything is taken, so there is nothing here to free. This is a
-/// no-operation with a stated ground rather than an empty function.
-#[cfg(feature = "cuda")]
-fn free_shards(_resident: &Resident) {}
 
 #[cfg(test)]
 mod tests {

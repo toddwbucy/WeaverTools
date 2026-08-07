@@ -9,6 +9,13 @@ revisions recorded in no document of this corpus, delegated by the survey to a
 workspace note under no version control and otherwise present only in the
 archived manifest that checklist item 7 deletes. Section 1.1 now carries both in
 full. No election changes and no record moves.
+**Revised:** 2026-08-07, a review tag becomes the instrument it priced. The load
+act ran the release against a real device and watched free memory return before
+the answer, under the named perturbation, so
+`spu-release-frees-before-answering` moves from `review` to `perturbation` and
+section 3's count of unbought records goes from seven to six. Review meant
+unbought, never nonexistent, and the record now says what stands. No election
+changes and no record changes container.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
@@ -447,21 +454,23 @@ to: spu-service-serial-one-loop
 
 The two exchanges of `weaver-harness-spu-contract`, in the charter's order.
 
-**Seven of this section's nine records are review's, and the ground is
+**Six of this section's nine records are review's, and the ground is
 non-purchase rather than reach.** Section 10's perturbation list was written
 before the device-assignment ruling of 2026-08-03 reshaped this section and was
 revisited in the act that closed issue 37, which bought what needs no hardware
 and no seam work: the cheap refusals below, and, in section 5, the family lookup
 against an artifact header and the width refusal against a declared set. What is
 left standing on prose divides in two, and the division is worth stating because
-the two halves are unbought for different reasons. The room condition, the peer
-reachability condition, and the release's free-before-answer ordering each read a
-driver, and they reach it through a seam a suite could double and this Spec does
-not introduce, so buying them is a larger act than the three this one takes. The
-remainder needs no device at all and is simply unbought: the devices coming from
-the binding, the headroom's placement, the hash's failure sentinel, and the
-once-only admit. Stating that here once is what keeps seven review tags from
-reading as seven findings that no instrument exists.
+the two halves are unbought for different reasons. The room condition and the peer
+reachability condition each read a driver, and they reach it through a seam a
+suite could double and this Spec does not introduce, so buying them is a larger
+act than the three this one takes. The release's free-before-answer ordering
+stood in that group until the load act of 2026-08-07 put the driver itself in
+reach, and its record carries the instrument that act bought. The remainder
+needs no device at all and is simply unbought: the devices coming from the
+binding, the headroom's placement, the hash's failure sentinel, and the
+once-only admit. Stating that here once is what keeps six review tags from
+reading as six findings that no instrument exists.
 
 **Admit runs the charter's five steps, and the first three are free.**
 Resolve the binding to an artifact, read what the artifact declares about
@@ -626,7 +635,7 @@ record names as producing an overcommit.
 ```graph
 node: spu-release-frees-before-answering
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu

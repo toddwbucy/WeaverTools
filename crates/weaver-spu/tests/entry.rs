@@ -9,79 +9,45 @@
 //! count check is about descriptors this process was handed, and the dumpable
 //! flag is read from outside by an observer the process cannot lie to.
 
-use std::os::fd::{AsRawFd, OwnedFd, RawFd};
-use std::os::unix::process::CommandExt;
+use std::fs::File;
+use std::os::fd::{AsRawFd, RawFd};
+use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
-use nix::libc;
-use nix::sys::socket::{AddressFamily, SockFlag, SockType, socketpair};
-
-fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
-    socketpair(
-        AddressFamily::Unix,
-        SockType::SeqPacket,
-        None,
-        SockFlag::SOCK_CLOEXEC,
-    )
-    .expect("a socketpair")
-}
+mod common;
+use common::{place_inherited, seqpacket_pair, wait_bounded};
 
 /// Start the binary holding exactly the descriptors named, placed at 3, 4, and
 /// upward in the order given.
 ///
-/// The placement runs in two passes on purpose. A source descriptor can already
-/// sit on a number this test is about to write, so writing the targets directly
-/// would clobber a source that has not been placed yet. The first pass lifts
-/// every source above the target range with `F_DUPFD`, and the second pass
-/// writes the targets from those copies. `dup2` clears close-on-exec on the
-/// target it writes, which is what lets these two survive the exec while every
-/// other descriptor in this process closes.
-fn spawn_holding(child_ends: Vec<RawFd>) -> Child {
+/// Standard error goes to a file rather than a pipe. These tests read what the
+/// binary writes there, and a pipe nobody drains until after the wait can fill
+/// and wedge the child mid-write, which is the deadlock the loaded suite met.
+/// A file has no such buffer and leaves the account on disk for a failure that
+/// needs it.
+fn spawn_holding(child_ends: Vec<RawFd>) -> (Child, PathBuf) {
+    let log_path = std::env::temp_dir().join(format!(
+        "weaver-spu-entry-{}-{}.log",
+        std::process::id(),
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    ));
+    let log = File::create(&log_path).expect("a child log file");
     let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
     command
         .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    // The sources are copied into a fixed-size array before the fork: the
-    // closure below runs in the child of a multithreaded test process, where
-    // another thread may hold the allocator lock at the moment of the fork, so
-    // an allocation inside it can deadlock. Nothing in the closure allocates.
-    let mut sources = [0 as RawFd; 8];
-    let count = child_ends.len();
-    assert!(
-        count <= sources.len(),
-        "spawn_holding takes at most {} descriptors, got {count}",
-        sources.len()
-    );
-    sources[..count].copy_from_slice(&child_ends);
-    unsafe {
-        command.pre_exec(move || {
-            // Pass one: lift every source clear of the target range.
-            let mut lifted = [0 as RawFd; 8];
-            for (slot, source) in lifted[..count].iter_mut().zip(&sources[..count]) {
-                let high = libc::fcntl(*source, libc::F_DUPFD, 32);
-                if high < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-                *slot = high;
-            }
-            // Pass two: write the targets, which also clears close-on-exec.
-            for (offset, high) in lifted[..count].iter().enumerate() {
-                if libc::dup2(*high, 3 + offset as RawFd) < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-            }
-            // `F_DUPFD` CLEARS close-on-exec on the copy rather than inheriting
-            // it, so these would survive the exec and inflate the very count
-            // the child checks. Closing them is required, not tidiness.
-            for high in &lifted[..count] {
-                libc::close(*high);
-            }
-            Ok(())
-        });
-    }
-    command.spawn().expect("the binary starts")
+        .stdout(Stdio::null())
+        .stderr(Stdio::from(log));
+    place_inherited(&mut command, &child_ends);
+    (command.spawn().expect("the binary starts"), log_path)
+}
+
+/// Distinguishes the log files of children spawned within one test process.
+static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+fn complaint(log_path: &PathBuf) -> String {
+    std::fs::read_to_string(log_path).unwrap_or_default()
 }
 
 /// **Entry verifies that it holds exactly two descriptors beyond the standard
@@ -104,23 +70,24 @@ fn a_leaked_descriptor_refuses_to_serve() {
     let (decode, child_decode) = seqpacket_pair();
     let (leaked, child_leaked) = seqpacket_pair();
 
-    let child = spawn_holding(vec![
+    let (mut child, log_path) = spawn_holding(vec![
         child_lifecycle.as_raw_fd(),
         child_decode.as_raw_fd(),
         child_leaked.as_raw_fd(),
     ]);
     drop((lifecycle, decode, leaked));
-    let out = child.wait_with_output().expect("the binary exits");
+    let status = wait_bounded(&mut child, 30, "a_leaked_descriptor_refuses_to_serve");
 
     assert!(
-        !out.status.success(),
+        !status.success(),
         "a process holding a leaked descriptor refuses to serve"
     );
-    let complaint = String::from_utf8_lossy(&out.stderr);
+    let complaint = complaint(&log_path);
     assert!(
         complaint.contains("held_beyond_standard_streams\":3"),
         "the refusal reports the count it found, got {complaint}"
     );
+    std::fs::remove_file(&log_path).ok();
 }
 
 /// The clean case: exactly two descriptors, so the count check passes and the
@@ -131,19 +98,23 @@ fn exactly_two_descriptors_serve() {
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
 
-    let child = spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
+    let (mut child, log_path) = spawn_holding(vec![
+        child_lifecycle.as_raw_fd(),
+        child_decode.as_raw_fd(),
+    ]);
 
     // A served process blocks on its first read rather than exiting. Closing
     // the parent's end is what ends it, and the clean exit below is the whole
     // proof it got past entry: an immediate liveness poll would race the exec
     // and assert nothing either way.
     drop(lifecycle);
-    let out = child.wait_with_output().expect("the binary exits");
+    let status = wait_bounded(&mut child, 30, "exactly_two_descriptors_serve");
     assert!(
-        out.status.success(),
+        status.success(),
         "a process holding exactly two descriptors serves and exits clean, stderr: {}",
-        String::from_utf8_lossy(&out.stderr)
+        complaint(&log_path)
     );
+    std::fs::remove_file(&log_path).ok();
 }
 
 /// **The dumpable flag is cleared at entry.**
@@ -175,7 +146,10 @@ fn the_dumpable_flag_is_clear_after_entry() {
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
 
-    let mut child = spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
+    let (mut child, log_path) = spawn_holding(vec![
+        child_lifecycle.as_raw_fd(),
+        child_decode.as_raw_fd(),
+    ]);
     let pid = child.id();
 
     // Entry runs and then blocks on the first read. Poll rather than sleep a
@@ -193,11 +167,38 @@ fn the_dumpable_flag_is_clear_after_entry() {
     }
 
     drop(lifecycle);
-    let _ = child.wait();
+    wait_bounded(&mut child, 30, "the_dumpable_flag_is_clear_after_entry");
+    std::fs::remove_file(&log_path).ok();
 
     assert_eq!(
         owner,
         Some(0),
         "a cleared dumpable flag makes /proc/{pid}/fd owned by root, found {owner:?}"
+    );
+}
+
+/// **A failed exec still reaches the parent.**
+///
+/// `place_inherited` marks the descriptors above its range close-on-exec
+/// rather than closing them, because Rust reports a failed exec through a
+/// close-on-exec pipe it opens above that range. Closing it makes the parent
+/// read EOF and conclude the spawn succeeded, which would let this suite spawn
+/// a missing binary and test nothing.
+///
+/// Perturbation: pass `0` instead of `CLOSE_RANGE_CLOEXEC` in `place_inherited`
+/// and this test fails, because `spawn` returns `Ok` for a path that does not
+/// exist. Watched under exactly that change.
+#[test]
+fn a_failed_exec_is_reported_to_the_parent() {
+    let (_parent, child_end) = seqpacket_pair();
+    let mut command = Command::new("/nonexistent/weaver-spu-that-is-not-there");
+    command
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    place_inherited(&mut command, &[child_end.as_raw_fd()]);
+    assert!(
+        command.spawn().is_err(),
+        "a missing executable is an error, never a spawn the parent believes"
     );
 }

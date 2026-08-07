@@ -1,0 +1,249 @@
+//! conforms: spu-release-frees-before-answering
+//!
+//! The success path: a real artifact admitted onto a real device and released,
+//! per `weaver-spu-Spec` section 3 and `weaver-harness-spu-contract` sections 3
+//! and 4. This is the path `tests/seam.rs` names as its gap, closed here for
+//! the build that carries a backend.
+//!
+//! Everything in this file needs the `cuda` and `gguf` features, a CUDA device,
+//! and a real GGUF on disk. Each absence skips loudly: a suite that reports
+//! success for tests it did not run is the failure mode this corpus treats as
+//! worse than a red result.
+
+#![cfg(all(feature = "cuda", feature = "gguf"))]
+
+mod common;
+
+use std::path::{Path, PathBuf};
+
+use weaver_spu::residency::{Headroom, Residency};
+use weaver_types::{ArtifactRef, DeviceOrdinal, ModelBinding};
+
+/// A small real model this workshop holds. The test is about the load path,
+/// not the model, so the smallest artifact on the box is the right fixture.
+/// `WEAVER_TEST_GGUF` overrides the location for a machine laid out
+/// differently.
+const MODEL: &str = "/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf";
+
+fn model_present() -> Option<PathBuf> {
+    match std::env::var_os("WEAVER_TEST_GGUF") {
+        // An explicit request that cannot be met is a failure rather than a
+        // skip: a runner that asked for the load path is told it did not run,
+        // instead of a green result claiming it did. The skip below survives
+        // only for the implicit case, where this machine simply is not one
+        // that holds the fixture. Both branches demand a regular file, since
+        // a directory or a socket at the path would fail later and blame the
+        // loader.
+        Some(named) => {
+            let path = PathBuf::from(named);
+            assert!(
+                path.is_file(),
+                "WEAVER_TEST_GGUF names {}, which is not a regular file",
+                path.display()
+            );
+            Some(path)
+        }
+        None => Path::new(MODEL).is_file().then(|| PathBuf::from(MODEL)),
+    }
+}
+
+/// The device tests bind device 0 and read device-global free memory, so a
+/// parallel run would have one test's admit move another test's measurement,
+/// an intermittent failure about scheduling rather than about the property.
+/// They take this lock and run one at a time.
+static DEVICE: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn device_lock() -> std::sync::MutexGuard<'static, ()> {
+    // A poisoned lock means an earlier test panicked, which that test already
+    // reported. Cascading its failure into this one would report it twice.
+    DEVICE.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// One context held for a whole measurement sequence, so the probes read a
+/// stable view: creating and dropping a context per probe would retain and
+/// release the primary context around each read.
+fn device_context() -> Option<std::sync::Arc<cudarc::driver::CudaContext>> {
+    cudarc::driver::CudaContext::new(0).ok()
+}
+
+fn free_bytes(context: &cudarc::driver::CudaContext) -> u64 {
+    let (free, _total) = context.mem_get_info().expect("the driver answers");
+    free as u64
+}
+
+/// **Admit holds the weights on the device, and release frees them before it
+/// answers.** The Spec carries the release ordering as review's, the instrument
+/// being priced against a driver seam the Spec does not introduce. This build
+/// has the driver itself, so the test reads the device: free memory drops
+/// across the admit and returns across the release, which is the confirmation
+/// being a fact about the device rather than a statement of intent.
+///
+/// The second-admit refusal is asserted inside the same lifecycle rather than
+/// in a second test, and the shape is load-bearing: one process performs one
+/// load, exactly as the shipped binary does. The engine hangs on a
+/// free-then-reload inside one process, found when the device lock serialized
+/// what the parallel run had overlapped, and the shipped binary cannot meet
+/// that hang because this crate begins empty, admits once, and dies. A second
+/// in-process lifecycle exists only in a harness, so the harness does not
+/// build one.
+///
+/// Perturbation: make `Residency::release` answer `Ok` without taking the
+/// resident and this test fails at the release assertion, because the weights
+/// stay on the device. Watched under exactly that change.
+#[test]
+fn a_real_admit_holds_the_device_and_release_frees_it() {
+    let Some(model) = model_present() else {
+        eprintln!("SKIP a_real_admit_holds_the_device: no model at {MODEL}");
+        return;
+    };
+    let Some(context) = device_context() else {
+        eprintln!("SKIP a_real_admit_holds_the_device: no CUDA device");
+        return;
+    };
+    let _device = device_lock();
+    let before = free_bytes(&context);
+
+    let mut residency = Residency::new();
+    let binding = ModelBinding {
+        artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+        devices: vec![DeviceOrdinal(0)],
+    };
+
+    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024));
+    let resident = match admitted {
+        Ok(resident) => resident,
+        Err(refusal) => panic!("the admit succeeds against a real artifact, got {refusal:?}"),
+    };
+
+    // The weights hash is real, never the sentinel, against bytes that loaded.
+    assert!(
+        !resident.weights_hash.is_sentinel(),
+        "a loaded artifact hashes to a value"
+    );
+    let held = free_bytes(&context);
+    // The artifact is ~370 MB quantized. The device must be holding a
+    // substantial part of that; the threshold is far below the artifact size
+    // so allocator granularity cannot flake it, while far above noise.
+    assert!(
+        before.saturating_sub(held) > 100 * 1024 * 1024,
+        "the admit holds device memory: before {before}, held {held}"
+    );
+
+    // Nothing is idempotent: a second admit refuses on the ordering with an
+    // identical binding, while the first residency stands.
+    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024));
+    assert!(
+        matches!(
+            second,
+            Err(weaver_spu::residency::AdmitRefusal::AlreadyAttempted)
+        ),
+        "the second admit refuses on the ordering even with an identical binding"
+    );
+
+    residency.release().expect("the release succeeds");
+    let after = free_bytes(&context);
+    assert!(
+        after.saturating_sub(held) > 100 * 1024 * 1024,
+        "the release returns the memory before answering: held {held}, after {after}"
+    );
+}
+
+mod seam_success {
+    //! The same round trip crossing the real socket into the real binary,
+    //! which is what the contract governs: an answer to admit arrives only
+    //! after the device holds the weights, and an answer to release only after
+    //! the device is free.
+
+    use super::*;
+    use std::os::fd::AsRawFd;
+    use std::process::{Command, Stdio};
+
+    use crate::common::{ask, bound_receives, place_inherited, seqpacket_pair, wait_bounded};
+    use weaver_types::{LifecycleAnswer, LifecycleDirective, Payload};
+
+    /// **The contract's success path, whole:** admit answers `Admitted`,
+    /// release answers `Released`, each on the exchange that asked, across the
+    /// real seam, against a real artifact, on a real device.
+    ///
+    /// Every wait is bounded. The receives carry a timeout sized to a model
+    /// load, and the child's exit is polled against a deadline with a kill on
+    /// expiry, so a wedged stage becomes a failure naming itself rather than a
+    /// hang the harness cannot end.
+    #[test]
+    fn admit_then_release_round_trips_across_the_seam() {
+        let Some(model) = model_present() else {
+            eprintln!("SKIP admit_then_release_round_trips: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP admit_then_release_round_trips: no CUDA device");
+            return;
+        }
+        // Held across the whole spawn-and-wait, because the child process is
+        // what takes the device.
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (_decode, child_decode) = seqpacket_pair();
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        // The streams go to a file rather than pipes: llama.cpp writes model
+        // metadata to stderr during the load, nothing here drains a pipe until
+        // after the exchanges, and a load chatty enough to fill the buffer
+        // would wedge the child mid-write against the parent mid-recv. A file
+        // has no such buffer, and unlike null it leaves the child's account on
+        // disk for the failure that needs it.
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-seam-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        // Generous against a model load, far under the harness's patience.
+        bound_receives(&lifecycle, 120);
+
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                binding: ModelBinding {
+                    artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                    devices: vec![DeviceOrdinal(0)],
+                },
+            },
+        );
+        assert_eq!(
+            admitted.payload,
+            Payload::Answer(LifecycleAnswer::Admitted),
+            "the admit answers Admitted across the seam"
+        );
+        assert_eq!(admitted.exchange.ordinal, 1);
+
+        let released = ask(&lifecycle, 2, LifecycleDirective::Release);
+        assert_eq!(
+            released.payload,
+            Payload::Answer(LifecycleAnswer::Released),
+            "the release answers Released across the seam"
+        );
+        assert_eq!(released.exchange.ordinal, 2);
+
+        drop(lifecycle);
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!(
+                "admit_then_release_round_trips, child stderr at {}",
+                log_path.display()
+            ),
+        );
+        assert!(status.success(), "and the process exits clean");
+        std::fs::remove_file(&log_path).ok();
+    }
+}
