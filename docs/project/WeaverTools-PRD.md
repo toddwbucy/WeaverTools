@@ -374,8 +374,7 @@ two-initiator channel with, which is a statement about topology. This is the rol
 topology exists to serve. The harness is answerable for the whole working, and an
 organ is answerable for its own domain and for nothing outside it. A hub that only
 carried traffic would leave integration to whichever organ noticed it was missing,
-which is how an organ starts
-reasoning about a domain that is not its own.
+which is how an organ starts reasoning about a domain that is not its own.
 
 **The loop is the integrating mechanism.** Integration is not a property the parts have
 when assembled correctly, it is work something does, and the loop running in the harness

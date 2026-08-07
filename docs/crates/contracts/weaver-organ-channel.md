@@ -67,13 +67,12 @@ named by how many parties may open an exchange on it, and this one takes two. Re
 of acts made under the old name keep their wording, being records rather than live
 claims.
 
-**Direction lives in the envelope here, and that follows from the property.** Both
-answers are legal on a two-initiator channel, so which party opened an exchange cannot
-be read off the channel and is carried per message, which is why the identity rule
-below is the opening party and that party's ordinal, and why `weaver-types-PRD`
-section 2.3 names wire vocabulary for the loop whose traffic it carries rather than for
-a sender. A channel only one party may open would carry the same fact in the object
-instead, and no such channel is chartered in this corpus today.
+**Which party opened an exchange is carried per message, and that follows from the
+property.** Either party may open one, so the fact cannot be read off the channel, which
+is why the identity rule below is the opening party and that party's ordinal, and why
+`weaver-types-PRD` section 2.3 names wire vocabulary for the loop whose traffic it
+carries rather than for a sender. A channel only one party may open would carry the same
+fact in the object instead, and no such channel is chartered in this corpus today.
 
 **The exchange is the unit, and every message names the one it belongs to.** A message
 carries the exchange it is part of, its position in that exchange as open or continue or

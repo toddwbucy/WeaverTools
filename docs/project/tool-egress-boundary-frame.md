@@ -14,9 +14,20 @@ tool workflow is there to decide.
 ## 0. What this document is
 
 It states where the agent's boundary to the world sits, what authorizes a crossing, and
-what the boundary claim does not reach. It answers `weaver-gate-PRD` section 7, the
-PENDING cell staged awaiting the tool workflow chartering plus a stated boundary
-rationale, and it is the frame that workflow opens against.
+what the boundary claim does not reach. It is the frame the tool workflow opens against,
+and it answers `weaver-gate-PRD` section 7's PENDING cell.
+
+**It does not answer that cell in the cell's own words, and the difference is this
+frame's to declare rather than a reader's to discover.** Section 7 stages the cell
+awaiting the tool workflow chartering plus a stated **threat measurement**, on the
+ground that a boundary upgrade priced without a threat model is a motive wearing a
+mechanic's clothes, and section 10 repeats the phrase. This document supplies a
+structural rationale instead and declines to be a threat measurement at all, for the
+reason the next paragraph gives. So the charter as merged asks for one thing and this
+frame offers another, deliberately. Editing sections 7 and 10 to match is owed with the
+apex act, where section 9 already sequences the gate charter's edits, and until then a
+reader deciding whether the cell can close should read the cell as reframed here and not
+as satisfied.
 
 It bears on apex section 3 step 1 and step 7, which it contradicts. A gate edit may not
 revise a merged apex clause, so the change is apex-level and section 9 names it as such.
@@ -73,9 +84,12 @@ about what it opens.
 
 **Bash is the case that forces the line.** Apex section 4 makes bash the reference tool
 and a real capability of the deliverable, and bash reaches the network as ordinary user
-capability. A forked process may hold no network descriptor, and bash cannot promise
-that, so a world-capable bash is a registered application outside the set rather than a
-subprocess inside it. Section 9 carries what that costs the definition of done.
+capability. The rule runs one way only. A process this program forks is inside the set
+and may hold no network descriptor, so a world-capable bash is not something the worker
+may fork, and it is provisioned as a registered application instead. That is a
+constraint on how bash is launched rather than a reclassification of a process already
+forked, and nothing a process does after it is forked moves it across the line. Section
+9 carries what the constraint costs the definition of done.
 
 ## 3. Two sockets, split by which party opens the exchange
 
@@ -108,11 +122,14 @@ compiles into the harness.** That loop drives the agent's logic and holds the to
 bindings, and a binding is not a connection to the internet handed over with
 instructions to go at it. A binding is the address of one registered tool reaching one
 endpoint and nothing else. The loop opens the exchange and the gate holds the door, so
-the loop reaches out only where the door was provisioned to allow the traffic. The same
-door admits inbound traffic, so the only processes that enter are the ones already named
-as allowed, and they enter this one way. The gate is the configured aperture in both
-directions, and the loop never holds a world descriptor. It holds the ability to speak
-through a door another component configured.
+the loop can address only the registered tools the door was provisioned for. What a tool
+reaches on its own side of that socket is the tool's business and the later layer's to
+bound, per section 5, and the claim here is the narrower one on purpose: the gate
+selects the application, and it does not select that application's destinations. The
+same door admits inbound traffic, so the only processes that enter are the ones already
+named as allowed, and they enter this one way. The gate is the configured aperture in
+both directions, and the loop never holds a world descriptor. It holds the ability to
+speak through a door another component configured.
 
 This is the ears-eyes-mouth socket and the hands socket, drawn by which party opens
 rather than by data direction (Bucy, 2026). The first draft named an asymmetry, a
@@ -153,12 +170,21 @@ made to fit this same floor rather than to punch through it. The agent addresses
 socket, and whatever network work the far side does is done outside the agent by a
 process the agent never becomes.
 
-This is a checkable claim and a small one. Enumerate the sockets every component in the
-set holds and confirm they are all AF_UNIX, and confirm no component in the set holds an
-AF_INET descriptor. The boundary is that enumeration coming back clean, which is one
-pass over the running component set rather than an argument, and section 2 is what makes
-the set the enumeration walks a bounded thing. The claim is deliberately narrower than
-any statement about what a tool can be made to do, and section 5 holds that line.
+This is a checkable claim and a small one, and the check is not the boundary. The
+boundary is how the components are built, every seam of every one of them an AF_UNIX
+socket under a named contract. The check is an enumeration: list the sockets each
+component in the set holds and confirm every one of them is AF_UNIX. It is stated as an
+allow-list of one address family rather than as a denial of AF_INET, because a test
+naming the families it excludes misses the next one, and section 2 is what makes the set
+the enumeration walks a bounded thing.
+
+**The enumeration validates and does not enforce, and the difference is section 5's.**
+Nothing in this frame stops a component from opening a socket the scan would have caught
+had it run a moment later. What stops it is that no component is built to, and a
+kernel-enforced version of the same restriction belongs to the layer section 5 places
+outside this program. Reading the scan as the enforcement is the error the first draft
+made one level up. The claim is deliberately narrower than any statement about what a
+tool can be made to do, and section 5 holds that line.
 
 ## 5. What this frame does not claim
 
@@ -199,6 +225,14 @@ without putting a network-touching process where the socket floor forbids one. F
 world-reaching tool the registered-application form is not one option among two. It is
 what the floor already requires.
 
+**That conclusion is conditional on the boundary, and the condition is the whole of what
+this frame asks.** If the human rules the boundary as section 1 states it, the form
+follows from apex invariant 5.1 rather than from an election, and no arm is left for the
+workflow to weigh. If the boundary is not ruled, apex step 7 stands untouched and the
+gate charter's cell closes on the arms it already holds. Either way the workflow
+charters the seam, its contract, and how a tool is launched and supervised, and this
+frame settles none of the three.
+
 Tools that touch no network are a different matter and not this frame's subject. This
 frame is the egress boundary, the tools that reach out, and for those the shape follows
 from the floor rather than from a measurement.
@@ -215,8 +249,19 @@ reads the peer by `SO_PEERCRED`. On the agent-opened socket the loop reaches thr
 gate toward the tool, so the tool reads the agent by the same kernel-supplied
 credential, and the agent in turn confirms it reached the registered tool and not a
 process squatting the socket path. Both ends can read peer credentials on AF_UNIX, so
-mutual identification is available, and who binds the path and with what permissions
-becomes a provisioning clause the contract states rather than leaves implied.
+mutual identification is available, and what the contract then owes is named here rather
+than authored, per section 8.
+
+**A credential names a uid and not a tool, which is the gap the contract closes.**
+`SO_PEERCRED` supplies a uid, a gid, and a pid, so a clause has to say which credential
+a registered tool presents and how that maps to its registration, or the seam
+authenticates a user and admits an application it never checked. Two more ride with it:
+who binds each path, with what ownership and mode, since a path nothing owns exclusively
+is a path another process can bind first, and what a restart or a death leaves behind,
+since a socket file outliving its tool is the squatting case arriving without an
+adversary. The gate's own predicate is the precedent for the first and
+`weaver-gate-Spec` is where the same questions were answered for the world-opened
+socket.
 
 ## 8. Scope, and the line it holds
 
@@ -246,18 +291,20 @@ batch's own manifest.
 Apex section 9's grip paragraphs answer talks-to through the world-opened socket's
 answer path, which is client-held execution and a different mechanism than the
 agent-opened socket, so the sweep retires or re-points that wording. The vision's
-section 6 has a tool's answer re-entering through the gate as part of the next prompt,
-which is the world-opened path and now names the wrong socket, though its initiation
-axis survives untouched and the two-socket split is that axis turned into hardware,
-worth one line where the sweep lands. Definition-of-done item 5 requires a real tool
-executed under kernel-enforced OS constraint, and under section 2 the reference bash is
-a registered application the program does not ship, so the item lands as a conformance
-fixture the way the gate suite ships fake clients. `weaver-admin-PRD` section 7 names
-the agent-uid tool case as its own assumption and files the cell to the gate, so the
-assumption sentence is edited when the cell resolves. The follow-on gate-charter edits
-are the no-second-listener surface clause of section 3, the relay of section 13.1
-gaining a second leg, and the section 7 cell itself, all after the apex, since
-apex-first is the only legal order.
+section 6 describes a tool's answer as re-entering through the gate as part of the next
+prompt, which is the world-opened path, where section 3 of this frame makes that answer
+the return leg of an agent-opened exchange, so the vision names the wrong socket under
+this frame and the sweep re-points it. The vision's initiation axis survives untouched,
+and the two-socket split is that axis turned into hardware, worth one line where the
+sweep lands. Definition-of-done item 5 requires a real tool executed under
+kernel-enforced OS constraint, and under section 2 the reference bash is a registered
+application the program does not ship, so the item lands as a conformance fixture the
+way the gate suite ships fake clients. `weaver-admin-PRD` section 7 names the agent-uid
+tool case as its own assumption and files the cell to the gate, so the assumption
+sentence is edited when the cell resolves. The follow-on gate-charter edits are the
+no-second-listener surface clause of section 3, the relay of section 13.1 gaining a
+second leg, and the section 7 cell itself, all after the apex, since apex-first is the
+only legal order.
 
 **The apex edit will want a grounding the rationale does not need.** The egress seam
 grounds in apex invariant 5.1, that every seam where one crate asks another process to
@@ -267,9 +314,10 @@ the client, the operator, and the init system, so a tool is the fourth instance 
 standing pattern rather than a novelty. One paragraph now spares the workflow the
 rediscovery.
 
-`weaver-gate-PRD` section 7 holds the PENDING cell open for exactly this. This document
-is the boundary rationale and the opening frame the workflow charters against. It
-decides nothing the workflow is there to decide. It states where the boundary sits, why
-it holds structurally, what it does not claim, and where the apex sweep runs, so the
-tool workflow opens with the question already framed rather than rediscovering it from
-the code.
+`weaver-gate-PRD` section 7 holds the PENDING cell open for the question this document
+frames, in the words section 0 records and reframes. This document is the boundary
+rationale and the opening frame the workflow charters against. It decides nothing the
+workflow is there to decide. It states where the boundary sits, why it holds
+structurally, what it does not claim, and where the apex sweep runs, so the tool
+workflow opens with the question already framed rather than rediscovering it from the
+code.

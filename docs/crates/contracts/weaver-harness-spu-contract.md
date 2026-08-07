@@ -34,8 +34,8 @@ deferred with the workflow that produces faults, per section 8.
 one.** The mechanics of an organ channel, the envelope, the exchange as the unit, what
 the layer does and does not provide, are the same for every organ the harness holds a
 two-initiator channel with, and they are stated once in `weaver-organ-channel` rather
-than in each contract.
-What stays here is what is specific to this seam, which is section 1.
+than in each contract. What stays here is what is specific to this seam, which is
+section 1.
 
 ```graph
 node: weaver-harness-spu-contract

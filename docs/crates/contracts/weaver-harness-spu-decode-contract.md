@@ -105,7 +105,7 @@ never its success, and what a death means is section 5's.
 ## 2. The exchanges
 
 Five. Four are opened by the harness and one by the SPU, which is the
-SPU-opened direction the residency contract deferred, arriving here because
+SPU-opened exchange the residency contract deferred, arriving here because
 the faults it carries are decode-domain traffic.
 
 **Open the session.** Opened by the harness, once per residency, after

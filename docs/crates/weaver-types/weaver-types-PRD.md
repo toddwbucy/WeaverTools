@@ -425,16 +425,14 @@ runs on. The case set it carries is the organs' enumerations, closed on
 **One of the nine belongs to the floor and not to any loop.** `organ-envelope` is the
 carrier every organ channel draws, holding the exchange a message belongs to, that
 message's position in the exchange, and the type of its payload. It is defined here
-because the coordination seam was the first channel to need it, and it is the one
-value in this subsection no later contract draws as new, because apex section 5.4
-makes a two-initiator channel with the harness the test of an organ and every such
-channel carries this envelope. The mechanics this record serves live in
-`weaver-organ-channel` as of the lift of 2026-07-31, and that document declares no
-records of its own, so this
-record stays here with the others and each organ contract draws it in its own
-vocabulary clause. The decode socket is not an organ channel, per
-`weaver-spu-PRD` section 13.2, so the every-channel sentence above stays
-scoped and the envelope does not cross that seam.
+because the coordination seam was the first channel to need it, and it is the one value
+in this subsection no later contract draws as new, because apex section 5.4 makes a
+two-initiator channel with the harness the test of an organ and every such channel
+carries this envelope. The mechanics this record serves live in `weaver-organ-channel`
+as of the lift of 2026-07-31, and that document declares no records of its own, so this
+record stays here with the others and each organ contract draws it in its own vocabulary
+clause. The decode socket is not an organ channel, per `weaver-spu-PRD` section 13.2, so
+the every-channel sentence above stays scoped and the envelope does not cross that seam.
 
 **Loop 0's traffic is low in volume and diagnostic in audience, which is the
 criterion its encoding answers to.** A residency carries a handful of these

@@ -36,14 +36,13 @@ admin's since the fault-carrier ruling of 2026-08-01 rerouted the fault to the
 stream, retires no half of what makes admin an organ. The invariant is authored in
 the apex and this document is downstream of it.
 
-**Two layers meet in this document and the boundary between them is a draw.** Sections
-1 and 2 draw `weaver-organ-channel`, which states the channel mechanics once for every
+**Two layers meet in this document and the boundary between them is a draw.** Sections 1
+and 2 draw `weaver-organ-channel`, which states the channel mechanics once for every
 organ the harness holds a two-initiator channel with, and keep only what is this seam's
-own. Sections 3
-through 7 are admin's instance, which is the exchange list and its rules. The layering
-is the point: the channel does not know what a load directive is, in the way that IP
-does not know what a name lookup is. The lift that document's section 0 records was
-anticipated here and landed on 2026-07-31.
+own. Sections 3 through 7 are admin's instance, which is the exchange list and its
+rules. The layering is the point: the channel does not know what a load directive is, in
+the way that IP does not know what a name lookup is. The lift that document's section 0
+records was anticipated here and landed on 2026-07-31.
 
 It carries no representation. The types it names have a definition site and no field
 list here, the ordering it fixes is stated as a rule rather than as a state machine,

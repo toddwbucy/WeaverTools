@@ -587,8 +587,7 @@ and neither alone, and admin governs the lifecycle domain. Either party may open
 exchange by the channel's mechanics, and the chartered census is admin's three, two
 that drive a transition and one that conveys the operator's intent to stop. The
 harness opens none since the fault-carrier ruling of 2026-08-01: a fault the worker
-survives
-travels as the `fault` event on the stream, the operator's tooling keys on it
+survives travels as the `fault` event on the stream, the operator's tooling keys on it
 there, and the two-initiator property is the channel's rather than the census's, per
 the contract's section 0. A worker's death is observed through process exit rather
 than reported over the channel, and readiness is a confirmation to a directive
