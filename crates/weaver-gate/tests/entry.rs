@@ -315,13 +315,29 @@ fn the_running_gate_refuses_an_unauthorized_dial() {
 /// a permanently readable listener. What the test reads is that the gate is
 /// still answering directives after far more dials than it retains.
 ///
-/// Perturbation: remove the `admitted.len() < RETAINED_LIMIT` guard and this
-/// test still passes at this dial count, which is why the assertion is that the
-/// channel still answers rather than a count of descriptors: the unbounded form
-/// fails at the descriptor table's size, which is a worse fixture than it is a
-/// property. The guard's ground is stated at its constant.
+/// **The dial count sits above the gate's retained bound and below the
+/// listener's backlog**, which is what lets every dial be asserted rather than
+/// hoped for. Rust's `UnixListener::bind` listens with a backlog of 128, so a
+/// hundred dials complete without blocking whether or not the gate accepts any
+/// of them. Verified by running this test against a gate with its accept
+/// removed: the loop finished immediately, the dials sitting in the backlog.
+/// An earlier cut dialled three hundred and swallowed failures with `if let
+/// Ok`, so it neither proved its own storm nor failed cleanly, since past the
+/// backlog a blocking connect against a gate that stopped accepting waits
+/// rather than returning, and the test would hang where it should fail.
+///
+/// **What this test does not demonstrate, stated because the name suggests
+/// otherwise.** Removing the `admitted.len() < RETAINED_LIMIT` guard leaves it
+/// passing: what the bound prevents is descriptor exhaustion, which needs a
+/// storm near the process's own descriptor limit rather than one just past the
+/// bound, and that is a heavier fixture than the property is worth here. Nor
+/// does removing the accept fail it, the channel being served before the
+/// listener, so a gate that never accepts still answers its directives. What is
+/// asserted is the narrower thing the name should be read as: a storm of dials
+/// leaves the channel answering. The guard's own ground is stated at its
+/// constant.
 #[test]
-fn a_peer_dialing_in_a_loop_leaves_the_gate_answering() {
+fn a_dial_storm_leaves_the_channel_answering() {
     let path = socket_path("dial-storm");
     let (harness, child_end) = seqpacket_pair();
     let (mut child, log_path) = spawn_gate(child_end.as_raw_fd());
@@ -336,12 +352,15 @@ fn a_peer_dialing_in_a_loop_leaves_the_gate_answering() {
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
 
-    // Well past the retained bound. These are refused on identity anyway, this
-    // process being the agent uid, which is the ordinary case for a storm.
-    for _ in 0..300 {
-        if let Ok(stream) = UnixStream::connect(&path) {
-            drop(stream);
-        }
+    // Well past the gate's retained bound of 64 and well under the listener's
+    // backlog of 128. Every dial is asserted: a swallowed failure would leave
+    // the storm unproven and the test named for something it did not do. These
+    // are refused on identity anyway, this process being the agent uid, which
+    // is the ordinary case for a storm.
+    for dial in 0..100 {
+        let stream = UnixStream::connect(&path)
+            .unwrap_or_else(|error| panic!("dial {dial} did not reach the listener: {error}"));
+        drop(stream);
     }
 
     // The channel still answers, which is the property: the loop did not wedge
@@ -354,7 +373,7 @@ fn a_peer_dialing_in_a_loop_leaves_the_gate_answering() {
     );
 
     drop(harness);
-    let status = wait_bounded(&mut child, 30, "a_peer_dialing_in_a_loop");
+    let status = wait_bounded(&mut child, 30, "a_dial_storm_leaves_the_channel_answering");
     assert!(status.success());
     std::fs::remove_file(&path).ok();
     std::fs::remove_file(&log_path).ok();
