@@ -32,18 +32,24 @@ use weaver_types::{MAX_ENVELOPE_BYTES, OrganEnvelope};
 pub const CHANNEL_FD: RawFd = 3;
 
 /// What entry refuses on, before it serves anything.
-#[derive(Debug, PartialEq)]
+///
+/// The two cases differ in what they leave behind, which is why the hygiene one
+/// carries the channel. A descriptor that will not open leaves this process
+/// mute, so its refusal can only be an exit the harness observes. A hygiene set
+/// that fails leaves the channel perfectly usable, so the refusal can be a
+/// typed answer the harness reads instead of a death it has to interpret.
+#[derive(Debug)]
 pub enum EntryFault {
-    /// Descriptor 3 is not an open descriptor.
-    ChannelUnusable,
-    /// Entry has already run. A second adoption would build a second owner for
-    /// one descriptor and close it twice on the way out, which is the hazard
-    /// owning the descriptor exists to remove.
-    AlreadyAdopted,
+    /// Descriptor 3 is not an open descriptor, or entry has already run. A
+    /// second adoption would build a second owner for one descriptor and close
+    /// it twice on the way out, which is the hazard owning it exists to remove.
+    Unusable,
     /// A hygiene set failed. Both are sets and never checks, so a failure is a
     /// refusal rather than a report: a step that finds a flag wrong and
-    /// continues leaves the process attachable.
-    HygieneFailed,
+    /// continues leaves the process attachable. The channel comes back with it,
+    /// because this process must answer for itself rather than be inferred
+    /// from.
+    HygieneFailed(Channel),
 }
 
 /// What a channel operation faults on, per `weaver-gate-Spec` section 5, which
@@ -96,31 +102,40 @@ pub fn adopt() -> Result<Channel, EntryFault> {
     // for descriptor 3, and the two closes on the way out are a double close of
     // a descriptor this process may no longer own.
     //
-    // **This carries no instrument and the ground is stated.** A test process
-    // holds no inherited channel, so its first adoption already refuses as
-    // unusable and a second-call test passes whether or not this guard stands.
-    // Buying it needs a process that really was forked with a channel at 3,
-    // which is the harness's fork rather than a fixture, so the guard is
-    // review's by reach.
+    // **The guard is claimed only once the descriptor verifies**, so a call
+    // that never built an owner leaves it unclaimed: setting it first would
+    // make a later retry report a double-close hazard that no owner ever
+    // created.
+    //
+    // The guard carries no instrument and the ground is stated. A test process
+    // holds no inherited channel, so its first adoption refuses as unusable and
+    // a second-call test passes whether or not this stands. Buying it needs a
+    // process really forked with a channel at 3, which is the harness's fork
+    // rather than a fixture.
     static ADOPTED: AtomicBool = AtomicBool::new(false);
-    if ADOPTED.swap(true, Ordering::SeqCst) {
-        return Err(EntryFault::AlreadyAdopted);
-    }
 
     let borrowed = unsafe { BorrowedFd::borrow_raw(CHANNEL_FD) };
-    fcntl(borrowed, FcntlArg::F_GETFD).map_err(|_| EntryFault::ChannelUnusable)?;
+    fcntl(borrowed, FcntlArg::F_GETFD).map_err(|_| EntryFault::Unusable)?;
+
+    if ADOPTED.swap(true, Ordering::SeqCst) {
+        return Err(EntryFault::Unusable);
+    }
 
     // SAFETY: the number was confirmed open above, and this is the one place in
     // the crate that constructs an owned handle from an inherited number.
     let end = unsafe { OwnedFd::from_raw_fd(CHANNEL_FD) };
+    let channel = Channel { end };
 
-    fcntl(end.as_fd(), FcntlArg::F_SETFD(FdFlag::FD_CLOEXEC))
-        .map_err(|_| EntryFault::HygieneFailed)?;
-    nix::sys::prctl::set_dumpable(false).map_err(|_| EntryFault::HygieneFailed)?;
-    nix::sys::prctl::set_pdeathsig(Some(nix::sys::signal::Signal::SIGTERM))
-        .map_err(|_| EntryFault::HygieneFailed)?;
+    // The sets. A failure hands the channel back rather than dropping it: the
+    // process is unfit to serve and must say so on the one channel it has.
+    if fcntl(channel.end.as_fd(), FcntlArg::F_SETFD(FdFlag::FD_CLOEXEC)).is_err()
+        || nix::sys::prctl::set_dumpable(false).is_err()
+        || nix::sys::prctl::set_pdeathsig(Some(nix::sys::signal::Signal::SIGTERM)).is_err()
+    {
+        return Err(EntryFault::HygieneFailed(channel));
+    }
 
-    Ok(Channel { end })
+    Ok(channel)
 }
 
 impl Channel {

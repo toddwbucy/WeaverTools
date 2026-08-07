@@ -9,22 +9,28 @@
 
 use std::process::Command;
 
-fn resolved_tree(edges: &str) -> String {
+/// One helper for both depths, so a flag change cannot land in one copy and
+/// leave the two tests asserting about different resolutions.
+fn resolved_tree(edges: &str, depth: Option<&str>) -> String {
+    let mut args = vec![
+        "tree",
+        "-p",
+        "weaver-gate",
+        "--edges",
+        edges,
+        "--prefix",
+        "none",
+        // The lock file is the subject: a resolution that fetched or updated
+        // would be asserting about a tree this repository does not record.
+        "--locked",
+        "--offline",
+    ];
+    if let Some(depth) = depth {
+        args.push("--depth");
+        args.push(depth);
+    }
     let out = Command::new(env!("CARGO"))
-        .args([
-            "tree",
-            "-p",
-            "weaver-gate",
-            "--edges",
-            edges,
-            "--prefix",
-            "none",
-            // The lock file is the subject: a resolution that fetched or
-            // updated would be asserting about a tree this repository does not
-            // record.
-            "--locked",
-            "--offline",
-        ])
+        .args(&args)
         .output()
         .expect("cargo tree runs");
     assert!(
@@ -32,18 +38,6 @@ fn resolved_tree(edges: &str) -> String {
         "cargo tree failed: {}",
         String::from_utf8_lossy(&out.stderr)
     );
-    String::from_utf8(out.stdout).expect("utf8")
-}
-
-fn resolved_tree_depth(edges: &str, depth: &str) -> String {
-    let out = Command::new(env!("CARGO"))
-        .args([
-            "tree", "-p", "weaver-gate", "--edges", edges, "--prefix", "none", "--depth", depth,
-            "--locked", "--offline",
-        ])
-        .output()
-        .expect("cargo tree runs");
-    assert!(out.status.success(), "cargo tree failed");
     String::from_utf8(out.stdout).expect("utf8")
 }
 
@@ -70,7 +64,7 @@ fn manifest() -> String {
 /// rather than this crate's draw.
 #[test]
 fn no_organ_is_in_the_resolved_tree() {
-    let names = crate_names(&resolved_tree("normal"));
+    let names = crate_names(&resolved_tree("normal", None));
     let mut internal: Vec<_> = names
         .iter()
         .filter(|n| n.starts_with("weaver-") && *n != "weaver-gate")
@@ -103,7 +97,7 @@ fn no_organ_is_in_the_resolved_tree() {
 fn the_direct_dependency_set_carries_no_traits_line() {
     // Structural first: the resolved direct set, which catches a renamed or
     // table-form declaration a text scan reads straight past.
-    let direct = crate_names(&resolved_tree_depth("normal", "1"));
+    let direct = crate_names(&resolved_tree("normal", Some("1")));
     assert!(
         !direct.iter().any(|n| n == "weaver-traits"),
         "weaver-traits is a direct dependency, and the floor-link set is \
@@ -162,7 +156,7 @@ fn the_manifest_declares_one_binary() {
 /// Watched under exactly that addition.
 #[test]
 fn the_resolved_tree_carries_no_runtime_no_logging_no_yaml() {
-    let names = crate_names(&resolved_tree("all"));
+    let names = crate_names(&resolved_tree("all", None));
     for forbidden in [
         "tokio",
         "async-std",

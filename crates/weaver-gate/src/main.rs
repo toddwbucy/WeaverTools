@@ -44,23 +44,48 @@ enum HookState {
 
 fn main() -> ExitCode {
     // Entry performs its two hygiene sets and one election before the first
-    // read. A refusal here is a refusal to serve.
-    let channel = match channel::adopt() {
-        Ok(channel) => channel,
-        Err(fault) => {
-            eprintln!("{}", entry_refusal_line(&fault));
-            return ExitCode::FAILURE;
+    // read.
+    match channel::adopt() {
+        Ok(channel) => serve(channel),
+        Err(EntryFault::Unusable) => {
+            // Mute by construction: with no usable channel the only refusal
+            // available is the exit the harness observes.
+            eprintln!(
+                "{}",
+                serde_json::json!({"refusal": "descriptors_unusable"})
+            );
+            ExitCode::FAILURE
         }
-    };
-    serve(channel)
+        Err(EntryFault::HygieneFailed(channel)) => {
+            // **The channel is usable, so this refuses in words rather than by
+            // dying.** Exiting here would reach the harness as a closed channel
+            // and be aggregated as a no-residency, sending the operator to
+            // debug the wrong subsystem for what the floor already names.
+            eprintln!("{}", serde_json::json!({"refusal": "boundary_unverified"}));
+            refuse_everything(channel)
+        }
+    }
 }
 
-fn entry_refusal_line(fault: &EntryFault) -> String {
-    match fault {
-        EntryFault::ChannelUnusable | EntryFault::AlreadyAdopted => {
-            "{\"refusal\":\"descriptors_unusable\"}".to_string()
+/// A process that failed its hygiene sets serves nothing and answers every
+/// directive with the floor's case for exactly this: the boundary could not be
+/// established. It runs the same loop shape so the harness reads a typed reason
+/// on the exchange it opened.
+fn refuse_everything(channel: Channel) -> ExitCode {
+    loop {
+        let envelope = match channel.recv() {
+            Ok(envelope) => envelope,
+            Err(ChannelFault::Closed) => return ExitCode::FAILURE,
+            Err(_) => return ExitCode::FAILURE,
+        };
+        let answered = channel.send(&OrganEnvelope {
+            exchange: envelope.exchange,
+            position: Position::Close,
+            payload: Payload::Refusal(LifecycleRefusal::BoundaryUnverified),
+        });
+        if answered.is_err() {
+            return ExitCode::FAILURE;
         }
-        EntryFault::HygieneFailed => "{\"refusal\":\"boundary_unverified\"}".to_string(),
     }
 }
 
@@ -93,27 +118,43 @@ fn serve(channel: Channel) -> ExitCode {
         };
 
         let payload = dispatch(&mut state, &envelope);
-        if channel
-            .send(&OrganEnvelope {
-                exchange: envelope.exchange,
-                position: Position::Close,
-                payload,
-            })
-            .is_err()
-        {
-            drop(state);
-            return ExitCode::FAILURE;
+        match channel.send(&OrganEnvelope {
+            exchange: envelope.exchange,
+            position: Position::Close,
+            payload,
+        }) {
+            Ok(()) => {}
+            // **The interior went away between the directive and its answer,
+            // which is the ordinary teardown rather than a failure here.** The
+            // harness's leave sends Lower, drops the channel, and reaps without
+            // reading the answer, so this is the path every clean session
+            // takes: treating it as a failure made the gate exit non-zero on
+            // every orderly unload, and any supervisor reading exit status
+            // recorded a fault per session.
+            Err(ChannelFault::Closed) => {
+                drop(state);
+                return ExitCode::SUCCESS;
+            }
+            // The other two mean this crate built something it cannot send,
+            // which is this crate's fault and is reported as one.
+            Err(fault) => {
+                eprintln!("{}", fault_line(&fault));
+                drop(state);
+                return ExitCode::FAILURE;
+            }
         }
     }
 }
 
+/// Every line this binary writes goes through the encoder it already depends
+/// on, so a renamed case or an added field cannot ship an unparseable line.
 fn fault_line(fault: &ChannelFault) -> String {
     match fault {
         ChannelFault::Truncated { bound } => {
-            format!("{{\"fault\":\"truncated\",\"bound\":{bound}}}")
+            serde_json::json!({"fault": "truncated", "bound": bound}).to_string()
         }
-        ChannelFault::Undecodable => "{\"fault\":\"undecodable\"}".to_string(),
-        ChannelFault::Closed => "{\"fault\":\"closed\"}".to_string(),
+        ChannelFault::Undecodable => serde_json::json!({"fault": "undecodable"}).to_string(),
+        ChannelFault::Closed => serde_json::json!({"fault": "closed"}).to_string(),
     }
 }
 

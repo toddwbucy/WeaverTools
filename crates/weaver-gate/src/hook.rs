@@ -138,6 +138,18 @@ impl Hook {
 
     /// Accept one connection and judge it **before any byte is read**.
     ///
+    /// **Nothing in the shipped binary calls this yet, and that is a gap rather
+    /// than a design.** The serve loop of `main.rs` blocks on the channel, so
+    /// during the raised window a dialing peer sits in the listen backlog
+    /// unjudged: the kernel completes its handshake and the boundary never
+    /// answers. What this crate would do with an *admitted* connection is the
+    /// relay of Spec section 4, which is deferred, so wiring an accept here
+    /// today would mean inventing a disposal the Spec does not describe.
+    /// Section 6's assertions are exercised against this function directly by
+    /// `tests/boundary.rs`, and the distance between that and the running
+    /// binary is named in `weaver-gate-PRD`'s open items rather than papered
+    /// over.
+    ///
     /// The peer's credential is read with `SO_PEERCRED` and the identity is
     /// judged by the floor's one predicate. A peer that fails is refused by
     /// closure with nothing written to it: an admitted-looking answer to a
@@ -161,19 +173,11 @@ impl Hook {
                 }
             }
         };
-        // Close-on-exec on the connection, on the same ground as the channel
-        // end: this crate execs nothing, and the requirement is stated against
-        // the last exec.
-        if nix::fcntl::fcntl(
-            stream.as_fd(),
-            nix::fcntl::FcntlArg::F_SETFD(nix::fcntl::FdFlag::FD_CLOEXEC),
-        )
-        .is_err()
-        {
-            return Err(AcceptOutcome::Unusable {
-                detail: "close-on-exec".into(),
-            });
-        }
+        // Close-on-exec is already set: Rust's `UnixListener::accept` uses
+        // `accept4(SOCK_CLOEXEC)` on Linux, so the flag arrives atomically with
+        // the connection. Setting it again would spend a syscall per accept and
+        // add a failure branch whose only reachable effect is to report the
+        // listener dead when one connection hiccuped.
 
         let peer = match peer_identity(&stream) {
             Some(peer) => peer,

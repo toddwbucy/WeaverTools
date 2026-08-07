@@ -17,39 +17,24 @@
 //! killing the double as a process would end the forking thread too, making the
 //! perturbation one that can never be seen to fail.
 
+mod common;
+
 use std::io::Write;
-use std::os::fd::{AsRawFd, OwnedFd, RawFd};
+use std::os::fd::AsRawFd;
 use std::os::unix::net::UnixStream;
-use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
-use nix::libc;
-use nix::sys::socket::{AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair};
-use weaver_types::{
-    AccessRule, ExchangeId, GateInstruction, LifecycleAnswer, LifecycleDirective, Opener,
-    OrganEnvelope, Payload, Position,
+use common::{
+    ask, bound_receives, instruction, place_inherited, scratch, seqpacket_pair, tell,
+    wait_bounded,
 };
+use weaver_types::{LifecycleAnswer, LifecycleDirective, Payload};
 
-fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
-    socketpair(
-        AddressFamily::Unix,
-        SockType::SeqPacket,
-        None,
-        SockFlag::SOCK_CLOEXEC,
-    )
-    .expect("a socketpair")
-}
-
-/// Place the child's end at descriptor 3 and mark everything above it
-/// close-on-exec.
-///
-/// Marked, never closed: Rust reports a failed exec to the parent through a
-/// close-on-exec pipe it opens above this range, and closing that pipe makes
-/// the parent read EOF and conclude the spawn succeeded. Nothing in the closure
-/// allocates, since it runs in the child of a multithreaded test process.
-fn spawn_gate(child_end: RawFd) -> (Child, PathBuf) {
+/// Start the gate with its one end at descriptor 3. Standard error goes to a
+/// file rather than a pipe, since nothing drains a pipe until after the wait.
+fn spawn_gate(child_end: std::os::fd::RawFd) -> (Child, PathBuf) {
     let log_path = std::env::temp_dir().join(format!(
         "weaver-gate-entry-{}-{}.log",
         std::process::id(),
@@ -61,99 +46,14 @@ fn spawn_gate(child_end: RawFd) -> (Child, PathBuf) {
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::from(log));
-    unsafe {
-        command.pre_exec(move || {
-            let high = libc::fcntl(child_end, libc::F_DUPFD, 32);
-            if high < 0 {
-                return Err(std::io::Error::last_os_error());
-            }
-            if libc::dup2(high, 3) < 0 {
-                return Err(std::io::Error::last_os_error());
-            }
-            libc::close(high);
-            // Checked: an unchecked sweep that failed would leave the child
-            // holding inheritable descriptors and refusing to serve for a
-            // reason the test could not see. Failing the spawn says it here.
-            if libc::syscall(
-                libc::SYS_close_range,
-                4u32,
-                u32::MAX,
-                libc::CLOSE_RANGE_CLOEXEC,
-            ) != 0
-            {
-                return Err(std::io::Error::last_os_error());
-            }
-            Ok(())
-        });
-    }
+    place_inherited(&mut command, &[child_end]);
     (command.spawn().expect("the binary starts"), log_path)
 }
 
 static COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
-fn wait_bounded(child: &mut Child, seconds: u64, what: &str) -> std::process::ExitStatus {
-    let deadline = Instant::now() + Duration::from_secs(seconds);
-    loop {
-        match child.try_wait().expect("a wait succeeds") {
-            Some(status) => return status,
-            None if Instant::now() > deadline => {
-                child.kill().ok();
-                child.wait().ok();
-                panic!("{what}: the child did not exit within {seconds}s");
-            }
-            None => std::thread::sleep(Duration::from_millis(25)),
-        }
-    }
-}
-
-fn ask(end: &OwnedFd, ordinal: u64, directive: LifecycleDirective) -> OrganEnvelope {
-    // Bounded, so a gate that never answers is a failure naming the exchange
-    // rather than a hang the harness cannot end.
-    nix::sys::socket::setsockopt(
-        end,
-        nix::sys::socket::sockopt::ReceiveTimeout,
-        &nix::sys::time::TimeVal::new(30, 0),
-    )
-    .expect("the receive timeout sets");
-
-    let envelope = OrganEnvelope {
-        exchange: ExchangeId {
-            opener: Opener::Harness,
-            ordinal,
-        },
-        position: Position::Open,
-        payload: Payload::Directive(directive),
-    };
-    let body = serde_json::to_vec(&envelope).expect("an envelope encodes");
-    send(end.as_raw_fd(), &body, MsgFlags::empty()).expect("the directive is sent");
-    let mut buffer = vec![0u8; 64 * 1024];
-    let read = recv(end.as_raw_fd(), &mut buffer, MsgFlags::empty())
-        .unwrap_or_else(|errno| panic!("no answer to ordinal {ordinal}: {errno}"));
-    assert!(
-        read > 0,
-        "the gate closed without answering ordinal {ordinal}"
-    );
-    buffer.truncate(read);
-    serde_json::from_slice(&buffer).expect("the answer is an envelope")
-}
-
 fn socket_path(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("weaver-gate-entry-{}-{name}", std::process::id()));
-    std::fs::create_dir_all(&dir).expect("a scratch dir");
-    let path = dir.join("gate.sock");
-    std::fs::remove_file(&path).ok();
-    path
-}
-
-fn instruction(path: PathBuf) -> GateInstruction {
-    GateInstruction {
-        socket_path: path,
-        access_rule: AccessRule {
-            allowed_uids: std::collections::BTreeSet::new(),
-            allowed_gids: std::collections::BTreeSet::new(),
-            denied_uids: std::collections::BTreeSet::new(),
-        },
-    }
+    scratch("entry", name)
 }
 
 /// **The dumpable flag is cleared at entry**, read from outside by an observer
@@ -282,6 +182,55 @@ fn raise_then_lower_round_trips_across_the_seam() {
     drop(harness);
     let status = wait_bounded(&mut child, 30, "raise_then_lower_round_trips");
     assert!(status.success());
+    std::fs::remove_file(&path).ok();
+    std::fs::remove_file(&log_path).ok();
+}
+
+/// **The harness's real teardown ends the gate cleanly.**
+///
+/// `leave()` sends Lower, drops the channel, and reaps, never reading the
+/// answer. The gate wakes, closes its listener, and its send of `GateStopped`
+/// meets a peer that is already gone. That is the ordinary path every clean
+/// session takes, and it must exit zero: an earlier cut returned failure here,
+/// so every orderly unload recorded a gate fault for any supervisor reading
+/// exit status.
+///
+/// The existing closure test exercises a gate blocked in `recv`. This one
+/// exercises the sequence the real caller performs, which is a different code
+/// path and was the one that was wrong.
+///
+/// Perturbation: return `ExitCode::FAILURE` on the `Closed` arm of the answer
+/// send and this test fails. Watched under exactly that change.
+#[test]
+fn the_harness_teardown_sequence_ends_the_gate_cleanly() {
+    let path = socket_path("teardown");
+    let (harness, child_end) = seqpacket_pair();
+    let (mut child, log_path) = spawn_gate(child_end.as_raw_fd());
+    bound_receives(&harness, 30);
+
+    let ready = ask(
+        &harness,
+        1,
+        LifecycleDirective::Raise {
+            instruction: instruction(path.clone()),
+        },
+    );
+    assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
+
+    // Exactly what the harness does: tell, drop, reap. No answer is read.
+    tell(&harness, 2, LifecycleDirective::Lower);
+    drop(harness);
+
+    let status = wait_bounded(&mut child, 30, "the_harness_teardown_sequence");
+    assert!(
+        status.success(),
+        "an orderly leave exits zero, stderr: {}",
+        std::fs::read_to_string(&log_path).unwrap_or_default()
+    );
+    assert!(
+        UnixStream::connect(&path).is_err(),
+        "and the listener is gone"
+    );
     std::fs::remove_file(&path).ok();
     std::fs::remove_file(&log_path).ok();
 }

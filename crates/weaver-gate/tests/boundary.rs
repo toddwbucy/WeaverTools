@@ -11,38 +11,16 @@
 //! the charter names. The mechanism is the predicate at accept with the agent's
 //! own uid denied by construction.
 
-use std::collections::BTreeSet;
+mod common;
+
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
-use std::path::PathBuf;
 
+use common::{permissive_instruction, scratch as scratch_path};
 use weaver_gate::hook::{AcceptOutcome, Hook};
-use weaver_types::{AccessRule, GateInstruction};
 
-fn scratch(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!(
-        "weaver-gate-boundary-{}-{name}",
-        std::process::id()
-    ));
-    std::fs::create_dir_all(&dir).expect("a scratch dir");
-    let path = dir.join("gate.sock");
-    std::fs::remove_file(&path).ok();
-    path
-}
-
-/// An instruction whose rule permits this very uid, which is the mistake the
-/// construction has to survive.
-fn permissive_instruction(path: PathBuf) -> GateInstruction {
-    let mut allowed_uids = BTreeSet::new();
-    allowed_uids.insert(nix::unistd::getuid().as_raw());
-    GateInstruction {
-        socket_path: path,
-        access_rule: AccessRule {
-            allowed_uids,
-            allowed_gids: BTreeSet::new(),
-            denied_uids: BTreeSet::new(),
-        },
-    }
+fn scratch(name: &str) -> std::path::PathBuf {
+    scratch_path("boundary", name)
 }
 
 /// **The agent uid is denied by construction, not by configuration.**
