@@ -299,7 +299,63 @@ fn the_running_gate_refuses_an_unauthorized_dial() {
 
     tell(&harness, 2, LifecycleDirective::Lower);
     drop(harness);
-    wait_bounded(&mut child, 30, "the_running_gate_refuses_an_unauthorized_dial");
+    let status = wait_bounded(&mut child, 30, "the_running_gate_refuses_an_unauthorized_dial");
+    assert!(
+        status.success(),
+        "an orderly lower ends the gate with a zero status, got {status:?}"
+    );
+    std::fs::remove_file(&path).ok();
+    std::fs::remove_file(&log_path).ok();
+}
+
+/// **A peer dialing in a loop cannot exhaust the gate or starve its channel.**
+///
+/// Retained connections are bounded, and the accept runs whether or not the
+/// connection is kept, so the backlog drains and the poll loop does not spin on
+/// a permanently readable listener. What the test reads is that the gate is
+/// still answering directives after far more dials than it retains.
+///
+/// Perturbation: remove the `admitted.len() < RETAINED_LIMIT` guard and this
+/// test still passes at this dial count, which is why the assertion is that the
+/// channel still answers rather than a count of descriptors: the unbounded form
+/// fails at the descriptor table's size, which is a worse fixture than it is a
+/// property. The guard's ground is stated at its constant.
+#[test]
+fn a_peer_dialing_in_a_loop_leaves_the_gate_answering() {
+    let path = socket_path("dial-storm");
+    let (harness, child_end) = seqpacket_pair();
+    let (mut child, log_path) = spawn_gate(child_end.as_raw_fd());
+    bound_receives(&harness, 30);
+
+    let ready = ask(
+        &harness,
+        1,
+        LifecycleDirective::Raise {
+            instruction: instruction(path.clone()),
+        },
+    );
+    assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
+
+    // Well past the retained bound. These are refused on identity anyway, this
+    // process being the agent uid, which is the ordinary case for a storm.
+    for _ in 0..300 {
+        if let Ok(stream) = UnixStream::connect(&path) {
+            drop(stream);
+        }
+    }
+
+    // The channel still answers, which is the property: the loop did not wedge
+    // on a readable listener and directives are not starved behind dials.
+    let stopped = ask(&harness, 2, LifecycleDirective::Lower);
+    assert_eq!(
+        stopped.payload,
+        Payload::Answer(LifecycleAnswer::GateStopped),
+        "the gate still serves its channel after a dial storm"
+    );
+
+    drop(harness);
+    let status = wait_bounded(&mut child, 30, "a_peer_dialing_in_a_loop");
+    assert!(status.success());
     std::fs::remove_file(&path).ok();
     std::fs::remove_file(&log_path).ok();
 }

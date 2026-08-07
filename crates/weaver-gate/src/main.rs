@@ -186,6 +186,16 @@ fn serve(channel: Channel) -> ExitCode {
     }
 }
 
+/// How many admitted connections the raised window retains before it refuses
+/// further ones by closure.
+///
+/// **A bound rather than a capacity.** In this pass no legitimate client
+/// traffic exists, the relay being deferred, so this exists to keep a peer that
+/// dials in a loop from consuming the gate's descriptor table rather than to
+/// size a workload. Sizing it against real traffic is the relay act's, which is
+/// also where retained connections stop being retained and start being served.
+const RETAINED_LIMIT: usize = 64;
+
 /// Accept one dialing peer and judge it.
 ///
 /// **The refusal half is what this act implements**, and it is what
@@ -194,16 +204,32 @@ fn serve(channel: Channel) -> ExitCode {
 /// closure with nothing written back. `Hook::accept` returns no stream for a
 /// refused peer, so the closure is the drop inside it.
 ///
-/// **An admitted peer is held rather than served or closed.** What it is owed
-/// is a conversation, which is the relay of Spec section 4 and is deferred, so
-/// closing it would refuse a peer the predicate admitted and answering it would
-/// be inventing the relay. Holding it is the truthful third thing: its request
-/// is pending. The connections ride with the hook and go when the lower does.
-/// In this pass no legitimate client traffic exists, so this is a path nothing
-/// takes, and the relay act is where it stops being one.
+/// **An admitted peer is held rather than served or closed, up to a bound.**
+/// What it is owed is a conversation, which is the relay of Spec section 4 and
+/// is deferred, so closing it would refuse a peer the predicate admitted and
+/// answering it would be inventing the relay. Holding it is the truthful third
+/// thing: its request is pending. The connections ride with the hook and go
+/// when the lower does.
+///
+/// **Past the bound the peer is closed, and the accept still runs.** Retaining
+/// without a limit lets a peer dial in a loop until the descriptor table is
+/// full, after which every accept fails and, because the listener stays
+/// readable, the loop spins: re-polling, re-failing, and flooding standard
+/// error while directives wait behind it. Declining to accept at the bound
+/// produces the same spin for the same reason, so the accept always happens and
+/// what changes at the bound is whether the connection is kept. Draining the
+/// backlog is what keeps the loop honest.
 fn judge_one(hook: &Hook, admitted: &mut Vec<Admitted>) {
     match hook.accept() {
-        Ok(peer) => admitted.push(peer),
+        Ok(peer) => {
+            if admitted.len() < RETAINED_LIMIT {
+                admitted.push(peer);
+            }
+            // Past the bound the connection drops here, closing it. The peer
+            // passed the predicate and is refused by capacity rather than by
+            // identity, which is a distinction the relay act will need to make
+            // answerable and this pass can only make bounded.
+        }
         // Refused, and already closed by the accept that judged it.
         Err(AcceptOutcome::Denied) => {}
         Err(AcceptOutcome::Unusable { detail }) => {
