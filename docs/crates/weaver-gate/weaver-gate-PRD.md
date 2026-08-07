@@ -94,23 +94,40 @@ the only thing that enters is work.
 
 ## 2. What this crate owns
 
-**The hook.** This crate binds the sockets the agent exposes outward, of any kind:
-named local Unix sockets. **There are two as of the egress ruling of 2026-08-07**, and
-the axis that separates them is which party may open an exchange, per
-`weaver-organ-channel` section 1. The world opens exchanges on one and the agent
-perceives and answers. The agent opens exchanges on the other and a registered tool
-answers. Each is single-initiator, which is what the interior's organ channels are not,
-and on a single-initiator socket the opening party is a fact about the socket rather
-than one carried per message, which is what lets this crate judge a crossing by reading
-no payload at all. The second socket is chartered here and its contract is the tool
-workflow's, per apex section 3 step 7. The claim is scoped to the
-outward-facing sockets deliberately, since the inversion of 2026-08-05 has
-the harness binding a coordination socket inward, inside the same sandbox, which
-faces admin rather than the world and admits root alone. **Two doors out and one
-door in, and this crate holds both that face out**, a count the egress ruling
-changed from one and the reason unchanged: what faces the world is this crate's
-and what faces admin is not. Ready means bound. Stopped means closed. The sockets
-it binds are not this crate's decision: they arrive as the gate instruction inside
+**The hook.** This crate holds the agent's outward seams, of any kind: named local
+Unix sockets. **There are two as of the egress ruling of 2026-08-07**, and the axis
+that separates them is which party may open an exchange, per `weaver-organ-channel`
+section 1. The world opens exchanges on one and the agent perceives and answers. The
+agent opens exchanges on the other and a registered tool answers. Each is
+single-initiator, which is what the interior's organ channels are not, and on a
+single-initiator socket the opening party is a fact about the socket rather than one
+carried per message, which is what lets this crate judge a crossing by reading no
+payload at all.
+
+**Which end binds the agent-opened seam is not this charter's to say.** On the
+world-opened seam it is settled and merged: the world dials, this crate binds and
+accepts, per `weaver-gate-world-contract`. On the agent-opened seam the transport is
+one of the three things `tool-egress-boundary-frame` section 7 names as the contract's
+own, beside which credential a registered tool presents and what a restart or a death
+leaves behind, and a charter that answered it here would settle by assertion what the
+frame parked for a reason: a path nothing owns exclusively is a path another process
+can bind first, and which end owns it decides that. **What this charter fixes is that
+the seam exists, that it is this crate's, and that it is single-initiator with the
+agent opening.** The rest arrives with the contract, per apex section 3 step 7.
+
+**Whichever end binds, the peer is authenticated on every connection.** Both ends of an
+AF_UNIX connection can read `SO_PEERCRED`, so the identification holds under either
+transport: this crate judges a peer it accepted, or confirms the peer it reached is the
+registered tool and not a process squatting the path. The predicate below is the rule
+that judgment runs, and the transport decides only which side calls first.
+
+The claim is scoped to the outward-facing seams deliberately, since the inversion of
+2026-08-05 has the harness binding a coordination socket inward, inside the same
+sandbox, which faces admin rather than the world and admits root alone. **Two doors out
+and one door in, and this crate holds both that face out**, a count the egress ruling
+changed from one and the reason unchanged: what faces the world is this crate's and what
+faces admin is not. Ready means every seam stands. Stopped means every one is closed.
+The seams are not this crate's decision: they arrive as the gate instruction inside
 the enter fan-out, operator-declared and admin-validated, carried by the harness
 uninterpreted, resolved here. The parallel to `model-binding` is exact and deliberate.
 
@@ -179,35 +196,46 @@ has confirmed residency, over a pair the harness creates before the fork. The or
 apex section 6's binding rule, and the reason is the boundary: a hook that rises
 before the interior is whole would accept work the agent cannot yet do. On its side of
 the fork this crate performs its final exec, sets its own end of the channel
-close-on-exec, clears its own dumpable flag, receives the gate instruction, binds the
-sockets the instruction names, and confirms ready. Ready is a fact about the
-listeners, not about the process: **it is sent only after every bind has returned**,
-which the egress ruling of 2026-08-07 turned from one bind into two. A ready answered
-after the first would name a boundary half open, and the harness reading it would
-proceed with a door still shut.
+close-on-exec, clears its own dumpable flag, receives the gate instruction, establishes
+every seam the instruction names, and confirms ready. Ready is a fact about the seams,
+not about the process: **it is sent only after every one of them stands**, which the
+egress ruling of 2026-08-07 turned from one seam into two. A ready answered after the
+first would name a boundary half open, and the harness reading it would proceed with a
+door still shut. What standing means on the agent-opened seam follows from the
+transport its contract settles, per section 2, and the rule stated here does not
+depend on that answer.
 
 **Refusing.** A bind that fails is a refusal with the reason, typed, and a refusal
 leaves nothing held: no listener, no half-bound socket, nothing a retry would trip
-over. **With two binds that becomes an unwind rather than a return**: a second bind
-that fails closes the listener the first bind opened before the refusal is answered,
-so a refused raise leaves the same nothing a single-bind refusal left. The aggregate's
-rollback has nothing of this crate's to undo, which is the property section 5 rests
-on, and it holds only if the partial success is closed here. A refusal is answered
-to the harness rather than exited on, for the reason the SPU charter states, a party
-that exited would replace a typed reason with an observed death.
+over. **With two seams that becomes an unwind rather than a return**: a second seam
+that fails to stand closes whatever the first established before the refusal is
+answered, so a refused raise leaves the same nothing a single-seam refusal left. The
+aggregate's rollback has nothing of this crate's to undo, which is the property
+section 5 rests on, and it holds only if the partial success is closed here.
+
+A refusal is answered to the harness rather than exited on, for the reason the SPU
+charter states, a party that exited would replace a typed reason with an observed
+death.
 
 **Lowering.** The harness stops this crate first in the leave fan-out. Stopping
-closes the listener before anything else happens anywhere else, which is what
-stopped-first means and why it is first. Confirmation of stopped is sent only after
-the listener is closed. What happens to a connection accepted and in flight at that
-moment is drain, and drain is the token workflow's, deferred in section 8. In this
-pass no traffic exists, so closed is the whole of it.
+closes **every seam this crate holds** before anything else happens anywhere else,
+which is what stopped-first means and why it is first. Confirmation of stopped is
+sent only after all of them are closed, which the egress ruling of 2026-08-07 turned
+from one into two: a stopped answered with the agent-opened seam still reachable
+would tell the harness the boundary is down while a door still stands, which is the
+same half-open the raise refuses in the other direction. What happens to a connection
+accepted and in flight at that moment is drain, and drain is the token workflow's,
+deferred in section 8, and it reaches both seams for the same reason the close does.
+In this pass no traffic exists, so closed is the whole of it.
 
 **Never outliving.** A gate process never outlives the worker interior it protects,
 per apex section 6. The mechanism this pass states is the channel: the pair closes
-when the harness is gone, and a gate that observes closure closes its listener and
-exits. Whether a second mechanism backs this is the Spec's choice, and the requirement
-does not depend on it.
+when the harness is gone, and a gate that observes closure closes every seam it holds
+and exits. The count is the lowering clause's and the reason is the same, a seam
+outliving the interior being the boundary standing with nothing behind it, which is
+worse on the agent-opened seam than on the world-opened one because a registered tool
+would go on reaching a gate whose agent is gone. Whether a second mechanism backs
+this is the Spec's choice, and the requirement does not depend on it.
 
 ## 5. What a failure partway through leaves behind
 
@@ -429,10 +457,10 @@ clients, and none is needed, since a client sees only its own connection.
 **Drain is modest by construction and this section states why.** A lower
 arrives only when the run is at rest, per the coordination seam's own rule
 that leave refuses while a turn is in flight, so no turn is outstanding when
-the listener closes. What remains is connections a client is holding open,
-which this crate closes after the listener and before answering stopped. A
-client that reconnects finds no listener, which is refusal by absence and the
-boundary the lifecycle protects.
+the seams close. What remains is connections a peer is holding open on either
+seam, which this crate closes after the seams and before answering stopped. A
+peer that reconnects finds nothing standing, which is refusal by absence and
+the boundary the lifecycle protects.
 
 ### 13.4 The faults this crate raises
 
