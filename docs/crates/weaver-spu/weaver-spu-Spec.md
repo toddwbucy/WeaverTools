@@ -397,7 +397,7 @@ section 10, and `weaver-gate-Spec` section 6 each naming the same watch. Section
 crate in the corpus carrying this obligation on prose alone. **The two also ground
 in two different invariants, along the same line their instruments took.** The
 envelope's confinement is apex section 5.4 read at this crate's two ends: the
-lifecycle channel is the duplex channel with the harness that makes this crate an
+lifecycle channel is the two-initiator channel with the harness that makes this crate an
 organ, and the decode socket is a second end its own contract governs, so an
 envelope crossing it would put the organ channel's carriage on a channel that is
 not one and leave the organ line unreadable from a capture. The truncation fault

@@ -52,10 +52,11 @@ to: WeaverTools
 
 **The organ that governs model residency, and one of them per agent.** It holds the
 weights on the device, it holds them for exactly as long as the worker that forked it
-lives, and it answers the harness about that residency across a duplex channel. Both
-halves are what make it an organ under apex section 5.4, and neither alone would.
-Governing a domain without a duplex channel would make it a submodule of the harness,
-and a duplex channel without a domain would make it a second coordinator.
+lives, and it answers the harness about that residency across a two-initiator channel.
+Both halves are what make it an organ under apex section 5.4, and neither alone would.
+Governing a domain without a two-initiator channel would make it a submodule of the
+harness, and a two-initiator channel without a domain would make it a second
+coordinator.
 
 **It is the only crate in this program that holds device memory.** `weaver-harness-PRD`
 section 3 gives it model residency, GPU arbitration at the device, decode compute,
@@ -364,8 +365,8 @@ the seam above and there is no reason for this seam to differ.
 
 ## 6. The seam
 
-This crate holds one seam. It is a duplex channel to `weaver-harness`, governed by
-`weaver-harness-spu-contract`.
+This crate holds one seam. It is a two-initiator channel to `weaver-harness`, governed
+by `weaver-harness-spu-contract`.
 
 | Seam | Peer | What crosses |
 |---|---|---|
@@ -398,7 +399,7 @@ to: weaver-traits
 is not an organ channel.** The decoder-cut ruling of 2026-08-02 gave decode its
 own socket so no lifecycle directive queues behind decode traffic, and section
 13.2 carries the classification that ruling deferred: the organ test of apex
-section 5.4 names one duplex channel, the lifecycle channel is that channel,
+section 5.4 names one two-initiator channel, the lifecycle channel is that channel,
 and this one is operation surface, so the organ envelope does not cross it and
 the every-channel sentence of `weaver-types-PRD` section 2.3 stays scoped to
 organ channels with no exception admitted.
@@ -411,22 +412,24 @@ possession, which is the apex's second case rather than an exception to its firs
 
 **The seam edge is declared here because this crate is the organ.** Under the rule
 `weaver-admin-harness-contract` section 0 states, the organ declares and the harness
-does not, because the harness is the hub every organ is duplex with and a hub declaring
-its own edges would carry the whole seam graph in one crate. The older rule, that the
-crate which asks declares, had no unique answer on a duplex seam, which is why it was
-replaced, and Document Format section 4 now carries the scoped rule.
+does not, because the harness is the hub every organ holds its two-initiator channel
+with and a hub declaring its own edges would carry the whole seam graph in one crate.
+The older rule, that the crate which asks declares, had no unique answer on a
+two-initiator seam, which is why it was replaced, and Document Format section 4 now
+carries the scoped rule.
 
-**The channel is duplex because this crate is an organ, and this pass charters one
-direction of it.** Apex section 5.4 makes a duplex channel with the harness one of the
-two properties of an organ, and the property does not bend. Both exchanges chartered
-here are opened by the harness. The direction this crate opens is the fault it raises,
+**The channel has two initiators because this crate is an organ, and this pass charters
+one direction of it.** Apex section 5.4 makes a two-initiator channel with the harness
+one of the two properties of an organ, and the property does not bend. Both exchanges
+chartered here are opened by the harness. The direction this crate opens is the fault
+it raises,
 which reaches the record through the harness as author, written as the `fault` event
 of `weaver-trace-PRD` section 3.1 per the fault-carrier ruling of 2026-08-01, and
 the case set for it is deferred with a named exit in section 10. A reader should not
 take a half-chartered direction for an absent one.
 
 **One channel carries the organ's traffic, and whether decode shares it is not settled
-here.** Apex section 5.4 names a duplex channel, singular, and `weaver-types-PRD`
+here.** Apex section 5.4 names a two-initiator channel, singular, and `weaver-types-PRD`
 section 2.3 has `organ-envelope` as the carrier every organ channel draws. Drafting a
 second channel for decode would be a second seam under the Document Format, needing its
 own name and its own contract, and this pass has no measurement to justify one. What it
@@ -592,15 +595,15 @@ once its premise left, which is a cell closing rather than being settled.
 ruling of 2026-08-02.** Decode traffic takes its own Unix socket, owned by this
 crate and distinct from the lifecycle channel, so no lifecycle directive ever
 queues behind decode traffic and the head-of-line question dissolves rather than
-being measured. The organ test still names one duplex channel and still holds:
+being measured. The organ test still names one two-initiator channel and still holds:
 the lifecycle channel is that channel, the decode socket is additional surface
 this crate owns, and the sockets multiply while the organ does not. The
 measurement this cell once waited on is superseded, because the risk it would
 have measured is answered structurally. How the decode socket reaches the
 harness, the exchanges that cross it, and whether it carries the organ envelope
 at all, under what encoding, are the token workflow's to charter. The last is
-named because `weaver-types-PRD` section 2.3 has every duplex channel with the
-harness carrying that envelope, and this socket is the universal's first
+named because `weaver-types-PRD` section 2.3 has every two-initiator channel with
+the harness carrying that envelope, and this socket is the universal's first
 unclassified instance: either it is such a channel and the envelope's encoding
 on the hot path becomes a live question, the JSON election stopping short of
 the decode seam by `weaver-types-Spec` section 4's own rule, or the universal
@@ -632,8 +635,8 @@ admission path is the visible cost a reason would have named.
 **The naming of the wire definitions is closed.** The collision governed, per the
 human's ruling of 2026-08-01, and the convention changed: wire vocabulary is named
 for the loop whose traffic it carries, direction being a fact about a loop's walk
-rather than a name on a duplex channel. This seam draws loop 0's trio and owes the
-floor nothing, per `weaver-types-PRD` section 2.3.
+rather than a name on a two-initiator channel. This seam draws loop 0's trio and owes
+the floor nothing, per `weaver-types-PRD` section 2.3.
 
 ## 11. Edits owed in the same act
 
@@ -719,7 +722,7 @@ created beside the lifecycle pair and crosses the same fork, so possession
 authenticates it the same way, and section 7 counts both ends.
 
 **It is not an organ channel, and the classification is this act's.** Apex
-section 5.4's test names one duplex channel and the lifecycle channel is it.
+section 5.4's test names one two-initiator channel and the lifecycle channel is it.
 This socket is operation surface, so the organ envelope does not cross it,
 `weaver-types-PRD` section 2.3's every-channel sentence stays scoped to organ
 channels with no exception admitted, and the seam's vocabulary is its own,
