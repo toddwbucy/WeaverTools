@@ -122,12 +122,17 @@ decision on a document the mapper never reads.
 **What this contract deliberately does not carry is a safety classification.** The
 previous tree made `Tool::invocation_properties` the crate's flagship enforcement type,
 a per-invocation read, mutate, or destructive judgment that every tool was obliged to
-return. That is gone. Apex section 3 step 7 moved tool safety to the kernel: a tool
-executes as the agent's constrained user and what it can reach is bounded by filesystem
-permissions, sudoers, and cgroups, not by a classification the tool makes about itself.
-A trait method asking a tool whether it is dangerous is a heuristic standing where an
-enforced boundary already stands, and its presence would invite the belief that the
-answer is load-bearing.
+return. That is gone, and the ground it rests on outlived the clause that first stated
+it. Apex section 3 step 7 moved tool safety off the tool: it read that a tool executes
+as the agent's constrained user bounded by filesystem permissions, sudoers, and cgroups,
+and the egress ruling of 2026-08-07 replaced that with a registered application the
+agent addresses across a socket, whose containment is the application's own and not this
+program's to state. **Both readings put the judgment somewhere other than in a method
+the tool answers**, which is the whole of what this negative needed. A trait method
+asking a tool whether it is dangerous is a heuristic standing where a boundary already
+stands, and its presence would invite the belief that the answer is load-bearing. The
+ruling narrows what this program claims about that boundary and takes nothing back from
+the reason this crate carries no classification.
 
 ### 3.2 The provider contract
 

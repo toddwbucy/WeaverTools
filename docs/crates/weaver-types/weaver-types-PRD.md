@@ -244,14 +244,14 @@ rather than deferring it.
 
 Known fields, from the passes already done: the model binding, the tool set, the
 permission mode, the residual-readout election, the gate instruction, and the trace
-sink. The last three arrived from the gate and operator-contract passes and from
-the trace pass rather than from this crate's own reasoning,
-which is the demand rule working as intended. The gate instruction names the socket
-the gate binds, and it travels the way the model binding does: the operator writes
-it, admin validates it, the harness carries it uninterpreted, and the gate resolves
-it, per `weaver-gate-PRD` section 10. The trace sink names where the stream lands,
-per `weaver-admin-operator-contract` section 3: the operator writes it, admin
-validates it and connects the stream to it at load, and no other crate reads it.
+sink. The last three arrived from the gate and operator-contract passes and from the
+trace pass rather than from this crate's own reasoning, which is the demand rule working
+as intended. The gate instruction names the seams the gate holds, two as of the egress
+ruling of 2026-08-07, and it travels the way the model binding does: the operator writes
+it, admin validates it, the harness carries it uninterpreted, and the gate resolves it,
+per `weaver-gate-PRD` section 10. The trace sink names where the stream lands, per
+`weaver-admin-operator-contract` section 3: the operator writes it, admin validates it
+and connects the stream to it at load, and no other crate reads it.
 
 Two of those fields are named in `weaver-harness-trace-contract`'s vocabulary clause,
 so the config file is already a declared dependency of a contract this crate is not
@@ -316,10 +316,14 @@ seam that admits an outside principal, and it is unchanged. The second consumer 
 the operator surface, which retired with the service account it authenticated to, and
 the coordination seam of `weaver-admin-harness-contract` section 2 takes its place:
 the socket inversion gave that seam a name and a real credential check, root or
-refused, where an inherited pair could distinguish nothing. Both surviving consumers
-authenticate by `SO_PEERCRED`, both judge by the one shared rule, and both draw the
-pair below. The claim is stronger for the exchange rather than weaker, the seam that
-left having been the one whose predicate a compromised group grant could widen.
+refused, where an inherited pair could distinguish nothing. Every surviving consumer
+authenticates by `SO_PEERCRED`, judges by the one shared rule, and draws the pair
+below. The claim is stronger for the exchange rather than weaker, the seam that left
+having been the one whose predicate a compromised group grant could widen. **The count
+was two and is not closed at two**: the egress ruling of 2026-08-07 charters the
+gate's agent-opened seam as a third, and what credential a registered tool presents on
+it is the tool-seam contract's, so this subsection states the shared rule and leaves
+the enumeration open rather than naming a consumer whose contract does not exist.
 
 **Alongside the identity type, this crate carries the authorization predicate, and
 that is a deliberate exception to holding only data.** The rule that decides whether a

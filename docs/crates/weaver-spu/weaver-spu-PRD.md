@@ -186,10 +186,10 @@ binding reaches it across the seam because the harness was handed it in the ente
 directive, so a read here would be a second interpretation of a file admin already
 validated, with no way to disagree usefully and every way to disagree quietly.
 
-**A listening socket of any kind.** `weaver-gate` binds the agent's only
-listening socket, a local hook and no network socket, per the demotion ruling of
-2026-07-31. This crate binds no socket at all, because the channel it uses was
-created by the harness before the fork and arrives already connected.
+**A listening socket of any kind.** `weaver-gate` holds the agent's outward seams, local
+hooks and no network socket, per the demotion ruling of 2026-07-31 and the egress ruling
+of 2026-08-07 that made them two. This crate binds no socket at all, because the channel
+it uses was created by the harness before the fork and arrives already connected.
 
 **Policy about whether a load should happen.** It answers whether this device can take
 this model now, and whether the agent should be loaded at all is the operator's.

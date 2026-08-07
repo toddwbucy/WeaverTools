@@ -8,7 +8,7 @@ lower. The exchanges that carry work arrive with the token workflow.
 **Date filed:** 2026-07-31
 **Revised:** 2026-08-07, the tool egress ruling lands here. Section 2's hook becomes
 two sockets split by which party opens an exchange, section 3's no-second-listener
-clause becomes two listeners and no third, section 13.1's relay gains its second leg,
+clause becomes two seams and no third, section 13.1's relay gains its second leg,
 and section 7's cell closes for the world-reaching tool and stands for every other. The
 second socket's contract is the tool workflow's and nothing here shapes it. Per apex
 section 3 as revised in the same act.
@@ -88,9 +88,12 @@ crossing and the close at the final answer, per `weaver-harness-PRD` section 5. 
 logged pass-through means the crossings land in the record, never that this crate
 logs.
 
-**A tool reaching outward is not ingress.** An outbound connection made by a tool
-under apex step 7 does not pass through this crate. The hook is about what enters, and
-the only thing that enters is work.
+**A tool reaching outward crosses this crate, as of the egress ruling of 2026-08-07.**
+This clause said the opposite until that ruling: an outbound connection made by a tool
+under apex step 7 did not pass through this crate, the hook being about what enters and
+the only thing entering being work. Apex step 1 now reverses it, and the hook is about
+what crosses in either direction, with the agent-opened seam of section 2 carrying the
+outbound half.
 
 ## 2. What this crate owns
 
@@ -115,11 +118,23 @@ can bind first, and which end owns it decides that. **What this charter fixes is
 the seam exists, that it is this crate's, and that it is single-initiator with the
 agent opening.** The rest arrives with the contract, per apex section 3 step 7.
 
-**Whichever end binds, the peer is authenticated on every connection.** Both ends of an
-AF_UNIX connection can read `SO_PEERCRED`, so the identification holds under either
-transport: this crate judges a peer it accepted, or confirms the peer it reached is the
-registered tool and not a process squatting the path. The predicate below is the rule
-that judgment runs, and the transport decides only which side calls first.
+**Whichever end binds, the peer is authenticated, and the two transports do not
+authenticate equally.** Where this crate accepts, `SO_PEERCRED` reports the connecting
+peer's own credentials and the predicate below judges them, which is the world-opened
+seam's merged mechanism. **Where this crate dials, `SO_PEERCRED` reports the
+credentials captured for the listening socket rather than those of the process that
+accepted**, so a registered tool that listens under one identity and drops to its
+provisioned one presents the pre-drop identity, and the check cannot by itself confirm
+that the peer reached is the registered tool. Verified against a live kernel on
+2026-08-07 rather than read off a manual page: a dialing client's `SO_PEERCRED`
+reported the pid that called `listen`, not the pid that called `accept`.
+
+**This is a demand on the contract rather than a defect in the seam.** What closes it
+is the contract stating how a registered tool proves itself to a dialer, which is the
+first of the three things `tool-egress-boundary-frame` section 7 names as owed and is
+the same question read from the other end. A charter claiming symmetric identification
+would hand `weaver-gate-Spec` a premise the kernel does not support, so it is named
+here instead.
 
 The claim is scoped to the outward-facing seams deliberately, since the inversion of
 2026-08-05 has the harness binding a coordination socket inward, inside the same
@@ -181,13 +196,20 @@ seam. A crate that read the file would put a second reading of the operator's
 declaration beside admin's, the same argument the SPU charter makes for the model
 binding.
 
-**No process it spawns, and two listeners and no third.** The two sockets of section
-2, each bound once per raise, are the whole of this crate's surface area. This clause
-once read one socket and no second listener, and the egress ruling of 2026-08-07 is
-what changed the count: the second listener is the agent's own door outward, not an
-acquired part. **What the clause still forbids is a listener this crate did not bind
-from an instruction**, and the reason is unchanged, a surface this crate opens on its
-own judgment being a surface nothing chartered.
+**No process it spawns, and two seams and no third.** The two seams of section 2, each
+established once per raise and neither more than once, are the whole of this crate's
+surface area. **Established rather than bound**, because which end binds the
+agent-opened seam is section 2's open question and this clause must not close it from
+seventy lines away. This clause once read one socket and no second listener, and the
+egress ruling of 2026-08-07 is what changed the count: the second seam is the agent's
+own door outward, not an acquired part. **What the clause still forbids is a surface
+this crate opens on its own judgment**, and the reason is unchanged, such a surface
+being one nothing chartered.
+
+**`weaver-harness-gate-contract` still forbids a second listener and is owed the
+edit**, per the apex's revision entry. Under Document Format section 7 that contract
+governs until the edit lands, so this clause states what this charter requires and a
+builder reading both is reading a requirement that is not yet implementable.
 
 ## 4. Raising and lowering, from this crate's side
 
@@ -347,7 +369,9 @@ section keeps them as the record of what the earlier pass could already see.
 
 **The tool-uid ruling.** Stated in section 7 with its candidate. **Settled by:** the
 architecture seat's ratification of the candidate, or the tool workflow chartering
-with a threat measurement if the ratification is declined. Until settled, admin's
+with a stated rationale if the ratification is declined, the egress ruling of
+2026-08-07 having supplied one for the world-reaching case and none for this one, and
+section 7 carries the same condition in the same words. Until settled, admin's
 assumption stands and nothing builds against the separate-uid arm.
 
 **The refusal type.** This seam's refusal reuses `lifecycle-refusal` rather than
@@ -486,11 +510,16 @@ A peer failing the predicate is not a fault. It is the boundary working, and
 a fault event per refused dial would make the record noisiest exactly when
 the boundary is doing its job.
 
-**With these named the corpus-wide case set closes across all three organs.**
-The `fault` event's cases are the SPU's at `weaver-spu-PRD` section 13.10,
-this crate's here, and the harness's own three at `weaver-harness-PRD`
-section 5, that last enumeration landing in this same act on the review
-seat's finding, and it cannot be derived from the other two because an organ
-death is reported by the party that survives rather than the one that died.
-The payload's shape lands with the trace act against the closed set rather
-than against a guess.
+**With these named the corpus-wide case set closes across all three organs for the seams
+that exist.** The agent-opened seam of section 2 is not among them: a registered tool
+unreachable, its path gone, or a dial refused are faults this crate will raise and this
+section does not enumerate, because the seam's contract does not exist and a case set
+written against a guess is the thing this section refuses elsewhere. **The closure claim
+is therefore scoped and the gap is named**, so the trace act electing a payload shape
+against a closed set knows which set closed. The `fault` event's cases are the SPU's at
+`weaver-spu-PRD` section 13.10, this crate's here, and the harness's own three at
+`weaver-harness-PRD` section 5, that last enumeration landing in this same act on the
+review seat's finding, and it cannot be derived from the other two because an organ
+death is reported by the party that survives rather than the one that died. The
+payload's shape lands with the trace act against the closed set rather than against a
+guess.

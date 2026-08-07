@@ -209,8 +209,10 @@ can reach and has no first-contact surface. Work arrives already authenticated.
 **The coordination listener of section 2 is not a counterexample and the
 distinction is the direction.** It faces admin rather than the world, it lives
 inside the agent's sandbox, and it admits root alone, so no work and no external
-principal reaches it. The gate holds the door that faces out and this crate holds
-the one that faces in, which is one door each rather than two owners of one.
+principal reaches it. The gate holds the doors that face out and this crate holds
+the one that faces in, which is each owning its own side rather than two owners of
+one. The outward count became two with the egress ruling of 2026-08-07 and the
+inward count is unchanged.
 
 **Boundary verification and lifecycle supervision go to `weaver-admin`.** Provisioning
 is the operator's rather than admin's, per `weaver-admin-PRD` section 1, and there is
@@ -248,12 +250,21 @@ what an event is and what it costs to commit one.
 **The trait contracts go to `weaver-traits`, and the config file format to
 `weaver-types`.**
 
-**Safety adjudication of tool input goes to the kernel and is not a harness
-function at all.** The harness does not inspect a command to decide whether it is
-dangerous. It executes the tool as the agent's constrained user and the kernel
-decides what that user can touch. There is no classifier here and none is coming,
-because a classifier would be a heuristic standing where an enforced boundary
-already stands.
+**Safety adjudication of tool input is not a harness function at all.** The harness
+does not inspect a command to decide whether it is dangerous. There is no classifier
+here and none is coming, because a classifier would be a heuristic standing where a
+boundary already stands.
+
+**Where that boundary stands moved with the egress ruling of 2026-08-07.** This
+paragraph said the harness executes the tool as the agent's constrained user and the
+kernel decides what that user can touch. Apex step 7 now has the harness address a
+registered tool across the gate's agent-opened seam rather than fork one, so what the
+harness does is reach a boundary rather than run inside it, and what a tool may touch
+is that application's own affair on the far side of the socket. **The seam this
+requires is chartered and its contract is not written**, per apex section 3 step 7, so
+this charter states the direction and owes the rest to the tool workflow: the exchange
+that carries a tool call toward the gate, this crate's part in it, and what a tool's
+death mid-call means are all that workflow's and none of them is shaped here.
 
 **Memory in every form is out of scope.** No recall, no consolidation, no
 surfacing, no substrate. When memory returns it returns as a socket peer under its
