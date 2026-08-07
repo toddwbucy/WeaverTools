@@ -17,20 +17,20 @@ It states where the agent's boundary to the world sits, what authorizes a crossi
 what the boundary claim does not reach. It is the frame the tool workflow opens against,
 and it answers `weaver-gate-PRD` section 7's PENDING cell.
 
+It bears on apex section 3 step 1 and step 7, which it contradicts. A gate edit may not
+revise a merged apex clause, so the change is apex-level and section 9 names it as such.
+
 **It does not answer that cell in the cell's own words, and the difference is this
 frame's to declare rather than a reader's to discover.** Section 7 stages the cell
 awaiting the tool workflow chartering plus a stated **threat measurement**, on the
 ground that a boundary upgrade priced without a threat model is a motive wearing a
 mechanic's clothes, and section 10 repeats the phrase. This document supplies a
 structural rationale instead and declines to be a threat measurement at all, for the
-reason the next paragraph gives. So the charter as merged asks for one thing and this
+reason the paragraph below gives. So the charter as merged asks for one thing and this
 frame offers another, deliberately. Editing sections 7 and 10 to match is owed with the
 apex act, where section 9 already sequences the gate charter's edits, and until then a
 reader deciding whether the cell can close should read the cell as reframed here and not
 as satisfied.
-
-It bears on apex section 3 step 1 and step 7, which it contradicts. A gate edit may not
-revise a merged apex clause, so the change is apex-level and section 9 names it as such.
 
 **The first draft priced this against the wrong thing, and the record is worth
 keeping.** It stated the threat as a compromise of the agent's process family reaching
