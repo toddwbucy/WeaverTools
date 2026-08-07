@@ -254,9 +254,19 @@ impl Residency {
         // Step one. Resolve the binding to an artifact. Free.
         let path = artifact::resolve(&binding.artifact).map_err(|_| AdmitRefusal::Unresolvable)?;
 
+        // Open it once and hold it. Every read after this, the header, the
+        // load, and the hash, goes through this descriptor, so a name replaced
+        // mid-admit cannot make the three observe three different files, and
+        // the kind check runs on what was opened rather than on the name.
+        let mut pinned = artifact::pin(&path).map_err(|refusal| match refusal {
+            LifecycleRefusal::ArtifactUnresolvable => AdmitRefusal::Unresolvable,
+            _ => AdmitRefusal::Unreadable,
+        })?;
+
         // Step two. Read what the artifact declares about itself, without
         // loading it and without touching a device. Free.
-        let header = artifact::read_header(&path).map_err(|_| AdmitRefusal::Unreadable)?;
+        let header =
+            artifact::read_header(&mut pinned).map_err(|_| AdmitRefusal::Unreadable)?;
 
         // Step three, cheapest first. The width condition is a comparison
         // between the binding's count and the family's declaration and reads
@@ -266,18 +276,29 @@ impl Residency {
         family::judge_width(&header.family, binding.devices.len() as u32)
             .map_err(AdmitRefusal::Family)?;
         judge_distinct(&binding.devices)?;
-        // The shard each device must hold, read from the filesystem rather than
-        // declared by the artifact. The width was judged above, so the divisor
-        // is known non-zero.
-        let shard_bytes = artifact::on_disk_bytes(&path).ok_or(AdmitRefusal::Unreadable)?
-            / binding.devices.len() as u64;
+        // The shard each device must hold, read from the held descriptor
+        // rather than from the name. The width was judged above, so the
+        // divisor is known non-zero.
+        let shard_bytes =
+            pinned.len().map_err(|_| AdmitRefusal::Unreadable)? / binding.devices.len() as u64;
         judge_room_and_reach(&binding.devices, shard_bytes, headroom)?;
 
         // Step four. Take the devices in shard order and load each shard. The
         // binding's order is the shard order, and the loader's one door is the
         // admission this function just proved.
+        // The loader is handed the descriptor's own path, not the operator's
+        // name, so it opens the file the judgments were made against.
+        //
+        // **This carries no instrument and the ground is stated.** Handing the
+        // operator's name here instead loads the same file on every path a
+        // fixture can build, so the perturbation passes: what the pin defends
+        // against is a replacement landing inside the load, and watching it
+        // needs a concurrent replacer this suite does not introduce. The kind
+        // check on the descriptor is watched, the identity of the descriptor
+        // is not.
+        let pinned_path = pinned.path();
         let admission = Admission {
-            path: &path,
+            path: &pinned_path,
             header: &header,
             devices: &binding.devices,
             _admitted: (),
@@ -291,7 +312,11 @@ impl Residency {
         // device does not hold, and binding the hash to the engine's own
         // mapped bytes is named in the artifact module as the remaining
         // distance.
-        let weights_hash = artifact::weights_hash(&path);
+        // The hash's subject is the operator's reference, which may name a
+        // directory whose members beyond the container are part of the
+        // artifact's identity.
+        let reference = std::path::PathBuf::from(&binding.artifact.0);
+        let weights_hash = artifact::weights_hash(&reference, &mut pinned);
 
         // Step five. Confirm.
         self.resident = Some(Resident {

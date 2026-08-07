@@ -76,20 +76,36 @@ pub fn place_inherited(command: &mut Command, child_ends: &[RawFd]) {
             for high in &lifted[..count] {
                 libc::close(*high);
             }
-            // Close everything above the placed range, which is the fork
-            // discipline the harness performs in production. The test process
-            // is not a clean parent: an in-process CUDA or llama.cpp load in
-            // a sibling test leaves driver descriptors open without
+            // Mark everything above the placed range close-on-exec, which is
+            // the fork discipline the harness performs in production. The test
+            // process is not a clean parent: an in-process CUDA or llama.cpp
+            // load in a sibling test leaves driver descriptors open without
             // close-on-exec, the child inherits them, and its own count check
             // then refuses to serve - correctly. Found live: a child spawned
             // after a sibling's in-process load reported 24 descriptors held.
+            //
+            // **Marked, never closed.** Rust reports a failed exec to the
+            // parent through a close-on-exec pipe it opened above this range,
+            // and closing that pipe makes the parent read EOF and conclude the
+            // spawn succeeded. Measured: with the descriptors closed, spawning
+            // a nonexistent binary returns Ok and the child dies on a signal.
+            // Marking leaves the pipe alive until exec, which is exactly when
+            // it should go.
             let first = 3 + count as libc::c_uint;
-            if libc::syscall(libc::SYS_close_range, first, libc::c_uint::MAX, 0) != 0 {
-                // The syscall is Linux 5.9+; this workshop is far past it, but
-                // a fallback loop keeps the helper honest elsewhere. It runs to
-                // the process's own descriptor limit rather than a round
-                // number, because a descriptor above that number is what the
-                // child would then count and refuse on.
+            if libc::syscall(
+                libc::SYS_close_range,
+                first,
+                libc::c_uint::MAX,
+                libc::CLOSE_RANGE_CLOEXEC,
+            ) != 0
+            {
+                // The flag is Linux 5.11+; this workshop is far past it, but a
+                // fallback keeps the helper honest elsewhere. It runs to the
+                // process's own descriptor limit rather than a round number,
+                // because a descriptor above that number is what the child
+                // would then count and refuse on, and it sets the flag on top
+                // of what each descriptor already carries rather than
+                // replacing it.
                 let mut limit = libc::rlimit {
                     rlim_cur: 0,
                     rlim_max: 0,
@@ -100,7 +116,10 @@ pub fn place_inherited(command: &mut Command, child_ends: &[RawFd]) {
                     4096
                 };
                 for fd in first as RawFd..ceiling {
-                    libc::close(fd);
+                    let flags = libc::fcntl(fd, libc::F_GETFD);
+                    if flags >= 0 {
+                        libc::fcntl(fd, libc::F_SETFD, flags | libc::FD_CLOEXEC);
+                    }
                 }
             }
             Ok(())

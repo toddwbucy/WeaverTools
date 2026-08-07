@@ -176,3 +176,29 @@ fn the_dumpable_flag_is_clear_after_entry() {
         "a cleared dumpable flag makes /proc/{pid}/fd owned by root, found {owner:?}"
     );
 }
+
+/// **A failed exec still reaches the parent.**
+///
+/// `place_inherited` marks the descriptors above its range close-on-exec
+/// rather than closing them, because Rust reports a failed exec through a
+/// close-on-exec pipe it opens above that range. Closing it makes the parent
+/// read EOF and conclude the spawn succeeded, which would let this suite spawn
+/// a missing binary and test nothing.
+///
+/// Perturbation: pass `0` instead of `CLOSE_RANGE_CLOEXEC` in `place_inherited`
+/// and this test fails, because `spawn` returns `Ok` for a path that does not
+/// exist. Watched under exactly that change.
+#[test]
+fn a_failed_exec_is_reported_to_the_parent() {
+    let (_parent, child_end) = seqpacket_pair();
+    let mut command = Command::new("/nonexistent/weaver-spu-that-is-not-there");
+    command
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    place_inherited(&mut command, &[child_end.as_raw_fd()]);
+    assert!(
+        command.spawn().is_err(),
+        "a missing executable is an error, never a spawn the parent believes"
+    );
+}

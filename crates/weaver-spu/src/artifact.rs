@@ -12,6 +12,7 @@
 
 use std::fs::File;
 use std::io::{BufReader, Read, Seek, SeekFrom};
+use std::os::fd::AsRawFd;
 use std::path::{Path, PathBuf};
 
 use weaver_types::{ArtifactRef, LifecycleRefusal};
@@ -74,15 +75,74 @@ pub fn resolve(reference: &ArtifactRef) -> Result<PathBuf, LifecycleRefusal> {
     Ok(path)
 }
 
+/// An artifact opened once and held open for the whole admit.
+///
+/// **The open is the check.** A path tested with `is_file` and opened later is
+/// two different files if the name is replaced in between, so this type opens
+/// first and asks the descriptor what it got. Everything after, the header
+/// read, the load, and the hash, goes through this one descriptor, so the three
+/// cannot observe three different files.
+///
+/// The open takes `O_NONBLOCK` so a named pipe cannot block it: a FIFO opens
+/// immediately and is then refused by the kind check, where a blocking open
+/// would hold the admit forever before any check could run.
+pub struct PinnedArtifact {
+    file: File,
+}
+
+impl PinnedArtifact {
+    /// The path that reaches this descriptor's file whatever the original name
+    /// now points at. The descriptor holds the inode, so a replacement of the
+    /// name does not move it.
+    pub fn path(&self) -> PathBuf {
+        PathBuf::from(format!("/proc/self/fd/{}", self.file.as_raw_fd()))
+    }
+
+    /// The artifact's size, from the descriptor rather than from the name.
+    pub fn len(&self) -> Result<u64, LifecycleRefusal> {
+        self.file
+            .metadata()
+            .map(|m| m.len())
+            .map_err(|_| LifecycleRefusal::ArtifactUnreadable)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len().map(|n| n == 0).unwrap_or(true)
+    }
+
+    fn rewind(&mut self) -> Result<(), LifecycleRefusal> {
+        self.file
+            .seek(SeekFrom::Start(0))
+            .map(|_| ())
+            .map_err(|_| LifecycleRefusal::ArtifactUnreadable)
+    }
+}
+
+/// Open the resolved artifact and hold it, refusing anything that is not a
+/// regular file once opened.
+pub fn pin(path: &Path) -> Result<PinnedArtifact, LifecycleRefusal> {
+    use std::os::unix::fs::OpenOptionsExt;
+    let file = std::fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(nix::libc::O_NONBLOCK)
+        .open(path)
+        .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
+    let kind = file
+        .metadata()
+        .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
+    if !kind.is_file() {
+        return Err(LifecycleRefusal::ArtifactUnresolvable);
+    }
+    Ok(PinnedArtifact { file })
+}
+
 /// Step two: read what the artifact declares about itself.
 ///
 /// **This function opens the artifact file and reads its header. It touches no
 /// device and loads no tensor data.**
-pub fn read_header(path: &Path) -> Result<ArtifactHeader, LifecycleRefusal> {
-    // Resolution already reduced a directory to its container file, so a
-    // directory arriving here skipped step one and does not read.
-    let handle = File::open(path).map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
-    let mut reader = BufReader::new(handle);
+pub fn read_header(pinned: &mut PinnedArtifact) -> Result<ArtifactHeader, LifecycleRefusal> {
+    pinned.rewind()?;
+    let mut reader = BufReader::new(&mut pinned.file);
 
     let mut magic = [0u8; 4];
     reader
@@ -317,27 +377,6 @@ fn read_gguf_typed<R: Read>(
     }
 }
 
-/// The artifact's size on disk, a single file or a walked directory.
-///
-/// This is what the admission inequality measures a shard against. It is read
-/// from the filesystem at admit rather than declared by the artifact, on the
-/// same grounds the weights hash is computed from the bytes loaded rather than
-/// from a manifest handed in: a number the artifact asserts about itself is a
-/// number a wrong artifact asserts just as easily.
-pub fn on_disk_bytes(path: &Path) -> Option<u64> {
-    if !path.is_dir() {
-        return std::fs::metadata(path).ok().map(|m| m.len());
-    }
-    let mut total = 0u64;
-    for entry in walkdir::WalkDir::new(path) {
-        let entry = entry.ok()?;
-        if entry.file_type().is_file() {
-            total = total.checked_add(entry.metadata().ok()?.len())?;
-        }
-    }
-    Some(total)
-}
-
 /// The weights hash: BLAKE3 over a canonical manifest, a single file or a
 /// walked directory.
 ///
@@ -351,14 +390,30 @@ pub fn on_disk_bytes(path: &Path) -> Option<u64> {
 /// The hash is computed at admit by reading the artifact, never from a manifest
 /// handed to this process, and it is computed fresh on each call with no cache
 /// across an artifact change, which is what makes the third walk's alteration
-/// visible. It is a second read of the artifact rather than a hash of the load,
-/// so a swap landing between the load and this read records an identity the
-/// device does not hold. Closing that window means hashing the bytes the
-/// engine itself mapped, which the engine's loading interface does not expose
-/// today: the GGUF loader arrived without it, so the window is named here
-/// rather than papered over, and it closes from the engine side or not at all.
-pub fn weights_hash(path: &Path) -> crate::residency::WeightsHash {
-    match hash_canonical(path) {
+/// visible. **For a single-file artifact it reads the descriptor the load
+/// used**, so a name replaced during the load cannot change what is hashed:
+/// the descriptor holds the inode. What remains open is a directory-shaped
+/// artifact, whose members beyond the loaded container are named rather than
+/// pinned, and that closes with the native path that reads them.
+pub fn weights_hash(
+    reference: &Path,
+    pinned: &mut PinnedArtifact,
+) -> crate::residency::WeightsHash {
+    // A reference naming one file hashes the descriptor the load used, which
+    // is what closes the swap window on the single-file case. A reference
+    // naming a directory hashes the walked directory, per the Spec's canonical
+    // manifest: its members beyond the container are not pinned, so that case
+    // keeps the window and the native path is where it closes.
+    let hashed = if reference.is_dir() {
+        hash_canonical(reference)
+    } else {
+        pinned.rewind().map_err(|_| ()).and_then(|()| {
+            let mut hasher = blake3::Hasher::new();
+            hash_reader_into(&mut pinned.file, &mut hasher)?;
+            Ok(hasher.finalize().to_hex().to_string())
+        })
+    };
+    match hashed {
         Ok(value) => crate::residency::WeightsHash(value),
         Err(()) => crate::residency::WeightsHash::sentinel(),
     }
@@ -390,9 +445,13 @@ fn hash_canonical(path: &Path) -> Result<String, ()> {
 
 fn hash_file_into(path: &Path, hasher: &mut blake3::Hasher) -> Result<(), ()> {
     let mut handle = File::open(path).map_err(|_| ())?;
+    hash_reader_into(&mut handle, hasher)
+}
+
+fn hash_reader_into<R: Read>(reader: &mut R, hasher: &mut blake3::Hasher) -> Result<(), ()> {
     let mut buffer = vec![0u8; 1024 * 1024];
     loop {
-        let read = handle.read(&mut buffer).map_err(|_| ())?;
+        let read = reader.read(&mut buffer).map_err(|_| ())?;
         if read == 0 {
             break;
         }
@@ -454,7 +513,7 @@ mod tests {
         drop(handle);
 
         assert_eq!(
-            read_header(&path),
+            read_header(&mut pin(&path).expect("the fixture pins")),
             Err(LifecycleRefusal::ArtifactUnreadable),
             "a nesting no real artifact carries is a refusal, never an abort"
         );
@@ -468,7 +527,7 @@ mod tests {
             .expect("the fixture is written");
         drop(handle);
         assert_eq!(
-            read_header(&shallow),
+            read_header(&mut pin(&shallow).expect("the fixture pins")),
             Err(LifecycleRefusal::ArtifactUnreadable),
             "no general.architecture key, so the refusal is the absent family"
         );
@@ -529,6 +588,30 @@ mod tests {
             resolve(&ArtifactRef(dir.to_string_lossy().into_owned())),
             Err(LifecycleRefusal::ArtifactUnresolvable),
             "a directory holding only a pipe holds no container"
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// **The pin refuses what is not a regular file, judged on the descriptor
+    /// rather than on the name.** A pipe opens without blocking because of
+    /// `O_NONBLOCK` and is refused by the kind check, where a blocking open
+    /// would hold the admit open before any check could run.
+    ///
+    /// Perturbation: drop the `is_file` branch from `pin` and this test fails.
+    /// Watched under exactly that removal.
+    #[test]
+    fn the_pin_refuses_a_pipe_on_the_descriptor() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-spu-artifact-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        let fifo = dir.join("pipe.gguf");
+        nix::unistd::mkfifo(&fifo, nix::sys::stat::Mode::S_IRWXU).expect("a fifo");
+        assert!(
+            matches!(pin(&fifo), Err(LifecycleRefusal::ArtifactUnresolvable)),
+            "the descriptor says pipe, so the pin refuses"
         );
         std::fs::remove_dir_all(&dir).ok();
     }
