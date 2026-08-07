@@ -18,11 +18,20 @@
 //! ```
 //! use llama_cpp_2::context::params::LlamaContextParams;
 //! // The eval-callback seam: present in the fork, absent upstream. Reverting
-//! // the pin makes this stop compiling, which is the pin firing.
+//! // the pin makes this stop compiling, which is the pin firing. The callback
+//! // is a real one and the assertion reads the state change, so the pin holds
+//! // the seam open rather than only naming it.
+//! unsafe extern "C" fn tap(
+//!     _tensor: *mut llama_cpp_sys_2::ggml_tensor,
+//!     _ask: bool,
+//!     _user_data: *mut std::ffi::c_void,
+//! ) -> bool {
+//!     true
+//! }
 //! let params = LlamaContextParams::default();
 //! assert!(!params.has_eval_callback());
-//! let params = unsafe { params.with_eval_callback(None, std::ptr::null_mut()) };
-//! assert!(!params.has_eval_callback());
+//! let params = unsafe { params.with_eval_callback(Some(tap), std::ptr::null_mut()) };
+//! assert!(params.has_eval_callback());
 //! ```
 //!
 //! **The two loader shapes the Spec names cannot reach this module.** The one
@@ -81,6 +90,18 @@ impl ResidentModel {
     /// exactly the named ordinals, never whatever else the driver can see.
     /// The parameter shapes carry the archived tree's own working
     /// configuration forward.
+    ///
+    /// **An assumption crosses here and is named rather than silent.** The
+    /// admission judges room and reach against CUDA ordinals, while
+    /// `main_gpu` and `with_devices` index ggml's registered-device
+    /// enumeration. The two numberings coincide while the libllama this
+    /// build links registers CUDA devices only and in ordinal order, which
+    /// holds for the library the pinned build script compiles. A deployment
+    /// linking a libllama with another backend registered, RPC or Vulkan or
+    /// SYCL, breaks the coincidence and puts weights on a card the admission
+    /// never judged. The mapping through the ggml device registry belongs to
+    /// the decode act, which touches the engine's device surface anyway, and
+    /// until then this paragraph is the boundary of what is verified.
     pub fn load(admission: &Admission<'_>) -> Result<ResidentModel, AdmitRefusal> {
         let backend = backend()?;
         let devices = admission.devices();

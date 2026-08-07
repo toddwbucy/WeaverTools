@@ -9,78 +9,23 @@
 //! count check is about descriptors this process was handed, and the dumpable
 //! flag is read from outside by an observer the process cannot lie to.
 
-use std::os::fd::{AsRawFd, OwnedFd, RawFd};
-use std::os::unix::process::CommandExt;
+use std::os::fd::{AsRawFd, RawFd};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
-use nix::libc;
-use nix::sys::socket::{AddressFamily, SockFlag, SockType, socketpair};
-
-fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
-    socketpair(
-        AddressFamily::Unix,
-        SockType::SeqPacket,
-        None,
-        SockFlag::SOCK_CLOEXEC,
-    )
-    .expect("a socketpair")
-}
+mod common;
+use common::{place_inherited, seqpacket_pair};
 
 /// Start the binary holding exactly the descriptors named, placed at 3, 4, and
-/// upward in the order given.
-///
-/// The placement runs in two passes on purpose. A source descriptor can already
-/// sit on a number this test is about to write, so writing the targets directly
-/// would clobber a source that has not been placed yet. The first pass lifts
-/// every source above the target range with `F_DUPFD`, and the second pass
-/// writes the targets from those copies. `dup2` clears close-on-exec on the
-/// target it writes, which is what lets these two survive the exec while every
-/// other descriptor in this process closes.
+/// upward in the order given. Streams stay piped here because these tests read
+/// the refusal the binary writes to standard error.
 fn spawn_holding(child_ends: Vec<RawFd>) -> Child {
     let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
     command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    // The sources are copied into a fixed-size array before the fork: the
-    // closure below runs in the child of a multithreaded test process, where
-    // another thread may hold the allocator lock at the moment of the fork, so
-    // an allocation inside it can deadlock. Nothing in the closure allocates.
-    let mut sources = [0 as RawFd; 8];
-    let count = child_ends.len();
-    assert!(
-        count <= sources.len(),
-        "spawn_holding takes at most {} descriptors, got {count}",
-        sources.len()
-    );
-    sources[..count].copy_from_slice(&child_ends);
-    unsafe {
-        command.pre_exec(move || {
-            // Pass one: lift every source clear of the target range.
-            let mut lifted = [0 as RawFd; 8];
-            for (slot, source) in lifted[..count].iter_mut().zip(&sources[..count]) {
-                let high = libc::fcntl(*source, libc::F_DUPFD, 32);
-                if high < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-                *slot = high;
-            }
-            // Pass two: write the targets, which also clears close-on-exec.
-            for (offset, high) in lifted[..count].iter().enumerate() {
-                if libc::dup2(*high, 3 + offset as RawFd) < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-            }
-            // `F_DUPFD` CLEARS close-on-exec on the copy rather than inheriting
-            // it, so these would survive the exec and inflate the very count
-            // the child checks. Closing them is required, not tidiness.
-            for high in &lifted[..count] {
-                libc::close(*high);
-            }
-            Ok(())
-        });
-    }
+    place_inherited(&mut command, &child_ends);
     command.spawn().expect("the binary starts")
 }
 

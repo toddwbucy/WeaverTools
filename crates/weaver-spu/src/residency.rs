@@ -43,6 +43,17 @@
 //!     weaver_spu::residency::Admission::from(path)
 //! }
 //! ```
+//!
+//! A compile-fail pin passes on any compile error, so the two above would go
+//! on passing if [`Admission`] were renamed or its accessors removed, proving
+//! nothing. This one compiles, names the door and its surface, and fails
+//! loudly the day either disappears:
+//!
+//! ```
+//! fn reads<'a>(admission: &'a weaver_spu::residency::Admission<'a>) -> &'a std::path::Path {
+//!     admission.path()
+//! }
+//! ```
 
 use std::path::{Path, PathBuf};
 
@@ -273,9 +284,13 @@ impl Residency {
         };
         let model = load(&admission)?;
 
-        // The weights hash is computed at admit from the bytes this process
-        // loaded rather than from a manifest handed to it, and computed fresh
-        // with no cache across an artifact change.
+        // The weights hash is computed at admit by reading the artifact,
+        // never taken from a manifest handed in, and computed fresh with no
+        // cache across an artifact change. It is a read beside the load, not
+        // of it: a swap landing between the two records an identity the
+        // device does not hold, and binding the hash to the engine's own
+        // mapped bytes is named in the artifact module as the remaining
+        // distance.
         let weights_hash = artifact::weights_hash(&path);
 
         // Step five. Confirm.

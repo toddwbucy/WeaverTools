@@ -14,65 +14,25 @@
 //! - a directive that arrives out of that order is refused and is not queued
 //!
 //! **The success path is not exercised here** because this file runs on every
-//! build, and a build with no backend cannot admit. It is exercised in
-//! `tests/loaded.rs`, which carries the admit-then-release round trip for the
-//! build with the GGUF backend, gated loudly on the features, a device, and a
-//! real artifact.
+//! build, and a build with no backend cannot admit. `tests/loaded.rs` carries
+//! the admit-then-release round trip, and its coverage is conditional in a way
+//! worth stating exactly: it runs on a build with the `cuda` and `gguf`
+//! features, on a machine with a device and the model fixture, and anywhere
+//! else it skips. A skip is a pass to the harness, so a green run of that file
+//! on a fixture-less machine verifies nothing, and `WEAVER_TEST_GGUF` exists
+//! precisely so a runner that means to exercise the load path fails rather
+//! than skips when it cannot.
 
-use std::os::fd::{AsRawFd, OwnedFd, RawFd};
-use std::os::unix::process::CommandExt;
+mod common;
+
+use std::os::fd::{AsRawFd, OwnedFd};
 use std::process::{Child, Command, Stdio};
 
-use nix::libc;
-use nix::sys::socket::{AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair};
+use common::{ask, bound_receives, place_inherited, seqpacket_pair};
 use weaver_types::{
-    ArtifactRef, DeviceOrdinal, ExchangeId, LifecycleDirective, LifecycleRefusal,
-    ModelBinding, Opener, OrganEnvelope, Payload, Position,
+    ArtifactRef, DeviceOrdinal, LifecycleDirective, LifecycleRefusal, ModelBinding, Opener,
+    OrganEnvelope, Payload, Position,
 };
-
-fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
-    socketpair(
-        AddressFamily::Unix,
-        SockType::SeqPacket,
-        None,
-        SockFlag::SOCK_CLOEXEC,
-    )
-    .expect("a socketpair")
-}
-
-/// Start the binary with the two ends at 3 and 4, in two passes so a source
-/// already sitting on a target number is not clobbered before it is placed.
-fn spawn(child_ends: Vec<RawFd>) -> Child {
-    let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    unsafe {
-        command.pre_exec(move || {
-            let mut lifted = Vec::with_capacity(child_ends.len());
-            for source in &child_ends {
-                let high = libc::fcntl(*source, libc::F_DUPFD, 32);
-                if high < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-                lifted.push(high);
-            }
-            for (offset, high) in lifted.iter().enumerate() {
-                if libc::dup2(*high, 3 + offset as RawFd) < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-            }
-            // F_DUPFD clears close-on-exec, so these would survive and inflate
-            // the count the child checks. Closing them is required.
-            for high in lifted {
-                libc::close(high);
-            }
-            Ok(())
-        });
-    }
-    command.spawn().expect("the binary starts")
-}
 
 /// A harness end: send one directive, read one answer.
 struct Harness {
@@ -83,29 +43,24 @@ struct Harness {
 impl Harness {
     fn ask(&mut self, directive: LifecycleDirective) -> OrganEnvelope {
         self.ordinal += 1;
-        let envelope = OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Harness,
-                ordinal: self.ordinal,
-            },
-            position: Position::Open,
-            payload: Payload::Directive(directive),
-        };
-        let body = serde_json::to_vec(&envelope).expect("an envelope encodes");
-        send(self.end.as_raw_fd(), &body, MsgFlags::empty()).expect("the directive is sent");
-
-        let mut buffer = vec![0u8; 64 * 1024];
-        let read = recv(self.end.as_raw_fd(), &mut buffer, MsgFlags::empty())
-            .expect("an answer arrives");
-        buffer.truncate(read);
-        serde_json::from_slice(&buffer).expect("the answer is an envelope")
+        ask(&self.end, self.ordinal, directive)
     }
 }
 
 fn started() -> (Harness, Child) {
     let (parent, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
-    let child = spawn(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
+    let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+    command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    place_inherited(
+        &mut command,
+        &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+    );
+    let child = command.spawn().expect("the binary starts");
+    bound_receives(&parent, 30);
     (
         Harness {
             end: parent,

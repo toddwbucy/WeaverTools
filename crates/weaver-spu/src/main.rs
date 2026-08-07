@@ -172,6 +172,17 @@ fn dispatch(
                     Payload::Answer(LifecycleAnswer::Admitted)
                 }
                 Err(refusal) => {
+                    // The engine's account of a failed load dies at the floor
+                    // conversion, whose closed set carries no detail field, so
+                    // it lands on standard error first: an operator meeting
+                    // DeviceCannotAdmit for a corrupt artifact should not be
+                    // sent to look at a healthy card with nothing else to read.
+                    if let weaver_spu::residency::AdmitRefusal::LoadFailed { detail } = &refusal {
+                        eprintln!(
+                            "{}",
+                            serde_json::json!({"refusal": "load_failed", "detail": detail})
+                        );
+                    }
                     // The one admission is spent whatever it answered.
                     *position = SeamPosition::AdmitRefused;
                     Payload::Refusal(refusal.into())

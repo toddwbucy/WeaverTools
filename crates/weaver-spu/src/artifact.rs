@@ -41,32 +41,38 @@ pub enum Container {
     Safetensors,
 }
 
-/// Step one: resolve the binding to an artifact.
+/// Step one: resolve the binding to an artifact file.
 ///
 /// Resolution is a path question and nothing more. Fetching one would make this
 /// crate a provisioner of the operator's own artifact, per charter section 4.1,
-/// which is why no HTTP client is in the dependency set.
+/// which is why no HTTP client is in the dependency set. A directory holding
+/// exactly one container file resolves to that file, which is the shape a
+/// safetensors export takes, and a directory holding several is refused as
+/// ambiguous.
 pub fn resolve(reference: &ArtifactRef) -> Result<PathBuf, LifecycleRefusal> {
     let path = PathBuf::from(&reference.0);
     if !path.exists() {
         return Err(LifecycleRefusal::ArtifactUnresolvable);
+    }
+    // A directory resolves here, at step one, to the single container file it
+    // holds. Resolving it later would leave the admission carrying the
+    // directory while the header read blessed the file inside, and the loader
+    // would then be handed a path it cannot open, refusing as a device
+    // condition three steps after the fact that caused it.
+    if path.is_dir() {
+        return container_within(&path);
     }
     Ok(path)
 }
 
 /// Step two: read what the artifact declares about itself.
 ///
-/// **This function opens the artifact and reads its header. It touches no
-/// device and loads no tensor data.** A directory resolves to its single
-/// container file where it holds exactly one, which is the shape a safetensors
-/// export takes.
+/// **This function opens the artifact file and reads its header. It touches no
+/// device and loads no tensor data.**
 pub fn read_header(path: &Path) -> Result<ArtifactHeader, LifecycleRefusal> {
-    let file = if path.is_dir() {
-        container_within(path)?
-    } else {
-        path.to_path_buf()
-    };
-    let handle = File::open(&file).map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
+    // Resolution already reduced a directory to its container file, so a
+    // directory arriving here skipped step one and does not read.
+    let handle = File::open(path).map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
     let mut reader = BufReader::new(handle);
 
     let mut magic = [0u8; 4];
@@ -334,9 +340,11 @@ pub fn on_disk_bytes(path: &Path) -> Option<u64> {
 /// handed to this process, and it is computed fresh on each call with no cache
 /// across an artifact change, which is what makes the third walk's alteration
 /// visible. It is a second read of the artifact rather than a hash of the load,
-/// so a swap between the load and this read would go unseen: binding the hash
-/// to the loaded bytes themselves arrives with the loader, and until then this
-/// is the honest statement of what is hashed.
+/// so a swap landing between the load and this read records an identity the
+/// device does not hold. Closing that window means hashing the bytes the
+/// engine itself mapped, which the engine's loading interface does not expose
+/// today: the GGUF loader arrived without it, so the window is named here
+/// rather than papered over, and it closes from the engine side or not at all.
 pub fn weights_hash(path: &Path) -> crate::residency::WeightsHash {
     match hash_canonical(path) {
         Ok(value) => crate::residency::WeightsHash(value),
@@ -475,10 +483,40 @@ mod tests {
             handle.write_all(&super::tests::nested_gguf(0)).expect("written");
         }
         assert_eq!(
-            read_header(&dir),
+            resolve(&ArtifactRef(dir.to_string_lossy().into_owned())),
             Err(LifecycleRefusal::ArtifactUnresolvable),
             "two containers is an ambiguity, not a choice"
         );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// **A directory artifact resolves to the file inside it, at step one.**
+    /// An earlier cut resolved the container inside the header read, so the
+    /// admission carried the directory while the judgments blessed the file,
+    /// and the loader was handed a path it cannot open, refusing as a device
+    /// condition three steps after the cause.
+    ///
+    /// Perturbation: return the directory itself from `resolve` and this test
+    /// fails on the extension assertion. Watched under exactly that change.
+    #[test]
+    fn a_directory_artifact_resolves_to_its_container_file() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-spu-artifact-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        let mut handle = File::create(dir.join("only.gguf")).expect("a fixture file");
+        handle.write_all(&nested_gguf(0)).expect("written");
+        drop(handle);
+
+        let resolved = resolve(&ArtifactRef(dir.to_string_lossy().into_owned()))
+            .expect("a one-container directory resolves");
+        assert!(
+            resolved.is_file(),
+            "the admission carries the file, never the directory"
+        );
+        assert_eq!(resolved.extension().and_then(|e| e.to_str()), Some("gguf"));
         std::fs::remove_dir_all(&dir).ok();
     }
 }

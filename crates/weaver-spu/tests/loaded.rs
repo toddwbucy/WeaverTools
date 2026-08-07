@@ -1,3 +1,5 @@
+//! conforms: spu-release-frees-before-answering
+//!
 //! The success path: a real artifact admitted onto a real device and released,
 //! per `weaver-spu-Spec` section 3 and `weaver-harness-spu-contract` sections 3
 //! and 4. This is the path `tests/seam.rs` names as its gap, closed here for
@@ -9,6 +11,8 @@
 //! worse than a red result.
 
 #![cfg(all(feature = "cuda", feature = "gguf"))]
+
+mod common;
 
 use std::path::{Path, PathBuf};
 
@@ -27,17 +31,19 @@ fn model_present() -> Option<PathBuf> {
         // skip: a runner that asked for the load path is told it did not run,
         // instead of a green result claiming it did. The skip below survives
         // only for the implicit case, where this machine simply is not one
-        // that holds the fixture.
+        // that holds the fixture. Both branches demand a regular file, since
+        // a directory or a socket at the path would fail later and blame the
+        // loader.
         Some(named) => {
             let path = PathBuf::from(named);
             assert!(
-                path.exists(),
-                "WEAVER_TEST_GGUF names {}, which does not exist",
+                path.is_file(),
+                "WEAVER_TEST_GGUF names {}, which is not a regular file",
                 path.display()
             );
             Some(path)
         }
-        None => Path::new(MODEL).exists().then(|| PathBuf::from(MODEL)),
+        None => Path::new(MODEL).is_file().then(|| PathBuf::from(MODEL)),
     }
 }
 
@@ -53,12 +59,16 @@ fn device_lock() -> std::sync::MutexGuard<'static, ()> {
     DEVICE.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
-fn device_free_bytes() -> Option<u64> {
-    // Read through the same driver surface the admission judges with.
-    use cudarc::driver::CudaContext;
-    let context = CudaContext::new(0).ok()?;
-    let (free, _total) = context.mem_get_info().ok()?;
-    Some(free as u64)
+/// One context held for a whole measurement sequence, so the probes read a
+/// stable view: creating and dropping a context per probe would retain and
+/// release the primary context around each read.
+fn device_context() -> Option<std::sync::Arc<cudarc::driver::CudaContext>> {
+    cudarc::driver::CudaContext::new(0).ok()
+}
+
+fn free_bytes(context: &cudarc::driver::CudaContext) -> u64 {
+    let (free, _total) = context.mem_get_info().expect("the driver answers");
+    free as u64
 }
 
 /// **Admit holds the weights on the device, and release frees them before it
@@ -86,12 +96,12 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         eprintln!("SKIP a_real_admit_holds_the_device: no model at {MODEL}");
         return;
     };
-    if device_free_bytes().is_none() {
+    let Some(context) = device_context() else {
         eprintln!("SKIP a_real_admit_holds_the_device: no CUDA device");
         return;
-    }
+    };
     let _device = device_lock();
-    let before = device_free_bytes().expect("the driver answers under the lock");
+    let before = free_bytes(&context);
 
     let mut residency = Residency::new();
     let binding = ModelBinding {
@@ -110,7 +120,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         !resident.weights_hash.is_sentinel(),
         "a loaded artifact hashes to a value"
     );
-    let held = device_free_bytes().expect("the driver still answers");
+    let held = free_bytes(&context);
     // The artifact is ~370 MB quantized. The device must be holding a
     // substantial part of that; the threshold is far below the artifact size
     // so allocator granularity cannot flake it, while far above noise.
@@ -131,7 +141,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
     );
 
     residency.release().expect("the release succeeds");
-    let after = device_free_bytes().expect("the driver still answers");
+    let after = free_bytes(&context);
     assert!(
         after.saturating_sub(held) > 100 * 1024 * 1024,
         "the release returns the memory before answering: held {held}, after {after}"
@@ -145,91 +155,28 @@ mod seam_success {
     //! the device is free.
 
     use super::*;
-    use std::os::fd::{AsRawFd, OwnedFd, RawFd};
-    use std::os::unix::process::CommandExt;
-    use std::process::{Child, Command, Stdio};
+    use std::os::fd::AsRawFd;
+    use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant};
 
-    use nix::libc;
-    use nix::sys::socket::{
-        AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair,
-    };
-    use weaver_types::{
-        ExchangeId, LifecycleAnswer, LifecycleDirective, Opener, OrganEnvelope, Payload,
-        Position,
-    };
-
-    fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
-        socketpair(
-            AddressFamily::Unix,
-            SockType::SeqPacket,
-            None,
-            SockFlag::SOCK_CLOEXEC,
-        )
-        .expect("a socketpair")
-    }
-
-    fn spawn_holding(child_ends: [RawFd; 2]) -> Child {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
-        // The streams go to null rather than pipes: llama.cpp writes model
-        // metadata to stderr during the load, nothing here drains a pipe until
-        // after the exchanges, and a load chatty enough to fill the buffer
-        // would wedge the child mid-write against the parent mid-recv. This
-        // test reads answers and an exit status, never output.
-        command
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null());
-        unsafe {
-            command.pre_exec(move || {
-                let mut lifted = [0 as RawFd; 2];
-                for (slot, source) in lifted.iter_mut().zip(&child_ends) {
-                    let high = libc::fcntl(*source, libc::F_DUPFD, 32);
-                    if high < 0 {
-                        return Err(std::io::Error::last_os_error());
-                    }
-                    *slot = high;
-                }
-                for (offset, high) in lifted.iter().enumerate() {
-                    if libc::dup2(*high, 3 + offset as RawFd) < 0 {
-                        return Err(std::io::Error::last_os_error());
-                    }
-                }
-                for high in lifted {
-                    libc::close(high);
-                }
-                Ok(())
-            });
-        }
-        command.spawn().expect("the binary starts")
-    }
-
-    fn ask(end: &OwnedFd, ordinal: u64, directive: LifecycleDirective) -> OrganEnvelope {
-        let envelope = OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Harness,
-                ordinal,
-            },
-            position: Position::Open,
-            payload: Payload::Directive(directive),
-        };
-        let body = serde_json::to_vec(&envelope).expect("an envelope encodes");
-        send(end.as_raw_fd(), &body, MsgFlags::empty()).expect("the directive is sent");
-        let mut buffer = vec![0u8; 64 * 1024];
-        let read = recv(end.as_raw_fd(), &mut buffer, MsgFlags::empty()).expect("an answer");
-        buffer.truncate(read);
-        serde_json::from_slice(&buffer).expect("the answer is an envelope")
-    }
+    use crate::common::{ask, bound_receives, place_inherited, seqpacket_pair};
+    use weaver_types::{LifecycleAnswer, LifecycleDirective, Payload};
 
     /// **The contract's success path, whole:** admit answers `Admitted`,
     /// release answers `Released`, each on the exchange that asked, across the
     /// real seam, against a real artifact, on a real device.
+    ///
+    /// Every wait is bounded. The receives carry a timeout sized to a model
+    /// load, and the child's exit is polled against a deadline with a kill on
+    /// expiry, so a wedged stage becomes a failure naming itself rather than a
+    /// hang the harness cannot end.
     #[test]
     fn admit_then_release_round_trips_across_the_seam() {
         let Some(model) = model_present() else {
             eprintln!("SKIP admit_then_release_round_trips: no model at {MODEL}");
             return;
         };
-        if device_free_bytes().is_none() {
+        if device_context().is_none() {
             eprintln!("SKIP admit_then_release_round_trips: no CUDA device");
             return;
         }
@@ -239,7 +186,29 @@ mod seam_success {
 
         let (lifecycle, child_lifecycle) = seqpacket_pair();
         let (_decode, child_decode) = seqpacket_pair();
-        let child = spawn_holding([child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        // The streams go to a file rather than pipes: llama.cpp writes model
+        // metadata to stderr during the load, nothing here drains a pipe until
+        // after the exchanges, and a load chatty enough to fill the buffer
+        // would wedge the child mid-write against the parent mid-recv. A file
+        // has no such buffer, and unlike null it leaves the child's account on
+        // disk for the failure that needs it.
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-seam-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        // Generous against a model load, far under the harness's patience.
+        bound_receives(&lifecycle, 120);
 
         let admitted = ask(
             &lifecycle,
@@ -267,8 +236,22 @@ mod seam_success {
         assert_eq!(released.exchange.ordinal, 2);
 
         drop(lifecycle);
-        let mut child = child;
-        let status = child.wait().expect("the binary exits");
+        let deadline = Instant::now() + Duration::from_secs(30);
+        let status = loop {
+            match child.try_wait().expect("a wait succeeds") {
+                Some(status) => break status,
+                None if Instant::now() > deadline => {
+                    child.kill().ok();
+                    child.wait().ok();
+                    panic!(
+                        "the child did not exit within 30s of its channel closing, \
+                         its stderr is at {}",
+                        log_path.display()
+                    );
+                }
+                None => std::thread::sleep(Duration::from_millis(50)),
+            }
+        };
         assert!(status.success(), "and the process exits clean");
     }
 }
