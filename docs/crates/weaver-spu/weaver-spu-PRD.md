@@ -365,8 +365,12 @@ the seam above and there is no reason for this seam to differ.
 
 ## 6. The seam
 
-This crate holds one seam. It is a two-initiator channel to `weaver-harness`, governed
-by `weaver-harness-spu-contract`.
+This crate holds two seams, both to `weaver-harness`. The residency seam is the
+two-initiator channel that makes this crate an organ, governed by
+`weaver-harness-spu-contract`, and the token seam is the decoder cut's own socket,
+governed by `weaver-harness-spu-decode-contract` and not an organ channel. The sentence
+here counted one until the cut of 2026-08-02 landed the second, and the table below has
+carried both since.
 
 | Seam | Peer | What crosses |
 |---|---|---|
@@ -421,22 +425,21 @@ carries the scoped rule.
 **The channel has two initiators because this crate is an organ, and this pass charters
 one direction of it.** Apex section 5.4 makes a two-initiator channel with the harness
 one of the two properties of an organ, and the property does not bend. Both exchanges
-chartered here are opened by the harness. The direction this crate opens is the fault
-it raises,
-which reaches the record through the harness as author, written as the `fault` event
-of `weaver-trace-PRD` section 3.1 per the fault-carrier ruling of 2026-08-01, and
+chartered here are opened by the harness. The direction this crate opens is the fault it
+raises, which reaches the record through the harness as author, written as the `fault`
+event of `weaver-trace-PRD` section 3.1 per the fault-carrier ruling of 2026-08-01, and
 the case set for it is deferred with a named exit in section 10. A reader should not
 take a half-chartered direction for an absent one.
 
-**One channel carries the organ's traffic, and whether decode shares it is not settled
-here.** Apex section 5.4 names a two-initiator channel, singular, and `weaver-types-PRD`
-section 2.3 has `organ-envelope` as the carrier every organ channel draws. Drafting a
-second channel for decode would be a second seam under the Document Format, needing its
-own name and its own contract, and this pass has no measurement to justify one. What it
-does have is a real question, since a boundary-preserving ordered channel puts a release
-directive behind whatever decode traffic is ahead of it, and this program's own
-principle is that latency is the enemy of agency. Section 10 files it against the
-workflow that can measure it.
+**One channel carries the organ's traffic, and decode does not share it.** Apex section
+5.4 names a two-initiator channel, singular, and `weaver-types-PRD` section 2.3 has
+`organ-envelope` as the carrier every organ channel draws. This paragraph once left the
+decode question open and filed it for measurement, and the decoder-cut ruling of
+2026-08-02 answered it structurally instead: decode took its own socket under its own
+contract, which is the second seam this section's table carries, so a release directive
+never queues behind decode traffic and the head-of-line risk this paragraph would have
+had measured cannot arise. Section 10 records the closure and section 13.2 carries the
+classification that follows from it.
 
 **This crate links both floor crates, and the second link is the decode
 workflow's answer to the question this paragraph used to leave open.** It
