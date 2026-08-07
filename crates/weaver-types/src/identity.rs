@@ -3,7 +3,9 @@
 //!
 //! Peer identity and the authorization predicate, per `weaver-types-Spec`
 //! section 3: the identity type, the rule it is judged against, and the one
-//! policy function, drawn by the two seams that admit an outside principal. One
+//! policy function, drawn by the seams that admit an outside principal, two today
+//! and a third chartered by the egress ruling of 2026-08-07 whose contract is not
+//! written. One
 //! shared definition is the only way separate processes provably enforce the
 //! same rule, and this crate holds one policy function and gains no second,
 //! which is charter enforcement read at review.
@@ -36,9 +38,14 @@ pub struct PeerIdentity {
 /// The rule a peer is judged against, one shared shape rather than one each
 /// consumer invents.
 ///
-/// The three sets are what the two consumers need and no more: the gate admits
-/// front-end principals by uid or group, the operator surface admits by group
-/// membership, and both exclude the agent uid.
+/// The three sets are what the consumers need and no more: the gate admits
+/// front-end principals by uid or group on its world-opened seam, the operator
+/// surface admits by group membership, and both exclude the agent uid. The gate's
+/// agent-opened seam is a third consumer and needs no fourth set: it admits
+/// registered tools by the same uid and group sets and excludes the agent uid by
+/// the same denial. What it needs beyond this rule is proof that a uid is the
+/// registered tool rather than a squatter, which is the tool-seam contract's and
+/// is not a shape this type carries.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct AccessRule {

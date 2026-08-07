@@ -310,19 +310,25 @@ instead. That contract draws neither definition below and says so. A universal w
 counterexample is a weaker seat than a scoped claim that holds, and the scoped claim is
 what the carve-out rests on.
 
-**The scoped claim has its consumers named as of 2026-08-01, and they are re-aimed
-by the recut of 2026-08-05.** The client socket of `weaver-gate-PRD` section 2 is the
-seam that admits an outside principal, and it is unchanged. The second consumer was
-the operator surface, which retired with the service account it authenticated to, and
-the coordination seam of `weaver-admin-harness-contract` section 2 takes its place:
-the socket inversion gave that seam a name and a real credential check, root or
-refused, where an inherited pair could distinguish nothing. Every surviving consumer
-authenticates by `SO_PEERCRED`, judges by the one shared rule, and draws the pair
-below. The claim is stronger for the exchange rather than weaker, the seam that left
-having been the one whose predicate a compromised group grant could widen. **The count
-was two and is not closed at two**: the egress ruling of 2026-08-07 charters the
-gate's agent-opened seam as a third, and what credential a registered tool presents on
-it is the tool-seam contract's, so this subsection states the shared rule and leaves
+**The scoped claim has its consumers named as of 2026-08-01, and they are re-aimed by
+the recut of 2026-08-05.** The client socket of `weaver-gate-PRD` section 2 is the seam
+that admits an outside principal, and it is unchanged. The second consumer was the
+operator surface, which retired with the service account it authenticated to, and the
+coordination seam of `weaver-admin-harness-contract` section 2 takes its place: the
+socket inversion gave that seam a name and a real credential check, root or refused,
+where an inherited pair could distinguish nothing. Every surviving consumer reads
+`SO_PEERCRED`, judges by the one shared rule, and draws the pair below. **Reads rather
+than is authenticated by, on the third seam**: where a consumer accepts, the credential
+is the connecting peer's own and the rule decides, and where a consumer dials, the
+credential is the one captured for the listening socket and cannot by itself say which
+application answered. The gate's agent-opened seam is the case, per `weaver-gate-PRD`
+section 2, and what closes it is the tool-seam contract stating how a registered tool
+proves itself and how that proof maps to its registration. This crate carries the rule
+and not that proof. The claim is stronger for the exchange rather than weaker, the seam
+that left having been the one whose predicate a compromised group grant could widen.
+**The count was two and is not closed at two**: the egress ruling of 2026-08-07 charters
+the gate's agent-opened seam as a third, and what credential a registered tool presents
+on it is the tool-seam contract's, so this subsection states the shared rule and leaves
 the enumeration open rather than naming a consumer whose contract does not exist.
 
 **Alongside the identity type, this crate carries the authorization predicate, and
