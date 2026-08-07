@@ -1,0 +1,43 @@
+[package]
+name = "weaver-gate"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "The outer membrane: the sole work ingress, its hook, and the boundary that judges every peer"
+
+# One binary, forked and exec'd by the harness during the enter fan-out, per
+# weaver-gate-Spec section 1. Nothing links this crate.
+#
+# The lib target beside it is not an API for a consumer. It exists because the
+# Spec's bind-shape pins are compile-fail doctests and cargo runs doctests for
+# lib targets only, so a bin-only crate would carry them as text that never
+# executes. The same reading weaver-spu takes, on the same ground.
+[lib]
+name = "weaver_gate"
+path = "src/lib.rs"
+
+[[bin]]
+name = "weaver-gate"
+path = "src/main.rs"
+
+# One internal crate and two external ones, per Spec section 1. weaver-types is
+# the charter's one floor link, taken WITHOUT its `config` feature: this crate
+# reads no configuration file, the gate instruction arriving over the seam
+# instead, so no parser enters a process whose whole argument is that it holds
+# little. No direct weaver-traits line, matching the charter's floor-link set.
+# serde_json encodes the seam's envelopes and touches no client byte. nix is the
+# OS surface: bind, listen, accept, getsockopt for the peer credential, fcntl,
+# `poll`, so the serve loop can wait on the channel and the hook's listener at
+# once: the boundary must judge a dialing peer during the raised window, and a
+# loop blocked on the channel alone never accepts one. And the two prctl sets.
+# No `uio`: this crate sends and receives whole
+# datagrams and passes no control message, so the scatter-gather surface the
+# harness needs for descriptor passing is weight it does not carry. No async
+# runtime, no logging crate, no YAML - this
+# crate writes no account of anything, a logging crate being a second author's
+# first step.
+[dependencies]
+weaver-types = { path = "../weaver-types", default-features = false }
+serde_json.workspace = true
+nix = { version = "0.31", features = ["socket", "fs", "process", "user", "poll"] }

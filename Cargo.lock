@@ -1687,6 +1687,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "weaver-gate"
+version = "0.1.0"
+dependencies = [
+ "nix",
+ "serde_json",
+ "weaver-types",
+]
+
+[[package]]
 name = "weaver-harness"
 version = "0.1.0"
 dependencies = [
