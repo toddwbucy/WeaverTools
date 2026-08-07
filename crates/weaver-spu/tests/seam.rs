@@ -13,9 +13,11 @@
 //! - a release with no completed admit before it is refused and is not queued
 //! - a directive that arrives out of that order is refused and is not queued
 //!
-//! **What is not exercised here is the success path**, because no build of this
-//! crate can admit yet: the backends of Spec section 4 are not written. That is
-//! a named gap rather than an oversight, and it closes when they land.
+//! **The success path is not exercised here** because this file runs on every
+//! build, and a build with no backend cannot admit. It is exercised in
+//! `tests/loaded.rs`, which carries the admit-then-release round trip for the
+//! build with the GGUF backend, gated loudly on the features, a device, and a
+//! real artifact.
 
 use std::os::fd::{AsRawFd, OwnedFd, RawFd};
 use std::os::unix::process::CommandExt;

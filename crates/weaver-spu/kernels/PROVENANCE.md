@@ -52,6 +52,20 @@ This is recorded rather than fixed because the script crosses verbatim, per the
 ruling of 2026-08-02. Changing the default would be an edit to a carried file,
 and the fact belongs with the carry either way.
 
+**The `gguf` feature's build script races against its own hard links.** The
+fork's `llama-cpp-sys-2` hard-links `libllama.so` and `libggml-*.so` into
+siblings of the profile dir, and a re-run meeting a survivor dies with
+`EEXIST` at its `build.rs:1110`. The archived tree records the same bug against
+the same crate. The sweep, run from the repo root before retrying:
+
+    find target/debug -maxdepth 1 -name 'lib*.so*' -delete
+    find target/debug \( -path '*/examples/lib*.so*' \
+      -o -path '*/deps/libllama.so*' -o -path '*/deps/libggml*.so*' \) -delete
+
+A build-script bug in the pinned revision, not a code fact, hit twice in this
+workshop on 2026-08-07: once on the first full build and once when clippy
+re-ran the script.
+
 The four `-gencode` lines are `sm_86` (A6000, Ampere), `sm_89` (RTX Ada),
 `sm_120` (RTX PRO Blackwell, needing CUDA >= 12.8), and a `compute_86` PTX
 fallback that JITs to any architecture at or above 86.
@@ -71,8 +85,8 @@ a clean nvcc exit, because it says the code for each target is present in the
 artifact that links rather than merely that the compiler accepted the flags.
 The fatbins on the two machines are identical, so the compiles-and-links column
 is the same fact on both rows: both verified builds emitted all four lines, and
-which line a machine can execute is the device-side column's question. The Ada line has no
-machine behind it and rides on the `cuobjdump` evidence alone.
+which line a machine can execute is the device-side column's question. The Ada
+line has no machine behind it and rides on the `cuobjdump` evidence alone.
 
 **No device-side execution has happened on Blackwell.** The kernels are known to
 be present and linkable there and are not known to produce correct numbers
