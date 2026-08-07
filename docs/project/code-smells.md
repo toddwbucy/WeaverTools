@@ -55,11 +55,11 @@ resolves to a peer, or a descriptor for a peer's channel held by anything other 
 the harness that created the pair.
 
 **What it breaks.** Apex section 5.4 makes the harness the organ whose domain is
-coordination, and the hub every other organ is duplex with rather than a spoke. A
-peer call is an edge the topology does not have. Section 5.1 then leaves it nowhere
-to live: every seam where one crate asks another process to do something is a socket
-governed by a named contract, and a peer call has no contract because no contract was
-written for a seam the architecture does not admit. So the call is either an
+coordination, and the hub every other organ holds its two-initiator channel with rather
+than a spoke. A peer call is an edge the topology does not have. Section 5.1 then leaves
+it nowhere to live: every seam where one crate asks another process to do something is a
+socket governed by a named contract, and a peer call has no contract because no contract
+was written for a seam the architecture does not admit. So the call is either an
 undeclared seam or a path dependency across a process line, and 5.1 forbids both.
 
 The cost is not stylistic. The harness is the sole author of the trace, and a turn

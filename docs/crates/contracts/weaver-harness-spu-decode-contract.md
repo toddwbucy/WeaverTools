@@ -36,7 +36,7 @@ named for its loop, and the residency contract's name stands unchanged.
 
 **This document does not draw `weaver-organ-channel`.** The token seam is not
 an organ channel, per `weaver-spu-PRD` section 13.2: the organ test names one
-duplex channel and the lifecycle channel is it. The channel mechanics this
+two-initiator channel and the lifecycle channel is it. The channel mechanics this
 seam needs are stated in section 1 as its own, and the organ envelope does
 not cross here.
 
@@ -105,7 +105,7 @@ never its success, and what a death means is section 5's.
 ## 2. The exchanges
 
 Five. Four are opened by the harness and one by the SPU, which is the
-duplex direction the residency contract deferred, arriving here because
+SPU-opened exchange the residency contract deferred, arriving here because
 the faults it carries are decode-domain traffic.
 
 **Open the session.** Opened by the harness, once per residency, after

@@ -22,9 +22,9 @@ Section 5 states where it files and what marks its kind.
 ## 0. What this document is
 
 The mechanics of the channel an organ holds with the harness. Apex section 5.4 makes a
-duplex channel with the harness one of the two properties of an organ, so every organ
-has one of these and every organ contract would otherwise describe it. This document
-describes it once.
+two-initiator channel with the harness one of the two properties of an organ, so every
+organ has one of these and every organ contract would otherwise describe it. This
+document describes it once.
 
 **The layering is the point, and it is not new here.** `weaver-admin-harness-contract`
 section 0 already marks the boundary inside itself: sections 1 and 2 are the organ
@@ -45,17 +45,34 @@ decide nothing the graph carries. The consequence is that the filing ruled in se
 was a small one: a question about where the file sits, not about what kind of node it is
 or who its parties are.
 
-## 1. The channel is duplex
+## 1. The channel has two initiators
 
-**This section is the message layer and it holds for any duplex channel, whether or
-not a process boundary is crossed.** An in-process duplex inside one domain is each
-domain's own business, unconstrained per apex section 5.4, and may draw this section
-alone if its domain so chooses.
+**This section is the message layer and it holds for any two-initiator channel, whether
+or not a process boundary is crossed.** An in-process two-initiator channel inside one
+domain is each domain's own business, unconstrained per apex section 5.4, and may draw
+this section alone if its domain so chooses.
 
 **Either party may open an exchange.** Two initiators exist on an organ channel and both
 directions are first-class. The harness opening an exchange is a normal event rather
 than an intrusion, and an implementation that treats a harness-opened message as a
 protocol error has the seam backwards. The same holds read the other way for the organ.
+
+**Two-initiator is the property's name, per the initiation ruling of 2026-08-07.** The
+earlier name was duplex, and the flow words are retired from live prose because they
+answer a different question: simplex and duplex describe how bytes move on a wire and
+say nothing about which party may open an exchange. Every channel in this program moves
+bytes both ways, so a flow word distinguishes nothing here, while the property this
+section states is initiation and does the work the old name was carrying. A channel is
+named by how many parties may open an exchange on it, and this one takes two. Records
+of acts made under the old name keep their wording, being records rather than live
+claims.
+
+**Which party opened an exchange is carried per message, and that follows from the
+property.** Either party may open one, so the fact cannot be read off the channel, which
+is why the identity rule below is the opening party and that party's ordinal, and why
+`weaver-types-PRD` section 2.3 names wire vocabulary for the loop whose traffic it
+carries rather than for a sender. A channel only one party may open would carry the same
+fact in the object instead, and no such channel is chartered in this corpus today.
 
 **The exchange is the unit, and every message names the one it belongs to.** A message
 carries the exchange it is part of, its position in that exchange as open or continue or
@@ -66,8 +83,8 @@ what keeps this layer indifferent to what the layer above is saying.
 **An exchange is identified by its opening party and that party's ordinal.** Two
 initiators numbering their own exchanges cannot collide without coordinating, so there
 is no correlation authority to appoint and no shared counter to keep. This is the
-mechanism that lets one channel carry both directions, and it is why a simplex reading
-needed a second channel and this one does not.
+mechanism that lets one channel carry both directions, and it is why a single-initiator
+reading needed a second channel and this one does not.
 
 **The minimal exchange is a single message that opens and closes at once.** Nothing
 requires an exchange to have two sides. An announcement that expects no answer is a
