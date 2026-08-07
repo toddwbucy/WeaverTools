@@ -104,23 +104,40 @@ and on a single-initiator socket the opening party is a fact about the socket ra
 than one carried per message, which is what lets this crate judge a crossing by reading
 no payload at all. The second socket is chartered here and its contract is the tool
 workflow's, per apex section 3 step 7. The claim is scoped to the
-outward direction deliberately, since the inversion of 2026-08-05 has the
-harness binding a coordination socket inward, inside the same sandbox, which
-faces admin rather than the world and admits root alone. One door out and one
-door in, and this crate holds the one that faces out. Ready means bound.
-Stopped means closed. The socket it binds is not this crate's decision: it
-arrives as the gate instruction inside the
-enter fan-out, operator-declared and admin-validated, carried by the harness
+outward-facing sockets deliberately, since the inversion of 2026-08-05 has
+the harness binding a coordination socket inward, inside the same sandbox, which
+faces admin rather than the world and admits root alone. **Two doors out and one
+door in, and this crate holds both that face out**, a count the egress ruling
+changed from one and the reason unchanged: what faces the world is this crate's
+and what faces admin is not. Ready means bound. Stopped means closed. The sockets
+it binds are not this crate's decision: they arrive as the gate instruction inside
+the enter fan-out, operator-declared and admin-validated, carried by the harness
 uninterpreted, resolved here. The parallel to `model-binding` is exact and deliberate.
 
-**The boundary predicate.** A named socket is dialable by anything that can reach it,
-so the hook authenticates every connection by peer credential and admits front-end
-principals only, which is the `peer-identity` and `authorization-predicate` pair of
+**The boundary predicate, and there is one per socket.** A named socket is dialable by
+anything that can reach it, so each hook authenticates every connection by peer
+credential, which is the `peer-identity` and `authorization-predicate` pair of
 `weaver-types-PRD` section 2.2 finding the consumer that subsection describes: a seam
 that admits an outside principal, authenticated by `SO_PEERCRED` and judged by the one
-shared rule. **The predicate excludes the agent uid.** An elected tool that could dial
-the agent's own mouth would let the agent prompt itself through its own front door,
-and the exclusion is stated here as the boundary fact, with the mechanism the Spec's.
+shared rule. The mechanism is shared and the rule judged against is not, because the
+two sockets admit different principals and one allow-list covering both would admit
+each socket's peers to the other's.
+
+**On the world-opened socket the predicate admits front-end principals only.** This is
+the merged rule, unchanged by the egress ruling.
+
+**On the agent-opened socket it admits registered tools only**, the principals the
+operator provisioned for that door and no others, per apex section 3 step 7. Which
+credential a registered tool presents and how that maps to its registration is the
+tool-seam contract's to state, per `tool-egress-boundary-frame` section 7, and this
+charter records the demand rather than inventing the answer.
+
+**Both predicates exclude the agent uid**, and the ground differs on each. On
+the world-opened socket an elected tool that could dial the agent's own mouth would let
+the agent prompt itself through its own front door. On the agent-opened socket a
+process at the agent uid answering where a registered tool should be is the agent
+answering its own call, which is the same loop arriving by the other door. The
+exclusions are stated here as boundary facts, with the mechanism the Spec's.
 
 **The relay.** Inbound bytes to the harness, outbound bytes to the client, opaque both
 ways, order preserved, nothing retained after the response returns.
@@ -163,14 +180,21 @@ apex section 6's binding rule, and the reason is the boundary: a hook that rises
 before the interior is whole would accept work the agent cannot yet do. On its side of
 the fork this crate performs its final exec, sets its own end of the channel
 close-on-exec, clears its own dumpable flag, receives the gate instruction, binds the
-socket the instruction names, and confirms ready. Ready is a fact about the listener,
-not about the process: it is sent only after the bind has returned.
+sockets the instruction names, and confirms ready. Ready is a fact about the
+listeners, not about the process: **it is sent only after every bind has returned**,
+which the egress ruling of 2026-08-07 turned from one bind into two. A ready answered
+after the first would name a boundary half open, and the harness reading it would
+proceed with a door still shut.
 
 **Refusing.** A bind that fails is a refusal with the reason, typed, and a refusal
 leaves nothing held: no listener, no half-bound socket, nothing a retry would trip
-over. A refusal is answered to the harness rather than exited on, for the reason the
-SPU charter states, a party that exited would replace a typed reason with an observed
-death.
+over. **With two binds that becomes an unwind rather than a return**: a second bind
+that fails closes the listener the first bind opened before the refusal is answered,
+so a refused raise leaves the same nothing a single-bind refusal left. The aggregate's
+rollback has nothing of this crate's to undo, which is the property section 5 rests
+on, and it holds only if the partial success is closed here. A refusal is answered
+to the harness rather than exited on, for the reason the SPU charter states, a party
+that exited would replace a typed reason with an observed death.
 
 **Lowering.** The harness stops this crate first in the leave fan-out. Stopping
 closes the listener before anything else happens anywhere else, which is what

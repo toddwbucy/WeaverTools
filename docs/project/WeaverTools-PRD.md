@@ -666,7 +666,20 @@ here.
 dials the agent and a client holds its own execution. The agent-opened socket is a
 second grip with the trust direction turned around, the agent reaching a registered tool
 and each end reading the other by kernel-supplied credential, and its contract is the
-tool workflow's to author. This paragraph once named the world contract alone and said
+tool workflow's to author.
+
+**What the gate owns of that second grip and what the workflow owns are split here, so
+the workflow inherits a boundary rather than a blank page.** The gate binds the
+listener, judges every connection by peer credential against the registered-tool
+allow-list, and relays octets in order without reading them, which is the same three
+things it already does on the world-opened socket. The workflow owns what a credential
+means: which identity a registered tool presents and how that maps to its registration,
+how a tool is addressed among several, what a call and its answer are, and how a tool
+is provisioned and supervised. The split is the ordinary one between a socket's
+mechanics and a seam's meaning, and it lands in two documents, the tool-seam contract
+and `weaver-gate-Spec`, neither of which this act writes.
+
+This paragraph once named the world contract alone and said
 the tool case was that same path with a different thing on the far side, which was true
 of a client-held tool and is not true of one the agent addresses.
 

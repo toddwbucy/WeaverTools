@@ -775,8 +775,12 @@ through a passed descriptor, and the trace directory is root-owned and not searc
 by the agent uid.
 
 **Same-uid reach is a live hole and the flag that closes it is a requirement stated
-elsewhere.** If an external tool process runs as the agent uid, it can attach to the
-worker and drive the coordination channel and the trace descriptor directly, which
+elsewhere.** A world-reaching tool no longer runs as the agent uid and is not
+started by this program at all, per apex section 3 step 7 as revised by the egress
+ruling of 2026-08-07, so what this paragraph reaches is the tool that reaches
+nothing, for which the agent-uid case still stands. If such a tool process runs as
+the agent uid, it can attach to the worker and drive the coordination channel and
+the trace descriptor directly, which
 defeats descriptor scoping. The worker's dumpable flag is what closes it, and
 `weaver-admin-harness-contract` section 2 is authoritative for both the requirement
 and its ordering, because the flag is a property admin relies on and cannot verify
