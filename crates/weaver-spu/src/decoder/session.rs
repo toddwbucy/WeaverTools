@@ -5,6 +5,7 @@
 //! conforms: spu-cancel-bounded-by-one-token
 //! conforms: spu-cancel-polled-not-signalled
 //! conforms: spu-flush-mechanism-from-declaration
+//! conforms: spu-signals-pre-sampler
 //!
 //! The resident session and its append path, per `weaver-spu-Spec` sections 4.2
 //! to 4.4.
@@ -37,6 +38,7 @@
 //! through the append path instead.
 
 use crate::decoder::backend::{Backend, DecodeFault, FlushMechanism, TokenId};
+use crate::measurement;
 
 /// Why a generation stopped.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -58,6 +60,11 @@ pub struct Generated {
     /// Why the loop ended. **A cancelled generation answers with what it
     /// produced, marked stopped, after the terminator lands.**
     pub stopped: Stopped,
+    /// What the distribution measured at each step, per Spec section 6.
+    ///
+    /// **Positionally paired with `tokens`.** Absent where the backend served
+    /// no distribution, and absent rather than empty where nothing was drawn.
+    pub signals: measurement::Signals,
 }
 
 /// The family's stop condition and its terminator.
@@ -224,6 +231,7 @@ impl Session {
         self.resident_len += delta.len();
 
         let mut produced = Vec::new();
+        let mut signals = measurement::Accumulator::new();
         let stopped = loop {
             // **The cancel is checked between sampled tokens**, which bounds
             // the stop by one token's decode rather than by a kernel's
@@ -241,10 +249,31 @@ impl Session {
                 break Stopped::CapacityReached;
             }
 
+            // **Measured before the sampler**, per Spec section 6. The
+            // distribution exists at this point and not after: `sample`
+            // consumes it and answers one token, so a measurement taken below
+            // would be reading a state the draw has already moved past. The
+            // index the surprisal needs is the token's own, so the entropy is
+            // taken here and the surprisal completed once the draw is known,
+            // both from the same distribution rather than from two.
+            let step = match self.backend.distribution() {
+                Ok(logits) => Some((measurement::entropy_bits(logits), logits.to_vec())),
+                // A backend serving no distribution measures nothing rather
+                // than faulting the generation. The signals are observability
+                // and an absent one is a reported absence, per section 6.
+                Err(_) => None,
+            };
+
             let token = match self.backend.sample() {
                 Ok(token) => token,
                 Err(fault) => return Err(self.poison(fault)),
             };
+
+            if let Some((entropy, logits)) = step
+                && let Some(surprisal) = measurement::surprisal_bits(&logits, token.0 as usize)
+            {
+                signals.record(entropy, surprisal);
+            }
             if stop.stop_tokens.contains(&token) {
                 break Stopped::Complete;
             }
@@ -262,7 +291,10 @@ impl Session {
         // faulted cannot be asked to decode a terminator, so those paths close
         // the session instead, and a closed session is the honest state where a
         // well-framed one cannot be produced.
-        if let Err(fault) = self.backend.decode_at(&[stop.terminator], self.resident_len) {
+        if let Err(fault) = self
+            .backend
+            .decode_at(&[stop.terminator], self.resident_len)
+        {
             return Err(self.poison(fault));
         }
         self.resident_len += 1;
@@ -270,6 +302,7 @@ impl Session {
         Ok(Generated {
             tokens: produced,
             stopped,
+            signals: signals.finish(),
         })
     }
 
@@ -348,12 +381,24 @@ mod tests {
         fail_decode_call: Option<usize>,
         /// Fail every `sample`.
         fail_sample: bool,
+        /// The order the seam's two read paths were called in, which is what
+        /// the pre-sampler claim is about.
+        order: Vec<&'static str>,
     }
 
     /// A backend that records what it was asked to do. The seam this doubles is
     /// the one Spec section 4.1 declares, so doubling it is reading the seam
     /// rather than inventing one.
-    struct Recorder(Rc<RefCell<Log>>);
+    /// A fixed distribution the double serves. Non-uniform so the entropy is
+    /// a number rather than a degenerate zero, and **wide enough to cover
+    /// every token id the scripts draw**: a real distribution spans the
+    /// vocabulary, so a fixture narrower than its own script would measure
+    /// nothing on the tokens past its end and misreport the pairing.
+    const DISTRIBUTION: &[f32] = &[
+        1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0,
+    ];
+
+    struct Recorder(Rc<RefCell<Log>>, Vec<f32>);
 
     impl Backend for Recorder {
         fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
@@ -367,8 +412,17 @@ mod tests {
             }
             Ok(())
         }
+        fn distribution(&self) -> Result<&[f32], DecodeFault> {
+            self.0.borrow_mut().order.push("distribution");
+            // **The double serves a fixed distribution**, which is enough for
+            // the ordering claim: what the signals test reads is that the
+            // measurement was taken from the state the sampler had not yet
+            // consumed, not what the numbers were.
+            Ok(&self.1)
+        }
         fn sample(&mut self) -> Result<TokenId, DecodeFault> {
             let mut log = self.0.borrow_mut();
+            log.order.push("sample");
             if log.fail_sample {
                 return Err(DecodeFault::Engine {
                     detail: "scripted".into(),
@@ -387,6 +441,61 @@ mod tests {
             Ok(())
         }
         fn close(&mut self) {}
+    }
+
+    /// **The signals are measured before the sampler, at every step.**
+    ///
+    /// The distribution exists until the draw consumes it, so a measurement
+    /// taken after `sample` is reading a state the draw has already moved
+    /// past. What this reads is the seam's call order: every `distribution`
+    /// sits immediately before the `sample` it measured, never after.
+    ///
+    /// Perturbation: move the `distribution` read below the `sample` call in
+    /// `append_and_generate` and this fails, the recorded order arriving as
+    /// sample-then-distribution. Watched under exactly that move.
+    #[test]
+    fn the_distribution_is_read_before_the_draw_at_every_step() {
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(2), TokenId(9)],
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+        );
+        session.open(&[TokenId(7)]).expect("the prefix lands");
+        let generated = session
+            .append_and_generate(
+                &[TokenId(8)],
+                &StopCondition {
+                    stop_tokens: vec![TokenId(9)],
+                    terminator: TokenId(0),
+                    max_tokens: 8,
+                },
+                &mut NeverCancels,
+            )
+            .expect("the generation runs");
+
+        let order = log.borrow().order.clone();
+        assert!(!order.is_empty(), "the seam was read at all");
+        for pair in order.chunks(2) {
+            assert_eq!(
+                pair,
+                ["distribution", "sample"],
+                "every measurement precedes its draw, got {order:?}"
+            );
+        }
+
+        // And the signals are positionally paired with what was drawn. The
+        // stop token is sampled but not produced, so the measured step count
+        // is the drawn count including it.
+        assert_eq!(generated.tokens.len(), 2, "two tokens before the stop");
+        assert_eq!(
+            generated.signals.steps(),
+            order.len() / 2,
+            "one measurement per draw"
+        );
     }
 
     /// Cancels after a set number of polls, which is how a token-boundary bound
@@ -421,8 +530,11 @@ mod tests {
             script,
             ..Default::default()
         }));
-        let mut session =
-            Session::new(Box::new(Recorder(Rc::clone(&log))), capacity, mechanism);
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            capacity,
+            mechanism,
+        );
         session.open(&[TokenId(1), TokenId(2)]).expect("open");
         (session, log)
     }
@@ -464,7 +576,10 @@ mod tests {
             .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
             .expect("first turn");
         let after_first = session.resident_len();
-        assert!(after_first > session.prefix_len(), "the first turn extended");
+        assert!(
+            after_first > session.prefix_len(),
+            "the first turn extended"
+        );
 
         let before = log.borrow().decoded.len();
         session
@@ -511,7 +626,11 @@ mod tests {
             .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
             .expect("a turn");
         assert_eq!(generated.stopped, Stopped::Complete);
-        assert_eq!(generated.tokens, vec![TokenId(7)], "99 stops, 7 is produced");
+        assert_eq!(
+            generated.tokens,
+            vec![TokenId(7)],
+            "99 stops, 7 is produced"
+        );
         assert_eq!(last_decoded(&log), vec![TokenId(50)]);
     }
 
@@ -564,7 +683,15 @@ mod tests {
         let (mut session, _log) = opened(vec![], 8);
         let mut cancel = NeverCancels;
         let refusal = session.append_and_generate(
-            &[TokenId(1), TokenId(2), TokenId(3), TokenId(4), TokenId(5), TokenId(6), TokenId(7)],
+            &[
+                TokenId(1),
+                TokenId(2),
+                TokenId(3),
+                TokenId(4),
+                TokenId(5),
+                TokenId(6),
+                TokenId(7),
+            ],
             &stop_at(50),
             &mut cancel,
         );
@@ -613,7 +740,6 @@ mod tests {
         assert_eq!(log.borrow().reestablished, 1);
         assert_eq!(log.borrow().truncated.clone(), Vec::<usize>::new());
     }
-
 
     /// **Open is first and happens once.** A second open refuses rather than
     /// silently rewinding the resident length over accumulated turns.
