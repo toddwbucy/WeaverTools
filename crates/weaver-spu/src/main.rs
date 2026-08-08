@@ -74,9 +74,7 @@ fn entry_refusal_line(fault: &EntryFault) -> String {
         EntryFault::DescriptorCountWrong { found } => format!(
             "{{\"refusal\":\"descriptors_unusable\",\"held_beyond_standard_streams\":{found}}}"
         ),
-        EntryFault::DescriptorsUnusable => {
-            "{\"refusal\":\"descriptors_unusable\"}".to_string()
-        }
+        EntryFault::DescriptorsUnusable => "{\"refusal\":\"descriptors_unusable\"}".to_string(),
         EntryFault::HygieneFailed => "{\"refusal\":\"boundary_unverified\"}".to_string(),
     }
 }
@@ -256,7 +254,11 @@ mod tests {
         let mut residency = Residency::new();
         let mut position = SeamPosition::BeforeAdmit;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &directive(LifecycleDirective::Release)),
+            dispatch(
+                &mut position,
+                &mut residency,
+                &directive(LifecycleDirective::Release)
+            ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
         assert_eq!(position, SeamPosition::BeforeAdmit, "and is not queued");

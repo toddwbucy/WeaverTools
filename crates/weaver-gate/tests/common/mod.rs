@@ -42,10 +42,8 @@ pub fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
 /// A scratch socket path under a directory named for the suite and the test,
 /// pre-cleaned so a previous run's leftover cannot make a raise refuse.
 pub fn scratch(suite: &str, name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!(
-        "weaver-gate-{suite}-{}-{name}",
-        std::process::id()
-    ));
+    let dir =
+        std::env::temp_dir().join(format!("weaver-gate-{suite}-{}-{name}", std::process::id()));
     std::fs::create_dir_all(&dir).expect("a scratch dir");
     let path = dir.join("gate.sock");
     std::fs::remove_file(&path).ok();
@@ -84,7 +82,11 @@ pub fn permissive_instruction(path: PathBuf) -> GateInstruction {
 pub fn place_inherited(command: &mut Command, child_ends: &[RawFd]) {
     let mut sources = [0 as RawFd; 8];
     let count = child_ends.len();
-    assert!(count <= sources.len(), "at most {} descriptors", sources.len());
+    assert!(
+        count <= sources.len(),
+        "at most {} descriptors",
+        sources.len()
+    );
     sources[..count].copy_from_slice(child_ends);
     unsafe {
         command.pre_exec(move || {
@@ -179,7 +181,10 @@ pub fn ask(end: &OwnedFd, ordinal: u64, directive: LifecycleDirective) -> OrganE
     let mut buffer = vec![0u8; 64 * 1024];
     let read = recv(end.as_raw_fd(), &mut buffer, MsgFlags::empty())
         .unwrap_or_else(|errno| panic!("no answer to ordinal {ordinal}: {errno}"));
-    assert!(read > 0, "the gate closed without answering ordinal {ordinal}");
+    assert!(
+        read > 0,
+        "the gate closed without answering ordinal {ordinal}"
+    );
     buffer.truncate(read);
     serde_json::from_slice(&buffer).expect("the answer is an envelope")
 }

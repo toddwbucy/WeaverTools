@@ -17,8 +17,7 @@ use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
 use weaver_gate::channel::{self, Channel, ChannelFault, EntryFault};
 use weaver_gate::hook::{AcceptOutcome, Admitted, Hook, RaiseRefusal};
 use weaver_types::{
-    LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope, Payload,
-    Position,
+    LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope, Payload, Position,
 };
 
 /// The hook's state, as a type rather than a flag.
@@ -57,10 +56,7 @@ fn main() -> ExitCode {
         Err(EntryFault::Unusable) => {
             // Mute by construction: with no usable channel the only refusal
             // available is the exit the harness observes.
-            eprintln!(
-                "{}",
-                serde_json::json!({"refusal": "descriptors_unusable"})
-            );
+            eprintln!("{}", serde_json::json!({"refusal": "descriptors_unusable"}));
             ExitCode::FAILURE
         }
         Err(EntryFault::HygieneFailed(channel)) => {
@@ -399,7 +395,10 @@ mod tests {
                 dispatch(&mut state, &opened(case)),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder)
             );
-            assert!(matches!(state, HookState::Lowered), "terminal stays terminal");
+            assert!(
+                matches!(state, HookState::Lowered),
+                "terminal stays terminal"
+            );
         }
     }
 
@@ -436,7 +435,10 @@ mod tests {
         assert!(matches!(state, HookState::Lowered));
         // **This crate unlinks nothing**: the path is the operator's artifact
         // and survives the lower.
-        assert!(path.exists(), "the lower closes the listener and unlinks nothing");
+        assert!(
+            path.exists(),
+            "the lower closes the listener and unlinks nothing"
+        );
         std::fs::remove_file(&path).ok();
     }
 

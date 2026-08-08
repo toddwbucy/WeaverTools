@@ -27,8 +27,7 @@ use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 use common::{
-    ask, bound_receives, instruction, place_inherited, scratch, seqpacket_pair, tell,
-    wait_bounded,
+    ask, bound_receives, instruction, place_inherited, scratch, seqpacket_pair, tell, wait_bounded,
 };
 use weaver_types::{LifecycleAnswer, LifecycleDirective, Payload};
 
@@ -149,7 +148,10 @@ fn a_closed_channel_ends_the_gate_and_its_listener() {
         "the listener died with the process that held it"
     );
     // The path survives: this crate unlinks nothing, even on the way out.
-    assert!(path.exists(), "the operator's artifact is left where it was");
+    assert!(
+        path.exists(),
+        "the operator's artifact is left where it was"
+    );
     std::fs::remove_file(&path).ok();
     std::fs::remove_file(&log_path).ok();
 }
@@ -172,7 +174,10 @@ fn raise_then_lower_round_trips_across_the_seam() {
     assert_eq!(ready.exchange.ordinal, 1);
 
     let stopped = ask(&harness, 2, LifecycleDirective::Lower);
-    assert_eq!(stopped.payload, Payload::Answer(LifecycleAnswer::GateStopped));
+    assert_eq!(
+        stopped.payload,
+        Payload::Answer(LifecycleAnswer::GateStopped)
+    );
     assert_eq!(stopped.exchange.ordinal, 2);
     assert!(
         UnixStream::connect(&path).is_err(),
@@ -299,7 +304,11 @@ fn the_running_gate_refuses_an_unauthorized_dial() {
 
     tell(&harness, 2, LifecycleDirective::Lower);
     drop(harness);
-    let status = wait_bounded(&mut child, 30, "the_running_gate_refuses_an_unauthorized_dial");
+    let status = wait_bounded(
+        &mut child,
+        30,
+        "the_running_gate_refuses_an_unauthorized_dial",
+    );
     assert!(
         status.success(),
         "an orderly lower ends the gate with a zero status, got {status:?}"

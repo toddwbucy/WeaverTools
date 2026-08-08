@@ -43,7 +43,9 @@ fn the_agent_uid_is_refused_even_when_the_rule_permits_it() {
     let hook = Hook::raise(&permissive_instruction(path.clone())).expect("the raise binds");
 
     assert!(
-        hook.rule().denied_uids.contains(&nix::unistd::getuid().as_raw()),
+        hook.rule()
+            .denied_uids
+            .contains(&nix::unistd::getuid().as_raw()),
         "the raise added this process's own uid to the deny set"
     );
 
@@ -132,7 +134,10 @@ fn a_dial_after_the_lower_finds_no_listener() {
         "once lowered, the path is a stale entry and nothing is listening"
     );
     // And the path itself survives: this crate unlinks nothing.
-    assert!(path.exists(), "the operator's artifact is left where it was");
+    assert!(
+        path.exists(),
+        "the operator's artifact is left where it was"
+    );
     std::fs::remove_file(&path).ok();
 }
 

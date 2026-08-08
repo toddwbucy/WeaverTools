@@ -17,9 +17,7 @@ use std::time::{Duration, Instant};
 
 use nix::libc;
 use nix::sys::socket::{AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair};
-use weaver_types::{
-    ExchangeId, LifecycleDirective, Opener, OrganEnvelope, Payload, Position,
-};
+use weaver_types::{ExchangeId, LifecycleDirective, Opener, OrganEnvelope, Payload, Position};
 
 pub fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
     socketpair(
