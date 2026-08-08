@@ -436,11 +436,13 @@ to: traits-tool-no-safety-classification
 
 
 **The tool taxonomy of `weaver-tools-vision` section 6 reaches this trait when the
-workflow charters it, and that section now cuts on two axes rather than one.** An
-action is elected when the model emits it and autonomic when the loop fires it on a
-condition the loop set, and it is dispatched inward to an organ or outward through the
-gate. **This trait serves the elected and outward corner alone**, which is what an
-earlier reading called an external tool. The inward corners are function loops the
+workflow charters it, and that section now cuts on two axes rather than one.** An action
+is elected when the model emits it and autonomic when the loop fires it on a condition
+the loop set, and it is dispatched inward to an organ or outward through the gate.
+**This trait serves the elected and outward corner alone**, which the port ruling of
+2026-08-07 narrows to a tool that binds a listening port: bash and every other tool that
+binds none is internal, so the trait's eventual constituency is the service the agent
+addresses through the gate and nothing else. The inward corners are function loops the
 harness runs beside its control loops and reach no trait here. Which shape the trait
 takes is still the workflow's question, and the classification no longer is.
 

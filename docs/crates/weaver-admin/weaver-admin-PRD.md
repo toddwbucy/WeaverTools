@@ -39,7 +39,7 @@ measurement of this date recorded there. The prior Revised entry's service-accou
 reading is superseded in whole.
 **Revised:** 2026-08-07, the tool egress ruling narrows one open question. The
 `AF_UNIX` restriction this charter files against a unit no longer meets a
-world-reaching tool inside it, that tool being a registered application the agent
+port-binding tool inside it, that tool being a registered application the agent
 addresses rather than one this program starts, so the cost the question names shrinks
 to the tool that reaches nothing. The question stays open and stays section 10's.
 **Parent:** `WeaverTools-PRD`
@@ -730,13 +730,15 @@ that cannot track its host.
 Restricting the address families the unit may open to `AF_UNIX` is **not** a restatement
 of this program's no-network-surface rule: that rule binds what these crates link, and
 this would bind what an agent's tools may reach. **The egress ruling of 2026-08-07
-narrows what that costs without settling it.** A world-reaching tool is no longer
-started by this program at all, being a registered application the agent addresses
-across the gate's agent-opened socket per apex section 3 step 7, so the unit this
-paragraph restricts holds no world-reaching tool to break. What it may still hold is a
-tool that reaches nothing, and whether the restriction is free for that case is the
-question section 10 keeps. It goes on section 10's list as an open question with the
-cost named rather than onto this list as a requirement.
+narrows what that costs, and the port ruling of the same date narrows it again.** A tool
+that binds a listening port is external and no longer started by this program at all,
+being a registered application the agent addresses across the gate's agent-opened socket
+per apex section 3 step 7. A tool that binds none is internal, which by the port ruling
+means loop code inside the worker rather than a process this unit starts beside it. **So
+the restriction meets no tool process at all**, and what section 10 keeps is whether it
+is free for the worker's own sockets, which are AF_UNIX by construction. It goes on
+section 10's list as an open question with the cost named rather than onto this list as
+a requirement.
 
 **Root performs the privileged acts directly, and the cost is stated rather than
 dressed.** Starting a unit under an agent identity, opening a sink the agent could
@@ -775,17 +777,17 @@ through a passed descriptor, and the trace directory is root-owned and not searc
 by the agent uid.
 
 **Same-uid reach is a live hole and the flag that closes it is a requirement stated
-elsewhere.** A world-reaching tool no longer runs as the agent uid and is not
-started by this program at all, per apex section 3 step 7 as revised by the egress
-ruling of 2026-08-07, so what this paragraph reaches is the tool that reaches
-nothing, for which the agent-uid case still stands. If such a tool process runs as
-the agent uid, it can attach to the worker and drive the coordination channel and
-the trace descriptor directly, which
-defeats descriptor scoping. The worker's dumpable flag is what closes it, and
-`weaver-admin-harness-contract` section 2 is authoritative for both the requirement
-and its ordering, because the flag is a property admin relies on and cannot verify
-from outside the process. This paragraph names the hole and points at the obligation
-rather than stating it twice.
+elsewhere.** A tool that binds a listening port is external and is not started by this
+program at all, per apex section 3 step 7. A tool that binds none is internal and is
+loop code inside the worker rather than a process beside it, per the port ruling of
+2026-08-07, so **the external tool process this paragraph reaches is one the operator
+provisions rather than one this program creates**. Where such a process runs as the
+agent uid, it can attach to the worker and drive the coordination channel and the trace
+descriptor directly, which defeats descriptor scoping. The worker's dumpable flag is
+what closes it, and `weaver-admin-harness-contract` section 2 is authoritative for both
+the requirement and its ordering, because the flag is a property admin relies on and
+cannot verify from outside the process. This paragraph names the hole and points at the
+obligation rather than stating it twice.
 
 **The one parse surface inside root, named as the trade it is.** Admin reads the
 coordination channel's answers and the peer at the far end is a worker running agent

@@ -9,7 +9,7 @@ lower. The exchanges that carry work arrive with the token workflow.
 **Revised:** 2026-08-07, the tool egress ruling lands here. Section 2's hook becomes
 two sockets split by which party opens an exchange, section 3's no-second-listener
 clause becomes two seams and no third, section 13.1's relay gains its second leg,
-and section 7's cell closes for the world-reaching tool and stands for every other. The
+and section 7's cell closes outright as of the port ruling of the same date. The
 second socket's contract is the tool workflow's and nothing here shapes it. Per apex
 section 3 as revised in the same act.
 **Document ID:** `weaver-gate-PRD`
@@ -318,22 +318,16 @@ rather than kernel-enforced separation, and the hardening is named: the cleared
 dumpable flag on every process of the worker's family, and close-on-exec on every
 descriptor at every fork, including the creating party's own ends.
 
-**The cell closes for a world-reaching tool and stands for every other, per the egress
-ruling of 2026-08-07.** A tool that reaches the world is a registered application the
-agent addresses across the agent-opened socket of section 2, provisioned by the
-operator with its own identity, so the question of which uid this program forks it
-under does not arise: this program does not fork it. Apex step 7 carried the forked
-case until that ruling and now carries the addressed one, so the merged clause this
-cell deferred to has moved and the deferral moves with it.
-
-**What the cell still holds open is the tool that reaches nothing.** A tool touching no
-network is outside the egress frame's subject, per `tool-egress-boundary-frame` section
-6, and for that case the two arms stand as section 8 stages them: the agent uid, or a
-uid this crate owns at the cost of an explicit grant for every reach into the agent's
-home. What it awaits is unchanged, the tool workflow chartering plus a stated
-rationale, because a boundary upgrade priced without one is a motive wearing a
-mechanic's clothes. The egress ruling supplies that rationale for the world-reaching
-case alone and supplies none for this one.
+**The cell closes, per the port ruling of 2026-08-07.** A tool that binds a listening
+port is external, a registered application the agent addresses across the agent-opened
+seam of section 2, provisioned by the operator with its own identity, so which uid this
+program forks it under does not arise: this program does not fork it. A tool that binds
+none is internal, and internal tooling is loop code compiled into the worker, so it
+runs as the agent because it **is** the agent and no separate tool process has a uid to
+negotiate. **Both arms lose their subject.** The egress ruling closed this cell for the
+first case and left the second standing, and the port ruling dissolves the second rather
+than settling it, a cell whose residual case does not exist being closed rather than
+narrowed. `weaver-admin-PRD` section 7's parallel assumption goes with it.
 
 ## 8. What does not cross, and what waits
 
@@ -369,9 +363,10 @@ section keeps them as the record of what the earlier pass could already see.
 
 **The tool-uid ruling.** Stated in section 7 with its candidate. **Settled by:** the
 architecture seat's ratification of the candidate, or the tool workflow chartering
-with a stated rationale if the ratification is declined, the egress ruling of
-2026-08-07 having supplied one for the world-reaching case and none for this one, and
-section 7 carries the same condition in the same words. Until settled, admin's
+**Closed by the port ruling of 2026-08-07**, which leaves the cell no residual case:
+an external tool is provisioned by the operator and this program forks none, and an
+internal tool is loop code that runs as the agent because it is the agent. Section 7
+carries the reasoning. Until the tool workflow charters the external seam, admin's
 assumption stands and nothing builds against the separate-uid arm.
 
 **The refusal type.** This seam's refusal reuses `lifecycle-refusal` rather than

@@ -73,11 +73,11 @@ network capability is not among these components.
 This retires the merged tool model for any tool that reaches the world. Apex step 7
 makes a tool a subprocess the harness forks and runs as the agent's own Linux user, and
 step 1 states that the outbound connection such a tool opens is not ingress and does not
-pass the gate. A world-reaching tool built that way puts a network-touching process
-inside the component set, which is the one thing the socket floor exists to prevent.
-Under this proposal a world-reaching tool is a registered application the agent
-addresses over an egress socket, and the network lives with that application, outside
-the agent, past the socket.
+pass the gate. A port-binding tool built that way puts a listening socket inside the
+component set, which is the one thing the socket floor exists to prevent. Under this
+proposal a port-binding tool is a registered application the agent addresses over an
+egress socket, and the listening surface lives with that application, outside the
+agent, past the socket.
 
 ## 2. What the component set is
 
@@ -96,14 +96,15 @@ structural. Without it the set is whatever a reader takes it to be, and the clai
 no component holds a network descriptor would rest on every forked child being honest
 about what it opens.
 
-**Bash is the case that forces the line.** Apex section 4 makes bash the reference tool
-and a real capability of the deliverable, and bash reaches the network as ordinary user
-capability. The rule runs one way only. A process this program forks is inside the set
-and may hold no network descriptor, so a world-capable bash is not something the worker
-may fork, and it is provisioned as a registered application instead. That is a
-constraint on how bash is launched rather than a reclassification of a process already
-forked, and nothing a process does after it is forked moves it across the line. Section
-9 carries what the constraint costs the definition of done.
+**Bash is the case that forced the line, and the port ruling of 2026-08-07 put it on
+the other side of it.** This paragraph argued that bash reaches the network as ordinary
+user capability, so a world-capable bash could not be forked inside the set and had to
+be provisioned as a registered application. That reasoned from where bash's bytes end
+up. The ruling reasons from its transport: **a tool that binds a listening port is
+external and one that does not is internal**, and bash binds none. So bash is internal,
+loop code the harness invokes, its identity kernel-attested and its reach bounded by
+the identity it runs as. What forces the line now is a service that listens, which is
+the case this frame is about and which bash was never an instance of.
 
 ## 3. Two sockets, split by which party opens the exchange
 
@@ -178,8 +179,13 @@ The gate charter is right that a boundary owes a rationale or it is an upgrade p
 without a model, a motive wearing a mechanic's clothes. The rationale here is structural
 and it is already in force. Apex invariant 5.1 makes every seam where one component asks
 another process to do something a Unix socket under a named contract, with no exceptions
-including for crates that arrive later. No primitive holds a network descriptor, so no
-primitive is reachable from the network or able to reach it directly. A tool call is
+including for crates that arrive later. No primitive binds a listening port, so no
+primitive is reachable from the network. **The claim is about what this program builds,
+and the port ruling of 2026-08-07 is why that scoping is stated rather than assumed.**
+An operator's loop code is internal by the port test whatever it dials, so a loop that
+reaches outward puts that descriptor inside a process this program ships without the
+program shipping the reach, and the enumeration below walks the sockets these crates
+hold rather than everything a deployment may run inside them. A tool call is
 made to fit this same floor rather than to punch through it. The agent addresses a
 socket, and whatever network work the far side does is done outside the agent by a
 process the agent never becomes.
@@ -190,7 +196,9 @@ socket under a named contract. The check is an enumeration: list the sockets eac
 component in the set holds and confirm every one of them is AF_UNIX. It is stated as an
 allow-list of one address family rather than as a denial of AF_INET, because a test
 naming the families it excludes misses the next one, and section 2 is what makes the set
-the enumeration walks a bounded thing.
+the enumeration walks a bounded thing. **The port ruling names the same test a third
+way**: AF_UNIX is internal and AF_INET is not, which is this enumeration read as a
+classification rather than as a check.
 
 **The enumeration validates and does not enforce, and the difference is section 5's.**
 Nothing in this frame stops a component from opening a socket the scan would have caught
@@ -234,9 +242,9 @@ The first draft laid two arms, a tool as a subprocess under its own uid against 
 as a standing registered application, and deferred the election. The axis those arms
 differed on was network-capability containment, which section 5 places outside this
 frame, so the arms collapse for the case this frame is about. Under section 2's
-definition a world-reaching tool cannot be a forked subprocess inside the component set
-without putting a network-touching process where the socket floor forbids one. For a
-world-reaching tool the registered-application form is not one option among two. It is
+definition a port-binding tool cannot be a forked subprocess inside the component set
+without putting a listening socket where the socket floor forbids one. For a
+port-binding tool the registered-application form is not one option among two. It is
 what the floor already requires.
 
 **That conclusion is conditional on the boundary, and the condition is the whole of what
@@ -247,13 +255,14 @@ gate charter's cell closes on the arms it already holds. Either way the workflow
 charters the seam, its contract, and how a tool is launched and supervised, and this
 frame settles none of the three.
 
-Tools that touch no network are a different matter and not this frame's subject. This
-frame is the egress boundary, the tools that reach out, and for those the shape follows
-from the floor rather than from a measurement.
+Tools that bind no listening port are a different matter and not this frame's subject.
+They are internal, they are the operator's loop code, and they never reach this seam.
+This frame is the egress boundary and the tools that listen, and for those the shape
+follows from the floor rather than from a measurement.
 
 ## 7. The cost the egress seam carries
 
-A world-reaching tool becomes a standing registered application with its own identity,
+A port-binding tool becomes a standing registered application with its own identity,
 socket, and lifecycle, provisioned and supervised outside the run rather than forked and
 reaped within it. That is real operational weight and the frame carries it in the open.
 
@@ -313,12 +322,14 @@ and the two-socket split is that axis turned into hardware, worth one line where
 sweep lands. Definition-of-done item 5 requires a real tool executed under
 kernel-enforced OS constraint, and under section 2 the reference bash is a registered
 application the program does not ship, so the item lands as a conformance fixture the
-way the gate suite ships fake clients. `weaver-admin-PRD` section 7 names the agent-uid
-tool case as its own assumption and files the cell to the gate, so the assumption
-sentence is edited when the cell resolves. The follow-on gate-charter edits are the
-no-second-listener surface clause of section 3, the relay of section 13.1 gaining a
-second leg, and the section 7 cell itself, all after the apex, since apex-first is the
-only legal order.
+way the gate suite ships fake clients. **The port ruling of 2026-08-07 retired that item
+entirely**, bash being internal and item 5 asking for an executed tool again, so this
+sentence records a landing that was owed and is no longer. `weaver-admin-PRD` section 7
+names the agent-uid tool case as its own assumption and files the cell to the gate, so
+the assumption sentence is edited when the cell resolves. The follow-on gate-charter
+edits are the no-second-listener surface clause of section 3, the relay of section 13.1
+gaining a second leg, and the section 7 cell itself, all after the apex, since
+apex-first is the only legal order.
 
 **The apex edit will want a grounding the rationale does not need.** The egress seam
 grounds in apex invariant 5.1, that every seam where one crate asks another process to
