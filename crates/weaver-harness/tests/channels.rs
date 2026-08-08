@@ -44,8 +44,7 @@ fn cloexec_set(fd: std::os::fd::BorrowedFd<'_>) -> bool {
 ///
 /// Perturbation: drop `SOCK_CLOEXEC` from the `socketpair` call and both
 /// assertions fail immediately; with a later `fcntl` they pass while the
-/// window stands, which is why the walk below forks to check what actually
-/// crosses.
+/// window stands, which is why the walk below forks to check what crosses.
 #[test]
 fn pairs_are_close_on_exec_from_creation() {
     let (near, far) = OrganChannel::pair().expect("pair");

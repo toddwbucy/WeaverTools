@@ -1,6 +1,7 @@
 //! conforms: types-loop0-encoding-json
 //! conforms: types-tagging-test
 //! conforms: types-envelope-bound-64k
+//! conforms: types-socket-seqpacket
 //!
 //! The loop 0 wire vocabulary, per `weaver-types-Spec` section 4: the envelope
 //! every organ channel carries and loop 0's trio, named for the loop whose
