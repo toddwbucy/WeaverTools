@@ -46,8 +46,16 @@
 
 use std::sync::OnceLock;
 
+use llama_cpp_2::context::LlamaContext;
+use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
+use llama_cpp_2::llama_batch::LlamaBatch;
 use llama_cpp_2::model::LlamaModel;
+use llama_cpp_2::sampling::LlamaSampler;
+use llama_cpp_2::token::LlamaToken;
+
+use crate::decoder::backend::{Backend, DecodeFault, TokenId};
+use crate::sampling::EffectiveKnobs;
 use llama_cpp_2::model::params::{LlamaModelParams, LlamaSplitMode};
 
 use crate::residency::{Admission, AdmitRefusal};
@@ -142,5 +150,176 @@ impl ResidentModel {
     #[allow(dead_code)]
     pub(crate) fn model(&self) -> &LlamaModel {
         &self.model
+    }
+}
+
+/// The GGUF engine, per `weaver-spu-Spec` section 4.
+///
+/// **It borrows the residency it decodes against.** `LlamaContext` borrows the
+/// model, and that is the relationship in life as well as in types: a session
+/// cannot outlive the residency it was opened over, and the borrow is what says
+/// so without a rule anyone has to remember.
+///
+/// **The loop above this is `session.rs`'s and stays there.** What lives here is
+/// the five primitives the seam declares and nothing else, so the terminator
+/// discipline and the cancel bound hold for this engine by construction rather
+/// than by this file remembering them.
+pub struct GgufEngine<'a> {
+    context: LlamaContext<'a>,
+    sampler: LlamaSampler,
+    /// The batch index whose logits the last decode left standing, which is the
+    /// only position `distribution` and `sample` may read. `None` before the
+    /// first decode, so a sample before any decode refuses rather than reading
+    /// a buffer nothing filled.
+    logits_at: Option<i32>,
+    closed: bool,
+}
+
+impl<'a> GgufEngine<'a> {
+    /// Open a context over a resident model and build its sampler from the
+    /// binary's resolved knobs.
+    ///
+    /// **The sampler is built once, from the effective values.** The knobs
+    /// resolved at the composition root per Spec section 8, so nothing here
+    /// re-reads a disposition or learns which side supplied a value.
+    pub fn open(
+        model: &'a ResidentModel,
+        knobs: &EffectiveKnobs,
+        capacity: u32,
+    ) -> Result<GgufEngine<'a>, DecodeFault> {
+        let backend = backend().map_err(|_| DecodeFault::Engine {
+            detail: "the llama backend is not initialised".into(),
+        })?;
+        let params = LlamaContextParams::default()
+            .with_n_ctx(std::num::NonZeroU32::new(capacity))
+            .with_n_batch(capacity);
+        let context = model
+            .model()
+            .new_context(backend, params)
+            .map_err(|error| DecodeFault::Engine {
+                detail: format!("new_context: {error}"),
+            })?;
+
+        // The chain order is the one llama.cpp's own samplers assume:
+        // penalties, then the truncating filters, then temperature, then the
+        // draw. A distribution sampler last is what makes the seed mean
+        // something.
+        let sampler = LlamaSampler::chain_simple([
+            LlamaSampler::penalties(
+                knobs.repetition_window as i32,
+                knobs.repetition_penalty,
+                0.0,
+                0.0,
+            ),
+            LlamaSampler::top_k(knobs.top_k as i32),
+            LlamaSampler::top_p(knobs.top_p, 1),
+            LlamaSampler::temp(knobs.temperature),
+            LlamaSampler::dist(knobs.seed as u32),
+        ]);
+
+        Ok(GgufEngine {
+            context,
+            sampler,
+            logits_at: None,
+            closed: false,
+        })
+    }
+
+    fn engine_fault(detail: impl Into<String>) -> DecodeFault {
+        DecodeFault::Engine {
+            detail: detail.into(),
+        }
+    }
+}
+
+impl Backend for GgufEngine<'_> {
+    fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        if tokens.is_empty() {
+            return Ok(());
+        }
+        let mut batch = LlamaBatch::new(tokens.len(), 1);
+        let last = tokens.len() - 1;
+        for (offset, token) in tokens.iter().enumerate() {
+            let pos = i32::try_from(position + offset)
+                .map_err(|_| Self::engine_fault("position exceeds the engine's range"))?;
+            // **Logits are asked for on the last token only.** Every earlier
+            // token is context being made resident, and asking for its
+            // distribution would allocate a vocabulary-wide buffer per token
+            // for a reading nothing takes.
+            batch
+                .add(LlamaToken(token.0 as i32), pos, &[0], offset == last)
+                .map_err(|error| Self::engine_fault(format!("batch add: {error}")))?;
+        }
+        self.context
+            .decode(&mut batch)
+            .map_err(|error| Self::engine_fault(format!("decode: {error}")))?;
+        self.logits_at = Some(last as i32);
+        Ok(())
+    }
+
+    fn distribution(&self) -> Result<&[f32], DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        // **Nothing to read before a decode has left logits standing.** A
+        // zeroed buffer would measure as a uniform distribution over the
+        // vocabulary, which is a reading rather than an absence.
+        let at = self
+            .logits_at
+            .ok_or_else(|| Self::engine_fault("no decode has left a distribution to read"))?;
+        Ok(self.context.get_logits_ith(at))
+    }
+
+    fn sample(&mut self) -> Result<TokenId, DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        let at = self
+            .logits_at
+            .ok_or_else(|| Self::engine_fault("no decode has left a distribution to sample"))?;
+        let token = self.sampler.sample(&self.context, at);
+        // The penalty window is a function of what was drawn, so the sampler is
+        // told what it drew.
+        self.sampler.accept(token);
+        u32::try_from(token.0)
+            .map(TokenId)
+            .map_err(|_| Self::engine_fault("the engine answered a negative token"))
+    }
+
+    fn truncate_to(&mut self, position: usize) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        let from = i32::try_from(position)
+            .map_err(|_| Self::engine_fault("position exceeds the engine's range"))?;
+        // Everything at or after the position leaves the cache. The open end is
+        // what makes this a truncation rather than a hole.
+        self.context
+            .clear_kv_cache_seq(Some(0), Some(from as u32), None)
+            .map_err(|error| Self::engine_fault(format!("clear_kv_cache_seq: {error}")))?;
+        // **The standing distribution belongs to a position that is gone.**
+        // Leaving it readable would let a sample after a truncation draw from
+        // the state the truncation removed.
+        self.logits_at = None;
+        Ok(())
+    }
+
+    fn reestablish(&mut self) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        self.context.clear_kv_cache();
+        self.logits_at = None;
+        Ok(())
+    }
+
+    fn close(&mut self) {
+        // The context and the sampler release with this value. What close marks
+        // is that nothing further may be asked, which every method above reads.
+        self.closed = true;
+        self.logits_at = None;
     }
 }
