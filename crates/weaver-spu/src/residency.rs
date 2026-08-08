@@ -265,8 +265,7 @@ impl Residency {
 
         // Step two. Read what the artifact declares about itself, without
         // loading it and without touching a device. Free.
-        let header =
-            artifact::read_header(&mut pinned).map_err(|_| AdmitRefusal::Unreadable)?;
+        let header = artifact::read_header(&mut pinned).map_err(|_| AdmitRefusal::Unreadable)?;
 
         // Step three, cheapest first. The width condition is a comparison
         // between the binding's count and the family's declaration and reads
@@ -410,8 +409,9 @@ fn judge_room_and_reach(
 fn load(admission: &Admission<'_>) -> Result<LoadedModel, AdmitRefusal> {
     match admission.header().container {
         #[cfg(feature = "gguf")]
-        crate::artifact::Container::Gguf => crate::decoder::gguf::ResidentModel::load(admission)
-            .map(LoadedModel::Gguf),
+        crate::artifact::Container::Gguf => {
+            crate::decoder::gguf::ResidentModel::load(admission).map(LoadedModel::Gguf)
+        }
         #[cfg(not(feature = "gguf"))]
         crate::artifact::Container::Gguf => Err(AdmitRefusal::BackendNotBuilt),
         crate::artifact::Container::Safetensors => Err(AdmitRefusal::BackendNotBuilt),

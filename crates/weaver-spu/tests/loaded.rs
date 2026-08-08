@@ -56,7 +56,9 @@ static DEVICE: std::sync::Mutex<()> = std::sync::Mutex::new(());
 fn device_lock() -> std::sync::MutexGuard<'static, ()> {
     // A poisoned lock means an earlier test panicked, which that test already
     // reported. Cascading its failure into this one would report it twice.
-    DEVICE.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    DEVICE
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 /// One context held for a whole measurement sequence, so the probes read a
@@ -192,10 +194,8 @@ mod seam_success {
         // would wedge the child mid-write against the parent mid-recv. A file
         // has no such buffer, and unlike null it leaves the child's account on
         // disk for the failure that needs it.
-        let log_path = std::env::temp_dir().join(format!(
-            "weaver-spu-seam-child-{}.log",
-            std::process::id()
-        ));
+        let log_path =
+            std::env::temp_dir().join(format!("weaver-spu-seam-child-{}.log", std::process::id()));
         let log = std::fs::File::create(&log_path).expect("a child log file");
         command
             .stdin(Stdio::null())

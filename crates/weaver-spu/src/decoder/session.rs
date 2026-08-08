@@ -262,7 +262,10 @@ impl Session {
         // faulted cannot be asked to decode a terminator, so those paths close
         // the session instead, and a closed session is the honest state where a
         // well-framed one cannot be produced.
-        if let Err(fault) = self.backend.decode_at(&[stop.terminator], self.resident_len) {
+        if let Err(fault) = self
+            .backend
+            .decode_at(&[stop.terminator], self.resident_len)
+        {
             return Err(self.poison(fault));
         }
         self.resident_len += 1;
@@ -421,8 +424,7 @@ mod tests {
             script,
             ..Default::default()
         }));
-        let mut session =
-            Session::new(Box::new(Recorder(Rc::clone(&log))), capacity, mechanism);
+        let mut session = Session::new(Box::new(Recorder(Rc::clone(&log))), capacity, mechanism);
         session.open(&[TokenId(1), TokenId(2)]).expect("open");
         (session, log)
     }
@@ -464,7 +466,10 @@ mod tests {
             .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
             .expect("first turn");
         let after_first = session.resident_len();
-        assert!(after_first > session.prefix_len(), "the first turn extended");
+        assert!(
+            after_first > session.prefix_len(),
+            "the first turn extended"
+        );
 
         let before = log.borrow().decoded.len();
         session
@@ -511,7 +516,11 @@ mod tests {
             .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
             .expect("a turn");
         assert_eq!(generated.stopped, Stopped::Complete);
-        assert_eq!(generated.tokens, vec![TokenId(7)], "99 stops, 7 is produced");
+        assert_eq!(
+            generated.tokens,
+            vec![TokenId(7)],
+            "99 stops, 7 is produced"
+        );
         assert_eq!(last_decoded(&log), vec![TokenId(50)]);
     }
 
@@ -564,7 +573,15 @@ mod tests {
         let (mut session, _log) = opened(vec![], 8);
         let mut cancel = NeverCancels;
         let refusal = session.append_and_generate(
-            &[TokenId(1), TokenId(2), TokenId(3), TokenId(4), TokenId(5), TokenId(6), TokenId(7)],
+            &[
+                TokenId(1),
+                TokenId(2),
+                TokenId(3),
+                TokenId(4),
+                TokenId(5),
+                TokenId(6),
+                TokenId(7),
+            ],
             &stop_at(50),
             &mut cancel,
         );
@@ -613,7 +630,6 @@ mod tests {
         assert_eq!(log.borrow().reestablished, 1);
         assert_eq!(log.borrow().truncated.clone(), Vec::<usize>::new());
     }
-
 
     /// **Open is first and happens once.** A second open refuses rather than
     /// silently rewinding the resident length over accumulated turns.

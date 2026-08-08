@@ -551,7 +551,9 @@ mod tests {
         std::fs::create_dir_all(&dir).expect("a scratch dir");
         for name in ["a.gguf", "b.gguf"] {
             let mut handle = File::create(dir.join(name)).expect("a fixture file");
-            handle.write_all(&super::tests::nested_gguf(0)).expect("written");
+            handle
+                .write_all(&super::tests::nested_gguf(0))
+                .expect("written");
         }
         assert_eq!(
             resolve(&ArtifactRef(dir.to_string_lossy().into_owned())),
