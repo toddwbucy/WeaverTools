@@ -141,10 +141,26 @@ impl Signals {
 /// section 3's no-state rule. [`Self::finish`] consumes the accumulator, so a
 /// second generation cannot reach the first's measurements through it: there is
 /// no accumulator left to reach.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Accumulator {
     entropy: Vec<f32>,
     surprisal: Vec<f32>,
+    /// **Cleared the moment a retained token could not be measured.** The
+    /// vectors are positionally paired with the tokens the generation answers
+    /// with, so a gap is not a shorter vector: it is a vector whose every
+    /// entry past the gap names the wrong token. An incomplete run reports
+    /// absent instead, which is a fact a reader can act on.
+    complete: bool,
+}
+
+impl Default for Accumulator {
+    fn default() -> Self {
+        Accumulator {
+            entropy: Vec::new(),
+            surprisal: Vec::new(),
+            complete: true,
+        }
+    }
 }
 
 impl Accumulator {
@@ -158,17 +174,54 @@ impl Accumulator {
         self.surprisal.push(surprisal_bits);
     }
 
+    /// Abandon the measurement: a retained token could not be measured, so the
+    /// pairing is broken and the whole run reports absent.
+    ///
+    /// **Not a shorter vector.** Dropping one entry silently shifts every
+    /// later one onto the wrong token, which is a misattribution a consumer
+    /// cannot detect. Absence is detectable.
+    pub fn abandon(&mut self) {
+        self.complete = false;
+    }
+
     /// Answer with the pair and consume the accumulator.
     ///
     /// A generation that produced no token answers absent on both, which is
     /// the case `NonEmpty::from_vec` turns into `None` rather than into a
-    /// zero-length vector.
+    /// zero-length vector. A generation that lost a step answers absent too,
+    /// for the pairing reason above.
     pub fn finish(self) -> Signals {
+        if !self.complete {
+            return Signals::absent();
+        }
         Signals {
             entropy_bits: NonEmpty::from_vec(self.entropy),
             surprisal_bits: NonEmpty::from_vec(self.surprisal),
         }
     }
+}
+
+/// The stable normaliser, as the pair everything here works from: the maximum
+/// logit and the log-sum-exp of the logits shifted by it.
+///
+/// **Nothing downstream ever touches a raw logit again**, and that is the whole
+/// of the stability. Working from an unshifted `lse` and subtracting raw logits
+/// from it looks equivalent and is not: at large magnitudes `lse - logit`
+/// cancels to zero and `probability * logit` overflows to infinity, so two
+/// equal logits at `f32::MAX` report no entropy and no surprise where the
+/// answer is one bit each. Measured before this shape was chosen.
+///
+/// `None` where the maximum is not finite, which is the empty slice and the
+/// all-infinite one.
+fn shifted_normaliser(logits: &[f32]) -> Option<(f32, f32)> {
+    let max = logits.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    if !max.is_finite() {
+        return None;
+    }
+    // Every argument to `exp` is at most zero, so nothing overflows however
+    // large the logits are.
+    let sum: f32 = logits.iter().map(|logit| (logit - max).exp()).sum();
+    Some((max, sum.ln()))
 }
 
 /// The stable log-sum-exp of a logit vector.
@@ -182,43 +235,39 @@ impl Accumulator {
 /// An empty slice answers negative infinity, which is the identity for this
 /// operation, though no caller here supplies one.
 pub fn log_sum_exp(logits: &[f32]) -> f32 {
-    let max = logits.iter().copied().fold(f32::NEG_INFINITY, f32::max);
-    if !max.is_finite() {
-        return max;
+    match shifted_normaliser(logits) {
+        Some((max, shifted)) => max + shifted,
+        None => logits.iter().copied().fold(f32::NEG_INFINITY, f32::max),
     }
-    let sum: f32 = logits.iter().map(|logit| (logit - max).exp()).sum();
-    max + sum.ln()
 }
 
 /// Entropy of the distribution the logits describe, in bits.
 ///
-/// Computed from the stable normaliser rather than from an explicit softmax,
-/// so no probability is materialised and nothing overflows on the way.
+/// Computed entirely in shifted space, so no probability is materialised
+/// against a raw logit and nothing overflows on the way.
 pub fn entropy_bits(logits: &[f32]) -> f32 {
-    let lse = log_sum_exp(logits);
-    if !lse.is_finite() {
+    let Some((max, shifted_lse)) = shifted_normaliser(logits) else {
         return 0.0;
-    }
-    // H = -sum(p * ln p) with ln p = l - lse, so H = lse - sum(p * l).
-    let mut weighted = 0.0f32;
+    };
+    // H = -sum(p * ln p), with ln p taken in shifted space so it is a small
+    // normalised number rather than the difference of two large ones.
+    let mut nats = 0.0f32;
     for &logit in logits {
-        let probability = (logit - lse).exp();
-        weighted += probability * logit;
+        let log_probability = (logit - max) - shifted_lse;
+        nats -= log_probability.exp() * log_probability;
     }
-    ((lse - weighted) / LN_2).max(0.0)
+    (nats / LN_2).max(0.0)
 }
 
 /// Surprisal of one token under the distribution, in bits.
 ///
-/// `-log2 p` for the drawn token, which is `(lse - logit) / ln 2` and needs no
-/// probability materialised either.
+/// `-log2 p` for the drawn token, taken in shifted space for the same reason
+/// the entropy is: an unshifted `lse - logit` cancels at large magnitudes and
+/// answers no surprise for a token that carried some.
 pub fn surprisal_bits(logits: &[f32], index: usize) -> Option<f32> {
     let logit = *logits.get(index)?;
-    let lse = log_sum_exp(logits);
-    if !lse.is_finite() {
-        return None;
-    }
-    Some(((lse - logit) / LN_2).max(0.0))
+    let (max, shifted_lse) = shifted_normaliser(logits)?;
+    Some(((shifted_lse - (logit - max)) / LN_2).max(0.0))
 }
 
 /// Why a partition was rejected.
@@ -326,6 +375,38 @@ mod tests {
         let logits = [1.0f32; 4];
         assert!((entropy_bits(&logits) - 2.0).abs() < 1e-4);
         assert!((surprisal_bits(&logits, 2).expect("present") - 2.0).abs() < 1e-4);
+    }
+
+    /// **Two equal logits carry one bit however large they are.** The magnitude
+    /// is a property of the distribution's position, not of its shape, so the
+    /// answer at `f32::MAX` is the answer at 1.0.
+    ///
+    /// This is the regression. The earlier form took `lse` in unshifted space
+    /// and then computed `probability * logit` and `lse - logit`: the first
+    /// overflows to infinity at `f32::MAX` and the second cancels to zero, so
+    /// both signals reported nothing where they should report a bit. Measured
+    /// at `0` entropy and `0` surprisal before the fix.
+    #[test]
+    fn equal_logits_carry_one_bit_at_any_magnitude() {
+        for logits in [
+            vec![f32::MAX, f32::MAX],
+            vec![1e30f32, 1e30],
+            vec![100.0f32, 100.0],
+            vec![1.0f32, 1.0],
+        ] {
+            let entropy = entropy_bits(&logits);
+            let surprisal = surprisal_bits(&logits, 0).expect("a finite surprisal");
+            assert!(
+                (entropy - 1.0).abs() < 1e-4,
+                "entropy at {:?} is one bit, got {entropy}",
+                logits[0]
+            );
+            assert!(
+                (surprisal - 1.0).abs() < 1e-4,
+                "surprisal at {:?} is one bit, got {surprisal}",
+                logits[0]
+            );
+        }
     }
 
     /// A distribution with all its mass in one place carries no entropy, and
