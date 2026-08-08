@@ -80,7 +80,12 @@ fn no_organ_is_in_the_resolved_tree() {
     // Read against the whole resolved tree rather than the filtered set above,
     // which the assertion has already fixed: a loop over `internal` could
     // never fail and would report a check nobody ran.
-    for organ in ["weaver-harness", "weaver-spu", "weaver-admin", "weaver-trace"] {
+    for organ in [
+        "weaver-harness",
+        "weaver-spu",
+        "weaver-admin",
+        "weaver-trace",
+    ] {
         assert!(
             !names.iter().any(|n| n == organ),
             "{organ} is a crate this one reaches over a socket, never a link"

@@ -154,7 +154,9 @@ mod tests {
         }
         let absurd = 1024u64 * 1024 * 1024 * 1024; // a terabyte
         match room_and_reach(&[DeviceOrdinal(0)], absurd, 0) {
-            Err(DeviceRefusal::NoRoom { ordinal, needed, .. }) => {
+            Err(DeviceRefusal::NoRoom {
+                ordinal, needed, ..
+            }) => {
                 assert_eq!(ordinal, 0);
                 assert_eq!(needed, absurd);
             }

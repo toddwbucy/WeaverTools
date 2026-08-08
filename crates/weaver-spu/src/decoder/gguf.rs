@@ -125,11 +125,12 @@ impl ResidentModel {
                 })?;
         }
 
-        let model = LlamaModel::load_from_file(backend, admission.path(), &params).map_err(
-            |error| AdmitRefusal::LoadFailed {
-                detail: format!("load_from_file: {error}"),
-            },
-        )?;
+        let model =
+            LlamaModel::load_from_file(backend, admission.path(), &params).map_err(|error| {
+                AdmitRefusal::LoadFailed {
+                    detail: format!("load_from_file: {error}"),
+                }
+            })?;
         Ok(ResidentModel { model })
     }
 

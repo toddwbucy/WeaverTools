@@ -98,10 +98,8 @@ fn exactly_two_descriptors_serve() {
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
 
-    let (mut child, log_path) = spawn_holding(vec![
-        child_lifecycle.as_raw_fd(),
-        child_decode.as_raw_fd(),
-    ]);
+    let (mut child, log_path) =
+        spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
 
     // A served process blocks on its first read rather than exiting. Closing
     // the parent's end is what ends it, and the clean exit below is the whole
@@ -146,10 +144,8 @@ fn the_dumpable_flag_is_clear_after_entry() {
     let (lifecycle, child_lifecycle) = seqpacket_pair();
     let (_decode, child_decode) = seqpacket_pair();
 
-    let (mut child, log_path) = spawn_holding(vec![
-        child_lifecycle.as_raw_fd(),
-        child_decode.as_raw_fd(),
-    ]);
+    let (mut child, log_path) =
+        spawn_holding(vec![child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()]);
     let pid = child.id();
 
     // Entry runs and then blocks on the first read. Poll rather than sleep a
