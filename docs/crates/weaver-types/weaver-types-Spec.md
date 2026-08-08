@@ -15,6 +15,11 @@ it implies being `weaver-trace`'s against a crate that links one internal
 dependency. Restating them would put one fact in two places with no authority
 and drawing them would widen a floor whose argument is thinness, so the deferral
 follows the fault report's rather than inventing a shape ahead of its answer.
+Section 6's encoding bullet narrows to the encoding, a review finding of this
+act: the entry preceding this one argued that the shape and the encoding
+separate and did not carry that through to the bullet still claiming both, so
+the document represented the trio at section 4.4 and called it unrepresented at
+section 6.
 **Revised:** 2026-08-08. The token trio is held at the new section 4.4, its cases
 being the decode contract's sections 2 and 5 and this crate holding rather than
 creating them. An earlier wording of section 4 deferred the trio's shape and its
@@ -1096,10 +1101,14 @@ already discharged.
 - **The YAML implementation.** A maintained one, confirmed at the moment the
   manifest is written, per section 2. If none exists the format election re-runs
   against TOML on the writer-audience grounds.
-- **The decode seam's encoding, and the token trio's representation.** The
-  token workflow's, with the hot-path measurement, per section 4.3, the
-  channel question having closed with the decoder-cut ruling, decode on its
-  own socket.
+- **The decode seam's encoding.** The token workflow's, with the hot-path
+  measurement, per section 4.3, the channel question having closed with the
+  decoder-cut ruling, decode on its own socket. **The trio's representation
+  left this bullet when section 4.4 landed it,** the directive and the refusal
+  being shaped there in full, and the one open part of the answer,
+  `Generation`'s shape, carrying the bullet above. This bullet reads as the
+  encoding alone, which is the separation section 4.4 argues and which an
+  unnarrowed wording here contradicted.
 - **`DeviceOrdinal` and `ArtifactRef`.** Satellites of section 2 with no
   cross-crate consequence beyond being well-formed: the first is an unsigned
   device number, so a negative one is a parse error rather than a check, and
