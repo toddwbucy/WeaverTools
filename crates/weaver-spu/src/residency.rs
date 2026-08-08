@@ -61,6 +61,7 @@ use weaver_types::{DeviceOrdinal, LifecycleRefusal, ModelBinding};
 
 use crate::artifact::{self, ArtifactHeader};
 use crate::family::{self, FamilyRefusal};
+use crate::readout::{self, ReadoutElection, ReadoutRefusal};
 
 /// The headroom term, in bytes, held beside the shard on each assigned device.
 ///
@@ -98,6 +99,10 @@ impl WeightsHash {
 /// with the whole ordering inverted.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AdmitRefusal {
+    /// The load elected residual readout and this family's engine cannot tap.
+    /// Judged on the admit path, so the refusal costs the operator nothing
+    /// beyond the header read.
+    Readout(ReadoutRefusal),
     /// Step one: the binding did not resolve to an artifact.
     Unresolvable,
     /// Step two: the artifact is present and could not be read, its header or
@@ -136,6 +141,12 @@ impl From<AdmitRefusal> for LifecycleRefusal {
             AdmitRefusal::Unresolvable => LifecycleRefusal::ArtifactUnresolvable,
             AdmitRefusal::Unreadable => LifecycleRefusal::ArtifactUnreadable,
             AdmitRefusal::Family(inner) => inner.into(),
+            // The floor's set carries no readout-naming case, so the election
+            // failure maps onto the device's inability to admit, which is what
+            // it is: this device's engine cannot serve what was elected. The
+            // family name stays on this side of the seam with the rest of the
+            // detail, per the same rule the family refusal follows.
+            AdmitRefusal::Readout(_) => LifecycleRefusal::DeviceCannotAdmit,
             AdmitRefusal::Device => LifecycleRefusal::DeviceCannotAdmit,
             AdmitRefusal::DuplicateDevice { .. } => LifecycleRefusal::DeviceCannotAdmit,
             #[cfg(feature = "cuda")]
@@ -245,6 +256,7 @@ impl Residency {
         &mut self,
         binding: &ModelBinding,
         headroom: Headroom,
+        readout: ReadoutElection,
     ) -> Result<&Resident, AdmitRefusal> {
         if self.admit_attempted {
             return Err(AdmitRefusal::AlreadyAttempted);
@@ -274,6 +286,16 @@ impl Residency {
         // what puts the width refusal inside a test on a machine with no device.
         family::judge_width(&header.family, binding.devices.len() as u32)
             .map_err(AdmitRefusal::Family)?;
+
+        // **The readout election is judged here, on the admit path**, per Spec
+        // section 7 and the charter's fail-cheap-or-lie-expensive rule. It
+        // reads the family's declaration and nothing else, so it costs no
+        // device query and sits with the other free judgments. Moved to the
+        // first turn instead, the load succeeds and the turn fails, which is
+        // the expensive lie the rule forbids and what section 10's watch
+        // perturbs.
+        let declaration = family::lookup(&header.family).map_err(AdmitRefusal::Family)?;
+        readout::judge(readout, declaration).map_err(AdmitRefusal::Readout)?;
         judge_distinct(&binding.devices)?;
         // The shard each device must hold, read from the held descriptor
         // rather than from the name. The width was judged above, so the
@@ -439,13 +461,17 @@ mod tests {
             artifact: ArtifactRef("/nonexistent/artifact".into()),
             devices: vec![DeviceOrdinal(0)],
         };
-        let first = residency.admit(&binding, Headroom(0)).err();
+        let first = residency
+            .admit(&binding, Headroom(0), ReadoutElection(false))
+            .err();
         assert_eq!(
             first,
             Some(AdmitRefusal::Unresolvable),
             "the fixture refuses at step one"
         );
-        let second = residency.admit(&binding, Headroom(0)).err();
+        let second = residency
+            .admit(&binding, Headroom(0), ReadoutElection(false))
+            .err();
         assert_eq!(
             second,
             Some(AdmitRefusal::AlreadyAttempted),
@@ -506,7 +532,9 @@ mod tests {
             devices: vec![DeviceOrdinal(0), DeviceOrdinal(0)],
         };
         assert_eq!(
-            residency.admit(&binding, Headroom(0)).err(),
+            residency
+                .admit(&binding, Headroom(0), ReadoutElection(false))
+                .err(),
             Some(AdmitRefusal::DuplicateDevice { ordinal: 0 }),
             "the refusal is the set's shape, before any driver condition"
         );
