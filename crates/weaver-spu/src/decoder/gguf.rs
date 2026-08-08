@@ -323,3 +323,153 @@ impl Backend for GgufEngine<'_> {
         self.logits_at = None;
     }
 }
+
+/// Load a model on the host alone, for the unit suite.
+///
+/// Test builds only. [`ResidentModel::load`] is the one path a shipped binary
+/// has and it takes an [`Admission`], which is the proof that the judgments of
+/// Spec section 3 ran. This takes a path and no proof, so it cannot stand in a
+/// shipped build, and it puts no layer on a device: what it buys is that the
+/// engine's own behaviour is watchable on a machine with no card, which is what
+/// the feature comment in `Cargo.toml` says the `gguf` build exists for.
+#[cfg(test)]
+fn host_only(path: &std::path::Path) -> Result<ResidentModel, DecodeFault> {
+    let backend = backend().map_err(|_| DecodeFault::Engine {
+        detail: "backend".into(),
+    })?;
+    let params = LlamaModelParams::default().with_n_gpu_layers(0);
+    let model = LlamaModel::load_from_file(backend, path, &params).map_err(|error| {
+        DecodeFault::Engine {
+            detail: format!("host_only load: {error}"),
+        }
+    })?;
+    Ok(ResidentModel { model })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sampling::{Disposition, Knobs, TunableValues};
+
+    /// A small instruct model that loads on the host in about a second.
+    const MODEL: &str = "/opt/weaver/models/qwen2.5-0.5b-instruct-q6_k.gguf";
+
+    fn frozen() -> EffectiveKnobs {
+        Knobs {
+            temperature: Disposition::Frozen(0.7),
+            top_k: Disposition::Frozen(40),
+            top_p: Disposition::Frozen(0.95),
+            repetition_penalty: Disposition::Frozen(1.1),
+            repetition_window: Disposition::Frozen(64),
+            seed: Disposition::Frozen(11),
+        }
+        .resolve(&TunableValues::new())
+        .expect("nothing is tunable")
+    }
+
+    fn engine(model: &ResidentModel) -> GgufEngine<'_> {
+        GgufEngine::open(model, &frozen(), 512).expect("the context opens")
+    }
+
+    fn model_or_skip() -> Option<ResidentModel> {
+        if !std::path::Path::new(MODEL).exists() {
+            eprintln!("SKIP: no model at {MODEL}");
+            return None;
+        }
+        Some(host_only(std::path::Path::new(MODEL)).expect("the model loads on the host"))
+    }
+
+    /// **The engine decodes a prompt and draws a token from it.** The first
+    /// end-to-end exercise of this seam in the program: real weights, a real
+    /// forward, a real draw.
+    ///
+    /// What it reads is that the distribution is the model's rather than a
+    /// buffer of zeros. A vocabulary-wide slice of equal values would satisfy a
+    /// length check and mean nothing, so the assertion is that the logits vary
+    /// and that the token drawn is inside the vocabulary.
+    #[test]
+    fn the_engine_decodes_and_draws() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+
+        engine
+            .decode_at(&[TokenId(9707), TokenId(11), TokenId(1879)], 0)
+            .expect("the prompt decodes");
+
+        // **The borrow ends before the draw, and the compiler is what says
+        // so.** `distribution` borrows and `sample` needs the engine mutably,
+        // so a reading held across the draw does not compile. That is the
+        // pre-sampler ordering of Spec section 6 enforced by the seam's own
+        // signatures rather than by a rule the caller remembers.
+        let (width, varies, finite) = {
+            let logits = engine.distribution().expect("a distribution stands");
+            let first = logits[0];
+            (
+                logits.len(),
+                logits.iter().any(|l| (l - first).abs() > 1e-3),
+                logits.iter().all(|l| l.is_finite()),
+            )
+        };
+        assert!(width > 1000, "a vocabulary, got {width}");
+        assert!(varies, "the distribution varies rather than being zeroed");
+        assert!(finite, "no logit is NaN");
+
+        let token = engine.sample().expect("a token is drawn");
+        assert!(
+            (token.0 as usize) < width,
+            "the draw is inside the vocabulary, got {token:?}"
+        );
+    }
+
+    /// **Nothing may be read before a decode has left a distribution.**
+    ///
+    /// Perturbation: return `get_logits_ith(0)` unconditionally rather than
+    /// keying on `logits_at` and this passes while reading a buffer no forward
+    /// filled, which measures as a uniform distribution over the vocabulary.
+    /// Watched under exactly that change.
+    #[test]
+    fn a_read_before_any_decode_refuses() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        assert!(engine.distribution().is_err(), "nothing has been decoded");
+        assert!(engine.sample().is_err(), "and nothing may be drawn");
+    }
+
+    /// **A truncation takes the standing distribution with the positions it
+    /// removed**, so a draw afterwards cannot come from state that is gone.
+    ///
+    /// Perturbation: leave `logits_at` set in `truncate_to` and this fails,
+    /// the sample succeeding against a position the cache no longer holds.
+    /// Watched under exactly that change.
+    #[test]
+    fn a_truncation_drops_the_standing_distribution() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        engine
+            .decode_at(&[TokenId(9707), TokenId(11)], 0)
+            .expect("decode");
+        assert!(engine.distribution().is_ok(), "a distribution stands");
+
+        engine.truncate_to(1).expect("the truncation runs");
+        assert!(
+            engine.distribution().is_err(),
+            "the reading went with the positions"
+        );
+    }
+
+    /// **A closed engine answers every ask with a refusal**, rather than a
+    /// stale value from the state it held.
+    #[test]
+    fn a_closed_engine_serves_nothing() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        engine.decode_at(&[TokenId(9707)], 0).expect("decode");
+        engine.close();
+
+        assert!(engine.distribution().is_err());
+        assert!(engine.sample().is_err());
+        assert!(engine.decode_at(&[TokenId(11)], 1).is_err());
+        assert!(engine.truncate_to(0).is_err());
+        assert!(engine.reestablish().is_err());
+    }
+}
