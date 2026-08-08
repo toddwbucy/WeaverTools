@@ -173,6 +173,51 @@ mod tests {
         assert_eq!(judge(ReadoutElection(true), &TAPPABLE), Ok(()));
     }
 
+    /// **No shipped family advertises a tap, because nothing implements one.**
+    ///
+    /// This is a tripwire rather than a preference. `Tap` has no implementation
+    /// in this crate, so a family declaring `taps_readout: true` would be
+    /// admitted under an election nothing could honor. The day a backend stands
+    /// its tap up, that family's declaration flips and this test is edited in
+    /// the same act, which is what makes the flip deliberate rather than
+    /// incidental.
+    #[test]
+    fn no_shipped_family_advertises_a_tap_it_cannot_perform() {
+        for declaration in crate::family::REGISTRY {
+            assert!(
+                !declaration.taps_readout,
+                "{} advertises a tap, and no Tap implementation exists",
+                declaration.family
+            );
+        }
+    }
+
+    /// **The refusal is reachable against the shipped registry**, not only
+    /// against a fixture.
+    ///
+    /// A judgment whose refusing branch only ever fires for a test-local
+    /// declaration proves the function and says nothing about the binary. This
+    /// walks every family this binary actually carries.
+    #[test]
+    fn an_elected_readout_refuses_against_every_shipped_family() {
+        for declaration in crate::family::REGISTRY {
+            assert_eq!(
+                judge(ReadoutElection(true), declaration),
+                Err(ReadoutRefusal::NotTappable {
+                    family: declaration.family
+                }),
+                "{} cannot honor an election today",
+                declaration.family
+            );
+            assert_eq!(
+                judge(ReadoutElection(false), declaration),
+                Ok(()),
+                "{} serves an unelected load",
+                declaration.family
+            );
+        }
+    }
+
     /// **No election, no refusal.** A family that cannot tap serves every load
     /// that did not ask it to, which is what keeps the capability from becoming
     /// a requirement.

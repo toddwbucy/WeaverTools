@@ -246,6 +246,13 @@ pub struct Declaration {
     /// section 5's capability list and section 7's admit judgment. Declared
     /// rather than probed, because an election judged at admit cannot wait for
     /// a forward to find out.
+    ///
+    /// **Every shipped family declares `false` today and that is the truthful
+    /// value, not a placeholder.** Nothing implements [`crate::readout::Tap`],
+    /// because neither backend exists, so a family advertising a tap it cannot
+    /// perform would be admitted under an election nothing could honor, which
+    /// is the expensive lie the admit judgment exists to prevent. Each flips in
+    /// the act that stands its engine's tap up, and not before.
     pub taps_readout: bool,
 }
 
@@ -286,14 +293,14 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: llama::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
-        taps_readout: true,
+        taps_readout: false,
     },
     Declaration {
         family: "qwen2",
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
-        taps_readout: true,
+        taps_readout: false,
     },
     Declaration {
         // **Qwen3 declares its own architecture and renders the same ChatML
@@ -313,7 +320,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
-        taps_readout: true,
+        taps_readout: false,
     },
     Declaration {
         // The key is what llama.cpp writes into `general.architecture`, which
@@ -323,7 +330,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: gpt_oss::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
-        taps_readout: true,
+        taps_readout: false,
     },
 ];
 
