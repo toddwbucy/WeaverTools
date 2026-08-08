@@ -37,6 +37,11 @@ crate rather than a group member asking a service, and
 boundary that survives. Section 10's descriptor cell closes by dissolution, the
 measurement of this date recorded there. The prior Revised entry's service-account
 reading is superseded in whole.
+**Revised:** 2026-08-07, the tool egress ruling narrows one open question. The
+`AF_UNIX` restriction this charter files against a unit no longer meets a
+world-reaching tool inside it, that tool being a registered application the agent
+addresses rather than one this program starts, so the cost the question names shrinks
+to the tool that reaches nothing. The question stays open and stays section 10's.
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
 **External boundaries:** `weaver-admin-operator-contract` for the record's exit and
@@ -724,9 +729,14 @@ that cannot track its host.
 **One property is a question rather than a requirement, and it has a real cost.**
 Restricting the address families the unit may open to `AF_UNIX` is **not** a restatement
 of this program's no-network-surface rule: that rule binds what these crates link, and
-this would bind what an agent's tools may reach. An agent whose tools fetch anything
-would break under it. It goes on section 10's list as an open question with the cost
-named rather than onto this list as a requirement.
+this would bind what an agent's tools may reach. **The egress ruling of 2026-08-07
+narrows what that costs without settling it.** A world-reaching tool is no longer
+started by this program at all, being a registered application the agent addresses
+across the gate's agent-opened socket per apex section 3 step 7, so the unit this
+paragraph restricts holds no world-reaching tool to break. What it may still hold is a
+tool that reaches nothing, and whether the restriction is free for that case is the
+question section 10 keeps. It goes on section 10's list as an open question with the
+cost named rather than onto this list as a requirement.
 
 **Root performs the privileged acts directly, and the cost is stated rather than
 dressed.** Starting a unit under an agent identity, opening a sink the agent could
@@ -765,8 +775,12 @@ through a passed descriptor, and the trace directory is root-owned and not searc
 by the agent uid.
 
 **Same-uid reach is a live hole and the flag that closes it is a requirement stated
-elsewhere.** If an external tool process runs as the agent uid, it can attach to the
-worker and drive the coordination channel and the trace descriptor directly, which
+elsewhere.** A world-reaching tool no longer runs as the agent uid and is not
+started by this program at all, per apex section 3 step 7 as revised by the egress
+ruling of 2026-08-07, so what this paragraph reaches is the tool that reaches
+nothing, for which the agent-uid case still stands. If such a tool process runs as
+the agent uid, it can attach to the worker and drive the coordination channel and
+the trace descriptor directly, which
 defeats descriptor scoping. The worker's dumpable flag is what closes it, and
 `weaver-admin-harness-contract` section 2 is authoritative for both the requirement
 and its ordering, because the flag is a property admin relies on and cannot verify

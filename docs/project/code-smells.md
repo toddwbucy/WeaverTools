@@ -461,8 +461,10 @@ an unlink of the path followed by a bind. The release half is an unlink somewher
 exit, or nothing.
 
 **What it breaks.** 5.1 makes every cross-process seam a socket governed by a named
-contract, and the apex makes the agent's gate hook the one listening socket the agent
-binds. Neither survives a path whose custody is decided by whoever calls unlink last.
+contract, and the apex makes the agent's gate hooks the listening sockets the agent
+binds, two as of the egress ruling of 2026-08-07 and each bound from an instruction.
+Neither survives a path whose custody is decided by whoever calls unlink last, and a
+second bound path is a second custody question rather than a new kind of one.
 Three failures fall out and they sustain each other:
 
 - **Bind steals a live peer.** A guard distinguishing a socket from a regular file never

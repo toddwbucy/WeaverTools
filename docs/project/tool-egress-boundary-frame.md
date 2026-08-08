@@ -1,8 +1,21 @@
 # Tool Egress Boundary
 
-**Status:** DRAFT v0.3, 2026-08-07. Phase-one architecture-seat material, outside the
+**Status:** DRAFT v0.4, 2026-08-07. Phase-one architecture-seat material, outside the
 document set and never ratified. Argument and framing, no code. It decides nothing the
 tool workflow is there to decide.
+
+**The human ruled the boundary on 2026-08-07 and the apex act performed it.** Section
+1's claim is now apex section 3 steps 1 and 7. **Section 9's landing list is not
+discharged**, and an earlier version of this banner said it was, which is the reading
+G7 exists to catch: an unlanded ruling reads as settled to every later reader. What
+the apex act swept and what it still owes are named in the apex's own revision entry,
+which is the authority for the count. The tool-seam contract and the gate Spec are the
+tool workflow's, and `weaver-harness-gate-contract` is owed before any of it is
+implementable, since it forbids the second listener the ruling requires. This
+document does not become authoritative by having been ruled on: it stays outside the set
+and stays a rationale, and what a later reader should read for the requirement is the
+apex rather than this page. Section 6's conditional resolved to its first arm, so the
+registered-application form follows from invariant 5.1 and no arm is left to weigh.
 
 **Date filed:** 2026-08-07
 **Document ID:** `tool-egress-boundary-frame`

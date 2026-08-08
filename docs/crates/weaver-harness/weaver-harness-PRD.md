@@ -122,12 +122,16 @@ describes the demonstrations rather than constraining a builder's loop, a
 judgment loop or a fixed-turn loop being licensed by the same ruling.
 
 **The tool system.** The registry, the execution context, and the permission modes.
-Permission modes are operator policy and not a safety boundary. What a tool can
-reach is bounded by the kernel, through the constrained user the tool executes as,
-and the mode setting governs only whether the operator wants to be consulted before
-a class of action. Stating this plainly is the point. A permission mode that reads
-as a security control when the kernel is the actual control is a thing that gets
-trusted wrongly later.
+Permission modes are operator policy and not a safety boundary. What a tool can reach is
+not bounded by anything this crate holds: the egress ruling of 2026-08-07 makes a
+world-reaching tool a registered application the harness addresses across the gate's
+agent-opened seam, so its containment is that application's own and the operator's to
+provision, per apex section 3 step 7. This paragraph read that the bound was the kernel
+through the constrained user the tool executes as, which described a tool this crate
+forked and no longer describes one it reaches. The mode setting governs only whether the
+operator wants to be consulted before a class of action. Stating this plainly is the
+point. A permission mode that reads as a security control when the kernel is the actual
+control is a thing that gets trusted wrongly later.
 
 **Prompt assembly's deterministic floor, with the family render across the
 seam.** The harness composes the canonical conversation: the identity prefix,
@@ -209,8 +213,10 @@ can reach and has no first-contact surface. Work arrives already authenticated.
 **The coordination listener of section 2 is not a counterexample and the
 distinction is the direction.** It faces admin rather than the world, it lives
 inside the agent's sandbox, and it admits root alone, so no work and no external
-principal reaches it. The gate holds the door that faces out and this crate holds
-the one that faces in, which is one door each rather than two owners of one.
+principal reaches it. The gate holds the doors that face out and this crate holds
+the one that faces in, which is each owning its own side rather than two owners of
+one. The outward count became two with the egress ruling of 2026-08-07 and the
+inward count is unchanged.
 
 **Boundary verification and lifecycle supervision go to `weaver-admin`.** Provisioning
 is the operator's rather than admin's, per `weaver-admin-PRD` section 1, and there is
@@ -248,12 +254,21 @@ what an event is and what it costs to commit one.
 **The trait contracts go to `weaver-traits`, and the config file format to
 `weaver-types`.**
 
-**Safety adjudication of tool input goes to the kernel and is not a harness
-function at all.** The harness does not inspect a command to decide whether it is
-dangerous. It executes the tool as the agent's constrained user and the kernel
-decides what that user can touch. There is no classifier here and none is coming,
-because a classifier would be a heuristic standing where an enforced boundary
-already stands.
+**Safety adjudication of tool input is not a harness function at all.** The harness
+does not inspect a command to decide whether it is dangerous. There is no classifier
+here and none is coming, because a classifier would be a heuristic standing where a
+boundary already stands.
+
+**Where that boundary stands moved with the egress ruling of 2026-08-07.** This
+paragraph said the harness executes the tool as the agent's constrained user and the
+kernel decides what that user can touch. Apex step 7 now has the harness address a
+registered tool across the gate's agent-opened seam rather than fork one, so what the
+harness does is reach a boundary rather than run inside it, and what a tool may touch
+is that application's own affair on the far side of the socket. **The seam this
+requires is chartered and its contract is not written**, per apex section 3 step 7, so
+this charter states the direction and owes the rest to the tool workflow: the exchange
+that carries a tool call toward the gate, this crate's part in it, and what a tool's
+death mid-call means are all that workflow's and none of them is shaped here.
 
 **Memory in every form is out of scope.** No recall, no consolidation, no
 surfacing, no substrate. When memory returns it returns as a socket peer under its
@@ -274,6 +289,16 @@ library boundary tagged `link` rather than `socket`, and it authenticates nothin
 because there is no second process to identify. It is a seam under a contract all the
 same, which is why the count here is four and the table below is three.
 
+**The egress ruling of 2026-08-07 adds no seam here, and the count staying four is a
+claim worth checking rather than an omission.** Apex section 3 step 7 has the harness
+address a registered tool *through the gate's* agent-opened socket, so this crate's
+counterparty is the gate it already holds a seam with, and what is new is a direction
+on that seam rather than a party. The tool is the gate's peer and not this crate's,
+which is why no row is added below and why nothing here authenticates a tool. **The
+exchange that carries a tool call is owed by `weaver-harness-gate-contract`**, which
+closes its enumeration at four and is named as owed in the apex's revision entry, so
+this seam's traffic is chartered ahead of the document that must admit it.
+
 Every request carrying work across these seams carries the turn context and returns
 it, per apex 5.2. Lifecycle directives on the coordination seam carry no turn context
 because they belong to no turn, per 5.2 as scoped by the re-authoring of
@@ -283,7 +308,7 @@ The three sockets:
 
 | Seam | Peer | The harness's role |
 |---|---|---|
-| Turn ingress | `weaver-gate` | Receives authenticated work. Gate never reaches past it. |
+| Boundary | `weaver-gate` | Receives authenticated work inbound. Opens the exchange that carries a tool call outbound, per apex step 7, which the gate relays to the registered tool and never interprets. Gate never reaches past this seam in either direction. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
 | Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptor of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens no exchange of its own, the fault travelling as a `fault` event on the stream per the fault-carrier ruling of 2026-08-01. |
 
@@ -321,7 +346,8 @@ to: weaver-types
 
 The socket seams above carry no records here. A seam without the contract that
 governs it fails G3 rather than passing incompletely, and none is in that state now:
-the turn ingress seam resolves through `weaver-harness-gate-contract` as of the gate
+the boundary seam, named turn ingress until the egress ruling gave it a second
+direction, resolves through `weaver-harness-gate-contract` as of the gate
 pair's merge on 2026-08-01, and the decode seam through
 `weaver-harness-spu-contract`, each declared from the organ's side per the organ
 rule of Document Format section 4, with no record declared here on either crate's
