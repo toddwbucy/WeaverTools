@@ -110,8 +110,12 @@ impl CancelPoll for NeverCancels {
 /// fault, which zeroes it alongside `opened` because a closed session accounts
 /// for nothing. Nothing writes it downward over a session that keeps serving,
 /// which is the discipline the perturbation test watches from outside.
-pub struct Session {
-    backend: Box<dyn Backend>,
+pub struct Session<'a> {
+    /// **The backend borrows the residency it decodes against**, so a session
+    /// cannot outlive the model it was opened over. The lifetime is what says
+    /// so: an engine holds a context, a context borrows its model, and the
+    /// residency owns the model. Nothing has to remember the rule.
+    backend: Box<dyn Backend + 'a>,
     resident_len: usize,
     prefix_len: usize,
     prefix: Vec<TokenId>,
@@ -126,12 +130,12 @@ pub struct Session {
     flush_mechanism: FlushMechanism,
 }
 
-impl Session {
+impl<'a> Session<'a> {
     pub fn new(
-        backend: Box<dyn Backend>,
+        backend: Box<dyn Backend + 'a>,
         capacity: usize,
         flush_mechanism: FlushMechanism,
-    ) -> Self {
+    ) -> Session<'a> {
         Session {
             backend,
             resident_len: 0,
@@ -598,7 +602,7 @@ mod tests {
         script: Vec<TokenId>,
         capacity: usize,
         mechanism: FlushMechanism,
-    ) -> (Session, Rc<RefCell<Log>>) {
+    ) -> (Session<'static>, Rc<RefCell<Log>>) {
         let log = Rc::new(RefCell::new(Log {
             script,
             ..Default::default()
@@ -612,7 +616,7 @@ mod tests {
         (session, log)
     }
 
-    fn opened(script: Vec<TokenId>, capacity: usize) -> (Session, Rc<RefCell<Log>>) {
+    fn opened(script: Vec<TokenId>, capacity: usize) -> (Session<'static>, Rc<RefCell<Log>>) {
         with_mechanism(script, capacity, FlushMechanism::TruncateToPosition)
     }
 

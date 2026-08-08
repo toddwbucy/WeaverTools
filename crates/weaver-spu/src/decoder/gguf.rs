@@ -390,6 +390,7 @@ fn host_only(path: &std::path::Path) -> Result<ResidentModel, DecodeFault> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::decoder::session::{NeverCancels, Session, StopCondition};
     use crate::sampling::{Disposition, Knobs, TunableValues};
 
     /// A small instruct model that loads on the host in about a second.
@@ -412,12 +413,45 @@ mod tests {
         GgufEngine::open(model, &frozen(), 512).expect("the context opens")
     }
 
+    /// The fixture these tests decode against.
+    ///
+    /// **An explicit request that cannot be met is a failure rather than a
+    /// skip.** A skip is a pass to the harness, so a green run on a machine
+    /// without the fixture reports that the engine was watched decoding when
+    /// nothing was decoded. The implicit skip survives only for the machine
+    /// that simply does not hold the fixture. This is the convention
+    /// `tests/loaded.rs` states and follows, and this file owed it.
+    ///
+    /// **Its own variable rather than `WEAVER_TEST_GGUF`.** That one points the
+    /// load path at any small artifact, because that path is about loading and
+    /// not about the model. These tests read a Qwen vocabulary: the terminator
+    /// below is `<|im_end|>` at 151645, past the end of a smaller family's
+    /// vocabulary, so one variable serving both would answer a load-path
+    /// request by failing here as an engine error rather than as the mismatch
+    /// it is.
     fn model_or_skip() -> Option<ResidentModel> {
-        if !std::path::Path::new(MODEL).exists() {
-            eprintln!("SKIP: no model at {MODEL}");
-            return None;
-        }
-        Some(host_only(std::path::Path::new(MODEL)).expect("the model loads on the host"))
+        let path = match std::env::var_os("WEAVER_DECODE_GGUF") {
+            Some(named) => {
+                let path = std::path::PathBuf::from(named);
+                // Both branches demand a regular file, since a directory at the
+                // path would fail later and blame the loader.
+                assert!(
+                    path.is_file(),
+                    "WEAVER_DECODE_GGUF names {}, which is not a regular file",
+                    path.display()
+                );
+                path
+            }
+            None => {
+                let path = std::path::Path::new(MODEL);
+                if !path.is_file() {
+                    eprintln!("SKIP: no model at {MODEL}");
+                    return None;
+                }
+                path.to_path_buf()
+            }
+        };
+        Some(host_only(&path).expect("the model loads on the host"))
     }
 
     /// **The engine decodes a prompt and draws a token from it.** The first
@@ -459,6 +493,71 @@ mod tests {
         assert!(
             (token.0 as usize) < width,
             "the draw is inside the vocabulary, got {token:?}"
+        );
+    }
+
+    /// **A session over this engine generates.** The loop of `session.rs`
+    /// driving the engine of this module against real weights, which is the
+    /// whole of the decode path below the seam and the first time in this
+    /// program that it runs.
+    ///
+    /// What it reads is that tokens come back, that the measurement is
+    /// positionally paired with them, and that the terminator landed: the
+    /// resident length exceeds what was decoded by the one slot the terminator
+    /// takes, which is the property section 4.2 holds on every path.
+    #[test]
+    fn a_session_over_the_engine_generates() {
+        let Some(model) = model_or_skip() else { return };
+        let mut session = Session::new(
+            Box::new(engine(&model)),
+            512,
+            crate::decoder::backend::FlushMechanism::TruncateToPosition,
+        );
+
+        // A short identity prefix, then a turn's delta.
+        session
+            .open(&[TokenId(9707), TokenId(11)])
+            .expect("the prefix goes resident");
+        let before = session.resident_len();
+        assert_eq!(before, 2, "the prefix is what was decoded");
+
+        let generated = session
+            .append_and_generate(
+                &[TokenId(1879)],
+                &StopCondition {
+                    stop_tokens: vec![],
+                    terminator: TokenId(151645),
+                    max_tokens: 8,
+                },
+                &mut NeverCancels,
+            )
+            .expect("the generation runs");
+
+        assert_eq!(generated.tokens.len(), 8, "the ceiling bounds the run");
+        assert_eq!(
+            generated.signals.steps(),
+            generated.tokens.len(),
+            "one measurement per retained token, positionally paired"
+        );
+
+        // **The terminator landed.** Two prefix, one delta, eight generated,
+        // one terminator.
+        assert_eq!(
+            session.resident_len(),
+            2 + 1 + 8 + 1,
+            "the terminator is resident beyond what was drawn"
+        );
+
+        let entropies = generated
+            .signals
+            .entropy_bits
+            .as_ref()
+            .expect("the run measured");
+        assert!(
+            entropies
+                .iter()
+                .all(|bits| bits.is_finite() && *bits >= 0.0),
+            "every entropy is a finite non-negative number of bits"
         );
     }
 
