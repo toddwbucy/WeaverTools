@@ -18,9 +18,12 @@
 //! cannot serve refuses rather than falling back to the other, which would be
 //! the silent substitution the family registry also forbids.
 //!
-//! **Neither implementation is written yet**, so [`for_container`] refuses for
-//! both containers today. The derivation's shape is here and the engines behind
-//! it are the remaining work of Spec section 4.
+//! **The GGUF engine stands and the native one does not.** [`for_container`]
+//! answers whether this build can serve a container at all, and construction is
+//! [`crate::residency::Resident::open_session`]'s, because an engine borrows the
+//! model and only the residency holds one. The derivation and the construction
+//! are two things for that reason rather than by preference: a function that
+//! answered with a backend would need a model it has no way to be given.
 //!
 //! ## Why the generation loop is not behind this seam
 //!
@@ -133,16 +136,18 @@ pub enum FlushMechanism {
 /// **Nothing elects a backend separately.** This is the whole derivation, and
 /// it is a function of the header read at admit. A container this build was not
 /// compiled to serve refuses by name rather than falling back to the peer.
-pub fn for_container(container: Container) -> Result<Box<dyn Backend>, DecodeFault> {
-    // **Neither backend is written yet**, so this refuses for both containers
-    // regardless of which features are on. The refusal names the container
-    // rather than reporting a device or artifact problem, so a reader meeting
-    // it is told what is missing.
-    //
-    // This is deliberately not a stub that returns something: a backend that
-    // decoded nothing and reported success would make every property above this
-    // seam untestable while appearing to pass. The two implementations are the
-    // remaining work of Spec section 4, and the `cuda` and `gguf` features buy
-    // the kernels and the fork dependencies today, not a serving path.
-    Err(DecodeFault::ContainerNotBuilt { container })
+pub fn for_container(container: Container) -> Result<(), DecodeFault> {
+    // **What this answers is serviceability, not a backend.** Construction
+    // needs a model and this is given a container, so the two are split. A
+    // container this build carries answers Ok and the caller constructs; one it
+    // does not answers by name, so a reader meeting the refusal is told what is
+    // missing rather than what failed.
+    match container {
+        #[cfg(feature = "gguf")]
+        Container::Gguf => Ok(()),
+        // A container this build was not compiled to serve refuses by name
+        // rather than falling back to the peer, which would be the silent
+        // substitution the family registry also forbids.
+        other => Err(DecodeFault::ContainerNotBuilt { container: other }),
+    }
 }

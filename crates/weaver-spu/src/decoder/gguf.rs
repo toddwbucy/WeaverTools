@@ -349,6 +349,7 @@ fn host_only(path: &std::path::Path) -> Result<ResidentModel, DecodeFault> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::decoder::session::{NeverCancels, Session, StopCondition};
     use crate::sampling::{Disposition, Knobs, TunableValues};
 
     /// A small instruct model that loads on the host in about a second.
@@ -418,6 +419,71 @@ mod tests {
         assert!(
             (token.0 as usize) < width,
             "the draw is inside the vocabulary, got {token:?}"
+        );
+    }
+
+    /// **A session over this engine generates.** The loop of `session.rs`
+    /// driving the engine of this module against real weights, which is the
+    /// whole of the decode path below the seam and the first time in this
+    /// program that it runs.
+    ///
+    /// What it reads is that tokens come back, that the measurement is
+    /// positionally paired with them, and that the terminator landed: the
+    /// resident length exceeds what was decoded by the one slot the terminator
+    /// takes, which is the property section 4.2 holds on every path.
+    #[test]
+    fn a_session_over_the_engine_generates() {
+        let Some(model) = model_or_skip() else { return };
+        let mut session = Session::new(
+            Box::new(engine(&model)),
+            512,
+            crate::decoder::backend::FlushMechanism::TruncateToPosition,
+        );
+
+        // A short identity prefix, then a turn's delta.
+        session
+            .open(&[TokenId(9707), TokenId(11)])
+            .expect("the prefix goes resident");
+        let before = session.resident_len();
+        assert_eq!(before, 2, "the prefix is what was decoded");
+
+        let generated = session
+            .append_and_generate(
+                &[TokenId(1879)],
+                &StopCondition {
+                    stop_tokens: vec![],
+                    terminator: TokenId(151645),
+                    max_tokens: 8,
+                },
+                &mut NeverCancels,
+            )
+            .expect("the generation runs");
+
+        assert_eq!(generated.tokens.len(), 8, "the ceiling bounds the run");
+        assert_eq!(
+            generated.signals.steps(),
+            generated.tokens.len(),
+            "one measurement per retained token, positionally paired"
+        );
+
+        // **The terminator landed.** Two prefix, one delta, eight generated,
+        // one terminator.
+        assert_eq!(
+            session.resident_len(),
+            2 + 1 + 8 + 1,
+            "the terminator is resident beyond what was drawn"
+        );
+
+        let entropies = generated
+            .signals
+            .entropy_bits
+            .as_ref()
+            .expect("the run measured");
+        assert!(
+            entropies
+                .iter()
+                .all(|bits| bits.is_finite() && *bits >= 0.0),
+            "every entropy is a finite non-negative number of bits"
         );
     }
 

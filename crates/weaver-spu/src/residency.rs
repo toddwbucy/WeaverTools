@@ -60,6 +60,8 @@ use std::path::{Path, PathBuf};
 use weaver_types::{DeviceOrdinal, LifecycleRefusal, ModelBinding};
 
 use crate::artifact::{self, ArtifactHeader};
+use crate::decoder::backend::{self, DecodeFault, FlushMechanism};
+use crate::decoder::session::Session;
 use crate::family::{self, FamilyRefusal};
 use crate::readout::{self, ReadoutElection, ReadoutRefusal};
 
@@ -229,6 +231,64 @@ impl Resident {
     /// such a build holds no residency to reach.
     pub fn model(&self) -> &LoadedModel {
         &self.model
+    }
+
+    /// Open a session over this residency.
+    ///
+    /// **The one door from a residency to a serving session.** The container
+    /// derivation of `weaver-spu-Spec` section 4.1 decides which engine serves,
+    /// read from the header this admit already validated rather than from a
+    /// configuration field, and a container this build cannot serve refuses by
+    /// name before an engine is asked for.
+    ///
+    /// **The session borrows this residency.** An engine holds a context, a
+    /// context borrows its model, and this holds the model, so the returned
+    /// session cannot outlive the residency it decodes against. The lifetime
+    /// carries that rather than a rule a caller has to keep.
+    pub fn open_session(
+        &self,
+        knobs: &crate::sampling::EffectiveKnobs,
+        capacity: u32,
+    ) -> Result<Session<'_>, DecodeFault> {
+        backend::for_container(self.header.container)?;
+        // On a build carrying no engine the two below are consumed by no arm,
+        // and saying so here is cheaper than shaping the signature around a
+        // build that cannot serve anything anyway.
+        #[cfg(not(feature = "gguf"))]
+        let _ = (knobs, capacity);
+        match &self.model {
+            #[cfg(feature = "gguf")]
+            LoadedModel::Gguf(model) => {
+                let engine = crate::decoder::gguf::GgufEngine::open(model, knobs, capacity)?;
+                Ok(Session::new(
+                    Box::new(engine),
+                    capacity as usize,
+                    self.flush_mechanism()?,
+                ))
+            }
+            // On a build carrying no backend `LoadedModel` has no cases, so
+            // this arm is unreachable rather than unwritten.
+            #[cfg(not(feature = "gguf"))]
+            _ => Err(DecodeFault::ContainerNotBuilt {
+                container: self.header.container,
+            }),
+        }
+    }
+
+    /// The flush mechanism this residency's family declares, per Spec section
+    /// 4.4. Read from the declaration rather than inferred from a version
+    /// string, which is the whole of that section's claim.
+    ///
+    /// Reached only from the engine arm, so a build carrying no engine has no
+    /// caller for it. The allow says that rather than widening the build's
+    /// surface to quiet a lint.
+    #[cfg_attr(not(feature = "gguf"), allow(dead_code))]
+    fn flush_mechanism(&self) -> Result<FlushMechanism, DecodeFault> {
+        family::lookup(&self.header.family)
+            .map(|declaration| declaration.flush)
+            .map_err(|_| DecodeFault::ContainerNotBuilt {
+                container: self.header.container,
+            })
     }
 }
 
