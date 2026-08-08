@@ -80,14 +80,22 @@ claim is therefore about where the boundary sits and what authorizes a crossing,
 is not a claim about network capability at all, because the primitive that would hold
 network capability is not among these components.
 
-This retires the merged tool model for any tool that reaches the world. Apex step 7
-makes a tool a subprocess the harness forks and runs as the agent's own Linux user, and
-step 1 states that the outbound connection such a tool opens is not ingress and does not
-pass the gate. A port-binding tool built that way puts a listening socket inside the
-component set, which is the one thing the socket floor exists to prevent. Under this
-proposal a port-binding tool is a registered application the agent addresses over an
-egress socket, and the listening surface lives with that application, outside the
-agent, past the socket.
+**This retires the merged tool model for a tool that binds a listening port, and for no
+other.** Apex step 7 made every tool a subprocess the harness forks and runs as the
+agent's own Linux user, and step 1 stated that the outbound connection such a tool opens
+is not ingress and does not pass the gate. A port-binding tool built that way puts a
+listening socket inside the component set, which is the one thing the socket floor
+exists to prevent, so under this proposal it is a registered application the agent
+addresses over an egress socket and the listening surface lives with that application,
+outside the agent, past the socket.
+
+**A tool that binds no port keeps the merged model and this frame does not reach it.**
+The port ruling of 2026-08-07 files it internal whatever it dials, so the forked
+subprocess of step 7 is still what it is, still runs under a uid this program chooses,
+and still meets the descriptor discipline `weaver-harness-Spec` section 10 builds its
+reference walk on. Which uid it runs under is `weaver-gate-PRD` section 7's open cell
+and the tool workflow's to settle, and none of it is this frame's, which is the egress
+seam and the services that listen.
 
 ## 2. What the component set is
 
