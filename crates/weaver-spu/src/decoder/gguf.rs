@@ -46,8 +46,16 @@
 
 use std::sync::OnceLock;
 
+use llama_cpp_2::context::LlamaContext;
+use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
+use llama_cpp_2::llama_batch::LlamaBatch;
 use llama_cpp_2::model::LlamaModel;
+use llama_cpp_2::sampling::LlamaSampler;
+use llama_cpp_2::token::LlamaToken;
+
+use crate::decoder::backend::{Backend, DecodeFault, TokenId};
+use crate::sampling::EffectiveKnobs;
 use llama_cpp_2::model::params::{LlamaModelParams, LlamaSplitMode};
 
 use crate::residency::{Admission, AdmitRefusal};
@@ -142,5 +150,456 @@ impl ResidentModel {
     #[allow(dead_code)]
     pub(crate) fn model(&self) -> &LlamaModel {
         &self.model
+    }
+}
+
+/// The GGUF engine, per `weaver-spu-Spec` section 4.
+///
+/// **It borrows the residency it decodes against.** `LlamaContext` borrows the
+/// model, and that is the relationship in life as well as in types: a session
+/// cannot outlive the residency it was opened over, and the borrow is what says
+/// so without a rule anyone has to remember.
+///
+/// **The loop above this is `session.rs`'s and stays there.** What lives here is
+/// the five primitives the seam declares and nothing else, so the terminator
+/// discipline and the cancel bound hold for this engine by construction rather
+/// than by this file remembering them.
+pub struct GgufEngine<'a> {
+    context: LlamaContext<'a>,
+    sampler: LlamaSampler,
+    /// The batch index whose logits the last decode left standing, which is the
+    /// only position `distribution` and `sample` may read. `None` before the
+    /// first decode, so a sample before any decode refuses rather than reading
+    /// a buffer nothing filled.
+    logits_at: Option<i32>,
+    closed: bool,
+}
+
+impl<'a> GgufEngine<'a> {
+    /// Open a context over a resident model and build its sampler from the
+    /// binary's resolved knobs.
+    ///
+    /// **The sampler is built once, from the effective values.** The knobs
+    /// resolved at the composition root per Spec section 8, so nothing here
+    /// re-reads a disposition or learns which side supplied a value.
+    pub fn open(
+        model: &'a ResidentModel,
+        knobs: &EffectiveKnobs,
+        capacity: u32,
+    ) -> Result<GgufEngine<'a>, DecodeFault> {
+        let backend = backend().map_err(|_| DecodeFault::Engine {
+            detail: "the llama backend is not initialised".into(),
+        })?;
+        // **A zero capacity refuses rather than being substituted.**
+        // `NonZeroU32::new(0)` is `None`, and `with_n_ctx(None)` leaves `n_ctx`
+        // at zero, which llama.cpp reads as the model's own training context.
+        // A caller asking for nothing would be served the whole window, and
+        // the session above would hold a capacity the context does not have,
+        // which is the disagreement `decode_at` exists to prevent.
+        let capacity = std::num::NonZeroU32::new(capacity)
+            .ok_or_else(|| Self::engine_fault("a session capacity of zero serves nothing"))?;
+        let params = LlamaContextParams::default()
+            .with_n_ctx(Some(capacity))
+            .with_n_batch(capacity.get());
+        let context = model
+            .model()
+            .new_context(backend, params)
+            .map_err(|error| DecodeFault::Engine {
+                detail: format!("new_context: {error}"),
+            })?;
+
+        // The chain order is the one llama.cpp's own samplers assume:
+        // penalties, then the truncating filters, then temperature, then the
+        // draw. A distribution sampler last is what makes the seed mean
+        // something.
+        let sampler = LlamaSampler::chain_simple([
+            LlamaSampler::penalties(
+                knobs.repetition_window as i32,
+                knobs.repetition_penalty,
+                0.0,
+                0.0,
+            ),
+            LlamaSampler::top_k(knobs.top_k as i32),
+            LlamaSampler::top_p(knobs.top_p, 1),
+            LlamaSampler::temp(knobs.temperature),
+            LlamaSampler::dist(knobs.seed as u32),
+        ]);
+
+        Ok(GgufEngine {
+            context,
+            sampler,
+            logits_at: None,
+            closed: false,
+        })
+    }
+
+    fn engine_fault(detail: impl Into<String>) -> DecodeFault {
+        DecodeFault::Engine {
+            detail: detail.into(),
+        }
+    }
+
+    /// Drop the penalty window after a cache rewrite.
+    ///
+    /// **A reset is the whole of it, and it is exact rather than an
+    /// approximation.** `sample` is the only place anything is accepted, so
+    /// the window holds sampled tokens and nothing else: a prefix reaches
+    /// residency through `decode_at`, which accepts nothing. Both flush paths
+    /// retain exactly the prefix, so every token that survives one is a token
+    /// the sampler never saw, and the correct window afterwards is empty.
+    ///
+    /// Without this the penalties stage keeps scoring against tokens the
+    /// truncation removed, so one resident state draws differently depending
+    /// on a history nothing represents, and the frozen seed stops meaning what
+    /// the chain order was built to make it mean.
+    fn forget_sampled(&mut self) {
+        self.sampler.reset();
+    }
+}
+
+impl Backend for GgufEngine<'_> {
+    fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        if tokens.is_empty() {
+            return Ok(());
+        }
+        let mut batch = LlamaBatch::new(tokens.len(), 1);
+        let last = tokens.len() - 1;
+        for (offset, token) in tokens.iter().enumerate() {
+            // **The addition needs no overflow check and carries none.** The
+            // review asked for one, and there is no input that reaches it:
+            // offsets run from zero, so the first pass converts `position`
+            // itself, and any position large enough to overflow a `usize` when
+            // an offset is added has already failed this conversion and
+            // returned. A guard here would be a mechanic whose premise the
+            // loop's own order removes.
+            let pos = i32::try_from(position + offset)
+                .map_err(|_| Self::engine_fault("position exceeds the engine's range"))?;
+            // **The token converts rather than wrapping.** `sample` below
+            // already refuses a value it cannot represent, and a `TokenId` is a
+            // `u32`, so the inbound half owes the same posture: `as i32` would
+            // turn anything above `i32::MAX` into a negative id and hand it to
+            // llama.cpp without a word.
+            let id = i32::try_from(token.0)
+                .map_err(|_| Self::engine_fault("the token is outside the engine's range"))?;
+            // **Logits are asked for on the last token only.** Every earlier
+            // token is context being made resident, and asking for its
+            // distribution would allocate a vocabulary-wide buffer per token
+            // for a reading nothing takes.
+            batch
+                .add(LlamaToken(id), pos, &[0], offset == last)
+                .map_err(|error| Self::engine_fault(format!("batch add: {error}")))?;
+        }
+        self.context
+            .decode(&mut batch)
+            .map_err(|error| Self::engine_fault(format!("decode: {error}")))?;
+        self.logits_at = Some(last as i32);
+        Ok(())
+    }
+
+    fn distribution(&self) -> Result<&[f32], DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        // **Nothing to read before a decode has left logits standing.** A
+        // zeroed buffer would measure as a uniform distribution over the
+        // vocabulary, which is a reading rather than an absence.
+        let at = self
+            .logits_at
+            .ok_or_else(|| Self::engine_fault("no decode has left a distribution to read"))?;
+        Ok(self.context.get_logits_ith(at))
+    }
+
+    fn sample(&mut self) -> Result<TokenId, DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        let at = self
+            .logits_at
+            .ok_or_else(|| Self::engine_fault("no decode has left a distribution to sample"))?;
+        let token = self.sampler.sample(&self.context, at);
+        // The penalty window is a function of what was drawn, so the sampler is
+        // told what it drew.
+        self.sampler.accept(token);
+        u32::try_from(token.0)
+            .map(TokenId)
+            .map_err(|_| Self::engine_fault("the engine answered a negative token"))
+    }
+
+    fn truncate_to(&mut self, position: usize) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        let from = i32::try_from(position)
+            .map_err(|_| Self::engine_fault("position exceeds the engine's range"))?;
+        // Everything at or after the position leaves the cache. The open end is
+        // what makes this a truncation rather than a hole.
+        self.context
+            .clear_kv_cache_seq(Some(0), Some(from as u32), None)
+            .map_err(|error| Self::engine_fault(format!("clear_kv_cache_seq: {error}")))?;
+        // **The standing distribution belongs to a position that is gone.**
+        // Leaving it readable would let a sample after a truncation draw from
+        // the state the truncation removed.
+        self.logits_at = None;
+        self.forget_sampled();
+        Ok(())
+    }
+
+    fn reestablish(&mut self) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        self.context.clear_kv_cache();
+        self.logits_at = None;
+        self.forget_sampled();
+        Ok(())
+    }
+
+    fn close(&mut self) {
+        // The context and the sampler release with this value. What close marks
+        // is that nothing further may be asked, which every method above reads.
+        self.closed = true;
+        self.logits_at = None;
+    }
+}
+
+/// Load a model on the host alone, for the unit suite.
+///
+/// Test builds only. [`ResidentModel::load`] is the one path a shipped binary
+/// has and it takes an [`Admission`], which is the proof that the judgments of
+/// Spec section 3 ran. This takes a path and no proof, so it cannot stand in a
+/// shipped build, and it puts no layer on a device: what it buys is that the
+/// engine's own behaviour is watchable on a machine with no card, which is what
+/// the feature comment in `Cargo.toml` says the `gguf` build exists for.
+#[cfg(test)]
+fn host_only(path: &std::path::Path) -> Result<ResidentModel, DecodeFault> {
+    let backend = backend().map_err(|_| DecodeFault::Engine {
+        detail: "backend".into(),
+    })?;
+    let params = LlamaModelParams::default().with_n_gpu_layers(0);
+    let model = LlamaModel::load_from_file(backend, path, &params).map_err(|error| {
+        DecodeFault::Engine {
+            detail: format!("host_only load: {error}"),
+        }
+    })?;
+    Ok(ResidentModel { model })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sampling::{Disposition, Knobs, TunableValues};
+
+    /// A small instruct model that loads on the host in about a second.
+    const MODEL: &str = "/opt/weaver/models/qwen2.5-0.5b-instruct-q6_k.gguf";
+
+    fn frozen() -> EffectiveKnobs {
+        Knobs {
+            temperature: Disposition::Frozen(0.7),
+            top_k: Disposition::Frozen(40),
+            top_p: Disposition::Frozen(0.95),
+            repetition_penalty: Disposition::Frozen(1.1),
+            repetition_window: Disposition::Frozen(64),
+            seed: Disposition::Frozen(11),
+        }
+        .resolve(&TunableValues::new())
+        .expect("nothing is tunable")
+    }
+
+    fn engine(model: &ResidentModel) -> GgufEngine<'_> {
+        GgufEngine::open(model, &frozen(), 512).expect("the context opens")
+    }
+
+    fn model_or_skip() -> Option<ResidentModel> {
+        if !std::path::Path::new(MODEL).exists() {
+            eprintln!("SKIP: no model at {MODEL}");
+            return None;
+        }
+        Some(host_only(std::path::Path::new(MODEL)).expect("the model loads on the host"))
+    }
+
+    /// **The engine decodes a prompt and draws a token from it.** The first
+    /// end-to-end exercise of this seam in the program: real weights, a real
+    /// forward, a real draw.
+    ///
+    /// What it reads is that the distribution is the model's rather than a
+    /// buffer of zeros. A vocabulary-wide slice of equal values would satisfy a
+    /// length check and mean nothing, so the assertion is that the logits vary
+    /// and that the token drawn is inside the vocabulary.
+    #[test]
+    fn the_engine_decodes_and_draws() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+
+        engine
+            .decode_at(&[TokenId(9707), TokenId(11), TokenId(1879)], 0)
+            .expect("the prompt decodes");
+
+        // **The borrow ends before the draw, and the compiler is what says
+        // so.** `distribution` borrows and `sample` needs the engine mutably,
+        // so a reading held across the draw does not compile. That is the
+        // pre-sampler ordering of Spec section 6 enforced by the seam's own
+        // signatures rather than by a rule the caller remembers.
+        let (width, varies, finite) = {
+            let logits = engine.distribution().expect("a distribution stands");
+            let first = logits[0];
+            (
+                logits.len(),
+                logits.iter().any(|l| (l - first).abs() > 1e-3),
+                logits.iter().all(|l| l.is_finite()),
+            )
+        };
+        assert!(width > 1000, "a vocabulary, got {width}");
+        assert!(varies, "the distribution varies rather than being zeroed");
+        assert!(finite, "no logit is NaN");
+
+        let token = engine.sample().expect("a token is drawn");
+        assert!(
+            (token.0 as usize) < width,
+            "the draw is inside the vocabulary, got {token:?}"
+        );
+    }
+
+    /// **Nothing may be read before a decode has left a distribution.**
+    ///
+    /// Perturbation: return `get_logits_ith(0)` unconditionally rather than
+    /// keying on `logits_at` and this passes while reading a buffer no forward
+    /// filled, which measures as a uniform distribution over the vocabulary.
+    /// Watched under exactly that change.
+    #[test]
+    fn a_read_before_any_decode_refuses() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        assert!(engine.distribution().is_err(), "nothing has been decoded");
+        assert!(engine.sample().is_err(), "and nothing may be drawn");
+    }
+
+    /// **A truncation takes the standing distribution with the positions it
+    /// removed**, so a draw afterwards cannot come from state that is gone.
+    ///
+    /// Perturbation: leave `logits_at` set in `truncate_to` and this fails,
+    /// the sample succeeding against a position the cache no longer holds.
+    /// Watched under exactly that change.
+    #[test]
+    fn a_truncation_drops_the_standing_distribution() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        engine
+            .decode_at(&[TokenId(9707), TokenId(11)], 0)
+            .expect("decode");
+        assert!(engine.distribution().is_ok(), "a distribution stands");
+
+        engine.truncate_to(1).expect("the truncation runs");
+        assert!(
+            engine.distribution().is_err(),
+            "the reading went with the positions"
+        );
+    }
+
+    /// **A capacity of zero refuses rather than being substituted.**
+    ///
+    /// `NonZeroU32::new(0)` is `None` and llama.cpp reads an absent `n_ctx` as
+    /// the model's own training context, so without the guard a caller asking
+    /// for nothing is served the whole window and the session above holds a
+    /// capacity the context does not have.
+    ///
+    /// Perturbation: pass the capacity through unchecked and this fails, the
+    /// open succeeding and reporting a context far larger than was asked for.
+    /// Watched under exactly that change.
+    #[test]
+    fn a_zero_capacity_refuses() {
+        let Some(model) = model_or_skip() else { return };
+        assert!(
+            GgufEngine::open(&model, &frozen(), 0).is_err(),
+            "a session that can hold nothing is refused at the open"
+        );
+        assert!(
+            GgufEngine::open(&model, &frozen(), 1).is_ok(),
+            "a positive capacity still opens"
+        );
+    }
+
+    /// **A token the engine cannot represent refuses by name.** `sample`
+    /// already refuses a value it cannot represent, and a `TokenId` is a
+    /// `u32`, so the inbound half owes the same posture.
+    ///
+    /// **The refusal is read rather than the failure**, because both the guard
+    /// and its absence end in a refusal and only the reason separates them.
+    /// Wrapping to a negative id fails later inside llama.cpp's batch, so an
+    /// `is_err` assertion passes with the guard gone and watches nothing.
+    ///
+    /// Perturbation: restore `token.0 as i32` and this fails, the refusal
+    /// arriving as `batch add` from the engine rather than naming the token.
+    /// Watched under exactly that change.
+    #[test]
+    fn an_unrepresentable_token_refuses_by_name() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        let refusal = engine
+            .decode_at(&[TokenId(u32::MAX)], 0)
+            .expect_err("a token above i32::MAX is refused");
+        let DecodeFault::Engine { detail } = refusal else {
+            panic!("the refusal is an engine fault, got {refusal:?}");
+        };
+        assert!(
+            detail.contains("the token is outside the engine's range"),
+            "the refusal names the token rather than the batch, got {detail:?}"
+        );
+    }
+
+    /// **A flush takes the penalty window with the tokens it removed.**
+    ///
+    /// The window holds sampled tokens and nothing else, since `sample` is the
+    /// only place anything is accepted, and both flush paths retain exactly the
+    /// prefix. So the window after either is empty, and a run that follows one
+    /// draws as though it were the first.
+    ///
+    /// What this reads is that the seed still means something across a flush:
+    /// two runs from the same resident state draw the same token, which is
+    /// false when a stale window penalizes one of them and not the other.
+    ///
+    /// Perturbation: drop `forget_sampled` from `reestablish` and this fails,
+    /// the second run drawing differently because the first run's tokens are
+    /// still being penalized. Watched under exactly that change.
+    #[test]
+    fn a_flush_takes_the_penalty_window_with_it() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        let prefix = [TokenId(9707), TokenId(11), TokenId(1879)];
+
+        engine.decode_at(&prefix, 0).expect("the prefix decodes");
+        let first = engine.sample().expect("a token is drawn");
+        // Make it resident and draw again, so the window is not empty.
+        engine.decode_at(&[first], prefix.len()).expect("resident");
+        engine.sample().expect("a second token is drawn");
+
+        engine.reestablish().expect("the flush runs");
+        engine
+            .decode_at(&prefix, 0)
+            .expect("the prefix decodes again");
+        let after = engine.sample().expect("a token is drawn");
+
+        assert_eq!(
+            first, after,
+            "the same resident state draws the same token, the window having gone with the flush"
+        );
+    }
+
+    /// **A closed engine answers every ask with a refusal**, rather than a
+    /// stale value from the state it held.
+    #[test]
+    fn a_closed_engine_serves_nothing() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        engine.decode_at(&[TokenId(9707)], 0).expect("decode");
+        engine.close();
+
+        assert!(engine.distribution().is_err());
+        assert!(engine.sample().is_err());
+        assert!(engine.decode_at(&[TokenId(11)], 1).is_err());
+        assert!(engine.truncate_to(0).is_err());
+        assert!(engine.reestablish().is_err());
     }
 }
