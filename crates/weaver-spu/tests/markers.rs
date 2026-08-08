@@ -154,10 +154,16 @@ fn every_rendered_marker_promotes_to_one_token() {
     // **A run that probed nothing is a failure, not a pass.** The archived
     // tree's version returned early when no model was present, which reads as
     // green on a machine that tested nothing.
+    //
+    // The failures are reported here as well as below, because a vocab that
+    // exists and will not load leaves `probed` at zero while `absent` stays
+    // empty. Naming only the absent set would then report that nothing was
+    // found when what happened is that everything failed to open.
     assert!(
         probed > 0,
         "no family vocab was reachable, so this test asserted nothing. Set one of \
-         WEAVER_VOCAB_LLAMA, WEAVER_VOCAB_QWEN2, or WEAVER_VOCAB_GPT_OSS. Absent: {absent:?}"
+         WEAVER_VOCAB_LLAMA, WEAVER_VOCAB_QWEN2, or WEAVER_VOCAB_GPT_OSS.\n  \
+         absent: {absent:?}\n  failed to load: {failures:?}"
     );
 
     assert!(
