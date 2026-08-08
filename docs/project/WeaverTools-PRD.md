@@ -21,16 +21,16 @@ listens.
 **Revised:** 2026-08-07, the tool egress ruling lands in part and the rest is named.
 The sweep this act ran reaches the apex, `weaver-gate-PRD`, `weaver-harness-PRD`,
 `weaver-traits-PRD`, `weaver-types-PRD`, `weaver-spu-PRD`, `weaver-admin-PRD`,
-`code-smells`, and the frame. **Four documents are still owed and are named here
-rather than discovered later**, per Working Process G7. `weaver-harness-gate-contract`
-forbids a second listener and closes its exchanges at four, both of which the ruling
-reverses, and until it is edited that contract governs and a gate binding a second
-listener is a conformance failure rather than a build. `weaver-harness-spu-contract`
-and `weaver-harness-Spec` rest close-on-exec requirements on a fork-per-tool-call this
+`code-smells`, and the frame. **Four documents are still owed and are named here rather
+than discovered later**, per Working Process G7. `weaver-harness-gate-contract` forbade
+a second listener and closed its exchanges at four, both of which the ruling reverses,
+and **that debt is discharged as of 2026-08-07**: the contract admits the two seams and
+enumerates the tool-call exchange. `weaver-harness-spu-contract` and
+`weaver-harness-Spec` rest close-on-exec requirements on a fork-per-tool-call this
 ruling retires, and the requirements survive the premise while the wording does not.
 `weaver-tools-vision` has a tool's answer re-entering through the world-opened socket,
-which is now the wrong door. **The ruling is not implementable until the first of
-those lands**, and this entry is the record that says so.
+which is now the wrong door. **Three remain and the ruling is not implementable until
+they land**, and this entry is the record that says so.
 **Revised:** 2026-08-07, the tool egress ruling. The gate carries a second socket,
 opened by the agent rather than by the world, and a tool call crosses it. Step 1's
 clause that outbound tool connections do not pass through Gate is reversed, step 7's
