@@ -190,9 +190,17 @@ impl<'a> GgufEngine<'a> {
         let backend = backend().map_err(|_| DecodeFault::Engine {
             detail: "the llama backend is not initialised".into(),
         })?;
+        // **A zero capacity refuses rather than being substituted.**
+        // `NonZeroU32::new(0)` is `None`, and `with_n_ctx(None)` leaves `n_ctx`
+        // at zero, which llama.cpp reads as the model's own training context.
+        // A caller asking for nothing would be served the whole window, and
+        // the session above would hold a capacity the context does not have,
+        // which is the disagreement `decode_at` exists to prevent.
+        let capacity = std::num::NonZeroU32::new(capacity)
+            .ok_or_else(|| Self::engine_fault("a session capacity of zero serves nothing"))?;
         let params = LlamaContextParams::default()
-            .with_n_ctx(std::num::NonZeroU32::new(capacity))
-            .with_n_batch(capacity);
+            .with_n_ctx(Some(capacity))
+            .with_n_batch(capacity.get());
         let context = model
             .model()
             .new_context(backend, params)
@@ -230,6 +238,23 @@ impl<'a> GgufEngine<'a> {
             detail: detail.into(),
         }
     }
+
+    /// Drop the penalty window after a cache rewrite.
+    ///
+    /// **A reset is the whole of it, and it is exact rather than an
+    /// approximation.** `sample` is the only place anything is accepted, so
+    /// the window holds sampled tokens and nothing else: a prefix reaches
+    /// residency through `decode_at`, which accepts nothing. Both flush paths
+    /// retain exactly the prefix, so every token that survives one is a token
+    /// the sampler never saw, and the correct window afterwards is empty.
+    ///
+    /// Without this the penalties stage keeps scoring against tokens the
+    /// truncation removed, so one resident state draws differently depending
+    /// on a history nothing represents, and the frozen seed stops meaning what
+    /// the chain order was built to make it mean.
+    fn forget_sampled(&mut self) {
+        self.sampler.reset();
+    }
 }
 
 impl Backend for GgufEngine<'_> {
@@ -243,14 +268,28 @@ impl Backend for GgufEngine<'_> {
         let mut batch = LlamaBatch::new(tokens.len(), 1);
         let last = tokens.len() - 1;
         for (offset, token) in tokens.iter().enumerate() {
+            // **The addition needs no overflow check and carries none.** The
+            // review asked for one, and there is no input that reaches it:
+            // offsets run from zero, so the first pass converts `position`
+            // itself, and any position large enough to overflow a `usize` when
+            // an offset is added has already failed this conversion and
+            // returned. A guard here would be a mechanic whose premise the
+            // loop's own order removes.
             let pos = i32::try_from(position + offset)
                 .map_err(|_| Self::engine_fault("position exceeds the engine's range"))?;
+            // **The token converts rather than wrapping.** `sample` below
+            // already refuses a value it cannot represent, and a `TokenId` is a
+            // `u32`, so the inbound half owes the same posture: `as i32` would
+            // turn anything above `i32::MAX` into a negative id and hand it to
+            // llama.cpp without a word.
+            let id = i32::try_from(token.0)
+                .map_err(|_| Self::engine_fault("the token is outside the engine's range"))?;
             // **Logits are asked for on the last token only.** Every earlier
             // token is context being made resident, and asking for its
             // distribution would allocate a vocabulary-wide buffer per token
             // for a reading nothing takes.
             batch
-                .add(LlamaToken(token.0 as i32), pos, &[0], offset == last)
+                .add(LlamaToken(id), pos, &[0], offset == last)
                 .map_err(|error| Self::engine_fault(format!("batch add: {error}")))?;
         }
         self.context
@@ -304,6 +343,7 @@ impl Backend for GgufEngine<'_> {
         // Leaving it readable would let a sample after a truncation draw from
         // the state the truncation removed.
         self.logits_at = None;
+        self.forget_sampled();
         Ok(())
     }
 
@@ -313,6 +353,7 @@ impl Backend for GgufEngine<'_> {
         }
         self.context.clear_kv_cache();
         self.logits_at = None;
+        self.forget_sampled();
         Ok(())
     }
 
@@ -553,6 +594,95 @@ mod tests {
         assert!(
             engine.distribution().is_err(),
             "the reading went with the positions"
+        );
+    }
+
+    /// **A capacity of zero refuses rather than being substituted.**
+    ///
+    /// `NonZeroU32::new(0)` is `None` and llama.cpp reads an absent `n_ctx` as
+    /// the model's own training context, so without the guard a caller asking
+    /// for nothing is served the whole window and the session above holds a
+    /// capacity the context does not have.
+    ///
+    /// Perturbation: pass the capacity through unchecked and this fails, the
+    /// open succeeding and reporting a context far larger than was asked for.
+    /// Watched under exactly that change.
+    #[test]
+    fn a_zero_capacity_refuses() {
+        let Some(model) = model_or_skip() else { return };
+        assert!(
+            GgufEngine::open(&model, &frozen(), 0).is_err(),
+            "a session that can hold nothing is refused at the open"
+        );
+        assert!(
+            GgufEngine::open(&model, &frozen(), 1).is_ok(),
+            "a positive capacity still opens"
+        );
+    }
+
+    /// **A token the engine cannot represent refuses by name.** `sample`
+    /// already refuses a value it cannot represent, and a `TokenId` is a
+    /// `u32`, so the inbound half owes the same posture.
+    ///
+    /// **The refusal is read rather than the failure**, because both the guard
+    /// and its absence end in a refusal and only the reason separates them.
+    /// Wrapping to a negative id fails later inside llama.cpp's batch, so an
+    /// `is_err` assertion passes with the guard gone and watches nothing.
+    ///
+    /// Perturbation: restore `token.0 as i32` and this fails, the refusal
+    /// arriving as `batch add` from the engine rather than naming the token.
+    /// Watched under exactly that change.
+    #[test]
+    fn an_unrepresentable_token_refuses_by_name() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        let refusal = engine
+            .decode_at(&[TokenId(u32::MAX)], 0)
+            .expect_err("a token above i32::MAX is refused");
+        let DecodeFault::Engine { detail } = refusal else {
+            panic!("the refusal is an engine fault, got {refusal:?}");
+        };
+        assert!(
+            detail.contains("the token is outside the engine's range"),
+            "the refusal names the token rather than the batch, got {detail:?}"
+        );
+    }
+
+    /// **A flush takes the penalty window with the tokens it removed.**
+    ///
+    /// The window holds sampled tokens and nothing else, since `sample` is the
+    /// only place anything is accepted, and both flush paths retain exactly the
+    /// prefix. So the window after either is empty, and a run that follows one
+    /// draws as though it were the first.
+    ///
+    /// What this reads is that the seed still means something across a flush:
+    /// two runs from the same resident state draw the same token, which is
+    /// false when a stale window penalizes one of them and not the other.
+    ///
+    /// Perturbation: drop `forget_sampled` from `reestablish` and this fails,
+    /// the second run drawing differently because the first run's tokens are
+    /// still being penalized. Watched under exactly that change.
+    #[test]
+    fn a_flush_takes_the_penalty_window_with_it() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        let prefix = [TokenId(9707), TokenId(11), TokenId(1879)];
+
+        engine.decode_at(&prefix, 0).expect("the prefix decodes");
+        let first = engine.sample().expect("a token is drawn");
+        // Make it resident and draw again, so the window is not empty.
+        engine.decode_at(&[first], prefix.len()).expect("resident");
+        engine.sample().expect("a second token is drawn");
+
+        engine.reestablish().expect("the flush runs");
+        engine
+            .decode_at(&prefix, 0)
+            .expect("the prefix decodes again");
+        let after = engine.sample().expect("a token is drawn");
+
+        assert_eq!(
+            first, after,
+            "the same resident state draws the same token, the window having gone with the flush"
         );
     }
 
