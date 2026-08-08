@@ -8,6 +8,13 @@ and this crate's part in the workflow now finishing is one thing, admitting a mo
 later releasing it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-08, the backends are grounded in device authority. Section 3
+argued that authority for the fleet this crate cannot see and for the selection it
+does not make, and stopped short of the engines themselves, so what kept a
+delegating backend out was an absent dependency rather than a stated rule. A
+backend reaching a local serving process over a socket needs no such dependency
+and still moves the device out from under this crate, which is the gap the new
+clause closes. No cell opens or closes and no record moves.
 **Document ID:** `weaver-spu-PRD`
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
@@ -179,6 +186,22 @@ hardware policy at load, which is the arbitration ruling C removed from admin
 rather than relocated into this crate. Whether the fleet should spend this
 device on this agent is the operator's
 question, answered in the configuration before a load is directed at all.
+
+**A backend that delegates the forward to a separate serving process.** What this
+crate carries are engines it runs against weights in its own address space, one
+per artifact container, and an adapter to a general serving process is not a
+further one. The ground is authority over the device rather than the shape of a
+dependency. A serving process runs its own admission, holds the device it placed
+the weights on, and answers from a residency this crate never judged, so a crate
+that delegated would be a client of the device's authority rather than the
+authority itself, and the conflict section 4.1 step 3 refuses would be refused
+somewhere this crate cannot see. The weights hash, the family's marker
+discipline, and the measurement of section 13.6 would move behind that same
+boundary, each becoming a number this crate repeats rather than a fact it holds.
+**How many engines there are is a consequence rather than a policy:** one per
+container this program writes an engine for, the container being a property of
+the artifact read at section 4.1 step 2, so a further engine arrives with a
+container and never with a protocol.
 
 **The agent's configuration file.** `weaver-types-PRD` section 2.1 has one writer, the
 operator, and two readers, admin and the harness. This crate is not a third. The model
