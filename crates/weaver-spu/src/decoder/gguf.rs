@@ -372,12 +372,45 @@ mod tests {
         GgufEngine::open(model, &frozen(), 512).expect("the context opens")
     }
 
+    /// The fixture these tests decode against.
+    ///
+    /// **An explicit request that cannot be met is a failure rather than a
+    /// skip.** A skip is a pass to the harness, so a green run on a machine
+    /// without the fixture reports that the engine was watched decoding when
+    /// nothing was decoded. The implicit skip survives only for the machine
+    /// that simply does not hold the fixture. This is the convention
+    /// `tests/loaded.rs` states and follows, and this file owed it.
+    ///
+    /// **Its own variable rather than `WEAVER_TEST_GGUF`.** That one points the
+    /// load path at any small artifact, because that path is about loading and
+    /// not about the model. These tests read a Qwen vocabulary: the terminator
+    /// below is `<|im_end|>` at 151645, past the end of a smaller family's
+    /// vocabulary, so one variable serving both would answer a load-path
+    /// request by failing here as an engine error rather than as the mismatch
+    /// it is.
     fn model_or_skip() -> Option<ResidentModel> {
-        if !std::path::Path::new(MODEL).exists() {
-            eprintln!("SKIP: no model at {MODEL}");
-            return None;
-        }
-        Some(host_only(std::path::Path::new(MODEL)).expect("the model loads on the host"))
+        let path = match std::env::var_os("WEAVER_DECODE_GGUF") {
+            Some(named) => {
+                let path = std::path::PathBuf::from(named);
+                // Both branches demand a regular file, since a directory at the
+                // path would fail later and blame the loader.
+                assert!(
+                    path.is_file(),
+                    "WEAVER_DECODE_GGUF names {}, which is not a regular file",
+                    path.display()
+                );
+                path
+            }
+            None => {
+                let path = std::path::Path::new(MODEL);
+                if !path.is_file() {
+                    eprintln!("SKIP: no model at {MODEL}");
+                    return None;
+                }
+                path.to_path_buf()
+            }
+        };
+        Some(host_only(&path).expect("the model loads on the host"))
     }
 
     /// **The engine decodes a prompt and draws a token from it.** The first
