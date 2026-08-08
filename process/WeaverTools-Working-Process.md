@@ -392,13 +392,15 @@ an assertion no Spec declares:
     weaver-trace      39/39      weaver-admin     31/31
     weaver-spu        55/60
 
-**The five open in `weaver-spu` are blocked rather than missed**, and what blocks
-each is named. Two wait on the floor carrying the decode seam's vocabulary, which
-the types charter declares and the types Spec defers. One waits on the readout
-election reaching the crate, which no directive carries today. Three wait on the
-decode engines existing, one of them on both. The register of open items lives in
-the repository's issue tracker rather than here, so this section names the shape
-and not the count.
+**The five open in `weaver-spu` are blocked rather than missed**, and the five
+divide in two without remainder. **Two** wait on the floor carrying the decode
+seam's vocabulary, which the types charter declares and the types Spec defers.
+**Three** wait on the decode engines existing, and **one of those same three**
+additionally waits on the readout election reaching the crate, which no directive
+carries today. Two and three are the whole five, the readout one being counted
+once and carrying two blockers rather than being a sixth. The register naming
+each assertion lives in the repository's issue tracker rather than here, so this
+section states the division and leaves the roll to the register.
 
 **The decode engines are not written, and they carry no assertion of their own.**
 `weaver-spu-Spec` section 4.1's derivation refuses for both containers today,
