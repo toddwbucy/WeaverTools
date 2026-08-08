@@ -17,9 +17,18 @@ pub const TURN_CLOSE: &str = "<|im_end|>";
 pub const CALL_OPEN: &str = "<tool_call>";
 pub const CALL_CLOSE: &str = "</tool_call>";
 
-/// Every control marker this family declares, which is what the inbound
-/// marker-promotion test of Spec section 10 tokenizes.
-pub const CONTROL_MARKERS: &[&str] = &[TURN_OPEN, TURN_CLOSE, CALL_OPEN, CALL_CLOSE];
+/// **The markers this family's renderer emits into a prompt**, which is what
+/// the inbound marker-promotion test of Spec section 10 tokenizes. The set is
+/// the template's, because the template is what the renderer writes.
+pub const RENDERED_MARKERS: &[&str] = &[TURN_OPEN, TURN_CLOSE];
+
+/// The markers this family's **model** emits and this module's parser reads.
+///
+/// Outbound, so promotion does not bind them the way it binds
+/// [`RENDERED_MARKERS`]: nothing here is tokenized by this crate, it is matched
+/// as text against an emission. Both happen to promote under Qwen2.5's
+/// tokenizer, which is a fact rather than a requirement this act asserts.
+pub const PARSED_MARKERS: &[&str] = &[CALL_OPEN, CALL_CLOSE];
 
 /// This family's template, the one authority for it. The registry cites this
 /// constant and [`Family::render_delta`] renders through it, so the shape is

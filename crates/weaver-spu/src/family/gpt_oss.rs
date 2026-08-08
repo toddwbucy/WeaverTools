@@ -24,8 +24,15 @@ pub const RETURN: &str = "<|return|>";
 /// What opens a call in this family's emissions.
 pub const CALL_OPEN: &str = "<|call|>";
 
-/// Every control marker this family declares.
-pub const CONTROL_MARKERS: &[&str] = &[TURN_OPEN, MESSAGE, TURN_END, CHANNEL, RETURN, CALL_OPEN];
+/// **The markers this family's renderer emits into a prompt**, which is what
+/// the inbound marker-promotion test of Spec section 10 tokenizes.
+pub const RENDERED_MARKERS: &[&str] = &[TURN_OPEN, MESSAGE, TURN_END];
+
+/// The markers this family's **model** emits and this module's parser reads.
+///
+/// Harmony carries its whole vocabulary as special tokens, so these promote
+/// too, which is a fact rather than a requirement this act asserts.
+pub const PARSED_MARKERS: &[&str] = &[CHANNEL, RETURN, CALL_OPEN];
 
 /// This family's template, the one authority for it. The registry cites this
 /// constant and [`Family::render_delta`] renders through it.
