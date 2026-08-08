@@ -18,15 +18,20 @@ pub const TURN_END: &str = "<|eot_id|>";
 pub const CALL_OPEN: &str = "<|python_tag|>";
 pub const CALL_CLOSE: &str = "<|eom_id|>";
 
-/// Every control marker this family declares.
-pub const CONTROL_MARKERS: &[&str] = &[
-    TEXT_BEGIN,
-    HEADER_OPEN,
-    HEADER_CLOSE,
-    TURN_END,
-    CALL_OPEN,
-    CALL_CLOSE,
-];
+/// **The markers this family's renderer emits into a prompt**, which is what
+/// the inbound marker-promotion test of Spec section 10 tokenizes.
+pub const RENDERED_MARKERS: &[&str] = &[TEXT_BEGIN, HEADER_OPEN, HEADER_CLOSE, TURN_END];
+
+/// The markers this family's **model** emits and this module's parser reads.
+///
+/// **These arrived with Llama 3.1 and the tokenizer this workshop can reach is
+/// 3.0-era, where both degrade to sub-word text**, measured at six and seven
+/// tokens. That costs nothing today because they are matched as text against an
+/// emission and never tokenized by this crate. It would cost something the day a
+/// prior turn's call is rendered back into a prompt, which is inbound and would
+/// bring them under [`RENDERED_MARKERS`]. Named here rather than left for that
+/// day to discover.
+pub const PARSED_MARKERS: &[&str] = &[CALL_OPEN, CALL_CLOSE];
 
 /// This family's template, the one authority for it. The registry cites this
 /// constant and [`Family::render_delta`] renders through it.

@@ -288,6 +288,25 @@ pub const REGISTRY: &[Declaration] = &[
         flush: FlushMechanism::TruncateToPosition,
     },
     Declaration {
+        // **Qwen3 declares its own architecture and renders the same ChatML
+        // scaffolding**, so it cites the qwen2 module rather than growing a
+        // second one that would hold the same two markers. Measured: the
+        // marker vocabulary is identical and both promote to one token, and the
+        // turn shape this template encodes is what both models' own templates
+        // produce.
+        //
+        // Their full templates are not identical. Qwen3's is longer and adds
+        // `<think>` reasoning blocks and an `enable_thinking` switch. That is
+        // outbound, so it reaches the parse rather than the render: a reasoning
+        // block arrives as ordinary assistant text today. Named here so the day
+        // it needs separating is a change with a stated starting point rather
+        // than a surprise in a trace.
+        family: "qwen3",
+        shard_widths: &[1, 2],
+        template: qwen2::TEMPLATE,
+        flush: FlushMechanism::TruncateToPosition,
+    },
+    Declaration {
         // The key is what llama.cpp writes into `general.architecture`, which
         // is hyphenated. A key spelled any other way is a family no artifact
         // header ever selects, unreachable rather than wrong-looking.
@@ -509,6 +528,24 @@ mod tests {
             // because the contract has both reaching the record.
             assert_eq!(parsed.verbatim, emission, "{name}: the verbatim is kept");
         }
+    }
+
+    /// **Qwen3 is carried, and it is served by the qwen2 module.**
+    ///
+    /// The architecture is its own, so without an entry the lookup refuses
+    /// `UnknownFamily("qwen3")` before any device call, correctly and
+    /// uselessly. What this guards is the entry existing: the marker probe of
+    /// `tests/markers.rs` verifies the vocabularies agree, and needs the `gguf`
+    /// feature to do it, so this side of the claim is asserted where every
+    /// build can see it.
+    #[test]
+    fn qwen3_resolves_through_the_qwen2_module() {
+        let declaration = lookup(&FamilyName("qwen3".into())).expect("qwen3 is carried");
+        assert_eq!(
+            declaration.template,
+            qwen2::TEMPLATE,
+            "the two keys share one module's template rather than a copy of it"
+        );
     }
 
     /// **The template renders in one pass, so neither field can be substituted
