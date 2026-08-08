@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.20, 2026-08-05. Companion to the Working Rules, the Document
+**Version:** v0.21, 2026-08-08. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -351,68 +351,83 @@ not become the permanent state. After loop 0, a failing H3 case blocks merge.
 
 The set is RATIFIED, 2026-08-04, per the operator's ruling recorded in section 5.
 Phase one closed with the whole set merged: seven charters, seven Specs, the
-contract layer, and 245 assertion records under their instruments. Phase two ran
-on the HADES server per `HANDOFF-2026-08-04-hades-graph-build`: the graph stood up
-from the merged set, the closing checklist was reported item by item, and the
-set-level mark now rides the apex's system record. Checklist item 1 owes its
-drop-and-rebuild audit trail and item 7 stands open behind G6.
+contract layer, and the assertion records under their instruments. Phase two ran
+on the HADES server per `HANDOFF-2026-08-04-hades-graph-build`, the graph stood up
+from the merged set, and the set-level mark rides the apex's system record.
 
-The floor probe of 2026-08-04 is the evidence the entry into code rests on: a
+**The graph was rebuilt 2026-08-08 from `98c8713`** and stands at 293 nodes and
+426 edges in 19 `wt_` collections under the named graph `corpus_graph`. The census
+below verified on that build. Two earlier builds preceded it, 2026-08-06 from
+`96c40bb` and 2026-08-04 from `0426ef5`, and each was a drop-and-rebuild rather
+than an upsert, which is checklist item 1's audit trail as far as it has been
+recorded. **A rebuild is owed on document movement even where the census does not
+move.** The 2026-08-08 rebuild found the record set almost unchanged across 28
+document commits, two assertions retagged and none added or removed, while 138 of
+242 assertions pointed at a line the document no longer held. A count check would
+have reported that graph healthy, so a matching census is not evidence a rebuild
+can be skipped.
+
+The floor probe of 2026-08-04 is the evidence the entry into code rested on: a
 commissioned session with no repository access rebuilt both floor crates from the
 graph and the corpus text, both compiled, the suite passed whole, and all 41 floor
-assertion slugs landed under their instruments. Its three divergences return as
-review findings for the first code act, not as defects in the set, and they are
-named here because the seat that must apply them reads them from the corpus. One,
-the probe inverted the non-exhaustive election and re-aimed the compile-fail pin at
-the inverted claim: the real Specs elect the attribute per type, growing sets
-carrying it and closed sets not. Two, the probe elected two permission modes where
-the floor Spec enumerates three, Ask, Allow, and Deny, the enumeration being
-uncited by any sibling and so unreachable from the graph. Three, the probe filled
-the fault report's deliberately open election with an invented shape: the deferral
-is the corpus's and stands, and the first code act preserves the blank rather than
-the invention.
+assertion slugs landed under their instruments. Its three divergences were named
+for the first code act rather than as defects in the set. One, the probe inverted
+the non-exhaustive election and re-aimed the compile-fail pin at the inverted
+claim: the real Specs elect the attribute per type, growing sets carrying it and
+closed sets not. Two, the probe elected two permission modes where the floor Spec
+enumerates three, Ask, Allow, and Deny. Three, the probe filled the fault report's
+deliberately open election with an invented shape, and the deferral is the
+corpus's and stands.
 
-The build workspace is a fresh clone on the server, carrying none of the probe's
-code. Seat assignment follows section 1's rule unchanged: the seat holding the
-working tree authors. The floor act is authored by the session holding the
-document tree, per the operator's ruling of 2026-08-05, which is the same rule
-applied to where that act's working tree sits, and review runs through the PR's
-review seats. Later code acts sit where the operator points them.
+Seat assignment follows section 1's rule unchanged: the seat holding the working
+tree authors, and review runs through the PR's review seats. Later code acts sit
+where the operator points them.
 
-Section 6 ratified 2026-08-04, so the entry gate stands satisfied, and five
-crates have merged against it: `weaver-traits`, `weaver-types`, `weaver-trace`,
-`weaver-harness`, and `weaver-admin`, each file carrying its conformance header
-per Document Format sections 3 and 4. `weaver-spu` and `weaver-gate` remain
-documents alone.
+**All seven crates are built and merged.** Each file carries its conformance
+header per Document Format sections 3 and 4, and no crate carries a header citing
+an assertion no Spec declares:
 
-**A phase one re-entry is under way as of 2026-08-05, deliberate and named,**
-which is the mechanism this section describes rather than an exception to it.
-The operator ruled three things in one act. Any socket connecting to the harness
-is an internal connection, so the harness binds and admin dials and the
-credential check refuses every peer that is not root. `weaver-admin-user` is
-struck, admin being a role the operator assumes with root and a crate that role
-runs one invocation per verb. And loop 0's composition leaves the `Loops/`
-shelf, the loop taxonomy reaching loop 1 and above and never loop 0. The act
-branches from `76102ad` as `docs/admin-recut-socket-inversion` and touches the
-admin pair, both contracts admin is party to, the harness pair, the types pair,
-the gate pair, the trace charter, the apex, both loop documents, and this
-document's companion Format. The merged code of `weaver-admin` and
-`weaver-harness` now disagrees with its Specs at the coordination channel and
-the operator surface, which is the expected consequence of a re-entry and is
-owed as code acts after the documents merge.
+    weaver-types      17/17      weaver-harness   48/48
+    weaver-traits     24/24      weaver-gate      23/23
+    weaver-trace      39/39      weaver-admin     31/31
+    weaver-spu        55/60
+
+**The five open in `weaver-spu` are blocked rather than missed**, and the five
+divide in two without remainder. **Two** wait on the floor carrying the decode
+seam's vocabulary, which the types charter declares and the types Spec defers.
+**Three** wait on the decode engines existing, and **one of those same three**
+additionally waits on the readout election reaching the crate, which no directive
+carries today. Two and three are the whole five, the readout one being counted
+once and carrying two blockers rather than being a sixth. The register naming
+each assertion lives in the repository's issue tracker rather than here, so this
+section states the division and leaves the roll to the register.
+
+**The decode engines are not written, and they carry no assertion of their own.**
+`weaver-spu-Spec` section 4.1's derivation refuses for both containers today,
+which the Spec states plainly, and the assertions covering that seam are about the
+derivation rather than about either engine. A crate can therefore report a high
+conformance figure while completing no turn, and the apex's demonstration is what
+distinguishes the two. Read the figure as what it is, a count of claims met, and
+not as a statement that the deliverable runs.
 
 What remains from the phase behind: G6 and then item 7, and the G2 and G5
-phase-close sweeps. The graph is owed a rebuild once this act merges, and its
-expected census is stated as a number rather than as a delta so a rebuild can
-detect a change nobody intended: **242 assertion nodes carried by 243 `asserts`
-edges**, against the 245 the 2026-08-04 build carried. The two figures differ by
-one on purpose, and the difference is a finding rather than an error: the
-assertion `types-tagging-test` is asserted by both floor crates, so one node
-takes two edges. Which figure a check reads therefore matters, and the closing
-checklist's item 5 reads nodes. The movement is this act's and is enumerated at
-`weaver-admin-Spec` section 10 and `weaver-harness-Spec` section 8. A rebuild
-returning any other figure has found either an unlanded edit or an assertion this
-act changed without recording.
+phase-close sweeps. The graph's expected census is stated as a number rather than
+as a delta so a rebuild can detect a change nobody intended: **242 assertion nodes
+carried by 243 `asserts` edges**. The two figures differ by one on purpose, and
+the difference is a finding rather than an error: the assertion
+`types-tagging-test` is asserted by both floor crates, so one node takes two
+edges. Which figure a check reads therefore matters, and the closing checklist's
+item 5 reads nodes. A rebuild returning any other figure has found either an
+unlanded edit or an assertion an act changed without recording.
+
+**Code is not ingested into the graph and that is deliberate.** The earlier ground
+was that conformance headers cited retired assertions and ingesting would bake
+dangling edges into the map. That count reached zero on 2026-08-08. The standing
+ground is the operator's, recorded here because a later reader will find the
+earlier one discharged and needs the current one: the architecture is not stable
+while acts like the 2026-08-05 re-entry still move it, and a conformance graph
+built from moving code would record a shape neither the documents nor the code
+will keep.
 
 ## 8. What this document does not do
 
