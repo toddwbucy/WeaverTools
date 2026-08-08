@@ -57,10 +57,20 @@ because the structure it rests on is already in force.
 
 ## 1. The claim
 
-The gate is the agent's only boundary to the world, and a tool call is world traffic
-that crosses it like any other. Everything the agent does as an agent, a prompt
-perceived or an outbound call, passes the gate. Nothing the agent initiates toward the
-world runs around it.
+The gate is the agent's only boundary to the world for the traffic a boundary can
+mediate, and a tool call to a listening service crosses it like any other. Everything
+that reaches the agent passes the gate, and every service the agent addresses is reached
+through it.
+
+**The port ruling of 2026-08-07 bounds this claim, and the bound is stated rather than
+absorbed.** An earlier form said nothing the agent initiates toward the world runs
+around the gate. Under the port test an internal tool binds no listening port and is
+loop code or a subprocess inside the worker, so an internal tool that dials outward does
+run around the gate. **What the gate is the only boundary for is a listening service**,
+in both directions: nothing reaches the agent except through it, and nothing the agent
+addresses is addressed any other way. An operator whose loop code dials out has made
+that choice on their own side of the line section 8 draws, and no primitive this program
+ships makes it.
 
 The gate never touches the network. The gate speaks AF_UNIX, and the network is some
 application's problem on the far side of that socket, outside the agent. This is not a
@@ -322,9 +332,11 @@ and the two-socket split is that axis turned into hardware, worth one line where
 sweep lands. Definition-of-done item 5 requires a real tool executed under
 kernel-enforced OS constraint, and under section 2 the reference bash is a registered
 application the program does not ship, so the item lands as a conformance fixture the
-way the gate suite ships fake clients. **The port ruling of 2026-08-07 retired that item
-entirely**, bash being internal and item 5 asking for an executed tool again, so this
-sentence records a landing that was owed and is no longer. `weaver-admin-PRD` section 7
+way the gate suite ships fake clients. **The port ruling of 2026-08-07 replaced that
+reading rather than retiring the item**: bash is internal, so item 5 asks for an
+executed tool again and asks it of bash, and what was retired is the
+registered-application reading and the conformance fixture it implied. The item stands
+and this sentence records a landing no longer owed. `weaver-admin-PRD` section 7
 names the agent-uid tool case as its own assumption and files the cell to the gate, so
 the assumption sentence is edited when the cell resolves. The follow-on gate-charter
 edits are the no-second-listener surface clause of section 3, the relay of section 13.1

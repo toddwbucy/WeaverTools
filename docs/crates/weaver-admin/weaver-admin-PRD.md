@@ -734,11 +734,13 @@ narrows what that costs, and the port ruling of the same date narrows it again.*
 that binds a listening port is external and no longer started by this program at all,
 being a registered application the agent addresses across the gate's agent-opened socket
 per apex section 3 step 7. A tool that binds none is internal, which by the port ruling
-means loop code inside the worker rather than a process this unit starts beside it. **So
-the restriction meets no tool process at all**, and what section 10 keeps is whether it
-is free for the worker's own sockets, which are AF_UNIX by construction. It goes on
-section 10's list as an open question with the cost named rather than onto this list as
-a requirement.
+means either loop code inside the worker or a subprocess the harness forks per call.
+**Neither is a process this unit starts beside the worker**, so the restriction reaches
+the worker and what it forks rather than a tool unit of its own, and what section 10
+keeps is whether it is free for those, the worker's own sockets being AF_UNIX by
+construction and a forked tool's reach being the question `weaver-gate-PRD` section 7
+holds open. It goes on section 10's list as an open question with the cost named rather
+than onto this list as a requirement.
 
 **Root performs the privileged acts directly, and the cost is stated rather than
 dressed.** Starting a unit under an agent identity, opening a sink the agent could
@@ -778,16 +780,15 @@ by the agent uid.
 
 **Same-uid reach is a live hole and the flag that closes it is a requirement stated
 elsewhere.** A tool that binds a listening port is external and is not started by this
-program at all, per apex section 3 step 7. A tool that binds none is internal and is
-loop code inside the worker rather than a process beside it, per the port ruling of
-2026-08-07, so **the external tool process this paragraph reaches is one the operator
-provisions rather than one this program creates**. Where such a process runs as the
-agent uid, it can attach to the worker and drive the coordination channel and the trace
-descriptor directly, which defeats descriptor scoping. The worker's dumpable flag is
-what closes it, and `weaver-admin-harness-contract` section 2 is authoritative for both
-the requirement and its ordering, because the flag is a property admin relies on and
-cannot verify from outside the process. This paragraph names the hole and points at the
-obligation rather than stating it twice.
+program at all, per apex section 3 step 7. A tool that binds none is internal, either
+loop code inside the worker or a subprocess the harness forks per call, per the port
+ruling of 2026-08-07. **The forked case is the one this paragraph reaches**, and which
+uid it runs under is what `weaver-gate-PRD` section 7 keeps open. Where such a process
+runs as the agent uid, it can attach to the worker and drive the coordination channel
+and the trace descriptor directly, which defeats descriptor scoping. The worker's
+dumpable flag is what closes it, and `weaver-admin-harness-contract` section 2 is
+authoritative for both the requirement and its ordering, because the flag is a property
+admin relies on and cannot verify.
 
 **The one parse surface inside root, named as the trade it is.** Admin reads the
 coordination channel's answers and the peer at the far end is a worker running agent
