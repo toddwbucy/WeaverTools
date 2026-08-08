@@ -946,7 +946,7 @@ meets the same refusal.
 
 **`Message` is `weaver-traits`' and is drawn rather than restated.** The decode
 contract's canonical messages are that type, shaped at `weaver-traits-Spec`
-section 5 as a role and its content blocks, and this crate already links that
+section 3 as a role and its content blocks, and this crate already links that
 one as its floor-link. An earlier wording of this subsection named a
 `CanonicalMessage` that exists nowhere, which is the naming slip a first reading
 of the contract's prose invites: the contract describes the messages as
