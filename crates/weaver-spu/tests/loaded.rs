@@ -16,6 +16,7 @@ mod common;
 
 use std::path::{Path, PathBuf};
 
+use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
 use weaver_types::{ArtifactRef, DeviceOrdinal, ModelBinding};
 
@@ -111,7 +112,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         devices: vec![DeviceOrdinal(0)],
     };
 
-    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024));
+    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
     let resident = match admitted {
         Ok(resident) => resident,
         Err(refusal) => panic!("the admit succeeds against a real artifact, got {refusal:?}"),
@@ -133,7 +134,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
 
     // Nothing is idempotent: a second admit refuses on the ordering with an
     // identical binding, while the first residency stands.
-    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024));
+    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
     assert!(
         matches!(
             second,

@@ -33,5 +33,6 @@ pub mod family;
 /// `cuda` feature, because it is the one module that requires a driver.
 #[cfg(feature = "cuda")]
 pub mod gpu;
+pub mod readout;
 pub mod residency;
 pub mod sampling;
