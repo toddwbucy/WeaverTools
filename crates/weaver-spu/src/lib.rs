@@ -34,3 +34,4 @@ pub mod family;
 #[cfg(feature = "cuda")]
 pub mod gpu;
 pub mod residency;
+pub mod sampling;
