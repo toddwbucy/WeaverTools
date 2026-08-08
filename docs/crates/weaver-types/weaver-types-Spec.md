@@ -5,6 +5,16 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-08, second of that date. The trio names what exists. The
+messages it carries are `weaver-traits`' `Message`, drawn rather than restated,
+where an earlier wording named a `CanonicalMessage` that exists nowhere.
+`Generation` is moved to section 6 as an open election rather than left as a
+name with no shape: the determination is the decode contract's and is not in
+question, and what is open is where the payload lives, seven of the satellites
+it implies being `weaver-trace`'s against a crate that links one internal
+dependency. Restating them would put one fact in two places with no authority
+and drawing them would widen a floor whose argument is thinness, so the deferral
+follows the fault report's rather than inventing a shape ahead of its answer.
 **Revised:** 2026-08-08. The token trio is held at the new section 4.4, its cases
 being the decode contract's sections 2 and 5 and this crate holding rather than
 creating them. An earlier wording of section 4 deferred the trio's shape and its
@@ -889,10 +899,10 @@ two come apart, and the deferral belongs to the encoding alone.
 
 ```rust
 pub enum TokenDirective {
-    Open { session: SessionId, messages: Vec<CanonicalMessage> },
+    Open { session: SessionId, messages: Vec<Message> },
     AppendAndGenerate {
         turn: TurnKey,
-        delta: Vec<CanonicalMessage>,
+        delta: Vec<Message>,
         tunable: BTreeMap<String, f64>,
     },
     Cancel { turn: TurnKey },
@@ -928,6 +938,26 @@ decoder accepts or emits `null`, and a `null` where a number belongs fails the
 decode. The check is therefore stated here as the receiver's, at the point the
 map is read, so a value that arrives by some later encoding that does carry them
 meets the same refusal.
+
+**`Message` is `weaver-traits`' and is drawn rather than restated.** The decode
+contract's canonical messages are that type, shaped at `weaver-traits-Spec`
+section 5 as a role and its content blocks, and this crate already links that
+one as its floor-link. An earlier wording of this subsection named a
+`CanonicalMessage` that exists nowhere, which is the naming slip a first reading
+of the contract's prose invites: the contract describes the messages as
+canonical and does not rename the type.
+
+**`Generation`'s shape is an open election and this subsection does not settle
+it.** The decode contract's section 2 determines what it carries, the token
+identifiers with their measurement, the timings, the template identity, the
+block partition, and the residual reductions where elected. What that becomes in
+the floor is not derivable from the determination alone, because **seven of the
+satellites it would need live in `weaver-trace`** and one in `weaver-spu`, and
+this crate's dependency set is one internal crate. Restating seven types that
+already exist would put one fact in two places with no named authority, and
+drawing them would widen a floor whose whole argument is thinness. The election
+is recorded at section 6 with what settles it, and it follows the fault report's
+deferral rather than inventing a shape ahead of its answer.
 
 **The four refusal cases are the contract's section 5 and this document adds
 none.** The session is not open or residency is not confirmed for the ask. The
@@ -1051,6 +1081,15 @@ already discharged.
 
 ## 6. Open elections
 
+- **`Generation`'s shape, the payload of `TokenAnswer::Generated`.** What it
+  carries is determined at `weaver-harness-spu-decode-contract` section 2 and is
+  not in question. What is open is where it lives and what it draws: seven of
+  the satellites the determination implies are `weaver-trace`'s, one is
+  `weaver-spu`'s, and this crate links one internal crate. Settled by deciding
+  whether the floor grows its own satellites, whether the payload is opaque
+  across this seam the way the turn frame is, or whether the shape belongs
+  outside the floor entirely. The block partition's own open question, which
+  party labels its spans, rides with it.
 - **The config file's directory and naming convention.** Operator provisioning,
   outside what this program governs, per section 2. What this Spec fixes is that
   admin resolves one file or refuses.
