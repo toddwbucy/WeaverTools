@@ -7,6 +7,12 @@ v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise a
 the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-07, the second seam is admitted. This document forbade a second
+listener, which the egress ruling of the same date reversed at the apex, and until now
+it governed against that ruling under Document Format section 7. The gate holds the two
+seams its instruction names. **The exchange that reaches the second seam is not
+enumerated here**, arriving with the tool workflow, so this act removes a contradiction
+and shapes nothing. **The apex named this document as owed and this discharges it.**
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -119,9 +125,12 @@ close-on-exec after its final exec and clears its dumpable flag in the same act,
 
 ## 2. The exchanges
 
-Four, and no others. Two are opened by the harness, raise and lower, and two
-by the gate, the turn and the fault report, which is the two-initiator channel
-carrying both of them as of the token workflow's gate act.
+Four, and no others in this pass. Two are opened by the harness, raise and lower, and
+two by the gate, the turn and the fault report, which is the two-initiator channel
+carrying both directions as of the token workflow's gate act. **The egress ruling of
+2026-08-07 gave the gate a second seam, and the exchange that reaches it arrives with
+the tool workflow rather than here.** Nothing is shaped for it and the closure above is
+this pass's rather than the seam's.
 
 **Raise the hook.** Opened by the harness, last in the enter fan-out, carrying the
 gate instruction admin supplied in the enter directive, uninterpreted by the harness.
@@ -174,14 +183,16 @@ replaced. A gate that needs an instruction it was not given has a failed raise r
 than a second request to make.
 
 **No exchange carries work, and no exchange carries a path this crate did not need.**
-The instruction names the socket the gate must bind, which is the one name this seam
+The instruction names the sockets the gate must hold, which is the one name this seam
 exists to deliver, operator-declared and admin-validated. The gate learns no trace
 path, no record name, and nothing of the interior.
 
-**No exchange carries turn context, because neither exchange belongs to a turn.**
+**No exchange carries turn context, because no exchange here belongs to a turn.**
 The same scoping the coordination and residency seams carry, filed once at
 `weaver-admin-PRD` section 11, and this contract is a further case of that edit
-rather than a new one.
+rather than a new one. A tool call belongs to a turn and would carry it under apex
+section 5.2, which is one of the things the tool workflow settles when it charters
+that exchange.
 
 ## 3. Ordering
 
@@ -284,8 +295,12 @@ fan-out.
 turn exchange and the fault report being its two. It reads
 no content and translates nothing, in either direction. It authors no trace event and
 holds no descriptor to the record. It dials no interior socket and
-holds no channel to `weaver-admin` or the SPU. It binds no second listener. It
-retains nothing about a turn after the response returns.
+holds no channel to `weaver-admin` or the SPU. **It holds the two seams the
+instruction names and no third**, a count the egress ruling of 2026-08-07 raised from
+one, and which end binds the agent-opened seam is that seam's own contract's to say,
+per `weaver-gate-PRD` section 2. What this prohibition still forbids is a surface the
+gate opens on its own judgment. It retains nothing about a turn after the response
+returns.
 
 **On both.** Neither party carries a fact about the other's interior. The harness
 does not know who is connected and the gate does not know what a turn contains, and

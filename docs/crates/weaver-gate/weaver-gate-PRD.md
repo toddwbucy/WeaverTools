@@ -206,10 +206,9 @@ own door outward, not an acquired part. **What the clause still forbids is a sur
 this crate opens on its own judgment**, and the reason is unchanged, such a surface
 being one nothing chartered.
 
-**`weaver-harness-gate-contract` still forbids a second listener and is owed the
-edit**, per the apex's revision entry. Under Document Format section 7 that contract
-governs until the edit lands, so this clause states what this charter requires and a
-builder reading both is reading a requirement that is not yet implementable.
+**`weaver-harness-gate-contract` admits the second seam as of 2026-08-07**, which
+it forbade until that act. The contract and this charter agree, and a builder reading
+both reads one count.
 
 ## 4. Raising and lowering, from this crate's side
 
