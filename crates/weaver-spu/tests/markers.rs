@@ -58,6 +58,15 @@ const PROBES: &[Probe] = &[
         rendered: qwen2::RENDERED_MARKERS,
     },
     Probe {
+        // **Qwen3 is a separate registry key served by the qwen2 module**, so
+        // its tokenizer is probed separately. Two keys citing one module is a
+        // claim about their markers agreeing, and a claim is worth measuring.
+        family: "qwen3",
+        env: "WEAVER_VOCAB_QWEN3",
+        default_path: "/opt/weaver/models/h-dist/Qwen3-8B-Q5_K_M.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
+    },
+    Probe {
         family: "gpt-oss",
         env: "WEAVER_VOCAB_GPT_OSS",
         default_path: "/opt/weaver/models/h-dist/gpt-oss-20b-mxfp4.gguf",
