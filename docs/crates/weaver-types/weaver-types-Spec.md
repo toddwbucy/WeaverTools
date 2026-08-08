@@ -48,7 +48,7 @@ instruction.
 Level discipline. The charter says what the crate holds and why. This document
 says how it is represented, which for this crate means two representation
 questions the corpus deliberately left here: what shape the agent config takes on
-disk, and what octets the loop 0 vocabulary becomes on the wire. Where this
+disk, and what octets the organ wire vocabulary becomes on the wire. Where this
 document and the charter disagree the charter yields nothing.
 
 **This document declares its crate's assertion records, and one edge that is
@@ -75,7 +75,7 @@ document needs no node of its own.
     src/lib.rs        re-exports, and nothing else
     src/config.rs     the agent config and its six fields, section 2
     src/identity.rs   peer identity and the authorization predicate, section 3
-    src/wire.rs       the loop 0 vocabulary and the envelope, section 4
+    src/wire.rs       the organ wire vocabulary and the envelope, section 4
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used, for the reason `weaver-traits-Spec` section 1 gives: a nightly requirement
@@ -885,7 +885,7 @@ are the decode contract's enumeration, one owner and one drawer today.
 crate cannot write one, and apex section 3 steps 5 and 6 put the seam inside the
 turn the program is built to complete, so no loop 1 avoids it however simple. An
 earlier reading of this section deferred the shape along with the encoding. The
-two separate, and the deferral belongs to the encoding alone.
+two come apart, and the deferral belongs to the encoding alone.
 
 ```rust
 pub enum TokenDirective {
@@ -914,6 +914,20 @@ pub enum TokenRefusal {
     MalformedDelta,
 }
 ```
+
+**Every tunable value is finite, and a value that is not is refused at the
+seam.** The map carries `f64` because the wire's numbers are, and the knobs it
+feeds are the operator-tunable remainder of Spec section 8's dispositions. A
+`NaN` reaching a sampler is a temperature that compares false against every
+bound, and an infinity is one no filter clamps, so neither may travel. Both are
+refused as `MalformedDelta`, which is the case the contract already carries for
+an ask this seam cannot serve, rather than as a case this document adds. **The
+encoding makes the refusal reachable rather than theoretical:** JSON has no
+literal for either, so a peer that computed one either emits something no
+decoder accepts or emits `null`, and a `null` where a number belongs fails the
+decode. The check is therefore stated here as the receiver's, at the point the
+map is read, so a value that arrives by some later encoding that does carry them
+meets the same refusal.
 
 **The four refusal cases are the contract's section 5 and this document adds
 none.** The session is not open or residency is not confirmed for the ask. The
