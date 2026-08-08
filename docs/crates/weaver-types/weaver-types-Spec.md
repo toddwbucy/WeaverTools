@@ -5,6 +5,23 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-08. The token trio is held at the new section 4.4, its cases
+being the decode contract's sections 2 and 5 and this crate holding rather than
+creating them. An earlier wording of section 4 deferred the trio's shape and its
+encoding together, and the two separate: what cases a type carries is determined
+by the demand construction puts on it, and only the encoding waits on the
+hot-path measurement. The deferral had become circular, that measurement being
+taken against traffic that cannot exist until the seam carries the trio. The
+section is retitled from the loop 0 wire vocabulary to the organ wire vocabulary,
+the heading being the only place in the corpus that phrase appeared and every
+citation to this section being by number. **The sorting test is rate of change
+rather than loop number,** per the operator of this date: a type an organ
+publishes is constitutive and lives here, loop 0 among them because a badly
+changed loop 0 is a model that cannot load, and a loop conforms to an organ's
+type where it uses one without being obliged to use it. A shelf for types a
+particular loop 1 defines is not created here, nothing in this crate being one
+today. No graph record moves: the nodes are the charter's and the ordering's
+instrument is `weaver-spu-Spec` section 9's.
 **Revised:** 2026-08-06, `lifecycle-refusal` gains `StateNotObservable`. The
 `weaver-admin` code act found sections 2 and 3 of `weaver-admin-Spec` jointly
 unsatisfiable for `show` and `list`: the answer must be one of the floor's two
@@ -470,7 +487,7 @@ predicate is weakened. The second is named here because the rule is defined here
 and owed by `weaver-gate-Spec`, which is the G7 shape read forward rather than a
 test this crate can pretend to run.
 
-## 4. The loop 0 wire vocabulary
+## 4. The organ wire vocabulary
 
 **What this section owns is loop 0's definitions in full, plus the carriage of
 anything the envelope carries,** which is a boundary the act of 2026-08-02
@@ -478,12 +495,14 @@ made visible and worth stating rather than leaving to be inferred. Loop 0's
 four definitions are shaped here entire. `turn-frame` and `fault-report` are
 shaped here only as far as the envelope carries them, their payload variants
 and, for the frame, the election section 6 holds, because
-`organ-envelope`'s representation is this document's. The token trio is shaped
-here not at all: it rides the decode socket, which is not an organ channel per
-`weaver-spu-PRD` section 13.2, so its representation is the token workflow's
-with the hot-path measurement and none of this document's business. A later
-workflow reads that boundary and knows which side its vocabulary lands on
-before it asks.
+`organ-envelope`'s representation is this document's. **The token trio is held
+at section 4.4 and its encoding is not this document's**, a division the act of
+2026-08-08 made after an earlier wording deferred both together. It rides the
+decode socket, which is not an organ channel per `weaver-spu-PRD` section 13.2,
+so the hot-path measurement elects what it looks like on the wire. What cases it
+carries is the decode contract's determination and this crate holds it, because
+this crate holds types rather than creating them. A later workflow reads that
+boundary and knows which side its vocabulary lands on before it asks.
 
 Four of the charter's nine definitions, then: the envelope every organ channel
 carries, and loop 0's trio named for the loop whose traffic it carries rather than
@@ -850,6 +869,83 @@ edge: grounds
 from: types-envelope-bound-64k
 to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
+
+
+### 4.4 The token trio
+
+**This crate holds types rather than creating them.** What shape a type takes is
+determined by the demand that construction puts on it, and the party under that
+demand is the one that determines it. The decode contract's sections 2 and 5 are
+that determination for the token trio, and this subsection is where the floor
+holds the result. The charter said as much when it declared the trio: the cases
+are the decode contract's enumeration, one owner and one drawer today.
+
+**The trio is held here now because the demand exists now.** Section 9 of
+`weaver-spu-Spec` requires the decode seam to answer a `token-refusal` and the
+crate cannot write one, and apex section 3 steps 5 and 6 put the seam inside the
+turn the program is built to complete, so no loop 1 avoids it however simple. An
+earlier reading of this section deferred the shape along with the encoding. The
+two separate, and the deferral belongs to the encoding alone.
+
+```rust
+pub enum TokenDirective {
+    Open { session: SessionId, messages: Vec<CanonicalMessage> },
+    AppendAndGenerate {
+        turn: TurnKey,
+        delta: Vec<CanonicalMessage>,
+        tunable: BTreeMap<String, f64>,
+    },
+    Cancel { turn: TurnKey },
+    Flush,
+}
+
+pub enum TokenAnswer {
+    Opened,
+    Generated(Generation),
+    AtRest,
+    Flushed,
+    Received,
+}
+
+pub enum TokenRefusal {
+    NotOpen,
+    OutOfOrder,
+    Overflow { resident: u64, requested: u64, capacity: u64 },
+    MalformedDelta,
+}
+```
+
+**The four refusal cases are the contract's section 5 and this document adds
+none.** The session is not open or residency is not confirmed for the ask. The
+directive is out of order for the seam's state, a second generation or a
+mid-flight flush above all. The session cannot take the next delta, and the
+overflow carries the session's own account of itself because the harness decides
+what a full context means and cannot decide it without the numbers. The delta is
+malformed for the family. **`OutOfOrder` is the same word loop 0's refusal
+carries and is not the same case**, because the states it is judged against are
+the decode seam's, which is why the trio carries its own rather than drawing
+loop 0's.
+
+**A cancel with nothing in flight answers `AtRest` rather than refusing**, per
+the contract's section 2, and `Received` closes the SPU-opened fault report. Both
+are answers because neither is a failure of the ask.
+
+**The encoding stays deferred and the deferral is the encoding's alone.** The
+hot-path measurement elects it, per section 4.3's boundary rule and
+`weaver-spu-Spec` section 11, and the measurement is taken against real decode
+traffic which the first demonstration produces. Until that traffic exists the
+seam carries this trio as JSON, the same encoding loop 0 carries, and **that is a
+provisional election with a stated trigger rather than an answer**: it is
+reconsidered when the first demonstration produces traffic to measure, and a
+build that has produced that traffic and not reconsidered has an open election
+reading as a settled one. The decode socket carries octets at its boundary
+already, so the election changes one function on each side and nothing above it.
+
+**No record is added here.** The trio's nodes are the charter's, declared at
+`weaver-types-PRD` section 2.3 with their `defines` edges, and the instrument
+that buys the ordering is `weaver-spu-Spec` section 9's, which names the
+assertion and the seam it is watched on. A node restated here would give the
+mapper two sources for one record.
 
 ## 5. What is enforced, and by which instrument
 
