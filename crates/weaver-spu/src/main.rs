@@ -20,6 +20,7 @@
 use std::process::ExitCode;
 
 use weaver_spu::channel::{self, ChannelFault, EntryFault, Inherited, LifecycleChannel};
+use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
 use weaver_types::{
     ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope,
@@ -74,9 +75,7 @@ fn entry_refusal_line(fault: &EntryFault) -> String {
         EntryFault::DescriptorCountWrong { found } => format!(
             "{{\"refusal\":\"descriptors_unusable\",\"held_beyond_standard_streams\":{found}}}"
         ),
-        EntryFault::DescriptorsUnusable => {
-            "{\"refusal\":\"descriptors_unusable\"}".to_string()
-        }
+        EntryFault::DescriptorsUnusable => "{\"refusal\":\"descriptors_unusable\"}".to_string(),
         EntryFault::HygieneFailed => "{\"refusal\":\"boundary_unverified\"}".to_string(),
     }
 }
@@ -166,7 +165,16 @@ fn dispatch(
 
     match (*position, directive) {
         (SeamPosition::BeforeAdmit, LifecycleDirective::Admit { binding }) => {
-            match residency.admit(binding, Headroom(HEADROOM_BYTES)) {
+            // **The election is passed as unelected because it has no route
+            // here yet, and that is a named gap rather than a decision.**
+            // `weaver-types-PRD` has the residual-readout election judged by
+            // this crate at admission, and `AgentConfig` carries it, but the
+            // floor's `Admit` directive carries the binding alone and this
+            // process never sees the config. Adding a field to the directive is
+            // the floor's act under `weaver-types-Spec` section 4, not this
+            // crate's, so the judgment is built and wired at the admit path and
+            // reaches it with the only value the seam can supply today.
+            match residency.admit(binding, Headroom(HEADROOM_BYTES), ReadoutElection(false)) {
                 Ok(_) => {
                     *position = SeamPosition::Admitted;
                     Payload::Answer(LifecycleAnswer::Admitted)
@@ -256,7 +264,11 @@ mod tests {
         let mut residency = Residency::new();
         let mut position = SeamPosition::BeforeAdmit;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &directive(LifecycleDirective::Release)),
+            dispatch(
+                &mut position,
+                &mut residency,
+                &directive(LifecycleDirective::Release)
+            ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
         assert_eq!(position, SeamPosition::BeforeAdmit, "and is not queued");

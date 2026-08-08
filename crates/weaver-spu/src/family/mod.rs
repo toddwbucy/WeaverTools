@@ -40,6 +40,7 @@
 //!     shard_widths: &[1, 4],
 //!     template: "{message}",
 //!     flush: weaver_spu::decoder::backend::FlushMechanism::TruncateToPosition,
+//!     taps_readout: true,
 //! };
 //! assert!(SPARSE.shards_across(4));
 //! assert!(!SPARSE.shards_across(2));
@@ -241,6 +242,11 @@ pub struct Declaration {
     /// a truncation that returns success while recurrent state stays is the
     /// silent failure the append-only discipline exists to prevent.
     pub flush: FlushMechanism,
+    /// **Whether this family's engine can tap for residual readout**, per Spec
+    /// section 5's capability list and section 7's admit judgment. Declared
+    /// rather than probed, because an election judged at admit cannot wait for
+    /// a forward to find out.
+    pub taps_readout: bool,
 }
 
 impl Declaration {
@@ -280,12 +286,14 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: llama::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
+        taps_readout: true,
     },
     Declaration {
         family: "qwen2",
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
+        taps_readout: true,
     },
     Declaration {
         // **Qwen3 declares its own architecture and renders the same ChatML
@@ -305,6 +313,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
+        taps_readout: true,
     },
     Declaration {
         // The key is what llama.cpp writes into `general.architecture`, which
@@ -314,6 +323,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: gpt_oss::TEMPLATE,
         flush: FlushMechanism::TruncateToPosition,
+        taps_readout: true,
     },
 ];
 
@@ -450,6 +460,7 @@ mod tests {
             shard_widths: &[1, 4],
             template: "{message}",
             flush: FlushMechanism::TruncateToPosition,
+            taps_readout: true,
         };
         assert!(SPARSE.shards_across(1));
         assert!(!SPARSE.shards_across(2), "a bound would admit this");

@@ -16,6 +16,7 @@ mod common;
 
 use std::path::{Path, PathBuf};
 
+use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
 use weaver_types::{ArtifactRef, DeviceOrdinal, ModelBinding};
 
@@ -56,7 +57,9 @@ static DEVICE: std::sync::Mutex<()> = std::sync::Mutex::new(());
 fn device_lock() -> std::sync::MutexGuard<'static, ()> {
     // A poisoned lock means an earlier test panicked, which that test already
     // reported. Cascading its failure into this one would report it twice.
-    DEVICE.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    DEVICE
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 /// One context held for a whole measurement sequence, so the probes read a
@@ -109,7 +112,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         devices: vec![DeviceOrdinal(0)],
     };
 
-    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024));
+    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
     let resident = match admitted {
         Ok(resident) => resident,
         Err(refusal) => panic!("the admit succeeds against a real artifact, got {refusal:?}"),
@@ -131,7 +134,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
 
     // Nothing is idempotent: a second admit refuses on the ordering with an
     // identical binding, while the first residency stands.
-    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024));
+    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
     assert!(
         matches!(
             second,
@@ -192,10 +195,8 @@ mod seam_success {
         // would wedge the child mid-write against the parent mid-recv. A file
         // has no such buffer, and unlike null it leaves the child's account on
         // disk for the failure that needs it.
-        let log_path = std::env::temp_dir().join(format!(
-            "weaver-spu-seam-child-{}.log",
-            std::process::id()
-        ));
+        let log_path =
+            std::env::temp_dir().join(format!("weaver-spu-seam-child-{}.log", std::process::id()));
         let log = std::fs::File::create(&log_path).expect("a child log file");
         command
             .stdin(Stdio::null())
