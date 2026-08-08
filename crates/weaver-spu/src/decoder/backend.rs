@@ -82,6 +82,16 @@ pub trait Backend {
     /// and a backend cannot disagree with it.
     fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault>;
 
+    /// The distribution over the vocabulary at the current state, as logits.
+    ///
+    /// **This exists so the signals of Spec section 6 are computed where the
+    /// distribution is, before the sampler.** The sampler consumes the
+    /// distribution and answers one token, so a measurement taken after it has
+    /// no distribution left to read and would have to reconstruct one. Reading
+    /// it here does not advance the state: a caller may take it and then
+    /// sample, which is exactly what the generation loop does.
+    fn distribution(&self) -> Result<&[f32], DecodeFault>;
+
     /// Sample one token from the current state.
     fn sample(&mut self) -> Result<TokenId, DecodeFault>;
 

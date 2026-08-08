@@ -5,6 +5,7 @@
 //! conforms: spu-cancel-bounded-by-one-token
 //! conforms: spu-cancel-polled-not-signalled
 //! conforms: spu-flush-mechanism-from-declaration
+//! conforms: spu-signals-pre-sampler
 //!
 //! The resident session and its append path, per `weaver-spu-Spec` sections 4.2
 //! to 4.4.
@@ -37,6 +38,7 @@
 //! through the append path instead.
 
 use crate::decoder::backend::{Backend, DecodeFault, FlushMechanism, TokenId};
+use crate::measurement;
 
 /// Why a generation stopped.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -58,6 +60,11 @@ pub struct Generated {
     /// Why the loop ended. **A cancelled generation answers with what it
     /// produced, marked stopped, after the terminator lands.**
     pub stopped: Stopped,
+    /// What the distribution measured at each step, per Spec section 6.
+    ///
+    /// **Positionally paired with `tokens`.** Absent where the backend served
+    /// no distribution, and absent rather than empty where nothing was drawn.
+    pub signals: measurement::Signals,
 }
 
 /// The family's stop condition and its terminator.
@@ -224,6 +231,7 @@ impl Session {
         self.resident_len += delta.len();
 
         let mut produced = Vec::new();
+        let mut signals = measurement::Accumulator::new();
         let stopped = loop {
             // **The cancel is checked between sampled tokens**, which bounds
             // the stop by one token's decode rather than by a kernel's
@@ -241,12 +249,44 @@ impl Session {
                 break Stopped::CapacityReached;
             }
 
+            // **Measured before the sampler**, per Spec section 6. The
+            // distribution exists at this point and not after: `sample`
+            // consumes it and answers one token, so a measurement taken below
+            // would be reading a state the draw has already moved past. The
+            // index the surprisal needs is the token's own, so the entropy is
+            // taken here and the surprisal completed once the draw is known,
+            // both from the same distribution rather than from two.
+            let step = match self.backend.distribution() {
+                Ok(logits) => Some((measurement::entropy_bits(logits), logits.to_vec())),
+                // A backend serving no distribution measures nothing rather
+                // than faulting the generation. The signals are observability
+                // and an absent one is a reported absence, per section 6.
+                Err(_) => None,
+            };
+
             let token = match self.backend.sample() {
                 Ok(token) => token,
                 Err(fault) => return Err(self.poison(fault)),
             };
+
+            // **The stop token is drawn but not retained, so it is not
+            // measured.** The signals are positionally paired with the tokens
+            // this answers with, and a measurement for a token the answer does
+            // not carry shifts every reader's pairing by one.
             if stop.stop_tokens.contains(&token) {
                 break Stopped::Complete;
+            }
+
+            // Retained from here, so this token owes a measurement. A step that
+            // cannot produce one abandons the whole run rather than leaving a
+            // vector one short: a gap misattributes every entry after it, and a
+            // reader cannot see that it happened.
+            match step.and_then(|(entropy, logits)| {
+                measurement::surprisal_bits(&logits, token.0 as usize)
+                    .map(|surprisal| (entropy, surprisal))
+            }) {
+                Some((entropy, surprisal)) => signals.record(entropy, surprisal),
+                None => signals.abandon(),
             }
             produced.push(token);
             if let Err(fault) = self.backend.decode_at(&[token], self.resident_len) {
@@ -273,6 +313,7 @@ impl Session {
         Ok(Generated {
             tokens: produced,
             stopped,
+            signals: signals.finish(),
         })
     }
 
@@ -351,12 +392,27 @@ mod tests {
         fail_decode_call: Option<usize>,
         /// Fail every `sample`.
         fail_sample: bool,
+        /// The order the seam's two read paths were called in, which is what
+        /// the pre-sampler claim is about.
+        order: Vec<&'static str>,
+        /// Fail the nth `distribution` call, counting from zero.
+        fail_distribution_call: Option<usize>,
+        distributions: std::cell::Cell<usize>,
     }
 
     /// A backend that records what it was asked to do. The seam this doubles is
     /// the one Spec section 4.1 declares, so doubling it is reading the seam
     /// rather than inventing one.
-    struct Recorder(Rc<RefCell<Log>>);
+    /// A fixed distribution the double serves. Non-uniform so the entropy is
+    /// a number rather than a degenerate zero, and **wide enough to cover
+    /// every token id the scripts draw**: a real distribution spans the
+    /// vocabulary, so a fixture narrower than its own script would measure
+    /// nothing on the tokens past its end and misreport the pairing.
+    const DISTRIBUTION: &[f32] = &[
+        1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0,
+    ];
+
+    struct Recorder(Rc<RefCell<Log>>, Vec<f32>);
 
     impl Backend for Recorder {
         fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
@@ -370,8 +426,28 @@ mod tests {
             }
             Ok(())
         }
+        fn distribution(&self) -> Result<&[f32], DecodeFault> {
+            let call = {
+                let mut log = self.0.borrow_mut();
+                log.order.push("distribution");
+                let call = log.distributions.get();
+                log.distributions.set(call + 1);
+                (call, log.fail_distribution_call)
+            };
+            if Some(call.0) == call.1 {
+                return Err(DecodeFault::Engine {
+                    detail: "no distribution".into(),
+                });
+            }
+            // **The double serves a fixed distribution**, which is enough for
+            // the ordering claim: what the signals test reads is that the
+            // measurement was taken from the state the sampler had not yet
+            // consumed, not what the numbers were.
+            Ok(&self.1)
+        }
         fn sample(&mut self) -> Result<TokenId, DecodeFault> {
             let mut log = self.0.borrow_mut();
+            log.order.push("sample");
             if log.fail_sample {
                 return Err(DecodeFault::Engine {
                     detail: "scripted".into(),
@@ -390,6 +466,109 @@ mod tests {
             Ok(())
         }
         fn close(&mut self) {}
+    }
+
+    /// **A step that cannot be measured makes the whole measurement absent**,
+    /// not a vector one short.
+    ///
+    /// The vectors are positionally paired with the tokens the answer carries,
+    /// so dropping one entry shifts every entry after it onto the wrong token.
+    /// A reader cannot detect that; a reader can detect absence.
+    ///
+    /// Perturbation: replace the `None => signals.abandon()` arm with a plain
+    /// skip and this fails, the run answering two measurements against three
+    /// tokens. Watched under exactly that change.
+    #[test]
+    fn a_step_that_cannot_be_measured_makes_the_whole_run_absent() {
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(2), TokenId(3), TokenId(9)],
+            // The second retained token loses its distribution.
+            fail_distribution_call: Some(1),
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+        );
+        session.open(&[TokenId(7)]).expect("the prefix lands");
+        let generated = session
+            .append_and_generate(
+                &[TokenId(8)],
+                &StopCondition {
+                    stop_tokens: vec![TokenId(9)],
+                    terminator: TokenId(0),
+                    max_tokens: 8,
+                },
+                &mut NeverCancels,
+            )
+            .expect("the generation runs");
+
+        assert_eq!(generated.tokens.len(), 3, "the generation still answers");
+        assert_eq!(
+            generated.signals.steps(),
+            0,
+            "and the measurement is absent rather than short"
+        );
+        assert!(generated.signals.entropy_bits.is_none());
+        assert!(generated.signals.surprisal_bits.is_none());
+    }
+
+    /// **The signals are measured before the sampler, at every step.**
+    ///
+    /// The distribution exists until the draw consumes it, so a measurement
+    /// taken after `sample` is reading a state the draw has already moved
+    /// past. What this reads is the seam's call order: every `distribution`
+    /// sits immediately before the `sample` it measured, never after.
+    ///
+    /// Perturbation: move the `distribution` read below the `sample` call in
+    /// `append_and_generate` and this fails, the recorded order arriving as
+    /// sample-then-distribution. Watched under exactly that move.
+    #[test]
+    fn the_distribution_is_read_before_the_draw_at_every_step() {
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(2), TokenId(9)],
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+        );
+        session.open(&[TokenId(7)]).expect("the prefix lands");
+        let generated = session
+            .append_and_generate(
+                &[TokenId(8)],
+                &StopCondition {
+                    stop_tokens: vec![TokenId(9)],
+                    terminator: TokenId(0),
+                    max_tokens: 8,
+                },
+                &mut NeverCancels,
+            )
+            .expect("the generation runs");
+
+        let order = log.borrow().order.clone();
+        assert!(!order.is_empty(), "the seam was read at all");
+        for pair in order.chunks(2) {
+            assert_eq!(
+                pair,
+                ["distribution", "sample"],
+                "every measurement precedes its draw, got {order:?}"
+            );
+        }
+
+        // **The signals pair with the tokens the answer carries.** The stop
+        // token is drawn and measured against, but it is not retained, so it
+        // owes no entry: a signal for a token the answer omits shifts every
+        // reader's pairing by one.
+        assert_eq!(generated.tokens.len(), 2, "two tokens before the stop");
+        assert_eq!(
+            generated.signals.steps(),
+            generated.tokens.len(),
+            "one measurement per retained token, positionally paired"
+        );
+        assert_eq!(order.len() / 2, 3, "three draws, the stop token among them");
     }
 
     /// Cancels after a set number of polls, which is how a token-boundary bound
@@ -424,7 +603,11 @@ mod tests {
             script,
             ..Default::default()
         }));
-        let mut session = Session::new(Box::new(Recorder(Rc::clone(&log))), capacity, mechanism);
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            capacity,
+            mechanism,
+        );
         session.open(&[TokenId(1), TokenId(2)]).expect("open");
         (session, log)
     }
