@@ -122,16 +122,17 @@ describes the demonstrations rather than constraining a builder's loop, a
 judgment loop or a fixed-turn loop being licensed by the same ruling.
 
 **The tool system.** The registry, the execution context, and the permission modes.
-Permission modes are operator policy and not a safety boundary. What a tool can reach is
-not bounded by anything this crate holds: the egress ruling of 2026-08-07 makes a
-world-reaching tool a registered application the harness addresses across the gate's
-agent-opened seam, so its containment is that application's own and the operator's to
-provision, per apex section 3 step 7. This paragraph read that the bound was the kernel
-through the constrained user the tool executes as, which described a tool this crate
-forked and no longer describes one it reaches. The mode setting governs only whether the
-operator wants to be consulted before a class of action. Stating this plainly is the
-point. A permission mode that reads as a security control when the kernel is the actual
-control is a thing that gets trusted wrongly later.
+Permission modes are operator policy and not a safety boundary. What a tool can reach
+depends on which side of the port test it sits, per the port ruling of 2026-08-07. A
+tool that binds a listening port is external, a registered application the harness
+addresses across the gate's agent-opened seam, and its containment is that application's
+own and the operator's to provision. A tool that binds none is internal, loop code this
+crate runs, and what it can reach is bounded by the kernel through the identity the
+worker holds, which is what this paragraph said before the egress act read it outward
+and is true again. The mode setting governs only whether the operator wants to be
+consulted before a class of action. Stating this plainly is the point. A permission mode
+that reads as a security control when the kernel is the actual control is a thing that
+gets trusted wrongly later.
 
 **Prompt assembly's deterministic floor, with the family render across the
 seam.** The harness composes the canonical conversation: the identity prefix,

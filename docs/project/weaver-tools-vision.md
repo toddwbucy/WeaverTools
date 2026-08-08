@@ -245,8 +245,12 @@ The two axes cross rather than nest, and the corners are all occupied except one
 
 - **Elected and dispatched inward.** The protoautonomic calculator. The model asks,
   the harness answers deterministically, and nothing crosses the gate.
-- **Elected and dispatched outward.** A bash tool, a database client, an API call.
-  The model asks and the gate carries it, opaque, as any other output.
+- **Elected and dispatched outward.** A registered service the agent addresses across
+  the gate, the model asking and the gate carrying it opaque as any other output. This
+  corner listed a bash tool, a database client, and an API call until the port ruling
+  of 2026-08-07, which files a tool by whether it binds a listening port rather than
+  by where its bytes go. None of those three binds one, so all three are internal and
+  dispatched inward, and what remains here is the service that listens.
 - **Autonomic and dispatched inward.** A memory surfacing because the loop's
   condition was met, entering the decoder's path without the model having asked.
 - **Autonomic and dispatched outward** is the empty corner. The loop reaching the

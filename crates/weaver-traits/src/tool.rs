@@ -18,8 +18,14 @@
 //!    runtime this crate does not name, and a future that cannot cross a thread
 //!    would bound the executor the composition root may choose.
 //! 4. No safety classification of any kind, per the charter's section 3.1 and
-//!    apex section 3 step 7, which the tool workflow may not weaken.
+//!    apex section 3 step 7, which the tool workflow may not weaken. Step 7 was
+//!    rewritten by the egress ruling of 2026-08-07 and the ground survived the
+//!    rewrite: both readings put the judgment somewhere other than a method the
+//!    tool answers, which is the whole of what this negative needs.
 //!
-//! The trait serves the elected-and-outward corner of the tool taxonomy alone;
-//! the inward corners are function loops the harness runs beside its control
-//! loops and reach no trait here.
+//! The trait serves the elected-and-outward corner of the tool taxonomy alone,
+//! and the port ruling of 2026-08-07 narrows what occupies that corner: a tool
+//! that binds a listening port is external and reaches the agent through the
+//! gate, and one that binds none is internal whatever its bytes reach. Bash is
+//! internal by that test. The inward corners are function loops the harness runs
+//! beside its control loops and reach no trait here.

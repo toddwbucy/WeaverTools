@@ -8,10 +8,10 @@ lower. The exchanges that carry work arrive with the token workflow.
 **Date filed:** 2026-07-31
 **Revised:** 2026-08-07, the tool egress ruling lands here. Section 2's hook becomes
 two sockets split by which party opens an exchange, section 3's no-second-listener
-clause becomes two seams and no third, section 13.1's relay gains its second leg,
-and section 7's cell closes for the world-reaching tool and stands for every other. The
-second socket's contract is the tool workflow's and nothing here shapes it. Per apex
-section 3 as revised in the same act.
+clause becomes two seams and no third, section 13.1's relay gains its second leg, and
+section 7's cell narrows to the forked internal tool as of the port ruling of the same
+date. The second socket's contract is the tool workflow's and nothing here shapes it.
+Per apex section 3 as revised in the same act.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -318,22 +318,21 @@ rather than kernel-enforced separation, and the hardening is named: the cleared
 dumpable flag on every process of the worker's family, and close-on-exec on every
 descriptor at every fork, including the creating party's own ends.
 
-**The cell closes for a world-reaching tool and stands for every other, per the egress
-ruling of 2026-08-07.** A tool that reaches the world is a registered application the
-agent addresses across the agent-opened socket of section 2, provisioned by the
-operator with its own identity, so the question of which uid this program forks it
-under does not arise: this program does not fork it. Apex step 7 carried the forked
-case until that ruling and now carries the addressed one, so the merged clause this
-cell deferred to has moved and the deferral moves with it.
+**The cell narrows to one case and does not close, and an earlier cut of this act said
+it closed.** The port ruling of 2026-08-07 removes two of the three tools it used to
+reach. A tool that binds a listening port is external, a registered application the
+operator provisions and this program forks none of, so no uid of its is this program's
+to choose. Loop code the operator compiles into the worker holds no separate process
+and so no separate uid. **What remains is the internal tool this crate's sibling forks
+per call**, `bash` above all, which `weaver-harness-Spec` section 10 describes as a
+subprocess running as the agent uid and builds a reference walk on. That process has a
+uid, the choice between the agent's and one this crate owns is live for it, and the
+descriptor custody the walk protects is exactly what the choice decides.
 
-**What the cell still holds open is the tool that reaches nothing.** A tool touching no
-network is outside the egress frame's subject, per `tool-egress-boundary-frame` section
-6, and for that case the two arms stand as section 8 stages them: the agent uid, or a
-uid this crate owns at the cost of an explicit grant for every reach into the agent's
-home. What it awaits is unchanged, the tool workflow chartering plus a stated
-rationale, because a boundary upgrade priced without one is a motive wearing a
-mechanic's clothes. The egress ruling supplies that rationale for the world-reaching
-case alone and supplies none for this one.
+**PENDING stands for that case, on the arms section 8 stages.** What it awaits is
+unchanged, the tool workflow chartering plus a stated rationale. The egress ruling
+supplied one for the external case and the port ruling removed that case from this
+cell rather than answering it, so neither ruling has priced the arm that remains.
 
 ## 8. What does not cross, and what waits
 
@@ -369,9 +368,9 @@ section keeps them as the record of what the earlier pass could already see.
 
 **The tool-uid ruling.** Stated in section 7 with its candidate. **Settled by:** the
 architecture seat's ratification of the candidate, or the tool workflow chartering
-with a stated rationale if the ratification is declined, the egress ruling of
-2026-08-07 having supplied one for the world-reaching case and none for this one, and
-section 7 carries the same condition in the same words. Until settled, admin's
+**Narrowed by the port ruling of 2026-08-07** to the internal tool the harness forks
+per call, an external tool being the operator's to provision and loop code holding no
+separate process. Section 7 carries the reasoning. Until settled, admin's
 assumption stands and nothing builds against the separate-uid arm.
 
 **The refusal type.** This seam's refusal reuses `lifecycle-refusal` rather than

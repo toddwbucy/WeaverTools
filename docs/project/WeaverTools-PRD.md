@@ -7,6 +7,17 @@ deliverable. Ratification belongs to the set rather than to any one document, pe
 Working Process section 2, and section 0's system record carries the set-level mark.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-07, the port ruling settles what the egress ruling left
+undefined. That act discriminated tools by whether they reach the world, which was
+doing undefined work, and the test is now whether a tool binds a listening port:
+binding one makes it external, binding none makes it internal whatever its bytes
+reach. Loopback launders nothing, exposure being a standing property of a listening
+socket rather than an event that waits on a connection. **The one classification that
+moves is bash**, which binds no port and is therefore internal, loop code the harness
+invokes and bounded by the kernel through the identity it runs as. The egress boundary
+is untouched: the gate's second seam stands and what crosses it is a service that
+listens.
+
 **Revised:** 2026-08-07, the tool egress ruling lands in part and the rest is named.
 The sweep this act ran reaches the apex, `weaver-gate-PRD`, `weaver-harness-PRD`,
 `weaver-traits-PRD`, `weaver-types-PRD`, `weaver-spu-PRD`, `weaver-admin-PRD`,
@@ -189,23 +200,21 @@ A proto-stateful agent that:
 3. hands that trace to a sink the agent cannot reach, durability being the
    operator's per `weaver-admin-operator-contract` section 3,
 4. keeps a hot KV cache across turns, flushed on the harness's terms,
-5. reaches a real registered tool across the gate's agent-opened socket, with
-   bash as the reference case, the tool provisioned outside the run rather than
-   forked inside it, per the egress ruling of 2026-08-07,
+5. executes a real internal tool, with bash as the reference case, invoked by the
+   loop and bounded by the kernel through the identity it runs as,
 6. fires at least one protoautonomic tool call, where the harness injects a
    deterministic result into the stream in place of a stochastic one, with the
    calculator as the reference case,
 7. can be reloaded with residual readout enabled or disabled by a change to its
    config file alone, with no rebuild.
 
-**Item 5 once read "executes a real tool under kernel-enforced OS constraint",
-and what the egress ruling moved is where that constraint lives rather than
-whether it holds.** A registered tool is provisioned by the operator with
-whatever containment its job wants, and the program's own claim is the seam it
-crosses rather than the bounding on its far side, per `tool-egress-boundary-frame`
-section 5. What the deliverable must show is a tool
-reached through the socket and answering, which the reference bash shows as an
-application the program addresses rather than one it ships.
+**Item 5 moved twice in one day and this is where it rests.** The egress ruling of
+2026-08-07 read it as a tool reached across the gate, and the port ruling of the same
+date settled the discriminator that reading rested on: **a tool that binds a listening
+port is external and one that does not is internal**, and bash binds none. So bash is
+internal, invoked by the loop rather than addressed through a socket, and this item
+asks what it always asked. The external case has its own hook and no reference tool in
+this deliverable, per section 9.
 
 Autonomic action, in the sense this program reserves the word, is
 harness-initiated and out of scope here. Protoautonomic names the mechanic
@@ -670,9 +679,13 @@ tool crate, and the reason differs on each side of the boundary.
 
 **Outward, what it owns is the grip:** the interface a tool is built to be gripped by.
 A hammer is not installed into a carpenter, it is shaped so a hand can hold it, and the
-boundary contract is that hand stated as a specification. A bash tool, a database
-client, an API caller are all things built to fit the grip, and none of them is a crate
-here.
+boundary contract is that hand stated as a specification. **Which tools fit a grip is
+settled by the port test**, per the port ruling of 2026-08-07: a tool that binds a
+listening port is external and reaches the agent through a grip, and one that does not
+is internal and is loop code the harness runs. A bash tool, a database client, and an
+API caller bind no listening port and are therefore internal, whatever their bytes
+reach. What fits the agent-opened grip is a service that listens, and none of these is
+a crate here either way.
 
 **The grip is two contracts and not one, as of the egress ruling of 2026-08-07.**
 `weaver-gate-world-contract` is the grip on the world-opened socket, where the world
