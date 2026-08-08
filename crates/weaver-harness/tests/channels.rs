@@ -10,7 +10,7 @@
 //! mutation under which it was watched to fail.
 #![cfg(target_os = "linux")]
 
-use std::os::fd::{AsFd, AsRawFd, OwnedFd};
+use std::os::fd::{AsFd, AsRawFd, FromRawFd, OwnedFd};
 
 use weaver_harness::{ChannelFault, FIRST_ORGAN_DESCRIPTOR, Harness, OrganBinaries, OrganChannel};
 use weaver_types::{
@@ -182,6 +182,26 @@ fn received_trace_descriptor_is_close_on_exec() {
     );
 }
 
+/// Relocate a descriptor above the range `place_child_ends` overwrites.
+///
+/// `F_DUPFD_CLOEXEC` answers the lowest free descriptor at or above the floor,
+/// so the precondition holds however the surrounding tests have arranged the
+/// descriptor table. The original is dropped, closing the low number, which is
+/// what leaves the placement's targets free for the placement to take.
+fn above_the_targets(fd: OwnedFd) -> OwnedFd {
+    // Comfortably clear of 3 and 4, and of the pairs this test already holds.
+    const FLOOR: std::os::fd::RawFd = 16;
+    if fd.as_raw_fd() >= FLOOR {
+        return fd;
+    }
+    let raw = nix::fcntl::fcntl(fd.as_fd(), nix::fcntl::FcntlArg::F_DUPFD_CLOEXEC(FLOOR))
+        .expect("relocate the report end above the placement's targets");
+    // SAFETY: `F_DUPFD_CLOEXEC` answered a fresh descriptor this process owns,
+    // and `fd` is dropped on return, so the low number is closed exactly once
+    // and the new number has exactly one owner.
+    unsafe { OwnedFd::from_raw_fd(raw) }
+}
+
 /// **The second walk's placement half:** a child finds the ends it is owed at
 /// descriptor 3 upward, in the channels' own order, with the flag cleared.
 ///
@@ -201,14 +221,18 @@ fn child_ends_land_from_descriptor_three() {
     // `place_child_ends` targets 3 and 4, and `dup2` closes whatever occupies
     // its target: a report end at either number would be closed by the very
     // placement this test measures, and the parent would read nothing and
-    // report a flag problem that did not occur. Descriptor numbers are the
-    // lowest free number, so the pairs usually take the lower ones - usually
-    // is not a guarantee.
-    assert!(
-        report_r.as_raw_fd() > FIRST_ORGAN_DESCRIPTOR + 1
-            && report_w.as_raw_fd() > FIRST_ORGAN_DESCRIPTOR + 1,
-        "the report pipe sits above the placement's targets"
-    );
+    // report a flag problem that did not occur.
+    //
+    // **Moved above the range rather than asserted to be above it.** A
+    // descriptor is the lowest free number, so the pairs above usually take
+    // the low ones, and usually is not a guarantee: a sibling test in this
+    // binary closing a descriptor between the pair calls and this one frees a
+    // low number for the pipe to take. Asserting the hope made this test fail
+    // about once in twenty-five full-file runs while passing forty times out
+    // of forty alone, which is a flake reporting a scheduling accident as a
+    // placement defect.
+    let report_r = above_the_targets(report_r);
+    let report_w = above_the_targets(report_w);
     // SAFETY: the child runs the handoff and then reports; async-signal-safe
     // calls only, then _exit.
     match unsafe { nix::unistd::fork() }.expect("fork") {
