@@ -14,9 +14,11 @@ gate's instruction is the pattern followed rather than a precedent invented. In
 the same act, `Generation` settles at section 4.4 and its bullet leaves section
 6: the emission and the finish are shaped here because the harness consumes
 them, and the measurement splices because nothing consumes it on the way to the
-trace's model events, the satellites staying `weaver-trace`'s. No graph record
-moves, the trio's nodes being the charter's and the config vocabulary
-unchanged.
+trace's model events, the satellites staying `weaver-trace`'s. Section 1's
+dependency set names `serde_json`'s `raw_value` feature, the splice's gate, on
+the review seat's finding that the set was argued at feature granularity and
+the new member was absent. No graph record moves, the trio's nodes being the
+charter's and the config vocabulary unchanged.
 **Revised:** 2026-08-08, second of that date. The trio names what exists. The
 messages it carries are `weaver-traits`' `Message`, drawn rather than restated,
 where an earlier wording named a `CanonicalMessage` that exists nowhere.
@@ -112,7 +114,9 @@ on the floor is a nightly requirement everywhere.
 `weaver-traits`, the one internal dependency, declared as the `floor-link` the
 charter carries and required because the config's permission mode and tool set
 elect from that crate's vocabulary. `serde` with `derive`, for the config and the
-wire types both. `serde_json` for the wire encoding, per section 4.3. A
+wire types both. `serde_json` for the wire encoding, per section 4.3, with its
+`raw_value` feature on, because section 4.4's measurement is spliced JSON and
+the splicing type is what that feature gates. A
 maintained YAML implementation for the config file, per the election of section
 2, **behind a non-default `config` cargo feature**. Nothing else, and specifically
 no socket crate, no async runtime, and no logging: this crate defines what crosses

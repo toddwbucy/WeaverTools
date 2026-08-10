@@ -478,8 +478,8 @@ reading as six findings that no instrument exists.
 
 **Admit runs the charter's five steps, and the first three are free.**
 Resolve the binding to an artifact, read what the artifact declares about
-itself without loading it, judge the assigned devices, take them in shard order
-and load each shard, confirm.
+itself without loading it, judge the assigned devices and the readout election,
+take them in shard order and load each shard, confirm.
 The header read is the salvaged mechanic the survey names: parsing an
 artifact's header and metadata answers what family this is and what its
 dimensions are without touching tensor data or the device, which converts the
