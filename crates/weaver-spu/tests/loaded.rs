@@ -229,7 +229,12 @@ mod seam_success {
         assert_eq!(refused.exchange.ordinal, 1, "on the exchange that asked");
 
         drop(lifecycle);
-        let _ = wait_bounded(&mut child, 30, "the refused worker exits");
+        let status = wait_bounded(&mut child, 30, "the refused worker exits");
+        assert!(
+            status.success(),
+            "a refused admit is an answer, not a death: the worker serves on and \
+             exits clean when the channel closes"
+        );
     }
 
     /// **The contract's success path, whole:** admit answers `Admitted`,
