@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.21, 2026-08-08. Companion to the Working Rules, the Document
+**Version:** v0.22, 2026-08-10. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
