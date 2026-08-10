@@ -8,6 +8,12 @@ and this crate's part in the workflow now finishing is one thing, admitting a mo
 later releasing it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-10, the route act. Section 13.7's election crosses as one
+instruction beside the binding rather than inside it, per `weaver-types-Spec`
+section 2, and the wording that read as the binding carrying the election is
+corrected: it was the wording this act's confusion traced to, the graph having
+always held the two as sibling fields of the configuration. No cell opens or
+closes and no record of this document moves.
 **Revised:** 2026-08-08, the backends are grounded in device authority. Section 3
 argued that authority for the fleet this crate cannot see and for the selection it
 does not make, and stopped short of the engines themselves, so what kept a
@@ -852,11 +858,12 @@ gone, per section 3's no-state rule.
 **The election governs production, and this crate is where production
 happens.** The agent's configuration elects the readout per load, per apex
 section 4's definition of done, and the election reaches this crate at
-admit with the binding. Elected, the per-layer activations are reduced in
-place at the tap and the reductions return on the same path as the
-generation, per apex section 3 step 6. Not elected, no tap runs and no
-affordance idles. **A binding that elects readout against a backend whose
-engine cannot tap refuses at admit,** because a load that grants an
+admit beside the binding, the two crossing as one instruction. Elected, the
+per-layer activations are reduced in place at the tap and the reductions
+return on the same path as the generation, per apex section 3 step 6. Not
+elected, no tap runs and no
+affordance idles. **An instruction that elects readout against a backend
+whose engine cannot tap refuses at admit,** because a load that grants an
 observability election it cannot honor fails at its cheapest moment or
 lies at its most expensive one.
 

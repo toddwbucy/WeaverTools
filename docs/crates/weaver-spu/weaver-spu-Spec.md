@@ -4,6 +4,10 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-10, the route act. Section 7 reads the election from the
+SPU instruction beside the binding rather than from the binding, per
+`weaver-types-Spec` section 2 and the corrected charter section 13.7. The
+judgment, the refusal at admit, and the section's records are unchanged.
 **Revised:** 2026-08-06, the fork pins get a home. The G6 sweep found the two
 revisions recorded in no document of this corpus, delegated by the survey to a
 workspace note under no version control and otherwise present only in the
@@ -1090,10 +1094,11 @@ to: spu-nothing-retained-after-the-answer
 
 ## 7. Residual readout
 
-**The election arrives at admit and no tap runs without it.** The binding
-carries the readout election, per charter section 13.7, and an admit whose
-election the backend cannot honor refuses at admit rather than failing at the
-first turn, which is the charter's fail-cheap-or-lie-expensive rule.
+**The election arrives at admit and no tap runs without it.** The SPU
+instruction carries the readout election beside the binding, per charter
+section 13.7 and `weaver-types-Spec` section 2, and an admit whose election
+the backend cannot honor refuses at admit rather than failing at the first
+turn, which is the charter's fail-cheap-or-lie-expensive rule.
 
 ```graph
 node: spu-readout-refused-at-admit
