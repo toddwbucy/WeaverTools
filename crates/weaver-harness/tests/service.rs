@@ -255,9 +255,14 @@ fn refused_enter_leaves_the_state_at_before_enter() {
             payload: weaver_types::EnterPayload {
                 session: weaver_types::SessionId("s-1".into()),
                 run_ordinal: 0,
-                model_binding: weaver_types::ModelBinding {
-                    artifact: weaver_types::ArtifactRef("qwen".into()),
-                    devices: vec![weaver_types::DeviceOrdinal(0)],
+                spu_instruction: weaver_types::SpuInstruction {
+                    decoder: weaver_types::DecoderInstruction {
+                        model_binding: weaver_types::ModelBinding {
+                            artifact: weaver_types::ArtifactRef("qwen".into()),
+                            devices: vec![weaver_types::DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                    },
                 },
                 gate_instruction: weaver_types::GateInstruction {
                     socket_path: "/run/weaver/gate.sock".into(),

@@ -387,7 +387,7 @@ impl Harness {
             pid: spu_pid,
         });
 
-        // Admit carries the model binding uninterpreted.
+        // Admit carries the SPU instruction uninterpreted.
         run.spu_ordinal += 1;
         let ordinal = run.spu_ordinal;
         let spu = run.spu.as_ref().expect("the arm just stood up");
@@ -397,7 +397,7 @@ impl Harness {
             ordinal,
             weaver_types::RefusingOrgan::Spu,
             LifecycleDirective::Admit {
-                binding: payload.model_binding.clone(),
+                instruction: payload.spu_instruction.clone(),
             },
         ) {
             // A closed channel means the organ is gone: its exit status says

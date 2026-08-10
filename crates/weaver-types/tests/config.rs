@@ -10,12 +10,14 @@ use weaver_types::{ConfigErrorKind, FieldName, parse};
 
 fn full_config() -> String {
     concat!(
-        "model-binding:\n",
-        "  artifact: qwen3-4b-instruct\n",
-        "  devices: [0]\n",
+        "spu-instruction:\n",
+        "  decoder:\n",
+        "    model-binding:\n",
+        "      artifact: qwen3-4b-instruct\n",
+        "      devices: [0]\n",
+        "    residual-readout-election: false\n",
         "tool-set: []\n",
         "permission-mode: ask\n",
-        "residual-readout-election: false\n",
         "gate-instruction:\n",
         "  socket-path: /run/weaver/alpha/gate.sock\n",
         "  access-rule:\n",
@@ -34,9 +36,10 @@ fn full_config() -> String {
 #[test]
 fn a_complete_config_parses() {
     let config = parse(&full_config()).expect("parses");
-    assert_eq!(config.model_binding.devices.len(), 1);
+    let decoder = &config.spu_instruction.decoder;
+    assert_eq!(decoder.model_binding.devices.len(), 1);
     assert_eq!(config.permission_mode, weaver_traits::PermissionMode::Ask);
-    assert!(!config.residual_readout_election);
+    assert!(!decoder.residual_readout_election);
 }
 
 /// A missing required field refuses the parse, run separately for the
@@ -48,7 +51,7 @@ fn a_complete_config_parses() {
 /// Watched to fail under exactly that change.
 #[test]
 fn missing_residual_readout_election_refuses() {
-    let source = full_config().replace("residual-readout-election: false\n", "");
+    let source = full_config().replace("    residual-readout-election: false\n", "");
     let err = parse(&source).expect_err("refuses");
     assert_eq!(err.kind, ConfigErrorKind::MissingField);
     assert_eq!(
@@ -61,9 +64,9 @@ fn missing_residual_readout_election_refuses() {
 #[test]
 fn missing_model_binding_refuses() {
     let source = full_config()
-        .replace("model-binding:\n", "")
-        .replace("  artifact: qwen3-4b-instruct\n", "")
-        .replace("  devices: [0]\n", "");
+        .replace("    model-binding:\n", "")
+        .replace("      artifact: qwen3-4b-instruct\n", "")
+        .replace("      devices: [0]\n", "");
     let err = parse(&source).expect_err("refuses");
     assert_eq!(err.kind, ConfigErrorKind::MissingField);
 }

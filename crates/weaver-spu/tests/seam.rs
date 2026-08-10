@@ -30,8 +30,8 @@ use std::process::{Child, Command, Stdio};
 
 use common::{ask, bound_receives, place_inherited, seqpacket_pair};
 use weaver_types::{
-    ArtifactRef, DeviceOrdinal, LifecycleDirective, LifecycleRefusal, ModelBinding, Opener,
-    OrganEnvelope, Payload, Position,
+    ArtifactRef, DecoderInstruction, DeviceOrdinal, LifecycleDirective, LifecycleRefusal,
+    ModelBinding, Opener, OrganEnvelope, Payload, Position, SpuInstruction,
 };
 
 /// A harness end: send one directive, read one answer.
@@ -74,6 +74,15 @@ fn binding() -> ModelBinding {
     ModelBinding {
         artifact: ArtifactRef("/nonexistent/artifact".into()),
         devices: vec![DeviceOrdinal(0)],
+    }
+}
+
+fn instruction() -> SpuInstruction {
+    SpuInstruction {
+        decoder: DecoderInstruction {
+            model_binding: binding(),
+            residual_readout_election: false,
+        },
     }
 }
 
@@ -138,14 +147,18 @@ fn a_directive_outside_the_vocabulary_is_refused_on_the_seam() {
 fn a_second_admit_is_refused_on_the_ordering_across_the_seam() {
     let (mut harness, mut child) = started();
 
-    let first = harness.ask(LifecycleDirective::Admit { binding: binding() });
+    let first = harness.ask(LifecycleDirective::Admit {
+        instruction: instruction(),
+    });
     assert_eq!(
         first.payload,
         Payload::Refusal(LifecycleRefusal::ArtifactUnresolvable),
         "the first admit refuses at step one, on the artifact"
     );
 
-    let second = harness.ask(LifecycleDirective::Admit { binding: binding() });
+    let second = harness.ask(LifecycleDirective::Admit {
+        instruction: instruction(),
+    });
     assert_eq!(
         second.payload,
         Payload::Refusal(LifecycleRefusal::OutOfOrder),

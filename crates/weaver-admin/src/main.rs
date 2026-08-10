@@ -275,7 +275,7 @@ fn run_load(
             payload: weaver_types::EnterPayload {
                 session: weaver_types::SessionId(format!("{}-{ordinal}", agent.0)),
                 run_ordinal: ordinal,
-                model_binding: inventory.config.model_binding.clone(),
+                spu_instruction: inventory.config.spu_instruction.clone(),
                 gate_instruction: inventory.config.gate_instruction.clone(),
             },
         }),

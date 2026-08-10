@@ -164,17 +164,18 @@ fn dispatch(
     };
 
     match (*position, directive) {
-        (SeamPosition::BeforeAdmit, LifecycleDirective::Admit { binding }) => {
-            // **The election is passed as unelected because it has no route
-            // here yet, and that is a named gap rather than a decision.**
-            // `weaver-types-PRD` has the residual-readout election judged by
-            // this crate at admission, and `AgentConfig` carries it, but the
-            // floor's `Admit` directive carries the binding alone and this
-            // process never sees the config. Adding a field to the directive is
-            // the floor's act under `weaver-types-Spec` section 4, not this
-            // crate's, so the judgment is built and wired at the admit path and
-            // reaches it with the only value the seam can supply today.
-            match residency.admit(binding, Headroom(HEADROOM_BYTES), ReadoutElection(false)) {
+        (SeamPosition::BeforeAdmit, LifecycleDirective::Admit { instruction }) => {
+            // The election arrives beside the binding inside the instruction,
+            // per `weaver-harness-spu-contract` section 2, so the judgment
+            // receives what the operator declared rather than the placeholder
+            // the routeless seam once forced. The judgment itself runs inside
+            // admit, at charter step 3, before any device is taken.
+            let decoder = &instruction.decoder;
+            match residency.admit(
+                &decoder.model_binding,
+                Headroom(HEADROOM_BYTES),
+                ReadoutElection(decoder.residual_readout_election),
+            ) {
                 Ok(_) => {
                     *position = SeamPosition::Admitted;
                     Payload::Answer(LifecycleAnswer::Admitted)
@@ -231,7 +232,9 @@ fn dispatch(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use weaver_types::{AgentName, ArtifactRef, DeviceOrdinal, ModelBinding};
+    use weaver_types::{
+        AgentName, ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction,
+    };
 
     fn directive(directive: LifecycleDirective) -> OrganEnvelope {
         OrganEnvelope {
@@ -248,6 +251,15 @@ mod tests {
         ModelBinding {
             artifact: ArtifactRef("/nonexistent/artifact".into()),
             devices: vec![DeviceOrdinal(0)],
+        }
+    }
+
+    fn instruction() -> SpuInstruction {
+        SpuInstruction {
+            decoder: DecoderInstruction {
+                model_binding: binding(),
+                residual_readout_election: false,
+            },
         }
     }
 
@@ -284,7 +296,9 @@ mod tests {
         let mut residency = Residency::new();
         let mut position = SeamPosition::Released;
         for case in [
-            LifecycleDirective::Admit { binding: binding() },
+            LifecycleDirective::Admit {
+                instruction: instruction(),
+            },
             LifecycleDirective::Release,
             LifecycleDirective::List,
         ] {
@@ -309,7 +323,9 @@ mod tests {
         let first = dispatch(
             &mut position,
             &mut residency,
-            &directive(LifecycleDirective::Admit { binding: binding() }),
+            &directive(LifecycleDirective::Admit {
+                instruction: instruction(),
+            }),
         );
         assert_eq!(
             first,
@@ -321,7 +337,9 @@ mod tests {
         let second = dispatch(
             &mut position,
             &mut residency,
-            &directive(LifecycleDirective::Admit { binding: binding() }),
+            &directive(LifecycleDirective::Admit {
+                instruction: instruction(),
+            }),
         );
         assert_eq!(second, Payload::Refusal(LifecycleRefusal::OutOfOrder));
     }
@@ -375,14 +393,18 @@ mod tests {
         let mut residency = Residency::new();
         let mut position = SeamPosition::BeforeAdmit;
 
-        let mut closing = directive(LifecycleDirective::Admit { binding: binding() });
+        let mut closing = directive(LifecycleDirective::Admit {
+            instruction: instruction(),
+        });
         closing.position = Position::Close;
         assert_eq!(
             dispatch(&mut position, &mut residency, &closing),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
-        let mut wrong_opener = directive(LifecycleDirective::Admit { binding: binding() });
+        let mut wrong_opener = directive(LifecycleDirective::Admit {
+            instruction: instruction(),
+        });
         wrong_opener.exchange.opener = Opener::Spu;
         assert_eq!(
             dispatch(&mut position, &mut residency, &wrong_opener),

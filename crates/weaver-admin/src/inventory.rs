@@ -98,7 +98,7 @@ pub fn take_inventory(
     })?;
 
     // The model artifact resolves to something readable. Nothing is repaired.
-    if !artifact_readable(&config.model_binding.artifact.0) {
+    if !artifact_readable(&config.spu_instruction.decoder.model_binding.artifact.0) {
         return Err(LifecycleRefusal::ArtifactUnresolvable);
     }
 
@@ -251,12 +251,14 @@ mod tests {
     fn config_source(sink_dir: &std::path::Path) -> String {
         format!(
             concat!(
-                "model-binding:\n",
-                "  artifact: qwen3-4b-instruct\n",
-                "  devices: [0]\n",
+                "spu-instruction:\n",
+                "  decoder:\n",
+                "    model-binding:\n",
+                "      artifact: qwen3-4b-instruct\n",
+                "      devices: [0]\n",
+                "    residual-readout-election: false\n",
                 "tool-set: []\n",
                 "permission-mode: ask\n",
-                "residual-readout-election: false\n",
                 "gate-instruction:\n",
                 "  socket-path: /run/weaver/alpha/gate.sock\n",
                 "  access-rule:\n",
