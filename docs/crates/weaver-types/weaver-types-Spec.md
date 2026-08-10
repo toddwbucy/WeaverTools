@@ -952,17 +952,66 @@ one as its floor-link. An earlier wording of this subsection named a
 of the contract's prose invites: the contract describes the messages as
 canonical and does not rename the type.
 
-**`Generation`'s shape is an open election and this subsection does not settle
-it.** The decode contract's section 2 determines what it carries, the token
-identifiers with their measurement, the timings, the template identity, the
-block partition, and the residual reductions where elected. What that becomes in
-the floor is not derivable from the determination alone, because **seven of the
-satellites it would need live in `weaver-trace`** and one in `weaver-spu`, and
-this crate's dependency set is one internal crate. Restating seven types that
-already exist would put one fact in two places with no named authority, and
-drawing them would widen a floor whose whole argument is thinness. The election
-is recorded at section 6 with what settles it, and it follows the fault report's
-deferral rather than inventing a shape ahead of its answer.
+**`Generation` shapes what the harness reads and splices what it forwards.** The
+decode contract's section 2 determines the answer as the generation and its
+measurement, the measurement being the token identifiers, the per-token signals,
+the timings, the template identity, the block partition, and the residual
+reductions where the residency was admitted with readout elected.
+
+```rust
+pub struct Generation {
+    pub emission: String,
+    pub finish: Finish,
+    pub measurement: Box<serde_json::value::RawValue>,
+}
+
+pub enum Finish {
+    Completed,
+    Stopped,
+}
+```
+
+**The split is between what the harness consumes and what it carries through, and
+`weaver-trace` states the rule it follows:** what is shaped in a crate is what no
+other crate defines. The emission and the finish are consumed here, the first
+entering the working structure as the assistant's message and the second closing
+the turn, so both are shaped. The measurement is consumed by nothing on the way
+past: it is forwarded whole into the trace's model events. **Seven of its
+satellites are `weaver-trace`'s** and one is `weaver-spu`'s, against a crate that
+links one internal dependency, so shaping it here would restate seven types that
+already exist with no named authority over either copy, which is the duplication
+G5 files as a defect rather than resolves by picking.
+
+**Spliced JSON and not octets, which is a distinction this crate enforced once
+already.** `RawValue` carries pre-serialized JSON written in place, so the
+measurement is a member of the answer's object rather than a string of bytes
+inside it. What section 4.1 refused was double encoding, and splicing is what
+avoids it, so that refusal is satisfied here rather than worked around.
+`weaver-trace` took the same election for the same reason, its message and fault
+payloads being spliced because a tag would wrap the bytes in an object of that
+crate's making.
+
+**The SPU renders and the harness authors, which is a ruling this restates rather
+than a position this invents.** The fault-carrier ruling already has the SPU
+handing over a `fault-report` and the harness authoring it as the `fault` event,
+per the decode contract's section 2. The measurement travels that path to the
+model events, so no crate holds a second copy of a shape `weaver-trace` owns and
+the sole-writer rule is untouched: what the SPU produces is data, and the event
+is still the harness's to author.
+
+**`Finish` is shaped here and `weaver-trace` shapes its own, with the harness
+converting.** That is the arrangement `SessionId` and `SessionRef` already take,
+per `weaver-trace-Spec` section 1, that crate linking no internal crate on purpose
+and the harness converting at one call site. Two names for one fact with a named
+conversion point is the corpus's existing answer for a floor type the trace needs,
+and a different answer here would be a second one.
+
+**What the harness must check, because the type cannot.** A spliced member is
+opaque to the compiler, so the measurement's conformance to what the trace's model
+events accept is the harness's to enforce at the submit call, in the same place the
+kind-to-payload pairing is already enforced by admission rather than by serde. The
+election buys thinness in the floor and pays for it there, and naming where it is
+paid is what keeps the payment from going missing.
 
 **The four refusal cases are the contract's section 5 and this document adds
 none.** The session is not open or residency is not confirmed for the ask. The
@@ -1086,15 +1135,17 @@ already discharged.
 
 ## 6. Open elections
 
-- **`Generation`'s shape, the payload of `TokenAnswer::Generated`.** What it
-  carries is determined at `weaver-harness-spu-decode-contract` section 2 and is
-  not in question. What is open is where it lives and what it draws: seven of
-  the satellites the determination implies are `weaver-trace`'s, one is
-  `weaver-spu`'s, and this crate links one internal crate. Settled by deciding
-  whether the floor grows its own satellites, whether the payload is opaque
-  across this seam the way the turn frame is, or whether the shape belongs
-  outside the floor entirely. The block partition's own open question, which
-  party labels its spans, rides with it.
+- **`Generation`'s shape settled at section 4.4 and this bullet retires with it.**
+  The emission and the finish are shaped in the floor because the harness consumes
+  them, and the measurement splices because nothing consumes it on the way to the
+  trace's model events. The seven satellites stay `weaver-trace`'s, neither
+  restated nor drawn, and the floor's dependency set is unchanged. **What does not
+  retire is the block partition's own question**, which party labels a block's
+  spans. Splicing decides where that answer is owed rather than what it is: the
+  renderer of a shape the trace accepts is the SPU, so the label is written there,
+  and the question is answered before the first measurement crosses rather than
+  carried as an open election. It is filed against `weaver-spu` rather than here,
+  this crate no longer having a stake in it.
 - **The config file's directory and naming convention.** Operator provisioning,
   outside what this program governs, per section 2. What this Spec fixes is that
   admin resolves one file or refuses.
