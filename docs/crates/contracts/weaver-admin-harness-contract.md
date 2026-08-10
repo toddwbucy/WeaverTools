@@ -5,6 +5,12 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-10, the route act. The enter directive carries the SPU
+instruction rather than the bare model binding, per `weaver-types-Spec`
+section 2, so the readout election the SPU judges at admit crosses this seam
+first, admin holding no channel to the SPU. Section 8 draws `model-binding`,
+owed from the cut, and `residual-readout-election`, and names the gate
+instruction's matching gap as owed rather than closed.
 **Revised:** 2026-08-05, the socket inversion and the admin recut, one act. The
 creating party inverts: the harness binds the coordination socket inside the agent's
 sandbox as its first act and admin dials in, one connection per verb, so the channel
@@ -166,11 +172,12 @@ Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run ordinal, the trace descriptor, the
-model binding, and the gate instruction. The last two are in the directive because the
+SPU instruction, and the gate instruction. The last two are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU or the gate, so
 if admin's intent for either does not cross this seam it crosses nowhere. The harness
 stands up an empty working structure, authors its `load` event, asks the SPU to
-admit the model binding it was handed, and starts Gate last. It answers ready only when
+admit against the instruction it was handed, and starts Gate last. It answers ready
+only when
 every step of that fan-out has confirmed, or it refuses, and a refusal names where the
 fan-out stopped, so that admin rolls back what was built without asking a second
 question. The answer, either way, closes the exchange and is the aggregate: one
@@ -256,7 +263,7 @@ exchange payload change is a supplies change by construction, and a Spec writer 
 this list.
 
 **Admin supplies** the session identity and run ordinal for the run being entered, the
-trace descriptor, the model binding the fan-out admits,
+trace descriptor, the SPU instruction the fan-out admits,
 the gate instruction the fan-out starts, and the intent to stop.
 
 **Admin guarantees** that the trace descriptor it passes refers to the sink the
@@ -359,9 +366,10 @@ the exchanges above are the whole of what either learns.
 ## 8. Vocabulary
 
 **Drawn from `weaver-types`:** `organ-envelope`, `lifecycle-directive`,
-`lifecycle-answer`, `lifecycle-refusal`, and `peer-identity`, the last as of the
-inversion ruling of 2026-08-05, because the identity the harness reads at every
-accept is the floor's.
+`lifecycle-answer`, `lifecycle-refusal`, `peer-identity` as of the inversion
+ruling of 2026-08-05, because the identity the harness reads at every accept is
+the floor's, and `model-binding` and `residual-readout-election` as of the
+route act of 2026-08-10.
 
 ```graph
 edge: draws
@@ -383,6 +391,30 @@ to: lifecycle-answer
 edge: draws
 from: weaver-admin-harness-contract
 to: lifecycle-refusal
+```
+
+**`model-binding` and `residual-readout-election` are drawn as of the route act
+of 2026-08-10, and the first was owed from the cut.** The enter directive has
+carried the model binding since this contract was written, and a payload term
+the clause never named left the interface short of the completeness apex
+section 5.3 demands. The election joins it because admin holds no channel to
+the SPU, per `weaver-admin-PRD` section 6, so what the SPU judges at admit
+crosses this seam first or crosses nowhere. Both are fields of the agent's
+configuration, defined at `weaver-types-PRD` section 2.1, and both cross inside
+`spu-instruction`, the section `weaver-types-Spec` section 2 shapes. The
+section is representation rather than a term of its own, so the draws name the
+definitions and not the grouping. The gate instruction crosses inside the same
+directive with the same gap, named here as owed rather than closed, because its
+draw reaches documents this act does not open.
+
+```graph
+edge: draws
+from: weaver-admin-harness-contract
+to: model-binding
+
+edge: draws
+from: weaver-admin-harness-contract
+to: residual-readout-election
 ```
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer
