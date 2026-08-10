@@ -88,8 +88,8 @@ mod wire;
 #[cfg(feature = "config")]
 pub use config::parse;
 pub use config::{
-    AgentConfig, ArtifactRef, ConfigError, ConfigErrorKind, DeviceOrdinal, FieldName,
-    GateInstruction, ModelBinding, ToolName, TraceSink,
+    AgentConfig, ArtifactRef, ConfigError, ConfigErrorKind, DecoderInstruction, DeviceOrdinal,
+    FieldName, GateInstruction, ModelBinding, SpuInstruction, ToolName, TraceSink,
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{

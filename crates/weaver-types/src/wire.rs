@@ -18,7 +18,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{FieldName, GateInstruction, ModelBinding};
+use crate::config::{FieldName, GateInstruction, SpuInstruction};
 
 /// The receiver's buffer bound: a message exceeding it sets the truncation flag
 /// and is treated as a channel fault rather than a message, because a silently
@@ -115,7 +115,7 @@ pub enum LifecycleDirective {
     Enter { payload: EnterPayload },
     Leave,
     Stop,
-    Admit { binding: ModelBinding },
+    Admit { instruction: SpuInstruction },
     Release,
     Raise { instruction: GateInstruction },
     Lower,
@@ -196,7 +196,7 @@ pub enum LifecycleRefusal {
 pub struct EnterPayload {
     pub session: SessionId,
     pub run_ordinal: u64,
-    pub model_binding: ModelBinding,
+    pub spu_instruction: SpuInstruction,
     pub gate_instruction: GateInstruction,
 }
 

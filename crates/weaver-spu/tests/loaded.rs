@@ -1,4 +1,5 @@
 //! conforms: spu-release-frees-before-answering
+//! conforms: spu-readout-refused-at-admit
 //!
 //! The success path: a real artifact admitted onto a real device and released,
 //! per `weaver-spu-Spec` section 3 and `weaver-harness-spu-contract` sections 3
@@ -18,7 +19,7 @@ use std::path::{Path, PathBuf};
 
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
-use weaver_types::{ArtifactRef, DeviceOrdinal, ModelBinding};
+use weaver_types::{ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction};
 
 /// A small real model this workshop holds. The test is about the load path,
 /// not the model, so the smallest artifact on the box is the right fixture.
@@ -162,7 +163,79 @@ mod seam_success {
     use std::process::{Command, Stdio};
 
     use crate::common::{ask, bound_receives, place_inherited, seqpacket_pair, wait_bounded};
-    use weaver_types::{LifecycleAnswer, LifecycleDirective, Payload};
+    use weaver_types::{LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Payload};
+
+    /// **The election the wire carries is the election the judgment
+    /// receives.** An admit whose instruction elects readout against a family
+    /// whose engine cannot tap refuses at admit, per Spec section 7 and
+    /// charter step 3. The refusal crosses as `DeviceCannotAdmit`, the floor
+    /// case the election failure maps onto, and it lands at the third step,
+    /// so the device this file otherwise requires is never touched on this
+    /// path.
+    ///
+    /// Perturbation: replace the dispatched election at the admit arm with
+    /// `ReadoutElection(false)`, the placeholder the routeless seam once
+    /// forced, and this test fails on this machine, the admit proceeding past
+    /// the judgment onto the device and answering `Admitted`. Watched under
+    /// exactly that change, which is why the device skip stays: without a
+    /// device the perturbed run refuses later for other reasons and the watch
+    /// distinguishes nothing.
+    #[test]
+    fn an_admit_electing_readout_refuses_across_the_seam() {
+        let Some(model) = model_present() else {
+            eprintln!("SKIP an_admit_electing_readout_refuses: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP an_admit_electing_readout_refuses: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (_decode, child_decode) = seqpacket_pair();
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+
+        let refused = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: SpuInstruction {
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: true,
+                    },
+                },
+            },
+        );
+        assert_eq!(
+            refused.payload,
+            Payload::Refusal(LifecycleRefusal::DeviceCannotAdmit),
+            "an elected readout no shipped family can honor refuses at admit"
+        );
+        assert_eq!(refused.exchange.ordinal, 1, "on the exchange that asked");
+
+        drop(lifecycle);
+        let status = wait_bounded(&mut child, 30, "the refused worker exits");
+        assert!(
+            status.success(),
+            "a refused admit is an answer, not a death: the worker serves on and \
+             exits clean when the channel closes"
+        );
+    }
 
     /// **The contract's success path, whole:** admit answers `Admitted`,
     /// release answers `Released`, each on the exchange that asked, across the
@@ -214,9 +287,14 @@ mod seam_success {
             &lifecycle,
             1,
             LifecycleDirective::Admit {
-                binding: ModelBinding {
-                    artifact: ArtifactRef(model.to_string_lossy().into_owned()),
-                    devices: vec![DeviceOrdinal(0)],
+                instruction: SpuInstruction {
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                    },
                 },
             },
         );

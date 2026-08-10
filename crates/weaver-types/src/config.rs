@@ -18,7 +18,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::identity::AccessRule;
 
-/// The declared surface of an agent, six fields, every one required.
+/// The declared surface of an agent, six fields under five keys, every one
+/// required.
 ///
 /// Absence is a refusal rather than a default: an operator who stated no
 /// residual readout has not thereby declined it, and admin refusing the load is
@@ -32,12 +33,38 @@ use crate::identity::AccessRule;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct AgentConfig {
-    pub model_binding: ModelBinding,
+    pub spu_instruction: SpuInstruction,
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,
-    pub residual_readout_election: bool,
     pub gate_instruction: GateInstruction,
     pub trace_sink: TraceSink,
+}
+
+/// The SPU's section of the declaration, per `weaver-types-Spec` section 2:
+/// an organ's fields are named together and cross together, the pattern
+/// `gate_instruction` already takes. The operator writes it, admin validates
+/// it, the harness carries it uninterpreted, and the SPU consumes it at
+/// admit.
+///
+/// `decoder` names a role rather than a slot. The organ's domain is every
+/// semantic operation in the text modality, and the decode role is the one
+/// whose seam stands, so an embedder key arrives in the act that builds an
+/// embedder rather than being carried empty here.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct SpuInstruction {
+    pub decoder: DecoderInstruction,
+}
+
+/// The decode role's declaration: which model serves it and whether the
+/// residual readout is elected for the load. Absence of either field refuses
+/// the parse at any depth, the no-defaulting rule of `weaver-types-Spec`
+/// section 2 surviving the nesting untouched.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct DecoderInstruction {
+    pub model_binding: ModelBinding,
+    pub residual_readout_election: bool,
 }
 
 /// The model artifact and the devices it is assigned to.
@@ -152,7 +179,13 @@ impl std::error::Error for ConfigError {}
 pub fn parse(source: &str) -> Result<AgentConfig, ConfigError> {
     let config: AgentConfig =
         serde_yaml_ng::from_str(source).map_err(|e| classify_yaml_error(&e.to_string()))?;
-    if config.model_binding.devices.is_empty() {
+    if config
+        .spu_instruction
+        .decoder
+        .model_binding
+        .devices
+        .is_empty()
+    {
         return Err(ConfigError {
             field: Some(FieldName("model-binding".to_string())),
             kind: ConfigErrorKind::BadValue,
