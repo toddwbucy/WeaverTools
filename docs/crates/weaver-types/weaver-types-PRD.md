@@ -6,6 +6,18 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-10. `residual-readout-election` moves from the fields read
+from the artifact to the fields a contract draws, and is drawn by
+`weaver-harness-spu-contract` and `weaver-admin-harness-contract` both. The
+wording it replaces had the election internal and judged by the SPU at admission
+in one paragraph, which cannot hold: the SPU reads no configuration file, so a
+field it judges is one that crossed a seam, and this one crossed none. Section
+2.1 also rules that an organ's fields are named together and cross together,
+the gate's already doing so and the SPU's not, and states the bound that keeps
+the rule on the near side of apex section 9: a section gains a field in the act
+that gives that field a reader, room made in advance being the reserved slot
+that section forbids. How the fields group is representation and stays the
+Spec's. No graph record moves, the six nodes and their edges being unchanged.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `WeaverTools-PRD`
 **Depends on:** `weaver-traits`
@@ -215,18 +227,50 @@ Each field is a vocabulary node this crate defines and the artifact holds, becau
 contract's clause draws a field rather than the whole file and an edge needs
 something to point at.
 
-**Which fields a contract draws, and why the rest are internal rather than owed.** Two
-are drawn: `model-binding` by `weaver-harness-spu-contract` and `gate-instruction` by
-its two contracts. The other four are read from the artifact rather than across a
-seam, which `weaver-admin-PRD` section 3 distinguishes in its own words, a field read
-out of a file and a definition drawn by a contract being answerable to different
-checks. `trace-sink` is consumed by admin at load, demanded into this section by
-`weaver-admin-operator-contract` and named by the builder-extension ruling as the
-un-freezable bound admin holds. `permission-mode` elects the floor's mode vocabulary,
-which is the argument the two-crate floor rests on, and the harness reads the mode.
-`tool-set` elects `tool-trait` by the same argument, and its element shape arrives
-with the tool workflow. `residual-readout-election` is judged by the SPU at admission,
-per apex section 4's definition of done and that Spec's admit test.
+**Which fields a contract draws, and why the rest are internal rather than owed.** Three
+are drawn: `model-binding` and `residual-readout-election` by
+`weaver-harness-spu-contract` and by `weaver-admin-harness-contract`, and
+`gate-instruction` by its two contracts. The other three are read from the artifact
+rather than across a seam, which `weaver-admin-PRD` section 3 distinguishes in its own
+words, a field read out of a file and a definition drawn by a contract being answerable
+to different checks. `trace-sink` is consumed by admin at load, demanded into this
+section by `weaver-admin-operator-contract` and named by the builder-extension ruling as
+the un-freezable bound admin holds. `permission-mode` elects the floor's mode
+vocabulary, which is the argument the two-crate floor rests on, and the harness reads
+the mode. `tool-set` elects `tool-trait` by the same argument, and its element shape
+arrives with the tool workflow.
+
+**`residual-readout-election` is drawn rather than internal, and an earlier wording of
+this section had it both ways.** That wording listed the election among the fields read
+from the artifact and said in the same breath that the SPU judges it at admission. The
+two cannot both hold. The SPU reads no configuration file, by its own charter's
+argument that a parser in a process whose claim is thinness is weight, so a field it
+judges is a field that reached it across a seam or a field it never sees. It reached it
+across none: the election was declared here, held by the artifact, and given no route,
+which is the defect this act closes. Being judged at admission is what makes it drawn,
+per apex section 4's definition of done and that Spec's admit test, and the route runs
+through both seams the load crosses rather than one, admin to the harness and the
+harness to the SPU.
+
+**An organ's fields travel together, and the gate's already do.** `gate-instruction` is
+one organ's declaration moving as one thing, along the path this section describes
+below. The SPU's did not: its two fields sat loose beside the other four
+with one of them crossing and one of them stranded, and the stranding above is what
+that asymmetry produced rather than an accident beside it. What this section rules is
+that an organ's fields are named together and cross together, so a field that organ
+later needs joins the ones it belongs with instead of being threaded through every
+directive that would have to carry it. How they are grouped is representation and the
+Spec's, and this charter rules only that they are.
+
+**The shape is what extends, and nothing is carried for a reader that does not exist.**
+Apex section 9 draws that line and this section stays on its near side. A reserved slot
+is a shape carried for a reader that does not exist, and every field named here has one
+today. A section gains a field in the act that gives that field a reader, which is the
+apex's own mechanism for statefulness read at a smaller scale: a feature add with its
+schema extension and its contract amendment, never a retrofit. What the uniform shape
+buys is that such an act amends one contract and one organ's declaration rather than
+reshaping what carries them. Room made in advance and a shape that admits growth are
+different things, and only the second is ruled here.
 
 **The definitions and their coding are sequenced separately, per the operator's ruling
 of 2026-08-04.** The graph maps the documented set whole, and material whose coding

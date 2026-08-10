@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-10, the route act. The enter directive and the admit
+exchange carry the SPU instruction rather than the bare binding, per
+`weaver-types-Spec` section 2, the readout election riding it uninterpreted
+to the admit, and section 1's leftover-elections list loses the readout
+accordingly. The featureless-link argument re-aims at `SpuInstruction`, the
+directive-carried type, and holds unchanged.
 **Revised:** 2026-08-05, the socket inversion. Per the operator: any socket
 connecting to the harness is an internal connection, so this crate binds the
 coordination socket inside the agent's sandbox and listens where section 2.3
@@ -95,14 +101,15 @@ argued.** `weaver-traits` and `weaver-types` are the floor links the charter
 declares, the first for the message model the authoring path licenses, the
 second for the wire vocabulary of loop 0 and the identity types the envelope
 carries. `weaver-types` is taken **without its `config` feature**: this crate
-reads no field from the agent config's file, so it links no parser. The model
-binding and the gate instruction are config fields this crate does consume,
-arriving over the coordination seam inside the enter directive, already
-validated, which is the file read staying admin's. The elections the file
-carries beyond them, the permission mode, the tool set, and the residual
-readout, are consumed by no workflow chartered today, and section 9 holds the
-config read as the tool workflow's question. **The featureless link rests on a
-placement owed to `weaver-types-Spec`.** `ModelBinding` and `GateInstruction`
+reads no field from the agent config's file, so it links no parser. The SPU
+instruction and the gate instruction are config sections this crate does
+consume, arriving over the coordination seam inside the enter directive,
+already validated, which is the file read staying admin's, and the readout
+election rides the first uninterpreted to the admit. The elections the file
+carries beyond them, the permission mode and the tool set, are consumed by no
+workflow chartered today, and section 9 holds the config read as the tool
+workflow's question. **The featureless link rests on a
+placement owed to `weaver-types-Spec`.** `SpuInstruction` and `GateInstruction`
 are config fields and wire types at once, that Spec defines them in the module
 its `config` feature gates while ruling the wire types unconditional, and this
 crate can construct a directive with the feature off only if the two types sit
@@ -814,7 +821,7 @@ the `load` event, the run's opening and the origin of its monotonic clock.
 Create the residency pair and the decode pair in one act, per
 `weaver-harness-spu-decode-contract` section 1, fork the SPU binary carrying
 both ends, and open the admit exchange on the lifecycle pair carrying the
-model binding uninterpreted. The decode socket is created here rather than at
+SPU instruction uninterpreted. The decode socket is created here rather than at
 first use because it crosses the same fork, and a socket the child was not
 given at its exec cannot be handed to it afterward. Create the gate pair only after the
 SPU's answer has confirmed residency, per `weaver-harness-gate-contract`

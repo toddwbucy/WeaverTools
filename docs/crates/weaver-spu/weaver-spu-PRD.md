@@ -8,6 +8,15 @@ and this crate's part in the workflow now finishing is one thing, admitting a mo
 later releasing it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-10, the route act. Section 13.7's election crosses as one
+instruction beside the binding rather than inside it, per `weaver-types-Spec`
+section 2, and the wording that read as the binding carrying the election is
+corrected: it was the wording this act's confusion traced to, the graph having
+always held the two as sibling fields of the configuration. On the review
+seat's finding that the judgment's position was stated nowhere, section 4.1's
+opening carries the instruction and its step 3 judges the election beside the
+devices, free before the fourth step per the ordering rule. No cell opens or
+closes and no record of this document moves.
 **Revised:** 2026-08-08, the backends are grounded in device authority. Section 3
 argued that authority for the fleet this crate cannot see and for the selection it
 does not make, and stopped short of the engines themselves, so what kept a
@@ -237,8 +246,8 @@ below has to carry a reason the harness can place in that aggregate without tran
 
 ### 4.1 admit
 
-Opened by the harness, carrying the model binding it was handed in the enter directive.
-It ends in residency confirmed or in a typed refusal.
+Opened by the harness, carrying the SPU instruction it was handed in the enter
+directive. It ends in residency confirmed or in a typed refusal.
 
 1. **Resolve the binding to an artifact.** A binding naming a model this crate
    cannot find is refused before the device is touched.
@@ -248,7 +257,8 @@ It ends in residency confirmed or in a typed refusal.
    touching the device. That is a mechanic worth keeping, because it converts the
    most common shape of a bad binding, an artifact that is present and wrong, into a
    refusal that costs no device work.
-3. **Judge the assigned devices against what admission requires.** The binding
+3. **Judge the assigned devices and the readout election against what admission
+   requires.** The binding
    names the devices, per `weaver-types-PRD` section 2.1 and the ruling of
    2026-08-03, and this crate judges those and selects none. What the
    artifact's shard needs plus the working headroom the residency requires must
@@ -258,7 +268,11 @@ It ends in residency confirmed or in a typed refusal.
    exchanges activations between them and a set that cannot is a set that
    cannot serve. And the backend must be able to shard across that many, per
    section 14's capability declaration. This is the one check on the devices,
-   per section 2, and nothing upstream performed an earlier one.
+   per section 2, and nothing upstream performed an earlier one. The election
+   is judged in this step as well, against what the family's engine declares,
+   per section 13.7: the family is known from step 2's header read, so the
+   check costs no device work and an election the engine cannot honor refuses
+   before any device is taken.
 4. **Take the assigned devices and load the weights.** Where the set is one this
    is one take and one load. Where it is larger the takes and the loads run in
    the binding's shard order, so a failure partway is a partial take rather than
@@ -852,11 +866,12 @@ gone, per section 3's no-state rule.
 **The election governs production, and this crate is where production
 happens.** The agent's configuration elects the readout per load, per apex
 section 4's definition of done, and the election reaches this crate at
-admit with the binding. Elected, the per-layer activations are reduced in
-place at the tap and the reductions return on the same path as the
-generation, per apex section 3 step 6. Not elected, no tap runs and no
-affordance idles. **A binding that elects readout against a backend whose
-engine cannot tap refuses at admit,** because a load that grants an
+admit beside the binding, the two crossing as one instruction. Elected, the
+per-layer activations are reduced in place at the tap and the reductions
+return on the same path as the generation, per apex section 3 step 6. Not
+elected, no tap runs and no
+affordance idles. **An instruction that elects readout against a backend
+whose engine cannot tap refuses at admit,** because a load that grants an
 observability election it cannot honor fails at its cheapest moment or
 lies at its most expensive one.
 

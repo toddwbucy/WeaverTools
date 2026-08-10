@@ -6,6 +6,13 @@ only, which is the residency half of what this pair will eventually agree on. Th
 exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-10, the route act. The admit exchange carries the SPU
+instruction rather than the bare binding, the model binding and the readout
+election crossing together per `weaver-types-Spec` section 2, and the SPU
+judges the election at admit against what the family's engine can honor, per
+`weaver-spu-PRD` section 13.7. Section 4's supplies follow, section 5 gains
+the election's refusal case, and section 7 draws
+`residual-readout-election`.
 **Document ID:** `weaver-harness-spu-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -56,6 +63,10 @@ to: organ-envelope
 edge: draws
 from: weaver-harness-spu-contract
 to: model-binding
+
+edge: draws
+from: weaver-harness-spu-contract
+to: residual-readout-election
 
 edge: draws
 from: weaver-harness-spu-contract
@@ -130,10 +141,12 @@ release directive on the residency seam.
 
 Two, and no others in this pass. Both are opened by the harness.
 
-**Admit the model.** Opened by the harness during the enter fan-out, carrying the model
-binding admin supplied in the enter directive. The SPU resolves the binding, reads what
-the artifact declares about itself without loading it, judges the assigned devices
-against what admission requires, takes them in the binding's shard order, and
+**Admit the model.** Opened by the harness during the enter fan-out, carrying the SPU
+instruction admin supplied in the enter directive, the model binding and the readout
+election together. The SPU resolves the binding, reads what the artifact declares
+about itself without loading it, judges the assigned devices against what admission
+requires, judges the election against what the family's engine can honor, per
+`weaver-spu-PRD` section 13.7, takes the devices in the binding's shard order, and
 loads the weights. It answers residency
 confirmed, or it refuses. **The refusal carries a reason the harness places in the enter
 aggregate without translation,** which is what makes `weaver-admin-harness-contract`
@@ -152,13 +165,15 @@ description of the admitted model, and the candidates that exist reach the recor
 elsewhere, per `weaver-spu-PRD` section 4.4. What that leaves open about the record is a
 cell in that charter's section 10 rather than a field added here against no reader.
 
-**The binding crosses once, in the admit exchange.** It is not re-sent, not revoked, and
-not replaced. An SPU that needs a binding it was not given has a failed admission rather
-than a second request to make, because there is no exchange in which it asks for one.
+**The instruction crosses once, in the admit exchange.** It is not re-sent, not
+revoked, and not replaced. An SPU that needs a binding or an election it was not given
+has a failed admission rather than a second request to make, because there is no
+exchange in which it asks for one.
 
-**No exchange carries a path.** The harness sends the binding it was handed and the SPU
-resolves it against what it can reach, and neither party learns a trace path or a record
-name from the other. This is the descriptor discipline of `weaver-harness-PRD` section 5
+**No exchange carries a path.** The harness sends the instruction it was handed and
+the SPU resolves the binding inside it against what it can reach, and neither party
+learns a trace path or a record name from the other. This is the descriptor
+discipline of `weaver-harness-PRD` section 5
 reaching a second seam.
 
 **No exchange carries turn context, because neither exchange belongs to a turn.** Apex
@@ -194,11 +209,11 @@ This section is derived from section 2 rather than prose beside it, because ever
 exchange payload change is a supplies change by construction and a Spec writer reads
 this list.
 
-**The harness supplies** the model binding it was handed in the enter directive, and the
-directive to release.
+**The harness supplies** the SPU instruction it was handed in the enter directive, and
+the directive to release.
 
-**The harness guarantees** that the binding it sends is the binding admin sent it,
-unaltered and uninterpreted, because a harness that adjusted a binding would put a
+**The harness guarantees** that the instruction it sends is the instruction admin sent
+it, unaltered and uninterpreted, because a harness that adjusted one would put a
 second reading of the agent's configuration between the operator's declaration and the
 device. It guarantees that it opens no exchange this document does not enumerate. It
 guarantees that it creates this seam's channel and passes its descriptor across the
@@ -238,6 +253,7 @@ because the harness answers nothing on this seam. The cases:
 - the binding does not resolve to an artifact this crate can reach
 - the artifact does not parse, or declares a shape this crate cannot serve
 - the device cannot take what admission requires
+- the election asks a readout the family's engine cannot honor
 - the directive is out of order for the channel's state
 - there is no residency to release
 
@@ -309,7 +325,8 @@ and a group is stated even when empty, because an explicit nothing is an asserti
 someone checked and an absent group is silence.
 
 **Drawn from `weaver-types`:** `organ-envelope`, `model-binding`,
-`lifecycle-directive`, `lifecycle-answer`, `lifecycle-refusal`.
+`residual-readout-election`, `lifecycle-directive`, `lifecycle-answer`,
+`lifecycle-refusal`.
 
 `organ-envelope` is the carrier every organ channel draws, and it is drawn here rather
 than defined here. The definition stays in `weaver-types` and the mechanics it serves
@@ -319,6 +336,15 @@ live in `weaver-organ-channel`, per `weaver-types-PRD` section 2.3.
 `weaver-types-PRD` section 2.1, drawn here because it is what crosses this seam and not
 interpreted here beyond being carried. Neither party redefines it. The operator writes
 it, admin validates it, the harness carries it, and the SPU resolves it.
+
+`residual-readout-election` is drawn as of the route act of 2026-08-10, defined
+beside the binding at the same section. The SPU judges at admit what the
+operator declared, per `weaver-spu-PRD` section 13.7, and a judged value is a
+drawn value rather than a read one, the SPU reading no configuration file. It
+crosses beside the binding inside `spu-instruction`, the section
+`weaver-types-Spec` section 2 shapes, and the section is representation rather
+than a term: what this seam agrees on is the definition, not the grouping that
+carries it.
 
 `lifecycle-directive`, `lifecycle-answer`, and `lifecycle-refusal` are loop 0's
 trio, named for the loop per the human's ruling of 2026-08-01, and this contract
