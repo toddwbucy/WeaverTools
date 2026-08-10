@@ -4,6 +4,12 @@
 merged charter. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-10. The shared tagging test gains its fourth arm, identical
+here and in `weaver-types-Spec` section 4.3 so the two floor Specs cannot
+drift: an enum with a variant wrapping a struct that carries a spliced member
+is adjacently tagged, the trio's code act having measured internal tagging
+failing the round trip at deserialization, a failure the rule's rationale
+named only for the write side.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
@@ -277,7 +283,13 @@ fieldless enum serializes as a plain renamed string. An enum whose every variant
 is struct-shaped or wraps a struct is internally tagged. An enum with any variant
 wrapping a primitive, a sequence, or another tagged enum is adjacently tagged,
 because internal tagging cannot represent those shapes and fails at
-serialization time rather than at compile time.
+serialization time rather than at compile time. **The same arm takes an enum
+with a variant wrapping a struct that carries a spliced member**, per the
+finding `weaver-types-Spec` section 4.3 records with its measurement: internal
+tagging buffers the content on the read side and the buffer cannot represent
+pre-serialized JSON, so the round trip fails at deserialization rather than at
+serialization, and the arm extends to the read side's failures rather than the
+write side's alone.
 
 `Role` is fieldless, so it takes `#[serde(rename_all = "snake_case")]` and no tag,
 serializing as `"user"`. Tagging it would yield `{"type": "user"}`, a nesting

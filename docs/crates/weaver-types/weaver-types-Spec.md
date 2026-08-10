@@ -5,6 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-10, second of that date. The shared tagging test of section
+4.3 gains its fourth arm, identical in `weaver-traits-Spec` section 3 so the
+floor cannot drift: an enum with a variant wrapping a struct that carries a
+spliced member is adjacently tagged, the trio's code act having measured
+internal tagging failing the round trip at deserialization, an invalid-type
+error at the splice, where the rule's rationale named only write-side
+failures. Applied at section 4.3: the token directive and refusal internally
+tagged, `Finish` fieldless, and `TokenAnswer` adjacent under the new arm.
 **Revised:** 2026-08-10. The SPU's configuration becomes a section:
 `spu-instruction` holds a `decoder` subsection carrying the model binding and
 the readout election together, and the section is what `EnterPayload` and
@@ -824,7 +832,14 @@ is a plain renamed string. An enum whose every variant is struct-shaped or wraps
 a struct is internally tagged. An enum with any variant wrapping a primitive, a
 sequence, or another tagged enum is adjacently tagged, because internal tagging
 cannot represent those shapes and fails at serialization rather than at compile
-time.
+time. **The same arm takes an enum with a variant wrapping a struct that
+carries a spliced member**, and this clause is the trio's code act finding a
+failure the rule's rationale did not name: internal tagging buffers the
+content on the read side and the buffer cannot represent pre-serialized JSON,
+so the round trip fails at deserialization rather than at serialization,
+measured in this workspace as an invalid-type error at the splice. A wire type
+one party can write and the other cannot read is not a wire type, so the arm
+extends to the read side's failures rather than the write side's alone.
 
 ```graph
 node: types-tagging-test
@@ -845,7 +860,11 @@ serialize as plain renamed strings. **The trio is internally tagged**, which is
 why every case carrying a value in 4.2 takes a struct variant, `Load { agent }`
 rather than `Load(AgentName)`. **`Payload` is adjacently tagged**, `#[serde(tag =
 "kind", content = "body")]`, because its variants wrap enums that carry a tag of
-their own.
+their own. **The token trio of section 4.4 divides under the same test**:
+`TokenDirective` and `TokenRefusal` are internally tagged, their value-carrying
+cases struct-shaped, `Finish` is fieldless and a plain renamed string, and
+`TokenAnswer` is adjacently tagged under the spliced-member arm, `Generated`
+wrapping the one struct in the vocabulary that carries a `RawValue`.
 
 **The envelope's layout is stated rather than left to a reader.** Nothing is
 flattened. `exchange`, `position`, and `payload` are three members of one object,
