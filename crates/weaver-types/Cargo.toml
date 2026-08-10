@@ -15,7 +15,10 @@ description = "The floor's data definitions: the agent config, the identity pair
 [dependencies]
 weaver-traits = { path = "../weaver-traits" }
 serde.workspace = true
-serde_json.workspace = true
+# raw_value gates the splicing type section 4.4's measurement crosses as, per
+# weaver-types-Spec section 1: pre-serialized JSON written in place, never a
+# quoted string.
+serde_json = { workspace = true, features = ["raw_value"] }
 serde_yaml_ng = { version = "0.10", optional = true }
 
 [features]

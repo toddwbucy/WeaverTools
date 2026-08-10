@@ -93,7 +93,8 @@ pub use config::{
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{
-    AgentName, AgentState, AgentSummary, EnterPayload, ExchangeId, FaultReport, LifecycleAnswer,
-    LifecycleDirective, LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload,
-    Position, RefusingOrgan, SessionId, TurnFrame, TurnKey,
+    AgentName, AgentState, AgentSummary, EnterPayload, ExchangeId, FaultReport, Finish, Generation,
+    LifecycleAnswer, LifecycleDirective, LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener,
+    OrganEnvelope, Payload, Position, RefusingOrgan, SessionId, TokenAnswer, TokenDirective,
+    TokenRefusal, TurnFrame, TurnKey,
 };

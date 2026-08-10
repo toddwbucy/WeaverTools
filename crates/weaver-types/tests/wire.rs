@@ -90,3 +90,73 @@ fn unknown_payload_kind_refuses() {
     let json = "{\"kind\":\"telemetry\",\"body\":{}}";
     assert!(serde_json::from_str::<Payload>(json).is_err());
 }
+
+/// **The measurement splices and never quotes**, per `weaver-types-Spec`
+/// section 4.4: the payload of `Generated` carries pre-serialized JSON as a
+/// member of the answer's object, and a quoted string in its place is the
+/// double encoding the `RawValue` election exists to prevent.
+///
+/// The round trip is through bytes, because the read side is where a tagging
+/// that buffers fails: a shape that serializes clean and cannot come back is
+/// a wire type only one party can use.
+#[test]
+fn the_measurement_splices_and_never_quotes() {
+    let measurement = serde_json::value::RawValue::from_string(
+        r#"{"tokens":[151643,872],"timings":{"prefill_ms":12}}"#.to_string(),
+    )
+    .expect("valid JSON splices");
+    let answer = weaver_types::TokenAnswer::Generated(weaver_types::Generation {
+        emission: "two words".to_string(),
+        finish: weaver_types::Finish::Completed,
+        measurement,
+    });
+
+    let bytes = serde_json::to_string(&answer).expect("serializes");
+    assert!(
+        bytes.contains(r#""measurement":{"tokens":[151643,872]"#),
+        "the measurement is a member, spliced: {bytes}"
+    );
+    assert!(
+        !bytes.contains(r#""measurement":"{"#),
+        "and never a quoted string: {bytes}"
+    );
+
+    let back: weaver_types::TokenAnswer = serde_json::from_str(&bytes).expect("deserializes");
+    assert_eq!(back, answer, "and the round trip holds through bytes");
+}
+
+/// The directive's ask round-trips with its tunable map, the map carrying
+/// `f64` because the wire's numbers are, per Spec section 4.4.
+#[test]
+fn the_token_directive_round_trips_through_bytes() {
+    let directive = weaver_types::TokenDirective::AppendAndGenerate {
+        turn: weaver_types::TurnKey("t-7".into()),
+        delta: vec![],
+        tunable: [("temperature".to_string(), 0.7f64)].into_iter().collect(),
+    };
+    let bytes = serde_json::to_string(&directive).expect("serializes");
+    assert!(
+        bytes.contains(r#""kind":"append_and_generate""#),
+        "internally tagged, snake case: {bytes}"
+    );
+    let back: weaver_types::TokenDirective = serde_json::from_str(&bytes).expect("deserializes");
+    assert_eq!(back, directive);
+}
+
+/// The refusal's overflow carries the session's own account, per the decode
+/// contract's section 5, and the fieldless cases are plain tagged strings.
+#[test]
+fn the_token_refusal_carries_the_account() {
+    let refusal = weaver_types::TokenRefusal::Overflow {
+        resident: 4096,
+        requested: 512,
+        capacity: 4352,
+    };
+    let bytes = serde_json::to_string(&refusal).expect("serializes");
+    assert!(bytes.contains(r#""kind":"overflow""#) && bytes.contains(r#""resident":4096"#));
+    let back: weaver_types::TokenRefusal = serde_json::from_str(&bytes).expect("deserializes");
+    assert_eq!(back, refusal);
+    let not_open: weaver_types::TokenRefusal =
+        serde_json::from_str(r#"{"kind":"not_open"}"#).expect("a fieldless case reads");
+    assert_eq!(not_open, weaver_types::TokenRefusal::NotOpen);
+}
