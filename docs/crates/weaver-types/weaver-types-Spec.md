@@ -5,6 +5,18 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-10. The SPU's configuration becomes a section:
+`spu-instruction` holds a `decoder` subsection carrying the model binding and
+the readout election together, and the section is what `EnterPayload` and
+`Admit` now carry, which closes the route the charter's revision of this date
+names, the election having been declared, held, and given no seam to cross. The
+gate's instruction is the pattern followed rather than a precedent invented. In
+the same act, `Generation` settles at section 4.4 and its bullet leaves section
+6: the emission and the finish are shaped here because the harness consumes
+them, and the measurement splices because nothing consumes it on the way to the
+trace's model events, the satellites staying `weaver-trace`'s. No graph record
+moves, the trio's nodes being the charter's and the config vocabulary
+unchanged.
 **Revised:** 2026-08-08, second of that date. The trio names what exists. The
 messages it carries are `weaver-traits`' `Message`, drawn rather than restated,
 where an earlier wording named a `CanonicalMessage` that exists nowhere.
@@ -190,12 +202,20 @@ more than one.
 
 ```rust
 pub struct AgentConfig {
-    pub model_binding: ModelBinding,
+    pub spu_instruction: SpuInstruction,
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,
-    pub residual_readout_election: bool,
     pub gate_instruction: GateInstruction,
     pub trace_sink: TraceSink,
+}
+
+pub struct SpuInstruction {
+    pub decoder: DecoderInstruction,
+}
+
+pub struct DecoderInstruction {
+    pub model_binding: ModelBinding,
+    pub residual_readout_election: bool,
 }
 
 pub enum TraceSink {
@@ -218,6 +238,20 @@ pub enum ConfigErrorKind {
     BadValue,
 }
 ```
+
+**The SPU's fields arrive as one section, and the gate's already did.** Charter
+section 2.1 rules that an organ's fields are named together and cross together,
+and `spu-instruction` is that rule's first application: one declaration admin
+validates, the harness carries uninterpreted, and the SPU consumes.
+**`decoder` names a role rather than a slot.** The organ's chartered domain is
+every semantic operation in the text modality, per `weaver-spu-PRD` section 8,
+and the decode role is the one whose seam stands,
+`weaver-harness-spu-decode-contract`, so the key names something built, with a
+reader today. An embedder key arrives in the act that builds an embedder, named
+here as absent rather than carried empty, which is the near side of apex
+section 9. The no-defaulting argument below survives the nesting untouched:
+every field of the section is required, absence refuses the load, and the depth
+at which a field sits changes nothing about what its absence means.
 
 **Field names are kebab-case on disk and snake_case in Rust, which takes an
 explicit election rather than a convention.** `#[serde(rename_all = "kebab-case",
@@ -321,7 +355,7 @@ exist, whether they can reach each other, and whether the backend can shard
 across that many are all admission's, per `weaver-spu-Spec` section 3, and
 this crate answers well-formed and nothing more.
 
-**`ModelBinding` and `GateInstruction` are defined here and are the same types the
+**`SpuInstruction` and `GateInstruction` are defined here and are the same types the
 wire carries, and the feature gate never reaches them.** The `config` feature
 gates the parser and the `parse` surface alone, and never a type: the two are
 wire types the loop 0 directives carry, so they compile with the feature off,
@@ -620,7 +654,7 @@ pub enum LifecycleDirective {
     Enter { payload: EnterPayload },
     Leave,
     Stop,
-    Admit { binding: ModelBinding },
+    Admit { instruction: SpuInstruction },
     Release,
     Raise { instruction: GateInstruction },
     Lower,
@@ -667,7 +701,7 @@ pub enum LifecycleRefusal {
 pub struct EnterPayload {
     pub session: SessionId,
     pub run_ordinal: u64,
-    pub model_binding: ModelBinding,
+    pub spu_instruction: SpuInstruction,
     pub gate_instruction: GateInstruction,
 }
 ```
