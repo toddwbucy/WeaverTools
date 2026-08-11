@@ -60,7 +60,7 @@ use std::path::{Path, PathBuf};
 use weaver_types::{DeviceOrdinal, LifecycleRefusal, ModelBinding};
 
 use crate::artifact::{self, ArtifactHeader};
-use crate::decoder::backend::{self, DecodeFault, FlushMechanism};
+use crate::decoder::backend::{self, DecodeFault, FlushMechanism, TokenId};
 use crate::decoder::session::Session;
 use crate::family::{self, FamilyRefusal};
 use crate::readout::{self, ReadoutElection, ReadoutRefusal};
@@ -269,6 +269,80 @@ impl Resident {
             // On a build carrying no backend `LoadedModel` has no cases, so
             // this arm is unreachable rather than unwritten.
             #[cfg(not(feature = "gguf"))]
+            _ => Err(DecodeFault::ContainerNotBuilt {
+                container: self.header.container,
+            }),
+        }
+    }
+
+    /// Tokenize rendered text against the resident model's vocabulary.
+    ///
+    /// On the residency rather than in the engine because the vocabulary is
+    /// the model's and not the context's: rendering and tokenizing precede
+    /// any session, and their product is what a session is opened with. On a
+    /// build carrying no backend `LoadedModel` has no cases and the match
+    /// says so.
+    pub fn tokenize(&self, text: &str) -> Result<Vec<TokenId>, DecodeFault> {
+        #[cfg(not(feature = "gguf"))]
+        let _ = text;
+        match &self.model {
+            #[cfg(feature = "gguf")]
+            LoadedModel::Gguf(model) => model
+                .model()
+                .str_to_token(text, llama_cpp_2::model::AddBos::Never)
+                .map(|tokens| tokens.into_iter().map(|t| TokenId(t.0 as u32)).collect())
+                .map_err(|error| DecodeFault::Engine {
+                    detail: error.to_string(),
+                }),
+            #[allow(unreachable_patterns)]
+            _ => Err(DecodeFault::ContainerNotBuilt {
+                container: self.header.container,
+            }),
+        }
+    }
+
+    /// The emission verbatim: the sampled tokens back as text, before any
+    /// parse, which is what the record's `model.output` carries.
+    pub fn detokenize(&self, tokens: &[TokenId]) -> Result<String, DecodeFault> {
+        #[cfg(not(feature = "gguf"))]
+        let _ = tokens;
+        match &self.model {
+            #[cfg(feature = "gguf")]
+            LoadedModel::Gguf(model) => {
+                // The whole sequence decodes together: a multi-byte character
+                // split across two tokens is ordinary under a byte-pair
+                // vocabulary, and per-token conversion would break it where
+                // the split fell.
+                let tokens: Vec<llama_cpp_2::token::LlamaToken> = tokens
+                    .iter()
+                    .map(|t| llama_cpp_2::token::LlamaToken(t.0 as i32))
+                    .collect();
+                model
+                    .model()
+                    .tokens_to_str(&tokens, llama_cpp_2::model::Special::Tokenize)
+                    .map_err(|error| DecodeFault::Engine {
+                        detail: error.to_string(),
+                    })
+            }
+            #[allow(unreachable_patterns)]
+            _ => Err(DecodeFault::ContainerNotBuilt {
+                container: self.header.container,
+            }),
+        }
+    }
+
+    /// The family's turn terminator, per `weaver-spu-Spec` section 4.3.
+    ///
+    /// **Read from the artifact's declared end-of-sequence today**, which for
+    /// every shipped chat family is the turn-close marker itself, the qwen2
+    /// artifacts declaring `<|im_end|>` there. A family whose terminator
+    /// diverges from its declared EOS arrives with the marker-promotion act
+    /// that gives the declaration a second source to check against.
+    pub fn terminator(&self) -> Result<TokenId, DecodeFault> {
+        match &self.model {
+            #[cfg(feature = "gguf")]
+            LoadedModel::Gguf(model) => Ok(TokenId(model.model().token_eos().0 as u32)),
+            #[allow(unreachable_patterns)]
             _ => Err(DecodeFault::ContainerNotBuilt {
                 container: self.header.container,
             }),
