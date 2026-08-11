@@ -545,18 +545,29 @@ impl Harness {
 /// The match on the options is the checked unwind: a forgotten arm is a
 /// compile error rather than a leaked residency.
 fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
+    // The unwind runs whole whatever refuses along it, because stopping at
+    // the first refusal leaks everything after it: a refused lower must not
+    // leave a device held. The first refusal in sequence order is what the
+    // answer names, per the contract's a-refusal-names-where-it-stopped.
+    let mut first_refusal: Option<LifecycleRefusal> = None;
+
     if let Some(gate) = run.gate.take() {
         run.gate_ordinal += 1;
-        let _ = gate.channel.send(&OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Harness,
-                ordinal: run.gate_ordinal,
-            },
-            position: Position::Open,
-            payload: weaver_types::Payload::Directive(LifecycleDirective::Lower),
-        });
+        // The lower is an exchange, not a shot: its confirmation is what
+        // admin's leave aggregate rests on, so the answer is read before the
+        // channel drops rather than raced against it.
+        let lowered = exchange(
+            &gate.channel,
+            Opener::Harness,
+            run.gate_ordinal,
+            weaver_types::RefusingOrgan::Gate,
+            LifecycleDirective::Lower,
+        );
         drop(gate.channel);
         reap(gate.pid);
+        if let Err(refusal) = lowered {
+            first_refusal.get_or_insert(refusal);
+        }
     }
     let _ = run.author.author(
         &mut run.recorder,
@@ -574,20 +585,39 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
 
     if let Some(spu) = run.spu.take() {
         run.spu_ordinal += 1;
-        let _ = spu.lifecycle.send(&OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Harness,
-                ordinal: run.spu_ordinal,
-            },
-            position: Position::Open,
-            payload: weaver_types::Payload::Directive(LifecycleDirective::Release),
-        });
-        drop(spu.lifecycle);
+        // **The decode end drops first**, ending the worker's decode phase so
+        // the release lands on a seam that is listening, per the serve loop's
+        // one-loop rule: from admit until its decode end closes, the worker
+        // reads nothing else. Issue 113's repair, and the ordering the seam
+        // tests always had.
         drop(spu.decode);
+        // The release is the exchange the contract says it is: confirmed
+        // after the device is free and never before, and admin's leave
+        // aggregate rests one arm on that confirmation, so the answer is
+        // read before the channel drops.
+        let released = exchange(
+            &spu.lifecycle,
+            Opener::Harness,
+            run.spu_ordinal,
+            weaver_types::RefusingOrgan::Spu,
+            LifecycleDirective::Release,
+        );
+        drop(spu.lifecycle);
         reap(spu.pid);
+        if let Err(refusal) = released {
+            first_refusal.get_or_insert(match drained.is_err() {
+                // The drain failed earlier in the sequence than the
+                // release did, so it is the failure the answer names.
+                true => LifecycleRefusal::DescriptorsUnusable,
+                false => refusal,
+            });
+        }
     }
     let _ = &run.session;
 
+    if let Some(refusal) = first_refusal {
+        return Err(refusal);
+    }
     match drained {
         Ok(()) => Ok(()),
         // The stream did not close cleanly, which is a fault the operator
