@@ -50,6 +50,14 @@ loop calls through the gate rather than sequencing it. What membership buys is b
 sequenced by the loop as part of processing meaning, and every loop member connects
 to the harness because the harness is where that sequencing lives.
 
+The harness's own coordination passes the same test rather than riding on its
+position. The harness holds the turn's content, assembling the working structure
+into what the organs reason over next, so its driving is done with the meaning
+rather than around it. A content-blind scheduler, moving opaque payloads on
+triggers it never holds as content, fails the criterion however central its
+position, which is the same fact the application-orchestrator refusal states at
+the system's edge.
+
 The minimum is small. A decoder that reasons over semantic content, a harness to
 hold the loop, and enough state to keep a single turn coherent, which at the
 minimum is essentially the KV cache. That much reasons. It reasons narrowly, but it
@@ -120,6 +128,14 @@ author time rather than by types. That opacity is interior to a payload. What th
 item needs is box granularity, a tool-result type obtainable only from one source,
 and the type system holds box granularity fully. Nobody inspects a tool result's
 fields to know it came through the gate.
+
+The mechanism is named so the target is checkable rather than aspirational. Only
+from one source means a construction door the gate crossing alone opens: no public
+constructor, no conversion from another type, and no deserialization path
+elsewhere in the floor, which is the absence-pinning the corpus already runs on
+the peer identity. The known hurdle is registered with the audit: the conversation
+model's own round trip currently deserializes everything it carries, and resolving
+that tension is the audit's work, not this document's.
 
 ## 5. Building toward, not current
 

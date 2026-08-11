@@ -419,10 +419,12 @@ come. The shell earns its place against its own bar, and center-first means
 built-first, never matters-more.
 
 The loop's edge is the gate, and the agent's edge is the network boundary: what
-crosses a network line is outside the agent entirely, for now and by ruling. A
-tool behind the gate is one Unix socket away, which the crossings-per-decode-step
-measure prices as nearly free, so the loop calls its shell without ceremony and
-contains none of it.
+crosses a network line is outside the agent entirely, for now and by ruling. The
+ruling reads network lines alone, and a local Unix socket crosses no boundary
+that counts, which is how a tool sits one socket away and still inside the
+agent. That crossing is what the crossings-per-decode-step measure prices as
+nearly free, so the loop calls its shell without ceremony and contains none of
+it.
 
 The reasoning loop nearing completion does not complete the agent. It is a road
 marker, the first one that runs, and the criterion that bounded it is the same

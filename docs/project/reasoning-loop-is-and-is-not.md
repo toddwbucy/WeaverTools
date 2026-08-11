@@ -37,7 +37,9 @@ with the reason it fails.
   rather than by a second one written to let them in.
 - Coordinated by the harness. Coordination of the turn is the harness's domain,
   held alone, and driving the organs that process meaning is itself the processing
-  of meaning, so the criterion admits it.
+  of meaning, so the criterion admits it. What it drives with is the turn's own
+  content, the working structure assembled into what the organs reason over,
+  which is what a content-blind scheduler never holds.
 - Harness-mediated in shape as well as in domain. Contracts are strictly one to
   one, there are no lateral edges at any level, and siblings route through the
   parent recursively.
@@ -91,7 +93,9 @@ with the reason it fails.
 One property belongs on the IS list by intent and is held back because the act that
 would make it true has not run. The loop is meant to be closed at the type level,
 such that a tool result entering the loop is obtainable only from the gate, which
-makes the boundary a compile-time fact rather than a convention. The audit of
+makes the boundary a compile-time fact rather than a convention. Only from the
+gate means a construction door the crossing alone opens, no public constructor,
+no conversion, and no floor deserialization path beside it. The audit of
 `weaver-types` and `weaver-traits` that would establish this is owed and
 unperformed. It is marked here the way the encoder is marked in the figure,
 declared and not built, because writing an owed act as a fact is how a corpus

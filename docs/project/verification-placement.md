@@ -45,6 +45,13 @@ The security model this placement rests on is role-scoped socket handoff. Each
 Unix socket descriptor handed across a boundary, from the gate and from admin
 alike, exists for an express purpose with allowances based on role, authenticated
 by kernel credential where the channel has a name and by descriptor possession
-where it does not, per the apex's invariant. Trust above a network protocol is not
+where it does not, per the apex's invariant. Possession authenticates only
+because the handoffs are controlled, and the precondition is stated rather than
+assumed: every pair is created with close-on-exec in the act that makes it, each
+party receives exactly its own ends, and an organ counts its descriptors at
+entry and refuses to serve when the count is wrong, so an unrelated descriptor
+cannot stand in for a handoff. The contracts bind this per seam, the gate
+receiving only its own end and the unnamed channels carrying the same hygiene.
+Trust above a network protocol is not
 part of the model because the network is not part of the agent: the agent's edge
 is the network boundary, and what crosses that line is outside the agent entirely.
