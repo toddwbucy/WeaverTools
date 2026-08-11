@@ -1237,9 +1237,10 @@ which a loop mints a port, because the ports are types these crates own. The
 decode surface a real loop needs, the exchanges, sessions, sampling, and the
 flush call, arrives with the token workflow per `weaver-spu-PRD` section 8,
 the basic loops this program ships land in their binaries by the same path as
-any builder's, and the executor election stays deferred with that workflow,
-per section 1. **The blade takes the compiler and the seam's position takes
-review.** A port is a type this crate owns with a constructor no consumer can
+any builder's, and the decode surface is chartered at section 6.1, the executor
+election closing there in the negative rather than deferring, no runtime
+entering and the serial `poll` loop serving the streaming path. **The blade takes
+the compiler and the seam's position takes review.** A port is a type this crate owns with a constructor no consumer can
 reach, so a loop composes against the granted surface or does not compile, which
 is the same type property section 8's sorting holds for descriptor ownership,
 elected here rather than listed there. Where the seam falls
@@ -1299,9 +1300,13 @@ admit confirms residency, so the surface loop 0 grants at loaded-and-idle is alr
 a session at rest. The identity material the open carries is the decoder
 instruction's `identity` field, per `weaver-types-Spec` section 2, configuration
 the operator wrote rather than history the working structure holds, the structure
-being empty at enter by construction. An open that refuses is an enter that refuses,
-the fan-out stopping where every fan-out failure stops, and the aggregate naming the
-decode seam as where it stopped.
+being empty at enter by construction. The mapping is direct: the field's canonical
+messages are the open directive's `messages`, and the run's session identity is its
+`session`, so the harness reads the field from the instruction it already carries
+and constructs the open without a second source. A refused open is a refused
+enter, returned through the fan-out's after-load failure so the authored bracket
+stands for the leave to unwind, the aggregate naming the decode seam as where the
+fan-out stopped.
 
 **The turn is loop 0's machinery, granted, and loop 1 supplies the delta and
 receives the outcome.** The granted surface offers a turn call: loop 1 hands the
@@ -1333,11 +1338,16 @@ the author call, the price the splice's opacity is paid at.
 While a generation streams token by token, loop 0 waits against two descriptors at
 once, the decode channel for the next token and the coordination listener for an
 operator who dials to stop. `poll` sleeps against both and wakes on the first
-ready, the reads staying the blocking reads they are and the service staying serial
+ready, the token read staying the blocking read it is and the service staying serial
 with one turn in flight, per section 2.4's election. A coordination dial arriving
-mid-stream is accepted, its stop directive read, and the turn cancelled at the
-decode seam, the outstanding generation answering with its partial output marked
-stopped and the tokens already streamed standing in the close, and the stop then
+mid-stream is accepted and credential-checked at the accept as every dial is, and
+its directive is read without wedging the turn: the accepted connection is itself
+polled before its read, so a dialer that connects and then delays or sends nothing
+cannot hold the streaming turn hostage, and a hangup or an error on it closes the
+connection and returns the loop to the stream rather than blocking on a peer that
+left. The stop it carries cancels the turn at the decode seam, the outstanding
+generation answering with its partial output marked stopped and the tokens already
+streamed standing in the close, and the stop then
 answered on the coordination seam with the turn's fate, the announce-after-record
 discipline placing the turn-close event before the answer. **The election flagged
 for the operator: the stop multiplexes by polling the decode channel against the
@@ -1699,8 +1709,8 @@ Each names what settles it, and none is this Spec's to settle alone.
   section 3.1.
 - **The satellite types.** `AdoptionFault`'s case set, `OrganChannel`'s
   exchange-surface spelling, `SpuChannels`' name, the licensing error's shape,
-  `DecodeChannel`'s token send and receive being section 6.1's now the surface
-  it carries is chartered, and the
+  `DecodeChannel`'s token send and receive surface, now chartered in section
+  6.1, and the
   channel-state enum's name. Identifier and shape choices with no
   cross-crate consequence, listed so what this Spec leaves to a builder is
   complete rather than implied.
