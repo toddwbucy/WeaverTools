@@ -309,20 +309,20 @@ impl Resident {
         match &self.model {
             #[cfg(feature = "gguf")]
             LoadedModel::Gguf(model) => {
-                let mut text = String::new();
-                for token in tokens {
-                    let piece = model
-                        .model()
-                        .token_to_str(
-                            llama_cpp_2::token::LlamaToken(token.0 as i32),
-                            llama_cpp_2::model::Special::Tokenize,
-                        )
-                        .map_err(|error| DecodeFault::Engine {
-                            detail: error.to_string(),
-                        })?;
-                    text.push_str(&piece);
-                }
-                Ok(text)
+                // The whole sequence decodes together: a multi-byte character
+                // split across two tokens is ordinary under a byte-pair
+                // vocabulary, and per-token conversion would break it where
+                // the split fell.
+                let tokens: Vec<llama_cpp_2::token::LlamaToken> = tokens
+                    .iter()
+                    .map(|t| llama_cpp_2::token::LlamaToken(t.0 as i32))
+                    .collect();
+                model
+                    .model()
+                    .tokens_to_str(&tokens, llama_cpp_2::model::Special::Tokenize)
+                    .map_err(|error| DecodeFault::Engine {
+                        detail: error.to_string(),
+                    })
             }
             #[allow(unreachable_patterns)]
             _ => Err(DecodeFault::ContainerNotBuilt {

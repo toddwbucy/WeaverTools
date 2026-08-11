@@ -237,29 +237,7 @@ impl DecodeSocket {
     /// exists to provide, per `weaver-spu-Spec` section 4.3's polled cancel.
     /// `None` is the quiet channel, distinct from every fault.
     pub fn try_recv_octets(&self) -> Result<Option<Vec<u8>>, ChannelFault> {
-        let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
-        let read = loop {
-            match recv(
-                self.end.as_raw_fd(),
-                &mut buffer,
-                MsgFlags::MSG_TRUNC | MsgFlags::MSG_DONTWAIT,
-            ) {
-                Ok(read) => break read,
-                Err(nix::errno::Errno::EINTR) => continue,
-                Err(nix::errno::Errno::EAGAIN) => return Ok(None),
-                Err(_) => return Err(ChannelFault::Closed),
-            }
-        };
-        if read > buffer.len() {
-            return Err(ChannelFault::Truncated {
-                bound: MAX_ENVELOPE_BYTES,
-            });
-        }
-        if read == 0 {
-            return Err(ChannelFault::Closed);
-        }
-        buffer.truncate(read);
-        Ok(Some(buffer))
+        recv_with(self.end.as_fd(), MsgFlags::MSG_DONTWAIT)
     }
 
     pub fn as_fd(&self) -> BorrowedFd<'_> {
@@ -287,11 +265,23 @@ fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
 /// `MSG_TRUNC` is what reports the overflow, so a message of exactly the bound
 /// fits and reads clean, and anything past it sets the flag.
 fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
+    recv_with(end, MsgFlags::empty())
+        .map(|frame| frame.expect("a blocking receive returns a frame or a fault"))
+}
+
+/// The one receive, parameterized by blocking: the buffer, the retry on a
+/// signal, the truncation report, and the zero-length closure reading live
+/// here once, and `Ok(None)` is the quiet channel on the non-blocking path
+/// alone.
+fn recv_with(end: BorrowedFd<'_>, flags: MsgFlags) -> Result<Option<Vec<u8>>, ChannelFault> {
     let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
     let read = loop {
-        match recv(end.as_raw_fd(), &mut buffer, MsgFlags::MSG_TRUNC) {
+        match recv(end.as_raw_fd(), &mut buffer, MsgFlags::MSG_TRUNC | flags) {
             Ok(read) => break read,
             Err(nix::errno::Errno::EINTR) => continue,
+            Err(nix::errno::Errno::EAGAIN) if flags.contains(MsgFlags::MSG_DONTWAIT) => {
+                return Ok(None);
+            }
             Err(_) => return Err(ChannelFault::Closed),
         }
     };
@@ -307,7 +297,7 @@ fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
         return Err(ChannelFault::Closed);
     }
     buffer.truncate(read);
-    Ok(buffer)
+    Ok(Some(buffer))
 }
 
 /// Construct a lifecycle end from an already-owned descriptor.

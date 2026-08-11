@@ -213,8 +213,10 @@ fn decode_fault_line(fault: &DecodeFault) -> String {
 /// mid-flight is out of order for a seam with a generation outstanding and
 /// is refused right here, not queued**, which is where the contract's
 /// mid-generation cases live in a serial service. A channel fault mid-flight
-/// marks the poll fatal: the generation stops, and the phase dies after the
-/// outstanding exchange closes.
+/// marks the poll fatal: the generation stops and the phase dies with the
+/// exchange open, closure with an exchange outstanding being that exchange's
+/// failure per the contract's own rule, and an answer on a channel the poll
+/// just faulted would be a promise the channel cannot keep.
 struct SeamCancel<'a> {
     socket: &'a DecodeSocket,
     cancelled: bool,
@@ -270,32 +272,29 @@ fn render_measurement(
     generated: &weaver_spu::decoder::session::Generated,
     delta_text_len: usize,
 ) -> String {
-    let entropy: Vec<f64> = generated
-        .signals
-        .entropy_bits
-        .as_ref()
-        .map(|bits| bits.iter().map(|b| f64::from(*b)).collect())
-        .unwrap_or_default();
-    let surprisal: Vec<f64> = generated
-        .signals
-        .surprisal_bits
-        .as_ref()
-        .map(|bits| bits.iter().map(|b| f64::from(*b)).collect())
-        .unwrap_or_default();
-    serde_json::json!({
+    let mut measurement = serde_json::json!({
         "model": resident.artifact.display().to_string(),
         "weights_hash": resident.weights_hash.0,
         "input_tokens": input_tokens.iter().map(|t| t.0).collect::<Vec<u32>>(),
         "output_tokens": generated.tokens.iter().map(|t| t.0).collect::<Vec<u32>>(),
         "blocks": [{"label": "turn-delta", "start": 0, "end": delta_text_len as u64}],
-        "entropies": entropy,
-        "surprisals": surprisal,
         "timings": {
             "prefill_ns": generated.prefill_ns.to_string(),
             "decode_ns": generated.decode_ns.to_string(),
         },
-    })
-    .to_string()
+    });
+    // Absent rather than empty, per Spec section 6: an unproduced reading
+    // emits no member at all, the absence itself being the report, which is
+    // the same discipline the record's own serialization carries.
+    if let Some(bits) = &generated.signals.entropy_bits {
+        measurement["entropies"] =
+            serde_json::json!(bits.iter().map(|b| f64::from(*b)).collect::<Vec<f64>>());
+    }
+    if let Some(bits) = &generated.signals.surprisal_bits {
+        measurement["surprisals"] =
+            serde_json::json!(bits.iter().map(|b| f64::from(*b)).collect::<Vec<f64>>());
+    }
+    measurement.to_string()
 }
 
 /// The decode phase, entered once residency confirms and served until the
@@ -1018,6 +1017,23 @@ mod tests {
             ),
             None,
             "a finite value is in order"
+        );
+    }
+
+    /// **A block the family cannot render refuses as the delta malformed for
+    /// the family,** the contract's own case: the tool shapes are blocked
+    /// with the tool workflow and the families render text today. The role
+    /// arm's wildcard is the future's alone and no test can construct its
+    /// subject, `Role` being non-exhaustive with every current case rendered.
+    #[test]
+    fn a_non_text_block_refuses_as_malformed_delta() {
+        let message = Message {
+            role: Role::User,
+            content: vec![ContentBlock::ToolCall(weaver_traits::ToolCall {})],
+        };
+        assert_eq!(
+            render_messages("{role}: {message}", &[message]),
+            Err(TokenRefusal::MalformedDelta),
         );
     }
 
