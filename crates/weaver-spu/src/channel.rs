@@ -232,6 +232,36 @@ impl DecodeSocket {
         recv_octets(self.end.as_fd())
     }
 
+    /// Receive one message without blocking, for the cancel poll at token
+    /// boundaries: a boundary check that blocked would defeat the bound it
+    /// exists to provide, per `weaver-spu-Spec` section 4.3's polled cancel.
+    /// `None` is the quiet channel, distinct from every fault.
+    pub fn try_recv_octets(&self) -> Result<Option<Vec<u8>>, ChannelFault> {
+        let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
+        let read = loop {
+            match recv(
+                self.end.as_raw_fd(),
+                &mut buffer,
+                MsgFlags::MSG_TRUNC | MsgFlags::MSG_DONTWAIT,
+            ) {
+                Ok(read) => break read,
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(nix::errno::Errno::EAGAIN) => return Ok(None),
+                Err(_) => return Err(ChannelFault::Closed),
+            }
+        };
+        if read > buffer.len() {
+            return Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES,
+            });
+        }
+        if read == 0 {
+            return Err(ChannelFault::Closed);
+        }
+        buffer.truncate(read);
+        Ok(Some(buffer))
+    }
+
     pub fn as_fd(&self) -> BorrowedFd<'_> {
         self.end.as_fd()
     }

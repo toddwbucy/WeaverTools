@@ -65,6 +65,13 @@ pub struct Generated {
     /// **Positionally paired with `tokens`.** Absent where the backend served
     /// no distribution, and absent rather than empty where nothing was drawn.
     pub signals: measurement::Signals,
+    /// The prefill span in nanoseconds: the delta's decode, before the loop.
+    /// Measured here because the span runs here, the two readings of the
+    /// record's `DecodeTimings` divided where the work divides.
+    pub prefill_ns: u64,
+    /// The decode span in nanoseconds: the sampling loop through the
+    /// terminator's landing.
+    pub decode_ns: u64,
 }
 
 /// The family's stop condition and its terminator.
@@ -229,10 +236,13 @@ impl<'a> Session<'a> {
             });
         }
 
+        let prefill_started = std::time::Instant::now();
         if let Err(fault) = self.backend.decode_at(delta, self.resident_len) {
             return Err(self.poison(fault));
         }
         self.resident_len += delta.len();
+        let prefill_ns = prefill_started.elapsed().as_nanos() as u64;
+        let decode_started = std::time::Instant::now();
 
         let mut produced = Vec::new();
         let mut signals = measurement::Accumulator::new();
@@ -318,6 +328,8 @@ impl<'a> Session<'a> {
             tokens: produced,
             stopped,
             signals: signals.finish(),
+            prefill_ns,
+            decode_ns: decode_started.elapsed().as_nanos() as u64,
         })
     }
 

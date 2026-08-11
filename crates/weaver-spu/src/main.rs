@@ -1,5 +1,7 @@
 //! conforms: spu-service-serial-one-loop
 //! conforms: spu-out-of-order-refused-on-residency
+//! conforms: spu-out-of-order-refused-on-decode
+//! conforms: spu-fault-below-the-exchange-layer
 //!
 //! Entry, the hygiene sets, and the service loop, per `weaver-spu-Spec`
 //! sections 2, 3, and 9.
@@ -19,12 +21,19 @@
 
 use std::process::ExitCode;
 
-use weaver_spu::channel::{self, ChannelFault, EntryFault, Inherited, LifecycleChannel};
+use weaver_spu::channel::{
+    self, ChannelFault, DecodeSocket, EntryFault, Inherited, LifecycleChannel,
+};
+use weaver_spu::decoder::backend::{DecodeFault, TokenId};
+use weaver_spu::decoder::session::{CancelPoll, Session, StopCondition, Stopped};
+use weaver_spu::family;
 use weaver_spu::readout::ReadoutElection;
-use weaver_spu::residency::{Headroom, Residency};
+use weaver_spu::residency::{Headroom, Residency, Resident};
+use weaver_spu::sampling::{Disposition, EffectiveKnobs, Knobs, TunableValues};
+use weaver_traits::{ContentBlock, Message, Role};
 use weaver_types::{
-    ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope,
-    Payload, Position, TokenDirective, TokenRefusal,
+    ExchangeId, Finish, Generation, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener,
+    OrganEnvelope, Payload, Position, TokenAnswer, TokenDirective, TokenRefusal,
 };
 
 /// The headroom the worker's composition root supplies. A deployment fact
@@ -65,7 +74,6 @@ enum SeamPosition {
 /// what it polls up that is not a cancel. What this machine holds is the
 /// between-exchanges state.
 #[derive(Debug, Clone, Copy, PartialEq)]
-#[cfg_attr(not(test), allow(dead_code))]
 enum DecodePosition {
     /// No open has arrived. Only an open is in order, and only once the
     /// residency it serves is confirmed on the lifecycle seam.
@@ -86,7 +94,6 @@ enum DecodePosition {
 /// map refused as `MalformedDelta` at the point the map is read, a temperature
 /// that compares false against every bound being what must never reach a
 /// sampler.
-#[cfg_attr(not(test), allow(dead_code))]
 fn judge_decode(
     position: DecodePosition,
     residency_confirmed: bool,
@@ -122,6 +129,402 @@ fn judge_decode(
     }
 }
 
+/// The engine context's token capacity, a builder's number supplied at the
+/// composition root before the measurement that replaces it exists, the same
+/// standing `HEADROOM_BYTES` has.
+const CONTEXT_CAPACITY: u32 = 4096;
+
+/// The per-turn generation ceiling, the stop condition's backstop for a model
+/// that never emits a stop token. The same composition-root standing.
+const MAX_TOKENS_PER_TURN: usize = 512;
+
+/// The binary's sampling dispositions, all frozen, per charter section 13.8:
+/// what this binary leaves operator-tunable is nothing, an election the
+/// composition root states rather than hides. The engine takes its knobs at
+/// open today, so a per-turn tunable has no engine to reach, and a tunable
+/// map naming any knob refuses as an ask this seam cannot serve. The
+/// disposition set widens in the act that carries a knob to the engine per
+/// turn.
+fn frozen_knobs() -> EffectiveKnobs {
+    Knobs {
+        temperature: Disposition::Frozen(0.7),
+        top_k: Disposition::Frozen(40),
+        top_p: Disposition::Frozen(0.95),
+        repetition_penalty: Disposition::Frozen(1.1),
+        repetition_window: Disposition::Frozen(64),
+        seed: Disposition::Frozen(11),
+    }
+    .resolve(&TunableValues::new())
+    .expect("nothing is tunable")
+}
+
+/// Render canonical messages through the family's template, text blocks only.
+/// A block the family cannot render is the delta malformed for the family,
+/// which is the contract's own case rather than one invented here: the tool
+/// shapes are blocked with the tool workflow and the families render text
+/// today.
+fn render_messages(template: &str, messages: &[Message]) -> Result<String, TokenRefusal> {
+    let mut rendered = String::new();
+    for message in messages {
+        let role = match message.role {
+            Role::User => "user",
+            Role::Assistant => "assistant",
+            Role::ToolResult => "tool",
+            // The role set grows with the conversation model, and a role this
+            // family has no rendering for is the delta malformed for it.
+            _ => return Err(TokenRefusal::MalformedDelta),
+        };
+        let mut content = String::new();
+        for block in &message.content {
+            match block {
+                ContentBlock::Text { text } => content.push_str(text),
+                _ => return Err(TokenRefusal::MalformedDelta),
+            }
+        }
+        rendered.push_str(&family::render_template(template, role, &content));
+    }
+    Ok(rendered)
+}
+
+/// One frame out on the decode seam: the trio crosses as bare JSON, per
+/// `weaver-types-Spec` section 4.4's provisional encoding.
+fn send_answer(decode: &DecodeSocket, answer: &TokenAnswer) -> Result<(), ChannelFault> {
+    let body = serde_json::to_vec(answer).map_err(|_| ChannelFault::Undecodable)?;
+    decode.send_octets(&body)
+}
+
+fn send_refusal(decode: &DecodeSocket, refusal: &TokenRefusal) -> Result<(), ChannelFault> {
+    let body = serde_json::to_vec(refusal).map_err(|_| ChannelFault::Undecodable)?;
+    decode.send_octets(&body)
+}
+
+/// A decode fault the seam cannot answer dies loudly: the fault exchange's
+/// payload shape is the open election the harness lane gathers, so until it
+/// lands, the contract's own closure rule is the signal, a closed channel
+/// with an exchange outstanding being that exchange's failure and never its
+/// success. The line on standard error is the operator's account of why.
+fn decode_fault_line(fault: &DecodeFault) -> String {
+    serde_json::json!({"decode_fault": format!("{fault:?}")}).to_string()
+}
+
+/// The cancel poll over the decode socket, per Spec section 4.3: between
+/// tokens the loop asks the channel rather than waiting on it. A cancel
+/// stops the generation at the boundary. **Any other directive polled up
+/// mid-flight is out of order for a seam with a generation outstanding and
+/// is refused right here, not queued**, which is where the contract's
+/// mid-generation cases live in a serial service. A channel fault mid-flight
+/// marks the poll fatal: the generation stops, and the phase dies after the
+/// outstanding exchange closes.
+struct SeamCancel<'a> {
+    socket: &'a DecodeSocket,
+    cancelled: bool,
+    fatal: bool,
+}
+
+impl CancelPoll for SeamCancel<'_> {
+    fn cancelled(&mut self) -> bool {
+        loop {
+            match self.socket.try_recv_octets() {
+                Ok(None) => return false,
+                Ok(Some(frame)) => match serde_json::from_slice::<TokenDirective>(&frame) {
+                    Ok(TokenDirective::Cancel { .. }) => {
+                        self.cancelled = true;
+                        return true;
+                    }
+                    Ok(_) => {
+                        if send_refusal(self.socket, &TokenRefusal::OutOfOrder).is_err() {
+                            self.fatal = true;
+                            return true;
+                        }
+                    }
+                    Err(_) => {
+                        self.fatal = true;
+                        return true;
+                    }
+                },
+                Err(_) => {
+                    self.fatal = true;
+                    return true;
+                }
+            }
+        }
+    }
+}
+
+/// What stands once the open exchange succeeds: the session and the two
+/// family facts every later exchange reads.
+struct OpenedSession<'r> {
+    session: Session<'r>,
+    template: &'static str,
+    terminator: TokenId,
+}
+
+/// The measurement, rendered by this organ to the shape the trace's model
+/// events accept, per the custody rule: the trace owns the boxes, the organ
+/// owns the contents, and conformance is the harness's to check at the
+/// submit call. The blocks carry the declared label vocabulary of Spec
+/// section 6, the turn's delta being the one span this measurement covers.
+fn render_measurement(
+    resident: &Resident,
+    input_tokens: &[TokenId],
+    generated: &weaver_spu::decoder::session::Generated,
+    delta_text_len: usize,
+) -> String {
+    let entropy: Vec<f64> = generated
+        .signals
+        .entropy_bits
+        .as_ref()
+        .map(|bits| bits.iter().map(|b| f64::from(*b)).collect())
+        .unwrap_or_default();
+    let surprisal: Vec<f64> = generated
+        .signals
+        .surprisal_bits
+        .as_ref()
+        .map(|bits| bits.iter().map(|b| f64::from(*b)).collect())
+        .unwrap_or_default();
+    serde_json::json!({
+        "model": resident.artifact.display().to_string(),
+        "weights_hash": resident.weights_hash.0,
+        "input_tokens": input_tokens.iter().map(|t| t.0).collect::<Vec<u32>>(),
+        "output_tokens": generated.tokens.iter().map(|t| t.0).collect::<Vec<u32>>(),
+        "blocks": [{"label": "turn-delta", "start": 0, "end": delta_text_len as u64}],
+        "entropies": entropy,
+        "surprisals": surprisal,
+        "timings": {
+            "prefill_ns": generated.prefill_ns.to_string(),
+            "decode_ns": generated.decode_ns.to_string(),
+        },
+    })
+    .to_string()
+}
+
+/// The decode phase, entered once residency confirms and served until the
+/// harness closes its decode end, which is the session ending with the run
+/// rather than a fault. The lifecycle seam is silent between admit and
+/// release by both contracts' ordering, so this phase owns the process until
+/// the channel closes clean and the release path resumes on the other seam.
+fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
+    let mut position = DecodePosition::BeforeOpen;
+    let mut opened: Option<OpenedSession<'_>> = None;
+
+    loop {
+        let frame = match decode.recv_octets() {
+            Ok(frame) => frame,
+            Err(ChannelFault::Closed) => return Ok(()),
+            Err(fault) => {
+                eprintln!("{}", fault_line(&fault));
+                return Err(());
+            }
+        };
+        let directive: TokenDirective = match serde_json::from_slice(&frame) {
+            Ok(directive) => directive,
+            Err(_) => {
+                // Below the exchange layer, per Spec section 9: octets that
+                // are not a directive are not a message, and a channel this
+                // process cannot read faithfully is one it stops serving.
+                eprintln!("{}", fault_line(&ChannelFault::Undecodable));
+                return Err(());
+            }
+        };
+
+        // The order is judged before the session is reached. The residency is
+        // confirmed by construction here: this phase is entered on admit.
+        if let Some(refusal) = judge_decode(position, true, &directive) {
+            if send_refusal(decode, &refusal).is_err() {
+                return Err(());
+            }
+            continue;
+        }
+
+        match directive {
+            TokenDirective::Open { messages, .. } => {
+                let declaration = match family::lookup(&resident.header.family) {
+                    Ok(declaration) => declaration,
+                    Err(_) => {
+                        // The family was judged at admit, so a miss here is
+                        // the process's own incoherence rather than an ask.
+                        eprintln!(
+                            "{}",
+                            serde_json::json!({"decode_fault": "family lost after admit"})
+                        );
+                        return Err(());
+                    }
+                };
+                let prefix_text = match render_messages(declaration.template, &messages) {
+                    Ok(text) => text,
+                    Err(refusal) => {
+                        if send_refusal(decode, &refusal).is_err() {
+                            return Err(());
+                        }
+                        continue;
+                    }
+                };
+                let knobs = frozen_knobs();
+                let outcome =
+                    resident
+                        .open_session(&knobs, CONTEXT_CAPACITY)
+                        .and_then(|mut session| {
+                            let prefix = resident.tokenize(&prefix_text)?;
+                            session.open(&prefix)?;
+                            let terminator = resident.terminator()?;
+                            Ok(OpenedSession {
+                                session,
+                                template: declaration.template,
+                                terminator,
+                            })
+                        });
+                match outcome {
+                    Ok(standing) => {
+                        opened = Some(standing);
+                        position = DecodePosition::AtRest;
+                        if send_answer(decode, &TokenAnswer::Opened).is_err() {
+                            return Err(());
+                        }
+                    }
+                    Err(fault) => {
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                }
+            }
+
+            TokenDirective::AppendAndGenerate { delta, tunable, .. } => {
+                // All knobs are frozen in this binary and the engine takes
+                // its knobs at open, so a supplied value is an ask this seam
+                // cannot serve, per the dispositions above.
+                if !tunable.is_empty() {
+                    if send_refusal(decode, &TokenRefusal::MalformedDelta).is_err() {
+                        return Err(());
+                    }
+                    continue;
+                }
+                let standing = opened.as_mut().expect("at rest implies an open session");
+                let delta_text = match render_messages(standing.template, &delta) {
+                    Ok(text) => text,
+                    Err(refusal) => {
+                        if send_refusal(decode, &refusal).is_err() {
+                            return Err(());
+                        }
+                        continue;
+                    }
+                };
+                let delta_tokens = match resident.tokenize(&delta_text) {
+                    Ok(tokens) => tokens,
+                    Err(fault) => {
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                };
+                let stop = StopCondition {
+                    stop_tokens: vec![standing.terminator],
+                    terminator: standing.terminator,
+                    max_tokens: MAX_TOKENS_PER_TURN,
+                };
+                let mut cancel = SeamCancel {
+                    socket: decode,
+                    cancelled: false,
+                    fatal: false,
+                };
+                let generated =
+                    match standing
+                        .session
+                        .append_and_generate(&delta_tokens, &stop, &mut cancel)
+                    {
+                        Ok(generated) => generated,
+                        Err(DecodeFault::Overflow {
+                            resident,
+                            requested,
+                            capacity,
+                        }) => {
+                            let refusal = TokenRefusal::Overflow {
+                                resident: resident as u64,
+                                requested: requested as u64,
+                                capacity: capacity as u64,
+                            };
+                            if send_refusal(decode, &refusal).is_err() {
+                                return Err(());
+                            }
+                            continue;
+                        }
+                        Err(fault) => {
+                            eprintln!("{}", decode_fault_line(&fault));
+                            return Err(());
+                        }
+                    };
+                if cancel.fatal {
+                    eprintln!("{}", fault_line(&ChannelFault::Undecodable));
+                    return Err(());
+                }
+                let emission = match resident.detokenize(&generated.tokens) {
+                    Ok(text) => text,
+                    Err(fault) => {
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                };
+                let finish = match generated.stopped {
+                    Stopped::Complete => Finish::Completed,
+                    Stopped::Cancelled | Stopped::CapacityReached => Finish::Stopped,
+                };
+                let measurement =
+                    render_measurement(resident, &delta_tokens, &generated, delta_text.len());
+                let measurement = match serde_json::value::RawValue::from_string(measurement) {
+                    Ok(raw) => raw,
+                    Err(_) => {
+                        eprintln!(
+                            "{}",
+                            serde_json::json!({"decode_fault": "measurement did not render"})
+                        );
+                        return Err(());
+                    }
+                };
+                let answer = TokenAnswer::Generated(Generation {
+                    emission,
+                    finish,
+                    measurement,
+                });
+                if send_answer(decode, &answer).is_err() {
+                    return Err(());
+                }
+                // A cancel that stopped this generation is its own exchange
+                // and closes second: the outstanding append answers with the
+                // partial output marked stopped, then the cancel answers at
+                // rest, per the contract's section 2.
+                if cancel.cancelled && send_answer(decode, &TokenAnswer::AtRest).is_err() {
+                    return Err(());
+                }
+            }
+
+            TokenDirective::Cancel { .. } => {
+                // At rest, a cancel answers at rest: a clean close rather
+                // than a refusal, the operator's intent satisfied by the
+                // state either way.
+                if send_answer(decode, &TokenAnswer::AtRest).is_err() {
+                    return Err(());
+                }
+            }
+
+            TokenDirective::Flush => {
+                let standing = opened.as_mut().expect("at rest implies an open session");
+                match standing.session.flush() {
+                    Ok(()) => {
+                        if send_answer(decode, &TokenAnswer::Flushed).is_err() {
+                            return Err(());
+                        }
+                    }
+                    Err(fault) => {
+                        // A failed flush closes the session, and a session
+                        // this process cannot restore to its fixed outcome is
+                        // a service it stops providing.
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn main() -> ExitCode {
     // Entry adopts both ends and performs its two sets before the first read.
     // A refusal here is a refusal to serve: the count check failing means the
@@ -152,10 +555,6 @@ fn entry_refusal_line(fault: &EntryFault) -> String {
 /// The one loop. One directive at a time against one resident session.
 fn serve(inherited: Inherited) -> ExitCode {
     let Inherited { lifecycle, decode } = inherited;
-    // The decode socket is held for the decode submodule's exchanges. It is
-    // bound to this scope so that its close is this process's exit rather than
-    // an earlier drop.
-    let _decode = decode;
 
     let mut residency = Residency::new();
     let mut position = SeamPosition::BeforeAdmit;
@@ -179,8 +578,20 @@ fn serve(inherited: Inherited) -> ExitCode {
         };
 
         let payload = dispatch(&mut position, &mut residency, &envelope);
+        let admitted_now = matches!(payload, Payload::Answer(LifecycleAnswer::Admitted));
         if answer(&lifecycle, envelope.exchange, payload).is_err() {
             return ExitCode::FAILURE;
+        }
+        if admitted_now {
+            // The residency stands, so the decode phase owns the process
+            // until the harness closes its decode end, the session ending
+            // with the run. The lifecycle seam is silent between admit and
+            // release by both contracts' ordering, and the release arrives
+            // here once the phase returns clean.
+            let resident = residency.resident().expect("the admit just confirmed");
+            if serve_decode(&decode, resident).is_err() {
+                return ExitCode::FAILURE;
+            }
         }
     }
 }

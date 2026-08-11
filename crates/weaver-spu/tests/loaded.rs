@@ -260,7 +260,7 @@ mod seam_success {
         let _device = device_lock();
 
         let (lifecycle, child_lifecycle) = seqpacket_pair();
-        let (_decode, child_decode) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
         let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
         // The streams go to a file rather than pipes: llama.cpp writes model
         // metadata to stderr during the load, nothing here drains a pipe until
@@ -305,6 +305,12 @@ mod seam_success {
         );
         assert_eq!(admitted.exchange.ordinal, 1);
 
+        // The decode end closes before the release is asked: once the admit
+        // confirms, the worker's decode phase owns it until the channel ends,
+        // per the serve loop's one-loop rule, so a release sent while the
+        // decode end stands would wait behind a phase that never returns.
+        drop(decode_parent);
+
         let released = ask(&lifecycle, 2, LifecycleDirective::Release);
         assert_eq!(
             released.payload,
@@ -319,6 +325,139 @@ mod seam_success {
             30,
             &format!(
                 "admit_then_release_round_trips, child stderr at {}",
+                log_path.display()
+            ),
+        );
+        assert!(status.success(), "and the process exits clean");
+        std::fs::remove_file(&log_path).ok();
+    }
+
+    /// **The seam serves, end to end:** an open renders and makes the prefix
+    /// resident, an append renders the turn, generates against the real
+    /// engine, and answers with the generation and its measurement, a flush
+    /// returns the session to its prefix, and the whole conversation crosses
+    /// the real decode socket as the trio's JSON. This is the decode seam's
+    /// service act watched whole, per `weaver-harness-spu-decode-contract`
+    /// section 2 and `weaver-spu-Spec` section 9.
+    #[test]
+    fn an_opened_session_generates_across_the_decode_seam() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP an_opened_session_generates: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP an_opened_session_generates: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-decode-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: SpuInstruction {
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                    },
+                },
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+
+        let message = |text: &str| Message {
+            role: Role::User,
+            content: vec![ContentBlock::Text { text: text.into() }],
+        };
+        let send = |directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+        let recv = || -> TokenAnswer {
+            let frame = decode.recv_octets().expect("an answer arrives");
+            serde_json::from_slice(&frame).expect("the answer parses")
+        };
+
+        send(&TokenDirective::Open {
+            session: SessionId("s-1".into()),
+            messages: vec![message("You answer in as few words as possible.")],
+        });
+        assert_eq!(recv(), TokenAnswer::Opened, "the session opens");
+
+        send(&TokenDirective::AppendAndGenerate {
+            turn: TurnKey("t-1".into()),
+            delta: vec![message("Say one word.")],
+            tunable: Default::default(),
+        });
+        let answer = recv();
+        let TokenAnswer::Generated(generation) = answer else {
+            panic!("the append answers with the generation, got {answer:?}");
+        };
+        assert!(
+            !generation.emission.is_empty(),
+            "a real model said something"
+        );
+        let measurement: serde_json::Value =
+            serde_json::from_str(generation.measurement.get()).expect("the measurement is JSON");
+        assert_eq!(
+            measurement["blocks"][0]["label"], "turn-delta",
+            "the block carries the declared label"
+        );
+        assert!(
+            measurement["output_tokens"]
+                .as_array()
+                .is_some_and(|tokens| !tokens.is_empty()),
+            "the tokens out are in the measurement"
+        );
+        assert!(
+            measurement["timings"]["decode_ns"].is_string(),
+            "the timings ride the decimal-string rule"
+        );
+
+        send(&TokenDirective::Flush);
+        assert_eq!(
+            recv(),
+            TokenAnswer::Flushed,
+            "the flush reaches its outcome"
+        );
+
+        drop(decode);
+        let released = ask(&lifecycle, 2, LifecycleDirective::Release);
+        assert_eq!(released.payload, Payload::Answer(LifecycleAnswer::Released));
+
+        drop(lifecycle);
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!(
+                "the served worker exits, child stderr at {}",
                 log_path.display()
             ),
         );
