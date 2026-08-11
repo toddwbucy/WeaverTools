@@ -31,6 +31,18 @@ tree, gitignored by design, so it is reachable from a fresh session here and
 absent from a fresh checkout: where it and this snapshot disagree, the newer
 of the two is the finding.
 
+**Added 2026-08-11, after this handoff merged: the reasoning-loop boundary is
+ratified and landed.** The criterion, its finding, the IS and IS NOT, the
+verification placement, and the figure stand at `docs/project/` beside this
+document, and the lane works inside them. What they change for this act is
+nothing and the reading order is longer: the act ships no tooling, the four
+questions of section 4 stand as asked, and the leave-path repair, the model
+events, and the turn are loop-interior work the boundary bounds without
+touching. What they change around the act: tools are outside the loop without
+exception, so no answer to any question below may introduce an in-loop tool
+path, and the corrections the ratification forces are registered at issues
+115 and 116, gating the tool workflow and nothing here.
+
 ## 1. What the harness already holds
 
 More than the section 7 summary suggests. `weaver-harness` already creates the
@@ -207,3 +219,6 @@ CodeRabbit and the operator as the checks, stated rather than slid past.
 9. `docs/project/open-items.md`, the working list, gitignored by design:
    present on this workshop's tree and absent from a fresh checkout, which is
    why section 0 carries the dated snapshot.
+10. `docs/project/reasoning-loop-boundary.md` and its companions, added
+    2026-08-11: the ratified criterion the lane works inside, read for frame
+    rather than for mechanics, the act itself shipping no tooling.
