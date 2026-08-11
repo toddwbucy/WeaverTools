@@ -4,6 +4,13 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-10, second of that date, the seam service act. Section 6
+declares the partition's label vocabulary on the operator's ruling of this
+date: the organ originates the service so the organ declares, the names are
+functionally descriptive, `identity-prefix` and `turn-delta` being what the
+render produces today, and consistency is the binding property, a new span
+kind arriving with the act that renders it. No record moves, the declaration
+riding the partition's existing assertion.
 **Revised:** 2026-08-10, the route act. Section 7 reads the election from the
 SPU instruction beside the binding rather than from the binding, per
 `weaver-types-Spec` section 2 and the corrected charter section 13.7. The
@@ -1063,6 +1070,22 @@ and a consumer joining text to tokens has no gap to guess at. The row's
 membership is the charter's and takes no record. The offsets invariant does,
 and it is review's by non-purchase, an assertion over one rendered prompt
 needing no device.
+
+**The partition's spans are labelled, and this crate declares the labels, per
+the operator's ruling of 2026-08-10.** The organ originates the service, so the
+organ declares the vocabulary, and the trace's block takes what the organ
+declares with the harness converting nothing and inventing nothing. The names
+are functionally descriptive, saying what a span does in the render, and the
+declared set is what the render produces today and nothing more:
+`identity-prefix`, the session's rendered prefix from the open exchange's
+messages, and `turn-delta`, one span per appended turn in append order. **The
+binding property is consistency rather than the set:** the same span kind
+carries the same label in every measurement this seam ever emits, and a new
+span kind arrives with the act that renders it, named in this list in the same
+act, so a label appearing in a measurement and absent here is a defect in one
+of them. The declaration rides the partition's existing record: what the
+labels are is stated here, and that the partition they label covers exactly is
+the assertion above.
 
 ```graph
 node: spu-prompt-partition-covers-exactly
