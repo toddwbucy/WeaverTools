@@ -530,6 +530,7 @@ mod tests {
                     max_tokens: 8,
                 },
                 &mut NeverCancels,
+                &mut |_| {},
             )
             .expect("the generation runs");
 

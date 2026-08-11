@@ -82,6 +82,7 @@ fn instruction() -> SpuInstruction {
         decoder: DecoderInstruction {
             model_binding: binding(),
             residual_readout_election: false,
+            identity: vec![],
         },
     }
 }

@@ -290,6 +290,16 @@ pub enum TokenDirective {
 #[serde(tag = "kind", content = "body", rename_all = "snake_case")]
 pub enum TokenAnswer {
     Opened,
+    /// The stream's intermediate, per the contract's section 2 as of the
+    /// streaming ruling: any number cross before the close and none closes
+    /// the exchange, which stays `Generated`'s alone. The identifier is a
+    /// bare `u32` because the wire's numbers are, and the piece is the
+    /// family's rendering that became emittable at this token, which is the
+    /// same text a consumer accumulating pieces holds as the emission grows.
+    Token {
+        token: u32,
+        piece: String,
+    },
     Generated(Generation),
     AtRest,
     Flushed,
@@ -325,6 +335,11 @@ pub enum TokenRefusal {
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
+    /// The rendered prompt as the family library produced it, spliced beside
+    /// the measurement rather than inside it: one spliced member per record
+    /// box, this one bound for the request event's `rendered`, per
+    /// `weaver-types-Spec` section 4.4 as of the streaming ruling.
+    pub rendered: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
 }
 
@@ -332,6 +347,7 @@ impl PartialEq for Generation {
     fn eq(&self, other: &Self) -> bool {
         self.emission == other.emission
             && self.finish == other.finish
+            && self.rendered.get() == other.rendered.get()
             && self.measurement.get() == other.measurement.get()
     }
 }

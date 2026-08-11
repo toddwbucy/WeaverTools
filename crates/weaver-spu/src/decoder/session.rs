@@ -215,6 +215,7 @@ impl<'a> Session<'a> {
         delta: &[TokenId],
         stop: &StopCondition,
         cancel: &mut dyn CancelPoll,
+        on_token: &mut dyn FnMut(TokenId),
     ) -> Result<Generated, DecodeFault> {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
@@ -303,6 +304,11 @@ impl<'a> Session<'a> {
                 None => signals.abandon(),
             }
             produced.push(token);
+            // **The stream fires for every retained token and no other**, per
+            // the contract's coherence guarantee: the stop token is drawn and
+            // not retained, so it is not streamed, and the close's account is
+            // exactly the streamed sequence.
+            on_token(token);
             if let Err(fault) = self.backend.decode_at(&[token], self.resident_len) {
                 return Err(self.poison(fault));
             }
@@ -517,6 +523,7 @@ mod tests {
                     max_tokens: 8,
                 },
                 &mut NeverCancels,
+                &mut |_| {},
             )
             .expect("the generation runs");
 
@@ -561,6 +568,7 @@ mod tests {
                     max_tokens: 8,
                 },
                 &mut NeverCancels,
+                &mut |_| {},
             )
             .expect("the generation runs");
 
@@ -662,7 +670,7 @@ mod tests {
         let mut cancel = NeverCancels;
 
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("first turn");
         let after_first = session.resident_len();
         assert!(
@@ -672,7 +680,7 @@ mod tests {
 
         let before = log.borrow().decoded.len();
         session
-            .append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel)
+            .append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("second turn");
 
         let (tokens, position) = log.borrow().decoded[before].clone();
@@ -692,7 +700,7 @@ mod tests {
         let mut seen = session.resident_len();
         for delta in [TokenId(3), TokenId(4), TokenId(5)] {
             session
-                .append_and_generate(&[delta], &stop_at(50), &mut cancel)
+                .append_and_generate(&[delta], &stop_at(50), &mut cancel, &mut |_| {})
                 .expect("a turn");
             assert!(
                 session.resident_len() > seen,
@@ -712,7 +720,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(99)], 128);
         let mut cancel = NeverCancels;
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("a turn");
         assert_eq!(generated.stopped, Stopped::Complete);
         assert_eq!(
@@ -734,7 +742,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("a cancelled turn");
         assert_eq!(generated.stopped, Stopped::Cancelled);
         assert_eq!(
@@ -756,7 +764,7 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("a cancelled turn");
         assert_eq!(
             generated.tokens,
@@ -783,6 +791,7 @@ mod tests {
             ],
             &stop_at(50),
             &mut cancel,
+            &mut |_| {},
         );
         match refusal {
             Err(DecodeFault::Overflow {
@@ -808,7 +817,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("a turn");
         session.flush().expect("flush");
         assert_eq!(session.resident_len(), session.prefix_len());
@@ -841,7 +850,7 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("a turn");
         let grown = session.resident_len();
         assert_eq!(
@@ -872,7 +881,7 @@ mod tests {
         assert!(session.flush().is_err(), "the flush reports its failure");
         let mut cancel = NeverCancels;
         assert_eq!(
-            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel),
+            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}),
             Err(DecodeFault::NotOpen),
             "the session no longer serves"
         );
@@ -894,12 +903,12 @@ mod tests {
         let mut cancel = NeverCancels;
         assert!(
             session
-                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel)
+                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
                 .is_err(),
             "the fault surfaces"
         );
         assert_eq!(
-            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel),
+            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}),
             Err(DecodeFault::NotOpen),
             "and the session no longer serves"
         );

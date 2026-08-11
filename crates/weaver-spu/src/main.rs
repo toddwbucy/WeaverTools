@@ -424,33 +424,61 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                     cancelled: false,
                     fatal: false,
                 };
-                let generated =
-                    match standing
-                        .session
-                        .append_and_generate(&delta_tokens, &stop, &mut cancel)
-                    {
-                        Ok(generated) => generated,
-                        Err(DecodeFault::Overflow {
-                            resident,
-                            requested,
-                            capacity,
-                        }) => {
-                            let refusal = TokenRefusal::Overflow {
-                                resident: resident as u64,
-                                requested: requested as u64,
-                                capacity: capacity as u64,
-                            };
-                            if send_refusal(decode, &refusal).is_err() {
-                                return Err(());
-                            }
-                            continue;
+                // **The stream, per the contract's section 2**: each retained
+                // token crosses as it is drawn. The pieces ride a pending
+                // buffer because a byte-pair vocabulary splits characters
+                // across tokens: a batch that does not yet decode to text
+                // waits for the token that completes it, and the piece that
+                // then crosses is the rendering that became emittable at this
+                // token, per `weaver-types-Spec` section 4.4. A send the
+                // socket refuses marks the stream fatal and the phase dies
+                // after the exchange, closure being the contract's signal.
+                let stream_fatal = std::cell::Cell::new(false);
+                let mut pending: Vec<TokenId> = Vec::new();
+                let mut on_token = |token: TokenId| {
+                    if stream_fatal.get() {
+                        return;
+                    }
+                    pending.push(token);
+                    if let Ok(piece) = resident.detokenize(&pending) {
+                        pending.clear();
+                        let frame = TokenAnswer::Token {
+                            token: token.0,
+                            piece,
+                        };
+                        if send_answer(decode, &frame).is_err() {
+                            stream_fatal.set(true);
                         }
-                        Err(fault) => {
-                            eprintln!("{}", decode_fault_line(&fault));
+                    }
+                };
+                let generated = match standing.session.append_and_generate(
+                    &delta_tokens,
+                    &stop,
+                    &mut cancel,
+                    &mut on_token,
+                ) {
+                    Ok(generated) => generated,
+                    Err(DecodeFault::Overflow {
+                        resident,
+                        requested,
+                        capacity,
+                    }) => {
+                        let refusal = TokenRefusal::Overflow {
+                            resident: resident as u64,
+                            requested: requested as u64,
+                            capacity: capacity as u64,
+                        };
+                        if send_refusal(decode, &refusal).is_err() {
                             return Err(());
                         }
-                    };
-                if cancel.fatal {
+                        continue;
+                    }
+                    Err(fault) => {
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                };
+                if cancel.fatal || stream_fatal.get() {
                     eprintln!("{}", fault_line(&ChannelFault::Undecodable));
                     return Err(());
                 }
@@ -477,9 +505,25 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                         return Err(());
                     }
                 };
+                // The rendered prompt splices beside the measurement, one
+                // member per record box, per the streaming ruling: this one
+                // is bound for the request event's rendered.
+                let rendered = match serde_json::value::RawValue::from_string(
+                    serde_json::json!(delta_text).to_string(),
+                ) {
+                    Ok(raw) => raw,
+                    Err(_) => {
+                        eprintln!(
+                            "{}",
+                            serde_json::json!({"decode_fault": "rendered did not render"})
+                        );
+                        return Err(());
+                    }
+                };
                 let answer = TokenAnswer::Generated(Generation {
                     emission,
                     finish,
+                    rendered,
                     measurement,
                 });
                 if send_answer(decode, &answer).is_err() {
@@ -738,6 +782,7 @@ mod tests {
             decoder: DecoderInstruction {
                 model_binding: binding(),
                 residual_readout_election: false,
+                identity: vec![],
             },
         }
     }
