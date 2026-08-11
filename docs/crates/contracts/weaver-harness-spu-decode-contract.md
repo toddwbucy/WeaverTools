@@ -8,6 +8,16 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-11, the seam streams, per the operator's ruling of this
+date. The append-and-generate exchange carries each token as an intermediate
+message as it is drawn, the identifier and its rendered piece, none closing
+the exchange, and the answer closes as it always did with the generation
+whole. The close gains the rendered prompt as the family library produced
+it, beside the measurement rather than inside it, one spliced member per
+record box, which is the record's request side gaining its wire source.
+Section 3 orders the intermediates before the answer, section 4's supplies
+follow, and the guarantee lands that the stream and the close never disagree
+about what was drawn. The stream changes the rhythm and not the record.
 **Document ID:** `weaver-harness-spu-decode-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -121,17 +131,29 @@ turn's context per apex section 5.2, the turn's delta as canonical
 messages under the same framing ruling, and the turn's sampling values
 for whatever knobs the binary left operator-tunable, per the dispositions
 of `weaver-spu-PRD` section 13.8. The SPU appends the delta at the
-resident end, generates, and answers with the generation and its
-measurement: the token identifiers, the per-token signals, the timings,
-the template identity, the block partition, and, where the residency was
-admitted with readout elected, the residual reductions. The answer closes
-the exchange and the turn's context returns with it.
+resident end and generates, **and the exchange streams as it does**, per
+the operator's ruling of 2026-08-11: each token crosses as it is drawn,
+an intermediate message carrying the token's identifier and its rendered
+piece, any number of them and possibly none, ordered, and none closing
+the exchange. The answer closes the exchange as it always did, carrying
+the generation whole, the rendered prompt as the family library produced
+it, beside the measurement rather than inside it because each splices
+into its own box of the record, and its measurement: the token
+identifiers, the per-token signals, the timings, the template identity,
+the block partition, and, where the residency was admitted with readout
+elected, the residual reductions. **The stream changes the seam's rhythm
+and not the record's
+shape**: the emission and the measurement arrive whole at the close, so a
+consumer that ignores every intermediate message reads the exchange
+exactly as the batch seam read. The answer closes the exchange and the
+turn's context returns with it.
 
 **Cancel.** Opened by the harness while a generation is in flight,
 carrying the turn's context and nothing else. The generation stops at the
 next token boundary, the session is left well-framed with the family's
 turn terminator resident, and the outstanding append-and-generate answers
-with the partial output marked stopped. A cancel with nothing in flight
+with the partial output marked stopped, the tokens already streamed
+standing and the close accounting every one of them. A cancel with nothing in flight
 answers at rest, a clean close rather than a refusal, the same shape the
 stop exchange takes on the coordination seam.
 
@@ -168,7 +190,8 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
 - Flush is valid only between turns. A flush while a generation is in
   flight is refused, the cancel existing for exactly that case.
 - The fault report may open at any time after the session opens.
-- Messages within one exchange are ordered.
+- Messages within one exchange are ordered, and the intermediate token
+  messages of append-and-generate all precede its answer.
 - An answer to append-and-generate arrives only after the session is
   well-framed for the next turn, stopped or complete alike, so the
   harness may rely on the session's coherence without inspecting it.
@@ -194,9 +217,10 @@ what answers carry. That what it receives it authors faithfully, the
 verbatim emission and the canonical parse both reaching the record, per
 the operator's end-to-end requirement.
 
-**The SPU supplies** the opened confirmation, each generation with its
-measurement and elected reductions, the stopped partials, the flush
-confirmation, the typed refusals, and the fault reports.
+**The SPU supplies** the opened confirmation, the token stream as each is
+drawn, each generation with its measurement and elected reductions, the
+stopped partials, the flush confirmation, the typed refusals, and the
+fault reports.
 
 **The SPU guarantees** that the session only advances: nothing ever asks
 resident state to rewind, and the weakest family sets the rule for all.
@@ -207,7 +231,9 @@ at production time, positionally paired, absent rather than zeroed, and
 that nothing is retained after the answer: produced, reported, gone. That
 an overflow refuses, typed, and sheds nothing silently. That a refusal
 leaves the session as the directive found it. That it answers a refusal
-rather than exiting on one.
+rather than exiting on one. That every token it streamed appears in the
+close's account, so the stream and the answer never disagree about what
+was drawn.
 
 ## 5. Failure
 

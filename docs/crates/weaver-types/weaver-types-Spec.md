@@ -5,6 +5,16 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-11, the seam streams. `TokenAnswer` gains its `Token`
+case, the intermediate the decode contract's streaming ruling of this date
+enumerates, any number preceding the close and none closing, the identifier
+a bare `u32` and the piece the family's rendering of that one token.
+`Generation` gains `rendered` beside the measurement rather than inside it,
+one spliced member per record box, the review of this act having caught the
+inside placement forcing the transform the splice refuses. The decoder's
+section gains the `identity` field, the open exchange's canonical messages
+as configuration rather than history, required with an empty list
+legitimate, interior to the section with no vocabulary node moving.
 **Revised:** 2026-08-10, second of that date. The shared tagging test of section
 4.3 gains its fourth arm, identical in `weaver-traits-Spec` section 3 so the
 floor cannot drift: an enum with a variant wrapping a struct that carries a
@@ -228,6 +238,7 @@ pub struct SpuInstruction {
 pub struct DecoderInstruction {
     pub model_binding: ModelBinding,
     pub residual_readout_election: bool,
+    pub identity: Vec<weaver_traits::Message>,
 }
 
 pub enum TraceSink {
@@ -264,6 +275,19 @@ here as absent rather than carried empty, which is the near side of apex
 section 9. The no-defaulting argument below survives the nesting untouched:
 every field of the section is required, absence refuses the load, and the depth
 at which a field sits changes nothing about what its absence means.
+
+**The identity material rides the decoder's section**, resolving the open
+exchange's source per the harness handoff's first question: the canonical
+messages the identity prefix is rendered from are configuration rather than
+history, the working structure being empty at enter by construction, so the
+operator writes them, admin validates them as part of the whole parse, the
+harness carries them uninterpreted, and the SPU consumes them at the
+session's open. The field is required like every field and an empty list is
+a declaration the operator made, an agent with no identity prefix being a
+legitimate agent, where an absent field is a file unfinished. The messages
+are `weaver-traits`' `Message`, drawn rather than restated, and the field is
+representation interior to the section the way the gate instruction's access
+rule is, no vocabulary node moving.
 
 **Field names are kebab-case on disk and snake_case in Rust, which takes an
 explicit election rather than a convention.** `#[serde(rename_all = "kebab-case",
@@ -973,6 +997,7 @@ pub enum TokenDirective {
 
 pub enum TokenAnswer {
     Opened,
+    Token { token: u32, piece: String },
     Generated(Generation),
     AtRest,
     Flushed,
@@ -1019,6 +1044,7 @@ reductions where the residency was admitted with readout elected.
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
+    pub rendered: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
 }
 
@@ -1032,8 +1058,14 @@ pub enum Finish {
 `weaver-trace` states the rule it follows:** what is shaped in a crate is what no
 other crate defines. The emission and the finish are consumed here, the first
 entering the working structure as the assistant's message and the second closing
-the turn, so both are shaped. The measurement is consumed by nothing on the way
-past: it is forwarded whole into the trace's model events. **Seven of its
+the turn, so both are shaped. The measurement and the rendered prompt are
+consumed by nothing on the way past and are two members rather than one: each
+is forwarded whole into its own box, the measurement into the measurement
+event and the rendered prompt into the request event's `rendered`, because one
+spliced member per box is what keeps the splice a move and never a transform.
+A rendered prompt inside the measurement would reach a box whose accepting
+shape carries no such member, and the harness would have to open the splice to
+remove it, which is the transform the splice exists to refuse. **Seven of its
 satellites are `weaver-trace`'s** and one is `weaver-spu`'s, against a crate that
 links one internal dependency, so shaping it here would restate seven types that
 already exist with no named authority over either copy, which is the duplication
@@ -1084,6 +1116,16 @@ loop 0's.
 **A cancel with nothing in flight answers `AtRest` rather than refusing**, per
 the contract's section 2, and `Received` closes the SPU-opened fault report. Both
 are answers because neither is a failure of the ask.
+
+**The stream is a case of the answer and never a fourth type**, per the
+contract's section 2 as of the streaming ruling of 2026-08-11. `Token` is the
+intermediate: any number cross before the close, each carrying one drawn
+identifier and its rendered piece, and none closes the exchange, which stays
+`Generated`'s alone. The identifier is a bare `u32` because the wire's numbers
+are, the backend's own token type staying on the SPU's side of the seam, and
+the piece is the family's rendering of that one token, so a consumer
+accumulating pieces holds the emission as it grows and a consumer ignoring
+every intermediate reads the seam the batch way.
 
 **The encoding stays deferred and the deferral is the encoding's alone.** The
 hot-path measurement elects it, per section 4.3's boundary rule and

@@ -4,6 +4,10 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-11, the seam streams. `poll` joins the OS surface of
+section 2.4, the wait against many that hears the stop while a generation
+streams, with the no-runtime election standing untouched and the declined
+rotation's grounds recorded beside the election.
 **Revised:** 2026-08-10, the route act. The enter directive and the admit
 exchange carry the SPU instruction rather than the bare binding, per
 `weaver-types-Spec` section 2, the readout election riding it uninterpreted
@@ -573,8 +577,9 @@ to: harness-no-path-taken
 
 **The OS crate is `nix`, and the ground is that descriptor custody is this
 crate's central obligation.** The mechanics above are `socketpair`, `recvmsg`
-with control messages, `fcntl`, `fork`, `dup2`, `execve`, and the dumpable
-`prctl`, and `nix` covers that surface over the standard library's owned
+with control messages, `fcntl`, `fork`, `dup2`, `execve`, the dumpable
+`prctl`, and `poll` as of the streaming ruling of 2026-08-11, and `nix`
+covers that surface over the standard library's owned
 descriptor types, so a descriptor's ownership is a compile property and a leak
 is a type error rather than an integer left behind. Raw `libc` is the old
 tree's answer and puts unsafe integer descriptors at the exact seam whose
@@ -590,6 +595,17 @@ them: the manifest carries one OS crate and no `libc` or `rustix` line of this
 crate's own. The ownership the election buys is the other claim in this
 paragraph and it is a type property, so it takes the compiler under section 8's
 first sorting rather than the manifest read.
+
+**`poll` joins the surface because the seam streams, and it only waits.** The
+serve must hear the operator's stop while a generation streams token by
+token, one process against more than one channel, and `poll` is the
+primitive that sleeps against a list and wakes on the first readiness. The
+reads stay the blocking reads they are, the service stays serial with one
+exchange in flight, and the no-runtime election of section 1 stands
+untouched: this is the syscall those runtimes wrap, not the runtime that
+section refuses. A rotation of timed non-blocking peeks was weighed and
+declined, a pause between peeks being latency added to every streamed token
+and a walk that lengthens with every organ the body grows.
 
 ```graph
 node: harness-os-surface-nix
