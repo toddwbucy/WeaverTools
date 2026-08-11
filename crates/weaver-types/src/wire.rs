@@ -9,8 +9,10 @@
 //! low in volume and diagnostic in audience. The tagging follows the mechanical
 //! test the two floor Specs share: a fieldless enum is a plain renamed string,
 //! an enum whose every variant is struct-shaped or wraps a struct is internally
-//! tagged, and an enum with any variant wrapping a primitive, a sequence, or
-//! another tagged enum is adjacently tagged.
+//! tagged, an enum with any variant wrapping a primitive, a sequence, or
+//! another tagged enum is adjacently tagged, and the same arm takes a variant
+//! wrapping a struct that carries a spliced member, internal tagging buffering
+//! the read side into a shape that cannot represent pre-serialized JSON.
 //!
 //! The socket type election (`SOCK_SEQPACKET`) and the boundary obligations bind
 //! the pair-creating crates, per the Spec; this crate opens no socket and the
@@ -246,6 +248,103 @@ pub struct AgentSummary {
 /// deferral is the corpus's and code filling it would be invention.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TurnFrame {}
+
+/// The decode seam's ask, per `weaver-types-Spec` section 4.4: the cases are
+/// `weaver-harness-spu-decode-contract` section 2's five exchanges read from
+/// the harness's side, and this crate holds rather than creates them. The
+/// messages are `weaver-traits`' [`weaver_traits::Message`], drawn rather than
+/// restated. The tunable map's values must be finite, and the check is the
+/// receiver's at the point the map is read, per the Spec: a `NaN` or an
+/// infinity refuses as `MalformedDelta` rather than reaching a sampler.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum TokenDirective {
+    Open {
+        session: SessionId,
+        messages: Vec<weaver_traits::Message>,
+    },
+    AppendAndGenerate {
+        turn: TurnKey,
+        delta: Vec<weaver_traits::Message>,
+        tunable: std::collections::BTreeMap<String, f64>,
+    },
+    Cancel {
+        turn: TurnKey,
+    },
+    Flush,
+}
+
+/// The decode seam's answer, per `weaver-types-Spec` section 4.4. A cancel
+/// with nothing in flight answers `AtRest` rather than refusing, and
+/// `Received` closes the SPU-opened fault report, both being answers because
+/// neither is a failure of the ask.
+///
+/// Adjacently tagged under the spliced-member arm of section 4.3's test:
+/// `Generated` wraps the one struct in the vocabulary carrying a `RawValue`,
+/// and internal tagging was measured failing the round trip at
+/// deserialization, an invalid-type error at the splice, because the tagged
+/// content is buffered on the read side and the buffer cannot represent
+/// pre-serialized JSON. A wire type one party can write and the other cannot
+/// read is not a wire type.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", content = "body", rename_all = "snake_case")]
+pub enum TokenAnswer {
+    Opened,
+    Generated(Generation),
+    AtRest,
+    Flushed,
+    Received,
+}
+
+/// The decode seam's refusal, per `weaver-types-Spec` section 4.4: the four
+/// cases are the decode contract's section 5 and this type adds none.
+/// `OutOfOrder` is the same word loop 0's refusal carries and is not the same
+/// case, the states it is judged against being the decode seam's, which is why
+/// this trio carries its own rather than drawing loop 0's.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum TokenRefusal {
+    NotOpen,
+    OutOfOrder,
+    Overflow {
+        resident: u64,
+        requested: u64,
+        capacity: u64,
+    },
+    MalformedDelta,
+}
+
+/// What a generation answers with: shaped where the harness consumes and
+/// spliced where it forwards, per `weaver-types-Spec` section 4.4. The
+/// emission enters the working structure and the finish closes the turn, so
+/// both are shaped here. The measurement is pre-serialized JSON written in
+/// place, consumed by nothing on the way to the trace's model events, and its
+/// conformance to what those events accept is the harness's to enforce at the
+/// submit call, the splice being opaque to the compiler.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Generation {
+    pub emission: String,
+    pub finish: Finish,
+    pub measurement: Box<serde_json::value::RawValue>,
+}
+
+impl PartialEq for Generation {
+    fn eq(&self, other: &Self) -> bool {
+        self.emission == other.emission
+            && self.finish == other.finish
+            && self.measurement.get() == other.measurement.get()
+    }
+}
+
+/// How the generation ended, per `weaver-types-Spec` section 4.4.
+/// `weaver-trace` shapes its own `Finish` and the harness converts at one call
+/// site, the arrangement `SessionId` and `SessionRef` already take.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Finish {
+    Completed,
+    Stopped,
+}
 
 /// A fault report: what any organ hands the harness across whatever channel it
 /// holds.
