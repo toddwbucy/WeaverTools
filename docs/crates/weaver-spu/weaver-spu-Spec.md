@@ -4,9 +4,10 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-11, the seam streams. The measurement's row gains the
-rendered prompt as the family library produced it, the record's request side
-gaining its wire source, per the decode contract's streaming ruling of this
+**Revised:** 2026-08-11, the seam streams. The close gains the rendered
+prompt as the family library produced it, beside the measurement rather than
+inside it, one spliced member per record box, the record's request side
+gaining its wire source per the decode contract's streaming ruling of this
 date. The stream itself is the contract's and the answer type's, this
 crate's serve writing each token as it is drawn, and the seam's ordered
 state is unchanged, one generation in flight and the intermediates inside
@@ -1070,10 +1071,11 @@ to: spu-absent-shape-pinned-by-doctest
 **What travels with a generation.** The token identifiers in and out, the two
 signal vectors, the timings the charter's row names, the model identity and
 its weights hash from section 3, the template identity from the family
-library, the prompt-block partition, the rendered prompt as the family
-library produced it, per the streaming ruling of 2026-08-11, which is the
-record's request side gaining its wire source, and the residual reductions
-when elected.
+library, the prompt-block partition, the residual reductions when elected,
+and beside the measurement rather than inside it the rendered prompt as the
+family library produced it, per the streaming ruling of 2026-08-11, its own
+member of the close because it splices into the record's request box where
+the measurement splices into its own.
 The partition comes from the tokenizer's offsets, which is the salvaged
 `tokenize_with_offsets` mechanic with its invariant intact: the last offset
 equals the rendered text's length, so a partition covers the prompt exactly

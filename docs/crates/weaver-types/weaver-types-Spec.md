@@ -8,9 +8,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 **Revised:** 2026-08-11, the seam streams. `TokenAnswer` gains its `Token`
 case, the intermediate the decode contract's streaming ruling of this date
 enumerates, any number preceding the close and none closing, the identifier
-a bare `u32` and the piece the family's rendering of that one token. The
-decoder's section gains the `identity` field, the open exchange's canonical
-messages as configuration rather than history, required with an empty list
+a bare `u32` and the piece the family's rendering of that one token.
+`Generation` gains `rendered` beside the measurement rather than inside it,
+one spliced member per record box, the review of this act having caught the
+inside placement forcing the transform the splice refuses. The decoder's
+section gains the `identity` field, the open exchange's canonical messages
+as configuration rather than history, required with an empty list
 legitimate, interior to the section with no vocabulary node moving.
 **Revised:** 2026-08-10, second of that date. The shared tagging test of section
 4.3 gains its fourth arm, identical in `weaver-traits-Spec` section 3 so the
@@ -1041,6 +1044,7 @@ reductions where the residency was admitted with readout elected.
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
+    pub rendered: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
 }
 
@@ -1054,8 +1058,14 @@ pub enum Finish {
 `weaver-trace` states the rule it follows:** what is shaped in a crate is what no
 other crate defines. The emission and the finish are consumed here, the first
 entering the working structure as the assistant's message and the second closing
-the turn, so both are shaped. The measurement is consumed by nothing on the way
-past: it is forwarded whole into the trace's model events. **Seven of its
+the turn, so both are shaped. The measurement and the rendered prompt are
+consumed by nothing on the way past and are two members rather than one: each
+is forwarded whole into its own box, the measurement into the measurement
+event and the rendered prompt into the request event's `rendered`, because one
+spliced member per box is what keeps the splice a move and never a transform.
+A rendered prompt inside the measurement would reach a box whose accepting
+shape carries no such member, and the harness would have to open the splice to
+remove it, which is the transform the splice exists to refuse. **Seven of its
 satellites are `weaver-trace`'s** and one is `weaver-spu`'s, against a crate that
 links one internal dependency, so shaping it here would restate seven types that
 already exist with no named authority over either copy, which is the duplication

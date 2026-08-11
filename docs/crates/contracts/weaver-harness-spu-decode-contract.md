@@ -12,8 +12,9 @@ and neither document restates the other.
 date. The append-and-generate exchange carries each token as an intermediate
 message as it is drawn, the identifier and its rendered piece, none closing
 the exchange, and the answer closes as it always did with the generation
-whole. The measurement gains the rendered prompt as the family library
-produced it, which is the record's request side gaining its wire source.
+whole. The close gains the rendered prompt as the family library produced
+it, beside the measurement rather than inside it, one spliced member per
+record box, which is the record's request side gaining its wire source.
 Section 3 orders the intermediates before the answer, section 4's supplies
 follow, and the guarantee lands that the stream and the close never disagree
 about what was drawn. The stream changes the rhythm and not the record.
@@ -135,11 +136,13 @@ the operator's ruling of 2026-08-11: each token crosses as it is drawn,
 an intermediate message carrying the token's identifier and its rendered
 piece, any number of them and possibly none, ordered, and none closing
 the exchange. The answer closes the exchange as it always did, carrying
-the generation whole and its measurement: the token identifiers, the
-per-token signals, the timings, the template identity, the block
-partition, the rendered prompt as the family library produced it, and,
-where the residency was admitted with readout elected, the residual
-reductions. **The stream changes the seam's rhythm and not the record's
+the generation whole, the rendered prompt as the family library produced
+it, beside the measurement rather than inside it because each splices
+into its own box of the record, and its measurement: the token
+identifiers, the per-token signals, the timings, the template identity,
+the block partition, and, where the residency was admitted with readout
+elected, the residual reductions. **The stream changes the seam's rhythm
+and not the record's
 shape**: the emission and the measurement arrive whole at the close, so a
 consumer that ignores every intermediate message reads the exchange
 exactly as the batch seam read. The answer closes the exchange and the
