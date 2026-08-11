@@ -112,6 +112,15 @@ fn the_measurement_splices_and_never_quotes() {
     });
 
     let bytes = serde_json::to_string(&answer).expect("serializes");
+    let encoded: serde_json::Value = serde_json::from_str(&bytes).expect("valid JSON");
+    assert_eq!(
+        encoded["kind"], "generated",
+        "adjacently tagged under the spliced-member arm, not externally: {bytes}"
+    );
+    assert!(
+        encoded["body"]["measurement"].is_object(),
+        "the measurement nests in the adjacent body as an object: {bytes}"
+    );
     assert!(
         bytes.contains(r#""measurement":{"tokens":[151643,872]"#),
         "the measurement is a member, spliced: {bytes}"
