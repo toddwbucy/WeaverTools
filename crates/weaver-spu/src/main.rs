@@ -24,7 +24,7 @@ use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
 use weaver_types::{
     ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope,
-    Payload, Position,
+    Payload, Position, TokenDirective, TokenRefusal,
 };
 
 /// The headroom the worker's composition root supplies. A deployment fact
@@ -51,6 +51,75 @@ enum SeamPosition {
     /// Terminal. A directive of any kind arriving after a release answers
     /// `OutOfOrder`.
     Released,
+}
+
+/// The decode seam's recorded position, per Spec section 9 and
+/// `weaver-harness-spu-decode-contract` section 3. The seam holds the richer
+/// state and the same discipline: the order is judged here, before a directive
+/// reaches the session.
+///
+/// The mid-generation cases the contract names, a second append or a flush
+/// while a generation is in flight, are not positions of this machine: the
+/// service is serial, so a generation runs inside the handling of its own
+/// exchange and the only reader mid-flight is the cancel poll, which refuses
+/// what it polls up that is not a cancel. What this machine holds is the
+/// between-exchanges state.
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(not(test), allow(dead_code))]
+enum DecodePosition {
+    /// No open has arrived. Only an open is in order, and only once the
+    /// residency it serves is confirmed on the lifecycle seam.
+    BeforeOpen,
+    /// The session stands at rest. Append-and-generate, cancel answering at
+    /// rest, and flush are in order. A second open is not: the contract has
+    /// open first and once, and rewinding is what the flush is for.
+    AtRest,
+}
+
+/// The ordering judgment for the decode seam, pure and total: a refusal, or
+/// the directive is in order for the position. Judged before the session is
+/// reached, which is what makes not-queued mean anything, per Spec section 9
+/// on both seams alike.
+///
+/// The finite check rides here because this seam is the receiver:
+/// `weaver-types-Spec` section 4.4 has a `NaN` or an infinity in the tunable
+/// map refused as `MalformedDelta` at the point the map is read, a temperature
+/// that compares false against every bound being what must never reach a
+/// sampler.
+#[cfg_attr(not(test), allow(dead_code))]
+fn judge_decode(
+    position: DecodePosition,
+    residency_confirmed: bool,
+    directive: &TokenDirective,
+) -> Option<TokenRefusal> {
+    match (position, directive) {
+        (DecodePosition::BeforeOpen, TokenDirective::Open { .. }) => {
+            if residency_confirmed {
+                None
+            } else {
+                // Open is valid only after the residency it serves is
+                // confirmed, one contract's ordering read against the other's.
+                Some(TokenRefusal::OutOfOrder)
+            }
+        }
+        // The session is not open for the ask.
+        (
+            DecodePosition::BeforeOpen,
+            TokenDirective::AppendAndGenerate { .. }
+            | TokenDirective::Cancel { .. }
+            | TokenDirective::Flush,
+        ) => Some(TokenRefusal::NotOpen),
+        // A second open refuses rather than rewinding.
+        (DecodePosition::AtRest, TokenDirective::Open { .. }) => Some(TokenRefusal::OutOfOrder),
+        (DecodePosition::AtRest, TokenDirective::AppendAndGenerate { tunable, .. }) => {
+            if tunable.values().any(|value| !value.is_finite()) {
+                Some(TokenRefusal::MalformedDelta)
+            } else {
+                None
+            }
+        }
+        (DecodePosition::AtRest, TokenDirective::Cancel { .. } | TokenDirective::Flush) => None,
+    }
 }
 
 fn main() -> ExitCode {
@@ -434,6 +503,131 @@ mod tests {
         assert_eq!(
             dispatch(&mut position, &mut residency, &envelope),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
+        );
+    }
+
+    fn open() -> TokenDirective {
+        TokenDirective::Open {
+            session: weaver_types::SessionId("s-1".into()),
+            messages: vec![],
+        }
+    }
+
+    fn append(tunable: &[(&str, f64)]) -> TokenDirective {
+        TokenDirective::AppendAndGenerate {
+            turn: weaver_types::TurnKey("t-1".into()),
+            delta: vec![],
+            tunable: tunable
+                .iter()
+                .map(|(name, value)| (name.to_string(), *value))
+                .collect(),
+        }
+    }
+
+    /// **An open before the residency it serves is confirmed refuses and is
+    /// not queued,** per Spec section 9, one contract's ordering read against
+    /// the other's. The judgment is pure and precedes the session, so the
+    /// refusal is about the order and never about work already run.
+    ///
+    /// Perturbation: make `judge_decode` hold an early open for later and
+    /// this test fails, there being no refusal to read. Watched under exactly
+    /// that change.
+    #[test]
+    fn an_open_before_residency_refuses_and_after_it_is_in_order() {
+        assert_eq!(
+            judge_decode(DecodePosition::BeforeOpen, false, &open()),
+            Some(TokenRefusal::OutOfOrder),
+            "before residency, out of order"
+        );
+        assert_eq!(
+            judge_decode(DecodePosition::BeforeOpen, true, &open()),
+            None,
+            "after residency, in order"
+        );
+    }
+
+    /// **A directive before any open answers `NotOpen`,** the refusal case
+    /// `weaver-types-Spec` section 4.4 gives the not-open session, distinct
+    /// from the ordering refusal because the harness reads the two
+    /// differently: one says open first, the other says never.
+    #[test]
+    fn a_directive_before_any_open_answers_not_open() {
+        for directive in [
+            append(&[]),
+            TokenDirective::Cancel {
+                turn: weaver_types::TurnKey("t-1".into()),
+            },
+            TokenDirective::Flush,
+        ] {
+            assert_eq!(
+                judge_decode(DecodePosition::BeforeOpen, true, &directive),
+                Some(TokenRefusal::NotOpen),
+                "{directive:?} before any open"
+            );
+        }
+    }
+
+    /// **A second open refuses rather than rewinding,** per the contract's
+    /// open-first-and-once, the flush being what a rewind has instead.
+    #[test]
+    fn a_second_open_refuses_rather_than_rewinding_on_the_seam() {
+        assert_eq!(
+            judge_decode(DecodePosition::AtRest, true, &open()),
+            Some(TokenRefusal::OutOfOrder)
+        );
+    }
+
+    /// **The receiver refuses a value no sampler may meet,** per
+    /// `weaver-types-Spec` section 4.4: a `NaN` or an infinity in the tunable
+    /// map is `MalformedDelta` at the point the map is read, stated as the
+    /// receiver's check so a value arriving by any later encoding meets the
+    /// same refusal.
+    ///
+    /// Perturbation: drop the finite check from `judge_decode` and this test
+    /// fails, the malformed values reading as in order. Watched under exactly
+    /// that removal.
+    #[test]
+    fn a_non_finite_tunable_refuses_as_malformed_delta() {
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            assert_eq!(
+                judge_decode(
+                    DecodePosition::AtRest,
+                    true,
+                    &append(&[("temperature", bad)])
+                ),
+                Some(TokenRefusal::MalformedDelta),
+                "{bad} must never reach a sampler"
+            );
+        }
+        assert_eq!(
+            judge_decode(
+                DecodePosition::AtRest,
+                true,
+                &append(&[("temperature", 0.7)])
+            ),
+            None,
+            "a finite value is in order"
+        );
+    }
+
+    /// At rest, a cancel and a flush are both in order for the seam: the
+    /// cancel answers at rest rather than refusing, which is the executor's
+    /// answer and not this judgment's refusal.
+    #[test]
+    fn cancel_and_flush_are_in_order_at_rest() {
+        assert_eq!(
+            judge_decode(
+                DecodePosition::AtRest,
+                true,
+                &TokenDirective::Cancel {
+                    turn: weaver_types::TurnKey("t-1".into()),
+                },
+            ),
+            None
+        );
+        assert_eq!(
+            judge_decode(DecodePosition::AtRest, true, &TokenDirective::Flush),
+            None
         );
     }
 }
