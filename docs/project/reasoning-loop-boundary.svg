@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2500 1520" width="2500" height="1520" font-family="Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="2500" height="1520" fill="#ffffff"/>
+
+  <text x="75" y="80" font-size="52" font-weight="bold" fill="#1a1a1a">WeaverTools: the semantic reasoning loop</text>
+  <text x="75" y="136" font-size="30" fill="#555555">one criterion. what directly enhances the processing of meaning sits inside and connects to the harness</text>
+
+  <text x="1930" y="46" font-size="24" font-weight="bold" fill="#555555">LEGEND</text>
+  <rect x="1930" y="66" width="52" height="36" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <text x="2000" y="95" font-size="26" fill="#333333">organ built and proven today</text>
+  <rect x="1930" y="120" width="52" height="36" fill="none" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+  <text x="2000" y="149" font-size="26" fill="#333333">organ declared, not built</text>
+  <line x1="1930" y1="192" x2="1982" y2="192" stroke="#1a1a1a" stroke-width="4"/>
+  <text x="2000" y="202" font-size="26" fill="#333333">channel in use</text>
+  <line x1="1930" y1="240" x2="1982" y2="240" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+  <text x="2000" y="250" font-size="26" fill="#333333">channel declared, not implemented</text>
+
+  <rect x="75" y="280" width="620" height="890" fill="#efefef"/>
+  <rect x="695" y="280" width="1800" height="890" fill="#f2f7ff"/>
+  <line x1="690" y1="280" x2="690" y2="1170" stroke="#b0b0b0" stroke-width="5" stroke-dasharray="14,12"/>
+
+  <rect x="130" y="390" width="210" height="105" fill="#ffffff" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+  <text x="235" y="452" font-size="30" fill="#333333" text-anchor="middle">tool</text>
+  <rect x="130" y="600" width="210" height="105" fill="#ffffff" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+  <text x="235" y="662" font-size="30" fill="#333333" text-anchor="middle">tool</text>
+  <rect x="130" y="810" width="210" height="105" fill="#ffffff" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+  <text x="235" y="872" font-size="30" fill="#333333" text-anchor="middle">tool</text>
+
+  <line x1="340" y1="442" x2="560" y2="600" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="340" y1="652" x2="560" y2="668" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="340" y1="862" x2="560" y2="760" stroke="#1a1a1a" stroke-width="4"/>
+
+  <rect x="560" y="565" width="230" height="230" fill="#ffffff" stroke="#1a1a1a" stroke-width="6"/>
+  <text x="675" y="695" font-size="40" font-weight="bold" fill="#1a1a1a" text-anchor="middle">GATE</text>
+
+  <rect x="1050" y="280" width="1100" height="890" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+  <text x="1095" y="340" font-size="38" font-weight="bold" fill="#1a1a1a">HARNESS</text>
+
+  <line x1="790" y1="680" x2="1025" y2="680" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="1025" y="655" width="50" height="50" fill="#ffffff" stroke="#1a1a1a" stroke-width="4"/>
+
+  <rect x="1375" y="400" width="450" height="180" fill="#ffffff" stroke="#1a1a1a" stroke-width="6"/>
+  <text x="1600" y="468" font-size="36" font-weight="bold" fill="#1a1a1a" text-anchor="middle">REASONING LOOP</text>
+  <text x="1600" y="516" font-size="27" fill="#555555" text-anchor="middle">holds the motive, sequences the turn</text>
+
+  <path d="M 1075 668 C 1180 660 1300 590 1375 505" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+
+  <rect x="1400" y="555" width="50" height="50" fill="#ffffff" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="1500" y="555" width="50" height="50" fill="#ffffff" stroke="#666666" stroke-width="4" stroke-dasharray="9,7"/>
+  <rect x="1620" y="555" width="50" height="50" fill="#ffffff" stroke="#666666" stroke-width="4" stroke-dasharray="9,7"/>
+  <rect x="1740" y="555" width="50" height="50" fill="#ffffff" stroke="#666666" stroke-width="4" stroke-dasharray="9,7"/>
+
+  <path d="M 1240 800 C 1300 720 1380 660 1420 608" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <path d="M 1300 800 C 1400 720 1480 660 1522 608" fill="none" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+  <text x="1352" y="712" font-size="27" fill="#333333">decode</text>
+  <text x="1500" y="690" font-size="27" fill="#666666">encode</text>
+
+  <path d="M 1600 800 C 1620 720 1640 660 1645 608" fill="none" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+  <path d="M 1960 800 C 1900 720 1820 660 1768 608" fill="none" stroke="#666666" stroke-width="4" stroke-dasharray="10,8"/>
+
+  <rect x="1090" y="800" width="300" height="210" fill="#ffffff" stroke="#1a1a1a" stroke-width="6"/>
+  <text x="1240" y="880" font-size="36" font-weight="bold" fill="#1a1a1a" text-anchor="middle">SPU</text>
+  <text x="1240" y="926" font-size="26" fill="#555555" text-anchor="middle">decoder built, encoder declared</text>
+  <text x="1240" y="964" font-size="24" fill="#2f6b3f" text-anchor="middle">minimum core</text>
+
+  <rect x="1450" y="800" width="300" height="210" fill="#ffffff" stroke="#666666" stroke-width="5" stroke-dasharray="12,9"/>
+  <text x="1600" y="880" font-size="36" font-weight="bold" fill="#333333" text-anchor="middle">MEMORY</text>
+  <text x="1600" y="926" font-size="26" fill="#555555" text-anchor="middle">reasoning over time</text>
+  <text x="1600" y="964" font-size="24" fill="#555555" text-anchor="middle">first extension</text>
+
+  <rect x="1810" y="800" width="300" height="210" fill="#ffffff" stroke="#666666" stroke-width="5" stroke-dasharray="12,9"/>
+  <text x="1960" y="872" font-size="34" font-weight="bold" fill="#333333" text-anchor="middle">PERCEPTION</text>
+  <text x="1960" y="916" font-size="26" fill="#555555" text-anchor="middle">vision, audio</text>
+  <text x="1960" y="954" font-size="24" fill="#555555" text-anchor="middle">later extension</text>
+
+  <path d="M 1825 490 C 1960 520 2060 620 2125 672" fill="none" stroke="#1a1a1a" stroke-width="4"/>
+  <rect x="2125" y="655" width="50" height="50" fill="#ffffff" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="2175" y1="680" x2="2215" y2="680" stroke="#1a1a1a" stroke-width="4"/>
+
+  <rect x="2215" y="565" width="230" height="230" fill="#ffffff" stroke="#1a1a1a" stroke-width="6"/>
+  <text x="2330" y="655" font-size="36" font-weight="bold" fill="#1a1a1a" text-anchor="middle">ADMIN</text>
+  <text x="2330" y="700" font-size="25" fill="#555555" text-anchor="middle">turns the harness on,</text>
+  <text x="2330" y="734" font-size="25" fill="#555555" text-anchor="middle">tees the trace</text>
+
+  <line x1="2330" y1="795" x2="2330" y2="880" stroke="#1a1a1a" stroke-width="4" marker-end="url(#arrow)"/>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <text x="2300" y="932" font-size="29" font-weight="bold" fill="#1a1a1a" text-anchor="middle">observability consumer</text>
+  <text x="2300" y="972" font-size="24" fill="#555555" text-anchor="middle">where faithfulness is checked</text>
+
+  <text x="385" y="1240" font-size="32" font-weight="bold" fill="#333333" text-anchor="middle">supplies material to reason over</text>
+  <text x="385" y="1284" font-size="27" fill="#666666" text-anchor="middle">reached through the gate</text>
+  <text x="385" y="1324" font-size="27" fill="#666666" text-anchor="middle">outside the loop, still part of the agent</text>
+
+  <text x="1595" y="1240" font-size="32" font-weight="bold" fill="#2f6b3f" text-anchor="middle">directly enhances the processing of meaning</text>
+  <text x="1595" y="1284" font-size="27" fill="#666666" text-anchor="middle">connects to the harness</text>
+
+  <text x="75" y="1420" font-size="26" fill="#777777">Solid organs stand today. Dashed organs are admitted by the same criterion, not by a second rule. (Bucy, 2026)</text>
+</svg>

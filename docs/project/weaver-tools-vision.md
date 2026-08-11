@@ -406,3 +406,28 @@ So this document grows as the work teaches it. Each stage that completes turns o
 of its open questions into a settled decision, and that decision moves into a PRD and
 out of here. The vision shrinks toward the built system as the built system grows
 toward the vision. When they meet, this document has done its job.
+
+## 12. The center and the shell
+
+Added 2026-08-11, on the ratification of the reasoning-loop criterion. The agent
+divides at a seam the stripping method exposed rather than any plan drew, and the
+division gives the road its shape. The reasoning loop is the center: what directly
+enhances the processing of meaning, built first because nothing else can be built
+without it. Around it is the shell, still the agent: tools including the local
+shell, durable identity written through admin, the corrective mechanisms that may
+come. The shell earns its place against its own bar, and center-first means
+built-first, never matters-more.
+
+The loop's edge is the gate, and the agent's edge is the network boundary: what
+crosses a network line is outside the agent entirely, for now and by ruling. The
+ruling reads network lines alone, and a local Unix socket crosses no boundary
+that counts, which is how a tool sits one socket away and still inside the
+agent. That crossing is what the crossings-per-decode-step measure prices as
+nearly free, so the loop calls its shell without ceremony and contains none of
+it.
+
+The reasoning loop nearing completion does not complete the agent. It is a road
+marker, the first one that runs, and the criterion that bounded it is the same
+criterion that will admit memory and perception when their acts come. What stands
+at the center today is small, proven, and deliberately incomplete, which is the
+correct state for a center.
