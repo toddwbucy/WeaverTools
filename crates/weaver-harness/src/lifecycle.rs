@@ -36,7 +36,7 @@ use std::path::PathBuf;
 use weaver_trace::{Kind, Payload, Recorder, RunOrdinal, SessionRef, Subsystem, TurnClose};
 use weaver_types::{
     ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope,
-    Position, SessionId, TurnKey,
+    Position, SessionId, TokenAnswer, TokenDirective, TurnKey,
 };
 
 use crate::authorship::Author;
@@ -413,6 +413,22 @@ impl Harness {
             after_load!(run, refusal);
         }
 
+        // **The decode session opens once residency confirms**, per
+        // `weaver-harness-Spec` section 6.1: the session opens at the enter
+        // fan-out and not at the first turn, so the interior loop 0 grants is
+        // a session at rest. The open carries the instruction's identity as
+        // its messages and the run's session as its session, read from the
+        // payload this crate already holds. A refused open is a refused enter,
+        // returned after-load so the bracket stands for the leave.
+        let spu = run.spu.as_ref().expect("residency stands");
+        if let Err(refusal) = open_session(
+            &spu.decode,
+            SessionId(run.session.0.clone()),
+            payload.spu_instruction.decoder.identity.clone(),
+        ) {
+            after_load!(run, refusal);
+        }
+
         // The gate pair is created only after the SPU's answer confirms
         // residency: one organ's readiness gates another organ's
         // construction, which neither organ can see from inside its domain.
@@ -635,6 +651,34 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
 /// nothing else". The exit status carries the same fact without adding one,
 /// and it is read here - after the exchange observed closure - where the child
 /// is already dead and there is no race to lose.
+/// Open the decode session once residency confirms, per
+/// `weaver-harness-Spec` section 6.1. The identity messages are the open's
+/// messages and the run's session its session, and a refusal or a fault below
+/// the exchange maps onto the load-refusal set the enter aggregate carries.
+fn open_session(
+    decode: &DecodeChannel,
+    session: SessionId,
+    identity: Vec<weaver_traits::Message>,
+) -> Result<(), LifecycleRefusal> {
+    decode
+        .send_directive(&TokenDirective::Open {
+            session,
+            messages: identity,
+        })
+        .map_err(|_| LifecycleRefusal::NoResidency)?;
+    match decode.recv_answer() {
+        Ok(TokenAnswer::Opened) => Ok(()),
+        // A typed refusal on the open is the session declining to stand, which
+        // the harness carries into the aggregate as the SPU unable to admit
+        // what the load asked, the decode seam's refusals having no floor
+        // lifecycle case of their own.
+        Ok(_) => Err(LifecycleRefusal::DeviceCannotAdmit),
+        // A fault below the exchange, the worker gone or the octets
+        // undecodable, is the residency lost the moment it was confirmed.
+        Err(_) => Err(LifecycleRefusal::NoResidency),
+    }
+}
+
 fn classify_organ_death(pid: nix::unistd::Pid) -> Option<LifecycleRefusal> {
     // **The wait does not block.** An organ that closed its end and kept
     // running would otherwise hold the serving thread here forever, which is

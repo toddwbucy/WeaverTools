@@ -21,4 +21,4 @@ weaver-traits = { path = "../weaver-traits" }
 weaver-types = { path = "../weaver-types", default-features = false }
 weaver-trace = { path = "../weaver-trace" }
 serde_json.workspace = true
-nix = { version = "0.31", features = ["socket", "fs", "process", "uio", "user"] }
+nix = { version = "0.31", features = ["socket", "fs", "process", "uio", "user", "poll"] }

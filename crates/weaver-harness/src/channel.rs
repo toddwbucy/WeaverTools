@@ -376,6 +376,26 @@ impl DecodeChannel {
     }
 }
 
+impl DecodeChannel {
+    /// Send one token directive as bare JSON, per the decode contract: the
+    /// seam carries the token trio and no envelope, one write one message.
+    pub fn send_directive(
+        &self,
+        directive: &weaver_types::TokenDirective,
+    ) -> Result<(), ChannelFault> {
+        let body = serde_json::to_vec(directive).map_err(|_| ChannelFault::Undecodable)?;
+        send_octets(self.end.as_fd(), &body)
+    }
+
+    /// Receive one token answer, blocking. The intermediate `Token` frames and
+    /// the closing answer arrive here alike, the caller reading until the
+    /// close, per the streaming ruling.
+    pub fn recv_answer(&self) -> Result<weaver_types::TokenAnswer, ChannelFault> {
+        let octets = recv_octets(self.end.as_fd())?;
+        serde_json::from_slice(&octets).map_err(|_| ChannelFault::Undecodable)
+    }
+}
+
 impl AsFd for DecodeChannel {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.end.as_fd()
