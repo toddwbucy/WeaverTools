@@ -4,6 +4,16 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-11, second of that date, the decode surface. Section 6.1
+charters what section 6 deferred, the exchanges, sessions, sampling, and the
+flush call: the session opens at the enter fan-out with the instruction's
+identity, the turn is loop 0's machinery granted to loop 1 which supplies the
+delta and authors nothing, the three model events author across the turn at
+the submit call, and the stop is heard mid-stream by `poll` against the decode
+channel and the coordination listener. Section 9's executor election closes in
+the negative, no runtime entering, and the surface's two shape choices are
+flagged for the operator at review. Two review assertions and one perturbation
+land under section 6.1.
 **Revised:** 2026-08-11, the seam streams. `poll` joins the OS surface of
 section 2.4, the wait against many that hears the stop while a generation
 streams, with the no-runtime election standing untouched and the declined
@@ -1227,9 +1237,11 @@ which a loop mints a port, because the ports are types these crates own. The
 decode surface a real loop needs, the exchanges, sessions, sampling, and the
 flush call, arrives with the token workflow per `weaver-spu-PRD` section 8,
 the basic loops this program ships land in their binaries by the same path as
-any builder's, and the executor election stays deferred with that workflow,
-per section 1. **The blade takes the compiler and the seam's position takes
-review.** A port is a type this crate owns with a constructor no consumer can
+any builder's, and the decode surface is chartered at section 6.1, the executor
+election closing there in the negative rather than deferring, no runtime
+entering and the serial `poll` loop serving the streaming path. **The blade takes
+the compiler and the seam's position takes review.** A port is a type this crate
+owns with a constructor no consumer can
 reach, so a loop composes against the granted surface or does not compile, which
 is the same type property section 8's sorting holds for descriptor ownership,
 elected here rather than listed there. Where the seam falls
@@ -1272,6 +1284,104 @@ tag: review
 edge: asserts
 from: weaver-harness
 to: harness-extension-seam-at-loaded-and-idle
+```
+
+### 6.1 The decode surface, chartered
+
+**This subsection closes what section 6 deferred and section 9's first election
+named**, the exchanges, sessions, sampling, and the flush call, per the operator's
+direction of 2026-08-11 that the harness half of the turn is drafted before it is
+built. What it charters is the granted surface and the seam's mechanics, never the
+loop that composes them, which stays the builder's.
+
+**The session opens at the enter fan-out and not at the first turn**, per the
+operator's ruling of 2026-08-11 answering the handoff's first question. Loop 0 opens
+the decode session as the last step of standing the interior up, after the SPU's
+admit confirms residency, so the surface loop 0 grants at loaded-and-idle is already
+a session at rest. The identity material the open carries is the decoder
+instruction's `identity` field, per `weaver-types-Spec` section 2, configuration
+the operator wrote rather than history the working structure holds, the structure
+being empty at enter by construction. The mapping is direct: the field's canonical
+messages are the open directive's `messages`, and the run's session identity is its
+`session`, so the harness reads the field from the instruction it already carries
+and constructs the open without a second source. A refused open is a refused
+enter, returned through the fan-out's after-load failure so the authored bracket
+stands for the leave to unwind, the aggregate naming the decode seam as where the
+fan-out stopped.
+
+**The turn is loop 0's machinery, granted, and loop 1 supplies the delta and
+receives the outcome.** The granted surface offers a turn call: loop 1 hands the
+turn's delta as canonical messages and receives back what the generation produced,
+the emission and its finish, and loop 1 authors nothing. Loop 0 drives the
+append-and-generate exchange, consumes the token stream, reads the close, and
+authors the record, which is the sole-writer property held where the turn runs
+rather than only where the load event is written. This is the custody model of
+`verification-placement`: loop 1 is the reasoning that supplies intent, loop 0 is
+the clerk that authors what happened, and the blade of section 6 is why the split
+falls here, a loop 1 that authored its own events reaching the trace by a route no
+seat granted. **The election flagged for the operator: the turn call authors
+internally rather than handing loop 1 a lower surface it authors over.** The ground
+is the blade and the sole-writer rule pulling the same direction, and the cost is
+that a loop wanting an unauthored generation has none, which no chartered loop wants
+and the tool workflow may reopen.
+
+**The three model events are authored across the turn, at the submit call where
+conformance is checked.** `model.request` carries the rendered prompt the answer's
+close splices, `model.output` carries the emission verbatim and its finish, and
+`model.measurement` carries the measurement the close splices, each event the
+harness authoring what the SPU rendered, the organ owning the content and the trace
+owning the boxes per the custody model. The rendered prompt and the measurement
+splice into their own boxes, one member per box per the streaming ruling, and the
+harness checks each spliced member's conformance to its event's accepting shape at
+the author call, the price the splice's opacity is paid at.
+
+**The stop is heard mid-stream by `poll`, which is why it joined the surface.**
+While a generation streams token by token, loop 0 waits against two descriptors at
+once, the decode channel for the next token and the coordination listener for an
+operator who dials to stop. `poll` sleeps against both and wakes on the first
+ready, the token read staying the blocking read it is and the service staying serial
+with one turn in flight, per section 2.4's election. A coordination dial arriving
+mid-stream is accepted and credential-checked at the accept as every dial is, and
+its directive is read without wedging the turn: the accepted connection is itself
+polled before its read, so a dialer that connects and then delays or sends nothing
+cannot hold the streaming turn hostage, and a hangup or an error on it closes the
+connection and returns the loop to the stream rather than blocking on a peer that
+left. The stop it carries cancels the turn at the decode seam, the outstanding
+generation answering with its partial output marked stopped and the tokens already
+streamed standing in the close, and the stop then
+answered on the coordination seam with the turn's fate, the announce-after-record
+discipline placing the turn-close event before the answer. **The election flagged
+for the operator: the stop multiplexes by polling the decode channel against the
+coordination listener, rather than by a second thread or a runtime.** The ground is
+section 2.4's `poll` election and the streaming ruling's rejection of the timed
+rotation, and the no-runtime rule of section 1 stands, which closes section 9's
+executor election in the negative rather than leaving it open: the streaming path
+is served by `poll` and a serial loop, and no runtime enters.
+
+```graph
+node: harness-session-opens-at-enter
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-session-opens-at-enter
+
+node: harness-turn-authors-the-model-events
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-turn-authors-the-model-events
+
+node: harness-stop-polled-during-the-stream
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-stop-polled-during-the-stream
 ```
 
 ## 7. The failure vocabulary
@@ -1563,12 +1673,15 @@ to: harness-path-shapes-pinned-by-doctest
 
 Each names what settles it, and none is this Spec's to settle alone.
 
-- **The executor.** The engine's shape closed with the token workflow's
-  acts, loop 1's seat and the decode surface it composes against both being
-  chartered, and what remains open is whether this crate takes a runtime at
-  all, deferred with the latency measurement on the decode path per
-  `weaver-traits-Spec` section 6, which may overturn section 1's no-runtime
-  rule.
+- **The executor, closed 2026-08-11 in the negative.** Loop 1's seat and the
+  decode surface it composes against are chartered at section 6.1, and the
+  runtime question they carried is answered by the streaming ruling of that
+  date: the streaming path is served by `poll` waiting against the decode
+  channel and the coordination listener, with the service serial and one turn
+  in flight, so no runtime enters and section 1's no-runtime rule stands.
+  Recorded as closed rather than deleted, this list naming what settled each
+  entry, and the latency measurement of `weaver-traits-Spec` section 6 remains
+  owed as a number rather than as a question that could reopen the rule.
 - **Stop mechanics at the decoder is closed.** The stop lands at the token
   boundary, ratified at the token workflow's charter act of 2026-08-02 and
   carried at `weaver-spu-PRD` section 13.5, with the family's turn terminator
@@ -1596,8 +1709,9 @@ Each names what settles it, and none is this Spec's to settle alone.
   enforcement point.** Blocked with `tool-trait`, per `weaver-traits-PRD`
   section 3.1.
 - **The satellite types.** `AdoptionFault`'s case set, `OrganChannel`'s
-  exchange-surface spelling, `DecodeChannel`'s and `SpuChannels`' names, the
-  licensing error's shape, and the
+  exchange-surface spelling, `SpuChannels`' name, the licensing error's shape,
+  `DecodeChannel`'s token send and receive surface, now chartered in section
+  6.1, and the
   channel-state enum's name. Identifier and shape choices with no
   cross-crate consequence, listed so what this Spec leaves to a builder is
   complete rather than implied.
