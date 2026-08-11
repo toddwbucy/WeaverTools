@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.21, 2026-08-08. Companion to the Working Rules, the Document
+**Version:** v0.22, 2026-08-10. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -365,7 +365,11 @@ move.** The 2026-08-08 rebuild found the record set almost unchanged across 28
 document commits, two assertions retagged and none added or removed, while 138 of
 242 assertions pointed at a line the document no longer held. A count check would
 have reported that graph healthy, so a matching census is not evidence a rebuild
-can be skipped.
+can be skipped. Document movement since `98c8713` has added three `draws` edges,
+the route act of 2026-08-10 drawing the election on both load seams and the
+binding on the seam that owed it from the cut, so the next rebuild expects **293
+nodes and 429 edges** where the standing graph holds 426, and the assertion
+figures do not move.
 
 The floor probe of 2026-08-04 is the evidence the entry into code rested on: a
 commissioned session with no repository access rebuilt both floor crates from the
@@ -390,25 +394,32 @@ an assertion no Spec declares:
     weaver-types      17/17      weaver-harness   48/48
     weaver-traits     24/24      weaver-gate      23/23
     weaver-trace      39/39      weaver-admin     31/31
-    weaver-spu        55/60
+    weaver-spu        56/60
 
-**The five open in `weaver-spu` are blocked rather than missed**, and the five
+**The four open in `weaver-spu` are blocked rather than missed**, and the four
 divide in two without remainder. **Two** wait on the floor carrying the decode
-seam's vocabulary, which the types charter declares and the types Spec defers.
-**Three** wait on the decode engines existing, and **one of those same three**
-additionally waits on the readout election reaching the crate, which no directive
-carries today. Two and three are the whole five, the readout one being counted
-once and carrying two blockers rather than being a sixth. The register naming
-each assertion lives in the repository's issue tracker rather than here, so this
-section states the division and leaves the roll to the register.
+seam's vocabulary, which the types charter declares and `weaver-types-Spec`
+section 4.4 now shapes whole, the trio landing 2026-08-08 and `Generation`
+settling 2026-08-10, so what these two wait on is the code act that writes the
+shaped types. **Two** wait on the readout tap existing, and the tap is not the
+engine: the eval-callback pin holds the seam open and nothing yet drives a tap
+through it, which `weaver-spu-Spec` section 7 states plainly as code this
+program writes rather than salvage it inherits. A fifth, the election refused
+at admit, was bought 2026-08-10 by the route act, the election having gained
+its wire route. The register naming each assertion lives in the repository's
+issue tracker rather than here, so this section states the division and leaves
+the roll to the register.
 
-**The decode engines are not written, and they carry no assertion of their own.**
-`weaver-spu-Spec` section 4.1's derivation refuses for both containers today,
-which the Spec states plainly, and the assertions covering that seam are about the
-derivation rather than about either engine. A crate can therefore report a high
-conformance figure while completing no turn, and the apex's demonstration is what
-distinguishes the two. Read the figure as what it is, a count of claims met, and
-not as a statement that the deliverable runs.
+**One decode engine is written and one is not, and the turn still does not
+complete.** The GGUF engine landed 2026-08-08 and decodes real weights under its
+own tests, a real forward and a real draw against a real artifact, and
+`weaver-spu-Spec` section 4.1's derivation answers for the GGUF container while
+refusing the native one, whose `native.rs` stays unwritten and undeclared. What
+no engine yet has is the seam: the decode socket's exchanges are not served, so
+no directive reaches an engine from outside its process. A crate can therefore
+report a high conformance figure while completing no turn, and the apex's
+demonstration is what distinguishes the two. Read the figure as what it is, a
+count of claims met, and not as a statement that the deliverable runs.
 
 What remains from the phase behind: G6 and then item 7, and the G2 and G5
 phase-close sweeps. The graph's expected census is stated as a number rather than
