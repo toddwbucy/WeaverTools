@@ -24,8 +24,12 @@ that makes the first complete turn reachable.
 Working Process section 7 reads 56/60 for the SPU and is one catch-up behind:
 the seam act bought `spu-out-of-order-refused-on-decode` and
 `spu-fault-below-the-exchange-layer`, both claims cleared by the operator at
-review, so the figure is 58/60 with the remaining two on the readout tap.
-`docs/project/open-items.md` carries the current numbers.
+review, so **the authoritative figure at this handoff's date is 58/60** with
+the remaining two on the readout tap, and this paragraph is the tracked
+snapshot. `docs/project/open-items.md` is the working list on this workshop's
+tree, gitignored by design, so it is reachable from a fresh session here and
+absent from a fresh checkout: where it and this snapshot disagree, the newer
+of the two is the finding.
 
 ## 1. What the harness already holds
 
@@ -160,8 +164,10 @@ adjudicates. A session states its seat before it begins.
 
 ## 6. The workshop, for a session that was not here
 
-The toolchain restores itself: `rust-toolchain.toml` pins the nightly and
-cargo fetches it on first use. The full-feature build wants the CUDA
+The toolchain needs one prerequisite, `rustup`, installed from the repos.
+Its shim reads `rust-toolchain.toml` and installs the pinned nightly with
+its two components the first time cargo runs, and cargo fetches the
+dependencies. The full-feature build wants the CUDA
 environment: `CUDA_PATH=/opt/cuda`, `PATH` prefixed with `/opt/cuda/bin`,
 `NVCC_CCBIN=/usr/bin/g++-15`, and `CMAKE_CUDA_ARCHITECTURES=86` for the
 A6000. **The host holds CCCL at 3.3.4 deliberately**: CUDA 13.3 ships CCCL
@@ -198,4 +204,6 @@ CodeRabbit and the operator as the checks, stated rather than slid past.
 7. `crates/weaver-harness/src/lifecycle.rs` and `engine.rs`, the enter
    fan-out, the defective leave path, and the Ports seat.
 8. Issues 113, 103, 106, 104, 102, in that order.
-9. `docs/project/open-items.md`, the working list, gitignored and current.
+9. `docs/project/open-items.md`, the working list, gitignored by design:
+   present on this workshop's tree and absent from a fresh checkout, which is
+   why section 0 carries the dated snapshot.
