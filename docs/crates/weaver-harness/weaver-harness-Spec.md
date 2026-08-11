@@ -1240,7 +1240,8 @@ the basic loops this program ships land in their binaries by the same path as
 any builder's, and the decode surface is chartered at section 6.1, the executor
 election closing there in the negative rather than deferring, no runtime
 entering and the serial `poll` loop serving the streaming path. **The blade takes
-the compiler and the seam's position takes review.** A port is a type this crate owns with a constructor no consumer can
+the compiler and the seam's position takes review.** A port is a type this crate
+owns with a constructor no consumer can
 reach, so a loop composes against the granted surface or does not compile, which
 is the same type property section 8's sorting holds for descriptor ownership,
 elected here rather than listed there. Where the seam falls
