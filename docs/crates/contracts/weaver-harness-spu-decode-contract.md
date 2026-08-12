@@ -8,6 +8,13 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, the seam's dataflow rule stated, per the operator's
+ruling of this date. Section 2 names the direction of expectation its count
+already embodied: a harness-opened exchange asks and its answer returns what
+the ask produced, and the SPU-opened exchange reports and is owed nothing
+back but receipt. Section 6 carries the rule's edge as a prohibition, the
+SPU holding no exchange in which to ask. Stated for the SPU in particular
+and generalized to no other organ.
 **Revised:** 2026-08-11, the seam streams, per the operator's ruling of this
 date. The append-and-generate exchange carries each token as an intermediate
 message as it is drawn, the identifier and its rendered piece, none closing
@@ -117,6 +124,18 @@ never its success, and what a death means is section 5's.
 Five. Four are opened by the harness and one by the SPU, which is the
 SPU-opened exchange the residency contract deferred, arriving here because
 the faults it carries are decode-domain traffic.
+
+**The count carries the seam's dataflow rule, stated with the operator's
+ruling of 2026-08-12.** An exchange the harness opens is an ask, expected
+to set the SPU producing, and its answer returns what the ask produced:
+the session opened, the generation drawn, the flush's outcome held. The
+exchange the SPU opens is a report, owed nothing back but receipt, and
+receipt promises authorship rather than any remedy, per its own entry
+below. Nothing that originates on this seam arrives owed work, which is
+the fact the harness charter reads when it names what may drive a turn.
+The rule is stated for the SPU in particular and generalized to no other
+organ: a later organ's contract states its own dataflow rule at its own
+chartering rather than inheriting this seam's.
 
 **Open the session.** Opened by the harness, once per residency, after
 residency is confirmed on the lifecycle seam. It carries the session's
@@ -268,7 +287,9 @@ is the anti-pattern the append-only protocol exists against. It does not
 treat an answer as authorization beyond its exchange.
 
 **On the SPU.** It authors no trace event and holds no descriptor to the
-record. It opens no exchange but the fault report. It retains nothing
+record. It opens no exchange but the fault report, and it has no exchange
+in which to ask, per section 2's dataflow rule, so an SPU that needs the
+harness to act has a fault to report and never a request to make. It retains nothing
 across answers and nothing across the residency. It evicts and compacts
 nothing, cognition being the harness's. It reaches no other crate.
 

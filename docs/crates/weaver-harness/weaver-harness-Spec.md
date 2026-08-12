@@ -4,6 +4,14 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, the invocation. Section 6.2 charters how loop 1
+comes to run, per the operator's ruling of this date: between enter and
+leave the wait spans the coordination listener, the gate channel, and the
+decode channel by the same `poll` election, dispatch is by payload kind,
+and the frame alone grants the seat, per frame with the wait staying loop
+0's, the third shape choice flagged for the operator at review. Section 3's
+accept-and-serve reading becomes one arm of that wait, and one review and
+one perturbation assertion land under 6.2.
 **Revised:** 2026-08-11, second of that date, the decode surface. Section 6.1
 charters what section 6 deferred, the exchanges, sessions, sampling, and the
 flush call: the session opens at the enter fan-out with the instruction's
@@ -667,7 +675,11 @@ the verb answers, and `weaver-admin-harness-contract` section 4 states the
 consequence: the ordering is the worker's rather than any connection's, because
 connections come and go with verbs and the run does not. So `serve` accepts,
 serves the directives that arrive, observes the close, and accepts again, with
-the channel state of section 3 held across the whole of it.
+the channel state of section 3 held across the whole of it. **In the entered
+state that wait widens**, per section 6.2: a standing run waits against the
+gate and decode channels beside this listener, and the accept here is one arm
+of it. Before enter and after leave the accept-and-serve reading above is the
+whole of the wait.
 
 **Leave is the one ordinary ending, and it is the only one that answers.** The
 earlier form unwound a standing run when the channel closed, which was right
@@ -1384,6 +1396,81 @@ from: weaver-harness
 to: harness-stop-polled-during-the-stream
 ```
 
+### 6.2 The invocation, chartered
+
+**This subsection charters how loop 1 comes to run, per the operator's ruling
+of 2026-08-12 and the charter's criterion: the seat is granted on work that
+arrives owed an answer, and on nothing else.** The dataflow ground is the
+decode contract's section 2 rule, nothing originating in the SPU arrives owed
+work, and the composition ground is the charter's section 2, restating the
+reasoning-loop boundary: the loop calls through the gate rather than
+sequencing it, so the agent's outer wait is loop 0's clerking and never the
+loop's reasoning.
+
+**The entered-state wait spans three descriptors, by `poll`, serial as ever.**
+Between enter and leave, loop 0 waits against the coordination listener, the
+gate channel, and the decode channel at once, and wakes on the first ready.
+The coordination listener's accept and credential check are section 2.3's
+unchanged. The decode channel is heard at rest for one thing, the SPU-opened
+report, there being no exchange the SPU may open that expects more than
+receipt. The gate channel carries the raise's answer at enter, the frames
+between, and the lower at leave. Section 2.4's `poll` election covers this
+wait as it covers the stream's, one mechanism in two states, and the
+no-runtime rule of section 1 stands.
+
+**Dispatch is by payload kind, and only the frame grants the seat.** A
+directive is the lifecycle interior's, served as section 3 serves it, a leave
+at rest proceeding and a stop at rest answering nothing in flight. A report
+is clerked: the harness authors the `fault` event from what it was handed,
+per the fault-carrier ruling, answers received, and no turn opens and no seat
+is granted. A frame is the one arrival owed an answer, so it and it alone
+grants the seat: loop 0 enters the loop the binary carries, handing the
+granted surface of section 6 and the turn's content, and the entry's return
+is the response the frame's exchange is answered with, the turn opened and
+closed inside by the surface's own turn call per 6.1.
+
+**The seat is granted per frame and returns by the entry's return.** At rest
+no seat is outstanding, which is what leaves the leave free to proceed, and a
+stop mid-turn forces what the return otherwise yields: the cancel of 6.1
+closes the generation, the turn closes stopped, and the entry returns the
+seat with the stopped outcome. A leave mid-turn is refused, per the
+coordination contract, so the seat is never reclaimed by force from a live
+turn. **The election flagged for the operator: the seat is granted per frame
+with the wait staying loop 0's, rather than lent for the run with a receive
+port granted to loop 1.** The ground is the boundary rule above and the
+blade of section 6, a run-long seat wanting a port to wait on, which would
+hand the loop the agent's outer coordination and the scheduler's position
+with it. The cost is that a loop with work of its own between turns has no
+seat while idle, which no chartered loop wants and a later workflow may
+reopen through the front door.
+
+**What this subsection does not elect, named so the deferral reads as the
+corpus's.** The frame's interior stands open at `weaver-types-Spec` section
+6, elected with the gate's turn half against its measurement. The parse of
+the client's line into the request the loop is handed is that same act's,
+per `weaver-gate-world-contract` section 2, the field list being the Spec's
+there. And the entry's concrete signature is a satellite of section 9,
+shaped when the frame's interior is, so nothing here fixes a parameter type
+the election would move.
+
+```graph
+node: harness-frame-grants-the-seat
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-frame-grants-the-seat
+
+node: harness-idle-report-authors-without-a-turn
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-idle-report-authors-without-a-turn
+```
+
 ## 7. The failure vocabulary
 
 ```rust
@@ -1711,7 +1798,8 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The satellite types.** `AdoptionFault`'s case set, `OrganChannel`'s
   exchange-surface spelling, `SpuChannels`' name, the licensing error's shape,
   `DecodeChannel`'s token send and receive surface, now chartered in section
-  6.1, and the
+  6.1, the loop entry's concrete signature, deferred with the frame's
+  interior per section 6.2, and the
   channel-state enum's name. Identifier and shape choices with no
   cross-crate consequence, listed so what this Spec leaves to a builder is
   complete rather than implied.
