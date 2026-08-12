@@ -136,12 +136,13 @@ the operator's ruling of 2026-08-11: each token crosses as it is drawn,
 an intermediate message carrying the token's identifier and its rendered
 piece, any number of them and possibly none, ordered, and none closing
 the exchange. The answer closes the exchange as it always did, carrying
-the generation whole, the rendered prompt as the family library produced
-it, beside the measurement rather than inside it because each splices
-into its own box of the record, and its measurement: the token
-identifiers, the per-token signals, the timings, the template identity,
-the block partition, and, where the residency was admitted with readout
-elected, the residual reductions. **The stream changes the seam's rhythm
+the generation whole, the model.request content beside the measurement
+because each splices into its own box of the record, the request being the
+rendered prompt with its template and effective sampling and the SPU
+rendering it whole per the custody act of 2026-08-11, and its measurement:
+the token identifiers, the per-token signals, the timings, the template
+identity, the block partition, and, where the residency was admitted with
+readout elected, the residual reductions. **The stream changes the seam's rhythm
 and not the record's
 shape**: the emission and the measurement arrive whole at the close, so a
 consumer that ignores every intermediate message reads the exchange
