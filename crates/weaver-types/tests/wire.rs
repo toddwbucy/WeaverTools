@@ -105,14 +105,14 @@ fn the_measurement_splices_and_never_quotes() {
         r#"{"tokens":[151643,872],"timings":{"prefill_ms":12}}"#.to_string(),
     )
     .expect("valid JSON splices");
-    let rendered = serde_json::value::RawValue::from_string(
-        serde_json::json!("<|im_start|>user\nhi<|im_end|>\n").to_string(),
+    let request = serde_json::value::RawValue::from_string(
+        serde_json::json!({"rendered":"<|im_start|>user\nhi<|im_end|>\n","template":"qwen2","sampling":{}}).to_string(),
     )
     .expect("valid JSON splices");
     let answer = weaver_types::TokenAnswer::Generated(weaver_types::Generation {
         emission: "two words".to_string(),
         finish: weaver_types::Finish::Completed,
-        rendered,
+        request,
         measurement,
     });
 

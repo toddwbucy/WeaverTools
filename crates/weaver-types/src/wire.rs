@@ -335,11 +335,12 @@ pub enum TokenRefusal {
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
-    /// The rendered prompt as the family library produced it, spliced beside
-    /// the measurement rather than inside it: one spliced member per record
-    /// box, this one bound for the request event's `rendered`, per
-    /// `weaver-types-Spec` section 4.4 as of the streaming ruling.
-    pub rendered: Box<serde_json::value::RawValue>,
+    /// The model.request content the SPU rendered whole, the rendered prompt
+    /// with its template and effective sampling, spliced into the request
+    /// event's box, per `weaver-types-Spec` section 4.4 as of the custody act.
+    /// Named `request` and not `rendered` because it carries the whole request
+    /// and not the prompt alone.
+    pub request: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
 }
 
@@ -347,7 +348,7 @@ impl PartialEq for Generation {
     fn eq(&self, other: &Self) -> bool {
         self.emission == other.emission
             && self.finish == other.finish
-            && self.rendered.get() == other.rendered.get()
+            && self.request.get() == other.request.get()
             && self.measurement.get() == other.measurement.get()
     }
 }

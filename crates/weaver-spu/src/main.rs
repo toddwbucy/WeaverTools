@@ -505,17 +505,32 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                         return Err(());
                     }
                 };
-                // The rendered prompt splices beside the measurement, one
-                // member per record box, per the streaming ruling: this one
-                // is bound for the request event's rendered.
-                let rendered = match serde_json::value::RawValue::from_string(
-                    serde_json::json!(delta_text).to_string(),
+                // **The request is the model.request content whole**, per the
+                // custody act: the rendered prompt with its template and the
+                // turn's effective sampling, this crate rendering it because
+                // the template and the knobs are this crate's, and the harness
+                // splices it into the request box without reading it.
+                let knobs = frozen_knobs();
+                let request = match serde_json::value::RawValue::from_string(
+                    serde_json::json!({
+                        "rendered": delta_text,
+                        "template": standing.template,
+                        "sampling": {
+                            "temperature": knobs.temperature,
+                            "top_k": knobs.top_k,
+                            "top_p": knobs.top_p,
+                            "repetition_penalty": knobs.repetition_penalty,
+                            "repetition_window": knobs.repetition_window,
+                            "seed": knobs.seed,
+                        },
+                    })
+                    .to_string(),
                 ) {
                     Ok(raw) => raw,
                     Err(_) => {
                         eprintln!(
                             "{}",
-                            serde_json::json!({"decode_fault": "rendered did not render"})
+                            serde_json::json!({"decode_fault": "request did not render"})
                         );
                         return Err(());
                     }
@@ -523,7 +538,7 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                 let answer = TokenAnswer::Generated(Generation {
                     emission,
                     finish,
-                    rendered,
+                    request,
                     measurement,
                 });
                 if send_answer(decode, &answer).is_err() {

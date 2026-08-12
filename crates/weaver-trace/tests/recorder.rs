@@ -3,7 +3,6 @@
 //! conforms: trace-admission-precedes-fan-out
 //! conforms: trace-one-rendering-two-holders
 //! conforms: trace-sequence-gapless
-//! conforms: trace-measurement-absent-not-zero
 //! conforms: trace-whole-events-only
 //! conforms: trace-bracket-kind-omits-payload
 //! conforms: trace-envelope-flattens
@@ -295,34 +294,23 @@ fn mismatched_payload_refuses() {
 /// the reading was taken and found empty. Watched under exactly that removal.
 #[test]
 fn absent_measurement_members_emit_nothing() {
-    use weaver_trace::{
-        DecodeTimings, ModelId, ModelMeasurement, PromptBlock, TokenId, WeightsHash,
-    };
+    // The measurement is a spliced payload as of the custody act, the SPU
+    // producing the absence and the trace carrying it verbatim, so a blob
+    // rendered without the unproduced members emits none of them: the record
+    // carries exactly what the organ rendered, no serde election of this
+    // crate's between them.
     let (mut r, _path) = recorder();
     r.submit(event(Kind::Load, None, None)).unwrap();
     r.submit(event(Kind::TurnStarted, Some("t-1"), None))
         .unwrap();
+    let measurement = weaver_trace::raw_payload(
+        r#"{"model":"qwen3-4b-instruct","weights_hash":"sha256:abc","input_tokens":[1,2],"output_tokens":[3],"blocks":[{"label":"turn-delta","start":0,"end":2}],"timings":{"prefill_ns":"1000","decode_ns":"2000"}}"#,
+    )
+    .expect("the measurement blob splices");
     r.submit(event(
         Kind::ModelMeasurement,
         Some("t-1"),
-        Some(Payload::ModelMeasurement(ModelMeasurement {
-            model: ModelId("qwen3-4b-instruct".into()),
-            weights_hash: WeightsHash("sha256:abc".into()),
-            input_tokens: vec![TokenId(1), TokenId(2)],
-            output_tokens: vec![TokenId(3)],
-            blocks: vec![PromptBlock {
-                label: "system".into(),
-                start: 0,
-                end: 2,
-            }],
-            entropies: vec![],
-            surprisals: vec![],
-            timings: DecodeTimings {
-                prefill_ns: MonotonicNs(1_000),
-                decode_ns: MonotonicNs(2_000),
-            },
-            reductions: None,
-        })),
+        Some(Payload::ModelMeasurement(measurement)),
     ))
     .unwrap();
     let line = r

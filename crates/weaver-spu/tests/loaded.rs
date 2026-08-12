@@ -444,11 +444,21 @@ mod seam_success {
             pieces, generation.emission,
             "the pieces accumulate to the emission, stream and close agreeing"
         );
-        let rendered: String =
-            serde_json::from_str(generation.rendered.get()).expect("the rendered splice is JSON");
+        let request: serde_json::Value =
+            serde_json::from_str(generation.request.get()).expect("the request splice is JSON");
         assert!(
-            rendered.contains("Say one word."),
-            "the rendered prompt is the family's render of the delta"
+            request["rendered"]
+                .as_str()
+                .is_some_and(|r| r.contains("Say one word.")),
+            "the request carries the family's render of the delta"
+        );
+        assert!(
+            request["template"].as_str().is_some(),
+            "and the template identity"
+        );
+        assert!(
+            request["sampling"]["temperature"].is_number(),
+            "and the effective sampling"
         );
         let measurement: serde_json::Value =
             serde_json::from_str(generation.measurement.get()).expect("the measurement is JSON");

@@ -199,10 +199,6 @@ fn timestamps_are_stamped_at_authoring() {
 /// exactly that widening.
 #[test]
 fn assembly_sees_only_message_kinds() {
-    use weaver_trace::{
-        Bits, DecodeTimings, ModelId, ModelMeasurement, MonotonicNs, PromptBlock, TokenId,
-        WeightsHash,
-    };
     let (author, mut recorder) = author();
     let turn = TurnKey("t-1".to_string());
     author
@@ -236,24 +232,15 @@ fn assembly_sees_only_message_kinds() {
             Kind::ModelMeasurement,
             Subsystem::Spu,
             Some(&turn),
-            Some(Payload::ModelMeasurement(ModelMeasurement {
-                model: ModelId("qwen3-4b-instruct".into()),
-                weights_hash: WeightsHash("sha256:secret-witness".into()),
-                input_tokens: vec![TokenId(1)],
-                output_tokens: vec![TokenId(2)],
-                blocks: vec![PromptBlock {
-                    label: "system".into(),
-                    start: 0,
-                    end: 1,
-                }],
-                entropies: vec![Bits(0.5)],
-                surprisals: vec![],
-                timings: DecodeTimings {
-                    prefill_ns: MonotonicNs(1),
-                    decode_ns: MonotonicNs(2),
-                },
-                reductions: None,
-            })),
+            // The measurement is a spliced blob as of the custody act, the SPU's
+            // weights hash carried opaque, and the witness the watch needs is
+            // that the assembly never reads it: the secret rides the splice.
+            Some(Payload::ModelMeasurement(
+                weaver_trace::raw_payload(
+                    r#"{"model":"qwen3-4b-instruct","weights_hash":"sha256:secret-witness","input_tokens":[1],"output_tokens":[2],"blocks":[{"label":"turn-delta","start":0,"end":1}],"entropies":[0.5],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#,
+                )
+                .expect("the measurement blob splices"),
+            )),
         )
         .unwrap();
 
