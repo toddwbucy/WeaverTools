@@ -6,6 +6,17 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-12, second of this date, the receipt retires. The report
+the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
+to the record and answers nothing, the trace entry being the acknowledgment,
+per the decode contract's second ruling of the same date.
+**Revised:** 2026-08-12, what drives loop 1. Per the operator: the seat is
+granted on work that arrives owed an answer and on nothing else. The decode
+seam's dataflow rule, stated at `weaver-harness-spu-decode-contract` section
+2, has nothing interior to the agent originating work, so a turn begins at
+the gate and nowhere else, read from the shipped contracts rather than
+legislated over organs not yet chartered. Section 2 carries the criterion
+and the dispatch, and the Spec's section 6.2 carries the mechanics.
 **Revised:** 2026-08-05, second this date, the socket inversion and the admin recut.
 Per the operator: any socket connecting to the harness is an internal connection, so
 this crate binds the coordination socket inside the agent's sandbox and listens,
@@ -120,6 +131,34 @@ demonstrations built by the same path, native in the same way, and they run
 until the model returns a final answer or that interrupt arrives, which
 describes the demonstrations rather than constraining a builder's loop, a
 judgment loop or a fixed-turn loop being licensed by the same ruling.
+
+**What drives loop 1, and what only clerks, per the operator's ruling of
+2026-08-12.** The seat is granted on work that arrives owed an answer, and on
+nothing else. Between enter and leave the harness waits wherever a flow can
+originate, and what an origination means is each seam's own contract's to
+say. On the decode seam the direction of expectation is stated at
+`weaver-harness-spu-decode-contract` section 2: every ask originates in the
+harness and its answer returns what the ask produced, and the SPU's one
+emission is a report owed nothing back at all and never an exchange, so
+nothing interior to the agent originates work. The coordination seam carries no work
+by its own contract. What remains is the boundary seam, whose turn exchange
+is the one inbound flow that arrives owed an answer, so a turn begins at the
+gate and nowhere else, read from the shipped contracts rather than
+legislated over organs not yet chartered. A later organ's contract states
+its own dataflow rule at its own chartering, and what such a rule licenses
+is that act's question rather than a corner this one closes.
+
+The invocation follows the criterion, and the wait stays loop 0's. The
+reasoning-loop boundary has the loop calling through the gate rather than
+sequencing it, and the agent's outer wait is content-blind coordination,
+exactly what that document excludes from the loop. So loop 0 waits, and what
+arrives is dispatched by what it is: a directive is the lifecycle
+interior's, a report is clerked to the record with no turn opened and
+nothing answered, the trace entry being the acknowledgment per the decode
+contract's second ruling of 2026-08-12, and a frame grants the seat, loop 1
+entered with the turn's content and the granted surface, the response
+returning through the same exchange when the seat comes back. The mechanics
+are the Spec's, at its section 6.2.
 
 **The tool system.** The registry, the execution context, and the permission modes.
 Permission modes are operator policy and not a safety boundary. What a tool can reach

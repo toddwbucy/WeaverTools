@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-12, the receipt retires and `Received` leaves the trio.
+Per the decode contract's second ruling of this date, the SPU's fault report
+is the seam's one emission and takes no answer, so the `TokenAnswer` case
+that closed it as an exchange is a case nothing would construct, the
+reserved slot apex section 7 forbids in data. Section 4.4 drops the case
+and states the report's standing: an emission owed nothing back, its wire
+case arriving with `FaultReport`'s shape, which section 6 holds open.
 **Revised:** 2026-08-11, third of that date, the model events splice.
 `Generation`'s `rendered` member becomes `request` and carries the model.request
 content whole, the rendered prompt with its template and effective sampling,
@@ -1008,7 +1015,6 @@ pub enum TokenAnswer {
     Generated(Generation),
     AtRest,
     Flushed,
-    Received,
 }
 
 pub enum TokenRefusal {
@@ -1130,8 +1136,14 @@ the decode seam's, which is why the trio carries its own rather than drawing
 loop 0's.
 
 **A cancel with nothing in flight answers `AtRest` rather than refusing**, per
-the contract's section 2, and `Received` closes the SPU-opened fault report. Both
-are answers because neither is a failure of the ask.
+the contract's section 2, an answer because it is not a failure of the ask.
+**The fault report takes no answer at all and no case here yet**, per the
+decode contract's second ruling of 2026-08-12: the report is the seam's one
+SPU-originated emission, and the `Received` case an earlier shape of this trio
+carried to close it as an exchange left with the receipt, a case nothing
+constructs being the reserved slot apex section 7 forbids in data. The
+report's own wire case arrives with `FaultReport`'s shape, which section 6
+holds open, so the emission is chartered and unshaped rather than absent.
 
 **The stream is a case of the answer and never a fourth type**, per the
 contract's section 2 as of the streaming ruling of 2026-08-11. `Token` is the
