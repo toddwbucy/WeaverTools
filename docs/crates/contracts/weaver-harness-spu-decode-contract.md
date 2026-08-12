@@ -8,6 +8,11 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, third of this date, the request is the turn's
+contribution. Per the operator's ruling closing issue 124, the request
+content the close carries is the turn's delta as rendered, the full
+effective context being the accumulation the record determines, and the
+SPU's rendering stays final as built.
 **Revised:** 2026-08-12, second of this date, the receipt retires. Per the
 operator: the SPU is a function, input in and output out, stopping when it
 stops unless interrupted, and a receipt it must consume is protocol state
@@ -170,7 +175,8 @@ piece, any number of them and possibly none, ordered, and none closing
 the exchange. The answer closes the exchange as it always did, carrying
 the generation whole, the model.request content beside the measurement
 because each splices into its own box of the record, the request being the
-rendered prompt with its template and effective sampling and the SPU
+turn's delta as rendered with its template and effective sampling per the
+ruling of 2026-08-12, the SPU
 rendering it whole per the custody act of 2026-08-11, and its measurement:
 the token identifiers, the per-token signals, the timings, the template
 identity, the block partition, and, where the residency was admitted with

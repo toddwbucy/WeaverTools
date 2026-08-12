@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-12, second of this date, the request is the turn's
+contribution. Per the operator's ruling closing issue 124, `Generation`'s
+`request` member carries the turn's delta as rendered, the full effective
+context being the accumulation the record determines. No shape moves, and
+the wording follows `weaver-trace-PRD` section 3.2 as narrowed.
 **Revised:** 2026-08-12, the receipt retires and `Received` leaves the trio.
 Per the decode contract's second ruling of this date, the SPU's fault report
 is the seam's one emission and takes no answer, so the `TokenAnswer` case
@@ -1086,8 +1091,9 @@ G5 files as a defect rather than resolves by picking.
 
 **`request` is the model.request content whole, not the rendered prompt alone.**
 The custody act of 2026-08-11 makes `model.request` a spliced payload the SPU
-renders, so this member carries what that event carries, the rendered prompt
-with its template identity and the turn's effective sampling values, rendered by
+renders, so this member carries what that event carries, the turn's delta as
+rendered with its template identity and the turn's effective sampling values,
+per the ruling of 2026-08-12, rendered by
 the SPU because the template and the knobs are the SPU's and assembling them in
 the harness would be the transform the splice refuses. It was named `rendered`
 for one act, when only the prompt crossed, and the name narrows to the truth the

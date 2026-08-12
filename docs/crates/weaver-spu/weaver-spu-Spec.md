@@ -4,6 +4,11 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, the request is the turn's contribution, per the
+operator's ruling of this date closing issue 124. The request content this
+crate renders is the turn's delta as the family library renders it, which
+is what the code builds, the ruling blessing the built reading, and the
+full effective context is the accumulation the record determines.
 **Revised:** 2026-08-11, second of that date, the model events splice. The
 close's request member widens from the rendered prompt to the model.request
 content whole, the rendered prompt with its template and effective sampling,
@@ -1083,7 +1088,8 @@ signal vectors, the timings the charter's row names, the model identity and
 its weights hash from section 3, the template identity from the family
 library, the prompt-block partition, the residual reductions when elected,
 and beside the measurement the model.request content whole, per the custody
-act of 2026-08-11: the rendered prompt as the family library produced it, the
+act of 2026-08-11: the turn's delta as the family library rendered it, per
+the ruling of 2026-08-12, the
 template identity, and the turn's effective sampling values, rendered by this
 crate because the template and the knobs are this crate's, and spliced into
 the record's request box as the measurement splices into its own. The harness
