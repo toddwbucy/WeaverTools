@@ -128,7 +128,14 @@ impl<'a> Ports<'a> {
         match self.run_turn(&turn, delta) {
             Ok(outcome) => Ok(outcome),
             Err(error) => {
-                let _ = self.author.author(
+                // **A failed close is itself a failure the caller must learn.**
+                // The recorder can be broken when the turn fails, so authoring
+                // the fault close can fail too, and swallowing that would leave
+                // a `turn.started` with no `turn.closed` and no error naming it.
+                // The original error is returned only when the close lands, and
+                // a close that cannot author returns `ChannelLost` because the
+                // record is now untrustworthy whatever the first cause was.
+                match self.author.author(
                     self.recorder,
                     Kind::TurnClosed,
                     Subsystem::Harness,
@@ -136,8 +143,10 @@ impl<'a> Ports<'a> {
                     Some(Payload::TurnClosed(TurnClose::Stopped {
                         reason: weaver_trace::StopReason::Fault,
                     })),
-                );
-                Err(error)
+                ) {
+                    Ok(_) => Err(error),
+                    Err(_) => Err(TurnError::ChannelLost),
+                }
             }
         }
     }
