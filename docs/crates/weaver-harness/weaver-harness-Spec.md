@@ -4,6 +4,11 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, third of this date, the request is the turn's
+contribution. Section 6.1's model events follow `weaver-trace-PRD` section
+3.2 as narrowed by the operator's ruling of this date: the request the close
+splices is the turn's rendered delta, the full effective context being the
+accumulation the record determines.
 **Revised:** 2026-08-12, second of this date, the receipt retires. Section
 6.2's clerking answers nothing: the SPU's report is the decode seam's one
 emission, owed nothing back at all, the trace entry being the
@@ -1342,11 +1347,13 @@ that a loop wanting an unauthored generation has none, which no chartered loop w
 and the tool workflow may reopen.
 
 **The three model events are authored across the turn, at the submit call where
-conformance is checked.** `model.request` carries the rendered prompt the answer's
-close splices, `model.output` carries the emission verbatim and its finish, and
+conformance is checked.** `model.request` carries the turn's rendered contribution
+the answer's close splices, the delta per the ruling of 2026-08-12, the full
+effective context being the accumulation the record determines. `model.output`
+carries the emission verbatim and its finish, and
 `model.measurement` carries the measurement the close splices, each event the
 harness authoring what the SPU rendered, the organ owning the content and the trace
-owning the boxes per the custody model. The rendered prompt and the measurement
+owning the boxes per the custody model. The rendered contribution and the measurement
 splice into their own boxes, one member per box per the streaming ruling, and the
 harness checks each spliced member's conformance to its event's accepting shape at
 the author call, the price the splice's opacity is paid at.
