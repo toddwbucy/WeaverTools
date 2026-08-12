@@ -8,6 +8,14 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, second of this date, the receipt retires. Per the
+operator: the SPU is a function, input in and output out, stopping when it
+stops unless interrupted, and a receipt it must consume is protocol state
+with no consumer behind it. The fault report becomes the seam's one
+emission rather than its fifth exchange, owed nothing back at all, the
+trace entry being the acknowledgment, and the fault-carrier ruling's razor
+is the precedent, a second carrier for one fact earning nothing. Sections
+2, 3, 5, and 6 carry the change.
 **Revised:** 2026-08-12, the seam's dataflow rule stated, per the operator's
 ruling of this date. Section 2 names the direction of expectation its count
 already embodied: a harness-opened exchange asks and its answer returns what
@@ -121,21 +129,24 @@ never its success, and what a death means is section 5's.
 
 ## 2. The exchanges
 
-Five. Four are opened by the harness and one by the SPU, which is the
-SPU-opened exchange the residency contract deferred, arriving here because
-the faults it carries are decode-domain traffic.
+Four exchanges and one emission. The exchanges are opened by the harness.
+The emission is the SPU's fault report, the origination the residency
+contract deferred, arriving here because the faults it carries are
+decode-domain traffic, and it is an emission rather than a fifth exchange
+per the receipt's retirement, the second ruling of 2026-08-12.
 
 **The count carries the seam's dataflow rule, stated with the operator's
 ruling of 2026-08-12.** An exchange the harness opens is an ask, expected
 to set the SPU producing, and its answer returns what the ask produced:
-the session opened, the generation drawn, the flush's outcome held. The
-exchange the SPU opens is a report, owed nothing back but receipt, and
-receipt promises authorship rather than any remedy, per its own entry
-below. Nothing that originates on this seam arrives owed work, which is
-the fact the harness charter reads when it names what may drive a turn.
-The rule is stated for the SPU in particular and generalized to no other
-organ: a later organ's contract states its own dataflow rule at its own
-chartering rather than inheriting this seam's.
+the session opened, the generation drawn, the flush's outcome held. What
+the SPU originates is a report, owed nothing back at all. The fact it
+carries has one home, the record, whose custodian is the harness, so the
+trace entry is the acknowledgment and no answer returns to the SPU.
+Nothing that originates on this seam arrives owed work, which is the fact
+the harness charter reads when it names what may drive a turn. The rule
+is stated for the SPU in particular and generalized to no other organ: a
+later organ's contract states its own dataflow rule at its own chartering
+rather than inheriting this seam's.
 
 **Open the session.** Opened by the harness, once per residency, after
 residency is confirmed on the lifecycle seam. It carries the session's
@@ -183,15 +194,20 @@ prefix resident, the accumulated turns gone, the outcome fixed and the
 mechanism the Spec's per family, per `weaver-spu-PRD` section 13.9. The
 answer confirms after the outcome holds.
 
-**Report a fault.** Opened by the SPU, the seam's one SPU-opened
-exchange, carrying a `fault-report` naming a case of `weaver-spu-PRD`
-section 13.10 that arose outside any outstanding exchange, residency
-degraded above all. A fault
-arising inside a generation is that exchange's typed answer instead, so
-one fact never travels twice. The harness authors what it is handed as
-the `fault` event, per the fault-carrier ruling, and answers received,
-which closes the exchange and promises authorship rather than any
-remedy.
+**Report a fault.** Emitted by the SPU, the seam's one SPU-originated
+message and not an exchange, carrying a `fault-report` naming a case of
+`weaver-spu-PRD` section 13.10 that arose outside any outstanding
+exchange, residency degraded above all. A fault arising inside a
+generation is that exchange's typed answer instead, so one fact never
+travels twice. The harness authors what it is handed as the `fault`
+event, per the fault-carrier ruling, and answers nothing. The receipt
+retired on the second ruling of 2026-08-12: the SPU could do nothing
+with it but discard it, and a confirmation whose one reader discards it
+is the alert exchange's error one layer down. The promise of faithful
+authorship is this contract's, in section 4, rather than an answer's.
+The SPU forgets the fault at the send, produced, reported, gone, and a
+send that fails is the channel dead, which is section 5's account of a
+death.
 
 **No exchange carries a path, and no exchange carries lifecycle.** Admit
 and release live on the residency seam and never here, the two seams
@@ -209,7 +225,8 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   rest, the validity window being the session rather than the generation.
 - Flush is valid only between turns. A flush while a generation is in
   flight is refused, the cancel existing for exactly that case.
-- The fault report may open at any time after the session opens.
+- The fault report may be emitted at any time after the session opens,
+  and it takes no answer.
 - Messages within one exchange are ordered, and the intermediate token
   messages of append-and-generate all precede its answer.
 - An answer to append-and-generate arrives only after the session is
@@ -268,8 +285,8 @@ Refusals are typed and enumerable. The cases:
 
 **A fault inside a generation is the exchange's typed answer**, naming the
 fault the way section 13.10 enumerates, and the turn fails with its
-account on the record. **A fault outside any exchange is the SPU-opened
-report.** **A death is neither:** the harness observes closure, the run's
+account on the record. **A fault outside any exchange is the SPU's
+emitted report.** **A death is neither:** the harness observes closure, the run's
 account shows what was authored, and what the harness does with a dead
 decoder is the coordination seam's business, the fault travelling to the
 record as the death's observation rather than the dead party's report.
@@ -287,9 +304,10 @@ is the anti-pattern the append-only protocol exists against. It does not
 treat an answer as authorization beyond its exchange.
 
 **On the SPU.** It authors no trace event and holds no descriptor to the
-record. It opens no exchange but the fault report, and it has no exchange
-in which to ask, per section 2's dataflow rule, so an SPU that needs the
-harness to act has a fault to report and never a request to make. It retains nothing
+record. It opens no exchange at all, the fault report being an emission,
+and it has no exchange in which to ask, per section 2's dataflow rule, so
+an SPU that needs the harness to act has a fault to report and never a
+request to make. It retains nothing
 across answers and nothing across the residency. It evicts and compacts
 nothing, cognition being the harness's. It reaches no other crate.
 

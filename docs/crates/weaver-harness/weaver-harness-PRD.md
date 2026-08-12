@@ -6,6 +6,10 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-12, second of this date, the receipt retires. The report
+the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
+to the record and answers nothing, the trace entry being the acknowledgment,
+per the decode contract's second ruling of the same date.
 **Revised:** 2026-08-12, what drives loop 1. Per the operator: the seat is
 granted on work that arrives owed an answer and on nothing else. The decode
 seam's dataflow rule, stated at `weaver-harness-spu-decode-contract` section
@@ -149,8 +153,10 @@ reasoning-loop boundary has the loop calling through the gate rather than
 sequencing it, and the agent's outer wait is content-blind coordination,
 exactly what that document excludes from the loop. So loop 0 waits, and what
 arrives is dispatched by what it is: a directive is the lifecycle
-interior's, a report is clerked to the record and answered received with no
-turn opened, and a frame grants the seat, loop 1 entered with the turn's
+interior's, a report is clerked to the record with no turn opened and
+nothing answered, the trace entry being the acknowledgment per the decode
+contract's second ruling of 2026-08-12, and a frame grants the seat, loop 1
+entered with the turn's
 content and the granted surface, the response returning through the same
 exchange when the seat comes back. The mechanics are the Spec's, at its
 section 6.2.

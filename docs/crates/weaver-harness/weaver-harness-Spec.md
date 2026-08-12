@@ -4,6 +4,10 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, second of this date, the receipt retires. Section
+6.2's clerking answers nothing: the SPU's report is the decode seam's one
+emission, owed nothing back at all, the trace entry being the
+acknowledgment, per the decode contract's second ruling of the same date.
 **Revised:** 2026-08-12, the invocation. Section 6.2 charters how loop 1
 comes to run, per the operator's ruling of this date: between enter and
 leave the wait spans the coordination listener, the gate channel, and the
@@ -1411,9 +1415,11 @@ loop's reasoning.
 Between enter and leave, loop 0 waits against the coordination listener, the
 gate channel, and the decode channel at once, and wakes on the first ready.
 The coordination listener's accept and credential check are section 2.3's
-unchanged. The decode channel is heard at rest for one thing, the SPU-opened
-report, there being no exchange the SPU may open that expects more than
-receipt. The gate channel carries the raise's answer at enter, the frames
+unchanged. The decode channel is heard at rest for one thing, the SPU's
+emitted report, there being no exchange the SPU may open at all, the report
+riding as the seam's one emission owed nothing back, per the decode
+contract's second ruling of 2026-08-12. The gate channel carries the raise's
+answer at enter, the frames
 between, and the lower at leave. Section 2.4's `poll` election covers this
 wait as it covers the stream's, one mechanism in two states, and the
 no-runtime rule of section 1 stands.
@@ -1422,7 +1428,8 @@ no-runtime rule of section 1 stands.
 directive is the lifecycle interior's, served as section 3 serves it, a leave
 at rest proceeding and a stop at rest answering nothing in flight. A report
 is clerked: the harness authors the `fault` event from what it was handed,
-per the fault-carrier ruling, answers received, and no turn opens and no seat
+per the fault-carrier ruling, and answers nothing, the receipt having
+retired with the second ruling of 2026-08-12, and no turn opens and no seat
 is granted. A frame is the one arrival owed an answer, so it and it alone
 grants the seat: loop 0 enters the loop the binary carries, handing the
 granted surface of section 6 and the turn's content, and the entry's return
