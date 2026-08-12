@@ -269,7 +269,7 @@ impl<'a> Ports<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+    use std::os::fd::{AsRawFd, OwnedFd};
 
     use nix::sys::socket::{AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair};
     use weaver_trace::{Recorder, RunOrdinal, SessionRef};
@@ -413,7 +413,6 @@ mod tests {
         ));
         let file = std::fs::File::create(&path).expect("sink");
         std::fs::remove_file(&path).ok();
-        // SAFETY: File owns the descriptor and into_raw_fd transfers it.
-        unsafe { OwnedFd::from_raw_fd(std::os::fd::IntoRawFd::into_raw_fd(file)) }
+        OwnedFd::from(file)
     }
 }

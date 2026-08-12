@@ -644,7 +644,6 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
             });
         }
     }
-    let _ = &run.session;
 
     if let Some(refusal) = first_refusal {
         return Err(refusal);

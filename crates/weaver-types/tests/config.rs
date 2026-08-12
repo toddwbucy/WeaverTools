@@ -45,6 +45,14 @@ fn a_complete_config_parses() {
     assert_eq!(decoder.model_binding.devices.len(), 1);
     assert_eq!(config.permission_mode, weaver_traits::PermissionMode::Ask);
     assert!(!decoder.residual_readout_election);
+    // The identity material parses to its canonical messages: one user
+    // message with a single text block, per the full_config fixture.
+    assert_eq!(decoder.identity.len(), 1);
+    assert_eq!(decoder.identity[0].role, weaver_traits::Role::User);
+    assert!(matches!(
+        decoder.identity[0].content.as_slice(),
+        [weaver_traits::ContentBlock::Text { text }] if text == "You answer briefly."
+    ));
 }
 
 /// A missing required field refuses the parse, run separately for the

@@ -521,6 +521,9 @@ mod tests {
         let before = session.resident_len();
         assert_eq!(before, 2, "the prefix is what was decoded");
 
+        // The stream counter reads the real engine's callback: it fires once
+        // per retained token, so the count equals the tokens the close carries.
+        let mut streamed = 0usize;
         let generated = session
             .append_and_generate(
                 &[TokenId(1879)],
@@ -530,11 +533,16 @@ mod tests {
                     max_tokens: 8,
                 },
                 &mut NeverCancels,
-                &mut |_| {},
+                &mut |_| streamed += 1,
             )
             .expect("the generation runs");
 
         assert_eq!(generated.tokens.len(), 8, "the ceiling bounds the run");
+        assert_eq!(
+            streamed,
+            generated.tokens.len(),
+            "the real engine streamed once per retained token"
+        );
         assert_eq!(
             generated.signals.steps(),
             generated.tokens.len(),

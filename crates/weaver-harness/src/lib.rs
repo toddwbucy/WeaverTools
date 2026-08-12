@@ -85,8 +85,8 @@
 //! fields and no reachable constructor, so a builder's loop composes the
 //! granted surface or does not compile.
 //!
-//! ```compile_fail
-//! // `grant` is crate-private, so a builder's loop cannot name it.
+//! ```compile_fail,E0624
+//! // `grant` is crate-private (E0624), so a builder's loop cannot name it.
 //! let _ = weaver_harness::Ports::grant;
 //! ```
 //!
