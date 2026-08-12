@@ -4,6 +4,15 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-11, the model events splice. `Payload::ModelRequest` and
+`Payload::ModelMeasurement` become spliced `RawValue`, the organ producing their
+content and the harness carrying it opaque per the custody model, reversing the
+earlier reading that shaped the measurement here. `ModelOutput` stays shaped, its
+emission a string the harness consumes and its finish a two-case enum, neither an
+opaque blob. The typed `ModelRequest` and `ModelMeasurement` structs retire from
+the schema, and `trace-measurement-absent-not-zero` retires with them, the
+absent-not-zero property relocating to the SPU's `spu-absent-not-empty-vector`
+where the rendering now happens. The crate becomes 38 assertions.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
@@ -214,36 +223,15 @@ pub enum Payload {
     Message(Box<serde_json::value::RawValue>),
     TurnClosed(TurnClose),
     Fault(Box<serde_json::value::RawValue>),
-    ModelRequest(ModelRequest),
+    ModelRequest(Box<serde_json::value::RawValue>),
     ModelOutput(ModelOutput),
-    ModelMeasurement(ModelMeasurement),
+    ModelMeasurement(Box<serde_json::value::RawValue>),
     Deferred(Box<serde_json::value::RawValue>),
-}
-
-pub struct ModelRequest {
-    pub rendered: Box<serde_json::value::RawValue>,
-    pub template: TemplateId,
-    pub sampling: Box<serde_json::value::RawValue>,
 }
 
 pub struct ModelOutput {
     pub emission: String,
     pub finish: Finish,
-}
-
-pub struct ModelMeasurement {
-    pub model: ModelId,
-    pub weights_hash: WeightsHash,
-    pub input_tokens: Vec<TokenId>,
-    pub output_tokens: Vec<TokenId>,
-    pub blocks: Vec<PromptBlock>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub entropies: Vec<Bits>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub surprisals: Vec<Bits>,
-    pub timings: DecodeTimings,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reductions: Option<Box<serde_json::value::RawValue>>,
 }
 
 #[serde(tag = "close", rename_all = "snake_case")]
@@ -492,17 +480,26 @@ from: weaver-trace
 to: trace-kind-payload-mapping-total
 ```
 
-**What is spliced and what is shaped, and the line between them is the
-charter's own.** `Fault` splices, because `fault-report` is `weaver-types`'
-definition and this crate links no internal crate, so the harness renders the
-floor's shape and hands the bytes exactly as it does for a message. The
-`sampling` member splices for the same reason, the knobs being the floor's and
-the SPU's. The `rendered` member splices because it is the model's prompt as
-the family library produced it, which is that library's shape and not this
-crate's. What is shaped here is what no other crate defines: the measurement's
-readings, the finish condition, and the identities that join them. The rule is
-the charter's section 2.5 read mechanically, this crate defines the record's
-own schema and carries everything else opaque.
+**What is spliced and what is shaped, and the custody model of 2026-08-11
+draws the line.** The trace owns the boxes and the organ owns the contents, so
+a payload whose content an organ produced splices, and a payload this crate
+consumes and shapes is the exception. `Fault` splices, `fault-report` being the
+floor's shape the reporting organ renders. **`model.request` and
+`model.measurement` splice on the same rule, reversing an earlier reading of
+this section.** The earlier text shaped the measurement here because its
+readings are what no other crate defines, but the streaming ruling made the SPU
+the definer and the producer of those readings, so under the custody model they
+are the organ's content and the harness splices them exactly as it splices a
+fault. The request the model received, the rendered prompt with its template
+and its effective sampling, is the family library's rendering and the SPU's, so
+it splices whole rather than being assembled here from members this crate would
+have to parse the splice to read. **`model.output` is the one model payload
+this crate shapes,** because its emission is a plain string the harness holds
+typed and consumes into the working structure, and its finish is a two-case
+enum the turn's close reads, so neither is an opaque blob and shaping them
+forces no transform. The rule is the charter's section 2.5 read through the
+custody model: this crate defines the record's own schema, the envelope and the
+kinds and the finish, and carries every organ-produced content opaque.
 
 ```graph
 node: trace-splice-or-shape
@@ -514,27 +511,22 @@ from: weaver-trace
 to: trace-splice-or-shape
 ```
 
-**`ModelRequest` holds the sampling values and `ModelMeasurement` does not,
-which is the charter's corrected row rather than this Spec's choice.** Apex
-section 8's five re-feed inputs therefore span the pair, four here and the
-fifth in the request, joined by the turn both carry, per charter section 3.1.
+**`model.request`'s splice holds the sampling values and `model.measurement`'s
+does not, which is the charter's corrected row rather than this Spec's choice.**
+Apex section 8's five re-feed inputs therefore span the pair, four in the
+measurement and the fifth in the request, joined by the turn both carry, per
+charter section 3.1, and each rides inside its own spliced content rather than
+a member this crate names.
 
-**The measurement's optional members are absent rather than zero, which is a
-serde election with a stated reason.** `skip_serializing_if` on the two signal
-vectors and on the reductions means an unproduced reading emits no member at
-all, per the charter's producing obligation. A zero-length vector rendered
-would say the reading was taken and found empty, and a zeroed vector would say
-the model was certain, and neither is what an absent instrument means.
-
-```graph
-node: trace-measurement-absent-not-zero
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-trace
-to: trace-measurement-absent-not-zero
-```
+**The measurement's optional members are absent rather than zero, and the
+absence is now the SPU's to produce rather than this crate's to serialize.**
+The measurement splices, so this crate names none of its members and elects no
+`skip_serializing_if` over them: the unproduced reading emits no member because
+the SPU rendered it absent, per `weaver-spu-Spec` section 6's
+`spu-absent-not-empty-vector`, and the trace carries what the SPU rendered
+without a serde election of its own. The property the retired
+`trace-measurement-absent-not-zero` asserted is the SPU's now, a relocation the
+custody model forces rather than a property dropped.
 
 **Untagged with seven variants is a serialization device, and the deserializing
 consumer keys on `kind`.** Serde resolves an untagged enum by trying variants in
