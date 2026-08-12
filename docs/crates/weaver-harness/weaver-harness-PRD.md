@@ -139,8 +139,8 @@ originate, and what an origination means is each seam's own contract's to
 say. On the decode seam the direction of expectation is stated at
 `weaver-harness-spu-decode-contract` section 2: every ask originates in the
 harness and its answer returns what the ask produced, and the SPU's one
-opened exchange is a report owed nothing back but receipt, so nothing
-interior to the agent originates work. The coordination seam carries no work
+emission is a report owed nothing back at all and never an exchange, so
+nothing interior to the agent originates work. The coordination seam carries no work
 by its own contract. What remains is the boundary seam, whose turn exchange
 is the one inbound flow that arrives owed an answer, so a turn begins at the
 gate and nowhere else, read from the shipped contracts rather than

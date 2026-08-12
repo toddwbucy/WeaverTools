@@ -20,7 +20,9 @@ is the precedent, a second carrier for one fact earning nothing. Sections
 ruling of this date. Section 2 names the direction of expectation its count
 already embodied: a harness-opened exchange asks and its answer returns what
 the ask produced, and the SPU-opened exchange reports and is owed nothing
-back but receipt. Section 6 carries the rule's edge as a prohibition, the
+back but receipt. The receipt this entry lands is retired by the entry
+above, same date, and the exchange it names is an emission since that
+ruling. Section 6 carries the rule's edge as a prohibition, the
 SPU holding no exchange in which to ask. Stated for the SPU in particular
 and generalized to no other organ.
 **Revised:** 2026-08-11, the seam streams, per the operator's ruling of this
@@ -225,8 +227,10 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   rest, the validity window being the session rather than the generation.
 - Flush is valid only between turns. A flush while a generation is in
   flight is refused, the cancel existing for exactly that case.
-- The fault report may be emitted at any time after the session opens,
-  and it takes no answer.
+- The fault report is emitted only at rest, no exchange outstanding, any
+  time after the session opens, and it takes no answer. A fault arising
+  while an exchange is outstanding is that exchange's typed answer, per
+  section 5, so a report never interleaves a stream.
 - Messages within one exchange are ordered, and the intermediate token
   messages of append-and-generate all precede its answer.
 - An answer to append-and-generate arrives only after the session is
@@ -405,6 +409,8 @@ How each check is implemented is Spec work. What must be checkable:
   silent absence.
 - An overflow refuses before any partial append, the session unchanged.
 - One generation in flight, enforced by refusal rather than queueing.
+- A report is never emitted while an exchange is outstanding, a fault
+  arising then being that exchange's typed answer.
 - The frozen knobs never appear on the wire, watched by a capture that
   fails when a frozen value crosses.
 

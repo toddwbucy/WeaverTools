@@ -1418,7 +1418,10 @@ The coordination listener's accept and credential check are section 2.3's
 unchanged. The decode channel is heard at rest for one thing, the SPU's
 emitted report, there being no exchange the SPU may open at all, the report
 riding as the seam's one emission owed nothing back, per the decode
-contract's second ruling of 2026-08-12. The gate channel carries the raise's
+contract's second ruling of 2026-08-12. A report never arrives mid-stream,
+the contract's ordering emitting it only while no exchange is outstanding,
+so the stream's poll of 6.1 hears tokens and the close and nothing else. The
+gate channel carries the raise's
 answer at enter, the frames
 between, and the lower at leave. Section 2.4's `poll` election covers this
 wait as it covers the stream's, one mechanism in two states, and the
