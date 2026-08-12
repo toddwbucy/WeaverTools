@@ -387,13 +387,28 @@ impl DecodeChannel {
         send_octets(self.end.as_fd(), &body)
     }
 
-    /// Receive one token answer, blocking. The intermediate `Token` frames and
-    /// the closing answer arrive here alike, the caller reading until the
-    /// close, per the streaming ruling.
-    pub fn recv_answer(&self) -> Result<weaver_types::TokenAnswer, ChannelFault> {
+    /// Receive one decode frame, blocking. A frame is a `TokenAnswer` or a
+    /// `TokenRefusal`, the two sharing the seam with disjoint tag vocabularies,
+    /// so the receive distinguishes them rather than reading only the answer
+    /// and losing a refusal to an undecodable fault.
+    pub fn recv_reply(&self) -> Result<DecodeReply, ChannelFault> {
         let octets = recv_octets(self.end.as_fd())?;
-        serde_json::from_slice(&octets).map_err(|_| ChannelFault::Undecodable)
+        if let Ok(answer) = serde_json::from_slice::<weaver_types::TokenAnswer>(&octets) {
+            return Ok(DecodeReply::Answer(answer));
+        }
+        if let Ok(refusal) = serde_json::from_slice::<weaver_types::TokenRefusal>(&octets) {
+            return Ok(DecodeReply::Refusal(refusal));
+        }
+        Err(ChannelFault::Undecodable)
     }
+}
+
+/// One frame off the decode seam: an answer to advance the exchange or a typed
+/// refusal that declines the ask, per the decode contract's section 5.
+#[derive(Debug)]
+pub enum DecodeReply {
+    Answer(weaver_types::TokenAnswer),
+    Refusal(weaver_types::TokenRefusal),
 }
 
 impl AsFd for DecodeChannel {

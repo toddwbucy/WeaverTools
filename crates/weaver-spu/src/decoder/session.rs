@@ -662,6 +662,44 @@ mod tests {
     /// `self.resident_len`, which is the re-prefill rewind the archived tree's
     /// proof warns about, and this test fails on the recorded position. Watched
     /// under exactly that change.
+    /// **The stream fires for exactly the retained tokens, in order.** The
+    /// on_token callback is the seam's stream, so what it fires must equal the
+    /// generation's tokens, no more and no fewer: the stop token is drawn and
+    /// not retained, so it is never streamed, and a consumer accumulating the
+    /// stream holds the same sequence the close carries.
+    ///
+    /// Perturbation: fire on_token before the stop-token check instead of
+    /// after the retain, and this test fails, the stop token appearing in the
+    /// stream but not in `Generated.tokens`. Watched under exactly that change.
+    #[test]
+    fn the_stream_fires_for_exactly_the_retained_tokens() {
+        // A script whose third token is the stop token, so the run retains two
+        // and stops on the third, which must not stream.
+        let (mut session, _log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
+        let mut cancel = NeverCancels;
+        let mut streamed: Vec<TokenId> = Vec::new();
+        let generated = session
+            .append_and_generate(
+                &[TokenId(3)],
+                &StopCondition {
+                    stop_tokens: vec![TokenId(9)],
+                    terminator: TokenId(0),
+                    max_tokens: 50,
+                },
+                &mut cancel,
+                &mut |token| streamed.push(token),
+            )
+            .expect("the generation runs");
+        assert_eq!(
+            streamed, generated.tokens,
+            "the stream equals the retained tokens in order"
+        );
+        assert!(
+            !streamed.contains(&TokenId(9)),
+            "the stop token is drawn and not streamed"
+        );
+    }
+
     #[test]
     fn the_delta_decodes_at_the_resident_end_never_at_the_prefix() {
         // A script that stops immediately, so generation adds a known amount

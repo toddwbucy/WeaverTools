@@ -107,9 +107,8 @@ impl<'a> Ports<'a> {
         *self.turn_ordinal += 1;
         let turn = TurnKey(format!("t-{}", self.turn_ordinal));
 
-        // The bracket opens, then the delta is authored as the turn's user
-        // messages, before the exchange so the record reads the ask before the
-        // answer.
+        // The bracket opens. A failure to open it leaves no bracket to close,
+        // so it returns before there is anything to unwind.
         self.author
             .author(
                 self.recorder,
@@ -119,9 +118,39 @@ impl<'a> Ports<'a> {
                 None,
             )
             .map_err(|_| TurnError::ChannelLost)?;
+
+        // **Every exit past the open closes the bracket.** A turn that opened
+        // and then lost the channel or met a refusal must not leave a
+        // `turn.started` without its `turn.closed`, which a consumer pairing
+        // the bracket would read as a turn that never ended. The body runs to
+        // its own close on success, and a failure closes with the fault reason
+        // before the error returns.
+        match self.run_turn(&turn, delta) {
+            Ok(outcome) => Ok(outcome),
+            Err(error) => {
+                let _ = self.author.author(
+                    self.recorder,
+                    Kind::TurnClosed,
+                    Subsystem::Harness,
+                    Some(&turn),
+                    Some(Payload::TurnClosed(TurnClose::Stopped {
+                        reason: weaver_trace::StopReason::Fault,
+                    })),
+                );
+                Err(error)
+            }
+        }
+    }
+
+    /// The turn's body, run inside the bracket [`turn`] opens and closes. It
+    /// authors the delta, drives the exchange, and authors the answer, and
+    /// every error it returns is closed by the caller.
+    fn run_turn(&mut self, turn: &TurnKey, delta: Vec<Message>) -> Result<TurnOutcome, TurnError> {
+        // The delta is authored as the turn's user messages, before the
+        // exchange so the record reads the ask before the answer.
         for message in &delta {
             self.author
-                .author_message(self.recorder, message, &turn)
+                .author_message(self.recorder, message, turn)
                 .map_err(|_| TurnError::Unlicensed)?
                 .map_err(|_| TurnError::ChannelLost)?;
         }
@@ -137,21 +166,24 @@ impl<'a> Ports<'a> {
             .map_err(|_| TurnError::ChannelLost)?;
 
         // Consume the stream to the close. The intermediate tokens are the
-        // stream loop 1 could surface as it grows, and the close carries the
-        // generation whole, which is what the record needs.
+        // stream loop 1 could surface as it grows, a typed refusal is the
+        // session declining the ask, and the close carries the generation
+        // whole, which is what the record needs.
         let generation = loop {
             match self
                 .decode
-                .recv_answer()
+                .recv_reply()
                 .map_err(|_| TurnError::ChannelLost)?
             {
-                TokenAnswer::Token { .. } => continue,
-                TokenAnswer::Generated(generation) => break generation,
-                TokenAnswer::AtRest => continue,
-                other => {
-                    let _ = other;
-                    return Err(TurnError::ChannelLost);
+                crate::channel::DecodeReply::Answer(TokenAnswer::Token { .. }) => continue,
+                crate::channel::DecodeReply::Answer(TokenAnswer::Generated(generation)) => {
+                    break generation;
                 }
+                crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                crate::channel::DecodeReply::Refusal(refusal) => {
+                    return Err(TurnError::Refused(refusal));
+                }
+                crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
             }
         };
 
@@ -164,7 +196,7 @@ impl<'a> Ports<'a> {
                 self.recorder,
                 Kind::ModelRequest,
                 Subsystem::Spu,
-                Some(&turn),
+                Some(turn),
                 Some(Payload::ModelRequest(generation.request)),
             )
             .map_err(|_| TurnError::ChannelLost)?;
@@ -174,7 +206,7 @@ impl<'a> Ports<'a> {
                 self.recorder,
                 Kind::ModelOutput,
                 Subsystem::Spu,
-                Some(&turn),
+                Some(turn),
                 Some(Payload::ModelOutput(ModelOutput {
                     emission: generation.emission.clone(),
                     finish: if stopped {
@@ -190,7 +222,7 @@ impl<'a> Ports<'a> {
                 self.recorder,
                 Kind::ModelMeasurement,
                 Subsystem::Spu,
-                Some(&turn),
+                Some(turn),
                 Some(Payload::ModelMeasurement(generation.measurement)),
             )
             .map_err(|_| TurnError::ChannelLost)?;
@@ -206,17 +238,23 @@ impl<'a> Ports<'a> {
             }],
         };
         self.author
-            .author_message(self.recorder, &assistant, &turn)
+            .author_message(self.recorder, &assistant, turn)
             .map_err(|_| TurnError::Unlicensed)?
             .map_err(|_| TurnError::ChannelLost)?;
 
-        // The bracket closes clean, the turn having completed without a stop.
+        // **The bracket closes clean because the turn ran to completion.** A
+        // model-side stop, the generation reaching capacity or its own stop
+        // token, is a completed turn whose truncation is recorded in the
+        // output's finish, not a turn aborted by a directive or a fault, which
+        // is the only thing `TurnClose::Stopped` names. Loop 1 reads the
+        // model-side stop from the outcome, and the record reads it from the
+        // output, and neither confuses it with an abort.
         self.author
             .author(
                 self.recorder,
                 Kind::TurnClosed,
                 Subsystem::Harness,
-                Some(&turn),
+                Some(turn),
                 Some(Payload::TurnClosed(TurnClose::Clean)),
             )
             .map_err(|_| TurnError::ChannelLost)?;

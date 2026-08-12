@@ -681,8 +681,8 @@ fn open_session(
             messages: identity,
         })
         .map_err(|_| LifecycleRefusal::NoResidency)?;
-    match decode.recv_answer() {
-        Ok(TokenAnswer::Opened) => Ok(()),
+    match decode.recv_reply() {
+        Ok(crate::channel::DecodeReply::Answer(TokenAnswer::Opened)) => Ok(()),
         // A typed refusal on the open is the session declining to stand, which
         // the harness carries into the aggregate as the SPU unable to admit
         // what the load asked, the decode seam's refusals having no floor
