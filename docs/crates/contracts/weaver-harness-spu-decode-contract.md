@@ -15,7 +15,7 @@ with no consumer behind it. The fault report becomes the seam's one
 emission rather than its fifth exchange, owed nothing back at all, the
 trace entry being the acknowledgment, and the fault-carrier ruling's razor
 is the precedent, a second carrier for one fact earning nothing. Sections
-2, 3, 5, and 6 carry the change.
+2, 3, 5, 6, and 8 carry the change.
 **Revised:** 2026-08-12, the seam's dataflow rule stated, per the operator's
 ruling of this date. Section 2 names the direction of expectation its count
 already embodied: a harness-opened exchange asks and its answer returns what

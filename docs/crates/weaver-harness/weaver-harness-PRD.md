@@ -156,10 +156,9 @@ arrives is dispatched by what it is: a directive is the lifecycle
 interior's, a report is clerked to the record with no turn opened and
 nothing answered, the trace entry being the acknowledgment per the decode
 contract's second ruling of 2026-08-12, and a frame grants the seat, loop 1
-entered with the turn's
-content and the granted surface, the response returning through the same
-exchange when the seat comes back. The mechanics are the Spec's, at its
-section 6.2.
+entered with the turn's content and the granted surface, the response
+returning through the same exchange when the seat comes back. The mechanics
+are the Spec's, at its section 6.2.
 
 **The tool system.** The registry, the execution context, and the permission modes.
 Permission modes are operator policy and not a safety boundary. What a tool can reach

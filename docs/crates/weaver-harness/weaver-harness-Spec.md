@@ -1421,11 +1421,10 @@ riding as the seam's one emission owed nothing back, per the decode
 contract's second ruling of 2026-08-12. A report never arrives mid-stream,
 the contract's ordering emitting it only while no exchange is outstanding,
 so the stream's poll of 6.1 hears tokens and the close and nothing else. The
-gate channel carries the raise's
-answer at enter, the frames
-between, and the lower at leave. Section 2.4's `poll` election covers this
-wait as it covers the stream's, one mechanism in two states, and the
-no-runtime rule of section 1 stands.
+gate channel carries the raise's answer at enter, the frames between, and
+the lower at leave. Section 2.4's `poll` election covers this wait as it
+covers the stream's, one mechanism in two states, and the no-runtime rule
+of section 1 stands.
 
 **Dispatch is by payload kind, and only the frame grants the seat.** A
 directive is the lifecycle interior's, served as section 3 serves it, a leave
