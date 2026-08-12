@@ -85,8 +85,9 @@
 //! fields and no reachable constructor, so a builder's loop composes the
 //! granted surface or does not compile.
 //!
-//! ```compile_fail
-//! let _ = weaver_harness::Ports::grant(None);
+//! ```compile_fail,E0624
+//! // `grant` is crate-private (E0624), so a builder's loop cannot name it.
+//! let _ = weaver_harness::Ports::grant;
 //! ```
 //!
 //! The channel state's three positions and the floor's exhaustive wire enums

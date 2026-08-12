@@ -138,9 +138,8 @@ mod writer;
 
 pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
-    Bits, DecodeTimings, Envelope, Event, Finish, Kind, Line, ModelId, ModelMeasurement,
-    ModelOutput, ModelRequest, Payload, PromptBlock, RunOrdinal, SessionRef, StopReason, Subsystem,
-    TemplateId, TokenId, TurnClose, TurnRef, WeightsHash, raw_payload,
+    Envelope, Event, Finish, Kind, Line, ModelOutput, Payload, RunOrdinal, SessionRef, StopReason,
+    Subsystem, TurnClose, TurnRef, raw_payload,
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};
 pub use structure::{Record, WorkingStructure};

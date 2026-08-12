@@ -16,6 +16,11 @@ fn full_config() -> String {
         "      artifact: qwen3-4b-instruct\n",
         "      devices: [0]\n",
         "    residual-readout-election: false\n",
+        "    identity:\n",
+        "      - role: user\n",
+        "        content:\n",
+        "          - type: text\n",
+        "            text: You answer briefly.\n",
         "tool-set: []\n",
         "permission-mode: ask\n",
         "gate-instruction:\n",
@@ -40,6 +45,14 @@ fn a_complete_config_parses() {
     assert_eq!(decoder.model_binding.devices.len(), 1);
     assert_eq!(config.permission_mode, weaver_traits::PermissionMode::Ask);
     assert!(!decoder.residual_readout_election);
+    // The identity material parses to its canonical messages: one user
+    // message with a single text block, per the full_config fixture.
+    assert_eq!(decoder.identity.len(), 1);
+    assert_eq!(decoder.identity[0].role, weaver_traits::Role::User);
+    assert!(matches!(
+        decoder.identity[0].content.as_slice(),
+        [weaver_traits::ContentBlock::Text { text }] if text == "You answer briefly."
+    ));
 }
 
 /// A missing required field refuses the parse, run separately for the

@@ -11,7 +11,6 @@
 //! conforms: trace-turn-close-internally-tagged
 //! conforms: trace-kind-payload-mapping-total
 //! conforms: trace-splice-or-shape
-//! conforms: trace-measurement-absent-not-zero
 //! conforms: trace-payload-serialize-only
 //!
 //! The event: the envelope, the kind set, and the payload shapes, per
@@ -153,9 +152,16 @@ pub enum Payload {
     TurnClosed(TurnClose),
     /// The floor's fault-report shape, rendered by the harness and spliced.
     Fault(Box<RawValue>),
-    ModelRequest(ModelRequest),
+    /// The request the model received, the SPU-rendered content the harness
+    /// splices, per the custody act of 2026-08-11: the rendered prompt with
+    /// its template and effective sampling, the organ's shape the record
+    /// carries opaque.
+    ModelRequest(Box<RawValue>),
     ModelOutput(ModelOutput),
-    ModelMeasurement(ModelMeasurement),
+    /// The instrument readings, the SPU-rendered measurement the harness
+    /// splices, its unproduced members produced absent by the SPU rather than
+    /// omitted by a serde election of this crate's.
+    ModelMeasurement(Box<RawValue>),
     /// The payloads whose shapes their own workflows settle, since the trace
     /// act of 2026-08-02 the tool bracket's two alone. Raw bytes in the
     /// interim rather than a placeholder struct, because a struct shaped
@@ -188,13 +194,6 @@ pub enum StopReason {
 /// library produced it and the sampling values, both spliced because their
 /// shapes are other crates' - what is shaped here is what no other crate
 /// defines.
-#[derive(Debug, Clone, Serialize)]
-pub struct ModelRequest {
-    pub rendered: Box<RawValue>,
-    pub template: TemplateId,
-    pub sampling: Box<RawValue>,
-}
-
 /// The decode boundary, response side: the emission verbatim, before any
 /// parse, and how the generation ended.
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -211,65 +210,14 @@ pub enum Finish {
     Stopped,
 }
 
-/// The instrument readings. The optional members are absent rather than zero:
-/// an unproduced reading emits no member at all, because a zero-length vector
-/// rendered would say the reading was taken and found empty, and a zeroed one
-/// would say the model was certain, and neither is what an absent instrument
-/// means.
-#[derive(Debug, Clone, Serialize)]
-pub struct ModelMeasurement {
-    pub model: ModelId,
-    pub weights_hash: WeightsHash,
-    pub input_tokens: Vec<TokenId>,
-    pub output_tokens: Vec<TokenId>,
-    pub blocks: Vec<PromptBlock>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub entropies: Vec<Bits>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub surprisals: Vec<Bits>,
-    pub timings: DecodeTimings,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reductions: Option<Box<RawValue>>,
-}
-
-/// The chat template's identity. Satellite newtype per section 11.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct TemplateId(pub String);
-
-/// The model's identity. Satellite newtype per section 11.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct ModelId(pub String);
-
-/// The weights hash joining a measurement to the exact artifact.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct WeightsHash(pub String);
-
-/// One token's identifier in the model's vocabulary.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-pub struct TokenId(pub u32);
-
-/// A per-token signal in bits.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
-pub struct Bits(pub f64);
-
-/// One block of the prompt-block partition: a name and the span of the token
-/// sequence it covers, end exclusive. Satellite shape per section 11.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct PromptBlock {
-    pub label: String,
-    pub start: u64,
-    pub end: u64,
-}
-
-/// The decode's timing readings, in nanoseconds under the decimal-string rule.
-/// Satellite shape per section 11: the two spans a decode divides into, with
-/// further readings arriving when the token workflow measures them.
-#[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct DecodeTimings {
-    pub prefill_ns: MonotonicNs,
-    pub decode_ns: MonotonicNs,
-}
-
+/// The measurement and the request retired their typed shapes with the custody
+/// act of 2026-08-11: both are the SPU's rendering the record carries opaque,
+/// so their satellites, the model and template identities, the weights hash,
+/// the token identifier, the per-token bits, the prompt block, and the decode
+/// timings, are the SPU's construction shape and no longer this crate's, per
+/// `weaver-trace-Spec` section 3. `ModelOutput` alone stays shaped, its
+/// emission a string the harness consumes and its finish the turn's close.
+///
 /// A pre-rendered payload arrives as validated octets: `RawValue` construction
 /// validates JSON, and the separator check ahead of it closes the hole
 /// validation leaves - JSON holds no raw newline inside a string, but holds

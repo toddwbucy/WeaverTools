@@ -65,6 +65,12 @@ pub struct SpuInstruction {
 pub struct DecoderInstruction {
     pub model_binding: ModelBinding,
     pub residual_readout_election: bool,
+    /// The session's identity material: the canonical messages the identity
+    /// prefix is rendered from, configuration rather than history, per
+    /// `weaver-types-Spec` section 2. Required like every field, and an
+    /// empty list is a declaration the operator made where an absent field
+    /// is a file unfinished.
+    pub identity: Vec<weaver_traits::Message>,
 }
 
 /// The model artifact and the devices it is assigned to.

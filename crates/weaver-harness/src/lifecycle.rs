@@ -36,7 +36,7 @@ use std::path::PathBuf;
 use weaver_trace::{Kind, Payload, Recorder, RunOrdinal, SessionRef, Subsystem, TurnClose};
 use weaver_types::{
     ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope,
-    Position, SessionId, TurnKey,
+    Position, SessionId, TokenAnswer, TokenDirective, TurnKey,
 };
 
 use crate::authorship::Author;
@@ -79,6 +79,9 @@ struct Run {
     /// the gate's counters are separate and neither is hardcoded.
     spu_ordinal: u64,
     gate_ordinal: u64,
+    /// The turn counter loop 0 mints turn keys from, per the gate contract's
+    /// rule that the turn does not exist until the harness opens it.
+    turn_ordinal: u64,
 }
 
 /// The SPU's arm is a pair of channels rather than one, and they are one field
@@ -350,6 +353,7 @@ impl Harness {
             turn_in_flight: None,
             spu_ordinal: 0,
             gate_ordinal: 0,
+            turn_ordinal: 0,
         };
 
         macro_rules! after_load {
@@ -413,6 +417,22 @@ impl Harness {
             after_load!(run, refusal);
         }
 
+        // **The decode session opens once residency confirms**, per
+        // `weaver-harness-Spec` section 6.1: the session opens at the enter
+        // fan-out and not at the first turn, so the interior loop 0 grants is
+        // a session at rest. The open carries the instruction's identity as
+        // its messages and the run's session as its session, read from the
+        // payload this crate already holds. A refused open is a refused enter,
+        // returned after-load so the bracket stands for the leave.
+        let spu = run.spu.as_ref().expect("residency stands");
+        if let Err(refusal) = open_session(
+            &spu.decode,
+            SessionId(run.session.0.clone()),
+            payload.spu_instruction.decoder.identity.clone(),
+        ) {
+            after_load!(run, refusal);
+        }
+
         // The gate pair is created only after the SPU's answer confirms
         // residency: one organ's readiness gates another organ's
         // construction, which neither organ can see from inside its domain.
@@ -466,7 +486,11 @@ impl Harness {
     /// interior to whatever loop 1 the binary carries, and takes it back at
     /// the stop and at the leave. A loop composes what this grants or does not
     /// compile - there is no call by which it mints a port.
-    pub fn grant_seat(&mut self, identity: &str, tool_schemas: &[String]) -> Option<crate::Ports> {
+    pub fn grant_seat(
+        &mut self,
+        identity: &str,
+        tool_schemas: &[String],
+    ) -> Option<crate::Ports<'_>> {
         match &mut self.state {
             // **The extension seam is crossed at loaded-and-idle itself.** A
             // turn in flight is the active state, not the idle one, and loop 0
@@ -496,7 +520,14 @@ impl Harness {
                     );
                     return None;
                 }
-                Some(crate::engine::Ports::grant(Some(prompt)))
+                let spu = run.spu.as_ref()?;
+                Some(crate::engine::Ports::grant(
+                    &spu.decode,
+                    &run.author,
+                    &mut run.recorder,
+                    &mut run.turn_ordinal,
+                    Some(prompt),
+                ))
             }
             // Before enter and after leave there is no standing interior to
             // hand across, which is the bracket discipline being loop 0's.
@@ -545,18 +576,29 @@ impl Harness {
 /// The match on the options is the checked unwind: a forgotten arm is a
 /// compile error rather than a leaked residency.
 fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
+    // The unwind runs whole whatever refuses along it, because stopping at
+    // the first refusal leaks everything after it: a refused lower must not
+    // leave a device held. The first refusal in sequence order is what the
+    // answer names, per the contract's a-refusal-names-where-it-stopped.
+    let mut first_refusal: Option<LifecycleRefusal> = None;
+
     if let Some(gate) = run.gate.take() {
         run.gate_ordinal += 1;
-        let _ = gate.channel.send(&OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Harness,
-                ordinal: run.gate_ordinal,
-            },
-            position: Position::Open,
-            payload: weaver_types::Payload::Directive(LifecycleDirective::Lower),
-        });
+        // The lower is an exchange, not a shot: its confirmation is what
+        // admin's leave aggregate rests on, so the answer is read before the
+        // channel drops rather than raced against it.
+        let lowered = exchange(
+            &gate.channel,
+            Opener::Harness,
+            run.gate_ordinal,
+            weaver_types::RefusingOrgan::Gate,
+            LifecycleDirective::Lower,
+        );
         drop(gate.channel);
         reap(gate.pid);
+        if let Err(refusal) = lowered {
+            first_refusal.get_or_insert(refusal);
+        }
     }
     let _ = run.author.author(
         &mut run.recorder,
@@ -574,20 +616,38 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
 
     if let Some(spu) = run.spu.take() {
         run.spu_ordinal += 1;
-        let _ = spu.lifecycle.send(&OrganEnvelope {
-            exchange: ExchangeId {
-                opener: Opener::Harness,
-                ordinal: run.spu_ordinal,
-            },
-            position: Position::Open,
-            payload: weaver_types::Payload::Directive(LifecycleDirective::Release),
-        });
-        drop(spu.lifecycle);
+        // **The decode end drops first**, ending the worker's decode phase so
+        // the release lands on a seam that is listening, per the serve loop's
+        // one-loop rule: from admit until its decode end closes, the worker
+        // reads nothing else. Issue 113's repair, and the ordering the seam
+        // tests always had.
         drop(spu.decode);
+        // The release is the exchange the contract says it is: confirmed
+        // after the device is free and never before, and admin's leave
+        // aggregate rests one arm on that confirmation, so the answer is
+        // read before the channel drops.
+        let released = exchange(
+            &spu.lifecycle,
+            Opener::Harness,
+            run.spu_ordinal,
+            weaver_types::RefusingOrgan::Spu,
+            LifecycleDirective::Release,
+        );
+        drop(spu.lifecycle);
         reap(spu.pid);
+        if let Err(refusal) = released {
+            first_refusal.get_or_insert(match drained.is_err() {
+                // The drain failed earlier in the sequence than the
+                // release did, so it is the failure the answer names.
+                true => LifecycleRefusal::DescriptorsUnusable,
+                false => refusal,
+            });
+        }
     }
-    let _ = &run.session;
 
+    if let Some(refusal) = first_refusal {
+        return Err(refusal);
+    }
     match drained {
         Ok(()) => Ok(()),
         // The stream did not close cleanly, which is a fault the operator
@@ -605,6 +665,34 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
 /// nothing else". The exit status carries the same fact without adding one,
 /// and it is read here - after the exchange observed closure - where the child
 /// is already dead and there is no race to lose.
+/// Open the decode session once residency confirms, per
+/// `weaver-harness-Spec` section 6.1. The identity messages are the open's
+/// messages and the run's session its session, and a refusal or a fault below
+/// the exchange maps onto the load-refusal set the enter aggregate carries.
+fn open_session(
+    decode: &DecodeChannel,
+    session: SessionId,
+    identity: Vec<weaver_traits::Message>,
+) -> Result<(), LifecycleRefusal> {
+    decode
+        .send_directive(&TokenDirective::Open {
+            session,
+            messages: identity,
+        })
+        .map_err(|_| LifecycleRefusal::NoResidency)?;
+    match decode.recv_reply() {
+        Ok(crate::channel::DecodeReply::Answer(TokenAnswer::Opened)) => Ok(()),
+        // A typed refusal on the open is the session declining to stand, which
+        // the harness carries into the aggregate as the SPU unable to admit
+        // what the load asked, the decode seam's refusals having no floor
+        // lifecycle case of their own.
+        Ok(_) => Err(LifecycleRefusal::DeviceCannotAdmit),
+        // A fault below the exchange, the worker gone or the octets
+        // undecodable, is the residency lost the moment it was confirmed.
+        Err(_) => Err(LifecycleRefusal::NoResidency),
+    }
+}
+
 fn classify_organ_death(pid: nix::unistd::Pid) -> Option<LifecycleRefusal> {
     // **The wait does not block.** An organ that closed its end and kept
     // running would otherwise hold the serving thread here forever, which is
@@ -736,16 +824,26 @@ mod tests {
                 .expect("turn started");
         }
         let (near, _far) = OrganChannel::pair().expect("pair");
+        // A loaded-and-idle run holds a resident SPU, so the helper builds one
+        // over a socketpair: the decode end is what the granted seat drives,
+        // and a run with no SPU is not loaded.
+        let (lifecycle, _spu_lifecycle) = OrganChannel::pair().expect("pair");
+        let (decode, _spu_decode) = DecodeChannel::pair().expect("decode pair");
         (
             Run {
                 recorder,
                 author,
                 session,
-                spu: None,
+                spu: Some(SpuChannels {
+                    lifecycle,
+                    decode,
+                    pid: nix::unistd::Pid::from_raw(1),
+                }),
                 gate: None,
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
                 spu_ordinal: 0,
                 gate_ordinal: 0,
+                turn_ordinal: 0,
             },
             near,
             path,

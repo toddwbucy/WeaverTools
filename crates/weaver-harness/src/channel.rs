@@ -376,10 +376,53 @@ impl DecodeChannel {
     }
 }
 
+impl DecodeChannel {
+    /// Send one token directive as bare JSON, per the decode contract: the
+    /// seam carries the token trio and no envelope, one write one message.
+    pub fn send_directive(
+        &self,
+        directive: &weaver_types::TokenDirective,
+    ) -> Result<(), ChannelFault> {
+        let body = serde_json::to_vec(directive).map_err(|_| ChannelFault::Undecodable)?;
+        send_octets(self.end.as_fd(), &body)
+    }
+
+    /// Receive one decode frame, blocking. A frame is a `TokenAnswer` or a
+    /// `TokenRefusal`, the two sharing the seam with disjoint tag vocabularies,
+    /// so the receive distinguishes them rather than reading only the answer
+    /// and losing a refusal to an undecodable fault.
+    pub fn recv_reply(&self) -> Result<DecodeReply, ChannelFault> {
+        let octets = recv_octets(self.end.as_fd())?;
+        if let Ok(answer) = serde_json::from_slice::<weaver_types::TokenAnswer>(&octets) {
+            return Ok(DecodeReply::Answer(answer));
+        }
+        if let Ok(refusal) = serde_json::from_slice::<weaver_types::TokenRefusal>(&octets) {
+            return Ok(DecodeReply::Refusal(refusal));
+        }
+        Err(ChannelFault::Undecodable)
+    }
+}
+
+/// One frame off the decode seam: an answer to advance the exchange or a typed
+/// refusal that declines the ask, per the decode contract's section 5.
+#[derive(Debug)]
+pub enum DecodeReply {
+    Answer(weaver_types::TokenAnswer),
+    Refusal(weaver_types::TokenRefusal),
+}
+
 impl AsFd for DecodeChannel {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.end.as_fd()
     }
+}
+
+/// Wrap an already-owned descriptor as a decode end, for the suite that scripts
+/// a decode peer over a socketpair rather than forking a real SPU. Test-only
+/// and not an adoption path.
+#[cfg(test)]
+pub(crate) fn decode_from_owned(end: OwnedFd) -> DecodeChannel {
+    DecodeChannel { end }
 }
 
 impl ChildEnd {

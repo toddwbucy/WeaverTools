@@ -262,6 +262,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                             devices: vec![weaver_types::DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
+                        identity: vec![],
                     },
                 },
                 gate_instruction: weaver_types::GateInstruction {

@@ -217,6 +217,7 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: true,
+                        identity: vec![],
                     },
                 },
             },
@@ -294,6 +295,7 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
+                        identity: vec![],
                     },
                 },
             },
@@ -386,6 +388,7 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
+                        identity: vec![],
                     },
                 },
             },
@@ -416,13 +419,46 @@ mod seam_success {
             delta: vec![message("Say one word.")],
             tunable: Default::default(),
         });
-        let answer = recv();
-        let TokenAnswer::Generated(generation) = answer else {
-            panic!("the append answers with the generation, got {answer:?}");
+        // **The stream precedes the close and never disagrees with it**, per
+        // the contract's coherence guarantee: token frames arrive as drawn,
+        // the pieces accumulate to the emission, and the close carries the
+        // generation whole.
+        let mut pieces = String::new();
+        let mut streamed = 0usize;
+        let generation = loop {
+            match recv() {
+                TokenAnswer::Token { piece, .. } => {
+                    pieces.push_str(&piece);
+                    streamed += 1;
+                }
+                TokenAnswer::Generated(generation) => break generation,
+                other => panic!("the stream carries tokens then the close, got {other:?}"),
+            }
         };
         assert!(
             !generation.emission.is_empty(),
             "a real model said something"
+        );
+        assert!(streamed > 0, "the seam streamed rather than batched");
+        assert_eq!(
+            pieces, generation.emission,
+            "the pieces accumulate to the emission, stream and close agreeing"
+        );
+        let request: serde_json::Value =
+            serde_json::from_str(generation.request.get()).expect("the request splice is JSON");
+        assert!(
+            request["rendered"]
+                .as_str()
+                .is_some_and(|r| r.contains("Say one word.")),
+            "the request carries the family's render of the delta"
+        );
+        assert!(
+            request["template"].as_str().is_some(),
+            "and the template identity"
+        );
+        assert!(
+            request["sampling"]["temperature"].is_number(),
+            "and the effective sampling"
         );
         let measurement: serde_json::Value =
             serde_json::from_str(generation.measurement.get()).expect("the measurement is JSON");

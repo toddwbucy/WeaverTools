@@ -257,6 +257,7 @@ mod tests {
                 "      artifact: qwen3-4b-instruct\n",
                 "      devices: [0]\n",
                 "    residual-readout-election: false\n",
+                "    identity: []\n",
                 "tool-set: []\n",
                 "permission-mode: ask\n",
                 "gate-instruction:\n",
