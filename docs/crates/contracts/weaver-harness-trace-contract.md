@@ -5,6 +5,11 @@
 separately.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-12, the request is the turn's contribution, per the
+operator's ruling of this date. The submit clause narrows with
+`weaver-trace-PRD` section 3.2: the harness submits the turn's delta as
+rendered rather than the prompt as the model received it, the full effective
+context being the accumulation the record determines.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -231,9 +236,12 @@ consumer a parser of every family. The recorder judges neither, per section
 6, so this is an obligation on the party that can meet it.
 
 **The rendered form and its template identity, with `model.request`.** The
-harness submits what the model was asked as the model received it, the
-rendered prompt and the identity of the template that produced it, beside the
-effective sampling values for the turn. It has the rendered form because the
+harness submits what the model was asked this turn, the turn's delta as
+rendered and the identity of the template that produced it, beside the
+effective sampling values for the turn, per the operator's ruling of
+2026-08-12: the seam is append-only, so the full effective context is the
+accumulation the record determines rather than a quantity any one event
+stores. It has the rendered form because the
 family library returns it on the report path, per `weaver-spu-PRD` section
 13.4, and it submits it because a record holding only canonical messages
 forces a replay through a template that may have changed, per

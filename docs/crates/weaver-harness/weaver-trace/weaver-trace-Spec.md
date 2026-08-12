@@ -4,6 +4,10 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-12, the request is the turn's contribution, per the
+operator's ruling of this date. Section 4's splice sentence follows
+`weaver-trace-PRD` section 3.2 as narrowed: the turn's delta as rendered,
+not the prompt as the model received it, splicing whole as before.
 **Revised:** 2026-08-11, the model events splice. `Payload::ModelRequest` and
 `Payload::ModelMeasurement` become spliced `RawValue`, the organ producing their
 content and the harness carrying it opaque per the custody model, reversing the
@@ -490,8 +494,9 @@ this section.** The earlier text shaped the measurement here because its
 readings are what no other crate defines, but the streaming ruling made the SPU
 the definer and the producer of those readings, so under the custody model they
 are the organ's content and the harness splices them exactly as it splices a
-fault. The request the model received, the rendered prompt with its template
-and its effective sampling, is the family library's rendering and the SPU's, so
+fault. The request the model was asked this turn, the turn's delta as rendered
+with its template and its effective sampling per the ruling of 2026-08-12, is
+the family library's rendering and the SPU's, so
 it splices whole rather than being assembled here from members this crate would
 have to parse the splice to read. **`model.output` is the one model payload
 this crate shapes,** because its emission is a plain string the harness holds

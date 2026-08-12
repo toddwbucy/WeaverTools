@@ -6,6 +6,15 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-12, the request is the turn's contribution, per the
+operator's ruling of this date closing issue 124. Section 3.2's model.request
+narrows from the prompt as the model received it to the turn's rendered
+delta, the full effective context being what the record determines by
+accumulation, the measurement's token identifiers carrying the exact
+tokenization. Two conditions ride it: a flush becoming reachable adds its
+event to the kind set or reopens the ruling, and replay's identity prefix
+leans on the open identifiability question. The state is a distillation of
+the record, never stored back into it.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -396,18 +405,36 @@ envelope's field and is not repeated in the payload. A fault the worker does
 not survive is not this kind, per the contracts, because the party that would
 report it is the one that died.
 
-**`model.request` carries what the model was asked, including what it saw.**
-The rendered prompt as the model received it, the identity of the template
-that produced it, and the sampling values in effect for the turn, effective
+**`model.request` carries what the model was asked this turn, the turn's
+rendered contribution, per the operator's ruling of 2026-08-12.** The turn's
+delta as the family library rendered it, the identity of the template that
+produced it, and the sampling values in effect for the turn, effective
 values whichever side set them, per the disposition rule of `weaver-spu-PRD`
-section 13.8. The rendered form is here rather than nowhere because of the
-end-to-end requirement of 2026-08-02: each model carries its own template, so
-the conversation exists twice, as the canonical messages this crate's message
-kinds hold and as the rendered token sequence the model was given, and a
-record holding only the first forces a replay to re-render through a template
-that may have changed since, which observes a forward pass that never
-happened. Recording both is what makes apex section 8's rule that
-tokenization is reproducible from what is recorded true rather than hopeful.
+section 13.8. The seam is append-only, so what the model received grows each
+turn while only the delta crosses, and the full effective context is what
+the record determines rather than what any one event stores: the
+accumulation of the recorded contributions under their recorded template
+identities, from the identity prefix the configuration carries. Recording
+the full effective prompt per turn would store a derived quantity the record
+already determines, one fact in two places, and would grow the account by
+the square of the conversation, the resend pathology the append-only seam
+exists to kill returning as record bloat. The state is a distillation of the
+record and is never stored back into it. The rendered form is here rather
+than nowhere because of the end-to-end requirement of 2026-08-02: each model
+carries its own template, so the turn's contribution exists twice, as the
+canonical messages this crate's message kinds hold and as the rendered piece
+the model was given, and a record holding only the first forces a replay to
+re-render through a template that may have changed since, which observes a
+forward pass that never happened. Recording both, with the measurement's
+token identifiers carrying the exact tokenization, is what makes apex
+section 8's rule that tokenization is reproducible from what is recorded
+true rather than hopeful. Two conditions ride the ruling, named rather than
+slid past. The accumulation reading holds while every operation that moves
+the resident context is recorded, so a flush becoming reachable adds its
+event to the kind set through the front door or reopens this ruling. And a
+replay's identity prefix is the configuration's, so the record's sufficiency
+for replay leans on the open question of what the load event carries of the
+admitted identity, which this ruling names and does not decide.
 
 **`model.output` carries the emission verbatim, before any parse.** The
 model's own family-styled output, the reasoning blocks and channel markers
