@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-12, third of this date, the frame's shape closes.
+`TurnFrame` carries its octets base64-encoded in one member, elected at
+section 4.1 by argument rather than the deferred measurement, per the
+operator's ruling of this date: no party validates a line before it crosses,
+so a splice would convert a refused turn into a channel fault that ends
+service. Section 6's bullet closes, one perturbation assertion lands, and
+the code's empty placeholder gains its member with the wiring act.
 **Revised:** 2026-08-12, second of this date, the request is the turn's
 contribution. Per the operator's ruling closing issue 124, `Generation`'s
 `request` member carries the turn's delta as rendered, the full effective
@@ -679,15 +686,49 @@ destroying exactly the legibility the JSON election rests on.
 2026-08-02.** The gate's turn exchanges cross the same organ channel the
 lifecycle directives do, so the frame enters this enum rather than taking a
 carrier of its own, and every consumer's match sees the addition, which is
-what the rule below is for. **Its shape is an open election with a stated
-constraint,** per section 6: a frame is opaque to the gate, so it is whatever
-the client sent, and an earlier draft of this Spec already recorded what
-happens to raw octets inside a JSON envelope, an array of numbers that
-triples the size and destroys the legibility the encoding election rests on.
-The frame is therefore not held as a byte vector, and which of the two honest
-answers it takes, a splice of the line as it stands where the world contract's
-own NDJSON shape makes that safe, or an encoding that survives arbitrary
-octets, is elected against a measurement rather than assumed here.
+what the rule below is for. **Its shape is elected, per the operator's ruling
+of 2026-08-12: the frame carries its octets base64-encoded in one member, and
+the measurement the earlier deferral waited on is not needed.**
+
+```rust
+pub struct TurnFrame {
+    pub octets: String,
+}
+```
+
+The member is the line's octets encoded base64, both directions, one
+definition per the charter. The deferral offered two honest answers, a
+splice of the line as it stands or an encoding that survives arbitrary
+octets, and held them for a measurement over real client traffic. The
+constraint set decides without one. The gate reads no frame, per its opacity
+rule and the `gate-client-content-unread` assertion, so no party validates a
+line before it crosses: the world contract names UTF-8 NDJSON as the
+client's format and names the harness as the party that refuses a line that
+does not parse, which admits arbitrary octets onto the seam by construction.
+A splice therefore fails exactly when a client misbehaves, and it fails at
+the wrong layer: an unparseable member makes the envelope undecodable, and
+an undecodable envelope is a channel fault that ends service, so a hostile
+line would convert a refused turn into a dead channel. The encoding that
+survives arbitrary octets is the only answer left, and base64 is its boring
+form: ASCII inside the JSON envelope, about a third larger than the line
+rather than the tripling a numeric array costs, on a channel that carries
+one frame per turn rather than the decode seam's per-token stream, so the
+hot-path concern the deferral carried does not reach it. Encoding is
+carriage rather than reading, a byte-blind transform parsing nothing, so the
+gate's opacity holds. The harness decodes the member back to octets before
+the parse question the gate's turn half owns, and what an undecodable member
+means behaviorally is that act's to state, the representation alone being
+this document's.
+
+```graph
+node: types-frame-survives-arbitrary-octets
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-types
+to: types-frame-survives-arbitrary-octets
+```
 
 **`Fault` enters on different grounds and the difference is worth stating.**
 It is not a loop's vocabulary, so the rule below does not reach it: a fault
@@ -1303,10 +1344,13 @@ already discharged.
   `weaver-gate-PRD` section 13.4, and `weaver-harness-PRD` section 5, since
   the same shape serves the wire and the `fault` event's payload and electing
   it twice would be two shapes for one fact.
-- **`TurnFrame`'s shape.** Elected against the constraint section 4.1 states,
-  a frame being opaque and octets inside a JSON envelope being the defect this
-  crate already refused once. Settled with a measurement over real client
-  traffic, which the gate's own Spec produces.
+- **`TurnFrame`'s shape is closed, 2026-08-12.** Elected at section 4.1 by
+  argument rather than the deferred measurement, per the operator's ruling of
+  this date: the gate validates nothing, so arbitrary octets reach the seam
+  by construction, a splice would convert a refused turn into a channel
+  fault, and the frame carries its octets base64-encoded in one member.
+  Recorded as closed rather than deleted, this list naming what settled each
+  entry.
 - **The `tool-set` field's element shape.** It elects from `tool-trait`, which
   `weaver-traits-PRD` section 3.1 holds blocked, so the field is a list of names
   today and gains its element type with the tool workflow.
