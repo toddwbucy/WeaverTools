@@ -1043,10 +1043,14 @@ to: spu-log-sum-exp-stable
 **The vectors are positionally paired with the token identifiers and absent
 when not produced,** per charter section 13.6 and `weaver-trace-PRD` section
 3.2. This crate produces no empty vector to mean nothing was measured: it
-sends no vector, and the trace's own `skip_serializing_if` carries the absence
-to the record. The serialization half is `weaver-trace-Spec`'s, argued and
-tested at its sections 3 and 10, and this record is the production half, which
-is a different party's obligation and not a second copy of one claim. **The
+renders no member for an unproduced reading, so the measurement blob it splices
+carries the absence to the record directly. As of the model-events splice act
+of 2026-08-11 the measurement is this crate's rendering the harness carries
+opaque, so the omission is this crate's to produce rather than the trace's to
+serialize: the earlier reading assigned it to `weaver-trace-Spec`'s
+`skip_serializing_if`, and that election retired with the typed measurement
+struct, this crate now owning both the production and the omission as one
+obligation. **The
 absence takes a type instead of a fixture, per the operator's election of
 2026-08-04:** the vectors travel as an option of a non-empty vector, head and
 tail, so an empty vector meaning nothing was measured is unrepresentable rather
