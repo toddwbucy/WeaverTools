@@ -86,7 +86,8 @@
 //! granted surface or does not compile.
 //!
 //! ```compile_fail
-//! let _ = weaver_harness::Ports::grant(None);
+//! // `grant` is crate-private, so a builder's loop cannot name it.
+//! let _ = weaver_harness::Ports::grant;
 //! ```
 //!
 //! The channel state's three positions and the floor's exhaustive wire enums

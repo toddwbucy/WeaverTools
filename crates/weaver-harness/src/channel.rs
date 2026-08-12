@@ -402,6 +402,14 @@ impl AsFd for DecodeChannel {
     }
 }
 
+/// Wrap an already-owned descriptor as a decode end, for the suite that scripts
+/// a decode peer over a socketpair rather than forking a real SPU. Test-only
+/// and not an adoption path.
+#[cfg(test)]
+pub(crate) fn decode_from_owned(end: OwnedFd) -> DecodeChannel {
+    DecodeChannel { end }
+}
+
 impl ChildEnd {
     /// The descriptor a child will find this end at once the handoff runs.
     pub fn as_fd(&self) -> BorrowedFd<'_> {

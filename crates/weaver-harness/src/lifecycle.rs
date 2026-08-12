@@ -79,6 +79,9 @@ struct Run {
     /// the gate's counters are separate and neither is hardcoded.
     spu_ordinal: u64,
     gate_ordinal: u64,
+    /// The turn counter loop 0 mints turn keys from, per the gate contract's
+    /// rule that the turn does not exist until the harness opens it.
+    turn_ordinal: u64,
 }
 
 /// The SPU's arm is a pair of channels rather than one, and they are one field
@@ -350,6 +353,7 @@ impl Harness {
             turn_in_flight: None,
             spu_ordinal: 0,
             gate_ordinal: 0,
+            turn_ordinal: 0,
         };
 
         macro_rules! after_load {
@@ -482,7 +486,11 @@ impl Harness {
     /// interior to whatever loop 1 the binary carries, and takes it back at
     /// the stop and at the leave. A loop composes what this grants or does not
     /// compile - there is no call by which it mints a port.
-    pub fn grant_seat(&mut self, identity: &str, tool_schemas: &[String]) -> Option<crate::Ports> {
+    pub fn grant_seat(
+        &mut self,
+        identity: &str,
+        tool_schemas: &[String],
+    ) -> Option<crate::Ports<'_>> {
         match &mut self.state {
             // **The extension seam is crossed at loaded-and-idle itself.** A
             // turn in flight is the active state, not the idle one, and loop 0
@@ -512,7 +520,14 @@ impl Harness {
                     );
                     return None;
                 }
-                Some(crate::engine::Ports::grant(Some(prompt)))
+                let spu = run.spu.as_ref()?;
+                Some(crate::engine::Ports::grant(
+                    &spu.decode,
+                    &run.author,
+                    &mut run.recorder,
+                    &mut run.turn_ordinal,
+                    Some(prompt),
+                ))
             }
             // Before enter and after leave there is no standing interior to
             // hand across, which is the bracket discipline being loop 0's.
@@ -810,16 +825,26 @@ mod tests {
                 .expect("turn started");
         }
         let (near, _far) = OrganChannel::pair().expect("pair");
+        // A loaded-and-idle run holds a resident SPU, so the helper builds one
+        // over a socketpair: the decode end is what the granted seat drives,
+        // and a run with no SPU is not loaded.
+        let (lifecycle, _spu_lifecycle) = OrganChannel::pair().expect("pair");
+        let (decode, _spu_decode) = DecodeChannel::pair().expect("decode pair");
         (
             Run {
                 recorder,
                 author,
                 session,
-                spu: None,
+                spu: Some(SpuChannels {
+                    lifecycle,
+                    decode,
+                    pid: nix::unistd::Pid::from_raw(1),
+                }),
                 gate: None,
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
                 spu_ordinal: 0,
                 gate_ordinal: 0,
+                turn_ordinal: 0,
             },
             near,
             path,
