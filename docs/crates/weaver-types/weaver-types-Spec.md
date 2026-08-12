@@ -697,7 +697,10 @@ pub struct TurnFrame {
 ```
 
 The member is the line's octets encoded base64, both directions, one
-definition per the charter. The deferral offered two honest answers, a
+definition per the charter. The encoding is RFC 4648 section 4's standard
+alphabet, padded, with no line breaks and no interior whitespace, and the
+decode refuses input the encode would not produce, so one octet sequence has
+exactly one carried form. The deferral offered two honest answers, a
 splice of the line as it stands or an encoding that survives arbitrary
 octets, and held them for a measurement over real client traffic. The
 constraint set decides without one. The gate reads no frame, per its opacity
