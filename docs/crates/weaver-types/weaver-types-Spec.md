@@ -5,13 +5,20 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-11, third of that date, the model events splice.
+`Generation`'s `rendered` member becomes `request` and carries the model.request
+content whole, the rendered prompt with its template and effective sampling,
+because the custody act makes `model.request` and `model.measurement` spliced
+payloads the SPU renders and the harness carries opaque. No case set moves, the
+trio's shape unchanged but for the member's name and widened content.
 **Revised:** 2026-08-11, the seam streams. `TokenAnswer` gains its `Token`
 case, the intermediate the decode contract's streaming ruling of this date
 enumerates, any number preceding the close and none closing, the identifier
 a bare `u32` and the piece the family's rendering of that one token.
-`Generation` gains `rendered` beside the measurement rather than inside it,
-one spliced member per record box, the review of this act having caught the
-inside placement forcing the transform the splice refuses. The decoder's
+`Generation` carries `request` and `measurement` as two spliced members, one
+per record box, the request being the model.request content whole and renamed
+from the `rendered` of one act ago now the custody act of 2026-08-11 makes the
+whole request the SPU's to render. The decoder's
 section gains the `identity` field, the open exchange's canonical messages
 as configuration rather than history, required with an empty list
 legitimate, interior to the section with no vocabulary node moving.
@@ -1044,7 +1051,7 @@ reductions where the residency was admitted with readout elected.
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
-    pub rendered: Box<serde_json::value::RawValue>,
+    pub request: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
 }
 
@@ -1070,6 +1077,15 @@ satellites are `weaver-trace`'s** and one is `weaver-spu`'s, against a crate tha
 links one internal dependency, so shaping it here would restate seven types that
 already exist with no named authority over either copy, which is the duplication
 G5 files as a defect rather than resolves by picking.
+
+**`request` is the model.request content whole, not the rendered prompt alone.**
+The custody act of 2026-08-11 makes `model.request` a spliced payload the SPU
+renders, so this member carries what that event carries, the rendered prompt
+with its template identity and the turn's effective sampling values, rendered by
+the SPU because the template and the knobs are the SPU's and assembling them in
+the harness would be the transform the splice refuses. It was named `rendered`
+for one act, when only the prompt crossed, and the name narrows to the truth the
+custody act settled.
 
 **Spliced JSON and not octets, which is a distinction this crate enforced once
 already.** `RawValue` carries pre-serialized JSON written in place, so the

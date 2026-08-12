@@ -4,6 +4,12 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-11, second of that date, the model events splice. The
+close's request member widens from the rendered prompt to the model.request
+content whole, the rendered prompt with its template and effective sampling,
+this crate rendering it because the custody act makes model.request a spliced
+payload the organ produces. The measurement was already this crate's to
+render, and the harness now carries both opaque.
 **Revised:** 2026-08-11, the seam streams. The close gains the rendered
 prompt as the family library produced it, beside the measurement rather than
 inside it, one spliced member per record box, the record's request side
@@ -1037,10 +1043,14 @@ to: spu-log-sum-exp-stable
 **The vectors are positionally paired with the token identifiers and absent
 when not produced,** per charter section 13.6 and `weaver-trace-PRD` section
 3.2. This crate produces no empty vector to mean nothing was measured: it
-sends no vector, and the trace's own `skip_serializing_if` carries the absence
-to the record. The serialization half is `weaver-trace-Spec`'s, argued and
-tested at its sections 3 and 10, and this record is the production half, which
-is a different party's obligation and not a second copy of one claim. **The
+renders no member for an unproduced reading, so the measurement blob it splices
+carries the absence to the record directly. As of the model-events splice act
+of 2026-08-11 the measurement is this crate's rendering the harness carries
+opaque, so the omission is this crate's to produce rather than the trace's to
+serialize: the earlier reading assigned it to `weaver-trace-Spec`'s
+`skip_serializing_if`, and that election retired with the typed measurement
+struct, this crate now owning both the production and the omission as one
+obligation. **The
 absence takes a type instead of a fixture, per the operator's election of
 2026-08-04:** the vectors travel as an option of a non-empty vector, head and
 tail, so an empty vector meaning nothing was measured is unrepresentable rather
@@ -1072,10 +1082,13 @@ to: spu-absent-shape-pinned-by-doctest
 signal vectors, the timings the charter's row names, the model identity and
 its weights hash from section 3, the template identity from the family
 library, the prompt-block partition, the residual reductions when elected,
-and beside the measurement rather than inside it the rendered prompt as the
-family library produced it, per the streaming ruling of 2026-08-11, its own
-member of the close because it splices into the record's request box where
-the measurement splices into its own.
+and beside the measurement the model.request content whole, per the custody
+act of 2026-08-11: the rendered prompt as the family library produced it, the
+template identity, and the turn's effective sampling values, rendered by this
+crate because the template and the knobs are this crate's, and spliced into
+the record's request box as the measurement splices into its own. The harness
+carries both opaque, neither assembled from members it would parse the splice
+to read.
 The partition comes from the tokenizer's offsets, which is the salvaged
 `tokenize_with_offsets` mechanic with its invariant intact: the last offset
 equals the rendered text's length, so a partition covers the prompt exactly
