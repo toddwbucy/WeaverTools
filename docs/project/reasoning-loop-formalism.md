@@ -6,8 +6,8 @@ the working artifact until this file. **Ratified by the operator, 2026-08-12, as
 a foundations document**, standing between the vision document and the PRD
 level: above the PRDs because it commits no crate to a mechanism, below the
 vision because it is math. Named as an input to the WeaverTools technical paper
-to follow, and as the core of a planned second formalization of the agent
-entotal, to which this document owes exactly one artifact, the trace. **Where
+to follow, and as the core of a planned second formalization of the whole
+agent, to which this document owes exactly one artifact, the trace. **Where
 this document and a merged document disagree, the merged document yields nothing
 and this one is corrected**, because the charters and the contracts are the
 decision record and this is their shape read back in symbols. It authors no
