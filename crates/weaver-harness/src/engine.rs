@@ -144,8 +144,13 @@ impl<'a> Ports<'a> {
         // `turn.started` without its `turn.closed`, which a consumer pairing
         // the bracket would read as a turn that never ended. The body runs to
         // its own close on success, and a failure closes with the fault reason
-        // before the error returns.
-        match self.run_turn(&turn, delta) {
+        // before the error returns. The stop slot rides out here so a cancel
+        // that crossed before the failure still gets its answer: an exchange
+        // the dialer opened is owed a close on every path, and a turn that
+        // died of a refusal keeps serving, so a dropped exchange would hold
+        // that dialer forever.
+        let mut stop: Option<weaver_types::ExchangeId> = None;
+        match self.run_turn(&turn, delta, &mut stop) {
             Ok(outcome) => Ok(outcome),
             Err(error) => {
                 // **A failed close is itself a failure the caller must learn.**
@@ -164,7 +169,28 @@ impl<'a> Ports<'a> {
                         reason: weaver_trace::StopReason::Fault,
                     })),
                 ) {
-                    Ok(_) => Err(error),
+                    Ok(_) => {
+                        // **Announce after record**, on the failure path as on
+                        // the clean one: the turn the stop asked to end has
+                        // ended, its close in the record naming the fault, and
+                        // the interior stands at rest for the dialer's
+                        // purpose. Best-effort, because the fault may already
+                        // be taking the service down, and closure then signals
+                        // what the answer could not.
+                        if let Some(exchange) = stop.take()
+                            && let Some(slot) = self.pending.as_deref_mut()
+                            && let Some(connection) = slot.as_ref()
+                        {
+                            let _ = connection.send(&weaver_types::OrganEnvelope {
+                                exchange,
+                                position: weaver_types::Position::Close,
+                                payload: weaver_types::Payload::Answer(
+                                    weaver_types::LifecycleAnswer::AtRest,
+                                ),
+                            });
+                        }
+                        Err(error)
+                    }
                     Err(_) => Err(TurnError::ChannelLost),
                 }
             }
@@ -174,7 +200,12 @@ impl<'a> Ports<'a> {
     /// The turn's body, run inside the bracket [`turn`] opens and closes. It
     /// authors the delta, drives the exchange, and authors the answer, and
     /// every error it returns is closed by the caller.
-    fn run_turn(&mut self, turn: &TurnKey, delta: Vec<Message>) -> Result<TurnOutcome, TurnError> {
+    fn run_turn(
+        &mut self,
+        turn: &TurnKey,
+        delta: Vec<Message>,
+        stop: &mut Option<weaver_types::ExchangeId>,
+    ) -> Result<TurnOutcome, TurnError> {
         // The delta is authored as the turn's user messages, before the
         // exchange so the record reads the ask before the answer.
         for message in &delta {
@@ -202,7 +233,6 @@ impl<'a> Ports<'a> {
         // partial marked stopped and the tokens already streamed standing
         // in the close. A dialer that connects and then sends nothing holds
         // only its own connection, never the streaming turn.
-        let mut stop: Option<weaver_types::ExchangeId> = None;
         let generation = loop {
             match self.stream_wake()? {
                 StreamWake::Decode => match self
@@ -255,7 +285,7 @@ impl<'a> Ports<'a> {
                                             turn: turn.clone(),
                                         })
                                         .map_err(|_| TurnError::ChannelLost)?;
-                                    stop = Some(exchange);
+                                    *stop = Some(exchange);
                                 }
                                 // A second stop, a leave, and everything
                                 // else are out of order for a turn in
@@ -375,7 +405,7 @@ impl<'a> Ports<'a> {
         // **Announce after record**: the stop's answer follows the close it
         // reports, carrying the turn's fate, aborted or completed-at-rest,
         // both truthful at the moment of answering.
-        if let Some(exchange) = stop
+        if let Some(exchange) = stop.take()
             && let Some(slot) = self.pending.as_deref_mut()
             && let Some(connection) = slot.as_ref()
         {
@@ -724,7 +754,10 @@ mod tests {
             .expect("the close authored")
             .line
             .to_string();
-        assert!(close.contains("stopped"), "{close}");
+        assert!(
+            close.contains(r#""close":"stopped""#) && close.contains(r#""reason":"directive""#),
+            "the close names the directive, not the fault: {close}"
+        );
     }
 
     fn test_listener() -> crate::channel::CoordinationListener {
