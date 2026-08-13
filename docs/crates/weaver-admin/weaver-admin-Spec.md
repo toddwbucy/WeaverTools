@@ -26,6 +26,15 @@ lives. Section 6's unit declares no open, its reliance set moving to
 and a failed dial now consults the unit's state so a refusal names the right
 failure.
 Section 10's walks and counts are restated against the surviving set.
+**Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the
+ruling landed in `weaver-admin-PRD` load step 5: section 6's ask gains an argument
+vector taking no second variable, and the reading of bare narrows to descriptors,
+which leaves the no-descriptor assertion standing unchanged. Section 9's list of
+the operator's installed values gains the two organ binary paths, on the ruling
+that one installation's fact does not belong in one agent's declaration, and that
+section's claim that the worker's composition root reads the file is corrected to
+what happens, the root receiving the values it needs and reading nothing. Section
+11 gains the two values the act declined to route.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -766,7 +775,14 @@ to: admin-cloexec-atomic-at-creation
 template lives in admin's own service configuration, per section 9, and the
 only value interpolated is the validated agent name of section 4, so the
 delegated authority stays bounded by the allow-list exactly as charter
-section 7 requires.
+section 7 requires. **The argument vector the ask carries takes no second
+variable.** Its three values are the coordination socket path of section 7,
+which this crate already derives from that same validated name, and the two
+organ binary paths section 9 holds among the operator's installed values. A
+builder who let any of the three be composed from the invocation's own input
+would be widening the delegated authority by the route the name check closes,
+so the shape to hold is that the vector reads the allow-listed name and the
+operator's file and reads nothing else.
 
 **The unit declares no descriptor-bearing open, and the absence is the
 assertion.** Under the
@@ -778,6 +794,18 @@ data over the connection admin dialed, per charter section 4.1 step 6. A
 builder adding a socket declaration to this invocation would be reviving the
 route the inversion retired, so what this clause asserts is that the start
 invocation carries no descriptor-bearing property.
+
+**Bare is a statement about descriptors and the argument vector does not
+qualify it.** The distinction is worth holding because the two are easy to
+read as one absence: a descriptor is a capability the manager would have to
+hold and pass, and an argument is a value the worker reads and then resolves
+for itself under its own identity. The worker opens what its arguments name, so
+a path in the vector grants nothing the agent uid did not already have, which
+is why the vector leaves the reliance set of
+`weaver-admin-systemd-contract` section 5 untouched while a descriptor route
+would not. The assertion below is unchanged by this act and is the one a
+reviewer checks: the invocation carries no descriptor-bearing property, whatever
+else it carries.
 
 The earlier form of this clause named a listen-fds route, and the measurement
 of 2026-08-05 is kept in the charter's section 10 rather than here: the
@@ -1011,16 +1039,36 @@ accumulates, which is the charter's own grounds read forward.
 
 **Admin has operator-installed configuration of its own, and this Spec names
 it rather than leaving it implied.** The coordination socket's per-agent name,
-the log directory, the unit template, the agent config directory, and the
-allow-list are deployment facts the operator installs. The operator socket's
-path left this list with the socket on 2026-08-05, and the coordination name
-stayed but changed hands: the operator places it, the harness binds it, and
-admin dials it, so one value reaches two crates and the operator's file is
-where they agree. They are not the agent config, they cross no seam, and no
-crate but this one and the worker's composition root reads them. The shape is
+the log directory, the unit template, the agent config directory, the allow-list,
+and the two organ binary paths are deployment facts the operator installs. The
+operator socket's path left this list with the socket on 2026-08-05, and the
+coordination name stayed but changed hands: the operator places it, the harness
+binds it, and admin dials it, so one value reaches two crates and the operator's
+file is where they agree. They are not the agent config, they cross no seam, and
+this crate is the only one that reads them. The shape is
 a satellite of section 11: what is fixed here is that these values exist, that
 they are the operator's to place, and that none of them is discovered at
 runtime by searching.
+
+**The organ binaries are on this list and not in the agent's declaration, and
+the placement is the ruling rather than a convenience.** They are one
+installation's facts rather than one agent's, identical for every agent the
+operator runs, so a declaration carrying them would state one fact in as many
+places as there are agents and make a binary's replacement an edit to every one
+of them, which is the divergence gate G5 exists to refuse. The charter's own
+test settles it from the other side: `weaver-harness-Spec` section 2 has the
+organ binaries supplied to the composition root as a deployment fact and names
+them not an operator election, and the agent's declaration is exactly the
+operator's elections.
+
+**The worker's composition root receives what it needs and reads none of this
+file.** An earlier wording of this section had that root reading these values
+alongside admin, which no longer describes anything: the values reach it as the
+argument vector of section 6, admin being the party that already holds both the
+validated name and the operator's file. The correction matters beyond
+tidiness, because a worker reading this file would take a dependency on a shape
+section 11 holds open and would put a second reader on values only one party
+places.
 
 ## 10. What is enforced, and by which instrument
 
@@ -1311,6 +1359,18 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **`AgentState` and `AgentSummary` field lists.** The floor names the
   types in `lifecycle-answer` and their fields are satellites there,
   consumed here as drawn.
+- **The two values the argument vector does not carry.** Section 6's vector
+  carries the socket path and the two organ binaries and stops there, and the
+  worker's remaining two inputs are named here rather than routed, because
+  routing either now would carry a value nothing reads. The assembled prompt's
+  identity is one: the agent's declaration holds an identity the SPU makes
+  resident as the session's prefix, the assembled prompt holds a second the
+  loop reads, and whether those are one thing is the assembly question rather
+  than this act's. The tool schemas are the other, the declaration's tool set
+  reaching this crate and going no further while nothing dispatches a tool.
+  **Settled by:** the assembly and distillation act for the first, and the
+  tool workflow that charters dispatch for the second. Until then the worker
+  defaults both, which is why a load stands without either.
 - **The unit template's hardening set.** Which properties beyond `User=`
   the fixed template carries is the operator's policy surface, named in
   section 9's configuration and deliberately not enumerated by this Spec,

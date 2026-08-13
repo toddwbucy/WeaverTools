@@ -9,6 +9,13 @@ per verb holds nothing across time, so the party that keeps an agent alive acros
 logout is the init system, and what the program relies on from it was stated nowhere.
 
 **Date filed:** 2026-08-05
+**Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the
+operator's ruling in `weaver-admin-PRD` load step 5: the start ask of section 2 gains
+the worker's argument vector, section 5 names it among what admin supplies and
+guarantees it draws on no authority beside the allow-list, and section 7's
+prohibitions stand unchanged because no part of the agent's declaration is in it. The
+boundary's reliance set does not move, this being a widening of what admin hands the
+manager rather than anything further asked of it.
 **Document ID:** `weaver-admin-systemd-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -83,9 +90,23 @@ recut struck.
 ## 2. What crosses in, from admin to the init system
 
 **A start ask.** One transient unit for one agent, carrying the agent's `User=`, the
-sandbox properties the operator's template fixes, and the runtime-directory
-declaration the coordination socket is bound inside. The unit's name is derived from
-the validated agent name and nothing else crosses that could widen it.
+sandbox properties the operator's template fixes, the runtime-directory declaration
+the coordination socket is bound inside, and the worker's argument vector. The unit's
+name is derived from the validated agent name and nothing else crosses that could
+widen it.
+
+**The argument vector carries what the worker cannot discover and nothing else.** The
+coordination socket's path, which the worker binds as its first act, and the two
+organ binaries it forks once a load reaches it. A worker cannot bind a name it was
+never told, and this ask is the only path from the operator's installed values into a
+process that does not yet exist, so the alternative is not a smaller ask but a worker
+that refuses its own start. **The vector widens nothing this boundary did not already
+carry.** The socket's path derives from the agent name the unit's name and its
+runtime directory already carry, and the binary paths are the operator's installed
+values, so a manager reading the vector learns the same agent name twice and two
+paths the operator wrote. Section 7's prohibition holds unchanged: no part of the
+agent's declaration is here, and a manager that logged the whole vector would still
+learn nothing about a turn.
 
 **The runtime directory is asked for here because its removal is the answer to a
 stale socket.** A Unix socket's pathname outlives the process that bound it, so a
@@ -160,12 +181,15 @@ condition so a later pass weighs a stated trade rather than rediscovering it.
 
 ## 5. What each party supplies and guarantees
 
-**Admin supplies** the validated agent name and the unit's properties as the
-operator's template fixes them.
+**Admin supplies** the validated agent name, the unit's properties as the operator's
+template fixes them, and the worker's argument vector of section 2.
 
 **Admin guarantees** that the name it interpolates is allow-listed and shaped as a
 name rather than a path, per `weaver-admin-PRD` section 7, so the delegated authority
-cannot be widened by an argument. It guarantees that it asks for one unit per agent
+cannot be widened by an argument. It guarantees that every value in the argument
+vector is one the operator installed or one derived from that same validated name, so
+the vector is a second reading of the allow-list rather than a second authority
+beside it. It guarantees that it asks for one unit per agent
 and holds no second route to start one. It guarantees that the agent's identity and
 boundary were verified before the ask, so the manager is never asked to resolve what
 this program should have refused.
