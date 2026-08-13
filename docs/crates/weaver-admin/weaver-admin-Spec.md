@@ -1044,8 +1044,13 @@ and the two organ binary paths are deployment facts the operator installs. The
 operator socket's path left this list with the socket on 2026-08-05, and the
 coordination name stayed but changed hands: the operator places it, the harness
 binds it, and admin dials it, so one value reaches two crates and the operator's
-file is where they agree. They are not the agent config, they cross no seam, and
-this crate is the only one that reads them. The shape is
+file is where they agree. They are not the agent config and no seam carries them,
+which is why the file takes no contract of its own. **The file and its values part
+company at the start ask, and the distinction is worth holding.** This crate is the
+only one that reads the file. Three of the values do not stay in it: the
+coordination socket's name and the two organ binary paths reach the worker in
+section 6's argument vector, over the external boundary
+`weaver-admin-systemd-contract` holds rather than over any seam. The shape is
 a satellite of section 11: what is fixed here is that these values exist, that
 they are the operator's to place, and that none of them is discovered at
 runtime by searching.
