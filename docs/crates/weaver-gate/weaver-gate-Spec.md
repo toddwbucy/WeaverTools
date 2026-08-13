@@ -8,7 +8,8 @@ workflow. Code is written against it under the gates of Working Process section 
 **Revised:** 2026-08-12, the turn half arrives, act two of the first-live-turn
 epic, per the operator. Section 4 charters the relay: one `poll` across the
 listener, the accepted connections, and the channel end, serial with no
-executor and never blocking on a client, a lower closing the listener then
+executor and never blocking on a client, one exchange open per connection
+as the flow control, a lower closing the listener then
 the connections then answering stopped,
 frames bounded at the delimiter by a scan that reads nothing, one
 line one exchange with the exchange's identity as the routing, a 32 kibibyte
@@ -507,11 +508,34 @@ there, and a response drains to its connection under the same poll,
 writability being a wake like readability. A response a connection cannot
 take yet waits in that connection's outbound buffer and in nothing else, so
 a slow client holds its own responses and never the loop, the listener, or
-the channel. The buffer needs no bound of its own, because one response
-exists per line the client sent, so what a client can queue is what it
-asked for. A connection whose peer is gone fails its write, which is the
+the channel. A connection whose peer is gone fails its write, which is the
 lost-delivery case of charter section 13.4, the record's close already
 standing.
+
+**One exchange is open per connection, and the cap is the flow control.** A
+connection with an exchange open leaves the poll's read set until its
+response returns, so a client's further lines wait where waiting is free,
+in the socket's own buffer, back-pressure by the transport with nothing
+refused and nothing dropped: a second request waits rather than being
+refused, per the world contract, and one line in and one line out is the
+resting shape realized per connection. The cap bounds everything the relay
+holds. The open-exchange set carries at most one entry per connection, the
+outbound buffer at most one response, and the channel send obeys the same
+no-blocking rule, an envelope the channel cannot take yet waiting in this
+crate and draining under the poll, at most one per connection by the same
+cap. Pipelining within a connection would buy a client nothing, the harness
+serving one turn at a time regardless, and its cost would be exactly the
+unbounded state and the blockable send this cap refuses.
+
+```graph
+node: gate-one-exchange-open-per-connection
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-one-exchange-open-per-connection
+```
 
 **A lower closes in order, and stopped answers last.** The lower read from
 the channel closes the listener first, then every accepted connection with
@@ -886,6 +910,9 @@ that format forbids.
   once each receive their own response on their own connection, confirmed
   by watching a response cross connections when the exchange identity stops
   carrying the routing.
+- One exchange is open per connection: a second line arriving while one is
+  open waits unread in the socket, confirmed by watching two exchanges
+  stand for one connection when the read-set withdrawal is removed.
 - The line bound closes the connection, inclusively: a line of exactly the
   bound's octets followed by its delimiter opens its exchange, a connection
   fed one octet more with no delimiter is closed with no exchange opened,
