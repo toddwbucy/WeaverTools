@@ -143,6 +143,7 @@ mod tests {
         family: "tappable",
         shard_widths: &[1],
         template: "{message}",
+        generation_opener: "",
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: true,
     };
@@ -151,6 +152,7 @@ mod tests {
         family: "untappable",
         shard_widths: &[1],
         template: "{message}",
+        generation_opener: "",
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     };

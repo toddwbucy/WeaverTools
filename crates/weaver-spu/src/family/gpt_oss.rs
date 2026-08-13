@@ -38,6 +38,14 @@ pub const PARSED_MARKERS: &[&str] = &[CHANNEL, RETURN, CALL_OPEN];
 /// constant and [`Family::render_delta`] renders through it.
 pub const TEMPLATE: &str = "<|start|>{role}<|message|>{message}<|end|>";
 
+/// The assistant turn's opening, appended after the delta's rendering so the
+/// generation completes the assistant's turn rather than electing a speaker,
+/// per the note on [`crate::family::qwen2::GENERATION_OPENER`]. Harmony's
+/// generation prompt ends at the role: the model emits its own channel and
+/// message markers. Restates [`TURN_OPEN`] because a const cannot concatenate
+/// one.
+pub const GENERATION_OPENER: &str = "<|start|>assistant";
+
 const STOP: &[&str] = &[RETURN, TURN_END];
 
 /// How Harmony qualifies a callable name.

@@ -37,6 +37,12 @@ pub const PARSED_MARKERS: &[&str] = &[CALL_OPEN, CALL_CLOSE];
 /// constant and [`Family::render_delta`] renders through it.
 pub const TEMPLATE: &str = "<|start_header_id|>{role}<|end_header_id|>\n\n{message}<|eot_id|>";
 
+/// The assistant turn's opening, appended after the delta's rendering so the
+/// generation completes the assistant's turn rather than electing a speaker,
+/// per the note on [`crate::family::qwen2::GENERATION_OPENER`]. Restates the
+/// header markers because a const cannot concatenate them.
+pub const GENERATION_OPENER: &str = "<|start_header_id|>assistant<|end_header_id|>\n\n";
+
 const STOP: &[&str] = &[TURN_END, CALL_CLOSE];
 
 pub struct Llama;

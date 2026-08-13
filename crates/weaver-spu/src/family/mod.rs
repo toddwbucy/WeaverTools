@@ -39,6 +39,7 @@
 //!     family: "sparse-example",
 //!     shard_widths: &[1, 4],
 //!     template: "{message}",
+//!     generation_opener: "",
 //!     flush: weaver_spu::decoder::backend::FlushMechanism::TruncateToPosition,
 //!     taps_readout: true,
 //! };
@@ -237,6 +238,11 @@ pub struct Declaration {
     /// The template this family renders the harness's canonical messages
     /// through.
     pub template: &'static str,
+    /// **What a delta's rendering closes with: the assistant's turn opened
+    /// and left unfinished**, so the generation completes that turn rather
+    /// than electing a speaker. Appended to the delta's rendering only, never
+    /// to the identity prefix, whose turns are all complete.
+    pub generation_opener: &'static str,
     /// **How this family's flush reaches its fixed outcome**, per Spec section
     /// 4.4. Declared here rather than inferred from a version string, because
     /// a truncation that returns success while recurrent state stays is the
@@ -292,6 +298,7 @@ pub const REGISTRY: &[Declaration] = &[
         family: "llama",
         shard_widths: &[1, 2],
         template: llama::TEMPLATE,
+        generation_opener: llama::GENERATION_OPENER,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -299,6 +306,7 @@ pub const REGISTRY: &[Declaration] = &[
         family: "qwen2",
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
+        generation_opener: qwen2::GENERATION_OPENER,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -319,6 +327,7 @@ pub const REGISTRY: &[Declaration] = &[
         family: "qwen3",
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
+        generation_opener: qwen2::GENERATION_OPENER,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -329,6 +338,7 @@ pub const REGISTRY: &[Declaration] = &[
         family: "gpt-oss",
         shard_widths: &[1, 2],
         template: gpt_oss::TEMPLATE,
+        generation_opener: gpt_oss::GENERATION_OPENER,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -466,6 +476,7 @@ mod tests {
             family: "sparse",
             shard_widths: &[1, 4],
             template: "{message}",
+            generation_opener: "",
             flush: FlushMechanism::TruncateToPosition,
             taps_readout: true,
         };

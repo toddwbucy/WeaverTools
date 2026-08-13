@@ -1,6 +1,7 @@
 //! conforms: harness-loop-mints-no-port
 //! conforms: harness-extension-seam-at-loaded-and-idle
 //! conforms: harness-turn-authors-the-model-events
+//! conforms: harness-stop-polled-during-the-stream
 //!
 //! Loop 1's seat and the decode surface it composes, per `weaver-harness-Spec`
 //! sections 6 and 6.1. The loop itself is the builder's, written at the worker
@@ -31,7 +32,7 @@ use weaver_types::{TokenAnswer, TokenDirective, TokenRefusal, TurnKey};
 
 use crate::assembly::Prompt;
 use crate::authorship::Author;
-use crate::channel::DecodeChannel;
+use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 
 /// The granted surface handed to loop 1 at loaded-and-idle, borrowing the
 /// standing interior for the seat's lifetime. Its fields are private and its
@@ -42,6 +43,16 @@ pub struct Ports<'a> {
     recorder: &'a mut Recorder,
     turn_ordinal: &'a mut u64,
     assembled: Option<Prompt>,
+    /// The coordination listener, waited against beside the decode channel
+    /// while a generation streams, per Spec 6.1: the stop is heard
+    /// mid-stream by `poll`. Private, so the seat carries the ear without
+    /// granting the loop a port.
+    coordination: &'a CoordinationListener,
+    /// The verb connection being served, shared with loop 0's own wait: a
+    /// dial accepted mid-stream lands here and is handed back when the
+    /// turn returns. `None` for a seat granted outside the serve loop,
+    /// which then streams without the ear.
+    pending: Option<&'a mut Option<OrganChannel>>,
 }
 
 /// Why a turn did not complete. A refusal the seam typed is the session
@@ -65,6 +76,11 @@ pub enum TurnError {
 pub struct TurnOutcome {
     pub emission: String,
     pub stopped: bool,
+    /// The turn was aborted by the operator's stop rather than running to
+    /// its own close: the bracket closed with the directive's reason and
+    /// the partial stands. A model-side stop is not this, per the close's
+    /// own distinction.
+    pub aborted: bool,
 }
 
 impl<'a> Ports<'a> {
@@ -77,6 +93,8 @@ impl<'a> Ports<'a> {
         recorder: &'a mut Recorder,
         turn_ordinal: &'a mut u64,
         assembled: Option<Prompt>,
+        coordination: &'a CoordinationListener,
+        pending: Option<&'a mut Option<OrganChannel>>,
     ) -> Self {
         Ports {
             decode,
@@ -84,6 +102,8 @@ impl<'a> Ports<'a> {
             recorder,
             turn_ordinal,
             assembled,
+            coordination,
+            pending,
         }
     }
 
@@ -124,8 +144,13 @@ impl<'a> Ports<'a> {
         // `turn.started` without its `turn.closed`, which a consumer pairing
         // the bracket would read as a turn that never ended. The body runs to
         // its own close on success, and a failure closes with the fault reason
-        // before the error returns.
-        match self.run_turn(&turn, delta) {
+        // before the error returns. The stop slot rides out here so a cancel
+        // that crossed before the failure still gets its answer: an exchange
+        // the dialer opened is owed a close on every path, and a turn that
+        // died of a refusal keeps serving, so a dropped exchange would hold
+        // that dialer forever.
+        let mut stop: Option<weaver_types::ExchangeId> = None;
+        match self.run_turn(&turn, delta, &mut stop) {
             Ok(outcome) => Ok(outcome),
             Err(error) => {
                 // **A failed close is itself a failure the caller must learn.**
@@ -144,7 +169,28 @@ impl<'a> Ports<'a> {
                         reason: weaver_trace::StopReason::Fault,
                     })),
                 ) {
-                    Ok(_) => Err(error),
+                    Ok(_) => {
+                        // **Announce after record**, on the failure path as on
+                        // the clean one: the turn the stop asked to end has
+                        // ended, its close in the record naming the fault, and
+                        // the interior stands at rest for the dialer's
+                        // purpose. Best-effort, because the fault may already
+                        // be taking the service down, and closure then signals
+                        // what the answer could not.
+                        if let Some(exchange) = stop.take()
+                            && let Some(slot) = self.pending.as_deref_mut()
+                            && let Some(connection) = slot.as_ref()
+                        {
+                            let _ = connection.send(&weaver_types::OrganEnvelope {
+                                exchange,
+                                position: weaver_types::Position::Close,
+                                payload: weaver_types::Payload::Answer(
+                                    weaver_types::LifecycleAnswer::AtRest,
+                                ),
+                            });
+                        }
+                        Err(error)
+                    }
                     Err(_) => Err(TurnError::ChannelLost),
                 }
             }
@@ -154,7 +200,12 @@ impl<'a> Ports<'a> {
     /// The turn's body, run inside the bracket [`turn`] opens and closes. It
     /// authors the delta, drives the exchange, and authors the answer, and
     /// every error it returns is closed by the caller.
-    fn run_turn(&mut self, turn: &TurnKey, delta: Vec<Message>) -> Result<TurnOutcome, TurnError> {
+    fn run_turn(
+        &mut self,
+        turn: &TurnKey,
+        delta: Vec<Message>,
+        stop: &mut Option<weaver_types::ExchangeId>,
+    ) -> Result<TurnOutcome, TurnError> {
         // The delta is authored as the turn's user messages, before the
         // exchange so the record reads the ask before the answer.
         for message in &delta {
@@ -174,25 +225,101 @@ impl<'a> Ports<'a> {
             })
             .map_err(|_| TurnError::ChannelLost)?;
 
-        // Consume the stream to the close. The intermediate tokens are the
-        // stream loop 1 could surface as it grows, a typed refusal is the
-        // session declining the ask, and the close carries the generation
-        // whole, which is what the record needs.
+        // Consume the stream to the close, hearing the stop while it runs,
+        // per Spec 6.1: `poll` sleeps against the decode channel, the
+        // coordination listener, and the verb connection if one stands, and
+        // wakes on the first ready. A stop dialed mid-stream cancels the
+        // turn at the seam, the outstanding generation answering with its
+        // partial marked stopped and the tokens already streamed standing
+        // in the close. A dialer that connects and then sends nothing holds
+        // only its own connection, never the streaming turn.
         let generation = loop {
-            match self
-                .decode
-                .recv_reply()
-                .map_err(|_| TurnError::ChannelLost)?
-            {
-                crate::channel::DecodeReply::Answer(TokenAnswer::Token { .. }) => continue,
-                crate::channel::DecodeReply::Answer(TokenAnswer::Generated(generation)) => {
-                    break generation;
+            match self.stream_wake()? {
+                StreamWake::Decode => match self
+                    .decode
+                    .recv_reply()
+                    .map_err(|_| TurnError::ChannelLost)?
+                {
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Token { .. }) => continue,
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Generated(generation)) => {
+                        break generation;
+                    }
+                    crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                    crate::channel::DecodeReply::Refusal(refusal) => {
+                        return Err(TurnError::Refused(refusal));
+                    }
+                    crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
+                },
+                StreamWake::Dial => {
+                    let Some(slot) = self.pending.as_deref_mut() else {
+                        continue;
+                    };
+                    match self.coordination.accept_root() {
+                        Ok(connection) => *slot = Some(connection),
+                        // A refused peer never reaches an exchange, and the
+                        // stream continues.
+                        Err(crate::failure::ChannelFault::WrongPeer { .. }) => {}
+                        Err(_) => return Err(TurnError::ChannelLost),
+                    }
                 }
-                crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
-                crate::channel::DecodeReply::Refusal(refusal) => {
-                    return Err(TurnError::Refused(refusal));
+                StreamWake::Directive => {
+                    let Some(slot) = self.pending.as_deref_mut() else {
+                        continue;
+                    };
+                    let Some(connection) = slot.as_ref() else {
+                        continue;
+                    };
+                    match connection.recv() {
+                        Ok(envelope) => {
+                            let exchange = envelope.exchange.clone();
+                            match envelope.payload {
+                                weaver_types::Payload::Directive(
+                                    weaver_types::LifecycleDirective::Stop,
+                                ) if stop.is_none() => {
+                                    // The cancel crosses at once, and the
+                                    // stream is consumed to the close it
+                                    // will produce, the answer owed after
+                                    // the record, not here.
+                                    self.decode
+                                        .send_directive(&TokenDirective::Cancel {
+                                            turn: turn.clone(),
+                                        })
+                                        .map_err(|_| TurnError::ChannelLost)?;
+                                    *stop = Some(exchange);
+                                }
+                                // A second stop, a leave, and everything
+                                // else are out of order for a turn in
+                                // flight, refused and not queued.
+                                weaver_types::Payload::Directive(
+                                    weaver_types::LifecycleDirective::Leave,
+                                ) => {
+                                    let _ = connection.send(&weaver_types::OrganEnvelope {
+                                        exchange,
+                                        position: weaver_types::Position::Close,
+                                        payload: weaver_types::Payload::Refusal(
+                                            weaver_types::LifecycleRefusal::ActivityNotAtRest,
+                                        ),
+                                    });
+                                }
+                                weaver_types::Payload::Directive(_) => {
+                                    let _ = connection.send(&weaver_types::OrganEnvelope {
+                                        exchange,
+                                        position: weaver_types::Position::Close,
+                                        payload: weaver_types::Payload::Refusal(
+                                            weaver_types::LifecycleRefusal::OutOfOrder,
+                                        ),
+                                    });
+                                }
+                                _ => return Err(TurnError::ChannelLost),
+                            }
+                        }
+                        Err(crate::failure::ChannelFault::Closed) => {
+                            // The dialer left, and the stream continues.
+                            *slot = None;
+                        }
+                        Err(_) => return Err(TurnError::ChannelLost),
+                    }
                 }
-                crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
             }
         };
 
@@ -251,28 +378,106 @@ impl<'a> Ports<'a> {
             .map_err(|_| TurnError::Unlicensed)?
             .map_err(|_| TurnError::ChannelLost)?;
 
-        // **The bracket closes clean because the turn ran to completion.** A
-        // model-side stop, the generation reaching capacity or its own stop
-        // token, is a completed turn whose truncation is recorded in the
-        // output's finish, not a turn aborted by a directive or a fault, which
-        // is the only thing `TurnClose::Stopped` names. Loop 1 reads the
-        // model-side stop from the outcome, and the record reads it from the
-        // output, and neither confuses it with an abort.
+        // **The close names what ended the turn.** A model-side stop, the
+        // generation reaching capacity or its own stop token, is a completed
+        // turn whose truncation is recorded in the output's finish and the
+        // bracket closes clean. A turn the operator's stop cancelled closes
+        // with the directive's reason, the partial standing. The cancel
+        // losing the race to a natural completion is the first case: the
+        // turn completed, and the stop is answered at rest.
+        let aborted = stop.is_some() && stopped;
         self.author
             .author(
                 self.recorder,
                 Kind::TurnClosed,
                 Subsystem::Harness,
                 Some(turn),
-                Some(Payload::TurnClosed(TurnClose::Clean)),
+                Some(Payload::TurnClosed(if aborted {
+                    TurnClose::Stopped {
+                        reason: weaver_trace::StopReason::Directive,
+                    }
+                } else {
+                    TurnClose::Clean
+                })),
             )
             .map_err(|_| TurnError::ChannelLost)?;
+
+        // **Announce after record**: the stop's answer follows the close it
+        // reports, carrying the turn's fate, aborted or completed-at-rest,
+        // both truthful at the moment of answering.
+        if let Some(exchange) = stop.take()
+            && let Some(slot) = self.pending.as_deref_mut()
+            && let Some(connection) = slot.as_ref()
+        {
+            let answer = if aborted {
+                weaver_types::LifecycleAnswer::TurnAborted { turn: turn.clone() }
+            } else {
+                weaver_types::LifecycleAnswer::AtRest
+            };
+            let _ = connection.send(&weaver_types::OrganEnvelope {
+                exchange,
+                position: weaver_types::Position::Close,
+                payload: weaver_types::Payload::Answer(answer),
+            });
+        }
 
         Ok(TurnOutcome {
             emission: generation.emission,
             stopped,
+            aborted,
         })
     }
+
+    /// One wake from the streaming wait, per Spec 6.1: the decode channel
+    /// first, then the verb connection if one stands, then the listener
+    /// while none does, the same serial discipline as the idle wait's.
+    fn stream_wake(&self) -> Result<StreamWake, TurnError> {
+        use std::os::fd::AsFd;
+
+        use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
+        loop {
+            let mut fds: Vec<PollFd<'_>> = Vec::with_capacity(3);
+            let mut wakes: Vec<StreamWake> = Vec::with_capacity(3);
+            fds.push(PollFd::new(self.decode.as_fd(), PollFlags::POLLIN));
+            wakes.push(StreamWake::Decode);
+            match self.pending.as_ref().map(|slot| slot.as_ref()) {
+                Some(Some(connection)) => {
+                    fds.push(PollFd::new(connection.as_fd(), PollFlags::POLLIN));
+                    wakes.push(StreamWake::Directive);
+                }
+                Some(None) => {
+                    fds.push(PollFd::new(self.coordination.as_fd(), PollFlags::POLLIN));
+                    wakes.push(StreamWake::Dial);
+                }
+                // A seat granted outside the serve loop streams without the
+                // ear, the slot being the loop's own.
+                None => {}
+            }
+            match poll(&mut fds, PollTimeout::NONE) {
+                Ok(_) => {}
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(_) => return Err(TurnError::ChannelLost),
+            }
+            let woken = PollFlags::POLLIN | PollFlags::POLLHUP | PollFlags::POLLERR;
+            for (fd, wake) in fds.iter().zip(&wakes) {
+                let revents = fd.revents().unwrap_or(PollFlags::empty());
+                if revents.contains(PollFlags::POLLNVAL) {
+                    return Err(TurnError::ChannelLost);
+                }
+                if revents.intersects(woken) {
+                    return Ok(*wake);
+                }
+            }
+        }
+    }
+}
+
+/// What the streaming wait woke on.
+#[derive(Clone, Copy)]
+enum StreamWake {
+    Decode,
+    Dial,
+    Directive,
 }
 
 #[cfg(test)]
@@ -356,8 +561,17 @@ mod tests {
             .expect("load");
         let mut turn_ordinal = 0u64;
 
+        let listener = test_listener();
         let outcome = {
-            let mut ports = Ports::grant(&decode, &author, &mut recorder, &mut turn_ordinal, None);
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+            );
             let delta = vec![Message {
                 role: Role::User,
                 content: vec![ContentBlock::Text {
@@ -412,6 +626,150 @@ mod tests {
             line_of(Kind::ModelMeasurement).contains("sha256:abc"),
             "the measurement splice carries what the SPU rendered"
         );
+    }
+
+    /// **The stop is heard mid-stream, per Spec 6.1.** The streaming wait
+    /// spans the decode channel and the verb connection at once, the stop
+    /// cancels the turn at the seam, the partial stands in the close with
+    /// the directive's reason, and the stop is answered with the turn's
+    /// fate after the record. Perturbation: collapse the streaming wait to
+    /// the decode channel alone and the cancel this scripted peer waits
+    /// for never arrives.
+    #[test]
+    fn a_stop_dialed_mid_stream_cancels_the_turn() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+        let listener = test_listener();
+        let (verb_end, admin_end) = crate::channel::OrganChannel::pair().expect("pair");
+        let admin = admin_end.into_channel();
+
+        // The operator's stop is already on the connection when the turn
+        // begins, the way the poll's readiness would deliver it mid-stream.
+        admin
+            .send(&weaver_types::OrganEnvelope {
+                exchange: weaver_types::ExchangeId {
+                    opener: weaver_types::Opener::Admin,
+                    ordinal: 9,
+                },
+                position: weaver_types::Position::Open,
+                payload: weaver_types::Payload::Directive(weaver_types::LifecycleDirective::Stop),
+            })
+            .expect("the stop sends");
+
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            // The cancel arrives because the wait heard the stop.
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv cancel");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the cancel parses");
+            assert!(
+                matches!(directive, weaver_types::TokenDirective::Cancel { .. }),
+                "the stop cancels at the seam"
+            );
+            let send_answer = |answer: &weaver_types::TokenAnswer| {
+                let bytes = serde_json::to_vec(answer).expect("answer renders");
+                send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+            };
+            send_answer(&weaver_types::TokenAnswer::Token {
+                token: 7,
+                piece: "par".into(),
+            });
+            let request = serde_json::value::RawValue::from_string(
+                r#"{"rendered":"r","template":"t","sampling":{}}"#.to_string(),
+            )
+            .unwrap();
+            let measurement = serde_json::value::RawValue::from_string(
+                r#"{"model":"m","weights_hash":"h","input_tokens":[1],"output_tokens":[7],"blocks":[],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#
+                    .to_string(),
+            )
+            .unwrap();
+            send_answer(&weaver_types::TokenAnswer::Generated(Generation {
+                emission: "par".into(),
+                finish: Finish::Stopped,
+                request,
+                measurement,
+            }));
+        });
+
+        let session = SessionId("s-2".into());
+        let sink = tempfile();
+        let mut recorder = Recorder::receive(sink, RunOrdinal(0), SessionRef(session.0.clone()))
+            .expect("recorder");
+        let author = Author::new(&session, 0);
+        author
+            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let mut slot = Some(verb_end);
+
+        let outcome = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                Some(&mut slot),
+            );
+            let delta = vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "stop me".into(),
+                }],
+            }];
+            ports.turn(delta).expect("the aborted turn still returns")
+        };
+        peer.join().expect("the decode peer finishes");
+
+        assert!(outcome.aborted, "the directive aborted the turn");
+        assert_eq!(outcome.emission, "par", "the partial stands");
+
+        // Announce after record: the answer carries the turn's fate.
+        match admin.recv().expect("the stop's answer").payload {
+            weaver_types::Payload::Answer(weaver_types::LifecycleAnswer::TurnAborted { turn }) => {
+                assert_eq!(turn.0, "t-1");
+            }
+            other => panic!("the stop answers the turn's fate, got {other:?}"),
+        }
+
+        // The close names the directive, the partial standing before it.
+        let close = recorder
+            .structure()
+            .by_kind(Kind::TurnClosed)
+            .next()
+            .expect("the close authored")
+            .line
+            .to_string();
+        assert!(
+            close.contains(r#""close":"stopped""#) && close.contains(r#""reason":"directive""#),
+            "the close names the directive, not the fault: {close}"
+        );
+    }
+
+    fn test_listener() -> crate::channel::CoordinationListener {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-engine-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        std::fs::create_dir_all(&dir).expect("scratch dir");
+        let path = dir.join("c.sock");
+        std::fs::remove_file(&path).ok();
+        crate::channel::bind_coordination(&path).expect("bind")
     }
 
     fn tempfile() -> OwnedFd {
