@@ -105,7 +105,11 @@ impl Peer {
                 },
             )
             .expect("listen");
-            harness.serve()
+            // The inert entry: these tests drive directives alone, so no
+            // frame ever arrives to call it.
+            harness.serve("", &[], |_: &mut weaver_harness::Ports<'_>, _: &str| {
+                Err(weaver_harness::TurnError::Unlicensed)
+            })
         });
         let peer = Peer {
             fd: dial(&path),

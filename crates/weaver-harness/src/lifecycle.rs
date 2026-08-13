@@ -17,6 +17,9 @@
 //! conforms: harness-spawns-no-thread
 //! conforms: harness-organ-forks-on-worker-lifetime-thread
 //! conforms: harness-internal-dependency-set
+//! conforms: harness-session-opens-at-enter
+//! conforms: harness-frame-grants-the-seat
+//! conforms: harness-parse-refuses-not-faults
 //!
 //! The lifecycle interior, per `weaver-harness-Spec` section 3: the harness
 //! type, the run state, and the fan-out of loop 0.
@@ -42,6 +45,67 @@ use weaver_types::{
 use crate::authorship::Author;
 use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 use crate::failure::{AdoptionFault, ChannelFault, Outcome};
+
+/// What the entered-state wait woke on, one of the four descriptors section
+/// 6.2 spans. The tag is carried beside its `PollFd` so the wake names its
+/// origin without re-deriving it from a position.
+#[derive(Clone, Copy)]
+enum Wake {
+    Listener,
+    Connection,
+    Gate,
+    Decode,
+}
+
+/// The request's parse, per `weaver-gate-Spec` section 4: one JSON object,
+/// one `text` member, a string, unknown members refused. Every failure is
+/// the refused turn's reason, content the harness authors, never a channel
+/// fault, which is the layer split the frame election bought.
+fn parse_request(frame: &weaver_types::TurnFrame) -> Result<String, &'static str> {
+    let Some(octets) = frame.octets() else {
+        return Err("the frame's carriage is not the canonical encoding");
+    };
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&octets) else {
+        return Err("the line does not parse as one JSON value");
+    };
+    let Some(object) = value.as_object() else {
+        return Err("a request is one JSON object");
+    };
+    if object.len() != 1 {
+        return Err("a request carries the text member and nothing else");
+    }
+    let Some(text) = object.get("text").and_then(|value| value.as_str()) else {
+        return Err("a request carries the text member, a string");
+    };
+    Ok(text.to_string())
+}
+
+/// One response line, the kind-named close of `weaver-gate-Spec` section 4:
+/// `answered` with `text`, `stopped` or `refused` with `reason`. The map
+/// orders keys, so the kind leads whatever the member.
+fn render_close(kind: &str, member: &str, value: &str) -> String {
+    let mut map = serde_json::Map::new();
+    map.insert(
+        "kind".to_string(),
+        serde_json::Value::String(kind.to_string()),
+    );
+    map.insert(
+        member.to_string(),
+        serde_json::Value::String(value.to_string()),
+    );
+    serde_json::Value::Object(map).to_string()
+}
+
+/// A decode refusal rendered as the stopped close's reason, content for the
+/// client rather than the wire case itself.
+fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
+    match refusal {
+        weaver_types::TokenRefusal::NotOpen => "the session is not open",
+        weaver_types::TokenRefusal::OutOfOrder => "the ask was out of order for the seam",
+        weaver_types::TokenRefusal::Overflow { .. } => "the session cannot take the delta",
+        weaver_types::TokenRefusal::MalformedDelta => "the delta was malformed for the family",
+    }
+}
 
 /// Where the organ binaries live: a deployment fact supplied by the
 /// composition root as a construction parameter, the way `weaver-trace-Spec`
@@ -143,38 +207,106 @@ impl Harness {
         })
     }
 
-    /// Serves the coordination channel until leave is answered or closure is
-    /// observed, or fails on a fault below the exchange layer.
+    /// Serves loop 0 until leave is answered or a fault below the exchange
+    /// layer ends service, waiting where a landing can arrive, per
+    /// `weaver-harness-Spec` section 6.2: the coordination listener, the
+    /// connection a dialed verb is being served on, the gate channel, and
+    /// the decode channel, one `poll` across all of them and one wake
+    /// handled at a time.
     ///
-    /// One directive at a time arrives, is judged against the channel's state,
-    /// and is answered or refused. A directive out of order for the state
-    /// answers `OutOfOrder` and is not queued.
-    pub fn serve(mut self) -> Result<Outcome, ChannelFault> {
+    /// Dispatch is by payload kind, and only the frame grants the seat. A
+    /// directive is the lifecycle interior's, judged against the channel's
+    /// state, answered or refused, out-of-order refused and not queued. A
+    /// report is clerked, no turn opening and no seat granted. A frame is
+    /// the one arrival owed an answer: `entry` is the loop the binary
+    /// carries across the dev boundary, called with the granted surface and
+    /// the parsed request, and its return is the response the frame's
+    /// exchange is answered with. `identity` and `tool_schemas` are the
+    /// composition root's, the c-material of the assembled prompt.
+    pub fn serve<F>(
+        mut self,
+        identity: &str,
+        tool_schemas: &[String],
+        mut entry: F,
+    ) -> Result<Outcome, ChannelFault>
+    where
+        F: FnMut(
+            &mut crate::engine::Ports<'_>,
+            &str,
+        ) -> Result<crate::engine::TurnOutcome, crate::engine::TurnError>,
+    {
+        // **One connection at a time**, held in the wait rather than blocked
+        // on: the listener leaves the read set while a verb's connection is
+        // being served, which is what holds the contract's
+        // one-exchange-in-flight rule now that no fleet map does.
+        let mut pending: Option<OrganChannel> = None;
         loop {
-            // **One connection at a time**, which is what holds the contract's
-            // one-exchange-in-flight rule now that no fleet map does.
-            let connection = match self.coordination.accept_root() {
-                Ok(connection) => connection,
-                // A peer that is not root never reaches an exchange. The
-                // listener stands and the next dial is accepted, because
-                // refusing one caller is not a reason to stop serving the one
-                // party that may call.
-                Err(ChannelFault::WrongPeer { .. }) => continue,
-                // The listener itself failed, which is the one thing that ends
-                // service without a leave.
-                Err(fault) => {
-                    self.unwind_if_entered();
-                    return Err(fault);
+            match self.wait(pending.as_ref()) {
+                Ok(Wake::Listener) => match self.coordination.accept_root() {
+                    Ok(connection) => pending = Some(connection),
+                    // A peer that is not root never reaches an exchange. The
+                    // listener stands and the next dial is accepted, because
+                    // refusing one caller is not a reason to stop serving
+                    // the one party that may call.
+                    Err(ChannelFault::WrongPeer { .. }) => continue,
+                    // The listener itself failed, which ends service.
+                    Err(fault) => {
+                        self.unwind_if_entered();
+                        return Err(fault);
+                    }
+                },
+                Ok(Wake::Connection) => {
+                    let connection = pending.take().expect("the wake proved a connection");
+                    let (envelope, sink) = match connection.recv_with_descriptor() {
+                        Ok(received) => received,
+                        // The verb answered and admin closed. Ordinary, and
+                        // not an ending: the run is held across connections,
+                        // per `weaver-admin-harness-contract` section 4.
+                        Err(ChannelFault::Closed) => continue,
+                        Err(fault) => {
+                            self.unwind_if_entered();
+                            return Err(fault);
+                        }
+                    };
+                    let exchange = envelope.exchange.clone();
+                    let directive = match envelope.payload {
+                        weaver_types::Payload::Directive(directive) => directive,
+                        // Anything else on this channel is not a directive
+                        // this crate can attribute to an exchange for a
+                        // refusal to answer.
+                        _ => {
+                            self.unwind_if_entered();
+                            return Err(ChannelFault::Undecodable);
+                        }
+                    };
+                    match self.dispatch_on(&connection, exchange, directive, sink) {
+                        Ok(Some(outcome)) => return Ok(outcome),
+                        // The verb answered and the run stands: the same
+                        // connection may carry another directive, so it
+                        // returns to the wait.
+                        Ok(None) => pending = Some(connection),
+                        Err(fault) => {
+                            self.unwind_if_entered();
+                            return Err(fault);
+                        }
+                    }
                 }
-            };
-            match self.serve_connection(connection) {
-                Ok(Some(outcome)) => return Ok(outcome),
-                // **The connection closed and the run did not.** Admin is
-                // per-invocation, so each verb's connection closes when the
-                // verb answers, and the state of section 3 is held across it,
-                // per `weaver-admin-harness-contract` section 4. Unwinding
-                // here would tear down the run the next verb expects to find.
-                Ok(None) => continue,
+                Ok(Wake::Gate) => {
+                    if let Err(fault) = self.serve_gate_wake(identity, tool_schemas, &mut entry) {
+                        self.unwind_if_entered();
+                        return Err(fault);
+                    }
+                }
+                Ok(Wake::Decode) => {
+                    // At rest nothing is owed on the decode seam, and the
+                    // report's wire case is issue 106's open election, so an
+                    // arrival here is octets the seam's state cannot read: a
+                    // fault below the exchange layer, ending service the way
+                    // section 3 ends it. The clerked-report arm lands when
+                    // the report's shape does.
+                    self.unwind_if_entered();
+                    return Err(ChannelFault::Undecodable);
+                }
                 Err(fault) => {
                     self.unwind_if_entered();
                     return Err(fault);
@@ -183,32 +315,212 @@ impl Harness {
         }
     }
 
-    /// Serves the directives arriving on one connection. Returns `Some` when
-    /// service ends, and `None` when the connection closed with the run still
-    /// standing.
-    fn serve_connection(
-        &mut self,
-        connection: OrganChannel,
-    ) -> Result<Option<Outcome>, ChannelFault> {
+    /// One wake from the entered-state wait, per `weaver-harness-Spec`
+    /// section 6.2. The read set is what can originate now: the listener
+    /// when no verb is mid-service, the verb's connection while one is, and
+    /// the gate and decode channels while a run stands. `poll` sleeps
+    /// against all of them and wakes on the first ready, serial as ever,
+    /// and no executor enters.
+    fn wait(&self, pending: Option<&OrganChannel>) -> Result<Wake, ChannelFault> {
+        use std::os::fd::AsFd;
+
+        use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
         loop {
-            let (envelope, sink) = match connection.recv_with_descriptor() {
-                Ok(received) => received,
-                // The verb answered and admin closed. Ordinary, and not an
-                // ending.
-                Err(ChannelFault::Closed) => return Ok(None),
-                Err(fault) => return Err(fault),
-            };
-            let exchange = envelope.exchange.clone();
-            let directive = match envelope.payload {
-                weaver_types::Payload::Directive(directive) => directive,
-                // Anything else on this channel is not a directive this crate
-                // can attribute to an exchange for a refusal to answer.
-                _ => return Err(ChannelFault::Undecodable),
-            };
-            if let Some(outcome) = self.dispatch_on(&connection, exchange, directive, sink)? {
-                return Ok(Some(outcome));
+            let mut fds: Vec<PollFd<'_>> = Vec::with_capacity(4);
+            let mut wakes: Vec<Wake> = Vec::with_capacity(4);
+            match pending {
+                Some(connection) => {
+                    fds.push(PollFd::new(connection.as_fd(), PollFlags::POLLIN));
+                    wakes.push(Wake::Connection);
+                }
+                None => {
+                    fds.push(PollFd::new(self.coordination.as_fd(), PollFlags::POLLIN));
+                    wakes.push(Wake::Listener);
+                }
+            }
+            if let ChannelState::Entered(run) = &self.state {
+                if let Some(gate) = &run.gate {
+                    fds.push(PollFd::new(gate.channel.as_fd(), PollFlags::POLLIN));
+                    wakes.push(Wake::Gate);
+                }
+                if let Some(spu) = &run.spu {
+                    fds.push(PollFd::new(spu.decode.as_fd(), PollFlags::POLLIN));
+                    wakes.push(Wake::Decode);
+                }
+            }
+            match poll(&mut fds, PollTimeout::NONE) {
+                Ok(_) => {}
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(_) => return Err(ChannelFault::Closed),
+            }
+            let woken = PollFlags::POLLIN | PollFlags::POLLHUP | PollFlags::POLLERR;
+            for (fd, wake) in fds.iter().zip(&wakes) {
+                if fd.revents().unwrap_or(PollFlags::empty()).intersects(woken) {
+                    return Ok(*wake);
+                }
             }
         }
+    }
+
+    /// A gate-channel wake, dispatched by payload kind per section 6.2: a
+    /// frame grants the seat, a report is clerked, and the gate gone is the
+    /// survivor's fault to report, the run standing so admin can still
+    /// leave.
+    fn serve_gate_wake<F>(
+        &mut self,
+        identity: &str,
+        tool_schemas: &[String],
+        entry: &mut F,
+    ) -> Result<(), ChannelFault>
+    where
+        F: FnMut(
+            &mut crate::engine::Ports<'_>,
+            &str,
+        ) -> Result<crate::engine::TurnOutcome, crate::engine::TurnError>,
+    {
+        let envelope = {
+            let ChannelState::Entered(run) = &mut self.state else {
+                return Ok(());
+            };
+            let Some(gate) = run.gate.as_ref() else {
+                return Ok(());
+            };
+            match gate.channel.recv() {
+                Ok(envelope) => envelope,
+                // The gate died with the hook raised: the boundary is gone
+                // and the interior is healthy, which is the survivor's fault
+                // to report, per the fault-carrier ruling. The run stands so
+                // the operator can still leave; the agent is unreachable
+                // until then.
+                Err(ChannelFault::Closed) => {
+                    let gate = run.gate.take().expect("the arm stood");
+                    drop(gate.channel);
+                    reap(gate.pid);
+                    let _ = run.author.author_fault(
+                        &mut run.recorder,
+                        Subsystem::Harness,
+                        None,
+                        r#"{"organ":"gate","death":"channel closed with the hook raised"}"#,
+                    );
+                    return Ok(());
+                }
+                Err(fault) => return Err(fault),
+            }
+        };
+        match envelope.payload {
+            weaver_types::Payload::Frame(frame) => {
+                self.serve_frame(envelope.exchange, frame, identity, tool_schemas, entry)
+            }
+            // The gate's fault report is clerked to the record per the
+            // fault-carrier ruling. The received answer the contract names
+            // arrives with the act that builds the gate's report sending:
+            // no sender exists today and no answer case is shaped for it,
+            // which the working list registers against the relay act.
+            weaver_types::Payload::Fault(_report) => {
+                if let ChannelState::Entered(run) = &mut self.state {
+                    let _ = run.author.author_fault(
+                        &mut run.recorder,
+                        Subsystem::Gate,
+                        None,
+                        r#"{"organ":"gate","report":"unshaped"}"#,
+                    );
+                }
+                Ok(())
+            }
+            // Nothing else is the gate's to open on this seam.
+            _ => Err(ChannelFault::Undecodable),
+        }
+    }
+
+    /// A frame grants the seat, per section 6.2 and the dev boundary: the
+    /// parse at the threshold, the entry with the granted surface, and the
+    /// response frame answered on the exchange. The parse refuses rather
+    /// than faults, per the ruling: a line that is not the request answers
+    /// `refused` as content and the channel stands.
+    fn serve_frame<F>(
+        &mut self,
+        exchange: ExchangeId,
+        frame: weaver_types::TurnFrame,
+        identity: &str,
+        tool_schemas: &[String],
+        entry: &mut F,
+    ) -> Result<(), ChannelFault>
+    where
+        F: FnMut(
+            &mut crate::engine::Ports<'_>,
+            &str,
+        ) -> Result<crate::engine::TurnOutcome, crate::engine::TurnError>,
+    {
+        let ChannelState::Entered(run) = &mut self.state else {
+            return Ok(());
+        };
+        let response = match parse_request(&frame) {
+            Err(reason) => render_close("refused", "reason", reason),
+            Ok(text) => {
+                // The seat, granted at loaded-and-idle: the assembly read,
+                // the grant across the dev boundary, and the take-back at
+                // the entry's return.
+                let prompt =
+                    crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas);
+                if prompt.undecodable > 0 {
+                    // An incomplete prompt does not cross the seam: the hole
+                    // becomes the fault event and the turn does not run.
+                    let report = format!(
+                        "{{\"organ\":\"harness\",\"undecodable-message-records\":{}}}",
+                        prompt.undecodable
+                    );
+                    let _ = run.author.author_fault(
+                        &mut run.recorder,
+                        Subsystem::Harness,
+                        None,
+                        &report,
+                    );
+                    render_close("stopped", "reason", "the working structure holds a hole")
+                } else {
+                    let Some(spu) = run.spu.as_ref() else {
+                        // A run with no SPU is not loaded, and nothing can
+                        // turn against it.
+                        return Err(ChannelFault::Undecodable);
+                    };
+                    let mut ports = crate::engine::Ports::grant(
+                        &spu.decode,
+                        &run.author,
+                        &mut run.recorder,
+                        &mut run.turn_ordinal,
+                        Some(prompt),
+                    );
+                    match entry(&mut ports, &text) {
+                        // A model-side stop is a completed turn whose
+                        // truncation the record holds, so the client is
+                        // answered with what stands.
+                        Ok(outcome) => render_close("answered", "text", &outcome.emission),
+                        Err(crate::engine::TurnError::Refused(refusal)) => {
+                            render_close("stopped", "reason", refusal_reason(&refusal))
+                        }
+                        Err(crate::engine::TurnError::Unlicensed) => render_close(
+                            "stopped",
+                            "reason",
+                            "a message was not licensed for its role",
+                        ),
+                        // The decode channel or the record is gone, and the
+                        // record is untrustworthy either way: service ends.
+                        Err(crate::engine::TurnError::ChannelLost) => {
+                            return Err(ChannelFault::Closed);
+                        }
+                    }
+                }
+            }
+        };
+        let Some(gate) = run.gate.as_ref() else {
+            return Ok(());
+        };
+        gate.channel.send(&OrganEnvelope {
+            exchange,
+            position: Position::Close,
+            payload: weaver_types::Payload::Frame(weaver_types::TurnFrame::carry(
+                response.as_bytes(),
+            )),
+        })
     }
 
     /// Unwinds a standing run, for a path that ends service without a leave.
@@ -1006,5 +1318,218 @@ mod tests {
             peer.recv().expect("answer").payload,
             weaver_types::Payload::Answer(LifecycleAnswer::AtRest)
         ));
+    }
+
+    /// **A frame grants the seat and the whole bracket authors**, per Spec
+    /// section 6.2 and the dev boundary: the parse at the threshold, the
+    /// entry across the crossing, the turn against a scripted decode peer,
+    /// and the response frame answered on the exchange, kind-named.
+    #[test]
+    fn a_frame_grants_the_seat_and_is_answered() {
+        use std::os::fd::AsRawFd;
+
+        use nix::sys::socket::{
+            AddressFamily, MsgFlags, SockFlag, SockType, recv as sock_recv, send as sock_send,
+            socketpair,
+        };
+
+        let (mut run, _spare, _sink) = entered_run(None);
+        // The decode arm is re-pointed at a scripted peer, engine-test style.
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        run.spu.as_mut().expect("the arm stands").decode = crate::channel::decode_from_owned(near);
+        let (gate_end, gate_peer) = OrganChannel::pair().expect("gate pair");
+        run.gate = Some(GateChannel {
+            channel: gate_end,
+            pid: nix::unistd::Pid::from_raw(1),
+        });
+        let gate_peer = gate_peer.into_channel();
+
+        let decode_peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = sock_recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            let request = serde_json::value::RawValue::from_string(
+                r#"{"rendered":"user: say a word","template":"qwen2","sampling":{}}"#.to_string(),
+            )
+            .unwrap();
+            let measurement = serde_json::value::RawValue::from_string(
+                r#"{"model":"m","weights_hash":"h","input_tokens":[1],"output_tokens":[2],"blocks":[],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#
+                    .to_string(),
+            )
+            .unwrap();
+            let answer = weaver_types::TokenAnswer::Generated(weaver_types::Generation {
+                emission: "one word".into(),
+                finish: weaver_types::Finish::Completed,
+                request,
+                measurement,
+            });
+            let bytes = serde_json::to_vec(&answer).expect("answer renders");
+            sock_send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+        });
+
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                spu: "/nonexistent".into(),
+                gate: "/nonexistent".into(),
+            },
+            state: ChannelState::Entered(Box::new(run)),
+        };
+
+        // The frame stands on the channel before the wake is served, the way
+        // the poll's readiness would have found it.
+        gate_peer
+            .send(&OrganEnvelope {
+                exchange: ExchangeId {
+                    opener: Opener::Gate,
+                    ordinal: 1,
+                },
+                position: Position::Open,
+                payload: weaver_types::Payload::Frame(weaver_types::TurnFrame::carry(
+                    b"{\"text\":\"say a word\"}",
+                )),
+            })
+            .expect("frame sends");
+
+        harness
+            .serve_gate_wake(
+                "identity",
+                &[],
+                &mut |ports: &mut crate::engine::Ports<'_>, text: &str| {
+                    let delta = vec![weaver_traits::Message {
+                        role: weaver_traits::Role::User,
+                        content: vec![weaver_traits::ContentBlock::Text {
+                            text: text.to_string(),
+                        }],
+                    }];
+                    ports.turn(delta)
+                },
+            )
+            .expect("the wake serves");
+        decode_peer.join().expect("the decode peer finishes");
+
+        // The response frame, kind-named, on the exchange the frame opened.
+        let answer = gate_peer.recv().expect("the response frame returns");
+        assert_eq!(answer.exchange.ordinal, 1);
+        let weaver_types::Payload::Frame(frame) = answer.payload else {
+            panic!("a frame answers a frame");
+        };
+        let line = String::from_utf8(frame.octets().expect("canonical")).expect("utf8");
+        assert_eq!(line, r#"{"kind":"answered","text":"one word"}"#);
+
+        // The bracket authored whole, in order.
+        let ChannelState::Entered(run) = &harness.state else {
+            panic!("the position stays entered");
+        };
+        let kinds: Vec<Kind> = run
+            .recorder
+            .structure()
+            .iter()
+            .filter(|r| r.turn.is_some())
+            .map(|r| r.kind)
+            .collect();
+        assert_eq!(
+            kinds,
+            vec![
+                Kind::TurnStarted,
+                Kind::MessageUser,
+                Kind::ModelRequest,
+                Kind::ModelOutput,
+                Kind::ModelMeasurement,
+                Kind::MessageAssistant,
+                Kind::TurnClosed,
+            ]
+        );
+    }
+
+    /// **The parse refuses rather than faults**, per Spec 6.2's threshold
+    /// clause: a line that is not the request answers `refused` as content,
+    /// no seat is granted, and the channel stands for the next frame, which
+    /// is the layer split the frame election bought.
+    #[test]
+    fn an_unparseable_line_refuses_and_the_channel_stands() {
+        let (mut run, _spare, _sink) = entered_run(None);
+        let (gate_end, gate_peer) = OrganChannel::pair().expect("gate pair");
+        run.gate = Some(GateChannel {
+            channel: gate_end,
+            pid: nix::unistd::Pid::from_raw(1),
+        });
+        let gate_peer = gate_peer.into_channel();
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                spu: "/nonexistent".into(),
+                gate: "/nonexistent".into(),
+            },
+            state: ChannelState::Entered(Box::new(run)),
+        };
+        let mut entered = false;
+        let mut entry = |_: &mut crate::engine::Ports<'_>, _: &str| {
+            entered = true;
+            Err(crate::engine::TurnError::Unlicensed)
+        };
+
+        // Not the canonical carriage at all.
+        gate_peer
+            .send(&OrganEnvelope {
+                exchange: ExchangeId {
+                    opener: Opener::Gate,
+                    ordinal: 1,
+                },
+                position: Position::Open,
+                payload: weaver_types::Payload::Frame(weaver_types::TurnFrame {
+                    octets: "not base64!".into(),
+                }),
+            })
+            .expect("frame sends");
+        harness
+            .serve_gate_wake("", &[], &mut entry)
+            .expect("the wake serves");
+        let answer = gate_peer.recv().expect("the refusal returns");
+        let weaver_types::Payload::Frame(frame) = answer.payload else {
+            panic!("a frame answers a frame");
+        };
+        let line = String::from_utf8(frame.octets().expect("canonical")).expect("utf8");
+        assert!(line.contains(r#""kind":"refused""#), "{line}");
+
+        // Canonical carriage, wrong shape: an unknown member refuses too,
+        // and the channel is alive to say so, which is the claim.
+        gate_peer
+            .send(&OrganEnvelope {
+                exchange: ExchangeId {
+                    opener: Opener::Gate,
+                    ordinal: 2,
+                },
+                position: Position::Open,
+                payload: weaver_types::Payload::Frame(weaver_types::TurnFrame::carry(
+                    b"{\"text\":\"hi\",\"role\":\"system\"}",
+                )),
+            })
+            .expect("frame sends");
+        harness
+            .serve_gate_wake("", &[], &mut entry)
+            .expect("the channel stands");
+        let answer = gate_peer.recv().expect("the second refusal returns");
+        let weaver_types::Payload::Frame(frame) = answer.payload else {
+            panic!("a frame answers a frame");
+        };
+        let line = String::from_utf8(frame.octets().expect("canonical")).expect("utf8");
+        assert!(line.contains(r#""kind":"refused""#), "{line}");
+
+        assert!(
+            !entered,
+            "no seat was granted for a line that did not parse"
+        );
     }
 }

@@ -109,7 +109,7 @@ pub use channel::{
     ChildEnd, CoordinationListener, DecodeChannel, FIRST_ORGAN_DESCRIPTOR, OrganChannel,
     bind_coordination, place_child_ends,
 };
-pub use engine::Ports;
+pub use engine::{Ports, TurnError, TurnOutcome};
 pub use failure::{AdoptionFault, ChannelFault, Outcome, UnlicensedMessage};
 pub use lifecycle::{Harness, OrganBinaries};
 pub use spawn::fork_organ;
