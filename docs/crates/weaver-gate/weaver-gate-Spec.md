@@ -518,7 +518,14 @@ response returns, so a client's further lines wait where waiting is free,
 in the socket's own buffer, back-pressure by the transport with nothing
 refused and nothing dropped: a second request waits rather than being
 refused, per the world contract, and one line in and one line out is the
-resting shape realized per connection. The cap bounds everything the relay
+resting shape realized per connection. One qualification keeps that sentence
+honest. Bytes a read already delivered past the first delimiter wait in this
+crate's input buffer rather than the socket's, at most one read's worth by
+construction since the withdrawal follows the first opened exchange, the
+undelimited-bound rule reading the residual like any bytes. When the
+response returns, the scan resumes over the residual before the connection
+re-enters the read set, so a line the residual already holds is served in
+its turn and never skipped. The cap bounds everything the relay
 holds. The open-exchange set carries at most one entry per connection, the
 outbound buffer at most one response, and the channel send obeys the same
 no-blocking rule, an envelope the channel cannot take yet waiting in this
