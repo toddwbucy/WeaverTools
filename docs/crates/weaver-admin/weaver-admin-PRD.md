@@ -42,6 +42,20 @@ reading is superseded in whole.
 port-binding tool inside it, that tool being a registered application the agent
 addresses rather than one this program starts, so the cost the question names shrinks
 to the tool that reaches nothing. The question stays open and stays section 10's.
+**Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the
+operator: admin creates the administrative space a harness works inside and performs
+no act that constitutes an agent, so starting the unit is admin's and loading a model
+or setting a state is not. Load step 5 carries the worker's provisioning with the
+`User=` it already carried, because a worker cannot bind a name it was never told and
+the value has no other path into a process that does not yet exist. The reading of
+bare narrows to descriptors, which is what it always meant and what the step now
+says. The defect this lands on: the merged step started a worker that refused its own
+arguments, so no load could reach a dial. **The act changes three documents and each
+carries its change:** this charter's step 5 and section 11 register,
+`weaver-admin-systemd-contract` sections 2 and 5, and `weaver-admin-Spec` sections 6,
+9, and 11. `weaver-harness-Spec` does not move, its section 2 already holding the
+organ binaries as a deployment fact the composition root is supplied, which is the
+clause this act reads rather than edits.
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
 **External boundaries:** `weaver-admin-operator-contract` for the record's exit and
@@ -379,11 +393,21 @@ order is the substance.
    a passed descriptor and is the harness's obligation at the receive, per the
    contract.
 5. **Ask the init system to start the worker as a transient unit carrying the
-   agent's `User=`.** Root asks the process manager it already commands, and the
-   unit's cgroup arrives with the unit rather than being shaped in advance. The
-   unit declares no open and receives no descriptor: the worker starts bare, and
-   its first act is to bind the coordination socket of section 6 inside its own
-   sandbox and listen.
+   agent's `User=` and the worker's provisioning.** Root asks the process manager
+   it already commands, and the unit's cgroup arrives with the unit rather than
+   being shaped in advance. The unit declares no open and receives no descriptor:
+   the worker starts bare of descriptors, and its first act is to bind the
+   coordination socket of section 6 inside its own sandbox and listen.
+   **Bare states what no descriptor crosses and says nothing about arguments.**
+   A worker cannot bind a name it was never told, and the organ binaries it forks
+   at enter are a provisioning fact its composition root is handed rather than one
+   it discovers, the same standing `weaver-harness-PRD` section 2 gives to which
+   binary an agent's unit starts. The ask carries them because it is the only path
+   from the operator's installed values into a process that does not yet exist.
+   What crosses stays a deployment fact and widens nothing: the socket's name
+   derives from the agent name the unit's own name already carries, the binary
+   paths are the operator's installed values rather than anything the invocation
+   composed, and no part of the agent's declaration reaches the manager.
 6. **Dial the channel, direct enter, and receive the aggregate.** The invocation
    connects to the socket the worker bound, retrying within a stated bound because
    the bind is the worker's first act and the dial may arrive first, the bound
@@ -1043,6 +1067,16 @@ of 2026-08-05 and neither landed by it.
   is the expected shape of a phase one re-entry, per Working Process section 2,
   and it is named as owed rather than left for a reader to discover by compiling.
   **Settled by:** the code acts, which follow this act rather than riding it.
+- **The merged code of the start ask, owed by the act of 2026-08-13.** Step 5
+  above now carries the worker's provisioning and the built invocation carries
+  none, so the unit template holds no field for the two organ binary paths, the
+  service configuration reads no value for them, and the argument vector is not
+  assembled. The divergence is not a drift a reviewer must hunt for: a load
+  starts a worker that refuses its own arguments and dies before the dial, so
+  every load of every agent refuses. **Settled by:** the code act that follows
+  this one, which grows the template by two fields, reads two more values from
+  the operator's file, and appends the socket path and the two binaries to the
+  ask.
 
 **Why the landed entries are gone rather than kept as a changelog.** The rule
 above is that an entry leaves when its edit lands, and it has a second half worth
