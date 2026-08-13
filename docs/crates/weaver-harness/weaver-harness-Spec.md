@@ -4,6 +4,14 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-13, the dev boundary is in the filesystem, per the
+architecture seat's directive of this date. Section 1 gains the worker bin
+target and the `dev_` convention: directories the developer edits carry the
+prefix, `dev_loop` holds the loop body with the bare decode loop as the
+worked default, and the placement rides the bin target because the blade
+requires the loop outside the library crate. Section 6 states the crossing
+single and named, one function loop 0 calls with the seat and the request,
+no reach-in either way. One review assertion lands.
 **Revised:** 2026-08-12, fifth of this date, the parse is chartered with the
 gate's turn half. Section 6.2 gains the frame's parse at the seat's
 threshold: the member decodes per the frame election, the octets parse as
@@ -135,8 +143,41 @@ leftovers.
     src/tools.rs       the tool system, blocked, section 6
     src/engine.rs      loop 1's seat, the extension seam, section 6
 
-Seven files, two of them placements, the way `weaver-traits-Spec` section 1
-places its blocked and deferred modules.
+    src/bin/worker/main.rs    the composition root, framework, section 6
+    src/bin/worker/dev_loop/  the loop body, the developer's, section 6
+
+Seven library files, two of them placements, the way `weaver-traits-Spec`
+section 1 places its blocked and deferred modules, and one bin target, the
+demonstration worker, arriving with the wiring act.
+
+**The dev boundary is visible in the filesystem, per the architecture seat's
+directive of 2026-08-13.** A directory the developer is meant to edit carries
+the `dev_` prefix, underscore because Rust's module names take no hyphen, and
+no directory without the prefix is theirs to touch. `dev_loop` holds the loop
+body, and the bare decode loop lives there as the worked default, occupying
+the exact location a replacement goes, so the example and the extension point
+are the same place. Everything outside the `dev_` directories is framework,
+and a newcomer listing the crate knows where their code goes before reading a
+single document. The convention is general: a later builder-editable surface
+takes the same prefix at its own directory, named when its act charters it.
+**The placement is forced by the blade, not chosen for tidiness.** A bin
+target compiles as its own crate linking this library, so the crate-private
+constructor stays unreachable from `dev_loop` and the `E0624` pin of section
+8 keeps its subject, where a module inside the library would see private
+items and the blade would die silently. The boundary also carries the
+crossing's whole option space: an alternative realization of `dev_loop`
+composes against the same crossing without the framework moving, which is
+the general form and the only form this document states.
+
+```graph
+node: harness-dev-boundary-in-the-filesystem
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-dev-boundary-in-the-filesystem
+```
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly
 feature used.
@@ -1511,6 +1552,17 @@ closed the same date with the turn-half act, the clause above spending what
 the election bought. What stays open is the entry's concrete signature, a
 satellite of section 9 the wiring act shapes against the chartered parse,
 and the refused line's bracket, flagged above for the operator.
+
+**The crossing is single and named, per the architecture seat's directive of
+2026-08-13.** Loop 0 calls one named function in `dev_loop`, hands the
+granted seat and the parsed request, and receives the response content, and
+that call is the whole of the traffic across the dev boundary: no harness
+reach into the loop's internals, no loop reach back into harness state
+except through what the seat grants, the blade making any other reach a
+compile error rather than a review comment. A trait would buy nothing the
+one function does not, the loop being compiled in with no dynamic selection
+chartered, so the crossing is a function and its signature is the section 9
+satellite the wiring act shapes.
 
 ```graph
 node: harness-frame-grants-the-seat
