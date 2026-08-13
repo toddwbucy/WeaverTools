@@ -163,6 +163,28 @@ impl Channel {
         }
     }
 
+    /// Send one envelope without blocking, per `weaver-gate-Spec` section 4:
+    /// the loop never waits on the channel, so an envelope the channel
+    /// cannot take now returns `false` and waits in the caller, draining
+    /// under the poll. The flag is per-call, so the channel's reads keep
+    /// their blocking discipline untouched.
+    pub fn try_send(&self, envelope: &OrganEnvelope) -> Result<bool, ChannelFault> {
+        let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Undecodable)?;
+        if body.len() > MAX_ENVELOPE_BYTES {
+            return Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES,
+            });
+        }
+        loop {
+            match send(self.end.as_raw_fd(), &body, MsgFlags::MSG_DONTWAIT) {
+                Ok(_) => return Ok(true),
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(nix::errno::Errno::EAGAIN) => return Ok(false),
+                Err(_) => return Err(ChannelFault::Closed),
+            }
+        }
+    }
+
     /// Receive one envelope, faulting on truncation.
     ///
     /// The buffer is exactly the envelope bound rather than the bound plus one:

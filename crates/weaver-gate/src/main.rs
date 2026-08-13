@@ -15,7 +15,8 @@ use std::process::ExitCode;
 use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
 
 use weaver_gate::channel::{self, Channel, ChannelFault, EntryFault};
-use weaver_gate::hook::{AcceptOutcome, Admitted, Hook, RaiseRefusal};
+use weaver_gate::hook::{AcceptOutcome, Hook, RaiseRefusal};
+use weaver_gate::relay::{self, Relay};
 use weaver_types::{
     LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope, Payload, Position,
 };
@@ -39,11 +40,11 @@ enum HookState {
     BeforeRaise,
     /// The hook stands. Only a lower is in order.
     ///
-    /// The admitted connections ride with it, because they exist only while it
+    /// The relay rides with it, because its connections exist only while it
     /// does: the lower drops the hook and them together, which is what makes
     /// `weaver-gate-world-contract` section 5's "a request while the hook is
     /// lowered finds no listener" true of a connection that was already open.
-    Raised(Hook, Vec<Admitted>),
+    Raised(Hook, Box<Relay>),
     /// Terminal. A directive of any kind arriving here answers `OutOfOrder`.
     Lowered,
 }
@@ -101,15 +102,49 @@ fn refuse_everything(channel: Channel) -> ExitCode {
 fn serve(channel: Channel) -> ExitCode {
     let mut state = HookState::BeforeRaise;
 
+    /// What one poll slot waits for, carried beside its `PollFd` so a wake
+    /// names its origin without re-deriving it from a position.
+    #[derive(Clone, Copy)]
+    enum Tag {
+        Channel,
+        Listener,
+        Conn(usize),
+    }
+
     loop {
-        // **Wait on the channel and, while raised, the hook's listener.** A
-        // loop that waited on the channel alone would leave a dialing peer in
-        // the backlog unjudged for the whole raised window, which is the
-        // boundary not existing rather than the boundary being quiet.
-        let mut waiting = Vec::with_capacity(2);
-        waiting.push(PollFd::new(channel.as_fd(), PollFlags::POLLIN));
-        if let HookState::Raised(hook, _) = &state {
+        // **Wait where a landing can arrive**, per Spec section 4: the
+        // channel, and while raised the listener and every served
+        // connection by what it wants, readable while no exchange is open
+        // and writable while a response stands undelivered. The channel
+        // adds writability exactly while pending envelopes wait on it, and
+        // the loop blocks on none of them.
+        let mut waiting = Vec::with_capacity(4);
+        let mut tags = Vec::with_capacity(4);
+        let channel_flags = match &state {
+            HookState::Raised(_, relay) if !relay.pending.is_empty() => {
+                PollFlags::POLLIN | PollFlags::POLLOUT
+            }
+            _ => PollFlags::POLLIN,
+        };
+        waiting.push(PollFd::new(channel.as_fd(), channel_flags));
+        tags.push(Tag::Channel);
+        if let HookState::Raised(hook, relay) = &state {
             waiting.push(PollFd::new(hook.listener(), PollFlags::POLLIN));
+            tags.push(Tag::Listener);
+            for (index, served) in relay.served.iter().enumerate() {
+                let mut flags = PollFlags::empty();
+                if served.wants_read() {
+                    flags |= PollFlags::POLLIN;
+                }
+                if served.wants_write() {
+                    flags |= PollFlags::POLLOUT;
+                }
+                if flags.is_empty() {
+                    continue;
+                }
+                waiting.push(PollFd::new(served.as_fd(), flags));
+                tags.push(Tag::Conn(index));
+            }
         }
         match poll(&mut waiting, PollTimeout::NONE) {
             Ok(_) => {}
@@ -120,111 +155,252 @@ fn serve(channel: Channel) -> ExitCode {
             }
         }
 
-        let channel_ready = waiting[0]
-            .revents()
-            .is_some_and(|r| r.intersects(PollFlags::POLLIN | PollFlags::POLLHUP));
-        let listener_ready = waiting
-            .get(1)
-            .and_then(|p| p.revents())
-            .is_some_and(|r| r.contains(PollFlags::POLLIN));
-
-        // The channel first: a lower waiting behind a queue of dials would let
-        // a caller hold the hook open by dialing it.
-        if !channel_ready {
-            if listener_ready && let HookState::Raised(hook, admitted) = &mut state {
-                judge_one(hook, admitted);
-            }
-            continue;
-        }
-
-        let envelope = match channel.recv() {
-            Ok(envelope) => envelope,
-            Err(ChannelFault::Closed) => {
-                // The interior is gone. Dropping the state closes the listener
-                // and every admitted connection with it, and this exits rather
-                // than answering.
-                drop(state);
-                return ExitCode::SUCCESS;
-            }
-            Err(fault) => {
-                eprintln!("{}", fault_line(&fault));
+        // One wake handled per round, the channel first: a lower waiting
+        // behind a queue of dials or writes would let a caller hold the
+        // hook open by talking to it.
+        let mut wake: Option<(Tag, PollFlags)> = None;
+        for (fd, tag) in waiting.iter().zip(&tags) {
+            let revents = fd.revents().unwrap_or(PollFlags::empty());
+            // An invalid descriptor never becomes ready, so treating
+            // POLLNVAL as anything but an ending would spin this loop.
+            if revents.contains(PollFlags::POLLNVAL) {
                 drop(state);
                 return ExitCode::FAILURE;
             }
+            if !revents.is_empty() {
+                wake = Some((*tag, revents));
+                break;
+            }
+        }
+        drop(waiting);
+        let Some((tag, revents)) = wake else {
+            continue;
         };
 
-        let payload = dispatch(&mut state, &envelope);
-        match channel.send(&OrganEnvelope {
-            exchange: envelope.exchange,
-            position: Position::Close,
-            payload,
-        }) {
-            Ok(()) => {}
-            // **The interior went away between the directive and its answer,
-            // which is the ordinary teardown rather than a failure here.** The
-            // harness's leave sends Lower, drops the channel, and reaps without
-            // reading the answer, so this is the path every clean session
-            // takes: treating it as a failure made the gate exit non-zero on
-            // every orderly unload, and any supervisor reading exit status
-            // recorded a fault per session.
-            Err(ChannelFault::Closed) => {
-                drop(state);
-                return ExitCode::SUCCESS;
+        match tag {
+            Tag::Channel if revents.intersects(PollFlags::POLLIN | PollFlags::POLLHUP) => {
+                if let Err(code) = serve_channel_event(&channel, &mut state) {
+                    drop(state);
+                    return code;
+                }
             }
-            // The other two mean this crate built something it cannot send,
-            // which is this crate's fault and is reported as one.
-            Err(fault) => {
-                eprintln!("{}", fault_line(&fault));
-                drop(state);
-                return ExitCode::FAILURE;
+            Tag::Channel => {
+                // Writable alone: the pending envelopes drain, in order.
+                if let HookState::Raised(_, relay) = &mut state {
+                    while let Some(front) = relay.pending.front() {
+                        match channel.try_send(front) {
+                            Ok(true) => {
+                                relay.pending.pop_front();
+                            }
+                            Ok(false) => break,
+                            Err(fault) => {
+                                eprintln!("{}", fault_line(&fault));
+                                drop(state);
+                                return ExitCode::FAILURE;
+                            }
+                        }
+                    }
+                }
+            }
+            Tag::Listener => {
+                if let HookState::Raised(hook, relay) = &mut state {
+                    judge_one(hook, relay);
+                }
+            }
+            Tag::Conn(at) => {
+                if let HookState::Raised(_, relay) = &mut state {
+                    if revents.intersects(PollFlags::POLLIN | PollFlags::POLLHUP) {
+                        match relay.read_one(at) {
+                            Ok(relay::Framed::Opened(envelope)) => {
+                                if let Err(code) = send_or_pend(&channel, relay, *envelope) {
+                                    drop(state);
+                                    return code;
+                                }
+                            }
+                            Ok(relay::Framed::Waiting) => {}
+                            Err(gone) => remove(relay, at, &gone),
+                        }
+                    } else if revents.contains(PollFlags::POLLOUT)
+                        && let Some(served) = relay.served.get_mut(at)
+                        && let Err(gone) = served.on_writable()
+                    {
+                        remove(relay, at, &gone);
+                    }
+                }
             }
         }
     }
 }
 
-/// How many admitted connections the raised window retains before it refuses
-/// further ones by closure.
+/// One channel event: a response frame routed to the connection its
+/// exchange names, or a directive judged and answered.
+fn serve_channel_event(channel: &Channel, state: &mut HookState) -> Result<(), ExitCode> {
+    let envelope = match channel.recv() {
+        Ok(envelope) => envelope,
+        Err(ChannelFault::Closed) => {
+            // The interior is gone. Returning drops the state, closing the
+            // listener and every served connection, and this exits rather
+            // than answering.
+            return Err(ExitCode::SUCCESS);
+        }
+        Err(fault) => {
+            eprintln!("{}", fault_line(&fault));
+            return Err(ExitCode::FAILURE);
+        }
+    };
+
+    // A frame is a response and routes by identity. Everything else is the
+    // lifecycle's, judged against the position and answered.
+    if let Payload::Frame(frame) = &envelope.payload {
+        return route_response(channel, state, &envelope, frame);
+    }
+
+    let payload = dispatch(state, &envelope);
+    match channel.send(&OrganEnvelope {
+        exchange: envelope.exchange,
+        position: Position::Close,
+        payload,
+    }) {
+        Ok(()) => Ok(()),
+        // **The interior went away between the directive and its answer,
+        // which is the ordinary teardown rather than a failure here.** The
+        // harness's leave sends Lower, drops the channel, and reaps without
+        // reading the answer, so this is the path every clean session
+        // takes: treating it as a failure made the gate exit non-zero on
+        // every orderly unload, and any supervisor reading exit status
+        // recorded a fault per session.
+        Err(ChannelFault::Closed) => Err(ExitCode::SUCCESS),
+        // The other two mean this crate built something it cannot send,
+        // which is this crate's fault and is reported as one.
+        Err(fault) => {
+            eprintln!("{}", fault_line(&fault));
+            Err(ExitCode::FAILURE)
+        }
+    }
+}
+
+/// A response frame from the harness: the exchange's identity names the
+/// connection owed it, the line queues with its delimiter, and the scan
+/// resumes over the residual so a waiting line is served in its turn. A
+/// response owed to a connection that already left is a lost delivery and
+/// not a lost turn, per the world contract, and it is reported as one.
+fn route_response(
+    channel: &Channel,
+    state: &mut HookState,
+    envelope: &OrganEnvelope,
+    frame: &weaver_types::TurnFrame,
+) -> Result<(), ExitCode> {
+    let HookState::Raised(_, relay) = state else {
+        eprintln!(
+            "{}",
+            serde_json::json!({"fault": "a response arrived with no hook raised"})
+        );
+        return Ok(());
+    };
+    if envelope.exchange.opener != Opener::Gate || envelope.position != Position::Close {
+        eprintln!(
+            "{}",
+            serde_json::json!({"fault": "a frame outside this crate's exchanges"})
+        );
+        return Ok(());
+    }
+    let ordinal = envelope.exchange.ordinal;
+    let Some(at) = relay.owed(ordinal) else {
+        eprintln!(
+            "{}",
+            serde_json::json!({"fault": "lost_delivery", "exchange": ordinal})
+        );
+        return Ok(());
+    };
+    let routed = relay
+        .served
+        .get_mut(at)
+        .expect("owed proved the index")
+        .on_response(frame);
+    match routed {
+        Ok(()) => match relay.frame_one(at) {
+            Ok(relay::Framed::Opened(next)) => send_or_pend(channel, relay, *next),
+            Ok(relay::Framed::Waiting) => Ok(()),
+            Err(gone) => {
+                remove(relay, at, &gone);
+                Ok(())
+            }
+        },
+        Err(gone) => {
+            remove(relay, at, &gone);
+            Ok(())
+        }
+    }
+}
+
+/// Sends a frame's envelope without blocking, the envelope waiting in the
+/// relay when the channel cannot take it yet, draining under the poll, per
+/// Spec section 4.
+fn send_or_pend(
+    channel: &Channel,
+    relay: &mut Relay,
+    envelope: OrganEnvelope,
+) -> Result<(), ExitCode> {
+    match channel.try_send(&envelope) {
+        Ok(true) => Ok(()),
+        Ok(false) => {
+            relay.pending.push_back(envelope);
+            Ok(())
+        }
+        Err(fault) => {
+            eprintln!("{}", fault_line(&fault));
+            Err(ExitCode::FAILURE)
+        }
+    }
+}
+
+/// A connection leaves the relay, its reason to standard error and its
+/// stream closed by the drop, never a word to the peer: the peer left the
+/// protocol or the conversation, and the boundary answers by closure.
+fn remove(relay: &mut Relay, at: usize, gone: &relay::Gone) {
+    relay.served.swap_remove(at);
+    eprintln!(
+        "{}",
+        serde_json::json!({"connection": "gone", "reason": format!("{gone:?}")})
+    );
+}
+
+/// How many connections the raised window serves before it refuses further
+/// ones by closure.
 ///
-/// **A bound rather than a capacity.** In this pass no legitimate client
-/// traffic exists, the relay being deferred, so this exists to keep a peer that
-/// dials in a loop from consuming the gate's descriptor table rather than to
-/// size a workload. Sizing it against real traffic is the relay act's, which is
-/// also where retained connections stop being retained and start being served.
+/// **A bound rather than a capacity**: it keeps a peer that dials in a loop
+/// from consuming the gate's descriptor table. Past it the accept still
+/// runs and the connection drops, refused by capacity rather than by
+/// identity. Sizing it against real traffic is issue 102's baseline
+/// measurement, taken once a live turn exists to measure.
 const RETAINED_LIMIT: usize = 64;
 
-/// Accept one dialing peer and judge it.
+/// Accept one dialing peer, judge it, and admit it into the relay.
 ///
-/// **The refusal half is what this act implements**, and it is what
-/// `weaver-gate-world-contract` section 5 specifies end to end: a peer that
-/// fails the predicate is refused at accept, before any content is read, by
-/// closure with nothing written back. `Hook::accept` returns no stream for a
-/// refused peer, so the closure is the drop inside it.
+/// A peer that fails the predicate is refused at accept, before any content
+/// is read, by closure with nothing written back, per
+/// `weaver-gate-world-contract` section 5: `Hook::accept` returns no stream
+/// for a refused peer, so the closure is the drop inside it. An admitted
+/// peer is served, nonblocking end to end, per Spec section 4.
 ///
-/// **An admitted peer is held rather than served or closed, up to a bound.**
-/// What it is owed is a conversation, which is the relay of Spec section 4 and
-/// is deferred, so closing it would refuse a peer the predicate admitted and
-/// answering it would be inventing the relay. Holding it is the truthful third
-/// thing: its request is pending. The connections ride with the hook and go
-/// when the lower does.
-///
-/// **Past the bound the peer is closed, and the accept still runs.** Retaining
-/// without a limit lets a peer dial in a loop until the descriptor table is
-/// full, after which every accept fails and, because the listener stays
-/// readable, the loop spins: re-polling, re-failing, and flooding standard
-/// error while directives wait behind it. Declining to accept at the bound
-/// produces the same spin for the same reason, so the accept always happens and
-/// what changes at the bound is whether the connection is kept. Draining the
-/// backlog is what keeps the loop honest.
-fn judge_one(hook: &Hook, admitted: &mut Vec<Admitted>) {
+/// **Past the bound the peer is closed, and the accept still runs.**
+/// Declining to accept would leave the listener readable and the loop
+/// spinning, so the accept always happens and what changes at the bound is
+/// whether the connection is kept: refused by capacity, not by identity.
+fn judge_one(hook: &Hook, relay: &mut Relay) {
     match hook.accept() {
         Ok(peer) => {
-            if admitted.len() < RETAINED_LIMIT {
-                admitted.push(peer);
+            if relay.served.len() < RETAINED_LIMIT {
+                match relay::Served::admit(peer) {
+                    Ok(served) => relay.served.push(served),
+                    Err(error) => {
+                        eprintln!(
+                            "{}",
+                            serde_json::json!({"fault": "admit_failed", "detail": error.to_string()})
+                        );
+                    }
+                }
             }
-            // Past the bound the connection drops here, closing it. The peer
-            // passed the predicate and is refused by capacity rather than by
-            // identity, which is a distinction the relay act will need to make
-            // answerable and this pass can only make bounded.
         }
         // Refused, and already closed by the accept that judged it.
         Err(AcceptOutcome::Denied) => {}
@@ -272,7 +448,7 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
                     // Ready is answered only after the bind and listen have
                     // returned, which is what makes ready a fact about the
                     // listener rather than a statement of intent.
-                    *state = HookState::Raised(hook, Vec::new());
+                    *state = HookState::Raised(hook, Box::new(Relay::new()));
                     Payload::Answer(LifecycleAnswer::GateReady)
                 }
                 Err(RaiseRefusal::BindFailed { detail }) => {
@@ -295,10 +471,12 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
             // The close happens here, before the answer is formed, so nothing
             // new can arrive once the harness reads stopped.
             let previous = std::mem::replace(state, HookState::Lowered);
-            if let HookState::Raised(hook, admitted) = previous {
-                // The admitted connections close with the listener, which is
-                // what makes a lowered hook find nothing standing.
-                drop(admitted);
+            if let HookState::Raised(hook, relay) = previous {
+                // The served connections close with the listener, whatever
+                // their buffers still held undelivered, which is what makes
+                // a lowered hook find nothing standing: no turn is in flight
+                // at a lower, so what the closes drop is deliveries at most.
+                drop(relay);
                 hook.lower();
             }
             Payload::Answer(LifecycleAnswer::GateStopped)

@@ -9,9 +9,10 @@
 //! the Spec's bind-shape pins execute, which they cannot do under a bin-only
 //! crate.
 //!
-//! One module per obligation, with one placement: `channel.rs` holds the seam
-//! end and the exchange service, `hook.rs` the instruction's resolution and the
-//! bind and the predicate, `relay.rs` the pass-through that is deferred.
+//! One module per obligation: `channel.rs` holds the seam end and the
+//! exchange service, `hook.rs` the instruction's resolution and the bind and
+//! the predicate, `relay.rs` the pass-through, filled with the wiring act
+//! per `weaver-gate-Spec` section 4.
 
 pub mod channel;
 pub mod hook;
