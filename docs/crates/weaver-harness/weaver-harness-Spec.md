@@ -4,6 +4,15 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, fifth of this date, the parse is chartered with the
+gate's turn half. Section 6.2 gains the frame's parse at the seat's
+threshold: the member decodes per the frame election, the octets parse as
+one JSON value against the request shape `weaver-gate-Spec` section 4 fixes,
+the text becomes the user message with roles never the client's, and what
+does not parse answers refused on the exchange with the channel standing.
+One perturbation assertion lands, and one election is flagged for the
+operator, whether a refused line takes a bracket, the unrecorded reading
+standing unless overruled.
 **Revised:** 2026-08-12, fourth of this date, the frame's deferral narrows.
 Section 6.2's non-elections follow `weaver-types-Spec` section 4.1 as
 elected: the frame's interior closed, base64-carried octets by argument, and
@@ -1465,14 +1474,43 @@ with it. The cost is that a loop with work of its own between turns has no
 seat while idle, which no chartered loop wants and a later workflow may
 reopen through the front door.
 
+**The frame's parse is loop 0's, at the seat's threshold, and it refuses
+rather than faults.** A frame's member decodes per the election of
+`weaver-types-Spec` section 4.1, and the octets parse as one JSON value
+against the request shape `weaver-gate-Spec` section 4 fixes: one object,
+one `text` member. What parses becomes the turn's content, the text as the
+user message, roles never the client's to name. What does not parse, the
+transport decode included, answers as a refused turn on the frame's
+exchange, the response frame's `refused` kind with its reason, and the
+channel stands: the failure is the content's and never the channel's, which
+is the layer split the frame election bought and this clause spends. **The
+election flagged for the operator: whether a refused line takes a
+bracket.** Two readings stand. Unrecorded, the refusal is answered and no
+turn opens, which keeps the trace's kind set closed and leaves the record
+blind to an authenticated client probing the mouth. Bracketed, the refusal
+opens and closes a turn with its refusal marked, which accounts every
+answered line and costs a front-door edit to the close's reason set. The
+wiring act takes the unrecorded reading unless the operator rules otherwise
+at this act's review, that being the reading no merged document contradicts,
+and the ruling is owed before the epic's wiring act closes.
+
+```graph
+node: harness-parse-refuses-not-faults
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-parse-refuses-not-faults
+```
+
 **What this subsection does not elect, named so the deferral reads as the
 corpus's.** The frame's interior closed on 2026-08-12, `weaver-types-Spec`
-section 4.1 electing base64-carried octets by argument. What stays open is
-the parse of the client's line into the request the loop is handed, the
-gate turn half's act per `weaver-gate-world-contract` section 2, the field
-list being the Spec's there. The entry's concrete signature is a satellite
-of section 9, shaped when that parse is, so nothing here fixes a parameter
-type the deferred act would move.
+section 4.1 electing base64-carried octets by argument, and the parse
+closed the same date with the turn-half act, the clause above spending what
+the election bought. What stays open is the entry's concrete signature, a
+satellite of section 9 the wiring act shapes against the chartered parse,
+and the refused line's bracket, flagged above for the operator.
 
 ```graph
 node: harness-frame-grants-the-seat
