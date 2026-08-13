@@ -117,6 +117,11 @@ pub struct Served {
     input: Vec<u8>,
     outbound: Vec<u8>,
     exchange: Option<u64>,
+    /// The peer closed its writing half. A half-closed connection is a
+    /// client that said its piece and awaits the answer, so the read side
+    /// ends while everything owed still delivers, and the connection leaves
+    /// only when it is spent.
+    read_closed: bool,
 }
 
 /// Why a connection left the relay. The name travels to standard error for
@@ -157,13 +162,17 @@ impl Served {
             input: Vec::new(),
             outbound: Vec::new(),
             exchange: None,
+            read_closed: false,
         })
     }
 
     /// Whether the read set wants this connection: only while no exchange
-    /// is open, which is the cap doing the flow control.
+    /// is open and no response stands undelivered, which is the cap doing
+    /// the flow control, the outbound buffer holding at most one response
+    /// per the Spec's own sentence. A read-closed connection wants nothing
+    /// read again.
     pub fn wants_read(&self) -> bool {
-        self.exchange.is_none()
+        !self.read_closed && self.exchange.is_none() && self.outbound.is_empty()
     }
 
     /// Whether the write set wants this connection: only while a response
@@ -177,14 +186,31 @@ impl Served {
         self.stream.as_fd()
     }
 
+    /// Whether nothing remains to serve: the read side ended, no exchange
+    /// is open, nothing is owed, and no complete line waits. A spent
+    /// connection leaves the relay quietly, its conversation finished.
+    pub fn spent(&self) -> bool {
+        self.read_closed
+            && self.exchange.is_none()
+            && self.outbound.is_empty()
+            && !self.input.contains(&DELIMITER)
+    }
+
     /// A readable wake: read what is there, once, and try to frame a line.
     /// One read per wake keeps one loud client from starving the round,
     /// the poll being level-triggered and re-waking on what remains.
+    ///
+    /// A read of nothing is the peer's half-close, not its departure: the
+    /// line it already sent still frames, the response it is owed still
+    /// delivers, and the connection leaves when it is spent.
     pub fn on_readable(&mut self, next_ordinal: &mut u64) -> Result<Framed, Gone> {
         let mut chunk = [0u8; 4096];
         loop {
             match self.stream.read(&mut chunk) {
-                Ok(0) => return Err(Gone::PeerLeft),
+                Ok(0) => {
+                    self.read_closed = true;
+                    break;
+                }
                 Ok(n) => {
                     self.input.extend_from_slice(&chunk[..n]);
                     break;
@@ -202,7 +228,10 @@ impl Served {
     /// response returns, so a line the residual already holds is served in
     /// its turn and never skipped.
     fn frame_one(&mut self, next_ordinal: &mut u64) -> Result<Framed, Gone> {
-        if self.exchange.is_some() {
+        // The cap holds on both legs: no second exchange opens while one is
+        // open or while its response stands undelivered, so the outbound
+        // buffer carries at most one response.
+        if self.exchange.is_some() || !self.outbound.is_empty() {
             return Ok(Framed::Waiting);
         }
         match self.input.iter().position(|byte| *byte == DELIMITER) {
@@ -319,21 +348,28 @@ mod tests {
             Framed::Waiting
         ));
 
-        // The response returns, and the scan resumes over the residual.
+        // The response returns and queues, and the scan still waits: the
+        // cap admits the next line only after the drain, the outbound
+        // buffer holding at most one response.
         served
             .on_response(&TurnFrame::carry(b"the first answer"))
             .expect("routes");
-        let Framed::Opened(second) = served.frame_one(&mut ordinal).expect("scans") else {
-            panic!("the residual's line frames in its turn");
-        };
-        assert_eq!(second.exchange.ordinal, 2);
+        assert!(matches!(
+            served.frame_one(&mut ordinal).expect("scans"),
+            Framed::Waiting
+        ));
 
-        // The queued response drains to the client, delimiter appended.
+        // The queued response drains to the client, delimiter appended,
+        // and only then does the residual's line frame in its turn.
         served.on_writable().expect("drains");
         let mut got = [0u8; 64];
         use std::io::Read as _;
         let n = client.read(&mut got).expect("client reads");
         assert_eq!(&got[..n], b"the first answer\n");
+        let Framed::Opened(second) = served.frame_one(&mut ordinal).expect("scans") else {
+            panic!("the residual's line frames after the drain");
+        };
+        assert_eq!(second.exchange.ordinal, 2);
     }
 
     /// **The response routes by the exchange's identity**, two clients
@@ -380,6 +416,55 @@ mod tests {
         assert_eq!(&got[..n], b"answer b\n", "b receives b's answer");
     }
 
+    /// **A half-closed peer is a finished speaker, not a departed one.**
+    /// The read side ends, the line already sent still frames, the response
+    /// still delivers, and the connection is spent only when nothing
+    /// remains: the shape every piped client takes.
+    #[test]
+    fn a_half_closed_peer_still_receives_its_answer() {
+        let (mut served, mut client) = served_pair();
+        let mut ordinal = 0u64;
+        client
+            .write_all(b"one line, then silence\n")
+            .expect("writes");
+        client
+            .shutdown(std::net::Shutdown::Write)
+            .expect("half-close");
+
+        let Framed::Opened(envelope) = served.on_readable(&mut ordinal).expect("reads") else {
+            panic!("the line frames despite the half-close");
+        };
+        let Payload::Frame(frame) = &envelope.payload else {
+            panic!("a frame");
+        };
+        assert_eq!(
+            frame.octets().expect("canonical"),
+            b"one line, then silence"
+        );
+        assert!(!served.spent(), "an open exchange is not spent");
+
+        served
+            .on_response(&TurnFrame::carry(b"the answer"))
+            .expect("routes");
+        served.on_writable().expect("drains");
+        use std::io::Read as _;
+        let mut got = [0u8; 32];
+        let n = client.read(&mut got).expect("client reads");
+        assert_eq!(&got[..n], b"the answer\n");
+
+        // The end of the read side is its own wake: the poll re-wakes on
+        // the pending close, the read records it, and with nothing left
+        // the connection is spent.
+        assert!(matches!(
+            served.on_readable(&mut ordinal).expect("reads the close"),
+            Framed::Waiting
+        ));
+        assert!(
+            served.spent(),
+            "nothing remains and the connection is spent"
+        );
+    }
+
     /// **The bound is inclusive, and one octet more closes the
     /// connection.** A line of exactly the bound followed by its delimiter
     /// opens its exchange, and a connection fed one undelimited octet past
@@ -393,18 +478,21 @@ mod tests {
         let exact = vec![b'x'; LINE_BOUND];
         client.write_all(&exact).expect("writes");
         client.write_all(b"\n").expect("delimiter");
-        loop {
+        let mut framed = false;
+        for _ in 0..=(LINE_BOUND / 4096 + 2) {
             match served.on_readable(&mut ordinal).expect("reads") {
                 Framed::Opened(envelope) => {
                     let Payload::Frame(frame) = &envelope.payload else {
                         panic!("a frame");
                     };
                     assert_eq!(frame.octets().expect("canonical").len(), LINE_BOUND);
+                    framed = true;
                     break;
                 }
                 Framed::Waiting => continue,
             }
         }
+        assert!(framed, "a bound-exact line frames within its reads");
 
         // One undelimited octet past the bound: the framing layer closes
         // the connection, no exchange opened.

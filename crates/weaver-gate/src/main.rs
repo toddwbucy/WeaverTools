@@ -178,7 +178,10 @@ fn serve(channel: Channel) -> ExitCode {
         };
 
         match tag {
-            Tag::Channel if revents.intersects(PollFlags::POLLIN | PollFlags::POLLHUP) => {
+            Tag::Channel
+                if revents
+                    .intersects(PollFlags::POLLIN | PollFlags::POLLHUP | PollFlags::POLLERR) =>
+            {
                 if let Err(code) = serve_channel_event(&channel, &mut state) {
                     drop(state);
                     return code;
@@ -203,13 +206,23 @@ fn serve(channel: Channel) -> ExitCode {
                 }
             }
             Tag::Listener => {
+                // An errored listener never accepts again, and judging it
+                // would spin: the boundary is gone, which ends service.
+                if revents.contains(PollFlags::POLLERR) {
+                    drop(state);
+                    return ExitCode::FAILURE;
+                }
                 if let HookState::Raised(hook, relay) = &mut state {
                     judge_one(hook, relay);
                 }
             }
             Tag::Conn(at) => {
                 if let HookState::Raised(_, relay) = &mut state {
-                    if revents.intersects(PollFlags::POLLIN | PollFlags::POLLHUP) {
+                    // An errored connection surfaces through its own read,
+                    // costing the connection and never the gate.
+                    if revents
+                        .intersects(PollFlags::POLLIN | PollFlags::POLLHUP | PollFlags::POLLERR)
+                    {
                         match relay.read_one(at) {
                             Ok(relay::Framed::Opened(envelope)) => {
                                 if let Err(code) = send_or_pend(&channel, relay, *envelope) {
@@ -217,14 +230,42 @@ fn serve(channel: Channel) -> ExitCode {
                                     return code;
                                 }
                             }
-                            Ok(relay::Framed::Waiting) => {}
+                            Ok(relay::Framed::Waiting) => {
+                                // A half-closed peer with nothing left to
+                                // serve leaves quietly, its conversation
+                                // finished.
+                                if relay.served.get(at).is_some_and(relay::Served::spent) {
+                                    relay.served.swap_remove(at);
+                                }
+                            }
                             Err(gone) => remove(relay, at, &gone),
                         }
                     } else if revents.contains(PollFlags::POLLOUT)
                         && let Some(served) = relay.served.get_mut(at)
-                        && let Err(gone) = served.on_writable()
                     {
-                        remove(relay, at, &gone);
+                        match served.on_writable() {
+                            Ok(()) => {
+                                // The drain finished, so the scan resumes
+                                // over the residual, the cap admitting the
+                                // next line only now, and a spent
+                                // connection leaves quietly.
+                                match relay.frame_one(at) {
+                                    Ok(relay::Framed::Opened(next)) => {
+                                        if let Err(code) = send_or_pend(&channel, relay, *next) {
+                                            drop(state);
+                                            return code;
+                                        }
+                                    }
+                                    Ok(relay::Framed::Waiting) => {
+                                        if relay.served.get(at).is_some_and(relay::Served::spent) {
+                                            relay.served.swap_remove(at);
+                                        }
+                                    }
+                                    Err(gone) => remove(relay, at, &gone),
+                                }
+                            }
+                            Err(gone) => remove(relay, at, &gone),
+                        }
                     }
                 }
             }
@@ -252,7 +293,8 @@ fn serve_channel_event(channel: &Channel, state: &mut HookState) -> Result<(), E
     // A frame is a response and routes by identity. Everything else is the
     // lifecycle's, judged against the position and answered.
     if let Payload::Frame(frame) = &envelope.payload {
-        return route_response(channel, state, &envelope, frame);
+        route_response(state, &envelope, frame);
+        return Ok(());
     }
 
     let payload = dispatch(state, &envelope);
@@ -285,24 +327,23 @@ fn serve_channel_event(channel: &Channel, state: &mut HookState) -> Result<(), E
 /// response owed to a connection that already left is a lost delivery and
 /// not a lost turn, per the world contract, and it is reported as one.
 fn route_response(
-    channel: &Channel,
     state: &mut HookState,
     envelope: &OrganEnvelope,
     frame: &weaver_types::TurnFrame,
-) -> Result<(), ExitCode> {
+) {
     let HookState::Raised(_, relay) = state else {
         eprintln!(
             "{}",
             serde_json::json!({"fault": "a response arrived with no hook raised"})
         );
-        return Ok(());
+        return;
     };
     if envelope.exchange.opener != Opener::Gate || envelope.position != Position::Close {
         eprintln!(
             "{}",
             serde_json::json!({"fault": "a frame outside this crate's exchanges"})
         );
-        return Ok(());
+        return;
     }
     let ordinal = envelope.exchange.ordinal;
     let Some(at) = relay.owed(ordinal) else {
@@ -310,7 +351,7 @@ fn route_response(
             "{}",
             serde_json::json!({"fault": "lost_delivery", "exchange": ordinal})
         );
-        return Ok(());
+        return;
     };
     let routed = relay
         .served
@@ -318,18 +359,12 @@ fn route_response(
         .expect("owed proved the index")
         .on_response(frame);
     match routed {
-        Ok(()) => match relay.frame_one(at) {
-            Ok(relay::Framed::Opened(next)) => send_or_pend(channel, relay, *next),
-            Ok(relay::Framed::Waiting) => Ok(()),
-            Err(gone) => {
-                remove(relay, at, &gone);
-                Ok(())
-            }
-        },
-        Err(gone) => {
-            remove(relay, at, &gone);
-            Ok(())
-        }
+        // The response queues and the scan waits: the cap admits the next
+        // line only after the drain finishes, so the outbound buffer holds
+        // at most one response and the residual is scanned again from the
+        // writable wake that empties it.
+        Ok(()) => {}
+        Err(gone) => remove(relay, at, &gone),
     }
 }
 

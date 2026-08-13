@@ -148,12 +148,7 @@ impl Channel {
     /// only on what it reads, because a writer that can exceed the receiver's
     /// buffer produces the truncation the receiver is obliged to fault on.
     pub fn send(&self, envelope: &OrganEnvelope) -> Result<(), ChannelFault> {
-        let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Undecodable)?;
-        if body.len() > MAX_ENVELOPE_BYTES {
-            return Err(ChannelFault::Truncated {
-                bound: MAX_ENVELOPE_BYTES,
-            });
-        }
+        let body = render(envelope)?;
         loop {
             match send(self.end.as_raw_fd(), &body, MsgFlags::empty()) {
                 Ok(_) => return Ok(()),
@@ -167,14 +162,10 @@ impl Channel {
     /// the loop never waits on the channel, so an envelope the channel
     /// cannot take now returns `false` and waits in the caller, draining
     /// under the poll. The flag is per-call, so the channel's reads keep
-    /// their blocking discipline untouched.
+    /// their blocking discipline untouched, and everything but the flag and
+    /// the would-block return is [`Channel::send`]'s own path.
     pub fn try_send(&self, envelope: &OrganEnvelope) -> Result<bool, ChannelFault> {
-        let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Undecodable)?;
-        if body.len() > MAX_ENVELOPE_BYTES {
-            return Err(ChannelFault::Truncated {
-                bound: MAX_ENVELOPE_BYTES,
-            });
-        }
+        let body = render(envelope)?;
         loop {
             match send(self.end.as_raw_fd(), &body, MsgFlags::MSG_DONTWAIT) {
                 Ok(_) => return Ok(true),
@@ -210,6 +201,18 @@ impl Channel {
         buffer.truncate(read);
         serde_json::from_slice(&buffer).map_err(|_| ChannelFault::Undecodable)
     }
+}
+
+/// One envelope rendered and judged against the bound, the shared half of
+/// the two send paths so the encode and the assertion cannot drift apart.
+fn render(envelope: &OrganEnvelope) -> Result<Vec<u8>, ChannelFault> {
+    let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Undecodable)?;
+    if body.len() > MAX_ENVELOPE_BYTES {
+        return Err(ChannelFault::Truncated {
+            bound: MAX_ENVELOPE_BYTES,
+        });
+    }
+    Ok(body)
 }
 
 /// Construct a channel from an already-owned descriptor, for the unit suite,
