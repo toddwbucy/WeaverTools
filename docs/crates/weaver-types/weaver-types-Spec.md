@@ -5,6 +5,10 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-12, fourth of this date, the encoding rides with the
+type. One sentence lands with the gate's turn-half act: the frame encoding's
+implementation is the floor's, beside the type, one canonical form for every
+party, owed by the wiring act.
 **Revised:** 2026-08-12, third of this date, the frame's shape closes.
 `TurnFrame` carries its octets base64-encoded in one member, elected at
 section 4.1 by argument rather than the deferred measurement, per the
@@ -700,7 +704,10 @@ The member is the line's octets encoded base64, both directions, one
 definition per the charter. The encoding is RFC 4648 section 4's standard
 alphabet, padded, with no line breaks and no interior whitespace, and the
 decode refuses input the encode would not produce, so one octet sequence has
-exactly one carried form. The deferral offered two honest answers, a
+exactly one carried form. The encoding's implementation rides with the type,
+a floor obligation the wiring act lands, so one implementation holds the
+canonical form for every party rather than two crates agreeing by luck. The
+deferral offered two honest answers, a
 splice of the line as it stands or an encoding that survives arbitrary
 octets, and held them for a measurement over real client traffic. The
 constraint set decides without one. The gate reads no frame, per its opacity

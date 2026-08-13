@@ -5,6 +5,15 @@ its charter is chartered to: the lifecycle half, with the traffic arriving via t
 workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, the turn half arrives, act two of the first-live-turn
+epic, per the operator. Section 4 charters the relay: one `poll` across the
+listener, the accepted connections, and the channel end, serial with no
+executor, frames bounded at the delimiter by a scan that reads nothing, one
+line one exchange with the exchange's identity as the routing, a 32 kibibyte
+line bound that closes the connection at the framing layer, and the client
+line's field list fixed, `text` in and `kind`-named closes out. Three
+perturbation assertions land, section 7's deferral narrows to streaming, and
+section 1's no-executor ground moves from deferral to `poll`.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -114,7 +123,8 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **No async runtime, no logging crate, nothing else.** The lifecycle traffic
-is two exchanges and the client traffic is deferred, so nothing here needs an
+is two exchanges and the turn traffic is served by `poll` and a serial loop
+per section 4, so nothing here needs an
 executor, and this crate writes no account of anything, per charter section
 1: a logging crate would be a second author's first step. The absences are
 checked by the build-time `cargo tree` assertion the floor Specs share.
@@ -468,17 +478,114 @@ from: gate-refused-raise-holds-nothing
 to: axiom-harness-integrates-by-the-loop
 ```
 
-## 4. The relay, deferred
+## 4. The relay, chartered
 
-`src/relay.rs` is the placement for the pass-through: inbound octets to the
-harness, outbound octets to the client, order preserved, nothing retained,
-per charter section 2. Everything it needs is the token workflow's, the
-turn exchanges toward the harness above all, per charter section 8, and
-nothing is shaped here ahead of that charter, per apex section 9. What this
-Spec fixes about it is only what the merged contracts already fix: the
-relay reads no content, and a line that does not parse is refused by the
-harness with the refusal returning by the path the line took, the gate
-carrying both directions unread. The claim binds the suite as much as the
+**This section closes what the cut deferred, the turn half arriving
+2026-08-12 as act two of the first-live-turn epic.** What it charters is the
+pass-through's mechanics and the client line's shape, against merged rails on
+every side: `weaver-harness-gate-contract` section 2's exchanges, the world
+contract's framing, charter section 13's protocol, and the frame election of
+`weaver-types-Spec` section 4.1. `src/relay.rs` is its placement, filled by
+the epic's wiring act.
+
+**The service is one `poll` across three kinds of descriptor, serial as the
+harness's own.** Between ready and stopped this crate waits against the
+listener, every accepted client connection, and the channel end, and wakes on
+the first ready. A listener wake accepts and judges the predicate, per
+section 3. A connection wake reads octets. A channel wake reads the envelope,
+a response frame to route out or the lower directive. Service is serial, one
+wake handled at a time, and no executor enters: section 1's ground held
+because the client traffic was deferred, and it holds now because `poll` and
+a serial loop serve it, the same election `weaver-harness-Spec` section 2.4
+carries for the same wait.
+
+**A frame is bounded at the delimiter, and the scan reads nothing.** The
+world contract fixes the framing as delimiter and octets, never fields, so
+this crate scans an accepted connection's bytes for the delimiter and what
+stands before it is the line. The scan is carriage rather than reading, a
+byte comparison against the delimiter parsing no field, which is the same
+distinction the frame election drew for the encoding. Bytes after a
+delimiter wait for the next scan, order preserved per connection.
+
+```graph
+node: gate-frame-bounded-at-the-delimiter
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-frame-bounded-at-the-delimiter
+```
+
+**One line becomes one exchange, and the exchange's identity is the
+routing.** A bounded line is encoded per the frame election into
+`turn-frame`'s one member, the encoding riding with the type on the floor so
+one implementation holds the canonical form for every party, and the frame
+crosses as a carry-a-turn exchange this crate opens. The response frame
+returns on the exchange, its member decodes to the response line's octets,
+and the line goes out the connection its request came in on, delimiter
+appended, per the correlation rule of charter section 13.1: the exchange's
+identity is the table this crate does not keep. Nothing about the turn
+survives the response's write.
+
+```graph
+node: gate-one-exchange-per-line-by-identity
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-one-exchange-per-line-by-identity
+```
+
+**The line takes a bound, and the bound closes the connection.** The organ
+envelope is bounded at 64 kibibytes, per `weaver-types-Spec` section 4, and
+the frame's encoding inflates its octets by a third, so an unbounded line
+would overrun the envelope on this crate's own send. **The election, flagged
+for the operator: a client line is bounded at 32 kibibytes of octets before
+the delimiter,** which encodes to under 44 kibibytes and leaves the envelope
+its overhead with margin rather than arithmetic exactness. A connection that
+reaches the bound with no delimiter found has left the protocol at the
+framing layer, below any turn, so the connection closes: there is no line to
+refuse and no turn to open, and a truncated relay would be the corpus-wide
+truncation fault worn as a feature. The world contract carries the case in
+its failure enumeration as of this act.
+
+```graph
+node: gate-line-bound-closes-the-connection
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-line-bound-closes-the-connection
+```
+
+**The client line's shape is this Spec's to fix, and it is fixed here.** The
+world contract delegates the field list to this page, the client being built
+against the format while the gate carries it unread: the shapes are stated
+here because the client reads this page, never because this crate does. A
+request is one JSON object with one required member, `text`, a string, the
+turn's content from the client's side. Roles are not the client's to name:
+the harness makes the text the turn's user message, per its Spec section
+6.2, so a client cannot claim the system position or any other, which is the
+injection this shape exists to refuse. An unknown member refuses the turn
+rather than being ignored, the no-extension rule the corpus applies to its
+own records applied at its mouth. A response is one JSON object whose `kind`
+names the close: `answered` carrying `text`, the assistant's canonical
+content, the record holding the verbatim beside it per `weaver-trace-PRD`
+section 3.2. `stopped` carrying `reason`, the stop reason in place of a
+response per the world contract. `refused` carrying `reason`, the answer a
+line earns when it does not parse as the request this paragraph fixes. The
+harness renders every one of them, per its guarantee in
+`weaver-harness-gate-contract` section 4, and their Rust representation is
+the wiring act's satellite, no floor type minted ahead of the loop entry's
+signature.
+
+What the merged contracts fixed before this act still binds: the relay reads
+no content, and a line that does not parse is refused by the harness with
+the refusal returning by the path the line took, the gate carrying both
+directions unread. The claim binds the suite as much as the
 build, which is why section 6 has no test that parses a client line, and it
 is review's at both ends: no instrument distinguishes octets forwarded from
 octets read.
@@ -742,9 +849,22 @@ that format forbids.
   this bullet exists to refuse. The refusal is owed to each organ by
   `weaver-types-Spec` section 5, which states it and enforces it nowhere,
   and this discharges the gate's side of that owing alone.
-- The unparseable-line refusal path stays whole-cloth deferred: no test
-  here parses a client line, and a test that did would be the opacity rule
-  breached by the suite, which review checks for.
+- Framing is at the delimiter: two lines arriving in one write open two
+  exchanges in order, confirmed by watching them fuse into one when the
+  scan is removed, and the scan compares bytes against the delimiter and
+  parses nothing, which review holds.
+- One line is one exchange and the identity routes: two clients speaking at
+  once each receive their own response on their own connection, confirmed
+  by watching a response cross connections when the exchange identity stops
+  carrying the routing.
+- The line bound closes the connection: a connection fed the bound's worth
+  of octets with no delimiter is closed with no exchange opened, confirmed
+  by watching an over-bound line reach the channel when the bound check is
+  removed.
+- The unparseable-line refusal is the harness's, per its Spec section 6.2 as
+  of the turn-half act: no test here parses a client line, and a test that
+  did would be the opacity rule breached by the suite, which review checks
+  for.
 
 ```graph
 node: gate-bind-shapes-pinned-by-doctest
@@ -768,10 +888,14 @@ Each names what settles it, and none is this Spec's to settle alone.
   `weaver-types-Spec`, with this document's demand stated in section 3:
   the socket path and the access rule. The demand is recorded here so the
   satellite is shaped against a consumer rather than invented.
-- **Everything the token workflow charters.** The turn exchanges and their
-  shapes, the relay's interior, streaming, backpressure, cancellation,
-  drain on stop, and concurrent clients against the one-turn loop, per
-  charter section 8.
+- **The token workflow's half arrived, 2026-08-12, and streaming alone
+  stays deferred.** The turn exchanges, the relay's interior, the line
+  bound, concurrency against the one-turn loop, and drain on stop are
+  chartered at section 4 and charter section 13. Streaming and partial
+  output stay with the token workflow's extensions to the world contract's
+  section 3, arriving with the memory round's architecture pass. Recorded
+  as narrowed rather than deleted, this list naming what settled each
+  entry.
 - **The tool-uid ruling.** Charter section 7's pending candidate, settled
   by the architecture seat's ratification or the tool workflow's threat
   measurement, and nothing here builds against the separate-uid arm.
