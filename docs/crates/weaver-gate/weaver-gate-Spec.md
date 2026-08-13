@@ -8,7 +8,9 @@ workflow. Code is written against it under the gates of Working Process section 
 **Revised:** 2026-08-12, the turn half arrives, act two of the first-live-turn
 epic, per the operator. Section 4 charters the relay: one `poll` across the
 listener, the accepted connections, and the channel end, serial with no
-executor, frames bounded at the delimiter by a scan that reads nothing, one
+executor and never blocking on a client, a lower closing the listener then
+the connections then answering stopped,
+frames bounded at the delimiter by a scan that reads nothing, one
 line one exchange with the exchange's identity as the routing, a 32 kibibyte
 line bound that closes the connection at the framing layer, and the client
 line's field list fixed, `text` in and `kind`-named closes out. Three
@@ -499,6 +501,25 @@ because the client traffic was deferred, and it holds now because `poll` and
 a serial loop serve it, the same election `weaver-harness-Spec` section 2.4
 carries for the same wait.
 
+**The loop never blocks on a client, in either direction.** Accepted
+connections are nonblocking end to end: a connection wake reads what is
+there, and a response drains to its connection under the same poll,
+writability being a wake like readability. A response a connection cannot
+take yet waits in that connection's outbound buffer and in nothing else, so
+a slow client holds its own responses and never the loop, the listener, or
+the channel. The buffer needs no bound of its own, because one response
+exists per line the client sent, so what a client can queue is what it
+asked for. A connection whose peer is gone fails its write, which is the
+lost-delivery case of charter section 13.4, the record's close already
+standing.
+
+**A lower closes in order, and stopped answers last.** The lower read from
+the channel closes the listener first, then every accepted connection with
+whatever its buffer still held undelivered, and answers stopped only after
+the closes return, per charter section 13.3 and the ordering the lifecycle
+half already pins. No turn is in flight at a lower, leave refusing while
+one is, so what the closes drop is deliveries at most and never turns.
+
 **A frame is bounded at the delimiter, and the scan reads nothing.** The
 world contract fixes the framing as delimiter and octets, never fields, so
 this crate scans an accepted connection's bytes for the delimiter and what
@@ -524,9 +545,14 @@ one implementation holds the canonical form for every party, and the frame
 crosses as a carry-a-turn exchange this crate opens. The response frame
 returns on the exchange, its member decodes to the response line's octets,
 and the line goes out the connection its request came in on, delimiter
-appended, per the correlation rule of charter section 13.1: the exchange's
-identity is the table this crate does not keep. Nothing about the turn
-survives the response's write.
+appended, per the correlation rule of charter section 13.1: the identity is
+the channel's own and this crate mints nothing beside it. What this crate
+holds is the set of its open exchanges, each the channel's identity paired
+with the connection owed the response, made at the open and gone at the
+response's write, at the connection's death, or at the lower, whichever
+arrives first. That set is the retention rule enforced rather than
+contradicted: an entry lives exactly as long as its exchange, and nothing
+about the turn survives the response's write.
 
 ```graph
 node: gate-one-exchange-per-line-by-identity
@@ -544,8 +570,11 @@ the frame's encoding inflates its octets by a third, so an unbounded line
 would overrun the envelope on this crate's own send. **The election, flagged
 for the operator: a client line is bounded at 32 kibibytes of octets before
 the delimiter,** which encodes to under 44 kibibytes and leaves the envelope
-its overhead with margin rather than arithmetic exactness. A connection that
-reaches the bound with no delimiter found has left the protocol at the
+its overhead with margin rather than arithmetic exactness. The bound is
+inclusive: a line of exactly the bound's octets followed by its delimiter is
+legal, and the connection closes when more than the bound stands undelimited,
+however many reads delivered it. A connection past the bound has left the
+protocol at the
 framing layer, below any turn, so the connection closes: there is no line to
 refuse and no turn to open, and a truncated relay would be the corpus-wide
 truncation fault worn as a feature. The world contract carries the case in
@@ -857,10 +886,12 @@ that format forbids.
   once each receive their own response on their own connection, confirmed
   by watching a response cross connections when the exchange identity stops
   carrying the routing.
-- The line bound closes the connection: a connection fed the bound's worth
-  of octets with no delimiter is closed with no exchange opened, confirmed
-  by watching an over-bound line reach the channel when the bound check is
-  removed.
+- The line bound closes the connection, inclusively: a line of exactly the
+  bound's octets followed by its delimiter opens its exchange, a connection
+  fed one octet more with no delimiter is closed with no exchange opened,
+  and both are confirmed by watching an over-bound line reach the channel
+  when the bound check is removed and a bound-exact line die when the check
+  reads exclusive.
 - The unparseable-line refusal is the harness's, per its Spec section 6.2 as
   of the turn-half act: no test here parses a client line, and a test that
   did would be the opacity rule breached by the suite, which review checks

@@ -9,8 +9,9 @@ crate, the second instance of the category that ruling settles.
 **Date filed:** 2026-08-01
 **Revised:** 2026-08-12, the line takes a bound, with the gate's turn-half
 act. Section 2 delegates the bound to the Spec beside the field list, and
-section 5 gains the case: a line reaching the bound with no delimiter has
-left the framing, and the connection closes below any turn.
+section 5 gains the case: a line exceeding the bound with no delimiter has
+left the framing, the bound inclusive, and the connection closes below any
+turn.
 **Document ID:** `weaver-gate-world-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -106,9 +107,10 @@ response path, as extensions to this page rather than replacements of it.
 - A request while the hook is lowered finds no listener, which is refusal by absence
   and not a typed answer.
 - A line that does not parse is a refused turn, per section 2.
-- A line that reaches the Spec's bound with no delimiter found has left the
+- A line that exceeds the Spec's bound with no delimiter found has left the
   framing, and the connection closes at that layer, below any turn: nothing
-  was refused because nothing was ever a line.
+  was refused because nothing was ever a line. The bound is inclusive, a
+  line of exactly the bound followed by its delimiter being legal.
 - A gate death mid-turn is the loss of the delivery and not of the turn: the record
   holds the close, and what the harness does with the death is the coordination
   seam's, per `weaver-harness-gate-contract` section 5.
