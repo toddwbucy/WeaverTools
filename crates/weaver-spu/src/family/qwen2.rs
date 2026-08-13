@@ -35,6 +35,17 @@ pub const PARSED_MARKERS: &[&str] = &[CALL_OPEN, CALL_CLOSE];
 /// stated once.
 pub const TEMPLATE: &str = "<|im_start|>{role}\n{message}<|im_end|>\n";
 
+/// **What the delta's rendering closes with: the assistant's turn, opened and
+/// left unfinished.** The generation continues from here, so the model
+/// completes its own turn rather than electing a speaker, and the terminator
+/// the engine makes resident after the stream is exactly this turn's close. A
+/// rendering that ends at the user's `<|im_end|>` instead leaves the model
+/// choosing who speaks next, which is how a completion opens with `user`. The
+/// string restates [`TURN_OPEN`] because a const cannot concatenate one - the
+/// marker-promotion test binds the marker itself, and this opener renders it
+/// with the fixed role.
+pub const GENERATION_OPENER: &str = "<|im_start|>assistant\n";
+
 const STOP: &[&str] = &[TURN_CLOSE];
 
 pub struct Qwen2;

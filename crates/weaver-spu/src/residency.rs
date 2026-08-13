@@ -312,17 +312,37 @@ impl Resident {
                 // The whole sequence decodes together: a multi-byte character
                 // split across two tokens is ordinary under a byte-pair
                 // vocabulary, and per-token conversion would break it where
-                // the split fell.
-                let tokens: Vec<llama_cpp_2::token::LlamaToken> = tokens
-                    .iter()
-                    .map(|t| llama_cpp_2::token::LlamaToken(t.0 as i32))
-                    .collect();
-                model
-                    .model()
-                    .tokens_to_str(&tokens, llama_cpp_2::model::Special::Tokenize)
+                // the split fell. The bytes are gathered per token and the
+                // text conversion is one pass over the concatenation, so a
+                // split character still fails as incomplete rather than
+                // rendering wrong, which is the failure the stream's pending
+                // buffer waits on. The engine reports a too-small buffer as
+                // the negative of the size it needed, so one retry at that
+                // size is exact - the wrapper's whole-sequence call caps the
+                // buffer at eight bytes and never retries, which faults any
+                // piece longer than that.
+                let mut bytes = Vec::new();
+                for token in tokens {
+                    let token = llama_cpp_2::token::LlamaToken(token.0 as i32);
+                    let piece = match model.model().token_to_piece_bytes(token, 8, true, None) {
+                        Err(llama_cpp_2::TokenToStringError::InsufficientBufferSpace(needed)) => {
+                            model.model().token_to_piece_bytes(
+                                token,
+                                (-needed) as usize,
+                                true,
+                                None,
+                            )
+                        }
+                        other => other,
+                    }
                     .map_err(|error| DecodeFault::Engine {
                         detail: error.to_string(),
-                    })
+                    })?;
+                    bytes.extend_from_slice(&piece);
+                }
+                String::from_utf8(bytes).map_err(|error| DecodeFault::Engine {
+                    detail: error.to_string(),
+                })
             }
             #[allow(unreachable_patterns)]
             _ => Err(DecodeFault::ContainerNotBuilt {

@@ -292,20 +292,35 @@ impl Harness {
                     }
                 }
                 Ok(Wake::Gate) => {
-                    if let Err(fault) = self.serve_gate_wake(identity, tool_schemas, &mut entry) {
+                    if let Err(fault) =
+                        self.serve_gate_wake(identity, tool_schemas, &mut entry, &mut pending)
+                    {
                         self.unwind_if_entered();
                         return Err(fault);
                     }
                 }
                 Ok(Wake::Decode) => {
-                    // At rest nothing is owed on the decode seam, and the
-                    // report's wire case is issue 106's open election, so an
-                    // arrival here is octets the seam's state cannot read: a
-                    // fault below the exchange layer, ending service the way
-                    // section 3 ends it. The clerked-report arm lands when
-                    // the report's shape does.
-                    self.unwind_if_entered();
-                    return Err(ChannelFault::Undecodable);
+                    // One at-rest arrival is legitimate: the cancel race's
+                    // residue. A stop whose cancel lost to a natural
+                    // completion reaches the SPU at rest and answers
+                    // `AtRest`, which surfaces here and drains. Everything
+                    // else is octets the seam's state cannot read, the
+                    // report's wire case being issue 106's open election: a
+                    // fault below the exchange layer, ending service the
+                    // way section 3 ends it.
+                    let residue = match &self.state {
+                        ChannelState::Entered(run) => run.spu.as_ref().map(|spu| {
+                            matches!(
+                                spu.decode.recv_reply(),
+                                Ok(crate::channel::DecodeReply::Answer(TokenAnswer::AtRest))
+                            )
+                        }),
+                        _ => None,
+                    };
+                    if residue != Some(true) {
+                        self.unwind_if_entered();
+                        return Err(ChannelFault::Undecodable);
+                    }
                 }
                 Err(fault) => {
                     self.unwind_if_entered();
@@ -378,6 +393,7 @@ impl Harness {
         identity: &str,
         tool_schemas: &[String],
         entry: &mut F,
+        pending: &mut Option<OrganChannel>,
     ) -> Result<(), ChannelFault>
     where
         F: FnMut(
@@ -415,9 +431,14 @@ impl Harness {
             }
         };
         match envelope.payload {
-            weaver_types::Payload::Frame(frame) => {
-                self.serve_frame(envelope.exchange, frame, identity, tool_schemas, entry)
-            }
+            weaver_types::Payload::Frame(frame) => self.serve_frame(
+                envelope.exchange,
+                frame,
+                identity,
+                tool_schemas,
+                entry,
+                pending,
+            ),
             // The gate's fault report is clerked to the record per the
             // fault-carrier ruling. The received answer the contract names
             // arrives with the act that builds the gate's report sending:
@@ -451,6 +472,7 @@ impl Harness {
         identity: &str,
         tool_schemas: &[String],
         entry: &mut F,
+        pending: &mut Option<OrganChannel>,
     ) -> Result<(), ChannelFault>
     where
         F: FnMut(
@@ -495,8 +517,15 @@ impl Harness {
                         &mut run.recorder,
                         &mut run.turn_ordinal,
                         Some(prompt),
+                        &self.coordination,
+                        Some(pending),
                     );
                     match entry(&mut ports, &text) {
+                        // A turn the operator's stop aborted answers the
+                        // stopped close, the partial standing in the record.
+                        Ok(outcome) if outcome.aborted => {
+                            render_close("stopped", "reason", "the operator stopped the turn")
+                        }
                         // A model-side stop is a completed turn whose
                         // truncation the record holds, so the client is
                         // answered with what stands.
@@ -846,6 +875,10 @@ impl Harness {
                     &mut run.recorder,
                     &mut run.turn_ordinal,
                     Some(prompt),
+                    &self.coordination,
+                    // A seat granted outside the serve loop streams without
+                    // the ear, the verb slot being the loop's own.
+                    None,
                 ))
             }
             // Before enter and after leave there is no standing interior to
@@ -1169,6 +1202,206 @@ mod tests {
         )
     }
 
+    /// **The turn rehearses on the device**, the live run's shape inside
+    /// the suite: the real enter fan-out forks the real organ binaries,
+    /// the SPU admits real weights on the device, the session opens with
+    /// the instruction's identity, a frame grants the seat, the decode
+    /// runs, the response frame returns, the leave unwinds, and the
+    /// artifact is read back whole from a real sink. The real client dial
+    /// stays the live run's, where uids differ: the gate denies its own
+    /// uid by construction, so after the real raise proves the gate arm,
+    /// the turn is driven on a scripted gate end.
+    ///
+    /// Skips loudly without the fixture and both built binaries. Build the
+    /// SPU with the device features first:
+    /// `cargo build -p weaver-spu --features cuda,gguf`.
+    #[test]
+    fn the_turn_rehearses_on_the_device() {
+        let fixture = std::path::Path::new("/opt/weaver/models/qwen2.5-0.5b-instruct-q6_k.gguf");
+        let target = std::env::current_exe()
+            .expect("the test binary knows itself")
+            .parent()
+            .and_then(std::path::Path::parent)
+            .expect("the target profile dir")
+            .to_path_buf();
+        let spu = std::env::var("WEAVER_SPU_BIN")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| target.join("weaver-spu"));
+        let gate = std::env::var("WEAVER_GATE_BIN")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| target.join("weaver-gate"));
+        if std::env::var("WEAVER_REHEARSAL").is_err()
+            || !fixture.exists()
+            || !spu.exists()
+            || !gate.exists()
+        {
+            eprintln!(
+                "SKIP the_turn_rehearses_on_the_device: set WEAVER_REHEARSAL=1 with the \
+                 device-featured SPU built, needs {} and {} and {}",
+                fixture.display(),
+                spu.display(),
+                gate.display()
+            );
+            return;
+        }
+
+        let scratch = std::env::temp_dir().join(format!("weaver-rehearsal-{}", std::process::id()));
+        std::fs::create_dir_all(&scratch).expect("scratch");
+        let sink_path = scratch.join("rehearsal.ndjson");
+        let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+        let gate_socket = scratch.join("gate.sock");
+        std::fs::remove_file(&gate_socket).ok();
+
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                spu: spu.clone(),
+                gate: gate.clone(),
+            },
+            state: ChannelState::BeforeEnter,
+        };
+        let payload = weaver_types::EnterPayload {
+            session: SessionId("rehearsal".into()),
+            run_ordinal: 0,
+            spu_instruction: weaver_types::SpuInstruction {
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef(fixture.to_string_lossy().into_owned()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    identity: Vec::new(),
+                },
+            },
+            gate_instruction: weaver_types::GateInstruction {
+                socket_path: gate_socket,
+                access_rule: weaver_types::AccessRule {
+                    allowed_uids: std::collections::BTreeSet::new(),
+                    allowed_gids: std::collections::BTreeSet::new(),
+                    denied_uids: std::collections::BTreeSet::new(),
+                },
+            },
+        };
+
+        // The real fan-out: real forks, real admit against real weights,
+        // the real session open, the real raise.
+        let mut run = match harness.enter(payload, Some(sink)) {
+            Ok(run) => run,
+            Err(EnterFailure::BeforeLoad(refusal)) => panic!("enter refused early: {refusal:?}"),
+            Err(EnterFailure::AfterLoad(_, refusal)) => panic!("enter refused: {refusal:?}"),
+        };
+
+        // The raise proved the gate arm on the real binary. The turn is
+        // driven on a scripted end, the real dial being act four's.
+        if let Some(gate_arm) = run.gate.take() {
+            drop(gate_arm.channel);
+            reap(gate_arm.pid);
+        }
+        let (gate_end, gate_peer) = OrganChannel::pair().expect("gate pair");
+        let gate_peer = gate_peer.into_channel();
+        run.gate = Some(GateChannel {
+            channel: gate_end,
+            pid: nix::unistd::Pid::from_raw(1),
+        });
+        harness.state = ChannelState::Entered(Box::new(run));
+
+        gate_peer
+            .send(&OrganEnvelope {
+                exchange: ExchangeId {
+                    opener: Opener::Gate,
+                    ordinal: 1,
+                },
+                position: Position::Open,
+                payload: weaver_types::Payload::Frame(weaver_types::TurnFrame::carry(
+                    b"{\"text\":\"Reply with exactly one word: hello\"}",
+                )),
+            })
+            .expect("the frame sends");
+
+        let mut verb_slot = None;
+        harness
+            .serve_gate_wake(
+                "",
+                &[],
+                &mut |ports: &mut crate::engine::Ports<'_>, text: &str| {
+                    let delta = vec![weaver_traits::Message {
+                        role: weaver_traits::Role::User,
+                        content: vec![weaver_traits::ContentBlock::Text {
+                            text: text.to_string(),
+                        }],
+                    }];
+                    ports.turn(delta)
+                },
+                &mut verb_slot,
+            )
+            .expect("the turn serves on the device");
+
+        let answer = gate_peer.recv().expect("the response frame returns");
+        let weaver_types::Payload::Frame(frame) = answer.payload else {
+            panic!("a frame answers a frame");
+        };
+        let line = String::from_utf8(frame.octets().expect("canonical")).expect("utf8");
+        assert!(
+            line.starts_with(r#"{"kind":"answered""#),
+            "a real decode answers: {line}"
+        );
+
+        // The leave unwinds the real SPU and drains the sink.
+        let ChannelState::Entered(run) = std::mem::replace(&mut harness.state, ChannelState::Left)
+        else {
+            panic!("entered");
+        };
+        let mut run = *run;
+        // The scripted gate arm answers no lower: the real lower is the real
+        // binary's, proven with the raise, and act four's live run walks it
+        // whole. The arm drops here so the leave's unwind meets no exchange
+        // nothing will answer.
+        if let Some(scripted) = run.gate.take() {
+            drop(scripted.channel);
+        }
+        leave(&mut run).expect("the leave unwinds");
+
+        // The artifact, read back whole: the first record any human
+        // inspects rides exactly this shape in act four.
+        let artifact = std::fs::read_to_string(&sink_path).expect("the artifact reads back");
+        let kinds: Vec<String> = artifact
+            .lines()
+            .filter_map(|line| {
+                serde_json::from_str::<serde_json::Value>(line)
+                    .ok()
+                    .and_then(|v| v.get("kind").and_then(|k| k.as_str()).map(String::from))
+            })
+            .collect();
+        assert_eq!(
+            kinds,
+            vec![
+                "load",
+                "turn.started",
+                "message.user",
+                "model.request",
+                "model.output",
+                "model.measurement",
+                "message.assistant",
+                "turn.closed",
+                "unload",
+            ],
+            "the whole bracket in the artifact, in order"
+        );
+        assert!(
+            artifact.contains(r#""template""#),
+            "the request splice carries the SPU's rendering"
+        );
+        assert!(
+            artifact.contains("weights_hash"),
+            "the measurement names the model and its weights"
+        );
+        eprintln!(
+            "REHEARSAL: {} events at {}",
+            kinds.len(),
+            sink_path.display()
+        );
+    }
+
     /// A stop places the turn's close event and answers `TurnAborted`.
     ///
     /// **This test proves both effects happened, not that the record preceded
@@ -1422,6 +1655,7 @@ mod tests {
                     }];
                     ports.turn(delta)
                 },
+                &mut None,
             )
             .expect("the wake serves");
         decode_peer.join().expect("the decode peer finishes");
@@ -1500,8 +1734,9 @@ mod tests {
                 }),
             })
             .expect("frame sends");
+        let mut verb_slot = None;
         harness
-            .serve_gate_wake("", &[], &mut entry)
+            .serve_gate_wake("", &[], &mut entry, &mut verb_slot)
             .expect("the wake serves");
         let answer = gate_peer.recv().expect("the refusal returns");
         let weaver_types::Payload::Frame(frame) = answer.payload else {
@@ -1525,7 +1760,7 @@ mod tests {
             })
             .expect("frame sends");
         harness
-            .serve_gate_wake("", &[], &mut entry)
+            .serve_gate_wake("", &[], &mut entry, &mut verb_slot)
             .expect("the channel stands");
         let answer = gate_peer.recv().expect("the second refusal returns");
         let weaver_types::Payload::Frame(frame) = answer.payload else {

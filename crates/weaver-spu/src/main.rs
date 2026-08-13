@@ -258,6 +258,7 @@ impl CancelPoll for SeamCancel<'_> {
 struct OpenedSession<'r> {
     session: Session<'r>,
     template: &'static str,
+    generation_opener: &'static str,
     terminator: TokenId,
 }
 
@@ -369,6 +370,7 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                             Ok(OpenedSession {
                                 session,
                                 template: declaration.template,
+                                generation_opener: declaration.generation_opener,
                                 terminator,
                             })
                         });
@@ -398,8 +400,16 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                     continue;
                 }
                 let standing = opened.as_mut().expect("at rest implies an open session");
+                // The delta's rendering closes with the assistant turn opened
+                // and unfinished, so the generation completes that turn and
+                // the terminator the engine makes resident closes it. The
+                // identity prefix at open takes no opener: its turns are all
+                // complete.
                 let delta_text = match render_messages(standing.template, &delta) {
-                    Ok(text) => text,
+                    Ok(mut text) => {
+                        text.push_str(standing.generation_opener);
+                        text
+                    }
                     Err(refusal) => {
                         if send_refusal(decode, &refusal).is_err() {
                             return Err(());
