@@ -1,5 +1,6 @@
 //! conforms: types-loop0-encoding-json
 //! conforms: types-tagging-test
+//! conforms: types-frame-survives-arbitrary-octets
 //!
 //! The wire-shape tests of `weaver-types-Spec` section 4.3. The Spec states the
 //! envelope's layout rather than leaving it to a reader, and these tests hold
@@ -173,4 +174,62 @@ fn the_token_refusal_carries_the_account() {
     let not_open: weaver_types::TokenRefusal =
         serde_json::from_str(r#"{"kind":"not_open"}"#).expect("a fieldless case reads");
     assert_eq!(not_open, weaver_types::TokenRefusal::NotOpen);
+}
+
+/// Arbitrary octets round-trip the frame and the envelope, per the frame
+/// election of `weaver-types-Spec` section 4.1: every byte value, no UTF-8
+/// assumed, the encoding surviving what a splice would not.
+#[test]
+fn the_frame_survives_arbitrary_octets() {
+    let octets: Vec<u8> = (0u8..=255).cycle().take(700).collect();
+    let envelope = OrganEnvelope {
+        exchange: ExchangeId {
+            opener: Opener::Gate,
+            ordinal: 3,
+        },
+        position: Position::Open,
+        payload: Payload::Frame(weaver_types::TurnFrame::carry(&octets)),
+    };
+    let json = serde_json::to_string(&envelope).expect("serializes");
+    let back: OrganEnvelope = serde_json::from_str(&json).expect("deserializes");
+    let Payload::Frame(frame) = back.payload else {
+        panic!("the frame came back as something else");
+    };
+    assert_eq!(frame.octets().expect("canonical"), octets);
+}
+
+/// Empty octets are a legal frame: the empty member, decoding to nothing.
+#[test]
+fn the_empty_frame_carries_and_returns_nothing() {
+    let frame = weaver_types::TurnFrame::carry(b"");
+    assert_eq!(frame.octets, "");
+    assert_eq!(frame.octets().expect("canonical"), Vec::<u8>::new());
+}
+
+/// The decode refuses what the encode would not produce, per the election:
+/// one octet sequence, exactly one carried form. Each rejected member is a
+/// second spelling, off-boundary, whitespace-bearing, interior-padded, or
+/// carrying trailing bits the encode zeroes.
+#[test]
+fn the_decode_refuses_the_noncanonical_forms() {
+    for bad in [
+        "QQ",       // off the four-boundary
+        "QQ=",      // off the four-boundary with padding
+        " QQ==",    // leading whitespace
+        "Q Q==",    // interior whitespace
+        "Q\nQ==",   // a line break
+        "QR==",     // trailing bits set where two octets are absent
+        "QUJ=",     // trailing bits set where one octet is absent
+        "QQ==QQ==", // padding anywhere but the tail
+        "=QQ=",     // padding leading a group
+    ] {
+        let frame = weaver_types::TurnFrame {
+            octets: bad.to_string(),
+        };
+        assert!(frame.octets().is_none(), "{bad:?} decoded as canonical");
+    }
+    let canonical = weaver_types::TurnFrame {
+        octets: "QUI=".to_string(),
+    };
+    assert_eq!(canonical.octets().expect("canonical"), b"AB");
 }
