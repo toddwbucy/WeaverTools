@@ -252,13 +252,23 @@ fn run_load(
     // `weaver-admin-systemd-contract` section 5 relies on, so a second load of
     // a live agent fails here, and a discarded status would let it proceed to
     // dial the first load's worker.
-    started(unit::start(&config.unit, &inventory.identity, &agent.0))?;
+    // The socket path is derived here from the same validated name the unit's
+    // own name carries, and the worker binds what it is told, so the two
+    // agree by construction rather than by two readings of one convention.
+    let socket_path = config.coordination_socket(&agent.0);
+    started(unit::start(
+        &config.unit,
+        &inventory.identity,
+        &agent.0,
+        &socket_path,
+    ))?;
     standing.unit_started = true;
 
     // **The dial races the worker's bind and the bound covers it.** A bound
     // exceeded is not an absent residency, so the refusal consults the unit's
-    // state before returning and carries what the manager said.
-    let socket_path = config.coordination_socket(&agent.0);
+    // state before returning and carries what the manager said. The path is
+    // the one the start ask carried, so admin dials exactly what it told the
+    // worker to bind.
     let mut coordination = match channel::dial(&socket_path) {
         Ok(coordination) => coordination,
         Err(_) => return Err(refusal_for_absent_worker(config, &agent.0)),
@@ -454,6 +464,11 @@ fn load_service_config() -> Result<ServiceConfig, String> {
                 .filter(|l| !l.is_empty())
                 .collect(),
             worker: PathBuf::from(read("worker-binary")?),
+            // Required rather than defaulted, on the same ground as every
+            // other value here: a missing one refuses and names itself
+            // rather than being searched for, per Spec section 9.
+            spu: PathBuf::from(read("spu-binary")?),
+            gate: PathBuf::from(read("gate-binary")?),
         },
         allow_list: inventory::AllowList::new(provisioned),
     })
@@ -476,6 +491,8 @@ mod tests {
                 control_tool: "/bin/false".into(),
                 properties: vec![],
                 worker: PathBuf::from("/bin/false"),
+                spu: PathBuf::from("/bin/false"),
+                gate: PathBuf::from("/bin/false"),
             },
             allow_list: inventory::AllowList::new(["alpha".to_string()]),
         }

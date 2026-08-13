@@ -31,6 +31,15 @@ pub struct UnitTemplate {
     pub properties: Vec<String>,
     /// The worker binary the unit starts.
     pub worker: std::path::PathBuf,
+    /// The SPU binary the worker forks at enter, and the gate binary beside
+    /// it. **Operator-installed values rather than anything this invocation
+    /// composed**, per `weaver-admin-Spec` section 9: one installation's fact,
+    /// identical for every agent, which is why they sit here and not in the
+    /// agent's declaration. They reach the worker in the argument vector
+    /// because a process that does not yet exist has no other way to learn
+    /// them.
+    pub spu: std::path::PathBuf,
+    pub gate: std::path::PathBuf,
 }
 
 /// What the init system answers about a unit, per
@@ -97,6 +106,13 @@ pub fn runtime_directory_name(agent: &str) -> String {
 /// sink's descriptor crosses later and elsewhere, inside the enter directive
 /// over the connection admin dialed.
 ///
+/// **Bare states what no descriptor crosses and says nothing about
+/// arguments**, per `weaver-admin-Spec` section 6. A descriptor is a
+/// capability the manager would have to hold and pass, and an argument is a
+/// value the worker reads and then resolves under its own identity, so the
+/// socket path this carries grants nothing the agent uid did not already
+/// have.
+///
 /// **The runtime directory is asked for because its removal is the answer to a
 /// stale socket.** A Unix socket's pathname outlives the process that bound
 /// it, and the program does not solve that by unlinking, which races a live
@@ -106,9 +122,15 @@ pub fn start(
     template: &UnitTemplate,
     identity: &str,
     agent: &str,
+    coordination_socket: &std::path::Path,
 ) -> std::io::Result<std::process::ExitStatus> {
     Command::new(&template.run_tool)
-        .args(start_arguments(template, identity, agent))
+        .args(start_arguments(
+            template,
+            identity,
+            agent,
+            coordination_socket,
+        ))
         .status()
 }
 
@@ -117,7 +139,20 @@ pub fn start(
 /// function, and a builder who added such a property to `start` would have to
 /// add it here, which is what keeps that test from passing over a drifted
 /// invocation.
-fn start_arguments(template: &UnitTemplate, identity: &str, agent: &str) -> Vec<String> {
+///
+/// **The worker's own arguments follow the binary and take no second
+/// variable**, per `weaver-admin-Spec` section 6. The socket path is derived
+/// by the caller from the validated agent name, and the two binaries are the
+/// operator's installed values, so the vector reads the allow-listed name and
+/// the operator's file and reads nothing else. A builder who let any of the
+/// three be composed from the invocation's own input would widen the
+/// delegated authority by the route the name check closes.
+fn start_arguments(
+    template: &UnitTemplate,
+    identity: &str,
+    agent: &str,
+    coordination_socket: &std::path::Path,
+) -> Vec<String> {
     let mut args = vec![
         "--unit".to_string(),
         format!("weaver-worker@{agent}"),
@@ -131,6 +166,9 @@ fn start_arguments(template: &UnitTemplate, identity: &str, agent: &str) -> Vec<
         args.push(format!("--property={property}"));
     }
     args.push(template.worker.display().to_string());
+    args.push(coordination_socket.display().to_string());
+    args.push(template.spu.display().to_string());
+    args.push(template.gate.display().to_string());
     args
 }
 
@@ -186,8 +224,15 @@ mod tests {
             control_tool: "/bin/true".into(),
             properties: vec!["PrivateTmp=yes".into(), "NoNewPrivileges=yes".into()],
             worker: "/usr/libexec/weaver-worker".into(),
+            spu: "/usr/libexec/weaver-spu".into(),
+            gate: "/usr/libexec/weaver-gate".into(),
         };
-        let rendered = start_arguments(&template, "weaver-alpha", "alpha");
+        let rendered = start_arguments(
+            &template,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+        );
         for banned in [
             "StandardOutput=",
             "StandardError=",
@@ -216,8 +261,15 @@ mod tests {
             control_tool: "/bin/true".into(),
             properties: vec![],
             worker: "/usr/libexec/weaver-worker".into(),
+            spu: "/usr/libexec/weaver-spu".into(),
+            gate: "/usr/libexec/weaver-gate".into(),
         };
-        let rendered = start_arguments(&template, "weaver-alpha", "alpha");
+        let rendered = start_arguments(
+            &template,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+        );
         assert!(rendered.iter().any(|a| a == "--property=User=weaver-alpha"));
         assert!(
             rendered
@@ -225,5 +277,43 @@ mod tests {
                 .any(|a| a == "--property=RuntimeDirectory=weaver-alpha")
         );
         assert_eq!(unit_name("alpha"), "weaver-worker@alpha.service");
+    }
+
+    /// **The ask carries the worker's provisioning, after the binary and in
+    /// the order the composition root reads.** The defect this pins is the one
+    /// the act of 2026-08-13 landed on: an ask that started a worker with no
+    /// arguments started a worker that refused its own start, and no load
+    /// could reach a dial.
+    ///
+    /// Perturbation: drop any of the three pushes in `start_arguments` and
+    /// this fails. The order matters as much as the presence, the composition
+    /// root reading them positionally, so the assertion is on the tail as a
+    /// sequence rather than on membership.
+    #[test]
+    fn the_start_ask_carries_the_workers_provisioning() {
+        let template = UnitTemplate {
+            run_tool: "/bin/true".into(),
+            control_tool: "/bin/true".into(),
+            properties: vec!["PrivateTmp=yes".into()],
+            worker: "/usr/libexec/weaver-worker".into(),
+            spu: "/usr/libexec/weaver-spu".into(),
+            gate: "/usr/libexec/weaver-gate".into(),
+        };
+        let rendered = start_arguments(
+            &template,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+        );
+        assert_eq!(
+            rendered[rendered.len() - 4..],
+            [
+                "/usr/libexec/weaver-worker".to_string(),
+                "/run/weaver-alpha/coordination.sock".to_string(),
+                "/usr/libexec/weaver-spu".to_string(),
+                "/usr/libexec/weaver-gate".to_string(),
+            ],
+            "the binary and its three arguments close the vector: {rendered:?}"
+        );
     }
 }
