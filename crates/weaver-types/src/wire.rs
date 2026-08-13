@@ -2,6 +2,7 @@
 //! conforms: types-tagging-test
 //! conforms: types-envelope-bound-64k
 //! conforms: types-socket-seqpacket
+//! conforms: types-frame-survives-arbitrary-octets
 //!
 //! The loop 0 wire vocabulary, per `weaver-types-Spec` section 4: the envelope
 //! every organ channel carries and loop 0's trio, named for the loop whose
@@ -239,19 +240,127 @@ pub struct AgentSummary {
     pub state: AgentState,
 }
 
-/// A turn frame, opaque to the gate: whatever the client sent.
+/// A turn frame, opaque to the gate: whatever the client sent, and the
+/// answer going back, one definition for both directions per the charter.
 ///
-/// **The shape is an open election with a stated constraint**, per
-/// `weaver-types-Spec` sections 4.1 and 6: the frame is not held as a byte
-/// vector, and which encoding it takes is elected against a measurement over
-/// real client traffic. This declaration is placement and carriage only - the
-/// deferral is the corpus's and code filling it would be invention.
+/// The member is the line's octets encoded base64, per the election of
+/// `weaver-types-Spec` section 4.1 and the ruling of 2026-08-12: RFC 4648
+/// section 4's standard alphabet, padded, no line breaks and no interior
+/// whitespace, so one octet sequence has exactly one carried form. The
+/// encoding rides here with the type, one implementation holding the
+/// canonical form for every party, and [`TurnFrame::octets`] refuses what
+/// [`TurnFrame::carry`] would not produce.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TurnFrame {}
+pub struct TurnFrame {
+    pub octets: String,
+}
+
+impl TurnFrame {
+    /// Carries octets as a frame, encoded to the one canonical form.
+    pub fn carry(octets: &[u8]) -> TurnFrame {
+        TurnFrame {
+            octets: encode_base64(octets),
+        }
+    }
+
+    /// The carried octets, decoded, or `None` where the member is not the
+    /// form the encode produces: a length off the four-boundary, a byte
+    /// outside the alphabet, padding anywhere but the tail, or trailing
+    /// bits the encode would have zeroed.
+    pub fn octets(&self) -> Option<Vec<u8>> {
+        decode_base64(&self.octets)
+    }
+}
+
+const BASE64_ALPHABET: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+fn encode_base64(octets: &[u8]) -> String {
+    let mut out = String::with_capacity(octets.len().div_ceil(3) * 4);
+    for chunk in octets.chunks(3) {
+        let b0 = u32::from(chunk[0]);
+        let b1 = u32::from(chunk.get(1).copied().unwrap_or(0));
+        let b2 = u32::from(chunk.get(2).copied().unwrap_or(0));
+        let word = (b0 << 16) | (b1 << 8) | b2;
+        out.push(char::from(BASE64_ALPHABET[(word >> 18) as usize & 0x3f]));
+        out.push(char::from(BASE64_ALPHABET[(word >> 12) as usize & 0x3f]));
+        out.push(if chunk.len() > 1 {
+            char::from(BASE64_ALPHABET[(word >> 6) as usize & 0x3f])
+        } else {
+            '='
+        });
+        out.push(if chunk.len() > 2 {
+            char::from(BASE64_ALPHABET[word as usize & 0x3f])
+        } else {
+            '='
+        });
+    }
+    out
+}
+
+fn base64_value(byte: u8) -> Option<u32> {
+    match byte {
+        b'A'..=b'Z' => Some(u32::from(byte - b'A')),
+        b'a'..=b'z' => Some(u32::from(byte - b'a') + 26),
+        b'0'..=b'9' => Some(u32::from(byte - b'0') + 52),
+        b'+' => Some(62),
+        b'/' => Some(63),
+        _ => None,
+    }
+}
+
+fn decode_base64(text: &str) -> Option<Vec<u8>> {
+    let bytes = text.as_bytes();
+    if bytes.is_empty() {
+        return Some(Vec::new());
+    }
+    if !bytes.len().is_multiple_of(4) {
+        return None;
+    }
+    let groups = bytes.len() / 4;
+    let mut out = Vec::with_capacity(groups * 3);
+    for g in 0..groups {
+        let group = &bytes[g * 4..g * 4 + 4];
+        let is_last = g + 1 == groups;
+        let pad = group.iter().filter(|b| **b == b'=').count();
+        let pad_at_tail = match pad {
+            0 => true,
+            1 => group[3] == b'=',
+            2 => group[2] == b'=' && group[3] == b'=',
+            _ => false,
+        };
+        if !pad_at_tail || (pad > 0 && !is_last) {
+            return None;
+        }
+        let v0 = base64_value(group[0])?;
+        let v1 = base64_value(group[1])?;
+        let v2 = if pad >= 2 { 0 } else { base64_value(group[2])? };
+        let v3 = if pad >= 1 { 0 } else { base64_value(group[3])? };
+        // The encode zeroes the bits no octet fills, so a set bit there is
+        // a second spelling of the same octets and is refused.
+        if pad == 2 && v1 & 0x0f != 0 {
+            return None;
+        }
+        if pad == 1 && v2 & 0x03 != 0 {
+            return None;
+        }
+        let word = (v0 << 18) | (v1 << 12) | (v2 << 6) | v3;
+        out.push((word >> 16) as u8);
+        if pad < 2 {
+            out.push((word >> 8) as u8);
+        }
+        if pad < 1 {
+            out.push(word as u8);
+        }
+    }
+    Some(out)
+}
 
 /// The decode seam's ask, per `weaver-types-Spec` section 4.4: the cases are
-/// `weaver-harness-spu-decode-contract` section 2's five exchanges read from
-/// the harness's side, and this crate holds rather than creates them. The
+/// `weaver-harness-spu-decode-contract` section 2's four exchanges read from
+/// the harness's side, the seam's fifth message being the SPU's emitted
+/// report, owed nothing back and taking its wire case with `FaultReport`'s
+/// shape, and this crate holds rather than creates them. The
 /// messages are `weaver-traits`' [`weaver_traits::Message`], drawn rather than
 /// restated. The tunable map's values must be finite, and the check is the
 /// receiver's at the point the map is read, per the Spec: a `NaN` or an
@@ -275,9 +384,11 @@ pub enum TokenDirective {
 }
 
 /// The decode seam's answer, per `weaver-types-Spec` section 4.4. A cancel
-/// with nothing in flight answers `AtRest` rather than refusing, and
-/// `Received` closes the SPU-opened fault report, both being answers because
-/// neither is a failure of the ask.
+/// with nothing in flight answers `AtRest` rather than refusing, an answer
+/// because it is not a failure of the ask. The SPU's fault report takes no
+/// case here: it is the seam's one emission, owed nothing back per the
+/// ruling of 2026-08-12, and its wire case arrives with `FaultReport`'s
+/// shape.
 ///
 /// Adjacently tagged under the spliced-member arm of section 4.3's test:
 /// `Generated` wraps the one struct in the vocabulary carrying a `RawValue`,
@@ -303,7 +414,6 @@ pub enum TokenAnswer {
     Generated(Generation),
     AtRest,
     Flushed,
-    Received,
 }
 
 /// The decode seam's refusal, per `weaver-types-Spec` section 4.4: the four

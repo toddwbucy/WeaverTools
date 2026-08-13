@@ -266,7 +266,7 @@ mod tests {
                 ordinal: 1,
             },
             position: Position::Open,
-            payload: Payload::Frame(TurnFrame {}),
+            payload: Payload::Frame(TurnFrame::carry(b"{\"text\":\"hello\"}")),
         };
         assert_eq!(channel.send(&envelope), Ok(()));
     }
