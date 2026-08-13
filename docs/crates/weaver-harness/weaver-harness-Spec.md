@@ -4,6 +4,11 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-12, fourth of this date, the frame's deferral narrows.
+Section 6.2's non-elections follow `weaver-types-Spec` section 4.1 as
+elected: the frame's interior closed, base64-carried octets by argument, and
+the loop entry's signature stays deferred with the client line's parse
+rather than with the frame.
 **Revised:** 2026-08-12, third of this date, the request is the turn's
 contribution. Section 6.1's model events follow `weaver-trace-PRD` section
 3.2 as narrowed by the operator's ruling of this date: the request the close
@@ -1461,13 +1466,13 @@ seat while idle, which no chartered loop wants and a later workflow may
 reopen through the front door.
 
 **What this subsection does not elect, named so the deferral reads as the
-corpus's.** The frame's interior stands open at `weaver-types-Spec` section
-6, elected with the gate's turn half against its measurement. The parse of
-the client's line into the request the loop is handed is that same act's,
-per `weaver-gate-world-contract` section 2, the field list being the Spec's
-there. And the entry's concrete signature is a satellite of section 9,
-shaped when the frame's interior is, so nothing here fixes a parameter type
-the election would move.
+corpus's.** The frame's interior closed on 2026-08-12, `weaver-types-Spec`
+section 4.1 electing base64-carried octets by argument. What stays open is
+the parse of the client's line into the request the loop is handed, the
+gate turn half's act per `weaver-gate-world-contract` section 2, the field
+list being the Spec's there. The entry's concrete signature is a satellite
+of section 9, shaped when that parse is, so nothing here fixes a parameter
+type the deferred act would move.
 
 ```graph
 node: harness-frame-grants-the-seat
@@ -1814,8 +1819,8 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The satellite types.** `AdoptionFault`'s case set, `OrganChannel`'s
   exchange-surface spelling, `SpuChannels`' name, the licensing error's shape,
   `DecodeChannel`'s token send and receive surface, now chartered in section
-  6.1, the loop entry's concrete signature, deferred with the frame's
-  interior per section 6.2, and the
+  6.1, the loop entry's concrete signature, deferred with the client line's
+  parse per section 6.2, and the
   channel-state enum's name. Identifier and shape choices with no
   cross-crate consequence, listed so what this Spec leaves to a builder is
   complete rather than implied.
