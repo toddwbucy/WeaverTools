@@ -355,7 +355,14 @@ impl Harness {
             }
             let woken = PollFlags::POLLIN | PollFlags::POLLHUP | PollFlags::POLLERR;
             for (fd, wake) in fds.iter().zip(&wakes) {
-                if fd.revents().unwrap_or(PollFlags::empty()).intersects(woken) {
+                let revents = fd.revents().unwrap_or(PollFlags::empty());
+                // An invalid descriptor never becomes readable, so treating
+                // POLLNVAL as anything but an ending would spin this loop
+                // forever against a wake that cannot arrive.
+                if revents.contains(PollFlags::POLLNVAL) {
+                    return Err(ChannelFault::Closed);
+                }
+                if revents.intersects(woken) {
                     return Ok(*wake);
                 }
             }
