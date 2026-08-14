@@ -1005,18 +1005,19 @@ agents.** The session is the operator's to name, so two agents can be given one
 session deliberately, which is what a benchmark pass across several agents is.
 A reference that were only a clock reading would then collide whenever two of
 them loaded in the same instant, and the guarantee is distinctness within a
-session rather than within an agent. So the reference carries the agent's name
-beside the instant, and the three ways two runs of one session could meet are
-answered separately. **Two agents differ by name.** **One agent cannot load
-twice at once**, because the init system refuses a second unit of the same
-name, per `weaver-admin-systemd-contract` section 5's reliance set. **And one
-agent loading twice in succession is separated by an unload and a fresh
-invocation**, each mint standing behind a process start, a unit start, and a
-dial, so the instants differ at any resolution finer than that separation. The
-instant is taken at nanosecond resolution for that reason rather than at the
-millisecond a reader would find sufficient, the cost being digits nobody reads
-and the gain being that the third case needs no argument about how fast a load
-can be issued.
+session rather than within an agent.
+
+**The reference has three parts and each does one job.** An instant, so it
+reads as a date and sorts into the order the operator's clock saw. The agent's
+name, so a reader can see whose run it is without joining anything. And a
+value drawn from the operating system's randomness at the load, which is what
+carries the distinctness guarantee. **A clock cannot carry it.** Wall-clock
+time is adjustable and an adjustment can move it backwards, so no resolution
+makes two instants certainly different, and an argument resting on how fast
+two loads can be issued is a probability rather than a guarantee. Separating
+the parts is what lets each be judged on its own: the instant may be coarse
+enough to read, because nothing rests on it, and the guarantee holds whatever
+the clock does.
 
 **Ordering is the operator's calendar order and the charter does not claim
 more.** The instant is a wall-clock reading, which an adjustment can move
