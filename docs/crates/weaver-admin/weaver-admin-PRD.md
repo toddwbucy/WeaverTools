@@ -996,10 +996,27 @@ across time cannot know what the next number is. Rather than give admin a
 counter to keep, which would return by the back door exactly what the recut
 removed, the requirement becomes the one the record needs: **the run
 reference distinguishes this run from every other run of its session.** A value
-minted at the load, ordered by construction and unique without coordination,
-satisfies it, and nothing has to be remembered between invocations for it to
-hold. Ordering across runs is preserved rather than lost, because the reference
-sorts and because the `load` event already carries a wall-clock stamp.
+minted at the load satisfies it with nothing remembered between invocations.
+
+**Distinctness has to be argued rather than assumed, because a session may span
+agents.** The session is the operator's to name, so two agents can be given one
+session deliberately, which is what a benchmark pass across several agents is.
+A reference that were only a clock reading would then collide whenever two of
+them loaded in the same instant, and the guarantee is distinctness within a
+session rather than within an agent. So the reference carries the agent's name
+beside the instant, and the pair is distinct by construction: two agents differ
+by name, and one agent cannot load twice at once because the init system
+refuses a second unit of the same name, per `weaver-admin-systemd-contract`
+section 5's reliance set. Nothing is left to the resolution of a clock.
+
+**Ordering is the operator's calendar order and the charter does not claim
+more.** The instant is a wall-clock reading, which an adjustment can move
+backwards, so sorting references orders runs as the operator's clock saw them
+rather than as a monotonic sequence. That is the right answer for a human
+reading an artifact and the wrong one for a consumer needing strict order,
+which is why order within a run stays the sequence's job, per
+`weaver-trace-PRD` section 6. The word monotonic is reserved in that charter
+for a different clock and is not borrowed here.
 
 **The session is the operator's to name, and the declaration is where it is
 named.** Per section 4.4 a session spans runs and an agent outlives a session,

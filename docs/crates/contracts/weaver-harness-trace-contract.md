@@ -270,7 +270,10 @@ though it were a new occurrence.
 narrowed from the session on 2026-08-01, because a recorder that begins every run
 empty holds nothing to continue numbering from. Session-wide order is the pair of
 admin's run reference and the sequence, assembled by the consumer, per
-`weaver-trace-PRD` section 6. Reads follow sequence order.
+`weaver-trace-PRD` section 6. The reference distinguishes runs and orders them
+by the operator's clock rather than monotonically, so the pair is an ordering
+between runs and the sequence is the ordering inside one. Reads follow sequence
+order.
 
 **Canonical form.** One byte-form rule for every artifact it writes. Integer fields
 that can exceed the double-safe range are written as decimal strings, so a consumer

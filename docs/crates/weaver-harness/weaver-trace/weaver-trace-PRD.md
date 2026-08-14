@@ -662,7 +662,10 @@ the fact is the operator's to do on the operator's own compute.
 - A strictly increasing, gapless sequence over admitted events, **scoped to the
   run**. Session-wide order is the pair of admin's run reference and the sequence,
   assembled by the consumer, because the program holds nothing across a residency
-  since the cut of 2026-08-01. The word monotonic is reserved in this charter for
+  since the cut of 2026-08-01. The reference orders runs as the operator's clock
+  saw them rather than as a monotonic sequence, per `weaver-admin-PRD` section
+  10, so a consumer that needs strict order has it inside a run and calendar
+  order between runs. The word monotonic is reserved in this charter for
   the clock of section 4.2. The sequence is the order and the clock is the
   instrument, and reading either for the other's job is an error the contract names
   explicitly.

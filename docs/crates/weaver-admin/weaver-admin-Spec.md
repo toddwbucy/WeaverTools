@@ -966,11 +966,25 @@ whose runs were indistinguishable. The session is the operator's, declared in
 the agent's config and carried uninterpreted, per `weaver-types-Spec` section
 2 and the ruling in `weaver-admin-PRD` section 10. The run reference is this
 crate's, minted at the load as an RFC 3339 timestamp in UTC at millisecond
-resolution, which distinguishes without coordination, sorts in the order the
-runs happened, and reads as a date to whoever opens the artifact. **Nothing is
+resolution followed by the validated agent name, `2026-08-14T16:02:11.482Z-alpha`,
+which reads as a date to whoever opens the artifact. **Nothing is
 remembered between invocations to produce it**, which is what makes it
-answerable by a crate that holds nothing across time, and it is the whole of
-what the contract's distinctness guarantee asks for.
+answerable by a crate that holds nothing across time.
+
+**The agent name is what makes the pair distinct and the clock alone would not
+be.** A session may span agents by the operator's election, so two agents can
+carry one session name and load at the same instant, and the guarantee is
+distinctness within a session. Two agents differ by name, and one agent cannot
+load twice at once because the init system refuses a second unit of the same
+name, per `weaver-admin-systemd-contract` section 5. The name is the validated
+one of section 4, so it introduces no second authority. A builder who dropped
+it, or who widened the timestamp's resolution instead, would be trading an
+argument that holds for one that depends on how fast two loads can be issued.
+
+**Sorting references gives calendar order and not a monotonic sequence.** The
+instant is a wall-clock reading and an adjustment can move it backwards. A
+consumer needing strict order uses the sequence, which is gapless and scoped to
+the run, per `weaver-harness-trace-contract` section 6.
 
 **The exchange ordinal beside it is a different thing and stays a counter.**
 That ordinal is serial within one connection and is the floor's, per

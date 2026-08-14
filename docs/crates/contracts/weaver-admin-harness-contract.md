@@ -275,7 +275,9 @@ the gate instruction the fan-out starts, and the intent to stop.
 
 **Admin guarantees** that the trace descriptor it passes refers to the sink the
 session's configuration declares, that the run reference distinguishes this run
-from every other run of that session, and
+from every other run of that session, distinctness being the guarantee rather
+than any particular rendering of it and the session possibly spanning agents,
+and
 that the boundary the worker runs inside exists and is correct, because
 admin verified it before the unit started and is the only party positioned to. The
 guarantee is of verification rather than of authorship, since the boundary is the
