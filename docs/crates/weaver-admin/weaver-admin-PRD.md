@@ -968,9 +968,13 @@ drain-and-checksum half an earlier form of this cell carried dissolved with the
 record on 2026-08-01.
 
 **What enter becomes without a record.** Enter stands up an empty working structure,
-per the cut of 2026-08-01, so a later run of a session begins with the session's
-identity and none of its conversation, and sessions are single-run at the program's
-promise level. Whether continuity returns
+per the cut of 2026-08-01, so **every run begins with the session's identity and
+none of its conversation**. Cardinality and continuity are two statements and
+only the second is open: a session may hold as many runs as the operator loads
+under it, per section 4.4, and what the program promises between them is
+nothing. An earlier wording called sessions single-run at the promise level,
+which read as a limit on how many runs a session may have rather than on what
+carries between them. Whether continuity returns
 through operator-held storage handed back at load, through the memory round's own
 substrate, or not at all is a design the corpus defers on purpose. A proposed
 reading stands as of 2026-08-01, per the
