@@ -20,6 +20,12 @@ descriptor, admin is per-invocation with no standing end, and the
 connection-lifetime rule restates against the listener. Section 5 gains the
 harness's refusal guarantee, section 6 its case, and section 8's possession
 negative inverts to a `peer-identity` draw.
+**Revised:** 2026-08-14, the run identifies itself. Section 5's guarantee that the run
+ordinal is the next one for its session becomes a guarantee that the run
+reference distinguishes this run from every other run of that session. The
+earlier wording assumed a standing admin and the recut of 2026-08-05 removed
+that premise, so the clause asked for something a per-invocation party cannot
+know. Section 3's supplies list renames with it.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -171,7 +177,7 @@ second dial waiting at the listener rather than being answered concurrently.
 Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
-session identity, the run ordinal, the trace descriptor, the
+session identity, the run reference, the trace descriptor, the
 SPU instruction, and the gate instruction. The last two are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU or the gate, so
 if admin's intent for either does not cross this seam it crosses nowhere. The harness
@@ -262,13 +268,14 @@ This section is derived from section 3 rather than prose beside it, because ever
 exchange payload change is a supplies change by construction, and a Spec writer reads
 this list.
 
-**Admin supplies** the session identity and run ordinal for the run being entered, the
+**Admin supplies** the session identity and the run reference for the run being
+entered, the
 trace descriptor, the SPU instruction the fan-out admits,
 the gate instruction the fan-out starts, and the intent to stop.
 
 **Admin guarantees** that the trace descriptor it passes refers to the sink the
-session's configuration declares, that the run ordinal is the next one for that
-session, and
+session's configuration declares, that the run reference distinguishes this run
+from every other run of that session, and
 that the boundary the worker runs inside exists and is correct, because
 admin verified it before the unit started and is the only party positioned to. The
 guarantee is of verification rather than of authorship, since the boundary is the

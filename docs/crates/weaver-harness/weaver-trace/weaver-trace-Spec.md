@@ -17,6 +17,10 @@ opaque blob. The typed `ModelRequest` and `ModelMeasurement` structs retire from
 the schema, and `trace-measurement-absent-not-zero` retires with them, the
 absent-not-zero property relocating to the SPU's `spu-absent-not-empty-vector`
 where the rendering now happens. The crate becomes 38 assertions.
+**Revised:** 2026-08-14, the run identifies itself. `RunOrdinal` becomes
+`RunRef`, so the envelope's triple reads `SessionRef`, `RunRef`, and
+`TurnRef`, and the newtype clause drops its small integers because all three
+are now strings.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
@@ -106,8 +110,8 @@ run, and a turn, and `weaver-types` owns `SessionId` and `TurnKey` for the wire.
 Linking that crate to reuse them would give this crate an internal dependency the
 charter forbids and would make the floor's wire vocabulary a dependency of the
 recorder, which records rather than speaks. So this crate defines
-`SessionRef`, `RunOrdinal`, and `TurnRef` as newtypes over owned strings and small
-integers, carries them without interpreting them, and the harness, which links both
+`SessionRef`, `RunRef`, and `TurnRef` as newtypes over owned strings, carries
+them without interpreting them, and the harness, which links both
 crates, converts at the submit call. The cost is that one concept has two type
 names in two crates. The alternative costs the charter's central structural claim,
 and the conversion is a total function at one call site rather than a judgment
@@ -192,7 +196,7 @@ pub struct Event {
 
 pub struct Envelope {
     pub session: SessionRef,
-    pub run: RunOrdinal,
+    pub run: RunRef,
     pub turn: Option<TurnRef>,
     pub sequence: Sequence,
     pub kind: Kind,
@@ -594,7 +598,7 @@ to: trace-structure-holds-rendered-lines
 pub struct WorkingStructure { /* private */ }
 
 impl WorkingStructure {
-    pub fn new(run: RunOrdinal) -> Self
+    pub fn new(run: RunRef) -> Self
     pub fn len(&self) -> usize
     pub fn iter(&self) -> impl Iterator<Item = &Record>
     pub fn by_kind(&self, kind: Kind) -> impl Iterator<Item = &Record>
@@ -691,7 +695,7 @@ pub struct Recorder { /* private */ }
 
 impl Recorder {
     /// The crate's one constructor and its one receive site.
-    pub fn receive(sink: OwnedFd, run: RunOrdinal, session: SessionRef)
+    pub fn receive(sink: OwnedFd, run: RunRef, session: SessionRef)
         -> Result<Self, Failure>
 
     pub fn submit(&mut self, event: Event) -> Result<Sequence, Failure>
@@ -987,7 +991,7 @@ to: trace-append-failed-no-recovery
   section 4 states.
 - The failure enum is exhaustive, so a new case reaches every caller.
 - The receive shape of section 5 is read by a doctest: a call passing an
-  `OwnedFd`, a `RunOrdinal`, and a `SessionRef` and binding a `Recorder`
+  `OwnedFd`, a `RunRef`, and a `SessionRef` and binding a `Recorder`
   compiles, so an argument added to the one constructor stops the build loudly.
   This is the pinned half of section 7's no-flag claim, the prohibition itself
   staying review's per the split stated there, an absence being what a positive

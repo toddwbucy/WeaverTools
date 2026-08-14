@@ -10,6 +10,8 @@ operator's ruling of this date. The submit clause narrows with
 `weaver-trace-PRD` section 3.2: the harness submits the turn's delta as
 rendered rather than the prompt as the model received it, the full effective
 context being the accumulation the record determines.
+**Revised:** 2026-08-14, the run identifies itself. The consumer assembles session-wide
+order from admin's run reference and the sequence, renamed from the ordinal.
 **Document ID:** `weaver-harness-trace-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -267,7 +269,7 @@ though it were a new occurrence.
 **within the run**, with no duplicates and no gaps among admitted events. The scope
 narrowed from the session on 2026-08-01, because a recorder that begins every run
 empty holds nothing to continue numbering from. Session-wide order is the pair of
-admin's run ordinal and the sequence, assembled by the consumer, per
+admin's run reference and the sequence, assembled by the consumer, per
 `weaver-trace-PRD` section 6. Reads follow sequence order.
 
 **Canonical form.** One byte-form rule for every artifact it writes. Integer fields

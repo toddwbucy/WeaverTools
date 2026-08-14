@@ -5,6 +5,8 @@ loop, filed under the harness's `Loops/` container per the Document Format's
 container entry. It argues no edges of its own: the seams it walks are declared in
 the crate charters per Document Format section 4, and a graph block here would
 duplicate a record that already has a home.
+**Revised:** 2026-08-14, the run identifies itself. The enter directive carries the run
+reference where it carried an ordinal, per `weaver-admin-PRD` section 10.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -193,7 +195,7 @@ then, all crossing at admin, carried by the exchanges of
 
 **Enter the run.** Admin resolves the session, opens the stream's sink under its
 own principal, and directs the harness to enter, supplying the session identity,
-the run ordinal, the trace descriptor, the
+the run reference, the trace descriptor, the
 model binding, and the gate instruction. The harness never resolves a path and
 never learns a name. It crosses once, in this directive, and is not
 re-sent, revoked, or replaced. The harness stands up an empty working structure,

@@ -15,6 +15,9 @@ tokenization. Two conditions ride it: a flush becoming reachable adds its
 event to the kind set or reopens the ruling, and replay's identity prefix
 leans on the open identifiability question. The state is a distillation of
 the record, never stored back into it.
+**Revised:** 2026-08-14, the run identifies itself. Session-wide order is the pair of
+admin's run reference and the sequence, the reference having replaced an
+ordinal that no per-invocation party could supply.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -657,7 +660,7 @@ the fact is the operator's to do on the operator's own compute.
 
 - Canonical byte form, one rule, all artifacts.
 - A strictly increasing, gapless sequence over admitted events, **scoped to the
-  run**. Session-wide order is the pair of admin's run ordinal and the sequence,
+  run**. Session-wide order is the pair of admin's run reference and the sequence,
   assembled by the consumer, because the program holds nothing across a residency
   since the cut of 2026-08-01. The word monotonic is reserved in this charter for
   the clock of section 4.2. The sequence is the order and the clock is the

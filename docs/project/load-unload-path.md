@@ -18,6 +18,10 @@ v0.2 header read this document as the outermost loop filed beside
 loops and no longer reaches this document, which is not one. `Loops/` holds the basic
 inference loop alone, and that loop running end to end is the proof-of-concept
 milestone.
+**Revised:** 2026-08-14, the run identifies itself. The enter directive carries the run
+reference, and the open cell citing where the run ordinal survives across
+invocations closes on its identity half: a reference distinguishes rather than
+counts, so nothing survives.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 
@@ -76,7 +80,7 @@ implied.
 ## 3. Opening the loop
 
 Admin directs enter across its one seam, on the connection it dialed, supplying
-the session identity, the run ordinal, the trace descriptor, the model binding,
+the session identity, the run reference, the trace descriptor, the model binding,
 and the gate instruction, per `weaver-admin-harness-contract` section 3. The
 harness fans out along its own seams, in its own order:
 
@@ -175,6 +179,8 @@ Each cell names what settles it, and none is this document's to settle.
   token workflow's pass over the organs' charters, the fault-carrier ruling of
   2026-08-01 having settled the carrier and the kind.
 - **What enter becomes without a record.** Rides the cell `weaver-admin-PRD`
-  section 10 holds, including where the run ordinal survives across invocations.
+  section 10 holds. The identity half of that cell closed on 2026-08-14: a run
+  reference distinguishes rather than counts, so nothing survives across
+  invocations, and what stays open is continuity.
 - **The loop abstraction.** Whether loop 0 takes a type or a trait. Awaits the
   Spec pass, demand-derived rather than reserved, per section 1.
