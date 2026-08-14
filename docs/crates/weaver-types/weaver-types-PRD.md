@@ -333,7 +333,8 @@ concern, argued in its own charter against its own harm, and it does not become 
 property of this file by being wanted.
 
 An earlier version of this section made some fields session-scoped and sealed at
-`run0`, naming a recording level as the instance. That scope is withdrawn, and the
+the session's first run, naming a recording level as the instance. That scope
+is withdrawn, and the
 level itself left the file entirely under the ruling of 2026-08-02. The seal also
 left the residual-readout election, which was never sealed, able to enable readout
 against a session whose recording level licensed no home for the reductions. Both

@@ -419,8 +419,9 @@ The SPU returns its generation and measurement payload tagged with the `turn_key
 it was given, and the harness writes `model.request`, `model.output`, and
 `model.measurement`. The harness writes `turn.started` and `turn.closed` around
 every turn, the message events, and the tool-call events. It records the
-`load` event that opens each run, which for `run0` is both the session's first
-entry and the record of `weaver-admin`'s initial contact. One emission per event,
+`load` event that opens each run, which for a session's first run is both that
+session's first entry and the record of `weaver-admin`'s initial contact. One
+emission per event,
 authored against the durable event schema, feeding the outbound stream and the
 working structure together.
 

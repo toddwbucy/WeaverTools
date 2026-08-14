@@ -110,7 +110,7 @@ out of scope here and arrive with later loops.
 
 Three levels, strictly nested. Session over run over turn.
 
-A **session** is opened by `run0`'s load event, there being no
+A **session** is opened by the load event of its first run, there being no
 `session.started`, per `weaver-trace-PRD` section 3.1. Admin resolves the session
 identity and opens the stream's sink under root before any run
 exists, per `weaver-admin-PRD` section 4.1, and the sink is a connection rather

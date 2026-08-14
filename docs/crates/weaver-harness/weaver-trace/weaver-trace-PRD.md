@@ -71,9 +71,13 @@ is written together with the contract that binds it.
 **A turn** is one request through to its final answer, bounded by `turn.started`
 and `turn.closed`.
 
-**A run** is one residency working on a session. `run0` opens the session. A run
-ends at unload or at process death, and the identifier is an ordinal within the
-session, so which run produced an event is answerable from the event alone.
+**A run** is one residency working on a session, and a session opens with its
+first. A run
+ends at unload or at process death, and the identifier is a reference admin
+mints at the load and distinct within the session, per `weaver-admin-PRD`
+section 10, so which run produced an event is answerable from the event alone.
+It is not an ordinal: nothing program-side counts runs, because nothing
+program-side is alive between two of them.
 
 **A session** is the identity the runs share, and the unit the agent's conversation
 belongs to. It is the boundary the proto-stateful definition of apex section 2 is
@@ -321,10 +325,12 @@ declared and produced, elections at the source governing production and
 production governing the record, which is this charter's own section 5
 instrumentation rule read forward.
 
-**There is no `session.started`.** A session begins when `run0` begins, so a separate
-kind would fire at the same moment as `run0`'s `load` and mean the same thing. The
+**There is no `session.started`.** A session begins when its first run begins, so a
+separate
+kind would fire at the same moment as that run's `load` and mean the same thing. The
 same argument retires the description of `weaver-admin`'s initial contact as a
-distinct first entry: **the `load` event of `run0` is that contact's record.** Admin
+distinct first entry: **the `load` event of the session's first run is that
+contact's record.** Admin
 authorizes the transition and hands it across, the harness authors its `load` on
 entering the run, and the monotonic origin is captured at that event. There is no
 room between those for an earlier entry, and the worker spawn and descriptor handoff

@@ -281,7 +281,7 @@ rest rather than racing it.
 
 **Trace authorship.** The harness is the sole writer of the record. Admin authors no
 event, holds no event kind, and its own first contact is recorded by the harness as
-the `load` event of `run0` rather than by an entry of its own.
+the `load` event of the session's first run rather than by an entry of its own.
 
 **Reading the stream as content.** Admin connects the sink, which is custody, and
 custody is not comprehension. Parsing events is the operator's tooling's business
@@ -373,7 +373,8 @@ than seniority, and it is why one verb's validation is this crate's own work and
 other's is only directed by it.
 
 **Opening the session record is not a boundary write.** `weaver-trace-PRD` section
-4.1 has `run0` creating the record, and this charter keeps that. A record belongs to a
+4.1 has the session's first run creating the record, and this charter keeps
+that. A record belongs to a
 session and a boundary belongs to an agent, so a verb that creates one is not
 creating the other, and the invariant above is scoped to the boundary deliberately.
 
@@ -449,8 +450,9 @@ anything else and no drop for the ordering of an earlier draft to get right. The
 privilege window that section 10 once carried as an open cell has no subject.
 
 **Steps 1 through 5 produce no trace entry, and neither does the rollback path.** That
-is a ruling and not an omission. `weaver-trace-PRD` section 3.1 makes `run0`'s `load`
-the record of admin's first contact and places the worker start and the descriptor
+is a ruling and not an omission. `weaver-trace-PRD` section 3.1 makes the first run's
+`load` the record of admin's first contact and places the worker start and the
+descriptor
 handoff outside the trace by construction, because they run before the harness exists
 to author anything. The load's one trace entry is written at step 6 by the harness,
 and the unload's at its own bracket. Nothing admin does before that moment reaches the
@@ -1004,10 +1006,17 @@ session deliberately, which is what a benchmark pass across several agents is.
 A reference that were only a clock reading would then collide whenever two of
 them loaded in the same instant, and the guarantee is distinctness within a
 session rather than within an agent. So the reference carries the agent's name
-beside the instant, and the pair is distinct by construction: two agents differ
-by name, and one agent cannot load twice at once because the init system
-refuses a second unit of the same name, per `weaver-admin-systemd-contract`
-section 5's reliance set. Nothing is left to the resolution of a clock.
+beside the instant, and the three ways two runs of one session could meet are
+answered separately. **Two agents differ by name.** **One agent cannot load
+twice at once**, because the init system refuses a second unit of the same
+name, per `weaver-admin-systemd-contract` section 5's reliance set. **And one
+agent loading twice in succession is separated by an unload and a fresh
+invocation**, each mint standing behind a process start, a unit start, and a
+dial, so the instants differ at any resolution finer than that separation. The
+instant is taken at nanosecond resolution for that reason rather than at the
+millisecond a reader would find sufficient, the cost being digits nobody reads
+and the gain being that the third case needs no argument about how fast a load
+can be issued.
 
 **Ordering is the operator's calendar order and the charter does not claim
 more.** The instant is a wall-clock reading, which an adjustment can move

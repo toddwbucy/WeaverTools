@@ -558,8 +558,9 @@ aggregate. Sequencing the organs is the harness's because the seams are, and
 each organ performs its own operation.
 
 **The harness is the sole writer of the trace across both centers.** It stands
-up the working structure, authors the `load` event of the run, which for `run0`
-is the record of admin's initial contact, and writes every component's activity
+up the working structure, authors the `load` event of the run, which for a
+session's first run is the record of admin's initial contact, and writes every
+component's activity
 into the stream for the whole of the residency. All coordination between
 components passes through the harness, which is what makes it the hub every
 later organ attaches to, each behind its own socket and contract, and the
