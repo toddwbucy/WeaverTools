@@ -1067,16 +1067,6 @@ of 2026-08-05 and neither landed by it.
   is the expected shape of a phase one re-entry, per Working Process section 2,
   and it is named as owed rather than left for a reader to discover by compiling.
   **Settled by:** the code acts, which follow this act rather than riding it.
-- **The merged code of the start ask, owed by the act of 2026-08-13.** Step 5
-  above now carries the worker's provisioning and the built invocation carries
-  none, so the unit template holds no field for the two organ binary paths, the
-  service configuration reads no value for them, and the argument vector is not
-  assembled. The divergence is not a drift a reviewer must hunt for: a load
-  starts a worker that refuses its own arguments and dies before the dial, so
-  every load of every agent refuses. **Settled by:** the code act that follows
-  this one, which grows the template by two fields, reads two more values from
-  the operator's file, and appends the socket path and the two binaries to the
-  ask.
 
 **Why the landed entries are gone rather than kept as a changelog.** The rule
 above is that an entry leaves when its edit lands, and it has a second half worth
