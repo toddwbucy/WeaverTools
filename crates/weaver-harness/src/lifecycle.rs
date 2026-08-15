@@ -36,7 +36,7 @@
 use std::os::fd::OwnedFd;
 use std::path::PathBuf;
 
-use weaver_trace::{Kind, Payload, Recorder, RunOrdinal, SessionRef, Subsystem, TurnClose};
+use weaver_trace::{Kind, Payload, Recorder, RunRef, SessionRef, Subsystem, TurnClose};
 use weaver_types::{
     ExchangeId, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener, OrganEnvelope,
     Position, SessionId, TokenAnswer, TokenDirective, TurnKey,
@@ -675,14 +675,14 @@ impl Harness {
         let session = payload.session.clone();
         let mut recorder = Recorder::receive(
             sink,
-            RunOrdinal(payload.run_ordinal),
+            RunRef(payload.run.0.clone()),
             SessionRef(session.0.clone()),
         )
         .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?;
 
         // The load event is the run's opening and the origin of its monotonic
         // clock, so the author is constructed at this moment.
-        let author = Author::new(&session, payload.run_ordinal);
+        let author = Author::new(&session, &payload.run);
         author
             .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
             .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
@@ -1157,9 +1157,10 @@ mod tests {
         ));
         let sink = OwnedFd::from(File::create(&path).expect("sink"));
         let session = SessionId("s-1".to_string());
-        let mut recorder = Recorder::receive(sink, RunOrdinal(0), SessionRef(session.0.clone()))
-            .expect("recorder");
-        let author = Author::new(&session, 0);
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
             .expect("load");
@@ -1262,7 +1263,7 @@ mod tests {
         };
         let payload = weaver_types::EnterPayload {
             session: SessionId("rehearsal".into()),
-            run_ordinal: 0,
+            run: weaver_types::RunId("r-1".into()),
             spu_instruction: weaver_types::SpuInstruction {
                 decoder: weaver_types::DecoderInstruction {
                     model_binding: weaver_types::ModelBinding {

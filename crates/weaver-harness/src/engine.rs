@@ -486,7 +486,7 @@ mod tests {
     use std::os::fd::{AsRawFd, OwnedFd};
 
     use nix::sys::socket::{AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair};
-    use weaver_trace::{Recorder, RunOrdinal, SessionRef};
+    use weaver_trace::{Recorder, RunRef, SessionRef};
     use weaver_types::{Finish, Generation, SessionId};
 
     /// **A turn runs, and loop 0 authors the whole bracket.** Loop 1 supplies
@@ -553,9 +553,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder = Recorder::receive(sink, RunOrdinal(0), SessionRef(session.0.clone()))
-            .expect("recorder");
-        let author = Author::new(&session, 0);
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
             .expect("load");
@@ -706,9 +707,10 @@ mod tests {
 
         let session = SessionId("s-2".into());
         let sink = tempfile();
-        let mut recorder = Recorder::receive(sink, RunOrdinal(0), SessionRef(session.0.clone()))
-            .expect("recorder");
-        let author = Author::new(&session, 0);
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
             .expect("load");

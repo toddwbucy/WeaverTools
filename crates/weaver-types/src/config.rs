@@ -17,6 +17,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use crate::identity::AccessRule;
+use crate::wire::SessionId;
 
 /// The declared surface of an agent, six fields under five keys, every one
 /// required.
@@ -33,6 +34,7 @@ use crate::identity::AccessRule;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct AgentConfig {
+    pub session: SessionId,
     pub spu_instruction: SpuInstruction,
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,

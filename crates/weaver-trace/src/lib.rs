@@ -15,14 +15,14 @@
 //! section 10.
 //!
 //! The receive shape is read by a compiling call
-//! (`trace-receive-shape-pinned-by-doctest`): an `OwnedFd`, a `RunOrdinal`,
+//! (`trace-receive-shape-pinned-by-doctest`): an `OwnedFd`, a `RunRef`,
 //! and a `SessionRef` binding a `Recorder`, so an argument added to the one
 //! constructor stops the build loudly.
 //!
 //! ```
 //! use std::os::fd::OwnedFd;
-//! use weaver_trace::{Failure, Recorder, RunOrdinal, SessionRef};
-//! fn shape(sink: OwnedFd, run: RunOrdinal, session: SessionRef) {
+//! use weaver_trace::{Failure, Recorder, RunRef, SessionRef};
+//! fn shape(sink: OwnedFd, run: RunRef, session: SessionRef) {
 //!     let _recorder: Result<Recorder, Failure> = Recorder::receive(sink, run, session);
 //! }
 //! ```
@@ -104,21 +104,21 @@
 //! because there is no call that takes what it learned.
 //!
 //! ```compile_fail
-//! use weaver_trace::{Recorder, RunOrdinal, SessionRef};
-//! let _ = Recorder::receive("/var/lib/weaver/trace.ndjson", RunOrdinal(0),
+//! use weaver_trace::{Recorder, RunRef, SessionRef};
+//! let _ = Recorder::receive("/var/lib/weaver/trace.ndjson", RunRef("r-1".into()),
 //!     SessionRef("s".into()));
 //! ```
 //!
 //! ```compile_fail
-//! use weaver_trace::{Recorder, RunOrdinal, SessionRef};
+//! use weaver_trace::{Recorder, RunRef, SessionRef};
 //! let path = String::from("/var/lib/weaver/trace.ndjson");
-//! let _ = Recorder::receive(path, RunOrdinal(0), SessionRef("s".into()));
+//! let _ = Recorder::receive(path, RunRef("r-1".into()), SessionRef("s".into()));
 //! ```
 //!
 //! ```compile_fail
 //! use std::path::PathBuf;
-//! use weaver_trace::{Recorder, RunOrdinal, SessionRef};
-//! let _ = Recorder::receive(PathBuf::from("/tmp/t"), RunOrdinal(0),
+//! use weaver_trace::{Recorder, RunRef, SessionRef};
+//! let _ = Recorder::receive(PathBuf::from("/tmp/t"), RunRef("r-1".into()),
 //!     SessionRef("s".into()));
 //! ```
 //!
@@ -138,7 +138,7 @@ mod writer;
 
 pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
-    Envelope, Event, Finish, Kind, Line, ModelOutput, Payload, RunOrdinal, SessionRef, StopReason,
+    Envelope, Event, Finish, Kind, Line, ModelOutput, Payload, RunRef, SessionRef, StopReason,
     Subsystem, TurnClose, TurnRef, raw_payload,
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};

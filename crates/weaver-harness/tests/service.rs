@@ -258,7 +258,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
         LifecycleDirective::Enter {
             payload: weaver_types::EnterPayload {
                 session: weaver_types::SessionId("s-1".into()),
-                run_ordinal: 0,
+                run: weaver_types::RunId("r-1".into()),
                 spu_instruction: weaver_types::SpuInstruction {
                     decoder: weaver_types::DecoderInstruction {
                         model_binding: weaver_types::ModelBinding {

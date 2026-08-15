@@ -10,6 +10,7 @@ use weaver_types::{ConfigErrorKind, FieldName, parse};
 
 fn full_config() -> String {
     concat!(
+        "session: s-1\n",
         "spu-instruction:\n",
         "  decoder:\n",
         "    model-binding:\n",

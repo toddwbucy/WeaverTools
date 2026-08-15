@@ -251,6 +251,7 @@ mod tests {
     fn config_source(sink_dir: &std::path::Path) -> String {
         format!(
             concat!(
+                "session: s-1\n",
                 "spu-instruction:\n",
                 "  decoder:\n",
                 "    model-binding:\n",

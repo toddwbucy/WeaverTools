@@ -16,8 +16,8 @@ use std::io::Read;
 use std::os::fd::OwnedFd;
 
 use weaver_trace::{
-    Envelope, Event, Failure, Kind, MonotonicNs, Payload, Recorder, RunOrdinal, Sequence,
-    SessionRef, StopReason, SubmitRefusal, Subsystem, TurnClose, TurnRef, raw_payload,
+    Envelope, Event, Failure, Kind, MonotonicNs, Payload, Recorder, RunRef, Sequence, SessionRef,
+    StopReason, SubmitRefusal, Subsystem, TurnClose, TurnRef, raw_payload,
 };
 
 fn sink() -> (OwnedFd, std::path::PathBuf) {
@@ -32,14 +32,15 @@ fn sink() -> (OwnedFd, std::path::PathBuf) {
 
 fn recorder() -> (Recorder, std::path::PathBuf) {
     let (fd, path) = sink();
-    let r = Recorder::receive(fd, RunOrdinal(0), SessionRef("s-1".into())).expect("receives");
+    let r =
+        Recorder::receive(fd, RunRef("r-1".into()), SessionRef("s-1".into())).expect("receives");
     (r, path)
 }
 
 fn envelope(kind: Kind, turn: Option<&str>) -> Envelope {
     Envelope {
         session: SessionRef("s-1".into()),
-        run: RunOrdinal(0),
+        run: RunRef("r-1".into()),
         turn: turn.map(|t| TurnRef(t.into())),
         sequence: Sequence(0),
         kind,
@@ -428,8 +429,12 @@ fn turn_on_run_level_kind_refuses() {
 #[cfg(target_os = "linux")]
 fn failed_write_is_terminal_and_named() {
     let file = File::create("/dev/full").expect("dev full");
-    let mut r = Recorder::receive(OwnedFd::from(file), RunOrdinal(0), SessionRef("s-1".into()))
-        .expect("receives");
+    let mut r = Recorder::receive(
+        OwnedFd::from(file),
+        RunRef("r-1".into()),
+        SessionRef("s-1".into()),
+    )
+    .expect("receives");
     r.submit(event(Kind::Load, None, None)).unwrap();
     let err = r.drain().unwrap_err();
     match err {
@@ -466,7 +471,7 @@ fn high_water_reports_on_recorded_events() {
     let (reader, pipe_writer) = std::io::pipe().expect("pipe");
     let mut r = Recorder::receive(
         OwnedFd::from(pipe_writer),
-        RunOrdinal(0),
+        RunRef("r-1".into()),
         SessionRef("s-1".into()),
     )
     .expect("receives");

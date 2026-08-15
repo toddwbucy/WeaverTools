@@ -13,11 +13,11 @@
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use weaver_trace::{
-    Envelope, Event, Failure, Kind, MonotonicNs, Payload, Recorder, RunOrdinal, Sequence,
-    SessionRef, Subsystem, TurnRef, raw_payload,
+    Envelope, Event, Failure, Kind, MonotonicNs, Payload, Recorder, RunRef, Sequence, SessionRef,
+    Subsystem, TurnRef, raw_payload,
 };
 use weaver_traits::{ContentBlock, Message, Role};
-use weaver_types::{SessionId, TurnKey};
+use weaver_types::{RunId, SessionId, TurnKey};
 
 use crate::failure::UnlicensedMessage;
 
@@ -31,17 +31,17 @@ use crate::failure::UnlicensedMessage;
 /// reading placeable in no run.
 pub struct Author {
     session: SessionRef,
-    run: RunOrdinal,
+    run: RunRef,
     origin: Instant,
 }
 
 impl Author {
     /// The origin is captured when the `load` event is authored, which is the
     /// first act of the run, so this constructor runs at that moment.
-    pub fn new(session: &SessionId, run_ordinal: u64) -> Self {
+    pub fn new(session: &SessionId, run: &RunId) -> Self {
         Author {
             session: convert_session(session),
-            run: RunOrdinal(run_ordinal),
+            run: convert_run(run),
             origin: Instant::now(),
         }
     }
@@ -64,7 +64,7 @@ impl Author {
         let event = Event {
             envelope: Envelope {
                 session: self.session.clone(),
-                run: self.run,
+                run: self.run.clone(),
                 turn: turn.map(convert_turn),
                 // The recorder assigns the run-scoped sequence; a caller
                 // cannot author a gapless order.
@@ -186,6 +186,10 @@ fn block_name(block: &ContentBlock) -> &'static str {
 /// forces, a total function at the one site that submits.
 fn convert_session(session: &SessionId) -> SessionRef {
     SessionRef(session.0.clone())
+}
+
+fn convert_run(run: &RunId) -> RunRef {
+    RunRef(run.0.clone())
 }
 
 fn convert_turn(turn: &TurnKey) -> TurnRef {

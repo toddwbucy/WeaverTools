@@ -11,7 +11,7 @@ use std::fs::File;
 use std::os::fd::OwnedFd;
 
 use weaver_harness::{Author, assemble, licensed};
-use weaver_trace::{Kind, Payload, Recorder, RunOrdinal, SessionRef, Subsystem, raw_payload};
+use weaver_trace::{Kind, Payload, Recorder, RunRef, SessionRef, Subsystem, raw_payload};
 use weaver_traits::{ContentBlock, Message, Role, ToolCall, ToolResultBlock};
 use weaver_types::{SessionId, TurnKey};
 
@@ -22,13 +22,20 @@ fn recorder() -> Recorder {
         std::thread::current().id()
     ));
     let file = File::create(&path).expect("sink");
-    Recorder::receive(OwnedFd::from(file), RunOrdinal(0), SessionRef("s-1".into()))
-        .expect("receives")
+    Recorder::receive(
+        OwnedFd::from(file),
+        RunRef("r-1".into()),
+        SessionRef("s-1".into()),
+    )
+    .expect("receives")
 }
 
 fn author() -> (Author, Recorder) {
     let session = SessionId("s-1".to_string());
-    (Author::new(&session, 0), recorder())
+    (
+        Author::new(&session, &weaver_types::RunId("r-1".into())),
+        recorder(),
+    )
 }
 
 /// **The licensed combinations are enforced here, before submit.** The

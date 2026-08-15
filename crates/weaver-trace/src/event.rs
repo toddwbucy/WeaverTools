@@ -48,7 +48,7 @@ pub struct Event {
 #[derive(Debug, Clone, Serialize)]
 pub struct Envelope {
     pub session: SessionRef,
-    pub run: RunOrdinal,
+    pub run: RunRef,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub turn: Option<TurnRef>,
     pub sequence: Sequence,
@@ -67,9 +67,17 @@ pub struct Envelope {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SessionRef(pub String);
 
-/// The run's ordinal within its session, carried without interpretation.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
-pub struct RunOrdinal(pub u64);
+/// The run's identity within its session, carried without interpretation.
+///
+/// **Not an ordinal.** It is minted by the party that performs the load and
+/// is distinct within its session rather than positioned in a sequence, per
+/// `weaver-admin-PRD` section 10. This crate neither mints it nor reads it,
+/// which is why the change is a rename here and an election elsewhere. It
+/// stops being `Copy` with the shape: a string is owned, and a run reference
+/// crosses this crate once per submit rather than in a loop, so nothing here
+/// wanted the copy.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct RunRef(pub String);
 
 /// The turn's identity as the harness converts it, the join key carried and
 /// never invented.

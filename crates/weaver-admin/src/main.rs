@@ -275,6 +275,13 @@ fn run_load(
     };
 
     let ordinal = coordination.next_ordinal();
+    // **The session is read and the run is minted**, per Spec section 7. The
+    // session is the operator's, declared in the config and carried
+    // uninterpreted. The reference is this crate's, and a load that cannot
+    // read the randomness it rests on refuses rather than carrying a
+    // reference that looks like the others and is not guaranteed.
+    let run_reference =
+        channel::mint_run_reference(&agent.0).ok_or(LifecycleRefusal::BoundaryUnverified)?;
     let envelope = weaver_types::OrganEnvelope {
         exchange: weaver_types::ExchangeId {
             opener: weaver_types::Opener::Admin,
@@ -283,8 +290,8 @@ fn run_load(
         position: weaver_types::Position::Open,
         payload: weaver_types::Payload::Directive(LifecycleDirective::Enter {
             payload: weaver_types::EnterPayload {
-                session: weaver_types::SessionId(format!("{}-{ordinal}", agent.0)),
-                run_ordinal: ordinal,
+                session: inventory.config.session.clone(),
+                run: run_reference,
                 spu_instruction: inventory.config.spu_instruction.clone(),
                 gate_instruction: inventory.config.gate_instruction.clone(),
             },
