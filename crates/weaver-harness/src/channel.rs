@@ -99,6 +99,22 @@ impl CoordinationListener {
     /// cannot outlive the worker and the next bind meets no stale name. A
     /// derivation reaching anywhere else would need the cleanup this program
     /// refuses to write, an unlink racing a live successor.
+    ///
+    /// **The leaf is fixed, so a coordination socket named `gate.sock` would
+    /// collide with what this returns.** Unguarded on purpose. The collision
+    /// is not reachable by configuring anything: admin fixes the coordination
+    /// leaf in code and what an operator places is the directory above it, so
+    /// producing one takes a composition root that names the coordination
+    /// socket `gate.sock` by hand. What it produces then is the gate refusing
+    /// its raise with `bind_failed` and the path carried, which is the
+    /// documented answer for an occupied path rather than a silence.
+    ///
+    /// A derivation that cannot collide is available and was declined: it
+    /// would have to carry the coordination socket's own name into the gate's,
+    /// giving every operator who dials the door a name like
+    /// `coordination-gate.sock` to explain, which is a permanent cost against
+    /// a failure nobody reaches. Named here rather than fixed so the next
+    /// composition root's author meets it before choosing a name.
     pub fn gate_socket(&self) -> std::path::PathBuf {
         self.path
             .parent()
@@ -108,6 +124,12 @@ impl CoordinationListener {
 }
 
 /// Binds the coordination socket and listens, which is the worker's first act.
+///
+/// **The name is the caller's, and `gate.sock` is the one to avoid.**
+/// [`CoordinationListener::gate_socket`] derives the gate's name as a sibling
+/// with that fixed leaf, so a coordination socket carrying it would be the
+/// path the gate is later told to bind. Nothing here refuses it, and that
+/// function carries why.
 ///
 /// **Any socket connecting to the harness is an internal connection**, per
 /// `weaver-admin-harness-contract` section 2, so this crate creates and binds
