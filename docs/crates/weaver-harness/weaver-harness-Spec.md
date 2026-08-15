@@ -77,9 +77,9 @@ derived as a sibling of the coordination socket it bound. The listener retains t
 path it bound, an exception to the no-paths rule argued the way the organ binaries
 are: a deployment fact supplied at construction rather than a name resolved at use.
 **Revised:** 2026-08-15, second this date, the close names its turn. Section 8's
-response renders the turn key and the run reference beside the kind, this crate
-composing what the gate relays. Both are carried from what the turn already
-holds rather than rebuilt, a second construction being a second chance to
+response renders the turn key and the run reference beside the kind where a turn
+opened, this crate composing what the gate relays. Both are carried from what the turn
+already holds rather than rebuilt, a second construction being a second chance to
 disagree with the record.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
@@ -1528,14 +1528,20 @@ granted surface of section 6 and the turn's content, and the entry's return
 is the response the frame's exchange is answered with, the turn opened and
 closed inside by the surface's own turn call per 6.1.
 
-**The response names the turn it answers and the run that turn belongs to**,
+**A response that answers a turn names it and names the run it belongs to**,
 per `weaver-gate-world-contract` section 3 and the client-facing ruling of
-`weaver-gate-PRD` section 1. This crate composes it, so the members are
-rendered here, and they are on every close rather than the clean one alone: a
-refused or stopped turn is the one a client is most likely to need to name. The
-turn key is the one this crate minted for that turn and the run reference the
-one it was entered with, both carried rather than rebuilt, because a second
-construction is a second chance to disagree with the record.
+`weaver-gate-PRD` section 1. This crate composes the response, so the members
+are rendered here. The turn key is the one this crate minted for that turn and
+the run reference the one it was entered with, both carried rather than
+rebuilt, because a second construction is a second chance to disagree with the
+record.
+
+**The closes that open no turn carry neither, and the boundary is where the
+turn is minted.** A frame that does not parse is refused before the seat is
+granted, and a prompt with a hole closes before it, so in both the turn key
+does not exist to be rendered. **A turn that opened carries its key whatever
+became of it**, refused by the seam or stopped by the operator alike, those
+being the closes a client is most likely to need to name.
 
 **The seat is granted per frame and returns by the entry's return.** At rest
 no seat is outstanding, which is what leaves the leave free to proceed, and a

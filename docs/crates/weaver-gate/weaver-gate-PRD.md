@@ -19,8 +19,8 @@ pathname leaves the declaration, section 2 carrying why the parallel to
 runtime directory so the manager's create-and-destroy makes a stale pathname
 unreachable rather than checked for.
 **Revised:** 2026-08-15, second this date, the close names its turn. Per the
-operator: a client can name what it received, section 1 carrying why the need is
-the client's own rather than an instrument's. Both the turn key and the run
+operator: a client can name the turn it received, section 1 carrying why the need
+is the client's own rather than an instrument's. Both the turn key and the run
 reference cross, one not identifying without the other, and neither is a
 capability: a name admits nothing where every seam authenticates by credential.
 **Document ID:** `weaver-gate-PRD`
@@ -80,9 +80,11 @@ a network face, protocol termination and a ruled dialect and a translation layer
 with that ruling, and what remains is the thinnest boundary that lets a local client
 reach a loaded agent.
 
-**A client can name what it received, ruled 2026-08-15.** The close carries the
-turn it answers and the run that turn belongs to, so a conversation has
-references in it and not only content. **The need is the client's own and not an
+**A client can name the turn it received, ruled 2026-08-15.** A close that
+answers a turn carries that turn and the run it belongs to, so a conversation
+has references in it and not only content. A close that answers no turn carries
+neither, a line that never parsed as a request having produced nothing to
+refer to. **The need is the client's own and not an
 instrument's.** A client that gets an answer and cannot say which answer it was
 has nothing to put in a bug report, nothing to hold two of its own records
 together with, and nothing to name when it asks for a turn to be stopped. Every

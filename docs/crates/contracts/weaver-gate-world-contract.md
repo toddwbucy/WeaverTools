@@ -17,11 +17,12 @@ longer operator-declared. The socket is supplied by the harness inside the unit'
 runtime directory and the access rule beside it stays the operator's, so what the
 world meets is a door the program placed and a predicate the operator wrote. The
 admission half is untouched.
-**Revised:** 2026-08-15, second this date, the close names its turn. Section 3's
-close carries the turn it answers and the run that turn belongs to, on every
-close rather than the clean one alone. Section 7 stays drawing nothing from
-`weaver-trace`, the identifiers being the floor's and the record's users rather
-than its fields, and adds no draw, neither being a vocabulary definition.
+**Revised:** 2026-08-15, second this date, the close names its turn. Section 3's close
+carries the turn it answers and the run that turn belongs to where a turn exists, a
+line that never parsed as a request having produced none to name. Section 7 stays
+drawing nothing from `weaver-trace`, the identifiers being the floor's and the
+record's users rather than its fields, and adds no draw, neither being a vocabulary
+definition.
 **Document ID:** `weaver-gate-world-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -94,12 +95,19 @@ close reason where no response exists, a stopped turn closing with the stop reas
 marked in its place per the grammar of the basic loop. The close names its kind, so
 a client can tell a clean close from a stopped one without reading anything else.
 
-**The close also names the turn it answers and the run that turn belongs to**,
-per `weaver-gate-PRD` section 1, so a client can refer to a turn rather than
-only receive one. Both cross because one does not identify: a turn key counts
-within its run and restarts with the next, and the run reference is what
-distinguishes runs. A close that carries no response still carries them, a
-refused turn being the one a client is most likely to need to name.
+**A close that answers a turn names it, and names the run that turn belongs
+to**, per `weaver-gate-PRD` section 1, so a client can refer to a turn rather
+than only receive one. Both cross because one does not identify: a turn key
+counts within its run and restarts with the next, and the run reference is what
+distinguishes runs. A turn refused by the interior carries them like any other,
+that being the close a client is most likely to need to name.
+
+**A close that answers no turn names none, because there is nothing to name.**
+A line that does not parse as a request is refused before any turn opens, so no
+turn exists for the close to identify and the close says only what it is. The
+distinction is the client's to read and is worth the reading: a named close
+reports what became of a turn, and an unnamed one reports that a line never
+became a turn at all.
 
 **They are labels and not keys to anything.** Neither admits a client to any
 seam, every seam authenticating by peer credential and none accepting a name as
@@ -171,9 +179,11 @@ record holds about a turn is authored inside, by the harness, on the other side
 of the gate.
 
 **They add no draw either**, because neither is a vocabulary definition. The
-floor holds them as identifier choices with no cross-crate consequence, per
-`weaver-types-Spec` section 11, and a satellite of that kind takes no node, so
-there is nothing here for a `draws` edge to point at.
+floor holds them as identifier choices whose representation carries no
+vocabulary weight, per `weaver-types-Spec` section 11, and a satellite of that
+kind takes no node, so there is nothing here for a `draws` edge to point at.
+The claim is about the graph and nothing else: these identifiers do cross this
+boundary, which is what section 3 records.
 
 **The clause above is stated in edge form here**, per Document Format section 4,
 which makes `draws` the vocabulary clause a query can walk and is what turns G4 from a
