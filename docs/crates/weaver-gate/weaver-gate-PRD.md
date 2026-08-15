@@ -12,6 +12,12 @@ clause becomes two seams and no third, section 13.1's relay gains its second leg
 section 7's cell narrows to the forked internal tool as of the port ruling of the same
 date. The second socket's contract is the tool workflow's and nothing here shapes it.
 Per apex section 3 as revised in the same act.
+**Revised:** 2026-08-15, the gate socket is the program's. Per the operator: where the
+door stands is the program's and only who may pass is the operator's. The socket's
+pathname leaves the declaration, section 2 carrying why the parallel to
+`model-binding` does not reach it, and the harness supplies a name inside the unit's
+runtime directory so the manager's create-and-destroy makes a stale pathname
+unreachable rather than checked for.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -144,7 +150,34 @@ changed from one and the reason unchanged: what faces the world is this crate's 
 faces admin is not. Ready means every seam stands. Stopped means every one is closed.
 The seams are not this crate's decision: they arrive as the gate instruction inside
 the enter fan-out, operator-declared and admin-validated, carried by the harness
-uninterpreted, resolved here. The parallel to `model-binding` is exact and deliberate.
+uninterpreted, resolved here.
+
+**Where the door stands is the program's and only who may pass is the
+operator's**, ruled 2026-08-15. An earlier reading had the socket's pathname
+declared beside the access rule, on the parallel to `model-binding`, and the
+parallel does not reach that far. Which weights an agent runs is a choice only
+the operator can make, and there is no other place the answer could come from.
+Where a Unix socket sits is not a choice of that kind: it is a deployment
+detail with exactly one correct answer, and the program is the party that knows
+it.
+
+**The correct answer is inside the unit's runtime directory, and that is the
+whole of the ruling's ground.** A Unix socket's pathname outlives the process
+that bound it, so a name chosen anywhere else survives its worker and refuses
+the next bind, and the program has no cleanup it can perform without racing a
+live successor. The runtime directory is the answer already taken for the
+coordination socket, per `weaver-admin-systemd-contract` section 2: the manager
+creates it at start and destroys it with the unit, so a pathname inside it
+cannot outlive the worker. The gate's socket carries the identical hazard and
+takes the identical answer, which makes the hazard unreachable rather than
+checked for. **A path an operator could write is a path an operator could write
+wrongly**, and the failure it produces is a second load refusing on a name the
+first left behind, which reads as a bind failure and is a stale file.
+
+So the instruction declares the access rule and the harness supplies the
+socket, each party naming what only it can know. What this costs is the ability
+to put an agent's door somewhere of the operator's choosing, which nothing in
+the program needed and which the client reaches by the agent's name either way.
 
 **The boundary predicate, and there is one per socket.** A named socket is dialable by
 anything that can reach it, so each hook authenticates every connection by peer

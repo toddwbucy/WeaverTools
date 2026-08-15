@@ -17,6 +17,10 @@ line bound that closes the connection at the framing layer, and the client
 line's field list fixed, `text` in and `kind`-named closes out. Three
 perturbation assertions land, section 7's deferral narrows to streaming, and
 section 1's no-executor ground moves from deferral to `poll`.
+**Revised:** 2026-08-15, the gate socket is the program's. Section 3's two consumed
+things arrive as two fields rather than one, the access rule being the operator's
+election and the socket the program's deployment fact. The count of what this crate
+consumes is unchanged and so is every record.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
@@ -309,9 +313,13 @@ to: gate-closure-is-death
 
 **The instruction is resolved, never interpreted beyond its fields.** The
 raise directive carries the `gate-instruction` the operator declared and
-admin validated, uninterpreted by the harness, and this crate consumes
-exactly two things from it: the socket path to bind and the access rule the
-predicate judges against. The field list is the floor's satellite, per
+admin validated, uninterpreted by the harness, and beside it the socket the
+harness supplies, per `weaver-gate-PRD` section 2. This crate consumes exactly
+two things: that socket path to bind and the access rule the predicate judges
+against. **They arrive as two fields because they have two authors**, the rule
+being the operator's election and the path being the program's deployment
+fact, and a single field carrying both would put the operator's name on a
+value they do not choose. The field list is the floor's satellite, per
 section 6, and the demand stated here is what that satellite must carry.
 
 ```graph

@@ -12,6 +12,11 @@ act. Section 2 delegates the bound to the Spec beside the field list, and
 section 5 gains the case: a line exceeding the bound with no delimiter has
 left the framing, the bound inclusive, and the connection closes below any
 turn.
+**Revised:** 2026-08-15, the gate socket is the program's. Section 1's channel is no
+longer operator-declared. The socket is supplied by the harness inside the unit's
+runtime directory and the access rule beside it stays the operator's, so what the
+world meets is a door the program placed and a predicate the operator wrote. The
+admission half is untouched.
 **Document ID:** `weaver-gate-world-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -51,8 +56,10 @@ party is named in prose and the missing category rides
 
 ## 1. The channel
 
-The named Unix socket the gate instruction declares, operator-declared,
-admin-validated, resolved and bound by the gate, per `weaver-gate-PRD` section 2. It
+The named Unix socket the raise directive carries, supplied by the harness
+inside the unit's runtime directory and bound by the gate, per `weaver-gate-PRD`
+section 2. The access rule beside it is the operator's, so what the world meets
+is a door the program placed and a predicate the operator wrote. It
 exists between raise and lower and at no other time: a connection before ready or
 after stopped finds no listener, which is the boundary the lifecycle protects.
 
