@@ -204,15 +204,21 @@ pub fn residency(template: &UnitTemplate, agent: &str) -> Residency {
 /// Split from the ask so the fold is reachable by a test rather than only by
 /// catching a unit mid-transition.
 ///
-/// **Every word that is not a settled rest folds to `Active`.** The manager
-/// names more states than this enum carries, and the fold has a safe direction
-/// and an unsafe one: reading a unit that is still moving as at rest is what
-/// lets an unload answer over a worker that has not stopped, which is the
-/// report `weaver-admin-Spec` section 6 says this crate must never produce.
-/// Reading a stopped unit as running costs a refusal the operator retries.
-/// So `deactivating` folds with `activating` and `reloading` rather than with
-/// `inactive`: a unit on its way down has not arrived, and only `inactive`
-/// says it has.
+/// **`inactive` is the only word that reads as at rest.** The manager names
+/// more states than this enum carries, and the fold has a safe direction and
+/// an unsafe one: reading a unit that is still moving as at rest is what lets
+/// an unload answer over a worker that has not stopped, which is the report
+/// `weaver-admin-Spec` section 6 says this crate must never produce. Reading a
+/// stopped unit as running costs a refusal the operator retries.
+///
+/// So the known transitional words fold to `Active`, and `deactivating` folds
+/// with `activating` and `reloading` rather than with `inactive`: a unit on its
+/// way down has not arrived. `failed` keeps its own case, the manager's own
+/// word for a unit whose process exited non-zero. A word this crate does not
+/// recognise folds to `Unknown` rather than to `Active`, because an answer
+/// nobody can read is not the same fact as a unit known to be running, and
+/// both refuse an unload anyway, so the safe direction is kept without
+/// claiming a state the manager did not report.
 fn residency_of(word: &str) -> Residency {
     match word {
         "active" | "activating" | "reloading" | "deactivating" => Residency::Active,
