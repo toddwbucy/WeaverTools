@@ -398,16 +398,41 @@ fn unload(config: &ServiceConfig, agent: &AgentName) -> Result<LifecycleAnswer, 
         outcome: residency.as_str().into(),
         undone: None,
     });
-    match stopped {
-        Ok(status) if status.success() => {}
-        _ => return Err(LifecycleRefusal::BindFailed),
+    // **The state ask decides and the stop ask's status does not**, per Spec
+    // section 6. That status returns the same value for a unit that is still
+    // there as for one already gone, and the second is the ordinary end of a
+    // clean unload: the leave confirmed above causes the worker to exit and a
+    // transient unit is collected the moment its main process does, so the
+    // stop that follows names a unit the manager no longer knows. The status
+    // is still read, because the log records what the ask returned.
+    let _ = stopped;
+    unload_answer(residency)
+}
+
+/// The unload's answer from the state ask alone, split out so the rule is
+/// reachable by a test rather than reachable only by unloading a live agent.
+///
+/// **Two of the four cases refuse and the reason is one rule**: an agent
+/// reported unloaded while its worker still runs is the report this verb must
+/// never produce, per `weaver-admin-Spec` section 6. `Active` is that case
+/// directly. `Unknown` is the ask itself having failed, so the verb cannot
+/// tell, and answering unloaded over a state nobody could read would risk the
+/// same report by another route. The Spec's clause names `active` because that
+/// is the case it was written against, and the rule behind it is what carries
+/// `Unknown` here.
+///
+/// `Inactive` and `Failed` both mean the worker is not running, which is the
+/// outcome charter step 2 asks for. A unit that failed is reported by the log,
+/// which carries the residency's own name, rather than by refusing an unload
+/// that achieved what it directed.
+fn unload_answer(residency: unit::Residency) -> Result<LifecycleAnswer, LifecycleRefusal> {
+    match residency {
+        unit::Residency::Active => Err(LifecycleRefusal::ActivityNotAtRest),
+        unit::Residency::Unknown => Err(LifecycleRefusal::BindFailed),
+        unit::Residency::Inactive | unit::Residency::Failed => Ok(LifecycleAnswer::State {
+            state: weaver_types::AgentState::Unloaded,
+        }),
     }
-    if residency == unit::Residency::Active {
-        return Err(LifecycleRefusal::ActivityNotAtRest);
-    }
-    Ok(LifecycleAnswer::State {
-        state: weaver_types::AgentState::Unloaded,
-    })
 }
 
 /// `stop` is a conveyance and its answer is a relay. Admin holds no opinion
@@ -601,5 +626,63 @@ mod tests {
                 "{request:?} refuses as not observable rather than answering"
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod unload_answer_tests {
+    use super::*;
+
+    /// **A clean unload answers unloaded**, which is the defect this rule
+    /// closes: the leave confirmed, the worker gone, and the transient unit
+    /// collected with it, so the stop that followed named a unit the manager
+    /// no longer knew and the verb refused over an agent that unloaded
+    /// exactly as asked.
+    ///
+    /// Perturbation: let the stop ask's status decide again and every unload
+    /// of a live agent refuses. Watched by running the verb, which is how the
+    /// defect was found.
+    #[test]
+    fn a_stopped_unit_answers_unloaded() {
+        assert!(matches!(
+            unload_answer(unit::Residency::Inactive),
+            Ok(LifecycleAnswer::State {
+                state: weaver_types::AgentState::Unloaded
+            })
+        ));
+    }
+
+    /// A unit still running refuses, which is the report this verb must never
+    /// produce and the case the clause was written against.
+    #[test]
+    fn a_running_unit_refuses_not_at_rest() {
+        assert!(matches!(
+            unload_answer(unit::Residency::Active),
+            Err(LifecycleRefusal::ActivityNotAtRest)
+        ));
+    }
+
+    /// **A state nobody could read refuses too.** The ask having failed is not
+    /// evidence the worker stopped, and answering unloaded over it would risk
+    /// the same false report by another route.
+    #[test]
+    fn an_unreadable_state_refuses() {
+        assert!(matches!(
+            unload_answer(unit::Residency::Unknown),
+            Err(LifecycleRefusal::BindFailed)
+        ));
+    }
+
+    /// A unit that ran and exited non-zero is not running, which is the
+    /// outcome the step asks for. The log carries the residency's own name, so
+    /// the failure is reported rather than swallowed.
+    #[test]
+    fn a_failed_unit_answers_unloaded() {
+        assert!(matches!(
+            unload_answer(unit::Residency::Failed),
+            Ok(LifecycleAnswer::State {
+                state: weaver_types::AgentState::Unloaded
+            })
+        ));
     }
 }
