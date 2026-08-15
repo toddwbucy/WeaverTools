@@ -25,7 +25,7 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::thread::JoinHandle;
 
 use crate::canonical::{Sequence, render};
-use crate::event::{Event, Kind, Line, Payload, RunOrdinal, SessionRef};
+use crate::event::{Event, Kind, Line, Payload, RunRef, SessionRef};
 use crate::failure::{Failure, FieldName, SubmitRefusal, WriteError};
 use crate::structure::{Record, WorkingStructure};
 
@@ -215,7 +215,7 @@ impl Drop for Writer {
 /// append to the structure or enqueue to the writer.
 pub struct Recorder {
     session: SessionRef,
-    run: RunOrdinal,
+    run: RunRef,
     next: u64,
     structure: WorkingStructure,
     writer: Writer,
@@ -226,7 +226,7 @@ impl Recorder {
     /// `OwnedFd` and nothing that could name a path, and it takes no flag
     /// argument: close-on-exec is supplied by the harness at its own receive,
     /// and append-only rides the open file description from admin's open.
-    pub fn receive(sink: OwnedFd, run: RunOrdinal, session: SessionRef) -> Result<Self, Failure> {
+    pub fn receive(sink: OwnedFd, run: RunRef, session: SessionRef) -> Result<Self, Failure> {
         Ok(Recorder {
             session,
             run,
@@ -255,7 +255,7 @@ impl Recorder {
     /// high-water report warned first, and a terminal write failure frees the
     /// block by discarding.
     pub fn submit(&mut self, mut event: Event) -> Result<Sequence, Failure> {
-        admit(&event, &self.session, self.run)?;
+        admit(&event, &self.session, &self.run)?;
         if let Some(failure) = self.writer.standing_failure() {
             return Err(failure);
         }
@@ -301,9 +301,9 @@ impl Recorder {
 /// construction. What admission may judge is bounded: the interior of a
 /// message is the harness's, and a recorder that parsed one would have taken a
 /// judgment the charter denies it.
-fn admit(event: &Event, session: &SessionRef, run: RunOrdinal) -> Result<(), Failure> {
+fn admit(event: &Event, session: &SessionRef, run: &RunRef) -> Result<(), Failure> {
     let refuse = |reason| Err(Failure::RefusedOnSubmit { reason });
-    if event.envelope.session != *session || event.envelope.run != run {
+    if event.envelope.session != *session || event.envelope.run != *run {
         // A submission bound to another run's identity is missing this run's:
         // the closest case the contract's vocabulary expresses.
         return refuse(SubmitRefusal::RequiredFieldAbsent {

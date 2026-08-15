@@ -198,7 +198,7 @@ pub enum LifecycleRefusal {
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct EnterPayload {
     pub session: SessionId,
-    pub run_ordinal: u64,
+    pub run: RunId,
     pub spu_instruction: SpuInstruction,
     pub gate_instruction: GateInstruction,
 }
@@ -207,6 +207,18 @@ pub struct EnterPayload {
 /// consequence, shaped in this crate.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SessionId(pub String);
+
+/// A run's identifier, minted by admin at the load and distinct within its
+/// session, per `weaver-admin-PRD` section 10.
+///
+/// **Not an ordinal.** Nothing program-side counts runs, because nothing
+/// program-side is alive between two of them, and the requirement the record
+/// carries is distinctness rather than position. What makes one distinct is
+/// argued where it is minted: this crate fixes only that it is an identifier
+/// rather than a number, which is what lets the mint answer without anything
+/// being remembered between invocations.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunId(pub String);
 
 /// The join key that names a turn. An identifier choice with no cross-crate
 /// consequence, shaped in this crate.
