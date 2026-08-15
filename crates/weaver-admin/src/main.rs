@@ -209,13 +209,14 @@ fn load(config: &ServiceConfig, agent: &AgentName) -> Result<LifecycleAnswer, Li
             // **Rollback walks what stands**, and its account is logged.
             let account = verbs::rollback(
                 &standing,
-                // **No leave is directed on this path**, so the account says
-                // so rather than claiming an act nobody performed. A failed
-                // load that entered leaves a run the harness unwinds when its
-                // channel closes, and a rollback that reported a leave it
-                // never sent would put a false act in the one record of the
-                // privileged half of the lifecycle.
-                || false,
+                // **The leave is directed where a run was entered**, per
+                // charter section 5 and Spec section 3. A refused fan-out
+                // leaves the harness holding a partial run it will unwind
+                // along the seams it fanned out on, and the directive is what
+                // asks it to. The account reports whether the ask landed, so
+                // a leave that could not be sent is recorded as held rather
+                // than claimed.
+                || direct_leave(config, agent).is_ok(),
                 || unit::stop(&config.unit, &agent.0).is_ok(),
                 || true,
             );
@@ -432,6 +433,36 @@ fn unload_answer(residency: unit::Residency) -> Result<LifecycleAnswer, Lifecycl
         unit::Residency::Inactive | unit::Residency::Failed => Ok(LifecycleAnswer::State {
             state: weaver_types::AgentState::Unloaded,
         }),
+    }
+}
+
+/// Direct one leave over a fresh dial, for the rollback path.
+///
+/// **Admin is per-invocation, so the connection the load used is gone by the
+/// time the rollback runs.** Dialing again is what every verb does, and the
+/// worker is still there to answer: a refused fan-out leaves the harness
+/// holding the partial run rather than exiting, which is what makes the
+/// directive reach something.
+///
+/// A dial that fails is not an error to report upward. It means the worker is
+/// already gone, so the run it held is gone with it, and the rollback's
+/// account records the leave as held rather than done. That is the truthful
+/// reading, and the act after this one stops the unit either way.
+fn direct_leave(config: &ServiceConfig, agent: &AgentName) -> Result<(), LifecycleRefusal> {
+    let socket_path = config.coordination_socket(&agent.0);
+    let mut coordination =
+        channel::dial(&socket_path).map_err(|_| LifecycleRefusal::NoResidency)?;
+    let ordinal = coordination.next_ordinal();
+    coordination
+        .send_directive(ordinal, LifecycleDirective::Leave)
+        .map_err(|_| LifecycleRefusal::NoResidency)?;
+    match coordination.recv() {
+        Ok(answer) => match answer.payload {
+            weaver_types::Payload::Answer(LifecycleAnswer::Left) => Ok(()),
+            weaver_types::Payload::Refusal(refusal) => Err(refusal),
+            _ => Err(LifecycleRefusal::Malformed),
+        },
+        Err(_) => Err(LifecycleRefusal::NoResidency),
     }
 }
 
