@@ -270,7 +270,6 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                     },
                 },
                 gate_instruction: weaver_types::GateInstruction {
-                    socket_path: "/run/weaver/gate.sock".into(),
                     access_rule: weaver_types::AccessRule {
                         allowed_uids: Default::default(),
                         allowed_gids: Default::default(),

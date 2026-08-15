@@ -122,7 +122,8 @@ fn a_closed_channel_ends_the_gate_and_its_listener() {
         &harness,
         1,
         LifecycleDirective::Raise {
-            instruction: instruction(path.clone()),
+            instruction: instruction(),
+            socket: path.clone(),
         },
     );
     assert_eq!(
@@ -167,7 +168,8 @@ fn raise_then_lower_round_trips_across_the_seam() {
         &harness,
         1,
         LifecycleDirective::Raise {
-            instruction: instruction(path.clone()),
+            instruction: instruction(),
+            socket: path.clone(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
@@ -217,7 +219,8 @@ fn the_harness_teardown_sequence_ends_the_gate_cleanly() {
         &harness,
         1,
         LifecycleDirective::Raise {
-            instruction: instruction(path.clone()),
+            instruction: instruction(),
+            socket: path.clone(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
@@ -273,7 +276,6 @@ fn the_running_gate_refuses_an_unauthorized_dial() {
     let mut allowed_uids = BTreeSet::new();
     allowed_uids.insert(nix::unistd::getuid().as_raw());
     let permissive = GateInstruction {
-        socket_path: path.clone(),
         access_rule: AccessRule {
             allowed_uids,
             allowed_gids: BTreeSet::new(),
@@ -286,6 +288,7 @@ fn the_running_gate_refuses_an_unauthorized_dial() {
         1,
         LifecycleDirective::Raise {
             instruction: permissive,
+            socket: path.clone(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
@@ -356,7 +359,8 @@ fn a_dial_storm_leaves_the_channel_answering() {
         &harness,
         1,
         LifecycleDirective::Raise {
-            instruction: instruction(path.clone()),
+            instruction: instruction(),
+            socket: path.clone(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));

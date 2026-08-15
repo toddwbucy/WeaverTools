@@ -115,18 +115,39 @@ pub enum RefusingOrgan {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum LifecycleDirective {
-    Enter { payload: EnterPayload },
+    Enter {
+        payload: EnterPayload,
+    },
     Leave,
     Stop,
-    Admit { instruction: SpuInstruction },
+    Admit {
+        instruction: SpuInstruction,
+    },
     Release,
-    Raise { instruction: GateInstruction },
+    /// **Two fields because two authors.** The instruction is the operator's
+    /// election carried uninterpreted, and the socket is the program's
+    /// deployment fact, supplied by the harness inside the unit's runtime
+    /// directory so the manager's create-and-destroy makes a stale pathname
+    /// unreachable, per `weaver-gate-PRD` section 2. A single field would put
+    /// the operator's name on a value they do not choose.
+    Raise {
+        instruction: GateInstruction,
+        socket: std::path::PathBuf,
+    },
     Lower,
-    Load { agent: AgentName },
-    Unload { agent: AgentName },
-    Validate { agent: AgentName },
+    Load {
+        agent: AgentName,
+    },
+    Unload {
+        agent: AgentName,
+    },
+    Validate {
+        agent: AgentName,
+    },
     List,
-    Show { agent: AgentName },
+    Show {
+        agent: AgentName,
+    },
 }
 
 /// Every directive receives exactly one answer: `Enter` answers `Ready`,

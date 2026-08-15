@@ -803,6 +803,11 @@ impl Harness {
             weaver_types::RefusingOrgan::Gate,
             LifecycleDirective::Raise {
                 instruction: payload.gate_instruction.clone(),
+                // The socket is this crate's rather than the declaration's,
+                // per `weaver-gate-PRD` section 2, named beside the
+                // coordination socket so the manager's runtime directory
+                // covers both and no pathname outlives its worker.
+                socket: self.coordination.gate_socket(),
             },
         ) {
             let refusal = match refusal {
@@ -1275,7 +1280,6 @@ mod tests {
                 },
             },
             gate_instruction: weaver_types::GateInstruction {
-                socket_path: gate_socket,
                 access_rule: weaver_types::AccessRule {
                     allowed_uids: std::collections::BTreeSet::new(),
                     allowed_gids: std::collections::BTreeSet::new(),

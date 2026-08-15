@@ -81,9 +81,15 @@ pub enum RaiseRefusal {
 }
 
 impl Hook {
-    /// **The crate's one bind site.** It takes the instruction and nothing
-    /// else, so a listener cannot be built from a path that did not arrive
-    /// over the seam.
+    /// **The crate's one bind site.** It takes what the raise directive
+    /// carried and nothing else, so a listener cannot be built from a path
+    /// that did not arrive over the seam.
+    ///
+    /// **The socket and the rule arrive separately because they have separate
+    /// authors**, per `weaver-gate-Spec` section 3: the rule is the operator's
+    /// election inside the instruction, and the path is the program's,
+    /// supplied by the harness inside the unit's runtime directory. This crate
+    /// resolves both and elects neither.
     ///
     /// The socket is `SOCK_STREAM`, elected on its contract's framing:
     /// `weaver-gate-world-contract` section 2 fixes newline-delimited JSON, one
@@ -91,23 +97,28 @@ impl Hook {
     /// boundary-preserving type would carry a second framing under the first.
     ///
     /// **This crate unlinks nothing.** A path already occupied refuses with the
-    /// reason carried: the path is the operator's artifact, a stale socket left
-    /// by an unclean death is the operator's to clear, and a gate that deleted
-    /// filesystem entries to make room for itself would hold an authority its
-    /// charter never grants.
+    /// reason carried, and a gate that deleted filesystem entries to make room
+    /// for itself would hold an authority its charter never grants. Since the
+    /// ruling of 2026-08-15 the case is close to unreachable rather than
+    /// merely refused: the path sits in the unit's runtime directory, which
+    /// the manager destroys with the unit, so no pathname outlives the worker
+    /// that bound it. The refusal stays because unreachable by construction is
+    /// a property of the deployment and this crate resolves what it is
+    /// handed.
     ///
     /// **A refusal leaves nothing held.** A failed bind holds no listener and
     /// no half-bound socket, so the aggregate's rollback has nothing of this
     /// crate's to unwind: the listener is constructed by the bind itself, and a
     /// bind that fails constructs nothing.
-    pub fn raise(instruction: &GateInstruction) -> Result<Hook, RaiseRefusal> {
+    pub fn raise(
+        instruction: &GateInstruction,
+        socket: &std::path::Path,
+    ) -> Result<Hook, RaiseRefusal> {
         // `UnixListener::bind` creates, binds, and listens, and Rust sets
         // close-on-exec in the creating call. Ready is answered only after this
         // returns, which is what makes ready a fact about the listener.
-        let listener = UnixListener::bind(&instruction.socket_path).map_err(|error| {
-            RaiseRefusal::BindFailed {
-                detail: format!("{}: {error}", instruction.socket_path.display()),
-            }
+        let listener = UnixListener::bind(socket).map_err(|error| RaiseRefusal::BindFailed {
+            detail: format!("{}: {error}", socket.display()),
         })?;
 
         // **The agent uid is denied by construction, not by configuration.**
@@ -120,7 +131,7 @@ impl Hook {
 
         Ok(Hook {
             listener,
-            path: instruction.socket_path.clone(),
+            path: socket.to_path_buf(),
             rule,
         })
     }
