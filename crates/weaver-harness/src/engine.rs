@@ -60,13 +60,19 @@ pub struct Ports<'a> {
 /// octets unreadable, per the decode contract's closure rule.
 #[derive(Debug)]
 pub enum TurnError {
-    /// The decode seam typed a refusal to the append.
-    Refused(TokenRefusal),
-    /// The channel faulted or answered something the turn cannot read.
+    /// The decode seam typed a refusal to the append. **Carries the turn**,
+    /// which opened before the refusal arrived, so the close a client
+    /// receives can name it, per `weaver-gate-world-contract` section 3.
+    Refused {
+        turn: TurnKey,
+        refusal: TokenRefusal,
+    },
+    /// The channel faulted or answered something the turn cannot read. No
+    /// turn key rides it because service ends here and no close is sent.
     ChannelLost,
-    /// A message loop 1 supplied is not licensed for its role, so no event
-    /// authors and the turn does not run.
-    Unlicensed,
+    /// A message loop 1 supplied is not licensed for its role. The bracket
+    /// opened before the delta was judged, so the turn exists and is named.
+    Unlicensed { turn: TurnKey },
 }
 
 /// What a completed turn produced for loop 1: the emission verbatim and how it
@@ -74,6 +80,11 @@ pub enum TurnError {
 /// decide its next move.
 #[derive(Debug, Clone)]
 pub struct TurnOutcome {
+    /// The turn this outcome closed, so the close a client receives can name
+    /// it, per `weaver-gate-world-contract` section 3. Carried from what the
+    /// turn already holds rather than rebuilt: a second construction is a
+    /// second chance to disagree with the record.
+    pub turn: TurnKey,
     pub emission: String,
     pub stopped: bool,
     /// The turn was aborted by the operator's stop rather than running to
@@ -211,7 +222,7 @@ impl<'a> Ports<'a> {
         for message in &delta {
             self.author
                 .author_message(self.recorder, message, turn)
-                .map_err(|_| TurnError::Unlicensed)?
+                .map_err(|_| TurnError::Unlicensed { turn: turn.clone() })?
                 .map_err(|_| TurnError::ChannelLost)?;
         }
 
@@ -246,7 +257,10 @@ impl<'a> Ports<'a> {
                     }
                     crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
                     crate::channel::DecodeReply::Refusal(refusal) => {
-                        return Err(TurnError::Refused(refusal));
+                        return Err(TurnError::Refused {
+                            turn: turn.clone(),
+                            refusal,
+                        });
                     }
                     crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
                 },
@@ -375,7 +389,7 @@ impl<'a> Ports<'a> {
         };
         self.author
             .author_message(self.recorder, &assistant, turn)
-            .map_err(|_| TurnError::Unlicensed)?
+            .map_err(|_| TurnError::Unlicensed { turn: turn.clone() })?
             .map_err(|_| TurnError::ChannelLost)?;
 
         // **The close names what ended the turn.** A model-side stop, the
@@ -422,6 +436,7 @@ impl<'a> Ports<'a> {
         }
 
         Ok(TurnOutcome {
+            turn: turn.clone(),
             emission: generation.emission,
             stopped,
             aborted,

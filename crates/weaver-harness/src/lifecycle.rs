@@ -83,7 +83,21 @@ fn parse_request(frame: &weaver_types::TurnFrame) -> Result<String, &'static str
 /// One response line, the kind-named close of `weaver-gate-Spec` section 4:
 /// `answered` with `text`, `stopped` or `refused` with `reason`. The map
 /// orders keys, so the kind leads whatever the member.
-fn render_close(kind: &str, member: &str, value: &str) -> String {
+/// The close a client receives, per `weaver-gate-world-contract` section 3.
+///
+/// **`named` is the turn this close answers and the run it belongs to, and it
+/// is absent where no turn opened.** A frame that does not parse is refused
+/// before the seat is granted, and a prompt with a hole closes before it, so
+/// there is no turn for those to identify and the close says only what it is.
+/// A turn that opened carries its key whatever became of it. The members take
+/// the trace envelope's own names so a consumer holding both joins on what it
+/// already reads.
+fn render_close(
+    kind: &str,
+    member: &str,
+    value: &str,
+    named: Option<(&TurnKey, &weaver_types::RunId)>,
+) -> String {
     let mut map = serde_json::Map::new();
     map.insert(
         "kind".to_string(),
@@ -93,6 +107,13 @@ fn render_close(kind: &str, member: &str, value: &str) -> String {
         member.to_string(),
         serde_json::Value::String(value.to_string()),
     );
+    if let Some((turn, run)) = named {
+        map.insert(
+            "turn".to_string(),
+            serde_json::Value::String(turn.0.clone()),
+        );
+        map.insert("run".to_string(), serde_json::Value::String(run.0.clone()));
+    }
     serde_json::Value::Object(map).to_string()
 }
 
@@ -136,6 +157,11 @@ struct Run {
     recorder: Recorder,
     author: Author,
     session: SessionId,
+    /// The run's own reference, retained so a close can name the run a turn
+    /// belongs to, per `weaver-gate-world-contract` section 3. The author
+    /// holds its own converted copy for the record, and this is the floor's,
+    /// carried rather than rebuilt.
+    run: weaver_types::RunId,
     spu: Option<SpuChannels>,
     gate: Option<GateChannel>,
     turn_in_flight: Option<TurnKey>,
@@ -483,8 +509,11 @@ impl Harness {
         let ChannelState::Entered(run) = &mut self.state else {
             return Ok(());
         };
+        // Taken before the borrow the seat needs, so a close can name the run
+        // without holding the run across the grant.
+        let run_ref = run.run.clone();
         let response = match parse_request(&frame) {
-            Err(reason) => render_close("refused", "reason", reason),
+            Err(reason) => render_close("refused", "reason", reason, None),
             Ok(text) => {
                 // The seat, granted at loaded-and-idle: the assembly read,
                 // the grant across the dev boundary, and the take-back at
@@ -504,7 +533,12 @@ impl Harness {
                         None,
                         &report,
                     );
-                    render_close("stopped", "reason", "the working structure holds a hole")
+                    render_close(
+                        "stopped",
+                        "reason",
+                        "the working structure holds a hole",
+                        None,
+                    )
                 } else {
                     let Some(spu) = run.spu.as_ref() else {
                         // A run with no SPU is not loaded, and nothing can
@@ -523,20 +557,32 @@ impl Harness {
                     match entry(&mut ports, &text) {
                         // A turn the operator's stop aborted answers the
                         // stopped close, the partial standing in the record.
-                        Ok(outcome) if outcome.aborted => {
-                            render_close("stopped", "reason", "the operator stopped the turn")
-                        }
+                        Ok(outcome) if outcome.aborted => render_close(
+                            "stopped",
+                            "reason",
+                            "the operator stopped the turn",
+                            Some((&outcome.turn, &run_ref)),
+                        ),
                         // A model-side stop is a completed turn whose
                         // truncation the record holds, so the client is
                         // answered with what stands.
-                        Ok(outcome) => render_close("answered", "text", &outcome.emission),
-                        Err(crate::engine::TurnError::Refused(refusal)) => {
-                            render_close("stopped", "reason", refusal_reason(&refusal))
-                        }
-                        Err(crate::engine::TurnError::Unlicensed) => render_close(
+                        Ok(outcome) => render_close(
+                            "answered",
+                            "text",
+                            &outcome.emission,
+                            Some((&outcome.turn, &run_ref)),
+                        ),
+                        Err(crate::engine::TurnError::Refused { turn, refusal }) => render_close(
+                            "stopped",
+                            "reason",
+                            refusal_reason(&refusal),
+                            Some((&turn, &run_ref)),
+                        ),
+                        Err(crate::engine::TurnError::Unlicensed { turn }) => render_close(
                             "stopped",
                             "reason",
                             "a message was not licensed for its role",
+                            Some((&turn, &run_ref)),
                         ),
                         // The decode channel or the record is gone, and the
                         // record is untrustworthy either way: service ends.
@@ -696,6 +742,7 @@ impl Harness {
             recorder,
             author,
             session,
+            run: payload.run.clone(),
             spu: None,
             gate: None,
             turn_in_flight: None,
@@ -1192,6 +1239,7 @@ mod tests {
                 recorder,
                 author,
                 session,
+                run: weaver_types::RunId("r-1".into()),
                 spu: Some(SpuChannels {
                     lifecycle,
                     decode,
@@ -1565,6 +1613,28 @@ mod tests {
         ));
     }
 
+    /// **A close that opens no turn names none**, per
+    /// `weaver-gate-world-contract` section 3. A line that does not parse is
+    /// refused before the seat is granted, so there is no turn for the close
+    /// to identify and it says only what it is.
+    ///
+    /// The distinction is the point rather than an omission: a named close
+    /// reports what became of a turn, and an unnamed one reports that a line
+    /// never became a turn at all. Perturbation: render the refusal with a
+    /// reconstructed key and this fails, which is what it is here to prevent,
+    /// a key rebuilt from the ordinal being a second chance to disagree with
+    /// the record.
+    #[test]
+    fn a_close_that_opens_no_turn_names_none() {
+        let refused = render_close("refused", "reason", "the line is not a request", None);
+        assert_eq!(
+            refused,
+            r#"{"kind":"refused","reason":"the line is not a request"}"#
+        );
+        assert!(!refused.contains("turn"), "no turn opened: {refused}");
+        assert!(!refused.contains("run"), "no turn opened: {refused}");
+    }
+
     /// **A frame grants the seat and the whole bracket authors**, per Spec
     /// section 6.2 and the dev boundary: the parse at the threshold, the
     /// entry across the crossing, the turn against a scripted decode peer,
@@ -1672,7 +1742,14 @@ mod tests {
             panic!("a frame answers a frame");
         };
         let line = String::from_utf8(frame.octets().expect("canonical")).expect("utf8");
-        assert_eq!(line, r#"{"kind":"answered","text":"one word"}"#);
+        // **The close names the turn it answers and the run it belongs to**,
+        // per `weaver-gate-world-contract` section 3. Pinned as the whole line
+        // rather than by membership, so a member added here has to be argued
+        // rather than slipping past a contains check.
+        assert_eq!(
+            line,
+            r#"{"kind":"answered","run":"r-1","text":"one word","turn":"t-1"}"#
+        );
 
         // The bracket authored whole, in order.
         let ChannelState::Entered(run) = &harness.state else {
@@ -1723,7 +1800,9 @@ mod tests {
         let mut entered = false;
         let mut entry = |_: &mut crate::engine::Ports<'_>, _: &str| {
             entered = true;
-            Err(crate::engine::TurnError::Unlicensed)
+            Err(crate::engine::TurnError::Unlicensed {
+                turn: TurnKey("t-0".into()),
+            })
         };
 
         // Not the canonical carriage at all.
