@@ -40,6 +40,15 @@ mints the run reference and reads the session, and draws the line between that
 reference and the exchange ordinal beside it, which stays a counter because a
 connection does not outlive the invocation. One assertion is added and section
 10's counts are restated to thirty-two.
+**Revised:** 2026-08-15, the state ask decides the unload. Section 6's clause
+refused on a stop ask that failed as well as on a unit a state ask still found
+active, and its reason named only the second, so it over-fired: a transient
+unit is collected when its main process exits, which the confirmed leave
+causes, and the stop that follows names a unit the manager no longer knows.
+Found by running the verb, every unload of a live agent answering `bind_failed`
+over a freed device and a closed record. The state ask now decides and the stop
+ask's status does not, on the ground that `weaver-admin-systemd-contract`
+section 3 already measures that status as unable to say which failure it was.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -421,13 +430,33 @@ operator unchanged and answers nothing further.
 for the difference.** `weaver-admin-systemd-contract` section 4 promises that a
 stop ask is answered when the unit has stopped rather than when the stop was
 accepted, so the ask itself is the confirmation and this Spec elects no timeout
-of its own beside it. What the verb owes is not to run ahead of that answer: a
-stop ask that fails, or that returns over a unit a following state ask still
-finds `active`, refuses with the failure carried and answers no state, because
-an agent reported unloaded while its worker still runs is the one report this
-verb must never produce. Where the stop refuses, the run has already left and
-the unit stands, which the rollback of this section records as an act it could
-not undo, per charter section 5.
+of its own beside it. What the verb owes is not to run ahead of that answer:
+**a following state ask that finds the unit `active` refuses with the failure
+carried and answers no state**, because an agent reported unloaded while its
+worker still runs is the one report this verb must never produce. Where the
+unit stands, the run has already left, which the rollback of this section
+records as an act it could not undo, per charter section 5.
+
+**The state ask decides and the stop ask's status does not, because that status
+cannot say why it failed.** `weaver-admin-systemd-contract` section 3 records
+the measurement: the boundary returns the same status for a duplicate unit name
+as for a malformed property, and a failed ask reports that an ask failed rather
+than which failure it was. So a non-zero stop carries two readings that want
+opposite answers. **A unit that is still there** is the case this clause was
+written for, and the state ask finds it `active` and refuses. **A unit that is
+already gone** is the other, and it is the ordinary end of a clean unload:
+the leave the previous step confirmed causes the worker to exit, a transient
+unit is collected the moment its main process does, and the stop that follows
+then names a unit the manager no longer knows. Refusing there reports a failure
+over an agent that unloaded exactly as asked.
+
+**An earlier form of this clause refused on either reading** and its reason
+named only the first, which is how it came to over-fire. The defect was found
+by running the verb rather than by reading it: every unload of a live agent
+answered `bind_failed` and exited non-zero while the device was freed, the
+worker gone, and the `unload` event standing in the record. A builder reading
+the retired wording would write that again, which is why the ordering is stated
+here rather than left to follow from the reason.
 
 ```graph
 node: admin-unload-answers-after-confirmed-stop
