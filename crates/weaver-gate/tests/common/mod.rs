@@ -52,9 +52,8 @@ pub fn scratch(suite: &str, name: &str) -> PathBuf {
 
 /// An instruction with an empty rule: nothing is permitted, and the raise adds
 /// this process's own uid to the deny set whatever the rule says.
-pub fn instruction(path: PathBuf) -> GateInstruction {
+pub fn instruction() -> GateInstruction {
     GateInstruction {
-        socket_path: path,
         access_rule: AccessRule {
             allowed_uids: BTreeSet::new(),
             allowed_gids: BTreeSet::new(),
@@ -65,10 +64,10 @@ pub fn instruction(path: PathBuf) -> GateInstruction {
 
 /// An instruction whose rule permits this very uid, which is the operator
 /// mistake the deny-by-construction has to survive.
-pub fn permissive_instruction(path: PathBuf) -> GateInstruction {
+pub fn permissive_instruction() -> GateInstruction {
     let mut allowed_uids = BTreeSet::new();
     allowed_uids.insert(nix::unistd::getuid().as_raw());
-    let mut instruction = instruction(path);
+    let mut instruction = instruction();
     instruction.access_rule.allowed_uids = allowed_uids;
     instruction
 }

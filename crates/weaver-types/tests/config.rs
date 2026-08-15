@@ -25,7 +25,6 @@ fn full_config() -> String {
         "tool-set: []\n",
         "permission-mode: ask\n",
         "gate-instruction:\n",
-        "  socket-path: /run/weaver/alpha/gate.sock\n",
         "  access-rule:\n",
         "    allowed-uids: [1000]\n",
         "    allowed-gids: []\n",

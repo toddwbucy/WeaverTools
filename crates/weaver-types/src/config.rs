@@ -92,13 +92,22 @@ pub struct ModelBinding {
 /// The instruction the gate resolves and never interprets beyond its fields.
 ///
 /// The operator writes it, admin validates it, the harness carries it
-/// uninterpreted, and the gate consumes exactly two things from it: the socket
-/// path to bind and the access rule the predicate judges against, per
-/// `weaver-gate-Spec` section 3, whose demand this satellite carries.
+/// uninterpreted, and the gate consumes it beside the socket the raise
+/// directive carries, per `weaver-gate-Spec` section 3.
+///
+/// **The socket is not here, and that is the ruling of 2026-08-15.** Where a
+/// door stands is the program's and only who may pass is the operator's, per
+/// `weaver-gate-PRD` section 2. A pathname the operator wrote could sit
+/// outside the unit's runtime directory, where it outlives its worker and
+/// refuses the next bind, so the program places it inside and the hazard
+/// becomes unreachable rather than checked for.
+///
+/// The group survives with one field rather than collapsing to a bare rule,
+/// on the pattern `spu_instruction` takes, so a field the gate workflow adds
+/// later has somewhere to land.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct GateInstruction {
-    pub socket_path: PathBuf,
     pub access_rule: AccessRule,
 }
 

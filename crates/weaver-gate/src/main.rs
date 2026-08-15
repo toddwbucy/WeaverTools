@@ -477,8 +477,14 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
     };
 
     match (&*state, directive) {
-        (HookState::BeforeRaise, LifecycleDirective::Raise { instruction }) => {
-            match Hook::raise(instruction) {
+        (
+            HookState::BeforeRaise,
+            LifecycleDirective::Raise {
+                instruction,
+                socket,
+            },
+        ) => {
+            match Hook::raise(instruction, socket) {
                 Ok(hook) => {
                     // Ready is answered only after the bind and listen have
                     // returned, which is what makes ready a fact about the
@@ -556,9 +562,8 @@ mod tests {
         }
     }
 
-    fn instruction(path: std::path::PathBuf) -> GateInstruction {
+    fn instruction() -> GateInstruction {
         GateInstruction {
-            socket_path: path,
             access_rule: AccessRule {
                 allowed_uids: BTreeSet::new(),
                 allowed_gids: BTreeSet::new(),
@@ -599,7 +604,8 @@ mod tests {
         let mut state = HookState::Lowered;
         for case in [
             LifecycleDirective::Raise {
-                instruction: instruction(scratch("terminal")),
+                instruction: instruction(),
+                socket: scratch("terminal"),
             },
             LifecycleDirective::Lower,
             LifecycleDirective::List,
@@ -625,7 +631,8 @@ mod tests {
         let ready = dispatch(
             &mut state,
             &opened(LifecycleDirective::Raise {
-                instruction: instruction(path.clone()),
+                instruction: instruction(),
+                socket: path.clone(),
             }),
         );
         assert_eq!(ready, Payload::Answer(LifecycleAnswer::GateReady));
@@ -637,7 +644,8 @@ mod tests {
             dispatch(
                 &mut state,
                 &opened(LifecycleDirective::Raise {
-                    instruction: instruction(path.clone()),
+                    instruction: instruction(),
+                    socket: path.clone(),
                 }),
             ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
@@ -677,7 +685,8 @@ mod tests {
             dispatch(
                 &mut state,
                 &opened(LifecycleDirective::Raise {
-                    instruction: instruction(unbindable),
+                    instruction: instruction(),
+                    socket: unbindable.clone(),
                 }),
             ),
             Payload::Refusal(LifecycleRefusal::BindFailed),
@@ -714,7 +723,8 @@ mod tests {
     fn a_mis_shapen_exchange_refuses_before_the_directive_runs() {
         let mut state = HookState::BeforeRaise;
         let mut closing = opened(LifecycleDirective::Raise {
-            instruction: instruction(scratch("misshapen")),
+            instruction: instruction(),
+            socket: scratch("misshapen"),
         });
         closing.position = Position::Close;
         assert_eq!(

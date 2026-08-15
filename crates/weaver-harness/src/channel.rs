@@ -79,6 +79,32 @@ pub struct ChildEnd {
 #[derive(Debug)]
 pub struct CoordinationListener {
     fd: OwnedFd,
+    /// The path this listener bound, retained so the gate's socket can be
+    /// named beside it, per `weaver-harness-Spec` section 3.
+    ///
+    /// **The one path this crate holds beyond the organ binaries**, and the
+    /// exception is argued the same way: a deployment fact supplied at
+    /// construction rather than a name resolved at use. Nothing here opens it
+    /// again, the listener already being bound when this is stored.
+    path: std::path::PathBuf,
+}
+
+impl CoordinationListener {
+    /// The gate's socket, named beside the coordination socket this listener
+    /// bound.
+    ///
+    /// **A sibling, so the manager's lifecycle covers both.** The runtime
+    /// directory is created at start and destroyed with the unit, per
+    /// `weaver-admin-systemd-contract` section 2, so a pathname inside it
+    /// cannot outlive the worker and the next bind meets no stale name. A
+    /// derivation reaching anywhere else would need the cleanup this program
+    /// refuses to write, an unlink racing a live successor.
+    pub fn gate_socket(&self) -> std::path::PathBuf {
+        self.path
+            .parent()
+            .unwrap_or(std::path::Path::new("/"))
+            .join("gate.sock")
+    }
 }
 
 /// Binds the coordination socket and listens, which is the worker's first act.
@@ -117,7 +143,10 @@ pub fn bind_coordination(
         .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
     listen(&fd, nix::sys::socket::Backlog::new(1).unwrap())
         .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
-    Ok(CoordinationListener { fd })
+    Ok(CoordinationListener {
+        fd,
+        path: socket_path.to_path_buf(),
+    })
 }
 
 impl AsFd for CoordinationListener {

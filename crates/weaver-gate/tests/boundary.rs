@@ -40,7 +40,7 @@ fn scratch(name: &str) -> std::path::PathBuf {
 #[test]
 fn the_agent_uid_is_refused_even_when_the_rule_permits_it() {
     let path = scratch("agent-uid");
-    let hook = Hook::raise(&permissive_instruction(path.clone())).expect("the raise binds");
+    let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
 
     assert!(
         hook.rule()
@@ -94,7 +94,7 @@ fn the_agent_uid_is_refused_even_when_the_rule_permits_it() {
 #[test]
 fn a_peer_is_judged_before_its_content_is_read() {
     let path = scratch("judged-first");
-    let hook = Hook::raise(&permissive_instruction(path.clone())).expect("the raise binds");
+    let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
 
     let mut client = UnixStream::connect(&path).expect("the dial reaches the listener");
     client
@@ -121,7 +121,7 @@ fn a_peer_is_judged_before_its_content_is_read() {
 #[test]
 fn a_dial_after_the_lower_finds_no_listener() {
     let path = scratch("after-lower");
-    let hook = Hook::raise(&permissive_instruction(path.clone())).expect("the raise binds");
+    let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
     assert!(
         UnixStream::connect(&path).is_ok(),
         "the standing hook accepts a dial"
@@ -149,9 +149,9 @@ fn a_dial_after_the_lower_finds_no_listener() {
 #[test]
 fn an_occupied_path_refuses_and_the_occupant_survives() {
     let path = scratch("occupied");
-    let first = Hook::raise(&permissive_instruction(path.clone())).expect("the first binds");
+    let first = Hook::raise(&permissive_instruction(), &path).expect("the first binds");
 
-    let second = Hook::raise(&permissive_instruction(path.clone()));
+    let second = Hook::raise(&permissive_instruction(), &path);
     assert!(second.is_err(), "an occupied path refuses the raise");
 
     // The first hook is untouched: its listener still answers.
