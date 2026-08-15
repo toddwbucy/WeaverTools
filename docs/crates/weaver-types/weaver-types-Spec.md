@@ -110,6 +110,10 @@ grouping the operator declares, and `EnterPayload`'s `run_ordinal` becomes
 `run: RunId`. Both are identifiers rather than numbers, which is what lets a
 run reference carry a stamp that distinguishes without anything being
 remembered between invocations.
+**Revised:** 2026-08-15, the gate socket is the program's. `GateInstruction` loses
+`socket_path` and `Raise` gains a `socket` beside the instruction, two fields because
+two authors. The group survives the loss rather than collapsing to a bare rule, so a
+field the gate workflow adds later has somewhere to land.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -437,6 +441,16 @@ the placement decision this crate exists not to make. Whether the devices
 exist, whether they can reach each other, and whether the backend can shard
 across that many are all admission's, per `weaver-spu-Spec` section 3, and
 this crate answers well-formed and nothing more.
+
+**`GateInstruction` carries the access rule and not the socket, ruled
+2026-08-15.** Where a socket sits is the program's and only who may pass it is
+the operator's, per `weaver-gate-PRD` section 2, so the instruction the
+operator writes carries the rule alone and the raise directive carries the
+socket beside it as a second field. **Two fields because two authors**, and a
+single one would put the operator's name on a value they do not choose. The
+grouping survives the loss: `gate_instruction` stays a named group rather than
+collapsing to a bare rule, on the same pattern `spu_instruction` takes, so a
+field the gate workflow adds later has somewhere to land.
 
 **`SpuInstruction` and `GateInstruction` are defined here and are the same types the
 wire carries, and the feature gate never reaches them.** The `config` feature
@@ -779,7 +793,7 @@ pub enum LifecycleDirective {
     Stop,
     Admit { instruction: SpuInstruction },
     Release,
-    Raise { instruction: GateInstruction },
+    Raise { instruction: GateInstruction, socket: PathBuf },
     Lower,
     Load { agent: AgentName },
     Unload { agent: AgentName },

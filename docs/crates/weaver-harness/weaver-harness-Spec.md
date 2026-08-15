@@ -71,6 +71,11 @@ reads the peer credential and refuses what is not root. The credential check arr
 from `weaver-admin-Spec`, where the accept used to happen, and the adopted end's
 close-on-exec retires with the end. The listener is not closed after an accept,
 admin being per-invocation.
+**Revised:** 2026-08-15, the gate socket is the program's. Section 3's raise carries
+the socket this crate supplies beside the instruction it carries uninterpreted,
+derived as a sibling of the coordination socket it bound. The listener retains the
+path it bound, an exception to the no-paths rule argued the way the organ binaries
+are: a deployment fact supplied at construction rather than a name resolved at use.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -928,8 +933,26 @@ first use because it crosses the same fork, and a socket the child was not
 given at its exec cannot be handed to it afterward. Create the gate pair only after the
 SPU's answer has confirmed residency, per `weaver-harness-gate-contract`
 section 1, then fork the gate binary and open the raise exchange carrying the
-gate instruction uninterpreted, the gate last so no work arrives before the
-interior serves, per apex section 6. The wait is what the run state's
+gate instruction uninterpreted **and the socket this crate supplies beside
+it**, the gate last so no work arrives before the interior serves, per apex
+section 6.
+
+**The gate's socket is a sibling of the coordination socket, and the
+derivation is the whole of this crate's part in it.** Per `weaver-gate-PRD`
+section 2 the pathname is the program's rather than the operator's, and this
+crate is the party positioned to know it: the coordination socket it bound as
+its first act sits in the unit's runtime directory, so the gate's name is that
+directory and a fixed leaf. **What that buys is the manager's lifecycle rather
+than a rule this crate enforces.** The directory is created at start and
+destroyed with the unit, per `weaver-admin-systemd-contract` section 2, so a
+socket inside it cannot outlive its worker and the next bind meets no stale
+name. A derivation reaching anywhere else would need a cleanup this program
+has already refused to write, an unlink racing a live successor.
+
+The listener therefore retains the path it bound, which is the one thing this
+crate holds a path for beyond the organ binaries, and the exception is argued
+the same way: it is a deployment fact supplied at construction rather than a
+name resolved at use. The wait is what the run state's
 invariant rests on: `gate` is set only ever after a confirmed `spu`, so the
 unwind's reverse order is a property of construction order rather than of
 timing. Ready is answered when the last arm confirms. A refusing
