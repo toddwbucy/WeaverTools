@@ -18,6 +18,11 @@ pathname leaves the declaration, section 2 carrying why the parallel to
 `model-binding` does not reach it, and the harness supplies a name inside the unit's
 runtime directory so the manager's create-and-destroy makes a stale pathname
 unreachable rather than checked for.
+**Revised:** 2026-08-15, second this date, the close names its turn. Per the
+operator: a client can name the turn it received, section 1 carrying why the need
+is the client's own rather than an instrument's. Both the turn key and the run
+reference cross, one not identifying without the other, and neither is a
+capability: a name admits nothing where every seam authenticates by credential.
 **Document ID:** `weaver-gate-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -74,6 +79,32 @@ apex correction is deposited on the correction list. What the earlier reading bu
 a network face, protocol termination and a ruled dialect and a translation layer, dies
 with that ruling, and what remains is the thinnest boundary that lets a local client
 reach a loaded agent.
+
+**A client can name the turn it received, ruled 2026-08-15.** A close that
+answers a turn carries that turn and the run it belongs to, so a conversation
+has references in it and not only content. A close that answers no turn carries
+neither, a line that never parsed as a request having produced nothing to
+refer to. **The need is the client's own and not an
+instrument's.** A client that gets an answer and cannot say which answer it was
+has nothing to put in a bug report, nothing to hold two of its own records
+together with, and nothing to name when it asks for a turn to be stopped. Every
+one of those is a question a client asks about its own traffic, and today the
+only honest answer is the order the lines arrived in, which stops being an
+answer the moment a turn is refused or stopped and the ordering shifts under it.
+
+**Both are carried because one does not identify.** A turn key counts within its
+run and restarts with the next one, so a client that spans a reload sees a
+second turn wearing the first one's name. The run reference distinguishes runs
+by construction, per `weaver-admin-PRD` section 10, and the pair is what names a
+turn once.
+
+**A name is not a capability, which is what makes this safe to hand out.**
+Possession of either identifier admits nothing and authorizes nothing: every
+seam in the program authenticates by peer credential and none of them accepts a
+name as a reason, so what a client holds is a label for something it already
+took part in. It gains no reach into the record either, the record being the
+operator's on the far side of a sink this crate never touches. What crosses is
+the ability to refer, which is the smallest thing that answers the need.
 
 **It is an organ with its job simplified, and a domain root with no members.** The
 organ test of apex section 5.4 is a domain and a two-initiator channel with the
