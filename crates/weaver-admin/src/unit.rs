@@ -195,13 +195,30 @@ pub fn residency(template: &UnitTemplate, agent: &str) -> Residency {
         .arg(unit_name(agent))
         .output();
     match out {
-        Ok(out) => match String::from_utf8_lossy(&out.stdout).trim() {
-            "active" | "activating" | "reloading" => Residency::Active,
-            "failed" => Residency::Failed,
-            "inactive" | "deactivating" => Residency::Inactive,
-            _ => Residency::Unknown,
-        },
+        Ok(out) => residency_of(String::from_utf8_lossy(&out.stdout).trim()),
         Err(_) => Residency::Unknown,
+    }
+}
+
+/// The manager's word for a state, folded into the four this crate carries.
+/// Split from the ask so the fold is reachable by a test rather than only by
+/// catching a unit mid-transition.
+///
+/// **Every word that is not a settled rest folds to `Active`.** The manager
+/// names more states than this enum carries, and the fold has a safe direction
+/// and an unsafe one: reading a unit that is still moving as at rest is what
+/// lets an unload answer over a worker that has not stopped, which is the
+/// report `weaver-admin-Spec` section 6 says this crate must never produce.
+/// Reading a stopped unit as running costs a refusal the operator retries.
+/// So `deactivating` folds with `activating` and `reloading` rather than with
+/// `inactive`: a unit on its way down has not arrived, and only `inactive`
+/// says it has.
+fn residency_of(word: &str) -> Residency {
+    match word {
+        "active" | "activating" | "reloading" | "deactivating" => Residency::Active,
+        "failed" => Residency::Failed,
+        "inactive" => Residency::Inactive,
+        _ => Residency::Unknown,
     }
 }
 
@@ -289,6 +306,23 @@ mod tests {
     /// this fails. The order matters as much as the presence, the composition
     /// root reading them positionally, so the assertion is on the tail as a
     /// sequence rather than on membership.
+    /// **A unit on its way down is not at rest.** The fold has a safe
+    /// direction and an unsafe one, and `deactivating` is the word that could
+    /// take the unsafe one: read as inactive it lets an unload answer over a
+    /// worker that has not stopped, which is the report section 6 forbids.
+    ///
+    /// Perturbation: fold `deactivating` with `inactive` and this fails.
+    /// Watched under exactly that fold, which is where it came from.
+    #[test]
+    fn a_unit_in_motion_is_not_at_rest() {
+        for word in ["active", "activating", "reloading", "deactivating"] {
+            assert_eq!(residency_of(word), Residency::Active, "word {word}");
+        }
+        assert_eq!(residency_of("inactive"), Residency::Inactive);
+        assert_eq!(residency_of("failed"), Residency::Failed);
+        assert_eq!(residency_of("something-new"), Residency::Unknown);
+    }
+
     #[test]
     fn the_start_ask_carries_the_workers_provisioning() {
         let template = UnitTemplate {

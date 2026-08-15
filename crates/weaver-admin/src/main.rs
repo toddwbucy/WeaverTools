@@ -680,7 +680,9 @@ mod unload_answer_tests {
     fn a_failed_unit_answers_unloaded() {
         assert!(matches!(
             unload_answer(unit::Residency::Failed),
-            Ok(LifecycleAnswer::State { .. })
+            Ok(LifecycleAnswer::State {
+                state: weaver_types::AgentState::Unloaded
+            })
         ));
     }
 }
