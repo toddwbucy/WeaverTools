@@ -35,6 +35,11 @@ that one installation's fact does not belong in one agent's declaration, and tha
 section's claim that the worker's composition root reads the file is corrected to
 what happens, the root receiving the values it needs and reading nothing. Section
 11 gains the two values the act declined to route.
+**Revised:** 2026-08-14, the run identifies itself. Section 7 gains the clause that
+mints the run reference and reads the session, and draws the line between that
+reference and the exchange ordinal beside it, which stays a counter because a
+connection does not outlive the invocation. One assertion is added and section
+10's counts are restated to thirty-two.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
@@ -954,6 +959,56 @@ order against anything. The exchange identity is the floor's
 `ExchangeId { opener: Admin, ordinal }`, ordinals assigned serially by this
 crate, per `weaver-organ-channel` section 1.
 
+**The run's identity is minted here and the session's is read.** They are two
+different kinds of value and the distinction is worth holding, because an
+earlier form of this crate derived one from the other and produced a record
+whose runs were indistinguishable. The session is the operator's, declared in
+the agent's config and carried uninterpreted, per `weaver-types-Spec` section
+2 and the ruling in `weaver-admin-PRD` section 10. The run reference is this
+crate's, minted at the load as an RFC 3339 timestamp in UTC at millisecond
+resolution, the validated agent name, and eight bytes read from the operating
+system's randomness rendered as hexadecimal,
+`2026-08-14T16:02:11.482Z-alpha-9f3a1c7d4e2b8a01`,
+which reads as a date to whoever opens the artifact. **Nothing is
+remembered between invocations to produce it**, which is what makes it
+answerable by a crate that holds nothing across time.
+
+**The random part carries the guarantee and the other two carry the reading.**
+The instant and the name are what make a reference legible, and a builder may
+reason about neither when asking whether two references can be equal: the
+clock is adjustable and the name is shared by every run of one agent. The
+eight bytes are what answer the contract, and they are read from the operating
+system at each load rather than derived from anything this crate holds, which
+is what keeps the answer available to a crate that holds nothing across time.
+The name is the validated one of section 4, so it introduces no second
+authority. **A builder who dropped the random part and leaned on the clock's
+resolution would be trading a guarantee for a probability**, and the case it
+would lose is the one hardest to see: an adjustment moving the clock backwards
+across an instant a previous run already took.
+
+**Sorting references gives calendar order and not a monotonic sequence.** The
+instant is a wall-clock reading and an adjustment can move it backwards. A
+consumer needing strict order uses the sequence, which is gapless and scoped to
+the run, per `weaver-harness-trace-contract` section 6.
+
+**The exchange ordinal beside it is a different thing and stays a counter.**
+That ordinal is serial within one connection and is the floor's, per
+`weaver-organ-channel` section 1, and a per-invocation crate can hold it
+because a connection does not outlive the invocation. A reader who sees both
+in one envelope is seeing a counter scoped to a connection and a reference
+scoped to a session, and conflating them is how the earlier defect was
+written.
+
+```graph
+node: admin-run-reference-distinguishes
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-admin
+to: admin-run-reference-distinguishes
+```
+
 ```graph
 node: admin-enter-carries-descriptor-in-one-message
 kind: assertion
@@ -1253,8 +1308,8 @@ domains.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-one records in all,
-fourteen tagged for review, twelve for perturbation, three for the manifest,
+would sit apart from the prose that earns it. Thirty-two records in all,
+fifteen tagged for review, twelve for perturbation, three for the manifest,
 and two for a compile pin. The residency record moved from review to
 perturbation on 2026-08-06, when the code act gave it a test. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec

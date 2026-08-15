@@ -15,6 +15,9 @@ tokenization. Two conditions ride it: a flush becoming reachable adds its
 event to the kind set or reopens the ruling, and replay's identity prefix
 leans on the open identifiability question. The state is a distillation of
 the record, never stored back into it.
+**Revised:** 2026-08-14, the run identifies itself. Session-wide order is the pair of
+admin's run reference and the sequence, the reference having replaced an
+ordinal that no per-invocation party could supply.
 **Document ID:** `weaver-trace-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
@@ -68,9 +71,13 @@ is written together with the contract that binds it.
 **A turn** is one request through to its final answer, bounded by `turn.started`
 and `turn.closed`.
 
-**A run** is one residency working on a session. `run0` opens the session. A run
-ends at unload or at process death, and the identifier is an ordinal within the
-session, so which run produced an event is answerable from the event alone.
+**A run** is one residency working on a session, and a session opens with its
+first. A run
+ends at unload or at process death, and the identifier is a reference admin
+mints at the load and distinct within the session, per `weaver-admin-PRD`
+section 10, so which run produced an event is answerable from the event alone.
+It is not an ordinal: nothing program-side counts runs, because nothing
+program-side is alive between two of them.
 
 **A session** is the identity the runs share, and the unit the agent's conversation
 belongs to. It is the boundary the proto-stateful definition of apex section 2 is
@@ -318,10 +325,12 @@ declared and produced, elections at the source governing production and
 production governing the record, which is this charter's own section 5
 instrumentation rule read forward.
 
-**There is no `session.started`.** A session begins when `run0` begins, so a separate
-kind would fire at the same moment as `run0`'s `load` and mean the same thing. The
+**There is no `session.started`.** A session begins when its first run begins, so a
+separate
+kind would fire at the same moment as that run's `load` and mean the same thing. The
 same argument retires the description of `weaver-admin`'s initial contact as a
-distinct first entry: **the `load` event of `run0` is that contact's record.** Admin
+distinct first entry: **the `load` event of the session's first run is that
+contact's record.** Admin
 authorizes the transition and hands it across, the harness authors its `load` on
 entering the run, and the monotonic origin is captured at that event. There is no
 room between those for an earlier entry, and the worker spawn and descriptor handoff
@@ -657,9 +666,12 @@ the fact is the operator's to do on the operator's own compute.
 
 - Canonical byte form, one rule, all artifacts.
 - A strictly increasing, gapless sequence over admitted events, **scoped to the
-  run**. Session-wide order is the pair of admin's run ordinal and the sequence,
+  run**. Session-wide order is the pair of admin's run reference and the sequence,
   assembled by the consumer, because the program holds nothing across a residency
-  since the cut of 2026-08-01. The word monotonic is reserved in this charter for
+  since the cut of 2026-08-01. The reference orders runs as the operator's clock
+  saw them rather than as a monotonic sequence, per `weaver-admin-PRD` section
+  10, so a consumer that needs strict order has it inside a run and calendar
+  order between runs. The word monotonic is reserved in this charter for
   the clock of section 4.2. The sequence is the order and the clock is the
   instrument, and reading either for the other's job is an error the contract names
   explicitly.

@@ -105,6 +105,11 @@ unsatisfiable for `show` and `list`: the answer must be one of the floor's two
 enums, and the only fitting answer cases carry an `AgentState` the corpus has no
 source for. The case is the honest third door, per section 4.2, and it retires
 with the observation exchange that closes the gap.
+**Revised:** 2026-08-14, the run identifies itself. `AgentConfig` gains `session`, the
+grouping the operator declares, and `EnterPayload`'s `run_ordinal` becomes
+`run: RunId`. Both are identifiers rather than numbers, which is what lets a
+run reference carry a stamp that distinguishes without anything being
+remembered between invocations.
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
@@ -245,6 +250,17 @@ manifest, and if no maintained implementation exists then the YAML conclusion
 falls with its premise and the TOML comparison re-runs on the writer-audience
 grounds above.
 
+**The session is declared and the run is minted.** `session` joins the
+declaration because a session spans runs and an agent outlives a session, per
+`weaver-admin-PRD` section 4.4, so the grouping is one only the operator can
+draw and the same agent serves many of them by editing one field. The run is
+the other half and does not appear here: `RunId` is minted at each load by the
+party that performs it, and a declared run would be a value the operator had to
+change before every load or watch collide. What the floor fixes is that both
+are identifiers rather than numbers, which is what lets a run reference carry a
+stamp that distinguishes without anything being remembered between invocations,
+per the identity ruling of 2026-08-14.
+
 **One file per agent, named for the agent, in a directory the operator owns.**
 This Spec fixes neither the directory nor the naming convention, which are
 operator provisioning and outside what this program governs, per
@@ -254,6 +270,7 @@ more than one.
 
 ```rust
 pub struct AgentConfig {
+    pub session: SessionId,
     pub spu_instruction: SpuInstruction,
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,
@@ -806,7 +823,7 @@ pub enum LifecycleRefusal {
 
 pub struct EnterPayload {
     pub session: SessionId,
-    pub run_ordinal: u64,
+    pub run: RunId,
     pub spu_instruction: SpuInstruction,
     pub gate_instruction: GateInstruction,
 }
@@ -1364,7 +1381,7 @@ already discharged.
 - **The `tool-set` field's element shape.** It elects from `tool-trait`, which
   `weaver-traits-PRD` section 3.1 holds blocked, so the field is a list of names
   today and gains its element type with the tool workflow.
-- **`SessionId`, `TurnKey`, `AgentName`, and `FieldName`.** Named in the
+- **`SessionId`, `RunId`, `TurnKey`, `AgentName`, and `FieldName`.** Named in the
   signatures above and shaped in this crate, their representations being
   identifier choices with no cross-crate consequence.
 - **`AgentState` and `AgentSummary`, whose case sets are not free.** Their Rust

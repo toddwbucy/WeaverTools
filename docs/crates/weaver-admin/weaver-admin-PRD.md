@@ -56,6 +56,14 @@ carries its change:** this charter's step 5 and section 11 register,
 9, and 11. `weaver-harness-Spec` does not move, its section 2 already holding the
 organ binaries as a deployment fact the composition root is supplied, which is the
 clause this act reads rather than edits.
+**Revised:** 2026-08-14, the run identifies itself. Per the operator: the identity half
+of section 10's enter cell closes and the continuity half stays open. They
+were filed as one design and separate cleanly, because whether a later run may
+read an earlier run's conversation is the memory question and whether a reader
+can tell two runs apart is not. A run reference distinguishes rather than
+counts, which is what a per-invocation admin can answer, and the session is the
+operator's to name in the declaration. Nothing here promises continuity between
+two runs of one session.
 **Parent:** `WeaverTools-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
 **External boundaries:** `weaver-admin-operator-contract` for the record's exit and
@@ -273,7 +281,7 @@ rest rather than racing it.
 
 **Trace authorship.** The harness is the sole writer of the record. Admin authors no
 event, holds no event kind, and its own first contact is recorded by the harness as
-the `load` event of `run0` rather than by an entry of its own.
+the `load` event of the session's first run rather than by an entry of its own.
 
 **Reading the stream as content.** Admin connects the sink, which is custody, and
 custody is not comprehension. Parsing events is the operator's tooling's business
@@ -365,7 +373,8 @@ than seniority, and it is why one verb's validation is this crate's own work and
 other's is only directed by it.
 
 **Opening the session record is not a boundary write.** `weaver-trace-PRD` section
-4.1 has `run0` creating the record, and this charter keeps that. A record belongs to a
+4.1 has the session's first run creating the record, and this charter keeps
+that. A record belongs to a
 session and a boundary belongs to an agent, so a verb that creates one is not
 creating the other, and the invariant above is scoped to the boundary deliberately.
 
@@ -441,8 +450,9 @@ anything else and no drop for the ordering of an earlier draft to get right. The
 privilege window that section 10 once carried as an open cell has no subject.
 
 **Steps 1 through 5 produce no trace entry, and neither does the rollback path.** That
-is a ruling and not an omission. `weaver-trace-PRD` section 3.1 makes `run0`'s `load`
-the record of admin's first contact and places the worker start and the descriptor
+is a ruling and not an omission. `weaver-trace-PRD` section 3.1 makes the first run's
+`load` the record of admin's first contact and places the worker start and the
+descriptor
 handoff outside the trace by construction, because they run before the harness exists
 to author anything. The load's one trace entry is written at step 6 by the harness,
 and the unload's at its own bracket. Nothing admin does before that moment reaches the
@@ -958,14 +968,16 @@ drain-and-checksum half an earlier form of this cell carried dissolved with the
 record on 2026-08-01.
 
 **What enter becomes without a record.** Enter stands up an empty working structure,
-per the cut of 2026-08-01, so a later run of a session begins with the session's
-identity and none of its conversation, and sessions are single-run at the program's
-promise level. Two faces of one question stand open. Whether continuity returns
+per the cut of 2026-08-01, so **every run begins with the session's identity and
+none of its conversation**. Cardinality and continuity are two statements and
+only the second is open: a session may hold as many runs as the operator loads
+under it, per section 4.4, and what the program promises between them is
+nothing. An earlier wording called sessions single-run at the promise level,
+which read as a limit on how many runs a session may have rather than on what
+carries between them. Whether continuity returns
 through operator-held storage handed back at load, through the memory round's own
-substrate, or not at all is a design the corpus defers on purpose. And the run
-ordinal is admin's to supply with nothing program-side holding the last one across
-invocations, so what makes the ordinal trustworthy over many invocations belongs
-to the same design. A proposed reading stands as of 2026-08-01, per the
+substrate, or not at all is a design the corpus defers on purpose. A proposed
+reading stands as of 2026-08-01, per the
 working-structure ruling: continuity returns as similarity recall, the SPU's
 encode side querying the session's NDJSON account rather than any relational
 store, which turns this cell into a handoff rather than a hole. **Settled by:**
@@ -973,6 +985,64 @@ the memory-and-state round, which takes or declines the proposed reading, and
 deliberately not by the cut batch that left it, because the batch deletes what
 dissolved and a resume redesigned in a deletion batch would be a load-bearing
 decision taken in passing.
+
+**The identity half of that cell closed on 2026-08-14 and the continuity half
+did not.** They were filed together because they looked like one design, and
+they separate cleanly: whether a later run may read an earlier run's
+conversation is the memory question, and whether a reader can tell two runs
+apart is not. The second is answerable now and blocks work that should not wait
+on the first, a record whose runs are indistinguishable being unusable as
+evidence whatever continuity later becomes.
+
+**A run identifies itself and is not counted.** The earlier wording had admin
+supply an ordinal that was the next one for its session, which was written when
+admin was a standing service and could hold one. The recut of 2026-08-05 made
+admin per-invocation with no standing end, and a party that holds nothing
+across time cannot know what the next number is. Rather than give admin a
+counter to keep, which would return by the back door exactly what the recut
+removed, the requirement becomes the one the record needs: **the run
+reference distinguishes this run from every other run of its session.** A value
+minted at the load satisfies it with nothing remembered between invocations.
+
+**Distinctness has to be argued rather than assumed, because a session may span
+agents.** The session is the operator's to name, so two agents can be given one
+session deliberately, which is what a benchmark pass across several agents is.
+A reference that were only a clock reading would then collide whenever two of
+them loaded in the same instant, and the guarantee is distinctness within a
+session rather than within an agent.
+
+**The reference has three parts and each does one job.** An instant, so it
+reads as a date and sorts into the order the operator's clock saw. The agent's
+name, so a reader can see whose run it is without joining anything. And a
+value drawn from the operating system's randomness at the load, which is what
+carries the distinctness guarantee. **A clock cannot carry it.** Wall-clock
+time is adjustable and an adjustment can move it backwards, so no resolution
+makes two instants certainly different, and an argument resting on how fast
+two loads can be issued is a probability rather than a guarantee. Separating
+the parts is what lets each be judged on its own: the instant may be coarse
+enough to read, because nothing rests on it, and the guarantee holds whatever
+the clock does.
+
+**Ordering is the operator's calendar order and the charter does not claim
+more.** The instant is a wall-clock reading, which an adjustment can move
+backwards, so sorting references orders runs as the operator's clock saw them
+rather than as a monotonic sequence. That is the right answer for a human
+reading an artifact and the wrong one for a consumer needing strict order,
+which is why order within a run stays the sequence's job, per
+`weaver-trace-PRD` section 6. The word monotonic is reserved in that charter
+for a different clock and is not borrowed here.
+
+**The session is the operator's to name, and the declaration is where it is
+named.** Per section 4.4 a session spans runs and an agent outlives a session,
+so a session is a grouping only the operator can draw: a benchmark pass, an
+evaluation, a day's work. Deriving it from anything the program mints would put
+the program in charge of a boundary it cannot see. It joins the agent's
+declaration with the rest of what the operator elects, so the same agent serves
+many sessions by editing one field, and admin carries it uninterpreted the way
+it carries every other declared value. **What this act does not do is promise
+continuity between two runs of one session.** Enter still stands up an empty
+working structure, and a shared session name is a shared label rather than a
+shared conversation until the memory round says otherwise.
 
 **The operator-to-service seam dissolved with the service, 2026-08-05.** The
 socket the earlier closure covered retired with the recut, the operator now
