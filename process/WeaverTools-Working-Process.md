@@ -451,12 +451,15 @@ reads false in the declaration the live run used, and its tap is unwritten.
 Collapsing them would be this document doing what section 7.2 was closed to
 prevent.
 
-**A completed turn satisfies no conformance assertion, and the four open in
-`weaver-spu` are open still.** The live run evidences that the path works. It
-does not write the shaped floor types two of the four wait on, and it does not
-drive a tap through the eval-callback pin the other two wait on. A reader who
-takes the demonstration as having closed them has read a count into a
-behaviour.
+**A completed turn satisfies no conformance assertion, and the SPU's two open
+are open still.** The live run evidences that the path works. It does not drive
+a tap through the eval-callback pin both of them wait on. A reader who takes the
+demonstration as having closed them has read a count into a behaviour.
+
+An earlier wording of this paragraph said four, which was the figure the table
+carried when the count ran over `src` alone. Two of that four were cited all
+along in the tests that buy them, and the recount above is where the figure and
+its method now sit together.
 
 The caution this paragraph carried still holds and now points both ways. A
 crate could always report a high conformance figure while completing no turn,
