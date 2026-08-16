@@ -67,6 +67,16 @@ const PROBES: &[Probe] = &[
         rendered: qwen2::RENDERED_MARKERS,
     },
     Probe {
+        // **Qwen3's sparse sibling is its own architecture key**, carried for
+        // the reason the dense one is and probed against its own tokenizer.
+        // Its rendered set is qwen2's exactly, with not even the vision
+        // markers the qwen35 artifacts carry.
+        family: "qwen3moe",
+        env: "WEAVER_VOCAB_QWEN3MOE",
+        default_path: "/opt/weaver/models/h-dist/Qwen3-30B-A3B-Q5_K_M.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
+    },
+    Probe {
         // **Qwen3.5 declares its own architecture and renders the same ChatML
         // scaffolding**, so it is probed separately for the reason qwen3 is:
         // two keys citing one module is a claim about their markers agreeing,
