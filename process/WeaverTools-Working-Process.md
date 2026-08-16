@@ -417,7 +417,7 @@ ordinary state of an assertion between a merged Spec and the act that cites it:
     weaver-spu        spu-session-parameters-carry-dispositions    compile-pin
     weaver-spu        spu-tunables-arrive-in-the-declaration       perturbation
     weaver-harness    harness-idle-report-authors-without-a-turn   perturbation
-    weaver-harness    harness-organ-argv-carries-construction-parameters
+    weaver-harness    harness-organ-argv-carries-construction-parameters  review
     weaver-admin      admin-run-reference-distinguishes            review
 
 **The SPU's two are blocked rather than missed** and both wait on the readout

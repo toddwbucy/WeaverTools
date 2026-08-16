@@ -337,6 +337,24 @@ field and not its contents: an empty map is a declaration that supplies
 nothing, and a binary with a tunable parameter and nothing supplied for it
 refuses the load naming the parameter.
 
+**A value is judged against what the parameter is before the session opens.**
+The map carries `f64` because a configuration's numbers are, and most of what it
+feeds is not a real: `top-k`, the repetition window, the context capacity and
+the per-turn ceiling are counts. So a value bound for a count must be integral,
+non-negative, and inside the range its type can hold, and a value bound for a
+real must be finite. A `NaN` reaching a sampler is a temperature that compares
+false against every bound and an infinity is one no filter clamps, and a
+negative or fractional count is worse than either, because the conversion to an
+unsigned integer saturates rather than failing and would substitute a zero no
+operator wrote.
+
+**The refusal is the load's, not the turn's.** A bad value is `BadValue` naming
+its field, refused where the declaration is read and before any device work,
+which is the same shape every other malformed field in this section takes. The
+earlier home for this check was the token seam, where the map used to travel and
+where the refusal was `MalformedDelta`, and it moved here with the map rather
+than being invented.
+
 **A value here never overrides a frozen parameter.** Frozen means compiled in
 and not carried on the wire, so a name the binary froze is ignored where it
 appears, and the record still reports the effective value whichever side set
@@ -1119,7 +1137,6 @@ pub enum TokenDirective {
     AppendAndGenerate {
         turn: TurnKey,
         delta: Vec<Message>,
-        tunable: BTreeMap<String, f64>,
     },
     Cancel { turn: TurnKey },
     Flush,
@@ -1141,19 +1158,11 @@ pub enum TokenRefusal {
 }
 ```
 
-**Every tunable value is finite, and a value that is not is refused at the
-seam.** The map carries `f64` because the wire's numbers are, and the knobs it
-feeds are the operator-tunable remainder of Spec section 8's dispositions. A
-`NaN` reaching a sampler is a temperature that compares false against every
-bound, and an infinity is one no filter clamps, so neither may travel. Both are
-refused as `MalformedDelta`, which is the case the contract already carries for
-an ask this seam cannot serve, rather than as a case this document adds. **The
-encoding makes the refusal reachable rather than theoretical:** JSON has no
-literal for either, so a peer that computed one either emits something no
-decoder accepts or emits `null`, and a `null` where a number belongs fails the
-decode. The check is therefore stated here as the receiver's, at the point the
-map is read, so a value that arrives by some later encoding that does carry them
-meets the same refusal.
+**The tunable map left this directive in the act that routed it to the
+declaration**, per `weaver-spu-Spec` section 8, so nothing sampling-related
+arrives with a turn and the value discipline that guarded it moved with it to
+section 2. What remains here is a turn's delta, and a delta this seam cannot
+serve is `MalformedDelta` as before.
 
 **`Message` is `weaver-traits`' and is drawn rather than restated.** The decode
 contract's canonical messages are that type, shaped at `weaver-traits-Spec`

@@ -426,11 +426,15 @@ How each check is implemented is Spec work. What must be checkable:
 - One generation in flight, enforced by refusal rather than queueing.
 - A report is never emitted while an exchange is outstanding, a fault
   arising then being that exchange's typed answer.
-- No sampling value appears on this seam at all, watched by a capture that
-  fails when one crosses. The check was written against the frozen knobs
-  alone, when the tunable remainder travelled here, and it widens with the
-  remainder's move to the declaration: this seam now carries none of them
-  and the capture says so without needing to know which were frozen.
+- No sampling value crosses **inbound** on this seam, watched by a capture
+  that fails when one reaches the SPU here. The check was written against the
+  frozen knobs alone, when the tunable remainder travelled here, and it
+  widens to the whole set with the remainder's move to the declaration.
+  **The answer is excluded and the exclusion is the point.** `Generation`
+  carries the request the SPU rendered whole, its template and its effective
+  sampling among it, because the record holds what a turn ran with whichever
+  side set it, per charter section 13.8. A capture reading both directions
+  would fail on that and call the record a leak.
 
 ## 9. What this document changes elsewhere
 

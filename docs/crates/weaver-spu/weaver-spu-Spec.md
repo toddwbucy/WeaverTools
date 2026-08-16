@@ -1353,6 +1353,13 @@ instruction the admit already brings, at the moment the session is about to
 open. Resolution stays where it was, `Knobs::resolve` against the supplied map,
 and neither the dispositions nor the resolve change shape.
 
+**What this is watched by reads one direction.** The capture of section 10
+fails when a sampling value reaches this crate on the token seam and ignores
+what leaves on it, because `Generation` carries the request this crate rendered
+whole with its effective sampling among it, per charter section 13.8's rule that
+the record holds what a turn ran with whichever side set it. A capture reading
+both directions would fail on the record and call it a leak.
+
 **The token seam's tunable map goes rather than staying unread.** With the
 values arriving at admit, a map on the token directive would be a payload field
 whose only reader is unbuilt, which apex section 9 refuses in the same words it
