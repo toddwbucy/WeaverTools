@@ -19,7 +19,6 @@
 use std::fs::File;
 use std::io::Write;
 use std::os::fd::OwnedFd;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread::JoinHandle;
@@ -57,13 +56,26 @@ pub struct Boundary {
 struct WriterShared {
     state: Mutex<WriterState>,
     drained: Condvar,
-    queued: AtomicUsize,
 }
 
 struct WriterState {
     committed: Option<Sequence>,
     last_error: Option<WriteError>,
     failed: Option<(Sequence, WriteError)>,
+    /// **The drain's predicate, and it lives under the drain's mutex.**
+    ///
+    /// It was an `AtomicUsize` beside the mutex rather than inside it, which
+    /// is a lost wakeup by construction: a waiter that has read the count and
+    /// not yet reached `wait` holds the mutex, the writer needs no mutex to
+    /// decrement and notify, so both can land in that window and the
+    /// notification arrives before anyone is waiting for it. The waiter then
+    /// sleeps on a count that is already zero and nothing will wake it.
+    ///
+    /// A condvar's predicate must be guarded by the condvar's mutex, which is
+    /// what makes the wait atomic with respect to the change it waits for.
+    /// Under the mutex the writer cannot decrement until the waiter has
+    /// released it by sleeping, so the notify always finds the sleeper.
+    queued: usize,
 }
 
 /// The stream writer: one thread, one descriptor, whole events only. A short
@@ -86,9 +98,9 @@ impl Writer {
                 committed: None,
                 last_error: None,
                 failed: None,
+                queued: 0,
             }),
             drained: Condvar::new(),
-            queued: AtomicUsize::new(0),
         });
         let thread_shared = Arc::clone(&shared);
         let mut file = File::from(sink);
@@ -104,19 +116,24 @@ impl Writer {
                     .expect("writer state")
                     .failed
                     .is_some();
-                if !already_failed {
-                    let outcome = file.write_all(line.as_bytes());
-                    let mut state = thread_shared.state.lock().expect("writer state");
-                    match outcome {
-                        Ok(()) => state.committed = Some(sequence),
-                        Err(e) => {
-                            let err = WriteError::from(&e);
-                            state.last_error = Some(err.clone());
-                            state.failed = Some((sequence, err));
-                        }
+                let outcome = (!already_failed).then(|| file.write_all(line.as_bytes()));
+                // **The decrement and the notify happen under the mutex the
+                // drain waits on.** That is what closes the window: a waiter
+                // between its predicate read and its `wait` still holds this
+                // lock, so this thread cannot reach the decrement until the
+                // waiter has released it by sleeping.
+                let mut state = thread_shared.state.lock().expect("writer state");
+                match outcome {
+                    Some(Ok(())) => state.committed = Some(sequence),
+                    Some(Err(e)) => {
+                        let err = WriteError::from(&e);
+                        state.last_error = Some(err.clone());
+                        state.failed = Some((sequence, err));
                     }
+                    None => {}
                 }
-                thread_shared.queued.fetch_sub(1, Ordering::SeqCst);
+                state.queued -= 1;
+                drop(state);
                 thread_shared.drained.notify_all();
             }
         });
@@ -128,7 +145,7 @@ impl Writer {
     }
 
     fn enqueue(&self, sequence: Sequence, line: Line) {
-        self.shared.queued.fetch_add(1, Ordering::SeqCst);
+        self.shared.state.lock().expect("writer state").queued += 1;
         // A full queue blocks here until the writer frees space: the
         // deployment's loss bound expressed as backpressure rather than loss,
         // reached only after the high-water report warned the harness. After a
@@ -136,8 +153,8 @@ impl Writer {
         // outlive a dead sink. A send failure means the writer thread is
         // gone, surfaced through the boundary's last error.
         if self.queue.send((sequence, line)).is_err() {
-            self.shared.queued.fetch_sub(1, Ordering::SeqCst);
             let mut state = self.shared.state.lock().expect("writer state");
+            state.queued -= 1;
             state.last_error = Some(WriteError {
                 os_error: None,
                 message: "writer thread terminated".to_string(),
@@ -146,7 +163,7 @@ impl Writer {
     }
 
     fn queued(&self) -> usize {
-        self.shared.queued.load(Ordering::SeqCst)
+        self.shared.state.lock().expect("writer state").queued
     }
 
     /// The failure a later submission surfaces: the first failed write, named
@@ -169,7 +186,7 @@ impl Writer {
 
     fn wait_drained(&self) -> Result<(), Failure> {
         let mut state = self.shared.state.lock().expect("writer state");
-        while self.shared.queued.load(Ordering::SeqCst) > 0 {
+        while state.queued > 0 {
             state = self.shared.drained.wait(state).expect("writer state");
         }
         match &state.failed {
@@ -191,7 +208,7 @@ impl Writer {
         Boundary {
             committed: state.committed,
             admitted,
-            queued: self.shared.queued.load(Ordering::SeqCst),
+            queued: state.queued,
             last_error: state.last_error.clone(),
         }
     }
