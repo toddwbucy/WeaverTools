@@ -496,6 +496,35 @@ from: weaver-harness
 to: harness-fork-to-exec-three-calls
 ```
 
+**The organ's argv carries the construction parameters its composition root is
+owed, and the environment stays empty.** An organ is told what it needs by the
+descriptors it is handed and by this vector, and by nothing else. The
+environment is left empty because it is inherited wholesale rather than stated,
+so a value reaching an organ that way would be one no act wrote down.
+
+**The bound above is untouched by this and the reason is where the work
+happens.** Every argument is a `CString` built in the parent before the fork,
+the way the program name already is, so the vector the child hands `execve` is
+finished before the child exists. The child performs the same three calls. A
+parameter that could only be assembled after the fork would not be expressible
+here, which is a constraint on what may travel this way rather than a cost.
+
+**What may travel it is bounded by argv being world-readable.** `/proc` exposes
+a process's arguments to any reader on the host, so a figure a deployment
+supplies is appropriate and a credential is not. Where an organ needs something
+secret, the descriptor it already holds is the route, per section 5.1's
+possession-as-authentication, and this vector is not.
+
+```graph
+node: harness-organ-argv-carries-construction-parameters
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-organ-argv-carries-construction-parameters
+```
+
 ### 2.3 The receive site, and adoption
 
 **The trace descriptor enters this crate at exactly one call, and that call
