@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.15, 2026-08-05. Companion to the Working Process. Project
+**Version:** v0.16, 2026-08-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -243,6 +243,29 @@ leading `./`, exactly as `git ls-files` prints it. The mapper derives the node
 identifier and every `cites` edge's `from` value from that one form, so a second
 spelling of one file is a defect the same way `permission-modes` beside
 `permission-mode` would be.
+
+**A conformance count is over every tracked unit carrying a header, and a
+directory is never the rule.** The scope follows from the node kind, a code node
+being any source unit with a header wherever it sits, so no enumeration of
+directories belongs in a count and one that appears is a defect in the count
+rather than a tightening of it. Stated because it was mis-applied: a count taken
+over `src` alone reported the crates through 2026-08-16, and it excluded every
+assertion whose citation sits in an integration test while including manifest
+assertions cited in `lib.rs` whose instrument is the manifest. That is arbitrary
+rather than strict, and it undercounted six of seven crates.
+
+**The tag is what says where a citation belongs.** An assertion names its
+enforcing instrument, so a `perturbation` claim is bought by a test and cited
+where the test is, a `review` claim is cited in the unit review reads, and a
+`manifest` claim is cited in the unit that carries the crate's root. A citation
+sitting where its instrument sits is correct placement and never a gap, which is
+the reading a directory-bounded count gets backwards.
+
+The rule is written against the tree rather than against today's layout for the
+same reason the identifier is: the layout moves. A crate that grows a build
+script or a benchmark carrying a header gains a code node by this clause without
+the clause being revised, and a count that enumerated directories would have to
+be, silently, by whoever noticed.
 
 ## 4. Edge kinds
 
