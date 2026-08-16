@@ -766,10 +766,16 @@ mod unload_answer_tests {
             LifecycleRefusal::BindFailed,
             "a running unit with an unreachable socket is still a bind failure"
         );
-        assert_eq!(
-            refusal_for_residency(unit::Residency::Inactive),
-            LifecycleRefusal::NoResidency
-        );
+        // Both patterns of the shared arm, not one of them. They answer
+        // together today and a later act splitting them would pass a test
+        // that named only `Inactive`.
+        for absent in [unit::Residency::Inactive, unit::Residency::Unknown] {
+            assert_eq!(
+                refusal_for_residency(absent),
+                LifecycleRefusal::NoResidency,
+                "neither reading claims more than an absent residency"
+            );
+        }
     }
 
     /// **A failed start ask is asked about rather than guessed at.** The
