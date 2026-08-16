@@ -343,10 +343,19 @@ feeds is not a real: `top-k`, the repetition window, the context capacity and
 the per-turn ceiling are counts. So a value bound for a count must be integral,
 non-negative, and inside the range its type can hold, and a value bound for a
 real must be finite. A `NaN` reaching a sampler is a temperature that compares
-false against every bound and an infinity is one no filter clamps, and a
-negative or fractional count is worse than either, because the conversion to an
-unsigned integer saturates rather than failing and would substitute a zero no
-operator wrote.
+false against every bound and an infinity is one no filter clamps.
+
+**A bad count is worse than either, and the reason is that the conversion never
+fails.** A float cast to an integer in Rust answers for every input: it
+truncates toward zero, so `3.7` becomes `3`, it maps `NaN` to zero, and it
+saturates at the target's bounds, so `-1.0` becomes `0` and `1e20` becomes
+`u32::MAX`. Measured on this workspace's toolchain rather than recalled. So a
+fractional count is silently rounded, a negative one silently becomes zero, and
+an oversized one silently becomes four billion, and none of the three reaches
+the operator as an error. The truncating case and the saturating case are
+different failures and the check refuses both, because a capacity of
+`u32::MAX` would fail later at allocation with nothing pointing back to the
+declaration that asked for it.
 
 **The refusal is the load's, not the turn's.** A bad value is `BadValue` naming
 its field, refused where the declaration is read and before any device work,
