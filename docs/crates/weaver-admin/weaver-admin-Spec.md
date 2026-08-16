@@ -4,6 +4,12 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-16, a failed prior unit stops being called a bind
+failure. The refusal is read from the state ask, where `failed` covers one
+condition, rather than from the start ask's status, which the systemd contract
+measures as unable to say which failure it was. Found by running the verb: a
+load whose organ refused a construction parameter left a failed unit and every
+load after it answered `bind_failed` over a healthy socket.
 **Revised:** 2026-08-05, the role ruling. Per the operator: `weaver-admin-role` is
 assumed by a human and never by an AI or an automation, a statement of design intent
 and not a guarantee about conduct. `weaver-admin-user` is a static service account
@@ -449,6 +455,26 @@ the leave the previous step confirmed causes the worker to exit, a transient
 unit is collected the moment its main process does, and the stop that follows
 then names a unit the manager no longer knows. Refusing there reports a failure
 over an agent that unloaded exactly as asked.
+
+**A failed prior unit is its own refusal, and this crate stopped calling it a
+bind failure on 2026-08-16.** `BindFailed` answered for two conditions that a
+state ask already tells apart. Where the manager reports the unit `active` and
+the socket was unreachable, a bind is what failed and the name is right. Where
+it reports `failed`, the unit ran and exited non-zero, so nothing bound and
+nothing tried to, and the name it leaves registered refuses every later start
+under it until the manager is asked to reap it. That answers
+`PriorUnitUnreaped`.
+
+**It rests on the one value the boundary states plainly.**
+`weaver-admin-systemd-contract` section 3 measures the start ask's status as
+unable to say which failure it was, a duplicate name and a malformed property
+sharing it, so the refusal is not read from that status. It is read from the
+state ask, where `failed` covers one condition and nothing is inferred.
+
+**Found by running the verb rather than by reading it**, as the unload defect
+below was: a load whose organ refused a construction parameter left a failed
+unit, and every load after it answered `bind_failed` over a socket that was
+never the problem, which sent the reading to the wrong place.
 
 **An earlier form of this clause refused on either reading** and its reason
 named only the first, which is how it came to over-fire. The defect was found

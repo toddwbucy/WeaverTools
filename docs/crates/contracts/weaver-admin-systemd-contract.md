@@ -9,6 +9,11 @@ per verb holds nothing across time, so the party that keeps an agent alive acros
 logout is the init system, and what the program relies on from it was stated nowhere.
 
 **Date filed:** 2026-08-05
+**Revised:** 2026-08-16, a failed unit holds its name until it is reaped.
+Measured this date against a live manager. The condition is unreadable in the
+start ask's status and plain in the state ask, so admin reads it there and
+answers `PriorUnitUnreaped`. Reaping stays the operator's act, a program that
+reset the unit before starting discarding the evidence of the previous failure.
 **Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the
 operator's ruling in `weaver-admin-PRD` load step 5: the start ask of section 2 gains
 the worker's argument vector, section 5 names it among what admin supplies and
@@ -152,6 +157,16 @@ unit that never existed, and a unit whose exec never succeeded because the binar
 named was absent. A party reading this boundary may therefore learn that a worker is
 not running and may not learn why, and a program that rendered `inactive` as any one
 of the three would be asserting what the boundary did not say.
+
+**A failed unit holds its name until it is reaped, measured 2026-08-16.** A
+transient unit whose process exits non-zero stays registered under its name, and
+a later start ask for that name fails rather than replacing it. The failure is
+not distinguishable in the start ask's status, per the paragraph above, and the
+state ask reports it as `failed`, which is the one value this boundary states
+without ambiguity. Admin therefore reads the condition from the state ask and
+answers `PriorUnitUnreaped`, and reaping is the operator's act rather than
+admin's: a program that reset the unit before starting would discard the
+evidence of why the previous one failed, which is the operator's to read.
 
 **Two things carry what the outcome cannot, and both are the program's own.** The
 identity, the home, and the boundary are verified by admin before any ask is made,
