@@ -1325,6 +1325,7 @@ mod tests {
                     },
                     residual_readout_election: false,
                     identity: Vec::new(),
+                        tunable_values: Default::default(),
                 },
             },
             gate_instruction: weaver_types::GateInstruction {

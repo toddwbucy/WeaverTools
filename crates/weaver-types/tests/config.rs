@@ -22,6 +22,7 @@ fn full_config() -> String {
         "        content:\n",
         "          - type: text\n",
         "            text: You answer briefly.\n",
+        "    tunable-values: {}\n",
         "tool-set: []\n",
         "permission-mode: ask\n",
         "gate-instruction:\n",
@@ -157,4 +158,43 @@ fn unknown_key_inside_socket_sink_refuses() {
     let err = parse(&source).expect_err("refuses");
     assert_eq!(err.kind, ConfigErrorKind::UnknownField);
     assert_eq!(err.field, Some(FieldName("trace-sink.linger".into())));
+}
+
+/// **A tunable value that is not finite refuses the load**, per Spec section 2.
+/// The floor judges finiteness because it is true of any value regardless of
+/// which parameter carried it, and leaves whether a value suits its parameter
+/// to the SPU, which holds the dispositions that say which names are counts.
+///
+/// Perturbation: drop the `check_tunable_values` call from `parse` and this
+/// test fails, `.nan` reaching a sampler through a config that parsed clean.
+#[test]
+fn a_non_finite_tunable_value_refuses() {
+    for bad in [".nan", ".inf", "-.inf"] {
+        let source = full_config().replace(
+            "    tunable-values: {}\n",
+            &format!("    tunable-values:\n      temperature: {bad}\n"),
+        );
+        let err = parse(&source).expect_err("refuses");
+        assert_eq!(err.kind, ConfigErrorKind::BadValue, "{bad} must not parse");
+        assert_eq!(
+            err.field,
+            Some(FieldName("tunable-values.temperature".into())),
+            "and the refusal names the value it refused"
+        );
+    }
+}
+
+/// A finite value parses and reaches the declaration, so the check above is
+/// refusing the bad case rather than the field.
+#[test]
+fn a_finite_tunable_value_parses() {
+    let source = full_config().replace(
+        "    tunable-values: {}\n",
+        "    tunable-values:\n      temperature: 0.2\n",
+    );
+    let config = parse(&source).expect("parses");
+    assert_eq!(
+        config.spu_instruction.decoder.tunable_values.get("temperature"),
+        Some(&0.2f64)
+    );
 }

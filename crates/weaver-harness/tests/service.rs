@@ -269,6 +269,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                         },
                         residual_readout_election: false,
                         identity: vec![],
+                        tunable_values: Default::default(),
                     },
                 },
                 gate_instruction: weaver_types::GateInstruction {

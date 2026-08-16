@@ -140,19 +140,27 @@ fn the_measurement_splices_and_never_quotes() {
     assert_eq!(back, answer, "and the round trip holds through bytes");
 }
 
-/// The directive's ask round-trips with its tunable map, the map carrying
-/// `f64` because the wire's numbers are, per Spec section 4.4.
+/// The directive's ask round-trips, and carries no sampling value.
+///
+/// **The absence is asserted rather than assumed.** The tunable map left this
+/// directive when the values moved to the declaration, per `weaver-spu-Spec`
+/// section 8, and a serialization that grew one back would be the seam
+/// carrying inbound what the decode contract's conformance list says it does
+/// not.
 #[test]
 fn the_token_directive_round_trips_through_bytes() {
     let directive = weaver_types::TokenDirective::AppendAndGenerate {
         turn: weaver_types::TurnKey("t-7".into()),
         delta: vec![],
-        tunable: [("temperature".to_string(), 0.7f64)].into_iter().collect(),
     };
     let bytes = serde_json::to_string(&directive).expect("serializes");
     assert!(
         bytes.contains(r#""kind":"append_and_generate""#),
         "internally tagged, snake case: {bytes}"
+    );
+    assert!(
+        !bytes.contains("tunable") && !bytes.contains("temperature"),
+        "no sampling value crosses this seam inbound: {bytes}"
     );
     let back: weaver_types::TokenDirective = serde_json::from_str(&bytes).expect("deserializes");
     assert_eq!(back, directive);

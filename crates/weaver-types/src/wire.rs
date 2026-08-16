@@ -395,9 +395,13 @@ fn decode_base64(text: &str) -> Option<Vec<u8>> {
 /// report, owed nothing back and taking its wire case with `FaultReport`'s
 /// shape, and this crate holds rather than creates them. The
 /// messages are `weaver-traits`' [`weaver_traits::Message`], drawn rather than
-/// restated. The tunable map's values must be finite, and the check is the
-/// receiver's at the point the map is read, per the Spec: a `NaN` or an
-/// infinity refuses as `MalformedDelta` rather than reaching a sampler.
+/// restated.
+///
+/// **No sampling value crosses this seam inbound.** The tunable map left this
+/// directive when the values moved to the declaration, per `weaver-spu-Spec`
+/// section 8: the engine builds its sampler once at session open, so a value
+/// arriving with a turn had no engine to reach. The value discipline that
+/// guarded the map moved with it to [`crate::config::DecoderInstruction`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum TokenDirective {
@@ -408,7 +412,6 @@ pub enum TokenDirective {
     AppendAndGenerate {
         turn: TurnKey,
         delta: Vec<weaver_traits::Message>,
-        tunable: std::collections::BTreeMap<String, f64>,
     },
     Cancel {
         turn: TurnKey,

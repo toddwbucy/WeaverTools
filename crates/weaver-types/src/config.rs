@@ -73,6 +73,20 @@ pub struct DecoderInstruction {
     /// empty list is a declaration the operator made where an absent field
     /// is a file unfinished.
     pub identity: Vec<weaver_traits::Message>,
+    /// Values for whatever parameters this deployment's SPU left tunable, per
+    /// `weaver-types-Spec` section 2 and `weaver-spu-Spec` section 8. This is
+    /// the route `Disposition::OperatorTunable` names, keyed by the
+    /// parameter's name.
+    ///
+    /// **A map rather than a field per parameter**, because which parameters a
+    /// binary leaves tunable is that binary's election and moves with a
+    /// recompile: a floor type enumerating them would move with every
+    /// deployment that changed its mind. Required like every field and may be
+    /// empty, an empty map being a declaration that supplies nothing. A name
+    /// this binary froze is ignored where it appears, frozen meaning compiled
+    /// in and never carried, so a declaration cannot move what a deployment
+    /// locked.
+    pub tunable_values: std::collections::BTreeMap<String, f64>,
 }
 
 /// The model artifact and the devices it is assigned to.
@@ -208,8 +222,35 @@ pub fn parse(source: &str) -> Result<AgentConfig, ConfigError> {
             kind: ConfigErrorKind::BadValue,
         });
     }
+    check_tunable_values(&config.spu_instruction.decoder.tunable_values)?;
     check_trace_sink_surface(source, &config.trace_sink)?;
     Ok(config)
+}
+
+/// **Finiteness is the whole of what this crate can judge about a tunable
+/// value, and the boundary is deliberate.** A `NaN` compares false against
+/// every bound and an infinity is one no filter clamps, and neither is
+/// specific to which parameter carried it, so the check belongs here.
+///
+/// Whether a value suits its parameter is not this crate's to say. Which names
+/// are counts and which are reals is the SPU's election, held in its
+/// dispositions and moving with its recompile, so a list of them here would be
+/// the same fact in two places with no authority named, which G5 files as a
+/// defect rather than resolves. The SPU judges that at resolve, before any
+/// device work, per `weaver-spu-Spec` section 8.
+#[cfg(feature = "config")]
+fn check_tunable_values(
+    values: &std::collections::BTreeMap<String, f64>,
+) -> Result<(), ConfigError> {
+    for (name, value) in values {
+        if !value.is_finite() {
+            return Err(ConfigError {
+                field: Some(FieldName(format!("tunable-values.{name}"))),
+                kind: ConfigErrorKind::BadValue,
+            });
+        }
+    }
+    Ok(())
 }
 
 /// The fixed-surface check the derive cannot carry: serde's

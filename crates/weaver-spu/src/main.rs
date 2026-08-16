@@ -18,6 +18,7 @@
 //! the last is terminal: before-admit, admitted, released. A release before any
 //! admit answers `OutOfOrder`, a second admit answers the same whatever the
 //! first answered, and any directive after a release answers the same.
+//! conforms: spu-session-parameters-carry-dispositions
 
 use std::process::ExitCode;
 
@@ -29,7 +30,7 @@ use weaver_spu::decoder::session::{CancelPoll, Session, StopCondition, Stopped};
 use weaver_spu::family;
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency, Resident};
-use weaver_spu::sampling::{Disposition, EffectiveKnobs, Knobs, TunableValues};
+use weaver_spu::sampling::{Disposition, EffectiveKnobs, EffectiveSessionParameters, KnobRefusal, Knobs, SessionParameters, TunableValues};
 use weaver_traits::{ContentBlock, Message, Role};
 use weaver_types::{
     ExchangeId, Finish, Generation, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener,
@@ -89,11 +90,12 @@ enum DecodePosition {
 /// reached, which is what makes not-queued mean anything, per Spec section 9
 /// on both seams alike.
 ///
-/// The finite check rides here because this seam is the receiver:
-/// `weaver-types-Spec` section 4.4 has a `NaN` or an infinity in the tunable
-/// map refused as `MalformedDelta` at the point the map is read, a temperature
-/// that compares false against every bound being what must never reach a
-/// sampler.
+/// **No sampling value reaches this seam to be judged.** The tunable map left
+/// the directive when the values moved to the declaration, per
+/// `weaver-spu-Spec` section 8, so what this judges is position and order
+/// alone. The finiteness check that rode here went with the map: the floor
+/// judges it at parse and this crate judges a value against its parameter at
+/// resolve, both before any device work.
 fn judge_decode(
     position: DecodePosition,
     residency_confirmed: bool,
@@ -118,44 +120,57 @@ fn judge_decode(
         ) => Some(TokenRefusal::NotOpen),
         // A second open refuses rather than rewinding.
         (DecodePosition::AtRest, TokenDirective::Open { .. }) => Some(TokenRefusal::OutOfOrder),
-        (DecodePosition::AtRest, TokenDirective::AppendAndGenerate { tunable, .. }) => {
-            if tunable.values().any(|value| !value.is_finite()) {
-                Some(TokenRefusal::MalformedDelta)
-            } else {
-                None
-            }
-        }
+        (DecodePosition::AtRest, TokenDirective::AppendAndGenerate { .. }) => None,
         (DecodePosition::AtRest, TokenDirective::Cancel { .. } | TokenDirective::Flush) => None,
     }
 }
 
-/// The engine context's token capacity, a builder's number supplied at the
-/// composition root before the measurement that replaces it exists, the same
-/// standing `HEADROOM_BYTES` has.
-const CONTEXT_CAPACITY: u32 = 4096;
+/// **This binary's elections, per charter section 13.8 and `weaver-spu-Spec`
+/// section 8.** Each parameter is `Frozen` with its value compiled in, or
+/// `OperatorTunable` and read from `decoder.tunable_values` at admit. The
+/// election is the builder's and the composition root states it rather than
+/// hiding it, so changing one is this line and a recompile.
+///
+/// This deployment freezes every one. A deployment iterating on an agent flips
+/// the parameters it is moving to `OperatorTunable` and sets them in
+/// `agent.yaml`, which is the loop the disposition mechanism exists for, and a
+/// production build freezes them back so no declaration can move them.
+const KNOBS: Knobs = Knobs {
+    temperature: Disposition::Frozen(0.7),
+    top_k: Disposition::Frozen(40),
+    top_p: Disposition::Frozen(0.95),
+    repetition_penalty: Disposition::Frozen(1.1),
+    repetition_window: Disposition::Frozen(64),
+    seed: Disposition::Frozen(11),
+};
 
-/// The per-turn generation ceiling, the stop condition's backstop for a model
-/// that never emits a stop token. The same composition-root standing.
-const MAX_TOKENS_PER_TURN: usize = 512;
+/// The context capacity and the per-turn generation ceiling, elected the same
+/// way. The ceiling is the stop condition's backstop for a model that never
+/// emits a stop token.
+const SESSION_PARAMETERS: SessionParameters = SessionParameters {
+    context_capacity: Disposition::Frozen(4096),
+    max_tokens_per_turn: Disposition::Frozen(512),
+};
 
-/// The binary's sampling dispositions, all frozen, per charter section 13.8:
-/// what this binary leaves operator-tunable is nothing, an election the
-/// composition root states rather than hides. The engine takes its knobs at
-/// open today, so a per-turn tunable has no engine to reach, and a tunable
-/// map naming any knob refuses as an ask this seam cannot serve. The
-/// disposition set widens in the act that carries a knob to the engine per
-/// turn.
-fn frozen_knobs() -> EffectiveKnobs {
-    Knobs {
-        temperature: Disposition::Frozen(0.7),
-        top_k: Disposition::Frozen(40),
-        top_p: Disposition::Frozen(0.95),
-        repetition_penalty: Disposition::Frozen(1.1),
-        repetition_window: Disposition::Frozen(64),
-        seed: Disposition::Frozen(11),
-    }
-    .resolve(&TunableValues::new())
-    .expect("nothing is tunable")
+/// What this load runs with, resolved once from the declaration.
+#[derive(Debug, Clone, Copy)]
+struct Effective {
+    knobs: EffectiveKnobs,
+    session: EffectiveSessionParameters,
+}
+
+/// Resolve both sets against what the declaration supplied.
+///
+/// **Called before the admit takes a device.** A parameter this binary left
+/// tunable with nothing supplied for it, or a count supplied as a fraction or
+/// a negative or something past its type, refuses the load naming the
+/// parameter rather than reaching an engine, and refusing before the admit
+/// keeps a declaration's mistake from costing device work.
+fn resolve_effective(supplied: &TunableValues) -> Result<Effective, KnobRefusal> {
+    Ok(Effective {
+        knobs: KNOBS.resolve(supplied)?,
+        session: SESSION_PARAMETERS.resolve(supplied)?,
+    })
 }
 
 /// Render canonical messages through the family's template, text blocks only.
@@ -303,7 +318,11 @@ fn render_measurement(
 /// rather than a fault. The lifecycle seam is silent between admit and
 /// release by both contracts' ordering, so this phase owns the process until
 /// the channel closes clean and the release path resumes on the other seam.
-fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
+fn serve_decode(
+    decode: &DecodeSocket,
+    resident: &Resident,
+    effective: &Effective,
+) -> Result<(), ()> {
     let mut position = DecodePosition::BeforeOpen;
     let mut opened: Option<OpenedSession<'_>> = None;
 
@@ -359,10 +378,9 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                         continue;
                     }
                 };
-                let knobs = frozen_knobs();
                 let outcome =
                     resident
-                        .open_session(&knobs, CONTEXT_CAPACITY)
+                        .open_session(&effective.knobs, effective.session.context_capacity)
                         .and_then(|mut session| {
                             let prefix = resident.tokenize(&prefix_text)?;
                             session.open(&prefix)?;
@@ -389,16 +407,10 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                 }
             }
 
-            TokenDirective::AppendAndGenerate { delta, tunable, .. } => {
-                // All knobs are frozen in this binary and the engine takes
-                // its knobs at open, so a supplied value is an ask this seam
-                // cannot serve, per the dispositions above.
-                if !tunable.is_empty() {
-                    if send_refusal(decode, &TokenRefusal::MalformedDelta).is_err() {
-                        return Err(());
-                    }
-                    continue;
-                }
+            TokenDirective::AppendAndGenerate { delta, .. } => {
+                // The directive carries no sampling value to refuse: the
+                // values reached this crate in the declaration and the engine
+                // took them when the session opened.
                 let standing = opened.as_mut().expect("at rest implies an open session");
                 // The delta's rendering closes with the assistant turn opened
                 // and unfinished, so the generation completes that turn and
@@ -427,7 +439,7 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                 let stop = StopCondition {
                     stop_tokens: vec![standing.terminator],
                     terminator: standing.terminator,
-                    max_tokens: MAX_TOKENS_PER_TURN,
+                    max_tokens: effective.session.max_tokens_per_turn,
                 };
                 let mut cancel = SeamCancel {
                     socket: decode,
@@ -519,8 +531,11 @@ fn serve_decode(decode: &DecodeSocket, resident: &Resident) -> Result<(), ()> {
                 // custody act: the rendered prompt with its template and the
                 // turn's effective sampling, this crate rendering it because
                 // the template and the knobs are this crate's, and the harness
-                // splices it into the request box without reading it.
-                let knobs = frozen_knobs();
+                // splices it into the request box without reading it. The
+                // values are the effective ones, whichever side set them, per
+                // charter section 13.8: a frozen knob is as visible in the
+                // record as a supplied one.
+                let knobs = effective.knobs;
                 let request = match serde_json::value::RawValue::from_string(
                     serde_json::json!({
                         "rendered": delta_text,
@@ -626,6 +641,7 @@ fn serve(inherited: Inherited) -> ExitCode {
 
     let mut residency = Residency::new();
     let mut position = SeamPosition::BeforeAdmit;
+    let mut effective: Option<Effective> = None;
 
     loop {
         let envelope = match lifecycle.recv() {
@@ -645,7 +661,7 @@ fn serve(inherited: Inherited) -> ExitCode {
             }
         };
 
-        let payload = dispatch(&mut position, &mut residency, &envelope);
+        let payload = dispatch(&mut position, &mut residency, &envelope, &mut effective);
         let admitted_now = matches!(payload, Payload::Answer(LifecycleAnswer::Admitted));
         if answer(&lifecycle, envelope.exchange, payload).is_err() {
             return ExitCode::FAILURE;
@@ -657,7 +673,8 @@ fn serve(inherited: Inherited) -> ExitCode {
             // release by both contracts' ordering, and the release arrives
             // here once the phase returns clean.
             let resident = residency.resident().expect("the admit just confirmed");
-            if serve_decode(&decode, resident).is_err() {
+            let effective = effective.as_ref().expect("the admit resolved them");
+            if serve_decode(&decode, resident, effective).is_err() {
                 return ExitCode::FAILURE;
             }
         }
@@ -701,6 +718,7 @@ fn dispatch(
     position: &mut SeamPosition,
     residency: &mut Residency,
     envelope: &OrganEnvelope,
+    effective: &mut Option<Effective>,
 ) -> Payload {
     // A directive opens its exchange, and only the harness opens on this
     // channel. Anything else is the peer speaking out of turn.
@@ -719,6 +737,30 @@ fn dispatch(
             // the routeless seam once forced. The judgment itself runs inside
             // admit, at charter step 3, before any device is taken.
             let decoder = &instruction.decoder;
+            // **The elections resolve before a device is taken.** A parameter
+            // this binary left tunable with nothing supplied, or a count
+            // supplied as a fraction or a negative, refuses the load naming the
+            // parameter. Refusing here rather than at open keeps a
+            // declaration's mistake from costing the admit's device work.
+            let resolved = match resolve_effective(&decoder.tunable_values) {
+                Ok(resolved) => resolved,
+                Err(refusal) => {
+                    let knob = match refusal {
+                        KnobRefusal::Unsupplied { knob } => knob,
+                        KnobRefusal::NotACount { knob, .. } => knob,
+                    };
+                    // The one admission is spent whatever it answered, this
+                    // route included: a declaration refused here has had its
+                    // admission and a second attempt is out of order, the same
+                    // invariant the artifact refusal below keeps.
+                    *position = SeamPosition::AdmitRefused;
+                    return Payload::Refusal(LifecycleRefusal::ConfigInvalid {
+                        field: Some(weaver_types::FieldName(format!(
+                            "tunable-values.{knob}"
+                        ))),
+                    });
+                }
+            };
             match residency.admit(
                 &decoder.model_binding,
                 Headroom(HEADROOM_BYTES),
@@ -726,6 +768,7 @@ fn dispatch(
             ) {
                 Ok(_) => {
                     *position = SeamPosition::Admitted;
+                    *effective = Some(resolved);
                     Payload::Answer(LifecycleAnswer::Admitted)
                 }
                 Err(refusal) => {
@@ -808,6 +851,7 @@ mod tests {
                 model_binding: binding(),
                 residual_readout_election: false,
                 identity: vec![],
+            tunable_values: Default::default(),
             },
         }
     }
@@ -828,7 +872,8 @@ mod tests {
             dispatch(
                 &mut position,
                 &mut residency,
-                &directive(LifecycleDirective::Release)
+                &directive(LifecycleDirective::Release),
+                &mut None,
             ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
@@ -852,7 +897,7 @@ mod tests {
             LifecycleDirective::List,
         ] {
             assert_eq!(
-                dispatch(&mut position, &mut residency, &directive(case.clone())),
+                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder),
                 "{case:?} after a release is out of order"
             );
@@ -875,6 +920,7 @@ mod tests {
             &directive(LifecycleDirective::Admit {
                 instruction: instruction(),
             }),
+            &mut None,
         );
         assert_eq!(
             first,
@@ -889,6 +935,7 @@ mod tests {
             &directive(LifecycleDirective::Admit {
                 instruction: instruction(),
             }),
+            &mut None,
         );
         assert_eq!(second, Payload::Refusal(LifecycleRefusal::OutOfOrder));
     }
@@ -922,7 +969,7 @@ mod tests {
         ];
         for case in outside {
             assert_eq!(
-                dispatch(&mut position, &mut residency, &directive(case.clone())),
+                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder),
                 "{case:?} is outside this seam's vocabulary"
             );
@@ -947,7 +994,7 @@ mod tests {
         });
         closing.position = Position::Close;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &closing),
+            dispatch(&mut position, &mut residency, &closing, &mut None),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
@@ -956,7 +1003,7 @@ mod tests {
         });
         wrong_opener.exchange.opener = Opener::Spu;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &wrong_opener),
+            dispatch(&mut position, &mut residency, &wrong_opener, &mut None),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
@@ -981,7 +1028,7 @@ mod tests {
             payload: Payload::Answer(LifecycleAnswer::Ready),
         };
         assert_eq!(
-            dispatch(&mut position, &mut residency, &envelope),
+            dispatch(&mut position, &mut residency, &envelope, &mut None),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
     }
@@ -993,14 +1040,10 @@ mod tests {
         }
     }
 
-    fn append(tunable: &[(&str, f64)]) -> TokenDirective {
+    fn append() -> TokenDirective {
         TokenDirective::AppendAndGenerate {
             turn: weaver_types::TurnKey("t-1".into()),
             delta: vec![],
-            tunable: tunable
-                .iter()
-                .map(|(name, value)| (name.to_string(), *value))
-                .collect(),
         }
     }
 
@@ -1033,7 +1076,7 @@ mod tests {
     #[test]
     fn a_directive_before_any_open_answers_not_open() {
         for directive in [
-            append(&[]),
+            append(),
             TokenDirective::Cancel {
                 turn: weaver_types::TurnKey("t-1".into()),
             },
@@ -1057,38 +1100,6 @@ mod tests {
         );
     }
 
-    /// **The receiver refuses a value no sampler may meet,** per
-    /// `weaver-types-Spec` section 4.4: a `NaN` or an infinity in the tunable
-    /// map is `MalformedDelta` at the point the map is read, stated as the
-    /// receiver's check so a value arriving by any later encoding meets the
-    /// same refusal.
-    ///
-    /// Perturbation: drop the finite check from `judge_decode` and this test
-    /// fails, the malformed values reading as in order. Watched under exactly
-    /// that removal.
-    #[test]
-    fn a_non_finite_tunable_refuses_as_malformed_delta() {
-        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
-            assert_eq!(
-                judge_decode(
-                    DecodePosition::AtRest,
-                    true,
-                    &append(&[("temperature", bad)])
-                ),
-                Some(TokenRefusal::MalformedDelta),
-                "{bad} must never reach a sampler"
-            );
-        }
-        assert_eq!(
-            judge_decode(
-                DecodePosition::AtRest,
-                true,
-                &append(&[("temperature", 0.7)])
-            ),
-            None,
-            "a finite value is in order"
-        );
-    }
 
     /// **A block the family cannot render refuses as the delta malformed for
     /// the family,** the contract's own case: the tool shapes are blocked

@@ -71,6 +71,7 @@
 //! };
 //! assert_eq!(knobs.tunable_names(), Vec::<&str>::new());
 //! ```
+//! conforms: spu-tunables-arrive-in-the-declaration
 
 use std::collections::BTreeMap;
 
@@ -130,12 +131,121 @@ pub struct EffectiveKnobs {
     pub seed: u64,
 }
 
+/// Resolve one count-valued parameter, judging the value before the cast.
+///
+/// **The cast cannot fail, which is why this exists.** A float cast to an
+/// integer answers for every input: it truncates toward zero, so `3.7` becomes
+/// `3`, it maps `NaN` to zero, and it saturates at the target's bounds, so
+/// `-1.0` becomes `0` and `1e20` becomes `u32::MAX`. Each substitutes a number
+/// no operator wrote.
+///
+/// **`ceiling` is exclusive and is a power of two rather than the type's
+/// maximum.** `u32::MAX as f64` is exact, but `u64::MAX as f64` rounds up to
+/// `2^64`, so a bound written as the maximum would admit a value of exactly
+/// `2^64`, which then saturates to `u64::MAX`. That is the substitution this
+/// function exists to refuse, surviving inside the refusal. Passing the power
+/// of two and rejecting at or above it closes that for every width.
+fn resolve_count<T: Copy>(
+    disposition: &Disposition<T>,
+    name: &'static str,
+    supplied: &TunableValues,
+    ceiling: f64,
+    convert: impl Fn(f64) -> T,
+) -> Result<T, KnobRefusal> {
+    match disposition {
+        Disposition::Frozen(value) => Ok(*value),
+        Disposition::OperatorTunable => {
+            let value = *supplied
+                .get(name)
+                .ok_or(KnobRefusal::Unsupplied { knob: name })?;
+            if value.fract() != 0.0 || value < 0.0 || value >= ceiling {
+                return Err(KnobRefusal::NotACount {
+                    knob: name,
+                    supplied: value,
+                });
+            }
+            Ok(convert(value))
+        }
+    }
+}
+
+/// The session parameters, elected the same way the knobs are.
+///
+/// **A sibling of [`Knobs`] rather than a member of it**, because [`Knobs`] is
+/// the sampling set and its doctest pins that membership: a capacity is not a
+/// sampling knob and adding it there would make the pinned list mean something
+/// else. What the two share is [`Disposition`], which is the mechanism rather
+/// than the set, so both resolve against one supplied map.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SessionParameters {
+    pub context_capacity: Disposition<u32>,
+    pub max_tokens_per_turn: Disposition<usize>,
+}
+
+/// The session parameters a load ran with, whichever side set them.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EffectiveSessionParameters {
+    pub context_capacity: u32,
+    pub max_tokens_per_turn: usize,
+}
+
+impl SessionParameters {
+    /// The names of the parameters this binary left tunable, derived from the
+    /// dispositions for the reason [`Knobs::tunable_names`] gives.
+    pub fn tunable_names(&self) -> Vec<&'static str> {
+        let mut names = Vec::new();
+        if !self.context_capacity.is_frozen() {
+            names.push("context-capacity");
+        }
+        if !self.max_tokens_per_turn.is_frozen() {
+            names.push("max-tokens-per-turn");
+        }
+        names
+    }
+
+    /// Resolve against what the declaration supplied. Both members are counts,
+    /// so both are judged before the cast that cannot fail.
+    pub fn resolve(
+        &self,
+        supplied: &TunableValues,
+    ) -> Result<EffectiveSessionParameters, KnobRefusal> {
+        Ok(EffectiveSessionParameters {
+            context_capacity: resolve_count(
+                &self.context_capacity,
+                "context-capacity",
+                supplied,
+                2f64.powi(32),
+                |v| v as u32,
+            )?,
+            max_tokens_per_turn: resolve_count(
+                &self.max_tokens_per_turn,
+                "max-tokens-per-turn",
+                supplied,
+                2f64.powi(64),
+                |v| v as usize,
+            )?,
+        })
+    }
+}
+
 /// Why a resolve refused.
 #[derive(Debug, Clone, PartialEq)]
 pub enum KnobRefusal {
     /// A knob this binary left tunable was not supplied. Named, because an
     /// operator meeting it needs to know which one.
     Unsupplied { knob: &'static str },
+    /// A value supplied for a count is not one: fractional, negative, or past
+    /// what the count's type holds.
+    ///
+    /// **The refusal exists because the conversion cannot fail.** A float cast
+    /// to an integer answers for every input: it truncates toward zero, so
+    /// `3.7` becomes `3`, it maps `NaN` to zero, and it saturates at the
+    /// target's bounds, so `-1.0` becomes `0` and `1e20` becomes `u32::MAX`.
+    /// Each of those substitutes a number no operator wrote, silently, which is
+    /// the substitution this crate refuses everywhere else. The floor judged
+    /// finiteness at parse, per `weaver-types-Spec` section 2, and which names
+    /// are counts is this crate's election so this is where it is judged.
+    NotACount { knob: &'static str, supplied: f64 },
 }
 
 impl Knobs {
@@ -192,7 +302,9 @@ impl Knobs {
         }
         Ok(EffectiveKnobs {
             temperature: take(&self.temperature, "temperature", supplied, |v| v as f32)?,
-            top_k: take(&self.top_k, "top-k", supplied, |v| v as u32)?,
+            top_k: resolve_count(&self.top_k, "top-k", supplied, 2f64.powi(32), |v| {
+                v as u32
+            })?,
             top_p: take(&self.top_p, "top-p", supplied, |v| v as f32)?,
             repetition_penalty: take(
                 &self.repetition_penalty,
@@ -200,13 +312,14 @@ impl Knobs {
                 supplied,
                 |v| v as f32,
             )?,
-            repetition_window: take(
+            repetition_window: resolve_count(
                 &self.repetition_window,
                 "repetition-window",
                 supplied,
+                2f64.powi(32),
                 |v| v as u32,
             )?,
-            seed: take(&self.seed, "seed", supplied, |v| v as u64)?,
+            seed: resolve_count(&self.seed, "seed", supplied, 2f64.powi(64), |v| v as u64)?,
         })
     }
 }
@@ -287,6 +400,99 @@ mod tests {
             Err(KnobRefusal::Unsupplied {
                 knob: "repetition-window"
             })
+        );
+    }
+
+    /// **A value supplied in the declaration reaches the engine's inputs**,
+    /// per `weaver-spu-Spec` section 8, which is the point of the route: the
+    /// values arrive with the instruction at admit and the engine takes them
+    /// when the session opens. The frozen half is asserted beside it, because
+    /// a route that moved a frozen value would take a deployment's lock away.
+    ///
+    /// Perturbation: have `Knobs::resolve` read its own frozen value for an
+    /// `OperatorTunable` disposition and this test fails, the temperature
+    /// reading 0.7 where the declaration said 0.2.
+    #[test]
+    fn a_declared_value_resolves_and_a_frozen_one_does_not_move() {
+        let elections = Knobs {
+            temperature: Disposition::OperatorTunable,
+            top_k: Disposition::Frozen(40),
+            top_p: Disposition::Frozen(0.95),
+            repetition_penalty: Disposition::Frozen(1.1),
+            repetition_window: Disposition::Frozen(64),
+            seed: Disposition::Frozen(11),
+        };
+        let supplied: TunableValues = [
+            ("temperature".to_string(), 0.2f64),
+            // A name this binary froze, ignored where it appears.
+            ("seed".to_string(), 99f64),
+        ]
+        .into_iter()
+        .collect();
+        let effective = elections.resolve(&supplied).expect("resolves");
+        assert_eq!(effective.temperature, 0.2, "the declaration's value resolved");
+        assert_eq!(
+            effective.seed, 11,
+            "and a frozen parameter is not moved by a declaration naming it"
+        );
+    }
+
+    /// **A count supplied as anything but a count refuses**, per
+    /// `weaver-spu-Spec` section 8, judged before a cast that cannot fail.
+    ///
+    /// **The ceiling case is the one worth having.** `u64::MAX as f64` rounds
+    /// up to `2^64`, so a bound written as the type's maximum would admit
+    /// exactly `2^64` and then saturate it to `u64::MAX`, which is the
+    /// substitution the check exists to refuse.
+    ///
+    /// Perturbation: relax `resolve_count`'s test to `value > ceiling` and the
+    /// `2^64` case fails, the value resolving to `u64::MAX`. Drop the `fract`
+    /// test and the fractional case fails. Watched under both.
+    #[test]
+    fn a_count_that_is_not_one_refuses() {
+        let elections = SessionParameters {
+            context_capacity: Disposition::OperatorTunable,
+            max_tokens_per_turn: Disposition::Frozen(512),
+        };
+        for bad in [3.7f64, -1.0, 2f64.powi(32)] {
+            let supplied: TunableValues =
+                [("context-capacity".to_string(), bad)].into_iter().collect();
+            assert_eq!(
+                elections.resolve(&supplied),
+                Err(KnobRefusal::NotACount {
+                    knob: "context-capacity",
+                    supplied: bad,
+                }),
+                "{bad} is not a count and the cast would have taken it"
+            );
+        }
+        let good: TunableValues = [("context-capacity".to_string(), 8192.0)]
+            .into_iter()
+            .collect();
+        assert_eq!(
+            elections
+                .resolve(&good)
+                .expect("a count resolves")
+                .context_capacity,
+            8192,
+            "and a count that is one is taken"
+        );
+    }
+
+    /// The 64-bit ceiling is exclusive, which the 32-bit case cannot show.
+    #[test]
+    fn the_sixty_four_bit_ceiling_is_exclusive() {
+        let elections = SessionParameters {
+            context_capacity: Disposition::Frozen(4096),
+            max_tokens_per_turn: Disposition::OperatorTunable,
+        };
+        let at_the_bound: TunableValues =
+            [("max-tokens-per-turn".to_string(), 2f64.powi(64))]
+                .into_iter()
+                .collect();
+        assert!(
+            elections.resolve(&at_the_bound).is_err(),
+            "2^64 is the value u64::MAX as f64 rounds to, and it is refused"
         );
     }
 }

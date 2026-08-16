@@ -83,6 +83,7 @@ fn instruction() -> SpuInstruction {
             model_binding: binding(),
             residual_readout_election: false,
             identity: vec![],
+            tunable_values: Default::default(),
         },
     }
 }

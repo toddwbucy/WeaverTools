@@ -259,6 +259,7 @@ mod tests {
                 "      devices: [0]\n",
                 "    residual-readout-election: false\n",
                 "    identity: []\n",
+                "    tunable-values: {{}}\n",
                 "tool-set: []\n",
                 "permission-mode: ask\n",
                 "gate-instruction:\n",
