@@ -22,6 +22,7 @@ fn full_config() -> String {
         "        content:\n",
         "          - type: text\n",
         "            text: You answer briefly.\n",
+        "    tunable-values: {}\n",
         "tool-set: []\n",
         "permission-mode: ask\n",
         "gate-instruction:\n",

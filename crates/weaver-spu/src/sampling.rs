@@ -130,12 +130,106 @@ pub struct EffectiveKnobs {
     pub seed: u64,
 }
 
+/// The session parameters, elected the same way the knobs are.
+///
+/// **A sibling of [`Knobs`] rather than a member of it**, because [`Knobs`] is
+/// the sampling set and its doctest pins that membership: a capacity is not a
+/// sampling knob and adding it there would make the pinned list mean something
+/// else. What the two share is [`Disposition`], which is the mechanism rather
+/// than the set, so both resolve against one supplied map.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SessionParameters {
+    pub context_capacity: Disposition<u32>,
+    pub max_tokens_per_turn: Disposition<usize>,
+}
+
+/// The session parameters a load ran with, whichever side set them.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EffectiveSessionParameters {
+    pub context_capacity: u32,
+    pub max_tokens_per_turn: usize,
+}
+
+impl SessionParameters {
+    /// The names of the parameters this binary left tunable, derived from the
+    /// dispositions for the reason [`Knobs::tunable_names`] gives.
+    pub fn tunable_names(&self) -> Vec<&'static str> {
+        let mut names = Vec::new();
+        if !self.context_capacity.is_frozen() {
+            names.push("context-capacity");
+        }
+        if !self.max_tokens_per_turn.is_frozen() {
+            names.push("max-tokens-per-turn");
+        }
+        names
+    }
+
+    /// Resolve against what the declaration supplied. Both members are counts,
+    /// so both are judged before the cast that cannot fail.
+    pub fn resolve(
+        &self,
+        supplied: &TunableValues,
+    ) -> Result<EffectiveSessionParameters, KnobRefusal> {
+        fn count<T: Copy>(
+            disposition: &Disposition<T>,
+            name: &'static str,
+            supplied: &TunableValues,
+            ceiling: f64,
+            convert: impl Fn(f64) -> T,
+        ) -> Result<T, KnobRefusal> {
+            match disposition {
+                Disposition::Frozen(value) => Ok(*value),
+                Disposition::OperatorTunable => {
+                    let value = *supplied
+                        .get(name)
+                        .ok_or(KnobRefusal::Unsupplied { knob: name })?;
+                    if value.fract() != 0.0 || value < 0.0 || value > ceiling {
+                        return Err(KnobRefusal::NotACount {
+                            knob: name,
+                            supplied: value,
+                        });
+                    }
+                    Ok(convert(value))
+                }
+            }
+        }
+        Ok(EffectiveSessionParameters {
+            context_capacity: count(
+                &self.context_capacity,
+                "context-capacity",
+                supplied,
+                u32::MAX as f64,
+                |v| v as u32,
+            )?,
+            max_tokens_per_turn: count(
+                &self.max_tokens_per_turn,
+                "max-tokens-per-turn",
+                supplied,
+                usize::MAX as f64,
+                |v| v as usize,
+            )?,
+        })
+    }
+}
+
 /// Why a resolve refused.
 #[derive(Debug, Clone, PartialEq)]
 pub enum KnobRefusal {
     /// A knob this binary left tunable was not supplied. Named, because an
     /// operator meeting it needs to know which one.
     Unsupplied { knob: &'static str },
+    /// A value supplied for a count is not one: fractional, negative, or past
+    /// what the count's type holds.
+    ///
+    /// **The refusal exists because the conversion cannot fail.** A float cast
+    /// to an integer answers for every input: it truncates toward zero, so
+    /// `3.7` becomes `3`, it maps `NaN` to zero, and it saturates at the
+    /// target's bounds, so `-1.0` becomes `0` and `1e20` becomes `u32::MAX`.
+    /// Each of those substitutes a number no operator wrote, silently, which is
+    /// the substitution this crate refuses everywhere else. The floor judged
+    /// finiteness at parse, per `weaver-types-Spec` section 2, and which names
+    /// are counts is this crate's election so this is where it is judged.
+    NotACount { knob: &'static str, supplied: f64 },
 }
 
 impl Knobs {
@@ -190,9 +284,37 @@ impl Knobs {
                     .ok_or(KnobRefusal::Unsupplied { knob: name }),
             }
         }
+        /// The same, for a parameter whose type is a count, judging the value
+        /// before the cast that cannot fail. `ceiling` is what the target type
+        /// holds, passed rather than inferred so the caller names it.
+        fn take_count<T: Copy>(
+            disposition: &Disposition<T>,
+            name: &'static str,
+            supplied: &TunableValues,
+            ceiling: f64,
+            convert: impl Fn(f64) -> T,
+        ) -> Result<T, KnobRefusal> {
+            match disposition {
+                Disposition::Frozen(value) => Ok(*value),
+                Disposition::OperatorTunable => {
+                    let value = *supplied
+                        .get(name)
+                        .ok_or(KnobRefusal::Unsupplied { knob: name })?;
+                    if value.fract() != 0.0 || value < 0.0 || value > ceiling {
+                        return Err(KnobRefusal::NotACount {
+                            knob: name,
+                            supplied: value,
+                        });
+                    }
+                    Ok(convert(value))
+                }
+            }
+        }
         Ok(EffectiveKnobs {
             temperature: take(&self.temperature, "temperature", supplied, |v| v as f32)?,
-            top_k: take(&self.top_k, "top-k", supplied, |v| v as u32)?,
+            top_k: take_count(&self.top_k, "top-k", supplied, u32::MAX as f64, |v| {
+                v as u32
+            })?,
             top_p: take(&self.top_p, "top-p", supplied, |v| v as f32)?,
             repetition_penalty: take(
                 &self.repetition_penalty,
@@ -200,13 +322,14 @@ impl Knobs {
                 supplied,
                 |v| v as f32,
             )?,
-            repetition_window: take(
+            repetition_window: take_count(
                 &self.repetition_window,
                 "repetition-window",
                 supplied,
+                u32::MAX as f64,
                 |v| v as u32,
             )?,
-            seed: take(&self.seed, "seed", supplied, |v| v as u64)?,
+            seed: take_count(&self.seed, "seed", supplied, u64::MAX as f64, |v| v as u64)?,
         })
     }
 }

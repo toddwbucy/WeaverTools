@@ -232,7 +232,6 @@ impl<'a> Ports<'a> {
             .send_directive(&TokenDirective::AppendAndGenerate {
                 turn: turn.clone(),
                 delta,
-                tunable: std::collections::BTreeMap::new(),
             })
             .map_err(|_| TurnError::ChannelLost)?;
 
