@@ -67,6 +67,26 @@ const PROBES: &[Probe] = &[
         rendered: qwen2::RENDERED_MARKERS,
     },
     Probe {
+        // **Qwen3.5 declares its own architecture and renders the same ChatML
+        // scaffolding**, so it is probed separately for the reason qwen3 is:
+        // two keys citing one module is a claim about their markers agreeing,
+        // and a claim is worth measuring. The artifacts on this workshop are
+        // community quantizations of Qwen3.6, which declare `qwen35`.
+        family: "qwen35",
+        env: "WEAVER_VOCAB_QWEN35",
+        default_path: "/bulk-store/models/DavidAU--Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF/Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-IQ2_M.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
+    },
+    Probe {
+        // The sparse sibling declares its own architecture again, so the same
+        // claim is measured against its own tokenizer rather than assumed from
+        // the dense one.
+        family: "qwen35moe",
+        env: "WEAVER_VOCAB_QWEN35MOE",
+        default_path: "/bulk-store/books/models/unsloth--Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-IQ1_M.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
+    },
+    Probe {
         family: "gpt-oss",
         env: "WEAVER_VOCAB_GPT_OSS",
         default_path: "/opt/weaver/models/h-dist/gpt-oss-20b-mxfp4.gguf",
