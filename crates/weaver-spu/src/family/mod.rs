@@ -332,6 +332,38 @@ pub const REGISTRY: &[Declaration] = &[
         taps_readout: false,
     },
     Declaration {
+        // **Qwen3.5 declares its own architecture and renders the same ChatML
+        // scaffolding**, so it cites the qwen2 module for the reason qwen3
+        // does rather than growing a third holding the same two markers.
+        // Measured by the marker probe of `tests/markers.rs` against a
+        // Qwen3.6 tokenizer, which is what declares this architecture: the
+        // rendered set promotes to one token each, and a lookalike that no
+        // family declares does not, so the vocabulary agrees rather than the
+        // tokenizer promoting everything.
+        //
+        // The artifacts also carry vision markers, `<|vision_start|>` and its
+        // neighbours, which no text turn renders. They are named here as
+        // present and unused rather than left for a later reader to wonder at.
+        family: "qwen35",
+        shard_widths: &[1, 2],
+        template: qwen2::TEMPLATE,
+        generation_opener: qwen2::GENERATION_OPENER,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
+        // The sparse sibling declares its own architecture again, so it is its
+        // own key and its own probe. Two keys citing one module is a claim
+        // about their markers agreeing, and this one is measured rather than
+        // inherited from the dense entry above.
+        family: "qwen35moe",
+        shard_widths: &[1, 2],
+        template: qwen2::TEMPLATE,
+        generation_opener: qwen2::GENERATION_OPENER,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
         // The key is what llama.cpp writes into `general.architecture`, which
         // is hyphenated. A key spelled any other way is a family no artifact
         // header ever selects, unreachable rather than wrong-looking.
@@ -567,6 +599,27 @@ mod tests {
     /// `tests/markers.rs` verifies the vocabularies agree, and needs the `gguf`
     /// feature to do it, so this side of the claim is asserted where every
     /// build can see it.
+    /// **Qwen3.5 and its sparse sibling are carried, and served by the qwen2
+    /// module.** Each declares its own architecture, so without an entry the
+    /// lookup refuses `UnknownFamily` before any device call, correctly and
+    /// uselessly. What this guards is the entries existing.
+    ///
+    /// The claim they rest on, that the marker vocabularies agree, is
+    /// measured by `tests/markers.rs` against a tokenizer of each rather than
+    /// inherited from qwen2 or from each other.
+    #[test]
+    fn qwen35_resolves_through_the_qwen2_module() {
+        for family in ["qwen35", "qwen35moe"] {
+            let declaration = lookup(&FamilyName(family.into()))
+                .unwrap_or_else(|_| panic!("{family} is carried"));
+            assert_eq!(declaration.template, qwen2::TEMPLATE, "{family}");
+            assert_eq!(
+                declaration.generation_opener, qwen2::GENERATION_OPENER,
+                "{family}"
+            );
+        }
+    }
+
     #[test]
     fn qwen3_resolves_through_the_qwen2_module() {
         let declaration = lookup(&FamilyName("qwen3".into())).expect("qwen3 is carried");

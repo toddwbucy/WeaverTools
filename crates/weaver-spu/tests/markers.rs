@@ -67,6 +67,26 @@ const PROBES: &[Probe] = &[
         rendered: qwen2::RENDERED_MARKERS,
     },
     Probe {
+        // **Qwen3.5 declares its own architecture and renders the same ChatML
+        // scaffolding**, so it is probed separately for the reason qwen3 is:
+        // two keys citing one module is a claim about their markers agreeing,
+        // and a claim is worth measuring. The artifacts on this workshop are
+        // community quantizations of Qwen3.6, which declare `qwen35`.
+        family: "qwen35",
+        env: "WEAVER_VOCAB_QWEN35",
+        default_path: "/bulk-store/models/DavidAU--Qwen3.6-40B-Claude-4.6-Opus-Deckard-Heretic-Uncensored-Thinking-NEO-CODE-Di-IMatrix-MAX-GGUF/Qwen3.6-40B-Deck-Opus-NEO-CODE-HERE-2T-OT-IQ2_M.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
+    },
+    Probe {
+        // The sparse sibling declares its own architecture again, so the same
+        // claim is measured against its own tokenizer rather than assumed from
+        // the dense one.
+        family: "qwen35moe",
+        env: "WEAVER_VOCAB_QWEN35MOE",
+        default_path: "/bulk-store/books/models/unsloth--Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-IQ1_M.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
+    },
+    Probe {
         family: "gpt-oss",
         env: "WEAVER_VOCAB_GPT_OSS",
         default_path: "/opt/weaver/models/h-dist/gpt-oss-20b-mxfp4.gguf",
@@ -75,10 +95,17 @@ const PROBES: &[Probe] = &[
 ];
 
 impl Probe {
-    fn path(&self) -> PathBuf {
+    /// The vocab to probe, and whether an operator named it.
+    ///
+    /// **The two are not the same absence.** A default path that is not there
+    /// is a workshop without that family's artifact, which leaves the family
+    /// unverified and is reported. An overridden path that is not there is an
+    /// operator who asked for a vocabulary and got no measurement, which must
+    /// not pass quietly.
+    fn path(&self) -> (PathBuf, bool) {
         match std::env::var_os(self.env) {
-            Some(value) => PathBuf::from(value),
-            None => PathBuf::from(self.default_path),
+            Some(value) => (PathBuf::from(value), true),
+            None => (PathBuf::from(self.default_path), false),
         }
     }
 }
@@ -119,7 +146,18 @@ fn every_rendered_marker_promotes_to_one_token() {
     let mut probed = 0usize;
 
     for probe in PROBES {
-        let path = probe.path();
+        let (path, overridden) = probe.path();
+        // An operator who named a vocab and whose path is not a regular file
+        // gets a failure rather than a skip: the ask was explicit, so silence
+        // would report a measurement that never ran.
+        assert!(
+            !overridden || path.is_file(),
+            "{} is set to {} which is not a regular file, so {} would have been \
+             skipped and this test would have passed without probing it",
+            probe.env,
+            path.display(),
+            probe.family
+        );
         if !path.exists() {
             absent.push(format!("{} (no vocab at {})", probe.family, path.display()));
             continue;
@@ -171,8 +209,12 @@ fn every_rendered_marker_promotes_to_one_token() {
     assert!(
         probed > 0,
         "no family vocab was reachable, so this test asserted nothing. Set one of \
-         WEAVER_VOCAB_LLAMA, WEAVER_VOCAB_QWEN2, or WEAVER_VOCAB_GPT_OSS.\n  \
-         absent: {absent:?}\n  failed to load: {failures:?}"
+         {}.\n  absent: {absent:?}\n  failed to load: {failures:?}",
+        PROBES
+            .iter()
+            .map(|probe| probe.env)
+            .collect::<Vec<_>>()
+            .join(", ")
     );
 
     assert!(
