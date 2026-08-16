@@ -2,6 +2,7 @@
 //! conforms: admin-dial-retries-within-a-bound
 //! conforms: admin-truncation-is-a-channel-fault
 //! conforms: admin-enter-carries-descriptor-in-one-message
+//! conforms: admin-run-reference-distinguishes
 //!
 //! The coordination channel, per `weaver-admin-Spec` section 7: reached in one
 //! act, the dial, `SOCK_SEQPACKET`, carrying the election of
