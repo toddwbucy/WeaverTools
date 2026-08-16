@@ -332,6 +332,19 @@ pub const REGISTRY: &[Declaration] = &[
         taps_readout: false,
     },
     Declaration {
+        // **Qwen3's sparse sibling declares its own architecture**, so it is
+        // its own key citing the qwen2 module for the reason the dense one
+        // does. Measured by the marker probe against a Qwen3-30B-A3B
+        // tokenizer: the rendered set is qwen2's exactly, carrying not even
+        // the vision markers the qwen35 artifacts do.
+        family: "qwen3moe",
+        shard_widths: &[1, 2],
+        template: qwen2::TEMPLATE,
+        generation_opener: qwen2::GENERATION_OPENER,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
         // **Qwen3.5 declares its own architecture and renders the same ChatML
         // scaffolding**, so it cites the qwen2 module for the reason qwen3
         // does rather than growing a third holding the same two markers.
@@ -608,8 +621,8 @@ mod tests {
     /// measured by `tests/markers.rs` against a tokenizer of each rather than
     /// inherited from qwen2 or from each other.
     #[test]
-    fn qwen35_resolves_through_the_qwen2_module() {
-        for family in ["qwen35", "qwen35moe"] {
+    fn the_qwen_family_keys_resolve_through_the_qwen2_module() {
+        for family in ["qwen3moe", "qwen35", "qwen35moe"] {
             let declaration = lookup(&FamilyName(family.into()))
                 .unwrap_or_else(|_| panic!("{family} is carried"));
             assert_eq!(declaration.template, qwen2::TEMPLATE, "{family}");
