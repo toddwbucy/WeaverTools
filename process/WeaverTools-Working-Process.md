@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.23, 2026-08-16. Companion to the Working Rules, the Document
+**Version:** v0.24, 2026-08-16. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -389,26 +389,41 @@ where the operator points them.
 
 **All seven crates are built and merged.** Each file carries its conformance
 header per Document Format sections 3 and 4, and no crate carries a header citing
-an assertion no Spec declares:
+an assertion no Spec declares. Recounted 2026-08-16 over every tracked unit
+carrying a header, per the Document Format's counting clause:
 
-    weaver-types      17/17      weaver-harness   48/48
-    weaver-traits     24/24      weaver-gate      23/23
-    weaver-trace      39/39      weaver-admin     31/31
-    weaver-spu        56/60
+    weaver-types      18/18      weaver-harness   54/55
+    weaver-traits     24/24      weaver-gate      27/27
+    weaver-trace      38/38      weaver-admin     31/32
+    weaver-spu        58/60
 
-**The four open in `weaver-spu` are blocked rather than missed**, and the four
-divide in two without remainder. **Two** wait on the floor carrying the decode
-seam's vocabulary, which the types charter declares and `weaver-types-Spec`
-section 4.4 now shapes whole, the trio landing 2026-08-08 and `Generation`
-settling 2026-08-10, so what these two wait on is the code act that writes the
-shaped types. **Two** wait on the readout tap existing, and the tap is not the
-engine: the eval-callback pin holds the seam open and nothing yet drives a tap
-through it, which `weaver-spu-Spec` section 7 states plainly as code this
-program writes rather than salvage it inherits. A fifth, the election refused
-at admit, was bought 2026-08-10 by the route act, the election having gained
-its wire route. The register naming each assertion lives in the repository's
-issue tracker rather than here, so this section states the division and leaves
-the roll to the register.
+**The figures moved on the method rather than on the work**, six of the seven
+rows changing at that recount and none of them because a crate gained or lost a
+citation that day. The count had been taken over `src` alone, which excluded
+every assertion whose citation sits in an integration test while including
+manifest assertions cited in `lib.rs` whose instrument is the manifest. The
+earlier table read `types 17/17`, `trace 39/39`, `harness 48/48`, `gate 23/23`,
+`admin 31/31`, and `spu 56/60`, and it is recorded here because a reader
+comparing an old batch against this section needs to know the ruler changed and
+not the thing measured.
+
+**Four assertions are open across the set and each is named**, the roll being
+short enough that leaving it to the register cost more than it saved:
+
+    weaver-spu        spu-one-forward-per-prompt                  review
+    weaver-spu        spu-two-taps-one-shape                      review
+    weaver-harness    harness-idle-report-authors-without-a-turn   perturbation
+    weaver-admin      admin-run-reference-distinguishes            review
+
+**The SPU's two are blocked rather than missed** and both wait on the readout
+tap existing, the tap not being the engine: the eval-callback pin holds the seam
+open and nothing yet drives a tap through it, which `weaver-spu-Spec` section 7
+states plainly as code this program writes rather than salvage it inherits. The
+two that waited on the floor carrying the decode seam's vocabulary are cited and
+closed, and a fifth, the election refused at admit, was bought 2026-08-10 by the
+route act. `spu-marker-promotion` reads satisfied under this count and did not
+under the old one, its citation sitting with the perturbation test that buys it,
+which matters because it is the gate on any family the registry gains.
 
 **One decode engine is written and one is not, and the turn now completes.**
 The GGUF engine landed 2026-08-08 and decodes real weights under its own tests,
@@ -436,12 +451,15 @@ reads false in the declaration the live run used, and its tap is unwritten.
 Collapsing them would be this document doing what section 7.2 was closed to
 prevent.
 
-**A completed turn satisfies no conformance assertion, and the four open in
-`weaver-spu` are open still.** The live run evidences that the path works. It
-does not write the shaped floor types two of the four wait on, and it does not
-drive a tap through the eval-callback pin the other two wait on. A reader who
-takes the demonstration as having closed them has read a count into a
-behaviour.
+**A completed turn satisfies no conformance assertion, and the SPU's two open
+are open still.** The live run evidences that the path works. It does not drive
+a tap through the eval-callback pin both of them wait on. A reader who takes the
+demonstration as having closed them has read a count into a behaviour.
+
+An earlier wording of this paragraph said four, which was the figure the table
+carried when the count ran over `src` alone. Two of that four were cited all
+along in the tests that buy them, and the recount above is where the figure and
+its method now sit together.
 
 The caution this paragraph carried still holds and now points both ways. A
 crate could always report a high conformance figure while completing no turn,
