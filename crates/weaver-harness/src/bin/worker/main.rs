@@ -17,15 +17,41 @@ mod dev_loop;
 
 use std::process::ExitCode;
 
-use weaver_harness::{Harness, OrganBinaries, bind_coordination};
+use weaver_harness::{Harness, OrganBinaries, OrganParameters, bind_coordination};
 
 fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
     let (Some(socket), Some(spu), Some(gate)) = (args.next(), args.next(), args.next()) else {
-        eprintln!("worker <coordination-socket> <spu-binary> <gate-binary> [identity]");
+        eprintln!(
+            "worker <coordination-socket> <spu-binary> <gate-binary> [identity] \
+             [--headroom-bytes N]"
+        );
         return ExitCode::FAILURE;
     };
-    let identity = args.next().unwrap_or_default();
+    // **The positional identity, then the deployment's construction
+    // parameters as named flags.** A parameter is optional and an organ given
+    // none keeps its compiled default, so a deployment that supplies nothing
+    // behaves as every deployment did before this vector existed.
+    let mut identity = String::new();
+    let mut parameters = OrganParameters::default();
+    while let Some(argument) = args.next() {
+        match argument.as_str() {
+            "--headroom-bytes" => match args.next() {
+                Some(value) => parameters.headroom_bytes = Some(value),
+                None => {
+                    eprintln!("worker: --headroom-bytes takes a value");
+                    return ExitCode::FAILURE;
+                }
+            },
+            other if other.starts_with("--") => {
+                // Named rather than ignored: a deployment that misspells a
+                // parameter would otherwise get the default and no signal.
+                eprintln!("worker: unknown parameter {other}");
+                return ExitCode::FAILURE;
+            }
+            positional => identity = positional.to_string(),
+        }
+    }
 
     let listener = match bind_coordination(std::path::Path::new(&socket)) {
         Ok(listener) => listener,
@@ -40,6 +66,7 @@ fn main() -> ExitCode {
             spu: spu.into(),
             gate: gate.into(),
         },
+        parameters,
     ) {
         Ok(harness) => harness,
         Err(fault) => {

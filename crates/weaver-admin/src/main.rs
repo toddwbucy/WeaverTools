@@ -532,6 +532,9 @@ fn load_service_config() -> Result<ServiceConfig, String> {
             // rather than being searched for, per Spec section 9.
             spu: PathBuf::from(read("spu-binary")?),
             gate: PathBuf::from(read("gate-binary")?),
+            // Optional, unlike the binaries above: an installation that states
+            // no headroom leaves the organ's compiled default standing.
+            headroom_bytes: read("headroom-bytes").ok().filter(|v| !v.is_empty()),
         },
         allow_list: inventory::AllowList::new(provisioned),
     })
@@ -556,6 +559,7 @@ mod tests {
                 worker: PathBuf::from("/bin/false"),
                 spu: PathBuf::from("/bin/false"),
                 gate: PathBuf::from("/bin/false"),
+            headroom_bytes: None,
             },
             allow_list: inventory::AllowList::new(["alpha".to_string()]),
         }

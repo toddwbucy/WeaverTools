@@ -103,6 +103,7 @@ impl Peer {
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
+                weaver_harness::OrganParameters::default(),
             )
             .expect("listen");
             // The inert entry: these tests drive directives alone, so no
@@ -391,6 +392,7 @@ fn dropping_the_harness_closes_the_listener() {
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
+                weaver_harness::OrganParameters::default(),
             )
             .expect("listen");
             drop(harness);

@@ -608,11 +608,49 @@ fn serve_decode(
     }
 }
 
+/// The admission headroom this process runs with.
+///
+/// **A host's fact, arriving on argv**, per `weaver-harness-Spec` section 2.2:
+/// the room to leave spare on a device is a property of the host and two agents
+/// sharing one cannot sensibly disagree about it, so it travels the worker's
+/// vector rather than a declaration. A deployment supplying none leaves the
+/// compiled default standing, which is what every deployment had before the
+/// vector existed.
+///
+/// **A supplied value that is not a byte count refuses to serve.** The
+/// alternative is a process running on a number nobody wrote, and an admission
+/// judged against a headroom the deployment did not ask for is worse than a
+/// refused start because nothing downstream could tell.
+fn headroom_from_arguments() -> Result<u64, String> {
+    let mut arguments = std::env::args().skip(1);
+    while let Some(argument) = arguments.next() {
+        match argument.as_str() {
+            "--headroom-bytes" => {
+                let value = arguments
+                    .next()
+                    .ok_or_else(|| "--headroom-bytes takes a value".to_string())?;
+                return value
+                    .parse::<u64>()
+                    .map_err(|_| format!("--headroom-bytes wants a byte count, got {value}"));
+            }
+            other => return Err(format!("unknown parameter {other}")),
+        }
+    }
+    Ok(HEADROOM_BYTES)
+}
+
 fn main() -> ExitCode {
     // Entry adopts both ends and performs its two sets before the first read.
     // A refusal here is a refusal to serve: the count check failing means the
     // harness's fork discipline failed upstream, and this process is not the
     // one to continue past it.
+    let headroom = match headroom_from_arguments() {
+        Ok(headroom) => headroom,
+        Err(complaint) => {
+            eprintln!("{}", serde_json::json!({"refusal": "bad_parameter", "detail": complaint}));
+            return ExitCode::FAILURE;
+        }
+    };
     let inherited = match channel::adopt() {
         Ok(inherited) => inherited,
         Err(fault) => {
@@ -620,7 +658,7 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    serve(inherited)
+    serve(inherited, headroom)
 }
 
 /// A refusal before any channel is trusted goes to standard error, because the
@@ -636,7 +674,7 @@ fn entry_refusal_line(fault: &EntryFault) -> String {
 }
 
 /// The one loop. One directive at a time against one resident session.
-fn serve(inherited: Inherited) -> ExitCode {
+fn serve(inherited: Inherited, headroom: u64) -> ExitCode {
     let Inherited { lifecycle, decode } = inherited;
 
     let mut residency = Residency::new();
@@ -661,7 +699,7 @@ fn serve(inherited: Inherited) -> ExitCode {
             }
         };
 
-        let payload = dispatch(&mut position, &mut residency, &envelope, &mut effective);
+        let payload = dispatch(&mut position, &mut residency, &envelope, &mut effective, headroom);
         let admitted_now = matches!(payload, Payload::Answer(LifecycleAnswer::Admitted));
         if answer(&lifecycle, envelope.exchange, payload).is_err() {
             return ExitCode::FAILURE;
@@ -719,6 +757,7 @@ fn dispatch(
     residency: &mut Residency,
     envelope: &OrganEnvelope,
     effective: &mut Option<Effective>,
+    headroom: u64,
 ) -> Payload {
     // A directive opens its exchange, and only the harness opens on this
     // channel. Anything else is the peer speaking out of turn.
@@ -763,7 +802,7 @@ fn dispatch(
             };
             match residency.admit(
                 &decoder.model_binding,
-                Headroom(HEADROOM_BYTES),
+                Headroom(headroom),
                 ReadoutElection(decoder.residual_readout_election),
             ) {
                 Ok(_) => {
@@ -874,6 +913,7 @@ mod tests {
                 &mut residency,
                 &directive(LifecycleDirective::Release),
                 &mut None,
+                HEADROOM_BYTES,
             ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
@@ -897,7 +937,7 @@ mod tests {
             LifecycleDirective::List,
         ] {
             assert_eq!(
-                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None),
+                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None, HEADROOM_BYTES),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder),
                 "{case:?} after a release is out of order"
             );
@@ -921,6 +961,7 @@ mod tests {
                 instruction: instruction(),
             }),
             &mut None,
+            HEADROOM_BYTES,
         );
         assert_eq!(
             first,
@@ -936,6 +977,7 @@ mod tests {
                 instruction: instruction(),
             }),
             &mut None,
+            HEADROOM_BYTES,
         );
         assert_eq!(second, Payload::Refusal(LifecycleRefusal::OutOfOrder));
     }
@@ -969,7 +1011,7 @@ mod tests {
         ];
         for case in outside {
             assert_eq!(
-                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None),
+                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None, HEADROOM_BYTES),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder),
                 "{case:?} is outside this seam's vocabulary"
             );
@@ -994,7 +1036,7 @@ mod tests {
         });
         closing.position = Position::Close;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &closing, &mut None),
+            dispatch(&mut position, &mut residency, &closing, &mut None, HEADROOM_BYTES),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
@@ -1003,7 +1045,7 @@ mod tests {
         });
         wrong_opener.exchange.opener = Opener::Spu;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &wrong_opener, &mut None),
+            dispatch(&mut position, &mut residency, &wrong_opener, &mut None, HEADROOM_BYTES),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
@@ -1028,7 +1070,7 @@ mod tests {
             payload: Payload::Answer(LifecycleAnswer::Ready),
         };
         assert_eq!(
-            dispatch(&mut position, &mut residency, &envelope, &mut None),
+            dispatch(&mut position, &mut residency, &envelope, &mut None, HEADROOM_BYTES),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
     }

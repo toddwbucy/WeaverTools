@@ -139,6 +139,65 @@ pub struct OrganBinaries {
     pub gate: PathBuf,
 }
 
+/// The construction parameters this worker hands its organs, per
+/// `weaver-harness-Spec` section 2.2.
+///
+/// **A host's facts and not an agent's.** What belongs here is a number two
+/// agents sharing this host cannot sensibly disagree about. A number that is a
+/// property of the agent reaches its organ in the declaration instead, which is
+/// why the context capacity and the per-turn ceiling are not here.
+///
+/// Carried as the string a deployment wrote rather than parsed on the way
+/// through: this crate hands it on and the organ's composition root is what
+/// judges it, so a bad value is refused by the crate that knows what the
+/// parameter means rather than twice.
+#[derive(Debug, Clone, Default)]
+pub struct OrganParameters {
+    /// The admission headroom, in bytes, if this deployment supplies one. An
+    /// organ given none keeps its own compiled default.
+    pub headroom_bytes: Option<String>,
+}
+
+impl OrganParameters {
+    /// The SPU's vector. Named flags rather than positions, because a
+    /// deployment supplying one parameter and not another must not have to
+    /// know the order, and an organ meeting an unknown flag says which.
+    pub fn spu_arguments(&self) -> Vec<String> {
+        let mut arguments = Vec::new();
+        if let Some(headroom) = &self.headroom_bytes {
+            arguments.push("--headroom-bytes".to_string());
+            arguments.push(headroom.clone());
+        }
+        arguments
+    }
+}
+
+#[cfg(test)]
+mod parameter_tests {
+    use super::OrganParameters;
+
+    /// **A deployment that states nothing hands nothing**, so an organ keeps
+    /// the default it compiled and an installation that never thought about a
+    /// parameter behaves as it always did.
+    #[test]
+    fn no_parameter_is_no_argument() {
+        assert!(OrganParameters::default().spu_arguments().is_empty());
+    }
+
+    /// A stated parameter travels as a named flag and its value, so a
+    /// deployment supplying one need not know the order of any other.
+    #[test]
+    fn a_stated_parameter_travels_named() {
+        let parameters = OrganParameters {
+            headroom_bytes: Some("268435456".to_string()),
+        };
+        assert_eq!(
+            parameters.spu_arguments(),
+            vec!["--headroom-bytes".to_string(), "268435456".to_string()]
+        );
+    }
+}
+
 /// The coordination channel's state: three positions, the last terminal, and
 /// the middle one carrying the run. A directive out of order for the state
 /// reaches a match arm rather than a flag check, which is what the type buys.
@@ -209,6 +268,7 @@ struct GateChannel {
 pub struct Harness {
     coordination: CoordinationListener,
     organs: OrganBinaries,
+    parameters: OrganParameters,
     state: ChannelState,
 }
 
@@ -224,11 +284,13 @@ impl Harness {
     pub fn listen(
         coordination: CoordinationListener,
         organs: OrganBinaries,
+        parameters: OrganParameters,
     ) -> Result<Self, AdoptionFault> {
         clear_dumpable()?;
         Ok(Harness {
             coordination,
             organs,
+            parameters,
             state: ChannelState::BeforeEnter,
         })
     }
@@ -773,7 +835,11 @@ impl Harness {
         // worker's, and the child performs only the async-signal-safe calls of
         // `place_child_ends` before its exec.
         let spu_pid = match unsafe {
-            crate::spawn::fork_organ(&self.organs.spu, &[&lifecycle_child, &decode_child])
+            crate::spawn::fork_organ(
+                &self.organs.spu,
+                &[&lifecycle_child, &decode_child],
+                &self.parameters.spu_arguments(),
+            )
         } {
             Ok(pid) => pid,
             Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
@@ -836,7 +902,7 @@ impl Harness {
             Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
         };
         // SAFETY: as above.
-        let gate_pid = match unsafe { crate::spawn::fork_organ(&self.organs.gate, &[&gate_child]) }
+        let gate_pid = match unsafe { crate::spawn::fork_organ(&self.organs.gate, &[&gate_child], &[]) }
         {
             Ok(pid) => pid,
             Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
@@ -1312,6 +1378,7 @@ mod tests {
                 spu: spu.clone(),
                 gate: gate.clone(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::BeforeEnter,
         };
         let payload = weaver_types::EnterPayload {
@@ -1479,6 +1546,7 @@ mod tests {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
         };
         harness
@@ -1525,6 +1593,7 @@ mod tests {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
         };
         harness.unwind_if_entered();
@@ -1561,6 +1630,7 @@ mod tests {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
         };
         assert!(
@@ -1577,6 +1647,7 @@ mod tests {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(idle)),
         };
         assert!(
@@ -1597,6 +1668,7 @@ mod tests {
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
         };
         harness
@@ -1700,6 +1772,7 @@ mod tests {
                 spu: "/nonexistent".into(),
                 gate: "/nonexistent".into(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
         };
 
@@ -1796,6 +1869,7 @@ mod tests {
                 spu: "/nonexistent".into(),
                 gate: "/nonexistent".into(),
             },
+            parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
         };
         let mut entered = false;
