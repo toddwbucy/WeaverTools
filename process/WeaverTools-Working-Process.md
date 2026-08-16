@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.26, 2026-08-16. Companion to the Working Rules, the Document
+**Version:** v0.27, 2026-08-16. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -392,7 +392,7 @@ header per Document Format sections 3 and 4, and no crate carries a header citin
 an assertion no Spec declares. Recounted 2026-08-16 over every tracked unit
 carrying a header, per the Document Format's counting clause:
 
-    weaver-types      18/18      weaver-harness   54/56
+    weaver-types      18/18      weaver-harness   55/56
     weaver-traits     24/24      weaver-gate      27/27
     weaver-trace      38/38      weaver-admin     32/32
     weaver-spu        60/62
@@ -407,7 +407,7 @@ earlier table read `types 17/17`, `trace 39/39`, `harness 48/48`, `gate 23/23`,
 comparing an old batch against this section needs to know the ruler changed and
 not the thing measured.
 
-**Four assertions are open across the set, and each is named with what it waits
+**Three assertions are open across the set, and each is named with what it waits
 on**, the roll being short enough that leaving it to the register cost more than
 it saved. What an open assertion waits on is stated because the count cannot say
 it, and a blocked one and an overlooked one read the same in a total:
@@ -415,9 +415,8 @@ it, and a blocked one and an overlooked one read the same in a total:
     weaver-spu        spu-one-forward-per-prompt                  review
     weaver-spu        spu-two-taps-one-shape                      review
     weaver-harness    harness-idle-report-authors-without-a-turn   perturbation
-    weaver-harness    harness-organ-argv-carries-construction-parameters  review
 
-**All four are blocked rather than missed.** The SPU's two wait on the readout
+**All three are blocked rather than missed.** The SPU's two wait on the readout
 tap existing, the tap not being the engine: the eval-callback pin holds the seam
 open and nothing yet drives a tap through it, which `weaver-spu-Spec` section 7
 states plainly as code this program writes rather than salvage it inherits. The
@@ -427,13 +426,12 @@ route act. `spu-marker-promotion` reads satisfied under this count and did not
 under the old one, its citation sitting with the perturbation test that buys it,
 which matters because it is the gate on any family the registry gains.
 
-**The harness's two wait on acts that have not started.** The idle report is
+**The harness's one waits on an act that has not started.** The idle report is
 unbuilt: no report authors without a turn because nothing authors one at all,
 and its sibling in the same section, `harness-frame-grants-the-seat`, is cited,
 so the dev boundary is partly built and this is the part still owed. The argv
-carrier waits on the headroom act, its document having landed 2026-08-16 and the
-code not yet, which is the ordinary state between a merged Spec and the act that
-cites it.
+carrier came off this roll the same day, its code act landing hours after its
+document, which is the ordinary sequence rather than a delay.
 
 **Two came off this roll on 2026-08-16 rather than being explained.**
 `admin-run-reference-distinguishes` was satisfied on 2026-08-15 and uncited, the
