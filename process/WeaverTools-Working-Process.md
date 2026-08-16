@@ -429,17 +429,27 @@ which matters because it is the gate on any family the registry gains.
 **The harness's one waits on an act that has not started.** The idle report is
 unbuilt: no report authors without a turn because nothing authors one at all,
 and its sibling in the same section, `harness-frame-grants-the-seat`, is cited,
-so the dev boundary is partly built and this is the part still owed. The argv
-carrier came off this roll the same day, its code act landing hours after its
-document, which is the ordinary sequence rather than a delay.
+so the dev boundary is partly built and this is the part still owed.
 
-**Two came off this roll on 2026-08-16 rather than being explained.**
+**Four came off this roll on 2026-08-16, and each is named with what closed
+it**, because a reader who saw one listed learns it closed rather than finding
+it absent:
+
+    admin-run-reference-distinguishes                    cited, PR 161
+    spu-session-parameters-carry-dispositions            cited, PR 160
+    spu-tunables-arrive-in-the-declaration               cited, PR 160
+    harness-organ-argv-carries-construction-parameters   cited, PR 162
+
 `admin-run-reference-distinguishes` was satisfied on 2026-08-15 and uncited, the
-act that built the three-part reference not adding the header, and the citation
-lands with this act. The SPU's two dispositions assertions were cited by the act
-that closed them. An assertion sitting in a census unexplained is the shape this
-project has repeatedly found, a record unable to say what it did not measure, so
-the roll now carries the reason beside the name.
+act that built the three-part reference not adding the header, so its citation
+landed separately. The other three were cited by the acts that closed them, the
+last of them landing hours after the document that authorized it, which is the
+ordinary sequence rather than a delay.
+
+An assertion sitting in a census unexplained is the shape this project has
+repeatedly found, a record unable to say what it did not measure, so the roll
+carries the reason beside the name in both directions: what an open one waits
+on, and what closed one that has gone.
 
 **One decode engine is written and one is not, and the turn now completes.**
 The GGUF engine landed 2026-08-08 and decodes real weights under its own tests,
