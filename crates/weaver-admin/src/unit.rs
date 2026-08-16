@@ -40,6 +40,19 @@ pub struct UnitTemplate {
     /// them.
     pub spu: std::path::PathBuf,
     pub gate: std::path::PathBuf,
+    /// The admission headroom this installation wants its organs to run with,
+    /// if it states one.
+    ///
+    /// **Optional where the binaries are required, and the difference is what
+    /// each is.** A worker cannot start without knowing which binaries to fork,
+    /// so a missing one refuses. A headroom is a number the organ already has a
+    /// compiled default for, so a missing one leaves that default standing and
+    /// an installation that never thought about it behaves as it always did.
+    ///
+    /// Carried as the operator's string rather than parsed here. This crate
+    /// hands it on and the organ's composition root judges it, so a bad value
+    /// is refused once, by the crate that knows what the parameter means.
+    pub headroom_bytes: Option<String>,
 }
 
 /// What the init system answers about a unit, per
@@ -169,6 +182,12 @@ fn start_arguments(
     args.push(coordination_socket.display().to_string());
     args.push(template.spu.display().to_string());
     args.push(template.gate.display().to_string());
+    // The construction parameters follow the positional arguments as named
+    // flags, so an installation supplying one need not know the order.
+    if let Some(headroom) = &template.headroom_bytes {
+        args.push("--headroom-bytes".to_string());
+        args.push(headroom.clone());
+    }
     args
 }
 
@@ -249,6 +268,7 @@ mod tests {
             worker: "/usr/libexec/weaver-worker".into(),
             spu: "/usr/libexec/weaver-spu".into(),
             gate: "/usr/libexec/weaver-gate".into(),
+            headroom_bytes: None,
         };
         let rendered = start_arguments(
             &template,
@@ -286,6 +306,7 @@ mod tests {
             worker: "/usr/libexec/weaver-worker".into(),
             spu: "/usr/libexec/weaver-spu".into(),
             gate: "/usr/libexec/weaver-gate".into(),
+            headroom_bytes: None,
         };
         let rendered = start_arguments(
             &template,
@@ -338,6 +359,7 @@ mod tests {
             worker: "/usr/libexec/weaver-worker".into(),
             spu: "/usr/libexec/weaver-spu".into(),
             gate: "/usr/libexec/weaver-gate".into(),
+            headroom_bytes: None,
         };
         let rendered = start_arguments(
             &template,

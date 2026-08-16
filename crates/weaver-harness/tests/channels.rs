@@ -294,6 +294,7 @@ fn adoption_clears_the_dumpable_flag() {
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
+                weaver_harness::OrganParameters::default(),
             );
             let dumpable = unsafe { nix::libc::prctl(nix::libc::PR_GET_DUMPABLE, 0, 0, 0, 0) };
             let ok = (constructed.is_ok() && dumpable == 0) as u8;

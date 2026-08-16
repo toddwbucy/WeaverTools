@@ -1,4 +1,5 @@
 //! conforms: harness-fork-to-exec-three-calls
+//! conforms: harness-organ-argv-carries-construction-parameters
 //! conforms: harness-organ-ends-from-descriptor-three
 //! conforms: harness-child-flag-clear-unconditional
 //!
@@ -28,9 +29,23 @@ use crate::channel::{ChildEnd, place_child_ends};
 pub unsafe fn fork_organ(
     binary: &Path,
     ends: &[&ChildEnd],
+    arguments: &[String],
 ) -> Result<nix::unistd::Pid, nix::Error> {
     let program =
         CString::new(binary.as_os_str().as_encoded_bytes()).map_err(|_| nix::Error::EINVAL)?;
+    // **Built here, in the parent, before the fork.** The child's three calls
+    // are the safety bound of the doc comment above, so a vector assembled
+    // after the fork would not be expressible: allocation is not
+    // async-signal-safe. The pointers below borrow these, so both outlive the
+    // exec that reads them.
+    let arguments: Vec<CString> = arguments
+        .iter()
+        .map(|argument| CString::new(argument.as_bytes()).map_err(|_| nix::Error::EINVAL))
+        .collect::<Result<_, _>>()?;
+    let mut argv: Vec<*const nix::libc::c_char> = Vec::with_capacity(arguments.len() + 2);
+    argv.push(program.as_ptr());
+    argv.extend(arguments.iter().map(|argument| argument.as_ptr()));
+    argv.push(std::ptr::null());
     // SAFETY: the caller's contract above, and the child body below runs only
     // async-signal-safe calls.
     match unsafe { nix::unistd::fork()? } {
@@ -51,7 +66,6 @@ pub unsafe fn fork_organ(
                 unsafe { nix::libc::_exit(PLACEMENT_FAILED) };
             }
             // Call three.
-            let argv = [program.as_ptr(), std::ptr::null()];
             let envp = [std::ptr::null()];
             // SAFETY: execve is async-signal-safe; on success it does not
             // return, and on failure the child exits without unwinding.

@@ -17,9 +17,12 @@
 //! consumes the listener it is handed, so this compiles:
 //!
 //! ```
-//! use weaver_harness::{AdoptionFault, CoordinationListener, Harness, OrganBinaries};
+//! use weaver_harness::{
+//!     AdoptionFault, CoordinationListener, Harness, OrganBinaries, OrganParameters,
+//! };
 //! fn shape(listener: CoordinationListener, organs: OrganBinaries) {
-//!     let _served: Result<Harness, AdoptionFault> = Harness::listen(listener, organs);
+//!     let _served: Result<Harness, AdoptionFault> =
+//!         Harness::listen(listener, organs, OrganParameters::default());
 //! }
 //! ```
 //!
@@ -111,5 +114,5 @@ pub use channel::{
 };
 pub use engine::{Ports, TurnError, TurnOutcome};
 pub use failure::{AdoptionFault, ChannelFault, Outcome, UnlicensedMessage};
-pub use lifecycle::{Harness, OrganBinaries};
+pub use lifecycle::{Harness, OrganBinaries, OrganParameters};
 pub use spawn::fork_organ;
