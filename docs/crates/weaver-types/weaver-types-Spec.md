@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-16, second of that date, a held unit name is its own
+refusal. `LifecycleRefusal` gains `PriorUnitUnreaped`, because `BindFailed` was
+answering for two conditions a state ask already tells apart: a unit that runs
+with an unreachable socket, where a bind is what failed, and a unit whose
+process exited non-zero, where a held name is what refuses.
 **Revised:** 2026-08-16, the declaration carries what a binary left movable.
 `DecoderInstruction` gains `tunable_values`, a name-keyed map of numbers that is
 the route `Disposition::OperatorTunable` names and had never been built. A map
@@ -886,6 +891,7 @@ pub enum LifecycleRefusal {
     DeviceCannotAdmit,
     NoResidency,
     BindFailed,
+    PriorUnitUnreaped,
     OrganRefused { organ: RefusingOrgan, reason: Box<LifecycleRefusal> },
     ActivityNotAtRest,
     StateNotObservable,
@@ -898,6 +904,33 @@ pub struct EnterPayload {
     pub gate_instruction: GateInstruction,
 }
 ```
+
+**`PriorUnitUnreaped` is added because `BindFailed` was answering for two
+conditions.** A unit whose process exited non-zero leaves its name registered
+with the manager, and every later start under that name refuses until it is
+reaped. That is what refused the load, and it is a different fact from a socket
+that would not bind, which is what `BindFailed` names.
+
+**What the case claims is exactly what the state reports and no more.** It says
+a prior process exited non-zero and its name is still held. It does not say the
+worker never bound, or never started, or died before serving, because `failed`
+carries none of that: a unit that bound its socket, served, and exited non-zero
+later reads `failed` too. An earlier wording of this clause said the worker was
+never there, which is the error `weaver-admin-systemd-contract` section 3 warns
+against in the neighbouring value, a program rendering a state as one of the
+conditions it covers.
+
+**It is expressible because it is the one thing the boundary says plainly.**
+`weaver-admin-systemd-contract` section 3 measures what the init system reports
+and finds most of it ambiguous: a duplicate unit name and a malformed property
+fail with the same status, and `inactive` covers three conditions. `failed`
+covers one, a unit whose process exited non-zero, so a refusal resting on that
+value rests on the only reading the boundary gives without inference.
+
+**The case is not derived from the start ask's status**, which the same section
+measures as unable to say which failure it was. It comes from the state ask that
+follows, which is where a program may ask a narrow question and get a narrow
+answer.
 
 **All three enums are exhaustive, and the absence of `#[non_exhaustive]` is the
 loudness this section claims.** The attribute would force every out-of-crate
