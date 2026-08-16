@@ -8,8 +8,8 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 **Revised:** 2026-08-16, second of that date, a held unit name is its own
 refusal. `LifecycleRefusal` gains `PriorUnitUnreaped`, because `BindFailed` was
 answering for two conditions a state ask already tells apart: a unit that runs
-with an unreachable socket, where a bind is what failed, and a unit that ran and
-exited non-zero, where nothing bound and nothing tried to.
+with an unreachable socket, where a bind is what failed, and a unit whose
+process exited non-zero, where a held name is what refuses.
 **Revised:** 2026-08-16, the declaration carries what a binary left movable.
 `DecoderInstruction` gains `tunable_values`, a name-keyed map of numbers that is
 the route `Disposition::OperatorTunable` names and had never been built. A map
@@ -906,10 +906,19 @@ pub struct EnterPayload {
 ```
 
 **`PriorUnitUnreaped` is added because `BindFailed` was answering for two
-conditions.** A unit that ran and exited non-zero leaves its name registered
-with the manager, and every later start under that name refuses. Nothing bound
-and nothing tried to: the worker was never there. Reporting that as a bind
-failure sends an operator to look at a socket, and the socket is fine.
+conditions.** A unit whose process exited non-zero leaves its name registered
+with the manager, and every later start under that name refuses until it is
+reaped. That is what refused the load, and it is a different fact from a socket
+that would not bind, which is what `BindFailed` names.
+
+**What the case claims is exactly what the state reports and no more.** It says
+a prior process exited non-zero and its name is still held. It does not say the
+worker never bound, or never started, or died before serving, because `failed`
+carries none of that: a unit that bound its socket, served, and exited non-zero
+later reads `failed` too. An earlier wording of this clause said the worker was
+never there, which is the error `weaver-admin-systemd-contract` section 3 warns
+against in the neighbouring value, a program rendering a state as one of the
+conditions it covers.
 
 **It is expressible because it is the one thing the boundary says plainly.**
 `weaver-admin-systemd-contract` section 3 measures what the init system reports

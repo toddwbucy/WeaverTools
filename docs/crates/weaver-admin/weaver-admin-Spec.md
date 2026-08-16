@@ -460,10 +460,11 @@ over an agent that unloaded exactly as asked.
 bind failure on 2026-08-16.** `BindFailed` answered for two conditions that a
 state ask already tells apart. Where the manager reports the unit `active` and
 the socket was unreachable, a bind is what failed and the name is right. Where
-it reports `failed`, the unit ran and exited non-zero, so nothing bound and
-nothing tried to, and the name it leaves registered refuses every later start
-under it until the manager is asked to reap it. That answers
-`PriorUnitUnreaped`.
+it reports `failed`, a prior process exited non-zero and the name it leaves
+registered refuses every later start under it until the manager is asked to reap
+it. That answers `PriorUnitUnreaped`, and the answer claims that and no more:
+`failed` does not say whether the worker bound, or how long it served, because a
+unit that bound and exited non-zero later reads the same.
 
 **It rests on the one value the boundary states plainly.**
 `weaver-admin-systemd-contract` section 3 measures the start ask's status as
