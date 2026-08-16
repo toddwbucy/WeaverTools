@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.23, 2026-08-15. Companion to the Working Rules, the Document
+**Version:** v0.23, 2026-08-16. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -415,21 +415,39 @@ The GGUF engine landed 2026-08-08 and decodes real weights under its own tests,
 a real forward and a real draw against a real artifact, and `weaver-spu-Spec`
 section 4.1's derivation answers for the GGUF container while refusing the
 native one, whose `native.rs` stays unwritten and undeclared. What this section
-said the engine lacked was the seam, and the seam closed: epic #130 completed
-the first live turn on 2026-08-14, gate to trace, against a real local model.
+said the engine lacked was the decode socket being served, and it is served:
+epic #130 completed the first live turn on 2026-08-14, gate to trace, against a
+real local model. **That is the operational path and not the decode seam's
+vocabulary**, which is a floor question the paragraph above leaves open and
+which this closes nothing of.
 
 **The demonstration is the evidence and it is inspectable.** A trace taken
 2026-08-16 carries one run reference over six turns, each running
 `turn.started`, `message.user`, `model.request`, `model.output`,
 `model.measurement`, `message.assistant`, `turn.closed`, the whole bracketed by
 a `load` and an `unload`. So a directive does reach an engine from outside its
-process, and the residual measurement rides back on the same turn.
+process and an answer returns.
 
-The caution this paragraph carried still holds and now points the other way. A
+**What rides back with it is the measurement payload and not the readout**, and
+the two are apex section 7.2's two items rather than one. The payload carries
+the timings, the per-token entropies and surprisals, and a block label over the
+turn's token range. The residual-stream readout is the other item, its election
+reads false in the declaration the live run used, and its tap is unwritten.
+Collapsing them would be this document doing what section 7.2 was closed to
+prevent.
+
+**A completed turn satisfies no conformance assertion, and the four open in
+`weaver-spu` are open still.** The live run evidences that the path works. It
+does not write the shaped floor types two of the four wait on, and it does not
+drive a tap through the eval-callback pin the other two wait on. A reader who
+takes the demonstration as having closed them has read a count into a
+behaviour.
+
+The caution this paragraph carried still holds and now points both ways. A
 crate could always report a high conformance figure while completing no turn,
-which is why the apex asks for a demonstration and not a count. What changed is
-that the demonstration exists, so read the figures below as a count of claims
-met and read the trace for whether the deliverable runs.
+which is why the apex asks for a demonstration and not a count, and a completed
+turn is likewise not a count of claims met. Read the figures below as what they
+are, and read the trace for whether the deliverable runs.
 
 **The four defects the live turn surfaced are closed, 2026-08-15.** Run
 identity landed first because five registered measurements join a result to a
