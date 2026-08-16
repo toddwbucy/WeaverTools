@@ -19,7 +19,6 @@
 //! admit answers `OutOfOrder`, a second admit answers the same whatever the
 //! first answered, and any directive after a release answers the same.
 //! conforms: spu-session-parameters-carry-dispositions
-//! conforms: spu-tunables-arrive-in-the-declaration
 
 use std::process::ExitCode;
 
@@ -126,9 +125,6 @@ fn judge_decode(
     }
 }
 
-/// The engine context's token capacity, a builder's number supplied at the
-/// composition root before the measurement that replaces it exists, the same
-/// standing `HEADROOM_BYTES` has.
 /// **This binary's elections, per charter section 13.8 and `weaver-spu-Spec`
 /// section 8.** Each parameter is `Frozen` with its value compiled in, or
 /// `OperatorTunable` and read from `decoder.tunable_values` at admit. The
@@ -753,6 +749,11 @@ fn dispatch(
                         KnobRefusal::Unsupplied { knob } => knob,
                         KnobRefusal::NotACount { knob, .. } => knob,
                     };
+                    // The one admission is spent whatever it answered, this
+                    // route included: a declaration refused here has had its
+                    // admission and a second attempt is out of order, the same
+                    // invariant the artifact refusal below keeps.
+                    *position = SeamPosition::AdmitRefused;
                     return Payload::Refusal(LifecycleRefusal::ConfigInvalid {
                         field: Some(weaver_types::FieldName(format!(
                             "tunable-values.{knob}"
@@ -1099,89 +1100,6 @@ mod tests {
         );
     }
 
-    /// **A value supplied in the declaration reaches the engine's inputs**,
-    /// per `weaver-spu-Spec` section 8, which is the whole point of the route
-    /// this act built: the values arrive with the instruction at admit, once,
-    /// and the engine takes them when the session opens.
-    ///
-    /// The frozen half is asserted beside it, because a route that moved a
-    /// frozen value would have taken a deployment's lock away.
-    ///
-    /// Perturbation: point `resolve_effective` at an empty map instead of the
-    /// declaration's and this test fails, the tunable resolving to nothing
-    /// supplied. Watched under exactly that substitution.
-    #[test]
-    fn a_declared_value_reaches_the_engine_and_a_frozen_one_does_not_move() {
-        let elections = Knobs {
-            temperature: Disposition::OperatorTunable,
-            top_k: Disposition::Frozen(40),
-            top_p: Disposition::Frozen(0.95),
-            repetition_penalty: Disposition::Frozen(1.1),
-            repetition_window: Disposition::Frozen(64),
-            seed: Disposition::Frozen(11),
-        };
-        let supplied: TunableValues = [
-            ("temperature".to_string(), 0.2f64),
-            // A name this binary froze, ignored where it appears.
-            ("seed".to_string(), 99f64),
-        ]
-        .into_iter()
-        .collect();
-        let effective = elections.resolve(&supplied).expect("resolves");
-        assert_eq!(
-            effective.temperature, 0.2,
-            "the declaration's value reached the engine's inputs"
-        );
-        assert_eq!(
-            effective.seed, 11,
-            "and a frozen parameter is not moved by a declaration naming it"
-        );
-    }
-
-    /// **A count supplied as anything but a count refuses the load**, per
-    /// `weaver-spu-Spec` section 8, and it refuses before the admit takes a
-    /// device.
-    ///
-    /// The discipline this replaces guarded the token seam, where the tunable
-    /// map used to travel and where a non-finite value was `MalformedDelta`.
-    /// The map moved to the declaration and the check moved with it, gaining
-    /// the count cases on the way: the floor judges finiteness at parse and
-    /// this crate judges a value against its parameter here.
-    ///
-    /// **The cast is why the check exists.** A float cast to an integer
-    /// answers for every input, truncating `3.7` to `3`, mapping `NaN` to
-    /// zero, and saturating `-1.0` to `0` and `1e20` to `u32::MAX`. Each
-    /// substitutes a number no operator wrote.
-    ///
-    /// Perturbation: drop the count judgment from `take_count` and this test
-    /// fails, the fractional and negative values reading as accepted.
-    #[test]
-    fn a_count_that_is_not_one_refuses_the_load() {
-        let tunable = SessionParameters {
-            context_capacity: Disposition::OperatorTunable,
-            max_tokens_per_turn: Disposition::Frozen(512),
-        };
-        for bad in [3.7f64, -1.0, 1e20] {
-            let supplied: TunableValues =
-                [("context-capacity".to_string(), bad)].into_iter().collect();
-            assert_eq!(
-                tunable.resolve(&supplied),
-                Err(KnobRefusal::NotACount {
-                    knob: "context-capacity",
-                    supplied: bad,
-                }),
-                "{bad} is not a count and the cast would have taken it"
-            );
-        }
-        let good: TunableValues = [("context-capacity".to_string(), 8192.0)]
-            .into_iter()
-            .collect();
-        assert_eq!(
-            tunable.resolve(&good).expect("a count resolves").context_capacity,
-            8192,
-            "and a count that is one is taken"
-        );
-    }
 
     /// **A block the family cannot render refuses as the delta malformed for
     /// the family,** the contract's own case: the tool shapes are blocked

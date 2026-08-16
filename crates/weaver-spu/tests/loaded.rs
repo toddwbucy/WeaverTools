@@ -218,6 +218,7 @@ mod seam_success {
                         },
                         residual_readout_election: true,
                         identity: vec![],
+                        tunable_values: Default::default(),
                     },
                 },
             },
@@ -296,6 +297,7 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                         identity: vec![],
+                        tunable_values: Default::default(),
                     },
                 },
             },
@@ -389,6 +391,7 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                         identity: vec![],
+                        tunable_values: Default::default(),
                     },
                 },
             },
@@ -417,7 +420,6 @@ mod seam_success {
         send(&TokenDirective::AppendAndGenerate {
             turn: TurnKey("t-1".into()),
             delta: vec![message("Say one word.")],
-            tunable: Default::default(),
         });
         // **The stream precedes the close and never disagrees with it**, per
         // the contract's coherence guarantee: token frames arrive as drawn,
