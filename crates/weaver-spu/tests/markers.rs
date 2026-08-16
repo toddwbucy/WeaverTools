@@ -95,10 +95,17 @@ const PROBES: &[Probe] = &[
 ];
 
 impl Probe {
-    fn path(&self) -> PathBuf {
+    /// The vocab to probe, and whether an operator named it.
+    ///
+    /// **The two are not the same absence.** A default path that is not there
+    /// is a workshop without that family's artifact, which leaves the family
+    /// unverified and is reported. An overridden path that is not there is an
+    /// operator who asked for a vocabulary and got no measurement, which must
+    /// not pass quietly.
+    fn path(&self) -> (PathBuf, bool) {
         match std::env::var_os(self.env) {
-            Some(value) => PathBuf::from(value),
-            None => PathBuf::from(self.default_path),
+            Some(value) => (PathBuf::from(value), true),
+            None => (PathBuf::from(self.default_path), false),
         }
     }
 }
@@ -139,7 +146,18 @@ fn every_rendered_marker_promotes_to_one_token() {
     let mut probed = 0usize;
 
     for probe in PROBES {
-        let path = probe.path();
+        let (path, overridden) = probe.path();
+        // An operator who named a vocab and whose path is not a regular file
+        // gets a failure rather than a skip: the ask was explicit, so silence
+        // would report a measurement that never ran.
+        assert!(
+            !overridden || path.is_file(),
+            "{} is set to {} which is not a regular file, so {} would have been \
+             skipped and this test would have passed without probing it",
+            probe.env,
+            path.display(),
+            probe.family
+        );
         if !path.exists() {
             absent.push(format!("{} (no vocab at {})", probe.family, path.display()));
             continue;
@@ -191,8 +209,12 @@ fn every_rendered_marker_promotes_to_one_token() {
     assert!(
         probed > 0,
         "no family vocab was reachable, so this test asserted nothing. Set one of \
-         WEAVER_VOCAB_LLAMA, WEAVER_VOCAB_QWEN2, or WEAVER_VOCAB_GPT_OSS.\n  \
-         absent: {absent:?}\n  failed to load: {failures:?}"
+         {}.\n  absent: {absent:?}\n  failed to load: {failures:?}",
+        PROBES
+            .iter()
+            .map(|probe| probe.env)
+            .collect::<Vec<_>>()
+            .join(", ")
     );
 
     assert!(
