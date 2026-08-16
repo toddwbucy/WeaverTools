@@ -159,6 +159,14 @@ impl Writer {
                 os_error: None,
                 message: "writer thread terminated".to_string(),
             });
+            drop(state);
+            // **This path must notify and the reason is that nothing else
+            // can.** The send failed because the writer thread is gone, so
+            // the receive loop that carries the other notify has already
+            // ended. A drain waiting here would sleep on a count this line
+            // just took to zero with no thread left to wake it, which is not
+            // a narrow window but every time the two overlap.
+            self.shared.drained.notify_all();
         }
     }
 
