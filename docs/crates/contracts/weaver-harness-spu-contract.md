@@ -6,6 +6,11 @@ only, which is the residency half of what this pair will eventually agree on. Th
 exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-16, the admit carries the operator-tunable values. They
+arrive with the binding in the instruction that already crosses once, which is
+the crossing that suits them, the SPU building its sampler after this exchange
+and before any turn. A parameter the binary froze is ignored where it appears,
+so this exchange gains no power to move what a deployment locked.
 **Revised:** 2026-08-10, the route act. The admit exchange carries the SPU
 instruction rather than the bare binding, the model binding and the readout
 election crossing together per `weaver-types-Spec` section 2, and the SPU
@@ -169,6 +174,16 @@ cell in that charter's section 10 rather than a field added here against no read
 revoked, and not replaced. An SPU that needs a binding or an election it was not given
 has a failed admission rather than a second request to make, because there is no
 exchange in which it asks for one.
+
+**The instruction now carries the operator-tunable values, and the once is why
+it can.** The sampling values and the session parameters a binary left movable
+arrive with the binding, per `weaver-spu-Spec` section 8, having previously
+travelled the decode seam per turn where the engine could not reach them. One
+crossing suits them: the SPU builds its sampler when the session opens, which is
+after this exchange and before any turn, so a value that crosses once and early
+is a value in hand at the only moment it is read. A parameter the binary froze
+is ignored where it appears here, frozen meaning compiled in and never carried,
+so this exchange gains no power to move what a deployment locked.
 
 **No exchange carries a path.** The harness sends the instruction it was handed and
 the SPU resolves the binding inside it against what it can reach, and neither party

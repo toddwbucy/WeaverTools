@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-16, the declaration carries what a binary left movable.
+`DecoderInstruction` gains `tunable_values`, a name-keyed map of numbers that is
+the route `Disposition::OperatorTunable` names and had never been built. A map
+rather than a field per parameter because which parameters a binary leaves
+tunable is that binary's election and moves with a recompile, so a floor type
+enumerating them would move with every deployment that changed its mind.
 **Revised:** 2026-08-12, fourth of this date, the encoding rides with the
 type. One sentence lands with the gate's turn-half act: the frame encoding's
 implementation is the floor's, beside the type, one canonical form for every
@@ -290,6 +296,7 @@ pub struct DecoderInstruction {
     pub model_binding: ModelBinding,
     pub residual_readout_election: bool,
     pub identity: Vec<weaver_traits::Message>,
+    pub tunable_values: BTreeMap<String, f64>,
 }
 
 pub enum TraceSink {
@@ -312,6 +319,55 @@ pub enum ConfigErrorKind {
     BadValue,
 }
 ```
+
+**`tunable_values` is the route `Disposition::OperatorTunable` names.** The SPU
+elects per parameter at its composition root whether a value is compiled in or
+supplied, and this map is where a supplied one arrives. It is keyed by the
+parameter's name and carries a number, which is the shape the SPU's resolve
+already takes, and it covers the sampling knobs and the session parameters
+alike because the election is the same election in both cases.
+
+**It is a map rather than a field per parameter, and the reason is which side
+owns the list.** Which parameters a binary leaves tunable is that binary's
+election and changes with a recompile, so a floor type enumerating them would
+have to move whenever a deployment changed its mind, and a declaration naming a
+parameter this binary froze is a fact with no effect rather than an error. The
+map is present always and may be empty, the no-defaulting rule reaching the
+field and not its contents: an empty map is a declaration that supplies
+nothing, and a binary with a tunable parameter and nothing supplied for it
+refuses the load naming the parameter.
+
+**A value is judged against what the parameter is before the session opens.**
+The map carries `f64` because a configuration's numbers are, and most of what it
+feeds is not a real: `top-k`, the repetition window, the context capacity and
+the per-turn ceiling are counts. So a value bound for a count must be integral,
+non-negative, and inside the range its type can hold, and a value bound for a
+real must be finite. A `NaN` reaching a sampler is a temperature that compares
+false against every bound and an infinity is one no filter clamps.
+
+**A bad count is worse than either, and the reason is that the conversion never
+fails.** A float cast to an integer in Rust answers for every input: it
+truncates toward zero, so `3.7` becomes `3`, it maps `NaN` to zero, and it
+saturates at the target's bounds, so `-1.0` becomes `0` and `1e20` becomes
+`u32::MAX`. Measured on this workspace's toolchain rather than recalled. So a
+fractional count is silently rounded, a negative one silently becomes zero, and
+an oversized one silently becomes four billion, and none of the three reaches
+the operator as an error. The truncating case and the saturating case are
+different failures and the check refuses both, because a capacity of
+`u32::MAX` would fail later at allocation with nothing pointing back to the
+declaration that asked for it.
+
+**The refusal is the load's, not the turn's.** A bad value is `BadValue` naming
+its field, refused where the declaration is read and before any device work,
+which is the same shape every other malformed field in this section takes. The
+earlier home for this check was the token seam, where the map used to travel and
+where the refusal was `MalformedDelta`, and it moved here with the map rather
+than being invented.
+
+**A value here never overrides a frozen parameter.** Frozen means compiled in
+and not carried on the wire, so a name the binary froze is ignored where it
+appears, and the record still reports the effective value whichever side set
+it. That is what keeps a deployment's lock a lock rather than a default.
 
 **The SPU's fields arrive as one section, and the gate's already did.** Charter
 section 2.1 rules that an organ's fields are named together and cross together,
@@ -1090,7 +1146,6 @@ pub enum TokenDirective {
     AppendAndGenerate {
         turn: TurnKey,
         delta: Vec<Message>,
-        tunable: BTreeMap<String, f64>,
     },
     Cancel { turn: TurnKey },
     Flush,
@@ -1112,19 +1167,11 @@ pub enum TokenRefusal {
 }
 ```
 
-**Every tunable value is finite, and a value that is not is refused at the
-seam.** The map carries `f64` because the wire's numbers are, and the knobs it
-feeds are the operator-tunable remainder of Spec section 8's dispositions. A
-`NaN` reaching a sampler is a temperature that compares false against every
-bound, and an infinity is one no filter clamps, so neither may travel. Both are
-refused as `MalformedDelta`, which is the case the contract already carries for
-an ask this seam cannot serve, rather than as a case this document adds. **The
-encoding makes the refusal reachable rather than theoretical:** JSON has no
-literal for either, so a peer that computed one either emits something no
-decoder accepts or emits `null`, and a `null` where a number belongs fails the
-decode. The check is therefore stated here as the receiver's, at the point the
-map is read, so a value that arrives by some later encoding that does carry them
-meets the same refusal.
+**The tunable map left this directive in the act that routed it to the
+declaration**, per `weaver-spu-Spec` section 8, so nothing sampling-related
+arrives with a turn and the value discipline that guarded it moved with it to
+section 2. What remains here is a turn's delta, and a delta this seam cannot
+serve is `MalformedDelta` as before.
 
 **`Message` is `weaver-traits`' and is drawn rather than restated.** The decode
 contract's canonical messages are that type, shaped at `weaver-traits-Spec`

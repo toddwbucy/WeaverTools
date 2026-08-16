@@ -8,6 +8,11 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-16, the sampling values leave this seam. They travelled
+here per turn and the engine builds its sampler once at session open, so they
+had no engine to reach, and they now cross in the declaration at admit. The
+conformance item widens with them: this seam carries no sampling value at all
+and the capture says so without needing to know which were frozen.
 **Revised:** 2026-08-12, third of this date, the request is the turn's
 contribution. Per the operator's ruling closing issue 124, the request
 content the close carries is the turn's delta as rendered, the full
@@ -164,10 +169,13 @@ establishes the resident session with the prefix resident, and answers
 opened, or refuses, typed.
 
 **Append and generate.** Opened by the harness, one per turn, carrying the
-turn's context per apex section 5.2, the turn's delta as canonical
-messages under the same framing ruling, and the turn's sampling values
-for whatever knobs the binary left operator-tunable, per the dispositions
-of `weaver-spu-PRD` section 13.8. The SPU appends the delta at the
+turn's context per apex section 5.2 and the turn's delta as canonical
+messages under the same framing ruling. **It carries no sampling values.**
+The operator-tunable remainder reaches the SPU in the declaration at
+admit, per `weaver-spu-Spec` section 8, because the engine builds its
+sampler once at session open and a value arriving with a token directive
+has no engine to reach. An earlier wording carried them here, which is
+the route this act closes. The SPU appends the delta at the
 resident end and generates, **and the exchange streams as it does**, per
 the operator's ruling of 2026-08-11: each token crosses as it is drawn,
 an intermediate message carrying the token's identifier and its rendered
@@ -251,14 +259,15 @@ change is a supplies change by construction and a Spec writer reads this
 list.
 
 **The harness supplies** the session's identity material at open, each
-turn's context and delta, the tunable sampling values, the cancel, and
-the flush.
+turn's context and delta, the cancel, and the flush. The sampling values
+are not among them and reach the SPU in the declaration instead.
 
 **The harness guarantees** that it opens no session before residency
 confirms and no second session ever. That one generation is in flight at
-a time. That every ask carries the turn's context and that the values it
-supplies for sampling are the operator-tunable remainder only, the frozen
-knobs being the binary's and crossing nowhere. That it never touches the
+a time. That every ask carries the turn's context and that it supplies no
+sampling value on this seam at all, the operator-tunable remainder having
+crossed once in the declaration and the frozen knobs being the binary's
+and crossing nowhere. That it never touches the
 cache, holds no handle to it, and derives nothing from the session but
 what answers carry. That what it receives it authors faithfully, the
 verbatim emission and the canonical parse both reaching the record, per
@@ -417,8 +426,15 @@ How each check is implemented is Spec work. What must be checkable:
 - One generation in flight, enforced by refusal rather than queueing.
 - A report is never emitted while an exchange is outstanding, a fault
   arising then being that exchange's typed answer.
-- The frozen knobs never appear on the wire, watched by a capture that
-  fails when a frozen value crosses.
+- No sampling value crosses **inbound** on this seam, watched by a capture
+  that fails when one reaches the SPU here. The check was written against the
+  frozen knobs alone, when the tunable remainder travelled here, and it
+  widens to the whole set with the remainder's move to the declaration.
+  **The answer is excluded and the exclusion is the point.** `Generation`
+  carries the request the SPU rendered whole, its template and its effective
+  sampling among it, because the record holds what a turn ran with whichever
+  side set it, per charter section 13.8. A capture reading both directions
+  would fail on that and call the record a leak.
 
 ## 9. What this document changes elsewhere
 
