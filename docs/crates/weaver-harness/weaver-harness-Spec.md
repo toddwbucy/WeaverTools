@@ -4,6 +4,11 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-16, second of that date, argv carries a host's fact and
+not an agent's. The organ argv clause of this date is narrowed rather than
+withdrawn: the headroom term stays on it, and a parameter belonging to one agent
+reaches its organ in the declaration instead. Both routes end at the same
+composition root, which is why the distinction is stated.
 **Revised:** 2026-08-13, the dev boundary is in the filesystem, per the
 architecture seat's directive of this date. Section 1 gains the worker bin
 target and the `dev_` convention: directories the developer edits carry the
@@ -507,6 +512,15 @@ because the worker happened to be holding it rather than because an act wrote it
 down, and what an organ was told would then depend on how the worker was
 started. Argv names each parameter at the call site, where the act that added it
 is the act that can be read.
+
+**What travels here is a host's fact and not an agent's.** A number two agents
+sharing this host cannot sensibly disagree about belongs on this vector, the
+room to leave spare on a device being the standing case. A number that is a
+property of the agent, its model's context ceiling or what one of its turns may
+spend, reaches its organ in the declaration instead, per `weaver-spu-Spec`
+section 8, because the declaration is per agent and this vector is per worker.
+The distinction is worth stating because both routes end at the same composition
+root and a parameter on the wrong one is not visibly wrong from inside it.
 
 **The bound above is untouched by this and the reason is where the work
 happens.** Every argument is a `CString` built in the parent before the fork,

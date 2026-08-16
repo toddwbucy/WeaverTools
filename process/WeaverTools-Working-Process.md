@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.24, 2026-08-16. Companion to the Working Rules, the Document
+**Version:** v0.25, 2026-08-16. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -392,10 +392,10 @@ header per Document Format sections 3 and 4, and no crate carries a header citin
 an assertion no Spec declares. Recounted 2026-08-16 over every tracked unit
 carrying a header, per the Document Format's counting clause:
 
-    weaver-types      18/18      weaver-harness   54/55
+    weaver-types      18/18      weaver-harness   54/56
     weaver-traits     24/24      weaver-gate      27/27
     weaver-trace      38/38      weaver-admin     31/32
-    weaver-spu        58/60
+    weaver-spu        58/62
 
 **The figures moved on the method rather than on the work**, six of the seven
 rows changing at that recount and none of them because a crate gained or lost a
@@ -407,12 +407,17 @@ earlier table read `types 17/17`, `trace 39/39`, `harness 48/48`, `gate 23/23`,
 comparing an old batch against this section needs to know the ruler changed and
 not the thing measured.
 
-**Four assertions are open across the set and each is named**, the roll being
-short enough that leaving it to the register cost more than it saved:
+**Seven assertions are open across the set and each is named**, the roll being
+short enough that leaving it to the register cost more than it saved. Three of
+the seven are awaiting the code act their document authorized, which is the
+ordinary state of an assertion between a merged Spec and the act that cites it:
 
     weaver-spu        spu-one-forward-per-prompt                  review
     weaver-spu        spu-two-taps-one-shape                      review
+    weaver-spu        spu-session-parameters-carry-dispositions    compile-pin
+    weaver-spu        spu-tunables-arrive-in-the-declaration       perturbation
     weaver-harness    harness-idle-report-authors-without-a-turn   perturbation
+    weaver-harness    harness-organ-argv-carries-construction-parameters
     weaver-admin      admin-run-reference-distinguishes            review
 
 **The SPU's two are blocked rather than missed** and both wait on the readout

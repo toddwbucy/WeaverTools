@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-16, the declaration carries what a binary left movable.
+`DecoderInstruction` gains `tunable_values`, a name-keyed map of numbers that is
+the route `Disposition::OperatorTunable` names and had never been built. A map
+rather than a field per parameter because which parameters a binary leaves
+tunable is that binary's election and moves with a recompile, so a floor type
+enumerating them would move with every deployment that changed its mind.
 **Revised:** 2026-08-12, fourth of this date, the encoding rides with the
 type. One sentence lands with the gate's turn-half act: the frame encoding's
 implementation is the floor's, beside the type, one canonical form for every
@@ -290,6 +296,7 @@ pub struct DecoderInstruction {
     pub model_binding: ModelBinding,
     pub residual_readout_election: bool,
     pub identity: Vec<weaver_traits::Message>,
+    pub tunable_values: BTreeMap<String, f64>,
 }
 
 pub enum TraceSink {
@@ -312,6 +319,28 @@ pub enum ConfigErrorKind {
     BadValue,
 }
 ```
+
+**`tunable_values` is the route `Disposition::OperatorTunable` names.** The SPU
+elects per parameter at its composition root whether a value is compiled in or
+supplied, and this map is where a supplied one arrives. It is keyed by the
+parameter's name and carries a number, which is the shape the SPU's resolve
+already takes, and it covers the sampling knobs and the session parameters
+alike because the election is the same election in both cases.
+
+**It is a map rather than a field per parameter, and the reason is which side
+owns the list.** Which parameters a binary leaves tunable is that binary's
+election and changes with a recompile, so a floor type enumerating them would
+have to move whenever a deployment changed its mind, and a declaration naming a
+parameter this binary froze is a fact with no effect rather than an error. The
+map is present always and may be empty, the no-defaulting rule reaching the
+field and not its contents: an empty map is a declaration that supplies
+nothing, and a binary with a tunable parameter and nothing supplied for it
+refuses the load naming the parameter.
+
+**A value here never overrides a frozen parameter.** Frozen means compiled in
+and not carried on the wire, so a name the binary froze is ignored where it
+appears, and the record still reports the effective value whichever side set
+it. That is what keeps a deployment's lock a lock rather than a default.
 
 **The SPU's fields arrive as one section, and the gate's already did.** Charter
 section 2.1 rules that an organ's fields are named together and cross together,

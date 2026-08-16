@@ -4,6 +4,15 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-16, the tunable route reaches the declaration. Every
+knob's `Disposition` promised a value routed from the agent's configuration at
+load and no such route existed, so all six compiled `Frozen` and the election
+the charter grants a builder could not be cast. The remainder now arrives in
+`decoder.tunable_values` at admit rather than on the token seam, where the
+engine that builds its sampler at open could not reach it. The session capacity
+joins the mechanism and its argv clause of this date is withdrawn, argv keeping
+the headroom term alone. The per-turn generation ceiling gains its first clause
+in this corpus.
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date closing issue 124. The request content this
 crate renders is the turn's delta as the family library renders it, which
@@ -769,36 +778,41 @@ identity prefix through the family library, decodes it once, and records the
 resident length it produced. No operation short of the flush reduces that
 length, per charter section 13.3.
 
-**The session's capacity is a construction parameter and reaches this crate's
-composition root as an argument.** It takes the standing the headroom term
-takes in section 4.1, a deployment fact rather than an operator election and a
-number a builder can supply before the measurement that replaces it exists. The
-ground for the standing is that a capacity is a property of what the device can
-hold at a quantization, which is what a deployment knows and a declaration does
-not, and an artifact's declared window is an upper bound on it rather than the
-figure itself.
+**The session's capacity carries a `Disposition` and is elected like a knob.**
+It is frozen with its value compiled in, or operator-tunable and supplied in
+`decoder.tunable_values` under the name `context-capacity`. The mechanism is
+section 8's and is not restated here beyond naming what it governs.
 
-**The delivery is argv, and it is stated because this crate has no other way to
-be told anything.** An organ is exec'd with an empty environment and adopts
-placed descriptors, so a number that is neither compiled in nor carried on the
-wire has no route. Compiling it in makes every capacity a rebuild, and the wire
-would make it an operator election and reach every party to the contract that
-carried it. Argv is the remaining route and the one that matches the standing:
-the worker already receives its coordination socket and its organ binaries this
-way, so this extends a path rather than opening one. **A process's arguments are
-readable by any local reader unless `/proc` is mounted to restrict them**, which
-is the deployment's option rather than this crate's, so the bound is drawn at
-the weaker guarantee and what travels here is a figure of this kind and never
-anything secret.
+**An earlier wording of this clause put the capacity on argv as a deployment
+fact, and that was wrong.** The ground offered was that what a device holds at a
+quantization is a deployment's knowledge rather than a declaration's, and it did
+not account for `Disposition::OperatorTunable`, which already names the agent's
+configuration as the route for a parameter a builder elects to leave movable.
+The capacity is an agent's fact: it is this model's ceiling under this
+quantization, two agents on one host differ in it, and a developer changing a
+model wants it changed by reloading rather than by rebuilding. **The headroom
+term keeps the deployment standing** and section 4.1 is unchanged, room to leave
+spare on a device being a property of the host that two agents cannot
+disagree about.
+
+**The per-turn generation ceiling carries one too, and gains a clause here for
+the first time.** It is the stop condition's backstop for a model that never
+emits a stop token, so it is a safety bound rather than a preference, and it is
+an agent's fact for the same reason the capacity is: what a turn should be
+allowed to spend is a property of the agent that spends it. It is frozen with
+its value compiled in, or operator-tunable under the name `max-tokens-per-turn`.
+The constant has stood in the composition root since the decode act with no
+document naming it, which is the absence this paragraph closes rather than a
+decision it reverses.
 
 ```graph
-node: spu-capacity-is-a-construction-parameter
+node: spu-session-parameters-carry-dispositions
 kind: assertion
-tag: review
+tag: compile-pin
 
 edge: asserts
 from: weaver-spu
-to: spu-capacity-is-a-construction-parameter
+to: spu-session-parameters-carry-dispositions
 ```
 
 **Overflow refuses and sheds nothing.** A delta that would exceed the
@@ -1323,9 +1337,45 @@ to: spu-knob-set-includes-the-seed
 ```
 
 **Frozen values never cross the wire and that is checkable.** Only the
-operator-tunable remainder travels on the token seam, per the decode
-contract's conformance list, and section 10 makes it a test rather than a
-promise.
+operator-tunable remainder crosses at all, and section 10 makes it a test
+rather than a promise.
+
+**The remainder crosses in the declaration at admit, not on the token seam,
+and this act moves it.** The earlier route had a value sourced from the agent's
+configuration at load, transported per turn on the token seam, and consumed at
+`open_session`, and those three do not meet: the engine builds its sampler once
+at open, so a value arriving with a token directive has no engine to reach.
+That is why every knob is `Frozen` today, which reads as an election and is a
+forced hand.
+
+`decoder.tunable_values` carries the remainder instead, arriving once with the
+instruction the admit already brings, at the moment the session is about to
+open. Resolution stays where it was, `Knobs::resolve` against the supplied map,
+and neither the dispositions nor the resolve change shape.
+
+**The token seam's tunable map goes rather than staying unread.** With the
+values arriving at admit, a map on the token directive would be a payload field
+whose only reader is unbuilt, which apex section 9 refuses in the same words it
+refuses an empty joint. A per-turn tunable remains possible and is a different
+feature, changing a value mid-session, and it wants the engine to rebuild its
+sampler between turns. When that is built it brings its own carrier back rather
+than finding one waiting.
+
+**What this buys is the iteration loop the disposition mechanism was for.** A
+parameter left tunable is set in `agent.yaml` and reaches the engine on the next
+load, so a developer moves it by reloading the agent. A parameter frozen for a
+production binary cannot be moved by any declaration and never travels. Which is
+which stays one line and a recompile at the composition root.
+
+```graph
+node: spu-tunables-arrive-in-the-declaration
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-tunables-arrive-in-the-declaration
+```
 
 ```graph
 node: spu-frozen-values-never-cross
@@ -1818,12 +1868,19 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The headroom figure.** Charter section 9's staged item, a construction
   parameter until a measurement on a real artifact against a real device
   replaces it.
-- **The session capacity figure.** The same standing and the same entry
-  condition, a construction parameter until a measurement replaces it, and
-  section 4.2 states where the number arrives from. What settles it is a
+- **The session capacity figure, and the per-turn generation ceiling.** Both
+  carry a `Disposition` per section 4.2, so what is open is the compiled value
+  a deployment freezes rather than the route. What settles the capacity is a
   measurement of what a device holds at a quantization, which is the cache cost
   per resident token against the room left once the weights are resident, and
-  the artifact's declared window bounds the answer without being it.
+  the artifact's declared window bounds the answer without being it. The
+  ceiling settles against what a turn is allowed to spend before the backstop
+  fires, which is a judgement rather than a measurement.
+- **Which parameters this binary leaves tunable.** The election is the
+  builder's per charter section 13.8 and it is a deployment's question rather
+  than this Spec's, the way the family set is. What this Spec fixes is that
+  every parameter carries an election and none defaults, not which way any
+  deployment casts it.
 - **Whether the artifact's declared shape is verified against its tensor
   data.** Charter section 9's second staged item, priced by what the check
   costs on the admit path.
