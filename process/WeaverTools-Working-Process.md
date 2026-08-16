@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.25, 2026-08-16. Companion to the Working Rules, the Document
+**Version:** v0.26, 2026-08-16. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -394,8 +394,8 @@ carrying a header, per the Document Format's counting clause:
 
     weaver-types      18/18      weaver-harness   54/56
     weaver-traits     24/24      weaver-gate      27/27
-    weaver-trace      38/38      weaver-admin     31/32
-    weaver-spu        58/62
+    weaver-trace      38/38      weaver-admin     32/32
+    weaver-spu        60/62
 
 **The figures moved on the method rather than on the work**, six of the seven
 rows changing at that recount and none of them because a crate gained or lost a
@@ -407,20 +407,17 @@ earlier table read `types 17/17`, `trace 39/39`, `harness 48/48`, `gate 23/23`,
 comparing an old batch against this section needs to know the ruler changed and
 not the thing measured.
 
-**Seven assertions are open across the set and each is named**, the roll being
-short enough that leaving it to the register cost more than it saved. Three of
-the seven are awaiting the code act their document authorized, which is the
-ordinary state of an assertion between a merged Spec and the act that cites it:
+**Four assertions are open across the set, and each is named with what it waits
+on**, the roll being short enough that leaving it to the register cost more than
+it saved. What an open assertion waits on is stated because the count cannot say
+it, and a blocked one and an overlooked one read the same in a total:
 
     weaver-spu        spu-one-forward-per-prompt                  review
     weaver-spu        spu-two-taps-one-shape                      review
-    weaver-spu        spu-session-parameters-carry-dispositions    compile-pin
-    weaver-spu        spu-tunables-arrive-in-the-declaration       perturbation
     weaver-harness    harness-idle-report-authors-without-a-turn   perturbation
     weaver-harness    harness-organ-argv-carries-construction-parameters  review
-    weaver-admin      admin-run-reference-distinguishes            review
 
-**The SPU's two are blocked rather than missed** and both wait on the readout
+**All four are blocked rather than missed.** The SPU's two wait on the readout
 tap existing, the tap not being the engine: the eval-callback pin holds the seam
 open and nothing yet drives a tap through it, which `weaver-spu-Spec` section 7
 states plainly as code this program writes rather than salvage it inherits. The
@@ -429,6 +426,22 @@ closed, and a fifth, the election refused at admit, was bought 2026-08-10 by the
 route act. `spu-marker-promotion` reads satisfied under this count and did not
 under the old one, its citation sitting with the perturbation test that buys it,
 which matters because it is the gate on any family the registry gains.
+
+**The harness's two wait on acts that have not started.** The idle report is
+unbuilt: no report authors without a turn because nothing authors one at all,
+and its sibling in the same section, `harness-frame-grants-the-seat`, is cited,
+so the dev boundary is partly built and this is the part still owed. The argv
+carrier waits on the headroom act, its document having landed 2026-08-16 and the
+code not yet, which is the ordinary state between a merged Spec and the act that
+cites it.
+
+**Two came off this roll on 2026-08-16 rather than being explained.**
+`admin-run-reference-distinguishes` was satisfied on 2026-08-15 and uncited, the
+act that built the three-part reference not adding the header, and the citation
+lands with this act. The SPU's two dispositions assertions were cited by the act
+that closed them. An assertion sitting in a census unexplained is the shape this
+project has repeatedly found, a record unable to say what it did not measure, so
+the roll now carries the reason beside the name.
 
 **One decode engine is written and one is not, and the turn now completes.**
 The GGUF engine landed 2026-08-08 and decodes real weights under its own tests,
