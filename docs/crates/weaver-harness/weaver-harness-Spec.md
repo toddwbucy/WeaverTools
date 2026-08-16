@@ -496,6 +496,46 @@ from: weaver-harness
 to: harness-fork-to-exec-three-calls
 ```
 
+**The organ's argv carries the construction parameters its composition root is
+owed, and the environment stays empty.** The exec passes an empty `envp`, so an
+organ inherits no variable from the worker and is told what it needs by the
+descriptors it is handed and by this vector, and by nothing else.
+
+**Passing the worker's environment instead is refused rather than overlooked.**
+An environment crosses wholesale or not at all, so a value would reach an organ
+because the worker happened to be holding it rather than because an act wrote it
+down, and what an organ was told would then depend on how the worker was
+started. Argv names each parameter at the call site, where the act that added it
+is the act that can be read.
+
+**The bound above is untouched by this and the reason is where the work
+happens.** Every argument is a `CString` built in the parent before the fork,
+the way the program name already is, so the vector the child hands `execve` is
+finished before the child exists. The child performs the same three calls. A
+parameter that could only be assembled after the fork would not be expressible
+here, which is a constraint on what may travel this way rather than a cost.
+
+**What may travel it is bounded by who can read a process's arguments.**
+`/proc/<pid>/cmdline` carries mode 444 and any local reader sees it unless
+`/proc` is mounted with `hidepid`, which is the deployment's option and not this
+crate's. **The bound is drawn at the weaker guarantee on purpose**, because a
+Spec that assumed the restriction would rest a boundary on a mount it does not
+set, and a deployment without that option would then expose what the boundary
+promised to hold. So a figure a deployment supplies may travel here and a
+credential may not. Where an organ needs something secret the descriptor it
+already holds is the route, per section 5.1's possession-as-authentication, and
+this vector is not.
+
+```graph
+node: harness-organ-argv-carries-construction-parameters
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-harness
+to: harness-organ-argv-carries-construction-parameters
+```
+
 ### 2.3 The receive site, and adoption
 
 **The trace descriptor enters this crate at exactly one call, and that call

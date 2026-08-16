@@ -769,6 +769,38 @@ identity prefix through the family library, decodes it once, and records the
 resident length it produced. No operation short of the flush reduces that
 length, per charter section 13.3.
 
+**The session's capacity is a construction parameter and reaches this crate's
+composition root as an argument.** It takes the standing the headroom term
+takes in section 4.1, a deployment fact rather than an operator election and a
+number a builder can supply before the measurement that replaces it exists. The
+ground for the standing is that a capacity is a property of what the device can
+hold at a quantization, which is what a deployment knows and a declaration does
+not, and an artifact's declared window is an upper bound on it rather than the
+figure itself.
+
+**The delivery is argv, and it is stated because this crate has no other way to
+be told anything.** An organ is exec'd with an empty environment and adopts
+placed descriptors, so a number that is neither compiled in nor carried on the
+wire has no route. Compiling it in makes every capacity a rebuild, and the wire
+would make it an operator election and reach every party to the contract that
+carried it. Argv is the remaining route and the one that matches the standing:
+the worker already receives its coordination socket and its organ binaries this
+way, so this extends a path rather than opening one. **A process's arguments are
+readable by any local reader unless `/proc` is mounted to restrict them**, which
+is the deployment's option rather than this crate's, so the bound is drawn at
+the weaker guarantee and what travels here is a figure of this kind and never
+anything secret.
+
+```graph
+node: spu-capacity-is-a-construction-parameter
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-spu
+to: spu-capacity-is-a-construction-parameter
+```
+
 **Overflow refuses and sheds nothing.** A delta that would exceed the
 session's capacity is refused with the overflow named and the session's own
 account of itself, the harness deciding what a full context means. This crate
@@ -1786,6 +1818,12 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The headroom figure.** Charter section 9's staged item, a construction
   parameter until a measurement on a real artifact against a real device
   replaces it.
+- **The session capacity figure.** The same standing and the same entry
+  condition, a construction parameter until a measurement replaces it, and
+  section 4.2 states where the number arrives from. What settles it is a
+  measurement of what a device holds at a quantization, which is the cache cost
+  per resident token against the room left once the weights are resident, and
+  the artifact's declared window bounds the answer without being it.
 - **Whether the artifact's declared shape is verified against its tensor
   data.** Charter section 9's second staged item, priced by what the check
   costs on the admit path.
