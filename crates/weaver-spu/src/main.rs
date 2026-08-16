@@ -622,21 +622,35 @@ fn serve_decode(
 /// judged against a headroom the deployment did not ask for is worse than a
 /// refused start because nothing downstream could tell.
 fn headroom_from_arguments() -> Result<u64, String> {
-    let mut arguments = std::env::args().skip(1);
+    headroom_from(std::env::args().skip(1))
+}
+
+/// **The whole vector is read before anything is returned.** An earlier
+/// wording answered on the first parameter it understood, so a vector carrying
+/// a misspelled one after it was served the value and never saw the mistake,
+/// which is the failure the worker's own parser refuses by name. A parameter
+/// stated twice is refused for the same reason: taking the first silently
+/// picks for a deployment that plainly meant one of them.
+fn headroom_from(arguments: impl Iterator<Item = String>) -> Result<u64, String> {
+    let mut arguments = arguments.peekable();
+    let mut headroom: Option<u64> = None;
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
             "--headroom-bytes" => {
                 let value = arguments
                     .next()
                     .ok_or_else(|| "--headroom-bytes takes a value".to_string())?;
-                return value
+                let parsed = value
                     .parse::<u64>()
-                    .map_err(|_| format!("--headroom-bytes wants a byte count, got {value}"));
+                    .map_err(|_| format!("--headroom-bytes wants a byte count, got {value}"))?;
+                if headroom.replace(parsed).is_some() {
+                    return Err("--headroom-bytes is stated twice".to_string());
+                }
             }
             other => return Err(format!("unknown parameter {other}")),
         }
     }
-    Ok(HEADROOM_BYTES)
+    Ok(headroom.unwrap_or(HEADROOM_BYTES))
 }
 
 fn main() -> ExitCode {
@@ -865,6 +879,38 @@ mod tests {
     use weaver_types::{
         AgentName, ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction,
     };
+
+    /// **Every argument is read before the answer is given.**
+    ///
+    /// Perturbation: return on the first `--headroom-bytes` rather than
+    /// recording it and continuing, and the trailing-unknown case passes with
+    /// the value served and the mistake unseen. Watched under exactly that.
+    #[test]
+    fn the_whole_vector_is_judged() {
+        let of = |v: &[&str]| headroom_from(v.iter().map(|s| s.to_string()));
+        assert_eq!(
+            of(&[]),
+            Ok(HEADROOM_BYTES),
+            "nothing stated keeps the compiled default"
+        );
+        assert_eq!(of(&["--headroom-bytes", "1024"]), Ok(1024));
+        assert!(
+            of(&["--headroom-bytes", "1024", "--bogus"]).is_err(),
+            "a misspelled parameter after a good one is still a mistake"
+        );
+        assert!(
+            of(&["--headroom-bytes", "1024", "--headroom-bytes", "2048"]).is_err(),
+            "stated twice picks for a deployment that meant one of them"
+        );
+        assert!(
+            of(&["--headroom-bytes"]).is_err(),
+            "the value is not optional"
+        );
+        assert!(
+            of(&["--headroom-bytes", "many"]).is_err(),
+            "and it is a byte count"
+        );
+    }
 
     fn directive(directive: LifecycleDirective) -> OrganEnvelope {
         OrganEnvelope {
