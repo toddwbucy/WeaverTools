@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.22, 2026-08-10. Companion to the Working Rules, the Document
+**Version:** v0.23, 2026-08-15. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -410,16 +410,47 @@ its wire route. The register naming each assertion lives in the repository's
 issue tracker rather than here, so this section states the division and leaves
 the roll to the register.
 
-**One decode engine is written and one is not, and the turn still does not
-complete.** The GGUF engine landed 2026-08-08 and decodes real weights under its
-own tests, a real forward and a real draw against a real artifact, and
-`weaver-spu-Spec` section 4.1's derivation answers for the GGUF container while
-refusing the native one, whose `native.rs` stays unwritten and undeclared. What
-no engine yet has is the seam: the decode socket's exchanges are not served, so
-no directive reaches an engine from outside its process. A crate can therefore
-report a high conformance figure while completing no turn, and the apex's
-demonstration is what distinguishes the two. Read the figure as what it is, a
-count of claims met, and not as a statement that the deliverable runs.
+**One decode engine is written and one is not, and the turn now completes.**
+The GGUF engine landed 2026-08-08 and decodes real weights under its own tests,
+a real forward and a real draw against a real artifact, and `weaver-spu-Spec`
+section 4.1's derivation answers for the GGUF container while refusing the
+native one, whose `native.rs` stays unwritten and undeclared. What this section
+said the engine lacked was the seam, and the seam closed: epic #130 completed
+the first live turn on 2026-08-14, gate to trace, against a real local model.
+
+**The demonstration is the evidence and it is inspectable.** A trace taken
+2026-08-16 carries one run reference over six turns, each running
+`turn.started`, `message.user`, `model.request`, `model.output`,
+`model.measurement`, `message.assistant`, `turn.closed`, the whole bracketed by
+a `load` and an `unload`. So a directive does reach an engine from outside its
+process, and the residual measurement rides back on the same turn.
+
+The caution this paragraph carried still holds and now points the other way. A
+crate could always report a high conformance figure while completing no turn,
+which is why the apex asks for a demonstration and not a count. What changed is
+that the demonstration exists, so read the figures below as a count of claims
+met and read the trace for whether the deliverable runs.
+
+**The four defects the live turn surfaced are closed, 2026-08-15.** Run
+identity landed first because five registered measurements join a result to a
+trace and could not: the session is the operator's and declared in
+`agent.yaml`, and the run reference is minted at the load from an instant, the
+agent's name, and eight bytes of randomness, so a declaration without a
+`session` field is now refused at load. The unload's misreport of a clean
+unwind closed against the Spec's own clause. The unclosed run bracket on a
+failed load needed no ruling, the charter and the Spec having both already
+required the rollback to direct a leave. The gate socket closed by the
+operator's reshaping of 2026-08-14: the socket is fixed by the application
+rather than named by a declaration, so `GateInstruction` no longer carries a
+path and the stale-pathname hazard is unreachable rather than guarded against.
+
+**A measurement regime stands outside this repository and the first baseline is
+taken.** Nine tests are registered with their methods before they run, and each
+result carries the conditions that make it comparable later, which includes the
+commit, the build profile, and the identity of the binaries measured rather
+than the profile's bare claim. It is deliberately not a corpus member and
+nothing here is written against it. It does not reach the gates, and a reading
+it produces is evidence about the code rather than authority over a document.
 
 What remains from the phase behind: G6 and then item 7, and the G2 and G5
 phase-close sweeps. The graph's expected census is stated as a number rather than
