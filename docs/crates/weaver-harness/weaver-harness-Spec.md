@@ -497,10 +497,16 @@ to: harness-fork-to-exec-three-calls
 ```
 
 **The organ's argv carries the construction parameters its composition root is
-owed, and the environment stays empty.** An organ is told what it needs by the
-descriptors it is handed and by this vector, and by nothing else. The
-environment is left empty because it is inherited wholesale rather than stated,
-so a value reaching an organ that way would be one no act wrote down.
+owed, and the environment stays empty.** The exec passes an empty `envp`, so an
+organ inherits no variable from the worker and is told what it needs by the
+descriptors it is handed and by this vector, and by nothing else.
+
+**Passing the worker's environment instead is refused rather than overlooked.**
+An environment crosses wholesale or not at all, so a value would reach an organ
+because the worker happened to be holding it rather than because an act wrote it
+down, and what an organ was told would then depend on how the worker was
+started. Argv names each parameter at the call site, where the act that added it
+is the act that can be read.
 
 **The bound above is untouched by this and the reason is where the work
 happens.** Every argument is a `CString` built in the parent before the fork,
