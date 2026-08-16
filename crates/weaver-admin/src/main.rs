@@ -262,7 +262,8 @@ fn run_load(
         &inventory.identity,
         &agent.0,
         &socket_path,
-    ))?;
+    ))
+    .map_err(|from_status| refusal_for_failed_start(config, &agent.0, from_status))?;
     standing.unit_started = true;
 
     // **The dial races the worker's bind and the bound covers it.** A bound
@@ -334,6 +335,35 @@ fn started(asked: std::io::Result<std::process::ExitStatus>) -> Result<(), Lifec
     }
 }
 
+/// **A failed start ask is asked about rather than guessed at.**
+///
+/// The status cannot say which failure it was: `weaver-admin-systemd-contract`
+/// section 3 measures a duplicate unit name and a malformed property failing
+/// with the same status, differing only in prose this crate does not read. So
+/// the refusal comes from the state ask, where `failed` covers one condition,
+/// and every other reading keeps the answer the status alone could give.
+///
+/// It is a function rather than a branch inside `run_load` for the reason
+/// `started` is: the decision is reachable by a test.
+fn refusal_for_failed_start(
+    config: &ServiceConfig,
+    agent: &str,
+    from_status: LifecycleRefusal,
+) -> LifecycleRefusal {
+    start_refusal_for_residency(unit::residency(&config.unit, agent), from_status)
+}
+
+/// The mapping alone, testable without a manager.
+fn start_refusal_for_residency(
+    residency: unit::Residency,
+    from_status: LifecycleRefusal,
+) -> LifecycleRefusal {
+    match residency {
+        unit::Residency::Failed => LifecycleRefusal::PriorUnitUnreaped,
+        _ => from_status,
+    }
+}
+
 /// **A failed dial is followed by a state ask, so a refusal names the right
 /// thing.** A start ask can succeed over a unit that never runs, so the dial's
 /// bound is what proves liveness, and the bound alone would report an absent
@@ -344,9 +374,19 @@ fn started(asked: std::io::Result<std::process::ExitStatus>) -> Result<(), Lifec
 /// existed, and one whose exec never succeeded, so nothing is claimed beyond
 /// the value.
 fn refusal_for_absent_worker(config: &ServiceConfig, agent: &str) -> LifecycleRefusal {
-    match unit::residency(&config.unit, agent) {
-        // The unit ran and exited non-zero: the worker is not there to bind.
-        unit::Residency::Failed => LifecycleRefusal::BindFailed,
+    refusal_for_residency(unit::residency(&config.unit, agent))
+}
+
+/// The mapping alone, separated from the ask for the reason `unload_answer` is:
+/// a decision reachable by a test rather than only by a live manager.
+fn refusal_for_residency(residency: unit::Residency) -> LifecycleRefusal {
+    match residency {
+        // A prior process exited non-zero and its name is still held, which
+        // is what refuses a later start under it. Not a bind failure: the
+        // state says a process exited non-zero and says nothing about whether
+        // it bound, so naming a socket here would assert what the boundary
+        // did not, per `weaver-admin-systemd-contract` section 3.
+        unit::Residency::Failed => LifecycleRefusal::PriorUnitUnreaped,
         // The unit is running and its socket was not reachable, so what failed
         // is the bind rather than the residency. Reporting no residency here
         // would name the one thing the manager just said was present.
@@ -706,6 +746,63 @@ mod unload_answer_tests {
             unload_answer(unit::Residency::Unknown),
             Err(LifecycleRefusal::BindFailed)
         ));
+    }
+
+    /// **The two conditions stop sharing a word**, per `weaver-admin-Spec`
+    /// and the ruling of 2026-08-16. A unit the manager reports `failed` left
+    /// a name held, which is what refuses a later start. A unit it reports
+    /// `active` with an unreachable socket is a bind that failed.
+    ///
+    /// Perturbation: answer `BindFailed` for `Failed` and this test fails,
+    /// which is the state the defect was found in.
+    #[test]
+    fn a_failed_prior_unit_is_not_a_bind_failure() {
+        assert_eq!(
+            refusal_for_residency(unit::Residency::Failed),
+            LifecycleRefusal::PriorUnitUnreaped
+        );
+        assert_eq!(
+            refusal_for_residency(unit::Residency::Active),
+            LifecycleRefusal::BindFailed,
+            "a running unit with an unreachable socket is still a bind failure"
+        );
+        // Both patterns of the shared arm, not one of them. They answer
+        // together today and a later act splitting them would pass a test
+        // that named only `Inactive`.
+        for absent in [unit::Residency::Inactive, unit::Residency::Unknown] {
+            assert_eq!(
+                refusal_for_residency(absent),
+                LifecycleRefusal::NoResidency,
+                "neither reading claims more than an absent residency"
+            );
+        }
+    }
+
+    /// **A failed start ask is asked about rather than guessed at.** The
+    /// status cannot say which failure it was, so the state decides, and every
+    /// reading but `failed` keeps the answer the status alone could give.
+    ///
+    /// Perturbation: return `from_status` for every residency and the first
+    /// case fails, which is how an operator came to read `bind_failed` over a
+    /// healthy socket.
+    #[test]
+    fn a_failed_start_consults_the_state() {
+        let from_status = LifecycleRefusal::BindFailed;
+        assert_eq!(
+            start_refusal_for_residency(unit::Residency::Failed, from_status.clone()),
+            LifecycleRefusal::PriorUnitUnreaped
+        );
+        for other in [
+            unit::Residency::Active,
+            unit::Residency::Inactive,
+            unit::Residency::Unknown,
+        ] {
+            assert_eq!(
+                start_refusal_for_residency(other, from_status.clone()),
+                LifecycleRefusal::BindFailed,
+                "nothing but failed is claimed beyond the status"
+            );
+        }
     }
 
     /// A unit that ran and exited non-zero is not running, which is the

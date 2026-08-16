@@ -199,6 +199,18 @@ pub enum LifecycleRefusal {
     DeviceCannotAdmit,
     NoResidency,
     BindFailed,
+    /// A prior process for this unit exited non-zero and its name is still
+    /// held by the manager, so a later start under that name refuses until it
+    /// is reaped.
+    ///
+    /// **It claims that and no more.** `failed` is the one state the init
+    /// boundary reports without ambiguity, per
+    /// `weaver-admin-systemd-contract` section 3, and it does not say whether
+    /// the worker bound or how long it served: a unit that bound its socket,
+    /// served, and exited non-zero later reads the same. What it says is what
+    /// refused the load, and that is a different fact from a socket that would
+    /// not bind, which is `BindFailed`.
+    PriorUnitUnreaped,
     OrganRefused {
         organ: RefusingOrgan,
         reason: Box<LifecycleRefusal>,

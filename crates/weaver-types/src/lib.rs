@@ -74,6 +74,7 @@
 //!         LifecycleRefusal::DeviceCannotAdmit => "device_cannot_admit",
 //!         LifecycleRefusal::NoResidency => "no_residency",
 //!         LifecycleRefusal::BindFailed => "bind_failed",
+//!         LifecycleRefusal::PriorUnitUnreaped => "prior_unit_unreaped",
 //!         LifecycleRefusal::OrganRefused { .. } => "organ_refused",
 //!         LifecycleRefusal::ActivityNotAtRest => "activity_not_at_rest",
 //!         LifecycleRefusal::StateNotObservable => "state_not_observable",
