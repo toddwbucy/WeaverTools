@@ -509,11 +509,16 @@ finished before the child exists. The child performs the same three calls. A
 parameter that could only be assembled after the fork would not be expressible
 here, which is a constraint on what may travel this way rather than a cost.
 
-**What may travel it is bounded by argv being world-readable.** `/proc` exposes
-a process's arguments to any reader on the host, so a figure a deployment
-supplies is appropriate and a credential is not. Where an organ needs something
-secret, the descriptor it already holds is the route, per section 5.1's
-possession-as-authentication, and this vector is not.
+**What may travel it is bounded by who can read a process's arguments.**
+`/proc/<pid>/cmdline` carries mode 444 and any local reader sees it unless
+`/proc` is mounted with `hidepid`, which is the deployment's option and not this
+crate's. **The bound is drawn at the weaker guarantee on purpose**, because a
+Spec that assumed the restriction would rest a boundary on a mount it does not
+set, and a deployment without that option would then expose what the boundary
+promised to hold. So a figure a deployment supplies may travel here and a
+credential may not. Where an organ needs something secret the descriptor it
+already holds is the route, per section 5.1's possession-as-authentication, and
+this vector is not.
 
 ```graph
 node: harness-organ-argv-carries-construction-parameters

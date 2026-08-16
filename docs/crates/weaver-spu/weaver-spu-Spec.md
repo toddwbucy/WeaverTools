@@ -785,9 +785,11 @@ wire has no route. Compiling it in makes every capacity a rebuild, and the wire
 would make it an operator election and reach every party to the contract that
 carried it. Argv is the remaining route and the one that matches the standing:
 the worker already receives its coordination socket and its organ binaries this
-way, so this extends a path rather than opening one. **Argv is world-readable
-through `ps`**, which bounds what may travel it to figures of this kind and not
-to anything secret.
+way, so this extends a path rather than opening one. **A process's arguments are
+readable by any local reader unless `/proc` is mounted to restrict them**, which
+is the deployment's option rather than this crate's, so the bound is drawn at
+the weaker guarantee and what travels here is a figure of this kind and never
+anything secret.
 
 ```graph
 node: spu-capacity-is-a-construction-parameter
