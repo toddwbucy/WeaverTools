@@ -30,17 +30,17 @@ sees. Each figure is the mean over the 2,000 iterations of one run.
 
 | size | pageable, batched | pageable, synced | pinned, batched | pinned, synced |
 |---|---|---|---|---|
-| 4 KiB | 6.40 us | 7.84 us | 5.71 us | 7.61 us |
-| 16 KiB | 7.90 us | 7.56 us | 7.44 us | 8.89 us |
-| 64 KiB | 27.70 us | 28.60 us | 7.97 us | 8.07 us |
-| 256 KiB | 82.92 us | 83.07 us | 12.57 us | 12.48 us |
-| 1 MiB | 326.25 us | 327.51 us | 32.17 us | 32.60 us |
+| 4 KiB | 5.13 us | 6.96 us | 5.58 us | 6.51 us |
+| 16 KiB | 7.21 us | 8.11 us | 6.94 us | 7.80 us |
+| 64 KiB | 27.60 us | 29.58 us | 8.11 us | 8.26 us |
+| 256 KiB | 83.52 us | 83.78 us | 12.65 us | 12.33 us |
+| 1 MiB | 326.80 us | 327.88 us | 32.09 us | 31.95 us |
 
 The issue's estimate for the 4 to 64 KiB band was 8.5 to 11 us. **Measured:
-7.6 to 8.9 us pinned in the synced view**, which is the view the estimate
+6.5 to 8.3 us pinned in the synced view**, which is the view the estimate
 described. The fact the estimate did not carry: pageable synchronized
-transfer runs about 3.5x slower than pinned at 64 KiB, 28.6 us against 8.1,
-and about 10x slower at 1 MiB, 327.5 us against 32.6 - roughly 30 to 39x
+transfer runs about 3.6x slower than pinned at 64 KiB, 29.6 us against 8.3,
+and about 10x slower at 1 MiB, 327.9 us against 32.0 - roughly 30 to 39x
 above the estimate band - so the allocation class matters an order of
 magnitude before the transfer size does.
 
@@ -75,12 +75,12 @@ Prefill of a one-message delta ran 13 to 19 ms across the three
 ## The ratio
 
 Ratio = decode time per token / transfer time per copy, taking the pinned
-synced 4 to 64 KiB band (7.6 to 8.9 us) for the transfer and both decode
+synced 4 to 64 KiB band (6.5 to 8.3 us) for the transfer and both decode
 readings for the compute:
 
-- per draw: 20.3 ms / 8.9 us to 38.3 ms / 7.6 us, **roughly 2,300 to 5,000x**
-- per retained token: 24.4 ms / 8.9 us to 51.0 ms / 7.6 us, **roughly 2,700
-  to 6,700x**
+- per draw: 20.3 ms / 8.3 us to 38.3 ms / 6.5 us, **roughly 2,500 to 5,900x**
+- per retained token: 24.4 ms / 8.3 us to 51.0 ms / 6.5 us, **roughly 3,000
+  to 7,800x**
 
 The issue estimated 3,000 to 6,000x on an A6000. The per-retained-token
 range brackets that estimate; the per-draw range overlaps its lower half and
@@ -125,12 +125,14 @@ negligible - which is to say, the burden of proof sits on the re-encoding.
 
 Transfer leg: the bench is small enough to carry whole, so the source is
 here rather than referenced, and the reported results came from exactly this
-text compiled with `nvcc -O2 -o xferbench2 xferbench2.cu` under CUDA 13.3.
+text compiled with `nvcc -O2 -o xferbench xferbench.cu` under CUDA 13.3.
 
 ```c
 // H2D transfer microbench: host wall-clock through device synchronization,
-// batched and per-copy-synced, pageable and pinned.
+// batched and per-copy-synced, pageable and pinned. Every CUDA call and the
+// pageable allocation are checked.
 #include <cstdio>
+#include <cstdlib>
 #include <chrono>
 #include <cuda_runtime.h>
 #define CK(x) do{ cudaError_t e=(x); if(e){printf("ERR %s\n",cudaGetErrorString(e)); return 1;} }while(0)
@@ -143,22 +145,22 @@ int main(){
     void *dev; CK(cudaMalloc(&dev, 1048576));
     for (int pinned = 0; pinned <= 1; pinned++){
         void *host;
-        if (pinned) CK(cudaMallocHost(&host, 1048576));
-        else host = malloc(1048576);
+        if (pinned) { CK(cudaMallocHost(&host, 1048576)); }
+        else { host = malloc(1048576); if (!host) { printf("ERR malloc\n"); return 1; } }
         for (size_t s : sizes){
-            for (int i=0;i<warm;i++) cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice);
+            for (int i=0;i<warm;i++) CK(cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice));
             CK(cudaDeviceSynchronize());
             auto t0 = clk::now();
-            for (int i=0;i<iters;i++) cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice);
+            for (int i=0;i<iters;i++) CK(cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice));
             CK(cudaDeviceSynchronize());
             double batched = std::chrono::duration<double,std::micro>(clk::now()-t0).count()/iters;
             t0 = clk::now();
-            for (int i=0;i<iters;i++){ cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice); cudaDeviceSynchronize(); }
+            for (int i=0;i<iters;i++){ CK(cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice)); CK(cudaDeviceSynchronize()); }
             double synced = std::chrono::duration<double,std::micro>(clk::now()-t0).count()/iters;
             printf("%s %7zu B  batched %8.2f us/copy   synced %8.2f us/copy\n",
                    pinned?"pinned  ":"pageable", s, batched, synced);
         }
-        if (pinned) cudaFreeHost(host); else free(host);
+        if (pinned) { CK(cudaFreeHost(host)); } else { free(host); }
     }
     return 0;
 }
@@ -167,10 +169,12 @@ int main(){
 Decode leg, per model, with the artifact's path in a variable so the command
 pastes as written:
 
-    ARTIFACT=/path/to/model.gguf
-    CUDA_PATH=/opt/cuda WEAVER_TEST_GGUF="$ARTIFACT" \
-      cargo test -p weaver-spu --features cuda,gguf --test loaded \
-      an_opened_session_generates -- --nocapture
+```sh
+ARTIFACT=/path/to/model.gguf
+CUDA_PATH=/opt/cuda WEAVER_TEST_GGUF="$ARTIFACT" \
+  cargo test -p weaver-spu --features cuda,gguf --test loaded \
+  an_opened_session_generates -- --nocapture
+```
 
 and read `timings.decode_ns`, `timings.prefill_ns`, and the length of
 `output_tokens` from the measurement the seam already carries; no instrument
