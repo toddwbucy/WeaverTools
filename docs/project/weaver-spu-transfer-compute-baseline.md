@@ -38,15 +38,20 @@ sees. Each figure is the mean over the 2,000 iterations of one run.
 
 The issue's estimate for the 4 to 64 KiB band was 8.5 to 11 us. **Measured:
 7.6 to 8.9 us pinned in the synced view**, which is the view the estimate
-described. The fact the estimate did not carry: pageable transfer leaves the
-band at 64 KiB and is 10x out by 1 MiB, so the allocation class matters an
-order of magnitude before the transfer size does.
+described. The fact the estimate did not carry: pageable synchronized
+transfer runs about 3.5x slower than pinned at 64 KiB, 28.6 us against 8.1,
+and about 10x slower at 1 MiB, 327.5 us against 32.6 - roughly 30 to 39x
+above the estimate band - so the allocation class matters an order of
+magnitude before the transfer size does.
 
 ## Leg two: the decode step
 
 Read from the SPU's own measurement payload through the full decode seam -
-the same path a production turn takes, socket framing and measurement
-production included. One generation per model, single-run observations rather
+the same path a production turn takes, so socket framing and measurement
+production are exercised by the run, **and excluded from the timed span**:
+`timings.decode_ns` opens and closes inside the SPU around the sampling loop,
+so what it times is the loop through the terminator's decode and nothing of
+the seam around it. One generation per model, single-run observations rather
 than aggregates, so these are order-of-magnitude figures; a
 longer-generation pass sharpens them when tuning actually wants precision.
 
@@ -77,8 +82,10 @@ readings for the compute:
 - per retained token: 24.4 ms / 8.9 us to 51.0 ms / 7.6 us, **roughly 2,700
   to 6,700x**
 
-The issue estimated 3,000 to 6,000x on an A6000. The measured band brackets
-it under either denominator.
+The issue estimated 3,000 to 6,000x on an A6000. The per-retained-token
+range brackets that estimate; the per-draw range overlaps its lower half and
+tops out below it. Under either denominator the estimate's order of
+magnitude holds, which is what the issue asked the measurement to settle.
 
 ## What the ratio supports, and what it does not
 
@@ -116,17 +123,52 @@ negligible - which is to say, the burden of proof sits on the re-encoding.
 
 ## Method, exactly, for the second column
 
-Transfer leg:
+Transfer leg: the bench is small enough to carry whole, so the source is
+here rather than referenced, and the reported results came from exactly this
+text compiled with `nvcc -O2 -o xferbench2 xferbench2.cu` under CUDA 13.3.
 
-    nvcc -O2 -o xferbench2 xferbench2.cu   # source shape as described above:
-    ./xferbench2                           # 2000 iters/cell, 200 warm, wall
-                                           # clock through cudaDeviceSynchronize,
-                                           # batched and synced shapes, pageable
-                                           # and pinned, mean per copy reported
+```c
+// H2D transfer microbench: host wall-clock through device synchronization,
+// batched and per-copy-synced, pageable and pinned.
+#include <cstdio>
+#include <chrono>
+#include <cuda_runtime.h>
+#define CK(x) do{ cudaError_t e=(x); if(e){printf("ERR %s\n",cudaGetErrorString(e)); return 1;} }while(0)
+using clk = std::chrono::steady_clock;
+int main(){
+    cudaDeviceProp p; CK(cudaGetDeviceProperties(&p,0));
+    printf("device: %s\n", p.name);
+    const size_t sizes[] = {4096, 16384, 65536, 262144, 1048576};
+    const int iters = 2000, warm = 200;
+    void *dev; CK(cudaMalloc(&dev, 1048576));
+    for (int pinned = 0; pinned <= 1; pinned++){
+        void *host;
+        if (pinned) CK(cudaMallocHost(&host, 1048576));
+        else host = malloc(1048576);
+        for (size_t s : sizes){
+            for (int i=0;i<warm;i++) cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice);
+            CK(cudaDeviceSynchronize());
+            auto t0 = clk::now();
+            for (int i=0;i<iters;i++) cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice);
+            CK(cudaDeviceSynchronize());
+            double batched = std::chrono::duration<double,std::micro>(clk::now()-t0).count()/iters;
+            t0 = clk::now();
+            for (int i=0;i<iters;i++){ cudaMemcpy(dev,host,s,cudaMemcpyHostToDevice); cudaDeviceSynchronize(); }
+            double synced = std::chrono::duration<double,std::micro>(clk::now()-t0).count()/iters;
+            printf("%s %7zu B  batched %8.2f us/copy   synced %8.2f us/copy\n",
+                   pinned?"pinned  ":"pageable", s, batched, synced);
+        }
+        if (pinned) cudaFreeHost(host); else free(host);
+    }
+    return 0;
+}
+```
 
-Decode leg, per model:
+Decode leg, per model, with the artifact's path in a variable so the command
+pastes as written:
 
-    CUDA_PATH=/opt/cuda WEAVER_TEST_GGUF=<artifact> \
+    ARTIFACT=/path/to/model.gguf
+    CUDA_PATH=/opt/cuda WEAVER_TEST_GGUF="$ARTIFACT" \
       cargo test -p weaver-spu --features cuda,gguf --test loaded \
       an_opened_session_generates -- --nocapture
 
