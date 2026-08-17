@@ -968,14 +968,20 @@ mod tests {
     /// **One module, one trait object, and three different flushes across the
     /// rows it serves.**
     ///
-    /// Five architecture keys cite the qwen2 module, and what they share is a
-    /// rendering, not a mechanism: qwen2 and qwen3 truncate, qwen35 and
-    /// qwen35moe re-establish because they are hybrid, and `nemotron_h_moe`
-    /// re-establishes for the same reason while being a different vendor's
-    /// model entirely. **This is why the flush is read from the row rather than
-    /// from the renderer**, and why `permits_truncation` could not stay on the
-    /// trait: `Qwen2::declaration()` answers for qwen2 whichever key was
-    /// admitted, and here that answer is wrong for three of the five.
+    /// Six architecture keys cite the qwen2 module, and what they share is a
+    /// rendering, not a mechanism: qwen2, qwen3 and qwen3moe truncate, qwen35
+    /// and qwen35moe re-establish because they are hybrid, and
+    /// `nemotron_h_moe` re-establishes for the same reason while being a
+    /// different vendor's model entirely. **This is why the flush is read from
+    /// the row rather than from the renderer**, and why `permits_truncation`
+    /// could not stay on the trait: `Qwen2::declaration()` answers for qwen2
+    /// whichever key was admitted, and here that answer is wrong for three of
+    /// the six.
+    ///
+    /// **The sparse siblings are the pair worth reading twice.** `qwen3moe`
+    /// truncates and `qwen35moe` does not, though both are Qwen mixtures of
+    /// experts citing one module, because sparsity is not what decides this
+    /// and the recurrent layers are.
     ///
     /// Perturbation: read the flush through `qwen2::renderer().declaration()`
     /// instead of through `lookup` and every non-qwen2 assertion below fails.
@@ -987,7 +993,7 @@ mod tests {
                 .flush
         };
 
-        for truncating in ["qwen2", "qwen3"] {
+        for truncating in ["qwen2", "qwen3", "qwen3moe"] {
             assert_eq!(
                 flush_of(truncating),
                 FlushMechanism::TruncateToPosition,
@@ -1017,7 +1023,14 @@ mod tests {
 
         // All five render through the one module, which is the half that makes
         // the differing flush interesting rather than incidental.
-        for shared in ["qwen2", "qwen3", "qwen35", "qwen35moe", "nemotron_h_moe"] {
+        for shared in [
+            "qwen2",
+            "qwen3",
+            "qwen3moe",
+            "qwen35",
+            "qwen35moe",
+            "nemotron_h_moe",
+        ] {
             assert_eq!(
                 lookup(&FamilyName(shared.into())).unwrap().template,
                 qwen2::TEMPLATE,

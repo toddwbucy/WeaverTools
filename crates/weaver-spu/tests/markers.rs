@@ -329,8 +329,14 @@ fn every_rendered_marker_promotes_to_one_token() {
 ///
 /// Perturbation: set either qwen35 entry's `flush` back to
 /// `TruncateToPosition` and this fails naming it. Watched under exactly that.
-/// The check is vacuous only where no artifact is reachable, which the
-/// `probed > 0` guard below refuses in the same way its sibling does.
+///
+/// **The guard counts declarations read, not vocabularies loaded.** A reachable
+/// artifact for a family the registry does not carry yet leaves this test with
+/// nothing to contradict, so counting the load would let a run pass having
+/// checked no declaration at all - which is exactly what happened while
+/// `mistral3` was probed and not yet carried. `verified` is what the assertion
+/// reads, and `probed` stays only to tell the two absences apart in the
+/// message.
 #[test]
 fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
     let backend = backend();
@@ -338,6 +344,7 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
     let mut failures: Vec<String> = Vec::new();
     let mut absent: Vec<String> = Vec::new();
     let mut probed = 0usize;
+    let mut verified = 0usize;
 
     for probe in PROBES {
         let (path, overridden) = probe.path();
@@ -350,7 +357,7 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
             probe.family
         );
         if !path.exists() {
-            absent.push(probe.family.to_string());
+            absent.push(format!("{} (no vocab)", probe.family));
             continue;
         }
         let model = match vocab_only(backend, &path) {
@@ -380,6 +387,7 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
             }
         };
 
+        verified += 1;
         let cannot_roll_back = model.is_hybrid() || model.is_recurrent();
         if declaration.permits_truncation() && cannot_roll_back {
             failures.push(format!(
@@ -397,9 +405,10 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
     }
 
     assert!(
-        probed > 0,
-        "no family vocab was reachable, so this test asserted nothing. Set one of \
-         {}.\n  absent: {absent:?}",
+        verified > 0,
+        "no carried family's declaration was read against an artifact, so this test \
+         asserted nothing. {probed} vocab(s) loaded and none belonged to a carried \
+         family. Set one of {}.\n  absent: {absent:?}",
         PROBES
             .iter()
             .map(|probe| probe.env)
