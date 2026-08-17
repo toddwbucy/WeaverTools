@@ -22,10 +22,14 @@ use weaver_spu::residency::{Headroom, Residency};
 use weaver_types::{ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction};
 
 /// A small real model this workshop holds. The test is about the load path,
-/// not the model, so the smallest artifact on the box is the right fixture.
-/// `WEAVER_TEST_GGUF` overrides the location for a machine laid out
-/// differently.
-const MODEL: &str = "/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf";
+/// not the model, so the fixture is the smallest artifact whose architecture
+/// and template agree. That second condition is not decoration: the smaller
+/// smollm2-360m declares `llama` and renders ChatML, so the registry hands it
+/// the Llama 3 stop set it was never trained against and the load refuses,
+/// correctly. Until an entry carries that pairing the fixture cannot be chosen
+/// on size alone. `WEAVER_TEST_GGUF` overrides the location for a machine laid
+/// out differently.
+const MODEL: &str = "/opt/weaver/models/qwen2.5-0.5b-instruct-q6_k.gguf";
 
 fn model_present() -> Option<PathBuf> {
     match std::env::var_os("WEAVER_TEST_GGUF") {
