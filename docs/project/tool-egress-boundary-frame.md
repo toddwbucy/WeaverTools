@@ -1,6 +1,10 @@
 # Tool Egress Boundary
 
-**Status:** DRAFT v0.4, 2026-08-07. Phase-one architecture-seat material, outside the
+**Status:** DRAFT v0.5, 2026-08-17. The ratified loop boundary of 2026-08-11
+refiles the internal tool: internal to the agent and external to the reasoning
+loop, per `finding-loop-agent-split` and issue #115, and section 2's bash
+sentence takes it. The port test keeps its answer whole at the agent level.
+Previously DRAFT v0.4, 2026-08-07. Phase-one architecture-seat material, outside the
 document set and never ratified. Argument and framing, no code. It decides nothing the
 tool workflow is there to decide.
 
@@ -119,9 +123,13 @@ the other side of it.** This paragraph argued that bash reaches the network as o
 user capability, so a world-capable bash could not be forked inside the set and had to
 be provisioned as a registered application. That reasoned from where bash's bytes end
 up. The ruling reasons from its transport: **a tool that binds a listening port is
-external and one that does not is internal**, and bash binds none. So bash is internal,
-loop code the harness invokes, its identity kernel-attested and its reach bounded by
-the identity it runs as. What forces the line now is a service that listens, which is
+external and one that does not is internal**, and bash binds none. So bash is internal
+to the agent and, per the refiling of 2026-08-11, external to the reasoning loop: a
+tool the loop reaches rather than loop code, its identity kernel-attested and its
+reach bounded by the identity it runs as. An earlier wording of this sentence called
+it loop code, which the one-level model could not distinguish from a tool; the
+ratified criterion can, and tooling fails it without exception. What forces the
+line now is a service that listens, which is
 the case this frame is about and which bash was never an instance of.
 
 ## 3. Two sockets, split by which party opens the exchange

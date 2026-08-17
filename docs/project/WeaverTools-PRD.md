@@ -37,6 +37,16 @@ ruling retires, and the requirements survive the premise while the wording does 
 `weaver-tools-vision` has a tool's answer re-entering through the world-opened socket,
 which is now the wrong door. **Three remain and the ruling is not implementable until
 they land**, and this entry is the record that says so.
+**Revised:** 2026-08-17, the ratified loop boundary reaches this document, per
+issue #115. The gate's row in the chain called it the outer membrane, and
+under the two-level model of `reasoning-loop-boundary`, ratified 2026-08-11,
+**the gate is the loop's membrane and the agent's membrane is the network
+boundary**. The row takes the two-level vocabulary; sole work ingress, raised
+last and lowered first, and every other fact of the row stand. The reversal
+is forced rather than editorial, per `finding-loop-agent-split`: enforcement
+by construction requires a tool result constructible from exactly one source,
+and a path that must stay open cannot be closed by the type system, so the
+one-level vocabulary cannot carry the boundary the enforcement closes.
 **Revised:** 2026-08-07, the tool egress ruling. The gate carries a second socket,
 opened by the agent rather than by the world, and a tool call crosses it. Step 1's
 clause that outbound tool connections do not pass through Gate is reversed, step 7's
@@ -572,7 +582,7 @@ The chain, in order:
 | **weaver-admin** | External authorization, boundary verification, lifecycle direction, custody of the sink, rollback |
 | **weaver-harness** | The fan-out inside enter and leave, readiness aggregation, activity control |
 | **weaver-spu** | Model admission, decoder and encoder residency, GPU release |
-| **weaver-gate** | Sole work ingress, and the outer membrane, raised last and lowered first |
+| **weaver-gate** | Sole work ingress, and the loop's membrane, raised last and lowered first |
 
 **Admin is the coordinating center of the load, and the harness is the
 coordinating center of the turn.** Admin authorizes the intent, verifies the

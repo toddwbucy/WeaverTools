@@ -2,7 +2,9 @@
 //! conforms: gate-floor-link-types-without-config
 //! conforms: gate-no-runtime-no-logging-no-yaml
 //!
-//! The outer membrane, per `weaver-gate-Spec`.
+//! The loop's membrane, per `weaver-gate-Spec` and the ratified
+//! reasoning-loop boundary of 2026-08-11: the agent's membrane is the network
+//! boundary, and this crate is the loop's.
 //!
 //! One binary, forked and exec'd by the harness during the enter fan-out, and
 //! nothing links it. This lib target is not an API for a consumer: it exists so

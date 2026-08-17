@@ -4,6 +4,11 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, the loop boundary reaches section 6's tool notes,
+per issue #115: the subprocess language stands as mechanics and is retired as
+the settled model, every tool sitting outside the loop by the ratified
+criterion, with the forcing rationale of `finding-loop-agent-split` stated
+where the notes are.
 **Revised:** 2026-08-16, second of that date, argv carries a host's fact and
 not an agent's. The organ argv clause of this date is narrowed rather than
 withdrawn: the headroom term stays on it, and a parameter belonging to one agent
@@ -1375,6 +1380,21 @@ which section 2 delivers by construction rather than by a per-tool argument and
 asserts there rather than again here. The absent safety classification is
 `weaver-traits-Spec` section 5's record, that trait being where the absence is
 pinned, and this clause obeys it rather than restating it.
+
+**The subprocess language above describes harness-side execution, and the
+ratified loop boundary of 2026-08-11 retires that as the settled model**, per
+issue #115. The kernel-bounds and tool-subprocess clauses stand as mechanics,
+the uid and descriptor discipline being true of whatever process shape the
+tool workflow elects, and they no longer describe where a tool sits: every
+tool is on the far side of the gate by the reasoning-loop criterion, without
+exception. The retirement is forced rather than preferential, per
+`finding-loop-agent-split`: enforcement by construction requires a tool
+result constructible from exactly one source, and a harness-side execution
+path that must stay open cannot be closed by the type system, so the in-loop
+construction path and the enforcement are incompatible and the enforcement
+was chosen. Whether the gate spawns tool processes or tools are provisioned
+as peers is the tool workflow's election and the finding rules on neither;
+what is settled is only which side of the loop's membrane the tool sits on.
 
 **`src/engine.rs` is loop 1's seat, and the seam it composes across is this
 crate's public surface.** The loop itself is the builder's, per the charter's

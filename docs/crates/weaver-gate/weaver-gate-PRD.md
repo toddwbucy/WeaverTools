@@ -6,6 +6,15 @@ lifecycle half of this crate, the hook the enter and leave directives raise and
 lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-17, the port ruling re-scopes under the ratified loop
+boundary, per issue #115. The ruling answered internal-to-the-agent, the only
+question a one-level model could ask, and it keeps that answer whole. What
+changes is that a second question now exists: the reasoning-loop criterion of
+2026-08-11 files every tool outside the loop without exception, so the forked
+internal tool is **internal to the agent and external to the loop**, both
+answers correct about the shell, per `finding-loop-agent-split`. A refiling
+rather than a reversal: nothing leaves the agent, and which boundary the tool
+is filed against is what changed. Section 7's cell carries the sentence.
 **Revised:** 2026-08-07, the tool egress ruling lands here. Section 2's hook becomes
 two sockets split by which party opens an exchange, section 3's no-second-listener
 clause becomes two seams and no third, section 13.1's relay gains its second leg, and
@@ -388,7 +397,11 @@ operator provisions and this program forks none of, so no uid of its is this pro
 to choose. Loop code the operator compiles into the worker holds no separate process
 and so no separate uid. **What remains is the internal tool this crate's sibling forks
 per call**, `bash` above all, which `weaver-harness-Spec` section 10 describes as a
-subprocess running as the agent uid and builds a reference walk on. That process has a
+subprocess running as the agent uid and builds a reference walk on. Internal
+answers the agent-level question the port test asks; under the ratified loop
+boundary of 2026-08-11 the same tool is external to the reasoning loop, every
+tool being on the far side of this crate by the criterion, and the two answers
+name two boundaries rather than contradicting each other. That process has a
 uid, the choice between the agent's and one this crate owns is live for it, and the
 descriptor custody the walk protects is exactly what the choice decides.
 
