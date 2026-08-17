@@ -172,7 +172,12 @@ pub enum Payload {
     Message(Box<RawValue>),
     /// The turn's close, the one payload the merged corpus fixes today.
     TurnClosed(TurnClose),
-    /// The floor's fault-report shape, rendered by the harness and spliced.
+    /// The floor's fault-report shape: the reporting organ renders its
+    /// account and names its case, the harness serializes the report whole
+    /// and splices it, per apex section 5.2's custody rule. Formerly
+    /// "rendered by the harness", which was true of the code until the act
+    /// that shaped the report, and corrected in that act rather than ahead
+    /// of it.
     Fault(Box<RawValue>),
     /// The request the model received, the SPU-rendered content the harness
     /// splices, per the custody act of 2026-08-11: the rendered prompt with

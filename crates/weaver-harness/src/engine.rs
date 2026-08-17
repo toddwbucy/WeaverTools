@@ -70,6 +70,19 @@ pub enum TurnError {
     /// The channel faulted or answered something the turn cannot read. No
     /// turn key rides it because service ends here and no close is sent.
     ChannelLost,
+    /// The SPU's fault emission arrived while this turn streamed. **The
+    /// report is already in the record when the caller sees this**: the
+    /// engine authors the `fault` event inside the turn's bracket, before
+    /// the close its error path lands, because a turn-attributed event
+    /// filed after `turn.closed` would sit outside the bracket that names
+    /// it. The report rides the error for the close the caller renders,
+    /// never for a second authoring. The exchange terminates at the
+    /// emission rather than waiting on a frame the contract says will not
+    /// come.
+    Faulted {
+        turn: TurnKey,
+        report: weaver_types::FaultReport,
+    },
     /// A message loop 1 supplied is not licensed for its role. The bracket
     /// opened before the delta was judged, so the turn exists and is named.
     Unlicensed { turn: TurnKey },
@@ -164,13 +177,33 @@ impl<'a> Ports<'a> {
         match self.run_turn(&turn, delta, &mut stop) {
             Ok(outcome) => Ok(outcome),
             Err(error) => {
+                // **The SPU's report is authored first, inside the bracket.**
+                // A `fault` event carrying a turn key must land before that
+                // turn's close, or the record shows a closed turn followed by
+                // an event attributed to it. The engine holds the author and
+                // the recorder, so the report is filed here rather than
+                // carried out to a caller who could only file it after the
+                // close below has already landed.
+                let fault_landed = match &error {
+                    TurnError::Faulted {
+                        turn: faulted,
+                        report,
+                    } => self
+                        .author
+                        .author_fault(self.recorder, Subsystem::Spu, Some(faulted), report)
+                        .is_ok(),
+                    _ => true,
+                };
                 // **A failed close is itself a failure the caller must learn.**
                 // The recorder can be broken when the turn fails, so authoring
                 // the fault close can fail too, and swallowing that would leave
                 // a `turn.started` with no `turn.closed` and no error naming it.
                 // The original error is returned only when the close lands, and
                 // a close that cannot author returns `ChannelLost` because the
-                // record is now untrustworthy whatever the first cause was.
+                // record is now untrustworthy whatever the first cause was. A
+                // report that cannot author is the same untrustworthiness one
+                // event earlier, so it takes the same answer, after the close
+                // is still attempted for the bracket's sake.
                 match self.author.author(
                     self.recorder,
                     Kind::TurnClosed,
@@ -200,7 +233,11 @@ impl<'a> Ports<'a> {
                                 ),
                             });
                         }
-                        Err(error)
+                        if fault_landed {
+                            Err(error)
+                        } else {
+                            Err(TurnError::ChannelLost)
+                        }
                     }
                     Err(_) => Err(TurnError::ChannelLost),
                 }
@@ -255,6 +292,17 @@ impl<'a> Ports<'a> {
                         break generation;
                     }
                     crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                    // The emission, matched by name rather than left to a
+                    // wildcard that would misfile it as channel loss and
+                    // discard the report. It closes no exchange, so this
+                    // turn ends without waiting on a frame the contract says
+                    // will not come.
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Fault(report)) => {
+                        return Err(TurnError::Faulted {
+                            turn: turn.clone(),
+                            report,
+                        });
+                    }
                     crate::channel::DecodeReply::Refusal(refusal) => {
                         return Err(TurnError::Refused {
                             turn: turn.clone(),
@@ -660,6 +708,110 @@ mod tests {
                 line_of(kind)
             );
         }
+    }
+
+    /// The emission mid-stream: the report is authored inside the bracket,
+    /// before the close. The pin is the order: a turn-attributed `fault`
+    /// filed after `turn.closed` would sit outside the bracket that names
+    /// it, which is the defect the wrapper's author-then-close sequence
+    /// exists to prevent.
+    #[test]
+    fn a_fault_emission_lands_inside_the_bracket_before_the_close() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+
+        // The scripted peer: read the append, stream one token, then emit
+        // the fault instead of the generation.
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let _ = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let send_answer = |answer: &weaver_types::TokenAnswer| {
+                let bytes = serde_json::to_vec(answer).expect("answer renders");
+                send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+            };
+            send_answer(&weaver_types::TokenAnswer::Token {
+                token: 9707,
+                piece: "one".into(),
+            });
+            send_answer(&weaver_types::TokenAnswer::Fault(
+                weaver_types::FaultReport {
+                    case: weaver_types::FaultCase::DeviceFaultDuringGeneration,
+                    account: serde_json::value::RawValue::from_string(
+                        r#"{"device":"cuda:0","errored":"mid-forward"}"#.to_string(),
+                    )
+                    .unwrap(),
+                },
+            ));
+        });
+
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+
+        let listener = test_listener();
+        let error = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+            );
+            let delta = vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "say a word".into(),
+                }],
+            }];
+            ports.turn(delta).expect_err("the emission fails the turn")
+        };
+        peer.join().expect("the decode peer finishes");
+
+        let TurnError::Faulted { turn, report } = error else {
+            panic!("the emission is matched by name, got another error");
+        };
+        assert_eq!(turn.0, "t-1", "the streaming turn is the one named");
+        assert_eq!(
+            report.case,
+            weaver_types::FaultCase::DeviceFaultDuringGeneration,
+            "the report rides the error for the caller's close"
+        );
+
+        // The pin: the turn-attributed sequence holds the fault before the
+        // close, both inside the bracket.
+        let kinds: Vec<Kind> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.turn.is_some())
+            .map(|r| r.kind)
+            .collect();
+        let fault_at = kinds
+            .iter()
+            .position(|k| *k == Kind::Fault)
+            .expect("the report was authored");
+        let close_at = kinds
+            .iter()
+            .position(|k| *k == Kind::TurnClosed)
+            .expect("the bracket closed");
+        assert!(
+            fault_at < close_at,
+            "the fault lands inside the bracket, before the close: {kinds:?}"
+        );
     }
 
     /// **The stop is heard mid-stream, per Spec 6.1.** The streaming wait

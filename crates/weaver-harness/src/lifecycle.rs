@@ -511,7 +511,10 @@ impl Harness {
                         &mut run.recorder,
                         Subsystem::Harness,
                         None,
-                        r#"{"organ":"gate","death":"channel closed with the hook raised"}"#,
+                        &crate::authorship::harness_report(
+                            weaver_types::FaultCase::OrganDeathObserved,
+                            r#"{"organ":"gate","death":"channel closed with the hook raised"}"#,
+                        ),
                     );
                     return Ok(());
                 }
@@ -528,18 +531,17 @@ impl Harness {
                 pending,
             ),
             // The gate's fault report is clerked to the record per the
-            // fault-carrier ruling. The received answer the contract names
-            // arrives with the act that builds the gate's report sending:
-            // no sender exists today and no answer case is shaped for it,
-            // which the working list registers against the relay act.
-            weaver_types::Payload::Fault(_report) => {
+            // fault-carrier ruling: the report arrives whole, the gate having
+            // named its own case per `weaver-types-Spec` section 4.2, and the
+            // harness authors what it is handed. No sender exists in the gate
+            // today, which the working list registers against the relay act,
+            // but the receive side no longer fabricates an account when one
+            // arrives.
+            weaver_types::Payload::Fault(report) => {
                 if let ChannelState::Entered(run) = &mut self.state {
-                    let _ = run.author.author_fault(
-                        &mut run.recorder,
-                        Subsystem::Gate,
-                        None,
-                        r#"{"organ":"gate","report":"unshaped"}"#,
-                    );
+                    let _ =
+                        run.author
+                            .author_fault(&mut run.recorder, Subsystem::Gate, None, &report);
                 }
                 Ok(())
             }
@@ -585,7 +587,7 @@ impl Harness {
                 if prompt.undecodable > 0 {
                     // An incomplete prompt does not cross the seam: the hole
                     // becomes the fault event and the turn does not run.
-                    let report = format!(
+                    let account = format!(
                         "{{\"organ\":\"harness\",\"undecodable-message-records\":{}}}",
                         prompt.undecodable
                     );
@@ -593,7 +595,10 @@ impl Harness {
                         &mut run.recorder,
                         Subsystem::Harness,
                         None,
-                        &report,
+                        &crate::authorship::harness_report(
+                            weaver_types::FaultCase::MessageRecordUndecodable,
+                            &account,
+                        ),
                     );
                     render_close(
                         "stopped",
@@ -638,6 +643,21 @@ impl Harness {
                             "stopped",
                             "reason",
                             refusal_reason(&refusal),
+                            Some((&turn, &run_ref)),
+                        ),
+                        // The emission arrived mid-stream. **The engine
+                        // already authored the report inside the turn's
+                        // bracket**, before the close its error path lands,
+                        // so this arm renders the client's close and authors
+                        // nothing: a second authoring here would file one
+                        // fact twice, and filing it here at all would put it
+                        // after `turn.closed`. Service continues, the fault
+                        // being one the worker survives by definition of the
+                        // case set.
+                        Err(crate::engine::TurnError::Faulted { turn, report: _ }) => render_close(
+                            "stopped",
+                            "reason",
+                            "the model organ reported a fault",
                             Some((&turn, &run_ref)),
                         ),
                         Err(crate::engine::TurnError::Unlicensed { turn }) => render_close(
@@ -902,11 +922,11 @@ impl Harness {
             Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
         };
         // SAFETY: as above.
-        let gate_pid = match unsafe { crate::spawn::fork_organ(&self.organs.gate, &[&gate_child], &[]) }
-        {
-            Ok(pid) => pid,
-            Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
-        };
+        let gate_pid =
+            match unsafe { crate::spawn::fork_organ(&self.organs.gate, &[&gate_child], &[]) } {
+                Ok(pid) => pid,
+                Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
+            };
         drop(gate_child);
         run.gate_ordinal += 1;
         if let Err(refusal) = exchange(
@@ -973,7 +993,7 @@ impl Harness {
                 // loop a prompt with a hole would put the loss in the model's
                 // context and nowhere else.
                 if prompt.undecodable > 0 {
-                    let report = format!(
+                    let account = format!(
                         "{{\"organ\":\"harness\",\"undecodable-message-records\":{}}}",
                         prompt.undecodable
                     );
@@ -982,7 +1002,10 @@ impl Harness {
                         &mut run.recorder,
                         Subsystem::Harness,
                         turn.as_ref(),
-                        &report,
+                        &crate::authorship::harness_report(
+                            weaver_types::FaultCase::MessageRecordUndecodable,
+                            &account,
+                        ),
                     );
                     return None;
                 }
@@ -1152,6 +1175,13 @@ fn open_session(
         .map_err(|_| LifecycleRefusal::NoResidency)?;
     match decode.recv_reply() {
         Ok(crate::channel::DecodeReply::Answer(TokenAnswer::Opened)) => Ok(()),
+        // The emission, matched by name: a fault at open is the residency
+        // unfit to serve, not the load's shape refused, and the wildcard
+        // below would misname it. No recorder stands this early, so the
+        // refusal carries the fact to the aggregate rather than the record.
+        Ok(crate::channel::DecodeReply::Answer(TokenAnswer::Fault(_))) => {
+            Err(LifecycleRefusal::NoResidency)
+        }
         // A typed refusal on the open is the session declining to stand, which
         // the harness carries into the aggregate as the SPU unable to admit
         // what the load asked, the decode seam's refusals having no floor
@@ -1392,7 +1422,7 @@ mod tests {
                     },
                     residual_readout_election: false,
                     identity: Vec::new(),
-                        tunable_values: Default::default(),
+                    tunable_values: Default::default(),
                 },
             },
             gate_instruction: weaver_types::GateInstruction {

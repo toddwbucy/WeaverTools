@@ -121,24 +121,45 @@ impl Author {
     }
 
     /// Authors the `fault` event a reported condition becomes. The payload is
-    /// the floor's fault report, carried unchanged from the reporting organ
-    /// and authored without translation: a fault an organ signalled for itself
-    /// would be a record entry no turn key attributes to anything.
+    /// the floor's fault report serialized whole, the `case` round-tripping
+    /// by spelling and the `account` passing verbatim, per `weaver-types-Spec`
+    /// section 4.2: a case exists before any `fault` event is authored, so no
+    /// raw account reaches the record unclassified. The reporting organ named
+    /// the case, this crate included, and this function classifies nothing.
     pub fn author_fault(
         &self,
         recorder: &mut Recorder,
         subsystem: Subsystem,
         turn: Option<&TurnKey>,
-        report_octets: &str,
+        report: &weaver_types::FaultReport,
     ) -> Result<Sequence, Failure> {
-        let payload =
-            raw_payload(report_octets)
-                .map(Payload::Fault)
-                .ok_or(Failure::RefusedOnSubmit {
-                    reason: weaver_trace::SubmitRefusal::PayloadMalformed,
-                })?;
+        let octets = serde_json::to_string(report).map_err(|_| Failure::RefusedOnSubmit {
+            reason: weaver_trace::SubmitRefusal::PayloadMalformed,
+        })?;
+        let payload = raw_payload(&octets)
+            .map(Payload::Fault)
+            .ok_or(Failure::RefusedOnSubmit {
+                reason: weaver_trace::SubmitRefusal::PayloadMalformed,
+            })?;
         self.author(recorder, Kind::Fault, subsystem, turn, Some(payload))
     }
+}
+
+/// A report of this crate's own, the harness being an organ too, per apex
+/// section 5.4, and therefore the renderer of its own accounts. The account
+/// arrives as the JSON this crate wrote, and a string that does not parse is
+/// this crate's own defect, answered by substituting the account with an
+/// object that says so: the case survives and the fault still lands
+/// classified, because every caller drops the authoring result, so refusing
+/// here would lose the whole fault to a discarded error while the
+/// substitution loses only the account and names the loss in the record.
+pub fn harness_report(case: weaver_types::FaultCase, account: &str) -> weaver_types::FaultReport {
+    let account =
+        serde_json::value::RawValue::from_string(account.to_string()).unwrap_or_else(|_| {
+            serde_json::value::RawValue::from_string(r#"{"account":"unrenderable"}"#.into())
+                .expect("a literal object parses")
+        });
+    weaver_types::FaultReport { case, account }
 }
 
 /// The licensing rule of `weaver-traits-Spec` section 3: a `User` message

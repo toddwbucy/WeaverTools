@@ -462,6 +462,14 @@ pub enum TokenAnswer {
     Generated(Generation),
     AtRest,
     Flushed,
+    /// The seam's one SPU-originated emission, per the decode contract's
+    /// second ruling of 2026-08-12: a case of the answer because the
+    /// SPU-to-harness traffic is one enum, and the prose fact the type cannot
+    /// carry is the Spec's - **it closes no exchange and answers nothing**,
+    /// the trace entry being the acknowledgment. A fault arising inside a
+    /// generation is that exchange's typed answer instead, so one fact never
+    /// travels twice.
+    Fault(FaultReport),
 }
 
 /// The decode seam's refusal, per `weaver-types-Spec` section 4.4: the four
@@ -524,10 +532,55 @@ pub enum Finish {
 /// A fault report: what any organ hands the harness across whatever channel it
 /// holds.
 ///
-/// **The shape is an open election**, per `weaver-types-Spec` section 6,
-/// elected by the token workflow's trace act against the closed case sets the
-/// three charters carry, since the same shape serves the wire and the `fault`
-/// event's payload. This declaration is placement and carriage only - the
-/// deferral is the corpus's and code filling it would be invention.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct FaultReport {}
+/// **The shape is the closed election of `weaver-types-Spec` section 6**,
+/// decided by apex section 5.2's custody rule: the `case` is what the harness
+/// itself consumes, typed and closed, because the judgment of what a fault
+/// means for the turn and the residency is the harness's to make. The
+/// `account` is the reporting organ's own rendering of what happened, spliced
+/// verbatim, so the floor carries no organ's descriptive vocabulary and a
+/// later organ's richer account grows no shared type.
+///
+/// **The reporting organ names its own case and the harness classifies
+/// nothing.** A report arrives whole, per the contracts, so a case exists
+/// before any `fault` event is authored and no raw account reaches the
+/// record unclassified.
+///
+/// No member names the raiser and no member names the turn: the envelope's
+/// field and the seam's context respectively, per the Spec's section 4.2.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FaultReport {
+    pub case: FaultCase,
+    pub account: Box<serde_json::value::RawValue>,
+}
+
+/// The spliced member compares by its octets, the pattern `Generation` set:
+/// `RawValue` carries no `PartialEq` of its own and the derive would be lost
+/// with it, so the comparison every test wants is written once here.
+impl PartialEq for FaultReport {
+    fn eq(&self, other: &Self) -> bool {
+        self.case == other.case && self.account.get() == other.account.get()
+    }
+}
+
+/// The three charters' closed ten, per `weaver-types-Spec` section 4.2: three
+/// of `weaver-spu-PRD` section 13.10, three of `weaver-gate-PRD` section 13.4,
+/// four of `weaver-harness-PRD` section 5. **An eleventh case is a charter
+/// act before it is a code change**, and the tenth was exactly that: the act
+/// typing these found the harness authoring an assembly fault no case
+/// covered, and the charter widened before this enum did. The harness's four
+/// ride the same shape although they cross no socket, one shape serving the
+/// wire and the `fault` event's payload.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FaultCase {
+    DeviceFaultDuringGeneration,
+    ResidencyDegraded,
+    ReadoutFaultWhileElected,
+    ListenerLost,
+    ClientConnectionFailedMidTurn,
+    AdmissionFailingSystematically,
+    RecorderCommitPressure,
+    StreamWriteFailed,
+    OrganDeathObserved,
+    MessageRecordUndecodable,
+}
