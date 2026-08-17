@@ -1041,6 +1041,26 @@ ever is reached, because a table this crate cannot read unambiguously is one it
 must not read by position. The two are belt and braces on purpose: order decides
 nothing at either.
 
+**The artifact's marker set is derived by rendering its template, not by
+reading it.** A template is a program and a marker it emits need not appear in
+its source: Phi-4-mini builds one as `'<|' + message['role'] + '|>'`, so
+`<|user|>` and `<|system|>` exist only after the program runs while
+`<|assistant|>` and `<|end|>` sit there literally. Measured 2026-08-17 over a
+range request against the first-party artifact. A reading derivation therefore
+finds two markers of four and refuses a model that renders exactly what a
+carried entry renders, which is a false refusal naming the architecture as
+though the family were uncarried.
+
+So a canonical conversation is rendered through the artifact's own template and
+the entry's markers are matched against the **output**. `llama-cpp-2` exposes
+that beside the template text and it reaches no device, so the derivation costs
+what the header read already costs.
+
+**It also closes the error the other way.** A marker present in an artifact's
+token table but never emitted by its template would match a vocabulary scan and
+should not, and a rendered probe cannot be fooled by it, because what it reads
+is what the artifact emits.
+
 **Marker sets are compared and templates are not.** A chat template is a
 program, and two that render the same turns can differ in whitespace, in
 comments, and in branches no turn of this program reaches, so comparing them
@@ -1048,6 +1068,19 @@ whole would refuse artifacts that agree about everything this crate uses. What
 this crate renders is a family's control markers, so what it compares is those,
 and the comparison is the same property `spu-marker-promotion` already tests
 from the other side.
+
+**Two artifacts differing only in whitespace are the standing case rather than
+the hypothetical one.** Phi-3.5-mini and Phi-4-mini render the same markers and
+differ in trailing newlines, so one entry serving both is what this clause buys,
+and a later act proposing to compare more than markers is proposing to refuse
+them.
+
+**The several-templates branch is reachable on the first artifacts anyone
+tries.** This workshop holds SmolLM2 rendering ChatML and Mistral Small
+rendering `[INST]`, both declaring `llama`, beside the Llama 3 artifacts the
+entry was written for. It is not a contingency waiting on an unusual model,
+which is why the code act follows this one closely rather than leaving the
+branch unexercised.
 
 **The registry is compile-time and admission consults it.** A table of the
 families this binary carries, keyed by what the artifact's header declares,
