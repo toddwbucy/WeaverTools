@@ -61,6 +61,7 @@ pub mod gemma4;
 pub mod gpt_oss;
 pub mod llama;
 pub mod mistral3;
+pub mod phi;
 pub mod qwen2;
 
 /// Why a family could not render a message.
@@ -647,6 +648,44 @@ pub const REGISTRY: &[Declaration] = &[
         generation_opener: mistral3::GENERATION_OPENER,
         renderer: mistral3::renderer,
         selecting_markers: mistral3::RENDERED_MARKERS,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
+        // **The second contested architecture, and the first where a vendor's
+        // own current line is what contests it.** Three first-party Microsoft
+        // artifacts declare `phi3`: the minis render role tags and Phi-4 14B
+        // renders ChatML with a separator token. The marker sets are disjoint
+        // to the point that the mini's vocabulary carries no `<|im_start|>`
+        // at all, so the two rows cannot be ambiguous under any rendering.
+        //
+        // Measured by the marker probe against
+        // `microsoft_Phi-4-mini-instruct-Q4_K_M.gguf`: the three tag markers
+        // promote to one token each, ids 200021, 200019, 200020, and the
+        // lookalike control does not. The flush is by truncation, `phi3`
+        // absent from both of the engine's cannot-roll-back lists, and the
+        // probe's cross-check reads that against the artifact rather than
+        // trusting this comment.
+        family: "phi3",
+        shard_widths: &[1, 2],
+        template: phi::TAG_TEMPLATE,
+        generation_opener: phi::TAG_GENERATION_OPENER,
+        renderer: phi::tag_renderer,
+        selecting_markers: phi::TAG_RENDERED_MARKERS,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
+        // The separator row of the pair above, serving Phi-4 14B artifacts.
+        // **Not a qwen2 citation on purpose**: `<|im_sep|>` stands where
+        // qwen2's ChatML puts a newline and no newline follows the close, so
+        // the format is phi's own and lives in phi's module.
+        family: "phi3",
+        shard_widths: &[1, 2],
+        template: phi::SEP_TEMPLATE,
+        generation_opener: phi::SEP_GENERATION_OPENER,
+        renderer: phi::sep_renderer,
+        selecting_markers: phi::SEP_RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -1322,6 +1361,70 @@ mod tests {
                 "{shared} renders qwen2's scaffolding"
             );
         }
+    }
+
+    /// **One architecture, two formats, and the role tag is the marker.**
+    ///
+    /// The phi3 pair is the second contested architecture and the first where
+    /// the role substitutes into the marker itself, so the tag renderer's
+    /// output carries `<|user|>` as a built token rather than a role word
+    /// between markers. Both formats are read so the disjointness the
+    /// registry's selection rests on is a rendered fact rather than a table
+    /// comment.
+    ///
+    /// Perturbation: render `PhiSep` through `TAG_TEMPLATE` and the second
+    /// assertion fails, the separator format then rendering tags. Watched
+    /// under exactly that.
+    #[test]
+    fn the_phi_formats_render_disjoint_markers_from_one_architecture() {
+        let turn = [said(Role::User, "hi")];
+
+        let tag = render_each(phi::tag_renderer(), &turn).expect("the tag format renders");
+        assert_eq!(tag, "<|user|>hi<|end|>");
+
+        let sep = render_each(phi::sep_renderer(), &turn).expect("the sep format renders");
+        assert_eq!(sep, "<|im_start|>user<|im_sep|>hi<|im_end|>");
+
+        // The disjointness selection rests on: no marker of one format
+        // appears in the other's rendering.
+        for marker in phi::TAG_RENDERED_MARKERS {
+            assert!(
+                !sep.contains(marker),
+                "{marker} leaked into the sep rendering"
+            );
+        }
+        for marker in phi::SEP_RENDERED_MARKERS {
+            assert!(
+                !tag.contains(marker),
+                "{marker} leaked into the tag rendering"
+            );
+        }
+
+        // And the tool role refuses under both, neither template carrying a
+        // tool turn.
+        let tool = [said(Role::ToolResult, "42")];
+        assert!(render_each(phi::tag_renderer(), &tool).is_err());
+        assert!(render_each(phi::sep_renderer(), &tool).is_err());
+    }
+
+    /// **Each phi row is reachable by its markers and answers its own
+    /// declaration**, which is what keeps `Family::declaration` truthful on
+    /// the first module whose architecture a by-name lookup refuses.
+    #[test]
+    fn the_phi_rows_select_by_their_own_marker_sets() {
+        let name = FamilyName("phi3".into());
+        assert!(
+            matches!(lookup(&name), Err(FamilyRefusal::ArchitectureContested(_))),
+            "phi3 is contested, so the by-name door refuses"
+        );
+
+        let tag = phi::tag_renderer().declaration();
+        assert_eq!(tag.template, phi::TAG_TEMPLATE);
+        assert_eq!(tag.generation_opener, phi::TAG_GENERATION_OPENER);
+
+        let sep = phi::sep_renderer().declaration();
+        assert_eq!(sep.template, phi::SEP_TEMPLATE);
+        assert_eq!(sep.generation_opener, phi::SEP_GENERATION_OPENER);
     }
 
     #[test]
