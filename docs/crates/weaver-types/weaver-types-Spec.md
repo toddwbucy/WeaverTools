@@ -982,6 +982,14 @@ harness's own three ride the same shape although they cross no socket, because
 the same shape serves the wire and the `fault` event's payload and electing it
 twice would be two shapes for one fact.
 
+**The reporting organ names its own case, and the harness classifies
+nothing.** The report arrives whole, per the contracts' wording that an
+emission carries a `fault-report` naming a case of its charter's enumeration,
+so a case exists before any `fault` event is authored and no raw account ever
+reaches the record wrapped without one. A report the harness would have to
+diagnose before it could file it would put the judgment on the wrong side of
+the seam, the organ being the party that knows.
+
 **No member names the raiser and no member names the turn.** Which subsystem
 raised a fault is the trace envelope's field, per `weaver-trace-PRD` section
 3.2, and which turn it belongs to travels as the seam's context per apex
@@ -1125,8 +1133,10 @@ from: weaver-traits
 to: types-tagging-test
 ```
 
-Applied here: `Position`, `Opener`, and `RefusingOrgan` are fieldless and
-serialize as plain renamed strings. **The trio is internally tagged**, which is
+Applied here: `Position`, `Opener`, `RefusingOrgan`, and `FaultCase` are
+fieldless and serialize as plain renamed strings, the rename being
+`snake_case` as everywhere in this vocabulary, so a case crosses as
+`residency_degraded` and never as its Rust spelling. **The trio is internally tagged**, which is
 why every case carrying a value in 4.2 takes a struct variant, `Load { agent }`
 rather than `Load(AgentName)`. **`Payload` is adjacently tagged**, `#[serde(tag =
 "kind", content = "body")]`, because its variants wrap enums that carry a tag of
@@ -1134,8 +1144,9 @@ their own. **The token trio of section 4.4 divides under the same test**:
 `TokenDirective` and `TokenRefusal` are internally tagged, their value-carrying
 cases struct-shaped, `Finish` is fieldless and a plain renamed string, and
 `TokenAnswer` is adjacently tagged under the spliced-member arm, two of its
-cases wrapping the vocabulary's two `RawValue` carriers, `Generation` and
-`FaultReport`, whose spliced members are the measurement and the account.
+cases wrapping the vocabulary's two `RawValue` carriers: `Generation`, whose
+`request` and `measurement` are both spliced, and `FaultReport`, whose
+`account` is.
 
 **The envelope's layout is stated rather than left to a reader.** Nothing is
 flattened. `exchange`, `position`, and `payload` are three members of one object,
@@ -1538,11 +1549,14 @@ already discharged.
   them. That act, and not this one, takes the two reopenings it needs by name,
   `weaver-trace-Spec`'s rule that a bracket kind carries no payload member and
   `weaver-trace-PRD` section 3.2's settlement, because a reopening lands only
-  with the mechanism it records. It takes no third: recording the measured
-  hash of what ran is reading what the run produced, so `weaver-types-PRD`
-  section 2.1's ruling that no mechanism authors run conditions stands
-  untouched, and a config identity asserted at load would reopen it and is
-  refused here for that reason.
+  with the mechanism it records. It need not take a third: recording the
+  measured hash of what ran is reading what the run produced, so
+  `weaver-types-PRD` section 2.1's ruling that no mechanism authors run
+  conditions stands untouched by that member. A config identity asserted at
+  load is a different matter, the mechanism 2.1's ruling names, and whether
+  the load line carries one is the mechanism act's judgment to make by
+  reopening 2.1 by name or by declining the member, not this election's to
+  foreclose either way.
 - **`TurnFrame`'s shape is closed, 2026-08-12.** Elected at section 4.1 by
   argument rather than the deferred measurement, per the operator's ruling of
   this date: the gate validates nothing, so arbitrary octets reach the seam
