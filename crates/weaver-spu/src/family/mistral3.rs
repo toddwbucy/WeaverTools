@@ -64,6 +64,16 @@ pub const ARGS: &str = "[ARGS]";
 /// the inbound marker-promotion test of Spec section 10 tokenizes.
 pub const RENDERED_MARKERS: &[&str] = &[BOS, TURN_OPEN, TURN_CLOSE, TURN_END];
 
+/// **The markers a detector rendering emits, which select this format's rows
+/// among entries sharing an architecture.** Not [`RENDERED_MARKERS`], and the
+/// missing `<s>` is the difference: the BOS is the tokenizer's to add rather
+/// than the template's to emit, so no rendering ever contains it and a
+/// selecting set requiring it refuses every artifact of the format it names.
+/// Measured 2026-08-17 against Mistral-Small-3.2's own template through the
+/// detector: `[INST] u[/INST] a</s>`, with `[SYSTEM_PROMPT]` opening and no
+/// `<s>` anywhere in the output.
+pub const SELECTING_MARKERS: &[&str] = &[TURN_OPEN, TURN_CLOSE, TURN_END];
+
 /// The markers this family's **model** emits and this module's parser reads.
 ///
 /// Outbound, so promotion does not bind them the way it binds
