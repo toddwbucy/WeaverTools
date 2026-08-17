@@ -1052,9 +1052,21 @@ carried entry renders, which is a false refusal naming the architecture as
 though the family were uncarried.
 
 So a canonical conversation is rendered through the artifact's own template and
-the entry's markers are matched against the **output**. `llama-cpp-2` exposes
-that beside the template text and it reaches no device, so the derivation costs
-what the header read already costs.
+the entry's markers are matched against the **output**.
+
+**The render depends on the template text and nothing else, so the refusal
+lands before any weight is read.** `llama_chat_apply_template` takes the
+template, the messages, and a buffer, and no model handle reaches it, which is
+what lets this run on the string the header already yielded. The safe wrapper
+`LlamaModel::apply_chat_template` requires a `&self` it does not pass down, so
+taking that path would order a weight load ahead of a refusal this crate can
+reach without one. The election is the lower call, and the reason is admission
+order rather than cost.
+
+The probe conversation is a frozen input of this crate, pinned where the marker
+sets are pinned rather than built where it is called, because a derivation whose
+input varies by call site compares two artifacts against two different
+questions.
 
 **It also closes the error the other way.** A marker present in an artifact's
 token table but never emitted by its template would match a vocabulary scan and
