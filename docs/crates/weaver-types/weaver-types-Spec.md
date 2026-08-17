@@ -43,6 +43,15 @@ that closed it as an exchange is a case nothing would construct, the
 reserved slot apex section 7 forbids in data. Section 4.4 drops the case
 and states the report's standing: an emission owed nothing back, its wire
 case arriving with `FaultReport`'s shape, which section 6 holds open.
+**Revised:** 2026-08-17, second of that date, the fault report takes its
+shape. Section 6's election closes at section 4.2: a typed `case` against the
+three charters' closed nine, and an organ-rendered `account` the harness
+splices, apex section 5.2's custody rule deciding the split. The token trio
+gains the emission's `Fault` case, the wire case the entry below always said
+would arrive with the shape, a case of the answer that closes no exchange and
+answers nothing. The run bracket's payload question is settled by the same
+judgment and recorded with the closed election, its two reopenings named as
+owed to the act that builds the load line's mechanism.
 **Revised:** 2026-08-11, third of that date, the model events splice.
 `Generation`'s `rendered` member becomes `request` and carries the model.request
 content whole, the rendered prompt with its template and effective sampling,
@@ -907,6 +916,23 @@ pub struct EnterPayload {
     pub spu_instruction: SpuInstruction,
     pub gate_instruction: GateInstruction,
 }
+
+pub struct FaultReport {
+    pub case: FaultCase,
+    pub account: Box<serde_json::value::RawValue>,
+}
+
+pub enum FaultCase {
+    DeviceFaultDuringGeneration,
+    ResidencyDegraded,
+    ReadoutFaultWhileElected,
+    ListenerLost,
+    ClientConnectionFailedMidTurn,
+    AdmissionFailingSystematically,
+    RecorderCommitPressure,
+    StreamWriteFailed,
+    OrganDeathObserved,
+}
 ```
 
 **`PriorUnitUnreaped` is added because `BindFailed` was answering for two
@@ -935,6 +961,40 @@ value rests on the only reading the boundary gives without inference.
 measures as unable to say which failure it was. It comes from the state ask that
 follows, which is where a program may ask a narrow question and get a narrow
 answer.
+
+**`FaultReport` is two members, and the custody rule of apex section 5.2 is
+the whole argument for the split.** The `case` is what the harness itself
+consumes: the judgment of what a fault means for the turn and the residency is
+the harness's to make, so the fact it judges is typed, exhaustive, and closed.
+The `account` is the reporting organ's own rendering of what happened, opaque
+here by construction: a raw value crosses verbatim and splices verbatim, so
+the floor carries no organ's descriptive vocabulary and a later organ's richer
+account grows no shared type. This is the standing exception of apex section
+5.2 corrected in the act that corrects it, the fault path now running the same
+direction as the generation measurement.
+
+**The case set is the three charters' closed enumeration and no case is this
+document's.** Three from `weaver-spu-PRD` section 13.10, three from
+`weaver-gate-PRD` section 13.4, three from `weaver-harness-PRD` section 5,
+which closed the corpus-wide set across all three organs for the seams that
+exist. A tenth case is a charter act before it is a code change, and the
+harness's own three ride the same shape although they cross no socket, because
+the same shape serves the wire and the `fault` event's payload and electing it
+twice would be two shapes for one fact.
+
+**The reporting organ names its own case, and the harness classifies
+nothing.** The report arrives whole, per the contracts' wording that an
+emission carries a `fault-report` naming a case of its charter's enumeration,
+so a case exists before any `fault` event is authored and no raw account ever
+reaches the record wrapped without one. A report the harness would have to
+diagnose before it could file it would put the judgment on the wrong side of
+the seam, the organ being the party that knows.
+
+**No member names the raiser and no member names the turn.** Which subsystem
+raised a fault is the trace envelope's field, per `weaver-trace-PRD` section
+3.2, and which turn it belongs to travels as the seam's context per apex
+section 5.2, so a member for either would be one fact in two places. The
+payload carries the what and never the where.
 
 **All three enums are exhaustive, and the absence of `#[non_exhaustive]` is the
 loudness this section claims.** The attribute would force every out-of-crate
@@ -1073,16 +1133,21 @@ from: weaver-traits
 to: types-tagging-test
 ```
 
-Applied here: `Position`, `Opener`, and `RefusingOrgan` are fieldless and
-serialize as plain renamed strings. **The trio is internally tagged**, which is
-why every case carrying a value in 4.2 takes a struct variant, `Load { agent }`
+Applied here: `Position`, `Opener`, `RefusingOrgan`, and `FaultCase` are
+fieldless and serialize as plain renamed strings, the rename being
+`snake_case` as everywhere in this vocabulary, so a case crosses as
+`residency_degraded` and never as its Rust spelling. **The trio is internally
+tagged**, which is why every case carrying a value in 4.2 takes a struct
+variant, `Load { agent }`
 rather than `Load(AgentName)`. **`Payload` is adjacently tagged**, `#[serde(tag =
 "kind", content = "body")]`, because its variants wrap enums that carry a tag of
 their own. **The token trio of section 4.4 divides under the same test**:
 `TokenDirective` and `TokenRefusal` are internally tagged, their value-carrying
 cases struct-shaped, `Finish` is fieldless and a plain renamed string, and
-`TokenAnswer` is adjacently tagged under the spliced-member arm, `Generated`
-wrapping the one struct in the vocabulary that carries a `RawValue`.
+`TokenAnswer` is adjacently tagged under the spliced-member arm, two of its
+cases wrapping the vocabulary's two `RawValue` carriers: `Generation`, whose
+`request` and `measurement` are both spliced, and `FaultReport`, whose
+`account` is.
 
 **The envelope's layout is stated rather than left to a reader.** Nothing is
 flattened. `exchange`, `position`, and `payload` are three members of one object,
@@ -1194,6 +1259,7 @@ pub enum TokenAnswer {
     Generated(Generation),
     AtRest,
     Flushed,
+    Fault(FaultReport),
 }
 
 pub enum TokenRefusal {
@@ -1312,13 +1378,16 @@ loop 0's.
 
 **A cancel with nothing in flight answers `AtRest` rather than refusing**, per
 the contract's section 2, an answer because it is not a failure of the ask.
-**The fault report takes no answer at all and no case here yet**, per the
+**The fault report takes no answer at all, and its case is `Fault`**, per the
 decode contract's second ruling of 2026-08-12: the report is the seam's one
 SPU-originated emission, and the `Received` case an earlier shape of this trio
 carried to close it as an exchange left with the receipt, a case nothing
 constructs being the reserved slot apex section 7 forbids in data. The
-report's own wire case arrives with `FaultReport`'s shape, which section 6
-holds open, so the emission is chartered and unshaped rather than absent.
+report's own wire case arrived with `FaultReport`'s shape, the election
+section 6 records as closed, and it is a case of the answer per the streaming
+ruling's own logic, the SPU-to-harness traffic being one enum, with the prose
+fact the type cannot carry stated here: the case closes no exchange and
+answers nothing, the trace entry being the acknowledgment, per the contract.
 
 **The stream is a case of the answer and never a fourth type**, per the
 contract's section 2 as of the streaming ruling of 2026-08-11. `Token` is the
@@ -1467,11 +1536,28 @@ already discharged.
   device number, so a negative one is a parse error rather than a check, and
   the second is what an operator writes to name an artifact, whose resolution
   is admin's and whose readability is the SPU's.
-- **`FaultReport`'s shape.** Elected by the token workflow's trace act
+- **`FaultReport`'s shape is closed, 2026-08-17.** Elected at section 4.2
   against the closed case set of `weaver-spu-PRD` section 13.10,
-  `weaver-gate-PRD` section 13.4, and `weaver-harness-PRD` section 5, since
-  the same shape serves the wire and the `fault` event's payload and electing
-  it twice would be two shapes for one fact.
+  `weaver-gate-PRD` section 13.4, and `weaver-harness-PRD` section 5: a typed
+  `case` the harness consumes and an organ-rendered `account` it splices,
+  which is apex section 5.2's custody rule deciding the shape, the fault path
+  thereby corrected from the standing exception that section named. One shape
+  serves the wire and the `fault` event's payload, as this entry always
+  required. **The same judgment decides the run bracket's payload question and
+  is recorded here so it is not re-argued**: the load line's reconstruction
+  fields are admin's account of a load it caused, so when they land they land
+  as organ-rendered content the harness splices, no floor type growing for
+  them. That act, and not this one, takes the two reopenings it needs by name,
+  `weaver-trace-Spec`'s rule that a bracket kind carries no payload member and
+  `weaver-trace-PRD` section 3.2's settlement, because a reopening lands only
+  with the mechanism it records. It need not take a third: recording the
+  measured hash of what ran is reading what the run produced, so
+  `weaver-types-PRD` section 2.1's ruling that no mechanism authors run
+  conditions stands untouched by that member. A config identity asserted at
+  load is a different matter, the mechanism 2.1's ruling names, and whether
+  the load line carries one is the mechanism act's judgment to make by
+  reopening 2.1 by name or by declining the member, not this election's to
+  foreclose either way.
 - **`TurnFrame`'s shape is closed, 2026-08-12.** Elected at section 4.1 by
   argument rather than the deferred measurement, per the operator's ruling of
   this date: the gate validates nothing, so arbitrary octets reach the seam
