@@ -251,10 +251,12 @@ fn assembly_sees_only_message_kinds() {
         )
         .unwrap();
 
-    // The watch's teeth: a fault event whose payload happens to be a valid
-    // Message. Only the kind filter keeps it out - a decode-after-read would
-    // admit it, which is exactly the difference the Spec's read-site rule
-    // draws and an earlier version of this test could not see.
+    // The watch's teeth: a fault event whose account happens to be a valid
+    // Message. The report shape wraps it now, so a bare message can no longer
+    // be a fault payload whole, but the message-shaped content still sits in
+    // the record and only the kind filter keeps it out of the prompt - a
+    // decode-after-read of the account would admit it, which is exactly the
+    // difference the Spec's read-site rule draws.
     let message_shaped = serde_json::to_string(&Message {
         role: Role::User,
         content: vec![ContentBlock::Text {
@@ -262,8 +264,12 @@ fn assembly_sees_only_message_kinds() {
         }],
     })
     .expect("renders");
+    let report = weaver_types::FaultReport {
+        case: weaver_types::FaultCase::DeviceFaultDuringGeneration,
+        account: serde_json::value::RawValue::from_string(message_shaped).expect("parses"),
+    };
     author
-        .author_fault(&mut recorder, Subsystem::Spu, Some(&turn), &message_shaped)
+        .author_fault(&mut recorder, Subsystem::Spu, Some(&turn), &report)
         .expect("fault authored");
 
     let prompt = assemble(recorder.structure(), "you are an agent", &[]);
@@ -393,13 +399,17 @@ fn fault_payload_is_carried_unchanged() {
     author
         .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
         .unwrap();
-    let report = "{\"organ\":\"spu\",\"detail\":\"device unavailable\"}";
+    let account = "{\"organ\":\"spu\",\"detail\":\"device unavailable\"}";
     assert!(
-        raw_payload(report).is_some(),
-        "the report is well-formed octets"
+        raw_payload(account).is_some(),
+        "the account is well-formed octets"
     );
+    let report = weaver_types::FaultReport {
+        case: weaver_types::FaultCase::DeviceFaultDuringGeneration,
+        account: serde_json::value::RawValue::from_string(account.into()).expect("parses"),
+    };
     author
-        .author_fault(&mut recorder, Subsystem::Spu, None, report)
+        .author_fault(&mut recorder, Subsystem::Spu, None, &report)
         .expect("authored");
     let line = recorder
         .structure()
@@ -409,8 +419,12 @@ fn fault_payload_is_carried_unchanged() {
         .line
         .to_string();
     assert!(
-        line.contains("\"payload\":{\"organ\":\"spu\""),
-        "spliced unchanged: {line}"
+        line.contains("\"account\":{\"organ\":\"spu\",\"detail\":\"device unavailable\"}"),
+        "the account is spliced unchanged inside the report: {line}"
+    );
+    assert!(
+        line.contains("\"case\":\"device_fault_during_generation\""),
+        "the case crosses as its snake_case spelling: {line}"
     );
     assert!(
         line.contains("\"subsystem\":\"spu\""),

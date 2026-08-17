@@ -70,6 +70,17 @@ pub enum TurnError {
     /// The channel faulted or answered something the turn cannot read. No
     /// turn key rides it because service ends here and no close is sent.
     ChannelLost,
+    /// The SPU's fault emission arrived while this turn streamed. **Carries
+    /// the report whole**, because the engine holds no author and the record
+    /// is the caller's to write: the caller authors the `fault` event and
+    /// closes the turn, per `weaver-types-Spec` section 4.2, the emission
+    /// answering nothing and the trace entry being the acknowledgment. The
+    /// exchange terminates here rather than waiting on a frame the contract
+    /// says will not come.
+    Faulted {
+        turn: TurnKey,
+        report: weaver_types::FaultReport,
+    },
     /// A message loop 1 supplied is not licensed for its role. The bracket
     /// opened before the delta was judged, so the turn exists and is named.
     Unlicensed { turn: TurnKey },
@@ -255,6 +266,17 @@ impl<'a> Ports<'a> {
                         break generation;
                     }
                     crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                    // The emission, matched by name rather than left to a
+                    // wildcard that would misfile it as channel loss and
+                    // discard the report. It closes no exchange, so this
+                    // turn ends without waiting on a frame the contract says
+                    // will not come.
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Fault(report)) => {
+                        return Err(TurnError::Faulted {
+                            turn: turn.clone(),
+                            report,
+                        });
+                    }
                     crate::channel::DecodeReply::Refusal(refusal) => {
                         return Err(TurnError::Refused {
                             turn: turn.clone(),

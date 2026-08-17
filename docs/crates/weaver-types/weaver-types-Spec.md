@@ -932,6 +932,7 @@ pub enum FaultCase {
     RecorderCommitPressure,
     StreamWriteFailed,
     OrganDeathObserved,
+    MessageRecordUndecodable,
 }
 ```
 
@@ -975,9 +976,13 @@ direction as the generation measurement.
 
 **The case set is the three charters' closed enumeration and no case is this
 document's.** Three from `weaver-spu-PRD` section 13.10, three from
-`weaver-gate-PRD` section 13.4, three from `weaver-harness-PRD` section 5,
+`weaver-gate-PRD` section 13.4, four from `weaver-harness-PRD` section 5,
 which closed the corpus-wide set across all three organs for the seams that
-exist. A tenth case is a charter act before it is a code change, and the
+exist. An eleventh case is a charter act before it is a code change, and the
+code act that typed these found the charter one short of its own crate's
+standing practice, the assembly fault, which is the eleventh-case rule
+exercised in the act that stated it rather than a rule waiting for its first
+test. And the
 harness's own three ride the same shape although they cross no socket, because
 the same shape serves the wire and the `fault` event's payload and electing it
 twice would be two shapes for one fact.
@@ -1536,7 +1541,9 @@ already discharged.
   device number, so a negative one is a parse error rather than a check, and
   the second is what an operator writes to name an artifact, whose resolution
   is admin's and whose readability is the SPU's.
-- **`FaultReport`'s shape is closed, 2026-08-17.** Elected at section 4.2
+- **`FaultReport`'s shape is closed, 2026-08-17, and its case set widened by
+  one the same day**, the code act finding the harness charter one case short
+  of its crate's standing practice. Elected at section 4.2
   against the closed case set of `weaver-spu-PRD` section 13.10,
   `weaver-gate-PRD` section 13.4, and `weaver-harness-PRD` section 5: a typed
   `case` the harness consumes and an organ-rendered `account` it splices,
