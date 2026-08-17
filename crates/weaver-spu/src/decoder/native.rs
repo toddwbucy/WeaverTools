@@ -50,6 +50,13 @@ use crate::sampling::EffectiveKnobs;
 pub struct ResidentModel {
     model: ModelForCausalLM,
     tokenizer: tokenizers::Tokenizer,
+    /// The artifact's declared end-of-sequence, `config.json`'s
+    /// `eos_token_id`, retained at load because the stop set's backstop
+    /// reads it after the sidecars are out of hand. The scalar is the
+    /// artifact's declaration the way GGUF's `token_eos` is: where a
+    /// generation config names several, the config's own scalar is the
+    /// declared one and the family's promoted conditions carry the rest.
+    eos: super::backend::TokenId,
     /// The admitted device's handle, held once at load: the tensors know
     /// where they live, but candle carries no model-level accessor, and
     /// reconstructing the handle per session would be a second account of a
@@ -84,7 +91,9 @@ impl ResidentModel {
             })?;
 
         let dir = sidecar_dir(admission.path())?;
-        let config = read_config(&dir.join("config.json"))?;
+        let config_path = dir.join("config.json");
+        let config = read_config(&config_path)?;
+        let eos = read_eos(&config_path)?;
         let tokenizer =
             tokenizers::Tokenizer::from_file(dir.join("tokenizer.json")).map_err(|error| {
                 AdmitRefusal::LoadFailed {
@@ -115,7 +124,13 @@ impl ResidentModel {
             model,
             tokenizer,
             device,
+            eos,
         })
+    }
+
+    /// The artifact's declared end-of-sequence.
+    pub(crate) fn declared_eos(&self) -> super::backend::TokenId {
+        self.eos
     }
 
     /// Tokenize against the artifact's own vocabulary.
@@ -156,6 +171,31 @@ fn sidecar_dir(path: &Path) -> Result<std::path::PathBuf, AdmitRefusal> {
         })
 }
 
+/// The declared end-of-sequence from `config.json`, scalar or the first of a
+/// list, refused where the file declares none: an artifact with no declared
+/// end would leave the stop set without its backstop, which is a fact to
+/// refuse at admit rather than discover mid-generation.
+fn read_eos(path: &Path) -> Result<super::backend::TokenId, AdmitRefusal> {
+    let text = std::fs::read_to_string(path).map_err(|error| AdmitRefusal::LoadFailed {
+        detail: format!("{}: {error}", path.display()),
+    })?;
+    let value: serde_json::Value =
+        serde_json::from_str(&text).map_err(|error| AdmitRefusal::LoadFailed {
+            detail: format!("{}: {error}", path.display()),
+        })?;
+    let eos = value.get("eos_token_id");
+    eos.and_then(|v| v.as_u64())
+        .or_else(|| {
+            eos.and_then(|v| v.as_array())
+                .and_then(|list| list.first())
+                .and_then(|v| v.as_u64())
+        })
+        .map(|id| super::backend::TokenId(id as u32))
+        .ok_or_else(|| AdmitRefusal::LoadFailed {
+            detail: format!("{}: no eos_token_id declared", path.display()),
+        })
+}
+
 /// Read the model's `config.json` into the fork's own shape.
 ///
 /// Monomorphic on purpose: the crate carries `serde_json` and not `serde`
@@ -184,6 +224,11 @@ pub struct NativeEngine {
     /// any decode refuses rather than reading a buffer nothing filled.
     logits: Option<Vec<f32>>,
     sampler: LogitsProcessor,
+    /// The repetition knobs, applied at sample over the resident tail: an
+    /// effective value the record claims was in effect must be in effect,
+    /// and the GGUF engine applies these in its sampler chain.
+    repetition_penalty: f32,
+    repetition_window: usize,
     capacity: usize,
     closed: bool,
 }
@@ -204,8 +249,18 @@ impl NativeEngine {
         // The sampling chain mirrors the effective knobs the way the GGUF
         // engine's sampler does: temperature zero is argmax, and the top-k
         // and top-p gates compose where both are live.
+        // **A top-k of zero disables the gate rather than refusing**, which
+        // is the GGUF engine's semantics for the same knob: llama.cpp reads
+        // k <= 0 as keep-everything, and the two engines answering one knob
+        // two ways would make the effective values mean different things per
+        // container.
         let sampling = if knobs.temperature <= 0.0 {
             Sampling::ArgMax
+        } else if knobs.top_k == 0 {
+            Sampling::TopP {
+                p: knobs.top_p as f64,
+                temperature: knobs.temperature as f64,
+            }
         } else {
             Sampling::TopKThenTopP {
                 k: knobs.top_k as usize,
@@ -219,6 +274,8 @@ impl NativeEngine {
             resident: Vec::new(),
             logits: None,
             sampler: LogitsProcessor::from_sampling(knobs.seed, sampling),
+            repetition_penalty: knobs.repetition_penalty,
+            repetition_window: knobs.repetition_window as usize,
             capacity: capacity as usize,
             closed: false,
         })
@@ -279,25 +336,57 @@ impl Backend for NativeEngine {
                 capacity: self.capacity,
             });
         }
-        let logits = self.forward(tokens)?;
+        // **A failed forward poisons the engine.** Candle advances layer
+        // caches as it walks, so a failure partway leaves cache the engine's
+        // own account never admitted, and a later decode against that state
+        // would diverge silently. The session poisons itself on the same
+        // fault, and this is the engine holding the property for callers the
+        // session does not mediate.
+        let logits = match self.forward(tokens) {
+            Ok(logits) => logits,
+            Err(fault) => {
+                self.close();
+                return Err(fault);
+            }
+        };
         self.resident.extend_from_slice(tokens);
         self.logits = Some(logits);
         Ok(())
     }
 
     fn distribution(&self) -> Result<&[f32], DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
         self.logits
             .as_deref()
             .ok_or_else(|| Self::engine_fault("no decode has produced a distribution"))
     }
 
     fn sample(&mut self) -> Result<TokenId, DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
         let logits = self
             .logits
             .as_deref()
             .ok_or_else(|| Self::engine_fault("no decode has produced a distribution"))?;
-        let tensor = Tensor::new(logits, &Device::Cpu)
+        let mut tensor = Tensor::new(logits, &Device::Cpu)
             .map_err(|error| Self::engine_fault(&format!("logits tensor: {error}")))?;
+        // The penalty reads the resident tail, the same window the knobs
+        // describe. `distribution` stays the raw measurement: the signals
+        // read the model's own distribution, and the penalty is the
+        // sampler's business, which is where the GGUF chain applies it too.
+        if self.repetition_penalty != 1.0 && self.repetition_window > 0 {
+            let start = self.resident.len().saturating_sub(self.repetition_window);
+            let context: Vec<u32> = self.resident[start..].iter().map(|t| t.0).collect();
+            tensor = candle_transformers::utils::apply_repeat_penalty(
+                &tensor,
+                self.repetition_penalty,
+                &context,
+            )
+            .map_err(|error| Self::engine_fault(&format!("repeat penalty: {error}")))?;
+        }
         let token = self
             .sampler
             .sample(&tensor)
@@ -306,21 +395,38 @@ impl Backend for NativeEngine {
     }
 
     fn truncate_to(&mut self, position: usize) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
         if position > self.resident.len() {
             return Err(Self::engine_fault(&format!(
                 "truncate to {position} beyond a resident length of {}",
                 self.resident.len()
             )));
         }
+        // Truncating to the standing length changes nothing, and paying a
+        // full re-decode to change nothing would make the common flush the
+        // expensive case for no outcome.
+        if position == self.resident.len() {
+            return Ok(());
+        }
         // Clear, then re-decode the retained front: the state after holds
         // exactly the first `position` tokens, a true truncation reached the
-        // expensive way, per this module's header.
+        // expensive way, per this module's header. A re-decode that fails
+        // poisons, for `decode_at`'s reason: the cache state is
+        // indeterminate and nothing may build on it.
         self.model.clear_kv_cache();
         let front: Vec<TokenId> = self.resident[..position].to_vec();
         self.resident.clear();
         self.logits = None;
         if !front.is_empty() {
-            let logits = self.forward(&front)?;
+            let logits = match self.forward(&front) {
+                Ok(logits) => logits,
+                Err(fault) => {
+                    self.close();
+                    return Err(fault);
+                }
+            };
             self.resident = front;
             self.logits = Some(logits);
         }
@@ -328,6 +434,9 @@ impl Backend for NativeEngine {
     }
 
     fn reestablish(&mut self) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
         self.model.clear_kv_cache();
         self.resident.clear();
         self.logits = None;

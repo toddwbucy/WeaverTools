@@ -3,7 +3,7 @@
 //! `loaded.rs` and this file mirrors its discipline: real artifact, skipped
 //! where the workshop lacks it, failing where an operator named one that is
 //! not there.
-#![cfg(all(feature = "gguf", feature = "cuda"))]
+#![cfg(feature = "cuda")]
 
 use std::path::PathBuf;
 

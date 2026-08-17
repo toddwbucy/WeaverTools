@@ -160,9 +160,6 @@ pub fn read_header(pinned: &mut PinnedArtifact) -> Result<ArtifactHeader, Lifecy
     if &magic == b"GGUF" {
         read_gguf_header(&mut reader)
     } else {
-        reader
-            .seek(SeekFrom::Start(0))
-            .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
         drop(reader);
         let sidecars = sidecar_dir_of(pinned);
         pinned.rewind()?;
@@ -269,11 +266,7 @@ fn read_safetensors_header<R: Read>(
     // artifact and its facts live beside the weights, which is the same
     // rule the native loader reads its config and vocabulary by.
     let metadata = parsed.get("__metadata__");
-    let sidecar = sidecars
-        .map(|dir| dir.join("config.json"))
-        .filter(|path| path.is_file())
-        .and_then(|path| std::fs::read_to_string(path).ok())
-        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok());
+    let sidecar = read_sidecar_json(sidecars, "config.json")?;
     let read = |key: &str| {
         metadata
             .and_then(|m| m.get(key))
@@ -296,16 +289,11 @@ fn read_safetensors_header<R: Read>(
     // The chat template lives in `tokenizer_config.json` for this container,
     // read for the same reason the GGUF read carries it: where an
     // architecture is contested, the template is the second half of the key.
-    let chat_template = sidecars
-        .map(|dir| dir.join("tokenizer_config.json"))
-        .filter(|path| path.is_file())
-        .and_then(|path| std::fs::read_to_string(path).ok())
-        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
-        .and_then(|c| {
-            c.get("chat_template")
-                .and_then(|v| v.as_str())
-                .map(str::to_string)
-        });
+    let chat_template = read_sidecar_json(sidecars, "tokenizer_config.json")?.and_then(|c| {
+        c.get("chat_template")
+            .and_then(|v| v.as_str())
+            .map(str::to_string)
+    });
 
     Ok(ArtifactHeader {
         container: Container::Safetensors,
@@ -314,6 +302,30 @@ fn read_safetensors_header<R: Read>(
         layer_count: read("num_hidden_layers").as_ref().and_then(json_number),
         chat_template,
     })
+}
+
+/// One sidecar as JSON: absent is `None`, present-but-unreadable refuses.
+///
+/// **The two absences are not the same.** A directory without the file is an
+/// export that never wrote one, and the read proceeds on what stands. A file
+/// that is there and does not parse is an artifact declaring something this
+/// crate cannot read, and proceeding as though it were absent would select
+/// against facts a corrupt file was about to supply, which is the silent
+/// degradation the refusal vocabulary exists to prevent.
+fn read_sidecar_json(
+    sidecars: Option<&Path>,
+    name: &str,
+) -> Result<Option<serde_json::Value>, LifecycleRefusal> {
+    let Some(path) = sidecars.map(|dir| dir.join(name)) else {
+        return Ok(None);
+    };
+    if !path.is_file() {
+        return Ok(None);
+    }
+    let text = std::fs::read_to_string(&path).map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
+    serde_json::from_str(&text)
+        .map(Some)
+        .map_err(|_| LifecycleRefusal::ArtifactUnreadable)
 }
 
 /// The directory the pinned artifact's sidecar files live in.

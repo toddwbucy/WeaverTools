@@ -336,7 +336,7 @@ impl Resident {
         // On a build carrying no engine the two below are consumed by no arm,
         // and saying so here is cheaper than shaping the signature around a
         // build that cannot serve anything anyway.
-        #[cfg(not(feature = "gguf"))]
+        #[cfg(not(any(feature = "gguf", feature = "cuda")))]
         let _ = (knobs, capacity);
         match &self.model {
             #[cfg(feature = "gguf")]
@@ -359,7 +359,7 @@ impl Resident {
             }
             // On a build carrying no backend `LoadedModel` has no cases, so
             // this arm is unreachable rather than unwritten.
-            #[cfg(not(feature = "gguf"))]
+            #[cfg(not(any(feature = "gguf", feature = "cuda")))]
             _ => Err(DecodeFault::ContainerNotBuilt {
                 container: self.header.container,
             }),
@@ -459,6 +459,8 @@ impl Resident {
         match &self.model {
             #[cfg(feature = "gguf")]
             LoadedModel::Gguf(model) => Ok(TokenId(model.model().token_eos().0 as u32)),
+            #[cfg(feature = "cuda")]
+            LoadedModel::Native(model) => Ok(model.declared_eos()),
             #[allow(unreachable_patterns)]
             _ => Err(DecodeFault::ContainerNotBuilt {
                 container: self.header.container,
