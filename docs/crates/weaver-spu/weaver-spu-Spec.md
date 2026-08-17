@@ -9,7 +9,9 @@ Code is written against it under the gates of Working Process section 6.
 declaring `llama` on this workshop render three, so the key widens from one
 header field to two. The artifact's own `tokenizer.chat_template` was present
 and unread, and marker sets are what is compared rather than templates whole,
-a template being a program that can differ in what no turn reaches.
+a template being a program that can differ in what no turn reaches. The pair of
+an architecture and a marker set is unique and the build says so, because two
+entries sharing both would make the table's order the selector.
 **Revised:** 2026-08-16, the tunable route reaches the declaration. Every
 knob's `Disposition` promised a value routed from the agent's configuration at
 load and no such route existed, so all six compiled `Frozen` and the election
@@ -1026,6 +1028,19 @@ more than one, the artifact's own marker set selects among the entries sharing
 that architecture, and an artifact matching none of them is refused naming the
 architecture it declared, per the rule below rather than as an exception to it.
 
+**The pair of an architecture and a marker set is unique, and the build is what
+says so.** Two entries sharing both would make the table's order the selector,
+which is a silent substitution wearing a different coat: the same artifact would
+resolve differently after a reordering that changed no declaration. The
+uniqueness is a compile-time property of the table for the reason the widths set
+is, so a duplicate stops the build rather than reaching an admit.
+
+**And an ambiguous match refuses rather than picking.** The compile-time check is
+what should make ambiguity unreachable, and the refusal is what happens if it
+ever is reached, because a table this crate cannot read unambiguously is one it
+must not read by position. The two are belt and braces on purpose: order decides
+nothing at either.
+
 **Marker sets are compared and templates are not.** A chat template is a
 program, and two that render the same turns can differ in whitespace, in
 comments, and in branches no turn of this program reaches, so comparing them
@@ -1052,6 +1067,14 @@ tag: perturbation
 edge: asserts
 from: weaver-spu
 to: spu-family-is-architecture-and-template
+
+node: spu-architecture-and-markers-are-unique
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-spu
+to: spu-architecture-and-markers-are-unique
 ```
 
 ```graph
