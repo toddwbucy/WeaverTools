@@ -12,7 +12,7 @@
 
 use weaver_types::ToolName;
 
-use super::{Declaration, Family, FamilyName, Markers, Message, Parsed, lookup};
+use super::{Declaration, Family, FamilyName, Markers, Message, Parsed, RenderRefusal, lookup};
 
 /// The Harmony markers. Written here and nowhere else in the crate.
 pub const TURN_OPEN: &str = "<|start|>";
@@ -47,6 +47,11 @@ pub const TEMPLATE: &str = "<|start|>{role}<|message|>{message}<|end|>";
 pub const GENERATION_OPENER: &str = "<|start|>assistant";
 
 const STOP: &[&str] = &[RETURN, TURN_END];
+
+/// This family's renderer, cited by its registry entry.
+pub fn renderer() -> &'static dyn Family {
+    &GptOss
+}
 
 /// How Harmony qualifies a callable name.
 const RECIPIENT: &str = "to=functions.";
@@ -85,16 +90,19 @@ impl GptOss {
 }
 
 impl Family for GptOss {
-    fn render_identity(&self, messages: &[Message]) -> String {
-        messages
-            .iter()
-            .map(|message| self.render_delta(message))
-            .collect::<Vec<_>>()
-            .join("")
+    fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal> {
+        super::render_each(self, messages)
     }
 
-    fn render_delta(&self, message: &Message) -> String {
-        super::render_template(TEMPLATE, &message.role, &message.content)
+    /// The wire role is the canonical one here, so the shared name kernel
+    /// serves. Harmony's routing header renames a *recipient*, which is the
+    /// parse's business and not the render's.
+    fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal> {
+        Ok(super::render_template(
+            TEMPLATE,
+            super::common_role_name(&message.role)?,
+            &super::text_content(message)?,
+        ))
     }
 
     fn parse(&self, emission: &str) -> Parsed {

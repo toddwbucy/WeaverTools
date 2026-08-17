@@ -40,6 +40,7 @@
 //!     shard_widths: &[1, 4],
 //!     template: "{message}",
 //!     generation_opener: "",
+//!     renderer: weaver_spu::family::qwen2::renderer,
 //!     flush: weaver_spu::decoder::backend::FlushMechanism::TruncateToPosition,
 //!     taps_readout: true,
 //! };
@@ -48,24 +49,93 @@
 //! assert!(!SPARSE.shards_across(3));
 //! ```
 
-use weaver_types::{LifecycleRefusal, ToolName};
+use weaver_traits::{ContentBlock, Message, Role};
+use weaver_types::{LifecycleRefusal, TokenRefusal, ToolName};
 
 use crate::decoder::backend::FlushMechanism;
 
+pub mod gemma4;
 pub mod gpt_oss;
 pub mod llama;
 pub mod qwen2;
 
-/// One canonical message, as the harness holds it.
+/// Why a family could not render a message.
 ///
-/// The floor carries no message type yet, the decode contract's payload shapes
-/// being deferred, so the shape lives here and travels no seam. It is what the
-/// renderers read and nothing else consumes it, which is what keeps it from
-/// being a slot reserved against a reader that does not exist.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Message {
-    pub role: String,
-    pub content: String,
+/// **The crate's own vocabulary rather than the floor's**, for the reason
+/// [`FamilyRefusal`] is: what a render refuses on is a family fact, and the
+/// wire's word for it is the composition root's to choose. The [`From`] below
+/// is where the two meet.
+///
+/// One case, and both of the floor's growth points feed it. `Role` and
+/// `ContentBlock` are each `non_exhaustive`, so a family's rendering is a match
+/// with a wildcard arm, and what the wildcard means is that this family has no
+/// rendering for what arrived. **That is the contract's own case rather than
+/// one invented here:** the tool shapes are blocked with the tool workflow and
+/// the families render text today.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RenderRefusal {
+    /// The message carries a role or a block this family has no rendering for.
+    MalformedForFamily,
+}
+
+impl From<RenderRefusal> for TokenRefusal {
+    /// What crosses the seam. A render that refused is the delta malformed for
+    /// the family, which is the only shape the decode contract carries for it.
+    fn from(_: RenderRefusal) -> Self {
+        TokenRefusal::MalformedDelta
+    }
+}
+
+/// **The role names most families render, as a shared kernel they drive.**
+///
+/// A family calls this because its wire vocabulary happens to be the canonical
+/// one, not because it inherits it. A family whose wire name differs writes its
+/// own match and does not call this, which is the whole of how [`gemma4`]
+/// renders its assistant as `model` without any other family learning the word.
+///
+/// The wildcard arm is the floor's growth point, `Role` being `non_exhaustive`.
+/// No test can construct its subject today, every current case being rendered.
+pub fn common_role_name(role: &Role) -> Result<&'static str, RenderRefusal> {
+    Ok(match role {
+        Role::User => "user",
+        Role::Assistant => "assistant",
+        Role::ToolResult => "tool",
+        _ => return Err(RenderRefusal::MalformedForFamily),
+    })
+}
+
+/// A message's text, joined, for the families that render text and nothing
+/// else.
+///
+/// A block that is not text is unrenderable rather than skipped: a tool call
+/// silently dropped from a prompt is a turn the model answers without knowing
+/// what it was asked, which is the silent substitution this crate refuses
+/// everywhere else.
+pub fn text_content(message: &Message) -> Result<String, RenderRefusal> {
+    let mut content = String::new();
+    for block in &message.content {
+        match block {
+            ContentBlock::Text { text } => content.push_str(text),
+            _ => return Err(RenderRefusal::MalformedForFamily),
+        }
+    }
+    Ok(content)
+}
+
+/// **The shared rendering kernel: every message through the family's own delta
+/// rendering, in order, and nothing else.**
+///
+/// It holds no marker, no role name, and no preamble, which is what keeps a
+/// family's whole vocabulary inside that family's module. A family whose
+/// identity prefix opens with something the turns do not repeat adds it around
+/// this call rather than inside it - see [`gemma4::Gemma4::render_identity`],
+/// where the once-per-prefix `<bos>` lives.
+pub fn render_each(family: &dyn Family, messages: &[Message]) -> Result<String, RenderRefusal> {
+    let mut rendered = String::new();
+    for message in messages {
+        rendered.push_str(&family.render_delta(message)?);
+    }
+    Ok(rendered)
 }
 
 /// One piece of an emission, recovered.
@@ -144,12 +214,25 @@ pub struct Markers {
 ///
 /// Six members and no seventh. Membership is the charter's enumeration and
 /// takes no record of its own.
+///
+/// **The messages are the floor's, which is what section 5 says and what this
+/// surface now reads.** It formerly took a message shape local to this module,
+/// and nothing on the decode path called it: the render ran in the composition
+/// root off the [`Declaration`]'s template string, so a family could hold no
+/// rendering fact beyond that one constant. A family whose wire role differs
+/// from the canonical one, or whose prefix opens with a string its turns do not
+/// repeat, had nowhere to say so. Both arrived with [`gemma4`], and the repair
+/// is this surface carrying the traffic Spec section 5 always said it carried.
 pub trait Family {
     /// Render an identity prefix from canonical messages.
-    fn render_identity(&self, messages: &[Message]) -> String;
+    ///
+    /// The prefix's turns are all complete, so no generation opener belongs
+    /// here. What may belong is a once-per-prefix preamble the per-turn
+    /// rendering must not repeat.
+    fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal>;
 
     /// Render a turn's delta.
-    fn render_delta(&self, message: &Message) -> String;
+    fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal>;
 
     /// Parse an emission into canonical content, this family's markers
     /// recognised.
@@ -227,7 +310,14 @@ pub fn scan(
 pub struct FamilyName(pub String);
 
 /// What one family declares about itself, at compile time.
-#[derive(Debug, Clone, Copy, PartialEq)]
+///
+/// **No [`PartialEq`], and the reason is [`Declaration::renderer`].** A
+/// function pointer's address is not guaranteed unique, so a derived comparison
+/// would answer about addresses rather than about families and the compiler
+/// says so. Nothing compares declarations - what callers read is a field - so
+/// the derive is dropped rather than hand-written around the one member that
+/// cannot answer.
+#[derive(Debug, Clone, Copy)]
 pub struct Declaration {
     /// The name an artifact header must carry to select this family.
     pub family: &'static str,
@@ -243,6 +333,16 @@ pub struct Declaration {
     /// than electing a speaker. Appended to the delta's rendering only, never
     /// to the identity prefix, whose turns are all complete.
     pub generation_opener: &'static str,
+    /// **The family's renderer, cited rather than written here**, for the
+    /// reason [`Declaration::template`] is cited: the module is the authority
+    /// and this table points at it.
+    ///
+    /// A function returning the object rather than the object itself, because
+    /// a `&dyn` field would take this struct's derived [`PartialEq`] with it
+    /// and the width judgment reads declarations by value. **One table, not
+    /// two:** a second map from family name to renderer would be the same fact
+    /// in two places with no authority named, which G5 files as a defect.
+    pub renderer: fn() -> &'static dyn Family,
     /// **How this family's flush reaches its fixed outcome**, per Spec section
     /// 4.4. Declared here rather than inferred from a version string, because
     /// a truncation that returns success while recurrent state stays is the
@@ -299,6 +399,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: llama::TEMPLATE,
         generation_opener: llama::GENERATION_OPENER,
+        renderer: llama::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -307,6 +408,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
+        renderer: qwen2::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -328,6 +430,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
+        renderer: qwen2::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -341,6 +444,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
+        renderer: qwen2::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -361,6 +465,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
+        renderer: qwen2::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -373,6 +478,35 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
+        renderer: qwen2::renderer,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
+        // **The first entry that had to grow a module rather than cite one.**
+        // Every qwen key above renders qwen2's scaffolding under its own
+        // architecture, so the entry was the whole act. This family renames a
+        // role and opens its prefix with a token its turns do not repeat, and
+        // neither is a string a table row can hold.
+        //
+        // Measured by the marker probe of `tests/markers.rs` against
+        // `gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf`, whose header declares this
+        // architecture: all five rendered markers promote to exactly one token,
+        // and the lookalike control does not, so the vocabulary agrees rather
+        // than the tokenizer promoting everything. Two of the five, the channel
+        // pair, are `USER_DEFINED` rather than `CONTROL` in that artifact's
+        // token table, which is why reading the template was not enough.
+        //
+        // The flush is by truncation for the reason every entry above declares
+        // it: attention KV rolls back by position. The interleaved sliding
+        // window this family's attention uses is a window over positions and
+        // does not change that. It is declared rather than inferred from the
+        // architecture string, per Spec section 4.4.
+        family: "gemma4",
+        shard_widths: &[1, 2],
+        template: gemma4::TEMPLATE,
+        generation_opener: gemma4::GENERATION_OPENER,
+        renderer: gemma4::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -384,6 +518,7 @@ pub const REGISTRY: &[Declaration] = &[
         shard_widths: &[1, 2],
         template: gpt_oss::TEMPLATE,
         generation_opener: gpt_oss::GENERATION_OPENER,
+        renderer: gpt_oss::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -493,10 +628,15 @@ mod tests {
     #[test]
     fn an_uncarried_family_refuses_by_name() {
         let absent = FamilyName("not-a-family-this-binary-carries".into());
-        assert_eq!(
-            lookup(&absent),
-            Err(FamilyRefusal::UnknownFamily(absent.clone())),
-            "the refusal carries the family the header named"
+        let outcome = lookup(&absent);
+        // Read as a pattern rather than by equality: [`Declaration`] carries a
+        // function pointer and so cannot answer `==` meaningfully. The claim is
+        // unchanged, and a lookup that fell back to a nearest match returns
+        // `Ok` and fails this the same way.
+        assert!(
+            matches!(&outcome, Err(FamilyRefusal::UnknownFamily(named)) if named == &absent),
+            "the refusal carries the family the header named, got {:?}",
+            outcome.as_ref().map(|declaration| declaration.family)
         );
     }
 
@@ -522,6 +662,7 @@ mod tests {
             shard_widths: &[1, 4],
             template: "{message}",
             generation_opener: "",
+            renderer: qwen2::renderer,
             flush: FlushMechanism::TruncateToPosition,
             taps_readout: true,
         };
@@ -627,10 +768,48 @@ mod tests {
                 .unwrap_or_else(|_| panic!("{family} is carried"));
             assert_eq!(declaration.template, qwen2::TEMPLATE, "{family}");
             assert_eq!(
-                declaration.generation_opener, qwen2::GENERATION_OPENER,
+                declaration.generation_opener,
+                qwen2::GENERATION_OPENER,
                 "{family}"
             );
         }
+    }
+
+    /// **gemma4 is carried, and it resolves to its own module rather than to
+    /// another family's constants.**
+    ///
+    /// Without an entry the lookup refuses `UnknownFamily("gemma4")` before any
+    /// device call, correctly and uselessly. What this guards is the entry
+    /// existing and citing the right module: the template and the opener are
+    /// gemma4's own, and the renderer the declaration hands out is the one that
+    /// knows the word `model`.
+    ///
+    /// The marker vocabulary it rests on is measured by `tests/markers.rs`
+    /// against a gemma4 tokenizer, which needs the `gguf` feature, so this side
+    /// of the claim is asserted where every build can see it.
+    #[test]
+    fn gemma4_resolves_to_its_own_module() {
+        let declaration = lookup(&FamilyName("gemma4".into())).expect("gemma4 is carried");
+        assert_eq!(declaration.template, gemma4::TEMPLATE);
+        assert_eq!(declaration.generation_opener, gemma4::GENERATION_OPENER);
+        assert!(
+            declaration
+                .generation_opener
+                .contains(gemma4::CHANNEL_CLOSE),
+            "the opener carries the closed thought channel the artifact's own \
+             template emits with thinking off"
+        );
+
+        // The renderer is this family's, which is what carries the role map and
+        // the preamble. Read through a rendering rather than by comparing
+        // pointers, a function pointer's address answering nothing.
+        let rendered = (declaration.renderer)()
+            .render_identity(&[said(Role::Assistant, "hi")])
+            .expect("gemma4 renders");
+        assert!(
+            rendered.starts_with("<bos><|turn>model\n"),
+            "the declaration hands out gemma4's own renderer, got {rendered:?}"
+        );
     }
 
     #[test]
@@ -641,6 +820,91 @@ mod tests {
             qwen2::TEMPLATE,
             "the two keys share one module's template rather than a copy of it"
         );
+    }
+
+    /// One text message, for the rendering tests below.
+    fn said(role: Role, text: &str) -> Message {
+        Message {
+            role,
+            content: vec![ContentBlock::Text {
+                text: text.to_string(),
+            }],
+        }
+    }
+
+    /// **A family's wire role is the family's own, and gemma4's differs.**
+    ///
+    /// The floor's `Role::Assistant` renders as `model` here and as `assistant`
+    /// under a family that calls the shared name kernel. Both halves are read,
+    /// because the claim is a difference and a test of one side alone would
+    /// pass under a shared map that had simply been renamed.
+    ///
+    /// Perturbation: give `Gemma4::render_delta` the shared
+    /// [`common_role_name`] and the gemma4 half fails, the turn then opening
+    /// `<|turn>assistant` against an artifact whose own template never writes
+    /// that word.
+    #[test]
+    fn the_wire_role_is_the_familys_own() {
+        let turn = [said(Role::Assistant, "hello")];
+
+        let rendered = render_each(gemma4::renderer(), &turn).expect("gemma4 renders an assistant");
+        assert!(
+            rendered.starts_with("<|turn>model\n"),
+            "gemma4 calls the assistant `model`, got {rendered:?}"
+        );
+
+        let rendered = render_each(qwen2::renderer(), &turn).expect("qwen2 renders an assistant");
+        assert!(
+            rendered.starts_with("<|im_start|>assistant\n"),
+            "the canonical name is unchanged where the family shares it, got {rendered:?}"
+        );
+    }
+
+    /// **A family's identity prefix carries its preamble once, and no delta
+    /// carries it at all.**
+    ///
+    /// This is the distinction the surface exists for. The prefix opens a
+    /// session and every later turn appends to it, so a preamble repeated per
+    /// turn is a control token in the middle of a conversation, and a preamble
+    /// missing from the prefix is a model reading its first turn without the
+    /// token it was trained to start from.
+    ///
+    /// Both carried preambles are read, gemma4's `<bos>` and llama's
+    /// `<|begin_of_text|>`, and the count is asserted rather than the presence:
+    /// two messages through the prefix must still yield one.
+    ///
+    /// Perturbation: move the preamble into the family's `TEMPLATE` and this
+    /// fails twice over - the prefix carries two and the delta carries one.
+    /// Watched under exactly that move.
+    #[test]
+    fn the_preamble_belongs_to_the_prefix_and_appears_once() {
+        let cases: [(&str, &'static dyn Family, &str); 2] = [
+            ("gemma4", gemma4::renderer(), gemma4::BOS),
+            ("llama", llama::renderer(), llama::TEXT_BEGIN),
+        ];
+        let turns = [said(Role::User, "one"), said(Role::Assistant, "two")];
+
+        for (name, family, preamble) in cases {
+            let prefix = family
+                .render_identity(&turns)
+                .unwrap_or_else(|_| panic!("{name} renders an identity prefix"));
+            assert_eq!(
+                prefix.matches(preamble).count(),
+                1,
+                "{name}: the prefix carries its preamble exactly once, got {prefix:?}"
+            );
+            assert!(
+                prefix.starts_with(preamble),
+                "{name}: and it opens with it, got {prefix:?}"
+            );
+
+            let delta = render_each(family, &turns[1..])
+                .unwrap_or_else(|_| panic!("{name} renders a delta"));
+            assert!(
+                !delta.contains(preamble),
+                "{name}: a delta appends to an open session and must not repeat it, got {delta:?}"
+            );
+        }
     }
 
     /// **The template renders in one pass, so neither field can be substituted

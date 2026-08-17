@@ -7,7 +7,7 @@
 
 use weaver_types::ToolName;
 
-use super::{Declaration, Family, FamilyName, Markers, Message, Parsed, lookup};
+use super::{Declaration, Family, FamilyName, Markers, Message, Parsed, RenderRefusal, lookup};
 
 /// The ChatML turn markers. Written here and nowhere else in the crate.
 pub const TURN_OPEN: &str = "<|im_start|>";
@@ -48,6 +48,11 @@ pub const GENERATION_OPENER: &str = "<|im_start|>assistant\n";
 
 const STOP: &[&str] = &[TURN_CLOSE];
 
+/// This family's renderer, cited by every registry entry it serves.
+pub fn renderer() -> &'static dyn Family {
+    &Qwen2
+}
+
 pub struct Qwen2;
 
 impl Qwen2 {
@@ -78,16 +83,19 @@ impl Qwen2 {
 }
 
 impl Family for Qwen2 {
-    fn render_identity(&self, messages: &[Message]) -> String {
-        messages
-            .iter()
-            .map(|message| self.render_delta(message))
-            .collect::<Vec<_>>()
-            .join("")
+    fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal> {
+        super::render_each(self, messages)
     }
 
-    fn render_delta(&self, message: &Message) -> String {
-        super::render_template(TEMPLATE, &message.role, &message.content)
+    /// **The wire role is the canonical one here**, so this family calls the
+    /// shared name kernel rather than holding a map of its own. ChatML's roles
+    /// and the floor's are the same three words.
+    fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal> {
+        Ok(super::render_template(
+            TEMPLATE,
+            super::common_role_name(&message.role)?,
+            &super::text_content(message)?,
+        ))
     }
 
     fn parse(&self, emission: &str) -> Parsed {

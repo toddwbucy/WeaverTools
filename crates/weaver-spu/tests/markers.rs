@@ -31,7 +31,7 @@ use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{AddBos, LlamaModel};
 
-use weaver_spu::family::{gpt_oss, llama, qwen2};
+use weaver_spu::family::{gemma4, gpt_oss, llama, qwen2};
 
 /// A family, its rendered markers, and where a tokenizer for it is found.
 ///
@@ -101,6 +101,19 @@ const PROBES: &[Probe] = &[
         env: "WEAVER_VOCAB_GPT_OSS",
         default_path: "/opt/weaver/models/h-dist/gpt-oss-20b-mxfp4.gguf",
         rendered: gpt_oss::RENDERED_MARKERS,
+    },
+    Probe {
+        // **The first family whose rendered set is not only turn markers.** Its
+        // generation opener carries a channel pair and its identity prefix
+        // carries a BOS, so five strings reach a prompt and all five are
+        // measured. Two of them, the channel pair, are `USER_DEFINED` rather
+        // than `CONTROL` in this artifact's token table, which is exactly the
+        // kind of difference a probe settles and a reading of the template
+        // does not.
+        family: "gemma4",
+        env: "WEAVER_VOCAB_GEMMA4",
+        default_path: "/home/todd/Projects/models/unsloth--gemma-4-26B-A4B-it-qat-GGUF/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+        rendered: gemma4::RENDERED_MARKERS,
     },
 ];
 
