@@ -4,6 +4,12 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, a family is an architecture and a template together.
+`general.architecture` does not determine a chat format and three artifacts
+declaring `llama` on this workshop render three, so the key widens from one
+header field to two. The artifact's own `tokenizer.chat_template` was present
+and unread, and marker sets are what is compared rather than templates whole,
+a template being a program that can differ in what no turn reaches.
 **Revised:** 2026-08-16, the tunable route reaches the declaration. Every
 knob's `Disposition` promised a value routed from the agent's configuration at
 load and no such route existed, so all six compiled `Frozen` and the election
@@ -997,6 +1003,37 @@ from: weaver-spu
 to: spu-widths-set-pinned-by-doctest
 ```
 
+**A family is an architecture and a template together, because the first does
+not determine the second.** `general.architecture` describes the tensor layout,
+how the weights are shaped and how they shard, and says nothing about how a turn
+is marked up: a builder may train any layout against any chat format, and
+builders do. Measured on this workshop 2026-08-17, three artifacts declaring
+`llama` render three different formats, ChatML for SmolLM2, `[INST]` for
+Mistral Small, and Llama 3's own headers for a Llama artifact, so a table keyed
+on architecture alone hands two of the three a template they were never trained
+against.
+
+**The header already carries the answer and this crate now reads it.** The
+artifact declares `tokenizer.chat_template` beside its architecture, which is
+the format its builder trained it on, so the fact was present and unread rather
+than absent. Reading it keeps the key what the artifact's header declares,
+which is what the clause below has always said, and widens what is read from
+one field to two.
+
+**Where one architecture carries one template the key is unchanged**, which is
+every family this binary carried before this act. Where an architecture carries
+more than one, the artifact's own marker set selects among the entries sharing
+that architecture, and an artifact matching none of them is refused naming the
+architecture it declared, per the rule below rather than as an exception to it.
+
+**Marker sets are compared and templates are not.** A chat template is a
+program, and two that render the same turns can differ in whitespace, in
+comments, and in branches no turn of this program reaches, so comparing them
+whole would refuse artifacts that agree about everything this crate uses. What
+this crate renders is a family's control markers, so what it compares is those,
+and the comparison is the same property `spu-marker-promotion` already tests
+from the other side.
+
 **The registry is compile-time and admission consults it.** A table of the
 families this binary carries, keyed by what the artifact's header declares,
 with no default and no fallback: an artifact whose family this binary does not
@@ -1006,6 +1043,16 @@ Section 10 buys the test, an artifact header naming a family the binary does
 not carry being a fixture and the refusal arriving before any device call, and
 what the test reads is the family the refusal names rather than the load's
 outcome, so a refusal arriving on some other ground does not satisfy it.
+
+```graph
+node: spu-family-is-architecture-and-template
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-family-is-architecture-and-template
+```
 
 ```graph
 node: spu-registry-no-silent-substitution
