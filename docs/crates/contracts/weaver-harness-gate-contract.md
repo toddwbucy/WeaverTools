@@ -192,16 +192,28 @@ ruling, and answers received, promising authorship and nothing else.
 **Execute a tool.** Opened by the harness, one exchange per call the model's
 emission recovered, valid only inside the raised window like the turn. The
 harness supplies the call, the tool's name and its arguments as the family
-parse recovered them, and interprets nothing. The gate resolves the name
-against the tools it holds, executes per its charter's mechanism, and answers
-with the result, or with the tool's own failure as content rather than as a
-channel fault, per the layer split every seam of this program runs. A name
-the gate does not hold is a refused call naming the tool, never a nearest
-match, the registry discipline of the family table applied one organ over.
-**The result crosses this seam exactly once and nothing else mints it**,
-which is the half of the loop closure this contract carries: the harness's
-granted tool-result value is constructed at this exchange's completion and
-nowhere else, per `weaver-harness-Spec` section 6.
+parse recovered them, and interprets nothing. **Every opened execution
+completes with an answer, and the answer carries one of three contents**: the
+tool's result, the tool's own failure, or the gate's refusal naming a tool it
+does not hold - never a nearest match, the registry discipline of the family
+table applied one organ over. All three are content rather than channel
+faults, per the layer split every seam of this program runs, because each is
+a fact the model must learn: a tool that does not exist is an answer the
+next turn reasons over, not a hole in the conversation.
+
+**Executions are serial and ordered by the emission.** The harness opens at
+most one at a time, in the order the family parse recovered the calls, and
+the next opens after the previous answered. Correlation is the channel's own
+exchange identity, opening party and ordinal, so no call identifier rides
+the payload, and the conversation's ordering is the emission's: the harness
+authors the tool-result turns in the order it opened the executions, which
+is the order the model spoke them.
+
+**The answer crosses this seam exactly once per call and nothing else mints
+what it grants**, which is the half of the loop closure this contract
+carries: the harness's granted tool-result value is constructed at this
+exchange's completion and nowhere else, whichever of the three contents
+arrived, per `weaver-harness-Spec` section 6.
 
 **The instruction crosses once, in the raise.** It is not re-sent, revoked, or
 replaced. A gate that needs an instruction it was not given has a failed raise rather
@@ -246,7 +258,13 @@ this list.
 
 **The harness supplies** the gate instruction it was handed in the enter directive,
 the directive to lower, and, per call, the tool execution's name and arguments
-as the family parse recovered them, uninterpreted.
+as the family parse recovered them, uninterpreted, opened serially in
+emission order.
+
+**The gate guarantees** an answer to every execution opened inside the raised
+window, carrying the result, the tool's failure, or the refusal naming an
+unheld tool, so the harness's grant construction site fires exactly once per
+opened call and a call never dangles.
 
 **The harness guarantees** that the instruction it sends is the instruction admin
 sent it, unaltered and uninterpreted. It guarantees that it opens no exchange this

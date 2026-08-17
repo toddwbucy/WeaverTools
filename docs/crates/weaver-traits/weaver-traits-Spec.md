@@ -200,9 +200,11 @@ to: traits-non-exhaustive-per-charter
 
 ## 3. The message model
 
-Provider-agnostic conversation content, per charter section 3.3. It is the one
-definition in this crate a merged contract draws today, and its shape is fixed by
-what two consumers need: the harness assembles prompts from it, and the trace
+Provider-agnostic conversation content, per charter section 3.3. It is one of
+the two definitions in this crate a merged contract draws, the message model
+by the trace contract and `tool-trait` by the harness-gate contract as of the
+tool workflow's opening, and its shape is fixed by what two consumers need:
+the harness assembles prompts from it, and the trace
 records `message.user`, `message.assistant`, and `message.tool_result` payloads
 carrying it, opaque to the recorder per `weaver-trace-PRD` section 3.
 
@@ -425,19 +427,40 @@ always constrained:
 
 ```rust
 pub trait Tool {
-    /// The name the model calls, matching what the family parse recovers.
-    fn name(&self) -> &ToolName;
+    /// The name the model calls, as the gate compares it against the drawn
+    /// `tool-name` that crossed the exchange.
+    fn name(&self) -> &str;
+    /// The schema this tool advertises to the model, the charter's own
+    /// vocabulary item carried by the signature.
+    fn schema(&self) -> &str;
     /// Execute one call. The arguments arrive as the model spoke them,
     /// uninterpreted by any party between the parse and this method.
     fn execute(&self, arguments: &str)
-        -> Pin<Box<dyn Future<Output = Result<String, ToolFailure>> + Send + '_>>;
+        -> Pin<Box<dyn Future<Output = Result<String, ToolFailure>>
+            + Send + '_>>;
+}
+
+pub struct ToolFailure {
+    /// The tool's own account of its failure, content the conversation
+    /// carries and never a channel fault.
+    pub detail: String,
 }
 ```
 
-A tool's failure is content, `ToolFailure` carrying the tool's own account,
-and never a channel fault, per the layer split the exchange states. The
-schema a tool advertises to the model stays with the prompt assembly that
-renders it and arrives with the schema act, deferred rather than absent.
+**The name is the primitive on purpose.** `tool-name` is `weaver-types`
+vocabulary and `weaver-types` already links this crate, the one floor-link
+its manifest names, so a trait naming that type would close a dependency
+cycle - and the floor invariant this Spec grounds six claims in is the
+reason this crate refuses internal dependencies at all. The gate depends on
+both crates and is the one party that compares the drawn name against what a
+tool answers, so the comparison lives where both definitions are in scope.
+
+`ToolFailure` is a record like the blocks of section 3, serialized as
+content across the exchange. The schema is advertised by the trait, per the
+charter's vocabulary sentence; **how an advertisement reaches the prompt
+assembly that renders it is the schema act's**, deferred rather than absent,
+the assembly's slot for it already chartered in `weaver-harness-Spec`
+section 5's ordering.
 
 **The four constraints, inherited and now visible in the signature.** The
 trait is dyn-compatible,
@@ -596,8 +619,9 @@ a claim nothing runs.
 twenty-four carry a `grounds` edge and all six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`. The other three axioms take
 nothing from this crate: it makes no claim about a turn key, it is not an organ,
-and the one contract that draws it draws the message model rather than anything
-this Spec settles about representing it. **The test applied is whether the axiom
+and the contracts that draw it draw the message model and the tool contract
+rather than anything this Spec settles about representing either. **The test
+applied is whether the axiom
 is the reason the claim exists.** Remove the floor invariant and this crate has no
 reason to refuse an internal dependency, no reason to keep an async runtime out of
 its manifest, no reason to bound a boxed future with `Send` or to hold `futures`

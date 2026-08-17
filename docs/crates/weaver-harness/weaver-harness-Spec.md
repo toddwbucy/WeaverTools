@@ -1423,15 +1423,23 @@ else, verified at the parse.
 negatives, each pinned the way the floor pins `PeerIdentity`:** no
 `Deserialize`, no public constructor, no conversion from `ToolResultBlock`.
 It is constructed at exactly one site, the completion of the execution
-exchange of `weaver-harness-gate-contract` section 2, and the author door
-for a tool-result message takes the grant and never the block, so a loop 1
-that would fabricate a result has no door: not by construction, not by
-serde, not by conversion, which is `reasoning-loop-boundary` section 4's
-mechanism named and held. The record the trace and the render consume is
-authored by this crate from the grant at that same site. The engine opens
-the execution exchange when the family parse recovers a call from the
-emission, one exchange per recovered call, and a turn whose emission carries
-no call opens none.
+exchange of `weaver-harness-gate-contract` section 2, **whichever of the
+exchange's three contents arrived**: the grant carries the tool's result,
+the tool's failure, or the gate's refusal of an unheld name, because each is
+a fact the model must learn and a refusal that could not author a
+tool-result turn would leave the conversation with a hole where the answer
+goes. One site, three contents, no second door. The author door for a
+tool-result message takes the grant and never the block, so a loop 1 that
+would fabricate a result has no door: not by construction, not by serde,
+not by conversion, which is `reasoning-loop-boundary` section 4's mechanism
+named and held. The record the trace and the render consume is authored by
+this crate from the grant at that same site. The engine opens the execution
+exchange when the family parse recovers a call from the emission, one
+exchange per recovered call, **serially and in the order the parse recovered
+them**, the next opening after the previous answered, and it authors the
+tool-result turns in that same order, so the conversation's ordering is the
+emission's and the channel's exchange identity is the only correlation the
+wire needs. A turn whose emission carries no call opens none.
 
 **`src/engine.rs` is loop 1's seat, and the seam it composes across is this
 crate's public surface.** The loop itself is the builder's, per the charter's
