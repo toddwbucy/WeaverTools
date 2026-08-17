@@ -643,6 +643,23 @@ mod tests {
             line_of(Kind::ModelMeasurement).contains("sha256:abc"),
             "the measurement splice carries what the SPU rendered"
         );
+
+        // The attribution, at engine grain: all three model events carry the
+        // decoder's case on the wire, per the #103 ruling. Read from the
+        // rendered line rather than the enum so a regression to `Spu` at the
+        // author call fails here naming the string, which is the emitter-side
+        // half of the pin whose spelling half lives in the recorder's tests.
+        for kind in [
+            Kind::ModelRequest,
+            Kind::ModelOutput,
+            Kind::ModelMeasurement,
+        ] {
+            assert!(
+                line_of(kind).contains("\"subsystem\":\"spu_decoder\""),
+                "{kind:?} is attributed to the decode engine, got {}",
+                line_of(kind)
+            );
+        }
     }
 
     /// **The stop is heard mid-stream, per Spec 6.1.** The streaming wait
