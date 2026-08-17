@@ -559,8 +559,8 @@ worker, applied one level down, and it is what keeps the routing claim of
 
 **The encoder is named as domain and is not built.** Encoding and decoding are one
 domain and it is this crate's, per `weaver-harness-PRD` section 3. The deferral
-rests on order of construction, per the operator's framing recorded on issue
-#93: **memory is a lossy compression of state, and state is the trace's
+rests on order of construction, per the operator's framing recorded on
+issue #93: **memory is a lossy compression of state, and state is the trace's
 faithful account of what actually happened.** There is no memory until
 something can reliably extract from the trace what a compression takes as
 input, so the encoder - the thing that compresses - cannot precede a
