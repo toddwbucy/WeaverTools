@@ -190,9 +190,23 @@ fn read_eos(path: &Path) -> Result<super::backend::TokenId, AdmitRefusal> {
                 .and_then(|list| list.first())
                 .and_then(|v| v.as_u64())
         })
-        .map(|id| super::backend::TokenId(id as u32))
         .ok_or_else(|| AdmitRefusal::LoadFailed {
             detail: format!("{}: no eos_token_id declared", path.display()),
+        })
+        .and_then(|id| {
+            // The declared id must fit the wire's token width. A cast would
+            // truncate a value above the ceiling into a different, valid
+            // token id, the silent substitution the count discipline of
+            // `sampling.rs` refuses, so the conversion is checked and an
+            // oversized declaration refuses naming itself.
+            u32::try_from(id)
+                .map(super::backend::TokenId)
+                .map_err(|_| AdmitRefusal::LoadFailed {
+                    detail: format!(
+                        "{}: eos_token_id {id} exceeds the token width",
+                        path.display()
+                    ),
+                })
         })
 }
 
