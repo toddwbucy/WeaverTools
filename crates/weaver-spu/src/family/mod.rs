@@ -465,6 +465,27 @@ pub const REGISTRY: &[Declaration] = &[
         taps_readout: false,
     },
     Declaration {
+        // **The llama architecture's third reading.** Mistral Small 3.2
+        // declares `general.architecture = llama` and renders `[INST]`, so
+        // before this row the two-field key refused it - correctly, per the
+        // 2026-08-17 sweep, where every model-needing test recorded the
+        // refusal (#186). The format is the mistral3 module's and this row
+        // cites it, the way the row above cites qwen2.
+        //
+        // The selecting set is [`mistral3::SELECTING_MARKERS`] rather than the
+        // module's full rendered set, because a rendering never emits `<s>`:
+        // the BOS is the tokenizer's. Measured against the artifact's own
+        // template through the detector before this row was written.
+        family: "llama",
+        shard_widths: &[1, 2],
+        template: mistral3::TEMPLATE,
+        generation_opener: mistral3::GENERATION_OPENER,
+        renderer: mistral3::renderer,
+        selecting_markers: mistral3::SELECTING_MARKERS,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
         family: "qwen2",
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
@@ -647,7 +668,11 @@ pub const REGISTRY: &[Declaration] = &[
         template: mistral3::TEMPLATE,
         generation_opener: mistral3::GENERATION_OPENER,
         renderer: mistral3::renderer,
-        selecting_markers: mistral3::RENDERED_MARKERS,
+        // [`mistral3::SELECTING_MARKERS`], not the full rendered set: a
+        // selecting set carrying `<s>` can never match a rendering, and a
+        // value that is only read when the architecture is contested must
+        // still be one that can be read.
+        selecting_markers: mistral3::SELECTING_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },

@@ -57,6 +57,13 @@ const CHATML_LLAMA: Fixture = Fixture {
     default_path: "/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf",
 };
 
+/// The third reading of the llama architecture: Mistral Small declares
+/// `llama` and renders `[INST]`.
+const INST_LLAMA: Fixture = Fixture {
+    env: "WEAVER_ARTIFACT_MISTRAL_SMALL",
+    default_path: "/opt/weaver/models/h-dist/Mistral-Small-3.2-24B-Instruct-2506-Q4_K_M.gguf",
+};
+
 /// The artifact whose template the detector refuses, which is what keeps the
 /// render off the uncontested path.
 const DETECTOR_REFUSES: Fixture = Fixture {
@@ -110,6 +117,38 @@ fn a_chatml_artifact_declaring_llama_selects_the_chatml_entry() {
     assert!(
         !selected.selecting_markers.contains(&"<|begin_of_text|>"),
         "the Llama 3 stop set is what refused this artifact before the act"
+    );
+}
+
+/// **The refusal the 2026-08-17 sweep recorded, resolved by the third row.**
+///
+/// Mistral Small declares `llama` and renders `[INST]`, matching neither the
+/// Llama 3 set nor the ChatML set, so cell 11 of the sweep refused it in
+/// every model-needing test (#186). The selecting set is the module's
+/// `SELECTING_MARKERS`, without `<s>`, because a rendering never emits the
+/// BOS - the set with `<s>` in it would leave this artifact refused with the
+/// row present.
+#[test]
+fn an_inst_artifact_declaring_llama_selects_the_inst_entry() {
+    let Some(path) = INST_LLAMA.resolve() else {
+        return;
+    };
+    let header = header_of(&path);
+    assert_eq!(header.family, FamilyName("llama".into()));
+    let template = header
+        .chat_template
+        .as_deref()
+        .expect("the artifact declares a chat template");
+
+    let selected = family::select(&header.family, Some(template)).expect("the artifact selects");
+    assert!(
+        selected.selecting_markers.contains(&"[INST]"),
+        "the [INST] entry is the one selected"
+    );
+    assert!(
+        !selected.selecting_markers.contains(&"<|im_start|>")
+            && !selected.selecting_markers.contains(&"<|begin_of_text|>"),
+        "neither sibling's set is the one selected"
     );
 }
 
