@@ -37,7 +37,7 @@ use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{AddBos, LlamaModel};
 
-use weaver_spu::family::{FamilyName, gemma4, gpt_oss, llama, mistral3, qwen2};
+use weaver_spu::family::{FamilyName, gemma4, gpt_oss, llama, mistral3, phi, qwen2};
 
 /// A family, its rendered markers, and where a tokenizer for it is found.
 ///
@@ -145,6 +145,25 @@ const PROBES: &[Probe] = &[
         env: "WEAVER_VOCAB_MISTRAL3",
         default_path: "/opt/weaver/models/Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
         rendered: mistral3::RENDERED_MARKERS,
+    },
+    Probe {
+        // **The tag half of the contested phi3 pair**, serving Phi-3.5-mini
+        // and Phi-4-mini artifacts. The role tag is built by substitution, so
+        // what promotes is the built marker, and the mini's vocabulary holds
+        // all three as single CONTROL tokens - and holds no `<|im_start|>` at
+        // all, which is what makes the pair unambiguous.
+        family: "phi3",
+        env: "WEAVER_VOCAB_PHI3_TAG",
+        default_path: "/opt/weaver/models/microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+        rendered: phi::TAG_RENDERED_MARKERS,
+    },
+    Probe {
+        // The separator half, serving Phi-4 14B artifacts. Same architecture
+        // string, disjoint markers.
+        family: "phi3",
+        env: "WEAVER_VOCAB_PHI3_SEP",
+        default_path: "/opt/weaver/models/phi-4-Q4_K_S.gguf",
+        rendered: phi::SEP_RENDERED_MARKERS,
     },
     Probe {
         // **A hybrid family rendering ChatML.** Its template is
@@ -369,23 +388,48 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
         };
         probed += 1;
 
-        // Read against the header's own family key rather than through a
-        // renderer: a module serving several keys answers for the one it is
-        // named after, and the flush is exactly where those keys differ.
+        // **Resolved the way admission resolves: the artifact's own header,
+        // through `select`.** A by-name lookup stopped being enough when
+        // architectures became contestable, because a contested name refuses
+        // by design and this test would have skipped `llama` and `phi3`
+        // forever while their flush claims went unchecked. The header carries
+        // both facts selection needs, the architecture and the template, and
+        // reading them here is what admission does, so the row this test
+        // judges is the row a load would get.
+        //
         // **A probe entry for a family the registry does not carry yet is not
-        // a failure**, because this test's claim is about what a carried family
-        // declares and an uncarried one declares nothing. That is the ordinary
-        // state mid-act: the discipline is to add the probe entry, measure, and
-        // only then write the registry entry, so between those two steps the
-        // family is here and not there. Named rather than skipped silently, so
-        // a key misspelled in this table reads as unverified instead of green.
-        let declaration = match weaver_spu::family::lookup(&FamilyName(probe.family.to_string())) {
-            Ok(declaration) => declaration,
-            Err(_) => {
-                absent.push(format!("{} (probed, not carried yet)", probe.family));
-                continue;
-            }
+        // a failure**, the ordinary mid-act state of probe-before-entry. A
+        // contested architecture whose resolution refuses is also unverified
+        // rather than failed, because admission would refuse that artifact
+        // before any flush ran, and it is named with the refusal so a
+        // detector gap reads as what it is.
+        let header = {
+            let mut pinned = weaver_spu::artifact::pin(&path).expect("a probed artifact pins");
+            weaver_spu::artifact::read_header(&mut pinned).expect("a probed header reads")
         };
+        assert_eq!(
+            header.family,
+            FamilyName(probe.family.to_string()),
+            "the probe table says {} and the artifact declares {}, so this row \
+             names the wrong family",
+            probe.family,
+            header.family.0,
+        );
+        let declaration =
+            match weaver_spu::family::select(&header.family, header.chat_template.as_deref()) {
+                Ok(declaration) => declaration,
+                Err(weaver_spu::family::FamilyRefusal::UnknownFamily(_)) => {
+                    absent.push(format!("{} (probed, not carried yet)", probe.family));
+                    continue;
+                }
+                Err(refusal) => {
+                    absent.push(format!(
+                        "{} (carried, unresolvable here: {refusal:?})",
+                        probe.family
+                    ));
+                    continue;
+                }
+            };
 
         verified += 1;
         let cannot_roll_back = model.is_hybrid() || model.is_recurrent();

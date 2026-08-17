@@ -452,6 +452,8 @@ mod seam_success {
         );
         let request: serde_json::Value =
             serde_json::from_str(generation.request.get()).expect("the request splice is JSON");
+        eprintln!("DIAG-RENDERED: {}", request["rendered"]);
+        eprintln!("DIAG-EMISSION: {:?}", generation.emission);
         assert!(
             request["rendered"]
                 .as_str()

@@ -64,6 +64,20 @@ const DETECTOR_REFUSES: Fixture = Fixture {
     default_path: "/opt/weaver/models/gemma4-31b-it-Q8_0.gguf",
 };
 
+/// The tag half of the contested phi3 pair: Phi-4-mini, whose template
+/// builds its markers by concatenation, so this fixture is also the standing
+/// proof that the detector answers where a template-text scan would not.
+const PHI3_TAG: Fixture = Fixture {
+    env: "WEAVER_ARTIFACT_PHI4_MINI",
+    default_path: "/opt/weaver/models/microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+};
+
+/// The separator half: Phi-4 14B, same architecture string, disjoint markers.
+const PHI3_SEP: Fixture = Fixture {
+    env: "WEAVER_ARTIFACT_PHI4",
+    default_path: "/opt/weaver/models/phi-4-Q4_K_S.gguf",
+};
+
 fn header_of(path: &Path) -> artifact::ArtifactHeader {
     let mut pinned = artifact::pin(path).expect("the artifact pins");
     artifact::read_header(&mut pinned).expect("the header reads")
@@ -138,4 +152,59 @@ fn an_uncarried_architecture_still_refuses_by_name() {
         family::select(&absent, None),
         Err(family::FamilyRefusal::UnknownFamily(name)) if name == absent
     ));
+}
+
+/// **The second contested architecture, selected from a vendor's own line.**
+///
+/// Phi-4-mini declares `phi3` and renders role tags whose literals its
+/// template source does not carry - `<|user|>` is built from `'<|' + role +
+/// '|>'` - so this is the case where reading the template text finds two of
+/// three markers and the detector's rendering finds all of them. The entry
+/// selected must be the tag row and must not be the separator row.
+#[test]
+fn a_tag_artifact_declaring_phi3_selects_the_tag_entry() {
+    let Some(path) = PHI3_TAG.resolve() else {
+        return;
+    };
+    let header = header_of(&path);
+    assert_eq!(header.family, FamilyName("phi3".into()));
+    let template = header
+        .chat_template
+        .as_deref()
+        .expect("the artifact declares a chat template");
+
+    let selected = family::select(&header.family, Some(template)).expect("the artifact selects");
+    assert!(
+        selected.selecting_markers.contains(&"<|user|>"),
+        "the tag entry is the one selected"
+    );
+    assert!(
+        !selected.selecting_markers.contains(&"<|im_sep|>"),
+        "and not the separator entry"
+    );
+}
+
+/// The separator half of the pair, from the artifact that declares the same
+/// architecture and renders the other format.
+#[test]
+fn a_separator_artifact_declaring_phi3_selects_the_separator_entry() {
+    let Some(path) = PHI3_SEP.resolve() else {
+        return;
+    };
+    let header = header_of(&path);
+    assert_eq!(header.family, FamilyName("phi3".into()));
+    let template = header
+        .chat_template
+        .as_deref()
+        .expect("the artifact declares a chat template");
+
+    let selected = family::select(&header.family, Some(template)).expect("the artifact selects");
+    assert!(
+        selected.selecting_markers.contains(&"<|im_sep|>"),
+        "the separator entry is the one selected"
+    );
+    assert!(
+        !selected.selecting_markers.contains(&"<|user|>"),
+        "and not the tag entry"
+    );
 }
