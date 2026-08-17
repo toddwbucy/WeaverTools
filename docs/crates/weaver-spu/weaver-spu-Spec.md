@@ -4,6 +4,14 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, a family is an architecture and a template together.
+`general.architecture` does not determine a chat format and three artifacts
+declaring `llama` on this workshop render three, so the key widens from one
+header field to two. The artifact's own `tokenizer.chat_template` was present
+and unread, and marker sets are what is compared rather than templates whole,
+a template being a program that can differ in what no turn reaches. The pair of
+an architecture and a marker set is unique and the build says so, because two
+entries sharing both would make the table's order the selector.
 **Revised:** 2026-08-16, the tunable route reaches the declaration. Every
 knob's `Disposition` promised a value routed from the agent's configuration at
 load and no such route existed, so all six compiled `Frozen` and the election
@@ -997,6 +1005,95 @@ from: weaver-spu
 to: spu-widths-set-pinned-by-doctest
 ```
 
+**A family is an architecture and a template together, because the first does
+not determine the second.** `general.architecture` describes the tensor layout,
+how the weights are shaped and how they shard, and says nothing about how a turn
+is marked up: a builder may train any layout against any chat format, and
+builders do. Measured on this workshop 2026-08-17, three artifacts declaring
+`llama` render three different formats, ChatML for SmolLM2, `[INST]` for
+Mistral Small, and Llama 3's own headers for a Llama artifact, so a table keyed
+on architecture alone hands two of the three a template they were never trained
+against.
+
+**The header already carries the answer and this crate now reads it.** The
+artifact declares `tokenizer.chat_template` beside its architecture, which is
+the format its builder trained it on, so the fact was present and unread rather
+than absent. Reading it keeps the key what the artifact's header declares,
+which is what the clause below has always said, and widens what is read from
+one field to two.
+
+**Where one architecture carries one template the key is unchanged**, which is
+every family this binary carried before this act. Where an architecture carries
+more than one, the artifact's own marker set selects among the entries sharing
+that architecture, and an artifact matching none of them is refused naming the
+architecture it declared, per the rule below rather than as an exception to it.
+
+**The pair of an architecture and a marker set is unique, and the build is what
+says so.** Two entries sharing both would make the table's order the selector,
+which is a silent substitution wearing a different coat: the same artifact would
+resolve differently after a reordering that changed no declaration. The
+uniqueness is a compile-time property of the table for the reason the widths set
+is, so a duplicate stops the build rather than reaching an admit.
+
+**And an ambiguous match refuses rather than picking.** The compile-time check is
+what should make ambiguity unreachable, and the refusal is what happens if it
+ever is reached, because a table this crate cannot read unambiguously is one it
+must not read by position. The two are belt and braces on purpose: order decides
+nothing at either.
+
+**The artifact's marker set is derived by rendering its template, not by
+reading it.** A template is a program and a marker it emits need not appear in
+its source: Phi-4-mini builds one as `'<|' + message['role'] + '|>'`, so
+`<|user|>` and `<|system|>` exist only after the program runs while
+`<|assistant|>` and `<|end|>` sit there literally. Measured 2026-08-17 over a
+range request against the first-party artifact. A reading derivation therefore
+finds two markers of four and refuses a model that renders exactly what a
+carried entry renders, which is a false refusal naming the architecture as
+though the family were uncarried.
+
+So a canonical conversation is rendered through the artifact's own template and
+the entry's markers are matched against the **output**.
+
+**The render depends on the template text and nothing else, so the refusal
+lands before any weight is read.** `llama_chat_apply_template` takes the
+template, the messages, and a buffer, and no model handle reaches it, which is
+what lets this run on the string the header already yielded. The safe wrapper
+`LlamaModel::apply_chat_template` requires a `&self` it does not pass down, so
+taking that path would order a weight load ahead of a refusal this crate can
+reach without one. The election is the lower call, and the reason is admission
+order rather than cost.
+
+The probe conversation is a frozen input of this crate, pinned where the marker
+sets are pinned rather than built where it is called, because a derivation whose
+input varies by call site compares two artifacts against two different
+questions.
+
+**It also closes the error the other way.** A marker present in an artifact's
+token table but never emitted by its template would match a vocabulary scan and
+should not, and a rendered probe cannot be fooled by it, because what it reads
+is what the artifact emits.
+
+**Marker sets are compared and templates are not.** A chat template is a
+program, and two that render the same turns can differ in whitespace, in
+comments, and in branches no turn of this program reaches, so comparing them
+whole would refuse artifacts that agree about everything this crate uses. What
+this crate renders is a family's control markers, so what it compares is those,
+and the comparison is the same property `spu-marker-promotion` already tests
+from the other side.
+
+**Two artifacts differing only in whitespace are the standing case rather than
+the hypothetical one.** Phi-3.5-mini and Phi-4-mini render the same markers and
+differ in trailing newlines, so one entry serving both is what this clause buys,
+and a later act proposing to compare more than markers is proposing to refuse
+them.
+
+**The several-templates branch is reachable on the first artifacts anyone
+tries.** This workshop holds SmolLM2 rendering ChatML and Mistral Small
+rendering `[INST]`, both declaring `llama`, beside the Llama 3 artifacts the
+entry was written for. It is not a contingency waiting on an unusual model,
+which is why the code act follows this one closely rather than leaving the
+branch unexercised.
+
 **The registry is compile-time and admission consults it.** A table of the
 families this binary carries, keyed by what the artifact's header declares,
 with no default and no fallback: an artifact whose family this binary does not
@@ -1006,6 +1103,24 @@ Section 10 buys the test, an artifact header naming a family the binary does
 not carry being a fixture and the refusal arriving before any device call, and
 what the test reads is the family the refusal names rather than the load's
 outcome, so a refusal arriving on some other ground does not satisfy it.
+
+```graph
+node: spu-family-is-architecture-and-template
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-family-is-architecture-and-template
+
+node: spu-architecture-and-markers-are-unique
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-spu
+to: spu-architecture-and-markers-are-unique
+```
 
 ```graph
 node: spu-registry-no-silent-substitution
