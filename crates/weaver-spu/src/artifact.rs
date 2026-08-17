@@ -163,7 +163,11 @@ pub fn read_header(pinned: &mut PinnedArtifact) -> Result<ArtifactHeader, Lifecy
         reader
             .seek(SeekFrom::Start(0))
             .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
-        read_safetensors_header(&mut reader)
+        drop(reader);
+        let sidecars = sidecar_dir_of(pinned);
+        pinned.rewind()?;
+        let mut reader = BufReader::new(&mut pinned.file);
+        read_safetensors_header(&mut reader, sidecars.as_deref())
     }
 }
 
@@ -240,7 +244,10 @@ fn read_gguf_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Lifecycle
 
 /// The safetensors header: an eight-byte little-endian length, then that many
 /// bytes of JSON. The tensor data beyond it is never read.
-fn read_safetensors_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, LifecycleRefusal> {
+fn read_safetensors_header<R: Read>(
+    reader: &mut R,
+    sidecars: Option<&Path>,
+) -> Result<ArtifactHeader, LifecycleRefusal> {
     let length = read_u64(reader)?;
     if length == 0 || length > 100 * 1024 * 1024 {
         return Err(LifecycleRefusal::ArtifactUnreadable);
@@ -252,32 +259,75 @@ fn read_safetensors_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Li
     let parsed: serde_json::Value =
         serde_json::from_slice(&body).map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
 
-    // The family travels in the `__metadata__` block, which is where a
-    // safetensors export carries anything that is not a tensor.
+    // The family travels in the `__metadata__` block where an export wrote
+    // one, and in the sibling `config.json` where it did not. **The sidecar
+    // is the ordinary case, not the fallback's fallback**: a stock exporter
+    // writes `__metadata__` as `{"format": "pt"}` and nothing else, measured
+    // 2026-08-17 against the Qwen2.5 artifact this workshop holds, so a
+    // reader trusting the embedded block alone refuses every real artifact
+    // of this container. A safetensors export is a directory-shaped
+    // artifact and its facts live beside the weights, which is the same
+    // rule the native loader reads its config and vocabulary by.
     let metadata = parsed.get("__metadata__");
+    let sidecar = sidecars
+        .map(|dir| dir.join("config.json"))
+        .filter(|path| path.is_file())
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok());
+    let read = |key: &str| {
+        metadata
+            .and_then(|m| m.get(key))
+            .or_else(|| sidecar.as_ref().and_then(|c| c.get(key)))
+            .cloned()
+    };
     let family = metadata
         .and_then(|m| m.get("architecture").or_else(|| m.get("model_type")))
         .and_then(|v| v.as_str())
+        .map(str::to_string)
+        .or_else(|| {
+            sidecar
+                .as_ref()
+                .and_then(|c| c.get("model_type"))
+                .and_then(|v| v.as_str())
+                .map(str::to_string)
+        })
         .ok_or(LifecycleRefusal::ArtifactUnreadable)?;
+
+    // The chat template lives in `tokenizer_config.json` for this container,
+    // read for the same reason the GGUF read carries it: where an
+    // architecture is contested, the template is the second half of the key.
+    let chat_template = sidecars
+        .map(|dir| dir.join("tokenizer_config.json"))
+        .filter(|path| path.is_file())
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+        .and_then(|c| {
+            c.get("chat_template")
+                .and_then(|v| v.as_str())
+                .map(str::to_string)
+        });
 
     Ok(ArtifactHeader {
         container: Container::Safetensors,
-        family: FamilyName(family.to_string()),
-        hidden_size: metadata
-            .and_then(|m| m.get("hidden_size"))
-            .and_then(json_number),
-        layer_count: metadata
-            .and_then(|m| m.get("num_hidden_layers"))
-            .and_then(json_number),
-        // **A safetensors export carries no template here and this is the
-        // truthful value rather than a gap.** The format keeps the chat
-        // template in a sibling `tokenizer_config.json`, which is a second
-        // file this crate does not open, so an artifact in this container
-        // reaches the registry on its architecture alone. That is sound while
-        // no contested architecture ships in this container, and the day one
-        // does the refusal is the honest outcome rather than a pick.
-        chat_template: None,
+        family: FamilyName(family),
+        hidden_size: read("hidden_size").as_ref().and_then(json_number),
+        layer_count: read("num_hidden_layers").as_ref().and_then(json_number),
+        chat_template,
     })
+}
+
+/// The directory the pinned artifact's sidecar files live in.
+///
+/// The pin's path is `/proc/self/fd/N` on purpose, the descriptor being the
+/// identity, so the sidecar directory is recovered by asking the kernel what
+/// it currently calls the pinned inode. A sidecar read is an open by name
+/// and cannot ride the descriptor, which is a named limit of the pin rather
+/// than something this function can repair: what the descriptor discipline
+/// protects is the weights, and a swapped sidecar changes what the artifact
+/// declares rather than what the device holds.
+fn sidecar_dir_of(pinned: &PinnedArtifact) -> Option<PathBuf> {
+    let real = std::fs::read_link(pinned.path()).ok()?;
+    real.parent().map(Path::to_path_buf)
 }
 
 fn json_number(value: &serde_json::Value) -> Option<u64> {

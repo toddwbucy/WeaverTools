@@ -21,7 +21,10 @@ pub mod session;
 #[cfg(feature = "gguf")]
 pub mod gguf;
 
-// `native.rs` is the Spec's layout and is **not written**, and it is not
-// declared either: a module declaration for a file that does not exist breaks
-// the build the moment its feature is on, which is the defect the Blackwell
-// run caught in `residency.rs`.
+/// The candle-native backend, the second peer of the seam. Its residency
+/// half loads safetensors onto the admitted device through the pinned candle
+/// fork, and its decode half implements the five primitives over a session's
+/// clone of the resident model. One family and one device this stage, per
+/// the module's own header.
+#[cfg(feature = "cuda")]
+pub mod native;
