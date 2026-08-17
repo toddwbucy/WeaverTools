@@ -1,20 +1,68 @@
 //! The two-field key of `weaver-spu-Spec` section 5, against held artifacts.
 //!
-//! **These read real artifacts and are skipped where none is present**, which
-//! is the pattern `markers.rs` uses: the claim is about what a shipped model
-//! declares, and a synthetic header asserting it would be this crate agreeing
-//! with itself.
+//! **These read real artifacts**, because the claim is about what a shipped
+//! model declares and a synthetic header asserting it would be this crate
+//! agreeing with itself.
 #![cfg(feature = "gguf")]
 
 use std::path::{Path, PathBuf};
 use weaver_spu::artifact;
 use weaver_spu::family::{self, FamilyName};
 
-/// A held artifact, or `None` where this box does not carry it.
-fn held(name: &str) -> Option<PathBuf> {
-    let path = Path::new("/opt/weaver/models").join(name);
-    path.is_file().then_some(path)
+/// An artifact these tests read, and where to find it.
+struct Fixture {
+    /// The variable an operator names it with. **One variable per fixture**,
+    /// after `markers.rs`. `WEAVER_TEST_GGUF` is not reused: it names the model
+    /// `loaded.rs` loads, and a run overriding that to exercise the seam would
+    /// otherwise redirect these tests to an artifact whose family is not the
+    /// one they assert about.
+    env: &'static str,
+    /// Where this workshop keeps it when nobody says otherwise.
+    default_path: &'static str,
 }
+
+impl Fixture {
+    /// The artifact, or `None` where this box does not carry it.
+    ///
+    /// **A missing default and a missing override are not the same absence**,
+    /// which is the distinction `markers.rs` draws and the reason it draws it.
+    /// A default that is not there is a workshop without that artifact, and
+    /// the test has nothing to say. An override that is not there is an
+    /// operator who asked for a measurement and would get a pass instead,
+    /// which must not happen quietly.
+    fn resolve(&self) -> Option<PathBuf> {
+        match std::env::var_os(self.env) {
+            Some(named) => {
+                let path = PathBuf::from(named);
+                assert!(
+                    path.is_file(),
+                    "{} names {}, which is not a regular file",
+                    self.env,
+                    path.display()
+                );
+                Some(path)
+            }
+            None => {
+                let path = Path::new(self.default_path).to_path_buf();
+                path.is_file().then_some(path)
+            }
+        }
+    }
+}
+
+/// The artifact that declares `llama` and renders ChatML, which is the pairing
+/// this act exists for.
+const CHATML_LLAMA: Fixture = Fixture {
+    env: "WEAVER_ARTIFACT_SMOLLM2",
+    default_path: "/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf",
+};
+
+/// The artifact whose template the detector refuses, which is what keeps the
+/// render off the uncontested path.
+const DETECTOR_REFUSES: Fixture = Fixture {
+    env: "WEAVER_ARTIFACT_GEMMA4",
+    default_path: "/opt/weaver/models/gemma4-31b-it-Q8_0.gguf",
+};
 
 fn header_of(path: &Path) -> artifact::ArtifactHeader {
     let mut pinned = artifact::pin(path).expect("the artifact pins");
@@ -30,7 +78,7 @@ fn header_of(path: &Path) -> artifact::ArtifactHeader {
 /// renders.
 #[test]
 fn a_chatml_artifact_declaring_llama_selects_the_chatml_entry() {
-    let Some(path) = held("smollm2-360m-instruct-q8_0.gguf") else {
+    let Some(path) = CHATML_LLAMA.resolve() else {
         return;
     };
     let header = header_of(&path);
@@ -72,7 +120,7 @@ fn a_contested_architecture_without_a_template_refuses() {
 /// clause of Spec section 5 that keeps an unconditional render out.
 #[test]
 fn a_family_the_detector_refuses_still_resolves() {
-    let Some(path) = held("gemma4-31b-it-Q8_0.gguf") else {
+    let Some(path) = DETECTOR_REFUSES.resolve() else {
         return;
     };
     let header = header_of(&path);
