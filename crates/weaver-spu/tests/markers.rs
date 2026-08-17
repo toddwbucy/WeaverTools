@@ -37,7 +37,7 @@ use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{AddBos, LlamaModel};
 
-use weaver_spu::family::{FamilyName, gemma4, gpt_oss, llama, qwen2};
+use weaver_spu::family::{FamilyName, gemma4, gpt_oss, llama, mistral3, qwen2};
 
 /// A family, its rendered markers, and where a tokenizer for it is found.
 ///
@@ -134,6 +134,31 @@ const PROBES: &[Probe] = &[
         env: "WEAVER_VOCAB_GEMMA4",
         default_path: "/opt/weaver/models/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
         rendered: gemma4::RENDERED_MARKERS,
+    },
+    Probe {
+        // **The census's warning made concrete.** Most Mistral artifacts
+        // declare `llama` rather than this architecture: Mistral-Small 3.1,
+        // Mistral-Small 3.2 and Magistral-Small all do, and their headers were
+        // read before this one was chosen. Devstral-Small-2 declares
+        // `mistral3`, so it is what this family can be measured against.
+        family: "mistral3",
+        env: "WEAVER_VOCAB_MISTRAL3",
+        default_path: "/opt/weaver/models/Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
+        rendered: mistral3::RENDERED_MARKERS,
+    },
+    Probe {
+        // **A hybrid family rendering ChatML.** Its template is
+        // `<|im_start|>role\n ... <|im_end|>\n`, qwen2's scaffolding exactly,
+        // so it is another key citing that module and the claim that their
+        // markers agree is measured here rather than inherited.
+        //
+        // Its `<think>` pair is `USER_DEFINED` rather than `CONTROL`, as
+        // gemma4's channel pair is, but it is outbound: the model emits it and
+        // this crate matches it as text, so it is not in the rendered set.
+        family: "nemotron_h_moe",
+        env: "WEAVER_VOCAB_NEMOTRON_H_MOE",
+        default_path: "/opt/weaver/models/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16-heretic.i1-IQ4_XS.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
     },
 ];
 
@@ -304,8 +329,14 @@ fn every_rendered_marker_promotes_to_one_token() {
 ///
 /// Perturbation: set either qwen35 entry's `flush` back to
 /// `TruncateToPosition` and this fails naming it. Watched under exactly that.
-/// The check is vacuous only where no artifact is reachable, which the
-/// `probed > 0` guard below refuses in the same way its sibling does.
+///
+/// **The guard counts declarations read, not vocabularies loaded.** A reachable
+/// artifact for a family the registry does not carry yet leaves this test with
+/// nothing to contradict, so counting the load would let a run pass having
+/// checked no declaration at all - which is exactly what happened while
+/// `mistral3` was probed and not yet carried. `verified` is what the assertion
+/// reads, and `probed` stays only to tell the two absences apart in the
+/// message.
 #[test]
 fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
     let backend = backend();
@@ -313,6 +344,7 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
     let mut failures: Vec<String> = Vec::new();
     let mut absent: Vec<String> = Vec::new();
     let mut probed = 0usize;
+    let mut verified = 0usize;
 
     for probe in PROBES {
         let (path, overridden) = probe.path();
@@ -325,7 +357,7 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
             probe.family
         );
         if !path.exists() {
-            absent.push(probe.family.to_string());
+            absent.push(format!("{} (no vocab)", probe.family));
             continue;
         }
         let model = match vocab_only(backend, &path) {
@@ -340,14 +372,22 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
         // Read against the header's own family key rather than through a
         // renderer: a module serving several keys answers for the one it is
         // named after, and the flush is exactly where those keys differ.
+        // **A probe entry for a family the registry does not carry yet is not
+        // a failure**, because this test's claim is about what a carried family
+        // declares and an uncarried one declares nothing. That is the ordinary
+        // state mid-act: the discipline is to add the probe entry, measure, and
+        // only then write the registry entry, so between those two steps the
+        // family is here and not there. Named rather than skipped silently, so
+        // a key misspelled in this table reads as unverified instead of green.
         let declaration = match weaver_spu::family::lookup(&FamilyName(probe.family.to_string())) {
             Ok(declaration) => declaration,
-            Err(refusal) => {
-                failures.push(format!("{}: not carried: {refusal:?}", probe.family));
+            Err(_) => {
+                absent.push(format!("{} (probed, not carried yet)", probe.family));
                 continue;
             }
         };
 
+        verified += 1;
         let cannot_roll_back = model.is_hybrid() || model.is_recurrent();
         if declaration.permits_truncation() && cannot_roll_back {
             failures.push(format!(
@@ -365,9 +405,10 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
     }
 
     assert!(
-        probed > 0,
-        "no family vocab was reachable, so this test asserted nothing. Set one of \
-         {}.\n  absent: {absent:?}",
+        verified > 0,
+        "no carried family's declaration was read against an artifact, so this test \
+         asserted nothing. {probed} vocab(s) loaded and none belonged to a carried \
+         family. Set one of {}.\n  absent: {absent:?}",
         PROBES
             .iter()
             .map(|probe| probe.env)

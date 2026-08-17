@@ -57,6 +57,7 @@ use crate::decoder::backend::FlushMechanism;
 pub mod gemma4;
 pub mod gpt_oss;
 pub mod llama;
+pub mod mistral3;
 pub mod qwen2;
 
 /// Why a family could not render a message.
@@ -546,6 +547,64 @@ pub const REGISTRY: &[Declaration] = &[
         taps_readout: false,
     },
     Declaration {
+        // **The same module as the qwen keys, and a different flush.** Its
+        // template is `<|im_start|>role\n ... <|im_end|>\n`, qwen2's
+        // scaffolding exactly, so it cites that module for the reason qwen3
+        // does. Measured by the marker probe against a Nemotron 3 Nano 30B A3B
+        // artifact: the rendered set is qwen2's and both markers promote.
+        //
+        // **What it does not share is how state rolls back.**
+        // `llm_arch_is_hybrid` names `NEMOTRON_H_MOE`, so this entry declares
+        // `ReestablishAndReprefill` beside four qwen keys citing the same
+        // module, two of which truncate and two of which do not. That is the
+        // whole reason the flush is declared per architecture here rather than
+        // answered by the shared renderer: one module, one trait object, and
+        // three different answers across the rows it serves.
+        //
+        // The `<think>` pair its model emits is outbound, reaching the parse
+        // rather than the render, on the same footing as qwen3's and named at
+        // that entry.
+        family: "nemotron_h_moe",
+        shard_widths: &[1, 2],
+        template: qwen2::TEMPLATE,
+        generation_opener: qwen2::GENERATION_OPENER,
+        renderer: qwen2::renderer,
+        flush: FlushMechanism::ReestablishAndReprefill,
+        taps_readout: false,
+    },
+    Declaration {
+        // **The first family that names no role**, wrapping the user's text in
+        // `[INST]` and `[/INST]` and leaving the model's bare, so the shape
+        // carries the speaker and there is nothing for a placeholder to fill.
+        // Its generation opener is empty because `[/INST]` is the assistant's
+        // turn already opened. Both are the module's to explain.
+        //
+        // Measured by the marker probe against
+        // `Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf`: all four rendered
+        // markers promote to one token, at ids 1, 2, 3 and 4, and the lookalike
+        // control does not.
+        //
+        // **Most Mistral artifacts do not declare this architecture.**
+        // Mistral-Small 3.1, Mistral-Small 3.2 and Magistral-Small report
+        // `llama` and would resolve to that entry's llama-3 header markers,
+        // which their tokenizers do not promote. That is #88's open case and
+        // this entry does not close it: what this entry serves is the artifacts
+        // whose header says `mistral3`.
+        //
+        // The flush is by truncation: this family is absent from
+        // `llm_arch_is_hybrid` and from `llm_arch_is_recurrent`, so its
+        // attention KV rolls back by position, and `tests/markers.rs` checks
+        // that declaration against the artifact rather than trusting this
+        // comment.
+        family: "mistral3",
+        shard_widths: &[1, 2],
+        template: mistral3::TEMPLATE,
+        generation_opener: mistral3::GENERATION_OPENER,
+        renderer: mistral3::renderer,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
         // The key is what llama.cpp writes into `general.architecture`, which
         // is hyphenated. A key spelled any other way is a family no artifact
         // header ever selects, unreachable rather than wrong-looking.
@@ -845,6 +904,139 @@ mod tests {
             rendered.starts_with("<bos><|turn>model\n"),
             "the declaration hands out gemma4's own renderer, got {rendered:?}"
         );
+    }
+
+    /// **A family can carry the speaker in the turn's shape rather than in a
+    /// word, and mistral3 is the first that does.**
+    ///
+    /// The user's text is wrapped and the model's is bare, so the two roles
+    /// render to structurally different strings from the same content. Both
+    /// halves are read, because a renderer that wrapped everything or wrapped
+    /// nothing would satisfy either assertion alone.
+    ///
+    /// Perturbation: render the assistant through the user's arm and the
+    /// second assertion fails, the model's turn arriving inside an instruction
+    /// block the model was trained to read as the user speaking.
+    #[test]
+    fn a_family_may_carry_the_role_in_the_turns_shape() {
+        let user = render_each(mistral3::renderer(), &[said(Role::User, "ping")])
+            .expect("mistral3 renders a user turn");
+        assert_eq!(user, "[INST]ping[/INST]", "the user's text is wrapped");
+
+        let assistant = render_each(mistral3::renderer(), &[said(Role::Assistant, "pong")])
+            .expect("mistral3 renders an assistant turn");
+        assert_eq!(
+            assistant, "pong</s>",
+            "the model's text is bare and closed by the turn's end"
+        );
+    }
+
+    /// **An empty generation opener is a declaration, not an omission.**
+    ///
+    /// Every other carried family appends an opener so the generation completes
+    /// the assistant's turn rather than electing a speaker. mistral3 appends
+    /// nothing because `[/INST]` already did both, and reading the two together
+    /// is what says so: the delta ends at the marker that opens the model's
+    /// turn.
+    ///
+    /// Perturbation: give the entry qwen2's opener and the second assertion
+    /// fails, a ChatML turn header landing after an instruction block.
+    #[test]
+    fn the_mistral3_delta_ends_at_the_marker_that_opens_the_model_turn() {
+        let declaration = lookup(&FamilyName("mistral3".into())).expect("mistral3 is carried");
+        let delta = render_each(mistral3::renderer(), &[said(Role::User, "ping")])
+            .expect("mistral3 renders a delta");
+
+        assert!(
+            delta.ends_with(mistral3::TURN_CLOSE),
+            "the delta closes with the marker that opens the model's turn, got {delta:?}"
+        );
+        assert_eq!(
+            declaration.generation_opener, "",
+            "so nothing is appended after it"
+        );
+
+        // And the prefix carries the preamble the turns do not repeat, the
+        // same joint gemma4 needed for a different reason.
+        let prefix = mistral3::renderer()
+            .render_identity(&[said(Role::User, "ping")])
+            .expect("mistral3 renders a prefix");
+        assert_eq!(prefix, "<s>[INST]ping[/INST]");
+        assert!(!delta.contains(mistral3::BOS), "and a delta does not");
+    }
+
+    /// **One module, one trait object, and three different flushes across the
+    /// rows it serves.**
+    ///
+    /// Six architecture keys cite the qwen2 module, and what they share is a
+    /// rendering, not a mechanism: qwen2, qwen3 and qwen3moe truncate, qwen35
+    /// and qwen35moe re-establish because they are hybrid, and
+    /// `nemotron_h_moe` re-establishes for the same reason while being a
+    /// different vendor's model entirely. **This is why the flush is read from
+    /// the row rather than from the renderer**, and why `permits_truncation`
+    /// could not stay on the trait: `Qwen2::declaration()` answers for qwen2
+    /// whichever key was admitted, and here that answer is wrong for three of
+    /// the six.
+    ///
+    /// **The sparse siblings are the pair worth reading twice.** `qwen3moe`
+    /// truncates and `qwen35moe` does not, though both are Qwen mixtures of
+    /// experts citing one module, because sparsity is not what decides this
+    /// and the recurrent layers are.
+    ///
+    /// Perturbation: read the flush through `qwen2::renderer().declaration()`
+    /// instead of through `lookup` and every non-qwen2 assertion below fails.
+    #[test]
+    fn one_module_serves_keys_whose_flush_mechanisms_differ() {
+        let flush_of = |family: &str| {
+            lookup(&FamilyName(family.into()))
+                .unwrap_or_else(|_| panic!("{family} is carried"))
+                .flush
+        };
+
+        for truncating in ["qwen2", "qwen3", "qwen3moe"] {
+            assert_eq!(
+                flush_of(truncating),
+                FlushMechanism::TruncateToPosition,
+                "{truncating} rolls back by position"
+            );
+            assert!(
+                lookup(&FamilyName(truncating.into()))
+                    .unwrap()
+                    .permits_truncation(),
+                "{truncating}"
+            );
+        }
+
+        for reestablishing in ["qwen35", "qwen35moe", "nemotron_h_moe"] {
+            assert_eq!(
+                flush_of(reestablishing),
+                FlushMechanism::ReestablishAndReprefill,
+                "{reestablishing} carries recurrent state and cannot be partially erased"
+            );
+            assert!(
+                !lookup(&FamilyName(reestablishing.into()))
+                    .unwrap()
+                    .permits_truncation(),
+                "{reestablishing}"
+            );
+        }
+
+        // All five render through the one module, which is the half that makes
+        // the differing flush interesting rather than incidental.
+        for shared in [
+            "qwen2",
+            "qwen3",
+            "qwen3moe",
+            "qwen35",
+            "qwen35moe",
+            "nemotron_h_moe",
+        ] {
+            assert_eq!(
+                lookup(&FamilyName(shared.into())).unwrap().template,
+                qwen2::TEMPLATE,
+                "{shared} renders qwen2's scaffolding"
+            );
+        }
     }
 
     #[test]
