@@ -284,6 +284,13 @@ pub fn promote_stop_conditions(
 pub struct Resident {
     pub artifact: PathBuf,
     pub header: ArtifactHeader,
+    /// **The registry entry this artifact was selected against, held rather
+    /// than looked up again.** The selection reads the artifact's template
+    /// where its architecture is contested, so re-deriving it on the decode
+    /// path would render the same answer once per turn. It is judged once, at
+    /// admit, where Spec section 7 puts the family judgment, and what follows
+    /// reads the answer.
+    pub declaration: &'static family::Declaration,
     pub devices: Vec<DeviceOrdinal>,
     pub weights_hash: WeightsHash,
     /// The model itself. Private: what the rest of the crate may do with a
@@ -482,11 +489,7 @@ impl Resident {
     /// surface to quiet a lint.
     #[cfg_attr(not(feature = "gguf"), allow(dead_code))]
     fn flush_mechanism(&self) -> Result<FlushMechanism, DecodeFault> {
-        family::lookup(&self.header.family)
-            .map(|declaration| declaration.flush)
-            .map_err(|_| DecodeFault::ContainerNotBuilt {
-                container: self.header.container,
-            })
+        Ok(self.declaration.flush)
     }
 }
 
@@ -542,17 +545,25 @@ impl Residency {
         // nothing; the room and reach conditions each cost a driver query. A
         // set failing more than one condition refuses on the cheapest, which is
         // what puts the width refusal inside a test on a machine with no device.
-        family::judge_width(&header.family, binding.devices.len() as u32)
+        // **The entry is selected here, at the first step that needs it.**
+        // This step already resolved the family, because the width it compares
+        // against is a property of an entry rather than of an architecture.
+        // Selecting reads the artifact's template where the architecture is
+        // contested, which is a string this step already holds and no device
+        // query, so the cheapest-first ordering is unchanged.
+        let declaration = family::select(&header.family, header.chat_template.as_deref())
+            .map_err(AdmitRefusal::Family)?;
+        family::judge_width(declaration, binding.devices.len() as u32)
             .map_err(AdmitRefusal::Family)?;
 
-        // **The readout election is judged here, on the admit path**, per Spec
+        // **The readout election is judged against the entry selected above**,
+        // per Spec
         // section 7 and the charter's fail-cheap-or-lie-expensive rule. It
         // reads the family's declaration and nothing else, so it costs no
         // device query and sits with the other free judgments. Moved to the
         // first turn instead, the load succeeds and the turn fails, which is
         // the expensive lie the rule forbids and what section 10's watch
         // perturbs.
-        let declaration = family::lookup(&header.family).map_err(AdmitRefusal::Family)?;
         readout::judge(readout, declaration).map_err(AdmitRefusal::Readout)?;
         judge_distinct(&binding.devices)?;
         // The shard each device must hold, read from the held descriptor
@@ -601,6 +612,7 @@ impl Residency {
         self.resident = Some(Resident {
             artifact: path,
             header,
+            declaration,
             devices: binding.devices.clone(),
             weights_hash,
             model,
@@ -846,11 +858,19 @@ mod tests {
 
     /// A GGUF whose header carries exactly the one key the family lookup
     /// needs, so an admit against it walks past steps one and two.
-    fn llama_gguf() -> std::path::PathBuf {
+    /// A minimal GGUF whose header resolves to exactly one registry entry.
+    ///
+    /// **It declares an uncontested architecture on purpose.** The fixture
+    /// carries a header and no chat template, and a contested architecture
+    /// needs the template to reach an entry, so declaring one here would make
+    /// this fixture refuse at selection and every test using it would read
+    /// that refusal instead of the condition it means to exercise. `qwen2` is
+    /// carried by one entry and needs no template to resolve.
+    fn resolvable_gguf() -> std::path::PathBuf {
         use std::io::Write;
         let dir = std::env::temp_dir().join(format!("weaver-spu-residency-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("a scratch dir");
-        let path = dir.join("llama.gguf");
+        let path = dir.join("resolvable.gguf");
         let mut file = Vec::new();
         file.extend_from_slice(b"GGUF");
         file.extend_from_slice(&3u32.to_le_bytes());
@@ -860,7 +880,7 @@ mod tests {
         file.extend_from_slice(&(key.len() as u64).to_le_bytes());
         file.extend_from_slice(key);
         file.extend_from_slice(&8u32.to_le_bytes());
-        let value = b"llama";
+        let value = b"qwen2";
         file.extend_from_slice(&(value.len() as u64).to_le_bytes());
         file.extend_from_slice(value);
         let mut handle = std::fs::File::create(&path).expect("a fixture file");
@@ -886,7 +906,7 @@ mod tests {
     fn a_duplicate_ordinal_refuses_on_the_admit_path() {
         let mut residency = Residency::new();
         let binding = ModelBinding {
-            artifact: ArtifactRef(llama_gguf().to_string_lossy().into_owned()),
+            artifact: ArtifactRef(resolvable_gguf().to_string_lossy().into_owned()),
             devices: vec![DeviceOrdinal(0), DeviceOrdinal(0)],
         };
         assert_eq!(

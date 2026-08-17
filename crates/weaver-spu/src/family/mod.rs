@@ -41,6 +41,9 @@
 //!     template: "{message}",
 //!     generation_opener: "",
 //!     renderer: weaver_spu::family::qwen2::renderer,
+//!     // Empty: this example's architecture is its own, so nothing competes
+//!     // with it and no marker set is read to choose.
+//!     selecting_markers: &[],
 //!     flush: weaver_spu::decoder::backend::FlushMechanism::TruncateToPosition,
 //!     taps_readout: true,
 //! };
@@ -347,6 +350,19 @@ pub struct Declaration {
     /// two:** a second map from family name to renderer would be the same fact
     /// in two places with no authority named, which G5 files as a defect.
     pub renderer: fn() -> &'static dyn Family,
+    /// **The markers this entry renders, which select it among the entries
+    /// sharing its architecture**, per Spec section 5.
+    ///
+    /// Cited from the family module rather than written here, for the reason
+    /// [`Declaration::template`] is cited: the module is the authority for
+    /// what it emits, and a second spelling here would be one fact in two
+    /// places with no authority named.
+    ///
+    /// **Read only where an architecture is contested.** An architecture
+    /// carrying one entry selects on the architecture and never renders, which
+    /// is what keeps a family the template detector does not recognise
+    /// admissible. Gemma4 is such a family today.
+    pub selecting_markers: &'static [&'static str],
     /// **How this family's flush reaches its fixed outcome**, per Spec section
     /// 4.4. Declared here rather than inferred from a version string, because
     /// a truncation that returns success while recurrent state stays is the
@@ -422,6 +438,28 @@ pub const REGISTRY: &[Declaration] = &[
         template: llama::TEMPLATE,
         generation_opener: llama::GENERATION_OPENER,
         renderer: llama::renderer,
+        selecting_markers: llama::RENDERED_MARKERS,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
+        // **The llama architecture's second reading, and the entry that makes
+        // the architecture contested.** SmolLM2 declares `general.architecture
+        // = llama` and renders ChatML, so the entry above hands it a Llama 3
+        // stop set it was never trained against and the load refuses. The
+        // refusal is correct and the gap was the table, which had one row for
+        // an architecture its artifacts read two ways.
+        //
+        // **Everything here is the ChatML module's**, cited for the reason
+        // `nemotron_h_moe` cites it: the format is that module's to explain
+        // and this row points at it. What distinguishes this row from that one
+        // is the architecture it answers for, which is the key.
+        family: "llama",
+        shard_widths: &[1, 2],
+        template: qwen2::TEMPLATE,
+        generation_opener: qwen2::GENERATION_OPENER,
+        renderer: qwen2::renderer,
+        selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -431,6 +469,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
+        selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -453,6 +492,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
+        selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -467,6 +507,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
+        selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -500,6 +541,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
+        selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::ReestablishAndReprefill,
         taps_readout: false,
     },
@@ -515,6 +557,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
+        selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::ReestablishAndReprefill,
         taps_readout: false,
     },
@@ -543,6 +586,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: gemma4::TEMPLATE,
         generation_opener: gemma4::GENERATION_OPENER,
         renderer: gemma4::renderer,
+        selecting_markers: gemma4::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -569,6 +613,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
+        selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::ReestablishAndReprefill,
         taps_readout: false,
     },
@@ -601,6 +646,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: mistral3::TEMPLATE,
         generation_opener: mistral3::GENERATION_OPENER,
         renderer: mistral3::renderer,
+        selecting_markers: mistral3::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -613,6 +659,7 @@ pub const REGISTRY: &[Declaration] = &[
         template: gpt_oss::TEMPLATE,
         generation_opener: gpt_oss::GENERATION_OPENER,
         renderer: gpt_oss::renderer,
+        selecting_markers: gpt_oss::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     },
@@ -660,6 +707,27 @@ pub enum FamilyRefusal {
     /// travels with the refusal rather than being flattened to a generic
     /// unreadable, which is what makes the substitution visible.
     UnknownFamily(FamilyName),
+    /// **More than one entry declares this architecture, and the caller asked
+    /// with the architecture alone.** Answering by position would make the
+    /// table's order the selector, so this is a refusal rather than a first
+    /// match. The caller holding the artifact's template reaches [`select`].
+    ArchitectureContested(FamilyName),
+    /// The architecture is contested and the artifact declares no chat
+    /// template, so the fact that would choose between the entries is absent.
+    TemplateAbsent(FamilyName),
+    /// The architecture is contested and the template detector did not
+    /// recognise this artifact's template, so no marker set was derived.
+    TemplateUnrecognised(FamilyName),
+    /// The artifact rendered, and its markers match no entry sharing its
+    /// architecture. The refusal names the architecture it declared, per Spec
+    /// section 5, rather than reporting the family as uncarried.
+    MarkersMatchNoEntry(FamilyName),
+    /// **The artifact's markers match more than one entry.** The compile-time
+    /// uniqueness pin should make this unreachable, and it is carried because
+    /// a table this crate cannot read unambiguously is one it must not read by
+    /// position. Belt and braces, per Spec section 5: order decides nothing at
+    /// either.
+    MarkersAmbiguous(FamilyName),
     /// The family is carried, but it does not shard across the requested width.
     WidthNotDeclared {
         family: FamilyName,
@@ -675,34 +743,248 @@ impl From<FamilyRefusal> for LifecycleRefusal {
     /// device set or an artifact this binary cannot serve.
     fn from(refusal: FamilyRefusal) -> Self {
         match refusal {
-            FamilyRefusal::UnknownFamily(_) => LifecycleRefusal::ArtifactUnreadable,
+            FamilyRefusal::UnknownFamily(_)
+            // **Every unresolved selection crosses as unreadable**, which is
+            // what the floor's closed set carries for an artifact this binary
+            // cannot serve. The distinctions above are this crate's to act on
+            // and the operator's to read in the refusal, and none of them is a
+            // device condition, so none maps to `DeviceCannotAdmit`.
+            | FamilyRefusal::ArchitectureContested(_)
+            | FamilyRefusal::TemplateAbsent(_)
+            | FamilyRefusal::TemplateUnrecognised(_)
+            | FamilyRefusal::MarkersMatchNoEntry(_)
+            | FamilyRefusal::MarkersAmbiguous(_) => LifecycleRefusal::ArtifactUnreadable,
             FamilyRefusal::WidthNotDeclared { .. } => LifecycleRefusal::DeviceCannotAdmit,
         }
     }
+}
+
+/// Byte equality for two string constants, in a const context.
+const fn same_text(left: &str, right: &str) -> bool {
+    let (left, right) = (left.as_bytes(), right.as_bytes());
+    if left.len() != right.len() {
+        return false;
+    }
+    let mut index = 0;
+    while index < left.len() {
+        if left[index] != right[index] {
+            return false;
+        }
+        index += 1;
+    }
+    true
+}
+
+/// Whether every marker in `inner` appears in `outer`.
+const fn contained_in(inner: &[&str], outer: &[&str]) -> bool {
+    let mut i = 0;
+    while i < inner.len() {
+        let mut found = false;
+        let mut j = 0;
+        while j < outer.len() {
+            if same_text(inner[i], outer[j]) {
+                found = true;
+            }
+            j += 1;
+        }
+        if !found {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
+
+/// **Whether the table can be read unambiguously**, which is the compile-time
+/// property Spec section 5 requires of it.
+///
+/// **The pin is subset-freedom rather than inequality, and the difference is
+/// what makes the guarantee true.** Selection matches an entry when every one
+/// of its markers appears in what the artifact rendered, so two entries whose
+/// sets merely differ can still both match: where one set is contained in the
+/// other, an artifact rendering the larger satisfies both. Pinning inequality
+/// alone would leave ambiguity reachable while reading as though it were
+/// closed, and section 5 says the compile-time check is what makes ambiguity
+/// unreachable. Equal sets are contained in each other, so this subsumes the
+/// uniqueness the section names rather than replacing it.
+///
+/// Marker sets are compared only within one architecture, because entries that
+/// declare different architectures never compete.
+const fn table_reads_unambiguously() -> bool {
+    let mut i = 0;
+    while i < REGISTRY.len() {
+        let mut j = i + 1;
+        while j < REGISTRY.len() {
+            if same_text(REGISTRY[i].family, REGISTRY[j].family)
+                && (contained_in(REGISTRY[i].selecting_markers, REGISTRY[j].selecting_markers)
+                    || contained_in(REGISTRY[j].selecting_markers, REGISTRY[i].selecting_markers))
+            {
+                return false;
+            }
+            j += 1;
+        }
+        i += 1;
+    }
+    true
+}
+
+const _: () = assert!(
+    table_reads_unambiguously(),
+    "two registry entries share an architecture and neither marker set \
+     distinguishes them, so the table's order would be the selector"
+);
+
+/// The conversation every contested artifact is asked to render.
+///
+/// **Frozen here rather than built where it is called**, per Spec section 5. A
+/// derivation whose input varies by call site compares two artifacts against
+/// two different questions, and the comparison is only meaningful where every
+/// artifact answered the same one. The contents carry no meaning: what is read
+/// is the scaffolding the template puts around them, so the bodies are single
+/// characters and the roles are the three the canonical shape names.
+const PROBE_CONVERSATION: &[(&str, &str)] = &[("system", "s"), ("user", "u"), ("assistant", "a")];
+
+/// Render the probe through the template detector and return what it emits.
+///
+/// **This is a detector rather than an evaluator**, per Spec section 5: it
+/// matches the template text against a table of families it carries and emits
+/// its own rendering of the one it settles on. It is not a jinja parser and
+/// upstream says so. It takes no model handle, so this reaches no weights.
+#[cfg(feature = "gguf")]
+fn render_probe(template: &str) -> Option<String> {
+    use std::ffi::CString;
+    let template = CString::new(template).ok()?;
+    let held: Vec<(CString, CString)> = PROBE_CONVERSATION
+        .iter()
+        .map(|(role, body)| (CString::new(*role).unwrap(), CString::new(*body).unwrap()))
+        .collect();
+    let chat: Vec<llama_cpp_sys_2::llama_chat_message> = held
+        .iter()
+        .map(|(role, body)| llama_cpp_sys_2::llama_chat_message {
+            role: role.as_ptr(),
+            content: body.as_ptr(),
+        })
+        .collect();
+    // The rendering is the probe's scaffolding around six bytes of body, so a
+    // fixed buffer is sufficient and a refusal is what an overrun becomes.
+    let mut buffer = vec![0u8; 8192];
+    // SAFETY: the template and the messages outlive the call, `chat` describes
+    // its own length, and the buffer's length is passed as written.
+    let written = unsafe {
+        llama_cpp_sys_2::llama_chat_apply_template(
+            template.as_ptr(),
+            chat.as_ptr(),
+            chat.len(),
+            true,
+            buffer.as_mut_ptr().cast::<std::os::raw::c_char>(),
+            buffer.len() as i32,
+        )
+    };
+    let written = usize::try_from(written).ok()?;
+    if written > buffer.len() {
+        return None;
+    }
+    buffer.truncate(written);
+    String::from_utf8(buffer).ok()
+}
+
+/// **A build carrying no GGUF backend carries no detector**, so a contested
+/// architecture has no derivation available and refuses rather than picking.
+/// Such a build serves no GGUF artifact at all, so nothing that could reach
+/// this is admissible for other reasons first.
+#[cfg(not(feature = "gguf"))]
+fn render_probe(_template: &str) -> Option<String> {
+    None
 }
 
 /// Look a family up in the compile-time table.
 ///
 /// **No silent substitution.** A miss is a refusal naming the family, never a
 /// nearest match and never a default declaration.
+///
+/// **A contested architecture refuses here rather than answering by position.**
+/// Where more than one entry declares the name, this function cannot choose
+/// between them and returning the first would make the table's order the
+/// selector. [`select`] is the door that can choose, because it holds the
+/// artifact's template as well as its architecture.
 pub fn lookup(name: &FamilyName) -> Result<&'static Declaration, FamilyRefusal> {
-    REGISTRY
-        .iter()
-        .find(|declaration| declaration.family == name.0)
-        .ok_or_else(|| FamilyRefusal::UnknownFamily(name.clone()))
+    let mut found = None;
+    for declaration in REGISTRY {
+        if declaration.family == name.0 {
+            if found.is_some() {
+                return Err(FamilyRefusal::ArchitectureContested(name.clone()));
+            }
+            found = Some(declaration);
+        }
+    }
+    found.ok_or_else(|| FamilyRefusal::UnknownFamily(name.clone()))
 }
 
-/// Judge a requested shard width against what the family declares.
+/// Select the entry this artifact belongs to, from its architecture and, where
+/// the architecture is contested, the marker set it renders.
+///
+/// **Where one architecture carries one entry the key is unchanged and nothing
+/// is rendered**, per Spec section 5. That is every family this binary carried
+/// before the act that added this function, and it is what keeps a family the
+/// detector does not recognise admissible: gemma4's template returns an error
+/// rather than a rendering, so an unconditional render would refuse a family
+/// the registry serves.
+///
+/// **Where it is contested the artifact's own rendering decides**, and a
+/// derivation that produces no set refuses rather than falling back to the
+/// architecture, because falling back is the silent substitution this reached
+/// for the template to prevent.
+pub fn select(
+    name: &FamilyName,
+    chat_template: Option<&str>,
+) -> Result<&'static Declaration, FamilyRefusal> {
+    let candidates: Vec<&'static Declaration> = REGISTRY
+        .iter()
+        .filter(|declaration| declaration.family == name.0)
+        .collect();
+    match candidates.as_slice() {
+        [] => return Err(FamilyRefusal::UnknownFamily(name.clone())),
+        [only] => return Ok(only),
+        _ => {}
+    }
+
+    let Some(template) = chat_template else {
+        return Err(FamilyRefusal::TemplateAbsent(name.clone()));
+    };
+    let Some(rendered) = render_probe(template) else {
+        return Err(FamilyRefusal::TemplateUnrecognised(name.clone()));
+    };
+
+    let mut matched = candidates.iter().filter(|declaration| {
+        declaration
+            .selecting_markers
+            .iter()
+            .all(|marker| rendered.contains(marker))
+    });
+    match (matched.next(), matched.next()) {
+        (Some(one), None) => Ok(one),
+        (Some(_), Some(_)) => Err(FamilyRefusal::MarkersAmbiguous(name.clone())),
+        (None, _) => Err(FamilyRefusal::MarkersMatchNoEntry(name.clone())),
+    }
+}
+
+/// Judge a requested shard width against what the selected entry declares.
 ///
 /// The width condition reads nothing, which is why Spec section 3 judges it
 /// before the room and reach conditions that each cost a driver query.
-pub fn judge_width(name: &FamilyName, requested: u32) -> Result<(), FamilyRefusal> {
-    let declaration = lookup(name)?;
+///
+/// **It takes the entry rather than the architecture, because an architecture
+/// is not always enough to find one.** Where two entries share an
+/// architecture, resolving it needs the artifact's template, and the caller
+/// has already done that: admit selects once and judges width against what it
+/// selected, so the width answer and everything after it read one declaration
+/// rather than two resolutions that could disagree.
+pub fn judge_width(declaration: &Declaration, requested: u32) -> Result<(), FamilyRefusal> {
     if declaration.shards_across(requested) {
         return Ok(());
     }
     Err(FamilyRefusal::WidthNotDeclared {
-        family: name.clone(),
+        family: FamilyName(declaration.family.to_string()),
         requested,
         declared: declaration.shard_widths,
     })
@@ -742,11 +1024,13 @@ mod tests {
     /// module doctest. Under that change the sparse assertion below fails.
     #[test]
     fn a_width_outside_the_declared_set_refuses() {
-        let llama = FamilyName("llama".into());
-        assert_eq!(judge_width(&llama, 1), Ok(()));
-        assert_eq!(judge_width(&llama, 2), Ok(()));
+        // Judged against an entry, because `llama` is a contested
+        // architecture and naming it alone reaches no single declaration.
+        let entry = select(&FamilyName("qwen2".into()), None).expect("the registry carries qwen2");
+        assert_eq!(judge_width(entry, 1), Ok(()));
+        assert_eq!(judge_width(entry, 2), Ok(()));
         assert!(matches!(
-            judge_width(&llama, 3),
+            judge_width(entry, 3),
             Err(FamilyRefusal::WidthNotDeclared { requested: 3, .. })
         ));
 
@@ -757,6 +1041,7 @@ mod tests {
             template: "{message}",
             generation_opener: "",
             renderer: qwen2::renderer,
+            selecting_markers: qwen2::RENDERED_MARKERS,
             flush: FlushMechanism::TruncateToPosition,
             taps_readout: true,
         };
