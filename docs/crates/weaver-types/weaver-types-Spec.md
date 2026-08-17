@@ -1223,9 +1223,9 @@ decode contract's section 2 determines the answer as the generation and its
 measurement, the measurement being the token identifiers, the per-token signals,
 the timings, the block partition, and the residual reductions where the
 residency was admitted with readout elected. The template identity is the
-request's member and not the measurement's, per the ruling of 2026-08-17 on
-#129, and this sentence restates the contract's enumeration rather than owning
-it, so it moves when the contract moved.
+request's member and not the measurement's, per the ruling of 2026-08-17
+on #129, and this sentence restates the contract's enumeration rather than
+owning it, so it moves when the contract moved.
 
 ```rust
 pub struct Generation {
