@@ -146,6 +146,20 @@ const PROBES: &[Probe] = &[
         default_path: "/opt/weaver/models/Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
         rendered: mistral3::RENDERED_MARKERS,
     },
+    Probe {
+        // **A hybrid family rendering ChatML.** Its template is
+        // `<|im_start|>role\n ... <|im_end|>\n`, qwen2's scaffolding exactly,
+        // so it is another key citing that module and the claim that their
+        // markers agree is measured here rather than inherited.
+        //
+        // Its `<think>` pair is `USER_DEFINED` rather than `CONTROL`, as
+        // gemma4's channel pair is, but it is outbound: the model emits it and
+        // this crate matches it as text, so it is not in the rendered set.
+        family: "nemotron_h_moe",
+        env: "WEAVER_VOCAB_NEMOTRON_H_MOE",
+        default_path: "/opt/weaver/models/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16-heretic.i1-IQ4_XS.gguf",
+        rendered: qwen2::RENDERED_MARKERS,
+    },
 ];
 
 impl Probe {
