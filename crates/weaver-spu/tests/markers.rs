@@ -110,9 +110,23 @@ const PROBES: &[Probe] = &[
         // than `CONTROL` in this artifact's token table, which is exactly the
         // kind of difference a probe settles and a reading of the template
         // does not.
+        //
+        // **The measurement was taken on a workshop that does not lay its
+        // models out this way**, through the override, against
+        // `unsloth--gemma-4-26B-A4B-it-qat-GGUF/` under a home directory. The
+        // default follows this table's `/opt/weaver/models` convention rather
+        // than naming that box, a default being a convenience and the override
+        // being what a run actually rests on:
+        //
+        //     WEAVER_VOCAB_GEMMA4=<artifact> cargo test -p weaver-spu \
+        //       --features gguf --test markers
+        //
+        // A workshop holding none of these artifacts fails the `probed > 0`
+        // guard below rather than reporting a green run over nothing, so the
+        // absence is loud wherever it lands.
         family: "gemma4",
         env: "WEAVER_VOCAB_GEMMA4",
-        default_path: "/home/todd/Projects/models/unsloth--gemma-4-26B-A4B-it-qat-GGUF/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+        default_path: "/opt/weaver/models/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
         rendered: gemma4::RENDERED_MARKERS,
     },
 ];
