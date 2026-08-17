@@ -3,7 +3,10 @@
 **Status:** DRAFT v0.5, 2026-08-17. The ratified loop boundary of 2026-08-11
 refiles the internal tool: internal to the agent and external to the reasoning
 loop, per `finding-loop-agent-split` and issue #115, and section 2's bash
-sentence takes it. The port test keeps its answer whole at the agent level.
+sentence takes it, and the portless-tool classification is applied
+document-wide: internal to the agent, external to the reasoning loop, outside
+this frame's reach. The port test keeps its answer whole at the agent level,
+named for what it sorts on, the agent's membrane at the network boundary.
 Previously DRAFT v0.4, 2026-08-07. Phase-one architecture-seat material, outside the
 document set and never ratified. Argument and framing, no code. It decides nothing the
 tool workflow is there to decide.
@@ -69,7 +72,10 @@ through it.
 **The port ruling of 2026-08-07 bounds this claim, and the bound is stated rather than
 absorbed.** An earlier form said nothing the agent initiates toward the world runs
 around the gate. Under the port test an internal tool binds no listening port and is
-loop code or a subprocess inside the worker, so an internal tool that dials outward does
+loop code or a subprocess inside the worker - internal meaning internal to the agent,
+the port test sorting on the agent's own membrane, which is the network boundary, and
+a subprocess tool among them sitting outside the reasoning loop all the same, per the
+refiling of 2026-08-11 - so an internal tool that dials outward does
 run around the gate. **What the gate is the only boundary for is a listening service**,
 in both directions: nothing reaches the agent except through it, and nothing the agent
 addresses is addressed any other way. An operator whose loop code dials out has made
@@ -93,11 +99,14 @@ exists to prevent, so under this proposal it is a registered application the age
 addresses over an egress socket and the listening surface lives with that application,
 outside the agent, past the socket.
 
-**A tool that binds no port keeps the merged model and this frame does not reach it.**
-The port ruling of 2026-08-07 files it internal whatever it dials, so the forked
-subprocess of step 7 is still what it is, still runs under a uid this program chooses,
-and still meets the descriptor discipline `weaver-harness-Spec` section 10 builds its
-reference walk on. Which uid it runs under is `weaver-gate-PRD` section 7's open cell
+**A tool that binds no port is internal to the agent, external to the reasoning
+loop, and outside this frame's reach.** The port ruling of 2026-08-07 files it
+internal to the agent whatever it dials, and the refiling of 2026-08-11 places it
+outside the loop, so the forked subprocess of step 7 keeps its mechanics, still
+runs under a uid this program chooses, and still meets the descriptor discipline
+`weaver-harness-Spec` section 10 builds its reference walk on - mechanics rather
+than the settled model, per that Spec's section 6 note. Which uid it runs under
+is `weaver-gate-PRD` section 7's open cell
 and the tool workflow's to settle, and none of it is this frame's, which is the egress
 seam and the services that listen.
 
@@ -208,7 +217,8 @@ another process to do something a Unix socket under a named contract, with no ex
 including for crates that arrive later. No primitive binds a listening port, so no
 primitive is reachable from the network. **The claim is about what this program builds,
 and the port ruling of 2026-08-07 is why that scoping is stated rather than assumed.**
-An operator's loop code is internal by the port test whatever it dials, so a loop that
+An operator's loop code is internal to the agent by the port test whatever it
+dials, so a loop that
 reaches outward puts that descriptor inside a process this program ships without the
 program shipping the reach, and the enumeration below walks the sockets these crates
 hold rather than everything a deployment may run inside them. A tool call is
@@ -223,8 +233,9 @@ component in the set holds and confirm every one of them is AF_UNIX. It is state
 allow-list of one address family rather than as a denial of AF_INET, because a test
 naming the families it excludes misses the next one, and section 2 is what makes the set
 the enumeration walks a bounded thing. **The port ruling names the same test a third
-way**: AF_UNIX is internal and AF_INET is not, which is this enumeration read as a
-classification rather than as a check.
+way**: AF_UNIX is internal to the agent and AF_INET is not, which is this
+enumeration read as a classification rather than as a check, and is the port test
+named for what it sorts on, the agent's membrane at the network boundary.
 
 **The enumeration validates and does not enforce, and the difference is section 5's.**
 Nothing in this frame stops a component from opening a socket the scan would have caught
@@ -282,7 +293,8 @@ charters the seam, its contract, and how a tool is launched and supervised, and 
 frame settles none of the three.
 
 Tools that bind no listening port are a different matter and not this frame's subject.
-They are internal, they are the operator's loop code, and they never reach this seam.
+They are internal to the agent, they are the operator's loop code, and they never
+reach this seam.
 This frame is the egress boundary and the tools that listen, and for those the shape
 follows from the floor rather than from a measurement.
 
@@ -349,7 +361,8 @@ sweep lands. Definition-of-done item 5 requires a real tool executed under
 kernel-enforced OS constraint, and under section 2 the reference bash is a registered
 application the program does not ship, so the item lands as a conformance fixture the
 way the gate suite ships fake clients. **The port ruling of 2026-08-07 replaced that
-reading rather than retiring the item**: bash is internal, so item 5 asks for an
+reading rather than retiring the item**: bash is internal to the agent, so item 5
+asks for an
 executed tool again and asks it of bash, and what was retired is the
 registered-application reading and the conformance fixture it implied. The item stands
 and this sentence records a landing no longer owed. `weaver-admin-PRD` section 7
