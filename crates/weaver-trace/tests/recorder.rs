@@ -512,3 +512,40 @@ fn high_water_reports_on_recorded_events() {
         "discard keeps the accounting consistent"
     );
 }
+
+/// **The subsystem's wire spellings are pinned, every case, and the organ and
+/// its engine are distinct values.** The field is the record's attribution and
+/// a consumer keys on the strings, so a variant rename or a serde-scheme
+/// change that moved one silently would re-attribute history. The
+/// organ-against-engine pair carries the claim of the #103 ruling: `spu` and
+/// `spu_decoder` are two producing parties, the organ's residency facts and
+/// the decode engine's model events, and a set that collapsed them would lose
+/// the fact a reader of a model event wants first.
+///
+/// Perturbation: rename `SpuDecoder` to `Decoder`, or drop it, and this fails
+/// naming the spelling. Watched by the pair below going through the same
+/// serializer the recorder uses.
+#[test]
+fn the_subsystem_spellings_are_pinned_and_the_engine_is_not_the_organ() {
+    let spelled = |subsystem: Subsystem| {
+        let mut e = envelope(Kind::Load, None);
+        e.subsystem = subsystem;
+        serde_json::to_string(&e).expect("the envelope renders")
+    };
+    for (case, wire) in [
+        (Subsystem::Admin, "\"subsystem\":\"admin\""),
+        (Subsystem::Harness, "\"subsystem\":\"harness\""),
+        (Subsystem::Spu, "\"subsystem\":\"spu\""),
+        (Subsystem::SpuDecoder, "\"subsystem\":\"spu_decoder\""),
+        (Subsystem::Gate, "\"subsystem\":\"gate\""),
+        (Subsystem::Tool, "\"subsystem\":\"tool\""),
+    ] {
+        let line = spelled(case);
+        assert!(line.contains(wire), "expected {wire} in {line}");
+    }
+    assert_ne!(
+        spelled(Subsystem::Spu),
+        spelled(Subsystem::SpuDecoder),
+        "the organ and its engine are two attributions, which is the split's point"
+    );
+}

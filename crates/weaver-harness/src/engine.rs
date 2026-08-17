@@ -336,15 +336,17 @@ impl<'a> Ports<'a> {
             }
         };
 
-        // The three model events author across the boundary, subsystem SPU
-        // because the SPU produced them, each spliced or shaped by the custody
-        // model: the request and the measurement carried opaque, the output
-        // shaped from the emission and finish.
+        // The three model events author across the boundary at engine grain,
+        // `SpuDecoder` rather than `Spu`, per issue #103's ruling: the organ
+        // will hold more than a decoder and a reader of a model event wants
+        // the engine first. Each is spliced or shaped by the custody model:
+        // the request and the measurement carried opaque, the output shaped
+        // from the emission and finish.
         self.author
             .author(
                 self.recorder,
                 Kind::ModelRequest,
-                Subsystem::Spu,
+                Subsystem::SpuDecoder,
                 Some(turn),
                 Some(Payload::ModelRequest(generation.request)),
             )
@@ -354,7 +356,7 @@ impl<'a> Ports<'a> {
             .author(
                 self.recorder,
                 Kind::ModelOutput,
-                Subsystem::Spu,
+                Subsystem::SpuDecoder,
                 Some(turn),
                 Some(Payload::ModelOutput(ModelOutput {
                     emission: generation.emission.clone(),
@@ -370,7 +372,7 @@ impl<'a> Ports<'a> {
             .author(
                 self.recorder,
                 Kind::ModelMeasurement,
-                Subsystem::Spu,
+                Subsystem::SpuDecoder,
                 Some(turn),
                 Some(Payload::ModelMeasurement(generation.measurement)),
             )

@@ -237,7 +237,7 @@ fn assembly_sees_only_message_kinds() {
         .author(
             &mut recorder,
             Kind::ModelMeasurement,
-            Subsystem::Spu,
+            Subsystem::SpuDecoder,
             Some(&turn),
             // The measurement is a spliced blob as of the custody act, the SPU's
             // weights hash carried opaque, and the witness the watch needs is

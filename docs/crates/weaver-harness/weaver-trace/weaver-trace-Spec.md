@@ -4,6 +4,14 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-17, the trace stamps the engine where the organ is too
+coarse, per issue #103. `Subsystem` gains `spu_decoder` for the three model
+events, whose wiring landed stamping `spu` before the case existed. `Spu`
+stays for residency, admit, release, and fault attribution, which are the
+organ's. The growth rule re-keys from crates to producing parties at the
+granularity a reader needs, which is the generalization `Tool` already was,
+and `spu_encoder` is named as deliberately absent until an encoder gives it
+an emitter, per apex section 9.
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date. Section 4's splice sentence follows
 `weaver-trace-PRD` section 3.2 as narrowed: the turn's delta as rendered,
@@ -207,7 +215,7 @@ pub struct Envelope {
 }
 
 #[serde(rename_all = "snake_case")]
-pub enum Subsystem { Admin, Harness, Spu, Gate, Tool }
+pub enum Subsystem { Admin, Harness, Spu, SpuDecoder, Gate, Tool }
 
 pub enum Kind {
     #[serde(rename = "load")]                 Load,
@@ -268,15 +276,26 @@ from: weaver-trace
 to: trace-kind-explicit-renames
 ```
 
-**`Subsystem` names the producing party and takes the plain snake-case scheme**,
-its values being single words with no dotted spelling to match. **The case set is
-this Spec's election and the charter fixes only that the field exists**, so the
-grounds are stated here rather than assumed: the four crates that can produce a
-report are `weaver-admin`, `weaver-harness`, `weaver-spu`, and `weaver-gate`, and
-`Tool` is the fifth because a tool's result reaches the record through the harness
-and a record that attributed it to the harness would lose the one fact an operator
-reading a tool result wants first. A sixth case arrives when a crate that can
-produce a report is chartered, which is a floor edit in the same act.
+**`Subsystem` names the producing party at the granularity a reader needs, and
+takes the plain snake-case scheme.** **The case set is this Spec's election and
+the charter fixes only that the field exists**, so the grounds are stated here
+rather than assumed. Four cases are the crates that can produce a report,
+`weaver-admin`, `weaver-harness`, `weaver-spu`, and `weaver-gate`. `Tool` is a
+producing party and not a crate, because a tool's result reaches the record
+through the harness and a record that attributed it to the harness would lose
+the one fact an operator reading a tool result wants first. **`SpuDecoder` is
+that argument one level down, per the ruling gathered on issue #103**: the
+SPU's chartered domain is every semantic operation in the text modality, so as
+engines accumulate behind the one organ, an event stamped `spu` loses the fact
+a reader wants first, which engine produced it. The three model events carry
+it. **`Spu` stays beside it**, because residency, admit, and release belong to
+the organ rather than to any engine inside it, and a fault report is the
+organ's for the same reason. The rule an earlier wording keyed on crates is
+retired: **a case arrives per producing party at the granularity a reader
+needs, with its first emitter, as a floor edit in the same act.** The encoder's
+case, `spu_encoder`, is deliberately absent until the act that builds an
+encoder gives it an emitter, a case with no producer being a reserved slot in
+enum form, per apex section 9.
 
 ```graph
 node: trace-subsystem-case-set
@@ -1053,7 +1072,7 @@ the invariant's own words, which leaves this document nothing to claim under it.
 **The test applied is whether the axiom is the reason the claim exists.** Remove
 the join-key invariant and this crate has no reason to refuse to infer a turn and
 no reason to report pressure rather than author it, so those two ground in it.
-Remove it and the kind renames are still dotted, the subsystem set is still five
+Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
 **Thirty-five claims grounding in no invariant is the expected result and not a
 gap**, per Document Format section 4: fourteen of the thirty-nine are section 3's
