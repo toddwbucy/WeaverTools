@@ -4,6 +4,11 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, the request owns the template identity, per the
+ruling on #129 and the sampling precedent: an input to a decode belongs with
+what was asked rather than with what was read off it. The what-travels list
+loses the member from its measurement half and keeps it in the request half,
+where it already sat.
 **Revised:** 2026-08-17, second of that date, the render is a detector rather
 than an evaluator. The clause landed that morning said a canonical conversation
 is rendered through the artifact's own template, and the dependency does not do
@@ -1305,14 +1310,20 @@ to: spu-absent-shape-pinned-by-doctest
 
 **What travels with a generation.** The token identifiers in and out, the two
 signal vectors, the timings the charter's row names, the model identity and
-its weights hash from section 3, the template identity from the family
-library, the prompt-block partition, the residual reductions when elected,
-and beside the measurement the model.request content whole, per the custody
-act of 2026-08-11: the turn's delta as the family library rendered it, per
-the ruling of 2026-08-12, the
-template identity, and the turn's effective sampling values, rendered by this
-crate because the template and the knobs are this crate's, and spliced into
-the record's request box as the measurement splices into its own. The harness
+its weights hash from section 3, the prompt-block partition, the residual
+reductions when elected, and beside the measurement the model.request content
+whole, per the custody act of 2026-08-11: the turn's delta as the family
+library rendered it, per the ruling of 2026-08-12, the template identity, and
+the turn's effective sampling values, rendered by this crate because the
+template and the knobs are this crate's, and spliced into the record's
+request box as the measurement splices into its own. **The template identity
+is the request's member and not the measurement's**, per the ruling of
+2026-08-17 on #129: it is an input-side fact, what was asked rather than what
+was read off the answer, which is the sampling values' own ground for sitting
+where they sit, and the earlier text listing it in both boxes was one fact in
+two places with no authority named, the defect G5 files. The code and
+`weaver-trace-PRD` section 3 already carried it this way; this clause catches
+up to them. The harness
 carries both opaque, neither assembled from members it would parse the splice
 to read.
 The partition comes from the tokenizer's offsets, which is the salvaged
