@@ -147,9 +147,12 @@ impl Author {
 
 /// A report of this crate's own, the harness being an organ too, per apex
 /// section 5.4, and therefore the renderer of its own accounts. The account
-/// arrives as the JSON this crate wrote, and a string this crate wrote that
-/// does not parse as JSON is this crate's own defect, surfaced at the submit
-/// refusal rather than silently rewritten here.
+/// arrives as the JSON this crate wrote, and a string that does not parse is
+/// this crate's own defect, answered by substituting the account with an
+/// object that says so: the case survives and the fault still lands
+/// classified, because every caller drops the authoring result, so refusing
+/// here would lose the whole fault to a discarded error while the
+/// substitution loses only the account and names the loss in the record.
 pub fn harness_report(case: weaver_types::FaultCase, account: &str) -> weaver_types::FaultReport {
     let account =
         serde_json::value::RawValue::from_string(account.to_string()).unwrap_or_else(|_| {

@@ -645,25 +645,21 @@ impl Harness {
                             refusal_reason(&refusal),
                             Some((&turn, &run_ref)),
                         ),
-                        // The emission arrived mid-stream: the report is
-                        // authored, the SPU having named its own case, and
-                        // the turn closes stopped. Service continues, the
-                        // fault being one the worker survives by definition
-                        // of the case set.
-                        Err(crate::engine::TurnError::Faulted { turn, report }) => {
-                            let _ = run.author.author_fault(
-                                &mut run.recorder,
-                                Subsystem::Spu,
-                                Some(&turn),
-                                &report,
-                            );
-                            render_close(
-                                "stopped",
-                                "reason",
-                                "the model organ reported a fault",
-                                Some((&turn, &run_ref)),
-                            )
-                        }
+                        // The emission arrived mid-stream. **The engine
+                        // already authored the report inside the turn's
+                        // bracket**, before the close its error path lands,
+                        // so this arm renders the client's close and authors
+                        // nothing: a second authoring here would file one
+                        // fact twice, and filing it here at all would put it
+                        // after `turn.closed`. Service continues, the fault
+                        // being one the worker survives by definition of the
+                        // case set.
+                        Err(crate::engine::TurnError::Faulted { turn, report: _ }) => render_close(
+                            "stopped",
+                            "reason",
+                            "the model organ reported a fault",
+                            Some((&turn, &run_ref)),
+                        ),
                         Err(crate::engine::TurnError::Unlicensed { turn }) => render_close(
                             "stopped",
                             "reason",
