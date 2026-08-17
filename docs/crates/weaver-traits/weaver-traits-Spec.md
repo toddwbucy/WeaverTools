@@ -283,8 +283,10 @@ to: traits-content-is-block-sequence
 opening, 2026-08-17.** They are the conversation's view of a tool
 interaction, and their field lists follow the protocol section 5 now
 charters: `ToolCall` carries the name and the arguments exactly as the
-family parse recovered them from the emission, `{ name: ToolName,
-arguments: String }`, so the record holds what the model spoke; and
+family parse recovered them from the emission, `{ name: String,
+arguments: String }`, the name a primitive for section 5's own cycle
+reason - this crate is the floor-link `weaver-types` names, so no type of
+that crate can appear here - and the record holds what the model spoke; and
 `ToolResultBlock` carries the content a family renders into the tool-result
 turn, `{ content: String }`. **Both are records and neither is a grant**:
 the block deserializes wherever the conversation crosses a seam, the decode
