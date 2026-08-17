@@ -79,7 +79,7 @@ through` names the module.
 | `gpt-oss` | Harmony | gpt_oss | the call-close marker **also ends a turn** | own `recover` reading a routing header, not JSON |
 | `gemma4` | Gemma 4 | gemma4 | assistant is called `model`; `<bos>` once; channel pair rendered into the opener; asymmetric markers | own role map, own preamble, own opener (#171) |
 | `mistral3` | Mistral v7 | mistral3 | **no role word at all**; empty generation opener; `<s>` once | own `render_delta` building each turn by shape (#173) |
-| `phi3` (1) | Phi tags | phi | **the role substitutes into the marker itself**, `<|{role}|>` | own role match; template builds the tag (#184) |
+| `phi3` (1) | Phi tags | phi | **the role substitutes into the marker itself**, `<\|{role}\|>` | own role match; template builds the tag (#184) |
 | `phi3` (2) | ChatML | phi | separator token where ChatML puts a newline; **same architecture as (1), disjoint markers** | second contested pair; the artifact's rendering selects (#184) |
 
 ## What the matrix shows
