@@ -1136,8 +1136,9 @@ to: types-tagging-test
 Applied here: `Position`, `Opener`, `RefusingOrgan`, and `FaultCase` are
 fieldless and serialize as plain renamed strings, the rename being
 `snake_case` as everywhere in this vocabulary, so a case crosses as
-`residency_degraded` and never as its Rust spelling. **The trio is internally tagged**, which is
-why every case carrying a value in 4.2 takes a struct variant, `Load { agent }`
+`residency_degraded` and never as its Rust spelling. **The trio is internally
+tagged**, which is why every case carrying a value in 4.2 takes a struct
+variant, `Load { agent }`
 rather than `Load(AgentName)`. **`Payload` is adjacently tagged**, `#[serde(tag =
 "kind", content = "body")]`, because its variants wrap enums that carry a tag of
 their own. **The token trio of section 4.4 divides under the same test**:
