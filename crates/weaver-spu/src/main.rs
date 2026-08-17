@@ -29,7 +29,7 @@ use weaver_spu::decoder::backend::{DecodeFault, TokenId};
 use weaver_spu::decoder::session::{CancelPoll, Session, StopCondition, Stopped};
 use weaver_spu::family;
 use weaver_spu::readout::ReadoutElection;
-use weaver_spu::residency::{Headroom, Residency, Resident};
+use weaver_spu::residency::{Headroom, Residency, Resident, StopSet};
 use weaver_spu::sampling::{
     Disposition, EffectiveKnobs, EffectiveSessionParameters, KnobRefusal, Knobs, SessionParameters,
     TunableValues,
@@ -273,7 +273,10 @@ struct OpenedSession<'r> {
     /// and a template identity worth the name is issues #88 and #129's.
     template: &'static str,
     generation_opener: &'static str,
-    terminator: TokenId,
+    /// **The family's stop conditions, promoted against this artifact.** Built
+    /// once at open, because the vocabulary cannot change under a residency and
+    /// a set rebuilt per turn would be the same answer at a per-turn cost.
+    stop: StopSet,
 }
 
 /// The measurement, rendered by this organ to the shape the trace's model
@@ -390,17 +393,34 @@ fn serve_decode(
                     .and_then(|mut session| {
                         let prefix = resident.tokenize(&prefix_text)?;
                         session.open(&prefix)?;
-                        let terminator = resident.terminator()?;
+                        // The family declares its stop conditions and the
+                        // artifact's vocabulary is where they are checked, so
+                        // the set is built once here rather than assumed from
+                        // the artifact's end-of-sequence.
+                        let stop = resident.stop_set(renderer)?;
                         Ok(OpenedSession {
                             session,
                             renderer,
                             template: declaration.template,
                             generation_opener: declaration.generation_opener,
-                            terminator,
+                            stop,
                         })
                     });
                 match outcome {
                     Ok(standing) => {
+                        // A declared stop the artifact cannot promote is named
+                        // on the operator's channel rather than dropped: it is
+                        // a condition this residency will never recognise, and
+                        // a run that carried it silently would report a turn
+                        // that ran to the cap as a turn that ended.
+                        if !standing.stop.unpromoted.is_empty() {
+                            eprintln!(
+                                "{}",
+                                serde_json::json!({
+                                    "stop_conditions_unpromoted": standing.stop.unpromoted,
+                                })
+                            );
+                        }
                         opened = Some(standing);
                         position = DecodePosition::AtRest;
                         if send_answer(decode, &TokenAnswer::Opened).is_err() {
@@ -444,8 +464,8 @@ fn serve_decode(
                     }
                 };
                 let stop = StopCondition {
-                    stop_tokens: vec![standing.terminator],
-                    terminator: standing.terminator,
+                    stop_tokens: standing.stop.tokens.clone(),
+                    terminator: standing.stop.terminator,
                     max_tokens: effective.session.max_tokens_per_turn,
                 };
                 let mut cancel = SeamCancel {
