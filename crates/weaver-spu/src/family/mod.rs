@@ -842,6 +842,12 @@ const _: () = assert!(
 /// artifact answered the same one. The contents carry no meaning: what is read
 /// is the scaffolding the template puts around them, so the bodies are single
 /// characters and the roles are the three the canonical shape names.
+///
+/// Read only by the detector arm below, so a build carrying no engine has no
+/// reader for it. The allow says that rather than widening the build's surface
+/// to quiet a lint, which is the form [`crate::residency`] already uses for the
+/// flush mechanism.
+#[cfg_attr(not(feature = "gguf"), allow(dead_code))]
 const PROBE_CONVERSATION: &[(&str, &str)] = &[("system", "s"), ("user", "u"), ("assistant", "a")];
 
 /// Render the probe through the template detector and return what it emits.
