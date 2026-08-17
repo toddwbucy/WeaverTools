@@ -18,7 +18,7 @@
 //! cannot serve refuses rather than falling back to the other, which would be
 //! the silent substitution the family registry also forbids.
 //!
-//! **The GGUF engine stands and the native one does not.** [`for_container`]
+//! **Both engines stand.** [`for_container`]
 //! answers whether this build can serve a container at all, and construction is
 //! [`crate::residency::Resident::open_session`]'s, because an engine borrows the
 //! model and only the residency holds one. The derivation and the construction
@@ -145,9 +145,12 @@ pub fn for_container(container: Container) -> Result<(), DecodeFault> {
     match container {
         #[cfg(feature = "gguf")]
         Container::Gguf => Ok(()),
+        #[cfg(feature = "cuda")]
+        Container::Safetensors => Ok(()),
         // A container this build was not compiled to serve refuses by name
         // rather than falling back to the peer, which would be the silent
         // substitution the family registry also forbids.
+        #[allow(unreachable_patterns)]
         other => Err(DecodeFault::ContainerNotBuilt { container: other }),
     }
 }
