@@ -7,7 +7,8 @@ contradict `weaver-spu-PRD` or `weaver-spu-Spec`, and where the code's family
 representation has no counterpart in those, the gap is returned at the end
 rather than settled here.
 
-Reconciled against `5ceecea`, after issue #88 closed. Written for a reader
+Reconciled against `2359e6f`, after issue #88 closed and the phi pair
+landed. Written for a reader
 coming to the SPU cold. Out of scope: tokenizer behaviour beyond template
 rendering, the decode path and its latency, and any family not yet in the code.
 
@@ -21,10 +22,10 @@ reader expects, and because getting it wrong is quiet: a model handed the wrong
 markers does not fault, it answers slightly worse, and the trace records a
 clean turn.
 
-The evidence is the accumulated divergence below. **Eleven registry entries
-across ten architecture strings, served by five modules, descending from five
-template ancestors.** Those three numbers being different from each other is
-the whole subject.
+The evidence is the accumulated divergence below. **Thirteen registry
+entries across eleven architecture strings, served by six modules, descending
+from six template ancestors.** Those three numbers being different from each
+other is the whole subject.
 
 ## The two workflows
 
@@ -78,12 +79,16 @@ through` names the module.
 | `gpt-oss` | Harmony | gpt_oss | the call-close marker **also ends a turn** | own `recover` reading a routing header, not JSON |
 | `gemma4` | Gemma 4 | gemma4 | assistant is called `model`; `<bos>` once; channel pair rendered into the opener; asymmetric markers | own role map, own preamble, own opener (#171) |
 | `mistral3` | Mistral v7 | mistral3 | **no role word at all**; empty generation opener; `<s>` once | own `render_delta` building each turn by shape (#173) |
+| `phi3` (1) | Phi tags | phi | **the role substitutes into the marker itself**, `<|{role}|>` | own role match; template builds the tag (#184) |
+| `phi3` (2) | ChatML | phi | separator token where ChatML puts a newline; **same architecture as (1), disjoint markers** | second contested pair; the artifact's rendering selects (#184) |
 
 ## What the matrix shows
 
 **The field starts from a small number of ancestors and every vendor edits its
-inheritance for its own use case.** Seven of eleven entries render ChatML, from
-four vendors who never coordinated. That is why the abstraction is a registry
+inheritance for its own use case.** Eight of thirteen entries descend from
+ChatML, from five vendors who never coordinated - Phi-4 14B editing it with a
+separator token where the others keep the newline. That is why the
+abstraction is a registry
 of declarations citing shared modules rather than one module per entry: the
 common case is a new architecture string over old markup, and it should cost
 one table row.
@@ -122,10 +127,13 @@ whose state is a running summary rather than a per-position cache. All render
 through the qwen2 module. **One module, one trait object, three flush
 mechanisms** - which is why the flush is declared per row and read from the row.
 
-**Whether the architecture identifies the format at all.** The `llama` pair is
-the case: a Llama 3 artifact and SmolLM2 both declare `llama` and render
-different markup. One architecture, two entries, and the artifact's own
-template breaks the tie.
+**Whether the architecture identifies the format at all.** Two pairs carry
+the case now: `llama`, where a Llama 3 artifact and SmolLM2 declare one
+architecture and render different markup, and `phi3`, where a single vendor's
+own current line does the same - the minis render role tags and Phi-4 14B
+renders the separator form, with marker sets so disjoint that each artifact's
+vocabulary lacks the other's markers entirely. One architecture, two entries,
+and the artifact's own template breaks the tie.
 
 ## Shared mechanism, and what was irreducible
 
