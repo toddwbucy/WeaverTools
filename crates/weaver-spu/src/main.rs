@@ -359,18 +359,16 @@ fn serve_decode(
 
         match directive {
             TokenDirective::Open { messages, .. } => {
-                let declaration = match family::lookup(&resident.header.family) {
-                    Ok(declaration) => declaration,
-                    Err(_) => {
-                        // The family was judged at admit, so a miss here is
-                        // the process's own incoherence rather than an ask.
-                        eprintln!(
-                            "{}",
-                            serde_json::json!({"decode_fault": "family lost after admit"})
-                        );
-                        return Err(());
-                    }
-                };
+                // **The entry selected at admit, held rather than looked up
+                // again.** This was a second lookup by architecture with a
+                // branch for losing the family between admit and decode. The
+                // resident now carries what admit selected, so there is no
+                // second derivation to disagree with the first and no miss to
+                // report: the incoherence that branch described is no longer
+                // expressible. A contested architecture is also not
+                // answerable by architecture alone, so the lookup this
+                // replaces could not have served one.
+                let declaration = resident.declaration;
                 // The declaration cites its family's renderer, so the prefix is
                 // that family's own rendering rather than a template string
                 // this root walks. The preamble a family opens a prefix with

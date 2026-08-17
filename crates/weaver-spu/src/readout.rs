@@ -145,6 +145,10 @@ mod tests {
         template: "{message}",
         generation_opener: "",
         renderer: crate::family::qwen2::renderer,
+        // These two fixtures are about the readout election and never reach a
+        // selection, so an empty set is what they carry rather than a
+        // borrowed one that would read as meaningful.
+        selecting_markers: &[],
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: true,
     };
@@ -155,6 +159,7 @@ mod tests {
         template: "{message}",
         generation_opener: "",
         renderer: crate::family::qwen2::renderer,
+        selecting_markers: &[],
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     };

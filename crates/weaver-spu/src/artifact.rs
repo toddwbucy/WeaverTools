@@ -269,7 +269,7 @@ fn read_safetensors_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Li
         layer_count: metadata
             .and_then(|m| m.get("num_hidden_layers"))
             .and_then(json_number),
-            // **A safetensors export carries no template here and this is the
+        // **A safetensors export carries no template here and this is the
         // truthful value rather than a gap.** The format keeps the chat
         // template in a sibling `tokenizer_config.json`, which is a second
         // file this crate does not open, so an artifact in this container
@@ -277,7 +277,7 @@ fn read_safetensors_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Li
         // no contested architecture ships in this container, and the day one
         // does the refusal is the honest outcome rather than a pick.
         chat_template: None,
-})
+    })
 }
 
 fn json_number(value: &serde_json::Value) -> Option<u64> {
