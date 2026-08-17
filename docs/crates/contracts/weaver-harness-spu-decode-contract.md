@@ -8,6 +8,12 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, the request owns the template identity, per the
+ruling on #129. The measurement's enumeration listed it beside the block
+partition while the request carried it too, one fact in two boxes of one
+turn's pair. It is an input-side fact of the sampling values' kind and it
+travels where they travel. The code and `weaver-trace-PRD` section 3 already
+did this; the enumeration catches up.
 **Revised:** 2026-08-16, the sampling values leave this seam. They travelled
 here per turn and the engine builds its sampler once at session open, so they
 had no engine to reach, and they now cross in the declaration at admit. The
@@ -186,9 +192,13 @@ because each splices into its own box of the record, the request being the
 turn's delta as rendered with its template and effective sampling per the
 ruling of 2026-08-12, the SPU
 rendering it whole per the custody act of 2026-08-11, and its measurement:
-the token identifiers, the per-token signals, the timings, the template
-identity, the block partition, and, where the residency was admitted with
-readout elected, the residual reductions. **The stream changes the seam's rhythm
+the token identifiers, the per-token signals, the timings, the block
+partition, and, where the residency was admitted with readout elected, the
+residual reductions. **The template identity travels in the request and only
+there**, per the ruling of 2026-08-17 on #129: it is an input-side fact of
+the same kind as the sampling values, which moved to the request for the
+same reason, and a member carried by both boxes of one turn's pair would be
+one fact in two places with no authority named. **The stream changes the seam's rhythm
 and not the record's
 shape**: the emission and the measurement arrive whole at the close, so a
 consumer that ignores every intermediate message reads the exchange

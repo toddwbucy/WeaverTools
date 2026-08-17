@@ -5,6 +5,10 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-17, the `Generation` subsection's restatement of the
+measurement's enumeration follows the decode contract's #129 correction: the
+template identity is the request's member, and the sentence names itself a
+restatement so the authority stays with the contract.
 **Revised:** 2026-08-16, second of that date, a held unit name is its own
 refusal. `LifecycleRefusal` gains `PriorUnitUnreaped`, because `BindFailed` was
 answering for two conditions a state ask already tells apart: a unit that runs
@@ -1217,8 +1221,11 @@ canonical and does not rename the type.
 **`Generation` shapes what the harness reads and splices what it forwards.** The
 decode contract's section 2 determines the answer as the generation and its
 measurement, the measurement being the token identifiers, the per-token signals,
-the timings, the template identity, the block partition, and the residual
-reductions where the residency was admitted with readout elected.
+the timings, the block partition, and the residual reductions where the
+residency was admitted with readout elected. The template identity is the
+request's member and not the measurement's, per the ruling of 2026-08-17 on
+#129, and this sentence restates the contract's enumeration rather than owning
+it, so it moves when the contract moved.
 
 ```rust
 pub struct Generation {
