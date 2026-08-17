@@ -8,6 +8,12 @@ and this crate's part in the workflow now finishing is one thing, admitting a mo
 later releasing it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-17, the encoder's deferral re-grounds on order of
+construction, per #93. Memory is a lossy compression of state and state is the
+trace's faithful account, so the encoder cannot precede a trustworthy trace.
+The conclusion, the domain ownership, and the built-nothing posture are
+unchanged; section 8's ground gets sturdier and the state-memory distinction is
+stated. No node or edge moves.
 **Revised:** 2026-08-10, the route act. Section 13.7's election crosses as one
 instruction beside the binding rather than inside it, per `weaver-types-Spec`
 section 2, and the wording that read as the binding carrying the election is
@@ -552,13 +558,33 @@ worker, applied one level down, and it is what keeps the routing claim of
 ## 8. What does not cross, and what waits
 
 **The encoder is named as domain and is not built.** Encoding and decoding are one
-domain and it is this crate's, per `weaver-harness-PRD` section 3. An encoding is
-useful only if something retrieves by similarity, nothing in the proto-stateful
-turn retrieves, and an embedder would produce vectors with no consumer. So this
-charter states the domain, adds no affordance for it, and builds nothing: no
-trait, no variant, no feature flag, no configuration field. **Ownership is not
-usage.** A charter naming a domain is a decided boundary, and an unbuilt interface
-waiting to be filled is what apex section 9 forbids.
+domain and it is this crate's, per `weaver-harness-PRD` section 3. The deferral
+rests on order of construction, per the operator's framing recorded on
+issue #93: **memory is a lossy compression of state, and state is the trace's
+faithful account of what actually happened.** There is no memory until
+something can reliably extract from the trace what a compression takes as
+input, so the encoder - the thing that compresses - cannot precede a
+trustworthy trace, whatever anyone wants to build. The trace is this program's
+deliverable and its reliability is the entry condition, so the ordering holds
+by the program's own structure rather than by the current feature list.
+
+The consumer argument still stands and is now the corollary rather than the
+ground: an encoding is useful only if something retrieves by similarity,
+nothing in the proto-stateful turn retrieves, and an embedder would produce
+vectors with no consumer. A consumer could be invented sooner than a
+trustworthy trace could be skipped, which is why the order-of-construction
+ground is the sturdier of the two.
+
+**State and memory are not the same thing, and this charter needs the
+distinction stated.** State is the faithful account; memory is a lossy
+derivative of it. The memory leg's exclusion is a consequence of that ordering
+rather than a scope decision, and the eventual memory PRDs inherit a
+definition to build against instead of one to invent.
+
+So this charter states the domain, adds no affordance for it, and builds
+nothing: no trait, no variant, no feature flag, no configuration field.
+**Ownership is not usage.** A charter naming a domain is a decided boundary,
+and an unbuilt interface waiting to be filled is what apex section 9 forbids.
 
 **The memory leg in every form.** No substrate, no recall, no consolidation. When memory
 returns it returns as a socket peer under its own contract, per apex 5.1.
