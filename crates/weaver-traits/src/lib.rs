@@ -100,5 +100,5 @@ mod provider;
 mod tool;
 
 pub use message::{ContentBlock, Message, Role, ToolCall, ToolResultBlock};
-pub use tool::{Tool, ToolFailure};
 pub use permission::PermissionMode;
+pub use tool::{Tool, ToolFailure};
