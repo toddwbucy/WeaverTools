@@ -106,10 +106,6 @@ impl Family for Qwen2 {
         STOP
     }
 
-    fn permits_truncation(&self) -> bool {
-        true
-    }
-
     fn declaration(&self) -> &'static Declaration {
         lookup(&FamilyName("qwen2".into())).expect("the registry carries qwen2")
     }

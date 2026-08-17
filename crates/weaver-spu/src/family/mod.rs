@@ -241,10 +241,13 @@ pub trait Family {
     /// The stop conditions this family declares.
     fn stop_conditions(&self) -> &'static [&'static str];
 
-    /// Whether the session's state permits truncation.
-    fn permits_truncation(&self) -> bool;
-
     /// The capabilities admission judges against.
+    ///
+    /// **A module serving several architecture keys answers for the key it is
+    /// named after, not for the artifact in hand.** [`qwen2`] serves five keys,
+    /// so `Qwen2::declaration()` is qwen2's row whichever of them was admitted.
+    /// Read a per-artifact fact through [`lookup`] against the header's family
+    /// instead, which is what the decode path does.
     fn declaration(&self) -> &'static Declaration;
 }
 
@@ -363,6 +366,24 @@ pub struct Declaration {
 }
 
 impl Declaration {
+    /// **Whether this family's session state permits truncation to a
+    /// position**, per Spec section 5's surface and section 4.4's mechanism.
+    ///
+    /// Derived from [`Declaration::flush`] rather than declared beside it,
+    /// because 4.4 makes them one fact: truncation is permitted exactly where
+    /// the flush is reached by truncating. It was a second declaration on the
+    /// [`Family`] trait until 2026-08-17, which is one fact in two places with
+    /// no authority named, and the two could disagree - every family said
+    /// `true` there, including the two whose engines refuse to roll back.
+    ///
+    /// **It lives here and not on the trait because this is keyed per
+    /// architecture.** A module serving several keys has one trait object and
+    /// several rows, and the answer differs between them: the qwen2 module
+    /// serves both a truncating qwen2 and a re-establishing qwen35.
+    pub const fn permits_truncation(&self) -> bool {
+        matches!(self.flush, FlushMechanism::TruncateToPosition)
+    }
+
     /// Whether this backend shards across exactly this many devices.
     ///
     /// Membership rather than a bound. A wider set refuses against the
@@ -461,12 +482,24 @@ pub const REGISTRY: &[Declaration] = &[
         // The artifacts also carry vision markers, `<|vision_start|>` and its
         // neighbours, which no text turn renders. They are named here as
         // present and unused rather than left for a later reader to wonder at.
+        //
+        // **The flush is by re-establishing, and this is the first entry where
+        // it is.** Corrected 2026-08-17: it declared truncation, copied from
+        // the qwen2 entry along with the template it legitimately shares.
+        // Sharing a marker vocabulary says nothing about how state rolls back.
+        //
+        // `llm_arch_is_hybrid` in the pinned llama.cpp names `QWEN35` and
+        // `QWEN35MOE`, so these artifacts carry recurrent layers beside their
+        // attention. A recurrent state is a running summary rather than a
+        // per-position cache, so it cannot be partially erased, and the engine
+        // says so: measured on a Qwen3.6 artifact, `seq_rm` answered `false`
+        // while the seam reported the turn flushed.
         family: "qwen35",
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
-        flush: FlushMechanism::TruncateToPosition,
+        flush: FlushMechanism::ReestablishAndReprefill,
         taps_readout: false,
     },
     Declaration {
@@ -474,12 +507,14 @@ pub const REGISTRY: &[Declaration] = &[
         // own key and its own probe. Two keys citing one module is a claim
         // about their markers agreeing, and this one is measured rather than
         // inherited from the dense entry above.
+        // Its sparse sibling is hybrid for the same reason and by the same
+        // list, and it is the artifact the measurement above was taken on.
         family: "qwen35moe",
         shard_widths: &[1, 2],
         template: qwen2::TEMPLATE,
         generation_opener: qwen2::GENERATION_OPENER,
         renderer: qwen2::renderer,
-        flush: FlushMechanism::TruncateToPosition,
+        flush: FlushMechanism::ReestablishAndReprefill,
         taps_readout: false,
     },
     Declaration {

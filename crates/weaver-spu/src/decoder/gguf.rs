@@ -336,9 +336,32 @@ impl Backend for GgufEngine<'_> {
             .map_err(|_| Self::engine_fault("position exceeds the engine's range"))?;
         // Everything at or after the position leaves the cache. The open end is
         // what makes this a truncation rather than a hole.
-        self.context
+        //
+        // **The engine's answer is read.** `clear_kv_cache_seq` returns
+        // `Result<bool, _>` where the error is the argument conversion and the
+        // **bool is llama.cpp's own account of whether the removal happened**.
+        // Discarding it is how a family that cannot roll back reports a flush it
+        // did not perform: `llama_memory_recurrent::seq_rm` refuses a partial
+        // erase that includes the final position, because a recurrent state is
+        // a running summary and not a per-position cache, and
+        // `llama_memory_hybrid::seq_rm` tries the recurrent half first and
+        // returns its refusal. Measured on 2026-08-17: a Qwen3.6 artifact
+        // answers `false` here while the seam answered `Flushed`.
+        let rolled_back = self
+            .context
             .clear_kv_cache_seq(Some(0), Some(from as u32), None)
             .map_err(|error| Self::engine_fault(format!("clear_kv_cache_seq: {error}")))?;
+        if !rolled_back {
+            // Nothing was mutated on this path, so the state is the state
+            // before the attempt. It is still a fault: the caller asked for a
+            // truncation and did not get one, and the session closing is what
+            // keeps a resident length from outrunning the engine's real state.
+            return Err(Self::engine_fault(format!(
+                "the engine refused to roll back to position {from}, which is a \
+                 family whose state cannot be partially erased declaring a \
+                 truncating flush"
+            )));
+        }
         // **The standing distribution belongs to a position that is gone.**
         // Leaving it readable would let a sample after a truncation draw from
         // the state the truncation removed.

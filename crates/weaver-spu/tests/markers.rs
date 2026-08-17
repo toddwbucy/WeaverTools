@@ -23,6 +23,12 @@
 //! never tokenizes. Where a parsed marker does not promote, the family module
 //! says so at its declaration rather than this test asserting a property the
 //! corpus does not claim.
+//!
+//! **The file also holds the flush declaration's check**, per Spec section 4.4,
+//! because it is the other claim a family makes that only an artifact can
+//! settle and the probe table is where the artifacts are named. Both tests ask
+//! the same question in the same way: the family declares, the artifact
+//! answers, and the two must agree.
 #![cfg(feature = "gguf")]
 
 use std::path::{Path, PathBuf};
@@ -31,7 +37,7 @@ use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{AddBos, LlamaModel};
 
-use weaver_spu::family::{gemma4, gpt_oss, llama, qwen2};
+use weaver_spu::family::{FamilyName, gemma4, gpt_oss, llama, qwen2};
 
 /// A family, its rendered markers, and where a tokenizer for it is found.
 ///
@@ -157,6 +163,18 @@ impl Probe {
 /// entirely.
 const LOOKALIKE: &str = "<|not_a_marker_any_family_declares|>";
 
+/// **The backend is a process-global and is initialized once for this binary.**
+///
+/// `LlamaBackend::init` is a compare-exchange on a static and answers
+/// `BackendAlreadyInitialized` to the second caller, so two tests in one binary
+/// each initializing their own would make the later one panic on whichever
+/// order the harness happened to run them in. The type is a zero-sized proof of
+/// initialization, so sharing one costs nothing and both tests take a reference.
+fn backend() -> &'static LlamaBackend {
+    static BACKEND: std::sync::OnceLock<LlamaBackend> = std::sync::OnceLock::new();
+    BACKEND.get_or_init(|| LlamaBackend::init().expect("the llama backend initialises"))
+}
+
 fn vocab_only(backend: &LlamaBackend, path: &Path) -> Result<LlamaModel, String> {
     let params = LlamaModelParams::default()
         .with_vocab_only(true)
@@ -176,7 +194,7 @@ fn vocab_only(backend: &LlamaBackend, path: &Path) -> Result<LlamaModel, String>
 /// tokenizer splits into six tokens.
 #[test]
 fn every_rendered_marker_promotes_to_one_token() {
-    let backend = LlamaBackend::init().expect("the llama backend initialises");
+    let backend = backend();
 
     let mut failures: Vec<String> = Vec::new();
     let mut absent: Vec<String> = Vec::new();
@@ -199,7 +217,7 @@ fn every_rendered_marker_promotes_to_one_token() {
             absent.push(format!("{} (no vocab at {})", probe.family, path.display()));
             continue;
         }
-        let model = match vocab_only(&backend, &path) {
+        let model = match vocab_only(backend, &path) {
             Ok(model) => model,
             Err(error) => {
                 failures.push(format!("{}: vocab-only load failed: {error}", probe.family));
@@ -265,5 +283,105 @@ fn every_rendered_marker_promotes_to_one_token() {
         // Named rather than silent: a family with no reachable vocab is
         // unverified here, and the run says which.
         eprintln!("marker promotion unverified for: {}", absent.join(", "));
+    }
+}
+
+/// **A family declaring a truncating flush must not be served by an engine
+/// that cannot roll back**, per `weaver-spu-Spec` section 4.4.
+///
+/// The declaration is the family's and the artifact is the only thing that can
+/// contradict it. `llama_model_is_hybrid` and `llama_model_is_recurrent` are
+/// the engine's own account of whether a state can be partially erased: a
+/// recurrent state is a running summary rather than a per-position cache, and a
+/// hybrid carries recurrent layers beside its attention, so `seq_rm` refuses a
+/// partial erase on both. A family declaring `TruncateToPosition` against
+/// either is asking for a rollback the engine will not perform.
+///
+/// **This is the test that was missing when qwen35 and qwen35moe were
+/// carried.** Both took `TruncateToPosition` from the qwen2 entry along with
+/// the template they legitimately share, and nothing read the two facts
+/// together. A marker vocabulary says nothing about how state rolls back.
+///
+/// Perturbation: set either qwen35 entry's `flush` back to
+/// `TruncateToPosition` and this fails naming it. Watched under exactly that.
+/// The check is vacuous only where no artifact is reachable, which the
+/// `probed > 0` guard below refuses in the same way its sibling does.
+#[test]
+fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
+    let backend = backend();
+
+    let mut failures: Vec<String> = Vec::new();
+    let mut absent: Vec<String> = Vec::new();
+    let mut probed = 0usize;
+
+    for probe in PROBES {
+        let (path, overridden) = probe.path();
+        assert!(
+            !overridden || path.is_file(),
+            "{} is set to {} which is not a regular file, so {} would have been \
+             skipped and this test would have passed without probing it",
+            probe.env,
+            path.display(),
+            probe.family
+        );
+        if !path.exists() {
+            absent.push(probe.family.to_string());
+            continue;
+        }
+        let model = match vocab_only(backend, &path) {
+            Ok(model) => model,
+            Err(error) => {
+                failures.push(format!("{}: vocab-only load failed: {error}", probe.family));
+                continue;
+            }
+        };
+        probed += 1;
+
+        // Read against the header's own family key rather than through a
+        // renderer: a module serving several keys answers for the one it is
+        // named after, and the flush is exactly where those keys differ.
+        let declaration = match weaver_spu::family::lookup(&FamilyName(probe.family.to_string())) {
+            Ok(declaration) => declaration,
+            Err(refusal) => {
+                failures.push(format!("{}: not carried: {refusal:?}", probe.family));
+                continue;
+            }
+        };
+
+        let cannot_roll_back = model.is_hybrid() || model.is_recurrent();
+        if declaration.permits_truncation() && cannot_roll_back {
+            failures.push(format!(
+                "{}: declares a truncating flush, but this artifact is {} and its \
+                 engine refuses a partial erase, so the flush would report an \
+                 outcome it did not reach",
+                probe.family,
+                if model.is_recurrent() {
+                    "recurrent"
+                } else {
+                    "hybrid"
+                },
+            ));
+        }
+    }
+
+    assert!(
+        probed > 0,
+        "no family vocab was reachable, so this test asserted nothing. Set one of \
+         {}.\n  absent: {absent:?}",
+        PROBES
+            .iter()
+            .map(|probe| probe.env)
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+
+    assert!(
+        failures.is_empty(),
+        "flush declarations the artifact contradicts:\n  {}",
+        failures.join("\n  ")
+    );
+
+    if !absent.is_empty() {
+        eprintln!("flush declaration unverified for: {}", absent.join(", "));
     }
 }
