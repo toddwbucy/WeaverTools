@@ -336,15 +336,17 @@ impl<'a> Ports<'a> {
             }
         };
 
-        // The three model events author across the boundary, subsystem SPU
-        // because the SPU produced them, each spliced or shaped by the custody
-        // model: the request and the measurement carried opaque, the output
-        // shaped from the emission and finish.
+        // The three model events author across the boundary at engine grain,
+        // `SpuDecoder` rather than `Spu`, per issue #103's ruling: the organ
+        // will hold more than a decoder and a reader of a model event wants
+        // the engine first. Each is spliced or shaped by the custody model:
+        // the request and the measurement carried opaque, the output shaped
+        // from the emission and finish.
         self.author
             .author(
                 self.recorder,
                 Kind::ModelRequest,
-                Subsystem::Spu,
+                Subsystem::SpuDecoder,
                 Some(turn),
                 Some(Payload::ModelRequest(generation.request)),
             )
@@ -354,7 +356,7 @@ impl<'a> Ports<'a> {
             .author(
                 self.recorder,
                 Kind::ModelOutput,
-                Subsystem::Spu,
+                Subsystem::SpuDecoder,
                 Some(turn),
                 Some(Payload::ModelOutput(ModelOutput {
                     emission: generation.emission.clone(),
@@ -370,7 +372,7 @@ impl<'a> Ports<'a> {
             .author(
                 self.recorder,
                 Kind::ModelMeasurement,
-                Subsystem::Spu,
+                Subsystem::SpuDecoder,
                 Some(turn),
                 Some(Payload::ModelMeasurement(generation.measurement)),
             )
@@ -641,6 +643,23 @@ mod tests {
             line_of(Kind::ModelMeasurement).contains("sha256:abc"),
             "the measurement splice carries what the SPU rendered"
         );
+
+        // The attribution, at engine grain: all three model events carry the
+        // decoder's case on the wire, per the #103 ruling. Read from the
+        // rendered line rather than the enum so a regression to `Spu` at the
+        // author call fails here naming the string, which is the emitter-side
+        // half of the pin whose spelling half lives in the recorder's tests.
+        for kind in [
+            Kind::ModelRequest,
+            Kind::ModelOutput,
+            Kind::ModelMeasurement,
+        ] {
+            assert!(
+                line_of(kind).contains("\"subsystem\":\"spu_decoder\""),
+                "{kind:?} is attributed to the decode engine, got {}",
+                line_of(kind)
+            );
+        }
     }
 
     /// **The stop is heard mid-stream, per Spec 6.1.** The streaming wait

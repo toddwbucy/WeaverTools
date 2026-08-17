@@ -84,17 +84,31 @@ pub struct RunRef(pub String);
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct TurnRef(pub String);
 
-/// The producing party. The four crates that can produce a report, and `Tool`
-/// as the fifth because a tool's result reaches the record through the harness
-/// and a record attributing it to the harness would lose the one fact an
-/// operator reading a tool result wants first. A sixth case arrives when a
-/// crate that can produce a report is chartered, a floor edit in the same act.
+/// The producing party, at the granularity a reader needs.
+///
+/// Four cases are the crates that can produce a report. `Tool` is a producing
+/// party and not a crate, because a tool's result reaches the record through
+/// the harness and a record attributing it to the harness would lose the one
+/// fact an operator reading a tool result wants first. **`SpuDecoder` is that
+/// argument one level down**, per `weaver-trace-Spec` section 3: the SPU's
+/// domain is every semantic operation in the text modality, so an event
+/// stamped `Spu` loses which engine produced it once more than one lives
+/// behind the organ. The three model events carry it; residency, admit,
+/// release, and fault attribution stay `Spu`, being the organ's rather than
+/// any engine's.
+///
+/// **A case arrives per producing party at the granularity a reader needs,
+/// with its first emitter, a floor edit in the same act.** The encoder's
+/// case, `spu_encoder`, is deliberately absent until the act that builds an
+/// encoder gives it an emitter: a case with no producer is a reserved slot in
+/// enum form, per apex section 9.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Subsystem {
     Admin,
     Harness,
     Spu,
+    SpuDecoder,
     Gate,
     Tool,
 }
