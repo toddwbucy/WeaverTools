@@ -7,6 +7,12 @@ deliverable. Ratification belongs to the set rather than to any one document, pe
 Working Process section 2, and section 0's system record carries the set-level mark.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-17, the custody rule is stated once. Section 5.2 carries
+what the set followed in one place and contradicted in another: an organ
+renders the content of the events it causes, the harness authors the event,
+the trace writes the line, and the floor carries only what the harness itself
+consumes. The fault path is named as the standing exception, owed to the act
+that settles `FaultReport`'s election in `weaver-types-Spec` section 6.
 **Revised:** 2026-08-07, the port ruling settles what the egress ruling left
 undefined. That act discriminated tools by whether they reach the world, which was
 doing undefined work, and the test is now whether a tool binds a listening port:
@@ -344,6 +350,33 @@ one turn in flight the harness cannot recover the association afterward. This
 is what turns the trace from a set of per-process logs into a coordination
 substrate, and it must be designed into every wire format at the moment the
 wire is specified.
+
+**The custody behind that sentence has four roles, and each sits with the party
+that must hold it.** An organ renders the content of every event it causes, the
+harness authors the event, the trace writes the line, and the floor carries
+only what the harness itself consumes. The first three are the sole-writer rule
+read at three seams, and the organ's role is the one this document had not
+said: what a component hands over is its own rendering of what happened,
+because the organ is the party that knows, and the harness splices what it is
+handed rather than reconstructing it. The fourth is the floor half, and it is
+what keeps the floor from growing by one crate's vocabulary every time an organ
+gains something to say. Under the rule a new organ arrives with its own payload
+shapes and renders them, the harness gains an event kind, and no shared type
+library accumulates a member per organ per feature. The cost is stated rather
+than discovered: spliced content is opaque to the compiler, so conformance
+moves from serde to the check at the harness's submit call, which is affordable
+because it is one place, and it is the place where the kind-to-payload pairing
+is already enforced by admission rather than by types.
+
+**The fault path is the standing exception, named rather than silently
+tolerated.** The floor carries `FaultReport` today and the harness renders it,
+which runs this rule backwards, while the generation measurement already runs
+it forwards, the SPU rendering and the harness splicing verbatim. Two patterns
+with a reason discovered per case is how a set acquires no rule, and this
+paragraph is the rule. The shape of `FaultReport` is an open election in
+`weaver-types-Spec` section 6, so the fault path's correction lands in the act
+that settles that election, where the custody and the shape are one judgment
+rather than a wording change ahead of its mechanism.
 
 
 ```graph
