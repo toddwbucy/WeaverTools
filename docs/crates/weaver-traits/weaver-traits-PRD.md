@@ -6,6 +6,11 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-17, the tool workflow opens and section 3.1's block
+lifts on its own terms: a seam now crosses tool dispatch, the harness-gate
+contract draws `tool-trait`, and the definition is shaped against its
+consumers. The no-safety-classification negative stands whole and the
+workflow may not weaken it, as always stated.
 **Document ID:** `weaver-traits-PRD`
 **Parent:** `WeaverTools-PRD`
 **Editorial:** Per the Working Rules.
@@ -108,16 +113,18 @@ The vocabulary its signature names comes with it: the schema a tool advertises, 
 input it accepts, the output and outcome it produces, and the error it returns. These
 are pure data the contract requires, with no dependency on anything that does work.
 
-**This definition is blocked rather than open, and the block is a ruling this
-charter states rather than a note a working list carries.** Tool dispatch is
-harness-internal and no seam crosses it, so no vocabulary clause draws
-`tool-trait` and G4's union check cannot fail against it before phase close. The
-shape therefore waits on the workflow that will demand it, and until then it is
-neither settled nor opened: a definition shaped here would be shaped against no
-consumer, which is the anticipatory contract section 4 forbids. The reasoning was
-recorded on the working list from 2026-07-29 and lands here on 2026-08-01, because
-a working list is never ratified and a Spec that cited one would rest a structural
-decision on a document the mapper never reads.
+**This definition opened with the tool workflow on 2026-08-17, and the block's
+own terms are what opened it.** The block held because tool dispatch was
+harness-internal and no seam crossed it, so no vocabulary clause could draw
+`tool-trait`. The ratified loop boundary of 2026-08-11 inverted that ground:
+every tool sits outside the reasoning loop, dispatch crosses the gate seam,
+and `weaver-harness-gate-contract` section 7 draws the definition - the
+clause that could not exist while no seam crossed is the clause that
+demanded it. The definition is now shaped against its consumers, the gate's
+executor and the harness's dispatch, which is what the anticipatory-contract
+rule always required and the workflow now supplies. The block's history
+stands as stated: recorded on the working list from 2026-07-29, landed here
+2026-08-01, held until the workflow demanded the shape.
 
 **What this contract deliberately does not carry is a safety classification.** The
 previous tree made `Tool::invocation_properties` the crate's flagship enforcement type,

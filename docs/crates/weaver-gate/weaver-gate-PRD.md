@@ -6,6 +6,17 @@ lifecycle half of this crate, the hook the enter and leave directives raise and
 lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-17, second of that date, the tool workflow opens and the
+mechanism election lands: **this crate executes the internal tool, forked and
+supervised per call, answering on the harness seam's execution exchange.** The
+finding of 2026-08-11 left the mechanism to the seat with codebase context,
+and the grounds are the boundary's own: the loop reaches tools through the
+gate, so a harness-side fork would put the spawn inside the membrane the
+result must cross, where a gate-side fork keeps tool execution beyond it and
+the result arrives as an exchange answer, which is what lets the harness's
+granted value be constructed at exactly one site. Section 7's uid cell stays
+PENDING and this pass forks at the uid this crate already holds, building
+nothing against the separate-uid arm.
 **Revised:** 2026-08-17, the port ruling re-scopes under the ratified loop
 boundary, per issue #115. The ruling answered internal-to-the-agent, the only
 question a one-level model could ask, and it keeps that answer whole. What
@@ -383,6 +394,18 @@ in the agent's uid is exactly the process a same-uid attach should not reach.
 uid or under a uid this crate owns is this crate's to rule, per `weaver-admin-PRD`
 section 7, which names the agent-uid case as its assumption and files the cell here so
 it is inherited as a constraint rather than rediscovered.
+
+**The fork is this crate's as of the tool workflow's opening act of
+2026-08-17.** The internal tool executes here, forked and supervised per call
+and answered on the execution exchange of `weaver-harness-gate-contract`
+section 2, the mechanism election the finding of 2026-08-11 left to the seat
+with codebase context. An earlier reading had the harness forking the tool,
+and the ratified boundary is what retired it: the loop reaches tools through
+this crate, so the spawn belongs on this side of the loop's membrane and the
+result crosses back exactly once, as the exchange's answer. This pass forks
+at the uid this crate already holds, which is the agent-uid arm admin's
+charter assumed, and the cell's separate-uid arm stays PENDING with nothing
+built against it, awaiting the threat measurement the cell names.
 
 **PENDING, ruling candidate for ratification.** Stage one ratifies the agent-uid
 case. Under that case the boundary between the agent and its worker is hardening

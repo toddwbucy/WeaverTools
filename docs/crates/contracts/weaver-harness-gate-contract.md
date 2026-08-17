@@ -7,6 +7,15 @@ v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise a
 the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-17, the tool workflow opens and the fifth exchange arrives,
+the one section 2 promised to it: execute a tool, opened by the harness,
+carrying the call the family parse recovered, answered with the result or the
+tool's own failure. The gate executes per the mechanism election recorded at
+`weaver-gate-PRD` section 7: the loop reaches tools through the gate, per the
+ratified boundary of 2026-08-11, so the fork lives on the gate's side of the
+loop's membrane and the result crosses back as an answer on this seam.
+Section 7 draws `tool-name` and, with the traits charter's unblocking in the
+same act, `tool-trait`. Owed by issue #116's arc.
 **Revised:** 2026-08-07, the second seam is admitted. This document forbade a second
 listener, which the egress ruling of the same date reversed at the apex, and until now
 it governed against that ruling under Document Format section 7. The gate holds the two
@@ -125,12 +134,14 @@ close-on-exec after its final exec and clears its dumpable flag in the same act,
 
 ## 2. The exchanges
 
-Four, and no others in this pass. Two are opened by the harness, raise and lower, and
-two by the gate, the turn and the fault report, which is the two-initiator channel
-carrying both directions as of the token workflow's gate act. **The egress ruling of
-2026-08-07 gave the gate a second seam, and the exchange that reaches it arrives with
-the tool workflow rather than here.** Nothing is shaped for it and the closure above is
-this pass's rather than the seam's.
+Five, and no others in this pass. Three are opened by the harness, raise, lower,
+and the tool execution as of the tool workflow's opening act of 2026-08-17, and
+two by the gate, the turn and the fault report, which is the two-initiator
+channel carrying both directions as of the token workflow's gate act. **The
+egress ruling of 2026-08-07 gave the gate a second seam toward the world**, the
+agent-opened socket for registered applications, and no exchange of this seam
+reaches it in this pass: the internal tool executes inside the gate and the
+egress socket waits on a registered application to address.
 
 **Raise the hook.** Opened by the harness, last in the enter fan-out, carrying the
 gate instruction admin supplied in the enter directive, uninterpreted by the harness.
@@ -178,6 +189,20 @@ response above all, is that exchange's own account instead. The harness
 authors what it is handed as the `fault` event, per the fault-carrier
 ruling, and answers received, promising authorship and nothing else.
 
+**Execute a tool.** Opened by the harness, one exchange per call the model's
+emission recovered, valid only inside the raised window like the turn. The
+harness supplies the call, the tool's name and its arguments as the family
+parse recovered them, and interprets nothing. The gate resolves the name
+against the tools it holds, executes per its charter's mechanism, and answers
+with the result, or with the tool's own failure as content rather than as a
+channel fault, per the layer split every seam of this program runs. A name
+the gate does not hold is a refused call naming the tool, never a nearest
+match, the registry discipline of the family table applied one organ over.
+**The result crosses this seam exactly once and nothing else mints it**,
+which is the half of the loop closure this contract carries: the harness's
+granted tool-result value is constructed at this exchange's completion and
+nowhere else, per `weaver-harness-Spec` section 6.
+
 **The instruction crosses once, in the raise.** It is not re-sent, revoked, or
 replaced. A gate that needs an instruction it was not given has a failed raise rather
 than a second request to make.
@@ -200,8 +225,8 @@ that exchange.
 - Lower is last, happens at most once, and is terminal on the channel.
 - A lower with no completed raise before it is refused and is not queued, because
   there is no listener for it to close.
-- Turn exchanges and fault reports are valid only between a completed raise
-  and a lower, the window being the raised hook.
+- Turn exchanges, tool executions, and fault reports are valid only between a
+  completed raise and a lower, the window being the raised hook.
 - More than one turn exchange may be open at once, the harness serving them
   one at a time in arrival order, per section 2.
 - Messages within one exchange are ordered.
@@ -220,7 +245,8 @@ exchange payload change is a supplies change by construction, and a Spec writer 
 this list.
 
 **The harness supplies** the gate instruction it was handed in the enter directive,
-and the directive to lower.
+the directive to lower, and, per call, the tool execution's name and arguments
+as the family parse recovered them, uninterpreted.
 
 **The harness guarantees** that the instruction it sends is the instruction admin
 sent it, unaltered and uninterpreted. It guarantees that it opens no exchange this
@@ -335,6 +361,27 @@ carried. The operator writes it, admin validates it, the harness carries it, the
 resolves it.
 
 `lifecycle-refusal` is drawn rather than twinned, per section 5.
+
+`tool-name` is drawn as of the tool workflow's opening act: the execution
+exchange carries it, and it is the same definition the family parse mints
+from an emission, so the name that crosses is the name the model spoke.
+
+**Drawn from `weaver-traits`:** `tool-trait`, as of the same act. The block's
+own ground inverted under the ratified loop boundary: tool dispatch now
+crosses a seam, this one, so the clause that could not draw the definition
+while no seam crossed it is the clause that draws it now. The trait is the
+gate's executor surface and the contract names it without shaping it, the
+shape being `weaver-traits-Spec` section 5's.
+
+```graph
+edge: draws
+from: weaver-harness-gate-contract
+to: tool-name
+
+edge: draws
+from: weaver-harness-gate-contract
+to: tool-trait
+```
 
 **This seam draws loop 0's trio and owes the floor nothing, per the naming ruling
 of 2026-08-01.** Wire vocabulary is named for the loop whose traffic it carries,
