@@ -36,11 +36,15 @@ artifact's header declares `general.architecture`. `family::select` filters
 - **One entry** - that entry, and **nothing is rendered**. This is the path
   every family took before #178 and it is still the common path.
 - **Several entries** - the architecture is *contested*, and the artifact's own
-  `tokenizer.chat_template` decides. A frozen three-turn probe conversation is
-  rendered through the template, and the entry whose `selecting_markers` all
-  appear in the output wins. No template refuses `TemplateAbsent`; a template
-  the renderer cannot handle refuses `TemplateUnrecognised`; no match refuses
-  `MarkersMatchNoEntry`; more than one refuses `MarkersAmbiguous`.
+  `tokenizer.chat_template` decides. **The template is required before anything
+  is rendered:** an artifact declaring none refuses `TemplateAbsent` at that
+  point. Otherwise a frozen three-turn probe conversation is rendered through
+  the template, and the entry whose `selecting_markers` all appear in the
+  output wins. A derivation that produces no rendering refuses
+  `TemplateUnrecognised` - chiefly the detector not recognising the template,
+  and also a build carrying no backend to detect with. An output matching no
+  entry refuses `MarkersMatchNoEntry`; one matching more than one refuses
+  `MarkersAmbiguous`.
 
 Once an entry is selected, its `renderer` renders: `render_identity` for the
 session prefix, the shared `render_each` per turn, then the entry's
