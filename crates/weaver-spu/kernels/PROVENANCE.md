@@ -52,26 +52,57 @@ This is recorded rather than fixed because the script crosses verbatim, per the
 ruling of 2026-08-02. Changing the default would be an edit to a carried file,
 and the fact belongs with the carry either way.
 
-**The `gguf` feature's build script races against its own hard links.** The
-fork's `llama-cpp-sys-2` hard-links `libllama.so` and `libggml-*.so` into
-siblings of the profile dir, and a re-run meeting a survivor dies with
-`EEXIST` at its `build.rs:1110`. The archived tree records the same bug against
-the same crate. The sweep, run from the repo root before retrying:
+**The `gguf` feature's build script dies `EEXIST` on its own dangling
+symlinks, and it is not a race.** Corrected 2026-08-16; this section previously
+called it one and prescribed a sweep written before the mechanism was known.
 
-    find target/debug -maxdepth 1 \
-      \( -name 'libllama.so*' -o -name 'libggml*.so*' \) -delete
-    find target/debug \( -path '*/examples/libllama.so*' \
-      -o -path '*/examples/libggml*.so*' \
-      -o -path '*/deps/libllama.so*' -o -path '*/deps/libggml*.so*' \) -delete
+The fork's `llama-cpp-sys-2` hard-links `libllama.so` and `libggml-*.so` into
+three directories under the profile, the root and its `examples` and `deps`,
+guarding each with `if !dst.exists()`. **`exists` follows a symlink and
+`hard_link` does not.** A `libllama.so -> libllama.so.0` whose target is gone
+therefore reads absent to the guard and present to the link, and the unwrap at
+`build.rs:1110` panics with `Os { code: 17, kind: AlreadyExists }`. The lines
+wander between 1110, 1118 and 1126 because there are three directories.
 
-The sweep names only the two libraries the race hard-links, so it cannot take
-an unrelated shared object with it, and it names `target/debug`: a release
-build, or a run with `CARGO_TARGET_DIR` set, puts the survivors elsewhere and
-needs the same sweep against that directory.
+**`cargo clean -p llama-cpp-sys-2` is not the cure and creates the
+condition:** it removes the `.so.0` files and leaves the `.so` symlinks it does
+not own. So does anything else that drops the versioned files while the links
+survive, which is why **it recurs whenever the feature set changes** - those
+directories are shared across feature configurations while the build directory
+is not. Observed 2026-08-16 moving from `--features gguf` to
+`--all-features`, and again when clippy re-ran the script.
 
-A build-script bug in the pinned revision, not a code fact, hit twice in this
-workshop on 2026-08-07: once on the first full build and once when clippy
-re-ran the script.
+The sweep, from the repo root, all three directories in one act:
+
+    T=${CARGO_TARGET_DIR:-target}/debug
+    rm -f $T/lib{llama,ggml}*.so* \
+          $T/examples/lib{llama,ggml}*.so* \
+          $T/deps/lib{llama,ggml}*.so*
+
+Clearing one directory at a time lets a partial pass repopulate it before the
+next panic, which reads as the same failure moving between lines. The sweep
+names only the two libraries the build script hard-links, so it cannot take an
+unrelated shared object with it, and it honours `CARGO_TARGET_DIR`; a release
+build puts the survivors under `release` and needs the same sweep there.
+
+**CUDA 13.3 does not compile the pinned llama.cpp, and one flag gets past
+it.** `ggml/src/ggml-cuda/argsort.cu:48` calls `cuda::make_strided_iterator`
+and `cuda::make_counting_iterator` behind a guard reading
+`CCCL_MAJOR_VERSION >= 3 && CCCL_MINOR_VERSION >= 1`. The toolkit's CCCL
+satisfies the guard and does not put those names in scope from `<cub/cub.cuh>`
+alone, so the file fails to compile. The header exists, at
+`/opt/cuda/include/cccl/cuda/iterator`, and nvcc will force-include it:
+
+    NVCC_APPEND_FLAGS="-include cuda/iterator" \
+      cargo build -p weaver-spu --features gguf
+
+Verified 2026-08-16 on CUDA 13.3.73. **The flag reaches every nvcc
+invocation**, including the plain `-E` probes `cc` uses to detect the compiler
+family for this crate's own kernels, which then report a detection failure and
+build anyway. Confine it to the runs that need it rather than exporting it.
+This is an incompatibility between the pinned revision and a newer toolkit, not
+a code fact, and it is recorded rather than fixed for the reason the
+`CUDA_PATH` default is.
 
 The four `-gencode` lines are `sm_86` (A6000, Ampere), `sm_89` (RTX Ada),
 `sm_120` (RTX PRO Blackwell, needing CUDA >= 12.8), and a `compute_86` PTX
