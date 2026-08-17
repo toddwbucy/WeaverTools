@@ -5,6 +5,11 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-17, the gate instruction's draw is closed. The route act
+named the gap and did not close it, its extent being the election's route, so
+section 8's clause read as complete while a payload term crossed it unnamed.
+Section 8 draws `gate-instruction`, and `weaver-types-PRD` section 2.1's count
+of the contracts drawing it moves from two to three. Owed by #105.
 **Revised:** 2026-08-10, the route act. The enter directive carries the SPU
 instruction rather than the bare model binding, per `weaver-types-Spec`
 section 2, so the readout election the SPU judges at admit crosses this seam
@@ -377,8 +382,8 @@ the exchanges above are the whole of what either learns.
 **Drawn from `weaver-types`:** `organ-envelope`, `lifecycle-directive`,
 `lifecycle-answer`, `lifecycle-refusal`, `peer-identity` as of the inversion
 ruling of 2026-08-05, because the identity the harness reads at every accept is
-the floor's, and `model-binding` and `residual-readout-election` as of the
-route act of 2026-08-10.
+the floor's, `model-binding` and `residual-readout-election` as of the
+route act of 2026-08-10, and `gate-instruction` as of 2026-08-17.
 
 ```graph
 edge: draws
@@ -412,9 +417,18 @@ crosses this seam first or crosses nowhere. Both are fields of the agent's
 configuration, defined at `weaver-types-PRD` section 2.1, and both cross inside
 `spu-instruction`, the section `weaver-types-Spec` section 2 shapes. The
 section is representation rather than a term of its own, so the draws name the
-definitions and not the grouping. The gate instruction crosses inside the same
-directive with the same gap, named here as owed rather than closed, because its
-draw reaches documents this act does not open.
+definitions and not the grouping.
+
+**`gate-instruction` is drawn as of 2026-08-17, and the route act named it
+owed.** It crosses inside the same directive as the two above and had the same
+gap: the enter directive has carried it since the fan-out was drawn, per
+sections 3 and 5, and a payload term the clause never names leaves the interface short
+of the completeness apex section 5.3 demands. The argument is the election's,
+one seat over: admin holds no channel to the gate, so the instruction that
+names the seams the gate holds crosses this seam first or crosses nowhere, and
+the harness carries it to the gate spawn. The definition is
+`weaver-types-PRD` section 2.1's, and this contract is the third to draw it,
+after the two gate seams that consume it.
 
 ```graph
 edge: draws
@@ -424,6 +438,10 @@ to: model-binding
 edge: draws
 from: weaver-admin-harness-contract
 to: residual-readout-election
+
+edge: draws
+from: weaver-admin-harness-contract
+to: gate-instruction
 ```
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer

@@ -6,6 +6,10 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-17. The count of contracts drawing `gate-instruction`
+moves from two to three: `weaver-admin-harness-contract` closes the draw the
+route act named as owed, the enter directive having carried the instruction
+since the fan-out was drawn. Owed by #105, and no definition moves.
 **Revised:** 2026-08-10. `residual-readout-election` moves from the fields read
 from the artifact to the fields a contract draws, and is drawn by
 `weaver-harness-spu-contract` and `weaver-admin-harness-contract` both. The
@@ -230,7 +234,9 @@ something to point at.
 **Which fields a contract draws, and why the rest are internal rather than owed.** Three
 are drawn: `model-binding` and `residual-readout-election` by
 `weaver-harness-spu-contract` and by `weaver-admin-harness-contract`, and
-`gate-instruction` by its two contracts. The other three are read from the artifact
+`gate-instruction` by its three, `weaver-admin-harness-contract` joining the
+two gate seams as of 2026-08-17, the seam it crosses first joining the seams
+that consume it. The other three are read from the artifact
 rather than across a seam, which `weaver-admin-PRD` section 3 distinguishes in its own
 words, a field read out of a file and a definition drawn by a contract being answerable
 to different checks. `trace-sink` is consumed by admin at load, demanded into this
