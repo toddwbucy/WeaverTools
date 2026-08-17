@@ -4,6 +4,19 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, second of that date, the render is a detector rather
+than an evaluator. The clause landed that morning said a canonical conversation
+is rendered through the artifact's own template, and the dependency does not do
+that: `llama_chat_apply_template` substring-matches the template against a
+table of families it carries and emits its own rendering of the one it settles
+on, saying in its own source that it is not a jinja parser. The derivation
+stands, because Phi-4-mini renders its markers through that path, measured. Two
+consequences the wrong mechanism hid now stand in the text. The render is
+reached only where an architecture is contested, because gemma4's template is
+one the detector does not recognise and an unconditional render would refuse a
+family this binary already serves. And mis-detection is named as the residual
+risk, bounded by the rendering choosing among entries that already agree with
+the artifact about its architecture rather than admitting one on its own.
 **Revised:** 2026-08-17, a family is an architecture and a template together.
 `general.architecture` does not determine a chat format and three artifacts
 declaring `llama` on this workshop render three, so the key widens from one
@@ -1041,8 +1054,8 @@ ever is reached, because a table this crate cannot read unambiguously is one it
 must not read by position. The two are belt and braces on purpose: order decides
 nothing at either.
 
-**The artifact's marker set is derived by rendering its template, not by
-reading it.** A template is a program and a marker it emits need not appear in
+**The artifact's marker set is derived by rendering, not by reading the
+template text.** A template is a program and a marker it emits need not appear in
 its source: Phi-4-mini builds one as `'<|' + message['role'] + '|>'`, so
 `<|user|>` and `<|system|>` exist only after the program runs while
 `<|assistant|>` and `<|end|>` sit there literally. Measured 2026-08-17 over a
@@ -1051,13 +1064,45 @@ finds two markers of four and refuses a model that renders exactly what a
 carried entry renders, which is a false refusal naming the architecture as
 though the family were uncarried.
 
-So a canonical conversation is rendered through the artifact's own template and
-the entry's markers are matched against the **output**.
+So a canonical conversation is rendered and the entry's markers are matched
+against the **output**.
+
+**What renders it is a detector, not an evaluator, and the difference is
+load-bearing.** `llama_chat_apply_template` does not evaluate the artifact's
+template. It matches the template text against a table of template families it
+carries, by substring, first match winning, and then emits its own rendering of
+the family it settled on. The upstream source says so in terms: it uses
+heuristic checks and it is not a jinja parser. So the derivation is not the
+artifact's program run to completion, and a clause claiming that would rest on
+a mechanism the dependency does not implement.
+
+**It nonetheless answers the case that motivated it, and that is measured
+rather than reasoned.** Phi-4-mini renders `<|system|>`, `<|user|>`, `<|end|>`
+and `<|assistant|>` through this path, where its template source carries only
+the second pair. The markers arrive because the detector recognised the family
+and knows what that family emits, which is a different reason from the one the
+finding proposed and the same answer.
+
+**It fails closed on a template it does not recognise, and one family this
+binary already carries is such a template.** Gemma4 returns an error rather
+than a rendering, measured 2026-08-17 against the artifact this workshop holds.
+An unconditional render would therefore refuse a family the registry serves
+today, which is why the render is reached only where an architecture is
+contested. An architecture carrying one entry selects on the architecture and
+renders nothing, so the artifacts that fail the detector never meet it.
+
+**The residual risk is mis-detection and it is bounded by where the answer is
+used.** A first-match heuristic can settle on the wrong family, and this crate
+cannot audit that judgment. What keeps it from becoming a silent substitution
+is that the rendering never admits an artifact on its own: it chooses among
+entries that already agree with the artifact about its architecture. A wrong
+detection can pick the wrong sibling of a family the artifact truly belongs to,
+and it cannot reach a family the artifact never declared.
 
 **The render depends on the template text and nothing else, so the refusal
-lands before any weight is read.** `llama_chat_apply_template` takes the
-template, the messages, and a buffer, and no model handle reaches it, which is
-what lets this run on the string the header already yielded. The safe wrapper
+lands before any weight is read.** The call takes the template, the messages,
+and a buffer, and no model handle reaches it, which is what lets this run on
+the string the header already yielded. The safe wrapper
 `LlamaModel::apply_chat_template` requires a `&self` it does not pass down, so
 taking that path would order a weight load ahead of a refusal this crate can
 reach without one. The election is the lower call, and the reason is admission
