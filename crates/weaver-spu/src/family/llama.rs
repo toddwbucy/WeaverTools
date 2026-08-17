@@ -110,10 +110,6 @@ impl Family for Llama {
         STOP
     }
 
-    fn permits_truncation(&self) -> bool {
-        true
-    }
-
     fn declaration(&self) -> &'static Declaration {
         lookup(&FamilyName("llama".into())).expect("the registry carries llama")
     }

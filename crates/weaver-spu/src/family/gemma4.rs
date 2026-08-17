@@ -183,10 +183,6 @@ impl Family for Gemma4 {
         STOP
     }
 
-    fn permits_truncation(&self) -> bool {
-        true
-    }
-
     fn declaration(&self) -> &'static Declaration {
         lookup(&FamilyName("gemma4".into())).expect("the registry carries gemma4")
     }

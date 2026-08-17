@@ -113,10 +113,6 @@ impl Family for GptOss {
         STOP
     }
 
-    fn permits_truncation(&self) -> bool {
-        true
-    }
-
     fn declaration(&self) -> &'static Declaration {
         lookup(&FamilyName("gpt-oss".into())).expect("the registry carries gpt-oss")
     }
