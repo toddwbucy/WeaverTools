@@ -80,14 +80,18 @@
 //! }
 //! ```
 //!
-//! No tool trait exists yet (`traits-tool-no-safety-classification`, today's half):
-//! the trait is blocked per `weaver-traits-Spec` section 5, so the strongest pin
-//! available is that nothing answers to the name. When the tool workflow charters
-//! the trait, this pin retires and the no-safety-classification compile-fail takes
-//! its place against the real item.
+//! The tool trait carries no safety classification
+//! (`traits-tool-no-safety-classification`), per `weaver-traits-PRD` section
+//! 3.1, which the tool workflow's chartering did not weaken. The previous
+//! form of this pin asserted that nothing answered to the trait's name while
+//! it was blocked, and promised this replacement when the workflow chartered
+//! it: the flagship judgment method of the prior tree must not exist, and
+//! the pin fires the day someone adds one.
 //!
 //! ```compile_fail
-//! use weaver_traits::Tool;
+//! fn judged(tool: &dyn weaver_traits::Tool) {
+//!     let _ = tool.invocation_properties("input");
+//! }
 //! ```
 
 mod message;
@@ -96,4 +100,5 @@ mod provider;
 mod tool;
 
 pub use message::{ContentBlock, Message, Role, ToolCall, ToolResultBlock};
+pub use tool::{Tool, ToolFailure};
 pub use permission::PermissionMode;

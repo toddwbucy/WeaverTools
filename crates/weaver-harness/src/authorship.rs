@@ -93,7 +93,18 @@ impl Author {
         let kind = match message.role {
             Role::User => Kind::MessageUser,
             Role::Assistant => Kind::MessageAssistant,
-            Role::ToolResult => Kind::MessageToolResult,
+            // **The tool-result door is the grant's and never this one**, per
+            // `weaver-harness-Spec` section 6: a message this door authored
+            // from a supplied block would be a fabricated result entering the
+            // record, so the role refuses here and `author_tool_result` is
+            // the one door, taking the granted value the gate exchange
+            // constructed.
+            Role::ToolResult => {
+                return Err(UnlicensedMessage {
+                    role: "tool_result",
+                    block: "granted-door-only",
+                });
+            }
             // The role set grows with the conversation model, and a role this
             // crate cannot map to an event kind is not authorable.
             _ => {
@@ -118,6 +129,31 @@ impl Author {
             Some(turn),
             Some(Payload::Message(payload)),
         ))
+    }
+
+    /// Authors a tool-result message from the granted value, the one door
+    /// for the role, per `weaver-harness-Spec` section 6: the record is
+    /// minted from the grant at this site and nowhere else, so what enters
+    /// the conversation as a tool result is what crossed the gate exchange.
+    pub fn author_tool_result(
+        &self,
+        recorder: &mut Recorder,
+        grant: &crate::tools::ToolResult,
+        turn: &TurnKey,
+    ) -> Result<Sequence, Failure> {
+        let message = Message {
+            role: Role::ToolResult,
+            content: vec![weaver_traits::ContentBlock::ToolResult(grant.block())],
+        };
+        let rendered = serde_json::to_string(&message).expect("a grant's record renders");
+        let payload = raw_payload(&rendered).expect("a grant's record splices");
+        self.author(
+            recorder,
+            Kind::MessageToolResult,
+            Subsystem::Harness,
+            Some(turn),
+            Some(Payload::Message(payload)),
+        )
     }
 
     /// Authors the `fault` event a reported condition becomes. The payload is

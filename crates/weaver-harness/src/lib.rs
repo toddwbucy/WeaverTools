@@ -113,6 +113,7 @@ pub use channel::{
     bind_coordination, place_child_ends,
 };
 pub use engine::{Ports, TurnError, TurnOutcome};
+pub use tools::ToolResult;
 pub use failure::{AdoptionFault, ChannelFault, Outcome, UnlicensedMessage};
 pub use lifecycle::{Harness, OrganBinaries, OrganParameters};
 pub use spawn::fork_organ;

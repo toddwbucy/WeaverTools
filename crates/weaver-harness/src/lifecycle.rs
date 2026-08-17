@@ -228,6 +228,10 @@ struct Run {
     /// the gate's counters are separate and neither is hardcoded.
     spu_ordinal: u64,
     gate_ordinal: u64,
+    /// Envelopes that arrived on the gate channel while a tool execution was
+    /// awaited: a client's frame crossing mid-execution is held here by the
+    /// turn and served after it, per the one-turn discipline.
+    held_frames: Vec<weaver_types::OrganEnvelope>,
     /// The turn counter loop 0 mints turn keys from, per the gate contract's
     /// rule that the turn does not exist until the harness opens it.
     turn_ordinal: u64,
@@ -607,6 +611,11 @@ impl Harness {
                         // turn against it.
                         return Err(ChannelFault::Undecodable);
                     };
+                    let gate_port = run.gate.as_ref().map(|gate| crate::engine::GatePort {
+                        channel: &gate.channel,
+                        ordinal: &mut run.gate_ordinal,
+                        held: &mut run.held_frames,
+                    });
                     let mut ports = crate::engine::Ports::grant(
                         &spu.decode,
                         &run.author,
@@ -615,6 +624,7 @@ impl Harness {
                         Some(prompt),
                         &self.coordination,
                         Some(pending),
+                        gate_port,
                     );
                     match entry(&mut ports, &text) {
                         // A turn the operator's stop aborted answers the
@@ -664,7 +674,47 @@ impl Harness {
             payload: weaver_types::Payload::Frame(weaver_types::TurnFrame::carry(
                 response.as_bytes(),
             )),
-        })
+        })?;
+
+        // **The frames the turn held are served now, in arrival order.** A
+        // client that spoke while an execution was awaited was neither
+        // dropped nor answered out of order: its envelope waited on the
+        // run's shelf and is served here as if just received, the one-turn
+        // discipline preserved across the executions inside a turn.
+        loop {
+            let held = {
+                let ChannelState::Entered(run) = &mut self.state else {
+                    return Ok(());
+                };
+                if run.held_frames.is_empty() {
+                    return Ok(());
+                }
+                run.held_frames.remove(0)
+            };
+            match held.payload {
+                weaver_types::Payload::Frame(frame) => {
+                    self.serve_frame(held.exchange, frame, identity, tool_schemas, entry, pending)?;
+                }
+                weaver_types::Payload::Fault(report) => {
+                    let ChannelState::Entered(run) = &mut self.state else {
+                        return Ok(());
+                    };
+                    let rendered =
+                        serde_json::to_string(&report).unwrap_or_else(|_| "{}".to_string());
+                    let turn = run.turn_in_flight.clone();
+                    let _ = run.author.author_fault(
+                        &mut run.recorder,
+                        Subsystem::Gate,
+                        turn.as_ref(),
+                        &rendered,
+                    );
+                }
+                // Nothing else is the gate's to open, and an answer with no
+                // exchange awaiting it correlates to nothing: dropped as the
+                // protocol noise it is rather than faulting the run.
+                _ => {}
+            }
+        }
     }
 
     /// Unwinds a standing run, for a path that ends service without a leave.
@@ -810,6 +860,7 @@ impl Harness {
             turn_in_flight: None,
             spu_ordinal: 0,
             gate_ordinal: 0,
+            held_frames: Vec::new(),
             turn_ordinal: 0,
         };
 
@@ -902,11 +953,11 @@ impl Harness {
             Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
         };
         // SAFETY: as above.
-        let gate_pid = match unsafe { crate::spawn::fork_organ(&self.organs.gate, &[&gate_child], &[]) }
-        {
-            Ok(pid) => pid,
-            Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
-        };
+        let gate_pid =
+            match unsafe { crate::spawn::fork_organ(&self.organs.gate, &[&gate_child], &[]) } {
+                Ok(pid) => pid,
+                Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
+            };
         drop(gate_child);
         run.gate_ordinal += 1;
         if let Err(refusal) = exchange(
@@ -995,7 +1046,10 @@ impl Harness {
                     Some(prompt),
                     &self.coordination,
                     // A seat granted outside the serve loop streams without
-                    // the ear, the verb slot being the loop's own.
+                    // the ear, the verb slot being the loop's own, and
+                    // executes no tools: the dev boundary's seat reasons and
+                    // the serve loop's seat reaches the world.
+                    None,
                     None,
                 ))
             }
@@ -1315,6 +1369,7 @@ mod tests {
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
                 spu_ordinal: 0,
                 gate_ordinal: 0,
+                held_frames: Vec::new(),
                 turn_ordinal: 0,
             },
             near,
@@ -1392,7 +1447,7 @@ mod tests {
                     },
                     residual_readout_election: false,
                     identity: Vec::new(),
-                        tunable_values: Default::default(),
+                    tunable_values: Default::default(),
                 },
             },
             gate_instruction: weaver_types::GateInstruction {
@@ -1757,6 +1812,7 @@ mod tests {
             )
             .unwrap();
             let answer = weaver_types::TokenAnswer::Generated(weaver_types::Generation {
+                content: vec![],
                 emission: "one word".into(),
                 finish: weaver_types::Finish::Completed,
                 request,

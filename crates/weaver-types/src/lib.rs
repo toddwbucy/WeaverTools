@@ -97,5 +97,5 @@ pub use wire::{
     AgentName, AgentState, AgentSummary, EnterPayload, ExchangeId, FaultReport, Finish, Generation,
     LifecycleAnswer, LifecycleDirective, LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener,
     OrganEnvelope, Payload, Position, RefusingOrgan, RunId, SessionId, TokenAnswer, TokenDirective,
-    TokenRefusal, TurnFrame, TurnKey,
+    TokenRefusal, ToolExecution, ToolOutcome, TurnFrame, TurnKey,
 };

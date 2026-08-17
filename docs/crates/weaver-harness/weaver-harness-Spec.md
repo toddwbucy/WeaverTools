@@ -1441,6 +1441,16 @@ tool-result turns in that same order, so the conversation's ordering is the
 emission's and the channel's exchange identity is the only correlation the
 wire needs. A turn whose emission carries no call opens none.
 
+```graph
+node: harness-tool-result-granted-not-minted
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-harness
+to: harness-tool-result-granted-not-minted
+```
+
 **`src/engine.rs` is loop 1's seat, and the seam it composes across is this
 crate's public surface.** The loop itself is the builder's, per the charter's
 rescope of 2026-08-02: written at the worker composition root, compiled into

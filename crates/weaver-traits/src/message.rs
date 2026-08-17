@@ -57,17 +57,27 @@ pub enum ContentBlock {
     ToolResult(ToolResultBlock),
 }
 
-/// The conversation's view of a tool invocation.
-///
-/// Named here and shaped with the tool workflow, per `weaver-traits-Spec`
-/// section 3: the field list follows the tool protocol that section 5 holds
-/// blocked, so this declaration is placement and carriage, not an election.
+/// The conversation's view of a tool invocation, shaped with the tool
+/// workflow's opening act per `weaver-traits-Spec` section 3: the name and
+/// arguments exactly as the family parse recovered them from the emission, so
+/// the record holds what the model spoke. The name is a primitive for section
+/// 5's cycle reason - this crate is the floor-link `weaver-types` names, so
+/// no type of that crate can appear here.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ToolCall {}
+pub struct ToolCall {
+    pub name: String,
+    pub arguments: String,
+}
 
-/// The conversation's view of a tool result's content.
+/// The conversation's view of a tool result's content, shaped with the tool
+/// workflow's opening act: what a family renders into the tool-result turn.
 ///
-/// Named here and shaped with the tool workflow, per `weaver-traits-Spec`
-/// section 3, on the same deferral as [`ToolCall`].
+/// **A record and not a grant.** This block deserializes wherever the
+/// conversation crosses a seam, the decode seam above all, and what it grants
+/// is nothing: the capability to author a tool-result message is the
+/// harness's granted value, constructed at the execution exchange's
+/// completion alone, per `weaver-harness-Spec` section 6.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ToolResultBlock {}
+pub struct ToolResultBlock {
+    pub content: String,
+}

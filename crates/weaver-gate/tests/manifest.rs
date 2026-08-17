@@ -93,29 +93,37 @@ fn no_organ_is_in_the_resolved_tree() {
     }
 }
 
-/// **No direct `weaver-traits` line exists**, matching the charter's
-/// floor-link set: nothing here draws a trait by name, so nothing declares one.
+/// **The internal dependency set is exactly the two floor crates**, per Spec
+/// section 1 as revised by the tool workflow's opening act: `weaver-types`
+/// for the wire, and `weaver-traits` for the tool contract this crate
+/// executes. This test pinned the absence of a traits line until that act,
+/// and the act that made the trait's executor live is the act that turned
+/// the pin around - the set is now closed at two, so a third internal
+/// dependency fails here the way the traits line itself used to.
 ///
-/// Perturbation: add a `weaver-traits` line to the dependency section and this
-/// test fails. Watched under exactly that addition.
+/// Perturbation: add any other `weaver-*` line to the dependency section and
+/// this fails naming it. Watched under the traits line's own addition, which
+/// this test refused until the Spec authorized it.
 #[test]
-fn the_direct_dependency_set_carries_no_traits_line() {
+fn the_internal_dependency_set_is_the_two_floor_crates() {
     // Structural first: the resolved direct set, which catches a renamed or
     // table-form declaration a text scan reads straight past.
     let direct = crate_names(&resolved_tree("normal", Some("1")));
-    assert!(
-        !direct.iter().any(|n| n == "weaver-traits"),
-        "weaver-traits is a direct dependency, and the floor-link set is \
-         weaver-types alone: found {direct:?}"
+    let internal: Vec<&String> = direct
+        .iter()
+        .filter(|n| n.starts_with("weaver-") && *n != "weaver-gate")
+        .collect();
+    assert_eq!(
+        internal.len(),
+        2,
+        "the internal set is weaver-types and weaver-traits, exactly: found {internal:?}"
     );
-    // And textually, because the manifest is what a reader edits.
-    let manifest = manifest();
-    assert!(
-        !manifest
-            .lines()
-            .any(|l| l.trim_start().starts_with("weaver-traits")),
-        "the manifest declares a weaver-traits line"
-    );
+    for required in ["weaver-types", "weaver-traits"] {
+        assert!(
+            internal.iter().any(|n| *n == required),
+            "{required} is not a direct dependency: found {internal:?}"
+        );
+    }
 }
 
 /// **`weaver-types` is taken without its `config` feature.** This crate reads

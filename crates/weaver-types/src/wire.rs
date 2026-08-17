@@ -21,7 +21,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{FieldName, GateInstruction, SpuInstruction};
+use crate::config::{FieldName, GateInstruction, SpuInstruction, ToolName};
 
 /// The receiver's buffer bound: a message exceeding it sets the truncation flag
 /// and is treated as a channel fault rather than a message, because a silently
@@ -94,6 +94,40 @@ pub enum Payload {
     Refusal(LifecycleRefusal),
     Frame(TurnFrame),
     Fault(FaultReport),
+    /// The execution exchange's ask, harness-opened per recovered call, as of
+    /// the tool workflow's opening act: the enum's own rule, a later loop's
+    /// vocabulary entering in the act that charters that loop.
+    Tool(ToolExecution),
+    /// The execution exchange's answer, closing it, one of the three contents
+    /// `weaver-harness-gate-contract` section 2 names.
+    ToolAnswer(ToolOutcome),
+}
+
+/// One tool call as it crosses the gate seam: the name and arguments exactly
+/// as the family parse recovered them from the emission, uninterpreted by
+/// the harness that carries them, per `weaver-harness-gate-contract`
+/// section 2.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ToolExecution {
+    pub name: ToolName,
+    pub arguments: String,
+}
+
+/// The three contents an execution's answer carries, every one of them
+/// content rather than a channel fault, because each is a fact the model
+/// must learn: a tool that does not exist is an answer the next turn
+/// reasons over, not a hole in the conversation.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "outcome", rename_all = "snake_case")]
+pub enum ToolOutcome {
+    /// The tool ran and this is what it returned.
+    Result { content: String },
+    /// The tool ran and failed, in its own words, per the trait's
+    /// `ToolFailure`.
+    Failure { detail: String },
+    /// The gate holds no tool of this name. Never a nearest match, the
+    /// family registry's discipline one organ over.
+    Unheld { name: ToolName },
 }
 
 /// The organs that refuse inside a fan-out: only the SPU and the gate. Admin
@@ -493,6 +527,15 @@ pub enum TokenRefusal {
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
+    /// The canonical parse of the emission, the family module's bridge from
+    /// the verbatim to the conversation's blocks, as of the tool workflow's
+    /// opening act: text as text and every recovered call as a `ToolCall`
+    /// block, in emission order. Family knowledge stays in the family module
+    /// and the canonical form is what crosses, so the harness dispatches
+    /// calls it never parsed for. A fragment that opened a call and could
+    /// not be recovered is reported by the SPU on its operator channel and
+    /// is deliberately not here: a failed call must not arrive as prose.
+    pub content: Vec<weaver_traits::ContentBlock>,
     /// The model.request content the SPU rendered whole, the rendered prompt
     /// with its template and effective sampling, spliced into the request
     /// event's box, per `weaver-types-Spec` section 4.4 as of the custody act.

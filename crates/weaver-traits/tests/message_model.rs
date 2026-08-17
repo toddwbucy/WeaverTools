@@ -23,7 +23,7 @@ fn message_round_trips_unchanged() {
             ContentBlock::Text {
                 text: "running the calculator".into(),
             },
-            ContentBlock::ToolCall(ToolCall {}),
+            ContentBlock::ToolCall(ToolCall { name: "calculator".into(), arguments: "{}".into() }),
         ],
     };
     let json = serde_json::to_string(&msg).expect("serializes");
