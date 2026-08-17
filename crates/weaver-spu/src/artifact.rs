@@ -30,6 +30,14 @@ pub struct ArtifactHeader {
     pub hidden_size: Option<u64>,
     /// The layer count, where the header declares one.
     pub layer_count: Option<u64>,
+    /// **The chat template the artifact's builder trained it on**, where the
+    /// header declares one, per Spec section 5.
+    ///
+    /// Read but not parsed here. It selects among registry entries sharing an
+    /// architecture, and the selection renders it rather than reading it,
+    /// because a template is a program and a marker it emits need not appear
+    /// in its source.
+    pub chat_template: Option<String>,
 }
 
 /// The two containers this crate reads, which are peers rather than a default
@@ -203,6 +211,7 @@ fn read_gguf_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Lifecycle
     let mut family = None;
     let mut hidden_size = None;
     let mut layer_count = None;
+    let mut chat_template = None;
 
     for _ in 0..kv_count {
         let key = read_gguf_string(reader)?;
@@ -213,6 +222,9 @@ fn read_gguf_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Lifecycle
                 hidden_size = Some(*n);
             }
             (k, GgufValue::Number(n)) if k.ends_with(".block_count") => layer_count = Some(*n),
+            ("tokenizer.chat_template", GgufValue::Text(text)) => {
+                chat_template = Some(text.clone());
+            }
             _ => {}
         }
     }
@@ -222,6 +234,7 @@ fn read_gguf_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Lifecycle
         family: FamilyName(family.ok_or(LifecycleRefusal::ArtifactUnreadable)?),
         hidden_size,
         layer_count,
+        chat_template,
     })
 }
 
@@ -256,7 +269,15 @@ fn read_safetensors_header<R: Read>(reader: &mut R) -> Result<ArtifactHeader, Li
         layer_count: metadata
             .and_then(|m| m.get("num_hidden_layers"))
             .and_then(json_number),
-    })
+            // **A safetensors export carries no template here and this is the
+        // truthful value rather than a gap.** The format keeps the chat
+        // template in a sibling `tokenizer_config.json`, which is a second
+        // file this crate does not open, so an artifact in this container
+        // reaches the registry on its architecture alone. That is sound while
+        // no contested architecture ships in this container, and the day one
+        // does the refusal is the honest outcome rather than a pick.
+        chat_template: None,
+})
 }
 
 fn json_number(value: &serde_json::Value) -> Option<u64> {
