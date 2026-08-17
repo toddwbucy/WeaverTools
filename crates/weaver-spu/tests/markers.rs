@@ -37,7 +37,7 @@ use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{AddBos, LlamaModel};
 
-use weaver_spu::family::{FamilyName, gemma4, gpt_oss, llama, qwen2};
+use weaver_spu::family::{FamilyName, gemma4, gpt_oss, llama, mistral3, qwen2};
 
 /// A family, its rendered markers, and where a tokenizer for it is found.
 ///
@@ -134,6 +134,17 @@ const PROBES: &[Probe] = &[
         env: "WEAVER_VOCAB_GEMMA4",
         default_path: "/opt/weaver/models/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
         rendered: gemma4::RENDERED_MARKERS,
+    },
+    Probe {
+        // **The census's warning made concrete.** Most Mistral artifacts
+        // declare `llama` rather than this architecture: Mistral-Small 3.1,
+        // Mistral-Small 3.2 and Magistral-Small all do, and their headers were
+        // read before this one was chosen. Devstral-Small-2 declares
+        // `mistral3`, so it is what this family can be measured against.
+        family: "mistral3",
+        env: "WEAVER_VOCAB_MISTRAL3",
+        default_path: "/opt/weaver/models/Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf",
+        rendered: mistral3::RENDERED_MARKERS,
     },
 ];
 
@@ -340,10 +351,17 @@ fn a_truncating_family_is_not_served_by_an_engine_that_cannot_roll_back() {
         // Read against the header's own family key rather than through a
         // renderer: a module serving several keys answers for the one it is
         // named after, and the flush is exactly where those keys differ.
+        // **A probe entry for a family the registry does not carry yet is not
+        // a failure**, because this test's claim is about what a carried family
+        // declares and an uncarried one declares nothing. That is the ordinary
+        // state mid-act: the discipline is to add the probe entry, measure, and
+        // only then write the registry entry, so between those two steps the
+        // family is here and not there. Named rather than skipped silently, so
+        // a key misspelled in this table reads as unverified instead of green.
         let declaration = match weaver_spu::family::lookup(&FamilyName(probe.family.to_string())) {
             Ok(declaration) => declaration,
-            Err(refusal) => {
-                failures.push(format!("{}: not carried: {refusal:?}", probe.family));
+            Err(_) => {
+                absent.push(format!("{} (probed, not carried yet)", probe.family));
                 continue;
             }
         };

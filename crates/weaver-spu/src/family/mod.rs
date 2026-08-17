@@ -57,6 +57,7 @@ use crate::decoder::backend::FlushMechanism;
 pub mod gemma4;
 pub mod gpt_oss;
 pub mod llama;
+pub mod mistral3;
 pub mod qwen2;
 
 /// Why a family could not render a message.
@@ -546,6 +547,38 @@ pub const REGISTRY: &[Declaration] = &[
         taps_readout: false,
     },
     Declaration {
+        // **The first family that names no role**, wrapping the user's text in
+        // `[INST]` and `[/INST]` and leaving the model's bare, so the shape
+        // carries the speaker and there is nothing for a placeholder to fill.
+        // Its generation opener is empty because `[/INST]` is the assistant's
+        // turn already opened. Both are the module's to explain.
+        //
+        // Measured by the marker probe against
+        // `Devstral-Small-2-24B-Instruct-2512-Q4_K_M.gguf`: all four rendered
+        // markers promote to one token, at ids 1, 2, 3 and 4, and the lookalike
+        // control does not.
+        //
+        // **Most Mistral artifacts do not declare this architecture.**
+        // Mistral-Small 3.1, Mistral-Small 3.2 and Magistral-Small report
+        // `llama` and would resolve to that entry's llama-3 header markers,
+        // which their tokenizers do not promote. That is #88's open case and
+        // this entry does not close it: what this entry serves is the artifacts
+        // whose header says `mistral3`.
+        //
+        // The flush is by truncation: this family is absent from
+        // `llm_arch_is_hybrid` and from `llm_arch_is_recurrent`, so its
+        // attention KV rolls back by position, and `tests/markers.rs` checks
+        // that declaration against the artifact rather than trusting this
+        // comment.
+        family: "mistral3",
+        shard_widths: &[1, 2],
+        template: mistral3::TEMPLATE,
+        generation_opener: mistral3::GENERATION_OPENER,
+        renderer: mistral3::renderer,
+        flush: FlushMechanism::TruncateToPosition,
+        taps_readout: false,
+    },
+    Declaration {
         // The key is what llama.cpp writes into `general.architecture`, which
         // is hyphenated. A key spelled any other way is a family no artifact
         // header ever selects, unreachable rather than wrong-looking.
@@ -845,6 +878,65 @@ mod tests {
             rendered.starts_with("<bos><|turn>model\n"),
             "the declaration hands out gemma4's own renderer, got {rendered:?}"
         );
+    }
+
+    /// **A family can carry the speaker in the turn's shape rather than in a
+    /// word, and mistral3 is the first that does.**
+    ///
+    /// The user's text is wrapped and the model's is bare, so the two roles
+    /// render to structurally different strings from the same content. Both
+    /// halves are read, because a renderer that wrapped everything or wrapped
+    /// nothing would satisfy either assertion alone.
+    ///
+    /// Perturbation: render the assistant through the user's arm and the
+    /// second assertion fails, the model's turn arriving inside an instruction
+    /// block the model was trained to read as the user speaking.
+    #[test]
+    fn a_family_may_carry_the_role_in_the_turns_shape() {
+        let user = render_each(mistral3::renderer(), &[said(Role::User, "ping")])
+            .expect("mistral3 renders a user turn");
+        assert_eq!(user, "[INST]ping[/INST]", "the user's text is wrapped");
+
+        let assistant = render_each(mistral3::renderer(), &[said(Role::Assistant, "pong")])
+            .expect("mistral3 renders an assistant turn");
+        assert_eq!(
+            assistant, "pong</s>",
+            "the model's text is bare and closed by the turn's end"
+        );
+    }
+
+    /// **An empty generation opener is a declaration, not an omission.**
+    ///
+    /// Every other carried family appends an opener so the generation completes
+    /// the assistant's turn rather than electing a speaker. mistral3 appends
+    /// nothing because `[/INST]` already did both, and reading the two together
+    /// is what says so: the delta ends at the marker that opens the model's
+    /// turn.
+    ///
+    /// Perturbation: give the entry qwen2's opener and the second assertion
+    /// fails, a ChatML turn header landing after an instruction block.
+    #[test]
+    fn the_mistral3_delta_ends_at_the_marker_that_opens_the_model_turn() {
+        let declaration = lookup(&FamilyName("mistral3".into())).expect("mistral3 is carried");
+        let delta = render_each(mistral3::renderer(), &[said(Role::User, "ping")])
+            .expect("mistral3 renders a delta");
+
+        assert!(
+            delta.ends_with(mistral3::TURN_CLOSE),
+            "the delta closes with the marker that opens the model's turn, got {delta:?}"
+        );
+        assert_eq!(
+            declaration.generation_opener, "",
+            "so nothing is appended after it"
+        );
+
+        // And the prefix carries the preamble the turns do not repeat, the
+        // same joint gemma4 needed for a different reason.
+        let prefix = mistral3::renderer()
+            .render_identity(&[said(Role::User, "ping")])
+            .expect("mistral3 renders a prefix");
+        assert_eq!(prefix, "<s>[INST]ping[/INST]");
+        assert!(!delta.contains(mistral3::BOS), "and a delta does not");
     }
 
     #[test]
