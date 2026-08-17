@@ -6,7 +6,7 @@
 
 use weaver_types::ToolName;
 
-use super::{Declaration, Family, FamilyName, Markers, Message, Parsed, lookup};
+use super::{Declaration, Family, FamilyName, Markers, Message, Parsed, RenderRefusal, lookup};
 
 /// The header markers. Written here and nowhere else in the crate.
 pub const TEXT_BEGIN: &str = "<|begin_of_text|>";
@@ -45,6 +45,11 @@ pub const GENERATION_OPENER: &str = "<|start_header_id|>assistant<|end_header_id
 
 const STOP: &[&str] = &[TURN_END, CALL_CLOSE];
 
+/// This family's renderer, cited by its registry entry.
+pub fn renderer() -> &'static dyn Family {
+    &Llama
+}
+
 pub struct Llama;
 
 impl Llama {
@@ -75,16 +80,26 @@ impl Llama {
 }
 
 impl Family for Llama {
-    fn render_identity(&self, messages: &[Message]) -> String {
+    /// **The identity prefix opens with [`TEXT_BEGIN`] and the turns never
+    /// repeat it**, which is what a once-per-prefix preamble is. It was written
+    /// here from the first act and reached no prompt until this surface went
+    /// live, the composition root having rendered every turn off the template
+    /// constant alone.
+    fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal> {
         let mut rendered = String::from(TEXT_BEGIN);
-        for message in messages {
-            rendered.push_str(&self.render_delta(message));
-        }
-        rendered
+        rendered.push_str(&super::render_each(self, messages)?);
+        Ok(rendered)
     }
 
-    fn render_delta(&self, message: &Message) -> String {
-        super::render_template(TEMPLATE, &message.role, &message.content)
+    /// The wire role is the canonical one here, so the shared name kernel
+    /// serves. Llama 3's header carries `user`, `assistant` and `tool` under
+    /// those names.
+    fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal> {
+        Ok(super::render_template(
+            TEMPLATE,
+            super::common_role_name(&message.role)?,
+            &super::text_content(message)?,
+        ))
     }
 
     fn parse(&self, emission: &str) -> Parsed {

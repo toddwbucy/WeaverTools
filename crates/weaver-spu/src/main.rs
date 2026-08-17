@@ -29,9 +29,12 @@ use weaver_spu::decoder::backend::{DecodeFault, TokenId};
 use weaver_spu::decoder::session::{CancelPoll, Session, StopCondition, Stopped};
 use weaver_spu::family;
 use weaver_spu::readout::ReadoutElection;
-use weaver_spu::residency::{Headroom, Residency, Resident};
-use weaver_spu::sampling::{Disposition, EffectiveKnobs, EffectiveSessionParameters, KnobRefusal, Knobs, SessionParameters, TunableValues};
-use weaver_traits::{ContentBlock, Message, Role};
+use weaver_spu::residency::{Headroom, Residency, Resident, StopSet};
+use weaver_spu::sampling::{
+    Disposition, EffectiveKnobs, EffectiveSessionParameters, KnobRefusal, Knobs, SessionParameters,
+    TunableValues,
+};
+use weaver_traits::Message;
 use weaver_types::{
     ExchangeId, Finish, Generation, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, Opener,
     OrganEnvelope, Payload, Position, TokenAnswer, TokenDirective, TokenRefusal,
@@ -173,32 +176,23 @@ fn resolve_effective(supplied: &TunableValues) -> Result<Effective, KnobRefusal>
     })
 }
 
-/// Render canonical messages through the family's template, text blocks only.
-/// A block the family cannot render is the delta malformed for the family,
-/// which is the contract's own case rather than one invented here: the tool
-/// shapes are blocked with the tool workflow and the families render text
-/// today.
-fn render_messages(template: &str, messages: &[Message]) -> Result<String, TokenRefusal> {
-    let mut rendered = String::new();
-    for message in messages {
-        let role = match message.role {
-            Role::User => "user",
-            Role::Assistant => "assistant",
-            Role::ToolResult => "tool",
-            // The role set grows with the conversation model, and a role this
-            // family has no rendering for is the delta malformed for it.
-            _ => return Err(TokenRefusal::MalformedDelta),
-        };
-        let mut content = String::new();
-        for block in &message.content {
-            match block {
-                ContentBlock::Text { text } => content.push_str(text),
-                _ => return Err(TokenRefusal::MalformedDelta),
-            }
-        }
-        rendered.push_str(&family::render_template(template, role, &content));
-    }
-    Ok(rendered)
+/// Render a turn's delta through the family, text blocks only.
+///
+/// **The turns and nothing around them.** The identity prefix goes through
+/// [`family::Family::render_identity`] instead, because a family whose prefix
+/// opens with a preamble its turns do not repeat renders that there and only
+/// there. A block or a role the family cannot render is the delta malformed for
+/// the family, which is the contract's own case rather than one invented here:
+/// the tool shapes are blocked with the tool workflow and the families render
+/// text today.
+///
+/// **This function used to hold the role names and the text flattening for
+/// every family at once.** It does not, because a role's wire name is a family
+/// fact and this is the composition root: `gemma4` calls the assistant `model`,
+/// and a map living here would have taught every other family the word or
+/// grown an arm naming one, which Spec section 5's placement rule forbids.
+fn render_delta(family: &dyn family::Family, delta: &[Message]) -> Result<String, TokenRefusal> {
+    family::render_each(family, delta).map_err(TokenRefusal::from)
 }
 
 /// One frame out on the decode seam: the trio crosses as bare JSON, per
@@ -272,9 +266,17 @@ impl CancelPoll for SeamCancel<'_> {
 /// family facts every later exchange reads.
 struct OpenedSession<'r> {
     session: Session<'r>,
+    renderer: &'static dyn family::Family,
+    /// **Carried for the record and not for the render.** The measurement
+    /// names the template that rendered the prompt, and this is the string it
+    /// names. Nothing renders through it here: that is [`Self::renderer`]'s,
+    /// and a template identity worth the name is issues #88 and #129's.
     template: &'static str,
     generation_opener: &'static str,
-    terminator: TokenId,
+    /// **The family's stop conditions, promoted against this artifact.** Built
+    /// once at open, because the vocabulary cannot change under a residency and
+    /// a set rebuilt per turn would be the same answer at a per-turn cost.
+    stop: StopSet,
 }
 
 /// The measurement, rendered by this organ to the shape the trace's model
@@ -369,7 +371,15 @@ fn serve_decode(
                         return Err(());
                     }
                 };
-                let prefix_text = match render_messages(declaration.template, &messages) {
+                // The declaration cites its family's renderer, so the prefix is
+                // that family's own rendering rather than a template string
+                // this root walks. The preamble a family opens a prefix with
+                // lands here and in no delta.
+                let renderer = (declaration.renderer)();
+                let prefix_text = match renderer
+                    .render_identity(&messages)
+                    .map_err(TokenRefusal::from)
+                {
                     Ok(text) => text,
                     Err(refusal) => {
                         if send_refusal(decode, &refusal).is_err() {
@@ -378,22 +388,39 @@ fn serve_decode(
                         continue;
                     }
                 };
-                let outcome =
-                    resident
-                        .open_session(&effective.knobs, effective.session.context_capacity)
-                        .and_then(|mut session| {
-                            let prefix = resident.tokenize(&prefix_text)?;
-                            session.open(&prefix)?;
-                            let terminator = resident.terminator()?;
-                            Ok(OpenedSession {
-                                session,
-                                template: declaration.template,
-                                generation_opener: declaration.generation_opener,
-                                terminator,
-                            })
-                        });
+                let outcome = resident
+                    .open_session(&effective.knobs, effective.session.context_capacity)
+                    .and_then(|mut session| {
+                        let prefix = resident.tokenize(&prefix_text)?;
+                        session.open(&prefix)?;
+                        // The family declares its stop conditions and the
+                        // artifact's vocabulary is where they are checked, so
+                        // the set is built once here rather than assumed from
+                        // the artifact's end-of-sequence.
+                        let stop = resident.stop_set(renderer)?;
+                        Ok(OpenedSession {
+                            session,
+                            renderer,
+                            template: declaration.template,
+                            generation_opener: declaration.generation_opener,
+                            stop,
+                        })
+                    });
                 match outcome {
                     Ok(standing) => {
+                        // A declared stop the artifact cannot promote is named
+                        // on the operator's channel rather than dropped: it is
+                        // a condition this residency will never recognise, and
+                        // a run that carried it silently would report a turn
+                        // that ran to the cap as a turn that ended.
+                        if !standing.stop.unpromoted.is_empty() {
+                            eprintln!(
+                                "{}",
+                                serde_json::json!({
+                                    "stop_conditions_unpromoted": standing.stop.unpromoted,
+                                })
+                            );
+                        }
                         opened = Some(standing);
                         position = DecodePosition::AtRest;
                         if send_answer(decode, &TokenAnswer::Opened).is_err() {
@@ -417,7 +444,7 @@ fn serve_decode(
                 // the terminator the engine makes resident closes it. The
                 // identity prefix at open takes no opener: its turns are all
                 // complete.
-                let delta_text = match render_messages(standing.template, &delta) {
+                let delta_text = match render_delta(standing.renderer, &delta) {
                     Ok(mut text) => {
                         text.push_str(standing.generation_opener);
                         text
@@ -437,8 +464,8 @@ fn serve_decode(
                     }
                 };
                 let stop = StopCondition {
-                    stop_tokens: vec![standing.terminator],
-                    terminator: standing.terminator,
+                    stop_tokens: standing.stop.tokens.clone(),
+                    terminator: standing.stop.terminator,
                     max_tokens: effective.session.max_tokens_per_turn,
                 };
                 let mut cancel = SeamCancel {
@@ -661,7 +688,10 @@ fn main() -> ExitCode {
     let headroom = match headroom_from_arguments() {
         Ok(headroom) => headroom,
         Err(complaint) => {
-            eprintln!("{}", serde_json::json!({"refusal": "bad_parameter", "detail": complaint}));
+            eprintln!(
+                "{}",
+                serde_json::json!({"refusal": "bad_parameter", "detail": complaint})
+            );
             return ExitCode::FAILURE;
         }
     };
@@ -713,7 +743,13 @@ fn serve(inherited: Inherited, headroom: u64) -> ExitCode {
             }
         };
 
-        let payload = dispatch(&mut position, &mut residency, &envelope, &mut effective, headroom);
+        let payload = dispatch(
+            &mut position,
+            &mut residency,
+            &envelope,
+            &mut effective,
+            headroom,
+        );
         let admitted_now = matches!(payload, Payload::Answer(LifecycleAnswer::Admitted));
         if answer(&lifecycle, envelope.exchange, payload).is_err() {
             return ExitCode::FAILURE;
@@ -808,9 +844,7 @@ fn dispatch(
                     // invariant the artifact refusal below keeps.
                     *position = SeamPosition::AdmitRefused;
                     return Payload::Refusal(LifecycleRefusal::ConfigInvalid {
-                        field: Some(weaver_types::FieldName(format!(
-                            "tunable-values.{knob}"
-                        ))),
+                        field: Some(weaver_types::FieldName(format!("tunable-values.{knob}"))),
                     });
                 }
             };
@@ -876,6 +910,7 @@ fn dispatch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use weaver_traits::{ContentBlock, Role};
     use weaver_types::{
         AgentName, ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction,
     };
@@ -936,7 +971,7 @@ mod tests {
                 model_binding: binding(),
                 residual_readout_election: false,
                 identity: vec![],
-            tunable_values: Default::default(),
+                tunable_values: Default::default(),
             },
         }
     }
@@ -983,7 +1018,13 @@ mod tests {
             LifecycleDirective::List,
         ] {
             assert_eq!(
-                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None, HEADROOM_BYTES),
+                dispatch(
+                    &mut position,
+                    &mut residency,
+                    &directive(case.clone()),
+                    &mut None,
+                    HEADROOM_BYTES
+                ),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder),
                 "{case:?} after a release is out of order"
             );
@@ -1057,7 +1098,13 @@ mod tests {
         ];
         for case in outside {
             assert_eq!(
-                dispatch(&mut position, &mut residency, &directive(case.clone()), &mut None, HEADROOM_BYTES),
+                dispatch(
+                    &mut position,
+                    &mut residency,
+                    &directive(case.clone()),
+                    &mut None,
+                    HEADROOM_BYTES
+                ),
                 Payload::Refusal(LifecycleRefusal::OutOfOrder),
                 "{case:?} is outside this seam's vocabulary"
             );
@@ -1082,7 +1129,13 @@ mod tests {
         });
         closing.position = Position::Close;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &closing, &mut None, HEADROOM_BYTES),
+            dispatch(
+                &mut position,
+                &mut residency,
+                &closing,
+                &mut None,
+                HEADROOM_BYTES
+            ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
@@ -1091,7 +1144,13 @@ mod tests {
         });
         wrong_opener.exchange.opener = Opener::Spu;
         assert_eq!(
-            dispatch(&mut position, &mut residency, &wrong_opener, &mut None, HEADROOM_BYTES),
+            dispatch(
+                &mut position,
+                &mut residency,
+                &wrong_opener,
+                &mut None,
+                HEADROOM_BYTES
+            ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
 
@@ -1116,7 +1175,13 @@ mod tests {
             payload: Payload::Answer(LifecycleAnswer::Ready),
         };
         assert_eq!(
-            dispatch(&mut position, &mut residency, &envelope, &mut None, HEADROOM_BYTES),
+            dispatch(
+                &mut position,
+                &mut residency,
+                &envelope,
+                &mut None,
+                HEADROOM_BYTES
+            ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
         );
     }
@@ -1188,12 +1253,15 @@ mod tests {
         );
     }
 
-
     /// **A block the family cannot render refuses as the delta malformed for
     /// the family,** the contract's own case: the tool shapes are blocked
-    /// with the tool workflow and the families render text today. The role
-    /// arm's wildcard is the future's alone and no test can construct its
-    /// subject, `Role` being non-exhaustive with every current case rendered.
+    /// with the tool workflow and the families render text today.
+    ///
+    /// What this reads is the refusal arriving at the seam's own vocabulary,
+    /// so it exercises the family's render and the [`From`] that carries its
+    /// answer across. The role arm's wildcard is the future's alone and no
+    /// test can construct its subject, `Role` being non-exhaustive with every
+    /// current case rendered by the families that call the shared name kernel.
     #[test]
     fn a_non_text_block_refuses_as_malformed_delta() {
         let message = Message {
@@ -1201,9 +1269,44 @@ mod tests {
             content: vec![ContentBlock::ToolCall(weaver_traits::ToolCall {})],
         };
         assert_eq!(
-            render_messages("{role}: {message}", &[message]),
+            render_delta(family::qwen2::renderer(), &[message]),
             Err(TokenRefusal::MalformedDelta),
         );
+    }
+
+    /// **A tool result is not renderable under gemma4, and the refusal is the
+    /// family's rather than the root's.**
+    ///
+    /// The family has no tool turn: its template carries tool results as
+    /// standalone blocks outside the turn structure. Rendering one as
+    /// `<|turn>tool` would be a silent substitution, so it refuses until the
+    /// tool workflow names the block shape.
+    ///
+    /// Perturbation: give `Gemma4::role_name` a `Role::ToolResult => "tool"`
+    /// arm and this fails, the render then succeeding on a turn shape the
+    /// artifact's template never produces.
+    #[test]
+    fn gemma4_refuses_a_tool_result_rather_than_inventing_a_turn() {
+        let message = Message {
+            role: Role::ToolResult,
+            content: vec![ContentBlock::Text {
+                text: "42".to_string(),
+            }],
+        };
+        assert_eq!(
+            render_delta(family::gemma4::renderer(), &[message]),
+            Err(TokenRefusal::MalformedDelta),
+        );
+
+        // The contrast, so this reads as a distinction rather than as a family
+        // that refuses everything: the same role renders under qwen2.
+        let message = Message {
+            role: Role::ToolResult,
+            content: vec![ContentBlock::Text {
+                text: "42".to_string(),
+            }],
+        };
+        assert!(render_delta(family::qwen2::renderer(), &[message]).is_ok());
     }
 
     /// At rest, a cancel and a flush are both in order for the seam: the

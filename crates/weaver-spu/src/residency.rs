@@ -212,6 +212,73 @@ impl std::fmt::Debug for LoadedModel {
     }
 }
 
+/// A family's stop conditions, promoted against one artifact's vocabulary.
+///
+/// Built by [`Resident::stop_set`], which is where the family's declaration and
+/// the artifact's vocabulary meet. Nothing here is read from the artifact
+/// alone: the strings are the family's and this is what became of them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StopSet {
+    /// Every declared condition that promoted, plus the artifact's declared
+    /// end-of-sequence as a backstop.
+    pub tokens: Vec<TokenId>,
+    /// The turn's close, made resident after a generation so the residency
+    /// holds a closed turn. The family's first declared condition.
+    pub terminator: TokenId,
+    /// Declared conditions this artifact's vocabulary does not promote to one
+    /// token, named so a run reports them rather than carrying a stop that
+    /// could never fire.
+    pub unpromoted: Vec<&'static str>,
+}
+
+/// Promote a family's declared stop conditions against one vocabulary.
+///
+/// The judgment of [`Resident::stop_set`], separated from the model so it can
+/// be read without one. The tokenizer arrives as a closure for that reason and
+/// for no other: what this decides is the same whatever supplied the ids.
+pub fn promote_stop_conditions(
+    declared: &[&'static str],
+    eos: TokenId,
+    tokenize: impl Fn(&str) -> Result<Vec<TokenId>, DecodeFault>,
+) -> Result<StopSet, DecodeFault> {
+    let mut tokens = Vec::new();
+    let mut unpromoted = Vec::new();
+    let mut terminator = None;
+
+    for (position, condition) in declared.iter().enumerate() {
+        match tokenize(condition)?.as_slice() {
+            [token] => {
+                if position == 0 {
+                    terminator = Some(*token);
+                }
+                tokens.push(*token);
+            }
+            _ => unpromoted.push(*condition),
+        }
+    }
+
+    let Some(terminator) = terminator else {
+        return Err(DecodeFault::Engine {
+            detail: format!(
+                "the family's turn close does not promote against this artifact's \
+                 vocabulary, so no turn could be recognised as ended: declared {declared:?}"
+            ),
+        });
+    };
+
+    // The artifact's own end-of-sequence, added rather than assumed. A model
+    // that ends the sequence stops whatever its family declares.
+    if !tokens.contains(&eos) {
+        tokens.push(eos);
+    }
+
+    Ok(StopSet {
+        tokens,
+        terminator,
+        unpromoted,
+    })
+}
+
 /// What this process holds after a successful admit.
 #[derive(Debug)]
 pub struct Resident {
@@ -351,14 +418,16 @@ impl Resident {
         }
     }
 
-    /// The family's turn terminator, per `weaver-spu-Spec` section 4.3.
+    /// The artifact's declared end-of-sequence token.
     ///
-    /// **Read from the artifact's declared end-of-sequence today**, which for
-    /// every shipped chat family is the turn-close marker itself, the qwen2
-    /// artifacts declaring `<|im_end|>` there. A family whose terminator
-    /// diverges from its declared EOS arrives with the marker-promotion act
-    /// that gives the declaration a second source to check against.
-    pub fn terminator(&self) -> Result<TokenId, DecodeFault> {
+    /// **Kept as a backstop and no longer as the turn's close.** It was both
+    /// until [`Self::stop_set`] landed, on the reading that "for every shipped
+    /// chat family the EOS is the turn-close marker itself", which held for the
+    /// qwen artifacts declaring `<|im_end|>` there and fails for gemma4, whose
+    /// EOS is `<eos>` and whose turn closes with `<turn|>` in `eot_token_id`.
+    /// A model that ends the sequence outright should still stop, so this joins
+    /// the family's set rather than leaving it.
+    pub fn declared_eos(&self) -> Result<TokenId, DecodeFault> {
         match &self.model {
             #[cfg(feature = "gguf")]
             LoadedModel::Gguf(model) => Ok(TokenId(model.model().token_eos().0 as u32)),
@@ -367,6 +436,41 @@ impl Resident {
                 container: self.header.container,
             }),
         }
+    }
+
+    /// **The stop set this artifact and this family agree on**, per
+    /// `weaver-spu-Spec` sections 4.3 and 5.
+    ///
+    /// The family declares its stop conditions as strings and this promotes
+    /// them against the artifact's own vocabulary, which is the only place the
+    /// two can be checked against each other. **The declaration is the
+    /// authority and the artifact is the check**, the reverse of what this
+    /// crate did before: a stop set read from `token_eos` alone is a set the
+    /// family never declared, and it agreed with the family only for as long
+    /// as every carried artifact happened to put its turn-close marker there.
+    ///
+    /// **The first declared condition is the turn's close**, and that ordering
+    /// is what [`StopSet::terminator`] reads. It is the token made resident
+    /// after a generation, so the residency holds a closed turn rather than a
+    /// turn ended by whatever the artifact calls end-of-sequence. All four
+    /// carried families declare their turn-close first.
+    ///
+    /// A condition that does not promote to exactly one token is **named
+    /// rather than dropped**, in [`StopSet::unpromoted`]. Llama's `<|eom_id|>`
+    /// is the standing case: it arrived with 3.1 and the tokenizer this
+    /// workshop can reach is 3.0-era, which splits it. A stop condition that
+    /// reaches the sampler as several tokens can never match one drawn token,
+    /// so carrying it would be a stop that silently never fires.
+    ///
+    /// **The turn's close failing to promote refuses**, because a family whose
+    /// close cannot be recognised generates to the token cap on every turn and
+    /// leaves the marker in the emission as prose.
+    pub fn stop_set(&self, family: &dyn family::Family) -> Result<StopSet, DecodeFault> {
+        promote_stop_conditions(
+            family.stop_conditions(),
+            self.declared_eos()?,
+            |condition| self.tokenize(condition),
+        )
     }
 
     /// The flush mechanism this residency's family declares, per Spec section
@@ -599,6 +703,106 @@ mod tests {
     use super::*;
     use crate::family::FamilyName;
     use weaver_types::ArtifactRef;
+
+    /// A vocabulary that promotes what it was told to promote and splits the
+    /// rest, which is what a real tokenizer does to a marker it does not carry.
+    fn vocabulary(
+        promoting: &'static [(&'static str, u32)],
+    ) -> impl Fn(&str) -> Result<Vec<TokenId>, DecodeFault> {
+        move |text: &str| {
+            Ok(match promoting.iter().find(|(marker, _)| *marker == text) {
+                Some((_, id)) => vec![TokenId(*id)],
+                None => text.chars().map(|c| TokenId(c as u32)).collect(),
+            })
+        }
+    }
+
+    /// **The turn's close is the family's declaration, not the artifact's
+    /// end-of-sequence.**
+    ///
+    /// The two coincide on every Qwen artifact, which declares `<|im_end|>` as
+    /// its EOS, and that coincidence is what let the composition root read the
+    /// artifact alone for as long as it did. The fixture is drawn from gemma4,
+    /// where they differ: `<eos>` is 1 and the turn closes with `<turn|>` at
+    /// 106. What the terminator carries decides what is made resident after a
+    /// generation, so a residency holding `<eos>` holds a turn the next
+    /// rendering does not continue from.
+    ///
+    /// Perturbation: return the artifact's `eos` as the terminator and this
+    /// fails on the first assertion. Watched under exactly that.
+    #[test]
+    fn the_terminator_is_the_familys_close_rather_than_the_artifacts_eos() {
+        let promoted = promote_stop_conditions(
+            &["<turn|>"],
+            TokenId(1),
+            vocabulary(&[("<turn|>", 106), ("<eos>", 1)]),
+        )
+        .expect("a family whose close promotes has a stop set");
+
+        assert_eq!(
+            promoted.terminator,
+            TokenId(106),
+            "the turn's close is what the family declared"
+        );
+        assert!(
+            promoted.tokens.contains(&TokenId(106)),
+            "and it stops the generation"
+        );
+        assert!(
+            promoted.tokens.contains(&TokenId(1)),
+            "the artifact's end-of-sequence joins the set as a backstop rather \
+             than replacing it"
+        );
+        assert!(promoted.unpromoted.is_empty());
+    }
+
+    /// **A declared condition the vocabulary splits is named rather than
+    /// carried.**
+    ///
+    /// Llama is the standing case: `<|eom_id|>` arrived with 3.1 and the
+    /// tokenizer this workshop can reach is 3.0-era, which splits it into
+    /// several tokens. A split marker can never equal one drawn token, so
+    /// carrying it would be a stop condition that silently never fires.
+    ///
+    /// Perturbation: push the first token of a split condition instead of
+    /// naming it, and the `unpromoted` assertion fails while a reader is told
+    /// the family's whole set is in force.
+    #[test]
+    fn a_condition_the_vocabulary_splits_is_named_rather_than_carried() {
+        let promoted = promote_stop_conditions(
+            &["<|eot_id|>", "<|eom_id|>"],
+            TokenId(128009),
+            vocabulary(&[("<|eot_id|>", 128009)]),
+        )
+        .expect("the close promotes even where a later condition does not");
+
+        assert_eq!(promoted.terminator, TokenId(128009));
+        assert_eq!(
+            promoted.unpromoted,
+            vec!["<|eom_id|>"],
+            "the condition that could never fire is reported"
+        );
+        assert_eq!(
+            promoted.tokens,
+            vec![TokenId(128009)],
+            "and it is not in the set, nor is the EOS twice"
+        );
+    }
+
+    /// **A family whose turn close does not promote refuses rather than
+    /// running.**
+    ///
+    /// Every turn would generate to the token cap and leave the close in the
+    /// emission as prose, which is a load that reports success and produces a
+    /// trace no reader can bracket.
+    #[test]
+    fn a_close_that_does_not_promote_refuses_the_open() {
+        let outcome = promote_stop_conditions(&["<turn|>"], TokenId(1), vocabulary(&[]));
+        assert!(
+            matches!(outcome, Err(DecodeFault::Engine { .. })),
+            "the open refuses, got {outcome:?}"
+        );
+    }
 
     /// **A second admit refuses on the ordering rather than re-running the
     /// steps.** Nothing is idempotent: this crate begins empty, admits once,

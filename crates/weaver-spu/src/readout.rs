@@ -144,6 +144,7 @@ mod tests {
         shard_widths: &[1],
         template: "{message}",
         generation_opener: "",
+        renderer: crate::family::qwen2::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: true,
     };
@@ -153,6 +154,7 @@ mod tests {
         shard_widths: &[1],
         template: "{message}",
         generation_opener: "",
+        renderer: crate::family::qwen2::renderer,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
     };
