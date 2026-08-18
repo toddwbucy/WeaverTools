@@ -71,10 +71,21 @@ artifact and the one authoritative record, per apex section 1, and what this
 crate holds is a distillation of the record, never stored back into it, per the
 ruling carried at `weaver-trace-PRD` section 3.2. Where the two disagree the
 trace is right by construction, because the trace is the account and state is a
-working derivative of the account. The distillation surface is the harness's
-tee over the canonical event stream, ruled by the operator 2026-08-12, and its
-output is this crate's ingress: state receives what the tee elects, holds it
-organized, and answers with it.
+working derivative of the account. The distillation surface is the tee over
+the canonical event stream, ruled by the operator 2026-08-12: the mechanism is
+`weaver-trace`'s, because what is being tee'd is the trace's own rendering,
+and the harness applies it as the one party that writes. Its output is this
+crate's ingress: state receives what the tee elects, holds it organized, and
+answers with it.
+
+**The labor divides three ways and each part holds one.** The tee selects and
+never computes. This crate transforms as part of organizing, per the
+operator's ruling of 2026-08-18: a derived shape, an aggregate, an index are
+custody's work on what was selected, and they carry no judgment about what
+the turn should do with them. The harness's loops decide. A tee that
+computed would smuggle state's work into the trace's crate, and a state that
+decided would smuggle the loops' work into custody, and the three-way split
+is what keeps each part answerable to its own charter.
 
 **It is not the model's to reach.** The harness reads state for its own
 assembly and its loops' decisions, and the model receives only what the harness
@@ -139,10 +150,21 @@ may make the session's continuation depend on the derivative surviving.
 
 The input is the inspected artifact's lineage: canonical event JSON as the
 trace renders it, selected per event by the tee's key-based filter, fixed at
-load, with the shipped kind filter as the default election. The run identifies
-itself in that stream since the ruling of 2026-08-14, admin's run reference
-having replaced the ordinal, so what state receives is attributable to the run
-that produced it without this crate minting any identity of its own.
+load. **The tee's rulings of 2026-08-18**: the envelope always rides and is
+not electable, session, run, turn, kind, and sequence crossing on every
+distilled event so no election can produce an unattributable row, and the
+election ranges over payload keys alone. An elected kind with no payload keys
+is a meaningful election, because presence itself is state. **The default
+election is the envelope of every kind and nothing more**, the operator
+electing payload keys on top of it, so a deployment that elects nothing still
+holds the session's shape - what happened, in what order, in which turn - and
+pays for no payload it never asked to keep. An event the election does not
+match costs nothing and is dropped at the tee, the trace remaining complete
+regardless, because the tee reads the stream and never thins it. The run
+identifies itself in that stream since the ruling of 2026-08-14, admin's run
+reference having replaced the ordinal, so what state receives is attributable
+to the run that produced it without this crate minting any identity of its
+own.
 
 One member instance serves one session: it stands with each run, ingests a
 stream whose events already carry their session, run, and turn identity, and
@@ -197,10 +219,13 @@ today.
   store's internal shape is ruled at section 4 and is not this cell: what the
   seam carries and what the store holds are two facts, and only the first is
   the contract's.
-- **The tee's charter section.** The distillation surface is the harness's
-  mechanism and its paper lands in `weaver-harness-PRD`, owed by the same
-  workflow that writes the contract, named here so neither document reads the
-  other as already settled.
+- **The tee's charter section.** The distillation surface's mechanism is
+  `weaver-trace`'s, per the ruling of 2026-08-18, and its paper lands in
+  `weaver-trace-PRD`, owed by the same workflow that writes the contract,
+  named here so neither document reads the other as already settled. The
+  election arrives with the load like the rest of the declaration, and where
+  its block sits in the agent's file is the deployment's shape to settle in
+  that act.
 - **Who else may ask.** Today the harness is the one peer, and every ask
   arrives through it. Whether a later operator surface reads state directly or
   through an admin verb is a cell for the day such a reader exists, refused
