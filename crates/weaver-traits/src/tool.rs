@@ -7,11 +7,13 @@
 //! The block this module carried lifted on its own terms: it held because tool
 //! dispatch was harness-internal and no seam crossed it, and the ratified loop
 //! boundary of 2026-08-11 inverted that ground - every tool sits outside the
-//! reasoning loop, dispatch crosses the gate seam, and
-//! `weaver-harness-gate-contract` section 7 draws this definition. The trait
-//! is the gate's executor surface: the gate resolves a name against the tools
-//! it holds and calls through it, and the harness dispatches the exchange and
-//! never the trait, which is the loop boundary held at the type level.
+//! reasoning loop. The tool boundary ruling of 2026-08-18 then narrowed the
+//! constituency to what `weaver-traits-Spec` section 5's foot always named:
+//! the elected outward corner, the registered service the egress seam
+//! awaits. The gate holds one tool, the shell, its own verb dispatched with
+//! no table, and the inward callables of `weaver-internal` are reached by
+//! their own surface - so today this trait has a chartered shape and no
+//! dispatching consumer, a definition waiting on its corner.
 //!
 //! **The name and the schema are primitives on purpose.** `tool-name` is
 //! `weaver-types` vocabulary and that crate names this one as its one
@@ -40,10 +42,10 @@ pub struct ToolFailure {
 
 /// The tool contract, per `weaver-traits-Spec` section 5.
 ///
-/// Dyn-compatible, because the gate dispatches tools it does not know the
-/// identity of. The future is explicitly boxed rather than `async fn` in
-/// trait, which is not dyn-compatible, and carries `Send` so no executor
-/// election leaks onto the floor.
+/// Dyn-compatible, because the eventual dispatcher of a registered service
+/// does not know the tool's identity. The future is explicitly boxed rather
+/// than `async fn` in trait, which is not dyn-compatible, and carries `Send`
+/// so no executor election leaks onto the floor.
 pub trait Tool {
     /// The name the model calls, as the gate compares it against the drawn
     /// `tool-name` that crossed the exchange.

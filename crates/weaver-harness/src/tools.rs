@@ -62,17 +62,28 @@ impl ToolResult {
     /// execution exchange completes and nowhere else.
     ///
     /// Every outcome becomes renderable content, in words the model reasons
-    /// over: a result is itself, a failure names itself as the tool's, and an
-    /// unheld name says the tool does not exist.
+    /// over, whichever of the exchange's four contents arrived: a result is
+    /// itself, a refusal and an error each name their speaker, and a kill
+    /// names the clock and carries what drained before it - marked as
+    /// partial, so a fragment cannot read as an answer.
     pub(crate) fn granted(outcome: &ToolOutcome) -> ToolResult {
         let content = match outcome {
             ToolOutcome::Result { content } => content.clone(),
-            ToolOutcome::Failure { detail } => {
-                format!("the tool failed: {detail}")
+            ToolOutcome::Refused { reason } => {
+                format!("the call was refused: {reason}")
             }
-            ToolOutcome::Unheld { name } => {
-                format!("no tool named {} exists", name.0)
+            ToolOutcome::Errored { detail } => {
+                format!("the tool machinery failed: {detail}")
             }
+            ToolOutcome::Killed { partial } => match partial {
+                Some(partial) => format!(
+                    "the command ran past the clock and was killed. Partial \
+                     output before the kill:\n{partial}"
+                ),
+                None => "the command ran past the clock and was killed, with \
+                         no output before the kill"
+                    .to_string(),
+            },
         };
         ToolResult { content }
     }

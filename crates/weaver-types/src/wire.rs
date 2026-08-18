@@ -98,36 +98,53 @@ pub enum Payload {
     /// the tool workflow's opening act: the enum's own rule, a later loop's
     /// vocabulary entering in the act that charters that loop.
     Tool(ToolExecution),
-    /// The execution exchange's answer, closing it, one of the three contents
+    /// The execution exchange's answer, closing it, one of the four contents
     /// `weaver-harness-gate-contract` section 2 names.
     ToolAnswer(ToolOutcome),
 }
 
 /// One tool call as it crosses the gate seam: the name and arguments exactly
 /// as the family parse recovered them from the emission, uninterpreted by
-/// the harness that carries them, per `weaver-harness-gate-contract`
-/// section 2.
+/// the harness that carries them, and the caller's clock, per
+/// `weaver-harness-gate-contract` section 2 as amended by the tool boundary
+/// ruling: one clock, the caller's, validated against the tool's declared
+/// maximum at the refusal layer and adopted as the kill clock.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ToolExecution {
     pub name: ToolName,
     pub arguments: String,
+    /// The caller's clock in milliseconds. The unit is this definition's
+    /// election, the contract fixing the rule and not the representation.
+    pub clock_ms: u64,
 }
 
-/// The three contents an execution's answer carries, every one of them
-/// content rather than a channel fault, because each is a fact the model
-/// must learn: a tool that does not exist is an answer the next turn
-/// reasons over, not a hole in the conversation.
+/// The four contents an execution's answer carries, told apart by tag
+/// alone, every one of them content rather than a channel fault, because
+/// each is a fact the model must learn. The rule beneath the four is who
+/// speaks in the return: a result is the tool's own words, a refusal is the
+/// gate's voice with nothing run, an error is the machinery's, and a kill
+/// carries no tool voice by construction.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "outcome", rename_all = "snake_case")]
 pub enum ToolOutcome {
-    /// The tool ran and this is what it returned.
+    /// The invocation ran and the tool answers in its own words. For the
+    /// shell a nonzero exit is a result, accounted in content, not an
+    /// error.
     Result { content: String },
-    /// The tool ran and failed, in its own words, per the trait's
-    /// `ToolFailure`.
-    Failure { detail: String },
-    /// The gate holds no tool of this name. Never a nearest match, the
-    /// family registry's discipline one organ over.
-    Unheld { name: ToolName },
+    /// Nothing ran, and the gate speaks in its own voice: a name it does
+    /// not hold - never a nearest match, the family registry's discipline
+    /// one organ over - malformed arguments, or a clock beyond the
+    /// declared maximum. No side effect exists.
+    Refused { reason: String },
+    /// The invocation machinery failed - the fork, a pipe, the supervisor -
+    /// and the account's speaker is the infrastructure, never the tool.
+    Errored { detail: String },
+    /// The caller's clock expired and the gate killed the invocation's
+    /// whole process group. No account from the tool exists by
+    /// construction - the absence of the tool's words is the fact - and
+    /// output drained before the kill rides as an attachment, never a
+    /// result.
+    Killed { partial: Option<String> },
 }
 
 /// The organs that refuse inside a fan-out: only the SPU and the gate. Admin

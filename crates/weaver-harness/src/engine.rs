@@ -37,6 +37,13 @@ use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 /// The granted surface handed to loop 1 at loaded-and-idle, borrowing the
 /// standing interior for the seat's lifetime. Its fields are private and its
 /// only constructor is crate-private, which is the blade.
+/// The caller's clock per tool invocation, in milliseconds: the
+/// composition root's bound like `MAX_TOOL_ROUNDS`, stated by this caller
+/// on every execution per the one-clock rule and adopted by the gate as
+/// the kill clock. At or under the shell's declared maximum by
+/// construction here, so the refusal arm is for callers less careful.
+pub(crate) const TOOL_CALL_CLOCK_MS: u64 = 30_000;
+
 /// How many envelopes one run's shelf may hold before the surplus is
 /// dropped and the drop recorded: the bound on both the queue and the
 /// serve loop's appetite, a refusal of hoarding rather than of the client.
@@ -395,6 +402,7 @@ impl<'a> Ports<'a> {
                 payload: weaver_types::Payload::Tool(weaver_types::ToolExecution {
                     name: weaver_types::ToolName(call.name.clone()),
                     arguments: call.arguments.clone(),
+                    clock_ms: TOOL_CALL_CLOCK_MS,
                 }),
             })
             .map_err(|_| TurnError::ChannelLost)?;

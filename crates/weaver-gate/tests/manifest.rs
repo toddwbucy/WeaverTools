@@ -93,19 +93,20 @@ fn no_organ_is_in_the_resolved_tree() {
     }
 }
 
-/// **The internal dependency set is exactly the two floor crates**, per Spec
-/// section 1 as revised by the tool workflow's opening act: `weaver-types`
-/// for the wire, and `weaver-traits` for the tool contract this crate
-/// executes. This test pinned the absence of a traits line until that act,
-/// and the act that made the trait's executor live is the act that turned
-/// the pin around - the set is now closed at two, so a third internal
-/// dependency fails here the way the traits line itself used to.
+/// **The internal dependency set is exactly one floor crate**, per Spec
+/// section 1 and the tool boundary ruling of 2026-08-18: `weaver-types` for
+/// the wire, alone. The traits line joined with the tool workflow's opening
+/// act as the trait's executor and left with the ruling - the shell is this
+/// crate's own verb, dispatched with no table, so the trait has no consumer
+/// here and the line would be a dependency taken for nothing. The pin has
+/// turned twice now and the story is the history's, not this comment's: a
+/// second internal dependency fails here naming itself.
 ///
 /// Perturbation: add any other `weaver-*` line to the dependency section and
-/// this fails naming it. Watched under the traits line's own addition, which
-/// this test refused until the Spec authorized it.
+/// this fails naming it. Watched under the traits line's own addition and
+/// again under its removal.
 #[test]
-fn the_internal_dependency_set_is_the_two_floor_crates() {
+fn the_internal_dependency_set_is_the_one_floor_crate() {
     // Structural first: the resolved direct set, which catches a renamed or
     // table-form declaration a text scan reads straight past.
     let direct = crate_names(&resolved_tree("normal", Some("1")));
@@ -115,15 +116,13 @@ fn the_internal_dependency_set_is_the_two_floor_crates() {
         .collect();
     assert_eq!(
         internal.len(),
-        2,
-        "the internal set is weaver-types and weaver-traits, exactly: found {internal:?}"
+        1,
+        "the internal set is weaver-types, exactly: found {internal:?}"
     );
-    for required in ["weaver-types", "weaver-traits"] {
-        assert!(
-            internal.iter().any(|n| *n == required),
-            "{required} is not a direct dependency: found {internal:?}"
-        );
-    }
+    assert!(
+        internal.iter().any(|n| *n == "weaver-types"),
+        "weaver-types is not a direct dependency: found {internal:?}"
+    );
 }
 
 /// **`weaver-types` is taken without its `config` feature.** This crate reads

@@ -21,13 +21,14 @@ path = "src/lib.rs"
 name = "weaver-gate"
 path = "src/main.rs"
 
-# Two internal crates and two external ones, per Spec section 1 as revised by
-# the tool workflow's opening act. weaver-types is taken WITHOUT its `config`
+# One internal crate and two external ones, per Spec section 1 and the tool
+# boundary ruling of 2026-08-18. weaver-types is taken WITHOUT its `config`
 # feature: this crate reads no configuration file, the gate instruction
 # arriving over the seam instead, so no parser enters a process whose whole
 # argument is that it holds little. weaver-traits joined with the tool
-# workflow: this crate is the trait's executor, resolving names against the
-# tools it holds, per weaver-harness-gate-contract section 7's draw.
+# workflow's opening act as the trait's executor and left with the ruling:
+# the shell is this crate's own verb, dispatched with no table, and the
+# contract's tool-trait draw retired with the table.
 # serde_json encodes the seam's envelopes and touches no client byte. nix is the
 # OS surface: bind, listen, accept, getsockopt for the peer credential, fcntl,
 # `poll`, so the serve loop can wait on the channel and the hook's listener at
@@ -40,7 +41,6 @@ path = "src/main.rs"
 # crate writes no account of anything, a logging crate being a second author's
 # first step.
 [dependencies]
-weaver-traits = { path = "../weaver-traits" }
 weaver-types = { path = "../weaver-types", default-features = false }
 serde_json.workspace = true
 nix = { version = "0.31", features = ["socket", "fs", "process", "user", "poll", "signal"] }

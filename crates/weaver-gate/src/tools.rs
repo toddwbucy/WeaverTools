@@ -1,195 +1,120 @@
-//! The tools this gate holds, and the execution that answers for them, per
-//! the tool workflow's opening act and `weaver-harness-gate-contract`
-//! section 2.
+//! conforms: gate-shell-the-one-held-tool
+//! conforms: gate-execution-one-clock
+//! conforms: gate-execution-four-contents
+//! conforms: gate-execution-group-kill
+//! conforms: gate-execution-drain-rides-the-run
 //!
-//! **The gate executes and the harness dispatches the exchange**, per the
-//! mechanism election of `weaver-gate-PRD` section 7: the loop reaches tools
-//! through this crate, so execution lives on this side of the loop's
-//! membrane and the result crosses back exactly once, as the exchange's
-//! answer. The calculator computes in this process and forks nothing; the
-//! per-call fork the charter's mechanism names engages with the first
-//! subprocess tool, which is not this act's, and the trait is indifferent to
-//! which a tool does.
+//! The shell execution, per `weaver-gate-Spec` section 8 and the tool
+//! boundary ruling of 2026-08-18: this crate holds one tool, the shell, and
+//! holds it as its own outbound verb rather than as a table's member. The
+//! agent's effect on the world crosses this membrane, the shell is that
+//! crossing's general form, and the uid it runs under is the agent's outer
+//! protective shell. A name that is not the shell's refuses by name, never
+//! a nearest match, and there is no dyn table to search: one verb,
+//! dispatched directly.
 //!
-//! **A name this table does not hold is refused by name, never a nearest
-//! match** - the family registry's discipline one organ over - and the
-//! refusal is content, because a tool that does not exist is a fact the
-//! model must learn.
+//! **One clock, the caller's.** Every invocation carries the caller's
+//! timeout, validated here against the declared maximum and adopted as the
+//! kill clock, refused past the maximum rather than clamped. The answer is
+//! one of the contract's four contents, told apart by who speaks: a result
+//! is the shell's own words - a nonzero exit included - a refusal is this
+//! crate's voice with nothing run, an error is the machinery's, and a kill
+//! carries no tool voice by construction.
 
-use weaver_traits::{Tool, ToolFailure};
 use weaver_types::{ToolExecution, ToolOutcome};
 
-/// The tools this binary carries. The calculator is the reference tool the
-/// program's order of work names, and the table grows by acts rather than by
-/// configuration: what the operator's `tool-set` elects from is what is
-/// compiled here.
-fn held() -> Vec<Box<dyn Tool + Send>> {
-    vec![Box::new(Calculator), Box::new(HomeCli)]
-}
+/// The one held tool's name. The model calls the shell by the name the
+/// shell answers to everywhere else.
+pub const SHELL_NAME: &str = "bash";
 
-/// Execute one call against the held table, answering one of the exchange's
-/// three contents.
+/// The maximum clock the shell declares, in milliseconds. A caller may ask
+/// for less and never more, per the one-clock rule.
+pub const SHELL_MAX_CLOCK_MS: u64 = 60_000;
+
+/// The capture bound per pipe. Output past it is drained and discarded so
+/// the pipe empties, and the truncation marks itself in the answer.
+const SHELL_OUTPUT_BOUND: usize = 32 * 1024;
+
+/// Execute one call, answering one of the exchange's four contents.
 pub fn execute(execution: &ToolExecution) -> ToolOutcome {
-    for tool in held() {
-        if tool.name() == execution.name.0 {
-            return match block_on(tool.execute(&execution.arguments)) {
-                Ok(content) => ToolOutcome::Result { content },
-                Err(ToolFailure { detail }) => ToolOutcome::Failure { detail },
+    if execution.name.0 != SHELL_NAME {
+        return ToolOutcome::Refused {
+            reason: format!(
+                "no tool named {} is held - the shell, {SHELL_NAME}, is the one tool",
+                execution.name.0
+            ),
+        };
+    }
+    if execution.clock_ms == 0 || execution.clock_ms > SHELL_MAX_CLOCK_MS {
+        return ToolOutcome::Refused {
+            reason: format!(
+                "the caller's clock of {}ms is outside the shell's declared maximum of \
+                 {SHELL_MAX_CLOCK_MS}ms",
+                execution.clock_ms
+            ),
+        };
+    }
+    let parsed: serde_json::Value = match serde_json::from_str(&execution.arguments) {
+        Ok(value) => value,
+        Err(_) => {
+            return ToolOutcome::Refused {
+                reason: "the arguments are not one JSON object".to_string(),
             };
         }
-    }
-    ToolOutcome::Unheld {
-        name: execution.name.clone(),
+    };
+    let Some(command) = parsed.get("command").and_then(|value| value.as_str()) else {
+        return ToolOutcome::Refused {
+            reason: "the arguments carry no command string".to_string(),
+        };
+    };
+    // The home comes from the account database rather than from the
+    // environment: the organ fan-out execs with an empty environment on
+    // purpose, and the account database is where the uid's home is a fact
+    // rather than an inheritance.
+    let Some(home) = nix::unistd::User::from_uid(nix::unistd::getuid())
+        .ok()
+        .flatten()
+        .map(|user| user.dir)
+    else {
+        return ToolOutcome::Errored {
+            detail: "this uid has no home in the account database".to_string(),
+        };
+    };
+    match run_in_home(
+        command,
+        &home.to_string_lossy(),
+        std::time::Duration::from_millis(execution.clock_ms),
+    ) {
+        Ok(content) => ToolOutcome::Result { content },
+        Err(end) => end.into_outcome(),
     }
 }
 
-/// Drive one tool future to completion on this thread, std only.
-///
-/// The trait's future is boxed and `Send` for the general case; this crate
-/// holds no runtime, per its own charter's no-runtime rule, so it polls with
-/// a thread-parking waker. A ready-immediate future, the calculator's case,
-/// completes on the first poll and parks nothing.
-fn block_on<T>(
-    mut future: std::pin::Pin<Box<dyn std::future::Future<Output = T> + Send + '_>>,
-) -> T {
-    use std::sync::Arc;
-    use std::task::{Context, Poll, Wake, Waker};
+/// How the shell's run ended when it did not answer: the machinery failed,
+/// or the caller's clock expired and the group was killed. The split is the
+/// contract's - the speaker differs - and the conversion to the wire's
+/// contents happens here so `run_in_home` stays a plain function.
+enum ShellEnd {
+    Errored { detail: String },
+    Killed { partial: Option<String> },
+}
 
-    struct Parker(std::thread::Thread);
-    impl Wake for Parker {
-        fn wake(self: Arc<Self>) {
-            self.0.unpark();
+impl ShellEnd {
+    fn into_outcome(self) -> ToolOutcome {
+        match self {
+            ShellEnd::Errored { detail } => ToolOutcome::Errored { detail },
+            ShellEnd::Killed { partial } => ToolOutcome::Killed { partial },
         }
     }
-
-    let waker = Waker::from(Arc::new(Parker(std::thread::current())));
-    let mut context = Context::from_waker(&waker);
-    loop {
-        match future.as_mut().poll(&mut context) {
-            Poll::Ready(value) => return value,
-            Poll::Pending => std::thread::park(),
-        }
-    }
 }
 
-/// The reference tool: arithmetic over `+ - * /` and parentheses, computed in
-/// this process. The arguments are one JSON object carrying `expression`, per
-/// the schema it advertises, and everything wrong with a call is the tool's
-/// own failure in its own words - content the model reasons over.
-pub struct Calculator;
-
-impl Tool for Calculator {
-    fn name(&self) -> &str {
-        "calculator"
-    }
-
-    fn schema(&self) -> &str {
-        r#"{"name":"calculator","description":"Evaluate a scientific expression.","parameters":{"type":"object","properties":{"expression":{"type":"string","description":"An expression over + - * / ^, parentheses, the constants pi and e, and the functions sin cos tan asin acos atan sqrt ln log exp abs (radians, log base 10)."}},"required":["expression"]}}"#
-    }
-
-    fn execute(
-        &self,
-        arguments: &str,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, ToolFailure>> + Send + '_>>
-    {
-        let arguments = arguments.to_string();
-        Box::pin(async move {
-            let parsed: serde_json::Value =
-                serde_json::from_str(&arguments).map_err(|_| ToolFailure {
-                    detail: "the arguments are not one JSON object".to_string(),
-                })?;
-            let expression = parsed
-                .get("expression")
-                .and_then(|value| value.as_str())
-                .ok_or_else(|| ToolFailure {
-                    detail: "the arguments carry no expression string".to_string(),
-                })?;
-            let value = evaluate(expression).map_err(|detail| ToolFailure { detail })?;
-            // Integers render without the trailing zero a float would carry,
-            // because "1591" is what a model quotes and "1591.0" invites it
-            // to copy the artifact.
-            Ok(if value.fract() == 0.0 && value.abs() < 1e15 {
-                format!("{}", value as i64)
-            } else {
-                format!("{value}")
-            })
-        })
-    }
-}
-
-/// How long one command may run before the fork is killed, the composition
-/// bound like the harness's tool-round cap: a command that hangs would
-/// otherwise hold the turn open without limit, and the kill is the tool's
-/// own failure in its own words rather than a hung exchange.
-const HOME_CLI_DEADLINE: std::time::Duration = std::time::Duration::from_secs(30);
-
-/// How much combined output crosses back, under the organ envelope's 64 KiB
-/// bound with room for the answer's own framing. Past it the output truncates
-/// with a named marker, because a model reasoning over silently missing bytes
-/// is worse than one told the output was cut.
-const HOME_CLI_OUTPUT_BOUND: usize = 32 * 1024;
-
-/// **The first subprocess tool, and the per-call fork the charter's
-/// mechanism names.** One `bash -c` per call, forked by this crate and
-/// supervised to a deadline, working directory the home of the uid this
-/// process runs as - which is the agent's own home under the deployment's
-/// boundary, and the kernel bound the charter states: what the command
-/// reaches is what the uid reaches, no more, no classification asked.
-pub struct HomeCli;
-
-impl Tool for HomeCli {
-    fn name(&self) -> &str {
-        "home_cli"
-    }
-
-    fn schema(&self) -> &str {
-        r#"{"name":"home_cli","description":"Run a shell command in the agent's own home directory.","parameters":{"type":"object","properties":{"command":{"type":"string","description":"A bash command line. Runs with the agent's identity, in its home directory, killed after 30 seconds."}},"required":["command"]}}"#
-    }
-
-    fn execute(
-        &self,
-        arguments: &str,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<String, ToolFailure>> + Send + '_>>
-    {
-        let arguments = arguments.to_string();
-        Box::pin(async move {
-            let parsed: serde_json::Value =
-                serde_json::from_str(&arguments).map_err(|_| ToolFailure {
-                    detail: "the arguments are not one JSON object".to_string(),
-                })?;
-            let command = parsed
-                .get("command")
-                .and_then(|value| value.as_str())
-                .ok_or_else(|| ToolFailure {
-                    detail: "the arguments carry no command string".to_string(),
-                })?;
-            // The home comes from the account database rather than from
-            // the environment: the organ fan-out execs with an empty
-            // environment on purpose, and the account database is where
-            // the uid's home is a fact rather than an inheritance.
-            let home = nix::unistd::User::from_uid(nix::unistd::getuid())
-                .ok()
-                .flatten()
-                .map(|user| user.dir)
-                .ok_or_else(|| ToolFailure {
-                    detail: "this uid has no home in the account database".to_string(),
-                })?;
-            run_in_home(command, &home.to_string_lossy())
-        })
-    }
-}
-
-/// Fork, supervise to the deadline, and account for the exit - every path a
-/// content answer or the tool's own failure, never a hung exchange.
-fn run_in_home(command: &str, home: &str) -> Result<String, ToolFailure> {
-    run_in_home_with_deadline(command, home, HOME_CLI_DEADLINE)
-}
-
-fn run_in_home_with_deadline(
+/// Fork, supervise to the caller's clock, and account for the exit - every
+/// path one of the contract's contents, never a hung exchange.
+fn run_in_home(
     command: &str,
     home: &str,
     deadline: std::time::Duration,
-) -> Result<String, ToolFailure> {
+) -> Result<String, ShellEnd> {
     use std::os::unix::process::CommandExt;
     use std::process::{Command, Stdio};
 
@@ -209,7 +134,7 @@ fn run_in_home_with_deadline(
         .stderr(Stdio::piped())
         .process_group(0)
         .spawn()
-        .map_err(|error| ToolFailure {
+        .map_err(|error| ShellEnd::Errored {
             detail: format!("the fork failed: {error}"),
         })?;
     let group = nix::unistd::Pid::from_raw(child.id() as i32);
@@ -221,8 +146,8 @@ fn run_in_home_with_deadline(
     // rest, so the capture is bounded while the pipe still empties.
     let stdout = child.stdout.take().expect("stdout is piped");
     let stderr = child.stderr.take().expect("stderr is piped");
-    let out_reader = std::thread::spawn(move || drain_bounded(stdout, HOME_CLI_OUTPUT_BOUND));
-    let err_reader = std::thread::spawn(move || drain_bounded(stderr, HOME_CLI_OUTPUT_BOUND));
+    let out_reader = std::thread::spawn(move || drain_bounded(stdout, SHELL_OUTPUT_BOUND));
+    let err_reader = std::thread::spawn(move || drain_bounded(stderr, SHELL_OUTPUT_BOUND));
 
     // Supervision: poll to the deadline, kill the group past it. `std`
     // carries no bounded wait, so the poll sleeps in small steps - coarse
@@ -244,13 +169,19 @@ fn run_in_home_with_deadline(
                 if started.elapsed() > deadline {
                     let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
                     let _ = child.wait();
-                    let _ = out_reader.join();
-                    let _ = err_reader.join();
-                    return Err(ToolFailure {
-                        detail: format!(
-                            "the command ran past the {}s deadline and was killed",
-                            deadline.as_secs()
-                        ),
+                    let out_drained = out_reader.join().unwrap_or((Vec::new(), false)).0;
+                    let err_drained = err_reader.join().unwrap_or((Vec::new(), false)).0;
+                    let mut partial = String::from_utf8_lossy(&out_drained).into_owned();
+                    let errors = String::from_utf8_lossy(&err_drained);
+                    if !errors.is_empty() {
+                        if !partial.is_empty() {
+                            partial.push('\n');
+                        }
+                        partial.push_str("stderr: ");
+                        partial.push_str(&errors);
+                    }
+                    return Err(ShellEnd::Killed {
+                        partial: (!partial.is_empty()).then_some(partial),
                     });
                 }
                 std::thread::sleep(std::time::Duration::from_millis(25));
@@ -262,7 +193,7 @@ fn run_in_home_with_deadline(
                 // so the answer is what the foreground command produced,
                 // and stragglers are ended, not adopted.
                 let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
-                break child.wait().map_err(|error| ToolFailure {
+                break child.wait().map_err(|error| ShellEnd::Errored {
                     detail: format!("the supervision failed: {error}"),
                 })?;
             }
@@ -271,7 +202,7 @@ fn run_in_home_with_deadline(
                 let _ = child.wait();
                 let _ = out_reader.join();
                 let _ = err_reader.join();
-                return Err(ToolFailure {
+                return Err(ShellEnd::Errored {
                     detail: format!("the supervision failed: {error}"),
                 });
             }
@@ -300,8 +231,8 @@ fn run_in_home_with_deadline(
         }
         output.push_str(&format!("exit status: {code}"));
     }
-    if out_cut || err_cut || output.len() > HOME_CLI_OUTPUT_BOUND {
-        let mut cut = output.len().min(HOME_CLI_OUTPUT_BOUND);
+    if out_cut || err_cut || output.len() > SHELL_OUTPUT_BOUND {
+        let mut cut = output.len().min(SHELL_OUTPUT_BOUND);
         while !output.is_char_boundary(cut) {
             cut -= 1;
         }
@@ -343,259 +274,79 @@ fn drain_bounded(mut pipe: impl std::io::Read, bound: usize) -> (Vec<u8>, bool) 
     (kept, truncated)
 }
 
-/// A recursive-descent evaluation of a scientific expression grammar:
-/// `+ - * / ^`, unary minus, parentheses, the constants `pi` and `e`, and
-/// the one-argument functions `sin cos tan asin acos atan sqrt ln log exp
-/// abs`, angles in radians, `log` base ten. No assignment, no user names, no
-/// calls beyond the function set: an expression the grammar does not cover
-/// is the tool's failure, in words that name the position.
-/// The nesting an expression may reach before it refuses. The expression
-/// is the model's, so its length and nesting are nobody's promise, and the
-/// recursive descent below is bounded so the process answers a hostile
-/// depth in the tool's own words instead of overflowing its stack.
-const MAX_DEPTH: usize = 64;
-
-fn evaluate(expression: &str) -> Result<f64, String> {
-    let tokens: Vec<char> = expression.chars().filter(|c| !c.is_whitespace()).collect();
-    let mut position = 0usize;
-    let value = parse_sum(&tokens, &mut position, 0)?;
-    if position != tokens.len() {
-        return Err(format!("unexpected character at position {position}"));
-    }
-    if !value.is_finite() {
-        return Err("the result is not a finite number".to_string());
-    }
-    Ok(value)
-}
-
-fn parse_sum(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
-    if depth >= MAX_DEPTH {
-        return Err(format!("the expression nests deeper than {MAX_DEPTH}"));
-    }
-    let mut value = parse_product(tokens, position, depth)?;
-    while let Some(&op) = tokens.get(*position) {
-        match op {
-            '+' => {
-                *position += 1;
-                value += parse_product(tokens, position, depth)?;
-            }
-            '-' => {
-                *position += 1;
-                value -= parse_product(tokens, position, depth)?;
-            }
-            _ => break,
-        }
-    }
-    Ok(value)
-}
-
-fn parse_product(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
-    let mut value = parse_power(tokens, position, depth)?;
-    while let Some(&op) = tokens.get(*position) {
-        match op {
-            '*' => {
-                *position += 1;
-                value *= parse_power(tokens, position, depth + 1)?;
-            }
-            '/' => {
-                *position += 1;
-                let divisor = parse_power(tokens, position, depth + 1)?;
-                if divisor == 0.0 {
-                    return Err("division by zero".to_string());
-                }
-                value /= divisor;
-            }
-            _ => break,
-        }
-    }
-    Ok(value)
-}
-
-/// `^` binds tighter than `*` and `/` and associates right, so `2^3^2` is
-/// `2^(3^2)` and `-2^2` is `-(2^2)`, the conventions a scientific reader
-/// expects.
-fn parse_power(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
-    // The bound holds here as well as at `parse_sum`: this level recurses
-    // into itself for the unary minus and for the exponent, and a chain of
-    // either reaches no `parse_sum` on the way down.
-    if depth >= MAX_DEPTH {
-        return Err(format!("the expression nests deeper than {MAX_DEPTH}"));
-    }
-    // Unary minus lives at this level and binds looser than `^`, so `-2^2`
-    // is `-(2^2)` and an exponent's own sign, `2^-3`, recurses through here.
-    if tokens.get(*position) == Some(&'-') {
-        *position += 1;
-        return Ok(-parse_power(tokens, position, depth + 1)?);
-    }
-    let base = parse_atom(tokens, position, depth)?;
-    if tokens.get(*position) == Some(&'^') {
-        *position += 1;
-        let exponent = parse_power(tokens, position, depth + 1)?;
-        return Ok(base.powf(exponent));
-    }
-    Ok(base)
-}
-
-fn parse_atom(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
-    match tokens.get(*position) {
-        Some('(') => {
-            *position += 1;
-            let value = parse_sum(tokens, position, depth + 1)?;
-            if tokens.get(*position) != Some(&')') {
-                return Err(format!("unclosed parenthesis at position {position}"));
-            }
-            *position += 1;
-            Ok(value)
-        }
-        Some(c) if c.is_ascii_alphabetic() => {
-            let start = *position;
-            while tokens
-                .get(*position)
-                .is_some_and(|c| c.is_ascii_alphabetic())
-            {
-                *position += 1;
-            }
-            let word: String = tokens[start..*position].iter().collect();
-            match word.as_str() {
-                "pi" => return Ok(std::f64::consts::PI),
-                "e" => return Ok(std::f64::consts::E),
-                _ => {}
-            }
-            if tokens.get(*position) != Some(&'(') {
-                return Err(format!("unknown name {word} at position {start}"));
-            }
-            *position += 1;
-            let argument = parse_sum(tokens, position, depth + 1)?;
-            if tokens.get(*position) != Some(&')') {
-                return Err(format!("unclosed call to {word} at position {position}"));
-            }
-            *position += 1;
-            match word.as_str() {
-                "sin" => Ok(argument.sin()),
-                "cos" => Ok(argument.cos()),
-                "tan" => Ok(argument.tan()),
-                "asin" => Ok(argument.asin()),
-                "acos" => Ok(argument.acos()),
-                "atan" => Ok(argument.atan()),
-                "sqrt" => {
-                    if argument < 0.0 {
-                        return Err("square root of a negative number".to_string());
-                    }
-                    Ok(argument.sqrt())
-                }
-                "ln" => {
-                    if argument <= 0.0 {
-                        return Err("logarithm of a non-positive number".to_string());
-                    }
-                    Ok(argument.ln())
-                }
-                "log" => {
-                    if argument <= 0.0 {
-                        return Err("logarithm of a non-positive number".to_string());
-                    }
-                    Ok(argument.log10())
-                }
-                "exp" => Ok(argument.exp()),
-                "abs" => Ok(argument.abs()),
-                _ => Err(format!("unknown function {word} at position {start}")),
-            }
-        }
-        Some(c) if c.is_ascii_digit() || *c == '.' => {
-            let start = *position;
-            while tokens
-                .get(*position)
-                .is_some_and(|c| c.is_ascii_digit() || *c == '.')
-            {
-                *position += 1;
-            }
-            let text: String = tokens[start..*position].iter().collect();
-            text.parse::<f64>()
-                .map_err(|_| format!("not a number at position {start}"))
-        }
-        _ => Err(format!("expected a value at position {position}")),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use weaver_types::ToolName;
 
-    /// The calculator computes, and its answers are the strings a model
-    /// quotes: integers without the float's trailing zero.
+    fn shell(arguments: &str, clock_ms: u64) -> ToolOutcome {
+        execute(&ToolExecution {
+            name: ToolName(SHELL_NAME.into()),
+            arguments: arguments.into(),
+            clock_ms,
+        })
+    }
+
+    /// **A name that is not the shell's refuses by name, in this crate's
+    /// own voice, and nothing runs.** The one verb has no nearest match.
     #[test]
-    fn the_calculator_computes() {
+    fn a_name_that_is_not_the_shells_refuses_by_name() {
         let outcome = execute(&ToolExecution {
             name: ToolName("calculator".into()),
-            arguments: r#"{"expression":"37 * 43"}"#.into(),
+            arguments: r#"{"command":"true"}"#.into(),
+            clock_ms: 1_000,
         });
-        assert_eq!(
-            outcome,
-            ToolOutcome::Result {
-                content: "1591".into()
-            }
+        let ToolOutcome::Refused { reason } = outcome else {
+            panic!("a refusal answers: {outcome:?}");
+        };
+        assert!(
+            reason.contains("no tool named calculator"),
+            "the refusal names the name: {reason}"
         );
     }
 
-    /// **Everything wrong with a call is the tool's failure in its own
-    /// words**, content and never a fault: bad JSON, a missing expression, a
-    /// grammar miss, division by zero.
+    /// **The clock is validated before anything runs, refused and never
+    /// clamped**: zero asks for nothing and past-maximum asks for more than
+    /// the shell declares, and both refuse naming the bound.
     #[test]
-    fn a_bad_call_fails_in_the_tools_own_words() {
-        let deep = format!(r#"{{"expression":"{}1"}}"#, "(".repeat(90));
-        let minus_chain = format!(r#"{{"expression":"{}1"}}"#, "-".repeat(90));
-        let power_chain = format!(r#"{{"expression":"1{}"}}"#, "^1".repeat(90));
-        let failing = [
-            ("not json", "the arguments are not one JSON object"),
-            (
-                r#"{"expr":"1"}"#,
-                "the arguments carry no expression string",
-            ),
-            (r#"{"expression":"1 +"}"#, "expected a value at position 2"),
-            (r#"{"expression":"1/0"}"#, "division by zero"),
-            (
-                r#"{"expression":"sqrt(-1)"}"#,
-                "square root of a negative number",
-            ),
-            (
-                r#"{"expression":"ln(0)"}"#,
-                "logarithm of a non-positive number",
-            ),
-            (
-                r#"{"expression":"bogus(1)"}"#,
-                "unknown function bogus at position 0",
-            ),
-            (r#"{"expression":"x + 1"}"#, "unknown name x at position 0"),
-            (deep.as_str(), "the expression nests deeper than 64"),
-            (minus_chain.as_str(), "the expression nests deeper than 64"),
-            (power_chain.as_str(), "the expression nests deeper than 64"),
-        ];
-        for (arguments, expected) in failing {
-            let outcome = execute(&ToolExecution {
-                name: ToolName("calculator".into()),
-                arguments: arguments.into(),
-            });
-            assert_eq!(
-                outcome,
-                ToolOutcome::Failure {
-                    detail: expected.into()
-                },
-                "for {arguments}"
+    fn a_clock_outside_the_maximum_refuses_rather_than_clamps() {
+        for clock in [0, SHELL_MAX_CLOCK_MS + 1] {
+            let outcome = shell(r#"{"command":"true"}"#, clock);
+            let ToolOutcome::Refused { reason } = outcome else {
+                panic!("a refusal answers for {clock}: {outcome:?}");
+            };
+            assert!(
+                reason.contains("declared maximum"),
+                "the refusal names the bound: {reason}"
             );
         }
     }
 
-    /// **The home CLI forks, answers, and accounts for every ending.** The
-    /// commands are deliberately harmless - the suite runs at whatever uid
-    /// builds the tree - and what is asserted is the mechanism: output
-    /// crosses, stderr is named, a nonzero exit is named, and the working
-    /// directory is the home the tool promises.
+    /// Malformed arguments are the gate's refusal - nothing ran, so no
+    /// account is the tool's.
     #[test]
-    fn the_home_cli_runs_where_it_promises() {
-        let outcome = execute(&ToolExecution {
-            name: ToolName("home_cli".into()),
-            arguments: r#"{"command":"pwd"}"#.into(),
-        });
+    fn malformed_arguments_refuse_in_the_gates_voice() {
+        for (arguments, expected) in [
+            ("not json", "the arguments are not one JSON object"),
+            (
+                r#"{"expr":"true"}"#,
+                "the arguments carry no command string",
+            ),
+        ] {
+            let outcome = shell(arguments, 1_000);
+            let ToolOutcome::Refused { reason } = outcome else {
+                panic!("a refusal answers: {outcome:?}");
+            };
+            assert!(reason.contains(expected), "for {arguments}: {reason}");
+        }
+    }
+
+    /// **The shell runs where it promises and accounts for every ending**:
+    /// output crosses, stderr is named, and a nonzero exit is a result -
+    /// the shell's own answer - never an error.
+    #[test]
+    fn the_shell_runs_where_it_promises() {
+        let outcome = shell(r#"{"command":"pwd"}"#, 10_000);
         let ToolOutcome::Result { content } = outcome else {
             panic!("pwd answers: {outcome:?}");
         };
@@ -604,12 +355,9 @@ mod tests {
         let reported = std::fs::canonicalize(content.trim()).expect("the pwd resolves");
         assert_eq!(reported, expected, "the command runs in the home directory");
 
-        let outcome = execute(&ToolExecution {
-            name: ToolName("home_cli".into()),
-            arguments: r#"{"command":"echo out; echo err 1>&2; exit 3"}"#.into(),
-        });
+        let outcome = shell(r#"{"command":"echo out; echo err 1>&2; exit 3"}"#, 10_000);
         let ToolOutcome::Result { content } = outcome else {
-            panic!("a nonzero exit is still an answer: {outcome:?}");
+            panic!("a nonzero exit is still a result: {outcome:?}");
         };
         assert!(content.contains("out"), "stdout crosses: {content}");
         assert!(
@@ -623,24 +371,22 @@ mod tests {
     }
 
     /// **A chatty command drains while it runs and a straggler does not
-    /// hold the answer.** The first command writes past the kernel's pipe
-    /// buffer and must complete promptly with the bound's marker - a drain
-    /// that waited for the exit would block the child's writes and convert
-    /// it into a false deadline kill. The second leaves a background child
-    /// holding the pipe's write end; the group kill at the exit is what
-    /// lets the readers finish, so the answer arrives in the foreground
-    /// command's time, not the straggler's.
+    /// hold the answer.** The first writes past the kernel's pipe buffer
+    /// and must complete promptly with the bound's marker - a drain that
+    /// waited for the exit would block the child's writes and convert it
+    /// into a false kill. The second leaves a background child holding the
+    /// pipe's write end, and the group kill at the exit is what lets the
+    /// readers finish.
     #[test]
     fn a_chatty_command_and_a_straggler_both_answer_promptly() {
-        let home = std::env::var("HOME").expect("the suite has a HOME");
-
         let started = std::time::Instant::now();
-        let content = super::run_in_home_with_deadline(
-            "head -c 200000 /dev/zero | tr '\\0' 'x'",
-            &home,
-            std::time::Duration::from_secs(10),
-        )
-        .expect("a chatty command still answers");
+        let outcome = shell(
+            r#"{"command":"head -c 200000 /dev/zero | tr '\\0' 'x'"}"#,
+            10_000,
+        );
+        let ToolOutcome::Result { content } = outcome else {
+            panic!("a chatty command still answers: {outcome:?}");
+        };
         assert!(
             content.contains("[output truncated at 32 KiB]"),
             "the bound marks itself: {} octets",
@@ -648,16 +394,14 @@ mod tests {
         );
         assert!(
             started.elapsed() < std::time::Duration::from_secs(5),
-            "the drain rode along, no deadline was consumed"
+            "the drain rode along, no clock was consumed"
         );
 
         let started = std::time::Instant::now();
-        let content = super::run_in_home_with_deadline(
-            "echo done; sleep 30 &",
-            &home,
-            std::time::Duration::from_secs(10),
-        )
-        .expect("the foreground command answers");
+        let outcome = shell(r#"{"command":"echo done; sleep 30 &"}"#, 10_000);
+        let ToolOutcome::Result { content } = outcome else {
+            panic!("the foreground command answers: {outcome:?}");
+        };
         assert!(content.contains("done"), "the answer crossed: {content}");
         assert!(
             started.elapsed() < std::time::Duration::from_secs(5),
@@ -665,71 +409,29 @@ mod tests {
         );
     }
 
-    /// The deadline is the tool's own failure in its own words, not a hung
-    /// exchange: the kill path watched directly through the supervisor with
-    /// a tiny bound, the constant being what a deployment tunes.
+    /// **A command past the caller's clock is killed as its own case,
+    /// carrying no tool voice and attaching what drained before the
+    /// kill.** The clock here is tiny because the constant is what a
+    /// deployment tunes and the mechanism is what this watches.
     #[test]
-    fn a_command_past_the_deadline_is_killed_and_says_so() {
-        let failure = super::run_in_home_with_deadline(
-            "sleep 5",
-            &std::env::var("HOME").expect("HOME"),
-            std::time::Duration::from_millis(100),
-        )
-        .expect_err("the sleep must be killed");
+    fn a_command_past_the_clock_is_killed_with_its_partial_attached() {
+        let outcome = shell(r#"{"command":"echo early; sleep 5"}"#, 200);
+        let ToolOutcome::Killed { partial } = outcome else {
+            panic!("the kill is its own case: {outcome:?}");
+        };
+        let partial = partial.expect("the drained output rides the kill");
         assert!(
-            failure.detail.contains("deadline and was killed"),
-            "the kill names itself: {}",
-            failure.detail
+            partial.contains("early"),
+            "what drained before the kill is attached: {partial}"
         );
-    }
 
-    /// **A name the table does not hold refuses by name, never a nearest
-    /// match.** Perturbation: make `execute` fall back to the first held tool
-    /// on a miss and this fails, the outcome then being a `Result`.
-    #[test]
-    fn an_unheld_name_is_refused_by_name() {
-        let outcome = execute(&ToolExecution {
-            name: ToolName("calculatr".into()),
-            arguments: "{}".into(),
-        });
-        assert_eq!(
-            outcome,
-            ToolOutcome::Unheld {
-                name: ToolName("calculatr".into())
-            }
+        let outcome = shell(r#"{"command":"sleep 5"}"#, 200);
+        let ToolOutcome::Killed { partial } = outcome else {
+            panic!("the kill is its own case: {outcome:?}");
+        };
+        assert!(
+            partial.is_none(),
+            "a silent command attaches nothing: {partial:?}"
         );
-    }
-
-    /// Parentheses, precedence, unary minus, and floats hold together.
-    #[test]
-    fn the_grammar_covers_its_claims() {
-        for (expression, expected) in [
-            ("2 + 3 * 4", "14"),
-            ("(2 + 3) * 4", "20"),
-            ("-(2 + 3) * 4", "-20"),
-            ("1 / 4", "0.25"),
-            ("10 - 2 - 3", "5"),
-            ("2^10", "1024"),
-            ("2^3^2", "512"),
-            ("-2^2", "-4"),
-            ("sqrt(16) + 2", "6"),
-            ("cos(0)", "1"),
-            ("ln(e)", "1"),
-            ("log(1000)", "3"),
-            ("abs(-3) * exp(0)", "3"),
-            ("sin(pi / 2)", "1"),
-        ] {
-            let outcome = execute(&ToolExecution {
-                name: ToolName("calculator".into()),
-                arguments: format!(r#"{{"expression":"{expression}"}}"#),
-            });
-            assert_eq!(
-                outcome,
-                ToolOutcome::Result {
-                    content: expected.into()
-                },
-                "for {expression}"
-            );
-        }
     }
 }
