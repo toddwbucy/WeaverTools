@@ -94,6 +94,15 @@ flowing back when the harness or a control loop in its seat asks. Both ride the
 one seam, because both are the harness talking to its member and a second
 channel would be a topology fact no need has produced.
 
+**The socket is the seam's own and reuses nothing.** Apex section 9 says a new
+socket and this charter reads it literally: the coordination seam keeps its
+one kind of traffic, and state's seam is a second, distinct channel with a
+name of its own. It stands at load under the same coordination that stands
+every organ channel, and it authenticates its peer by credential, per the
+first invariant's rule for a channel with a name. Which end binds, how the
+descriptor travels, and the credential's exact judgment are the contract's
+mechanics, deliberately absent here.
+
 The nesting under `weaver-harness` carries domain membership and nothing else,
 per apex section 5.4: nesting is never process topology, and this member
 crossing a process line while the trace links in-process is two right answers
@@ -106,8 +115,20 @@ should not carry, so it stands beside the harness rather than inside it.
 the session that produced them, which is proto-stateful's boundary honored
 rather than crossed. Persistence across sessions is a second return through the
 same apex door with its own paper, and nothing here lays in for it: no
-serialization surface a future act would wish existed, no directory this crate
-writes that outlives its process, per the no-reserved-slots rule.
+dump-and-restore surface a future act would wish existed, no directory this
+crate writes that outlives its process, per the no-reserved-slots rule. The
+prohibition is on durability, not on encoding: the seam's traffic serializes
+the way every seam's does, and refusing that would refuse the socket itself.
+
+**Losing the member loses the derivative and never the account.** State can
+die while the session lives, and the session goes on: the trace is the
+authoritative record, this crate holds a working derivative of it, and a
+harness whose state member is gone serves turns the way it did before the leg
+existed. The holdings are rebuildable by construction, because everything they
+distilled is still in the record, and whether a restarted member is refilled
+by replaying the tee or stands empty is the harness's policy like every other
+judgment. What this charter forbids is the inversion: no design in this leg
+may make the session's continuation depend on the derivative surviving.
 
 ## 4. Its material
 
@@ -117,6 +138,12 @@ load, with the shipped kind filter as the default election. The run identifies
 itself in that stream since the ruling of 2026-08-14, admin's run reference
 having replaced the ordinal, so what state receives is attributable to the run
 that produced it without this crate minting any identity of its own.
+
+One member instance serves one session: it stands with the session, ingests a
+stream whose events already carry their session, run, and turn identity, and
+is torn down with the session by the same unload that retires the rest, so
+nothing this crate holds needs an identity it minted itself and nothing
+survives the close.
 
 What organizing means at this charter's level: the holdings are queryable by
 the facts the record already carries, the run, the turn, the kind, and the
