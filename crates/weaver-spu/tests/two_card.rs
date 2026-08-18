@@ -152,10 +152,28 @@ fn a_split_artifact_larger_than_any_card_admits_across_the_pair() {
             Headroom(2 * 1024 * 1024 * 1024),
             ReadoutElection(false),
         );
-        assert!(
-            refused.is_err(),
-            "the split fits no single card, so ordinal {ordinal} alone refuses"
-        );
+        // The refusal must be the room refusal on the probed card, or the
+        // probe proves nothing: any other refusal - a family miss, a bad
+        // path - would satisfy a bare is_err while the size claim went
+        // unexercised.
+        match refused.as_ref().err() {
+            Some(weaver_spu::residency::AdmitRefusal::DeviceRefused(
+                weaver_spu::gpu::DeviceRefusal::NoRoom {
+                    ordinal: refused_at,
+                    free,
+                    needed,
+                },
+            )) => {
+                assert_eq!(*refused_at, ordinal, "the refusal names the probed card");
+                assert!(
+                    needed > free,
+                    "the refusal carries the inequality: needed {needed} against free {free}"
+                );
+            }
+            other => panic!(
+                "the split fits no single card, so ordinal {ordinal} refuses for room, got {other:?}"
+            ),
+        }
     }
 
     let mut residency = Residency::new();
