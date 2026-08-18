@@ -1,0 +1,129 @@
+# weaver-state - PRD (crate charter)
+
+**Status:** MERGED. In `main` and the source of truth.
+
+**Date filed:** 2026-08-18
+**Document ID:** `weaver-state-PRD`
+**Parent:** `weaver-harness-PRD`
+**Companion contract:** `weaver-harness-state-contract`, owed by the act that opens
+the seam and named here so the seam cannot open without it.
+**Editorial:** Per the Working Rules.
+
+---
+
+## 1. What this crate is
+
+`weaver-state` is the custodian of the agent's working state. It stores what it
+is handed, organizes what it stores, and serves what it is asked for, and it
+does nothing else. The charter is the operator's ruling of 2026-08-18, and the
+sentence is short enough to carry whole: the crate holds state, and the
+management of state as it concerns context for the decoder belongs to the
+harness and its control loops.
+
+This is the statefulness leg returning by the door apex section 9 built for it.
+Proto-stateful was the deliverable: real state within a session and none across,
+with the memory leg out entirely and its return chartered in advance as a schema
+extension plus a new socket and contract, never as a retrofit. This document is
+that return's first paper. Nothing in the base set moves to make room for it,
+which is what the door was for.
+
+```graph
+node: weaver-state
+kind: crate
+
+edge: parent
+from: weaver-state
+to: weaver-harness
+```
+
+## 2. What it is not
+
+**It does not manage.** The harness's control loops decide what enters the
+decoder's context, what leaves it, when a flush is worth its cost, and what any
+stored fact is worth to the turn at hand. Every one of those is policy, every
+one is the harness's, and this crate answers asks without holding an opinion
+about why it was asked. The trace charter drew this line for recording and it
+holds here for keeping: custody without policy is the whole of the charter, and
+a member that judged its own contents would be a second reasoning loop wearing a
+filing cabinet's name.
+
+**It does not initiate.** Nothing in this crate fires on a condition, watches a
+threshold, or acts unasked. A control loop that consults state is the operator's
+code in the harness's seat, per the tool boundary ruling's placement of control
+loops, and this crate is a place such a loop reaches rather than a place one
+lives.
+
+**It is not the trace and does not compete with it.** The trace is the primary
+artifact and the one authoritative record, per apex section 1, and what this
+crate holds is a distillation of the record, never stored back into it, per the
+ruling carried at `weaver-trace-PRD` section 3.2. Where the two disagree the
+trace is right by construction, because the trace is the account and state is a
+working derivative of the account. The distillation surface is the harness's
+tee over the canonical event stream, ruled by the operator 2026-08-12, and its
+output is this crate's ingress: state receives what the tee elects, holds it
+organized, and answers with it.
+
+**It is not the model's to reach.** The harness reads state for its own
+assembly and its loops' decisions, and the model receives only what the harness
+hands it as rendered context, the same wall `weaver-harness-PRD` section 5
+holds for the trace. There is no model-facing read path and no tool that opens
+one.
+
+## 3. The seam
+
+The seam is the apex's own prescription read literally: a schema extension plus
+a new socket and contract. State crosses a process line from the harness under
+`weaver-harness-state-contract`, initiator first in the name because the
+harness asks and state answers, on a Unix socket that authenticates its peer
+per the first invariant. Two kinds of traffic and no third: the tee's
+distillate flowing in as the harness applies its filter, and served answers
+flowing back when the harness or a control loop in its seat asks. Both ride the
+one seam, because both are the harness talking to its member and a second
+channel would be a topology fact no need has produced.
+
+The nesting under `weaver-harness` carries domain membership and nothing else,
+per apex section 5.4: nesting is never process topology, and this member
+crossing a process line while the trace links in-process is two right answers
+to two different questions. The trace must be unreachable by the agent and is
+written by exactly one party, so it lives inside that party. State serves reads
+back toward its writer's loops and holds volume the harness's own process
+should not carry, so it stands beside the harness rather than inside it.
+
+**Within a session, and not across.** This crate's holdings live and die with
+the session that produced them, which is proto-stateful's boundary honored
+rather than crossed. Persistence across sessions is a second return through the
+same apex door with its own paper, and nothing here lays in for it: no
+serialization surface a future act would wish existed, no directory this crate
+writes that outlives its process, per the no-reserved-slots rule.
+
+## 4. Its material
+
+The input is the inspected artifact's lineage: canonical event JSON as the
+trace renders it, selected per event by the tee's key-based filter, fixed at
+load, with the shipped kind filter as the default election. The run identifies
+itself in that stream since the ruling of 2026-08-14, admin's run reference
+having replaced the ordinal, so what state receives is attributable to the run
+that produced it without this crate minting any identity of its own.
+
+What organizing means at this charter's level: the holdings are queryable by
+the facts the record already carries, the run, the turn, the kind, and the
+keys the tee elected. What it means in representation, indexes, orderings, and
+the query surface's shape, is the Spec's and deliberately absent here.
+
+## 5. Open cells
+
+- **The schema extension.** Apex section 9's door names one and this charter
+  does not write it: the shape of the distillate the tee emits is settled with
+  `weaver-harness-state-contract`, because the schema is the seam's vocabulary
+  and a contract is a complete interface or it is not a valid contract.
+- **The tee's charter section.** The distillation surface is the harness's
+  mechanism and its paper lands in `weaver-harness-PRD`, owed by the same
+  workflow that writes the contract, named here so neither document reads the
+  other as already settled.
+- **Who else may ask.** Today the harness is the one peer, and every ask
+  arrives through it. Whether a later operator surface reads state directly or
+  through an admin verb is a cell for the day such a reader exists, refused
+  until then by the seam having exactly two ends.
+- **What a control loop's ask looks like.** The loops are the operator's code
+  in the harness's seat, so their asks ride the harness's end of the seam. The
+  calling shape a loop uses is settled where the loop surface is, not here.
