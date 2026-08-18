@@ -110,20 +110,6 @@ impl ResidentModel {
                 }
             })?;
 
-        // BF16 on the device, which is what the artifact holds and what the
-        // fork's kernels serve. The mmap is unsafe by the crate's own
-        // signature: the file must not change underneath the map, which is
-        // the standing assumption every reader of a pinned artifact makes.
-        let vb = unsafe {
-            candle_nn::VarBuilder::from_mmaped_safetensors(
-                &[admission.path().to_path_buf()],
-                DType::BF16,
-                &device,
-            )
-        }
-        .map_err(|error| AdmitRefusal::LoadFailed {
-            detail: format!("safetensors map: {error}"),
-        })?;
         let model = if let [_, second] = ordinals.as_slice() {
             let second =
                 Device::new_cuda(*second as usize).map_err(|error| AdmitRefusal::LoadFailed {
@@ -135,6 +121,22 @@ impl ResidentModel {
                 [device.clone(), second],
             )?)
         } else {
+            // BF16 on the device, which is what the artifact holds. The mmap
+            // is unsafe by the crate's own signature: the file must not
+            // change underneath the map, the standing assumption every
+            // reader of a pinned artifact makes. Built here rather than
+            // above, because the pair branch maps the container itself and
+            // an unconsumed map would be work the load never uses.
+            let vb = unsafe {
+                candle_nn::VarBuilder::from_mmaped_safetensors(
+                    &[admission.path().to_path_buf()],
+                    DType::BF16,
+                    &device,
+                )
+            }
+            .map_err(|error| AdmitRefusal::LoadFailed {
+                detail: format!("safetensors map: {error}"),
+            })?;
             Forward::Single(ModelForCausalLM::new(&config, vb).map_err(|error| {
                 AdmitRefusal::LoadFailed {
                     detail: format!("model construction: {error}"),

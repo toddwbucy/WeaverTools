@@ -285,6 +285,12 @@ impl ShardedModel {
     pub fn forward(&mut self, tokens: &[u32], offset: usize) -> Result<Vec<f32>, DecodeFault> {
         let fault = |detail: String| DecodeFault::Engine { detail };
         let seq = tokens.len();
+        // An empty decode reaches no distribution and the engine returns
+        // before asking, so this door refuses rather than underflowing the
+        // last-position index for a caller the engine does not mediate.
+        if seq == 0 {
+            return Err(fault("an empty decode has no distribution".into()));
+        }
         let ids = Tensor::new(tokens, &self.devices[0]).map_err(|e| fault(format!("ids: {e}")))?;
         let hidden0 = self
             .embed
@@ -298,15 +304,36 @@ impl ShardedModel {
                 .map_err(|e| fault(format!("broadcast: {e}")))?,
         ];
 
-        let mask = if seq > 1 {
+        // **The mask spans the keys, not the queries alone.** After the
+        // cache concat the scores run over `offset + seq` key positions, so
+        // a mask shaped by the delta alone would misbroadcast the moment a
+        // multi-token delta followed a resident prefix, which is every real
+        // turn. Query `i` sees every cached position and its own prefix of
+        // the delta. Staged onto each device once, here, rather than hopped
+        // from the host per layer per shard.
+        let mask: Option<[Tensor; 2]> = if seq > 1 {
+            let keys = offset + seq;
             let m: Vec<f32> = (0..seq)
-                .flat_map(|i| (0..seq).map(move |j| if j > i { f32::NEG_INFINITY } else { 0.0 }))
+                .flat_map(|i| {
+                    (0..keys).map(move |j| {
+                        if j > offset + i {
+                            f32::NEG_INFINITY
+                        } else {
+                            0.0
+                        }
+                    })
+                })
                 .collect();
-            Some(
-                Tensor::from_vec(m, (seq, seq), &Device::Cpu)
-                    .and_then(|t| t.to_dtype(DType::BF16))
-                    .map_err(|e| fault(format!("mask: {e}")))?,
-            )
+            let host = Tensor::from_vec(m, (seq, keys), &Device::Cpu)
+                .and_then(|t| t.to_dtype(DType::BF16))
+                .map_err(|e| fault(format!("mask: {e}")))?;
+            let on0 = host
+                .to_device(&self.devices[0])
+                .map_err(|e| fault(format!("mask: {e}")))?;
+            let on1 = host
+                .to_device(&self.devices[1])
+                .map_err(|e| fault(format!("mask: {e}")))?;
+            Some([on0, on1])
         } else {
             None
         };
@@ -320,7 +347,7 @@ impl ShardedModel {
                     &hidden[half],
                     &self.cos[half],
                     &self.sin[half],
-                    mask.as_ref(),
+                    mask.as_ref().map(|m| &m[half]),
                     offset,
                     self.heads_per_device,
                     self.kv_heads_per_device,
@@ -422,7 +449,6 @@ fn attend(
     eps: f64,
 ) -> candle_core::Result<Tensor> {
     let (seq, _hidden_size) = hidden.dims2()?;
-    let device = hidden.device();
     let normed = rms_norm(hidden, &shard.input_norm, eps)?;
 
     let q = normed
@@ -462,7 +488,7 @@ fn attend(
     let scale = 1f64 / (head_dim as f64).sqrt();
     let scores = (q.matmul(&k.transpose(1, 2)?.contiguous()?)? * scale)?;
     let scores = match mask {
-        Some(mask) => scores.broadcast_add(&mask.to_device(device)?.unsqueeze(0)?)?,
+        Some(mask) => scores.broadcast_add(&mask.unsqueeze(0)?)?,
         None => scores,
     };
     let weights = softmax_last_dim(&scores.to_dtype(DType::F32)?)?.to_dtype(scores.dtype())?;
@@ -536,11 +562,36 @@ mod tests {
     /// The sharded forward against the stock forward, both halves on one
     /// device: isolates the sharding arithmetic from every cross-device
     /// question. Skipped where the workshop lacks the artifact or a device.
+    /// The fixture, by the same variable the device suite reads: unset and
+    /// absent skips, named and absent fails.
+    fn fixture_dir() -> Option<std::path::PathBuf> {
+        match std::env::var_os("WEAVER_ARTIFACT_QWEN25_SAFETENSORS") {
+            Some(named) => {
+                let path = std::path::PathBuf::from(named);
+                assert!(
+                    path.is_dir(),
+                    "WEAVER_ARTIFACT_QWEN25_SAFETENSORS names {}, which is not a directory",
+                    path.display()
+                );
+                Some(path)
+            }
+            None => {
+                let path =
+                    std::path::PathBuf::from("/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct");
+                path.is_dir().then_some(path)
+            }
+        }
+    }
+
     #[test]
     fn the_halves_recompose_the_whole() {
-        let dir = std::path::Path::new("/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct");
-        if !dir.is_dir() || Device::new_cuda(0).is_err() {
-            eprintln!("SKIP: no artifact or no device");
+        let Some(dir) = fixture_dir() else {
+            eprintln!("SKIP: no artifact");
+            return;
+        };
+        let dir = dir.as_path();
+        if Device::new_cuda(0).is_err() {
+            eprintln!("SKIP: no device");
             return;
         }
         let device = Device::new_cuda(0).expect("device");
@@ -667,6 +718,50 @@ mod tests {
             argmax(&stock_logits),
             "the pair recomposes the whole"
         );
+
+        // **A multi-token delta after a resident prefix, against the stock
+        // model**: the real turn's shape, and the shape whose mask a
+        // delta-sized square would misbroadcast. Three tokens resident, then
+        // three more, compared at the second call's distribution.
+        {
+            let split_at = 3;
+            paired.clear_kv_cache();
+            let _ = paired
+                .forward(&tokens[..split_at], 0)
+                .expect("the prefix decodes");
+            let stepped = paired
+                .forward(&tokens[split_at..], split_at)
+                .expect("the delta decodes at its offset");
+            // The stock reference walks the delta one token at a time: its
+            // own batched delta-at-offset path miscats an F32 mask against a
+            // BF16 zero block in the pinned fork, a defect noted for the
+            // fork's next touch, and the stepwise walk is the same math
+            // through the path everyone exercises.
+            stock.clear_kv_cache();
+            let input = Tensor::new(&tokens[..split_at], &device)
+                .and_then(|t| t.unsqueeze(0))
+                .expect("prefix input");
+            let _ = stock.forward(&input, 0).expect("stock prefix");
+            let mut stock_stepped = Vec::new();
+            for (step, token) in tokens[split_at..].iter().enumerate() {
+                let input = Tensor::new(&[*token][..], &device)
+                    .and_then(|t| t.unsqueeze(0))
+                    .expect("step input");
+                stock_stepped = stock
+                    .forward(&input, split_at + step)
+                    .and_then(|t| t.squeeze(0))
+                    .and_then(|t| t.squeeze(0))
+                    .and_then(|t| t.to_dtype(DType::F32))
+                    .and_then(|t| t.to_vec1::<f32>())
+                    .expect("stock step");
+            }
+            assert_eq!(
+                argmax(&stepped),
+                argmax(&stock_stepped),
+                "a delta at an offset recomposes the stock model's answer"
+            );
+            paired.clear_kv_cache();
+        }
 
         // The engine's route: the pinned descriptor path instead of the
         // name. The admission hands the loader /proc/self/fd/N, so the

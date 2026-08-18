@@ -187,12 +187,15 @@ fn the_pair_agrees_with_the_single_card() {
         let mut session = resident.open_session(&knobs, 512).expect("session opens");
         session.open(&prefix).expect("prefix decodes");
         let close = resident.tokenize("<|im_end|>").expect("close tokenizes");
+        let [terminator] = close.as_slice() else {
+            panic!("the turn close promotes to one token, got {close:?}");
+        };
         let generated = session
             .append_and_generate(
                 &[],
                 &StopCondition {
                     stop_tokens: close.clone(),
-                    terminator: close[0],
+                    terminator: *terminator,
                     max_tokens: 8,
                 },
                 &mut NeverCancels,
@@ -207,20 +210,18 @@ fn the_pair_agrees_with_the_single_card() {
         emissions.push(generated.tokens.clone());
     }
     // Greedy at temperature zero over the same weights: the full sequences
-    // agree in practice on this workshop and the first token is the pin,
-    // reduction order being licensed to move low-order logit bits where two
-    // candidates tie.
-    assert_eq!(
-        emissions[0].first(),
-        emissions[1].first(),
-        "the pair's first greedy token agrees with the single card's"
+    // agree, measured, and the whole sequence is the pin. A future flake
+    // here would mean two candidates tied close enough for reduction order
+    // to pick differently, and that is a fact to meet with evidence in hand
+    // rather than pre-excused by a weaker assertion.
+    assert!(
+        !emissions[0].is_empty() && !emissions[1].is_empty(),
+        "both widths generated"
     );
-    if emissions[0] != emissions[1] {
-        eprintln!(
-            "note: sequences diverge after the first token: {:?} vs {:?}",
-            emissions[0], emissions[1]
-        );
-    }
+    assert_eq!(
+        emissions[0], emissions[1],
+        "the pair's greedy sequence agrees with the single card's"
+    );
 }
 
 fn cuda_present() -> bool {
