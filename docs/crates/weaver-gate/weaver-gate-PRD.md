@@ -17,6 +17,18 @@ the result arrives as an exchange answer, which is what lets the harness's
 granted value be constructed at exactly one site. Section 7's uid cell stays
 PENDING and this pass forks at the uid this crate already holds, building
 nothing against the separate-uid arm.
+**Revised:** 2026-08-18, the tool boundary ruling narrows the held set to
+one. The tool this crate executes is the shell, `bash`, and the shell is not
+a guest here: it is this crate's own outbound verb. The agent's effect on
+the world crosses this membrane, the shell is that crossing's general form,
+and the uid it runs under is the agent's outer protective shell, so
+executing it is the gate doing its one job in the outward direction. The
+calculator leaves for `weaver-internal`, the promotion space that ruling
+charters, dispatched inward and never this crate's. The agent's wider
+roster is emergent - scripts the agent writes and keeps in its home
+directory, reached through the shell, owned by the uid, and no crate's
+member. This crate therefore holds no tool table: one verb, dispatched
+directly, and a name that is not the shell's refuses by name.
 **Revised:** 2026-08-17, the port ruling re-scopes under the ratified loop
 boundary, per issue #115. The ruling answered internal-to-the-agent, the only
 question a one-level model could ask, and it keeps that answer whole. What
@@ -396,7 +408,7 @@ section 7, which names the agent-uid case as its assumption and files the cell h
 it is inherited as a constraint rather than rediscovered.
 
 **The fork is this crate's as of the tool workflow's opening act of
-2026-08-17.** The internal tool executes here, forked and supervised per call
+2026-08-17.** The shell executes here, forked and supervised per call
 and answered on the execution exchange of `weaver-harness-gate-contract`
 section 2, the mechanism election the finding of 2026-08-11 left to the seat
 with codebase context. An earlier reading had the harness forking the tool,
@@ -418,13 +430,16 @@ it closed.** The port ruling of 2026-08-07 removes two of the three tools it use
 reach. A tool that binds a listening port is external, a registered application the
 operator provisions and this program forks none of, so no uid of its is this program's
 to choose. Loop code the operator compiles into the worker holds no separate process
-and so no separate uid. **What remains is the internal tool this crate's sibling forks
-per call**, `bash` above all, which `weaver-harness-Spec` section 10 describes as a
-subprocess running as the agent uid and builds a reference walk on. Internal
-answers the agent-level question the port test asks; under the ratified loop
-boundary of 2026-08-11 the same tool is external to the reasoning loop, every
-tool being on the far side of this crate by the criterion, and the two answers
-name two boundaries rather than contradicting each other. That process has a
+and so no separate uid. **What remains is the shell this crate forks per call**, which
+`weaver-harness-Spec` section 10 describes as a subprocess running as the
+agent uid and builds a reference walk on. The word internal names the
+agent-level answer the port test gives, and under the ratified loop boundary
+of 2026-08-11 the same shell is external to the reasoning loop, every tool
+being on the far side of this crate by that criterion - two answers naming
+two boundaries rather than contradicting each other. As of the tool boundary
+ruling of 2026-08-18 the word also names a third thing, the `weaver-internal`
+promotion space, which holds inward-dispatched callables and no process, so
+no uid question of this cell reaches it. That process has a
 uid, the choice between the agent's and one this crate owns is live for it, and the
 descriptor custody the walk protects is exactly what the choice decides.
 
@@ -467,9 +482,9 @@ section keeps them as the record of what the earlier pass could already see.
 
 **The tool-uid ruling.** Stated in section 7 with its candidate. **Settled by:** the
 architecture seat's ratification of the candidate, or the tool workflow chartering
-**Narrowed by the port ruling of 2026-08-07** to the internal tool the harness forks
-per call, an external tool being the operator's to provision and loop code holding no
-separate process. Section 7 carries the reasoning. Until settled, admin's
+**Narrowed by the port ruling of 2026-08-07** to the forked shell, an external
+tool being the operator's to provision and loop code holding no separate
+process. Section 7 carries the reasoning. Until settled, admin's
 assumption stands and nothing builds against the separate-uid arm.
 
 **The refusal type.** This seam's refusal reuses `lifecycle-refusal` rather than

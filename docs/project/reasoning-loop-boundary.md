@@ -152,7 +152,11 @@ These are open and belong to the seat with codebase context, not to this one.
   for everything the loop did not bring itself, which is broader than an opaque
   logged pass-through for external tools. Does the port-as-discriminator rule still
   sort a calculator that binds no port against a shell that is invoked, when both
-  are local and both are external to the loop.
+  are local and both are external to the loop. **Answered by the tool boundary
+  ruling of 2026-08-18**: the shell is the gate's own outbound verb and the
+  calculator is a `weaver-internal` callable dispatched inward, so the gate
+  mediates the world and never the machine's own arithmetic, and the sort is by
+  which side of the loop's membrane the answer comes from rather than by port.
 - Organ-promotion bar. A cluster of external tools covering a domain may earn
   promotion to an organ when internal management pays for itself. That criterion
   drifts toward aesthetics. What is the measurement that says a cluster earned

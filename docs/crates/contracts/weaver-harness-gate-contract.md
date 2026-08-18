@@ -7,6 +7,18 @@ v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise a
 the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-18, the tool boundary ruling re-grounds the execution
+exchange. The gate holds one tool, the shell, which is this crate's own
+outbound verb: the agent's effect on the world crosses this membrane, and the
+shell is that crossing's general form, bounded by the uid that is the agent's
+outer protective shell per `weaver-tools-vision` section 6. The calculator
+leaves for `weaver-internal`, dispatched inward and never this seam's
+traffic. The answer's contents grow from three to four, killed on the clock
+joining as its own case, and the invocation carries the caller's clock under
+the one-clock rule this act states. The `tool-trait` draw retires: with one
+held tool and no dyn table this seam's execution speaks through no trait, and
+the trait stays chartered at `weaver-traits-Spec` section 5 for the elected
+outward corner it always constituted.
 **Revised:** 2026-08-17, the tool workflow opens and the fifth exchange arrives,
 the one section 2 promised to it: execute a tool, opened by the harness,
 carrying the call the family parse recovered, answered with the result or the
@@ -140,8 +152,9 @@ two by the gate, the turn and the fault report, which is the two-initiator
 channel carrying both directions as of the token workflow's gate act. **The
 egress ruling of 2026-08-07 gave the gate a second seam toward the world**, the
 agent-opened socket for registered applications, and no exchange of this seam
-reaches it in this pass: the internal tool executes inside the gate and the
-egress socket waits on a registered application to address.
+reaches it in this pass: the shell executes inside the gate, the one tool it
+holds as of the tool boundary ruling of 2026-08-18, and the egress socket
+waits on a registered application to address.
 
 **Raise the hook.** Opened by the harness, last in the enter fan-out, carrying the
 gate instruction admin supplied in the enter directive, uninterpreted by the harness.
@@ -191,15 +204,45 @@ ruling, and answers received, promising authorship and nothing else.
 
 **Execute a tool.** Opened by the harness, one exchange per call the model's
 emission recovered, valid only inside the raised window like the turn. The
-harness supplies the call, the tool's name and its arguments as the family
-parse recovered them, and interprets nothing. **Every opened execution
-completes with an answer, and the answer carries one of three contents**: the
-tool's result, the tool's own failure, or the gate's refusal naming a tool it
-does not hold - never a nearest match, the registry discipline of the family
-table applied one organ over. All three are content rather than channel
-faults, per the layer split every seam of this program runs, because each is
-a fact the model must learn: a tool that does not exist is an answer the
-next turn reasons over, not a hole in the conversation.
+harness supplies the call - the tool's name, its arguments as the family
+parse recovered them, and the caller's clock - and interprets nothing.
+
+**One clock, the caller's.** Every invocation carries a timeout the caller
+states. The tool declares a maximum, the caller's number must be equal to or
+less than that maximum, and the gate adopts the caller's number as the kill
+clock for that invocation. A clock beyond the maximum refuses rather than
+clamps, because a clamped clock silently changes the caller's wait and the
+two-clock disagreement returns by the back door. The tool cannot outlive the
+wait, so no orphaned process survives the exchange and no stale return
+arrives at a decision point that is already gone.
+
+**Every opened execution completes with an answer, and the answer carries
+one of four contents**, told apart by tag alone, the rule beneath the four
+being who speaks in the return:
+
+- **Result.** The invocation ran and the tool answers in its own words. For
+  the shell, a nonzero exit status is a result and not an error: the exit is
+  the shell's answer, accounted in content.
+- **Refused.** Nothing ran, and the gate speaks in its own voice: a name it
+  does not hold - never a nearest match, the registry discipline of the
+  family table applied one organ over - malformed arguments, or a clock
+  beyond the declared maximum. No side effect exists and a corrected call is
+  safe to re-ask.
+- **Errored.** The invocation machinery failed - the fork, a pipe, the
+  supervisor - and the account's speaker is the infrastructure, never the
+  tool.
+- **Killed.** The caller's clock expired and the gate killed the invocation's
+  whole process group, descendants included, because a kill that reaped only
+  the leader would leave the pipes held open and the promise above false.
+  The case carries no account from the tool by construction - the absence of
+  the tool's words is the fact - and output drained before the kill rides
+  the case as an attachment, never folded into a result, so a partial cannot
+  masquerade as an answer.
+
+All four are content rather than channel faults, per the layer split every
+seam of this program runs, because each is a fact the model must learn: a
+tool that does not exist is an answer the next turn reasons over, not a hole
+in the conversation.
 
 **Executions are serial and ordered by the emission.** The harness opens at
 most one at a time, in the order the family parse recovered the calls, and
@@ -212,7 +255,7 @@ is the order the model spoke them.
 **The answer crosses this seam exactly once per call and nothing else mints
 what it grants**, which is the half of the loop closure this contract
 carries: the harness's granted tool-result value is constructed at this
-exchange's completion and nowhere else, whichever of the three contents
+exchange's completion and nowhere else, whichever of the four contents
 arrived, per `weaver-harness-Spec` section 6.
 
 **The instruction crosses once, in the raise.** It is not re-sent, revoked, or
@@ -257,14 +300,15 @@ exchange payload change is a supplies change by construction, and a Spec writer 
 this list.
 
 **The harness supplies** the gate instruction it was handed in the enter directive,
-the directive to lower, and, per call, the tool execution's name and arguments
-as the family parse recovered them, uninterpreted, opened serially in
-emission order.
+the directive to lower, and, per call, the tool execution's name, arguments
+as the family parse recovered them, and the caller's clock, uninterpreted,
+opened serially in emission order.
 
 **The gate guarantees** an answer to every execution opened inside the raised
-window, carrying the result, the tool's failure, or the refusal naming an
-unheld tool, so the harness's grant construction site fires exactly once per
-opened call and a call never dangles.
+window, carrying one of the four contents of section 2, so the harness's
+grant construction site fires exactly once per opened call and a call never
+dangles. It guarantees the kill clock is the caller's number and the kill
+reaches the invocation's whole process group.
 
 **The harness guarantees** that the instruction it sends is the instruction admin
 sent it, unaltered and uninterpreted. It guarantees that it opens no exchange this
@@ -384,21 +428,21 @@ resolves it.
 exchange carries it, and it is the same definition the family parse mints
 from an emission, so the name that crosses is the name the model spoke.
 
-**Drawn from `weaver-traits`:** `tool-trait`, as of the same act. The block's
-own ground inverted under the ratified loop boundary: tool dispatch now
-crosses a seam, this one, so the clause that could not draw the definition
-while no seam crossed it is the clause that draws it now. The trait is the
-gate's executor surface and the contract names it without shaping it, the
-shape being `weaver-traits-Spec` section 5's.
+**Drawn from `weaver-traits`:** nothing, as of the tool boundary ruling of
+2026-08-18. The act of 2026-08-17 drew `tool-trait` here on the reading that
+the trait was the gate's executor surface, and the ruling retires that
+reading: the gate holds one tool, the shell, its own verb dispatched with no
+table, and `weaver-traits-Spec` section 5's constituency sentence already
+confined the trait to the elected outward corner - the registered service the
+egress seam awaits - which no exchange of this seam reaches. The trait stays
+chartered where it is for the corner it constitutes, and this clause draws it
+again on the day that corner's exchange arrives here or on the egress seam's
+own contract.
 
 ```graph
 edge: draws
 from: weaver-harness-gate-contract
 to: tool-name
-
-edge: draws
-from: weaver-harness-gate-contract
-to: tool-trait
 ```
 
 **This seam draws loop 0's trio and owes the floor nothing, per the naming ruling
@@ -409,9 +453,6 @@ The seam-owned reading an earlier version chose to prevent drift is answered at
 its root rather than kept: the closed case sets have one owner, the floor, and
 contracts draw rather than grow them, so the drift two independent enumerations
 invited cannot occur.
-
-**Drawn from `weaver-traits`:** nothing. The clause is present with that answer
-because `weaver-types-PRD` section 5 asks for it even when it is empty.
 
 **Drawn from `weaver-trace` and `weaver-harness`:** nothing. The gate reports and the
 harness authors, and no event kind or envelope field crosses this seam. The
