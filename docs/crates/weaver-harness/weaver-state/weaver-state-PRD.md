@@ -111,14 +111,19 @@ written by exactly one party, so it lives inside that party. State serves reads
 back toward its writer's loops and holds volume the harness's own process
 should not carry, so it stands beside the harness rather than inside it.
 
-**Within a session, and not across.** This crate's holdings live and die with
-the session that produced them, which is proto-stateful's boundary honored
-rather than crossed. Persistence across sessions is a second return through the
-same apex door with its own paper, and nothing here lays in for it: no
-dump-and-restore surface a future act would wish existed, no directory this
-crate writes that outlives its process, per the no-reserved-slots rule. The
-prohibition is on durability, not on encoding: the seam's traffic serializes
-the way every seam's does, and refusing that would refuse the socket itself.
+**Within a session, and not across, and a session spans its runs.** This
+crate's holdings live and die with the session that produced them, which is
+proto-stateful's boundary honored rather than crossed - and the session, not
+the run, is the boundary, per the operator's ruling of 2026-08-18. The trace
+file already persists across load and unload cycles within one session, and
+the state file persists beside it the same way: an unload retires a run and
+leaves the holdings standing, the next load of the same session reopens them,
+and the close of the session is what retires them. Persistence across
+sessions is a second return through the same apex door with its own paper,
+and nothing here lays in for it: no export surface a future act would wish
+existed, per the no-reserved-slots rule. The prohibition is on outliving the
+session, not on encoding: the seam's traffic serializes the way every seam's
+does, and refusing that would refuse the socket itself.
 
 **Losing the member loses the derivative and never the account.** State can
 die while the session lives, and the session goes on: the trace is the
@@ -139,11 +144,11 @@ itself in that stream since the ruling of 2026-08-14, admin's run reference
 having replaced the ordinal, so what state receives is attributable to the run
 that produced it without this crate minting any identity of its own.
 
-One member instance serves one session: it stands with the session, ingests a
+One member instance serves one session: it stands with each run, ingests a
 stream whose events already carry their session, run, and turn identity, and
-is torn down with the session by the same unload that retires the rest, so
-nothing this crate holds needs an identity it minted itself and nothing
-survives the close.
+its process retires with each unload while its holdings stand for the next
+run, so nothing this crate holds needs an identity it minted itself and
+nothing survives the session's close.
 
 What organizing means at this charter's level: the holdings are queryable by
 the facts the record already carries, the run, the turn, the kind, and the
@@ -158,6 +163,22 @@ elected keys built at load, so extension within a session is rows accumulating
 under standing indexes and extension of the schema is a new load's new
 election. What remains the Spec's: the table and index shapes, the query
 surface, and the dependency's own clause.
+
+**The file lives beside the trace, in the operator's territory, owned by the
+member's own account.** The operator's ruling of 2026-08-18: the state file
+sits in the per-agent directory on the operator's side where the session
+record already lives, never in the agent's home, because the wall of section
+2 is enforced at the filesystem and the agent's home is the one place the
+agent's uid writes - a state file the agent's uid could read would hand the
+model its own state through an ordinary tool call. The custody diverges from
+the trace's in one named way: the trace is held by descriptor, opened by
+admin and handed down, while an embedded relational store opens by path and
+keeps sibling files beside itself, so the state member holds its territory by
+owning it, a uid of its own over one subdirectory the agent's uid cannot
+enter. The stakes tolerate the divergence, because the derivative is
+rebuildable from the record and the account never depends on it. The path is
+the operator's configuration the way the trace sink's is, and its exact key
+is the deployment's.
 
 **The store is reached through the seam and never as a file.** A database file
 opened from two processes would be a seam crossing a process line without a
