@@ -79,7 +79,7 @@ impl ShardedModel {
     /// replicated smalls. The slice happens on the mmap'd host side, so only
     /// a shard's bytes ever reach a device.
     pub fn load(
-        container: &std::path::Path,
+        containers: &[std::path::PathBuf],
         config: &Config,
         devices: [Device; 2],
     ) -> Result<ShardedModel, AdmitRefusal> {
@@ -100,11 +100,7 @@ impl ShardedModel {
         }
         let cpu = Device::Cpu;
         let vb = unsafe {
-            candle_nn::VarBuilder::from_mmaped_safetensors(
-                &[container.to_path_buf()],
-                DType::BF16,
-                &cpu,
-            )
+            candle_nn::VarBuilder::from_mmaped_safetensors(containers, DType::BF16, &cpu)
         }
         .map_err(|e| fail(format!("safetensors map: {e}")))?;
         let vm = vb.pp("model");
@@ -123,18 +119,23 @@ impl ShardedModel {
         let get1 = |name: &str, len: usize| -> Result<Tensor, AdmitRefusal> {
             vm.get(len, name).map_err(|e| fail(format!("{name}: {e}")))
         };
-        // Both slices are made contiguous at load: a row shard narrows the
-        // stride-1 dimension and the device matmul refuses the transposed
-        // view of a strided tensor, so the copy is paid once here rather
-        // than refused per forward.
+        // **Both slices become owned copies at load, and `contiguous` is
+        // not enough.** A column shard narrows dimension zero, which is
+        // already contiguous, so `contiguous()` answers the same view over
+        // the whole backing buffer - and the device transfer ships the
+        // backing buffer, not the view. Measured on the 32B: both cards
+        // filled to the whole model's size and the load died out of memory
+        // at sixty-two gigabytes a side. `copy()` allocates exactly the
+        // shard, which is also what the device matmul needs, the transposed
+        // view of a strided tensor being refused there.
         let column = |t: &Tensor, half: usize, rows: usize| -> Result<Tensor, AdmitRefusal> {
             t.narrow(0, half * rows, rows)
-                .and_then(|t| t.contiguous())
+                .and_then(|t| t.force_contiguous())
                 .map_err(|e| fail(format!("column shard: {e}")))
         };
         let row = |t: &Tensor, half: usize, cols: usize| -> Result<Tensor, AdmitRefusal> {
             t.narrow(1, half * cols, cols)
-                .and_then(|t| t.contiguous())
+                .and_then(|t| t.force_contiguous())
                 .map_err(|e| fail(format!("row shard: {e}")))
         };
         let onto = |t: Tensor, device: &Device| -> Result<Tensor, AdmitRefusal> {
@@ -601,8 +602,12 @@ mod tests {
         .expect("config parses");
         let container = dir.join("model.safetensors");
 
-        let mut sharded = ShardedModel::load(&container, &config, [device.clone(), device.clone()])
-            .expect("the sharded model loads");
+        let mut sharded = ShardedModel::load(
+            std::slice::from_ref(&container),
+            &config,
+            [device.clone(), device.clone()],
+        )
+        .expect("the sharded model loads");
         let vb = unsafe {
             candle_nn::VarBuilder::from_mmaped_safetensors(
                 std::slice::from_ref(&container),
@@ -664,11 +669,18 @@ mod tests {
             let devices = [DeviceOrdinal(0), DeviceOrdinal(1)];
             let _ = crate::gpu::room_and_reach(&devices, 1024, 2 * 1024 * 1024 * 1024);
         }
-        let mut paired = ShardedModel::load(&container, &config, [device.clone(), second])
-            .expect("the paired model loads");
-        let mut single_ref =
-            ShardedModel::load(&container, &config, [device.clone(), device.clone()])
-                .expect("reference loads");
+        let mut paired = ShardedModel::load(
+            std::slice::from_ref(&container),
+            &config,
+            [device.clone(), second],
+        )
+        .expect("the paired model loads");
+        let mut single_ref = ShardedModel::load(
+            std::slice::from_ref(&container),
+            &config,
+            [device.clone(), device.clone()],
+        )
+        .expect("reference loads");
 
         // Determinism per variant: each model against itself, twice.
         for (name, model) in [("paired", &mut paired), ("single_ref", &mut single_ref)] {
@@ -770,7 +782,7 @@ mod tests {
         let held = std::fs::File::open(&container).expect("the container opens");
         let fd_path = std::path::PathBuf::from(format!("/proc/self/fd/{}", held.as_raw_fd()));
         let mut via_fd = ShardedModel::load(
-            &fd_path,
+            std::slice::from_ref(&fd_path),
             &config,
             [device.clone(), Device::new_cuda(1).unwrap()],
         )
