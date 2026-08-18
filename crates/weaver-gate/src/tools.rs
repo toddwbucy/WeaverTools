@@ -163,10 +163,18 @@ impl Tool for HomeCli {
                 .ok_or_else(|| ToolFailure {
                     detail: "the arguments carry no command string".to_string(),
                 })?;
-            let home = std::env::var("HOME").map_err(|_| ToolFailure {
-                detail: "this process has no HOME to run in".to_string(),
-            })?;
-            run_in_home(command, &home)
+            // The home comes from the account database rather than from
+            // the environment: the organ fan-out execs with an empty
+            // environment on purpose, and the account database is where
+            // the uid's home is a fact rather than an inheritance.
+            let home = nix::unistd::User::from_uid(nix::unistd::getuid())
+                .ok()
+                .flatten()
+                .map(|user| user.dir)
+                .ok_or_else(|| ToolFailure {
+                    detail: "this uid has no home in the account database".to_string(),
+                })?;
+            run_in_home(command, &home.to_string_lossy())
         })
     }
 }
@@ -193,6 +201,9 @@ fn run_in_home_with_deadline(
         .arg("-c")
         .arg(command)
         .current_dir(home)
+        // The gate's own environment is deliberately empty; the command
+        // still deserves to know where it lives.
+        .env("HOME", home)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
