@@ -13,12 +13,29 @@
 #![cfg(all(feature = "gguf", feature = "cuda"))]
 
 use std::path::PathBuf;
+use std::sync::{Mutex, OnceLock};
 
 use weaver_spu::decoder::session::{NeverCancels, StopCondition};
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
 use weaver_spu::sampling::EffectiveKnobs;
 use weaver_types::{ArtifactRef, DeviceOrdinal, ModelBinding};
+
+/// One test in this binary today, and the lock stands anyway: a second
+/// two-card measurement added later must not race the first for the same
+/// devices, which is `loaded.rs`'s discipline carried over.
+fn device_lock() -> std::sync::MutexGuard<'static, ()> {
+    static DEVICE: OnceLock<Mutex<()>> = OnceLock::new();
+    DEVICE
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+fn free_bytes(context: &cudarc::driver::CudaContext) -> u64 {
+    let (free, _total) = context.mem_get_info().expect("the driver answers");
+    free as u64
+}
 
 fn artifact() -> Option<PathBuf> {
     match std::env::var_os("WEAVER_ARTIFACT_TWO_CARD") {
@@ -45,6 +62,16 @@ fn a_model_larger_than_one_card_admits_across_a_pair() {
         eprintln!("SKIP: no two-card artifact");
         return;
     };
+    let (Some(card0), Some(card1)) = (
+        cudarc::driver::CudaContext::new(0).ok(),
+        cudarc::driver::CudaContext::new(1).ok(),
+    ) else {
+        eprintln!("SKIP: fewer than two CUDA devices");
+        return;
+    };
+    let _device = device_lock();
+    let before = (free_bytes(&card0), free_bytes(&card1));
+
     let mut residency = Residency::new();
     let binding = ModelBinding {
         artifact: ArtifactRef(path.to_string_lossy().into_owned()),
@@ -58,6 +85,24 @@ fn a_model_larger_than_one_card_admits_across_a_pair() {
         Ok(resident) => resident,
         Err(refusal) => panic!("the pair admit: {refusal:?}"),
     };
+    // **Both cards hold a substantial share, asserted with thresholds well
+    // under an even split**: the artifact is 34.4 GiB and a layer split is
+    // not exactly even, so each card owing 8 GiB catches a one-card load
+    // masquerading as a pair without flaking on allocator granularity.
+    let floor = 8u64 * 1024 * 1024 * 1024;
+    let held = (free_bytes(&card0), free_bytes(&card1));
+    assert!(
+        before.0 - held.0 > floor,
+        "ordinal 0 holds a share: {} -> {}",
+        before.0,
+        held.0
+    );
+    assert!(
+        before.1 - held.1 > floor,
+        "ordinal 1 holds a share: {} -> {}",
+        before.1,
+        held.1
+    );
     eprintln!("ADMITTED across two devices");
 
     let prompt =
@@ -73,8 +118,14 @@ fn a_model_larger_than_one_card_admits_across_a_pair() {
     };
     let mut session = resident.open_session(&knobs, 4096).expect("session opens");
     session.open(&prefix).expect("prefix decodes");
+    // The close must promote to exactly one token against this artifact's
+    // vocabulary, or the override named an artifact whose stop this test
+    // would misbuild.
     let close = resident.tokenize("<|im_end|>").expect("close tokenizes");
-    let terminator = close[0];
+    let [terminator] = close.as_slice() else {
+        panic!("the turn close promotes to one token, got {close:?}");
+    };
+    let terminator = *terminator;
     let generated = session
         .append_and_generate(
             &[],
@@ -90,4 +141,25 @@ fn a_model_larger_than_one_card_admits_across_a_pair() {
     let text = resident.detokenize(&generated.tokens).expect("detokenizes");
     eprintln!("two-card emission: {text:?}");
     assert!(!generated.tokens.is_empty());
+
+    // **The release frees both cards.** The session and the resident borrow
+    // the residency, so both end before it releases, and the assertion reads
+    // the devices rather than trusting the drop order.
+    drop(session);
+    let _ = resident;
+    residency.release().expect("the release succeeds");
+    let after = (free_bytes(&card0), free_bytes(&card1));
+    let tolerance = 1u64 * 1024 * 1024 * 1024;
+    assert!(
+        after.0 + tolerance > before.0,
+        "ordinal 0 returns to baseline: {} -> {}",
+        before.0,
+        after.0
+    );
+    assert!(
+        after.1 + tolerance > before.1,
+        "ordinal 1 returns to baseline: {} -> {}",
+        before.1,
+        after.1
+    );
 }
