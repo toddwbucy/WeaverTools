@@ -1,8 +1,9 @@
 # weaver-internal - Spec
 
-**Status:** DRAFT, in review. Cut 2026-08-18 against the ratified charter of the
-same date. Ratification is the operator's act on the review's close, and code is
-written against this document only after it.
+**Status:** MERGED. Cut 2026-08-18 against the ratified charter of the same
+date, reviewed in PR, and ratified by the operator on the review's close of
+the same date. Code is written against it under the gates of Working Process
+section 6.
 
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-internal-Spec`
