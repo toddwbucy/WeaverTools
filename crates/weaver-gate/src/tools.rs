@@ -182,8 +182,13 @@ fn run_in_home_with_deadline(
     home: &str,
     deadline: std::time::Duration,
 ) -> Result<String, ToolFailure> {
+    use std::os::unix::process::CommandExt;
     use std::process::{Command, Stdio};
 
+    // The child leads its own process group, so the kill below reaches
+    // `bash -c`'s descendants too: a background child would otherwise
+    // inherit the pipe's write end and hold the readers open after the
+    // shell itself exited.
     let mut child = Command::new("bash")
         .arg("-c")
         .arg(command)
@@ -191,22 +196,36 @@ fn run_in_home_with_deadline(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .process_group(0)
         .spawn()
         .map_err(|error| ToolFailure {
             detail: format!("the fork failed: {error}"),
         })?;
+    let group = nix::unistd::Pid::from_raw(child.id() as i32);
 
-    // Supervision: poll to the deadline, kill past it. `std` carries no
-    // bounded wait, so the poll sleeps in small steps - coarse and
-    // sufficient for a bound whose unit is seconds.
+    // Both pipes drain concurrently with the run, each on its own thread:
+    // a pipe left unread to the exit fills at the kernel's buffer and
+    // blocks the child's writes, which would convert a chatty command into
+    // a false deadline failure. The drain keeps the bound and discards the
+    // rest, so the capture is bounded while the pipe still empties.
+    let stdout = child.stdout.take().expect("stdout is piped");
+    let stderr = child.stderr.take().expect("stderr is piped");
+    let out_reader = std::thread::spawn(move || drain_bounded(stdout, HOME_CLI_OUTPUT_BOUND));
+    let err_reader = std::thread::spawn(move || drain_bounded(stderr, HOME_CLI_OUTPUT_BOUND));
+
+    // Supervision: poll to the deadline, kill the group past it. `std`
+    // carries no bounded wait, so the poll sleeps in small steps - coarse
+    // and sufficient for a bound whose unit is seconds.
     let started = std::time::Instant::now();
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
             Ok(None) => {
                 if started.elapsed() > deadline {
-                    let _ = child.kill();
+                    let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
                     let _ = child.wait();
+                    let _ = out_reader.join();
+                    let _ = err_reader.join();
                     return Err(ToolFailure {
                         detail: format!(
                             "the command ran past the {}s deadline and was killed",
@@ -217,6 +236,10 @@ fn run_in_home_with_deadline(
                 std::thread::sleep(std::time::Duration::from_millis(25));
             }
             Err(error) => {
+                let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
+                let _ = child.wait();
+                let _ = out_reader.join();
+                let _ = err_reader.join();
                 return Err(ToolFailure {
                     detail: format!("the supervision failed: {error}"),
                 });
@@ -224,16 +247,16 @@ fn run_in_home_with_deadline(
         }
     };
 
-    let mut output = String::new();
-    if let Some(mut stdout) = child.stdout.take() {
-        use std::io::Read;
-        let _ = stdout.read_to_string(&mut output);
-    }
-    let mut errors = String::new();
-    if let Some(mut stderr) = child.stderr.take() {
-        use std::io::Read;
-        let _ = stderr.read_to_string(&mut errors);
-    }
+    // The command has exited; the group dies with it. A background child
+    // the command left behind still holds the pipes' write ends, and the
+    // joins below would wait on it - so the answer is what the foreground
+    // command produced, and stragglers are ended, not adopted.
+    let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
+    let (out_bytes, out_cut) = out_reader.join().unwrap_or((Vec::new(), false));
+    let (err_bytes, err_cut) = err_reader.join().unwrap_or((Vec::new(), false));
+
+    let mut output = String::from_utf8_lossy(&out_bytes).into_owned();
+    let errors = String::from_utf8_lossy(&err_bytes);
     if !errors.is_empty() {
         if !output.is_empty() {
             output.push('\n');
@@ -251,8 +274,8 @@ fn run_in_home_with_deadline(
         }
         output.push_str(&format!("exit status: {code}"));
     }
-    if output.len() > HOME_CLI_OUTPUT_BOUND {
-        let mut cut = HOME_CLI_OUTPUT_BOUND;
+    if out_cut || err_cut || output.len() > HOME_CLI_OUTPUT_BOUND {
+        let mut cut = output.len().min(HOME_CLI_OUTPUT_BOUND);
         while !output.is_char_boundary(cut) {
             cut -= 1;
         }
@@ -265,16 +288,51 @@ fn run_in_home_with_deadline(
     Ok(output)
 }
 
+/// Reads a pipe to its end, keeping at most `bound` octets and reporting
+/// whether anything past the bound was discarded. The read continues past
+/// the bound on purpose: stopping would refill the pipe and block the
+/// writer, which is the deadlock the bound exists to avoid.
+fn drain_bounded(mut pipe: impl std::io::Read, bound: usize) -> (Vec<u8>, bool) {
+    let mut kept = Vec::new();
+    let mut truncated = false;
+    let mut buffer = [0u8; 8192];
+    loop {
+        match pipe.read(&mut buffer) {
+            Ok(0) => break,
+            Ok(read) => {
+                if kept.len() < bound {
+                    let take = (bound - kept.len()).min(read);
+                    kept.extend_from_slice(&buffer[..take]);
+                    if take < read {
+                        truncated = true;
+                    }
+                } else {
+                    truncated = true;
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(_) => break,
+        }
+    }
+    (kept, truncated)
+}
+
 /// A recursive-descent evaluation of a scientific expression grammar:
 /// `+ - * / ^`, unary minus, parentheses, the constants `pi` and `e`, and
 /// the one-argument functions `sin cos tan asin acos atan sqrt ln log exp
 /// abs`, angles in radians, `log` base ten. No assignment, no user names, no
 /// calls beyond the function set: an expression the grammar does not cover
 /// is the tool's failure, in words that name the position.
+/// The nesting an expression may reach before it refuses. The expression
+/// is the model's, so its length and nesting are nobody's promise, and the
+/// recursive descent below is bounded so the process answers a hostile
+/// depth in the tool's own words instead of overflowing its stack.
+const MAX_DEPTH: usize = 64;
+
 fn evaluate(expression: &str) -> Result<f64, String> {
     let tokens: Vec<char> = expression.chars().filter(|c| !c.is_whitespace()).collect();
     let mut position = 0usize;
-    let value = parse_sum(&tokens, &mut position)?;
+    let value = parse_sum(&tokens, &mut position, 0)?;
     if position != tokens.len() {
         return Err(format!("unexpected character at position {position}"));
     }
@@ -284,17 +342,20 @@ fn evaluate(expression: &str) -> Result<f64, String> {
     Ok(value)
 }
 
-fn parse_sum(tokens: &[char], position: &mut usize) -> Result<f64, String> {
-    let mut value = parse_product(tokens, position)?;
+fn parse_sum(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
+    if depth >= MAX_DEPTH {
+        return Err(format!("the expression nests deeper than {MAX_DEPTH}"));
+    }
+    let mut value = parse_product(tokens, position, depth)?;
     while let Some(&op) = tokens.get(*position) {
         match op {
             '+' => {
                 *position += 1;
-                value += parse_product(tokens, position)?;
+                value += parse_product(tokens, position, depth)?;
             }
             '-' => {
                 *position += 1;
-                value -= parse_product(tokens, position)?;
+                value -= parse_product(tokens, position, depth)?;
             }
             _ => break,
         }
@@ -302,17 +363,17 @@ fn parse_sum(tokens: &[char], position: &mut usize) -> Result<f64, String> {
     Ok(value)
 }
 
-fn parse_product(tokens: &[char], position: &mut usize) -> Result<f64, String> {
-    let mut value = parse_power(tokens, position)?;
+fn parse_product(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
+    let mut value = parse_power(tokens, position, depth)?;
     while let Some(&op) = tokens.get(*position) {
         match op {
             '*' => {
                 *position += 1;
-                value *= parse_power(tokens, position)?;
+                value *= parse_power(tokens, position, depth + 1)?;
             }
             '/' => {
                 *position += 1;
-                let divisor = parse_power(tokens, position)?;
+                let divisor = parse_power(tokens, position, depth + 1)?;
                 if divisor == 0.0 {
                     return Err("division by zero".to_string());
                 }
@@ -327,27 +388,27 @@ fn parse_product(tokens: &[char], position: &mut usize) -> Result<f64, String> {
 /// `^` binds tighter than `*` and `/` and associates right, so `2^3^2` is
 /// `2^(3^2)` and `-2^2` is `-(2^2)`, the conventions a scientific reader
 /// expects.
-fn parse_power(tokens: &[char], position: &mut usize) -> Result<f64, String> {
+fn parse_power(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
     // Unary minus lives at this level and binds looser than `^`, so `-2^2`
     // is `-(2^2)` and an exponent's own sign, `2^-3`, recurses through here.
     if tokens.get(*position) == Some(&'-') {
         *position += 1;
-        return Ok(-parse_power(tokens, position)?);
+        return Ok(-parse_power(tokens, position, depth + 1)?);
     }
-    let base = parse_atom(tokens, position)?;
+    let base = parse_atom(tokens, position, depth)?;
     if tokens.get(*position) == Some(&'^') {
         *position += 1;
-        let exponent = parse_power(tokens, position)?;
+        let exponent = parse_power(tokens, position, depth + 1)?;
         return Ok(base.powf(exponent));
     }
     Ok(base)
 }
 
-fn parse_atom(tokens: &[char], position: &mut usize) -> Result<f64, String> {
+fn parse_atom(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
     match tokens.get(*position) {
         Some('(') => {
             *position += 1;
-            let value = parse_sum(tokens, position)?;
+            let value = parse_sum(tokens, position, depth + 1)?;
             if tokens.get(*position) != Some(&')') {
                 return Err(format!("unclosed parenthesis at position {position}"));
             }
@@ -372,7 +433,7 @@ fn parse_atom(tokens: &[char], position: &mut usize) -> Result<f64, String> {
                 return Err(format!("unknown name {word} at position {start}"));
             }
             *position += 1;
-            let argument = parse_sum(tokens, position)?;
+            let argument = parse_sum(tokens, position, depth + 1)?;
             if tokens.get(*position) != Some(&')') {
                 return Err(format!("unclosed call to {word} at position {position}"));
             }
@@ -449,6 +510,7 @@ mod tests {
     /// grammar miss, division by zero.
     #[test]
     fn a_bad_call_fails_in_the_tools_own_words() {
+        let deep = format!(r#"{{"expression":"{}1"}}"#, "(".repeat(90));
         let failing = [
             ("not json", "the arguments are not one JSON object"),
             (
@@ -470,6 +532,7 @@ mod tests {
                 "unknown function bogus at position 0",
             ),
             (r#"{"expression":"x + 1"}"#, "unknown name x at position 0"),
+            (deep.as_str(), "the expression nests deeper than 64"),
         ];
         for (arguments, expected) in failing {
             let outcome = execute(&ToolExecution {
@@ -500,11 +563,10 @@ mod tests {
         let ToolOutcome::Result { content } = outcome else {
             panic!("pwd answers: {outcome:?}");
         };
-        assert_eq!(
-            content.trim(),
-            std::env::var("HOME").expect("the suite has a HOME"),
-            "the command runs in the home directory"
-        );
+        let home = std::env::var("HOME").expect("the suite has a HOME");
+        let expected = std::fs::canonicalize(&home).expect("the home resolves");
+        let reported = std::fs::canonicalize(content.trim()).expect("the pwd resolves");
+        assert_eq!(reported, expected, "the command runs in the home directory");
 
         let outcome = execute(&ToolExecution {
             name: ToolName("home_cli".into()),
@@ -521,6 +583,49 @@ mod tests {
         assert!(
             content.contains("exit status: 3"),
             "the exit is named: {content}"
+        );
+    }
+
+    /// **A chatty command drains while it runs and a straggler does not
+    /// hold the answer.** The first command writes past the kernel's pipe
+    /// buffer and must complete promptly with the bound's marker - a drain
+    /// that waited for the exit would block the child's writes and convert
+    /// it into a false deadline kill. The second leaves a background child
+    /// holding the pipe's write end; the group kill at the exit is what
+    /// lets the readers finish, so the answer arrives in the foreground
+    /// command's time, not the straggler's.
+    #[test]
+    fn a_chatty_command_and_a_straggler_both_answer_promptly() {
+        let home = std::env::var("HOME").expect("the suite has a HOME");
+
+        let started = std::time::Instant::now();
+        let content = super::run_in_home_with_deadline(
+            "head -c 200000 /dev/zero | tr '\\0' 'x'",
+            &home,
+            std::time::Duration::from_secs(10),
+        )
+        .expect("a chatty command still answers");
+        assert!(
+            content.contains("[output truncated at 32 KiB]"),
+            "the bound marks itself: {} octets",
+            content.len()
+        );
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(5),
+            "the drain rode along, no deadline was consumed"
+        );
+
+        let started = std::time::Instant::now();
+        let content = super::run_in_home_with_deadline(
+            "echo done; sleep 30 &",
+            &home,
+            std::time::Duration::from_secs(10),
+        )
+        .expect("the foreground command answers");
+        assert!(content.contains("done"), "the answer crossed: {content}");
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(5),
+            "the straggler did not hold the answer open"
         );
     }
 

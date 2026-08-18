@@ -556,6 +556,7 @@ pub struct Generation {
 impl PartialEq for Generation {
     fn eq(&self, other: &Self) -> bool {
         self.emission == other.emission
+            && self.content == other.content
             && self.finish == other.finish
             && self.request.get() == other.request.get()
             && self.measurement.get() == other.measurement.get()

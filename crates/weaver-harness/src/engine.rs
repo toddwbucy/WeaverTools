@@ -37,15 +37,20 @@ use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 /// The granted surface handed to loop 1 at loaded-and-idle, borrowing the
 /// standing interior for the seat's lifetime. Its fields are private and its
 /// only constructor is crate-private, which is the blade.
+/// How many envelopes one run's shelf may hold before the surplus is
+/// dropped and the drop recorded: the bound on both the queue and the
+/// serve loop's appetite, a refusal of hoarding rather than of the client.
+pub(crate) const MAX_HELD_FRAMES: usize = 64;
+
 /// The gate seam's grant to the turn: the channel the execution exchange
 /// crosses, the ordinal source for harness-opened exchanges, and the shelf
 /// for envelopes that arrive while an execution is awaited - a client's turn
 /// frame crossing mid-execution is held for the serve loop, never dropped
-/// and never answered out of order.
+/// and never answered out of order, and bounded at [`MAX_HELD_FRAMES`].
 pub(crate) struct GatePort<'a> {
     pub(crate) channel: &'a crate::channel::OrganChannel,
     pub(crate) ordinal: &'a mut u64,
-    pub(crate) held: &'a mut Vec<weaver_types::OrganEnvelope>,
+    pub(crate) held: &'a mut std::collections::VecDeque<weaver_types::OrganEnvelope>,
 }
 
 pub struct Ports<'a> {
@@ -406,8 +411,26 @@ impl<'a> Ports<'a> {
                     weaver_types::Payload::ToolAnswer(outcome) => break outcome,
                     _ => return Err(TurnError::ChannelLost),
                 }
+            } else if gate.held.len() >= MAX_HELD_FRAMES {
+                // **The shelf is bounded.** A client that keeps speaking
+                // through a long execution would otherwise grow it - and the
+                // drain's stack with it - without limit. The surplus envelope
+                // is dropped and the drop is recorded: the connection that
+                // spoke loses its exchange, which is the case the fault
+                // names.
+                let account =
+                    format!("{{\"organ\":\"harness\",\"held-frames-bound\":{MAX_HELD_FRAMES}}}");
+                let _ = self.author.author_fault(
+                    self.recorder,
+                    Subsystem::Harness,
+                    Some(turn),
+                    &crate::authorship::harness_report(
+                        weaver_types::FaultCase::ClientConnectionFailedMidTurn,
+                        &account,
+                    ),
+                );
             } else {
-                gate.held.push(envelope);
+                gate.held.push_back(envelope);
             }
         };
 
@@ -1122,7 +1145,7 @@ mod tests {
             .expect("load");
         let mut turn_ordinal = 0u64;
         let mut gate_ordinal = 0u64;
-        let mut held = Vec::new();
+        let mut held = std::collections::VecDeque::new();
 
         let listener = test_listener();
         let outcome = {

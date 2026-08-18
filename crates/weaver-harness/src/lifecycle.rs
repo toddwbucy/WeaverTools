@@ -231,7 +231,7 @@ struct Run {
     /// Envelopes that arrived on the gate channel while a tool execution was
     /// awaited: a client's frame crossing mid-execution is held here by the
     /// turn and served after it, per the one-turn discipline.
-    held_frames: Vec<weaver_types::OrganEnvelope>,
+    held_frames: std::collections::VecDeque<weaver_types::OrganEnvelope>,
     /// The turn counter loop 0 mints turn keys from, per the gate contract's
     /// rule that the turn does not exist until the harness opens it.
     turn_ordinal: u64,
@@ -559,7 +559,7 @@ impl Harness {
     /// response frame answered on the exchange. The parse refuses rather
     /// than faults, per the ruling: a line that is not the request answers
     /// `refused` as content and the channel stands.
-    fn serve_frame<F>(
+    fn serve_one_frame<F>(
         &mut self,
         exchange: ExchangeId,
         frame: weaver_types::TurnFrame,
@@ -695,25 +695,57 @@ impl Harness {
                 response.as_bytes(),
             )),
         })?;
+        Ok(())
+    }
 
-        // **The frames the turn held are served now, in arrival order.** A
-        // client that spoke while an execution was awaited was neither
-        // dropped nor answered out of order: its envelope waited on the
-        // run's shelf and is served here as if just received, the one-turn
-        // discipline preserved across the executions inside a turn.
+    /// One frame's turn, then the shelf, per [`Run::held_frames`]: the
+    /// frames the turn held are served after its close, in arrival order. A
+    /// client that spoke while an execution was awaited was neither dropped
+    /// nor answered out of order: its envelope waited on the run's shelf
+    /// and is served here as if just received, the one-turn discipline
+    /// preserved across the executions inside a turn.
+    ///
+    /// **The drain is a flat loop, never a recursive serve per held
+    /// frame.** A held frame's own turn can hold more frames, and a serve
+    /// that recursed would let a client that speaks through every execution
+    /// grow the stack with the shelf; the loop re-reads the queue after
+    /// each turn instead, the depth constant however long the shelf runs.
+    fn serve_frame<F>(
+        &mut self,
+        exchange: ExchangeId,
+        frame: weaver_types::TurnFrame,
+        identity: &str,
+        tool_schemas: &[String],
+        entry: &mut F,
+        pending: &mut Option<OrganChannel>,
+    ) -> Result<(), ChannelFault>
+    where
+        F: FnMut(
+            &mut crate::engine::Ports<'_>,
+            &str,
+        ) -> Result<crate::engine::TurnOutcome, crate::engine::TurnError>,
+    {
+        self.serve_one_frame(exchange, frame, identity, tool_schemas, entry, pending)?;
         loop {
             let held = {
                 let ChannelState::Entered(run) = &mut self.state else {
                     return Ok(());
                 };
-                if run.held_frames.is_empty() {
+                let Some(held) = run.held_frames.pop_front() else {
                     return Ok(());
-                }
-                run.held_frames.remove(0)
+                };
+                held
             };
             match held.payload {
                 weaver_types::Payload::Frame(frame) => {
-                    self.serve_frame(held.exchange, frame, identity, tool_schemas, entry, pending)?;
+                    self.serve_one_frame(
+                        held.exchange,
+                        frame,
+                        identity,
+                        tool_schemas,
+                        entry,
+                        pending,
+                    )?;
                 }
                 weaver_types::Payload::Fault(report) => {
                     let ChannelState::Entered(run) = &mut self.state else {
@@ -878,7 +910,7 @@ impl Harness {
             turn_in_flight: None,
             spu_ordinal: 0,
             gate_ordinal: 0,
-            held_frames: Vec::new(),
+            held_frames: std::collections::VecDeque::new(),
             turn_ordinal: 0,
         };
 
@@ -1397,7 +1429,7 @@ mod tests {
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
                 spu_ordinal: 0,
                 gate_ordinal: 0,
-                held_frames: Vec::new(),
+                held_frames: std::collections::VecDeque::new(),
                 turn_ordinal: 0,
             },
             near,

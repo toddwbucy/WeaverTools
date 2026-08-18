@@ -43,4 +43,4 @@ path = "src/main.rs"
 weaver-traits = { path = "../weaver-traits" }
 weaver-types = { path = "../weaver-types", default-features = false }
 serde_json.workspace = true
-nix = { version = "0.31", features = ["socket", "fs", "process", "user", "poll"] }
+nix = { version = "0.31", features = ["socket", "fs", "process", "user", "poll", "signal"] }
