@@ -302,9 +302,7 @@ impl Knobs {
         }
         Ok(EffectiveKnobs {
             temperature: take(&self.temperature, "temperature", supplied, |v| v as f32)?,
-            top_k: resolve_count(&self.top_k, "top-k", supplied, 2f64.powi(32), |v| {
-                v as u32
-            })?,
+            top_k: resolve_count(&self.top_k, "top-k", supplied, 2f64.powi(32), |v| v as u32)?,
             top_p: take(&self.top_p, "top-p", supplied, |v| v as f32)?,
             repetition_penalty: take(
                 &self.repetition_penalty,
@@ -430,7 +428,10 @@ mod tests {
         .into_iter()
         .collect();
         let effective = elections.resolve(&supplied).expect("resolves");
-        assert_eq!(effective.temperature, 0.2, "the declaration's value resolved");
+        assert_eq!(
+            effective.temperature, 0.2,
+            "the declaration's value resolved"
+        );
         assert_eq!(
             effective.seed, 11,
             "and a frozen parameter is not moved by a declaration naming it"
@@ -455,8 +456,9 @@ mod tests {
             max_tokens_per_turn: Disposition::Frozen(512),
         };
         for bad in [3.7f64, -1.0, 2f64.powi(32)] {
-            let supplied: TunableValues =
-                [("context-capacity".to_string(), bad)].into_iter().collect();
+            let supplied: TunableValues = [("context-capacity".to_string(), bad)]
+                .into_iter()
+                .collect();
             assert_eq!(
                 elections.resolve(&supplied),
                 Err(KnobRefusal::NotACount {
@@ -486,10 +488,9 @@ mod tests {
             context_capacity: Disposition::Frozen(4096),
             max_tokens_per_turn: Disposition::OperatorTunable,
         };
-        let at_the_bound: TunableValues =
-            [("max-tokens-per-turn".to_string(), 2f64.powi(64))]
-                .into_iter()
-                .collect();
+        let at_the_bound: TunableValues = [("max-tokens-per-turn".to_string(), 2f64.powi(64))]
+            .into_iter()
+            .collect();
         assert!(
             elections.resolve(&at_the_bound).is_err(),
             "2^64 is the value u64::MAX as f64 rounds to, and it is refused"

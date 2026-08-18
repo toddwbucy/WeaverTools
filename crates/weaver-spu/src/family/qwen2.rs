@@ -17,6 +17,11 @@ pub const TURN_CLOSE: &str = "<|im_end|>";
 pub const CALL_OPEN: &str = "<tool_call>";
 pub const CALL_CLOSE: &str = "</tool_call>";
 
+/// What wraps a tool's answer on its way back into the prompt, the family
+/// template's own vocabulary for the other half of the bracket.
+pub const RESPONSE_OPEN: &str = "<tool_response>";
+pub const RESPONSE_CLOSE: &str = "</tool_response>";
+
 /// **The markers this family's renderer emits into a prompt**, which is what
 /// the inbound marker-promotion test of Spec section 10 tokenizes. The set is
 /// the template's, because the template is what the renderer writes.
@@ -88,13 +93,62 @@ impl Family for Qwen2 {
     }
 
     /// **The wire role is the canonical one here**, so this family calls the
-    /// shared name kernel rather than holding a map of its own. ChatML's roles
-    /// and the floor's are the same three words.
+    /// shared name kernel rather than holding a map of its own - with the
+    /// tool bracket's two exceptions, which are this family's template
+    /// speaking: a tool result renders as a `user` turn wrapping its content
+    /// in `<tool_response>` tags, and an assistant's recovered calls render
+    /// back inside `<tool_call>` tags, both the forms the family's tuning
+    /// expects and [`parse`](Family::parse) recovers.
     fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal> {
+        if message.role == super::Role::ToolResult {
+            let mut content = String::new();
+            for block in &message.content {
+                let weaver_traits::ContentBlock::ToolResult(result) = block else {
+                    return Err(RenderRefusal::MalformedForFamily);
+                };
+                if !content.is_empty() {
+                    content.push('\n');
+                }
+                content.push_str(RESPONSE_OPEN);
+                content.push('\n');
+                content.push_str(&result.content);
+                content.push('\n');
+                content.push_str(RESPONSE_CLOSE);
+            }
+            return Ok(super::render_template(TEMPLATE, "user", &content));
+        }
+        let mut body = String::new();
+        for block in &message.content {
+            match block {
+                weaver_traits::ContentBlock::Text { text } => body.push_str(text),
+                weaver_traits::ContentBlock::ToolCall(call) => {
+                    // A call is the assistant's speech and no other role's:
+                    // one in a user turn is a shape no party authors,
+                    // refused rather than rendered.
+                    if message.role != super::Role::Assistant {
+                        return Err(RenderRefusal::MalformedForFamily);
+                    }
+                    if !body.is_empty() {
+                        body.push('\n');
+                    }
+                    body.push_str(CALL_OPEN);
+                    body.push('\n');
+                    body.push_str(
+                        &serde_json::json!({"name": call.name, "arguments": call.arguments})
+                            .to_string(),
+                    );
+                    body.push('\n');
+                    body.push_str(CALL_CLOSE);
+                }
+                // A tool result inside any other role, or a block this
+                // family has not learned, refuses rather than guesses.
+                _ => return Err(RenderRefusal::MalformedForFamily),
+            }
+        }
         Ok(super::render_template(
             TEMPLATE,
             super::common_role_name(&message.role)?,
-            &super::text_content(message)?,
+            &body,
         ))
     }
 

@@ -1281,8 +1281,10 @@ mod tests {
     }
 
     /// **A block the family cannot render refuses as the delta malformed for
-    /// the family,** the contract's own case: the tool shapes are blocked
-    /// with the tool workflow and the families render text today.
+    /// the family,** the contract's own case. The tool workflow lifted the
+    /// blanket block, so the subject here is a shape no party authors: a
+    /// tool call riding a user turn, which qwen2 renders for the assistant
+    /// alone.
     ///
     /// What this reads is the refusal arriving at the seam's own vocabulary,
     /// so it exercises the family's render and the [`From`] that carries its
@@ -1329,12 +1331,13 @@ mod tests {
         );
 
         // The contrast, so this reads as a distinction rather than as a family
-        // that refuses everything: the same role renders under qwen2.
+        // that refuses everything: the authored shape - the granted door's
+        // result block in the tool-result role - renders under qwen2.
         let message = Message {
             role: Role::ToolResult,
-            content: vec![ContentBlock::Text {
-                text: "42".to_string(),
-            }],
+            content: vec![ContentBlock::ToolResult(weaver_traits::ToolResultBlock {
+                content: "42".to_string(),
+            })],
         };
         assert!(render_delta(family::qwen2::renderer(), &[message]).is_ok());
     }
