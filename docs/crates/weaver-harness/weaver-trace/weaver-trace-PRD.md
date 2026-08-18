@@ -6,6 +6,14 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-18, the tee is this crate's mechanism. Section 11 lands
+the distillation surface, per the operator's rulings of 2026-08-12 and
+2026-08-18: a selection over the canonical event stream, applied by the
+harness as the one party that writes, feeding the state seam. The tee
+selects and never computes, the envelope always rides, the election ranges
+over payload keys and is fixed at load, the default election is the envelope
+of every kind, and an event the election does not match is dropped at the
+tee with the trace complete regardless.
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date closing issue 124. Section 3.2's model.request
 narrows from the prompt as the model received it to the turn's rendered
@@ -785,3 +793,47 @@ the previous tree's format borrowed OTLP field names without being OTLP, then
 carried a claim that a trivial converter could bridge them which turned out to be
 untrue and unverified. Whether the derived view targets OTLP specifically, and what
 conformance record backs that claim, is not settled here.
+
+## 11. The tee
+
+**The distillation surface is this crate's mechanism, because what is tee'd
+is this crate's own rendering.** The canonical form of section 2 is rendered
+once per event, and the tee is a second reader of that one rendering: the
+recorder hands the same canonical JSON to the outbound stream, to the working
+structure, and now to a selection whose output feeds the state seam under
+`weaver-harness-state-contract`. The harness applies the tee as the sole
+writer, per the custody rule of apex section 5.2, and this crate holds the
+mechanism the way it holds every other: without policy.
+
+**The tee selects and never computes**, per the operator's ruling of
+2026-08-18. The selection is per event and key-based: the envelope crosses
+whole on every distilled event and is not electable, session, run, turn,
+kind, and sequence, so no election can produce an unattributable row, and
+the election ranges over payload keys alone, named as paths into the
+canonical JSON. An elected kind with no payload keys is a meaningful
+election, presence itself being state. Transformation of what was selected
+is `weaver-state`'s work and decision about what it means is the harness's
+loops', and a tee that computed would smuggle the first into this crate.
+
+**The election is fixed at load and arrives with the declaration.** What the
+operator elected is thereby a load condition the record carries like any
+other. The default election is the envelope of every kind and nothing more,
+so a deployment that elects nothing still distills the session's shape and
+pays for no payload it never asked to keep.
+
+**A miss costs nothing.** An event the election does not match is dropped at
+the tee and the trace remains complete regardless, because the tee reads the
+stream and never thins it. No account of the record, canonical, outbound, or
+working, changes because a tee stands beside it, and an act that trimmed the
+trace to what the tee keeps would have inverted the derivative and the
+account.
+
+```graph
+node: trace-tee-selects-never-computes
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-tee-selects-never-computes
+```
