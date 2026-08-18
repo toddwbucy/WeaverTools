@@ -133,12 +133,26 @@ impl ResidentModel {
                 })?;
         }
 
-        let model =
+        // **A split artifact loads by its whole pinned set.** llama.cpp
+        // resolves siblings from the first file's name only when the name
+        // carries the split pattern, and a descriptor path carries none, so
+        // the set is named explicitly, in split order, every member the
+        // admission pinned. One path takes the single-file door it always
+        // took.
+        let paths = admission.paths();
+        let model = if paths.len() > 1 {
+            LlamaModel::load_from_splits(backend, paths, &params).map_err(|error| {
+                AdmitRefusal::LoadFailed {
+                    detail: format!("load_from_splits: {error}"),
+                }
+            })?
+        } else {
             LlamaModel::load_from_file(backend, admission.path(), &params).map_err(|error| {
                 AdmitRefusal::LoadFailed {
                     detail: format!("load_from_file: {error}"),
                 }
-            })?;
+            })?
+        };
         Ok(ResidentModel { model })
     }
 

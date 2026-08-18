@@ -15,6 +15,7 @@
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 
+use weaver_spu::decoder::backend::TokenId;
 use weaver_spu::decoder::session::{NeverCancels, StopCondition};
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
@@ -37,6 +38,44 @@ fn free_bytes(context: &cudarc::driver::CudaContext) -> u64 {
     free as u64
 }
 
+/// One raw generation with no family assumption: a plain prompt, the
+/// artifact's own declared end-of-sequence as the stop, greedy sampling.
+/// The subject of this file is the pair load, not any template, so an
+/// operator overriding a fixture with another family's split reaches no
+/// marker this helper never promised.
+fn generate_plain(resident: &weaver_spu::residency::Resident) -> (Vec<TokenId>, String) {
+    let prefix = resident
+        .tokenize("The capital of France is")
+        .expect("a plain prompt tokenizes");
+    let knobs = EffectiveKnobs {
+        temperature: 0.0,
+        top_k: 1,
+        top_p: 1.0,
+        repetition_penalty: 1.0,
+        repetition_window: 0,
+        seed: 11,
+    };
+    let mut session = resident.open_session(&knobs, 4096).expect("session opens");
+    session.open(&prefix).expect("prefix decodes");
+    let eos = resident
+        .declared_eos()
+        .expect("the artifact declares an end-of-sequence");
+    let generated = session
+        .append_and_generate(
+            &[],
+            &StopCondition {
+                stop_tokens: vec![eos],
+                terminator: eos,
+                max_tokens: 12,
+            },
+            &mut NeverCancels,
+            &mut |_| {},
+        )
+        .expect("generates");
+    let text = resident.detokenize(&generated.tokens).expect("detokenizes");
+    (generated.tokens, text)
+}
+
 fn artifact() -> Option<PathBuf> {
     match std::env::var_os("WEAVER_ARTIFACT_TWO_CARD") {
         Some(named) => {
@@ -54,6 +93,129 @@ fn artifact() -> Option<PathBuf> {
             path.is_file().then_some(path)
         }
     }
+}
+
+/// The split artifact, the class the ruling on the collision reopened: a
+/// 64.6 GiB set across two files, larger than any single card this box
+/// holds, admitted whole through the pinned set and the fork's explicit
+/// splits door.
+#[test]
+fn a_split_artifact_larger_than_any_card_admits_across_the_pair() {
+    let path = match std::env::var_os("WEAVER_ARTIFACT_SPLIT") {
+        Some(named) => {
+            let path = PathBuf::from(named);
+            assert!(path.is_file(), "WEAVER_ARTIFACT_SPLIT names a missing file");
+            // The same classifier the pin answers to: a single-file override
+            // would pass this test through the single-file door while the
+            // test's name promises the splits door was exercised.
+            assert!(
+                weaver_spu::artifact::names_a_split(&path),
+                "WEAVER_ARTIFACT_SPLIT must name a split shard: {}",
+                path.display()
+            );
+            path
+        }
+        None => {
+            let path = PathBuf::from(
+                "/bulk-store/models/unsloth--Qwen3.6-35B-A3B-GGUF/BF16/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf",
+            );
+            if !path.is_file() {
+                eprintln!("SKIP: no split artifact");
+                return;
+            }
+            path
+        }
+    };
+    let (Some(card0), Some(card1)) = (
+        cudarc::driver::CudaContext::new(0).ok(),
+        cudarc::driver::CudaContext::new(1).ok(),
+    ) else {
+        eprintln!("SKIP: fewer than two CUDA devices");
+        return;
+    };
+    let _device = device_lock();
+    let before = (free_bytes(&card0), free_bytes(&card1));
+
+    // **Larger than any card is asserted, not narrated**: the same artifact
+    // on either card alone refuses at the room judgment, which is free, so
+    // the claim the pair admission rests on is exercised before it is
+    // relied on. Fresh residencies per probe, because a residency admits
+    // once and a probe must not consume the one the pair uses.
+    for ordinal in [0u32, 1] {
+        let mut probe = Residency::new();
+        let single = ModelBinding {
+            artifact: ArtifactRef(path.to_string_lossy().into_owned()),
+            devices: vec![DeviceOrdinal(ordinal)],
+        };
+        let refused = probe.admit(
+            &single,
+            Headroom(2 * 1024 * 1024 * 1024),
+            ReadoutElection(false),
+        );
+        // The refusal must be the room refusal on the probed card, or the
+        // probe proves nothing: any other refusal - a family miss, a bad
+        // path - would satisfy a bare is_err while the size claim went
+        // unexercised.
+        match refused.as_ref().err() {
+            Some(weaver_spu::residency::AdmitRefusal::DeviceRefused(
+                weaver_spu::gpu::DeviceRefusal::NoRoom {
+                    ordinal: refused_at,
+                    free,
+                    needed,
+                },
+            )) => {
+                assert_eq!(*refused_at, ordinal, "the refusal names the probed card");
+                assert!(
+                    needed > free,
+                    "the refusal carries the inequality: needed {needed} against free {free}"
+                );
+            }
+            other => panic!(
+                "the split fits no single card, so ordinal {ordinal} refuses for room, got {other:?}"
+            ),
+        }
+    }
+
+    let mut residency = Residency::new();
+    let binding = ModelBinding {
+        artifact: ArtifactRef(path.to_string_lossy().into_owned()),
+        devices: vec![DeviceOrdinal(0), DeviceOrdinal(1)],
+    };
+    let resident = residency
+        .admit(
+            &binding,
+            Headroom(2 * 1024 * 1024 * 1024),
+            ReadoutElection(false),
+        )
+        .expect("the split admits across the pair");
+
+    // Larger than either card alone: each holds a share no one card could
+    // spare beside the other's, which is the fact this artifact class is for.
+    let floor = 24u64 * 1024 * 1024 * 1024;
+    let held = (free_bytes(&card0), free_bytes(&card1));
+    assert!(before.0 - held.0 > floor, "ordinal 0 holds a major share");
+    assert!(before.1 - held.1 > floor, "ordinal 1 holds a major share");
+
+    let (generated, text) = generate_plain(resident);
+    eprintln!("split emission: {text:?}");
+    assert!(!generated.is_empty());
+
+    let _ = resident;
+    residency.release().expect("the release succeeds");
+    let after = (free_bytes(&card0), free_bytes(&card1));
+    let tolerance: u64 = 1024 * 1024 * 1024;
+    assert!(
+        after.0.abs_diff(before.0) < tolerance,
+        "ordinal 0 returns to baseline in both directions: {} -> {}",
+        before.0,
+        after.0
+    );
+    assert!(
+        after.1.abs_diff(before.1) < tolerance,
+        "ordinal 1 returns to baseline in both directions: {} -> {}",
+        before.1,
+        after.1
+    );
 }
 
 #[test]
@@ -105,60 +267,26 @@ fn a_model_larger_than_one_card_admits_across_a_pair() {
     );
     eprintln!("ADMITTED across two devices");
 
-    let prompt =
-        "<|im_start|>user\nReply with exactly one word: hello<|im_end|>\n<|im_start|>assistant\n";
-    let prefix = resident.tokenize(prompt).expect("tokenizes");
-    let knobs = EffectiveKnobs {
-        temperature: 0.0,
-        top_k: 1,
-        top_p: 1.0,
-        repetition_penalty: 1.0,
-        repetition_window: 0,
-        seed: 11,
-    };
-    let mut session = resident.open_session(&knobs, 4096).expect("session opens");
-    session.open(&prefix).expect("prefix decodes");
-    // The close must promote to exactly one token against this artifact's
-    // vocabulary, or the override named an artifact whose stop this test
-    // would misbuild.
-    let close = resident.tokenize("<|im_end|>").expect("close tokenizes");
-    let [terminator] = close.as_slice() else {
-        panic!("the turn close promotes to one token, got {close:?}");
-    };
-    let terminator = *terminator;
-    let generated = session
-        .append_and_generate(
-            &[],
-            &StopCondition {
-                stop_tokens: vec![terminator],
-                terminator,
-                max_tokens: 16,
-            },
-            &mut NeverCancels,
-            &mut |_| {},
-        )
-        .expect("generates");
-    let text = resident.detokenize(&generated.tokens).expect("detokenizes");
+    let (generated, text) = generate_plain(resident);
     eprintln!("two-card emission: {text:?}");
-    assert!(!generated.tokens.is_empty());
+    assert!(!generated.is_empty());
 
     // **The release frees both cards.** The session and the resident borrow
     // the residency, so both end before it releases, and the assertion reads
     // the devices rather than trusting the drop order.
-    drop(session);
     let _ = resident;
     residency.release().expect("the release succeeds");
     let after = (free_bytes(&card0), free_bytes(&card1));
     let tolerance: u64 = 1024 * 1024 * 1024;
     assert!(
-        after.0 + tolerance > before.0,
-        "ordinal 0 returns to baseline: {} -> {}",
+        after.0.abs_diff(before.0) < tolerance,
+        "ordinal 0 returns to baseline in both directions: {} -> {}",
         before.0,
         after.0
     );
     assert!(
-        after.1 + tolerance > before.1,
-        "ordinal 1 returns to baseline: {} -> {}",
+        after.1.abs_diff(before.1) < tolerance,
+        "ordinal 1 returns to baseline in both directions: {} -> {}",
         before.1,
         after.1
     );
