@@ -118,12 +118,18 @@ specified behavior rather than an implementation's habit:
 - A numeric literal is decimal digits with an optional fractional part. No
   scientific notation, no separators, and a sign is the unary minus of the
   grammar rather than part of the literal.
-- **A position is a character offset into the expression with whitespace
-  removed**, zero-based, because the scan runs over that form. Stated so two
-  implementations cannot count the same defect differently.
-- **The rendered value is the shortest decimal that round-trips the answer**,
-  an integer-valued answer rendering with no fractional part, so `2^10`
-  answers `1024` and never `1024.0`.
+- **Arithmetic is IEEE 754 binary64**, the double-precision type, every
+  literal, constant, and intermediate. A narrower width would change answers
+  and is refused by this line.
+- **A position is a zero-based offset in Unicode scalar values** into the
+  expression with whitespace removed, because the scan runs over that form.
+  Stated down to the unit so two implementations cannot count the same
+  defect differently, bytes and grapheme clusters both refused.
+- **The rendered value is the shortest decimal that round-trips the answer
+  under binary64**, without exponent notation, an integer-valued answer
+  rendering with no fractional part, so `2^10` answers `1024` and never
+  `1024.0`. A negative zero keeps its sign, the round trip being what the
+  rendering promises and an unsigned zero not round-tripping to it.
 
 **Every refusal is the member's own words and names its position.** An unknown
 function or name refuses naming itself and where it sits. A square root of a
@@ -132,15 +138,20 @@ result that is not finite each refuse by naming the defect. The words are conten
 a model reasons over at whatever seat the answer lands in, so a refusal that only
 an implementer could read is a defect against this section.
 
-**The recursion is depth-bounded at 64.** The expression arrives from outside
-the member's control, so its nesting is nobody's promise, and the descent
-refuses past the bound in the member's own words, naming the bound, rather than
-overflowing the caller's stack. The root opens at depth zero and every
-construct that recurses increments it: a parenthesized subexpression, a
-function's argument, and the power level's two self-recursions, the unary
-minus and the exponent - a minus chain or an exponent chain reaches no other
-level on the way down, so the bound holds at every level that recurses into
-itself, the power level's entry included.
+**The recursion is depth-bounded at 64, refused at entry.** The expression
+arrives from outside the member's control, so its nesting is nobody's
+promise, and a construct asked to open at depth 64 refuses in the member's
+own words, naming the bound, rather than overflowing the caller's stack. The
+root opens at depth zero and every construct that recurses increments it: a
+parenthesized subexpression, a function's argument, and the power level's
+two self-recursions, the unary minus and the exponent - a minus chain or an
+exponent chain reaches no other level on the way down, so the bound holds at
+every level that recurses into itself, the power level's entry included.
+Concretely, sixty-three nested parentheses evaluate and a sixty-fourth
+refuses, and the same count governs a chain of unary minuses or exponents.
+The refusal's exact wording is the member's own, per the refusal rule above,
+and is not pinned here: what this section fixes is the count and the entry
+placement, the two facts implementations could otherwise disagree on.
 
 ```graph
 node: internal-calculator-power-conventions
@@ -181,8 +192,11 @@ between hosts. That is the honest form of what the harness-SPU splice
 amendment prices: the trace re-derives what the model saw on the deployment
 that recorded it, which is the deployment the splice runs on, so per-binary
 determinism is the property the mechanism needs and the property claimed.
-Purity is why the framework holds its own members to a bar it does not impose
-on the operator's promotions. The manifest assertion of section 1 is the mechanical
+What identity a replay admits - binary, host, or wider - is the splice
+amendment's to state on the harness-SPU contract, this Spec supplying the
+member's property and nothing about the trace's admission rules. Purity is
+why the framework holds its own members to a bar it does not impose on the
+operator's promotions. The manifest assertion of section 1 is the mechanical
 half, and the review half is that no ambient authority of the standard library -
 environment, time, entropy, paths - is reached either.
 
