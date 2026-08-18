@@ -199,6 +199,12 @@ pub enum LoadedModel {
     /// A GGUF model held by llama.cpp, weights on the assigned devices.
     #[cfg(feature = "gguf")]
     Gguf(crate::decoder::gguf::ResidentModel),
+    /// A safetensors model held by the pinned candle fork, weights on the
+    /// assigned device. Boxed for the variant-size lint's reason: the
+    /// tokenizer's tables ride the value, and an enum sized for its largest
+    /// member would tax the GGUF case with the native one's weight.
+    #[cfg(feature = "cuda")]
+    Native(Box<crate::decoder::native::ResidentModel>),
 }
 
 impl std::fmt::Debug for LoadedModel {
@@ -206,6 +212,8 @@ impl std::fmt::Debug for LoadedModel {
         match self {
             #[cfg(feature = "gguf")]
             LoadedModel::Gguf(_) => f.write_str("LoadedModel::Gguf"),
+            #[cfg(feature = "cuda")]
+            LoadedModel::Native(_) => f.write_str("LoadedModel::Native"),
             #[allow(unreachable_patterns)]
             _ => f.write_str("LoadedModel"),
         }
@@ -328,7 +336,7 @@ impl Resident {
         // On a build carrying no engine the two below are consumed by no arm,
         // and saying so here is cheaper than shaping the signature around a
         // build that cannot serve anything anyway.
-        #[cfg(not(feature = "gguf"))]
+        #[cfg(not(any(feature = "gguf", feature = "cuda")))]
         let _ = (knobs, capacity);
         match &self.model {
             #[cfg(feature = "gguf")]
@@ -340,9 +348,18 @@ impl Resident {
                     self.flush_mechanism()?,
                 ))
             }
+            #[cfg(feature = "cuda")]
+            LoadedModel::Native(model) => {
+                let engine = crate::decoder::native::NativeEngine::open(model, knobs, capacity)?;
+                Ok(Session::new(
+                    Box::new(engine),
+                    capacity as usize,
+                    self.flush_mechanism()?,
+                ))
+            }
             // On a build carrying no backend `LoadedModel` has no cases, so
             // this arm is unreachable rather than unwritten.
-            #[cfg(not(feature = "gguf"))]
+            #[cfg(not(any(feature = "gguf", feature = "cuda")))]
             _ => Err(DecodeFault::ContainerNotBuilt {
                 container: self.header.container,
             }),
@@ -368,6 +385,8 @@ impl Resident {
                 .map_err(|error| DecodeFault::Engine {
                     detail: error.to_string(),
                 }),
+            #[cfg(feature = "cuda")]
+            LoadedModel::Native(model) => model.tokenize(text),
             #[allow(unreachable_patterns)]
             _ => Err(DecodeFault::ContainerNotBuilt {
                 container: self.header.container,
@@ -418,6 +437,8 @@ impl Resident {
                     detail: error.to_string(),
                 })
             }
+            #[cfg(feature = "cuda")]
+            LoadedModel::Native(model) => model.detokenize(tokens),
             #[allow(unreachable_patterns)]
             _ => Err(DecodeFault::ContainerNotBuilt {
                 container: self.header.container,
@@ -438,6 +459,8 @@ impl Resident {
         match &self.model {
             #[cfg(feature = "gguf")]
             LoadedModel::Gguf(model) => Ok(TokenId(model.model().token_eos().0 as u32)),
+            #[cfg(feature = "cuda")]
+            LoadedModel::Native(model) => Ok(model.declared_eos()),
             #[allow(unreachable_patterns)]
             _ => Err(DecodeFault::ContainerNotBuilt {
                 container: self.header.container,
@@ -693,11 +716,10 @@ fn judge_room_and_reach(
 
 /// Step four: load by the container the header declared.
 ///
-/// **The GGUF path is real where the build carries it.** The safetensors path
-/// is not written: driving it means the native forward machinery of the
-/// decode acts, and the refusal names that rather than reporting a device
-/// condition, so an operator with a healthy card is not sent to look at it. A
-/// container whose backend this build does not carry refuses the same way.
+/// **Both paths are real where the build carries them.** A container whose
+/// backend this build does not carry refuses by name rather than reporting a
+/// device condition, so an operator with a healthy card is not sent to look
+/// at it.
 fn load(admission: &Admission<'_>) -> Result<LoadedModel, AdmitRefusal> {
     match admission.header().container {
         #[cfg(feature = "gguf")]
@@ -706,6 +728,12 @@ fn load(admission: &Admission<'_>) -> Result<LoadedModel, AdmitRefusal> {
         }
         #[cfg(not(feature = "gguf"))]
         crate::artifact::Container::Gguf => Err(AdmitRefusal::BackendNotBuilt),
+        #[cfg(feature = "cuda")]
+        crate::artifact::Container::Safetensors => {
+            crate::decoder::native::ResidentModel::load(admission)
+                .map(|model| LoadedModel::Native(Box::new(model)))
+        }
+        #[cfg(not(feature = "cuda"))]
         crate::artifact::Container::Safetensors => Err(AdmitRefusal::BackendNotBuilt),
     }
 }

@@ -38,7 +38,19 @@ default = []
 # Each gate names what it buys, per Spec section 1.1. A build with neither
 # compiles the channels, the residency bookkeeping, and the family libraries,
 # which is what keeps the family surface testable on a machine with no device.
-cuda = ["dep:cudarc", "dep:candle-core", "dep:candle-nn", "dep:candle-transformers"]
+cuda = [
+    "dep:cudarc",
+    "dep:candle-core",
+    "dep:candle-nn",
+    "dep:candle-transformers",
+    # The fork's own device features ride this crate's gate: a cuda build of
+    # this crate that compiled candle CPU-only would load every safetensors
+    # artifact into host memory while claiming the device, which is the lie
+    # the admit's room judgment cannot see.
+    "candle-core/cuda",
+    "candle-nn/cuda",
+    "candle-transformers/cuda",
+]
 gguf = ["dep:llama-cpp-2", "dep:llama-cpp-sys-2"]
 
 [dependencies]

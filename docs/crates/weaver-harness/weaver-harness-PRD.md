@@ -506,13 +506,20 @@ cover.** The harness is an organ too, per apex section 5.4, the one whose
 domain is coordination, so the `fault` event's case set is incomplete without
 its sources and they are named here with the organs': the recorder surfacing
 commit pressure while the sink stays writable, a stream write failing against
-a live process, and an organ's death observed as channel closure after the
-enter aggregate was answered. The third is why this enumeration cannot be
-derived from the organs' own: a dead party is exactly the one that cannot
-report, so the SPU's cases at `weaver-spu-PRD` section 13.10 and the gate's
-at `weaver-gate-PRD` section 13.4 are silent about their own deaths by
-construction, and the harness's observation is the only account there is.
-With these three named the corpus-wide case set closes across all three
+a live process, an organ's death observed as channel closure after the
+enter aggregate was answered, and a message-kind record of its own working
+structure that does not decode at assembly, the hole authored as the fault it
+is rather than handed to the model as context. The third is why this
+enumeration cannot be derived from the organs' own: a dead party is exactly
+the one that cannot report, so the SPU's cases at `weaver-spu-PRD` section
+13.10 and the gate's at `weaver-gate-PRD` section 13.4 are silent about their
+own deaths by construction, and the harness's observation is the only account
+there is. The fourth was authored by the built crate before it was named
+here, which is the enumeration read against standing practice and found one
+short: the assembly fault predates the case set's typing and no case of the
+three covered it, so the charter records the condition its crate already
+raises rather than leaving the record's one unclassified fault standing.
+With these four named the corpus-wide case set closes across all three
 organs, and the payload's shape is the trace act's to elect against it.
 
 **The harness reads, the model does not.** The harness reads the trace continuously,
