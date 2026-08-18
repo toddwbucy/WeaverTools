@@ -320,20 +320,22 @@ own contract, per apex 5.1, and this crate gains a seam rather than a dependency
 
 ## 4. The seams
 
-The harness is party to four seams, and every one of them is governed by a named
-contract, per apex 5.1. Three cross a process line and are Unix sockets that
+The harness is party to five seams, and every one of them is governed by a named
+contract, per apex 5.1. Four cross a process line and are Unix sockets that
 authenticate their peer, by credential where the channel has a name and by possession
 where it has none. The coordination seam is a named socket this crate binds and
 authenticates by credential, root or refused, per `weaver-admin-harness-contract`
-section 2 as of the inversion of 2026-08-05. The other two are unnamed pairs this
-crate creates at its organ forks and authenticate by possession.
+section 2 as of the inversion of 2026-08-05. Two are unnamed pairs this
+crate creates at its organ forks and authenticate by possession. The fourth
+socket is the state seam of the 2026-08-18 charter, credential-authenticated
+as a channel with a name.
 
-The fourth is the seam to `weaver-trace`. It crosses no process line, so it is a
+The fifth seam is the one to `weaver-trace`. It crosses no process line, so it is a
 library boundary tagged `link` rather than `socket`, and it authenticates nothing
 because there is no second process to identify. It is a seam under a contract all the
-same, which is why the count here is four and the table below is three.
+same, which is why the count here is five and the table below is four.
 
-**The egress ruling of 2026-08-07 adds no seam here, and the count staying four is a
+**The egress ruling of 2026-08-07 adds no seam here, and the socket count above it is a
 claim worth checking rather than an omission.** Apex section 3 step 7 has the harness
 address a registered tool *through the gate's* agent-opened socket, so this crate's
 counterparty is the gate it already holds a seam with, and what is new is a direction
@@ -348,13 +350,14 @@ it, per apex 5.2. Lifecycle directives on the coordination seam carry no turn co
 because they belong to no turn, per 5.2 as scoped by the re-authoring of
 2026-08-01.
 
-The three sockets:
+The four sockets:
 
 | Seam | Peer | The harness's role |
 |---|---|---|
 | Boundary | `weaver-gate` | Receives authenticated work inbound. Opens the exchange that carries a tool call outbound, per apex step 7, which the gate relays to the registered tool and never interprets. Gate never reaches past this seam in either direction. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
 | Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptor of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens no exchange of its own, the fault travelling as a `fault` event on the stream per the fault-carrier ruling of 2026-08-01. |
+| State | `weaver-state` | Sends the tee's election at the channel's opening and the distillate stream after it, owed nothing back until the serve direction takes its shape. A dead peer costs the distillate and never the turn, per the contract's failure vocabulary. |
 
 **A fault the worker survives is a `fault` event, and the stream is its carrier.**
 The fault-carrier ruling of 2026-08-01 retired the alert exchange: with one

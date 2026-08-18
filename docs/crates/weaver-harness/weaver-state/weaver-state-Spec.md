@@ -84,7 +84,11 @@ shape optimized for queries nobody has asked would be optimizing a guess.
 election is reconsidered against real asks, and a build that has served real
 asks without reconsidering has an open election reading as a settled one.
 
-**The indexes are built at load from the election**, per the charter: the
+**The indexes are built at load from the election the seam's opener
+carried**, per the contract's ingest clause: the opener arrives before the
+first distillate on every standing of the channel, so a restarted member
+rebuilds the identical index set before it holds a single new row. Per the
+charter: the
 envelope's standing indexes on `(run, turn)` and `(kind, sequence)`, and one
 index per elected key path on `field (key, value)` filtered to that key,
 so extension within a session is rows accumulating under standing indexes
@@ -101,11 +105,15 @@ election.
 
 ## 4. The ingest
 
-The seam's traffic is the contract's `distillate`, and this crate's half is
-mechanical: parse, insert, index nothing per event, answer nothing. A
-distillate that does not parse is dropped whole, per the contract's
-malformed-row clause, and the defect waits for the serve direction to give
-its surfacing a voice. Inserts ride the sequence order the harness owes, and
+The seam's traffic is the contract's `election` opener and its `distillate`
+stream, and this crate's half is mechanical: parse, insert, index nothing
+per event, answer nothing. **A distillate lands whole or not at all**: the
+parse completes before any write, and the event row and its field rows go
+in as one transaction that rolls back entire on any failure, because a
+distillate held in part would be an attributable envelope over missing
+pairs, a corruption custody cannot detect later. A distillate that does not
+parse is dropped whole, per the contract's malformed-row clause, and the
+defect waits for the serve direction to give its surfacing a voice. Inserts ride the sequence order the harness owes, and
 a gap in sequence is not this crate's to notice: the record is the account
 of what happened, and custody keeps what arrives.
 

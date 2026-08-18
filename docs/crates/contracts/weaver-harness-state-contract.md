@@ -57,10 +57,12 @@ vocabulary, defined below, and the floor carries no member for it, per the
 custody rule of apex section 5.2: the floor carries only what the harness
 itself consumes, and what crosses here is consumed by state.
 
-**This seam's own.** The `distillate`: one distilled event, carrying the
-envelope whole and the elected payload pairs beside it, each pair a payload
-key path and the value the canonical JSON held at it. The election that
-produced it is a load condition and does not ride each event. The serve
+**This seam's own.** Two terms. The `election`: the seam's opener, the
+elected kinds and their payload key paths as the load declared them, sent
+whole at every standing of the channel and never per event. The
+`distillate`: one distilled event, carrying the envelope whole and the
+elected payload pairs beside it, each pair a payload key path and the value
+the canonical JSON held at it. The serve
 direction's vocabulary is deliberately absent, per section 3.
 
 ```graph
@@ -74,6 +76,13 @@ kind: term
 edge: defines
 from: weaver-harness-state-contract
 to: distillate
+
+node: election
+kind: term
+
+edge: defines
+from: weaver-harness-state-contract
+to: election
 ```
 
 ## 1. What this contract governs
@@ -86,12 +95,19 @@ the other.
 
 ## 2. The traffic
 
-**Ingest, flowing, one direction.** The harness sends a `distillate` per
-elected event, in sequence order, and is owed nothing back: the fact has one
-home, state's holdings, and a confirmation whose one reader would discard it
-is the retired receipt's error again. The harness does not wait, and a
-distillate is not a turn's work: nothing about a turn's completion depends on
-this seam accepting anything.
+**Ingest, flowing, one direction, and the election opens it.** The first
+traffic on every standing of the channel is the election itself, whole: the
+elected kinds and their payload key paths, as the load declared them. The
+custodian needs the election before the first distillate, because its
+indexes are built from it at load, and a restarted member receives the
+identical election with its reopened channel, which is what keeps the
+selection deterministic across the processes of one load. After the opener,
+the harness sends a `distillate` per elected event, in sequence order, and
+is owed nothing back: the fact has one home, state's holdings, and a
+confirmation whose one reader would discard it is the retired receipt's
+error again. The harness does not wait, and a distillate is not a turn's
+work: nothing about a turn's completion depends on this seam accepting
+anything.
 
 **Serve, chartered and unshaped.** The second direction exists in charter and
 carries no vocabulary yet, per `weaver-state-PRD` section 5: its first asker
