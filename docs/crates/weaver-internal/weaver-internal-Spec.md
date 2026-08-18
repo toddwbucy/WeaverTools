@@ -43,7 +43,20 @@ tag: manifest
 edge: asserts
 from: weaver-internal
 to: internal-no-dependencies
+
+node: internal-one-library-target
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-internal
+to: internal-one-library-target
 ```
+
+`internal-one-library-target` is the target-shape half of the same fact: the
+manifest declares exactly one library target and no target of any other kind,
+which is the shape the first sentence of this section states and the
+instrument `weaver-spu`'s one-binary claim already uses.
 
 ## 2. The member surface, and what the agent never sees
 
@@ -98,7 +111,19 @@ specified behavior rather than an implementation's habit:
   carry its own sign, so `2^-3` holds. These are the conventions a scientific
   reader expects and they are asserted, not assumed.
 - The one-argument functions `sin cos tan asin acos atan sqrt ln log exp abs`,
-  angles in radians, `log` base ten, and the constants `pi` and `e`.
+  angles in radians, `log` base ten, and the constants `pi` and `e`. A call is
+  the function's name followed by a parenthesized argument, names are lowercase
+  and case-sensitive, and there is no implicit multiplication: `2pi` refuses at
+  the `p` rather than guessing a product.
+- A numeric literal is decimal digits with an optional fractional part. No
+  scientific notation, no separators, and a sign is the unary minus of the
+  grammar rather than part of the literal.
+- **A position is a character offset into the expression with whitespace
+  removed**, zero-based, because the scan runs over that form. Stated so two
+  implementations cannot count the same defect differently.
+- **The rendered value is the shortest decimal that round-trips the answer**,
+  an integer-valued answer rendering with no fractional part, so `2^10`
+  answers `1024` and never `1024.0`.
 
 **Every refusal is the member's own words and names its position.** An unknown
 function or name refuses naming itself and where it sits. A square root of a
@@ -107,12 +132,15 @@ result that is not finite each refuse by naming the defect. The words are conten
 a model reasons over at whatever seat the answer lands in, so a refusal that only
 an implementer could read is a defect against this section.
 
-**The recursion is depth-bounded.** The expression arrives from outside the
-member's control, so its nesting is nobody's promise, and the descent refuses past
-a stated bound in the member's own words rather than overflowing the caller's
-stack. The bound holds at every level that recurses into itself, the power level
-included, because a minus chain or an exponent chain reaches no other level on the
-way down.
+**The recursion is depth-bounded at 64.** The expression arrives from outside
+the member's control, so its nesting is nobody's promise, and the descent
+refuses past the bound in the member's own words, naming the bound, rather than
+overflowing the caller's stack. The root opens at depth zero and every
+construct that recurses increments it: a parenthesized subexpression, a
+function's argument, and the power level's two self-recursions, the unary
+minus and the exponent - a minus chain or an exponent chain reaches no other
+level on the way down, so the bound holds at every level that recurses into
+itself, the power level's entry included.
 
 ```graph
 node: internal-calculator-power-conventions
@@ -144,11 +172,17 @@ to: internal-calculator-depth-bounded
 
 A framework member is a function of its arguments alone: no filesystem, no
 network, no clock, no randomness, and no state held between calls, so one
-expression answers one value on every machine that runs it. Purity is what lets a
-recorded call reproduce its answer, which is the property the harness-SPU splice
-amendment prices when a control loop substitutes a member's answer into context,
-and it is why the framework holds its own members to a bar it does not impose on
-the operator's promotions. The manifest assertion of section 1 is the mechanical
+expression answers one value on the deployment that ran it - the same binary
+on the same host always answers the same. **The claim is deterministic per
+deployment and not bit-identical per universe**: the four arithmetic
+operations follow IEEE 754 and carry across platforms, while `^` and the
+function set follow the platform's math library, whose last digit may differ
+between hosts. That is the honest form of what the harness-SPU splice
+amendment prices: the trace re-derives what the model saw on the deployment
+that recorded it, which is the deployment the splice runs on, so per-binary
+determinism is the property the mechanism needs and the property claimed.
+Purity is why the framework holds its own members to a bar it does not impose
+on the operator's promotions. The manifest assertion of section 1 is the mechanical
 half, and the review half is that no ambient authority of the standard library -
 environment, time, entropy, paths - is reached either.
 
@@ -164,9 +198,10 @@ to: internal-member-pure-function
 
 ## 5. What is enforced, and by which instrument
 
-Seven assertions. `internal-no-dependencies` is the manifest instrument: the
-resolved dependency set of the crate is empty, checked by a test reading the
-lockfile's view of this package. The three perturbation claims are bought by
+Eight assertions. Two are the manifest instrument's: the resolved dependency
+set of the crate is empty, checked by a test reading the lockfile's view of
+this package, and the manifest declares exactly one library target and no
+other kind. The three perturbation claims are bought by
 tests that fail when the property is removed: the power conventions fail when the
 minus level or the associativity is moved, the own-words refusals fail when a
 refusal is replaced by a bare error, and the depth bound fails when the entry
