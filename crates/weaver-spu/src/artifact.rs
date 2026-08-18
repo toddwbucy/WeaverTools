@@ -163,16 +163,16 @@ impl PinnedArtifact {
 /// unresolvable: the artifact the binding names is the set, and a partial
 /// set is not a smaller artifact but an absent one.
 pub fn pin(path: &Path) -> Result<PinnedArtifact, LifecycleRefusal> {
-    let Some((first, count)) = split_pattern(path) else {
+    let Some((first, count, suffix)) = split_pattern(path) else {
         return Ok(PinnedArtifact {
             file: pin_one(path)?,
             siblings: Vec::new(),
         });
     };
-    let file = pin_one(&shard_name(&first, 1, count))?;
+    let file = pin_one(&shard_name(&first, 1, count, suffix))?;
     let mut siblings = Vec::with_capacity(count as usize - 1);
     for index in 2..=count {
-        siblings.push(pin_one(&shard_name(&first, index, count))?);
+        siblings.push(pin_one(&shard_name(&first, index, count, suffix))?);
     }
     Ok(PinnedArtifact { file, siblings })
 }
@@ -203,13 +203,21 @@ fn pin_one(path: &Path) -> Result<File, LifecycleRefusal> {
     Ok(file)
 }
 
-/// The split pattern in a name: `<stem>-NNNNN-of-NNNNN.gguf`. Answers the
-/// stem and the count, or nothing for an unsplit name. Parsed by hand
-/// because the shape is fixed and a pattern dependency for one fixed shape
-/// buys nothing.
-fn split_pattern(path: &Path) -> Option<(PathBuf, u32)> {
+/// The split pattern in a name: `<stem>-NNNNN-of-NNNNN.<container>`, both
+/// containers spelling it the same way, llama.cpp's convention for GGUF and
+/// the HuggingFace exporter's for safetensors. Answers the stem, the count,
+/// and the suffix, or nothing for an unsplit name. Parsed by hand because
+/// the shape is fixed and a pattern dependency for one fixed shape buys
+/// nothing.
+fn split_pattern(path: &Path) -> Option<(PathBuf, u32, &'static str)> {
     let name = path.file_name()?.to_str()?;
-    let rest = name.strip_suffix(".gguf")?;
+    let (rest, suffix) = if let Some(rest) = name.strip_suffix(".gguf") {
+        (rest, ".gguf")
+    } else if let Some(rest) = name.strip_suffix(".safetensors") {
+        (rest, ".safetensors")
+    } else {
+        return None;
+    };
     // <stem>-NNNNN-of-NNNNN
     if rest.len() < 15 {
         return None;
@@ -242,7 +250,7 @@ fn split_pattern(path: &Path) -> Option<(PathBuf, u32)> {
     if index == 0 || index > count {
         return None;
     }
-    Some((path.with_file_name(stem), count))
+    Some((path.with_file_name(stem), count, suffix))
 }
 
 /// Whether a path names a shard of a split artifact.
@@ -254,10 +262,10 @@ pub fn names_a_split(path: &Path) -> bool {
     split_pattern(path).is_some()
 }
 
-/// One shard's name from the split's stem: `<stem>-NNNNN-of-NNNNN.gguf`.
-fn shard_name(stem: &Path, index: u32, count: u32) -> PathBuf {
+/// One shard's name from the split's stem and suffix.
+fn shard_name(stem: &Path, index: u32, count: u32, suffix: &str) -> PathBuf {
     let mut name = stem.as_os_str().to_os_string();
-    name.push(format!("-{index:05}-of-{count:05}.gguf"));
+    name.push(format!("-{index:05}-of-{count:05}{suffix}"));
     PathBuf::from(name)
 }
 
@@ -305,10 +313,32 @@ fn container_within(dir: &Path) -> Result<PathBuf, LifecycleRefusal> {
     match found.len() {
         0 => Err(LifecycleRefusal::ArtifactUnresolvable),
         1 => Ok(found.remove(0)),
-        // A directory holding several containers is ambiguous, and picking one
-        // would be this crate deciding which artifact the operator meant. The
-        // binding names one artifact; a directory that does not is refused.
-        _ => Err(LifecycleRefusal::ArtifactUnresolvable),
+        // **Several containers resolve as one artifact exactly where they
+        // are one split's shards.** Every file must carry the split pattern
+        // with one shared stem and count, and the resolution answers the
+        // first shard, the pin collecting the rest. Anything else is the
+        // ambiguity this arm has always refused: two artifacts in one
+        // directory is a binding that names neither.
+        _ => {
+            let mut parsed = Vec::with_capacity(found.len());
+            for path in &found {
+                match split_pattern(path) {
+                    Some(parts) => parsed.push(parts),
+                    None => return Err(LifecycleRefusal::ArtifactUnresolvable),
+                }
+            }
+            let (stem, count, suffix) = parsed[0].clone();
+            if !parsed
+                .iter()
+                .all(|(s, c, x)| *s == stem && *c == count && *x == suffix)
+            {
+                return Err(LifecycleRefusal::ArtifactUnresolvable);
+            }
+            if found.len() != count as usize {
+                return Err(LifecycleRefusal::ArtifactUnresolvable);
+            }
+            Ok(shard_name(&stem, 1, count, suffix))
+        }
     }
 }
 
@@ -669,6 +699,41 @@ fn hash_reader_into<R: Read>(reader: &mut R, hasher: &mut blake3::Hasher) -> Res
 
 #[cfg(test)]
 mod tests {
+    /// A directory of one split's shards resolves as one artifact, to its
+    /// first shard, and the pin collects the set. A directory mixing stems
+    /// stays the ambiguity it always was.
+    #[test]
+    fn a_sharded_directory_resolves_to_its_first_shard() {
+        let dir = std::env::temp_dir().join(format!("weaver-sharded-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        for index in 1..=3 {
+            std::fs::write(
+                dir.join(format!("model-{index:05}-of-00003.safetensors")),
+                b"x",
+            )
+            .expect("a shard writes");
+        }
+        let resolved = super::container_within(&dir).expect("the set resolves");
+        assert_eq!(
+            resolved,
+            dir.join("model-00001-of-00003.safetensors"),
+            "the first shard is the container"
+        );
+        let pinned = super::pin(&resolved).expect("the set pins");
+        assert_eq!(pinned.paths().len(), 3, "every shard is pinned");
+
+        // A stranger in the directory restores the refusal.
+        std::fs::write(dir.join("other.safetensors"), b"x").expect("writes");
+        assert!(
+            matches!(
+                super::container_within(&dir),
+                Err(LifecycleRefusal::ArtifactUnresolvable)
+            ),
+            "a mixed directory is ambiguous"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// A split with a missing later shard refuses as unresolvable, which is
     /// the pin doc's own promise: a partial set is an absent artifact.
     #[test]
@@ -695,18 +760,27 @@ mod tests {
     fn the_split_pattern_is_exact() {
         use std::path::Path;
         let hit = super::split_pattern(Path::new("/m/model-00001-of-00002.gguf"));
-        let (stem, count) = hit.expect("the pattern parses");
+        let (stem, count, suffix) = hit.expect("the pattern parses");
         assert_eq!(stem, Path::new("/m/model"));
         assert_eq!(count, 2);
+        assert_eq!(suffix, ".gguf");
         assert_eq!(
-            super::shard_name(&stem, 2, count),
+            super::shard_name(&stem, 2, count, suffix),
             Path::new("/m/model-00002-of-00002.gguf")
         );
 
         // Naming a later shard reaches the same set.
-        let (stem2, _) = super::split_pattern(Path::new("/m/model-00002-of-00002.gguf"))
+        let (stem2, _, _) = super::split_pattern(Path::new("/m/model-00002-of-00002.gguf"))
             .expect("a later shard parses");
         assert_eq!(stem2, stem);
+
+        // The second container spells the same pattern, per the exporter's
+        // own convention.
+        let (_, count_st, suffix_st) =
+            super::split_pattern(Path::new("/m/model-00001-of-00017.safetensors"))
+                .expect("a safetensors shard parses");
+        assert_eq!(count_st, 17);
+        assert_eq!(suffix_st, ".safetensors");
 
         for miss in [
             "/m/model.gguf",

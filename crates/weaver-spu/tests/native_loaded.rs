@@ -224,6 +224,107 @@ fn the_pair_agrees_with_the_single_card() {
     );
 }
 
+/// The model the pair exists for: larger than any single card, sharded
+/// safetensors, served across both devices through the native engine. The
+/// deliberate mirror of `two_card.rs`'s split-GGUF proof in the second
+/// container.
+#[test]
+fn a_large_sharded_safetensors_serves_across_the_pair() {
+    let dir = match std::env::var_os("WEAVER_ARTIFACT_QWEN25_32B") {
+        Some(named) => {
+            let path = PathBuf::from(named);
+            assert!(
+                path.is_dir(),
+                "WEAVER_ARTIFACT_QWEN25_32B names {}, which is not a directory",
+                path.display()
+            );
+            path
+        }
+        None => {
+            let path = PathBuf::from("/bulk-store/models/Qwen--Qwen2.5-32B-Instruct");
+            if !path.is_dir() || !path.join("model-00001-of-00017.safetensors").is_file() {
+                eprintln!("SKIP a_large_sharded_safetensors: artifact absent or incomplete");
+                return;
+            }
+            path
+        }
+    };
+    if cudarc::driver::CudaContext::new(1).is_err() {
+        eprintln!("SKIP a_large_sharded_safetensors: fewer than two CUDA devices");
+        return;
+    }
+
+    // The premise, asserted the way the GGUF split test asserts it: either
+    // card alone refuses for room.
+    for ordinal in [0u32, 1] {
+        let mut probe = Residency::new();
+        let single = ModelBinding {
+            artifact: ArtifactRef(dir.to_string_lossy().into_owned()),
+            devices: vec![DeviceOrdinal(ordinal)],
+        };
+        let refused = probe.admit(
+            &single,
+            Headroom(2 * 1024 * 1024 * 1024),
+            ReadoutElection(false),
+        );
+        assert!(
+            refused.is_err(),
+            "the 32B fits no single card, so ordinal {ordinal} alone refuses"
+        );
+    }
+
+    let mut residency = Residency::new();
+    let binding = ModelBinding {
+        artifact: ArtifactRef(dir.to_string_lossy().into_owned()),
+        devices: vec![DeviceOrdinal(0), DeviceOrdinal(1)],
+    };
+    let resident = residency
+        .admit(
+            &binding,
+            Headroom(2 * 1024 * 1024 * 1024),
+            ReadoutElection(false),
+        )
+        .expect("the 32B admits across the pair");
+
+    let prompt =
+        "<|im_start|>user\nReply with exactly one word: hello<|im_end|>\n<|im_start|>assistant\n";
+    let prefix = resident.tokenize(prompt).expect("tokenizes");
+    let knobs = EffectiveKnobs {
+        temperature: 0.0,
+        top_k: 1,
+        top_p: 1.0,
+        repetition_penalty: 1.0,
+        repetition_window: 0,
+        seed: 11,
+    };
+    let mut session = resident.open_session(&knobs, 1024).expect("session opens");
+    let opened = std::time::Instant::now();
+    session.open(&prefix).expect("the prefix decodes");
+    let close = resident.tokenize("<|im_end|>").expect("close tokenizes");
+    let [terminator] = close.as_slice() else {
+        panic!("the turn close promotes to one token, got {close:?}");
+    };
+    let generated = session
+        .append_and_generate(
+            &[],
+            &StopCondition {
+                stop_tokens: close.clone(),
+                terminator: *terminator,
+                max_tokens: 16,
+            },
+            &mut NeverCancels,
+            &mut |_| {},
+        )
+        .expect("the 32B generates");
+    let secs = opened.elapsed().as_secs_f64();
+    let text = resident.detokenize(&generated.tokens).expect("detokenizes");
+    eprintln!(
+        "32B pair emission: {text:?} ({} tokens, {secs:.1}s with prefill)",
+        generated.tokens.len()
+    );
+    assert!(!generated.tokens.is_empty());
+}
+
 fn cuda_present() -> bool {
     cudarc::driver::CudaContext::new(0).is_ok()
 }

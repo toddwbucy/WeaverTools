@@ -116,7 +116,7 @@ impl ResidentModel {
                     detail: format!("cuda device {second}: {error}"),
                 })?;
             Forward::Pair(super::native_pair::ShardedModel::load(
-                admission.path(),
+                admission.paths(),
                 &config,
                 [device.clone(), second],
             )?)
@@ -129,7 +129,7 @@ impl ResidentModel {
             // an unconsumed map would be work the load never uses.
             let vb = unsafe {
                 candle_nn::VarBuilder::from_mmaped_safetensors(
-                    &[admission.path().to_path_buf()],
+                    admission.paths(),
                     DType::BF16,
                     &device,
                 )
