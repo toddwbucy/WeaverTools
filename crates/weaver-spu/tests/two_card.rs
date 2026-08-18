@@ -66,6 +66,14 @@ fn a_split_artifact_larger_than_any_card_admits_across_the_pair() {
         Some(named) => {
             let path = PathBuf::from(named);
             assert!(path.is_file(), "WEAVER_ARTIFACT_SPLIT names a missing file");
+            // The same classifier the pin answers to: a single-file override
+            // would pass this test through the single-file door while the
+            // test's name promises the splits door was exercised.
+            assert!(
+                weaver_spu::artifact::names_a_split(&path),
+                "WEAVER_ARTIFACT_SPLIT must name a split shard: {}",
+                path.display()
+            );
             path
         }
         None => {

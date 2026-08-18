@@ -183,7 +183,17 @@ fn pin_one(path: &Path) -> Result<File, LifecycleRefusal> {
         .read(true)
         .custom_flags(nix::libc::O_NONBLOCK)
         .open(path)
-        .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
+        .map_err(|error| {
+            // A shard that is not there is the artifact failing to resolve,
+            // which is what the pin's own doc promises. A shard that is
+            // there and will not open is a different fact and keeps the
+            // unreadable name.
+            if error.kind() == std::io::ErrorKind::NotFound {
+                LifecycleRefusal::ArtifactUnresolvable
+            } else {
+                LifecycleRefusal::ArtifactUnreadable
+            }
+        })?;
     let kind = file
         .metadata()
         .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
@@ -206,22 +216,42 @@ fn split_pattern(path: &Path) -> Option<(PathBuf, u32)> {
     }
     let (head, of_part) = rest.split_at(rest.len() - 9);
     let count_digits = of_part.strip_prefix("-of-")?;
-    let count: u32 = count_digits.parse().ok()?;
-    let head = head.strip_suffix(|c: char| c.is_ascii_digit())?;
-    let mut digits = 1;
-    let mut stem = head;
-    while let Some(shorter) = stem.strip_suffix(|c: char| c.is_ascii_digit()) {
-        digits += 1;
-        stem = shorter;
-    }
-    if digits != 5 {
+    // **Every character of both fields is a digit, checked rather than left
+    // to the integer parse**, which accepts a leading sign the pattern does
+    // not.
+    if !count_digits.bytes().all(|b| b.is_ascii_digit()) {
         return None;
     }
-    let stem = stem.strip_suffix('-')?;
-    if count == 0 {
+    let count: u32 = count_digits.parse().ok()?;
+    if head.len() < 6 {
+        return None;
+    }
+    let (stem_dash, index_digits) = head.split_at(head.len() - 5);
+    if !index_digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let stem = stem_dash.strip_suffix('-')?;
+    if stem.is_empty() || count == 0 {
+        return None;
+    }
+    // **The named index must cohere with the count.** An existing file named
+    // index zero, or an index past the count, is a name outside the set it
+    // claims membership of, and deriving the set from an incoherent name
+    // would honor a reference the set does not contain.
+    let index: u32 = index_digits.parse().ok()?;
+    if index == 0 || index > count {
         return None;
     }
     Some((path.with_file_name(stem), count))
+}
+
+/// Whether a path names a shard of a split artifact.
+///
+/// Public so a caller preparing a binding, and the device tests exercising
+/// the splits door, ask the same classifier the pin answers to rather than
+/// growing a second parse of the same pattern.
+pub fn names_a_split(path: &Path) -> bool {
+    split_pattern(path).is_some()
 }
 
 /// One shard's name from the split's stem: `<stem>-NNNNN-of-NNNNN.gguf`.
@@ -639,6 +669,24 @@ fn hash_reader_into<R: Read>(reader: &mut R, hasher: &mut blake3::Hasher) -> Res
 
 #[cfg(test)]
 mod tests {
+    /// A split with a missing later shard refuses as unresolvable, which is
+    /// the pin doc's own promise: a partial set is an absent artifact.
+    #[test]
+    fn a_split_missing_a_shard_is_unresolvable() {
+        let dir = std::env::temp_dir().join(format!("weaver-split-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        let first = dir.join("model-00001-of-00002.gguf");
+        std::fs::write(&first, b"GGUF").expect("the first shard writes");
+        // The sibling is deliberately absent.
+        let outcome = super::pin(&first);
+        assert!(
+            matches!(outcome, Err(LifecycleRefusal::ArtifactUnresolvable)),
+            "a missing sibling is the artifact failing to resolve, got {:?}",
+            outcome.as_ref().err()
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// The split pattern is exact: five digits, `-of-`, five digits, the
     /// `.gguf` suffix. A near miss is a single-file artifact rather than a
     /// malformed split, because the pattern is llama.cpp's convention and a
@@ -663,10 +711,14 @@ mod tests {
         for miss in [
             "/m/model.gguf",
             "/m/model-1-of-2.gguf",
-            "/m/model-000001-of-00002.gguf",
             "/m/model-00001-of-00000.gguf",
             "/m/model-00001-of-00002.bin",
             "/m/00001-of-00002.gguf",
+            // The integer parse alone would take a signed count.
+            "/m/model-00001-of-+1234.gguf",
+            // An index outside the set it claims membership of.
+            "/m/model-00000-of-00002.gguf",
+            "/m/model-00003-of-00002.gguf",
         ] {
             assert!(
                 super::split_pattern(Path::new(miss)).is_none(),
