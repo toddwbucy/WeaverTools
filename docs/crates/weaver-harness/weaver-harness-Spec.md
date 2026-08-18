@@ -4,6 +4,11 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, second of that date, the tool workflow opens and the
+loop closes at the type level, per issue #116: section 6 carries the audit's
+record and the granted `ToolResult`, no Deserialize, no public constructor,
+no conversion from the record block, constructed at the execution exchange's
+completion alone, with the engine opening that exchange per recovered call.
 **Revised:** 2026-08-17, the loop boundary reaches section 6's tool notes,
 per issue #115: the subprocess language stands as mechanics and is retired as
 the settled model, every tool sitting outside the loop by the ratified
@@ -1369,13 +1374,18 @@ to: harness-provider-injected-no-wire-format
 
 ## 6. The tool system, blocked, and loop 1's seat
 
-**Tool dispatch is blocked, and this Spec obeys the block.** `tool-trait` is
-held by `weaver-traits-PRD` section 3.1 until the tool workflow, so
-`src/tools.rs` is a placement, and what is stated now is only what the charter
-already fixes: permission modes are consultation policy and not a boundary,
-the kernel bounds what a tool reaches through the uid it runs as, and no
-safety classification exists here or is coming, per `weaver-harness-PRD`
-section 3. The tool subprocess inherits no descriptor this program holds,
+**Tool dispatch is chartered as of the tool workflow's opening, 2026-08-17,
+and it is the exchange and never the trait.** `tool-trait` opened with
+`weaver-traits-PRD` section 3.1's revision and lives on the gate's side of
+the seam: this crate resolves nothing against it and holds no tool, opening
+the execution exchange of `weaver-harness-gate-contract` section 2 per call
+the family parse recovers, which keeps every tool on the far side of the
+loop's membrane where the ratified boundary filed it. What the charter fixed
+before the workflow still holds: permission modes are consultation policy
+and not a boundary, the kernel bounds what a tool reaches through the uid it
+runs as, and no safety classification exists here or is coming, per
+`weaver-harness-PRD` section 3. The tool subprocess inherits no descriptor this program
+holds,
 which section 2 delivers by construction rather than by a per-tool argument and
 asserts there rather than again here. The absent safety classification is
 `weaver-traits-Spec` section 5's record, that trait being where the absence is
@@ -1395,6 +1405,41 @@ construction path and the enforcement are incompatible and the enforcement
 was chosen. Whether the gate spawns tool processes or tools are provisioned
 as peers is the tool workflow's election and the finding rules on neither;
 what is settled is only which side of the loop's membrane the tool sits on.
+
+**The granted tool result closes the loop at the type level, per the audit of
+issue #116, run 2026-08-17 with the reversal act landed.** The audit's
+findings, recorded where the enforcement lands: the floor's tooling surface
+is `ToolCall` and `ToolResultBlock` riding `ContentBlock`, `ToolName`, the
+`tool-set` config field, and the trait placement. `ToolName` stays freely
+mintable, the family parse legitimately minting one from every emission. The
+conversation blocks stay serde records, because the decode seam carries
+`Vec<Message>` and the SPU must deserialize a block to render it - the
+round-trip hurdle the boundary document registered, resolved by splitting
+the record from the grant rather than by sealing the record. The world mints
+nothing: the turn ingress parses one `text` member and refuses everything
+else, verified at the parse.
+
+**The grant is `ToolResult`, a type on this crate's surface with three
+negatives, each pinned the way the floor pins `PeerIdentity`:** no
+`Deserialize`, no public constructor, no conversion from `ToolResultBlock`.
+It is constructed at exactly one site, the completion of the execution
+exchange of `weaver-harness-gate-contract` section 2, **whichever of the
+exchange's three contents arrived**: the grant carries the tool's result,
+the tool's failure, or the gate's refusal of an unheld name, because each is
+a fact the model must learn and a refusal that could not author a
+tool-result turn would leave the conversation with a hole where the answer
+goes. One site, three contents, no second door. The author door for a
+tool-result message takes the grant and never the block, so a loop 1 that
+would fabricate a result has no door: not by construction, not by serde,
+not by conversion, which is `reasoning-loop-boundary` section 4's mechanism
+named and held. The record the trace and the render consume is authored by
+this crate from the grant at that same site. The engine opens the execution
+exchange when the family parse recovers a call from the emission, one
+exchange per recovered call, **serially and in the order the parse recovered
+them**, the next opening after the previous answered, and it authors the
+tool-result turns in that same order, so the conversation's ordering is the
+emission's and the channel's exchange identity is the only correlation the
+wire needs. A turn whose emission carries no call opens none.
 
 **`src/engine.rs` is loop 1's seat, and the seam it composes across is this
 crate's public surface.** The loop itself is the builder's, per the charter's

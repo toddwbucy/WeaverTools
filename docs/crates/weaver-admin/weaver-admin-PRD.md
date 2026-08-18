@@ -6,6 +6,11 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-17, the tool workflow's opening reaches section 3's
+cross-reference: `tool-trait` is no longer held blocked, the unblocking being
+the traits charter's own on the ratified loop boundary's inverted ground, and
+this crate still draws nothing from it. One sentence moves and no seam of
+this crate changes.
 **Revised:** 2026-08-05, the role ruling. Per the operator: `weaver-admin-role` is
 assumed by a human and never by an AI or an automation, a statement of design intent
 and not a guarantee about conduct. `weaver-admin-user` is a static service account
@@ -340,10 +345,11 @@ That contributes one fact and settles nothing. `tool-set` reaches this crate as 
 of the configuration file it reads, which is an artifact this crate validates rather
 than a value drawn across a seam, and the distinction matters because a field read out
 of a file and a definition drawn by a contract are answerable to different checks.
-`tool-trait` is reached neither way. It is held blocked rather than open, because
-tool-call protocol depends on a workflow that depends on organs not yet built, and it
-cannot fail before phase close by G4's own terms. This charter does not settle it and
-does not open it.
+`tool-trait` is reached neither way. It was held blocked until the tool
+workflow's opening act of 2026-08-17, and this charter neither settled nor
+opened it: the unblocking is `weaver-traits-PRD` section 3.1's own, on the
+inverted ground the ratified loop boundary supplied, and this crate still
+draws nothing from it.
 
 ## 4. The lifecycle
 

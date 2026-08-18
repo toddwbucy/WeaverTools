@@ -4,6 +4,12 @@
 merged charter. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-17, the tool workflow opens: section 5's block lifts per
+the charter's own revision, the trait is chartered against the gate's
+executor and the harness's dispatch, and section 3's deferred field lists
+land - `ToolCall` carrying the name and arguments the family parse recovers,
+`ToolResultBlock` carrying the content a family renders. The
+no-safety-classification negative stands whole.
 **Revised:** 2026-08-10. The shared tagging test gains its fourth arm, identical
 here and in `weaver-types-Spec` section 4.3 so the two floor Specs cannot
 drift: an enum with a variant wrapping a struct that carries a spliced member
@@ -42,13 +48,14 @@ format forbids, and dropping it silently would leave part of this crate's
 assertion set with nothing recording where it went.
 
 **What this Spec can settle is bounded by what is chartered, and the bound is not
-a gap.** Two of the four definitions are fully specifiable today because the
-harness and the trace pair demand them now. The other two are named, placed, and
-deliberately left unshaped: `tool-trait` is blocked by the charter's own section
-3.1, and `provider-trait` carries the decode seam's shapes, which
-`weaver-spu-PRD` section 8 defers to the token workflow. Specifying either would
-be the anticipatory contract charter section 4 forbids, written in Rust rather
-than in prose.
+a gap.** Three of the four definitions are fully specifiable: the harness and
+the trace pair demanded two from the start, and `tool-trait` joined them with
+the tool workflow's opening of 2026-08-17, chartered at section 5 against its
+consumers. The fourth stays named, placed, and deliberately unshaped:
+`provider-trait` carries the decode seam's shapes, which `weaver-spu-PRD`
+section 8 defers to the token workflow, and specifying it would be the
+anticipatory contract charter section 4 forbids, written in Rust rather than
+in prose.
 
 ## 1. The crate
 
@@ -59,7 +66,7 @@ the author's convenience.
     src/lib.rs          re-exports, and nothing else
     src/message.rs      the message model, section 3
     src/permission.rs   the permission modes, section 4
-    src/tool.rs         the tool contract, section 5, blocked
+    src/tool.rs         the tool contract, section 5
     src/provider.rs     the provider contract, section 6, deferred
 
 **Edition and toolchain.** Edition 2024 on the workspace's pinned nightly, per the
@@ -193,9 +200,11 @@ to: traits-non-exhaustive-per-charter
 
 ## 3. The message model
 
-Provider-agnostic conversation content, per charter section 3.3. It is the one
-definition in this crate a merged contract draws today, and its shape is fixed by
-what two consumers need: the harness assembles prompts from it, and the trace
+Provider-agnostic conversation content, per charter section 3.3. It is one of
+the two definitions in this crate a merged contract draws, the message model
+by the trace contract and `tool-trait` by the harness-gate contract as of the
+tool workflow's opening, and its shape is fixed by what two consumers need:
+the harness assembles prompts from it, and the trace
 records `message.user`, `message.assistant`, and `message.tool_result` payloads
 carrying it, opaque to the recorder per `weaver-trace-PRD` section 3.
 
@@ -270,12 +279,22 @@ from: weaver-traits
 to: traits-content-is-block-sequence
 ```
 
-**`ToolCall` and `ToolResultBlock` are named here and shaped with the tool
-workflow.** They are the conversation's view of a tool interaction, which is the
-message model's business, but their field lists follow the tool protocol that
-section 5 holds blocked. This Spec fixes that they exist as blocks and defers what
-they carry, which is the half-chartered discipline the SPU and gate charters
-already run on.
+**`ToolCall` and `ToolResultBlock` are shaped as of the tool workflow's
+opening, 2026-08-17.** They are the conversation's view of a tool
+interaction, and their field lists follow the protocol section 5 now
+charters: `ToolCall` carries the name and the arguments exactly as the
+family parse recovered them from the emission, `{ name: String,
+arguments: String }`, the name a primitive for section 5's own cycle
+reason - this crate is the floor-link `weaver-types` names, so no type of
+that crate can appear here - and the record holds what the model spoke; and
+`ToolResultBlock` carries the content a family renders into the tool-result
+turn, `{ content: String }`. **Both are records and neither is a grant**:
+the block deserializes wherever the conversation crosses a seam, the decode
+seam above all, and what it grants is nothing - the capability to author a
+tool-result message is `weaver-harness-Spec` section 6's granted value,
+constructed at the gate exchange's completion alone. The record and the
+grant are two types on purpose, which is how the loop closes at the type
+level while the conversation still round-trips.
 
 **The tagging election follows one mechanical test, stated here and applied
 identically in `weaver-types-Spec` so the two floor Specs cannot drift.** A
@@ -394,16 +413,59 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 declares the `elects` edge. This crate defines the vocabulary and learns nothing
 about which mode any agent chose.
 
-## 5. The tool contract, blocked
+## 5. The tool contract, chartered with the tool workflow
 
-`tool-trait` is blocked rather than open, per `weaver-traits-PRD` section 3.1 and
-the G4 terms it states: tool dispatch is harness-internal, no seam crosses it, so
-no vocabulary clause draws the definition and it cannot fail before phase close.
-This Spec obeys that. `src/tool.rs` exists as a placement and this section states
-only what the eventual shape must satisfy, so that the workflow settling it
-inherits the constraints rather than rediscovering them.
+`tool-trait` opened on 2026-08-17, per `weaver-traits-PRD` section 3.1 as
+revised: the ratified loop boundary put every tool outside the reasoning loop,
+dispatch crosses the gate seam, and `weaver-harness-gate-contract` section 7
+draws the definition. `src/tool.rs` holds it, shaped against its consumers:
+the gate resolves a name against the tools it holds and calls through this
+trait, and the harness dispatches the exchange and never the trait, which is
+the loop boundary held at the type level - the trait is not reachable from
+the loop's side of the seam because the crate that dispatches it is the gate.
 
-**Four constraints the tool workflow inherits.** The trait is dyn-compatible,
+The shape, stating the four inherited constraints as the signature they
+always constrained:
+
+```rust
+pub trait Tool {
+    /// The name the model calls, as the gate compares it against the drawn
+    /// `tool-name` that crossed the exchange.
+    fn name(&self) -> &str;
+    /// The schema this tool advertises to the model, the charter's own
+    /// vocabulary item carried by the signature.
+    fn schema(&self) -> &str;
+    /// Execute one call. The arguments arrive as the model spoke them,
+    /// uninterpreted by any party between the parse and this method.
+    fn execute(&self, arguments: &str)
+        -> Pin<Box<dyn Future<Output = Result<String, ToolFailure>>
+            + Send + '_>>;
+}
+
+pub struct ToolFailure {
+    /// The tool's own account of its failure, content the conversation
+    /// carries and never a channel fault.
+    pub detail: String,
+}
+```
+
+**The name is the primitive on purpose.** `tool-name` is `weaver-types`
+vocabulary and `weaver-types` already links this crate, the one floor-link
+its manifest names, so a trait naming that type would close a dependency
+cycle - and the floor invariant this Spec grounds six claims in is the
+reason this crate refuses internal dependencies at all. The gate depends on
+both crates and is the one party that compares the drawn name against what a
+tool answers, so the comparison lives where both definitions are in scope.
+
+`ToolFailure` is a record like the blocks of section 3, serialized as
+content across the exchange. The schema is advertised by the trait, per the
+charter's vocabulary sentence; **how an advertisement reaches the prompt
+assembly that renders it is the schema act's**, deferred rather than absent,
+the assembly's slot for it already chartered in `weaver-harness-Spec`
+section 5's ordering.
+
+**The four constraints, inherited and now visible in the signature.** The
+trait is dyn-compatible,
 because `weaver-traits-PRD` section 3.1 has the engine dispatching tools it does
 not know the identity of and that is object dispatch by definition. Its async
 methods return an explicitly boxed future rather than using `async fn` in trait,
@@ -559,8 +621,9 @@ a claim nothing runs.
 twenty-four carry a `grounds` edge and all six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`. The other three axioms take
 nothing from this crate: it makes no claim about a turn key, it is not an organ,
-and the one contract that draws it draws the message model rather than anything
-this Spec settles about representing it. **The test applied is whether the axiom
+and the contracts that draw it draw the message model and the tool contract
+rather than anything this Spec settles about representing either. **The test
+applied is whether the axiom
 is the reason the claim exists.** Remove the floor invariant and this crate has no
 reason to refuse an internal dependency, no reason to keep an async runtime out of
 its manifest, no reason to bound a boxed future with `Send` or to hold `futures`
