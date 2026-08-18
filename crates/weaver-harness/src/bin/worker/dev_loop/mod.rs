@@ -46,6 +46,15 @@ pub fn drive(seat: &mut Ports<'_>, text: &str) -> Result<TurnOutcome, TurnError>
     let first_turn = seat
         .assembled()
         .is_none_or(|prompt| prompt.messages.is_empty());
+    seat.turn(contribution(first_turn, text))
+}
+
+/// The turn's delta from the loop's one judgment: the prompt leads a first
+/// turn and no other. Pure, because the seat cannot be minted outside loop
+/// zero - the E0624 blade of `weaver-harness-Spec` section 8 - so what this
+/// loop can pin is its own contribution, and the seat's half is loop zero's
+/// suite's to hold.
+fn contribution(first_turn: bool, text: &str) -> Vec<Message> {
     let mut delta = Vec::new();
     if first_turn {
         delta.push(Message {
@@ -61,5 +70,34 @@ pub fn drive(seat: &mut Ports<'_>, text: &str) -> Result<TurnOutcome, TurnError>
             text: text.to_string(),
         }],
     });
-    seat.turn(delta)
+    delta
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn texts(delta: &[Message]) -> Vec<&str> {
+        delta
+            .iter()
+            .flat_map(|message| {
+                message.content.iter().map(|block| match block {
+                    ContentBlock::Text { text } => text.as_str(),
+                    _ => "",
+                })
+            })
+            .collect()
+    }
+
+    /// The one-time injection contract: a first turn leads with the prompt,
+    /// in order, and every later turn contributes the request alone.
+    #[test]
+    fn the_prompt_leads_the_first_turn_and_no_other() {
+        let first = contribution(true, "hello");
+        assert_eq!(texts(&first), vec![SYSTEM_PROMPT, "hello"]);
+        assert!(first.iter().all(|m| m.role == Role::User));
+
+        let later = contribution(false, "and again");
+        assert_eq!(texts(&later), vec!["and again"]);
+    }
 }
