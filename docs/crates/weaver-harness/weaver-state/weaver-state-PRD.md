@@ -107,15 +107,35 @@ that produced it without this crate minting any identity of its own.
 
 What organizing means at this charter's level: the holdings are queryable by
 the facts the record already carries, the run, the turn, the kind, and the
-keys the tee elected. What it means in representation, indexes, orderings, and
-the query surface's shape, is the Spec's and deliberately absent here.
+keys the tee elected. **The representation is ruled**: the operator elected an
+embedded relational store, sqlite, on 2026-08-18, and the election stands on
+this workshop's own measurements rather than on preference, the regime's
+backend comparison having held its registered prediction that an in-process
+query is a function call while a service on loopback pays a round trip per
+ask. The store lives inside this member's process as its internal
+representation, the tee's distillate feeding it and the indexes for the
+elected keys built at load, so extension within a session is rows accumulating
+under standing indexes and extension of the schema is a new load's new
+election. What remains the Spec's: the table and index shapes, the query
+surface, and the dependency's own clause.
+
+**The store is reached through the seam and never as a file.** A database file
+opened from two processes would be a seam crossing a process line without a
+socket, which the first invariant forbids however convenient the driver makes
+it. The harness's speed rides the named socket, which this workshop has
+measured well below any control loop's cadence, and a caller that someday
+needs faster than the seam is a ruling for that day rather than a shared file
+today.
 
 ## 5. Open cells
 
 - **The schema extension.** Apex section 9's door names one and this charter
   does not write it: the shape of the distillate the tee emits is settled with
   `weaver-harness-state-contract`, because the schema is the seam's vocabulary
-  and a contract is a complete interface or it is not a valid contract.
+  and a contract is a complete interface or it is not a valid contract. The
+  store's internal shape is ruled at section 4 and is not this cell: what the
+  seam carries and what the store holds are two facts, and only the first is
+  the contract's.
 - **The tee's charter section.** The distillation surface is the harness's
   mechanism and its paper lands in `weaver-harness-PRD`, owed by the same
   workflow that writes the contract, named here so neither document reads the
