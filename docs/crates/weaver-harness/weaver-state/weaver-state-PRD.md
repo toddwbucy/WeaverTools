@@ -20,6 +20,19 @@ sentence is short enough to carry whole: the crate holds state, and the
 management of state as it concerns context for the decoder belongs to the
 harness and its control loops.
 
+**Two functions and no third: ingest and serve.** The tee's distillate flows
+in and is kept, and what is kept answers asks. The two are not symmetric
+today, and the asymmetry is load-bearing for the build order. The ingest has
+its producer standing: the trace renders canonical events now, the tee's
+election is ruled, and the stream this crate drinks from is real traffic on a
+real agent. The serve has no consumer yet: its first asker is the control
+loop that injects context for the model, and that loop is unwritten. So the
+ingest half builds whole against its living producer, and the serve half's
+shape waits for the loop's act, per the reserved-slot rule: a query surface
+elected against a guess about its caller is an interface-shaped empty joint,
+and the fault report's own history is the precedent, chartered and unshaped
+rather than absent until its first real traffic gave it a shape.
+
 This is the statefulness leg returning by the door apex section 9 built for it.
 Proto-stateful was the deliverable: real state within a session and none across,
 with the memory leg out entirely and its return chartered in advance as a schema
@@ -144,6 +157,11 @@ today.
   arrives through it. Whether a later operator surface reads state directly or
   through an admin verb is a cell for the day such a reader exists, refused
   until then by the seam having exactly two ends.
+- **The serve surface's shape.** Chartered here and deliberately unshaped:
+  its first asker is the context-injection control loop, and the surface is
+  elected in that loop's act, against real asks, never before. Until then the
+  seam carries ingest traffic whole and the serve direction stands as this
+  named cell, which is the fault emission's own pattern on the decode seam.
 - **What a control loop's ask looks like.** The loops are the operator's code
   in the harness's seat, so their asks ride the harness's end of the seam. The
   calling shape a loop uses is settled where the loop surface is, not here.
