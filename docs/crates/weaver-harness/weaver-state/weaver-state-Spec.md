@@ -113,8 +113,9 @@ in as one transaction that rolls back entire on any failure, because a
 distillate held in part would be an attributable envelope over missing
 pairs, a corruption custody cannot detect later. A distillate that does not
 parse is dropped whole, per the contract's malformed-row clause, and the
-defect waits for the serve direction to give its surfacing a voice. Inserts ride the sequence order the harness owes, and
-a gap in sequence is not this crate's to notice: the record is the account
+defect waits for the serve direction to give its surfacing a voice. Inserts
+ride the sequence order the harness owes, and a gap in sequence is not this
+crate's to notice: the record is the account
 of what happened, and custody keeps what arrives.
 
 **Transformation is chartered and none ships yet.** The charter licenses
