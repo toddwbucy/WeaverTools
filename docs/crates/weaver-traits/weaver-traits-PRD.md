@@ -6,6 +6,11 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-18, the tool boundary ruling narrows section 3.1's
+constituency to the elected outward corner, the shell being the gate's own
+verb and the inward callables being `weaver-internal`'s. The
+no-safety-classification negative stands whole and reaches the new crate by
+its own charter.
 **Revised:** 2026-08-17, the tool workflow opens and section 3.1's block
 lifts on its own terms: a seam now crosses tool dispatch, the harness-gate
 contract draws `tool-trait`, and the definition is shaped against its
@@ -105,9 +110,14 @@ contracts declare against these four.
 
 ### 3.1 The tool contract
 
-`Tool` is the interface every tool implements. It exists because the harness's engine
-dispatches tools it does not know the identity of, and because a tool must declare
-what the model may call it with.
+`Tool` is the interface a registered outward service implements, and a tool
+must declare what the model may call it with. An earlier form of this
+sentence had every tool implementing it and the harness's engine dispatching
+tools it does not know the identity of, and the tool boundary ruling of
+2026-08-18 narrowed both halves: the gate's one held tool is the shell, its
+own verb dispatched with no table, the inward callables of `weaver-internal`
+are reached by their own surface, and what remains for object dispatch is
+the elected outward corner `weaver-traits-Spec` section 5 always named.
 
 The vocabulary its signature names comes with it: the schema a tool advertises, the
 input it accepts, the output and outcome it produces, and the error it returns. These

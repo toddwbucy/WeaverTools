@@ -5,6 +5,10 @@ its charter is chartered to: the lifecycle half, with the traffic arriving via t
 workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-18, the tool boundary ruling lands section 8: the shell
+execution, the one tool this crate holds as its own outbound verb, with the
+one-clock rule, the four answer contents, and the group-kill containment as
+assertions. The tool-uid cell of section 7 stands unmoved.
 **Revised:** 2026-08-12, the turn half arrives, act two of the first-live-turn
 epic, per the operator. Section 4 charters the relay: one `poll` across the
 listener, the accepted connections, and the channel end, serial with no
@@ -977,3 +981,84 @@ Each names what settles it, and none is this Spec's to settle alone.
   where a shared crate would be a dependency taken for a name, and the
   channel-state enum's name. Choices with no cross-crate consequence,
   listed so what this Spec leaves to a builder is complete.
+
+## 8. The shell execution
+
+Landed by the tool boundary ruling of 2026-08-18, against the amended
+`weaver-harness-gate-contract` section 2 and the charter's amended election.
+This crate holds one tool, the shell, and holds it as its own verb rather
+than as a table's member: the execution exchange resolves against that one
+name directly, and a name that is not the shell's refuses by name, never a
+nearest match.
+
+**The invocation forks the shell in its own process group and supervises it
+to the caller's clock.** The caller's timeout crossed the exchange, already
+validated against the declared maximum at the refusal layer, and it is the
+one kill clock. Past it the kill reaches the whole group, because `bash`
+leaves descendants holding the pipes' write ends, and a kill that reaped
+only the leader would hold the answer open on a straggler's schedule. The
+exit is observed unreaped before the group is signaled, so the group id
+cannot be reissued between the observation and the kill.
+
+**Both pipes drain concurrently with the run, bounded, and the drain
+continues past the bound.** A pipe left unread to the exit fills at the
+kernel's buffer and blocks the child's writes, converting a chatty command
+into a false kill. The capture keeps the bound and discards the rest, and
+what was discarded is marked in the answer.
+
+**The answer is one of the contract's four contents and the account's
+speaker is the tag's meaning.** A nonzero exit is a result, the shell's own
+answer accounted in content. A refusal is this crate's voice and nothing
+ran. An error is the machinery's. A kill carries no account from the tool by
+construction, with any drained partial riding as an attachment and never as
+a result.
+
+```graph
+node: gate-shell-the-one-held-tool
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-shell-the-one-held-tool
+
+node: gate-execution-one-clock
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-execution-one-clock
+
+node: gate-execution-group-kill
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-execution-group-kill
+
+node: gate-execution-drain-rides-the-run
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-execution-drain-rides-the-run
+
+node: gate-execution-four-contents
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-gate
+to: gate-execution-four-contents
+```
+
+The perturbation obligations are apex section 11's: the unheld-name watch
+fails when the refusal arm is removed, the clock watch fails when the kill
+branch is removed, the group-kill watch fails when the group signal is
+removed and a straggler holds the pipes, and the drain watch fails when the
+readers wait for the exit. The four-contents claim is review's because the
+enumeration is a shape fact the compiler holds once the answer type carries
+the cases.

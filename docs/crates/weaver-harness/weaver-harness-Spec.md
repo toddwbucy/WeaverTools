@@ -4,6 +4,11 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-18, the tool boundary ruling grows the execution
+exchange's contents from three to four and section 6's grant site follows:
+killed on the caller's clock joins as its own case, per the amended
+`weaver-harness-gate-contract` section 2, and the one-site construction is
+untouched.
 **Revised:** 2026-08-17, second of that date, the tool workflow opens and the
 loop closes at the type level, per issue #116: section 6 carries the audit's
 record and the granted `ToolResult`, no Deserialize, no public constructor,
@@ -1424,11 +1429,12 @@ negatives, each pinned the way the floor pins `PeerIdentity`:** no
 `Deserialize`, no public constructor, no conversion from `ToolResultBlock`.
 It is constructed at exactly one site, the completion of the execution
 exchange of `weaver-harness-gate-contract` section 2, **whichever of the
-exchange's three contents arrived**: the grant carries the tool's result,
-the tool's failure, or the gate's refusal of an unheld name, because each is
-a fact the model must learn and a refusal that could not author a
-tool-result turn would leave the conversation with a hole where the answer
-goes. One site, three contents, no second door. The author door for a
+exchange's four contents arrived**: the grant carries the tool's result, the
+gate's refusal, the machinery's error, or the kill on the caller's clock,
+per the taxonomy the tool boundary ruling of 2026-08-18 settled on that
+contract, because each is a fact the model must learn and a refusal that
+could not author a tool-result turn would leave the conversation with a hole
+where the answer goes. One site, four contents, no second door. The author door for a
 tool-result message takes the grant and never the block, so a loop 1 that
 would fabricate a result has no door: not by construction, not by serde,
 not by conversion, which is `reasoning-loop-boundary` section 4's mechanism
