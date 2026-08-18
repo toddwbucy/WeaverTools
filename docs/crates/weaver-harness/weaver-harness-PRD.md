@@ -406,14 +406,18 @@ from: weaver-harness
 to: weaver-types
 ```
 
-The socket seams above carry no records here. A seam without the contract that
-governs it fails G3 rather than passing incompletely, and none is in that state now:
-the boundary seam, named turn ingress until the egress ruling gave it a second
-direction, resolves through `weaver-harness-gate-contract` as of the gate
-pair's merge on 2026-08-01, and the decode seam through
-`weaver-harness-spu-contract`, each declared from the organ's side per the organ
-rule of Document Format section 4, with no record declared here on either crate's
-behalf.
+The organ channels above carry no records here, and the state seam is the one
+socket seam that does. The organ rule of Document Format section 4 puts an
+organ channel's declaration on the organ's side, so the boundary, decode, and
+coordination seams each resolve through their contracts with no record
+declared here on any organ's behalf. The state seam is a member seam rather
+than an organ channel, the asking side declares, and its record stands in the
+dependency block above with `weaver-harness-state-contract` as its `via`. A
+seam without the contract that governs it fails G3 rather than passing
+incompletely, and none is in that state now: the boundary seam, named turn
+ingress until the egress ruling gave it a second direction, resolves through
+`weaver-harness-gate-contract` as of the gate pair's merge on 2026-08-01, and
+the decode seam through `weaver-harness-spu-contract`.
 
 The coordination seam is no longer in that state. `weaver-admin-harness-contract` is
 written and declares the seam from admin's side, per the Document Format rule that on
