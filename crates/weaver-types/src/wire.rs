@@ -21,7 +21,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{FieldName, GateInstruction, SpuInstruction};
+use crate::config::{FieldName, GateInstruction, SpuInstruction, ToolName};
 
 /// The receiver's buffer bound: a message exceeding it sets the truncation flag
 /// and is treated as a channel fault rather than a message, because a silently
@@ -94,6 +94,57 @@ pub enum Payload {
     Refusal(LifecycleRefusal),
     Frame(TurnFrame),
     Fault(FaultReport),
+    /// The execution exchange's ask, harness-opened per recovered call, as of
+    /// the tool workflow's opening act: the enum's own rule, a later loop's
+    /// vocabulary entering in the act that charters that loop.
+    Tool(ToolExecution),
+    /// The execution exchange's answer, closing it, one of the four contents
+    /// `weaver-harness-gate-contract` section 2 names.
+    ToolAnswer(ToolOutcome),
+}
+
+/// One tool call as it crosses the gate seam: the name and arguments exactly
+/// as the family parse recovered them from the emission, uninterpreted by
+/// the harness that carries them, and the caller's clock, per
+/// `weaver-harness-gate-contract` section 2 as amended by the tool boundary
+/// ruling: one clock, the caller's, validated against the tool's declared
+/// maximum at the refusal layer and adopted as the kill clock.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ToolExecution {
+    pub name: ToolName,
+    pub arguments: String,
+    /// The caller's clock in milliseconds. The unit is this definition's
+    /// election, the contract fixing the rule and not the representation.
+    pub clock_ms: u64,
+}
+
+/// The four contents an execution's answer carries, told apart by tag
+/// alone, every one of them content rather than a channel fault, because
+/// each is a fact the model must learn. The rule beneath the four is who
+/// speaks in the return: a result is the tool's own words, a refusal is the
+/// gate's voice with nothing run, an error is the machinery's, and a kill
+/// carries no tool voice by construction.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "outcome", rename_all = "snake_case")]
+pub enum ToolOutcome {
+    /// The invocation ran and the tool answers in its own words. For the
+    /// shell a nonzero exit is a result, accounted in content, not an
+    /// error.
+    Result { content: String },
+    /// Nothing ran, and the gate speaks in its own voice: a name it does
+    /// not hold - never a nearest match, the family registry's discipline
+    /// one organ over - malformed arguments, or a clock beyond the
+    /// declared maximum. No side effect exists.
+    Refused { reason: String },
+    /// The invocation machinery failed - the fork, a pipe, the supervisor -
+    /// and the account's speaker is the infrastructure, never the tool.
+    Errored { detail: String },
+    /// The caller's clock expired and the gate killed the invocation's
+    /// whole process group. No account from the tool exists by
+    /// construction - the absence of the tool's words is the fact - and
+    /// output drained before the kill rides as an attachment, never a
+    /// result.
+    Killed { partial: Option<String> },
 }
 
 /// The organs that refuse inside a fan-out: only the SPU and the gate. Admin
@@ -501,6 +552,15 @@ pub enum TokenRefusal {
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
+    /// The canonical parse of the emission, the family module's bridge from
+    /// the verbatim to the conversation's blocks, as of the tool workflow's
+    /// opening act: text as text and every recovered call as a `ToolCall`
+    /// block, in emission order. Family knowledge stays in the family module
+    /// and the canonical form is what crosses, so the harness dispatches
+    /// calls it never parsed for. A fragment that opened a call and could
+    /// not be recovered is reported by the SPU on its operator channel and
+    /// is deliberately not here: a failed call must not arrive as prose.
+    pub content: Vec<weaver_traits::ContentBlock>,
     /// The model.request content the SPU rendered whole, the rendered prompt
     /// with its template and effective sampling, spliced into the request
     /// event's box, per `weaver-types-Spec` section 4.4 as of the custody act.
@@ -513,6 +573,7 @@ pub struct Generation {
 impl PartialEq for Generation {
     fn eq(&self, other: &Self) -> bool {
         self.emission == other.emission
+            && self.content == other.content
             && self.finish == other.finish
             && self.request.get() == other.request.get()
             && self.measurement.get() == other.measurement.get()

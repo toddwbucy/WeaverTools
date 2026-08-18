@@ -88,10 +88,18 @@ with the reason it fails.
   the loop, never outside the program, and outside the loop still has to earn its
   place against a different bar.
 
-## Declared, not built
+## Declared, and built 2026-08-17
 
-One property belongs on the IS list by intent and is held back because the act that
-would make it true has not run. The loop is meant to be closed at the type level,
+The property this section held back is true as of the tool workflow's opening
+act, issue #116's arc: the loop is closed at the type level. The granted
+`ToolResult` on the harness's surface carries three compile-pinned negatives,
+no `Deserialize`, no public construction, no conversion from the
+conversation's record block, and is constructed at the execution exchange's
+completion alone, with the author door for a tool-result message taking the
+grant and the turn's own door refusing a supplied result. The section's
+original statement stands below as the intent the act made true.
+
+The loop is meant to be closed at the type level,
 such that a tool result entering the loop is obtainable only from the gate, which
 makes the boundary a compile-time fact rather than a convention. Only from the
 gate means a construction door the crossing alone opens, no public constructor,

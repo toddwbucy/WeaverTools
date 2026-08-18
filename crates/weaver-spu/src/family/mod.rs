@@ -1202,6 +1202,76 @@ mod tests {
     /// `tests/markers.rs` verifies the vocabularies agree, and needs the `gguf`
     /// feature to do it, so this side of the claim is asserted where every
     /// build can see it.
+    /// **The qwen2 renderer speaks both halves of the tool bracket.** An
+    /// assistant message carrying a recovered call renders it back inside
+    /// `<tool_call>` tags with the name-and-arguments object, and a tool
+    /// result renders as a `user` turn wrapping its content in
+    /// `<tool_response>` tags - the two forms the family's tuning expects,
+    /// asserted against the module's own marker constants so a drift in
+    /// either is a drift this test names.
+    #[test]
+    fn qwen2_renders_the_tool_bracket() {
+        let assistant = Message {
+            role: Role::Assistant,
+            content: vec![
+                ContentBlock::Text {
+                    text: "checking".to_string(),
+                },
+                ContentBlock::ToolCall(weaver_traits::ToolCall {
+                    name: "calculator".to_string(),
+                    arguments: r#"{"expression":"2^10"}"#.to_string(),
+                }),
+            ],
+        };
+        let rendered = qwen2::renderer()
+            .render_delta(&assistant)
+            .expect("the call renders");
+        assert!(
+            rendered.contains(qwen2::CALL_OPEN) && rendered.contains(qwen2::CALL_CLOSE),
+            "the call wears its tags: {rendered}"
+        );
+        assert!(
+            rendered.contains(r#""name":"calculator""#),
+            "the name crosses: {rendered}"
+        );
+        assert!(
+            rendered.contains(r#""arguments":{"expression":"2^10"}"#),
+            "the arguments render as the object the model spoke: {rendered}"
+        );
+        assert!(rendered.contains("checking"), "the text stays: {rendered}");
+
+        let result = Message {
+            role: Role::ToolResult,
+            content: vec![ContentBlock::ToolResult(weaver_traits::ToolResultBlock {
+                content: "1024".to_string(),
+            })],
+        };
+        let rendered = qwen2::renderer()
+            .render_delta(&result)
+            .expect("the result renders");
+        assert!(
+            rendered.starts_with("<|im_start|>user\n"),
+            "a tool response rides a user turn: {rendered}"
+        );
+        assert!(
+            rendered.contains(qwen2::RESPONSE_OPEN)
+                && rendered.contains("1024")
+                && rendered.contains(qwen2::RESPONSE_CLOSE),
+            "the response wears its tags: {rendered}"
+        );
+
+        let misplaced = Message {
+            role: Role::Assistant,
+            content: vec![ContentBlock::ToolResult(weaver_traits::ToolResultBlock {
+                content: "1024".to_string(),
+            })],
+        };
+        assert!(
+            qwen2::renderer().render_delta(&misplaced).is_err(),
+            "a result in the wrong role refuses"
+        );
+    }
+
     /// **Qwen3.5 and its sparse sibling are carried, and served by the qwen2
     /// module.** Each declares its own architecture, so without an entry the
     /// lookup refuses `UnknownFamily` before any device call, correctly and

@@ -37,6 +37,29 @@ use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 /// The granted surface handed to loop 1 at loaded-and-idle, borrowing the
 /// standing interior for the seat's lifetime. Its fields are private and its
 /// only constructor is crate-private, which is the blade.
+/// The caller's clock per tool invocation, in milliseconds: the
+/// composition root's bound like `MAX_TOOL_ROUNDS`, stated by this caller
+/// on every execution per the one-clock rule and adopted by the gate as
+/// the kill clock. At or under the shell's declared maximum by
+/// construction here, so the refusal arm is for callers less careful.
+pub(crate) const TOOL_CALL_CLOCK_MS: u64 = 30_000;
+
+/// How many envelopes one run's shelf may hold before the surplus is
+/// dropped and the drop recorded: the bound on both the queue and the
+/// serve loop's appetite, a refusal of hoarding rather than of the client.
+pub(crate) const MAX_HELD_FRAMES: usize = 64;
+
+/// The gate seam's grant to the turn: the channel the execution exchange
+/// crosses, the ordinal source for harness-opened exchanges, and the shelf
+/// for envelopes that arrive while an execution is awaited - a client's turn
+/// frame crossing mid-execution is held for the serve loop, never dropped
+/// and never answered out of order, and bounded at [`MAX_HELD_FRAMES`].
+pub(crate) struct GatePort<'a> {
+    pub(crate) channel: &'a crate::channel::OrganChannel,
+    pub(crate) ordinal: &'a mut u64,
+    pub(crate) held: &'a mut std::collections::VecDeque<weaver_types::OrganEnvelope>,
+}
+
 pub struct Ports<'a> {
     decode: &'a DecodeChannel,
     author: &'a Author,
@@ -53,6 +76,11 @@ pub struct Ports<'a> {
     /// turn returns. `None` for a seat granted outside the serve loop,
     /// which then streams without the ear.
     pending: Option<&'a mut Option<OrganChannel>>,
+    /// The gate seam, for the execution exchange. `None` for a seat granted
+    /// where no gate stands, whose turns then carry their calls unexecuted:
+    /// the assistant's record holds them and no tool-result turn follows,
+    /// which is a fact the record shows rather than hides.
+    gate: Option<GatePort<'a>>,
 }
 
 /// Why a turn did not complete. A refusal the seam typed is the session
@@ -111,6 +139,11 @@ impl<'a> Ports<'a> {
     /// Crate-private: no consumer can reach it, which makes the blade a
     /// compile property. Loop 0 calls it at loaded-and-idle, lending the
     /// interior across the extension seam.
+    ///
+    /// The arguments are the granted surface itself, one per port, and a
+    /// bundling struct would be a second `Ports` wrapping this one, so the
+    /// lint is answered rather than obeyed.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn grant(
         decode: &'a DecodeChannel,
         author: &'a Author,
@@ -119,6 +152,7 @@ impl<'a> Ports<'a> {
         assembled: Option<Prompt>,
         coordination: &'a CoordinationListener,
         pending: Option<&'a mut Option<OrganChannel>>,
+        gate: Option<GatePort<'a>>,
     ) -> Self {
         Ports {
             decode,
@@ -128,6 +162,7 @@ impl<'a> Ports<'a> {
             assembled,
             coordination,
             pending,
+            gate,
         }
     }
 
@@ -254,6 +289,17 @@ impl<'a> Ports<'a> {
         delta: Vec<Message>,
         stop: &mut Option<weaver_types::ExchangeId>,
     ) -> Result<TurnOutcome, TurnError> {
+        // **A tool-result message in loop 1's delta refuses before anything
+        // is authored**, per `weaver-harness-Spec` section 6: the role's one
+        // door is the grant's, inside this turn's own execution loop, so a
+        // supplied result is a fabrication whatever it carries.
+        if delta
+            .iter()
+            .any(|message| matches!(message.role, Role::ToolResult))
+        {
+            return Err(TurnError::Unlicensed { turn: turn.clone() });
+        }
+
         // The delta is authored as the turn's user messages, before the
         // exchange so the record reads the ask before the answer.
         for message in &delta {
@@ -263,6 +309,163 @@ impl<'a> Ports<'a> {
                 .map_err(|_| TurnError::ChannelLost)?;
         }
 
+        // **The execution loop**, per the tool workflow's opening act: each
+        // round appends a delta and generates, and a generation whose parse
+        // recovered calls executes them through the gate, the granted
+        // results becoming the next round's delta. The bound refuses further
+        // rounds and never the turn: the final emission stands whatever the
+        // model still wanted.
+        let mut delta = delta;
+        let mut rounds = 0usize;
+        let generation = loop {
+            let generation = self.generate_once(turn, delta, stop)?;
+            let calls: Vec<weaver_traits::ToolCall> = generation
+                .content
+                .iter()
+                .filter_map(|block| match block {
+                    ContentBlock::ToolCall(call) => Some(call.clone()),
+                    _ => None,
+                })
+                .collect();
+            if calls.is_empty() || self.gate.is_none() || rounds >= crate::tools::MAX_TOOL_ROUNDS {
+                break generation;
+            }
+            rounds += 1;
+            let mut next_delta = Vec::with_capacity(calls.len());
+            for call in calls {
+                let grant = self.execute_call(turn, &call)?;
+                // The record and the seam read one construction: the grant
+                // authors the tool-result event at its one door, and the
+                // same content crosses to the SPU as the next delta.
+                let message = Message {
+                    role: Role::ToolResult,
+                    content: vec![ContentBlock::ToolResult(grant.block())],
+                };
+                self.author
+                    .author_tool_result(self.recorder, &grant, turn)
+                    .map_err(|_| TurnError::ChannelLost)?;
+                next_delta.push(message);
+            }
+            delta = next_delta;
+        };
+
+        let aborted = self.close_turn(turn, &generation, stop)?;
+        Ok(TurnOutcome {
+            turn: turn.clone(),
+            emission: generation.emission,
+            stopped: matches!(generation.finish, weaver_types::Finish::Stopped),
+            aborted,
+        })
+    }
+
+    /// **One execution through the gate**, per `weaver-harness-gate-contract`
+    /// section 2: the exchange opens with the call as the parse recovered it,
+    /// and completes with one of the three contents, the grant constructed
+    /// from the completion whichever arrived - the one construction site.
+    /// The tool bracket's events ride the exchange: started as the harness's
+    /// dispatch, completed as the gate's answer, the deferred payloads
+    /// carrying the call and the outcome as this crate renders them.
+    fn execute_call(
+        &mut self,
+        turn: &TurnKey,
+        call: &weaver_traits::ToolCall,
+    ) -> Result<crate::tools::ToolResult, TurnError> {
+        let started = serde_json::json!({
+            "name": call.name,
+            "arguments": call.arguments,
+        })
+        .to_string();
+        let started = weaver_trace::raw_payload(&started).ok_or(TurnError::ChannelLost)?;
+        self.author
+            .author(
+                self.recorder,
+                Kind::ToolCallStarted,
+                Subsystem::Harness,
+                Some(turn),
+                Some(Payload::Deferred(started)),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+
+        let gate = self
+            .gate
+            .as_mut()
+            .expect("execute_call runs only with a gate");
+        *gate.ordinal += 1;
+        let exchange = weaver_types::ExchangeId {
+            opener: weaver_types::Opener::Harness,
+            ordinal: *gate.ordinal,
+        };
+        gate.channel
+            .send(&weaver_types::OrganEnvelope {
+                exchange: exchange.clone(),
+                position: weaver_types::Position::Open,
+                payload: weaver_types::Payload::Tool(weaver_types::ToolExecution {
+                    name: weaver_types::ToolName(call.name.clone()),
+                    arguments: call.arguments.clone(),
+                    clock_ms: TOOL_CALL_CLOCK_MS,
+                }),
+            })
+            .map_err(|_| TurnError::ChannelLost)?;
+
+        // Await the completion. A turn frame arriving mid-execution is a
+        // client speaking while the turn runs, held for the serve loop per
+        // the one-turn discipline; a fault report is held the same way. The
+        // exchange identity is the correlation, per the contract: nothing
+        // else closes this ordinal.
+        let outcome = loop {
+            let envelope = gate.channel.recv().map_err(|_| TurnError::ChannelLost)?;
+            if envelope.exchange == exchange && envelope.position == weaver_types::Position::Close {
+                match envelope.payload {
+                    weaver_types::Payload::ToolAnswer(outcome) => break outcome,
+                    _ => return Err(TurnError::ChannelLost),
+                }
+            } else if gate.held.len() >= MAX_HELD_FRAMES {
+                // **The shelf is bounded.** A client that keeps speaking
+                // through a long execution would otherwise grow it - and the
+                // drain's stack with it - without limit. The surplus envelope
+                // is dropped and the drop is recorded: the connection that
+                // spoke loses its exchange, which is the case the fault
+                // names.
+                let account =
+                    format!("{{\"organ\":\"harness\",\"held-frames-bound\":{MAX_HELD_FRAMES}}}");
+                let _ = self.author.author_fault(
+                    self.recorder,
+                    Subsystem::Harness,
+                    Some(turn),
+                    &crate::authorship::harness_report(
+                        weaver_types::FaultCase::ClientConnectionFailedMidTurn,
+                        &account,
+                    ),
+                );
+            } else {
+                gate.held.push_back(envelope);
+            }
+        };
+
+        let completed = serde_json::to_string(&outcome).map_err(|_| TurnError::ChannelLost)?;
+        let completed = weaver_trace::raw_payload(&completed).ok_or(TurnError::ChannelLost)?;
+        self.author
+            .author(
+                self.recorder,
+                Kind::ToolCallCompleted,
+                Subsystem::Gate,
+                Some(turn),
+                Some(Payload::Deferred(completed)),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+
+        Ok(crate::tools::ToolResult::granted(&outcome))
+    }
+
+    /// One append-and-generate round: the delta crosses, the stream is
+    /// consumed to the close, and the three model events author at engine
+    /// grain.
+    fn generate_once(
+        &mut self,
+        turn: &TurnKey,
+        delta: Vec<Message>,
+        stop: &mut Option<weaver_types::ExchangeId>,
+    ) -> Result<weaver_types::Generation, TurnError> {
         // Append and generate. The delta crosses, the SPU appends it at the
         // resident end, and the stream returns each token before the close.
         self.decode
@@ -396,7 +599,7 @@ impl<'a> Ports<'a> {
                 Kind::ModelRequest,
                 Subsystem::SpuDecoder,
                 Some(turn),
-                Some(Payload::ModelRequest(generation.request)),
+                Some(Payload::ModelRequest(generation.request.clone())),
             )
             .map_err(|_| TurnError::ChannelLost)?;
         let stopped = matches!(generation.finish, weaver_types::Finish::Stopped);
@@ -422,25 +625,38 @@ impl<'a> Ports<'a> {
                 Kind::ModelMeasurement,
                 Subsystem::SpuDecoder,
                 Some(turn),
-                Some(Payload::ModelMeasurement(generation.measurement)),
+                Some(Payload::ModelMeasurement(generation.measurement.clone())),
             )
             .map_err(|_| TurnError::ChannelLost)?;
 
         // The assistant's turn enters the record as a message event, the
-        // canonical parse beside the verbatim the output holds. A plain
-        // response is text, and family-aware parsing arrives with the tool
-        // workflow that gives the emission structure worth extracting.
+        // canonical parse beside the verbatim the output holds: the family
+        // module's own bridge crossed the seam in the generation, text as
+        // text and every recovered call as a `ToolCall` block, per the tool
+        // workflow's opening act.
         let assistant = Message {
             role: Role::Assistant,
-            content: vec![ContentBlock::Text {
-                text: generation.emission.clone(),
-            }],
+            content: generation.content.clone(),
         };
         self.author
             .author_message(self.recorder, &assistant, turn)
             .map_err(|_| TurnError::Unlicensed { turn: turn.clone() })?
             .map_err(|_| TurnError::ChannelLost)?;
 
+        Ok(generation)
+    }
+
+    /// **The close names what ended the turn**, and the announce follows the
+    /// record. Split from the rounds so one bracket closes however many
+    /// generations ran inside it: the turn is the conversation's unit and the
+    /// executions are its interior.
+    fn close_turn(
+        &mut self,
+        turn: &TurnKey,
+        generation: &weaver_types::Generation,
+        stop: &mut Option<weaver_types::ExchangeId>,
+    ) -> Result<bool, TurnError> {
+        let stopped = matches!(generation.finish, weaver_types::Finish::Stopped);
         // **The close names what ended the turn.** A model-side stop, the
         // generation reaching capacity or its own stop token, is a completed
         // turn whose truncation is recorded in the output's finish and the
@@ -484,12 +700,7 @@ impl<'a> Ports<'a> {
             });
         }
 
-        Ok(TurnOutcome {
-            turn: turn.clone(),
-            emission: generation.emission,
-            stopped,
-            aborted,
-        })
+        Ok(aborted)
     }
 
     /// One wake from the streaming wait, per Spec 6.1: the decode channel
@@ -608,6 +819,9 @@ mod tests {
             )
             .unwrap();
             send_answer(&weaver_types::TokenAnswer::Generated(Generation {
+                content: vec![weaver_traits::ContentBlock::Text {
+                    text: "one word".into(),
+                }],
                 emission: "one word".into(),
                 finish: Finish::Completed,
                 request,
@@ -635,6 +849,7 @@ mod tests {
                 &mut turn_ordinal,
                 None,
                 &listener,
+                None,
                 None,
             );
             let delta = vec![Message {
@@ -771,6 +986,7 @@ mod tests {
                 None,
                 &listener,
                 None,
+                None,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -812,6 +1028,275 @@ mod tests {
             fault_at < close_at,
             "the fault lands inside the bracket, before the close: {kinds:?}"
         );
+    }
+
+    /// **A turn executes its calls, and the grant authors the result.** The
+    /// whole mechanism in one bracket: the scripted decode peer's first
+    /// generation carries a `ToolCall` block, the scripted gate peer answers
+    /// the execution exchange with the result, the grant authors the
+    /// tool-result turn at its one door, the same content crosses back as
+    /// the second delta, and the second generation closes the turn as text.
+    ///
+    /// What the bracket must read, in order: the user message, the first
+    /// model triplet, the assistant turn carrying the call, the tool
+    /// bracket's two events, the tool-result message, the second model
+    /// triplet, the closing assistant turn, and the close - two generations
+    /// inside one turn, which is the loop the tool workflow exists for.
+    ///
+    /// Perturbation: drop the `execute_call` loop and route calls as plain
+    /// text, and this fails at the kinds assertion missing the tool bracket.
+    #[test]
+    fn a_turn_executes_its_calls_and_the_grant_authors_the_result() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+
+        // The decode peer: two rounds. Round one answers a generation whose
+        // canonical content carries the call; round two reads the tool-result
+        // delta back and answers plain text.
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let raw =
+                |text: &str| serde_json::value::RawValue::from_string(text.to_string()).unwrap();
+            let send_answer = |answer: &weaver_types::TokenAnswer| {
+                let bytes = serde_json::to_vec(answer).expect("answer renders");
+                send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+            };
+
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            send_answer(&weaver_types::TokenAnswer::Generated(Generation {
+                content: vec![weaver_traits::ContentBlock::ToolCall(
+                    weaver_traits::ToolCall {
+                        name: "calculator".into(),
+                        arguments: r#"{"expression":"37 * 43"}"#.into(),
+                    },
+                )],
+                emission: r#"<tool_call>{"name":"calculator"}</tool_call>"#.into(),
+                finish: Finish::Completed,
+                request: raw(r#"{"rendered":"r1","template":"qwen2","sampling":{}}"#),
+                measurement: raw(
+                    r#"{"model":"m","weights_hash":"h","input_tokens":[1],"output_tokens":[2],"blocks":[{"label":"turn-delta","start":0,"end":1}],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#,
+                ),
+            }));
+
+            // Round two: the tool-result delta arrives, carrying the granted
+            // content and nothing the loop invented.
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv round 2");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("round 2 parses");
+            let weaver_types::TokenDirective::AppendAndGenerate { delta, .. } = directive else {
+                panic!("round two is an append");
+            };
+            assert_eq!(delta.len(), 1, "one tool-result message crosses");
+            assert!(matches!(delta[0].role, Role::ToolResult));
+            assert!(
+                matches!(
+                    &delta[0].content[0],
+                    ContentBlock::ToolResult(block) if block.content == "1591"
+                ),
+                "the granted content is what crosses: {:?}",
+                delta[0].content
+            );
+            send_answer(&weaver_types::TokenAnswer::Generated(Generation {
+                content: vec![weaver_traits::ContentBlock::Text {
+                    text: "37 * 43 is 1591.".into(),
+                }],
+                emission: "37 * 43 is 1591.".into(),
+                finish: Finish::Completed,
+                request: raw(r#"{"rendered":"r2","template":"qwen2","sampling":{}}"#),
+                measurement: raw(
+                    r#"{"model":"m","weights_hash":"h","input_tokens":[3],"output_tokens":[4],"blocks":[{"label":"turn-delta","start":0,"end":1}],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#,
+                ),
+            }));
+        });
+
+        // The gate peer: one execution exchange, answered with the result,
+        // exactly as the gate's dispatch would.
+        let (gate_near, gate_child) = crate::channel::OrganChannel::pair().expect("gate pair");
+        let gate_peer = std::thread::spawn(move || {
+            let gate_far = gate_child.into_channel();
+            let envelope = gate_far.recv().expect("the execution opens");
+            assert_eq!(envelope.position, weaver_types::Position::Open);
+            let weaver_types::Payload::Tool(execution) = &envelope.payload else {
+                panic!("the exchange carries the call, got {:?}", envelope.payload);
+            };
+            assert_eq!(execution.name.0, "calculator");
+            let outcome = weaver_gate_execute_stub(execution);
+            gate_far
+                .send(&weaver_types::OrganEnvelope {
+                    exchange: envelope.exchange.clone(),
+                    position: weaver_types::Position::Close,
+                    payload: weaver_types::Payload::ToolAnswer(outcome),
+                })
+                .expect("the answer closes");
+        });
+
+        let session = SessionId("s-t".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let mut gate_ordinal = 0u64;
+        let mut held = std::collections::VecDeque::new();
+
+        let listener = test_listener();
+        let outcome = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+                Some(GatePort {
+                    channel: &gate_near,
+                    ordinal: &mut gate_ordinal,
+                    held: &mut held,
+                }),
+            );
+            let delta = vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "what is 37 * 43?".into(),
+                }],
+            }];
+            ports.turn(delta).expect("the turn completes")
+        };
+        peer.join().expect("the decode peer finishes");
+        gate_peer.join().expect("the gate peer finishes");
+
+        assert_eq!(outcome.emission, "37 * 43 is 1591.");
+        assert!(held.is_empty(), "nothing crossed mid-execution to hold");
+
+        let kinds: Vec<Kind> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.turn.is_some())
+            .map(|r| r.kind)
+            .collect();
+        assert_eq!(
+            kinds,
+            vec![
+                Kind::TurnStarted,
+                Kind::MessageUser,
+                Kind::ModelRequest,
+                Kind::ModelOutput,
+                Kind::ModelMeasurement,
+                Kind::MessageAssistant,
+                Kind::ToolCallStarted,
+                Kind::ToolCallCompleted,
+                Kind::MessageToolResult,
+                Kind::ModelRequest,
+                Kind::ModelOutput,
+                Kind::ModelMeasurement,
+                Kind::MessageAssistant,
+                Kind::TurnClosed,
+            ],
+            "two generations inside one bracket, the tool loop between them"
+        );
+
+        // The attribution: started is the harness's dispatch, completed is
+        // the gate's answer.
+        let line_of = |kind: Kind| {
+            recorder
+                .structure()
+                .by_kind(kind)
+                .next()
+                .expect("authored")
+                .line
+                .to_string()
+        };
+        assert!(line_of(Kind::ToolCallStarted).contains("\"subsystem\":\"harness\""));
+        assert!(line_of(Kind::ToolCallCompleted).contains("\"subsystem\":\"gate\""));
+        assert!(
+            line_of(Kind::MessageToolResult).contains("1591"),
+            "the granted content is the record's"
+        );
+    }
+
+    /// **A fabricated tool result in loop 1's delta refuses before anything
+    /// authors**, per `weaver-harness-Spec` section 6: the role's one door is
+    /// the grant's, and a supplied result is a fabrication whatever it
+    /// carries. What this reads is the refusal arriving before the record
+    /// gains a single event of the turn's interior.
+    ///
+    /// Perturbation: the door is doubled on purpose - `run_turn` refuses the
+    /// role and `author_message` refuses it again - so the watch drops both:
+    /// remove the role check at the top of `run_turn` and the refusal arm in
+    /// `author_message`, and this fails with `ChannelLost`, the fabricated
+    /// delta then authoring and the turn reaching a decode seam this test
+    /// deliberately closed. Watched under exactly that pair.
+    #[test]
+    fn a_supplied_tool_result_refuses_at_the_door() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+        // Closed on purpose: a perturbed turn that authored the fabrication
+        // would reach the decode seam, and a closed seam fails it fast
+        // instead of hanging the suite on a peer that never answers.
+        drop(far);
+        let session = SessionId("s-f".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        let mut turn_ordinal = 0u64;
+        let listener = test_listener();
+        let mut ports = Ports::grant(
+            &decode,
+            &author,
+            &mut recorder,
+            &mut turn_ordinal,
+            None,
+            &listener,
+            None,
+            None,
+        );
+        let delta = vec![Message {
+            role: Role::ToolResult,
+            content: vec![ContentBlock::ToolResult(weaver_traits::ToolResultBlock {
+                content: "fabricated".into(),
+            })],
+        }];
+        assert!(
+            matches!(ports.turn(delta), Err(TurnError::Unlicensed { .. })),
+            "the supplied result refuses at the door"
+        );
+    }
+
+    /// A calculator-shaped stub for the scripted gate peer, so this test does
+    /// not depend on the gate crate: the answer is what the real gate's
+    /// dispatch would produce for this call.
+    fn weaver_gate_execute_stub(
+        execution: &weaver_types::ToolExecution,
+    ) -> weaver_types::ToolOutcome {
+        assert_eq!(execution.arguments, r#"{"expression":"37 * 43"}"#);
+        weaver_types::ToolOutcome::Result {
+            content: "1591".into(),
+        }
     }
 
     /// **The stop is heard mid-stream, per Spec 6.1.** The streaming wait
@@ -883,6 +1368,7 @@ mod tests {
             )
             .unwrap();
             send_answer(&weaver_types::TokenAnswer::Generated(Generation {
+                content: vec![],
                 emission: "par".into(),
                 finish: Finish::Stopped,
                 request,
@@ -911,6 +1397,7 @@ mod tests {
                 None,
                 &listener,
                 Some(&mut slot),
+                None,
             );
             let delta = vec![Message {
                 role: Role::User,

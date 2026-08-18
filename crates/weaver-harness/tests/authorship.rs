@@ -64,7 +64,9 @@ fn unlicensed_message_is_refused_before_submit() {
 
     let unlicensed = Message {
         role: Role::Assistant,
-        content: vec![ContentBlock::ToolResult(ToolResultBlock {})],
+        content: vec![ContentBlock::ToolResult(ToolResultBlock {
+            content: "42".into(),
+        })],
     };
     let before = recorder.structure().len();
     let refused = author.author_message(&mut recorder, &unlicensed, &turn);
@@ -84,7 +86,10 @@ fn unlicensed_message_is_refused_before_submit() {
             ContentBlock::Text {
                 text: "calling the calculator".into(),
             },
-            ContentBlock::ToolCall(ToolCall {}),
+            ContentBlock::ToolCall(ToolCall {
+                name: "calculator".into(),
+                arguments: "{}".into(),
+            }),
         ],
     };
     author
@@ -99,8 +104,17 @@ fn unlicensed_message_is_refused_before_submit() {
 #[test]
 fn the_licensing_table_holds_in_both_directions() {
     let text = || ContentBlock::Text { text: "x".into() };
-    let call = || ContentBlock::ToolCall(ToolCall {});
-    let result = || ContentBlock::ToolResult(ToolResultBlock {});
+    let call = || {
+        ContentBlock::ToolCall(ToolCall {
+            name: "calculator".into(),
+            arguments: "{}".into(),
+        })
+    };
+    let result = || {
+        ContentBlock::ToolResult(ToolResultBlock {
+            content: "42".into(),
+        })
+    };
 
     assert!(
         licensed(&Message {

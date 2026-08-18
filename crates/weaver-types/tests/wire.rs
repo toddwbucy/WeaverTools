@@ -111,6 +111,12 @@ fn the_measurement_splices_and_never_quotes() {
     )
     .expect("valid JSON splices");
     let answer = weaver_types::TokenAnswer::Generated(weaver_types::Generation {
+        content: vec![weaver_traits::ContentBlock::ToolCall(
+            weaver_traits::ToolCall {
+                name: "calculator".to_string(),
+                arguments: r#"{"expression":"1+1"}"#.to_string(),
+            },
+        )],
         emission: "two words".to_string(),
         finish: weaver_types::Finish::Completed,
         request,

@@ -585,9 +585,38 @@ fn serve_decode(
                         return Err(());
                     }
                 };
+                // The canonical parse crosses beside the verbatim, per the
+                // tool workflow's opening act: the family's own parser is the
+                // bridge, text as text and every recovered call as a
+                // `ToolCall` block. An unrecovered fragment is reported on
+                // the operator channel rather than crossing as prose, the
+                // parse discipline's own rule.
+                let parsed = standing.renderer.parse(&emission);
+                if parsed.has_unrecovered_call() {
+                    eprintln!(
+                        "{}",
+                        serde_json::json!({
+                            "unrecovered_calls": parsed.unrecovered.len(),
+                        })
+                    );
+                }
+                let content: Vec<weaver_traits::ContentBlock> = parsed
+                    .content
+                    .into_iter()
+                    .map(|piece| match piece {
+                        family::Content::Text(text) => weaver_traits::ContentBlock::Text { text },
+                        family::Content::Call { name, arguments } => {
+                            weaver_traits::ContentBlock::ToolCall(weaver_traits::ToolCall {
+                                name: name.0,
+                                arguments,
+                            })
+                        }
+                    })
+                    .collect();
                 let answer = TokenAnswer::Generated(Generation {
                     emission,
                     finish,
+                    content,
                     request,
                     measurement,
                 });
@@ -1252,8 +1281,10 @@ mod tests {
     }
 
     /// **A block the family cannot render refuses as the delta malformed for
-    /// the family,** the contract's own case: the tool shapes are blocked
-    /// with the tool workflow and the families render text today.
+    /// the family,** the contract's own case. The tool workflow lifted the
+    /// blanket block, so the subject here is a shape no party authors: a
+    /// tool call riding a user turn, which qwen2 renders for the assistant
+    /// alone.
     ///
     /// What this reads is the refusal arriving at the seam's own vocabulary,
     /// so it exercises the family's render and the [`From`] that carries its
@@ -1264,7 +1295,10 @@ mod tests {
     fn a_non_text_block_refuses_as_malformed_delta() {
         let message = Message {
             role: Role::User,
-            content: vec![ContentBlock::ToolCall(weaver_traits::ToolCall {})],
+            content: vec![ContentBlock::ToolCall(weaver_traits::ToolCall {
+                name: "calculator".into(),
+                arguments: "{}".into(),
+            })],
         };
         assert_eq!(
             render_delta(family::qwen2::renderer(), &[message]),
@@ -1297,12 +1331,13 @@ mod tests {
         );
 
         // The contrast, so this reads as a distinction rather than as a family
-        // that refuses everything: the same role renders under qwen2.
+        // that refuses everything: the authored shape - the granted door's
+        // result block in the tool-result role - renders under qwen2.
         let message = Message {
             role: Role::ToolResult,
-            content: vec![ContentBlock::Text {
-                text: "42".to_string(),
-            }],
+            content: vec![ContentBlock::ToolResult(weaver_traits::ToolResultBlock {
+                content: "42".to_string(),
+            })],
         };
         assert!(render_delta(family::qwen2::renderer(), &[message]).is_ok());
     }

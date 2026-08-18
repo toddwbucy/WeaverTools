@@ -472,6 +472,16 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
     if envelope.position != Position::Open || envelope.exchange.opener != Opener::Harness {
         return Payload::Refusal(LifecycleRefusal::OutOfOrder);
     }
+    // The execution exchange, per `weaver-harness-gate-contract` section 2:
+    // valid only inside the raised window like the turn, and every opened
+    // execution completes with an answer carrying one of the three contents,
+    // the resolution living in `tools` where both floor crates are in scope.
+    if let Payload::Tool(execution) = &envelope.payload {
+        return match state {
+            HookState::Raised(_, _) => Payload::ToolAnswer(weaver_gate::tools::execute(execution)),
+            _ => Payload::Refusal(LifecycleRefusal::OutOfOrder),
+        };
+    }
     let Payload::Directive(directive) = &envelope.payload else {
         return Payload::Refusal(LifecycleRefusal::OutOfOrder);
     };

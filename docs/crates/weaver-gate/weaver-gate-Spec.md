@@ -105,13 +105,17 @@ places its deferred modules.
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly
 feature used.
 
-**The dependency set is one internal crate and two external ones.**
-`weaver-types` is the charter's one floor link, taken **without its `config`
-feature**: this crate reads no configuration file, per charter section 3, the
-gate instruction arriving over the seam instead, so no parser enters a
-process whose whole argument is that it holds little, which is the thinness
-the feature gate exists for, per `weaver-types-Spec` section 1. No direct
-`weaver-traits` line exists, matching the charter's floor-link set.
+**The dependency set is two internal crates and two external ones, the
+second internal as of the tool workflow's opening act.** `weaver-types` is
+taken **without its `config` feature**: this crate reads no configuration
+file, per charter section 3, the gate instruction arriving over the seam
+instead, so no parser enters a process whose whole argument is that it holds
+little, which is the thinness the feature gate exists for, per
+`weaver-types-Spec` section 1. `weaver-traits` joined when this crate became
+the tool contract's executor, per `weaver-harness-gate-contract` section 7:
+the trait is dispatched here and nowhere the loop reaches, which is the
+boundary the dependency direction states - the floor's tool contract is in
+scope for the organ beyond the membrane and absent from the loop's seat.
 `serde_json` encodes and decodes the seam's envelopes and touches no client
 byte, because the client's line is octets this crate must not read, per the
 opacity rule. `nix` is the OS surface, on the grounds
@@ -769,9 +773,10 @@ overclaim this corpus refuses in prose and has no reason to admit in a graph.
 The load-bearing absence this crate relies on, `PeerIdentity` deriving no
 `Deserialize`, is the floor's pin, per `weaver-types-Spec` section 3.
 
-**Enforced by the manifest.** The internal dependency is exactly
-`weaver-types` without the `config` feature, read against the graph's one
-floor-link under gate H2. No async runtime, no logging crate, and no YAML
+**Enforced by the manifest.** The internal dependencies are exactly
+`weaver-types` without the `config` feature and, as of the tool workflow's
+opening act, `weaver-traits` for the tool contract this crate executes, read
+against the graph's floor links under gate H2. No async runtime, no logging crate, and no YAML
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 

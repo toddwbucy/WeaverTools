@@ -2075,6 +2075,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "weaver-internal"
+version = "0.1.0"
+
+[[package]]
 name = "weaver-spu"
 version = "0.1.0"
 dependencies = [
