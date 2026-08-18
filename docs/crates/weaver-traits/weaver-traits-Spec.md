@@ -4,6 +4,13 @@
 merged charter. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-18, the tool boundary ruling retires section 5's interim
+reading. The gate holds one tool, the shell, its own verb dispatched with no
+table, so no current party dispatches `tool-trait` and the harness-gate
+contract's draw of it retires with the table. The trait stays chartered for
+the constituency section 5's own foot always named, the elected outward
+corner - the registered service the egress seam awaits - and the shape and
+its three assertions stand for that day.
 **Revised:** 2026-08-17, the tool workflow opens: section 5's block lifts per
 the charter's own revision, the trait is chartered against the gate's
 executor and the harness's dispatch, and section 3's deferred field lists
@@ -416,13 +423,20 @@ about which mode any agent chose.
 ## 5. The tool contract, chartered with the tool workflow
 
 `tool-trait` opened on 2026-08-17, per `weaver-traits-PRD` section 3.1 as
-revised: the ratified loop boundary put every tool outside the reasoning loop,
-dispatch crosses the gate seam, and `weaver-harness-gate-contract` section 7
-draws the definition. `src/tool.rs` holds it, shaped against its consumers:
-the gate resolves a name against the tools it holds and calls through this
-trait, and the harness dispatches the exchange and never the trait, which is
-the loop boundary held at the type level - the trait is not reachable from
-the loop's side of the seam because the crate that dispatches it is the gate.
+revised: the ratified loop boundary put every tool outside the reasoning
+loop, and dispatch crosses the gate seam. `src/tool.rs` holds it. The
+opening act read the trait as the gate's executor surface over a table of
+held tools, and the tool boundary ruling of 2026-08-18 retired that reading
+the day after it landed: the gate holds exactly one tool, the shell, its own
+outbound verb dispatched directly, and the inward callables of
+`weaver-internal` are reached by their own surface and never through a dyn
+table. What stands is the constituency this section's foot stated from the
+start - the trait serves the elected outward corner alone, the registered
+service the egress seam awaits - so the trait today has a chartered shape
+and no dispatching consumer, which is a definition waiting on its corner
+rather than a reserved slot: the shape was demanded and shaped by an act,
+the corner is named, and the draw returns on the day that corner's exchange
+arrives.
 
 The shape, stating the four inherited constraints as the signature they
 always constrained:

@@ -173,6 +173,10 @@ impl From<AdmitRefusal> for LifecycleRefusal {
 /// expressible. The fields are read-only views into the admit that made them.
 pub struct Admission<'a> {
     path: &'a Path,
+    /// Every shard's descriptor path in split order, one entry for a
+    /// single-file artifact. The loader that can take a set takes this, and
+    /// `path` stays the first shard for the readers a single path serves.
+    paths: &'a [PathBuf],
     header: &'a ArtifactHeader,
     devices: &'a [DeviceOrdinal],
     /// What makes the door a door: nothing outside this module constructs one.
@@ -182,6 +186,9 @@ pub struct Admission<'a> {
 impl Admission<'_> {
     pub fn path(&self) -> &Path {
         self.path
+    }
+    pub fn paths(&self) -> &[PathBuf] {
+        self.paths
     }
     pub fn header(&self) -> &ArtifactHeader {
         self.header
@@ -610,8 +617,10 @@ impl Residency {
         // check on the descriptor is watched, the identity of the descriptor
         // is not.
         let pinned_path = pinned.path();
+        let pinned_paths = pinned.paths();
         let admission = Admission {
             path: &pinned_path,
+            paths: &pinned_paths,
             header: &header,
             devices: &binding.devices,
             _admitted: (),
