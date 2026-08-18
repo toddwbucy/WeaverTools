@@ -5,6 +5,10 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-18, the state seam is declared. Section 4 gains the
+socket seam to `weaver-state` under `weaver-harness-state-contract`, the
+harness declaring as the asking side, with the member reached over a wire
+rather than linked and the dependency surface unchanged.
 **Date filed:** 2026-07-28
 **Revised:** 2026-08-12, second of this date, the receipt retires. The report
 the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
@@ -367,6 +371,21 @@ what the block below projects: two `floor-link` records and one `seam`. Calling 
 three floor vocabulary would use the word `WeaverTools-PRD` section 5.1 reserves for
 what every domain draws from and no domain contains. That is the whole
 dependency surface, and it is checkable against this list.
+
+**A second member stands beside the trace and is not a link.** `weaver-state`
+is a member of this domain reached over a socket, per apex section 9's
+re-entry door and its charter's seam section, so it adds a `seam` record and
+no dependency: nothing of it is linked, and the dependency-surface claim
+above stands unchanged. The harness declares the edge as the asking side,
+the contract carrying the traffic's whole shape.
+
+```graph
+edge: seam
+from: weaver-harness
+to: weaver-state
+via: weaver-harness-state-contract
+tag: socket
+```
 
 ```graph
 edge: seam
