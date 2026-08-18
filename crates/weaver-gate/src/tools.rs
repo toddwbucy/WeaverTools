@@ -216,11 +216,20 @@ fn run_in_home_with_deadline(
     // Supervision: poll to the deadline, kill the group past it. `std`
     // carries no bounded wait, so the poll sleeps in small steps - coarse
     // and sufficient for a bound whose unit is seconds.
+    //
+    // **The exit is observed with `WNOWAIT` and the leader reaped only
+    // after the group is signaled.** A reaping poll would free the leader's
+    // pid at the moment of exit, and the group kill that follows would
+    // signal an id the kernel may already have reissued; unreaped, the
+    // leader holds the group id reserved until the `wait` below.
     let started = std::time::Instant::now();
     let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) => {
+        use nix::sys::wait::{Id, WaitPidFlag, WaitStatus, waitid};
+        match waitid(
+            Id::Pid(group),
+            WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG | WaitPidFlag::WNOWAIT,
+        ) {
+            Ok(WaitStatus::StillAlive) => {
                 if started.elapsed() > deadline {
                     let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
                     let _ = child.wait();
@@ -235,6 +244,17 @@ fn run_in_home_with_deadline(
                 }
                 std::thread::sleep(std::time::Duration::from_millis(25));
             }
+            Ok(_) => {
+                // The command has exited; the group dies with it. A
+                // background child the command left behind still holds the
+                // pipes' write ends, and the joins below would wait on it -
+                // so the answer is what the foreground command produced,
+                // and stragglers are ended, not adopted.
+                let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
+                break child.wait().map_err(|error| ToolFailure {
+                    detail: format!("the supervision failed: {error}"),
+                })?;
+            }
             Err(error) => {
                 let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
                 let _ = child.wait();
@@ -247,11 +267,6 @@ fn run_in_home_with_deadline(
         }
     };
 
-    // The command has exited; the group dies with it. A background child
-    // the command left behind still holds the pipes' write ends, and the
-    // joins below would wait on it - so the answer is what the foreground
-    // command produced, and stragglers are ended, not adopted.
-    let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
     let (out_bytes, out_cut) = out_reader.join().unwrap_or((Vec::new(), false));
     let (err_bytes, err_cut) = err_reader.join().unwrap_or((Vec::new(), false));
 
@@ -389,6 +404,12 @@ fn parse_product(tokens: &[char], position: &mut usize, depth: usize) -> Result<
 /// `2^(3^2)` and `-2^2` is `-(2^2)`, the conventions a scientific reader
 /// expects.
 fn parse_power(tokens: &[char], position: &mut usize, depth: usize) -> Result<f64, String> {
+    // The bound holds here as well as at `parse_sum`: this level recurses
+    // into itself for the unary minus and for the exponent, and a chain of
+    // either reaches no `parse_sum` on the way down.
+    if depth >= MAX_DEPTH {
+        return Err(format!("the expression nests deeper than {MAX_DEPTH}"));
+    }
     // Unary minus lives at this level and binds looser than `^`, so `-2^2`
     // is `-(2^2)` and an exponent's own sign, `2^-3`, recurses through here.
     if tokens.get(*position) == Some(&'-') {
@@ -511,6 +532,8 @@ mod tests {
     #[test]
     fn a_bad_call_fails_in_the_tools_own_words() {
         let deep = format!(r#"{{"expression":"{}1"}}"#, "(".repeat(90));
+        let minus_chain = format!(r#"{{"expression":"{}1"}}"#, "-".repeat(90));
+        let power_chain = format!(r#"{{"expression":"1{}"}}"#, "^1".repeat(90));
         let failing = [
             ("not json", "the arguments are not one JSON object"),
             (
@@ -533,6 +556,8 @@ mod tests {
             ),
             (r#"{"expression":"x + 1"}"#, "unknown name x at position 0"),
             (deep.as_str(), "the expression nests deeper than 64"),
+            (minus_chain.as_str(), "the expression nests deeper than 64"),
+            (power_chain.as_str(), "the expression nests deeper than 64"),
         ];
         for (arguments, expected) in failing {
             let outcome = execute(&ToolExecution {
