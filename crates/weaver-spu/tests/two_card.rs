@@ -149,7 +149,7 @@ fn a_model_larger_than_one_card_admits_across_a_pair() {
     let _ = resident;
     residency.release().expect("the release succeeds");
     let after = (free_bytes(&card0), free_bytes(&card1));
-    let tolerance = 1u64 * 1024 * 1024 * 1024;
+    let tolerance: u64 = 1024 * 1024 * 1024;
     assert!(
         after.0 + tolerance > before.0,
         "ordinal 0 returns to baseline: {} -> {}",
