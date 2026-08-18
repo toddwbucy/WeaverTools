@@ -56,8 +56,8 @@ pub fn room_and_reach(
 ) -> Result<(), DeviceRefusal> {
     let mut contexts = Vec::with_capacity(devices.len());
     for device in devices {
-        let context = CudaContext::new(device.0 as usize)
-            .map_err(|_| DeviceRefusal::Unreachable { ordinal: device.0 })?;
+        let context =
+            context_for(device.0).ok_or(DeviceRefusal::Unreachable { ordinal: device.0 })?;
         contexts.push((device.0, context));
     }
 
@@ -94,6 +94,32 @@ pub fn room_and_reach(
     }
 
     Ok(())
+}
+
+/// One primary-context handle per ordinal, held for the life of the process.
+///
+/// **The judge must not churn primary contexts, and the ground is a measured
+/// corruption.** `CudaContext::new` retains the device's primary context and
+/// the drop releases it, so a judge that was the only holder walked the
+/// refcount through zero: a full primary-context destroy and recreate under
+/// the driver, once per admit. The engine's own contexts arrive later and
+/// looked past it, and candle's multi-device forward did not - after one
+/// judge cycle the pair's cross-device arithmetic went nondeterministic,
+/// weights byte-exact and every operation exact in isolation. Holding the
+/// handle once removes the zero-crossing, and repeated admits stop paying a
+/// context build besides.
+fn context_for(ordinal: u32) -> Option<Arc<CudaContext>> {
+    use std::collections::HashMap;
+    use std::sync::{Mutex, OnceLock};
+    static HELD: OnceLock<Mutex<HashMap<u32, Arc<CudaContext>>>> = OnceLock::new();
+    let held = HELD.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut held = held.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    if let Some(context) = held.get(&ordinal) {
+        return Some(context.clone());
+    }
+    let context = CudaContext::new(ordinal as usize).ok()?;
+    held.insert(ordinal, context.clone());
+    Some(context)
 }
 
 /// Ask the driver whether peer access holds from one device to another.
