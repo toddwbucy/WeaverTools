@@ -230,6 +230,7 @@ fn the_pair_agrees_with_the_single_card() {
 /// container.
 #[test]
 fn a_large_sharded_safetensors_serves_across_the_pair() {
+    let overridden = std::env::var_os("WEAVER_ARTIFACT_QWEN25_32B").is_some();
     let dir = match std::env::var_os("WEAVER_ARTIFACT_QWEN25_32B") {
         Some(named) => {
             let path = PathBuf::from(named);
@@ -323,6 +324,16 @@ fn a_large_sharded_safetensors_serves_across_the_pair() {
         generated.tokens.len()
     );
     assert!(!generated.tokens.is_empty());
+    // **The known fixture's answer is pinned exactly**: greedy at zero
+    // temperature over fixed weights is deterministic, and the measured
+    // emission is the one word the instruction asks for, in one token. An
+    // operator's override may name a model whose obedience this test never
+    // promised, so the content pin holds for the fixture the test knows and
+    // the serving assertions above hold for any.
+    if !overridden {
+        assert_eq!(generated.tokens.len(), 1, "one word, one token");
+        assert_eq!(text.trim(), "hello", "the instruction is followed exactly");
+    }
 }
 
 fn cuda_present() -> bool {
