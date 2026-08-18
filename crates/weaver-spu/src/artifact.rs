@@ -96,6 +96,12 @@ pub fn resolve(reference: &ArtifactRef) -> Result<PathBuf, LifecycleRefusal> {
 /// would hold the admit forever before any check could run.
 pub struct PinnedArtifact {
     file: File,
+    /// The split's later shards, pinned beside the first, empty for the
+    /// single-file case. **The pin reaches the artifact's whole extent**, per
+    /// the ruling on the split collision: judging and loading different
+    /// bytes is the swap the descriptor discipline exists to prevent, and a
+    /// split artifact's bytes are every shard's.
+    siblings: Vec<File>,
 }
 
 impl PinnedArtifact {
@@ -106,12 +112,33 @@ impl PinnedArtifact {
         PathBuf::from(format!("/proc/self/fd/{}", self.file.as_raw_fd()))
     }
 
-    /// The artifact's size, from the descriptor rather than from the name.
+    /// The artifact's size, from the descriptors rather than from the names:
+    /// the sum over every shard, which is what the room judgment must see.
     pub fn len(&self) -> Result<u64, LifecycleRefusal> {
-        self.file
+        let mut total = self
+            .file
             .metadata()
             .map(|m| m.len())
-            .map_err(|_| LifecycleRefusal::ArtifactUnreadable)
+            .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
+        for sibling in &self.siblings {
+            total += sibling
+                .metadata()
+                .map(|m| m.len())
+                .map_err(|_| LifecycleRefusal::ArtifactUnreadable)?;
+        }
+        Ok(total)
+    }
+
+    /// Every shard's descriptor path, in split order, the first shard first.
+    /// One entry for a single-file artifact.
+    pub fn paths(&self) -> Vec<PathBuf> {
+        let mut paths = vec![self.path()];
+        paths.extend(
+            self.siblings
+                .iter()
+                .map(|f| PathBuf::from(format!("/proc/self/fd/{}", f.as_raw_fd()))),
+        );
+        paths
     }
 
     pub fn is_empty(&self) -> bool {
@@ -128,7 +155,29 @@ impl PinnedArtifact {
 
 /// Open the resolved artifact and hold it, refusing anything that is not a
 /// regular file once opened.
+///
+/// **A split artifact pins whole.** A name carrying llama.cpp's
+/// `-NNNNN-of-NNNNN` pattern is one shard of a set, so every shard is pinned
+/// here, in split order, with the first shard becoming the header's file
+/// whichever shard the operator named. A shard that is missing refuses as
+/// unresolvable: the artifact the binding names is the set, and a partial
+/// set is not a smaller artifact but an absent one.
 pub fn pin(path: &Path) -> Result<PinnedArtifact, LifecycleRefusal> {
+    let Some((first, count)) = split_pattern(path) else {
+        return Ok(PinnedArtifact {
+            file: pin_one(path)?,
+            siblings: Vec::new(),
+        });
+    };
+    let file = pin_one(&shard_name(&first, 1, count))?;
+    let mut siblings = Vec::with_capacity(count as usize - 1);
+    for index in 2..=count {
+        siblings.push(pin_one(&shard_name(&first, index, count))?);
+    }
+    Ok(PinnedArtifact { file, siblings })
+}
+
+fn pin_one(path: &Path) -> Result<File, LifecycleRefusal> {
     use std::os::unix::fs::OpenOptionsExt;
     let file = std::fs::OpenOptions::new()
         .read(true)
@@ -141,7 +190,45 @@ pub fn pin(path: &Path) -> Result<PinnedArtifact, LifecycleRefusal> {
     if !kind.is_file() {
         return Err(LifecycleRefusal::ArtifactUnresolvable);
     }
-    Ok(PinnedArtifact { file })
+    Ok(file)
+}
+
+/// The split pattern in a name: `<stem>-NNNNN-of-NNNNN.gguf`. Answers the
+/// stem and the count, or nothing for an unsplit name. Parsed by hand
+/// because the shape is fixed and a pattern dependency for one fixed shape
+/// buys nothing.
+fn split_pattern(path: &Path) -> Option<(PathBuf, u32)> {
+    let name = path.file_name()?.to_str()?;
+    let rest = name.strip_suffix(".gguf")?;
+    // <stem>-NNNNN-of-NNNNN
+    if rest.len() < 15 {
+        return None;
+    }
+    let (head, of_part) = rest.split_at(rest.len() - 9);
+    let count_digits = of_part.strip_prefix("-of-")?;
+    let count: u32 = count_digits.parse().ok()?;
+    let head = head.strip_suffix(|c: char| c.is_ascii_digit())?;
+    let mut digits = 1;
+    let mut stem = head;
+    while let Some(shorter) = stem.strip_suffix(|c: char| c.is_ascii_digit()) {
+        digits += 1;
+        stem = shorter;
+    }
+    if digits != 5 {
+        return None;
+    }
+    let stem = stem.strip_suffix('-')?;
+    if count == 0 {
+        return None;
+    }
+    Some((path.with_file_name(stem), count))
+}
+
+/// One shard's name from the split's stem: `<stem>-NNNNN-of-NNNNN.gguf`.
+fn shard_name(stem: &Path, index: u32, count: u32) -> PathBuf {
+    let mut name = stem.as_os_str().to_os_string();
+    name.push(format!("-{index:05}-of-{count:05}.gguf"));
+    PathBuf::from(name)
 }
 
 /// Step two: read what the artifact declares about itself.
@@ -491,8 +578,15 @@ pub fn weights_hash(
         hash_canonical(reference)
     } else {
         pinned.rewind().map_err(|_| ()).and_then(|()| {
+            // Every shard feeds the hash in split order: the identity is the
+            // set's, and hashing the first shard alone would let a swapped
+            // sibling ride under an unchanged identity.
             let mut hasher = blake3::Hasher::new();
             hash_reader_into(&mut pinned.file, &mut hasher)?;
+            for sibling in &mut pinned.siblings {
+                sibling.seek(SeekFrom::Start(0)).map_err(|_| ())?;
+                hash_reader_into(sibling, &mut hasher)?;
+            }
             Ok(hasher.finalize().to_hex().to_string())
         })
     };
@@ -545,6 +639,42 @@ fn hash_reader_into<R: Read>(reader: &mut R, hasher: &mut blake3::Hasher) -> Res
 
 #[cfg(test)]
 mod tests {
+    /// The split pattern is exact: five digits, `-of-`, five digits, the
+    /// `.gguf` suffix. A near miss is a single-file artifact rather than a
+    /// malformed split, because the pattern is llama.cpp's convention and a
+    /// name outside it is just a name.
+    #[test]
+    fn the_split_pattern_is_exact() {
+        use std::path::Path;
+        let hit = super::split_pattern(Path::new("/m/model-00001-of-00002.gguf"));
+        let (stem, count) = hit.expect("the pattern parses");
+        assert_eq!(stem, Path::new("/m/model"));
+        assert_eq!(count, 2);
+        assert_eq!(
+            super::shard_name(&stem, 2, count),
+            Path::new("/m/model-00002-of-00002.gguf")
+        );
+
+        // Naming a later shard reaches the same set.
+        let (stem2, _) = super::split_pattern(Path::new("/m/model-00002-of-00002.gguf"))
+            .expect("a later shard parses");
+        assert_eq!(stem2, stem);
+
+        for miss in [
+            "/m/model.gguf",
+            "/m/model-1-of-2.gguf",
+            "/m/model-000001-of-00002.gguf",
+            "/m/model-00001-of-00000.gguf",
+            "/m/model-00001-of-00002.bin",
+            "/m/00001-of-00002.gguf",
+        ] {
+            assert!(
+                super::split_pattern(Path::new(miss)).is_none(),
+                "{miss} is not a split"
+            );
+        }
+    }
+
     use super::*;
     use std::io::Write;
 

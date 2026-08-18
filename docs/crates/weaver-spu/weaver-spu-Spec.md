@@ -4,6 +4,14 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-17, fourth of that date, the pin reaches every shard.
+The split collision ruling lands: a name carrying llama.cpp's
+`-NNNNN-of-NNNNN` pattern is one shard of a set, so the pin opens every
+shard in split order, the room judgment sums them, the weights hash feeds
+them all, and the loader names the whole set through the fork's new
+`load_from_splits`, the llama-cpp pin moving to `ecce255b` to carry it. A
+missing sibling refuses as unresolvable, a partial set being an absent
+artifact rather than a smaller one.
 **Revised:** 2026-08-17, the request owns the template identity, per the
 ruling on #129 and the sampling precedent: an input to a decode belongs with
 what was asked rather than with what was read off it. The what-travels list
@@ -276,7 +284,11 @@ candle raises its floor.
 **The pins, recorded here because no document of this corpus carried them
 until 2026-08-06.** `llama-cpp-2` and `llama-cpp-sys-2` both resolve to
 `https://github.com/toddwbucy/llama-cpp-rs` at revision
-`277e4100fd0846efb09d2c18f1b99f30681dcdd8`. `candle-core`, `candle-nn`,
+`ecce255bcb14dd6d88f184cc8776c23a85afafeb`, moved 2026-08-17 from `277e4100`
+by the split-artifact ruling: the fork gains `load_from_splits`, the
+explicit-set door llama.cpp holds for callers whose paths carry no sibling
+pattern, which is what a descriptor path is, and the build script's DLL
+relink becomes idempotent under concurrent builds. `candle-core`, `candle-nn`,
 `candle-transformers`, and `candle-flash-attn` all resolve to
 `https://github.com/toddwbucy/candle` at revision
 `d24381efff07cb2c79419369d74605f112d2cff7`. Both are full revisions rather than
