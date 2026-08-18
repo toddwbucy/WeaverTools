@@ -1234,6 +1234,10 @@ mod tests {
             rendered.contains(r#""name":"calculator""#),
             "the name crosses: {rendered}"
         );
+        assert!(
+            rendered.contains(r#""arguments":{"expression":"2^10"}"#),
+            "the arguments render as the object the model spoke: {rendered}"
+        );
         assert!(rendered.contains("checking"), "the text stays: {rendered}");
 
         let result = Message {

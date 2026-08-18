@@ -133,9 +133,16 @@ impl Family for Qwen2 {
                     }
                     body.push_str(CALL_OPEN);
                     body.push('\n');
+                    // The arguments are JSON text as the parse recovered
+                    // them, and the family form carries them as an object:
+                    // embedding the string as a string would add a quoting
+                    // layer the model never spoke and the recover cannot
+                    // round-trip. A fragment that is not JSON rides as the
+                    // string it is rather than being repaired.
+                    let arguments = serde_json::from_str::<serde_json::Value>(&call.arguments)
+                        .unwrap_or_else(|_| serde_json::Value::String(call.arguments.clone()));
                     body.push_str(
-                        &serde_json::json!({"name": call.name, "arguments": call.arguments})
-                            .to_string(),
+                        &serde_json::json!({"name": call.name, "arguments": arguments}).to_string(),
                     );
                     body.push('\n');
                     body.push_str(CALL_CLOSE);

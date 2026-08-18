@@ -22,11 +22,16 @@
 /// expression.
 pub fn evaluate(expression: &str) -> Result<String, String> {
     let value = evaluate_value(expression)?;
-    Ok(if value.fract() == 0.0 && value.abs() < 1e15 {
-        format!("{}", value as i64)
-    } else {
-        format!("{value}")
-    })
+    // A negative zero is integer-valued and still not the integer branch's:
+    // `-0.0 as i64` is 0, which drops the sign the Spec says survives.
+    let negative_zero = value == 0.0 && value.is_sign_negative();
+    Ok(
+        if value.fract() == 0.0 && value.abs() < 1e15 && !negative_zero {
+            format!("{}", value as i64)
+        } else {
+            format!("{value}")
+        },
+    )
 }
 
 const MAX_DEPTH: usize = 64;
@@ -217,6 +222,7 @@ mod tests {
             ("log(1000)", "3"),
             ("abs(-3) * exp(0)", "3"),
             ("sin(pi / 2)", "1"),
+            ("-0", "-0"),
         ] {
             assert_eq!(
                 evaluate(expression).as_deref(),
