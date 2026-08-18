@@ -47,8 +47,17 @@ use crate::sampling::EffectiveKnobs;
 /// Holding it is the residency: the tensors live on the admitted device and
 /// dropping this frees them, so the release ordering is by construction, the
 /// same property the GGUF peer states.
+/// The forward this residency holds: one device's whole model, or two
+/// devices' halves. One resident kind, because the seam above cares which
+/// artifact is resident and not how many cards hold it.
+#[derive(Clone)]
+pub(crate) enum Forward {
+    Single(ModelForCausalLM),
+    Pair(super::native_pair::ShardedModel),
+}
+
 pub struct ResidentModel {
-    model: ModelForCausalLM,
+    model: Forward,
     tokenizer: tokenizers::Tokenizer,
     /// The artifact's declared end-of-sequence, `config.json`'s
     /// `eos_token_id`, retained at load because the stop set's backstop
@@ -74,20 +83,20 @@ impl ResidentModel {
     /// and its parts do not travel inside one file the way a GGUF's do.
     pub fn load(admission: &Admission<'_>) -> Result<ResidentModel, AdmitRefusal> {
         let devices = admission.devices();
-        // **Stage one is a one-device path and says so.** A pair refuses by
-        // name rather than serving a width this file cannot shard: the
-        // salvaged two-device forward is its own act.
-        let [ordinal] = devices else {
+        // One device or a pair. A wider set refuses by name: the width
+        // election of Spec section 11 holds an N-way forward as future work.
+        let ordinals: Vec<u32> = devices.iter().map(|d| d.0).collect();
+        if ordinals.len() > 2 {
             return Err(AdmitRefusal::LoadFailed {
                 detail: format!(
-                    "the native path serves one device and the binding names {}",
-                    devices.len()
+                    "the native path serves one device or two and the binding names {}",
+                    ordinals.len()
                 ),
             });
-        };
+        }
         let device =
-            Device::new_cuda(ordinal.0 as usize).map_err(|error| AdmitRefusal::LoadFailed {
-                detail: format!("cuda device {}: {error}", ordinal.0),
+            Device::new_cuda(ordinals[0] as usize).map_err(|error| AdmitRefusal::LoadFailed {
+                detail: format!("cuda device {}: {error}", ordinals[0]),
             })?;
 
         let dir = sidecar_dir(admission.path())?;
@@ -115,10 +124,23 @@ impl ResidentModel {
         .map_err(|error| AdmitRefusal::LoadFailed {
             detail: format!("safetensors map: {error}"),
         })?;
-        let model =
-            ModelForCausalLM::new(&config, vb).map_err(|error| AdmitRefusal::LoadFailed {
-                detail: format!("model construction: {error}"),
-            })?;
+        let model = if let [_, second] = ordinals.as_slice() {
+            let second =
+                Device::new_cuda(*second as usize).map_err(|error| AdmitRefusal::LoadFailed {
+                    detail: format!("cuda device {second}: {error}"),
+                })?;
+            Forward::Pair(super::native_pair::ShardedModel::load(
+                admission.path(),
+                &config,
+                [device.clone(), second],
+            )?)
+        } else {
+            Forward::Single(ModelForCausalLM::new(&config, vb).map_err(|error| {
+                AdmitRefusal::LoadFailed {
+                    detail: format!("model construction: {error}"),
+                }
+            })?)
+        };
 
         Ok(ResidentModel {
             model,
@@ -228,7 +250,7 @@ fn read_config(path: &Path) -> Result<Config, AdmitRefusal> {
 /// The native engine: the five primitives over a session's clone of the
 /// resident model.
 pub struct NativeEngine {
-    model: ModelForCausalLM,
+    model: Forward,
     device: Device,
     /// Every token decoded in order, the one account this engine holds of its
     /// own state, retained because truncation re-decodes the front of it.
@@ -283,7 +305,18 @@ impl NativeEngine {
             }
         };
         Ok(NativeEngine {
-            model: model.model.clone(),
+            model: match &model.model {
+                Forward::Single(single) => {
+                    // The single model's caches also ride a derived clone,
+                    // and a fresh residency's are empty. Cleared anyway, for
+                    // the same reason the pair door exists: the session's
+                    // account starts at zero and its state must too.
+                    let mut clone = single.clone();
+                    clone.clear_kv_cache();
+                    Forward::Single(clone)
+                }
+                Forward::Pair(pair) => Forward::Pair(pair.session_clone()),
+            },
             device,
             resident: Vec::new(),
             logits: None,
@@ -304,18 +337,28 @@ impl NativeEngine {
     /// One forward over `tokens` at the engine's own resident length.
     fn forward(&mut self, tokens: &[TokenId]) -> Result<Vec<f32>, DecodeFault> {
         let ids: Vec<u32> = tokens.iter().map(|token| token.0).collect();
-        let input = Tensor::new(ids.as_slice(), &self.device)
-            .and_then(|t| t.unsqueeze(0))
-            .map_err(|error| Self::engine_fault(&format!("input tensor: {error}")))?;
-        let logits = self
-            .model
-            .forward(&input, self.resident.len())
-            .and_then(|t| t.squeeze(0))
-            .and_then(|t| t.squeeze(0))
-            .and_then(|t| t.to_dtype(DType::F32))
-            .and_then(|t| t.to_vec1::<f32>())
-            .map_err(|error| Self::engine_fault(&format!("forward: {error}")))?;
-        Ok(logits)
+        match &mut self.model {
+            Forward::Single(model) => {
+                let input = Tensor::new(ids.as_slice(), &self.device)
+                    .and_then(|t| t.unsqueeze(0))
+                    .map_err(|error| Self::engine_fault(&format!("input tensor: {error}")))?;
+                model
+                    .forward(&input, self.resident.len())
+                    .and_then(|t| t.squeeze(0))
+                    .and_then(|t| t.squeeze(0))
+                    .and_then(|t| t.to_dtype(DType::F32))
+                    .and_then(|t| t.to_vec1::<f32>())
+                    .map_err(|error| Self::engine_fault(&format!("forward: {error}")))
+            }
+            Forward::Pair(model) => model.forward(&ids, self.resident.len()),
+        }
+    }
+
+    fn clear_model_cache(&mut self) {
+        match &mut self.model {
+            Forward::Single(model) => model.clear_kv_cache(),
+            Forward::Pair(model) => model.clear_kv_cache(),
+        }
     }
 }
 
@@ -429,7 +472,7 @@ impl Backend for NativeEngine {
         // expensive way, per this module's header. A re-decode that fails
         // poisons, for `decode_at`'s reason: the cache state is
         // indeterminate and nothing may build on it.
-        self.model.clear_kv_cache();
+        self.clear_model_cache();
         let front: Vec<TokenId> = self.resident[..position].to_vec();
         self.resident.clear();
         self.logits = None;
@@ -451,14 +494,14 @@ impl Backend for NativeEngine {
         if self.closed {
             return Err(Self::engine_fault("the engine is closed"));
         }
-        self.model.clear_kv_cache();
+        self.clear_model_cache();
         self.resident.clear();
         self.logits = None;
         Ok(())
     }
 
     fn close(&mut self) {
-        self.model.clear_kv_cache();
+        self.clear_model_cache();
         self.resident.clear();
         self.logits = None;
         self.closed = true;

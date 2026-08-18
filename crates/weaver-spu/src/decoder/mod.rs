@@ -28,3 +28,9 @@ pub mod gguf;
 /// the module's own header.
 #[cfg(feature = "cuda")]
 pub mod native;
+
+/// The native pair forward, the two-device half of the width election. The
+/// scheme is the salvaged `forward_tp2`'s and the code is candle's ops, per
+/// the module's own header.
+#[cfg(feature = "cuda")]
+pub mod native_pair;
