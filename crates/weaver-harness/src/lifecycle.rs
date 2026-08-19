@@ -899,18 +899,31 @@ impl Harness {
         // deployment stood one, and its absence is the leg not standing,
         // never a refused load. Attached before the load event is authored
         // so the run's opening distills like everything after it. The
-        // election is the contract's default, the envelope of every kind,
-        // until the operator's payload-key elections arrive with their own
-        // declaration act. The ask end is a clone of the same channel, per
-        // Spec section 6, taken before the tee owns the original, and it
-        // stands only where the tee does: one seam, both directions or
-        // neither.
+        // election is the declaration's, resolved by admin and carried in
+        // the enter per the contract's sections 3 and 5, converted here at
+        // the one site the way the session reference is: the floor's
+        // spelling in, the tee's own out. The ask end is a clone of the
+        // same channel, per Spec section 6, taken before the tee owns the
+        // original, and it stands only where the tee does: one seam, both
+        // directions or neither.
+        let election = weaver_trace::Election {
+            all_kinds: payload.state_election.all_kinds,
+            keys: payload
+                .state_election
+                .keys
+                .iter()
+                .map(|elected| weaver_trace::ElectedKind {
+                    kind: elected.kind.clone(),
+                    paths: elected.paths.clone(),
+                })
+                .collect(),
+        };
         let mut state_seam = None;
         if let Ok(channel) =
             std::os::unix::net::UnixStream::connect(self.coordination.state_socket())
         {
             let ask_end = channel.try_clone();
-            if let Ok(tee) = weaver_trace::Tee::open(channel, weaver_trace::Election::default()) {
+            if let Ok(tee) = weaver_trace::Tee::open(channel, election) {
                 recorder.attach_tee(tee);
                 state_seam = ask_end.ok().map(crate::state::StateSeam::new);
             }
@@ -1548,6 +1561,7 @@ mod tests {
                     denied_uids: std::collections::BTreeSet::new(),
                 },
             },
+            state_election: weaver_types::StateElection::default(),
         };
 
         // The real fan-out: real forks, real admit against real weights,

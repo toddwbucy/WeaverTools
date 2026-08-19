@@ -285,6 +285,10 @@ pub struct EnterPayload {
     pub run: RunId,
     pub spu_instruction: SpuInstruction,
     pub gate_instruction: GateInstruction,
+    /// The tee's election, resolved: admin fills the ruled default where
+    /// the declaration is silent, per `weaver-admin-harness-contract`
+    /// section 5, so what crosses is always the election whole.
+    pub state_election: crate::config::StateElection,
 }
 
 /// A session's identifier. An identifier choice with no cross-crate

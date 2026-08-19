@@ -198,3 +198,58 @@ fn a_finite_tunable_value_parses() {
         Some(&0.2f64)
     );
 }
+
+/// The one optional field: absent means None, which admin resolves to the
+/// ruled default, and the standing fixtures above never mention it, which
+/// is the absence path exercised by every test in this file.
+#[test]
+fn an_absent_state_election_is_none() {
+    let config = parse(&full_config()).expect("parses");
+    assert_eq!(config.state_election, None);
+    assert_eq!(
+        weaver_types::StateElection::default(),
+        weaver_types::StateElection {
+            all_kinds: true,
+            keys: Vec::new(),
+        },
+        "the resolved default's spelling is the Spec's"
+    );
+}
+
+/// A present election parses whole, keys meaningful beside all-kinds true.
+#[test]
+fn a_present_state_election_parses() {
+    let source = format!(
+        concat!(
+            "{}state-election:\n",
+            "  all-kinds: true\n",
+            "  keys:\n",
+            "    - kind: turn.closed\n",
+            "      paths: [close]\n",
+            "    - kind: message.user\n",
+            "      paths: [content]\n",
+        ),
+        full_config()
+    );
+    let config = parse(&source).expect("parses");
+    let election = config.state_election.expect("present");
+    assert!(election.all_kinds);
+    assert_eq!(election.keys.len(), 2);
+    assert_eq!(election.keys[0].kind, "turn.closed");
+    assert_eq!(election.keys[1].paths, vec!["content".to_string()]);
+}
+
+/// Inside a present block the required-field discipline resumes: a block
+/// missing a member refuses, and an unknown member refuses.
+#[test]
+fn a_partial_state_election_refuses() {
+    for tail in [
+        "state-election:\n  keys: []\n",
+        "state-election:\n  all-kinds: true\n",
+        "state-election:\n  all-kinds: true\n  keys: []\n  extra: 1\n",
+        "state-election:\n  all-kinds: true\n  keys:\n    - kind: load\n",
+    ] {
+        let source = format!("{}{}", full_config(), tail);
+        assert!(parse(&source).is_err(), "{tail} must refuse");
+    }
+}

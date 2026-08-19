@@ -280,6 +280,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                         denied_uids: Default::default(),
                     },
                 },
+                state_election: weaver_types::StateElection::default(),
             },
         },
     );
