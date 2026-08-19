@@ -4,6 +4,15 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, third of this date, the Python-iterating worker
+enters the tree. Issue #134's composition root had stood outside the
+repository in its own manifest so the interpreter stayed out of this
+package, and what that bought was an ungoverned live tree at the
+workshop level, unversioned and reaching the library by path. The
+operator ruled the placement reversed: section 1 gains the `pyworker`
+bin target and its `dev_python` directory, and the interpreter
+dependency enters the manifest optional behind the `pyworker` feature,
+so no default build compiles it.
 **Revised:** 2026-08-19, second of this date, the seat gains the context
 ports. The context-management loop needed two ports the surface did not
 offer, and both enter by the front door section 6 names: the fullness
@@ -192,9 +201,14 @@ leftovers.
     src/bin/worker/main.rs    the composition root, framework, section 6
     src/bin/worker/dev_loop/  the loop body, the developer's, section 6
 
+    src/bin/pyworker/main.rs     the Python-iterating worker, framework, section 6
+    src/bin/pyworker/py_loop.rs  the connector at the crossing, framework, section 6
+    src/bin/pyworker/dev_python/ the loop files, the developer's, section 6
+
 Eight library files, two of them placements, the way `weaver-traits-Spec`
-section 1 places its blocked and deferred modules, and one bin target, the
-demonstration worker, arriving with the wiring act.
+section 1 places its blocked and deferred modules, and two bin targets: the
+demonstration worker, arriving with the wiring act, and the Python-iterating
+worker, entering the tree 2026-08-19 behind the `pyworker` feature.
 
 **The dev boundary is visible in the filesystem, per the architecture seat's
 directive of 2026-08-13.** A directory the developer is meant to edit carries
@@ -214,6 +228,24 @@ items and the blade would die silently. The boundary also carries the
 crossing's whole option space: an alternative realization of `dev_loop`
 composes against the same crossing without the framework moving, which is
 the general form and the only form this document states.
+
+**The general form has one realization in the tree, `pyworker`, per
+issue #134.** Framework identical to the demonstration worker, same
+arguments and same crossing, with the loop body marshalled into an embedded
+interpreter by `py_loop`: the loop file is read and compiled per crossing,
+so the builder iterates at conversation speed and freezes the result into
+a Rust `dev_loop` to deploy. The loop files live under `dev_python`, the
+developer's directory by the standing prefix, and the file the crossing
+runs is the one `WEAVER_PY_LOOP` names, the deployed default standing where
+it is unset. The binary and its interpreter dependency enter the manifest
+behind the `pyworker` feature, the dependency optional and the bin target
+carrying `required-features`, so no default build compiles or links an
+interpreter and the deployed worker's build is untouched. The blade holds
+by the same placement rule: a bin target links this library as an external
+crate, the crate-private constructor stays unreachable, and Python reaches
+only what the connector's proxy forwards from the granted seat, the proxy
+dying with its crossing. Which binary a unit starts stays a provisioning
+fact, and no document elects it.
 
 ```graph
 node: harness-dev-boundary-in-the-filesystem
