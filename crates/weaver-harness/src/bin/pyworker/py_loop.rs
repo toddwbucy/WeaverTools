@@ -24,8 +24,11 @@ use pyo3::types::{PyDict, PyModule};
 use weaver_harness::{Ports, TurnError, TurnOutcome};
 use weaver_traits::{ContentBlock, Message, Role};
 
-/// The seat as Python sees it: three methods, each a thin forward of the
-/// granted surface, and nothing else in either direction.
+/// The seat as Python sees it: six methods, each a thin forward of the
+/// granted surface, and nothing else in either direction. The three
+/// context ports arrived 2026-08-19 so the loop's context policy - the
+/// trigger, the cut, and the re-entry - is iterable here at conversation
+/// speed, the judgments being the loop's alone.
 #[pyclass(unsendable)]
 struct Seat {
     /// The granted surface, lifetime-erased for the length of one crossing.
@@ -59,6 +62,56 @@ impl Seat {
     fn assembled_empty(&mut self) -> PyResult<bool> {
         let ports = self.ports_mut()?;
         Ok(ports.assembled().is_none_or(|p| p.messages.is_empty()))
+    }
+
+    /// The session's fullness as the last generation carried it: a
+    /// (resident, capacity) pair, or None before any generation. Plain
+    /// counts whose meaning is the loop's - when a flush is worth its
+    /// cost is decided here, never below.
+    fn fullness(&mut self) -> PyResult<Option<(u64, u64)>> {
+        let ports = self.ports_mut()?;
+        Ok(ports.fullness())
+    }
+
+    /// The flush: the decode context returns to its prefix and the record
+    /// carries the event with both counts. Answers (resident_before,
+    /// resident_after), or None where the seam refused or broke - and a
+    /// None cannot prove the flush did not land, so a loop that elected
+    /// one composes its re-entry either way.
+    fn flush(&mut self) -> PyResult<Option<(u64, u64)>> {
+        let ports = self.ports_mut()?;
+        Ok(ports.flush())
+    }
+
+    /// Custody's recall: the conversation's message events in landing
+    /// order, bounded to the most recent turns where a bound is given, or
+    /// None where the leg is down. Each event is {"kind": str, "turn":
+    /// str|None, "sequence": str, "pairs": {key: value}}, the pair values
+    /// being the canonical JSON text custody kept.
+    #[pyo3(signature = (last_turns=None))]
+    fn recall(
+        &mut self,
+        py: Python<'_>,
+        last_turns: Option<u64>,
+    ) -> PyResult<Option<Vec<Py<PyDict>>>> {
+        let ports = self.ports_mut()?;
+        let Some(events) = ports.recall(last_turns) else {
+            return Ok(None);
+        };
+        let mut recalled = Vec::with_capacity(events.len());
+        for event in &events {
+            let entry = PyDict::new(py);
+            entry.set_item("kind", &event.kind)?;
+            entry.set_item("turn", event.turn.as_deref())?;
+            entry.set_item("sequence", &event.sequence)?;
+            let pairs = PyDict::new(py);
+            for (key, value) in &event.pairs {
+                pairs.set_item(key, value)?;
+            }
+            entry.set_item("pairs", pairs)?;
+            recalled.push(entry.unbind());
+        }
+        Ok(Some(recalled))
     }
 
     /// The session's shape from the state member, or None where the leg is
