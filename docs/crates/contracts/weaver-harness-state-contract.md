@@ -2,6 +2,12 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-19, third of this date, recall joins the asks. The
+vocabulary's ask set gains `recall` by section 7's own door, elected
+against the context-management loop's real need per issue #221's arc: a
+decode context is a working set the loop rebuilds after a flush, and the
+rebuilding material is custody's. Section 2 shapes the ask and its
+answer, section 8 gains its conformance.
 **Revised:** 2026-08-19, the serve direction takes its shape. The vocabulary
 gains the `ask` and the `answer` and the one ask name `shape`, section 2's
 serve paragraph replaces its cell-face with the flowing direction, sections
@@ -145,8 +151,9 @@ which is what makes a served fact attributable to a position in the stream:
 every distillate sent ahead of the ask is in the answer's view and nothing
 sent after it is.
 
-**The ask vocabulary is closed and enumerated here, and it holds one name:
-`shape`.** The shape ask carries no members, one member instance holding
+**The ask vocabulary is closed and enumerated here, and it holds two
+names: `shape` and `recall`.** The shape ask carries no members, one
+member instance holding
 one session, and asks for the session's shape - what happened, in what
 order, in which run, which is the phrase the charter uses for what the
 default election holds. Its answer carries the session's runs in the order
@@ -154,8 +161,22 @@ custody first saw them, each with its run reference and its held event
 counts by kind, every name spelled as the envelope spelled it. The counts
 are organized envelope fact and carry no judgment: what a kind's count
 means to a turn is the asking loop's business, per the three-way division
-of `weaver-state-PRD` section 2. A second ask name is a change under
-section 7 and does not exist until it merges there.
+of `weaver-state-PRD` section 2.
+
+**The `recall` ask returns the conversation as custody holds it**, added
+2026-08-19 against the context-management loop's need: after a flush the
+decode context is empty and the session's knowledge is not, so the loop
+asks for the material and composes its own re-entry. The ask carries one
+optional member, `last-turns`: a count bounding the answer to the most
+recent turns, absent meaning the session whole. The answer carries the
+events of the four message kinds in landing order, each with its envelope
+whole and its elected pairs beside it - the distillate's own shape served
+back - so what returns is exactly what the election kept, no more
+recallable than it was distillable. Selection bounds and ordering are
+custody's organizing licence, and every judgment about what to keep,
+summarize, or drop in the rebuilt context is the loop's. A further ask
+name is a change under section 7 and does not exist until it merges
+there.
 
 ## 3. What the harness owes
 
@@ -241,7 +262,10 @@ notice. Both land with the code act that opens the seam.
 
 The serve direction is testable against the living pair: a real load, real
 events landed, and the shape ask answered with exactly the runs and counts
-the record shows for the session, in first-seen order. The answered-against
+the record shows for the session, in first-seen order. The recall ask is
+testable the same way: the answer's events are exactly the elected
+message-kind rows, in landing order, bounded to the named turn count where
+one was given, byte-faithful to what the tee carried in. The answered-against
 clause is testable in time: asks interleaved with distillates, each answer
 holding every count the stream carried before its ask and nothing sent
 after it. The serve half of the dead-peer clause is testable by asking with

@@ -6,6 +6,15 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, second of this date, the flush reaches the record.
+The kind set gains `flush`, sixteenth, under this charter's adding-one
+rule and by the standing condition the ruling of 2026-08-12 set for
+itself: a flush becoming reachable adds its event to the kind set. The
+context-management arc of issue #221 makes it reachable - the loop
+elects a flush and the decode context returns to its prefix - and the
+event carries the resident counts before and after, because a context
+that shrank without a record would break the accumulation reading the
+model.request ruling rests on.
 **Revised:** 2026-08-19, the finish tells the truth. Section 3.2's
 `model.output` clause names the third way a generation ends: cut at the
 turn's token limit, distinct from completed and from stopped, per
@@ -295,6 +304,7 @@ its closure.
 | `unload` | closes a run |
 | `session.closed` | the session will not be resumed |
 | `turn.started` / `turn.closed` | the turn bracket |
+| `flush` | the decode context returned to its prefix, the loop's election, resident counts before and after |
 | `message.system` | the framing of the field, the loop's or the operator's |
 | `message.user` | operator input |
 | `message.assistant` | model output as conversation |
@@ -305,8 +315,14 @@ its closure.
 | `model.output` | the decode boundary, response side |
 | `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
 
-Fifteen kinds. Adding one is an edit to this charter and to every contract whose
+Sixteen kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
+`flush` is the sixteenth, added 2026-08-19 by the ruling of 2026-08-12's own
+condition: a reachable flush adds its event, and the context-management arc
+made it reachable. Its payload carries the resident token counts before and
+after, so the record accounts for a context that shrank: the model.request
+ruling reads the effective context by accumulation, and an unrecorded flush
+would break that reading silently.
 `message.system` is the fifteenth, added under that rule 2026-08-19 with the
 floor's `Role::System`: the slot the system prompt rode user role for since
 the control loop's first act. `fault` is

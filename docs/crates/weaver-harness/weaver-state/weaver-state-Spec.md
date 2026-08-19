@@ -187,9 +187,15 @@ the `id` column's, custody's own order key: the run groups are ordered by
 the least `id` each holds, each carrying its kinds and their counts as the
 envelope spelled them, rendered as the contract's answer frame and written
 back on the channel as one answer frame, the frame's byte shape riding the
-encoding election of section 6. A malformed ask is dropped whole the way a
-malformed distillate is, and the resulting silence is the harness's bound
-to convert into a missing answer.
+encoding election of section 6. The `recall` ask reads the event rows of
+the four message kinds with their field pairs, ordered by the `id` column
+like every landing-order answer, and where `last-turns` bounds it the
+bound resolves as the distinct `turn` values of the most recent turns by
+id, the rows outside them left unread. The answer serves each event as
+the distillate's own shape, envelope and pairs, because custody serves
+what it kept in the form it kept it. A malformed ask is dropped whole the
+way a malformed distillate is, and the resulting silence is the harness's
+bound to convert into a missing answer.
 
 **Transformation is chartered and the shape aggregate is its first
 member.** The grouped count above is custody's derivation under the

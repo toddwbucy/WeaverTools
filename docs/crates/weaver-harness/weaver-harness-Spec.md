@@ -4,6 +4,14 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, second of this date, the seat gains the context
+ports. The context-management loop needed two ports the surface did not
+offer, and both enter by the front door section 6 names: the fullness
+read, the last generation's resident count and capacity as the decode
+answer carried them, and the flush, driving the decode seam's standing
+flush exchange between turns and authoring the record's `flush` event
+with the counts before and after. Per issue #221's arc, beside the
+recall ask and the flush kind landing in the same act.
 **Revised:** 2026-08-19, the seat gains the state port. The
 context-injection loop needed a port the granted surface did not offer, and
 the capability change enters through the front door section 6 names, as
@@ -1532,6 +1540,25 @@ edge: asserts
 from: weaver-harness
 to: harness-extension-seam-at-loaded-and-idle
 ```
+
+**The seat carries the context ports, 2026-08-19, second of this date and
+the same door again.** The context-management loop holds two more calls,
+each the smallest port its need admits. The fullness read answers the last
+generation's `resident` and `capacity` as the decode answer carried them,
+`None` before any generation, plain counts whose meaning is the loop's:
+when a flush is worth its cost is the loop's business, per
+`weaver-state-PRD` section 2. The flush drives the decode seam's standing
+flush exchange, chartered at `weaver-harness-spu-decode-contract` and
+implemented in the engine since the token workflow, valid between turns
+and never while a generation streams, which the seat's own granting
+already guarantees. On the flush's confirmation the harness authors the
+record's `flush` event carrying the resident counts before and after, per
+`weaver-trace-PRD` section 3.1's sixteenth kind, because a context that
+shrank without a record would break the accumulation reading the
+model.request ruling rests on. After a flush the assembly's working
+structure still holds the whole conversation and the decode context does
+not, which is exactly the divergence the loop then closes with the recall
+ask and its own composed re-entry.
 
 **The seat carries the state port, 2026-08-19, through the front door this
 section names.** The context-injection loop needed a port the granted
