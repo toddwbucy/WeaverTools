@@ -241,7 +241,7 @@ mod tests {
     fn a_distillate_crosses_from_tee_to_row() {
         let line = concat!(
             r#"{"session":"alpha-1","run":"r-1","turn":"t-1","kind":"turn.closed","#,
-            r#""sequence":7,"subsystem":"harness","wall_ms":1,"monotonic_ns":2,"#,
+            r#""sequence":"7","subsystem":"harness","wall_ms":1,"monotonic_ns":"2","#,
             r#""payload":{"close":"clean"}}"#
         );
         let election = weaver_trace::Election {

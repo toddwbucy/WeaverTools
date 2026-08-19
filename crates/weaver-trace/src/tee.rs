@@ -68,7 +68,10 @@ struct CanonicalLine<'a> {
     run: &'a str,
     turn: Option<&'a str>,
     kind: &'a str,
-    sequence: i64,
+    /// A string, because the canonical form spells it as one, per
+    /// `weaver-trace-Spec`: the envelope crosses as the record spelled it
+    /// and the custodian converts at its own landing.
+    sequence: &'a str,
     #[serde(borrow)]
     payload: Option<&'a RawValue>,
 }
@@ -88,7 +91,7 @@ struct FrameEnvelope<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     turn: Option<&'a str>,
     kind: &'a str,
-    sequence: i64,
+    sequence: &'a str,
 }
 
 /// Distill one canonical line under the election. Selection only: `None`
@@ -197,7 +200,7 @@ mod tests {
 
     const LINE: &str = concat!(
         r#"{"session":"alpha-1","run":"r-1","turn":"t-1","kind":"turn.closed","#,
-        r#""sequence":7,"subsystem":"harness","wall_ms":1,"monotonic_ns":2,"#,
+        r#""sequence":"7","subsystem":"harness","wall_ms":1,"monotonic_ns":"2","#,
         r#""payload":{"close":"clean","request":{"sampling":{"temperature":0.7}}}}"#
     );
 
@@ -211,7 +214,7 @@ mod tests {
             frame,
             concat!(
                 r#"{"envelope":{"session":"alpha-1","run":"r-1","turn":"t-1","#,
-                r#""kind":"turn.closed","sequence":7},"pairs":{}}"#,
+                r#""kind":"turn.closed","sequence":"7"},"pairs":{}}"#,
                 "\n"
             )
         );
@@ -260,7 +263,7 @@ mod tests {
     /// canonical form's own omission.
     #[test]
     fn a_turnless_event_stays_turnless() {
-        let line = r#"{"session":"s","run":"r","kind":"run.load","sequence":0,"wall_ms":1}"#;
+        let line = r#"{"session":"s","run":"r","kind":"run.load","sequence":"0","wall_ms":1}"#;
         let frame = distill(line, &Election::default()).expect("distills");
         assert!(!frame.contains("turn"), "{frame}");
     }

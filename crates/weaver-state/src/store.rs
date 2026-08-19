@@ -196,7 +196,11 @@ pub fn parse_distillate(frame: &str) -> Option<Distillate> {
             .and_then(|t| t.as_str())
             .map(str::to_string),
         kind: envelope.get("kind")?.as_str()?.to_string(),
-        sequence: envelope.get("sequence")?.as_i64()?,
+        // The canonical form spells the sequence as a string and the
+        // distillate carries that spelling, so the conversion to the row's
+        // integer happens here, at the landing, and a spelling that does
+        // not convert refuses the frame whole.
+        sequence: envelope.get("sequence")?.as_str()?.parse().ok()?,
         pairs,
     })
 }
@@ -246,11 +250,11 @@ mod tests {
     /// member is nobody's row.
     #[test]
     fn an_unattributable_frame_is_refused() {
-        assert!(parse_distillate(r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":0}}"#).is_some());
+        assert!(parse_distillate(r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":"0"}}"#).is_some());
         for missing in [
-            r#"{"envelope":{"run":"r","kind":"load","sequence":0}}"#,
-            r#"{"envelope":{"session":"s","kind":"load","sequence":0}}"#,
-            r#"{"envelope":{"session":"s","run":"r","sequence":0}}"#,
+            r#"{"envelope":{"run":"r","kind":"load","sequence":"0"}}"#,
+            r#"{"envelope":{"session":"s","kind":"load","sequence":"0"}}"#,
+            r#"{"envelope":{"session":"s","run":"r","sequence":"0"}}"#,
             r#"{"envelope":{"session":"s","run":"r","kind":"load"}}"#,
             r#"{"pairs":{}}"#,
             "not json",
