@@ -457,6 +457,10 @@ How each check is implemented is Spec work. What must be checkable:
 - A session never rewinds: no operation of this seam reduces the resident
   state except the flush, whose outcome is the kept prefix and never less
   than the identity prefix.
+- The cut's bounds hold at their edges: a keep of zero, one inside the
+  span, one at the resident count, and one beyond it each resolve to the
+  clamped length, the confirmation's counts agreeing with the outcome in
+  every case and the identity prefix never cut.
 - An aborted generation leaves the session accepting the next turn's
   delta cleanly, watched to fail when the terminator step is removed.
 - The stop lands within a token boundary of the cancel's arrival.
