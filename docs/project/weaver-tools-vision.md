@@ -446,8 +446,9 @@ The shape, held here so it is not lost and not scheduled: this repository's
 program becomes **weaver-agents**, the organism and its framework. Around it
 grow **weaver-web**, the frontend for admin and gate, **weaver-store**, a
 shared semantic store between agents, and eventually **weaver-train**, the
-post-training leg. **WeaverTools** becomes the name of the whole: the suite,
-and the company. The rebrand is deliberately deferred - the direction is
+post-training leg. **WeaverTools** becomes the name of the whole, the suite,
+and in the direction the operator holds, eventually the company built
+around it. The rebrand is deliberately deferred - the direction is
 held, the renaming act is not begun - and the satellite names are provisional,
 weaver-store sitting close enough to weaver-state on the page that the final
 name is chosen with the collision rule in hand.
@@ -459,10 +460,15 @@ nothing today. weaver-web builds on the two external contracts the ruling of
 and nothing else, on the consumer's own compute per the live-view ruling.
 weaver-train stands on the clause that kept the native path alive, a program
 that intends training as a continuation cannot let that path decay. And the
-gaps a real frontend will meet - streaming through the gate, a status ask,
-the operator's read on state - each enter by a change protocol already
-written, which is the inversion this section records: needs discovered in
-use pull framework acts through front doors, where the roadmap once pushed.
+gaps a real frontend will meet each have a named front door, though not
+one shape of door: streaming and a status ask enter by amending the two
+external contracts in docs acts, the operator's read on state enters
+through `weaver-state-PRD` section 5's named cell for the day such a
+reader exists, and a new ask between harness and state has
+`weaver-harness-state-contract` section 7's change protocol, which today
+governs only that seam's own vocabulary. That is the inversion this
+section records: needs discovered in use pull framework acts through
+front doors, where the roadmap once pushed.
 
 One vocabulary line is held hard, because collapsing it is how the prior tree
 drifted. **weaver-store is a commons between agents and is not memory.** It
@@ -471,8 +477,11 @@ membrane, and an agent reaches it the way an agent reaches anything in the
 world: through the gate, as a tool. The agent's own memory - drey, the
 hippocampus, the consolidation pass - remains in-agent, arriving through apex
 section 9's door as an organ with its own socket and contract, on the
-schedule section 2's ordering argues. A record, a memory, and a commons are
-three things, and the suite works only while each stays itself.
+schedule section 2's ordering argues. The terms, held exactly: the record
+and the working state distilled from it are agent state, in-agent and
+per-agent. A memory is the agent's own late organ. A commons is the
+fleet's, outside every agent. Agent state, memory, and commons are three
+things, and the suite works only while each stays itself.
 
 The discipline that binds the suite is the one the state leg just proved end
 to end: satellites are consumers or contract peers, never retrofits. Nothing
