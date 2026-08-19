@@ -5,6 +5,15 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, the tee's election reaches the declaration.
+`AgentConfig` gains `state_election`, the one optional field this Spec
+carries, its absence meaning the ruled default election per
+`weaver-state-PRD` section 4, which is the exception the required-field
+rule itself names: a charter saying a field is optional and saying what
+its absence means. `StateElection` and `ElectedKindConfig` join the
+section, `EnterPayload` carries the resolved election to the worker, and
+the supplies change lands in `weaver-admin-harness-contract` in the same
+act.
 **Revised:** 2026-08-17, the `Generation` subsection's restatement of the
 measurement's enumeration follows the decode contract's #129 correction: the
 template identity is the request's member, and the sentence names itself a
@@ -304,6 +313,17 @@ pub struct AgentConfig {
     pub permission_mode: weaver_traits::PermissionMode,
     pub gate_instruction: GateInstruction,
     pub trace_sink: TraceSink,
+    pub state_election: Option<StateElection>,
+}
+
+pub struct StateElection {
+    pub all_kinds: bool,
+    pub keys: Vec<ElectedKindConfig>,
+}
+
+pub struct ElectedKindConfig {
+    pub kind: String,
+    pub paths: Vec<String>,
 }
 
 pub struct SpuInstruction {
@@ -440,8 +460,21 @@ temptation named.** The surface is the union of what the organs register, per
 one struct's field list, and the refusal is against that surface rather than against a
 fixed type. The property below is unchanged by that and is why the rule exists.
 Charter section 5 rules that absence is never read as a default unless the charter
-says a field is optional and says what its absence means. No field here is
-optional. The residual-readout election is what a builder will reach to default,
+says a field is optional and says what its absence means. One field is optional,
+and it is optional by exactly that rule's own terms: `state_election` may be
+absent because `weaver-state-PRD` section 4 rules what absence means, the
+default election, the envelope of every kind and nothing more, so a deployment
+that elects nothing still holds the session's shape by the charter's sentence
+rather than by a parser's guess. The resolved spelling of that default is
+fixed here so two resolvers cannot disagree: `all_kinds` true and `keys`
+empty. The empty list is only the default's spelling, not a constraint on
+the pair: `keys` stays meaningful beside `all_kinds` true, each named kind
+adding payload paths on top of the envelope every kind already crosses
+with. `EnterPayload` carries the election resolved,
+admin filling that ruled default at inventory, so the worker never re-derives
+an absence. When the block is present, both its members are required, the
+required-field discipline resuming inside it. Every other field is required.
+The residual-readout election is what a builder will reach to default,
 to off, and it is exactly the one that must not: an operator who stated no readout
 has not thereby declined it, and admin refusing the load is how that operator
 learns the file is incomplete rather than discovering it in a record with no
@@ -915,6 +948,7 @@ pub struct EnterPayload {
     pub run: RunId,
     pub spu_instruction: SpuInstruction,
     pub gate_instruction: GateInstruction,
+    pub state_election: StateElection,
 }
 
 pub struct FaultReport {

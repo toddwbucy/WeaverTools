@@ -25,6 +25,14 @@ descriptor, admin is per-invocation with no standing end, and the
 connection-lifetime rule restates against the listener. Section 5 gains the
 harness's refusal guarantee, section 6 its case, and section 8's possession
 negative inverts to a `peer-identity` draw.
+**Revised:** 2026-08-19, the enter carries the tee's election. Section 3's
+enter supplies the state election beside the two instructions, on the same
+ground the ruling of `weaver-admin-PRD` section 6 gives them: admin has no
+channel to the state member, so if the operator's election does not cross
+this seam it crosses nowhere. Section 5's supplies follow by derivation.
+Admin resolves an absent declaration to the ruled default of
+`weaver-state-PRD` section 4 before the directive, so what crosses is
+always the election whole.
 **Revised:** 2026-08-14, the run identifies itself. Section 5's guarantee that the run
 ordinal is the next one for its session becomes a guarantee that the run
 reference distinguishes this run from every other run of that session. The
@@ -183,9 +191,11 @@ Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run reference, the trace descriptor, the
-SPU instruction, and the gate instruction. The last two are in the directive because the
-ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU or the gate, so
-if admin's intent for either does not cross this seam it crosses nowhere. The harness
+SPU instruction, the gate instruction, and the state election the tee applies. The
+last three are in the directive because the
+ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU, the gate,
+or the state member, so if admin's intent for any of them does not cross this
+seam it crosses nowhere. The harness
 stands up an empty working structure, authors its `load` event, asks the SPU to
 admit against the instruction it was handed, and starts Gate last. It answers ready
 only when
@@ -276,7 +286,9 @@ this list.
 **Admin supplies** the session identity and the run reference for the run being
 entered, the
 trace descriptor, the SPU instruction the fan-out admits,
-the gate instruction the fan-out starts, and the intent to stop.
+the gate instruction the fan-out starts, the state election the tee applies,
+resolved to the ruled default where the declaration is silent, and the intent
+to stop.
 
 **Admin guarantees** that the trace descriptor it passes refers to the sink the
 session's configuration declares, that the run reference distinguishes this run
@@ -383,7 +395,8 @@ the exchanges above are the whole of what either learns.
 `lifecycle-answer`, `lifecycle-refusal`, `peer-identity` as of the inversion
 ruling of 2026-08-05, because the identity the harness reads at every accept is
 the floor's, `model-binding` and `residual-readout-election` as of the
-route act of 2026-08-10, and `gate-instruction` as of 2026-08-17.
+route act of 2026-08-10, `gate-instruction` as of 2026-08-17, and
+`state-election` as of 2026-08-19.
 
 ```graph
 edge: draws
@@ -442,6 +455,23 @@ to: residual-readout-election
 edge: draws
 from: weaver-admin-harness-contract
 to: gate-instruction
+```
+
+**`state-election` is drawn as of 2026-08-19, with the declaration act that
+adds it to the enter.** The argument is the standing one, a third seat over:
+admin holds no channel to the state member, so the election the tee applies
+crosses this seam first or crosses nowhere, and a payload term the clause
+never named would leave the interface short of the completeness apex section
+5.3 demands. The definition is `weaver-types-PRD` section 2.1's, the shape is
+`weaver-types-Spec` section 2's, and the shape's groupings, `StateElection`
+and `ElectedKindConfig`, are representation rather than terms of their own,
+per this section's standing rule: the draws name the definitions and not the
+grouping.
+
+```graph
+edge: draws
+from: weaver-admin-harness-contract
+to: state-election
 ```
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer

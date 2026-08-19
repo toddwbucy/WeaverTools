@@ -10,6 +10,12 @@ set into the graph, and it belongs to the set rather than to this document.
 moves from two to three: `weaver-admin-harness-contract` closes the draw the
 route act named as owed, the enter directive having carried the instruction
 since the fan-out was drawn. Owed by #105, and no definition moves.
+**Revised:** 2026-08-19, the tee's election joins the file. Section 2.1
+gains `state-election`, a vocabulary node this crate defines and the
+artifact holds, drawn by `weaver-admin-harness-contract` in the same act:
+the operator's election of payload key paths for the state tee, optional
+in the file because `weaver-state-PRD` section 4 rules what absence means,
+the shape being `weaver-types-Spec` section 2's.
 **Revised:** 2026-08-10. `residual-readout-election` moves from the fields read
 from the artifact to the fields a contract draws, and is drawn by
 `weaver-harness-spu-contract` and `weaver-admin-harness-contract` both. The
@@ -164,6 +170,9 @@ kind: vocabulary
 node: trace-sink
 kind: vocabulary
 
+node: state-election
+kind: vocabulary
+
 edge: defines
 from: weaver-types
 to: model-binding
@@ -188,6 +197,10 @@ edge: defines
 from: weaver-types
 to: trace-sink
 
+edge: defines
+from: weaver-types
+to: state-election
+
 edge: holds
 from: agent-config
 to: model-binding
@@ -211,6 +224,10 @@ to: gate-instruction
 edge: holds
 from: agent-config
 to: trace-sink
+
+edge: holds
+from: agent-config
+to: state-election
 
 edge: elects
 from: permission-mode
@@ -231,12 +248,15 @@ Each field is a vocabulary node this crate defines and the artifact holds, becau
 contract's clause draws a field rather than the whole file and an edge needs
 something to point at.
 
-**Which fields a contract draws, and why the rest are internal rather than owed.** Three
+**Which fields a contract draws, and why the rest are internal rather than owed.** Four
 are drawn: `model-binding` and `residual-readout-election` by
-`weaver-harness-spu-contract` and by `weaver-admin-harness-contract`, and
+`weaver-harness-spu-contract` and by `weaver-admin-harness-contract`,
 `gate-instruction` by its three, `weaver-admin-harness-contract` joining the
 two gate seams as of 2026-08-17, the seam it crosses first joining the seams
-that consume it. The other three are read from the artifact
+that consume it, and `state-election` by `weaver-admin-harness-contract` as
+of 2026-08-19, the seam it crosses first and today the only seam that
+carries it, its consumer being the tee the harness applies. The other three
+are read from the artifact
 rather than across a seam, which `weaver-admin-PRD` section 3 distinguishes in its own
 words, a field read out of a file and a definition drawn by a contract being answerable
 to different checks. `trace-sink` is consumed by admin at load, demanded into this
