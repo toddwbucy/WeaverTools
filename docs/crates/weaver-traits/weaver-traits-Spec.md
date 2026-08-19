@@ -10,7 +10,10 @@ the licensed combinations gain one line: a `System` message carries `Text`
 blocks. The slot the control loop's system prompt has ridden in user role
 since PR 207's standing practice now exists in its own name, and the
 message a system role becomes is `message.system`, the trace charter and
-the harness-trace contract moving in the same act.
+the harness-trace contract moving in the same act. The count-named
+assertion `traits-role-set-three` retires for
+`traits-role-kind-one-to-one`, the durable property named instead of the
+count, the code's citation moving with it in this act.
 **Revised:** 2026-08-18, the tool boundary ruling retires section 5's interim
 reading. The gate holds one tool, the shell, its own verb dispatched with no
 table, so no current party dispatches `tool-trait` and the harness-gate
