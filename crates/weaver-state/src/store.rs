@@ -172,18 +172,22 @@ fn quoted(text: &str) -> String {
 /// per the contract: an unattributable distillate is the sender's defect
 /// and is dropped by the caller on `None`.
 pub fn parse_distillate(frame: &str) -> Option<Distillate> {
-    let value: serde_json::Value = serde_json::from_str(frame).ok()?;
-    let envelope = value.get("envelope")?;
-    let pairs = value
-        .get("pairs")
-        .and_then(|p| p.as_object())
-        .map(|object| {
-            object
-                .iter()
-                .map(|(k, v)| (k.clone(), v.to_string()))
-                .collect()
-        })
-        .unwrap_or_default();
+    use serde_json::value::RawValue;
+    let top: std::collections::BTreeMap<&str, &RawValue> = serde_json::from_str(frame).ok()?;
+    let envelope: serde_json::Value = serde_json::from_str(top.get("envelope")?.get()).ok()?;
+    // The pair values land as the raw text that crossed, never re-rendered,
+    // because the distillate is a projection of the canonical form and a
+    // reshaping here would break that on the last step.
+    let pairs = match top.get("pairs") {
+        Some(raw) => serde_json::from_str::<std::collections::BTreeMap<String, &RawValue>>(
+            raw.get(),
+        )
+        .ok()?
+        .into_iter()
+        .map(|(key, value)| (key, value.get().to_string()))
+        .collect(),
+        None => Vec::new(),
+    };
     Some(Distillate {
         session: envelope.get("session")?.as_str()?.to_string(),
         run: envelope.get("run")?.as_str()?.to_string(),

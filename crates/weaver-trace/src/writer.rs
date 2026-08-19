@@ -27,6 +27,7 @@ use crate::canonical::{Sequence, render};
 use crate::event::{Event, Kind, Line, Payload, RunRef, SessionRef};
 use crate::failure::{Failure, FieldName, SubmitRefusal, WriteError};
 use crate::structure::{Record, WorkingStructure};
+use crate::tee::Tee;
 
 /// The queue's depth. A construction parameter of the deployment rather than a
 /// configuration field, per `weaver-trace-Spec` section 6 - the composition
@@ -244,6 +245,7 @@ pub struct Recorder {
     next: u64,
     structure: WorkingStructure,
     writer: Writer,
+    tee: Option<Tee>,
 }
 
 impl Recorder {
@@ -258,7 +260,17 @@ impl Recorder {
             next: 0,
             structure: WorkingStructure::new(),
             writer: Writer::start(sink),
+            tee: None,
         })
+    }
+
+    /// Attach the tee, per `weaver-trace-PRD` section 11: the harness
+    /// applies it as the one party that writes, at load, after standing the
+    /// state seam. The recorder feeds every admitted line through it, and a
+    /// broken seam detaches it silently - the distillate is lost, never the
+    /// turn, per the contract's dead-peer clause.
+    pub fn attach_tee(&mut self, tee: Tee) {
+        self.tee = Some(tee);
     }
 
     /// The four steps of the charter's emit path, in order, always: admit or
@@ -294,6 +306,11 @@ impl Recorder {
             turn: event.envelope.turn.clone(),
             line: Line::clone(&line),
         });
+        if let Some(tee) = &mut self.tee
+            && !tee.feed(&line)
+        {
+            self.tee = None;
+        }
         self.writer.enqueue(sequence, line);
         let queued = self.writer.queued();
         if queued > HIGH_WATER_MARK {

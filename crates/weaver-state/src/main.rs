@@ -120,3 +120,61 @@ impl<'a> LineReader<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The contract's election round trip, section 8: the opener as the
+    /// tee renders it parses to the same election on this end, so a
+    /// restarted member rebuilds the identical index set.
+    #[test]
+    fn the_opener_round_trips_across_the_seam() {
+        let sent = weaver_trace::Election {
+            all_kinds: false,
+            keys: vec![weaver_trace::ElectedKind {
+                kind: "turn.closed".into(),
+                paths: vec!["close".into(), "request.sampling".into()],
+            }],
+        };
+        let opener = weaver_trace::opener(&sent);
+        let received = parse_election(opener.trim_end()).expect("the opener parses");
+        assert!(!received.all_kinds);
+        assert_eq!(
+            received.keys,
+            vec![(
+                "turn.closed".to_string(),
+                vec!["close".to_string(), "request.sampling".to_string()]
+            )]
+        );
+    }
+
+    /// A distillate as the tee renders it parses whole on this end: the
+    /// envelope's five attributable, the elected pair carried verbatim.
+    #[test]
+    fn a_distillate_crosses_from_tee_to_row() {
+        let line = concat!(
+            r#"{"session":"alpha-1","run":"r-1","turn":"t-1","kind":"turn.closed","#,
+            r#""sequence":7,"subsystem":"harness","wall_ms":1,"monotonic_ns":2,"#,
+            r#""payload":{"close":"clean"}}"#
+        );
+        let election = weaver_trace::Election {
+            all_kinds: true,
+            keys: vec![weaver_trace::ElectedKind {
+                kind: "turn.closed".into(),
+                paths: vec!["close".into()],
+            }],
+        };
+        let frame = weaver_trace::distill(line, &election).expect("distills");
+        let distillate = parse_distillate(frame.trim_end()).expect("parses");
+        assert_eq!(distillate.session, "alpha-1");
+        assert_eq!(distillate.run, "r-1");
+        assert_eq!(distillate.turn.as_deref(), Some("t-1"));
+        assert_eq!(distillate.kind, "turn.closed");
+        assert_eq!(distillate.sequence, 7);
+        assert_eq!(
+            distillate.pairs,
+            vec![("close".to_string(), "\"clean\"".to_string())]
+        );
+    }
+}

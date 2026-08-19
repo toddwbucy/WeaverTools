@@ -10,5 +10,5 @@ edition = "2024"
 [dependencies]
 weaver-trace = { path = "../weaver-trace" }
 rusqlite = { version = "0.37", features = ["bundled"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["raw_value"] }
 nix = { version = "0.31", features = ["socket", "fs", "uio", "user", "poll"] }

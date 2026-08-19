@@ -134,6 +134,7 @@ mod canonical;
 mod event;
 mod failure;
 mod structure;
+mod tee;
 mod writer;
 
 pub use canonical::{MonotonicNs, Sequence};
@@ -143,4 +144,5 @@ pub use event::{
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};
 pub use structure::{Record, WorkingStructure};
+pub use tee::{ElectedKind, Election, Tee, distill, opener};
 pub use writer::{Boundary, HIGH_WATER_MARK, QUEUE_DEPTH, Recorder};
