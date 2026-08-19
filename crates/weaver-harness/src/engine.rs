@@ -81,6 +81,10 @@ pub struct Ports<'a> {
     /// the assistant's record holds them and no tool-result turn follows,
     /// which is a fact the record shows rather than hides.
     gate: Option<GatePort<'a>>,
+    /// The state port, per `weaver-harness-Spec` section 6: the seam's ask
+    /// end where the leg stands, and `None` where it does not, which the
+    /// port serves as the same absence a missing answer does.
+    state: Option<&'a mut crate::state::StateSeam>,
 }
 
 /// Why a turn did not complete. A refusal the seam typed is the session
@@ -153,6 +157,7 @@ impl<'a> Ports<'a> {
         coordination: &'a CoordinationListener,
         pending: Option<&'a mut Option<OrganChannel>>,
         gate: Option<GatePort<'a>>,
+        state: Option<&'a mut crate::state::StateSeam>,
     ) -> Self {
         Ports {
             decode,
@@ -163,7 +168,19 @@ impl<'a> Ports<'a> {
             coordination,
             pending,
             gate,
+            state,
         }
+    }
+
+    /// The state port, per `weaver-harness-Spec` section 6: the shape ask
+    /// of `weaver-harness-state-contract` section 2, answered from the
+    /// member's holdings, or `None` where the leg is down, the answer
+    /// malformed, or the bound expired - each the contract's dead peer
+    /// converted into the same absence a missing leg serves. What any
+    /// count means to the turn is this caller's business, per the
+    /// three-way division.
+    pub fn session_shape(&mut self) -> Option<crate::state::SessionShape> {
+        self.state.as_mut()?.ask_shape()
     }
 
     /// The prompt loop 0 assembled from the working structure, a read loop 1
@@ -851,6 +868,7 @@ mod tests {
                 &listener,
                 None,
                 None,
+                None,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -985,6 +1003,7 @@ mod tests {
                 &mut turn_ordinal,
                 None,
                 &listener,
+                None,
                 None,
                 None,
             );
@@ -1170,6 +1189,7 @@ mod tests {
                     ordinal: &mut gate_ordinal,
                     held: &mut held,
                 }),
+                None,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -1272,6 +1292,7 @@ mod tests {
             &mut turn_ordinal,
             None,
             &listener,
+            None,
             None,
             None,
         );
@@ -1397,6 +1418,7 @@ mod tests {
                 None,
                 &listener,
                 Some(&mut slot),
+                None,
                 None,
             );
             let delta = vec![Message {

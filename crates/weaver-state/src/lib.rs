@@ -6,10 +6,13 @@
 //! belongs to the harness and its control loops, and nothing in this crate
 //! holds an opinion about why it was asked.
 //!
-//! The ingest half stands. The serve half is chartered and unshaped, per
-//! the charter's cell: its first asker is the context-injection control
-//! loop, and the surface is elected in that loop's act against real asks.
+//! Both halves stand: the ingest of 2026-08-18, and the serve of
+//! 2026-08-19, shaped by its first asker per the charter's cell - the
+//! context-injection loop, whose one ask is the session's shape.
 
 pub mod store;
 
-pub use store::{CustodyFault, Distillate, Election, Store, parse_distillate};
+pub use store::{
+    CustodyFault, Distillate, Election, RunShape, Store, is_shape_ask, parse_distillate,
+    render_shape_answer,
+};

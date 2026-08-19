@@ -170,14 +170,85 @@ impl Store {
             .map_err(|e| CustodyFault::LandingFailed(e.to_string()))
     }
 
-    /// How many events stand, a custody fact the tests read. Not a serve
-    /// surface: the serve direction's shape waits for its asker, and this
-    /// answers no question about content.
+    /// How many events stand, a custody fact the tests read.
     pub fn held(&self) -> Result<i64, CustodyFault> {
         self.connection
             .query_row("SELECT COUNT(*) FROM event", [], |row| row.get(0))
             .map_err(|e| CustodyFault::StoreUnavailable(e.to_string()))
     }
+
+    /// The shape ask's query, per `weaver-state-Spec` section 4: the runs
+    /// in first-landed order, the `id` column being custody's own order
+    /// key, each carrying its kinds and their counts as the envelope
+    /// spelled them. An organized envelope fact carrying no judgment about
+    /// what any count means to a turn, per the three-way division.
+    pub fn shape(&self) -> Result<Vec<RunShape>, CustodyFault> {
+        let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
+        let mut runs_query = self
+            .connection
+            .prepare_cached("SELECT run FROM event GROUP BY run ORDER BY MIN(id)")
+            .map_err(fault)?;
+        let runs: Vec<String> = runs_query
+            .query_map([], |row| row.get(0))
+            .map_err(fault)?
+            .collect::<Result<_, _>>()
+            .map_err(fault)?;
+        let mut kinds_query = self
+            .connection
+            .prepare_cached(
+                "SELECT kind, COUNT(*) FROM event WHERE run = ?1
+                 GROUP BY kind ORDER BY kind",
+            )
+            .map_err(fault)?;
+        let mut shaped = Vec::with_capacity(runs.len());
+        for run in runs {
+            let kinds: Vec<(String, i64)> = kinds_query
+                .query_map([&run], |row| Ok((row.get(0)?, row.get(1)?)))
+                .map_err(fault)?
+                .collect::<Result<_, _>>()
+                .map_err(fault)?;
+            shaped.push(RunShape { run, kinds });
+        }
+        Ok(shaped)
+    }
+}
+
+/// One run's shape, the answer's material: the run reference and the held
+/// event counts by kind.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RunShape {
+    pub run: String,
+    pub kinds: Vec<(String, i64)>,
+}
+
+/// Whether a seam frame is the shape ask, per the contract's closed
+/// vocabulary: one name today, and a frame carrying any other ask name is
+/// malformed and answers nothing.
+pub fn is_shape_ask(frame: &str) -> bool {
+    serde_json::from_str::<serde_json::Value>(frame)
+        .ok()
+        .and_then(|value| value.get("ask")?.get("shape").cloned())
+        .is_some()
+}
+
+/// Render the shape answer as the contract's frame, one answer frame on
+/// the channel, the runs in the order the query gave them.
+pub fn render_shape_answer(runs: &[RunShape]) -> String {
+    let entries: Vec<serde_json::Value> = runs
+        .iter()
+        .map(|shape| {
+            let kinds: serde_json::Map<String, serde_json::Value> = shape
+                .kinds
+                .iter()
+                .map(|(kind, count)| (kind.clone(), serde_json::Value::from(*count)))
+                .collect();
+            serde_json::json!({"run": shape.run, "kinds": kinds})
+        })
+        .collect();
+    let mut frame =
+        serde_json::json!({"answer": {"shape": {"runs": entries}}}).to_string();
+    frame.push('\n');
+    frame
 }
 
 /// A string as a single-quoted SQL literal, sqlite's own doubling rule.
@@ -292,6 +363,85 @@ mod tests {
             .expect("counts");
         assert_eq!(elected, 2, "each key path owns its index");
         let _ = std::fs::remove_file(&path);
+    }
+
+    fn landed(session: &str, run: &str, kind: &str, sequence: i64) -> Distillate {
+        Distillate {
+            session: session.into(),
+            run: run.into(),
+            turn: None,
+            kind: kind.into(),
+            sequence,
+            pairs: Vec::new(),
+        }
+    }
+
+    /// The shape holds the runs in first-landed order by the id column,
+    /// interleaved landings included, each with its counts by kind, and
+    /// the answer frame renders the contract's spelling.
+    #[test]
+    fn the_shape_orders_runs_by_first_landing() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        for (run, kind, sequence) in [
+            ("r-1", "load", 0),
+            ("r-1", "turn.closed", 1),
+            ("r-2", "load", 0),
+            ("r-1", "turn.closed", 2),
+            ("r-2", "turn.closed", 1),
+        ] {
+            store.land(&landed("s", run, kind, sequence)).expect("lands");
+        }
+        let shape = store.shape().expect("shapes");
+        assert_eq!(shape.len(), 2);
+        assert_eq!(shape[0].run, "r-1", "first landed leads");
+        assert_eq!(
+            shape[0].kinds,
+            vec![("load".to_string(), 1), ("turn.closed".to_string(), 2)]
+        );
+        assert_eq!(shape[1].run, "r-2");
+        let frame = render_shape_answer(&shape);
+        assert!(frame.starts_with(r#"{"answer":{"shape":{"runs":["#), "{frame}");
+        assert!(frame.ends_with("}\n"), "{frame}");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The answered-against clause, in time: an ask sees every landing
+    /// before it and nothing after, because the shape reads the holdings
+    /// at its own position in the stream.
+    #[test]
+    fn an_ask_sees_the_holdings_at_its_position_and_no_more() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        store.land(&landed("s", "r-1", "load", 0)).expect("lands");
+        let before = store.shape().expect("shapes");
+        assert_eq!(before[0].kinds, vec![("load".to_string(), 1)]);
+        store
+            .land(&landed("s", "r-1", "turn.closed", 1))
+            .expect("lands");
+        let after = store.shape().expect("shapes");
+        assert_eq!(
+            after[0].kinds,
+            vec![("load".to_string(), 1), ("turn.closed".to_string(), 1)]
+        );
+        assert_eq!(before[0].kinds.len(), 1, "the earlier answer never grew");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The ask vocabulary is closed: the shape ask is recognized and
+    /// every other frame is not an ask at all.
+    #[test]
+    fn the_ask_vocabulary_is_closed() {
+        assert!(is_shape_ask(r#"{"ask":{"shape":{}}}"#));
+        for not_an_ask in [
+            r#"{"ask":{"recall":{}}}"#,
+            r#"{"envelope":{}}"#,
+            "not json",
+        ] {
+            assert!(!is_shape_ask(not_an_ask), "{not_an_ask}");
+        }
     }
 
     /// The parse demands the envelope whole: a frame missing any envelope

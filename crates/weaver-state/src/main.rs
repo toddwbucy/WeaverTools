@@ -8,12 +8,24 @@
 use std::io::Read;
 use std::os::fd::AsFd;
 
-use weaver_state::{Election, Store, parse_distillate};
+use weaver_state::{Election, Store, is_shape_ask, parse_distillate, render_shape_answer};
 
 /// How long the name waits for its one peer before concluding the load
 /// never came, so an abandoned member is a bounded cost rather than a
 /// resident one.
 const ACCEPT_WAIT_MS: u16 = 60_000;
+
+/// The bound on one answer frame, matched by the harness's own cap on
+/// what it reads: an answer past this size is a fault answered with
+/// silence, per the contract's clause that custody never invents an
+/// answer shape for a fault.
+const ANSWER_BOUND: usize = 1024 * 1024;
+
+/// The bound on the answer's write: a peer that takes nothing for this
+/// long has stopped reading, and a custodian wedged on its behalf would
+/// cost the session its custody, so the seam retires instead, holdings
+/// standing.
+const RESPOND_WAIT_MS: u16 = 2_000;
 
 fn main() -> std::process::ExitCode {
     let mut arguments = std::env::args().skip(1);
@@ -59,11 +71,23 @@ fn main() -> std::process::ExitCode {
     }
 
     // Custody until closure: parse, land whole, drop what does not parse,
-    // per the contract's malformed-row clause. Closure is retirement, the
-    // holdings standing for the next run.
+    // per the contract's malformed-row clause, and answer the shape ask in
+    // stream order, which is what delivers the contract's answered-against
+    // clause - nothing lands between reading an ask and answering it.
+    // Closure is retirement, the holdings standing for the next run.
     while let Some(line) = lines.next_line() {
         if let Some(distillate) = parse_distillate(&line) {
             let _ = store.land(&distillate);
+        } else if is_shape_ask(&line) {
+            // A store that cannot answer, like an answer past the bound,
+            // is silence the harness's bound converts, per the contract:
+            // custody never invents an answer shape for a fault.
+            if let Ok(shape) = store.shape() {
+                let frame = render_shape_answer(&shape);
+                if frame.len() <= ANSWER_BOUND && !lines.respond(frame.as_bytes()) {
+                    break;
+                }
+            }
         }
     }
     std::process::ExitCode::SUCCESS
@@ -195,6 +219,44 @@ impl<'a> LineReader<'a> {
     /// custodian answers it as closure rather than growing without bound:
     /// the peer holds a credential, not a license to exhaust this process.
     const FRAME_BOUND: usize = 8 * 1024 * 1024;
+
+    /// Write one answer frame back on the channel, whole inside the write
+    /// bound or reporting the seam broken: the serve direction's one write
+    /// site, used only when asked, per the contract. The wait rides a poll
+    /// deadline because a blocking write against a peer that stopped
+    /// reading would wedge custody for the session's life.
+    fn respond(&mut self, bytes: &[u8]) -> bool {
+        use std::io::Write;
+        use std::os::fd::AsFd;
+        let deadline = std::time::Instant::now()
+            + std::time::Duration::from_millis(u64::from(RESPOND_WAIT_MS));
+        let mut sent = 0;
+        while sent < bytes.len() {
+            let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+            if remaining.is_zero() {
+                return false;
+            }
+            let wait = remaining.as_millis().min(u128::from(u16::MAX)) as u16;
+            let mut fds = [nix::poll::PollFd::new(
+                self.stream.as_fd(),
+                nix::poll::PollFlags::POLLOUT,
+            )];
+            match nix::poll::poll(&mut fds, wait) {
+                Ok(0) => return false,
+                Ok(_) => {}
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(_) => return false,
+            }
+            match self.stream.write(&bytes[sent..]) {
+                Ok(0) => return false,
+                Ok(count) => sent += count,
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {}
+                Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+                Err(_) => return false,
+            }
+        }
+        true
+    }
 
     fn next_line(&mut self) -> Option<String> {
         loop {

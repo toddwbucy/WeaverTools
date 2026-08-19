@@ -104,6 +104,7 @@ mod engine;
 mod failure;
 mod lifecycle;
 mod spawn;
+mod state;
 mod tools;
 
 pub use assembly::{Prompt, assemble};
@@ -116,4 +117,5 @@ pub use engine::{Ports, TurnError, TurnOutcome};
 pub use failure::{AdoptionFault, ChannelFault, Outcome, UnlicensedMessage};
 pub use lifecycle::{Harness, OrganBinaries, OrganParameters};
 pub use spawn::fork_organ;
+pub use state::{RunShape, SessionShape, StateSeam};
 pub use tools::ToolResult;
