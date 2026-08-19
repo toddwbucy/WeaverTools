@@ -312,6 +312,13 @@ fn render_measurement(
         measurement["surprisals"] =
             serde_json::json!(bits.iter().map(|b| f64::from(*b)).collect::<Vec<f64>>());
     }
+    // The residual reductions where the residency was admitted with readout
+    // elected, per Spec sections 6 and 7: one norm per layer per forward
+    // this generation ran, and absent rather than empty like every reading.
+    if let Some(norms) = &generated.residual_norms {
+        measurement["residual_norms"] =
+            serde_json::json!(norms.iter().map(|n| f64::from(*n)).collect::<Vec<f64>>());
+    }
     measurement.to_string()
 }
 

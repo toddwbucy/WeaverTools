@@ -493,7 +493,12 @@ pub const REGISTRY: &[Declaration] = &[
         renderer: qwen2::renderer,
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
-        taps_readout: false,
+        // The native tap stands for this family, 2026-08-19: the fork's
+        // forward_with_intermediates for qwen2 on the single device and the
+        // pair's own per-layer fold. The GGUF side cannot tap - standing
+        // that tap up is code this program has not written - and the judge
+        // reads the container beside this flag, per readout::judge.
+        taps_readout: true,
     },
     Declaration {
         // **Qwen3 declares its own architecture and renders the same ChatML

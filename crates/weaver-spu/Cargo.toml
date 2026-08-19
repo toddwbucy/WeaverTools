@@ -98,9 +98,9 @@ llama-cpp-sys-2 = { git = "https://github.com/toddwbucy/llama-cpp-rs", rev = "ec
 # this crate names uses flash attention, and a declared dependency nothing
 # enables is the reserved slot the apex forbids. Its revision is recorded in
 # Spec section 1.1 as a pin value, which is where a value nothing takes belongs.
-candle-core = { git = "https://github.com/toddwbucy/candle", rev = "578dc1b75baaaf5c3afe47421b6be46dbf82f60d", default-features = false, optional = true }
-candle-nn = { git = "https://github.com/toddwbucy/candle", rev = "578dc1b75baaaf5c3afe47421b6be46dbf82f60d", default-features = false, optional = true }
-candle-transformers = { git = "https://github.com/toddwbucy/candle", rev = "578dc1b75baaaf5c3afe47421b6be46dbf82f60d", default-features = false, optional = true }
+candle-core = { git = "https://github.com/toddwbucy/candle", rev = "429615148582d62f285879b97cb63dbdd17b47fd", default-features = false, optional = true }
+candle-nn = { git = "https://github.com/toddwbucy/candle", rev = "429615148582d62f285879b97cb63dbdd17b47fd", default-features = false, optional = true }
+candle-transformers = { git = "https://github.com/toddwbucy/candle", rev = "429615148582d62f285879b97cb63dbdd17b47fd", default-features = false, optional = true }
 
 # cudarc is caret-pinned rather than exact, so Cargo unifies this crate's
 # device handles with candle's inside one minor line. Exactness comes from the

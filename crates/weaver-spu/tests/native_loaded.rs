@@ -224,6 +224,118 @@ fn the_pair_agrees_with_the_single_card() {
     );
 }
 
+/// An elected readout travels with the generation, at both widths: one
+/// norm per layer per forward, in order, every figure finite, and the
+/// prefix decode's figures drained rather than leaking into the turn's.
+/// The unelected path stays absent rather than empty, the record's own
+/// discipline, asserted against the same artifact in the same breath.
+#[test]
+fn an_elected_readout_travels_with_the_generation() {
+    let Some(dir) = artifact_dir() else {
+        eprintln!("SKIP an_elected_readout: no safetensors artifact");
+        return;
+    };
+    let both = cudarc::driver::CudaContext::new(1).is_ok();
+    let knobs = EffectiveKnobs {
+        temperature: 0.0,
+        top_k: 1,
+        top_p: 1.0,
+        repetition_penalty: 1.0,
+        repetition_window: 0,
+        seed: 11,
+    };
+    let prompt =
+        "<|im_start|>user\nReply with exactly one word: hello<|im_end|>\n<|im_start|>assistant\n";
+    let mut widths = vec![vec![DeviceOrdinal(0)]];
+    if both {
+        widths.push(vec![DeviceOrdinal(0), DeviceOrdinal(1)]);
+    } else {
+        eprintln!("SKIP an_elected_readout pair half: fewer than two CUDA devices");
+    }
+    for (devices, elected) in widths
+        .into_iter()
+        .flat_map(|devices| [(devices.clone(), true), (devices, false)])
+    {
+        let width = devices.len();
+        let mut residency = Residency::new();
+        let binding = ModelBinding {
+            artifact: ArtifactRef(dir.to_string_lossy().into_owned()),
+            devices,
+        };
+        let resident = residency
+            .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(elected))
+            .unwrap_or_else(|refusal| panic!("admit width {width}: {refusal:?}"));
+        let prefix = resident.tokenize(prompt).expect("tokenizes");
+        let mut session = resident.open_session(&knobs, 512).expect("session opens");
+        session.open(&prefix).expect("prefix decodes");
+        let close = resident.tokenize("<|im_end|>").expect("close tokenizes");
+        let [terminator] = close.as_slice() else {
+            panic!("one close token");
+        };
+        let generated = session
+            .append_and_generate(
+                &[],
+                &StopCondition {
+                    stop_tokens: close.clone(),
+                    terminator: *terminator,
+                    max_tokens: 4,
+                },
+                &mut NeverCancels,
+                &mut |_| {},
+            )
+            .expect("generates");
+        match (elected, &generated.residual_norms) {
+            (false, None) => {}
+            (false, Some(_)) => panic!("width {width}: unelected but norms present"),
+            (true, None) => panic!("width {width}: elected but no norms"),
+            (true, Some(norms)) => {
+                // 24 layers, one figure per layer per forward, and the
+                // generation ran at least one forward.
+                assert!(!norms.is_empty(), "width {width}: empty norms");
+                assert_eq!(norms.len() % 24, 0, "width {width}: {} figures", norms.len());
+                let forwards = norms.len() / 24;
+                assert!(
+                    forwards <= 6,
+                    "width {width}: {forwards} forwards claims more than the turn ran, \
+                     the prefix leaked"
+                );
+                assert!(
+                    norms.iter().all(|n| n.is_finite() && *n > 0.0),
+                    "width {width}: a figure is not a finite positive norm"
+                );
+                eprintln!("width {width} elected: {} figures over {forwards} forwards", norms.len());
+            }
+        }
+    }
+}
+
+/// An elected readout against a GGUF residency refuses at admit, naming
+/// the family: the native tap stands and the GGUF tap does not, and a
+/// load that succeeded and failed at the first turn would be the
+/// expensive lie the charter forbids.
+#[test]
+fn an_elected_readout_refuses_a_gguf_residency_at_admit() {
+    let gguf = PathBuf::from(
+        "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct-GGUF/qwen2.5-0.5b-instruct-q8_0.gguf",
+    );
+    if !gguf.is_file() {
+        eprintln!("SKIP an_elected_readout_refuses_gguf: no GGUF artifact");
+        return;
+    }
+    let mut residency = Residency::new();
+    let binding = ModelBinding {
+        artifact: ArtifactRef(gguf.to_string_lossy().into_owned()),
+        devices: vec![DeviceOrdinal(0)],
+    };
+    let refusal = residency
+        .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(true))
+        .expect_err("an elected GGUF admit refuses");
+    assert!(
+        format!("{refusal:?}").contains("NotTappable"),
+        "refused for the tap, got {refusal:?}"
+    );
+}
+
 /// The measurement instrument for the reduction's cost, not a gate: run
 /// with `WEAVER_MEASURE_PACE=1` and it reports the single card's pace and
 /// the pair's on the hop-dominated 0.5B worst case, 256 greedy tokens

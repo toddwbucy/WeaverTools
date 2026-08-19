@@ -72,6 +72,12 @@ pub struct Generated {
     /// The decode span in nanoseconds: the sampling loop through the
     /// terminator's landing.
     pub decode_ns: u64,
+    /// The residual reduction's figures where the residency was admitted
+    /// with readout elected, per `weaver-spu-Spec` sections 6 and 7: one
+    /// norm per layer per forward this generation ran, in order, drained
+    /// from the tap when the generation closes. Absent rather than empty
+    /// where nothing tapped, the record's own discipline.
+    pub residual_norms: Option<Vec<f32>>,
 }
 
 /// The family's stop condition and its terminator.
@@ -237,6 +243,11 @@ impl<'a> Session<'a> {
             });
         }
 
+        // Any reduction standing from the prefix decode or an earlier
+        // generation is drained and dropped, so what this generation
+        // reports is its own forwards and nothing staler.
+        let _ = self.backend.take_reduction();
+
         let prefill_started = std::time::Instant::now();
         if let Err(fault) = self.backend.decode_at(delta, self.resident_len) {
             return Err(self.poison(fault));
@@ -336,6 +347,10 @@ impl<'a> Session<'a> {
             signals: signals.finish(),
             prefill_ns,
             decode_ns: decode_started.elapsed().as_nanos() as u64,
+            residual_norms: self
+                .backend
+                .take_reduction()
+                .map(|reduction| reduction.per_layer_norm().to_vec()),
         })
     }
 

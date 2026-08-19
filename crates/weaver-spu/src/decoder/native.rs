@@ -268,6 +268,14 @@ pub struct NativeEngine {
     repetition_penalty: f32,
     repetition_window: usize,
     capacity: usize,
+    /// Whether this session's residency was admitted with readout elected,
+    /// judged at admit and read here: an elected engine taps every forward
+    /// and an unelected one runs the plain path and accumulates nothing.
+    readout: bool,
+    /// The reduction accumulating since the last drain, per
+    /// `weaver-spu-Spec` section 7: one figure per layer per forward, the
+    /// norm taken on the device so the activations never leave it.
+    reduction: crate::readout::Reduction,
     closed: bool,
 }
 
@@ -277,6 +285,7 @@ impl NativeEngine {
         model: &ResidentModel,
         knobs: &EffectiveKnobs,
         capacity: u32,
+        readout: bool,
     ) -> Result<NativeEngine, DecodeFault> {
         if capacity == 0 {
             return Err(DecodeFault::Engine {
@@ -326,6 +335,8 @@ impl NativeEngine {
             repetition_penalty: knobs.repetition_penalty,
             repetition_window: knobs.repetition_window as usize,
             capacity: capacity as usize,
+            readout,
+            reduction: crate::readout::Reduction::new(),
             closed: false,
         })
     }
@@ -344,15 +355,45 @@ impl NativeEngine {
                 let input = Tensor::new(ids.as_slice(), &self.device)
                     .and_then(|t| t.unsqueeze(0))
                     .map_err(|error| Self::engine_fault(&format!("input tensor: {error}")))?;
-                model
-                    .forward(&input, self.resident.len())
-                    .and_then(|t| t.squeeze(0))
+                let logits = if self.readout {
+                    // The tap, per Spec section 7: the fork's intermediates
+                    // route, each layer's norm taken on the device and one
+                    // scalar folded, the activations never leaving.
+                    let (logits, intermediates) = model
+                        .forward_with_intermediates(&input, self.resident.len())
+                        .map_err(|error| Self::engine_fault(&format!("forward: {error}")))?;
+                    for layer in &intermediates {
+                        let norm = layer_norm_figure(layer)
+                            .map_err(|error| Self::engine_fault(&format!("tap: {error}")))?;
+                        self.reduction.fold_norm(norm);
+                    }
+                    logits
+                } else {
+                    model
+                        .forward(&input, self.resident.len())
+                        .map_err(|error| Self::engine_fault(&format!("forward: {error}")))?
+                };
+                logits
+                    .squeeze(0)
                     .and_then(|t| t.squeeze(0))
                     .and_then(|t| t.to_dtype(DType::F32))
                     .and_then(|t| t.to_vec1::<f32>())
                     .map_err(|error| Self::engine_fault(&format!("forward: {error}")))
             }
-            Forward::Pair(model) => model.forward(&ids, self.resident.len()),
+            Forward::Pair(model) => {
+                let norms = if self.readout {
+                    let mut folded = Vec::new();
+                    let logits =
+                        model.forward(&ids, self.resident.len(), Some(&mut folded))?;
+                    for norm in folded {
+                        self.reduction.fold_norm(norm);
+                    }
+                    return Ok(logits);
+                } else {
+                    None
+                };
+                model.forward(&ids, self.resident.len(), norms)
+            }
         }
     }
 
@@ -362,6 +403,18 @@ impl NativeEngine {
             Forward::Pair(model) => model.clear_kv_cache(),
         }
     }
+}
+
+/// One layer's norm, taken on the device: the square, the sum, the root,
+/// and a single scalar crossing to the host, which is the in-place clause
+/// of `weaver-spu-Spec` section 7 read at its strongest.
+pub(crate) fn layer_norm_figure(layer: &Tensor) -> candle_core::Result<f32> {
+    layer
+        .to_dtype(DType::F32)?
+        .sqr()?
+        .sum_all()?
+        .sqrt()?
+        .to_scalar::<f32>()
 }
 
 impl Backend for NativeEngine {
@@ -490,6 +543,13 @@ impl Backend for NativeEngine {
             self.logits = Some(logits);
         }
         Ok(())
+    }
+
+    fn take_reduction(&mut self) -> Option<crate::readout::Reduction> {
+        if !self.readout {
+            return None;
+        }
+        Some(std::mem::take(&mut self.reduction))
     }
 
     fn reestablish(&mut self) -> Result<(), DecodeFault> {
