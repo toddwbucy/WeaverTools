@@ -64,9 +64,15 @@ pub fn opener(election: &Election) -> String {
 /// the canonical JSON held, never a re-rendering of it.
 #[derive(Deserialize)]
 struct CanonicalLine<'a> {
-    session: &'a str,
-    run: &'a str,
-    turn: Option<&'a str>,
+    /// `Cow` rather than `&str` for the identity strings, because a borrowed
+    /// deserialization refuses any JSON string carrying an escape and the
+    /// session's spelling is the operator's to choose.
+    #[serde(borrow)]
+    session: std::borrow::Cow<'a, str>,
+    #[serde(borrow)]
+    run: std::borrow::Cow<'a, str>,
+    #[serde(borrow)]
+    turn: Option<std::borrow::Cow<'a, str>>,
     kind: &'a str,
     /// A string, because the canonical form spells it as one, per
     /// `weaver-trace-Spec`: the envelope crosses as the record spelled it
@@ -115,9 +121,9 @@ pub fn distill(line: &str, election: &Election) -> Option<String> {
     }
     let mut frame = serde_json::to_string(&Frame {
         envelope: FrameEnvelope {
-            session: event.session,
-            run: event.run,
-            turn: event.turn,
+            session: event.session.as_ref(),
+            run: event.run.as_ref(),
+            turn: event.turn.as_deref(),
             kind: event.kind,
             sequence: event.sequence,
         },
@@ -136,7 +142,8 @@ pub fn distill(line: &str, election: &Election) -> Option<String> {
 fn value_at<'a>(payload: &'a RawValue, path: &str) -> Option<&'a RawValue> {
     let mut cursor = payload;
     for segment in path.split('.') {
-        let object: BTreeMap<&str, &RawValue> = serde_json::from_str(cursor.get()).ok()?;
+        let object: BTreeMap<std::borrow::Cow<'_, str>, &RawValue> =
+            serde_json::from_str(cursor.get()).ok()?;
         cursor = object.get(segment)?;
     }
     Some(cursor)
@@ -181,6 +188,12 @@ impl Tee {
     /// full has stalled for longer than any healthy custodian ever is, and
     /// waiting on it would be backpressure, so `WouldBlock` is treated as
     /// the same breakage a closed peer is.
+    ///
+    /// A partial write followed by `false` is safe only because the caller
+    /// detaches the tee and the drop closes the channel: the reader hits
+    /// end-of-stream and discards the truncated tail as an unfinished line.
+    /// A caller that kept the channel open after `false` would risk the
+    /// peer parsing that tail against the next frame.
     fn send(&mut self, mut bytes: &[u8]) -> bool {
         while !bytes.is_empty() {
             match self.channel.write(bytes) {
@@ -257,6 +270,25 @@ mod tests {
             }],
         };
         assert!(distill(LINE, &election).is_none());
+    }
+
+    /// The sequence crosses as the canonical form spells it, a string. A
+    /// line spelling it as a number is not the canonical form and is not
+    /// distilled, which is the pin the first live stand was missing.
+    #[test]
+    fn a_numeric_sequence_is_refused() {
+        let line = r#"{"session":"s","run":"r","kind":"load","sequence":0,"wall_ms":1}"#;
+        assert!(distill(line, &Election::default()).is_none());
+    }
+
+    /// An identity string carrying a JSON escape still distills: the
+    /// session's spelling is the operator's, and a borrowed-only parse
+    /// would refuse it.
+    #[test]
+    fn an_escaped_identity_still_distills() {
+        let line = r#"{"session":"s\"x","run":"r","kind":"load","sequence":"0"}"#;
+        let frame = distill(line, &Election::default()).expect("distills");
+        assert!(frame.contains(r#""session":"s\"x""#), "{frame}");
     }
 
     /// A turnless event distills without a turn member, mirroring the

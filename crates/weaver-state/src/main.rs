@@ -69,11 +69,13 @@ fn main() -> std::process::ExitCode {
     std::process::ExitCode::SUCCESS
 }
 
-/// Stand the name, wait for the one peer, and judge it by credential. The
-/// name is unlinked once the peer is accepted, so the seam has exactly two
-/// ends for its whole life. The socket file's mode is opened wide on
-/// purpose: the filesystem is not the gate here, the credential check is,
-/// per the contract's authentication clause.
+/// Stand the name, wait for the one peer, and judge it by credential. A
+/// peer holding the wrong uid is closed unread and the name keeps
+/// listening until the deadline, because the socket's mode is open on
+/// purpose - the filesystem is not the gate here, the credential check is,
+/// per the contract's authentication clause - and a stranger dialing first
+/// must not cost the worker its leg. The name is unlinked once the right
+/// peer is accepted, so the standing seam has exactly two ends.
 fn stand_and_accept(socket: &str, peer_uid: u32) -> Option<std::os::unix::net::UnixStream> {
     let path = std::path::Path::new(socket);
     let _ = std::fs::remove_file(path);
@@ -90,59 +92,57 @@ fn stand_and_accept(socket: &str, peer_uid: u32) -> Option<std::os::unix::net::U
     use std::os::unix::fs::PermissionsExt;
     let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o666));
 
-    let mut fds = [nix::poll::PollFd::new(
-        listener.as_fd(),
-        nix::poll::PollFlags::POLLIN,
-    )];
-    match nix::poll::poll(&mut fds, ACCEPT_WAIT_MS) {
-        Ok(0) => {
+    let deadline = std::time::Instant::now()
+        + std::time::Duration::from_millis(u64::from(ACCEPT_WAIT_MS));
+    loop {
+        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+        if remaining.is_zero() {
             // The load never came. An abandoned name is removed and the
             // empty stand is the honest outcome.
             let _ = std::fs::remove_file(path);
             return None;
         }
-        Ok(_) => {}
-        Err(_) => {
-            let _ = std::fs::remove_file(path);
-            return None;
+        let wait = remaining.as_millis().min(u128::from(u16::MAX)) as u16;
+        let mut fds = [nix::poll::PollFd::new(
+            listener.as_fd(),
+            nix::poll::PollFlags::POLLIN,
+        )];
+        match nix::poll::poll(&mut fds, wait) {
+            Ok(0) => continue,
+            Ok(_) => {}
+            Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => {
+                let _ = std::fs::remove_file(path);
+                return None;
+            }
         }
-    }
-    let (channel, _address) = match listener.accept() {
-        Ok(accepted) => accepted,
-        Err(error) => {
-            eprintln!(
-                "{}",
-                serde_json::json!({"state_fault": format!("accept failed: {error}")})
-            );
-            let _ = std::fs::remove_file(path);
-            return None;
-        }
-    };
-    let _ = std::fs::remove_file(path);
-
-    // The credential judgment, per the first invariant's rule for a channel
-    // with a name: the peer holds the one expected uid or the channel
-    // closes unread.
-    let credentials =
-        nix::sys::socket::getsockopt(&channel, nix::sys::socket::sockopt::PeerCredentials);
-    match credentials {
-        Ok(credentials) if credentials.uid() == peer_uid => Some(channel),
-        Ok(credentials) => {
-            eprintln!(
-                "{}",
-                serde_json::json!({
-                    "state_fault":
-                        format!("peer uid {} is not the expected {peer_uid}", credentials.uid())
-                })
-            );
-            None
-        }
-        Err(error) => {
-            eprintln!(
-                "{}",
-                serde_json::json!({"state_fault": format!("credential read failed: {error}")})
-            );
-            None
+        let Ok((channel, _address)) = listener.accept() else {
+            continue;
+        };
+        // The credential judgment, per the first invariant's rule for a
+        // channel with a name.
+        match nix::sys::socket::getsockopt(&channel, nix::sys::socket::sockopt::PeerCredentials) {
+            Ok(credentials) if credentials.uid() == peer_uid => {
+                let _ = std::fs::remove_file(path);
+                return Some(channel);
+            }
+            Ok(credentials) => {
+                eprintln!(
+                    "{}",
+                    serde_json::json!({
+                        "state_fault": format!(
+                            "peer uid {} is not the expected {peer_uid}",
+                            credentials.uid()
+                        )
+                    })
+                );
+            }
+            Err(error) => {
+                eprintln!(
+                    "{}",
+                    serde_json::json!({"state_fault": format!("credential read failed: {error}")})
+                );
+            }
         }
     }
 }
@@ -191,12 +191,20 @@ impl<'a> LineReader<'a> {
         }
     }
 
+    /// One frame larger than the bound is not the seam's traffic, and the
+    /// custodian answers it as closure rather than growing without bound:
+    /// the peer holds a credential, not a license to exhaust this process.
+    const FRAME_BOUND: usize = 8 * 1024 * 1024;
+
     fn next_line(&mut self) -> Option<String> {
         loop {
             if let Some(position) = self.buffer.iter().position(|&b| b == b'\n') {
                 let line: Vec<u8> = self.buffer.drain(..=position).collect();
                 let text = String::from_utf8_lossy(&line[..line.len() - 1]).into_owned();
                 return Some(text);
+            }
+            if self.buffer.len() > Self::FRAME_BOUND {
+                return None;
             }
             let mut chunk = [0u8; 65536];
             match self.stream.read(&mut chunk) {
@@ -233,6 +241,31 @@ mod tests {
                 vec!["close".to_string(), "request.sampling".to_string()]
             )]
         );
+    }
+
+    /// A malformed opener falls to the default election, the envelope of
+    /// every kind, which is the contract's default and never a guess.
+    #[test]
+    fn a_malformed_opener_falls_back_to_the_default() {
+        for bad in ["not json", "{}", r#"{"election":{"keys":[]}}"#] {
+            let election = parse_election(bad).unwrap_or_default();
+            assert!(election.all_kinds, "{bad}");
+            assert!(election.keys.is_empty(), "{bad}");
+        }
+    }
+
+    /// An entry missing its paths member is dropped whole, while an entry
+    /// with an empty paths list stands as the meaningful envelope-only
+    /// election. The tee always renders paths, so the dropped shape is a
+    /// hand-built opener's defect, documented here as the current behavior.
+    #[test]
+    fn an_entry_without_paths_is_dropped_whole() {
+        let opener = concat!(
+            r#"{"election":{"all_kinds":false,"keys":["#,
+            r#"{"kind":"load"},{"kind":"turn.closed","paths":[]}]}}"#
+        );
+        let election = parse_election(opener).expect("parses");
+        assert_eq!(election.keys, vec![("turn.closed".to_string(), vec![])]);
     }
 
     /// A distillate as the tee renders it parses whole on this end: the

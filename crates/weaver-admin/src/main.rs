@@ -167,14 +167,21 @@ fn stand_state_member(config: &ServiceConfig, agent: &AgentName, inventory: &inv
     }
     let territory_root = inventory::sink_directory(&inventory.config.trace_sink);
     let territory = territory_root.join("state");
-    if std::fs::create_dir_all(&territory).is_err() {
-        return;
-    }
     // The territory's custody mirrors the sink's: this uid owns it, the
     // sink directory's group may look, and the worker's identity holds
     // neither and cannot enter, which is the wall of `weaver-state-PRD`
-    // section 4 enforced at the filesystem.
-    use std::os::unix::fs::{MetadataExt, PermissionsExt};
+    // section 4 enforced at the filesystem. The mode rides the creation
+    // itself, so the directory never stands a moment wider than it ends.
+    use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt};
+    if std::fs::DirBuilder::new()
+        .recursive(true)
+        .mode(0o750)
+        .create(&territory)
+        .is_err()
+        && !territory.is_dir()
+    {
+        return;
+    }
     let _ = std::fs::set_permissions(&territory, std::fs::Permissions::from_mode(0o750));
     if let Ok(parent) = std::fs::metadata(territory_root) {
         let _ = std::os::unix::fs::chown(&territory, None, Some(parent.gid()));
@@ -189,6 +196,10 @@ fn stand_state_member(config: &ServiceConfig, agent: &AgentName, inventory: &inv
         .coordination_root
         .join(unit::runtime_directory_name(&agent.0))
         .join("state.sock");
+    // A stale name from an earlier load must not satisfy the wait below
+    // before the new member binds its own: the member removes it too, but
+    // this side's removal is what keeps the existence check honest.
+    let _ = std::fs::remove_file(&socket);
     let log = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -205,14 +216,20 @@ fn stand_state_member(config: &ServiceConfig, agent: &AgentName, inventory: &inv
     } else {
         member.stderr(std::process::Stdio::null());
     }
-    if member.spawn().is_err() {
-        return;
-    }
+    let mut member = match member.spawn() {
+        Ok(member) => member,
+        Err(_) => return,
+    };
     // Wait for the name to stand so the worker's dial at enter finds it or
-    // does not, never mid-bind. A name that does not appear inside the bound
-    // is a member that failed to stand, and the load proceeds leg-less.
+    // does not, never mid-bind. A member that exits before binding ends the
+    // wait at once rather than costing the load the full bound, and a name
+    // that does not appear inside the bound is a member that failed to
+    // stand: either way the load proceeds leg-less.
     for _ in 0..100 {
         if socket.exists() {
+            return;
+        }
+        if matches!(member.try_wait(), Ok(Some(_))) {
             return;
         }
         std::thread::sleep(std::time::Duration::from_millis(20));

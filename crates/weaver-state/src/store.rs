@@ -99,14 +99,22 @@ impl Store {
     /// Spec: one partial index per elected key path, so extension within a
     /// session is rows accumulating under standing indexes.
     pub fn index_election(&mut self, election: &Election) -> Result<(), CustodyFault> {
-        for (index, (_kind, keys)) in election.keys.iter().enumerate() {
-            for (key_index, key) in keys.iter().enumerate() {
-                // The index name is positional and the key is a bound-in
-                // literal within the WHERE, quoted through sqlite's own
-                // quoting to keep a hostile key path from becoming SQL.
-                let name = format!("field_elected_{index}_{key_index}");
+        for (_kind, keys) in &election.keys {
+            for key in keys {
+                // The index name is the key path itself, hex-encoded, so a
+                // name can only ever stand for one predicate: a positional
+                // name would let a later load's differing election fall
+                // silently under `IF NOT EXISTS` on an earlier load's name.
+                // The key is a bound-in literal within the WHERE, quoted
+                // through sqlite's own quoting to keep a hostile key path
+                // from becoming SQL.
+                use std::fmt::Write;
+                let mut name = String::with_capacity(key.len() * 2);
+                for byte in key.bytes() {
+                    let _ = write!(name, "{byte:02x}");
+                }
                 let statement = format!(
-                    "CREATE INDEX IF NOT EXISTS {name} ON field (key, value) WHERE key = {}",
+                    "CREATE INDEX IF NOT EXISTS field_elected_{name} ON field (key, value) WHERE key = {}",
                     quoted(key)
                 );
                 self.connection
@@ -126,27 +134,36 @@ impl Store {
             .connection
             .transaction()
             .map_err(|e| CustodyFault::LandingFailed(e.to_string()))?;
-        transaction
-            .execute(
-                "INSERT INTO event (session, run, turn, kind, sequence)
-                 VALUES (?1, ?2, ?3, ?4, ?5)",
-                rusqlite::params![
+        // The two inserts ride cached statements: one prepare per schema
+        // for the store's life rather than one per event, with the
+        // transaction boundary unchanged.
+        {
+            let mut insert_event = transaction
+                .prepare_cached(
+                    "INSERT INTO event (session, run, turn, kind, sequence)
+                     VALUES (?1, ?2, ?3, ?4, ?5)",
+                )
+                .map_err(|e| CustodyFault::LandingFailed(e.to_string()))?;
+            insert_event
+                .execute(rusqlite::params![
                     distillate.session,
                     distillate.run,
                     distillate.turn,
                     distillate.kind,
                     distillate.sequence
-                ],
-            )
-            .map_err(|e| CustodyFault::LandingFailed(e.to_string()))?;
-        let event_id = transaction.last_insert_rowid();
-        for (key, value) in &distillate.pairs {
-            transaction
-                .execute(
-                    "INSERT INTO field (event_id, key, value) VALUES (?1, ?2, ?3)",
-                    rusqlite::params![event_id, key, value],
-                )
+                ])
                 .map_err(|e| CustodyFault::LandingFailed(e.to_string()))?;
+        }
+        let event_id = transaction.last_insert_rowid();
+        {
+            let mut insert_field = transaction
+                .prepare_cached("INSERT INTO field (event_id, key, value) VALUES (?1, ?2, ?3)")
+                .map_err(|e| CustodyFault::LandingFailed(e.to_string()))?;
+            for (key, value) in &distillate.pairs {
+                insert_field
+                    .execute(rusqlite::params![event_id, key, value])
+                    .map_err(|e| CustodyFault::LandingFailed(e.to_string()))?;
+            }
         }
         transaction
             .commit()
@@ -210,7 +227,11 @@ mod tests {
     use super::*;
 
     fn scratch() -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("weaver-state-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-state-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
         std::fs::create_dir_all(&dir).expect("scratch dir");
         dir.join("state.sql")
     }
@@ -243,6 +264,33 @@ mod tests {
             1,
             "holdings survive the process, per the charter"
         );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A later load's differing election builds its own index rather than
+    /// falling silently under an earlier load's name, which is what a
+    /// positional index name would allow under `IF NOT EXISTS`.
+    #[test]
+    fn a_changed_election_builds_its_own_indexes() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        let elect = |key: &str| Election {
+            all_kinds: true,
+            keys: vec![("turn.closed".into(), vec![key.into()])],
+        };
+        store.index_election(&elect("close")).expect("first");
+        store.index_election(&elect("tokens")).expect("second");
+        let elected: i64 = store
+            .connection
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master
+                 WHERE type = 'index' AND name LIKE 'field_elected_%'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("counts");
+        assert_eq!(elected, 2, "each key path owns its index");
         let _ = std::fs::remove_file(&path);
     }
 
