@@ -4,6 +4,11 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, the generation reports the session's fullness.
+Section 6's travel list gains the resident count and the capacity, the
+floor's `Generation` carrying both per `weaver-types-Spec` section 4.4, so
+the loop that manages the context sees pressure before the wall rather
+than in the wall's refusal.
 **Revised:** 2026-08-17, fourth of that date, the pin reaches every shard.
 The split collision ruling lands: a name carrying llama.cpp's
 `-NNNNN-of-NNNNN` pattern is one shard of a set, so the pin opens every
@@ -1323,7 +1328,11 @@ to: spu-absent-shape-pinned-by-doctest
 **What travels with a generation.** The token identifiers in and out, the two
 signal vectors, the timings the charter's row names, the model identity and
 its weights hash from section 3, the prompt-block partition, the residual
-reductions when elected, and beside the measurement the model.request content
+reductions when elected, the session's resident token count and its
+capacity as the generation closed - the generation's own typed members
+beside the two spliced boxes, never measurement members, per issue #221's
+arc and
+`weaver-types-Spec` section 4.4 - and beside the measurement the model.request content
 whole, per the custody act of 2026-08-11: the turn's delta as the family
 library rendered it, per the ruling of 2026-08-12, the template identity, and
 the turn's effective sampling values, rendered by this crate because the

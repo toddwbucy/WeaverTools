@@ -6,6 +6,20 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, second of this date, the flush reaches the record.
+The kind set gains `flush`, sixteenth, under this charter's adding-one
+rule and by the standing condition the ruling of 2026-08-12 set for
+itself: a flush becoming reachable adds its event to the kind set. The
+context-management arc of issue #221 makes it reachable - the loop
+elects a flush and the decode context returns to its prefix - and the
+event carries the resident counts before and after, because a context
+that shrank without a record would break the accumulation reading the
+model.request ruling rests on.
+**Revised:** 2026-08-19, the finish tells the truth. Section 3.2's
+`model.output` clause names the third way a generation ends: cut at the
+turn's token limit, distinct from completed and from stopped, per
+issue #218's evidence that the cap had reported itself complete. The floor's
+`Finish` and this crate's mirror gain `Length` in the same act.
 **Revised:** 2026-08-19, the system role lands. The kind set gains
 `message.system`, fifteenth, under this charter's own rule that adding one
 edits this charter and every contract naming the set: the floor's `Role`
@@ -290,6 +304,7 @@ its closure.
 | `unload` | closes a run |
 | `session.closed` | the session will not be resumed |
 | `turn.started` / `turn.closed` | the turn bracket |
+| `flush` | the decode context returned to its prefix, the loop's election, resident counts before and after |
 | `message.system` | the framing of the field, the loop's or the operator's |
 | `message.user` | operator input |
 | `message.assistant` | model output as conversation |
@@ -300,8 +315,14 @@ its closure.
 | `model.output` | the decode boundary, response side |
 | `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
 
-Fifteen kinds. Adding one is an edit to this charter and to every contract whose
+Sixteen kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
+`flush` is the sixteenth, added 2026-08-19 by the ruling of 2026-08-12's own
+condition: a reachable flush adds its event, and the context-management arc
+made it reachable. Its payload carries the resident token counts before and
+after, so the record accounts for a context that shrank: the model.request
+ruling reads the effective context by accumulation, and an unrecorded flush
+would break that reading silently.
 `message.system` is the fifteenth, added under that rule 2026-08-19 with the
 floor's `Role::System`: the slot the system prompt rode user role for since
 the control loop's first act. `fault` is
@@ -413,7 +434,13 @@ authored by the harness when the abort of `weaver-admin-harness-contract` sectio
 stop exchange lands. Every open has a close and the close says which kind it was, so
 a reader never infers an abort from an absence. This adds a field to one payload
 shape and no kind to the set, and it edits this charter and the contract in the same
-act, per the rule of this section.
+act, per the rule of this section. **A generation cut at the turn's token
+limit closes clean**, stated with the `Length` finish of 2026-08-19: the
+turn ran to its own end and the bracket closed whole, the cut being a fact
+about the generation that `model.output.finish` carries and the answered
+close may surface as `finish: "length"` per the world contract, while the
+stopped close stays reserved for the aborts, the stop directive's and a
+fault's, so the two kinds of ending never share a spelling.
 
 ### 3.2 The payload shapes the token workflow settles
 
@@ -460,19 +487,27 @@ token identifiers carrying the exact tokenization, is what makes apex
 section 8's rule that tokenization is reproducible from what is recorded
 true rather than hopeful. Two conditions ride the ruling, named rather than
 slid past. The accumulation reading holds while every operation that moves
-the resident context is recorded. The flush is chartered on the decode seam
-and served by the SPU, and no granted surface exposes it today, so no loop
-can reach it: the act that exposes the flush adds its event to the kind set
-through the front door or reopens this ruling. And a
+the resident context is recorded. **The flush's condition fired 2026-08-19
+and was honored**: the context-management act exposed the flush at the seat
+and added its event to the kind set through the front door in the same act,
+exactly as this sentence required. The reading therefore survives a flush
+by the event itself: a reader or a replay meeting `flush` resets its
+accumulation to the identity prefix, the payload's resident counts
+confirming the reset, so no later turn can be read against pre-flush
+context. And a
 replay's identity prefix is the configuration's, so the record's sufficiency
 for replay leans on the open question of what the load event carries of the
 admitted identity, which this ruling names and does not decide.
 
 **`model.output` carries the emission verbatim, before any parse.** The
 model's own family-styled output, the reasoning blocks and channel markers
-and tool-call markers exactly as emitted, and how the generation ended,
-completed or stopped. **The record holds both layers and never flattens
-one into the other:** this payload is the verbatim reality and the message
+and tool-call markers exactly as emitted, and how the generation ended:
+completed by the model's own stop, stopped from outside mid-stream, or cut
+at the turn's token limit, the third case added 2026-08-19 because a cap
+that reported itself complete put an ambiguity in the one record whose
+reason for existing is that it never lies. **The record holds both layers
+and never flattens one into the other:** this payload is the verbatim
+reality and the message
 kinds hold the canonical parse of it, with the family parsers as the recorded
 bridge between them, which is the outbound half of the same end-to-end
 requirement. A record that kept only the parse could not answer what the

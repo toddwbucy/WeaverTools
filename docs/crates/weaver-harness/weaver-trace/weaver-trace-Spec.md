@@ -4,6 +4,15 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, third of this date, the flush reaches the record.
+`Kind` gains `Flush` with its explicit rename, the counts move to sixteen
+and the ordinals to seventeenth, and the kind-to-payload mapping gains the
+ninth disposition: `flush` carries `FlushCounts`, the resident tokens
+before and after, per the charter's same-act edit.
+**Revised:** 2026-08-19, second of this date, the finish tells the truth.
+`Finish` gains `Length`, mirroring the floor's same-act addition per the
+two-names-one-fact arrangement of section 1: the turn's token limit
+reached, which the record had flattened into `Completed`.
 **Revised:** 2026-08-19, the system role lands. `Kind` gains
 `MessageSystem` with its explicit rename, the counts move to fifteen
 throughout, the message kinds become four, and the kind-to-payload mapping
@@ -228,6 +237,7 @@ pub enum Kind {
     #[serde(rename = "session.closed")]       SessionClosed,
     #[serde(rename = "turn.started")]         TurnStarted,
     #[serde(rename = "turn.closed")]          TurnClosed,
+    #[serde(rename = "flush")]                Flush,
     #[serde(rename = "message.system")]       MessageSystem,
     #[serde(rename = "message.user")]         MessageUser,
     #[serde(rename = "message.assistant")]    MessageAssistant,
@@ -256,6 +266,11 @@ pub struct ModelOutput {
     pub finish: Finish,
 }
 
+pub struct FlushCounts {
+    pub resident_before: u64,
+    pub resident_after: u64,
+}
+
 #[serde(tag = "close", rename_all = "snake_case")]
 pub enum TurnClose {
     Clean,
@@ -270,7 +285,7 @@ the derive default emits `"MessageUser"` and `rename_all = "snake_case"` emits
 it to a scheme would put a second spelling of every kind on the wire, which is the
 one-name-two-nodes defect the Document Format rules against for identifiers and
 which reads the same way for a consumer keying on a kind. The mapping is total:
-fifteen variants, fifteen renames, and the wire spelling is the charter's.
+sixteen variants, sixteen renames, and the wire spelling is the charter's.
 
 ```graph
 node: trace-kind-explicit-renames
@@ -313,10 +328,10 @@ from: weaver-trace
 to: trace-subsystem-case-set
 ```
 
-**Fifteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
+**Sixteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
-attribute that let a consumer absorb a sixteenth kind into a wildcard would defeat
+attribute that let a consumer absorb a seventeenth kind into a wildcard would defeat
 the closure the corpus keys on.
 
 ```graph
@@ -492,12 +507,14 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, fifteen kinds and eight
+**The kind-to-payload mapping is total, sixteen kinds and nine
 dispositions.** `load`, `unload`, `session.closed`, and `turn.started` carry
 `None`. The four message kinds carry `Message`. `turn.closed` carries
-`TurnClosed`. `fault` carries `Fault`. The three model kinds carry their three
+`TurnClosed`. `fault` carries `Fault`. `flush` carries `FlushCounts`, the
+resident token counts before and after, both plain integers. The three
+model kinds carry their three
 own shapes, one each. The tool bracket's two carry `Deferred`. Four plus four
-plus one plus one plus three plus two is fifteen, which is the whole of
+plus one plus one plus one plus three plus two is sixteen, which is the whole of
 charter section 3.1's set. The count is stated because an earlier draft of this
 paragraph assigned thirteen and left `turn.started` homeless, and it is
 recounted here because the token workflow's trace act of 2026-08-02 moved four
@@ -1008,7 +1025,7 @@ to: trace-append-failed-no-recovery
 
 **Enforced by the compiler.**
 
-- The kind enum is exhaustive, so a sixteenth kind breaks every consumer's match.
+- The kind enum is exhaustive, so a seventeenth kind breaks every consumer's match.
 - `WorkingStructure` exposes no mutation surface: every public accessor yields a
   shared reference and the append is crate-private, so alteration after landing is
   unrepresentable rather than merely forbidden. This is the signature half of the
