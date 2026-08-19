@@ -352,6 +352,122 @@ mod seam_success {
     /// service act watched whole, per `weaver-harness-spu-decode-contract`
     /// section 2 and `weaver-spu-Spec` section 9.
     #[test]
+    fn the_declared_ceiling_governs_the_generation() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP the_declared_ceiling: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP the_declared_ceiling: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-ceiling-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+
+        // The declaration elects a ceiling far below any natural stop, so
+        // the only way the count below comes out right is the declared
+        // value reaching the generation's stop condition: a test at 4096
+        // would pass whenever a short answer finished naturally, proving
+        // only that the knob did not refuse.
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: SpuInstruction {
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                        identity: vec![],
+                        tunable_values: [("max-tokens-per-turn".to_string(), 9.0)]
+                            .into_iter()
+                            .collect(),
+                    },
+                },
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+
+        let message = |text: &str| Message {
+            role: Role::User,
+            content: vec![ContentBlock::Text { text: text.into() }],
+        };
+        let send = |directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+        let recv = || -> TokenAnswer {
+            let frame = decode.recv_octets().expect("an answer arrives");
+            serde_json::from_slice(&frame).expect("the answer parses")
+        };
+
+        send(&TokenDirective::Open {
+            session: SessionId("s-ceiling".into()),
+            messages: vec![message("You count plainly.")],
+        });
+        assert_eq!(recv(), TokenAnswer::Opened, "the session opens");
+
+        send(&TokenDirective::AppendAndGenerate {
+            turn: TurnKey("t-1".into()),
+            delta: vec![message(
+                "Count upward from one, comma separated, without stopping.",
+            )],
+        });
+        let mut streamed = 0usize;
+        let generation = loop {
+            match recv() {
+                TokenAnswer::Token { .. } => streamed += 1,
+                TokenAnswer::Generated(generation) => break generation,
+                other => panic!("tokens then the close, got {other:?}"),
+            }
+        };
+        assert_eq!(
+            streamed, 9,
+            "the declared nine-token ceiling governed the generation"
+        );
+        let measurement: serde_json::Value =
+            serde_json::from_str(generation.measurement.get()).expect("measurement is JSON");
+        assert_eq!(
+            measurement["output_tokens"]
+                .as_array()
+                .expect("output tokens")
+                .len(),
+            9,
+            "the measurement agrees with the stream"
+        );
+
+        drop(decode);
+        drop(lifecycle);
+        let _ = child.wait();
+        let _ = std::fs::remove_file(&log_path);
+    }
+
+    #[test]
     fn an_opened_session_generates_across_the_decode_seam() {
         use weaver_traits::{ContentBlock, Message, Role};
         use weaver_types::{SessionId, TokenAnswer, TokenDirective, TurnKey};
