@@ -229,12 +229,12 @@ crossing's whole option space: an alternative realization of `dev_loop`
 composes against the same crossing without the framework moving, which is
 the general form and the only form this document states.
 
-**The general form has one realization in the tree, `pyworker`, per issue
-#134.** Framework identical to the demonstration worker, same arguments and
-same crossing, with the loop body marshalled into an embedded interpreter
-by `py_loop`: the loop file is read and compiled per crossing, so the
-builder iterates at conversation speed and freezes the result into a Rust
-`dev_loop` to deploy. The loop files live under `dev_python`, the
+**The general form has one realization in the tree, `pyworker`, per
+issue #134.** Framework identical to the demonstration worker, same
+arguments and same crossing, with the loop body marshalled into an embedded
+interpreter by `py_loop`: the loop file is read and compiled per crossing,
+so the builder iterates at conversation speed and freezes the result into
+a Rust `dev_loop` to deploy. The loop files live under `dev_python`, the
 developer's directory by the standing prefix, and the file the crossing
 runs is the one `WEAVER_PY_LOOP` names, the deployed default standing where
 it is unset. The binary and its interpreter dependency enter the manifest
