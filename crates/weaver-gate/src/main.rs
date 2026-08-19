@@ -149,7 +149,11 @@ fn serve(channel: Channel) -> ExitCode {
         match poll(&mut waiting, PollTimeout::NONE) {
             Ok(_) => {}
             Err(nix::errno::Errno::EINTR) => continue,
-            Err(_) => {
+            Err(errno) => {
+                // Named on the way out, per issue #221: a gate that dies
+                // silently leaves the worker's fault event as the only
+                // account of which party fell first.
+                eprintln!("{}", serde_json::json!({"gate_death": "poll failed", "errno": errno as i32}));
                 drop(state);
                 return ExitCode::FAILURE;
             }
@@ -164,6 +168,7 @@ fn serve(channel: Channel) -> ExitCode {
             // An invalid descriptor never becomes ready, so treating
             // POLLNVAL as anything but an ending would spin this loop.
             if revents.contains(PollFlags::POLLNVAL) {
+                eprintln!("{}", serde_json::json!({"gate_death": "a polled descriptor went invalid"}));
                 drop(state);
                 return ExitCode::FAILURE;
             }
@@ -209,6 +214,7 @@ fn serve(channel: Channel) -> ExitCode {
                 // An errored listener never accepts again, and judging it
                 // would spin: the boundary is gone, which ends service.
                 if revents.contains(PollFlags::POLLERR) {
+                    eprintln!("{}", serde_json::json!({"gate_death": "the client listener errored"}));
                     drop(state);
                     return ExitCode::FAILURE;
                 }
