@@ -145,7 +145,7 @@ fn artifact_readable(artifact: &str) -> bool {
     !artifact.is_empty()
 }
 
-fn sink_directory(sink: &TraceSink) -> &Path {
+pub(crate) fn sink_directory(sink: &TraceSink) -> &Path {
     let path = match sink {
         TraceSink::File { path, .. }
         | TraceSink::Pipe { path, .. }

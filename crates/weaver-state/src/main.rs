@@ -1,31 +1,39 @@
-//! The member's process: adopt the seam end, judge the peer, read the
-//! election, stand the store, and land distillates until the channel
-//! closes. Per `weaver-state-Spec` section 2, the seam end arrives as an
-//! inherited descriptor the way every stood channel's does, and the
-//! territory path arrives as the one argument.
+//! The member's process: stand the seam's name, judge the peer by
+//! credential, read the election, stand the store, and land distillates
+//! until the channel closes. Per `weaver-harness-state-contract`, the seam
+//! is a Unix socket with a name, authenticated by credential per the first
+//! invariant, so the member binds and the worker dials. The arguments are
+//! the territory, the socket path, and the one uid the peer may hold.
 
 use std::io::Read;
-use std::os::fd::{FromRawFd, OwnedFd};
+use std::os::fd::AsFd;
 
 use weaver_state::{Election, Store, parse_distillate};
 
-/// The seam end's descriptor number, the standing pattern of the worker's
-/// organ channels: the spawner places the end at the first descriptor
-/// beyond the standard three.
-const SEAM_DESCRIPTOR: i32 = 3;
+/// How long the name waits for its one peer before concluding the load
+/// never came, so an abandoned member is a bounded cost rather than a
+/// resident one.
+const ACCEPT_WAIT_MS: u16 = 60_000;
 
 fn main() -> std::process::ExitCode {
     let mut arguments = std::env::args().skip(1);
-    let Some(territory) = arguments.next() else {
-        eprintln!("{}", serde_json::json!({"state_fault": "no territory argument"}));
+    let (Some(territory), Some(socket), Some(peer)) =
+        (arguments.next(), arguments.next(), arguments.next())
+    else {
+        eprintln!(
+            "{}",
+            serde_json::json!({"state_fault": "usage: weaver-state <territory> <socket> <peer-uid>"})
+        );
+        return std::process::ExitCode::FAILURE;
+    };
+    let Ok(peer_uid) = peer.parse::<u32>() else {
+        eprintln!("{}", serde_json::json!({"state_fault": "peer uid does not parse"}));
         return std::process::ExitCode::FAILURE;
     };
 
-    // The inherited end, adopted as owned per the descriptor discipline.
-    // SAFETY: the spawner placed the seam end at this descriptor and
-    // nothing else in this process claims it.
-    let seam = unsafe { OwnedFd::from_raw_fd(SEAM_DESCRIPTOR) };
-    let mut channel = std::os::unix::net::UnixStream::from(seam);
+    let Some(mut channel) = stand_and_accept(&socket, peer_uid) else {
+        return std::process::ExitCode::FAILURE;
+    };
 
     let path = std::path::Path::new(&territory).join("state.sql");
     let mut store = match Store::open(&path) {
@@ -59,6 +67,84 @@ fn main() -> std::process::ExitCode {
         }
     }
     std::process::ExitCode::SUCCESS
+}
+
+/// Stand the name, wait for the one peer, and judge it by credential. The
+/// name is unlinked once the peer is accepted, so the seam has exactly two
+/// ends for its whole life. The socket file's mode is opened wide on
+/// purpose: the filesystem is not the gate here, the credential check is,
+/// per the contract's authentication clause.
+fn stand_and_accept(socket: &str, peer_uid: u32) -> Option<std::os::unix::net::UnixStream> {
+    let path = std::path::Path::new(socket);
+    let _ = std::fs::remove_file(path);
+    let listener = match std::os::unix::net::UnixListener::bind(path) {
+        Ok(listener) => listener,
+        Err(error) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({"state_fault": format!("bind failed: {error}")})
+            );
+            return None;
+        }
+    };
+    use std::os::unix::fs::PermissionsExt;
+    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o666));
+
+    let mut fds = [nix::poll::PollFd::new(
+        listener.as_fd(),
+        nix::poll::PollFlags::POLLIN,
+    )];
+    match nix::poll::poll(&mut fds, ACCEPT_WAIT_MS) {
+        Ok(0) => {
+            // The load never came. An abandoned name is removed and the
+            // empty stand is the honest outcome.
+            let _ = std::fs::remove_file(path);
+            return None;
+        }
+        Ok(_) => {}
+        Err(_) => {
+            let _ = std::fs::remove_file(path);
+            return None;
+        }
+    }
+    let (channel, _address) = match listener.accept() {
+        Ok(accepted) => accepted,
+        Err(error) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({"state_fault": format!("accept failed: {error}")})
+            );
+            let _ = std::fs::remove_file(path);
+            return None;
+        }
+    };
+    let _ = std::fs::remove_file(path);
+
+    // The credential judgment, per the first invariant's rule for a channel
+    // with a name: the peer holds the one expected uid or the channel
+    // closes unread.
+    let credentials =
+        nix::sys::socket::getsockopt(&channel, nix::sys::socket::sockopt::PeerCredentials);
+    match credentials {
+        Ok(credentials) if credentials.uid() == peer_uid => Some(channel),
+        Ok(credentials) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({
+                    "state_fault":
+                        format!("peer uid {} is not the expected {peer_uid}", credentials.uid())
+                })
+            );
+            None
+        }
+        Err(error) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({"state_fault": format!("credential read failed: {error}")})
+            );
+            None
+        }
+    }
 }
 
 /// The opener's shape: `{"election":{"all_kinds":true,"keys":[...]}}`. A

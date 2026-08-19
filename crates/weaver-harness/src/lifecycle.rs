@@ -888,6 +888,21 @@ impl Harness {
         )
         .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?;
 
+        // The state seam, per `weaver-harness-state-contract`: the member's
+        // named socket stands beside the coordination socket when the
+        // deployment stood one, and its absence is the leg not standing,
+        // never a refused load. Attached before the load event is authored
+        // so the run's opening distills like everything after it. The
+        // election is the contract's default, the envelope of every kind,
+        // until the operator's payload-key elections arrive with their own
+        // declaration act.
+        if let Ok(channel) =
+            std::os::unix::net::UnixStream::connect(self.coordination.state_socket())
+            && let Ok(tee) = weaver_trace::Tee::open(channel, weaver_trace::Election::default())
+        {
+            recorder.attach_tee(tee);
+        }
+
         // The load event is the run's opening and the origin of its monotonic
         // clock, so the author is constructed at this moment.
         let author = Author::new(&session, &payload.run);

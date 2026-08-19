@@ -121,6 +121,18 @@ impl CoordinationListener {
             .unwrap_or(std::path::Path::new("/"))
             .join("gate.sock")
     }
+
+    /// The state member's socket, beside the coordination socket by the same
+    /// derivation as the gate's, per `weaver-harness-state-contract`: a
+    /// channel with a name, stood by the party that spawns the member. The
+    /// worker dials it at enter, and an absent name is the leg not standing
+    /// rather than any kind of refusal.
+    pub fn state_socket(&self) -> std::path::PathBuf {
+        self.path
+            .parent()
+            .unwrap_or(std::path::Path::new("/"))
+            .join("state.sock")
+    }
 }
 
 /// Binds the coordination socket and listens, which is the worker's first act.

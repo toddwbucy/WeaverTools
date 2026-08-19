@@ -150,6 +150,75 @@ fn admissible(config: &ServiceConfig, agent: &AgentName) -> Result<(), Lifecycle
 
 /// The one inventory, called by both `validate` and `load`, so the two cannot
 /// drift.
+/// Stands the state member for this load, per `weaver-harness-state-contract`
+/// and `weaver-state-Spec` section 2: the custodian's territory sits on the
+/// operator's side of the wall the worker's identity cannot cross, so the
+/// party that opens the trace sink is the party that stands the member. The
+/// binary is discovered beside the worker's own, so a deployment without it
+/// simply has no leg. Every failure here is absorbed: the leg is optional by
+/// presence and a load is never refused over its derivative.
+fn stand_state_member(config: &ServiceConfig, agent: &AgentName, inventory: &inventory::Inventory) {
+    let Some(binary_directory) = config.unit.worker.parent() else {
+        return;
+    };
+    let binary = binary_directory.join("weaver-state");
+    if !binary.exists() {
+        return;
+    }
+    let territory_root = inventory::sink_directory(&inventory.config.trace_sink);
+    let territory = territory_root.join("state");
+    if std::fs::create_dir_all(&territory).is_err() {
+        return;
+    }
+    // The territory's custody mirrors the sink's: this uid owns it, the
+    // sink directory's group may look, and the worker's identity holds
+    // neither and cannot enter, which is the wall of `weaver-state-PRD`
+    // section 4 enforced at the filesystem.
+    use std::os::unix::fs::{MetadataExt, PermissionsExt};
+    let _ = std::fs::set_permissions(&territory, std::fs::Permissions::from_mode(0o750));
+    if let Ok(parent) = std::fs::metadata(territory_root) {
+        let _ = std::os::unix::fs::chown(&territory, None, Some(parent.gid()));
+    }
+    let Ok(worker_identity) = nix::unistd::User::from_name(&inventory.identity) else {
+        return;
+    };
+    let Some(worker_identity) = worker_identity else {
+        return;
+    };
+    let socket = config
+        .coordination_root
+        .join(unit::runtime_directory_name(&agent.0))
+        .join("state.sock");
+    let log = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(territory.join("state.log"));
+    let mut member = std::process::Command::new(&binary);
+    member
+        .arg(&territory)
+        .arg(&socket)
+        .arg(worker_identity.uid.as_raw().to_string())
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null());
+    if let Ok(log) = log {
+        member.stderr(log);
+    } else {
+        member.stderr(std::process::Stdio::null());
+    }
+    if member.spawn().is_err() {
+        return;
+    }
+    // Wait for the name to stand so the worker's dial at enter finds it or
+    // does not, never mid-bind. A name that does not appear inside the bound
+    // is a member that failed to stand, and the load proceeds leg-less.
+    for _ in 0..100 {
+        if socket.exists() {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+}
+
 fn take_inventory(
     config: &ServiceConfig,
     agent: &AgentName,
@@ -275,6 +344,13 @@ fn run_load(
         Ok(coordination) => coordination,
         Err(_) => return Err(refusal_for_absent_worker(config, &agent.0)),
     };
+
+    // The state member stands after the worker's bind and before the enter,
+    // so the name the worker dials at enter is either present or absent by
+    // the time it looks, never racing it. Best-effort whole, per the
+    // contract's dead-peer clause: an absent binary, a failed spawn, or a
+    // name that never appears leaves the leg down and the load unrefused.
+    stand_state_member(config, agent, &inventory);
 
     let ordinal = coordination.next_ordinal();
     // **The session is read and the run is minted**, per Spec section 7. The
