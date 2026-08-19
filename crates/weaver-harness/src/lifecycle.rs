@@ -348,7 +348,7 @@ impl Harness {
                     Err(ChannelFault::WrongPeer { .. }) => continue,
                     // The listener itself failed, which ends service.
                     Err(fault) => {
-                        self.unwind_if_entered();
+                        self.unwind_if_entered(weaver_types::FaultCase::ListenerLost, &fault);
                         return Err(fault);
                     }
                 },
@@ -361,7 +361,10 @@ impl Harness {
                         // per `weaver-admin-harness-contract` section 4.
                         Err(ChannelFault::Closed) => continue,
                         Err(fault) => {
-                            self.unwind_if_entered();
+                            self.unwind_if_entered(
+                                weaver_types::FaultCase::OrganDeathObserved,
+                                &fault,
+                            );
                             return Err(fault);
                         }
                     };
@@ -372,7 +375,10 @@ impl Harness {
                         // this crate can attribute to an exchange for a
                         // refusal to answer.
                         _ => {
-                            self.unwind_if_entered();
+                            self.unwind_if_entered(
+                                weaver_types::FaultCase::OrganDeathObserved,
+                                &ChannelFault::Undecodable,
+                            );
                             return Err(ChannelFault::Undecodable);
                         }
                     };
@@ -383,7 +389,10 @@ impl Harness {
                         // returns to the wait.
                         Ok(None) => pending = Some(connection),
                         Err(fault) => {
-                            self.unwind_if_entered();
+                            self.unwind_if_entered(
+                                weaver_types::FaultCase::OrganDeathObserved,
+                                &fault,
+                            );
                             return Err(fault);
                         }
                     }
@@ -392,7 +401,10 @@ impl Harness {
                     if let Err(fault) =
                         self.serve_gate_wake(identity, tool_schemas, &mut entry, &mut pending)
                     {
-                        self.unwind_if_entered();
+                        self.unwind_if_entered(
+                            weaver_types::FaultCase::OrganDeathObserved,
+                            &fault,
+                        );
                         return Err(fault);
                     }
                 }
@@ -405,22 +417,38 @@ impl Harness {
                     // report's wire case being issue 106's open election: a
                     // fault below the exchange layer, ending service the
                     // way section 3 ends it.
-                    let residue = match &self.state {
-                        ChannelState::Entered(run) => run.spu.as_ref().map(|spu| {
-                            matches!(
-                                spu.decode.recv_reply(),
-                                Ok(crate::channel::DecodeReply::Answer(TokenAnswer::AtRest))
-                            )
-                        }),
+                    let verdict = match &self.state {
+                        ChannelState::Entered(run) => {
+                            run.spu.as_ref().map(|spu| spu.decode.recv_reply())
+                        }
                         _ => None,
                     };
-                    if residue != Some(true) {
-                        self.unwind_if_entered();
-                        return Err(ChannelFault::Undecodable);
+                    match verdict {
+                        Some(Ok(crate::channel::DecodeReply::Answer(TokenAnswer::AtRest))) => {}
+                        // A reply that decoded and is not the residue is the
+                        // one place the synthetic fault is honest: the octets
+                        // read, the seam's state cannot.
+                        Some(Ok(_)) | None => {
+                            self.unwind_if_entered(
+                                weaver_types::FaultCase::OrganDeathObserved,
+                                &ChannelFault::Undecodable,
+                            );
+                            return Err(ChannelFault::Undecodable);
+                        }
+                        // The channel's own fault is retained, so the fault
+                        // event's account carries what the seam met rather
+                        // than a synthetic stand-in.
+                        Some(Err(fault)) => {
+                            self.unwind_if_entered(
+                                weaver_types::FaultCase::OrganDeathObserved,
+                                &fault,
+                            );
+                            return Err(fault);
+                        }
                     }
                 }
                 Err(fault) => {
-                    self.unwind_if_entered();
+                    self.unwind_if_entered(weaver_types::FaultCase::ListenerLost, &fault);
                     return Err(fault);
                 }
             }
@@ -773,10 +801,28 @@ impl Harness {
         }
     }
 
-    /// Unwinds a standing run, for a path that ends service without a leave.
-    fn unwind_if_entered(&mut self) {
+    /// Unwinds a standing run, for a path that ends service without a
+    /// leave, and records why before it does. A worker that dies seconds
+    /// after a fault with no fault event in the stream is the record gap
+    /// issue #221 filed: the stream is the program's one fault carrier,
+    /// and a silent death lies by omission. The case is the caller's,
+    /// because the site that met the fault knows which party it lost, and
+    /// the account carries the fault's own spelling.
+    fn unwind_if_entered(&mut self, case: weaver_types::FaultCase, fault: &ChannelFault) {
         if let ChannelState::Entered(run) = std::mem::replace(&mut self.state, ChannelState::Left) {
             let mut run = *run;
+            let turn = run.turn_in_flight.clone();
+            let account = serde_json::json!({
+                "organ": "harness",
+                "service-ended": format!("{fault:?}"),
+            })
+            .to_string();
+            let _ = run.author.author_fault(
+                &mut run.recorder,
+                Subsystem::Harness,
+                turn.as_ref(),
+                &crate::authorship::harness_report(case, &account),
+            );
             let _ = leave(&mut run);
         }
     }
@@ -1865,7 +1911,10 @@ mod tests {
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
         };
-        harness.unwind_if_entered();
+        harness.unwind_if_entered(
+            weaver_types::FaultCase::OrganDeathObserved,
+            &ChannelFault::Undecodable,
+        );
         match &harness.state {
             ChannelState::Left => {}
             _ => panic!("the position is terminal after an unwind"),
@@ -1881,6 +1930,17 @@ mod tests {
         assert!(
             stream.contains("\"kind\":\"load\""),
             "and the run it closes is the one that opened: {stream}"
+        );
+        // Issue #221's gap: the death recorded its why before the bracket
+        // closed, inside the record whose reason for existing is that it
+        // never lies.
+        assert!(
+            stream.contains("\"kind\":\"fault\""),
+            "the ending authored a fault event: {stream}"
+        );
+        assert!(
+            stream.contains("organ_death_observed") && stream.contains("Undecodable"),
+            "the fault names its case and carries the fault's spelling: {stream}"
         );
     }
 
