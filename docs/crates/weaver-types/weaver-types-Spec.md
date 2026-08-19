@@ -1399,12 +1399,15 @@ is still the harness's to author.
 
 **Three cases, each one fact.** `Completed` is the family's stop condition
 reached, the model's own end. `Stopped` is the generation ended from
-outside mid-stream, the operator's stop or the session's capacity.
-`Length` is the turn's token limit reached, added 2026-08-19 by issue
-#218's evidence: the cap had exited as `Completed`, so a reader of the
-record could not distinguish a finished answer from a cut one, which is an
-ambiguity in the one artifact whose reason for existing is that it never
-lies.
+outside the model's own signal: the operator's stop directive, or the
+session's context capacity reached mid-generation, the resident-length
+limit named here explicitly as the non-turn limit so the two ceilings
+cannot be read as one. `Length` is the turn's token limit and that limit
+alone, `max-tokens-per-turn` reached, added 2026-08-19 by
+issue #218's evidence: the cap had exited as `Completed`, so a reader of
+the record could not distinguish a finished answer from a cut one, which
+is an ambiguity in the one artifact whose reason for existing is that it
+never lies.
 
 **`Finish` is shaped here and `weaver-trace` shapes its own, with the harness
 converting.** That is the arrangement `SessionId` and `SessionRef` already take,
