@@ -1481,6 +1481,110 @@ mod tests {
         )
     }
 
+    /// The declared election reaches the tee, through the real enter path:
+    /// a fake member listens at the seam's name, the enter runs with a
+    /// non-default election and organ binaries that cannot exec, and by
+    /// the time the fan-out fails after-load the member has already
+    /// received the opener carrying exactly the declared kinds and paths,
+    /// followed by the load event's distillate. The pairs-for-elected-keys
+    /// behavior itself is the tee suite's to pin - what this buys is the
+    /// plumbing from `EnterPayload` to `Tee::open` that nothing else
+    /// watches. Needs no device, no fixture, and no built organs.
+    #[test]
+    fn the_declared_election_reaches_the_tee() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-election-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("scratch");
+        let listener =
+            crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
+
+        // The fake member: accept the worker's dial, hand back every line
+        // that arrives until the peer closes.
+        let member = std::os::unix::net::UnixListener::bind(dir.join("state.sock"))
+            .expect("member binds");
+        let (send, receive) = std::sync::mpsc::channel::<String>();
+        let reader = std::thread::spawn(move || {
+            use std::io::Read;
+            let (mut channel, _) = member.accept().expect("the worker dials");
+            let mut held = String::new();
+            let _ = channel.read_to_string(&mut held);
+            for line in held.lines() {
+                let _ = send.send(line.to_string());
+            }
+        });
+
+        let sink_path = dir.join("trace.ndjson");
+        let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+        let mut harness = Harness {
+            coordination: listener,
+            organs: OrganBinaries {
+                spu: "/nonexistent/weaver-spu".into(),
+                gate: "/nonexistent/weaver-gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::BeforeEnter,
+        };
+        let payload = weaver_types::EnterPayload {
+            session: SessionId("s-election".into()),
+            run: weaver_types::RunId("r-1".into()),
+            spu_instruction: weaver_types::SpuInstruction {
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef("unreachable".into()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    identity: Vec::new(),
+                    tunable_values: Default::default(),
+                },
+            },
+            gate_instruction: weaver_types::GateInstruction {
+                access_rule: weaver_types::AccessRule {
+                    allowed_uids: Default::default(),
+                    allowed_gids: Default::default(),
+                    denied_uids: Default::default(),
+                },
+            },
+            state_election: weaver_types::StateElection {
+                all_kinds: false,
+                keys: vec![weaver_types::ElectedKindConfig {
+                    kind: "load".into(),
+                    paths: vec!["origin".into()],
+                }],
+            },
+        };
+
+        // The fan-out fails after-load at the SPU exec, which is the point:
+        // the tee attach and the load event precede the forks.
+        match harness.enter(payload, Some(sink)) {
+            Err(EnterFailure::AfterLoad(_, _)) => {}
+            Ok(_) => panic!("the bogus fan-out cannot succeed"),
+            Err(EnterFailure::BeforeLoad(refusal)) => {
+                panic!("failed before the load: {refusal:?}")
+            }
+        }
+        // Dropping the run above closed the tee's channel, so the reader
+        // drains to end-of-stream and finishes.
+        reader.join().expect("the member read to closure");
+
+        let opener = receive.recv().expect("the opener arrived first");
+        let parsed: serde_json::Value = serde_json::from_str(&opener).expect("opener parses");
+        let election = &parsed["election"];
+        assert_eq!(election["all_kinds"], serde_json::Value::Bool(false));
+        assert_eq!(election["keys"][0]["kind"], "load");
+        assert_eq!(election["keys"][0]["paths"][0], "origin");
+
+        let distilled = receive.recv().expect("the load event distilled");
+        let frame: serde_json::Value = serde_json::from_str(&distilled).expect("frame parses");
+        assert_eq!(frame["envelope"]["kind"], "load");
+        assert_eq!(frame["envelope"]["session"], "s-election");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// **The turn rehearses on the device**, the live run's shape inside
     /// the suite: the real enter fan-out forks the real organ binaries,
     /// the SPU admits real weights on the device, the session opens with
