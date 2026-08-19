@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, third of this date, the finish tells the truth.
+Section 4.4's `Finish` gains `Length`: the generation ended because the
+turn's token limit was reached, a third fact the two-case set flattened
+into `Completed`, which issue #218 found from the record's own evidence -
+a capped answer reporting itself complete. The trace's mirror and the
+close's member move in the same act.
 **Revised:** 2026-08-19, the tee's election reaches the declaration.
 `AgentConfig` gains `state_election`, the one optional field this Spec
 carries, its absence meaning the ruled default election per
@@ -1343,6 +1349,7 @@ pub struct Generation {
 pub enum Finish {
     Completed,
     Stopped,
+    Length,
 }
 ```
 
@@ -1389,6 +1396,15 @@ per the decode contract's section 2. The measurement travels that path to the
 model events, so no crate holds a second copy of a shape `weaver-trace` owns and
 the sole-writer rule is untouched: what the SPU produces is data, and the event
 is still the harness's to author.
+
+**Three cases, each one fact.** `Completed` is the family's stop condition
+reached, the model's own end. `Stopped` is the generation ended from
+outside mid-stream, the operator's stop or the session's capacity.
+`Length` is the turn's token limit reached, added 2026-08-19 by issue
+#218's evidence: the cap had exited as `Completed`, so a reader of the
+record could not distinguish a finished answer from a cut one, which is an
+ambiguity in the one artifact whose reason for existing is that it never
+lies.
 
 **`Finish` is shaped here and `weaver-trace` shapes its own, with the harness
 converting.** That is the arrangement `SessionId` and `SessionRef` already take,

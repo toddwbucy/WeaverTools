@@ -7,6 +7,12 @@ are blockers on the Spec phase. One party is an external principal rather than a
 crate, the second instance of the category that ruling settles.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, the close carries the cut. Section 3's answered
+close gains one optional member: `finish`, present with the value
+`"length"` where the generation was cut at the turn's token limit and
+absent where the model reached its own end, so a client renders a
+truncated answer as truncated rather than whole. Filed from the first
+outside consumer, issue #218, and entering by this contract's own door.
 **Revised:** 2026-08-12, the line takes a bound, with the gate's turn-half
 act. Section 2 delegates the bound to the Spec beside the field list, and
 section 5 gains the case: a line exceeding the bound with no delimiter has
@@ -94,6 +100,10 @@ The turn's close: one JSON line per turn, carrying the response, or carrying the
 close reason where no response exists, a stopped turn closing with the stop reason
 marked in its place per the grammar of the basic loop. The close names its kind, so
 a client can tell a clean close from a stopped one without reading anything else.
+An answered close whose generation was cut at the turn's token limit carries one
+more member, `finish` with the value `"length"`, and carries it only then: absence
+means the model reached its own end, so a client renders a truncated answer as
+truncated and pays nothing on the whole ones.
 
 **A close that answers a turn names it, and names the run that turn belongs
 to**, per `weaver-gate-PRD` section 1, so a client can refer to a turn rather

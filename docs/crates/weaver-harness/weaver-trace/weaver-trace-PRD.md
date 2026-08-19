@@ -6,6 +6,11 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, the finish tells the truth. Section 3.2's
+`model.output` clause names the third way a generation ends: cut at the
+turn's token limit, distinct from completed and from stopped, per
+issue #218's evidence that the cap had reported itself complete. The floor's
+`Finish` and this crate's mirror gain `Length` in the same act.
 **Revised:** 2026-08-19, the system role lands. The kind set gains
 `message.system`, fifteenth, under this charter's own rule that adding one
 edits this charter and every contract naming the set: the floor's `Role`
@@ -470,9 +475,12 @@ admitted identity, which this ruling names and does not decide.
 
 **`model.output` carries the emission verbatim, before any parse.** The
 model's own family-styled output, the reasoning blocks and channel markers
-and tool-call markers exactly as emitted, and how the generation ended,
-completed or stopped. **The record holds both layers and never flattens
-one into the other:** this payload is the verbatim reality and the message
+and tool-call markers exactly as emitted, and how the generation ended:
+completed by the model's own stop, stopped from outside mid-stream, or cut
+at the turn's token limit, the third case added 2026-08-19 because a cap
+that reported itself complete put an ambiguity in the one record whose
+reason for existing is that it never lies. **The record holds both layers
+and never flattens one into the other:** this payload is the verbatim reality and the message
 kinds hold the canonical parse of it, with the family parsers as the recorded
 bridge between them, which is the outbound half of the same end-to-end
 requirement. A record that kept only the parse could not answer what the

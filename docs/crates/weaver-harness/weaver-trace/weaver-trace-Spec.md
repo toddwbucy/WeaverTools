@@ -4,6 +4,10 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, second of this date, the finish tells the truth.
+`Finish` gains `Length`, mirroring the floor's same-act addition per the
+two-names-one-fact arrangement of section 1: the turn's token limit
+reached, which the record had flattened into `Completed`.
 **Revised:** 2026-08-19, the system role lands. `Kind` gains
 `MessageSystem` with its explicit rename, the counts move to fifteen
 throughout, the message kinds become four, and the kind-to-payload mapping
