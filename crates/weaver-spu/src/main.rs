@@ -560,6 +560,7 @@ fn serve_decode(
                 let finish = match generated.stopped {
                     Stopped::Complete => Finish::Completed,
                     Stopped::Cancelled | Stopped::CapacityReached => Finish::Stopped,
+                    Stopped::LimitReached => Finish::Length,
                 };
                 let measurement =
                     render_measurement(resident, &delta_tokens, &generated, delta_text.len());
@@ -640,6 +641,8 @@ fn serve_decode(
                     content,
                     request,
                     measurement,
+                    resident: standing.session.resident_len() as u64,
+                    capacity: standing.session.capacity() as u64,
                 });
                 if send_answer(decode, &answer).is_err() {
                     return Err(());
@@ -664,9 +667,17 @@ fn serve_decode(
 
             TokenDirective::Flush => {
                 let standing = opened.as_mut().expect("at rest implies an open session");
+                let resident_before = standing.session.resident_len() as u64;
                 match standing.session.flush() {
                     Ok(()) => {
-                        if send_answer(decode, &TokenAnswer::Flushed).is_err() {
+                        // Both counts from the one authority, per the decode
+                        // contract: the harness authors the record's flush
+                        // event from exactly them.
+                        let flushed = TokenAnswer::Flushed {
+                            resident_before,
+                            resident_after: standing.session.resident_len() as u64,
+                        };
+                        if send_answer(decode, &flushed).is_err() {
                             return Err(());
                         }
                     }

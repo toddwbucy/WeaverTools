@@ -28,7 +28,7 @@
 //! ```
 //!
 //! The kind enum is exhaustive (`trace-kind-enum-exhaustive`): a consumer's
-//! match with no wildcard compiles, and a fifteenth kind breaks it loudly.
+//! match with no wildcard compiles, and a further kind breaks it loudly.
 //!
 //! ```
 //! use weaver_trace::Kind;
@@ -45,6 +45,7 @@
 //!         Kind::ToolCallStarted => "tool.call.started",
 //!         Kind::ToolCallCompleted => "tool.call.completed",
 //!         Kind::Fault => "fault",
+//!         Kind::Flush => "flush",
 //!         Kind::ModelRequest => "model.request",
 //!         Kind::ModelOutput => "model.output",
 //!         Kind::ModelMeasurement => "model.measurement",
@@ -139,8 +140,8 @@ mod writer;
 
 pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
-    Envelope, Event, Finish, Kind, Line, ModelOutput, Payload, RunRef, SessionRef, StopReason,
-    Subsystem, TurnClose, TurnRef, raw_payload,
+    Envelope, Event, Finish, FlushCounts, Kind, Line, ModelOutput, Payload, RunRef, SessionRef,
+    StopReason, Subsystem, TurnClose, TurnRef, raw_payload,
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};
 pub use structure::{Record, WorkingStructure};

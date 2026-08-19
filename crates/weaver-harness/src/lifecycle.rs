@@ -98,6 +98,20 @@ fn render_close(
     value: &str,
     named: Option<(&TurnKey, &weaver_types::RunId)>,
 ) -> String {
+    render_close_with_finish(kind, member, value, named, false)
+}
+
+/// The world contract's one optional member: an answered close whose
+/// generation was cut at the turn's token limit carries `finish:
+/// "length"`, and carries it only then, so a client renders a truncated
+/// answer as truncated and pays nothing on the whole ones.
+fn render_close_with_finish(
+    kind: &str,
+    member: &str,
+    value: &str,
+    named: Option<(&TurnKey, &weaver_types::RunId)>,
+    truncated: bool,
+) -> String {
     let mut map = serde_json::Map::new();
     map.insert(
         "kind".to_string(),
@@ -107,6 +121,12 @@ fn render_close(
         member.to_string(),
         serde_json::Value::String(value.to_string()),
     );
+    if truncated {
+        map.insert(
+            "finish".to_string(),
+            serde_json::Value::String("length".to_string()),
+        );
+    }
     if let Some((turn, run)) = named {
         map.insert(
             "turn".to_string(),
@@ -228,6 +248,10 @@ struct Run {
     /// state port. `None` where the leg is not standing, which the port
     /// serves as the same absence a missing answer does.
     state: Option<crate::state::StateSeam>,
+    /// The session's fullness as the last generation carried it, granted to
+    /// the seat as the fullness read, per the context ports of the Spec's
+    /// section 6.
+    fullness: Option<(u64, u64)>,
     turn_in_flight: Option<TurnKey>,
     /// Each initiator numbers exchanges on its own channel, so the SPU's and
     /// the gate's counters are separate and neither is hardcoded.
@@ -664,6 +688,7 @@ impl Harness {
                         Some(pending),
                         gate_port,
                         run.state.as_mut(),
+                        &mut run.fullness,
                     );
                     match entry(&mut ports, &text) {
                         // A turn the operator's stop aborted answers the
@@ -677,11 +702,12 @@ impl Harness {
                         // A model-side stop is a completed turn whose
                         // truncation the record holds, so the client is
                         // answered with what stands.
-                        Ok(outcome) => render_close(
+                        Ok(outcome) => render_close_with_finish(
                             "answered",
                             "text",
                             &outcome.emission,
                             Some((&outcome.turn, &run_ref)),
+                            outcome.truncated,
                         ),
                         Err(crate::engine::TurnError::Refused { turn, refusal }) => render_close(
                             "stopped",
@@ -995,6 +1021,7 @@ impl Harness {
             spu: None,
             gate: None,
             state: state_seam,
+            fullness: None,
             turn_in_flight: None,
             spu_ordinal: 0,
             gate_ordinal: 0,
@@ -1193,6 +1220,7 @@ impl Harness {
                     None,
                     None,
                     run.state.as_mut(),
+                    &mut run.fullness,
                 ))
             }
             // Before enter and after leave there is no standing interior to
@@ -1516,6 +1544,7 @@ mod tests {
                 }),
                 gate: None,
                 state: None,
+                fullness: None,
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
                 spu_ordinal: 0,
                 gate_ordinal: 0,
@@ -2091,6 +2120,8 @@ mod tests {
                 finish: weaver_types::Finish::Completed,
                 request,
                 measurement,
+                resident: 64,
+                capacity: 4096,
             });
             let bytes = serde_json::to_vec(&answer).expect("answer renders");
             sock_send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");

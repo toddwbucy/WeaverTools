@@ -85,6 +85,10 @@ pub struct Ports<'a> {
     /// end where the leg stands, and `None` where it does not, which the
     /// port serves as the same absence a missing answer does.
     state: Option<&'a mut crate::state::StateSeam>,
+    /// The session's fullness as the last generation carried it, per the
+    /// context ports of `weaver-harness-Spec` section 6: written by the
+    /// turn from the decode answer, read by the loop before the wall.
+    fullness: &'a mut Option<(u64, u64)>,
 }
 
 /// Why a turn did not complete. A refusal the seam typed is the session
@@ -137,6 +141,12 @@ pub struct TurnOutcome {
     /// the partial stands. A model-side stop is not this, per the close's
     /// own distinction.
     pub aborted: bool,
+    /// The generation was cut at the turn's token limit, the `Length`
+    /// finish of `weaver-types-Spec` section 4.4: its own fact rather than
+    /// a case of `stopped`, because overloading the stop flag is the same
+    /// conflation the finish vocabulary exists to end. The answered close
+    /// surfaces it per the world contract.
+    pub truncated: bool,
 }
 
 impl<'a> Ports<'a> {
@@ -158,6 +168,7 @@ impl<'a> Ports<'a> {
         pending: Option<&'a mut Option<OrganChannel>>,
         gate: Option<GatePort<'a>>,
         state: Option<&'a mut crate::state::StateSeam>,
+        fullness: &'a mut Option<(u64, u64)>,
     ) -> Self {
         Ports {
             decode,
@@ -169,7 +180,62 @@ impl<'a> Ports<'a> {
             pending,
             gate,
             state,
+            fullness,
         }
+    }
+
+    /// The fullness read, per `weaver-harness-Spec` section 6's context
+    /// ports: the session's resident token count and its capacity as the
+    /// last generation carried them, `None` before any generation. Plain
+    /// counts whose meaning is the loop's - when a flush is worth its cost
+    /// is the loop's business.
+    pub fn fullness(&self) -> Option<(u64, u64)> {
+        *self.fullness
+    }
+
+    /// The flush, per `weaver-harness-Spec` section 6's context ports:
+    /// drives the decode seam's standing flush exchange, valid between
+    /// turns, and on confirmation authors the record's `flush` event from
+    /// the counts the confirmation carried, the SPU being the one
+    /// authority on either number. Answers the pair, or `None` where the
+    /// seam refused or broke - the next turn will meet the dead seam
+    /// properly, so nothing here converts it.
+    pub fn flush(&mut self) -> Option<(u64, u64)> {
+        self.decode.send_directive(&TokenDirective::Flush).ok()?;
+        let counts = loop {
+            match self.decode.recv_reply().ok()? {
+                crate::channel::DecodeReply::Answer(TokenAnswer::Flushed {
+                    resident_before,
+                    resident_after,
+                }) => break (resident_before, resident_after),
+                crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                _ => return None,
+            }
+        };
+        self.author
+            .author(
+                self.recorder,
+                Kind::Flush,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Flush(weaver_trace::FlushCounts {
+                    resident_before: counts.0,
+                    resident_after: counts.1,
+                })),
+            )
+            .ok()?;
+        if let Some((_, capacity)) = *self.fullness {
+            *self.fullness = Some((counts.1, capacity));
+        }
+        Some(counts)
+    }
+
+    /// The recall ask, per `weaver-harness-state-contract` section 2: the
+    /// conversation as custody holds it, in landing order, bounded to the
+    /// most recent turns where a bound is given. `None` is the dead peer at
+    /// the seat, the same absence a missing leg serves.
+    pub fn recall(&mut self, last_turns: Option<u64>) -> Option<Vec<crate::state::Recalled>> {
+        self.state.as_mut()?.ask_recall(last_turns)
     }
 
     /// The state port, per `weaver-harness-Spec` section 6: the shape ask
@@ -367,11 +433,13 @@ impl<'a> Ports<'a> {
         };
 
         let aborted = self.close_turn(turn, &generation, stop)?;
+        *self.fullness = Some((generation.resident, generation.capacity));
         Ok(TurnOutcome {
             turn: turn.clone(),
             emission: generation.emission,
             stopped: matches!(generation.finish, weaver_types::Finish::Stopped),
             aborted,
+            truncated: matches!(generation.finish, weaver_types::Finish::Length),
         })
     }
 
@@ -619,7 +687,6 @@ impl<'a> Ports<'a> {
                 Some(Payload::ModelRequest(generation.request.clone())),
             )
             .map_err(|_| TurnError::ChannelLost)?;
-        let stopped = matches!(generation.finish, weaver_types::Finish::Stopped);
         self.author
             .author(
                 self.recorder,
@@ -628,10 +695,13 @@ impl<'a> Ports<'a> {
                 Some(turn),
                 Some(Payload::ModelOutput(ModelOutput {
                     emission: generation.emission.clone(),
-                    finish: if stopped {
-                        weaver_trace::Finish::Stopped
-                    } else {
-                        weaver_trace::Finish::Completed
+                    // The one conversion site, all three cases carried: an
+                    // if on the stopped flag flattened Length into
+                    // Completed, which is issue #218's lie at the record.
+                    finish: match generation.finish {
+                        weaver_types::Finish::Completed => weaver_trace::Finish::Completed,
+                        weaver_types::Finish::Stopped => weaver_trace::Finish::Stopped,
+                        weaver_types::Finish::Length => weaver_trace::Finish::Length,
                     },
                 })),
             )
@@ -841,6 +911,8 @@ mod tests {
                 }],
                 emission: "one word".into(),
                 finish: Finish::Completed,
+                resident: 64,
+                capacity: 4096,
                 request,
                 measurement,
             }));
@@ -859,6 +931,7 @@ mod tests {
 
         let listener = test_listener();
         let outcome = {
+            let mut fullness = None;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -869,6 +942,7 @@ mod tests {
                 None,
                 None,
                 None,
+                &mut fullness,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -996,6 +1070,7 @@ mod tests {
 
         let listener = test_listener();
         let error = {
+            let mut fullness = None;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1006,6 +1081,7 @@ mod tests {
                 None,
                 None,
                 None,
+                &mut fullness,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -1103,6 +1179,8 @@ mod tests {
                 )],
                 emission: r#"<tool_call>{"name":"calculator"}</tool_call>"#.into(),
                 finish: Finish::Completed,
+                resident: 64,
+                capacity: 4096,
                 request: raw(r#"{"rendered":"r1","template":"qwen2","sampling":{}}"#),
                 measurement: raw(
                     r#"{"model":"m","weights_hash":"h","input_tokens":[1],"output_tokens":[2],"blocks":[{"label":"turn-delta","start":0,"end":1}],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#,
@@ -1133,6 +1211,8 @@ mod tests {
                 }],
                 emission: "37 * 43 is 1591.".into(),
                 finish: Finish::Completed,
+                resident: 64,
+                capacity: 4096,
                 request: raw(r#"{"rendered":"r2","template":"qwen2","sampling":{}}"#),
                 measurement: raw(
                     r#"{"model":"m","weights_hash":"h","input_tokens":[3],"output_tokens":[4],"blocks":[{"label":"turn-delta","start":0,"end":1}],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#,
@@ -1176,6 +1256,7 @@ mod tests {
 
         let listener = test_listener();
         let outcome = {
+            let mut fullness = None;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1190,6 +1271,7 @@ mod tests {
                     held: &mut held,
                 }),
                 None,
+                &mut fullness,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -1285,6 +1367,7 @@ mod tests {
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut turn_ordinal = 0u64;
         let listener = test_listener();
+        let mut fullness = None;
         let mut ports = Ports::grant(
             &decode,
             &author,
@@ -1295,6 +1378,7 @@ mod tests {
             None,
             None,
             None,
+            &mut fullness,
         );
         let delta = vec![Message {
             role: Role::ToolResult,
@@ -1392,6 +1476,8 @@ mod tests {
                 content: vec![],
                 emission: "par".into(),
                 finish: Finish::Stopped,
+                resident: 64,
+                capacity: 4096,
                 request,
                 measurement,
             }));
@@ -1410,6 +1496,7 @@ mod tests {
         let mut slot = Some(verb_end);
 
         let outcome = {
+            let mut fullness = None;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1420,6 +1507,7 @@ mod tests {
                 Some(&mut slot),
                 None,
                 None,
+                &mut fullness,
             );
             let delta = vec![Message {
                 role: Role::User,
