@@ -4,6 +4,13 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, fourth of this date, the flush port carries the
+cut. Per the operator's ruling that the cleanup line is the loop's and
+the decode contract's amended flush exchange: the seat's flush takes
+`keep`, the resident length the session returns to, forwarded to the
+directive unjudged, the port staying the thin pass every context port
+is. The confirmation's counts answer what the cut resolved to under the
+seam's bounds.
 **Revised:** 2026-08-19, third of this date, the Python-iterating worker
 enters the tree. Issue #134's composition root had stood outside the
 repository in its own manifest so the interpreter stayed out of this
@@ -1583,8 +1590,14 @@ when a flush is worth its cost is the loop's business, per
 flush exchange, chartered at `weaver-harness-spu-decode-contract` and
 implemented in the engine since the token workflow, valid between turns
 and never while a generation streams, which the seat's own granting
-already guarantees. On the flush's confirmation the harness authors the
-record's `flush` event carrying the resident counts before and after, per
+already guarantees. Since the cut ruling of 2026-08-19 the flush takes
+`keep`, the resident length the session returns to, forwarded to the
+directive unjudged: where the cleanup line falls is the loop's election,
+the seam bounds it below by the identity prefix and above by the resident
+count, and the confirmation's counts answer what held, so the loop reads
+its cut's resolution rather than assuming it. On the flush's confirmation
+the harness authors the record's `flush` event carrying the resident
+counts before and after, per
 `weaver-trace-PRD` section 3.1's sixteenth kind, because a context that
 shrank without a record would break the accumulation reading the
 model.request ruling rests on. After a flush the assembly's working

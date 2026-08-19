@@ -8,6 +8,15 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, second of this date, the flush names its cut.
+Per the operator's ruling: the cleanup line is the loop's, because the
+loop knows what it does not want to re-decode, and a fixed outcome made
+one policy true for all use cases. The flush directive gains `keep`, the
+resident length the session returns to, bounded below by the identity
+prefix whose permanence this seam guarantees and above by the resident
+count, the confirmation's counts carrying what held in every case. The
+SPU still decides nothing: it executes the cut the ask names, per
+`weaver-spu-PRD` section 13.9 as amended in this act.
 **Revised:** 2026-08-19, the generation reports the session's fullness. The
 generate exchange's closing answer carries the session's resident token
 count and its capacity beside the emission, per issue #221's arc: the
@@ -227,13 +236,20 @@ answers at rest, a clean close rather than a refusal, the same shape the
 stop exchange takes on the coordination seam.
 
 **Flush.** Opened by the harness between turns, never while a generation
-is in flight. The session returns to its prefix-only state: the identity
-prefix resident, the accumulated turns gone, the outcome fixed and the
-mechanism the Spec's per family, per `weaver-spu-PRD` section 13.9. The
-answer confirms after the outcome holds, and carries the resident token
-counts before and after the truncate, added 2026-08-19: the SPU is the one
-authority on either number, and the harness authors the record's `flush`
-event from exactly them.
+is in flight. The directive names its cut, `keep`, added 2026-08-19 on
+the operator's ruling that the cleanup line is the loop's: the session
+returns to its first `keep` resident tokens, everything beyond them gone,
+the outcome fixed against the named cut and the mechanism the Spec's per
+family, per `weaver-spu-PRD` section 13.9. The cut is bounded, not
+refused: a `keep` below the identity prefix's length holds the prefix
+entire, its permanence being this seam's own guarantee, and a `keep` at
+or beyond the resident count cuts nothing, the confirmation's counts
+carrying what held in either case, so no outcome is silent. A `keep` of
+zero is the prefix-only state the flush has always meant. The answer
+confirms after the outcome holds, and carries the resident token counts
+before and after the truncate: the SPU is the one authority on either
+number, and the harness authors the record's `flush` event from exactly
+them.
 
 **Report a fault.** Emitted by the SPU, the seam's one SPU-originated
 message and not an exchange, carrying a `fault-report` naming a case of
@@ -275,7 +291,7 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
 - An answer to append-and-generate arrives only after the session is
   well-framed for the next turn, stopped or complete alike, so the
   harness may rely on the session's coherence without inspecting it.
-- An answer to flush arrives only after the prefix-only state holds.
+- An answer to flush arrives only after the kept-prefix state holds.
 
 ## 4. What each party supplies and guarantees
 
@@ -439,7 +455,12 @@ until the tool workflow authors that contract and the count is read again.
 How each check is implemented is Spec work. What must be checkable:
 
 - A session never rewinds: no operation of this seam reduces the resident
-  state except the flush, whose outcome is the prefix alone.
+  state except the flush, whose outcome is the kept prefix and never less
+  than the identity prefix.
+- The cut's bounds hold at their edges: a keep of zero, one inside the
+  span, one at the resident count, and one beyond it each resolve to the
+  clamped length, the confirmation's counts agreeing with the outcome in
+  every case and the identity prefix never cut.
 - An aborted generation leaves the session accepting the next turn's
   delta cleanly, watched to fail when the terminator step is removed.
 - The stop lands within a token boundary of the cancel's arrival.

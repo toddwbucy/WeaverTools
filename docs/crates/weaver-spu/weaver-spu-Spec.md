@@ -4,6 +4,12 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, second of this date, the flush names its cut.
+Section 4.4 reaches the ask's kept length instead of the fixed prefix,
+per charter section 13.9 as amended on the operator's ruling, and the
+session retains its resident token sequence so both flush mechanisms
+reach any kept length: truncation by position, re-establishment by
+re-decoding the kept slice.
 **Revised:** 2026-08-19, the generation reports the session's fullness.
 Section 6's travel list gains the resident count and the capacity, the
 floor's `Generation` carrying both per `weaver-types-Spec` section 4.4, so
@@ -957,16 +963,24 @@ said before it was stopped.
 
 ### 4.4 The flush
 
-**The outcome is fixed and the mechanism is per family.** After a flush the
-identity prefix is resident and the accumulated turns are gone, per charter
-section 13.9. Where a family's state permits truncation to a position the
-outcome is reached by truncating to the prefix's recorded length. Where it
-cannot roll back, the outcome is reached by re-establishing the session and
-decoding the prefix again, which is expensive and correct where the cheap path
-is silently wrong. **The family declares which it is** and the decode path
-reads the declaration rather than inferring it from a version string. Review's
-by non-purchase, a family declaring each way being two fixtures and one
-assertion about the resident length after the flush.
+**The outcome is the ask's kept length and the mechanism is per family.**
+After a flush the session's first kept tokens are resident and everything
+beyond them is gone, per charter section 13.9 as amended 2026-08-19: the
+ask names the cut, bounded below by the identity prefix's recorded length
+and above by the resident count, the bound applied as arithmetic and the
+confirmation's counts carrying what held. Where a family's state permits
+truncation to a position the outcome is reached by truncating to the kept
+length. Where it cannot roll back, the outcome is reached by
+re-establishing the session and decoding the kept slice again, which is
+expensive and correct where the cheap path is silently wrong. **The
+session retains its resident token sequence** for exactly this reach: the
+re-establishing mechanism needs the tokens it re-decodes, the identity
+prefix alone stopped sufficing when the cut became the ask's, and the
+retention is bounded by the capacity the load resolved. **The family
+declares which it is** and the decode path reads the declaration rather
+than inferring it from a version string. Review's by non-purchase, a
+family declaring each way being two fixtures and one assertion about the
+resident length after the flush.
 
 ```graph
 node: spu-flush-mechanism-from-declaration

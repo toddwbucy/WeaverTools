@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, fifth of this date, the flush names its cut.
+`TokenDirective::Flush` gains `keep`, the resident length the session
+returns to, per the operator's ruling that the cleanup line is the
+loop's and the decode contract's amended flush exchange. The cut is
+bounded rather than refused, below by the identity prefix and above by
+the resident count, the confirmation's standing counts carrying what
+held, so the answer's shape does not move.
 **Revised:** 2026-08-19, fourth of this date, the generation reports the
 session's fullness. Section 4.4's `Generation` gains `resident` and
 `capacity`, the session's token count and its ceiling as the generation
@@ -1301,7 +1308,7 @@ pub enum TokenDirective {
         delta: Vec<Message>,
     },
     Cancel { turn: TurnKey },
-    Flush,
+    Flush { keep: u64 },
 }
 
 pub enum TokenAnswer {
@@ -1411,9 +1418,10 @@ is still the harness's to author.
 **The flush confirmation carries both resident counts**, because the SPU
 is the one authority on either number and the harness authors the
 record's `flush` event from exactly them: the count before the truncate
-and the count after, the identity prefix's own length. A confirmation
-without the counts would leave the event's payload to a party that
-cannot know it.
+and the count after, the kept length as it held under the cut's bounds.
+A confirmation without the counts would leave the event's payload to a
+party that cannot know it, and under a bounded cut the counts are also
+where the asking loop learns what its `keep` resolved to.
 
 **The fullness rides every generation, added 2026-08-19 by issue #221's
 arc.** `resident` is the session's token count as the generation closed,
