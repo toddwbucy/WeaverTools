@@ -18,6 +18,12 @@ use std::os::unix::net::UnixStream;
 /// a missing leg serves.
 const ANSWER_BOUND_MS: u16 = 2_000;
 
+/// The bound on the answer's size, matched by the member's own cap on
+/// what it renders: an answer still unframed past this many octets is not
+/// the seam's traffic, and the seam retires rather than growing the turn
+/// path's memory on a peer's behavior.
+const ANSWER_BOUND_BYTES: usize = 1024 * 1024;
+
 /// The session's shape as the member answered it, per
 /// `weaver-harness-state-contract` section 2: the runs in the order custody
 /// first saw them, each with its held event counts by kind. The counts are
@@ -40,20 +46,41 @@ pub struct RunShape {
 /// the parse. Held on the run, granted to the seat, mintable nowhere else.
 pub struct StateSeam {
     channel: UnixStream,
+    /// The serve direction retires on its first failure: a late answer
+    /// after a timed-out ask would be read as the next ask's answer,
+    /// mis-attributing its position in the stream, so a seam that failed
+    /// one ask answers no later one. The ingest direction is the tee's
+    /// and is unaffected.
+    dead: bool,
 }
 
 impl StateSeam {
     /// Crate-private, the port discipline: the enter constructs it from the
     /// standing channel's clone and nothing outside loop 0 can.
     pub(crate) fn new(channel: UnixStream) -> StateSeam {
-        StateSeam { channel }
+        StateSeam {
+            channel,
+            dead: false,
+        }
     }
 
     /// The shape ask: write the frame, await the answer inside the bound,
-    /// parse. `None` is the contract's dead peer at the seat - the leg
-    /// down, the write refused, the bound expired, or the answer malformed
-    /// - converted into the same absence a missing leg serves.
+    /// parse. `None` is the contract's dead peer at the seat, whether the
+    /// leg is down, the write refused, the bound expired, or the answer
+    /// malformed, converted into the same absence a missing leg serves,
+    /// and the serve direction retires on it.
     pub(crate) fn ask_shape(&mut self) -> Option<SessionShape> {
+        if self.dead {
+            return None;
+        }
+        let answered = self.exchange();
+        if answered.is_none() {
+            self.dead = true;
+        }
+        answered
+    }
+
+    fn exchange(&mut self) -> Option<SessionShape> {
         if !self.send(b"{\"ask\":{\"shape\":{}}}\n") {
             return None;
         }
@@ -86,6 +113,9 @@ impl StateSeam {
         loop {
             if let Some(position) = buffer.iter().position(|&b| b == b'\n') {
                 return Some(String::from_utf8_lossy(&buffer[..position]).into_owned());
+            }
+            if buffer.len() > ANSWER_BOUND_BYTES {
+                return None;
             }
             let remaining = deadline.saturating_duration_since(std::time::Instant::now());
             if remaining.is_zero() {
@@ -175,6 +205,46 @@ mod tests {
         let started = std::time::Instant::now();
         assert!(seam.ask_shape().is_none());
         assert!(started.elapsed() < std::time::Duration::from_secs(10));
+    }
+
+    /// The serve direction retires on its first failure: a malformed
+    /// answer costs its ask, and a well-formed answer already waiting
+    /// behind it is never read, because attributing it to a later ask
+    /// would misplace its position in the stream.
+    #[test]
+    fn the_seam_retires_on_its_first_failure() {
+        let (ours, theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let mut peer = theirs;
+        peer.write_all(b"garbage\n{\"answer\":{\"shape\":{\"runs\":[]}}}\n")
+            .expect("answers in advance");
+        assert!(seam.ask_shape().is_none(), "a malformed answer misses");
+        assert!(
+            seam.ask_shape().is_none(),
+            "the retired seam never reads the late well-formed answer"
+        );
+    }
+
+    /// An answer still unframed past the byte bound retires the seam
+    /// inside the bound rather than growing the turn path's memory.
+    #[test]
+    fn an_unframed_flood_retires_the_seam_inside_the_bound() {
+        let (ours, theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let responder = std::thread::spawn(move || {
+            let mut peer = theirs;
+            let mut taken = [0u8; 256];
+            let _ = peer.read(&mut taken).expect("reads the ask");
+            let flood = vec![b'x'; 2 * ANSWER_BOUND_BYTES];
+            let _ = peer.write_all(&flood);
+        });
+        let started = std::time::Instant::now();
+        assert!(seam.ask_shape().is_none());
+        assert!(started.elapsed() < std::time::Duration::from_secs(10));
+        drop(seam);
+        responder.join().expect("responder");
     }
 
     /// A peer that answers is read whole across the seam.
