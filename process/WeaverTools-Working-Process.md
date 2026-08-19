@@ -470,8 +470,9 @@ carries the reason beside the name in both directions: what an open one waits
 on, and what closed one that has gone.
 
 **Both decode engines are written, and the turn completes through either.**
-The GGUF engine landed 2026-08-08 and the native engine followed across issue
-#158's arc, closed 2026-08-19: `native.rs` stood 2026-08-17 (#196), the pair
+The GGUF engine landed 2026-08-08 and the native engine followed across
+issue #158's arc, closed 2026-08-19: `native.rs` stood 2026-08-17 (#196),
+the pair
 forward and the split loaders opened the dual-GPU grid in both containers
 (#200, #201), and a 65 GB sharded artifact too large for any single card
 served across the pair (#202). Section 4.1's derivation answers for both
@@ -496,8 +497,14 @@ residual-stream readout's native tap stood 2026-08-19 with #158's closing
 act: an elected qwen2 residency taps every forward at either width, each
 layer's norm taken on the device with one scalar crossing, and the
 reduction travels in the measurement as `residual_norms`, absent rather
-than empty. An elected GGUF load refuses at admit by name, that tap being
-unwritten still, and the standing agent declaration elects no readout.
+than empty. The refusal turns on the election alone: an elected GGUF load
+refuses at admit by name, that tap being unwritten still, while a GGUF
+load with `residual_readout_election` false admits and serves turns
+exactly as before the tap existed. Where readout is not elected the SPU
+emits no `residual_norms` member at all, and the harness and the trace
+carry the measurement as opaque JSON either way, so the omission stays an
+absence in the record rather than anything converted to empty. The
+standing agent declaration elects no readout.
 
 **A completed turn satisfies no conformance assertion, and the SPU's two
 open moved on 2026-08-19 without closing.** Both waited on the readout tap
