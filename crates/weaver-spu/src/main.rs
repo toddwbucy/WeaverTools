@@ -150,9 +150,22 @@ const KNOBS: Knobs = Knobs {
 /// The context capacity and the per-turn generation ceiling, elected the same
 /// way. The ceiling is the stop condition's backstop for a model that never
 /// emits a stop token.
+///
+/// **The ceiling is operator-tunable as of 2026-08-19, per issue #218**:
+/// the frozen 512 was the first outside consumer's first wall, a code
+/// answer needing four to eight times that, so the election moves to the
+/// declaration where the deployment sizes it. A declaration must now
+/// supply `max-tokens-per-turn` in `tunable-values` or the load refuses by
+/// name, which is the explicitness the tunable route carries.
+///
+/// The capacity stays frozen this act and the freeze is a standing
+/// surprise worth knowing: a declaration supplying `context-capacity`
+/// today is ignored by this binary's election, per the frozen rule, and
+/// unfreezing it changes the KV cache's device footprint at the next
+/// load, so it moves only by the operator's own ruling.
 const SESSION_PARAMETERS: SessionParameters = SessionParameters {
     context_capacity: Disposition::Frozen(4096),
-    max_tokens_per_turn: Disposition::Frozen(512),
+    max_tokens_per_turn: Disposition::OperatorTunable,
 };
 
 /// What this load runs with, resolved once from the declaration.
@@ -1005,7 +1018,9 @@ mod tests {
                 model_binding: binding(),
                 residual_readout_election: false,
                 identity: vec![],
-                tunable_values: Default::default(),
+                tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                    .into_iter()
+                    .collect(),
             },
         }
     }

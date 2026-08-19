@@ -222,7 +222,9 @@ mod seam_success {
                         },
                         residual_readout_election: true,
                         identity: vec![],
-                        tunable_values: Default::default(),
+                        tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                            .into_iter()
+                            .collect(),
                     },
                 },
             },
@@ -301,7 +303,9 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                         identity: vec![],
-                        tunable_values: Default::default(),
+                        tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                            .into_iter()
+                            .collect(),
                     },
                 },
             },
@@ -395,7 +399,9 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                         identity: vec![],
-                        tunable_values: Default::default(),
+                        tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                            .into_iter()
+                            .collect(),
                     },
                 },
             },
