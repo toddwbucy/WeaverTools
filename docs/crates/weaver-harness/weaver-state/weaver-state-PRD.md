@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-19, second of this date, the election reaches the
+declaration. Section 5's tee-charter cell closes its remaining part: the
+election's block in the agent's file is `state-election`, shaped at
+`weaver-types-Spec` section 2, optional with its absence meaning this
+charter's ruled default, and it rides the enter directive per
+`weaver-admin-harness-contract` sections 3 and 5, every party merging in
+the act.
 **Revised:** 2026-08-19, the serve surface takes its shape. Section 5's
 serve cell and calling-shape cell close: the first asker arrived as the
 context-injection loop, the ask vocabulary landed in
@@ -225,13 +232,14 @@ today.
   store's internal shape is ruled at section 4 and is not this cell: what the
   seam carries and what the store holds are two facts, and only the first is
   the contract's.
-- **The tee's charter section.** The distillation surface's mechanism is
-  `weaver-trace`'s, per the ruling of 2026-08-18, and its paper lands in
-  `weaver-trace-PRD`, owed by the same workflow that writes the contract,
-  named here so neither document reads the other as already settled. The
-  election arrives with the load like the rest of the declaration, and where
-  its block sits in the agent's file is the deployment's shape to settle in
-  that act.
+- **The tee's charter section. Closed 2026-08-19.** The distillation
+  surface's mechanism is `weaver-trace`'s, per the ruling of 2026-08-18,
+  its paper standing at `weaver-trace-PRD` section 11 since the seam act,
+  and the deployment's shape settled with the declaration act: the
+  election's block is `state-election` in the agent's file, shaped at
+  `weaver-types-Spec` section 2, riding the enter directive per
+  `weaver-admin-harness-contract`, absent meaning section 4's ruled
+  default.
 - **Who else may ask.** Today the harness is the one peer, and every ask
   arrives through it. Whether a later operator surface reads state directly or
   through an admin verb is a cell for the day such a reader exists, refused
