@@ -1559,16 +1559,21 @@ mod tests {
         };
 
         // The fan-out fails after-load at the SPU exec, which is the point:
-        // the tee attach and the load event precede the forks.
-        match harness.enter(payload, Some(sink)) {
-            Err(EnterFailure::AfterLoad(_, _)) => {}
+        // the tee attach and the load event precede the forks. The bracket
+        // stands on that failure, so the run is retained and left the way
+        // the serving loop leaves it - dropping it unleft would orphan the
+        // forked child unreaped and leave the bracket unclosed.
+        let mut run = match harness.enter(payload, Some(sink)) {
+            Err(EnterFailure::AfterLoad(run, _)) => run,
             Ok(_) => panic!("the bogus fan-out cannot succeed"),
             Err(EnterFailure::BeforeLoad(refusal)) => {
                 panic!("failed before the load: {refusal:?}")
             }
-        }
-        // Dropping the run above closed the tee's channel, so the reader
-        // drains to end-of-stream and finishes.
+        };
+        let _ = leave(&mut run);
+        drop(run);
+        // The leave closed the bracket and the drop closed the tee's
+        // channel, so the reader drains to end-of-stream and finishes.
         reader.join().expect("the member read to closure");
 
         let opener = receive.recv().expect("the opener arrived first");
