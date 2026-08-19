@@ -480,7 +480,8 @@ completed by the model's own stop, stopped from outside mid-stream, or cut
 at the turn's token limit, the third case added 2026-08-19 because a cap
 that reported itself complete put an ambiguity in the one record whose
 reason for existing is that it never lies. **The record holds both layers
-and never flattens one into the other:** this payload is the verbatim reality and the message
+and never flattens one into the other:** this payload is the verbatim
+reality and the message
 kinds hold the canonical parse of it, with the family parsers as the recorded
 bridge between them, which is the outbound half of the same end-to-end
 requirement. A record that kept only the parse could not answer what the
