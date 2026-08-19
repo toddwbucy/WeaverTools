@@ -293,9 +293,14 @@ fn an_elected_readout_travels_with_the_generation() {
                 // generation ran at least one forward.
                 assert!(!norms.is_empty(), "width {width}: empty norms");
                 assert_eq!(norms.len() % 24, 0, "width {width}: {} figures", norms.len());
+                // The ceiling is exact on purpose: an empty delta decodes
+                // nothing, four sampled tokens decode once each, and the
+                // terminator's landing is the fifth, so a leaked prefix
+                // pass is the sixth and fails here rather than slipping
+                // under a slack bound.
                 let forwards = norms.len() / 24;
                 assert!(
-                    forwards <= 6,
+                    forwards <= 5,
                     "width {width}: {forwards} forwards claims more than the turn ran, \
                      the prefix leaked"
                 );
