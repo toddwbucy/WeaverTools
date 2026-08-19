@@ -205,7 +205,8 @@ members and never inside the measurement, the session's fullness as the
 generation closed: the resident token count and the capacity, added
 2026-08-19 so the loop that elects a flush sees the pressure before the
 wall rather than in the wall's refusal, shaped at `weaver-types-Spec`
-section 4.4 because the harness consumes them. **The template identity travels in the request and only
+section 4.4 because the harness consumes them. **The template identity
+travels in the request and only
 there**, per the ruling of 2026-08-17 on #129: it is an input-side fact of
 the same kind as the sampling values, which moved to the request for the
 same reason, and a member carried by both boxes of one turn's pair would be
