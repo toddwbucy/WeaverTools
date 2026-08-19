@@ -113,6 +113,16 @@ pub trait Backend {
     /// path is silently wrong.
     fn reestablish(&mut self) -> Result<(), DecodeFault>;
 
+    /// Drain the residual reduction the engine accumulated since the last
+    /// drain, per `weaver-spu-Spec` section 7: the reduction returns by the
+    /// same path as the generation, and `None` is an engine that taps
+    /// nothing, which is every engine whose residency was not admitted with
+    /// readout elected. Default `None` so an engine without a tap states
+    /// nothing.
+    fn take_reduction(&mut self) -> Option<crate::readout::Reduction> {
+        None
+    }
+
     /// Release the engine's resources.
     fn close(&mut self);
 }

@@ -283,7 +283,12 @@ impl ShardedModel {
 
     /// One forward over `tokens` at `offset`, answering the last position's
     /// logits as f32 on the host.
-    pub fn forward(&mut self, tokens: &[u32], offset: usize) -> Result<Vec<f32>, DecodeFault> {
+    pub fn forward(
+        &mut self,
+        tokens: &[u32],
+        offset: usize,
+        mut layer_norms: Option<&mut Vec<f32>>,
+    ) -> Result<Vec<f32>, DecodeFault> {
         let fault = |detail: String| DecodeFault::Engine { detail };
         let seq = tokens.len();
         // An empty decode reaches no distribution and the engine returns
@@ -301,7 +306,7 @@ impl ShardedModel {
         // state, per the module header.
         let mut hidden = [
             hidden0.clone(),
-            hop(&hidden0, &self.devices[0], &self.devices[1])
+            hop(&hidden0, &self.devices[1])
                 .map_err(|e| fault(format!("broadcast: {e}")))?,
         ];
 
@@ -389,6 +394,15 @@ impl ShardedModel {
             for half in 0..2 {
                 hidden[half] = (&hidden[half] + &reduced[half])
                     .map_err(|e| fault(format!("residual: {e}")))?;
+            }
+
+            // The pair's tap: both devices hold the whole residual, so the
+            // layer's figure is one device-side norm of the first copy and
+            // one scalar crossing, per `weaver-spu-Spec` section 7.
+            if let Some(norms) = layer_norms.as_deref_mut() {
+                let figure = super::native::layer_norm_figure(&hidden[0])
+                    .map_err(|e| fault(format!("tap: {e}")))?;
+                norms.push(figure);
             }
         }
 
@@ -527,31 +541,34 @@ fn repeat_kv(x: &Tensor, times: usize) -> candle_core::Result<Tensor> {
 /// read a partial the matmul has not finished writing. The failure was
 /// nondeterministic and moved between runs, weights byte-exact and every op
 /// exact in isolation, which is the signature that named it. The syncs cost
-/// a stall per reduction; the stream-event ordering that removes the stall
-/// is the same follow-up as the peer-to-peer copy, and it enters measured.
+/// a stall per reduction, and the direct path's measured rejection is
+/// recorded at `hop` below.
 fn allreduce(partials: Vec<Tensor>, devices: &[Device; 2]) -> candle_core::Result<[Tensor; 2]> {
     let mut it = partials.into_iter();
     let a = it.next().expect("two partials");
     let b = it.next().expect("two partials");
-    let b_on_a = hop(&b, &devices[1], &devices[0])?;
+    let b_on_a = hop(&b, &devices[0])?;
     let sum = (&a + &b_on_a)?;
-    let sum_on_b = hop(&sum, &devices[0], &devices[1])?;
+    let sum_on_b = hop(&sum, &devices[1])?;
     Ok([sum, sum_on_b])
 }
 
 /// One tensor from one device to the other, explicitly through the host.
 ///
-/// **The direct device-to-device path is not taken, and the ground is a
-/// measured race.** Candle's cuda-to-cuda `to_device` left the copy
-/// unordered against the source stream's queued compute under load, and the
-/// forward went nondeterministic - weights byte-exact, every op exact in
-/// isolation, the divergence moving between runs. Explicit synchronization
-/// around the direct path shrank the window without closing it. The host
-/// staging is two synchronous copies whose ordering is the driver's own
-/// contract, and the stream-event ordering that removes the stall enters
-/// with the peer-to-peer follow-up, measured.
-fn hop(tensor: &Tensor, from: &Device, to: &Device) -> candle_core::Result<Tensor> {
-    from.synchronize()?;
+/// **The direct device-to-device path was entered measured on 2026-08-19
+/// and the measurement rejected it.** With the fork's stream fences and
+/// the driver's peer plus pool-access grants all standing, the direct
+/// copy still corrupted intermittently below even full host
+/// synchronization - a pool-backed peer copy defect beneath the driver's
+/// own sync - and it paced slower besides: 47 against 76 tokens per
+/// second on the hop-dominated 0.5B case, because a hop here moves about
+/// two kilobytes and latency dominates, so the interconnect's bandwidth
+/// buys nothing. The host staging is two synchronous copies whose
+/// ordering is the driver's own contract, measured faster, and boring.
+/// A future entry at widths where the activations are large enough to
+/// pay reopens this with the fences already landed in the fork.
+fn hop(tensor: &Tensor, to: &Device) -> candle_core::Result<Tensor> {
+    tensor.device().synchronize()?;
     let staged = tensor.to_device(&Device::Cpu)?;
     staged.to_device(to)
 }
@@ -620,7 +637,7 @@ mod tests {
             .expect("the stock model loads");
 
         let tokens: Vec<u32> = vec![9707, 11, 1246, 525, 498, 30];
-        let sharded_logits = sharded.forward(&tokens, 0).expect("sharded forward");
+        let sharded_logits = sharded.forward(&tokens, 0, None).expect("sharded forward");
         let input = Tensor::new(tokens.as_slice(), &device)
             .and_then(|t| t.unsqueeze(0))
             .expect("input");
@@ -685,9 +702,9 @@ mod tests {
         // Determinism per variant: each model against itself, twice.
         for (name, model) in [("paired", &mut paired), ("single_ref", &mut single_ref)] {
             model.clear_kv_cache();
-            let a = model.forward(&[9707], 0).expect("first");
+            let a = model.forward(&[9707], 0, None).expect("first");
             model.clear_kv_cache();
-            let b = model.forward(&[9707], 0).expect("second");
+            let b = model.forward(&[9707], 0, None).expect("second");
             let d = a
                 .iter()
                 .zip(&b)
@@ -703,8 +720,8 @@ mod tests {
         }
 
         // One token first: the mask-free path, isolating the seq dimension.
-        let one = paired.forward(&[9707], 0).expect("one-token forward");
-        let one_ref = single_ref.forward(&[9707], 0).expect("reference forward");
+        let one = paired.forward(&[9707], 0, None).expect("one-token forward");
+        let one_ref = single_ref.forward(&[9707], 0, None).expect("reference forward");
         let one_diff = one
             .iter()
             .zip(&one_ref)
@@ -712,7 +729,7 @@ mod tests {
             .fold(0f32, f32::max);
         eprintln!("one-token pair-vs-samedevice max diff: {one_diff}");
         paired.clear_kv_cache();
-        let paired_logits = paired.forward(&tokens, 0).expect("paired forward");
+        let paired_logits = paired.forward(&tokens, 0, None).expect("paired forward");
         let stats = |v: &[f32]| {
             let max = v.iter().fold(f32::MIN, |m, x| m.max(*x));
             let min = v.iter().fold(f32::MAX, |m, x| m.min(*x));
@@ -739,10 +756,10 @@ mod tests {
             let split_at = 3;
             paired.clear_kv_cache();
             let _ = paired
-                .forward(&tokens[..split_at], 0)
+                .forward(&tokens[..split_at], 0, None)
                 .expect("the prefix decodes");
             let stepped = paired
-                .forward(&tokens[split_at..], split_at)
+                .forward(&tokens[split_at..], split_at, None)
                 .expect("the delta decodes at its offset");
             // The stock reference walks the delta one token at a time: its
             // own batched delta-at-offset path miscats an F32 mask against a
@@ -787,7 +804,7 @@ mod tests {
             [device.clone(), Device::new_cuda(1).unwrap()],
         )
         .expect("the descriptor-path load succeeds");
-        let fd_logits = via_fd.forward(&tokens, 0).expect("descriptor-path forward");
+        let fd_logits = via_fd.forward(&tokens, 0, None).expect("descriptor-path forward");
         let fd_diff = fd_logits
             .iter()
             .zip(&paired_logits)
@@ -803,7 +820,7 @@ mod tests {
         // The engine's other difference: it decodes against a clone of the
         // resident's model, per the session discipline.
         let mut cloned = via_fd.session_clone();
-        let clone_logits = cloned.forward(&tokens, 0).expect("the clone forwards");
+        let clone_logits = cloned.forward(&tokens, 0, None).expect("the clone forwards");
         eprintln!(
             "clone argmax {} original argmax {}",
             argmax(&clone_logits),

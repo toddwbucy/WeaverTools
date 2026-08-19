@@ -308,6 +308,10 @@ pub struct Resident {
     pub declaration: &'static family::Declaration,
     pub devices: Vec<DeviceOrdinal>,
     pub weights_hash: WeightsHash,
+    /// The readout election this residency was admitted under, judged at
+    /// admit and read at session open: an elected residency taps, an
+    /// unelected one runs the plain forward, and nothing later re-decides.
+    pub readout: ReadoutElection,
     /// The model itself. Private: what the rest of the crate may do with a
     /// residency is a question for the decode acts, and nothing reaches the
     /// engine around the seam.
@@ -357,7 +361,12 @@ impl Resident {
             }
             #[cfg(feature = "cuda")]
             LoadedModel::Native(model) => {
-                let engine = crate::decoder::native::NativeEngine::open(model, knobs, capacity)?;
+                let engine = crate::decoder::native::NativeEngine::open(
+                    model,
+                    knobs,
+                    capacity,
+                    self.readout.elected(),
+                )?;
                 Ok(Session::new(
                     Box::new(engine),
                     capacity as usize,
@@ -594,7 +603,7 @@ impl Residency {
         // first turn instead, the load succeeds and the turn fails, which is
         // the expensive lie the rule forbids and what section 10's watch
         // perturbs.
-        readout::judge(readout, declaration).map_err(AdmitRefusal::Readout)?;
+        readout::judge(readout, declaration, header.container).map_err(AdmitRefusal::Readout)?;
         judge_distinct(&binding.devices)?;
         // The shard each device must hold, read from the held descriptor
         // rather than from the name. The width was judged above, so the
@@ -647,6 +656,7 @@ impl Residency {
             declaration,
             devices: binding.devices.clone(),
             weights_hash,
+            readout,
             model,
         });
         Ok(self.resident.as_ref().expect("set immediately above"))
