@@ -2,6 +2,14 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-19, second of this date, the assertion records land.
+The code act of 2026-08-18 shipped three conformance headers citing
+assertions no document declared, which is the defect the counting clause
+exists to catch, found by the position refresh of 2026-08-19. The three
+records land here under the sections that argue them, each tagged
+`review`: their tests demonstrate the property's good half and no
+perturbation yet forces the failing half, so a stronger tag would claim
+an instrument that does not exist.
 **Revised:** 2026-08-19, the serve half is represented. Section 4 gains the
 ask handling and the shape query, section 3's provisional store shape
 passes its stated trigger and stands with the reasoning recorded, and
@@ -27,7 +35,22 @@ with the context-injection loop's act of 2026-08-19 at section 4.
 ## 1. The crate
 
 A binary crate, one process per session member, spawned at load and retired at
-unload while its holdings stand, per `weaver-state-PRD` section 3. It links
+unload while its holdings stand, per `weaver-state-PRD` section 3. The
+charter's one sentence is asserted at the crate: custody without policy,
+nothing judged, ranked, or initiated, which review checks by reading the
+crate's surface for any door a judgment could enter by.
+
+```graph
+node: state-custody-without-policy
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-state
+to: state-custody-without-policy
+```
+
+It links
 `weaver-trace` for the canonical event vocabulary its ingest parses and no
 other internal crate: the floor's wire trio does not cross this seam, the
 distillate being the seam's own vocabulary per the contract, so the floor
@@ -110,6 +133,16 @@ and a new election is a new load's new index set. The engine's automatic
 index machinery is not relied on, because an index that appears when a query
 happens to want it is a cost landing mid-serve rather than at load.
 
+```graph
+node: state-indexes-built-at-load
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-state
+to: state-indexes-built-at-load
+```
+
 **Durability yields to speed, and the charter is the license.** The
 derivative is rebuildable from the record and the session never depends on
 it, per the loss clause, so the store runs with synchronization relaxed and
@@ -132,6 +165,16 @@ defect waits for the serve direction to give its surfacing a voice. Inserts
 ride the sequence order the harness owes, and a gap in sequence is not this
 crate's to notice: the record is the account
 of what happened, and custody keeps what arrives.
+
+```graph
+node: state-distillate-lands-whole
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-state
+to: state-distillate-lands-whole
+```
 
 **The serve half, shaped by its first asker per the charter's cell.** An
 `ask` frame arriving on the stream is handled in stream order by the same
