@@ -516,7 +516,13 @@ pub enum TokenAnswer {
     },
     Generated(Generation),
     AtRest,
-    Flushed,
+    /// The flush confirmed, carrying both resident counts: the SPU is the
+    /// one authority on either number, and the harness authors the
+    /// record's flush event from exactly them, per the decode contract.
+    Flushed {
+        resident_before: u64,
+        resident_after: u64,
+    },
     /// The seam's one SPU-originated emission, per the decode contract's
     /// second ruling of 2026-08-12: a case of the answer because the
     /// SPU-to-harness traffic is one enum, and the prose fact the type cannot
@@ -572,6 +578,13 @@ pub struct Generation {
     /// and not the prompt alone.
     pub request: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
+    /// The session's token count as this generation closed, terminator
+    /// included, and the ceiling the load resolved: the same two numbers
+    /// the overflow refusal carries after the wall, carried here so the
+    /// asking loop sees pressure before it, per `weaver-types-Spec`
+    /// section 4.4. Plain counts with no judgment.
+    pub resident: u64,
+    pub capacity: u64,
 }
 
 impl PartialEq for Generation {
@@ -592,6 +605,11 @@ impl PartialEq for Generation {
 pub enum Finish {
     Completed,
     Stopped,
+    /// The turn's token limit reached, and that limit alone, per
+    /// `weaver-types-Spec` section 4.4: a cap that exited as `Completed`
+    /// left a reader unable to distinguish a finished answer from a cut
+    /// one, per issue #218.
+    Length,
 }
 
 /// A fault report: what any organ hands the harness across whatever channel it

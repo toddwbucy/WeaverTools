@@ -49,6 +49,11 @@ pub enum Stopped {
     Cancelled,
     /// The session reached its capacity mid-generation.
     CapacityReached,
+    /// The turn's token limit was reached, and that limit alone, per
+    /// `weaver-types-Spec` section 4.4's Length case: a cap that exited as
+    /// complete left the record unable to distinguish a finished answer
+    /// from a cut one, per issue #218.
+    LimitReached,
 }
 
 /// What one generation produced.
@@ -267,7 +272,7 @@ impl<'a> Session<'a> {
                 break Stopped::Cancelled;
             }
             if produced.len() >= stop.max_tokens {
-                break Stopped::Complete;
+                break Stopped::LimitReached;
             }
             // A slot for the terminator is held back, so capacity is reached
             // one short of the true end.

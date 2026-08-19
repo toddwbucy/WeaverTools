@@ -42,6 +42,17 @@ pub struct RunShape {
     pub kinds: Vec<(String, u64)>,
 }
 
+/// One recalled event, per the contract's recall answer: the envelope's
+/// facts the loop composes with, and the elected pairs as custody kept
+/// them - the distillate's own shape served back.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Recalled {
+    pub kind: String,
+    pub turn: Option<String>,
+    pub sequence: String,
+    pub pairs: Vec<(String, String)>,
+}
+
 /// The harness's end of the serve direction: the ask, the bounded wait, and
 /// the parse. Held on the run, granted to the seat, mintable nowhere else.
 pub struct StateSeam {
@@ -86,6 +97,33 @@ impl StateSeam {
         }
         let line = self.await_line()?;
         parse_shape_answer(&line)
+    }
+
+    /// The recall ask, per the contract: the conversation as custody holds
+    /// it, bounded to the most recent turns where a bound is given. The
+    /// same one-strike economics as the shape ask, for the same
+    /// mis-attribution reason.
+    pub(crate) fn ask_recall(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
+        if self.dead {
+            return None;
+        }
+        let answered = self.recall_exchange(last_turns);
+        if answered.is_none() {
+            self.dead = true;
+        }
+        answered
+    }
+
+    fn recall_exchange(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
+        let ask = match last_turns {
+            Some(bound) => format!("{{\"ask\":{{\"recall\":{{\"last-turns\":{bound}}}}}}}\n"),
+            None => "{\"ask\":{\"recall\":{}}}\n".to_string(),
+        };
+        if !self.send(ask.as_bytes()) {
+            return None;
+        }
+        let line = self.await_line()?;
+        parse_recall_answer(&line)
     }
 
     /// One frame whole or nothing, the tee's own economics: the channel is
@@ -162,6 +200,42 @@ fn parse_shape_answer(line: &str) -> Option<SessionShape> {
         shaped.push(RunShape { run, kinds });
     }
     Some(SessionShape { runs: shaped })
+}
+
+/// Parse the recall answer, per the contract:
+/// `{"answer":{"recall":{"events":[{"envelope":{...},"pairs":{...}}]}}}`.
+/// A frame that does not carry the whole shape answers nothing.
+fn parse_recall_answer(line: &str) -> Option<Vec<Recalled>> {
+    let value: serde_json::Value = serde_json::from_str(line).ok()?;
+    let events = value
+        .get("answer")?
+        .get("recall")?
+        .get("events")?
+        .as_array()?;
+    let mut recalled = Vec::with_capacity(events.len());
+    for event in events {
+        let envelope = event.get("envelope")?;
+        let pairs = event
+            .get("pairs")
+            .and_then(|p| p.as_object())
+            .map(|object| {
+                object
+                    .iter()
+                    .map(|(key, val)| (key.clone(), val.to_string()))
+                    .collect()
+            })
+            .unwrap_or_default();
+        recalled.push(Recalled {
+            kind: envelope.get("kind")?.as_str()?.to_string(),
+            turn: envelope
+                .get("turn")
+                .and_then(|t| t.as_str())
+                .map(str::to_string),
+            sequence: envelope.get("sequence")?.as_str()?.to_string(),
+            pairs,
+        });
+    }
+    Some(recalled)
 }
 
 #[cfg(test)]

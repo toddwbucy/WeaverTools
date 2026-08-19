@@ -121,6 +121,8 @@ fn the_measurement_splices_and_never_quotes() {
         finish: weaver_types::Finish::Completed,
         request,
         measurement,
+        resident: 64,
+        capacity: 4096,
     });
 
     let bytes = serde_json::to_string(&answer).expect("serializes");

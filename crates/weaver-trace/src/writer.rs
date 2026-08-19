@@ -379,12 +379,15 @@ fn admit(event: &Event, session: &SessionRef, run: &RunRef) -> Result<(), Failur
 /// carries one, never inferred. `fault` may occur inside or outside a turn,
 /// so its option stays the caller's fact.
 fn turn_forbidden(kind: Kind) -> bool {
-    matches!(kind, Kind::Load | Kind::Unload | Kind::SessionClosed)
+    matches!(
+        kind,
+        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Flush
+    )
 }
 
 fn turn_required(kind: Kind) -> bool {
     match kind {
-        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Fault => false,
+        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Fault | Kind::Flush => false,
         Kind::TurnStarted
         | Kind::TurnClosed
         | Kind::MessageUser
@@ -411,6 +414,7 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
             Some(Payload::Message(_))
         ) | (Kind::TurnClosed, Some(Payload::TurnClosed(_)))
             | (Kind::Fault, Some(Payload::Fault(_)))
+            | (Kind::Flush, Some(Payload::Flush(_)))
             | (Kind::ModelRequest, Some(Payload::ModelRequest(_)))
             | (Kind::ModelOutput, Some(Payload::ModelOutput(_)))
             | (Kind::ModelMeasurement, Some(Payload::ModelMeasurement(_)))

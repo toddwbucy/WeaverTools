@@ -221,14 +221,161 @@ pub struct RunShape {
     pub kinds: Vec<(String, i64)>,
 }
 
-/// Whether a seam frame is the shape ask, per the contract's closed
-/// vocabulary: one name today, and a frame carrying any other ask name is
+/// An ask as the seam's closed vocabulary spells it: two names, per the
+/// contract's section 2, and a frame carrying any other ask name is
 /// malformed and answers nothing.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Ask {
+    /// The session's shape: runs in first-seen order, counts by kind.
+    Shape,
+    /// The conversation as custody holds it, bounded to the most recent
+    /// turns where a bound is given.
+    Recall { last_turns: Option<u64> },
+}
+
+/// Parse a seam frame as an ask, or nothing where it is not one.
+pub fn parse_ask(frame: &str) -> Option<Ask> {
+    let value: serde_json::Value = serde_json::from_str(frame).ok()?;
+    let ask = value.get("ask")?;
+    if ask.get("shape").is_some() {
+        return Some(Ask::Shape);
+    }
+    let recall = ask.get("recall")?;
+    Some(Ask::Recall {
+        last_turns: recall.get("last-turns").and_then(|n| n.as_u64()),
+    })
+}
+
+/// Whether a seam frame is the shape ask, kept for the standing tests: the
+/// dispatch reads [`parse_ask`].
 pub fn is_shape_ask(frame: &str) -> bool {
-    serde_json::from_str::<serde_json::Value>(frame)
-        .ok()
-        .and_then(|value| value.get("ask")?.get("shape").cloned())
-        .is_some()
+    matches!(parse_ask(frame), Some(Ask::Shape))
+}
+
+/// One recalled event, the recall answer's material: the envelope's facts
+/// and the elected pairs as custody kept them.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RecalledEvent {
+    pub session: String,
+    pub run: String,
+    pub turn: Option<String>,
+    pub kind: String,
+    pub sequence: i64,
+    pub pairs: Vec<(String, String)>,
+}
+
+impl Store {
+    /// The recall query, per `weaver-state-Spec` section 4: the event rows
+    /// of the four message kinds with their field pairs, ordered by the
+    /// `id` column, bounded where asked to the distinct `turn` values of
+    /// the most recent turns by id, the rows outside them left unread.
+    pub fn recall(&self, last_turns: Option<u64>) -> Result<Vec<RecalledEvent>, CustodyFault> {
+        let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
+        let bound: Option<Vec<String>> = match last_turns {
+            None => None,
+            Some(count) => {
+                let mut turns_query = self
+                    .connection
+                    .prepare_cached(
+                        "SELECT turn FROM (
+                             SELECT turn, MAX(id) AS last FROM event
+                             WHERE turn IS NOT NULL GROUP BY turn
+                         ) ORDER BY last DESC LIMIT ?1",
+                    )
+                    .map_err(fault)?;
+                let turns: Vec<String> = turns_query
+                    .query_map([count as i64], |row| row.get(0))
+                    .map_err(fault)?
+                    .collect::<Result<_, _>>()
+                    .map_err(fault)?;
+                Some(turns)
+            }
+        };
+        let mut events_query = self
+            .connection
+            .prepare_cached(
+                "SELECT id, session, run, turn, kind, sequence FROM event
+                 WHERE kind IN ('message.system', 'message.user',
+                                'message.assistant', 'message.tool_result')
+                 ORDER BY id",
+            )
+            .map_err(fault)?;
+        let rows: Vec<(i64, String, String, Option<String>, String, i64)> = events_query
+            .query_map([], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    row.get(5)?,
+                ))
+            })
+            .map_err(fault)?
+            .collect::<Result<_, _>>()
+            .map_err(fault)?;
+        let mut pairs_query = self
+            .connection
+            .prepare_cached("SELECT key, value FROM field WHERE event_id = ?1")
+            .map_err(fault)?;
+        let mut recalled = Vec::new();
+        for (id, session, run, turn, kind, sequence) in rows {
+            if let (Some(kept), Some(turn_ref)) = (&bound, &turn)
+                && !kept.contains(turn_ref)
+            {
+                continue;
+            }
+            if bound.is_some() && turn.is_none() {
+                continue;
+            }
+            let pairs: Vec<(String, String)> = pairs_query
+                .query_map([id], |row| Ok((row.get(0)?, row.get(1)?)))
+                .map_err(fault)?
+                .collect::<Result<_, _>>()
+                .map_err(fault)?;
+            recalled.push(RecalledEvent {
+                session,
+                run,
+                turn,
+                kind,
+                sequence,
+                pairs,
+            });
+        }
+        Ok(recalled)
+    }
+}
+
+/// Render the recall answer as the contract's frame: each event in the
+/// distillate's own shape, envelope and pairs, because custody serves what
+/// it kept in the form it kept it.
+pub fn render_recall_answer(events: &[RecalledEvent]) -> String {
+    let rendered: Vec<serde_json::Value> = events
+        .iter()
+        .map(|event| {
+            let mut envelope = serde_json::Map::new();
+            envelope.insert("session".into(), event.session.clone().into());
+            envelope.insert("run".into(), event.run.clone().into());
+            if let Some(turn) = &event.turn {
+                envelope.insert("turn".into(), turn.clone().into());
+            }
+            envelope.insert("kind".into(), event.kind.clone().into());
+            envelope.insert("sequence".into(), event.sequence.to_string().into());
+            let pairs: serde_json::Map<String, serde_json::Value> = event
+                .pairs
+                .iter()
+                .map(|(key, value)| {
+                    let parsed = serde_json::from_str(value)
+                        .unwrap_or_else(|_| serde_json::Value::String(value.clone()));
+                    (key.clone(), parsed)
+                })
+                .collect();
+            serde_json::json!({"envelope": envelope, "pairs": pairs})
+        })
+        .collect();
+    let mut frame = serde_json::json!({"answer": {"recall": {"events": rendered}}}).to_string();
+    frame.push('\n');
+    frame
 }
 
 /// Render the shape answer as the contract's frame, one answer frame on
@@ -430,17 +577,28 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
-    /// The ask vocabulary is closed: the shape ask is recognized and
-    /// every other frame is not an ask at all.
+    /// The ask vocabulary is closed at two names: both are recognized,
+    /// the recall's optional bound parses, and every other frame is not
+    /// an ask at all.
     #[test]
     fn the_ask_vocabulary_is_closed() {
-        assert!(is_shape_ask(r#"{"ask":{"shape":{}}}"#));
+        assert_eq!(parse_ask(r#"{"ask":{"shape":{}}}"#), Some(Ask::Shape));
+        assert_eq!(
+            parse_ask(r#"{"ask":{"recall":{}}}"#),
+            Some(Ask::Recall { last_turns: None })
+        );
+        assert_eq!(
+            parse_ask(r#"{"ask":{"recall":{"last-turns":3}}}"#),
+            Some(Ask::Recall {
+                last_turns: Some(3)
+            })
+        );
         for not_an_ask in [
-            r#"{"ask":{"recall":{}}}"#,
+            r#"{"ask":{"summarize":{}}}"#,
             r#"{"envelope":{}}"#,
             "not json",
         ] {
-            assert!(!is_shape_ask(not_an_ask), "{not_an_ask}");
+            assert!(parse_ask(not_an_ask).is_none(), "{not_an_ask}");
         }
     }
 

@@ -8,7 +8,10 @@
 use std::io::Read;
 use std::os::fd::AsFd;
 
-use weaver_state::{Election, Store, is_shape_ask, parse_distillate, render_shape_answer};
+use weaver_state::{
+    Ask, Election, Store, parse_ask, parse_distillate, render_recall_answer,
+    render_shape_answer,
+};
 
 /// How long the name waits for its one peer before concluding the load
 /// never came, so an abandoned member is a bounded cost rather than a
@@ -78,15 +81,21 @@ fn main() -> std::process::ExitCode {
     while let Some(line) = lines.next_line() {
         if let Some(distillate) = parse_distillate(&line) {
             let _ = store.land(&distillate);
-        } else if is_shape_ask(&line) {
+        } else if let Some(ask) = parse_ask(&line) {
             // A store that cannot answer, like an answer past the bound,
             // is silence the harness's bound converts, per the contract:
             // custody never invents an answer shape for a fault.
-            if let Ok(shape) = store.shape() {
-                let frame = render_shape_answer(&shape);
-                if frame.len() <= ANSWER_BOUND && !lines.respond(frame.as_bytes()) {
-                    break;
-                }
+            let frame = match ask {
+                Ask::Shape => store.shape().map(|shape| render_shape_answer(&shape)),
+                Ask::Recall { last_turns } => store
+                    .recall(last_turns)
+                    .map(|events| render_recall_answer(&events)),
+            };
+            if let Ok(frame) = frame
+                && frame.len() <= ANSWER_BOUND
+                && !lines.respond(frame.as_bytes())
+            {
+                break;
             }
         }
     }

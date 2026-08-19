@@ -117,5 +117,5 @@ pub use engine::{Ports, TurnError, TurnOutcome};
 pub use failure::{AdoptionFault, ChannelFault, Outcome, UnlicensedMessage};
 pub use lifecycle::{Harness, OrganBinaries, OrganParameters};
 pub use spawn::fork_organ;
-pub use state::{RunShape, SessionShape, StateSeam};
+pub use state::{Recalled, RunShape, SessionShape, StateSeam};
 pub use tools::ToolResult;

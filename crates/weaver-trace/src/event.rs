@@ -142,6 +142,8 @@ pub enum Kind {
     ToolCallCompleted,
     #[serde(rename = "fault")]
     Fault,
+    #[serde(rename = "flush")]
+    Flush,
     #[serde(rename = "model.request")]
     ModelRequest,
     #[serde(rename = "model.output")]
@@ -185,6 +187,11 @@ pub enum Payload {
     /// carries opaque.
     ModelRequest(Box<RawValue>),
     ModelOutput(ModelOutput),
+    /// The flush's account: the resident token counts before and after the
+    /// decode context returned to its prefix, per charter section 3.1's
+    /// sixteenth kind. Both from the SPU's confirmation, the one authority
+    /// on either number.
+    Flush(FlushCounts),
     /// The instrument readings, the SPU-rendered measurement the harness
     /// splices, its unproduced members produced absent by the SPU rather than
     /// omitted by a serde election of this crate's.
@@ -224,6 +231,12 @@ pub enum StopReason {
 /// The decode boundary, response side: the emission verbatim, before any
 /// parse, and how the generation ended.
 #[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct FlushCounts {
+    pub resident_before: u64,
+    pub resident_after: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ModelOutput {
     pub emission: String,
     pub finish: Finish,
@@ -235,6 +248,10 @@ pub struct ModelOutput {
 pub enum Finish {
     Completed,
     Stopped,
+    /// The turn's token limit reached, and that limit alone: this crate's
+    /// mirror of the floor's case, converted by the harness at the one
+    /// site, per `weaver-trace-Spec` section 3.
+    Length,
 }
 
 /// The measurement and the request retired their typed shapes with the custody
