@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, fourth of this date, the generation reports the
+session's fullness. Section 4.4's `Generation` gains `resident` and
+`capacity`, the session's token count and its ceiling as the generation
+closed, per issue #221's arc: the loop that manages the context must see
+pressure before the wall, and the wall's own refusal was the only carrier
+of either number.
 **Revised:** 2026-08-19, third of this date, the finish tells the truth.
 Section 4.4's `Finish` gains `Length`: the generation ended because the
 turn's token limit was reached, a third fact the two-case set flattened
@@ -1344,6 +1350,8 @@ pub struct Generation {
     pub finish: Finish,
     pub request: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
+    pub resident: u64,
+    pub capacity: u64,
 }
 
 pub enum Finish {
@@ -1396,6 +1404,14 @@ per the decode contract's section 2. The measurement travels that path to the
 model events, so no crate holds a second copy of a shape `weaver-trace` owns and
 the sole-writer rule is untouched: what the SPU produces is data, and the event
 is still the harness's to author.
+
+**The fullness rides every generation, added 2026-08-19 by issue #221's
+arc.** `resident` is the session's token count as the generation closed,
+terminator included, and `capacity` is the ceiling the load resolved, the
+same two numbers the overflow refusal carries after the wall is hit,
+carried here so the asking loop sees the pressure before it. Plain counts
+with no judgment: when a flush is worth its cost is the loop's business,
+per `weaver-state-PRD` section 2.
 
 **Three cases, each one fact.** `Completed` is the family's stop condition
 reached, the model's own end. `Stopped` is the generation ended from

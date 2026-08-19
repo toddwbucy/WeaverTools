@@ -8,6 +8,12 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, the generation reports the session's fullness. The
+generate exchange's closing answer carries the session's resident token
+count and its capacity beside the emission, per issue #221's arc: the
+asking loop must see pressure before the wall, and the overflow refusal
+was the only carrier of either number. Plain counts with no judgment,
+`weaver-types-Spec` section 4.4 shaping them.
 **Revised:** 2026-08-17, the request owns the template identity, per the
 ruling on #129. The measurement's enumeration listed it beside the block
 partition while the request carried it too, one fact in two boxes of one
@@ -191,10 +197,13 @@ the generation whole, the model.request content beside the measurement
 because each splices into its own box of the record, the request being the
 turn's delta as rendered with its template and effective sampling per the
 ruling of 2026-08-12, the SPU
-rendering it whole per the custody act of 2026-08-11, and its measurement:
+rendering it whole per the custody act of 2026-08-11, its measurement:
 the token identifiers, the per-token signals, the timings, the block
 partition, and, where the residency was admitted with readout elected, the
-residual reductions. **The template identity travels in the request and only
+residual reductions, and the session's fullness as the generation closed,
+the resident token count and the capacity, added 2026-08-19 so the loop
+that elects a flush sees the pressure before the wall rather than in the
+wall's refusal. **The template identity travels in the request and only
 there**, per the ruling of 2026-08-17 on #129: it is an input-side fact of
 the same kind as the sampling values, which moved to the request for the
 same reason, and a member carried by both boxes of one turn's pair would be

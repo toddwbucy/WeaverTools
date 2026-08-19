@@ -152,7 +152,8 @@ every distillate sent ahead of the ask is in the answer's view and nothing
 sent after it is.
 
 **The ask vocabulary is closed and enumerated here, and it holds two
-names: `shape` and `recall`.** The shape ask carries no members, one member instance holding
+names: `shape` and `recall`.** The shape ask carries no members, one
+member instance holding
 one session, and asks for the session's shape - what happened, in what
 order, in which run, which is the phrase the charter uses for what the
 default election holds. Its answer carries the session's runs in the order
