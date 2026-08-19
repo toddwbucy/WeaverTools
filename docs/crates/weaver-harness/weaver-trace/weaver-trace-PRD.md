@@ -417,7 +417,7 @@ act, per the rule of this section.
 
 ### 3.2 The payload shapes the token workflow settles
 
-Six of the fourteen kinds carried no chartered shape, and this subsection
+Six of the fifteen kinds carried no chartered shape, and this subsection
 settles four of them on the token workflow's acts of 2026-08-02: `fault` and
 the three `model.*` kinds. The tool bracket's two are the remaining pair and
 stay deferred with the tool workflow, per section 9. What follows is content

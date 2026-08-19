@@ -1,4 +1,4 @@
-//! conforms: traits-role-set-three
+//! conforms: traits-role-kind-one-to-one
 //! conforms: traits-content-is-block-sequence
 //! conforms: traits-role-plain-string
 //! conforms: traits-content-block-internally-tagged

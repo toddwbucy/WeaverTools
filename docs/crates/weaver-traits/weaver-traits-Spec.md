@@ -245,20 +245,25 @@ pub enum ContentBlock {
 }
 ```
 
-**The role set is three because the closed event-kind set is three.**
-`weaver-trace-PRD` section 3.1 carries `message.user`, `message.assistant`, and
-`message.tool_result`, and the harness authors one kind per message, so a role
-mapping to no kind or to two would put a judgment on the authoring path that the
-kind set has already made. The mapping is one to one and total.
+**The role set matches the closed message-kind set one to one.**
+`weaver-trace-PRD` section 3.1 carries `message.system`, `message.user`,
+`message.assistant`, and `message.tool_result`, four kinds for four roles,
+and the harness authors one kind per message, so a role mapping to no kind
+or to two would put a judgment on the authoring path that the kind set has
+already made. The mapping is one to one and total, and the assertion is
+named for that property rather than for a count, so a role that joins with
+its kind moves the sets together and renames nothing. An earlier name,
+`traits-role-set-three`, carried the count and retired with the system
+role's act.
 
 ```graph
-node: traits-role-set-three
+node: traits-role-kind-one-to-one
 kind: assertion
 tag: review
 
 edge: asserts
 from: weaver-traits
-to: traits-role-set-three
+to: traits-role-kind-one-to-one
 ```
 
 
