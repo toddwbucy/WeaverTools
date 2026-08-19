@@ -406,8 +406,9 @@ counting pass and the table below is the seven-crate figure of 2026-08-16.
 
 **All seven crates of the ratified set are built and merged.** Each file
 carries its conformance header per Document Format sections 3 and 4, and no
-crate carries a header citing an assertion no Spec declares. Recounted 2026-08-16 over every tracked unit
-carrying a header, per the Document Format's counting clause:
+crate carries a header citing an assertion no Spec declares. Recounted
+2026-08-16 over every tracked unit carrying a header, per the Document
+Format's counting clause:
 
     weaver-types      18/18      weaver-harness   55/56
     weaver-traits     24/24      weaver-gate      27/27
