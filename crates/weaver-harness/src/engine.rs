@@ -197,11 +197,17 @@ impl<'a> Ports<'a> {
     /// drives the decode seam's standing flush exchange, valid between
     /// turns, and on confirmation authors the record's `flush` event from
     /// the counts the confirmation carried, the SPU being the one
-    /// authority on either number. Answers the pair, or `None` where the
+    /// authority on either number. Since the cut ruling of 2026-08-19 the
+    /// call takes `keep`, the resident length the session returns to,
+    /// forwarded to the directive unjudged: the seam bounds it below by
+    /// the identity prefix and above by the resident count, and the
+    /// answered pair says what held. Answers the pair, or `None` where the
     /// seam refused or broke - the next turn will meet the dead seam
     /// properly, so nothing here converts it.
-    pub fn flush(&mut self) -> Option<(u64, u64)> {
-        self.decode.send_directive(&TokenDirective::Flush).ok()?;
+    pub fn flush(&mut self, keep: u64) -> Option<(u64, u64)> {
+        self.decode
+            .send_directive(&TokenDirective::Flush { keep })
+            .ok()?;
         let counts = loop {
             match self.decode.recv_reply().ok()? {
                 crate::channel::DecodeReply::Answer(TokenAnswer::Flushed {

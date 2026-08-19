@@ -10,13 +10,14 @@
 //! The resident session and its append path, per `weaver-spu-Spec` sections 4.2
 //! to 4.4.
 //!
-//! **Append-only, `resident_len`, and nothing ever rewinds.** The session holds
-//! the resident length and no prefix cache, and every generation decodes only
-//! the delta at absolute positions from that length forward. The archived
-//! tree's proof is the reason: a rewind fails silently on families that keep
-//! recurrent layers, because the clear returns success while the recurrent
-//! state stays, and the failure surfaces later as a position error far from its
-//! cause.
+//! **Append-only, and nothing ever rewinds.** The session holds the resident
+//! token sequence, per `weaver-spu-Spec` section 4.4 as of the cut act - the
+//! re-establishing flush mechanism needs the tokens it re-decodes - and every
+//! generation decodes only the delta at absolute positions from the sequence's
+//! end forward. The archived tree's proof is the reason nothing rewinds: a
+//! rewind fails silently on families that keep recurrent layers, because the
+//! clear returns success while the recurrent state stays, and the failure
+//! surfaces later as a position error far from its cause.
 //!
 //! **This crate calls no scoped-clear on a resident range**, which is the
 //! discipline stated as an absence. There is no method here that clears a range,
@@ -123,9 +124,10 @@ impl CancelPoll for NeverCancels {
 
 /// The resident session.
 ///
-/// **`resident_len` is monotonic except across a flush.** It is private, and
-/// the paths that reduce it are [`Session::flush`] and the close over a backend
-/// fault, which zeroes it alongside `opened` because a closed session accounts
+/// **The resident sequence is monotonic except across a flush.** It is
+/// private, and the paths that reduce it are [`Session::flush`], to the cut's
+/// kept length and never below the prefix, and the close over a backend
+/// fault, which clears it alongside `opened` because a closed session accounts
 /// for nothing. Nothing writes it downward over a session that keeps serving,
 /// which is the discipline the perturbation test watches from outside.
 pub struct Session<'a> {
@@ -134,9 +136,8 @@ pub struct Session<'a> {
     /// so: an engine holds a context, a context borrows its model, and the
     /// residency owns the model. Nothing has to remember the rule.
     backend: Box<dyn Backend + 'a>,
-    resident_len: usize,
+    resident: Vec<TokenId>,
     prefix_len: usize,
-    prefix: Vec<TokenId>,
     capacity: usize,
     opened: bool,
     /// Set by the close over a backend fault and never cleared. `opened` alone
@@ -156,9 +157,8 @@ impl<'a> Session<'a> {
     ) -> Session<'a> {
         Session {
             backend,
-            resident_len: 0,
+            resident: Vec::new(),
             prefix_len: 0,
-            prefix: Vec::new(),
             capacity,
             opened: false,
             poisoned: false,
@@ -169,7 +169,7 @@ impl<'a> Session<'a> {
     /// What is resident now. The session's own account of itself, which the
     /// overflow refusal hands back to the harness.
     pub fn resident_len(&self) -> usize {
-        self.resident_len
+        self.resident.len()
     }
 
     /// Where the identity prefix ends. **The prefix is established at open and
@@ -206,9 +206,8 @@ impl<'a> Session<'a> {
             });
         }
         self.backend.decode_at(prefix, 0)?;
-        self.resident_len = prefix.len();
+        self.resident = prefix.to_vec();
         self.prefix_len = prefix.len();
-        self.prefix = prefix.to_vec();
         self.opened = true;
         Ok(())
     }
@@ -240,9 +239,9 @@ impl<'a> Session<'a> {
         // delta that fits only by displacing it would produce the malformed
         // framing the terminator discipline exists to prevent.
         let needed = delta.len() + 1;
-        if self.resident_len + needed > self.capacity {
+        if self.resident.len() + needed > self.capacity {
             return Err(DecodeFault::Overflow {
-                resident: self.resident_len,
+                resident: self.resident.len(),
                 requested: delta.len(),
                 capacity: self.capacity,
             });
@@ -254,10 +253,10 @@ impl<'a> Session<'a> {
         let _ = self.backend.take_reduction();
 
         let prefill_started = std::time::Instant::now();
-        if let Err(fault) = self.backend.decode_at(delta, self.resident_len) {
+        if let Err(fault) = self.backend.decode_at(delta, self.resident.len()) {
             return Err(self.poison(fault));
         }
-        self.resident_len += delta.len();
+        self.resident.extend_from_slice(delta);
         let prefill_ns = prefill_started.elapsed().as_nanos() as u64;
         let decode_started = std::time::Instant::now();
 
@@ -276,7 +275,7 @@ impl<'a> Session<'a> {
             }
             // A slot for the terminator is held back, so capacity is reached
             // one short of the true end.
-            if self.resident_len + 1 >= self.capacity {
+            if self.resident.len() + 1 >= self.capacity {
                 break Stopped::CapacityReached;
             }
 
@@ -325,10 +324,10 @@ impl<'a> Session<'a> {
             // not retained, so it is not streamed, and the close's account is
             // exactly the streamed sequence.
             on_token(token);
-            if let Err(fault) = self.backend.decode_at(&[token], self.resident_len) {
+            if let Err(fault) = self.backend.decode_at(&[token], self.resident.len()) {
                 return Err(self.poison(fault));
             }
-            self.resident_len += 1;
+            self.resident.push(token);
         };
 
         // Every path above converges here. The terminator lands on the clean
@@ -340,11 +339,11 @@ impl<'a> Session<'a> {
         // well-framed one cannot be produced.
         if let Err(fault) = self
             .backend
-            .decode_at(&[stop.terminator], self.resident_len)
+            .decode_at(&[stop.terminator], self.resident.len())
         {
             return Err(self.poison(fault));
         }
-        self.resident_len += 1;
+        self.resident.push(stop.terminator);
 
         Ok(Generated {
             tokens: produced,
@@ -359,22 +358,30 @@ impl<'a> Session<'a> {
         })
     }
 
-    /// Reach the flush's fixed outcome: the identity prefix resident, the
-    /// accumulated turns gone.
+    /// Reach the ask's kept length: the session's first `keep` tokens
+    /// resident, everything beyond them gone, per `weaver-spu-Spec` section
+    /// 4.4 as of the cut act.
     ///
-    /// **The outcome is fixed and the mechanism is per family.** The family
-    /// declares which it is and this reads the declaration rather than
-    /// inferring it from a version string.
-    pub fn flush(&mut self) -> Result<(), DecodeFault> {
+    /// **The cut is bounded as arithmetic, never refused**: below by the
+    /// identity prefix, whose permanence is the decode seam's own guarantee,
+    /// and above by the resident count, where there is nothing to cut. The
+    /// caller reads what held from the resident length, which is why the
+    /// confirmation's counts are taken around this call.
+    ///
+    /// **The mechanism is per family.** The family declares which it is and
+    /// this reads the declaration rather than inferring it from a version
+    /// string.
+    pub fn flush(&mut self, keep: usize) -> Result<(), DecodeFault> {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
         }
+        let kept = keep.max(self.prefix_len).min(self.resident.len());
         let outcome = match self.flush_mechanism {
-            FlushMechanism::TruncateToPosition => self.backend.truncate_to(self.prefix_len),
+            FlushMechanism::TruncateToPosition => self.backend.truncate_to(kept),
             FlushMechanism::ReestablishAndReprefill => self
                 .backend
                 .reestablish()
-                .and_then(|()| self.backend.decode_at(&self.prefix, 0)),
+                .and_then(|()| self.backend.decode_at(&self.resident[..kept], 0)),
         };
         // A flush that fails partway leaves the backend's state and the
         // session's account disagreeing: a reestablish that succeeded before a
@@ -386,9 +393,10 @@ impl<'a> Session<'a> {
         if let Err(fault) = outcome {
             return Err(self.poison(fault));
         }
-        // The one place in this type that reduces the resident length, and it
-        // reduces it to the prefix rather than to an arbitrary position.
-        self.resident_len = self.prefix_len;
+        // The one place in this type that reduces the resident sequence, and
+        // it reduces it to the bounded cut rather than to an arbitrary
+        // position.
+        self.resident.truncate(kept);
         Ok(())
     }
 
@@ -408,7 +416,7 @@ impl<'a> Session<'a> {
         self.poisoned = true;
         self.backend.close();
         self.opened = false;
-        self.resident_len = 0;
+        self.resident.clear();
         fault
     }
 }
@@ -877,9 +885,52 @@ mod tests {
         session
             .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {})
             .expect("a turn");
-        session.flush().expect("flush");
+        session.flush(0).expect("flush");
         assert_eq!(session.resident_len(), session.prefix_len());
         assert_eq!(log.borrow().truncated.clone(), vec![2]);
+    }
+
+    /// **The cut's bounds hold at their edges**, per the decode contract's
+    /// conformance list: zero, a middle length, the resident count, and
+    /// beyond it each resolve to the clamped length, and the identity
+    /// prefix is never cut.
+    #[test]
+    fn the_cuts_bounds_hold_at_their_edges() {
+        let grown = |mechanism| {
+            let (mut session, log) = with_mechanism(vec![TokenId(99), TokenId(98)], 128, mechanism);
+            let mut cancel = NeverCancels;
+            session
+                .append_and_generate(&[TokenId(3), TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {})
+                .expect("a turn");
+            (session, log)
+        };
+        for mechanism in [
+            FlushMechanism::TruncateToPosition,
+            FlushMechanism::ReestablishAndReprefill,
+        ] {
+            // Beyond the resident count: nothing to cut, nothing moves.
+            let (mut session, _log) = grown(mechanism);
+            let standing = session.resident_len();
+            session.flush(standing + 10).expect("flush");
+            assert_eq!(session.resident_len(), standing, "{mechanism:?} beyond");
+
+            // At the resident count: the cut lands exactly there.
+            session.flush(standing).expect("flush");
+            assert_eq!(session.resident_len(), standing, "{mechanism:?} at");
+
+            // A middle length, inside the span: the cut is the ask's.
+            let middle = session.prefix_len() + 1;
+            session.flush(middle).expect("flush");
+            assert_eq!(session.resident_len(), middle, "{mechanism:?} middle");
+
+            // Zero: clamped up to the identity prefix, never below it.
+            session.flush(0).expect("flush");
+            assert_eq!(
+                session.resident_len(),
+                session.prefix_len(),
+                "{mechanism:?} zero clamps to the prefix"
+            );
+        }
     }
 
     /// A family that cannot roll back is re-established and re-prefilled, which
@@ -891,7 +942,7 @@ mod tests {
             128,
             FlushMechanism::ReestablishAndReprefill,
         );
-        session.flush().expect("flush");
+        session.flush(0).expect("flush");
         assert_eq!(session.resident_len(), 2);
         assert_eq!(log.borrow().reestablished, 1);
         assert_eq!(log.borrow().truncated.clone(), Vec::<usize>::new());
@@ -936,7 +987,7 @@ mod tests {
         // The re-prefill after the reestablish is the next decode call.
         let next_call = log.borrow().decoded.len();
         log.borrow_mut().fail_decode_call = Some(next_call);
-        assert!(session.flush().is_err(), "the flush reports its failure");
+        assert!(session.flush(0).is_err(), "the flush reports its failure");
         let mut cancel = NeverCancels;
         assert_eq!(
             session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}),

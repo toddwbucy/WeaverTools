@@ -619,11 +619,18 @@ mod seam_success {
             "the timings ride the decimal-string rule"
         );
 
-        send(&TokenDirective::Flush);
-        assert_eq!(
-            recv(),
-            TokenAnswer::Flushed,
-            "the flush reaches its outcome"
+        send(&TokenDirective::Flush { keep: 0 });
+        let flushed = recv();
+        let TokenAnswer::Flushed {
+            resident_before,
+            resident_after,
+        } = flushed
+        else {
+            panic!("the flush reaches its outcome: {flushed:?}");
+        };
+        assert!(
+            resident_before > resident_after,
+            "the flush cut what stood: {resident_before} to {resident_after}"
         );
 
         drop(decode);
