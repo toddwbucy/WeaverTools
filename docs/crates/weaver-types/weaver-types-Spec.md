@@ -465,9 +465,14 @@ and it is optional by exactly that rule's own terms: `state_election` may be
 absent because `weaver-state-PRD` section 4 rules what absence means, the
 default election, the envelope of every kind and nothing more, so a deployment
 that elects nothing still holds the session's shape by the charter's sentence
-rather than by a parser's guess. `EnterPayload` carries the election resolved,
-admin filling the ruled default at inventory, so the worker never re-derives an
-absence. When the block is present, both its members are required, the
+rather than by a parser's guess. The resolved spelling of that default is
+fixed here so two resolvers cannot disagree: `all_kinds` true and `keys`
+empty. The empty list is only the default's spelling, not a constraint on
+the pair: `keys` stays meaningful beside `all_kinds` true, each named kind
+adding payload paths on top of the envelope every kind already crosses
+with. `EnterPayload` carries the election resolved,
+admin filling that ruled default at inventory, so the worker never re-derives
+an absence. When the block is present, both its members are required, the
 required-field discipline resuming inside it. Every other field is required.
 The residual-readout election is what a builder will reach to default,
 to off, and it is exactly the one that must not: an operator who stated no readout

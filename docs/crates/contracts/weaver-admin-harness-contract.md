@@ -395,7 +395,8 @@ the exchanges above are the whole of what either learns.
 `lifecycle-answer`, `lifecycle-refusal`, `peer-identity` as of the inversion
 ruling of 2026-08-05, because the identity the harness reads at every accept is
 the floor's, `model-binding` and `residual-readout-election` as of the
-route act of 2026-08-10, and `gate-instruction` as of 2026-08-17.
+route act of 2026-08-10, `gate-instruction` as of 2026-08-17, and
+`state-election` as of 2026-08-19.
 
 ```graph
 edge: draws
@@ -454,6 +455,23 @@ to: residual-readout-election
 edge: draws
 from: weaver-admin-harness-contract
 to: gate-instruction
+```
+
+**`state-election` is drawn as of 2026-08-19, with the declaration act that
+adds it to the enter.** The argument is the standing one, a third seat over:
+admin holds no channel to the state member, so the election the tee applies
+crosses this seam first or crosses nowhere, and a payload term the clause
+never named would leave the interface short of the completeness apex section
+5.3 demands. The definition is `weaver-types-PRD` section 2.1's, the shape is
+`weaver-types-Spec` section 2's, and the shape's groupings, `StateElection`
+and `ElectedKindConfig`, are representation rather than terms of their own,
+per this section's standing rule: the draws name the definitions and not the
+grouping.
+
+```graph
+edge: draws
+from: weaver-admin-harness-contract
+to: state-election
 ```
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer
