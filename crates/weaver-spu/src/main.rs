@@ -158,13 +158,14 @@ const KNOBS: Knobs = Knobs {
 /// supply `max-tokens-per-turn` in `tunable-values` or the load refuses by
 /// name, which is the explicitness the tunable route carries.
 ///
-/// The capacity stays frozen this act and the freeze is a standing
-/// surprise worth knowing: a declaration supplying `context-capacity`
-/// today is ignored by this binary's election, per the frozen rule, and
-/// unfreezing it changes the KV cache's device footprint at the next
-/// load, so it moves only by the operator's own ruling.
+/// The capacity unfroze on the operator's ruling of 2026-08-19, issue
+/// #221: the frozen 4096 was the wall both of that issue's faults hit,
+/// while the declaration's stated capacity had been silently ignored
+/// under the frozen rule since it was written. The declaration now
+/// governs, sized by the operator against the KV cache's device
+/// footprint, 32768 being the ruled starting point on this deployment.
 const SESSION_PARAMETERS: SessionParameters = SessionParameters {
-    context_capacity: Disposition::Frozen(4096),
+    context_capacity: Disposition::OperatorTunable,
     max_tokens_per_turn: Disposition::OperatorTunable,
 };
 
@@ -1018,7 +1019,10 @@ mod tests {
                 model_binding: binding(),
                 residual_readout_election: false,
                 identity: vec![],
-                tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 4096.0),
+                            ("context-capacity".to_string(), 4096.0),
+                        ]
                     .into_iter()
                     .collect(),
             },

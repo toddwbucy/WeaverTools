@@ -222,7 +222,10 @@ mod seam_success {
                         },
                         residual_readout_election: true,
                         identity: vec![],
-                        tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 4096.0),
+                            ("context-capacity".to_string(), 4096.0),
+                        ]
                             .into_iter()
                             .collect(),
                     },
@@ -303,7 +306,10 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                         identity: vec![],
-                        tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 4096.0),
+                            ("context-capacity".to_string(), 4096.0),
+                        ]
                             .into_iter()
                             .collect(),
                     },
@@ -404,7 +410,10 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                         identity: vec![],
-                        tunable_values: [("max-tokens-per-turn".to_string(), 9.0)]
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 9.0),
+                            ("context-capacity".to_string(), 4096.0),
+                        ]
                             .into_iter()
                             .collect(),
                     },
@@ -515,7 +524,10 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                         identity: vec![],
-                        tunable_values: [("max-tokens-per-turn".to_string(), 4096.0)]
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 4096.0),
+                            ("context-capacity".to_string(), 4096.0),
+                        ]
                             .into_iter()
                             .collect(),
                     },
