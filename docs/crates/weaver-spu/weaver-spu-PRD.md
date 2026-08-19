@@ -8,6 +8,14 @@ and this crate's part in the workflow now finishing is one thing, admitting a mo
 later releasing it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-19, the flush names its cut. Per the operator's
+ruling: the cleanup line is the loop's, because the loop knows what it
+does not want to re-decode, and a fixed outcome made one policy true for
+all use cases. Section 13.9's outcome is defined against the ask's named
+cut, bounded below by the identity prefix whose permanence stands
+untouched, and the no-eviction ground of section 13.3 is unchanged in
+kind: the SPU still decides nothing about what matters, it executes the
+cut the harness carries down from the loop.
 **Revised:** 2026-08-17, the encoder's deferral re-grounds on order of
 construction, per #93. Memory is a lossy compression of state and state is the
 trace's faithful account, so the encoder cannot precede a trustworthy trace.
@@ -916,13 +924,23 @@ The knob enumeration and its types are the Spec's and the floor's.
 
 ### 13.9 The flush
 
-**The harness owns the decision and this seam carries it.** The flush is
-the harness's ask on this seam, and its outcome is defined against the
-prefix invariant: after a flush the identity prefix is resident and the
-accumulated turns are gone. Where a family's state permits truncation the
-outcome is reached by truncation, and where it cannot roll back it is
-reached by re-establishing the prefix fresh, the invariant being the
-outcome rather than the mechanism, and the mechanism the Spec's per
+**The harness owns the decision and this seam carries it, the cut
+included.** The flush is the harness's ask on this seam, and since the
+operator's ruling of 2026-08-19 the ask names its cut: after a flush the
+session's first kept tokens are resident and everything beyond them is
+gone, the kept length being the ask's, bounded below by the identity
+prefix the prefix invariant keeps permanent and above by the resident
+count. The bound is arithmetic rather than refusal, the confirmation's
+counts carrying what held, so no outcome is silent. The cut is the
+loop's because the loop knows what it does not want to re-decode - a
+fixed outcome made one policy true for every use case, and which part
+of the context matters is cognition, which section 13.3 places outside
+this crate for eviction and this section now places outside it for
+retention, the same rule facing both ways. Where a family's state
+permits truncation to a position the outcome is reached by truncating
+to the kept length, and where it cannot roll back it is reached by
+re-establishing the kept resident sequence fresh, the invariant being
+the outcome rather than the mechanism, and the mechanism the Spec's per
 family. The harness still holds no handle to the cache and touches
 nothing, per section 2.
 
