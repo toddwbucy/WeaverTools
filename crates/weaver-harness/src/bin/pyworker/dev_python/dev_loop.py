@@ -6,7 +6,12 @@
 #   seat.assembled_empty() -> bool        first-turn test
 #   seat.session_shape()   -> list|None   [{"run": str, "kinds": {k: n}}]
 #   seat.fullness()        -> tuple|None  (resident, capacity), plain counts
-#   seat.flush()           -> tuple|None  (resident_before, resident_after)
+#   seat.flush(keep=0)     -> tuple|None  (resident_before, resident_after);
+#                                         keep is the resident length the
+#                                         session returns to, the cleanup
+#                                         line, bounded by the seam at the
+#                                         identity prefix and the resident
+#                                         count
 #   seat.recall(n)         -> list|None   message events, newest n turns:
 #                                         {"kind", "turn", "sequence",
 #                                          "pairs": {key: json_text}}

@@ -64,7 +64,10 @@ pub fn drive(seat: &mut Ports<'_>, text: &str) -> Result<TurnOutcome, TurnError>
         // Where the flush landed the model needs the restoration, and
         // where it did not the recap costs a few duplicated tokens on a
         // seam already failing.
-        let _ = seat.flush();
+        // The cut is the loop's: zero keeps the identity prefix alone,
+        // which is this loop's whole standing context, its system prompt
+        // riding as message content rather than as the open's prefix.
+        let _ = seat.flush(0);
         Some(reentry_text(seat.recall(Some(RECALL_TURNS))))
     } else {
         None

@@ -483,7 +483,12 @@ pub enum TokenDirective {
     Cancel {
         turn: TurnKey,
     },
-    Flush,
+    /// The flush names its cut, per the decode contract as amended
+    /// 2026-08-19: `keep` is the resident length the session returns to,
+    /// bounded by the seam below at the identity prefix and above at the
+    /// resident count, zero being the prefix-only state the flush has
+    /// always meant.
+    Flush { keep: u64 },
 }
 
 /// The decode seam's answer, per `weaver-types-Spec` section 4.4. A cancel

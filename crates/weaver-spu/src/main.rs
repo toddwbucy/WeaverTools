@@ -119,12 +119,14 @@ fn judge_decode(
             DecodePosition::BeforeOpen,
             TokenDirective::AppendAndGenerate { .. }
             | TokenDirective::Cancel { .. }
-            | TokenDirective::Flush,
+            | TokenDirective::Flush { .. },
         ) => Some(TokenRefusal::NotOpen),
         // A second open refuses rather than rewinding.
         (DecodePosition::AtRest, TokenDirective::Open { .. }) => Some(TokenRefusal::OutOfOrder),
         (DecodePosition::AtRest, TokenDirective::AppendAndGenerate { .. }) => None,
-        (DecodePosition::AtRest, TokenDirective::Cancel { .. } | TokenDirective::Flush) => None,
+        (DecodePosition::AtRest, TokenDirective::Cancel { .. } | TokenDirective::Flush { .. }) => {
+            None
+        }
     }
 }
 
@@ -665,10 +667,10 @@ fn serve_decode(
                 }
             }
 
-            TokenDirective::Flush => {
+            TokenDirective::Flush { keep } => {
                 let standing = opened.as_mut().expect("at rest implies an open session");
                 let resident_before = standing.session.resident_len() as u64;
-                match standing.session.flush() {
+                match standing.session.flush(keep as usize) {
                     Ok(()) => {
                         // Both counts from the one authority, per the decode
                         // contract: the harness authors the record's flush
@@ -1297,7 +1299,7 @@ mod tests {
             TokenDirective::Cancel {
                 turn: weaver_types::TurnKey("t-1".into()),
             },
-            TokenDirective::Flush,
+            TokenDirective::Flush { keep: 0 },
         ] {
             assert_eq!(
                 judge_decode(DecodePosition::BeforeOpen, true, &directive),
@@ -1395,7 +1397,11 @@ mod tests {
             None
         );
         assert_eq!(
-            judge_decode(DecodePosition::AtRest, true, &TokenDirective::Flush),
+            judge_decode(
+                DecodePosition::AtRest,
+                true,
+                &TokenDirective::Flush { keep: 0 }
+            ),
             None
         );
     }

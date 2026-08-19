@@ -73,14 +73,17 @@ impl Seat {
         Ok(ports.fullness())
     }
 
-    /// The flush: the decode context returns to its prefix and the record
-    /// carries the event with both counts. Answers (resident_before,
-    /// resident_after), or None where the seam refused or broke - and a
-    /// None cannot prove the flush did not land, so a loop that elected
-    /// one composes its re-entry either way.
-    fn flush(&mut self) -> PyResult<Option<(u64, u64)>> {
+    /// The flush: the decode context returns to the cut the loop names -
+    /// `keep` resident tokens, bounded by the seam below at the identity
+    /// prefix and above at the resident count, zero being the prefix-only
+    /// state - and the record carries the event with both counts. Answers
+    /// (resident_before, resident_after), or None where the seam refused
+    /// or broke - and a None cannot prove the flush did not land, so a
+    /// loop that elected one composes its re-entry either way.
+    #[pyo3(signature = (keep=0))]
+    fn flush(&mut self, keep: u64) -> PyResult<Option<(u64, u64)>> {
         let ports = self.ports_mut()?;
-        Ok(ports.flush())
+        Ok(ports.flush(keep))
     }
 
     /// Custody's recall: the conversation's message events in landing
