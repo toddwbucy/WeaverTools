@@ -223,6 +223,11 @@ struct Run {
     run: weaver_types::RunId,
     spu: Option<SpuChannels>,
     gate: Option<GateChannel>,
+    /// The state seam's ask end, per `weaver-harness-Spec` section 6: a
+    /// clone of the standing state channel, granted to the seat as the
+    /// state port. `None` where the leg is not standing, which the port
+    /// serves as the same absence a missing answer does.
+    state: Option<crate::state::StateSeam>,
     turn_in_flight: Option<TurnKey>,
     /// Each initiator numbers exchanges on its own channel, so the SPU's and
     /// the gate's counters are separate and neither is hardcoded.
@@ -630,6 +635,7 @@ impl Harness {
                         &self.coordination,
                         Some(pending),
                         gate_port,
+                        run.state.as_mut(),
                     );
                     match entry(&mut ports, &text) {
                         // A turn the operator's stop aborted answers the
@@ -895,12 +901,19 @@ impl Harness {
         // so the run's opening distills like everything after it. The
         // election is the contract's default, the envelope of every kind,
         // until the operator's payload-key elections arrive with their own
-        // declaration act.
+        // declaration act. The ask end is a clone of the same channel, per
+        // Spec section 6, taken before the tee owns the original, and it
+        // stands only where the tee does: one seam, both directions or
+        // neither.
+        let mut state_seam = None;
         if let Ok(channel) =
             std::os::unix::net::UnixStream::connect(self.coordination.state_socket())
-            && let Ok(tee) = weaver_trace::Tee::open(channel, weaver_trace::Election::default())
         {
-            recorder.attach_tee(tee);
+            let ask_end = channel.try_clone();
+            if let Ok(tee) = weaver_trace::Tee::open(channel, weaver_trace::Election::default()) {
+                recorder.attach_tee(tee);
+                state_seam = ask_end.ok().map(crate::state::StateSeam::new);
+            }
         }
 
         // The load event is the run's opening and the origin of its monotonic
@@ -922,6 +935,7 @@ impl Harness {
             run: payload.run.clone(),
             spu: None,
             gate: None,
+            state: state_seam,
             turn_in_flight: None,
             spu_ordinal: 0,
             gate_ordinal: 0,
@@ -1119,6 +1133,7 @@ impl Harness {
                     // the serve loop's seat reaches the world.
                     None,
                     None,
+                    run.state.as_mut(),
                 ))
             }
             // Before enter and after leave there is no standing interior to
@@ -1441,6 +1456,7 @@ mod tests {
                     pid: nix::unistd::Pid::from_raw(1),
                 }),
                 gate: None,
+                state: None,
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
                 spu_ordinal: 0,
                 gate_ordinal: 0,

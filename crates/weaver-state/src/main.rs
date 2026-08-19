@@ -8,7 +8,7 @@
 use std::io::Read;
 use std::os::fd::AsFd;
 
-use weaver_state::{Election, Store, parse_distillate};
+use weaver_state::{Election, Store, is_shape_ask, parse_distillate, render_shape_answer};
 
 /// How long the name waits for its one peer before concluding the load
 /// never came, so an abandoned member is a bounded cost rather than a
@@ -59,11 +59,22 @@ fn main() -> std::process::ExitCode {
     }
 
     // Custody until closure: parse, land whole, drop what does not parse,
-    // per the contract's malformed-row clause. Closure is retirement, the
-    // holdings standing for the next run.
+    // per the contract's malformed-row clause, and answer the shape ask in
+    // stream order, which is what delivers the contract's answered-against
+    // clause - nothing lands between reading an ask and answering it.
+    // Closure is retirement, the holdings standing for the next run.
     while let Some(line) = lines.next_line() {
         if let Some(distillate) = parse_distillate(&line) {
             let _ = store.land(&distillate);
+        } else if is_shape_ask(&line) {
+            // A store that cannot answer is silence the harness's bound
+            // converts, per the contract: custody never invents an answer
+            // shape for a fault.
+            if let Ok(shape) = store.shape()
+                && !lines.respond(render_shape_answer(&shape).as_bytes())
+            {
+                break;
+            }
         }
     }
     std::process::ExitCode::SUCCESS
@@ -195,6 +206,14 @@ impl<'a> LineReader<'a> {
     /// custodian answers it as closure rather than growing without bound:
     /// the peer holds a credential, not a license to exhaust this process.
     const FRAME_BOUND: usize = 8 * 1024 * 1024;
+
+    /// Write one answer frame back on the channel, whole or reporting the
+    /// seam broken: the serve direction's one write site, used only when
+    /// asked, per the contract.
+    fn respond(&mut self, bytes: &[u8]) -> bool {
+        use std::io::Write;
+        self.stream.write_all(bytes).is_ok()
+    }
 
     fn next_line(&mut self) -> Option<String> {
         loop {
