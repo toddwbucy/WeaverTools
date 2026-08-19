@@ -154,7 +154,7 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 [[package]]
 name = "candle-core"
 version = "0.11.0"
-source = "git+https://github.com/toddwbucy/candle?rev=d24381efff07cb2c79419369d74605f112d2cff7#d24381efff07cb2c79419369d74605f112d2cff7"
+source = "git+https://github.com/toddwbucy/candle?rev=578dc1b75baaaf5c3afe47421b6be46dbf82f60d#578dc1b75baaaf5c3afe47421b6be46dbf82f60d"
 dependencies = [
  "byteorder",
  "candle-kernels",
@@ -182,7 +182,7 @@ dependencies = [
 [[package]]
 name = "candle-kernels"
 version = "0.11.0"
-source = "git+https://github.com/toddwbucy/candle?rev=d24381efff07cb2c79419369d74605f112d2cff7#d24381efff07cb2c79419369d74605f112d2cff7"
+source = "git+https://github.com/toddwbucy/candle?rev=578dc1b75baaaf5c3afe47421b6be46dbf82f60d#578dc1b75baaaf5c3afe47421b6be46dbf82f60d"
 dependencies = [
  "cudaforge",
 ]
@@ -190,7 +190,7 @@ dependencies = [
 [[package]]
 name = "candle-nn"
 version = "0.11.0"
-source = "git+https://github.com/toddwbucy/candle?rev=d24381efff07cb2c79419369d74605f112d2cff7#d24381efff07cb2c79419369d74605f112d2cff7"
+source = "git+https://github.com/toddwbucy/candle?rev=578dc1b75baaaf5c3afe47421b6be46dbf82f60d#578dc1b75baaaf5c3afe47421b6be46dbf82f60d"
 dependencies = [
  "candle-core",
  "half",
@@ -205,7 +205,7 @@ dependencies = [
 [[package]]
 name = "candle-transformers"
 version = "0.11.0"
-source = "git+https://github.com/toddwbucy/candle?rev=d24381efff07cb2c79419369d74605f112d2cff7#d24381efff07cb2c79419369d74605f112d2cff7"
+source = "git+https://github.com/toddwbucy/candle?rev=578dc1b75baaaf5c3afe47421b6be46dbf82f60d#578dc1b75baaaf5c3afe47421b6be46dbf82f60d"
 dependencies = [
  "byteorder",
  "candle-core",
@@ -223,7 +223,7 @@ dependencies = [
 [[package]]
 name = "candle-ug"
 version = "0.11.0"
-source = "git+https://github.com/toddwbucy/candle?rev=d24381efff07cb2c79419369d74605f112d2cff7#d24381efff07cb2c79419369d74605f112d2cff7"
+source = "git+https://github.com/toddwbucy/candle?rev=578dc1b75baaaf5c3afe47421b6be46dbf82f60d#578dc1b75baaaf5c3afe47421b6be46dbf82f60d"
 dependencies = [
  "ug",
  "ug-cuda",

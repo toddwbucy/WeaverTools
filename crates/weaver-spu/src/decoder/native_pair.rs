@@ -301,7 +301,7 @@ impl ShardedModel {
         // state, per the module header.
         let mut hidden = [
             hidden0.clone(),
-            hop(&hidden0, &self.devices[0], &self.devices[1])
+            hop(&hidden0, &self.devices[1])
                 .map_err(|e| fault(format!("broadcast: {e}")))?,
         ];
 
@@ -527,31 +527,34 @@ fn repeat_kv(x: &Tensor, times: usize) -> candle_core::Result<Tensor> {
 /// read a partial the matmul has not finished writing. The failure was
 /// nondeterministic and moved between runs, weights byte-exact and every op
 /// exact in isolation, which is the signature that named it. The syncs cost
-/// a stall per reduction; the stream-event ordering that removes the stall
-/// is the same follow-up as the peer-to-peer copy, and it enters measured.
+/// a stall per reduction, and the direct path's measured rejection is
+/// recorded at `hop` below.
 fn allreduce(partials: Vec<Tensor>, devices: &[Device; 2]) -> candle_core::Result<[Tensor; 2]> {
     let mut it = partials.into_iter();
     let a = it.next().expect("two partials");
     let b = it.next().expect("two partials");
-    let b_on_a = hop(&b, &devices[1], &devices[0])?;
+    let b_on_a = hop(&b, &devices[0])?;
     let sum = (&a + &b_on_a)?;
-    let sum_on_b = hop(&sum, &devices[0], &devices[1])?;
+    let sum_on_b = hop(&sum, &devices[1])?;
     Ok([sum, sum_on_b])
 }
 
 /// One tensor from one device to the other, explicitly through the host.
 ///
-/// **The direct device-to-device path is not taken, and the ground is a
-/// measured race.** Candle's cuda-to-cuda `to_device` left the copy
-/// unordered against the source stream's queued compute under load, and the
-/// forward went nondeterministic - weights byte-exact, every op exact in
-/// isolation, the divergence moving between runs. Explicit synchronization
-/// around the direct path shrank the window without closing it. The host
-/// staging is two synchronous copies whose ordering is the driver's own
-/// contract, and the stream-event ordering that removes the stall enters
-/// with the peer-to-peer follow-up, measured.
-fn hop(tensor: &Tensor, from: &Device, to: &Device) -> candle_core::Result<Tensor> {
-    from.synchronize()?;
+/// **The direct device-to-device path was entered measured on 2026-08-19
+/// and the measurement rejected it.** With the fork's stream fences and
+/// the driver's peer plus pool-access grants all standing, the direct
+/// copy still corrupted intermittently below even full host
+/// synchronization - a pool-backed peer copy defect beneath the driver's
+/// own sync - and it paced slower besides: 47 against 76 tokens per
+/// second on the hop-dominated 0.5B case, because a hop here moves about
+/// two kilobytes and latency dominates, so the interconnect's bandwidth
+/// buys nothing. The host staging is two synchronous copies whose
+/// ordering is the driver's own contract, measured faster, and boring.
+/// A future entry at widths where the activations are large enough to
+/// pay reopens this with the fences already landed in the fork.
+fn hop(tensor: &Tensor, to: &Device) -> candle_core::Result<Tensor> {
+    tensor.device().synchronize()?;
     let staged = tensor.to_device(&Device::Cpu)?;
     staged.to_device(to)
 }

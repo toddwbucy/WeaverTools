@@ -224,6 +224,78 @@ fn the_pair_agrees_with_the_single_card() {
     );
 }
 
+/// The measurement instrument for the reduction's cost, not a gate: run
+/// with `WEAVER_MEASURE_PACE=1` and it reports the single card's pace and
+/// the pair's on the hop-dominated 0.5B worst case, 256 greedy tokens
+/// each, timing the generation alone. It asserts nothing about the
+/// numbers, because a pace is a fact to read rather than a threshold to
+/// flake on, and it skips by default so the suite's cost stays flat.
+#[test]
+fn the_pair_reports_its_pace() {
+    if std::env::var_os("WEAVER_MEASURE_PACE").is_none() {
+        eprintln!("SKIP the_pair_reports_its_pace: WEAVER_MEASURE_PACE unset");
+        return;
+    }
+    let Some(dir) = artifact_dir() else {
+        eprintln!("SKIP the_pair_reports_its_pace: no safetensors artifact");
+        return;
+    };
+    if cudarc::driver::CudaContext::new(1).is_err() {
+        eprintln!("SKIP the_pair_reports_its_pace: fewer than two CUDA devices");
+        return;
+    }
+    let knobs = EffectiveKnobs {
+        temperature: 0.0,
+        top_k: 1,
+        top_p: 1.0,
+        repetition_penalty: 1.0,
+        repetition_window: 0,
+        seed: 11,
+    };
+    let prompt = "<|im_start|>user\nCount upward from one, comma separated, \
+                  for as long as you can.<|im_end|>\n<|im_start|>assistant\n";
+    for devices in [
+        vec![DeviceOrdinal(0)],
+        vec![DeviceOrdinal(0), DeviceOrdinal(1)],
+    ] {
+        let width = devices.len();
+        let mut residency = Residency::new();
+        let binding = ModelBinding {
+            artifact: ArtifactRef(dir.to_string_lossy().into_owned()),
+            devices,
+        };
+        let resident = residency
+            .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false))
+            .unwrap_or_else(|refusal| panic!("the admit at width {width}: {refusal:?}"));
+        let prefix = resident.tokenize(prompt).expect("tokenizes");
+        let mut session = resident.open_session(&knobs, 2048).expect("session opens");
+        session.open(&prefix).expect("prefix decodes");
+        let close = resident.tokenize("<|im_end|>").expect("close tokenizes");
+        let [terminator] = close.as_slice() else {
+            panic!("the turn close promotes to one token, got {close:?}");
+        };
+        let started = std::time::Instant::now();
+        let generated = session
+            .append_and_generate(
+                &[],
+                &StopCondition {
+                    stop_tokens: close.clone(),
+                    terminator: *terminator,
+                    max_tokens: 256,
+                },
+                &mut NeverCancels,
+                &mut |_| {},
+            )
+            .expect("generates");
+        let elapsed = started.elapsed().as_secs_f64();
+        let count = generated.tokens.len();
+        eprintln!(
+            "PACE width {width}: {count} tokens in {elapsed:.2}s = {:.1} tok/s",
+            count as f64 / elapsed
+        );
+    }
+}
+
 /// The model the pair exists for: larger than any single card, sharded
 /// safetensors, served across both devices through the native engine. The
 /// deliberate mirror of `two_card.rs`'s split-GGUF proof in the second
