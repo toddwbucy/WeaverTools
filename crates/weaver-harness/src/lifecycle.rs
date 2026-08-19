@@ -417,21 +417,34 @@ impl Harness {
                     // report's wire case being issue 106's open election: a
                     // fault below the exchange layer, ending service the
                     // way section 3 ends it.
-                    let residue = match &self.state {
-                        ChannelState::Entered(run) => run.spu.as_ref().map(|spu| {
-                            matches!(
-                                spu.decode.recv_reply(),
-                                Ok(crate::channel::DecodeReply::Answer(TokenAnswer::AtRest))
-                            )
-                        }),
+                    let verdict = match &self.state {
+                        ChannelState::Entered(run) => {
+                            run.spu.as_ref().map(|spu| spu.decode.recv_reply())
+                        }
                         _ => None,
                     };
-                    if residue != Some(true) {
-                        self.unwind_if_entered(
-                            weaver_types::FaultCase::OrganDeathObserved,
-                            &ChannelFault::Undecodable,
-                        );
-                        return Err(ChannelFault::Undecodable);
+                    match verdict {
+                        Some(Ok(crate::channel::DecodeReply::Answer(TokenAnswer::AtRest))) => {}
+                        // A reply that decoded and is not the residue is the
+                        // one place the synthetic fault is honest: the octets
+                        // read, the seam's state cannot.
+                        Some(Ok(_)) | None => {
+                            self.unwind_if_entered(
+                                weaver_types::FaultCase::OrganDeathObserved,
+                                &ChannelFault::Undecodable,
+                            );
+                            return Err(ChannelFault::Undecodable);
+                        }
+                        // The channel's own fault is retained, so the fault
+                        // event's account carries what the seam met rather
+                        // than a synthetic stand-in.
+                        Some(Err(fault)) => {
+                            self.unwind_if_entered(
+                                weaver_types::FaultCase::OrganDeathObserved,
+                                &fault,
+                            );
+                            return Err(fault);
+                        }
                     }
                 }
                 Err(fault) => {
