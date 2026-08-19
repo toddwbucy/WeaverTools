@@ -2,6 +2,12 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-19, the serve half is represented. Section 4 gains the
+ask handling and the shape query, section 3's provisional store shape
+passes its stated trigger and stands with the reasoning recorded, and
+section 6 closes the serve surface election, the transformation vocabulary
+gaining its first member. Arrives with the context-injection loop's act,
+per the contract's change protocol.
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`
@@ -12,10 +18,11 @@
 ## 0. What this document is
 
 How the custodian is represented: its process, its store, its territory, and
-the shapes the ingest half takes. Written from the merged corpus alone. The
-charter carries every why, and where reasoning appears here it restates a
-charter clause and cites it. The serve half's representation is deliberately
-absent throughout, per the charter's cell: its first asker shapes it.
+the shapes both halves of the seam take. Written from the merged corpus
+alone. The charter carries every why, and where reasoning appears here it
+restates a charter clause and cites it. The serve half stood deliberately
+absent until its first asker shaped it, per the charter's cell, and arrived
+with the context-injection loop's act of 2026-08-19 at section 4.
 
 ## 1. The crate
 
@@ -83,6 +90,13 @@ shape optimized for queries nobody has asked would be optimizing a guess.
 **The trigger is the serve act**: when the first asker's shapes land, this
 election is reconsidered against real asks, and a build that has served real
 asks without reconsidering has an open election reading as a settled one.
+**The trigger fired 2026-08-19 with the shape ask, and the election
+stands.** The first real ask groups the event table by run and kind, which
+the two-table shape answers in one pass over rows a session keeps in the
+low thousands, at a cadence of one ask per run's opening, so a query-side
+reshaping would buy nothing measurable and the provisional shape is kept on
+that ground. No index is added for it, by the same arithmetic. The next ask
+that arrives reopens the question under the same clause.
 
 **The indexes are built at load from the election the seam's opener
 carried**, per the contract's ingest clause: the opener arrives before the
@@ -103,11 +117,12 @@ the journal in memory, the crash cost being a rebuild or an empty stand
 rather than a lost account. The exact pragmas are the code act's, under this
 election.
 
-## 4. The ingest
+## 4. The ingest and the serve
 
-The seam's traffic is the contract's `election` opener and its `distillate`
-stream, and this crate's half is mechanical: parse, insert, index nothing
-per event, answer nothing. **A distillate lands whole or not at all**: the
+The seam's traffic is the contract's `election` opener, its `distillate`
+stream, and since 2026-08-19 its `ask` and `answer`, and this crate's half
+is mechanical: parse, insert, index nothing per event, answer exactly what
+was asked. **A distillate lands whole or not at all**: the
 parse completes before any write, and the event row and its field rows go
 in as one transaction that rolls back entire on any failure, because a
 distillate held in part would be an attributable envelope over missing
@@ -118,27 +133,46 @@ ride the sequence order the harness owes, and a gap in sequence is not this
 crate's to notice: the record is the account
 of what happened, and custody keeps what arrives.
 
-**Transformation is chartered and none ships yet.** The charter licenses
-derived shapes as custody's work, and the first derivations land when the
-serve act names what the loop consumes, for the reserved-slot reason: a
-derivation nothing reads is a data-shaped empty joint.
+**The serve half, shaped by its first asker per the charter's cell.** An
+`ask` frame arriving on the stream is handled in stream order by the same
+loop that lands distillates, which is what delivers the contract's
+answered-against clause without a lock or a snapshot: the holdings at the
+ask's position are the holdings, because nothing lands between reading the
+ask and answering it. The `shape` ask runs one grouped count over the event
+table, runs in first-landed order, each carrying its kinds and their counts
+as the envelope spelled them, rendered as the contract's answer frame and
+written back on the channel in one line. A malformed ask is dropped whole
+the way a malformed distillate is, and the resulting silence is the
+harness's bound to convert into a missing answer.
+
+**Transformation is chartered and the shape aggregate is its first
+member.** The grouped count above is custody's derivation under the
+charter's license: an organized envelope fact carrying no judgment about
+what any count means to a turn. Further derivations land as further asks
+name what they consume, for the reserved-slot reason: a derivation nothing
+reads is a data-shaped empty joint.
 
 ## 5. What is enforced, and by which instrument
 
-The ingest's conformance is the contract's section 8, landing with the code
-act: the election round trip, real events to attributable rows, and the
-dead-peer clause watched by killing the member mid-run. The territory's
-mode is checkable by the same walk the trace's custody was checked by, the
-agent's uid asked to read the file and refused.
+The seam's conformance is the contract's section 8, each half landing with
+its code act: the election round trip, real events to attributable rows,
+and the dead-peer clause watched by killing the member mid-run for the
+ingest, and the shape ask answered with exactly what the record shows plus
+the ask against a dead member costing the answer and never the turn for
+the serve. The territory's mode is checkable by the same walk the trace's
+custody was checked by, the agent's uid asked to read the file and refused.
 
 ## 6. Open elections
 
-- **The serve surface, whole.** Shape, vocabulary, and the store's
-  query-side representation, elected in the context-injection loop's act
-  against real asks, per the charter's cell.
-- **The transformation vocabulary.** Which derivations custody performs,
-  elected with the serve surface, because a derivation is named by what
-  reads it.
+The serve surface's election closed 2026-08-19: its shape and vocabulary
+landed in the contract, its query-side representation at section 4, and the
+store shape's trigger fired and was answered at section 3, all elected
+against the context-injection loop's real ask per the charter's cell.
+
+- **The transformation vocabulary, beyond its first member.** The shape
+  aggregate landed with the serve act, and which further derivations
+  custody performs stays elected ask by ask, because a derivation is named
+  by what reads it.
 - **The retirement mechanics.** The session's close retires the holdings,
   and the act that gives sessions a close in practice elects how the file
   is removed, sessions today outliving every run this workshop has

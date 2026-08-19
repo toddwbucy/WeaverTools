@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-19, the serve surface takes its shape. Section 5's
+serve cell and calling-shape cell close: the first asker arrived as the
+context-injection loop, the ask vocabulary landed in
+`weaver-harness-state-contract`, the representation landed in
+`weaver-state-Spec` section 4, and the loop's calling shape landed as the
+seat's state port at `weaver-harness-Spec` section 6. Section 1's
+build-order asymmetry is history and reads as such.
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-PRD`
 **Parent:** `weaver-harness-PRD`
@@ -21,17 +28,16 @@ management of state as it concerns context for the decoder belongs to the
 harness and its control loops.
 
 **Two functions and no third: ingest and serve.** The tee's distillate flows
-in and is kept, and what is kept answers asks. The two are not symmetric
-today, and the asymmetry is load-bearing for the build order. The ingest has
-its producer standing: the trace renders canonical events now, the tee's
-election is ruled, and the stream this crate drinks from is real traffic on a
-real agent. The serve has no consumer yet: its first asker is the control
-loop that injects context for the model, and that loop is unwritten. So the
-ingest half builds whole against its living producer, and the serve half's
-shape waits for the loop's act, per the reserved-slot rule: a query surface
-elected against a guess about its caller is an interface-shaped empty joint,
-and the fault report's own history is the precedent, chartered and unshaped
-rather than absent until its first real traffic gave it a shape.
+in and is kept, and what is kept answers asks. The two were not symmetric
+at chartering, and the asymmetry was load-bearing for the build order. The
+ingest had its producer standing and built whole against real traffic on a
+real agent, landing 2026-08-18. The serve half waited for its first asker,
+per the reserved-slot rule: a query surface elected against a guess about
+its caller is an interface-shaped empty joint, and the fault report's own
+history is the precedent, chartered and unshaped rather than absent until
+its first real traffic gave it a shape. The asker arrived 2026-08-19 as the
+context-injection loop, and the surface was elected against its real ask
+rather than ahead of it, which is the rule honored rather than raced.
 
 This is the statefulness leg returning by the door apex section 9 built for it.
 Proto-stateful was the deliverable: real state within a session and none across,
@@ -230,11 +236,13 @@ today.
   arrives through it. Whether a later operator surface reads state directly or
   through an admin verb is a cell for the day such a reader exists, refused
   until then by the seam having exactly two ends.
-- **The serve surface's shape.** Chartered here and deliberately unshaped:
-  its first asker is the context-injection control loop, and the surface is
-  elected in that loop's act, against real asks, never before. Until then the
-  seam carries ingest traffic whole and the serve direction stands as this
-  named cell, which is the fault emission's own pattern on the decode seam.
-- **What a control loop's ask looks like.** The loops are the operator's code
-  in the harness's seat, so their asks ride the harness's end of the seam. The
-  calling shape a loop uses is settled where the loop surface is, not here.
+- **The serve surface's shape. Closed 2026-08-19.** Chartered here and held
+  deliberately unshaped until its first asker, which is the fault
+  emission's own pattern on the decode seam. The context-injection loop
+  arrived and the surface was elected in its act against its real ask: the
+  vocabulary in `weaver-harness-state-contract` section 2, the
+  representation in `weaver-state-Spec` section 4.
+- **What a control loop's ask looks like. Closed 2026-08-19.** The loops
+  are the operator's code in the harness's seat, so their asks ride the
+  harness's end of the seam, and the calling shape landed where the loop
+  surface is: the seat's state port, `weaver-harness-Spec` section 6.

@@ -5,6 +5,11 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-19, the serve direction takes its shape. Section 4's
+State row gains the ask and the answer riding the same channel as the
+distillate stream, per the contract's change protocol, and the asking loop
+is the context-injection loop, whose calling shape is the seat's state
+port per the Spec's section 6.
 **Revised:** 2026-08-18, the state seam is declared. Section 4 gains the
 socket seam to `weaver-state` under `weaver-harness-state-contract`, the
 harness declaring as the asking side, with the member reached over a wire
@@ -357,7 +362,7 @@ The four sockets:
 | Boundary | `weaver-gate` | Receives authenticated work inbound. Opens the exchange that carries a tool call outbound, per apex step 7, which the gate relays to the registered tool and never interprets. Gate never reaches past this seam in either direction. |
 | Decode | `weaver-spu` | Opens the resident session, appends each turn's delta, and issues the flush. Requests carry `turn_key` and `session_key`. Consumes the response and its measurement payload. |
 | Coordination | `weaver-admin` | Receives lifecycle sequencing, the trace descriptor of section 5, and the operator's intent to stop. Reports readiness, confirmation, and the turn's fate on a stop. Opens no exchange of its own, the fault travelling as a `fault` event on the stream per the fault-carrier ruling of 2026-08-01. |
-| State | `weaver-state` | Sends the tee's election at the channel's opening and the distillate stream after it, owed nothing back until the serve direction takes its shape. A dead peer costs the distillate and never the turn, per the contract's failure vocabulary. |
+| State | `weaver-state` | Sends the tee's election at the channel's opening, the distillate stream after it, and its loops' asks on the same channel, each answered once against the holdings the stream carried before it. A dead peer costs the distillate or the answer and never the turn, per the contract's failure vocabulary. |
 
 **A fault the worker survives is a `fault` event, and the stream is its carrier.**
 The fault-carrier ruling of 2026-08-01 retired the alert exchange: with one
