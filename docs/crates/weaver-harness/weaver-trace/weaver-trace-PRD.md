@@ -6,6 +6,14 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, the system role lands. The kind set gains
+`message.system`, fifteenth, under this charter's own rule that adding one
+edits this charter and every contract naming the set: the floor's `Role`
+gains `System` in the same act, and the payload joins the opaque
+conversation shapes. The ground is the loop's standing practice made
+honest - the system prompt has ridden user role since PR 207 for want of
+the slot, and the record should say what a message was rather than what
+the floor could spell.
 **Revised:** 2026-08-18, the tee is this crate's mechanism. Section 11 lands
 the distillation surface, per the operator's rulings of 2026-08-12 and
 2026-08-18: a selection over the canonical event stream, applied by the
@@ -185,7 +193,8 @@ single occurrence time. `weaver-harness-trace-contract` section 3 states which p
 stamps them and why the scopes differ. The payload shape is determined by the kind,
 and the kind vocabulary is closed.
 
-**Three payload shapes are opaque to this crate.** `message.user`,
+**Four payload shapes are opaque to this crate.** `message.system`,
+`message.user`,
 `message.assistant`, and `message.tool_result` carry conversation messages in the
 shape `weaver-traits` defines, and this crate neither defines that shape nor decodes
 it. It records the octets, sequences them, and carries them as opaque
@@ -281,6 +290,7 @@ its closure.
 | `unload` | closes a run |
 | `session.closed` | the session will not be resumed |
 | `turn.started` / `turn.closed` | the turn bracket |
+| `message.system` | the framing of the field, the loop's or the operator's |
 | `message.user` | operator input |
 | `message.assistant` | model output as conversation |
 | `message.tool_result` | a tool result entering the conversation |
@@ -290,8 +300,11 @@ its closure.
 | `model.output` | the decode boundary, response side |
 | `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
 
-Fourteen kinds. Adding one is an edit to this charter and to every contract whose
-vocabulary clause names the set, because consumers key on the closure. `fault` is
+Fifteen kinds. Adding one is an edit to this charter and to every contract whose
+vocabulary clause names the set, because consumers key on the closure.
+`message.system` is the fifteenth, added under that rule 2026-08-19 with the
+floor's `Role::System`: the slot the system prompt rode user role for since
+the control loop's first act. `fault` is
 the fourteenth, added under that rule by the fault-carrier ruling of 2026-08-01:
 the stream is the program's one fault carrier, so a fault the worker survives is an
 event like every other, recorded whenever it occurs because a fault absent from an

@@ -5,6 +5,10 @@
 separately.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, the system role lands. The vocabulary's message
+list gains `message.system`, per the kind-set rule this contract restates
+at section 7: the set closed at fifteen with `weaver-trace-PRD`'s same-act
+edit, and the payload is opaque to the recorder like its three siblings.
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date. The submit clause narrows with
 `weaver-trace-PRD` section 3.2: the harness submits the turn's delta as
@@ -65,10 +69,11 @@ defines it. A contract without this clause is not a valid contract, and a group 
 stated even when empty, because an explicit nothing is an assertion someone checked
 and an absent group is silence.
 
-**From `weaver-traits`.** The message model. The `message.user`, `message.assistant`,
+**From `weaver-traits`.** The message model. The `message.system`,
+`message.user`, `message.assistant`,
 and `message.tool_result` payloads carry conversation messages in whatever shape that
 crate defines, and this contract does not redefine them. The harness draws it. The
-recorder does not, because those three payloads are opaque to it per `weaver-trace-PRD`
+recorder does not, because those four payloads are opaque to it per `weaver-trace-PRD`
 section 3, so this name crosses the seam in one direction only.
 
 **From `weaver-types`.** Nothing. The clause is present with that answer because

@@ -4,6 +4,11 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, the system role lands. `Kind` gains
+`MessageSystem` with its explicit rename, the counts move to fifteen
+throughout, the message kinds become four, and the kind-to-payload mapping
+carries it under `Message` with its siblings, per the charter's same-act
+edit.
 **Revised:** 2026-08-17, the trace stamps the engine where the organ is too
 coarse, per issue #103. `Subsystem` gains `spu_decoder` for the three model
 events, whose wiring landed stamping `spu` before the case existed. `Spu`
@@ -223,6 +228,7 @@ pub enum Kind {
     #[serde(rename = "session.closed")]       SessionClosed,
     #[serde(rename = "turn.started")]         TurnStarted,
     #[serde(rename = "turn.closed")]          TurnClosed,
+    #[serde(rename = "message.system")]       MessageSystem,
     #[serde(rename = "message.user")]         MessageUser,
     #[serde(rename = "message.assistant")]    MessageAssistant,
     #[serde(rename = "message.tool_result")]  MessageToolResult,
@@ -264,7 +270,7 @@ the derive default emits `"MessageUser"` and `rename_all = "snake_case"` emits
 it to a scheme would put a second spelling of every kind on the wire, which is the
 one-name-two-nodes defect the Document Format rules against for identifiers and
 which reads the same way for a consumer keying on a kind. The mapping is total:
-fourteen variants, fourteen renames, and the wire spelling is the charter's.
+fifteen variants, fifteen renames, and the wire spelling is the charter's.
 
 ```graph
 node: trace-kind-explicit-renames
@@ -307,10 +313,10 @@ from: weaver-trace
 to: trace-subsystem-case-set
 ```
 
-**Fourteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
+**Fifteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
-attribute that let a consumer absorb a fifteenth kind into a wildcard would defeat
+attribute that let a consumer absorb a sixteenth kind into a wildcard would defeat
 the closure the corpus keys on.
 
 ```graph
@@ -486,12 +492,12 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, fourteen kinds and eight
+**The kind-to-payload mapping is total, fifteen kinds and eight
 dispositions.** `load`, `unload`, `session.closed`, and `turn.started` carry
-`None`. The three message kinds carry `Message`. `turn.closed` carries
+`None`. The four message kinds carry `Message`. `turn.closed` carries
 `TurnClosed`. `fault` carries `Fault`. The three model kinds carry their three
-own shapes, one each. The tool bracket's two carry `Deferred`. Four plus three
-plus one plus one plus three plus two is fourteen, which is the whole of
+own shapes, one each. The tool bracket's two carry `Deferred`. Four plus four
+plus one plus one plus three plus two is fifteen, which is the whole of
 charter section 3.1's set. The count is stated because an earlier draft of this
 paragraph assigned thirteen and left `turn.started` homeless, and it is
 recounted here because the token workflow's trace act of 2026-08-02 moved four
@@ -1002,7 +1008,7 @@ to: trace-append-failed-no-recovery
 
 **Enforced by the compiler.**
 
-- The kind enum is exhaustive, so a fifteenth kind breaks every consumer's match.
+- The kind enum is exhaustive, so a sixteenth kind breaks every consumer's match.
 - `WorkingStructure` exposes no mutation surface: every public accessor yields a
   shared reference and the append is crate-private, so alteration after landing is
   unrepresentable rather than merely forbidden. This is the signature half of the
