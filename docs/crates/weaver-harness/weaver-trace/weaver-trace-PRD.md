@@ -418,7 +418,13 @@ authored by the harness when the abort of `weaver-admin-harness-contract` sectio
 stop exchange lands. Every open has a close and the close says which kind it was, so
 a reader never infers an abort from an absence. This adds a field to one payload
 shape and no kind to the set, and it edits this charter and the contract in the same
-act, per the rule of this section.
+act, per the rule of this section. **A generation cut at the turn's token
+limit closes clean**, stated with the `Length` finish of 2026-08-19: the
+turn ran to its own end and the bracket closed whole, the cut being a fact
+about the generation that `model.output.finish` carries and the answered
+close may surface as `finish: "length"` per the world contract, while the
+stopped close stays reserved for the aborts, the stop directive's and a
+fault's, so the two kinds of ending never share a spelling.
 
 ### 3.2 The payload shapes the token workflow settles
 
