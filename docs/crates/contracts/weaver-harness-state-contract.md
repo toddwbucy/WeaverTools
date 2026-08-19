@@ -2,6 +2,14 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-19, the serve direction takes its shape. The vocabulary
+gains the `ask` and the `answer` and the one ask name `shape`, section 2's
+serve paragraph replaces its cell-face with the flowing direction, sections
+3 through 5 gain each party's serve obligations and the serve failure
+vocabulary, section 7 records the change this protocol named as landed, and
+section 8 gains the serve conformance. The change arrives with the
+context-injection loop's act, which is the landing the charter's cell
+required, every party merging in it.
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-harness-state-contract`
 **Editorial:** Per the Working Rules.
@@ -57,13 +65,15 @@ vocabulary, defined below, and the floor carries no member for it, per the
 custody rule of apex section 5.2: the floor carries only what the harness
 itself consumes, and what crosses here is consumed by state.
 
-**This seam's own.** Two terms. The `election`: the seam's opener, the
+**This seam's own.** Four terms. The `election`: the seam's opener, the
 elected kinds and their payload key paths as the load declared them, sent
 whole at every standing of the channel and never per event. The
 `distillate`: one distilled event, carrying the envelope whole and the
 elected payload pairs beside it, each pair a payload key path and the value
-the canonical JSON held at it. The serve
-direction's vocabulary is deliberately absent, per section 3.
+the canonical JSON held at it. The `ask`: one question the harness puts to
+the holdings on the standing channel, carrying a name from the closed
+vocabulary section 2 enumerates. The `answer`: the custodian's one reply to
+one well-formed ask, sent only when asked and at no other time.
 
 ```graph
 edge: draws
@@ -83,6 +93,20 @@ kind: term
 edge: defines
 from: weaver-harness-state-contract
 to: election
+
+node: ask
+kind: term
+
+edge: defines
+from: weaver-harness-state-contract
+to: ask
+
+node: answer
+kind: term
+
+edge: defines
+from: weaver-harness-state-contract
+to: answer
 ```
 
 ## 1. What this contract governs
@@ -109,12 +133,29 @@ error again. The harness does not wait, and a distillate is not a turn's
 work: nothing about a turn's completion depends on this seam accepting
 anything.
 
-**Serve, chartered and unshaped.** The second direction exists in charter and
-carries no vocabulary yet, per `weaver-state-PRD` section 5: its first asker
-is the context-injection control loop, and the ask's shape is elected in that
-loop's act, against real asks, never before. This section is the named cell's
-contract-side face, and an implementation that invents an ask shape ahead of
-that act has built a reserved slot.
+**Serve, flowing, the second direction, asked and answered on the one
+channel.** The cell that stood here closed 2026-08-19: the first asker
+arrived as the context-injection loop and the shape below is elected
+against its real ask, per `weaver-state-PRD` section 5. After the ingest's
+opener, the harness may put an `ask` on the standing channel at any point
+in the stream, and the custodian sends exactly one `answer` per well-formed
+ask, in the order the asks arrived, and speaks at no other time. **An ask
+is answered against exactly the holdings the seam carried before it**,
+which is what makes a served fact attributable to a position in the stream:
+every distillate sent ahead of the ask is in the answer's view and nothing
+sent after it is.
+
+**The ask vocabulary is closed and enumerated here, and it holds one name:
+`shape`.** The shape ask carries no members, one member instance holding
+one session, and asks for the session's shape - what happened, in what
+order, in which run, which is the phrase the charter uses for what the
+default election holds. Its answer carries the session's runs in the order
+custody first saw them, each with its run reference and its held event
+counts by kind, every name spelled as the envelope spelled it. The counts
+are organized envelope fact and carry no judgment: what a kind's count
+means to a turn is the asking loop's business, per the three-way division
+of `weaver-state-PRD` section 2. A second ask name is a change under
+section 7 and does not exist until it merges there.
 
 ## 3. What the harness owes
 
@@ -126,6 +167,11 @@ that act has built a reserved slot.
   defect in the sender.
 - **Its own judgment kept to itself.** What a fact is worth is the harness's
   loops' business and crosses this seam in neither direction.
+- **Asks from the enumerated vocabulary only, and a bounded wait.** The
+  harness sends no ask this contract does not name, and it does not wait
+  unboundedly for an answer: an answer that has not arrived inside the
+  harness's own bound is a missing answer, treated as the dead peer of
+  section 5, and the turn proceeds without the fact.
 
 ## 4. What state owes
 
@@ -135,9 +181,10 @@ that act has built a reserved slot.
 - **Transformation without judgment.** Derived shapes, aggregates, and
   indexes are custody's work and carry no opinion about what a turn should
   do, per the three-way division of `weaver-state-PRD` section 2.
-- **Nothing back, yet.** Until the serve direction takes its shape, state
-  sends nothing on this seam. A custodian that spoke unasked would be
-  initiating, which its charter forbids.
+- **The answer, only when asked.** Exactly one answer per well-formed ask,
+  in arrival order, each answered against the holdings the stream carried
+  before its ask, and no other traffic ever. A custodian that spoke
+  unasked would be initiating, which its charter forbids.
 
 ## 5. Failure vocabulary
 
@@ -155,6 +202,16 @@ closing nothing: the event is dropped, the defect is state's to surface when
 the serve direction gives it a voice, and the record remains authoritative
 for what was elected. The seam does not fault the worker for a bad row.
 
+**A dead or silent peer costs the answer and never the turn.** The serve
+direction fails the way the ingest does: where state is gone, or an answer
+does not arrive inside the harness's bound, the harness proceeds as if
+nothing were held, the loop composes its turn without the fact, and no
+retry follows on this standing of the channel. A malformed ask is dropped
+by the custodian without an answer, which the harness's bound converts into
+the same missing-answer outcome, and a malformed answer is dropped by the
+harness to the same effect. In every one of these the record remains whole
+and the next load's channel asks again against holdings that never moved.
+
 ## 6. What neither party may do
 
 - Neither party writes the trace through this seam, in either direction. The
@@ -166,10 +223,13 @@ for what was elected. The seam does not fault the worker for a bad row.
 
 ## 7. Change protocol
 
-A change to the distillate's shape, to the election's semantics, or to the
-serve direction's opening touches this contract, and every party merges in
-the same act. The serve direction's first shape is a change under this
-protocol, landing with the loop act the charter names.
+A change to the distillate's shape, to the election's semantics, to the
+ask vocabulary, or to the answer's shape or its ordering guarantees
+touches this contract, and every party merges in the same act. The serve
+direction's first shape was a change under this protocol and landed
+2026-08-19 with the loop act the charter named, which is the
+sentence above kept as the rule it demonstrated: a second ask name enters
+by the same door.
 
 ## 8. Conformance
 
@@ -178,3 +238,12 @@ real election, real events crossing, and the holdings queried for exactly
 what the election named, attributable by envelope. The dead-peer clause is
 testable by killing the member mid-run and watching the turn path not
 notice. Both land with the code act that opens the seam.
+
+The serve direction is testable against the living pair: a real load, real
+events landed, and the shape ask answered with exactly the runs and counts
+the record shows for the session, in first-seen order. The answered-against
+clause is testable in time: asks interleaved with distillates, each answer
+holding every count the stream carried before its ask and nothing sent
+after it. The serve half of the dead-peer clause is testable by asking with
+the member gone and watching the turn complete without the fact inside the
+bound. All three land with the loop act that shapes the surface.

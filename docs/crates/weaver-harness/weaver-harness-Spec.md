@@ -4,6 +4,13 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, the seat gains the state port. The
+context-injection loop needed a port the granted surface did not offer, and
+the capability change enters through the front door section 6 names, as
+this charter edit beside the contract's: `Ports` grows the shape ask,
+section 1's listing gains `src/state.rs`, and the file count moves to
+eight. Per `weaver-harness-state-contract` section 7's change protocol,
+arriving in the same act as every party.
 **Revised:** 2026-08-18, the tool boundary ruling grows the execution
 exchange's contents from three to four and section 6's grant site follows:
 killed on the caller's clock joins as its own case, per the amended
@@ -172,11 +179,12 @@ leftovers.
     src/assembly.rs    prompt assembly's deterministic floor, section 5
     src/tools.rs       the tool system, blocked, section 6
     src/engine.rs      loop 1's seat, the extension seam, section 6
+    src/state.rs       the state seam's ask end, section 6
 
     src/bin/worker/main.rs    the composition root, framework, section 6
     src/bin/worker/dev_loop/  the loop body, the developer's, section 6
 
-Seven library files, two of them placements, the way `weaver-traits-Spec`
+Eight library files, two of them placements, the way `weaver-traits-Spec`
 section 1 places its blocked and deferred modules, and one bin target, the
 demonstration worker, arriving with the wiring act.
 
@@ -1524,6 +1532,28 @@ edge: asserts
 from: weaver-harness
 to: harness-extension-seam-at-loaded-and-idle
 ```
+
+**The seat carries the state port, 2026-08-19, through the front door this
+section names.** The context-injection loop needed a port the granted
+surface did not offer, and the capability change entered as a charter and
+contract edit rather than as an import, this clause and
+`weaver-harness-state-contract`'s serve sections landing in one act.
+`Ports` grows one call, the shape ask of that contract's section 2,
+returning the session's shape as the member answered it, or nothing where
+the leg is down, the answer malformed, or the bound expired, each of which
+is the contract's dead peer converted at the seat into the same absence a
+missing leg serves. The port rides the same blade as every other: a type
+this crate owns, granted with the seat and mintable nowhere, so the loop
+that holds a seat holds the ask and no narrower grant exists for the
+boundary to name. The seam's ask end lives in `src/state.rs`, a clone of
+the standing state channel held on the run beside the tee the enter
+attaches, the ask written and the answer awaited on the serving thread
+inside a bound this crate elects, generous against a member whose answer is
+one pass over its own holdings. Serialization on the shared channel is the
+serving thread itself: the tee's feed and the seat's ask both run on it, so
+no ask can interleave a distillate's octets, and the member's answers are
+the only traffic that ever flows toward this crate, so whatever the wait
+reads is the answer or is malformed, with no third case to disambiguate.
 
 ### 6.1 The decode surface, chartered
 
