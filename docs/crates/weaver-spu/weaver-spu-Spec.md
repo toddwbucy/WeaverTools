@@ -1329,8 +1329,10 @@ to: spu-absent-shape-pinned-by-doctest
 signal vectors, the timings the charter's row names, the model identity and
 its weights hash from section 3, the prompt-block partition, the residual
 reductions when elected, the session's resident token count and its
-capacity as the generation closed, per issue #221's arc and
-`weaver-types-Spec` section 4.4, and beside the measurement the model.request content
+capacity as the generation closed - the generation's own typed members
+beside the two spliced boxes, never measurement members, per issue #221's
+arc and
+`weaver-types-Spec` section 4.4 - and beside the measurement the model.request content
 whole, per the custody act of 2026-08-11: the turn's delta as the family
 library rendered it, per the ruling of 2026-08-12, the template identity, and
 the turn's effective sampling values, rendered by this crate because the

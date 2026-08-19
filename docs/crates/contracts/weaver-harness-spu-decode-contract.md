@@ -200,10 +200,12 @@ ruling of 2026-08-12, the SPU
 rendering it whole per the custody act of 2026-08-11, its measurement:
 the token identifiers, the per-token signals, the timings, the block
 partition, and, where the residency was admitted with readout elected, the
-residual reductions, and the session's fullness as the generation closed,
-the resident token count and the capacity, added 2026-08-19 so the loop
-that elects a flush sees the pressure before the wall rather than in the
-wall's refusal. **The template identity travels in the request and only
+residual reductions. Beside the two boxes, as the generation's own typed
+members and never inside the measurement, the session's fullness as the
+generation closed: the resident token count and the capacity, added
+2026-08-19 so the loop that elects a flush sees the pressure before the
+wall rather than in the wall's refusal, shaped at `weaver-types-Spec`
+section 4.4 because the harness consumes them. **The template identity travels in the request and only
 there**, per the ruling of 2026-08-17 on #129: it is an input-side fact of
 the same kind as the sampling values, which moved to the request for the
 same reason, and a member carried by both boxes of one turn's pair would be
@@ -227,7 +229,10 @@ stop exchange takes on the coordination seam.
 is in flight. The session returns to its prefix-only state: the identity
 prefix resident, the accumulated turns gone, the outcome fixed and the
 mechanism the Spec's per family, per `weaver-spu-PRD` section 13.9. The
-answer confirms after the outcome holds.
+answer confirms after the outcome holds, and carries the resident token
+counts before and after the truncate, added 2026-08-19: the SPU is the one
+authority on either number, and the harness authors the record's `flush`
+event from exactly them.
 
 **Report a fault.** Emitted by the SPU, the seam's one SPU-originated
 message and not an exchange, carrying a `fault-report` naming a case of

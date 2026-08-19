@@ -266,6 +266,11 @@ pub struct ModelOutput {
     pub finish: Finish,
 }
 
+pub struct FlushCounts {
+    pub resident_before: u64,
+    pub resident_after: u64,
+}
+
 #[serde(tag = "close", rename_all = "snake_case")]
 pub enum TurnClose {
     Clean,

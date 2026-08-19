@@ -1309,7 +1309,10 @@ pub enum TokenAnswer {
     Token { token: u32, piece: String },
     Generated(Generation),
     AtRest,
-    Flushed,
+    Flushed {
+        resident_before: u64,
+        resident_after: u64,
+    },
     Fault(FaultReport),
 }
 
@@ -1404,6 +1407,13 @@ per the decode contract's section 2. The measurement travels that path to the
 model events, so no crate holds a second copy of a shape `weaver-trace` owns and
 the sole-writer rule is untouched: what the SPU produces is data, and the event
 is still the harness's to author.
+
+**The flush confirmation carries both resident counts**, because the SPU
+is the one authority on either number and the harness authors the
+record's `flush` event from exactly them: the count before the truncate
+and the count after, the identity prefix's own length. A confirmation
+without the counts would leave the event's payload to a party that
+cannot know it.
 
 **The fullness rides every generation, added 2026-08-19 by issue #221's
 arc.** `resident` is the session's token count as the generation closed,

@@ -487,10 +487,14 @@ token identifiers carrying the exact tokenization, is what makes apex
 section 8's rule that tokenization is reproducible from what is recorded
 true rather than hopeful. Two conditions ride the ruling, named rather than
 slid past. The accumulation reading holds while every operation that moves
-the resident context is recorded. The flush is chartered on the decode seam
-and served by the SPU, and no granted surface exposes it today, so no loop
-can reach it: the act that exposes the flush adds its event to the kind set
-through the front door or reopens this ruling. And a
+the resident context is recorded. **The flush's condition fired 2026-08-19
+and was honored**: the context-management act exposed the flush at the seat
+and added its event to the kind set through the front door in the same act,
+exactly as this sentence required. The reading therefore survives a flush
+by the event itself: a reader or a replay meeting `flush` resets its
+accumulation to the identity prefix, the payload's resident counts
+confirming the reset, so no later turn can be read against pre-flush
+context. And a
 replay's identity prefix is the configuration's, so the record's sufficiency
 for replay leans on the open question of what the load event carries of the
 admitted identity, which this ruling names and does not decide.
