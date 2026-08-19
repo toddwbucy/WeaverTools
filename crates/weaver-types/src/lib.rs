@@ -90,7 +90,8 @@ mod wire;
 pub use config::parse;
 pub use config::{
     AgentConfig, ArtifactRef, ConfigError, ConfigErrorKind, DecoderInstruction, DeviceOrdinal,
-    FieldName, GateInstruction, ModelBinding, SpuInstruction, ToolName, TraceSink,
+    ElectedKindConfig, FieldName, GateInstruction, ModelBinding, SpuInstruction, StateElection,
+    ToolName, TraceSink,
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{

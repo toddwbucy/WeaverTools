@@ -40,6 +40,46 @@ pub struct AgentConfig {
     pub permission_mode: weaver_traits::PermissionMode,
     pub gate_instruction: GateInstruction,
     pub trace_sink: TraceSink,
+    /// The tee's election, per `weaver-types-Spec` section 2: the one
+    /// optional field, optional by the required-field rule's own exception
+    /// because `weaver-state-PRD` section 4 rules what absence means - the
+    /// default election, the envelope of every kind. Admin resolves the
+    /// absence at inventory, so the worker never re-derives it.
+    #[serde(default)]
+    pub state_election: Option<StateElection>,
+}
+
+/// The operator's election of payload key paths for the state tee, per
+/// `weaver-types-Spec` section 2. The resolved default's spelling is fixed
+/// there so two resolvers cannot disagree: `all_kinds` true and `keys`
+/// empty. The empty list is only the default's spelling: `keys` stays
+/// meaningful beside `all_kinds` true, each named kind adding payload
+/// paths on top of the envelope every kind already crosses with. When the
+/// block is present in the file, both members are required, the
+/// required-field discipline resuming inside it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct StateElection {
+    pub all_kinds: bool,
+    pub keys: Vec<ElectedKindConfig>,
+}
+
+impl Default for StateElection {
+    fn default() -> Self {
+        StateElection {
+            all_kinds: true,
+            keys: Vec::new(),
+        }
+    }
+}
+
+/// One kind's election: the kind as the canonical form spells it, and the
+/// payload key paths elected for it, dotted from the payload root.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct ElectedKindConfig {
+    pub kind: String,
+    pub paths: Vec<String>,
 }
 
 /// The SPU's section of the declaration, per `weaver-types-Spec` section 2:

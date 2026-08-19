@@ -389,6 +389,11 @@ fn run_load(
                 run: run_reference,
                 spu_instruction: inventory.config.spu_instruction.clone(),
                 gate_instruction: inventory.config.gate_instruction.clone(),
+                // The resolution site the contract names: an absent
+                // declaration becomes the ruled default here, so what
+                // crosses is always the election whole and the worker
+                // never re-derives an absence.
+                state_election: inventory.config.state_election.clone().unwrap_or_default(),
             },
         }),
     };
