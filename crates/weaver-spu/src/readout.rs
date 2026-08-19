@@ -17,11 +17,13 @@
 //! candle fork's `forward_with_intermediates` and the GGUF path the ggml
 //! scheduler's eval callback the llama-cpp fork exposes. Both drive this seam
 //! and both answer [`Reduction`], so a consumer reads one shape and cannot tell
-//! which engine produced it. **Neither tap is stood up**, because neither
-//! backend is: `decoder::backend::for_container` refuses for both containers
-//! today, and the Spec is explicit that standing the GGUF tap up is code this
-//! program writes rather than salvage it inherits. What is here is the seam
-//! they will drive and the reduction they will fill.
+//! which engine produced it. **The native tap stands as of 2026-08-19** for
+//! the families whose declarations say so, at both widths, folding each
+//! layer's device-side norm through [`Reduction::fold_norm`]. **The GGUF tap
+//! is not stood**: the Spec is explicit that standing it up is code this
+//! program writes rather than salvage it inherits, and [`judge`] reads the
+//! container beside the family's flag so an elected GGUF load refuses at
+//! admit rather than serving turns without what was elected.
 //!
 //! **A tap that fails while elected is a fault, not an absence.** Per charter
 //! section 13.10: an elected observability that silently stopped observing is a
