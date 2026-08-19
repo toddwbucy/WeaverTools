@@ -365,11 +365,15 @@ move.** The 2026-08-08 rebuild found the record set almost unchanged across 28
 document commits, two assertions retagged and none added or removed, while 138 of
 242 assertions pointed at a line the document no longer held. A count check would
 have reported that graph healthy, so a matching census is not evidence a rebuild
-can be skipped. Document movement since `98c8713` has added three `draws` edges,
-the route act of 2026-08-10 drawing the election on both load seams and the
-binding on the seam that owed it from the cut, so the next rebuild expects **293
-nodes and 429 edges** where the standing graph holds 426, and the assertion
-figures do not move.
+can be skipped. Document movement since `98c8713` had added three `draws` edges by
+2026-08-10, and the state leg's papers of 2026-08-18 and 2026-08-19 have
+since added a crate node, its parent and seam edges, a contract with its
+parties, draws, and four term definitions, and three assertion records, so
+the stated expectation of 293 nodes and 429 edges is withdrawn as stale.
+The next rebuild derives its expected census from a fresh pass over the
+merged set before it runs, stated as numbers at that pass per this
+section's own discipline, and HADES remains down meanwhile, so the rebuild
+is owed and not runnable.
 
 The floor probe of 2026-08-04 is the evidence the entry into code rested on: a
 commissioned session with no repository access rebuilt both floor crates from the
@@ -387,10 +391,24 @@ Seat assignment follows section 1's rule unchanged: the seat holding the working
 tree authors, and review runs through the PR's review seats. Later code acts sit
 where the operator points them.
 
-**All seven crates are built and merged.** Each file carries its conformance
-header per Document Format sections 3 and 4, and no crate carries a header citing
-an assertion no Spec declares. Recounted 2026-08-16 over every tracked unit
-carrying a header, per the Document Format's counting clause:
+**An eighth crate joined the set's shadow on 2026-08-18 and the roster
+below predates it.** The statefulness leg returned through apex section 9's
+door: `weaver-state-PRD` chartered the custodian on the operator's rulings,
+`weaver-harness-state-contract` and the Spec landed its seam and shapes, and
+the code acts stood the ingest (#208) and the serve direction with its
+first asker, the context-injection loop (#209, #210), each proven against
+the living agent - the loop now injects the session's shape at a run's
+opening and the model has answered from it. The crate carries three
+conformance headers, whose assertion records land with the position
+refresh of 2026-08-19 after the refresh found them cited but undeclared,
+each tagged review. A recount over the eight-crate set is owed at the next
+counting pass and the table below is the seven-crate figure of 2026-08-16.
+
+**All seven crates of the ratified set are built and merged.** Each file
+carries its conformance header per Document Format sections 3 and 4, and no
+crate carries a header citing an assertion no Spec declares. Recounted
+2026-08-16 over every tracked unit carrying a header, per the Document
+Format's counting clause:
 
     weaver-types      18/18      weaver-harness   55/56
     weaver-traits     24/24      weaver-gate      27/27
@@ -451,16 +469,18 @@ repeatedly found, a record unable to say what it did not measure, so the roll
 carries the reason beside the name in both directions: what an open one waits
 on, and what closed one that has gone.
 
-**One decode engine is written and one is not, and the turn now completes.**
-The GGUF engine landed 2026-08-08 and decodes real weights under its own tests,
-a real forward and a real draw against a real artifact, and `weaver-spu-Spec`
-section 4.1's derivation answers for the GGUF container while refusing the
-native one, whose `native.rs` stays unwritten and undeclared. What this section
-said the engine lacked was the decode socket being served, and it is served:
-epic #130 completed the first live turn on 2026-08-14, gate to trace, against a
-real local model. **That is the operational path and not the decode seam's
-vocabulary**, which is a floor question the paragraph above leaves open and
-which this closes nothing of.
+**Both decode engines are written, and the turn completes through either.**
+The GGUF engine landed 2026-08-08 and the native engine followed across
+issue #158's arc, closed 2026-08-19: `native.rs` stood 2026-08-17 (#196),
+the pair
+forward and the split loaders opened the dual-GPU grid in both containers
+(#200, #201), and a 65 GB sharded artifact too large for any single card
+served across the pair (#202). Section 4.1's derivation answers for both
+containers to about 90 GiB across the device pair. The direct peer-to-peer
+reduction was entered measured at the close and rejected on the evidence,
+the hop staying host-staged with the rejection recorded at the function.
+Epic #130 completed the first live turn on 2026-08-14, gate to trace,
+against a real local model, and turns have run daily since.
 
 **The demonstration is the evidence and it is inspectable.** A trace taken
 2026-08-16 carries one run reference over six turns, each running
@@ -469,18 +489,31 @@ which this closes nothing of.
 a `load` and an `unload`. So a directive does reach an engine from outside its
 process and an answer returns.
 
-**What rides back with it is the measurement payload and not the readout**, and
-the two are apex section 7.2's two items rather than one. The payload carries
-the timings, the per-token entropies and surprisals, and a block label over the
-turn's token range. The residual-stream readout is the other item, its election
-reads false in the declaration the live run used, and its tap is unwritten.
-Collapsing them would be this document doing what section 7.2 was closed to
-prevent.
+**What rides back with it is the measurement payload, and the readout joins
+it where elected**, the two being apex section 7.2's two items rather than
+one. The payload carries the timings, the per-token entropies and
+surprisals, and a block label over the turn's token range. The
+residual-stream readout's native tap stood 2026-08-19 with #158's closing
+act: an elected qwen2 residency taps every forward at either width, each
+layer's norm taken on the device with one scalar crossing, and the
+reduction travels in the measurement as `residual_norms`, absent rather
+than empty. The refusal turns on the election alone: an elected GGUF load
+refuses at admit by name, that tap being unwritten still, while a GGUF
+load with `residual_readout_election` false admits and serves turns
+exactly as before the tap existed. Where readout is not elected the SPU
+emits no `residual_norms` member at all, and the harness and the trace
+carry the measurement as opaque JSON either way, so the omission stays an
+absence in the record rather than anything converted to empty. The
+standing agent declaration elects no readout.
 
-**A completed turn satisfies no conformance assertion, and the SPU's two open
-are open still.** The live run evidences that the path works. It does not drive
-a tap through the eval-callback pin both of them wait on. A reader who takes the
-demonstration as having closed them has read a count into a behaviour.
+**A completed turn satisfies no conformance assertion, and the SPU's two
+open moved on 2026-08-19 without closing.** Both waited on the readout tap
+existing, and the native half now does. `spu-two-taps-one-shape` still
+waits on the GGUF half, the eval-callback pin holding that seam open with
+nothing driving it. `spu-one-forward-per-prompt` is now watchable under
+the standing native tap and waits only on its count being taken. A reader
+who takes the demonstration as having closed either has read a count into
+a behaviour.
 
 An earlier wording of this paragraph said four, which was the figure the table
 carried when the count ran over `src` alone. Two of that four were cited all
@@ -516,9 +549,11 @@ it produces is evidence about the code rather than authority over a document.
 
 What remains from the phase behind: G6 and then item 7, and the G2 and G5
 phase-close sweeps. The graph's expected census is stated as a number rather than
-as a delta so a rebuild can detect a change nobody intended: **242 assertion nodes
-carried by 243 `asserts` edges**. The two figures differ by one on purpose, and
-the difference is a finding rather than an error: the assertion
+as a delta so a rebuild can detect a change nobody intended: **242 assertion
+nodes carried by 243 `asserts` edges at the last statement**, which the state
+leg's three review assertions of 2026-08-19 have since outgrown, the fresh
+figures landing with the pre-rebuild pass named above. The two figures differ
+by one on purpose, and the difference is a finding rather than an error: the assertion
 `types-tagging-test` is asserted by both floor crates, so one node takes two
 edges. Which figure a check reads therefore matters, and the closing checklist's
 item 5 reads nodes. A rebuild returning any other figure has found either an
@@ -532,6 +567,19 @@ earlier one discharged and needs the current one: the architecture is not stable
 while acts like the 2026-08-05 re-entry still move it, and a conformance graph
 built from moving code would record a shape neither the documents nor the code
 will keep.
+
+**The seat shifted 2026-08-19, on the operator's direction: from building
+the framework to using it.** The apex deliverable stands and is exceeded,
+and the suite around it is named in the living vision's section 13,
+weaver-web standing up as the first outside consumer against the two
+external contracts of 2026-08-01, in its own tree beyond this corpus. What
+that changes here is who leads: needs discovered in use pull framework acts
+through the change protocols, where the roadmap once pushed, and the
+predicted pulls are streaming through the gate's world contract, a status
+ask on admin's operator contract, and the operator's read on state per that
+charter's named cell. Framework work queued on its own account: the Python
+connector of issue #134, the payload-key election through the declaration,
+and the Role::System floor act.
 
 ## 8. What this document does not do
 
