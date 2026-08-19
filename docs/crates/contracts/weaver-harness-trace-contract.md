@@ -5,6 +5,10 @@
 separately.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, second of this date, the flush reaches the record.
+The kind set gains `flush` per the charter's same-act rule, authored by
+the harness when its loop's flush confirms, the payload this crate's own
+`FlushCounts`.
 **Revised:** 2026-08-19, the system role lands. The vocabulary's message
 list gains `message.system`, per the kind-set rule this contract restates
 at section 7: the set closed at fifteen with `weaver-trace-PRD`'s same-act
