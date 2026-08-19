@@ -223,9 +223,9 @@ and the next load's channel asks again against holdings that never moved.
 
 ## 7. Change protocol
 
-A change to the distillate's shape, to the election's semantics, or to the
-ask vocabulary touches this contract, and every party merges in the same
-act. The serve direction's first shape was a change under this protocol and
+A change to the distillate's shape, to the election's semantics, to the
+ask vocabulary, or to the answer's shape or its ordering guarantees
+touches this contract, and every party merges in the same act. The serve direction's first shape was a change under this protocol and
 landed 2026-08-19 with the loop act the charter named, which is the
 sentence above kept as the rule it demonstrated: a second ask name enters
 by the same door.
@@ -240,7 +240,9 @@ notice. Both land with the code act that opens the seam.
 
 The serve direction is testable against the living pair: a real load, real
 events landed, and the shape ask answered with exactly the runs and counts
-the record shows for the session, in first-seen order. The serve half of
-the dead-peer clause is testable by asking with the member gone and
-watching the turn complete without the fact inside the bound. Both land
-with the loop act that shapes the surface.
+the record shows for the session, in first-seen order. The answered-against
+clause is testable in time: asks interleaved with distillates, each answer
+holding every count the stream carried before its ask and nothing sent
+after it. The serve half of the dead-peer clause is testable by asking with
+the member gone and watching the turn complete without the fact inside the
+bound. All three land with the loop act that shapes the surface.

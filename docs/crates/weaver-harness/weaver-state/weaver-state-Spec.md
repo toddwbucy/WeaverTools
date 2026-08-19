@@ -139,11 +139,14 @@ loop that lands distillates, which is what delivers the contract's
 answered-against clause without a lock or a snapshot: the holdings at the
 ask's position are the holdings, because nothing lands between reading the
 ask and answering it. The `shape` ask runs one grouped count over the event
-table, runs in first-landed order, each carrying its kinds and their counts
-as the envelope spelled them, rendered as the contract's answer frame and
-written back on the channel in one line. A malformed ask is dropped whole
-the way a malformed distillate is, and the resulting silence is the
-harness's bound to convert into a missing answer.
+table, and the landing order the contract's first-seen clause asks for is
+the `id` column's, custody's own order key: the run groups are ordered by
+the least `id` each holds, each carrying its kinds and their counts as the
+envelope spelled them, rendered as the contract's answer frame and written
+back on the channel as one answer frame, the frame's byte shape riding the
+encoding election of section 6. A malformed ask is dropped whole the way a
+malformed distillate is, and the resulting silence is the harness's bound
+to convert into a missing answer.
 
 **Transformation is chartered and the shape aggregate is its first
 member.** The grouped count above is custody's derivation under the
