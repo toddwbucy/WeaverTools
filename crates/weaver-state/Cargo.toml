@@ -1,0 +1,14 @@
+[package]
+name = "weaver-state"
+version = "0.1.0"
+edition = "2024"
+
+# The custodian, per weaver-state-Spec section 1: one binary, weaver-trace
+# for the canonical event vocabulary, and the three externals the Spec
+# names. No async runtime, no logging crate, no HTTP, per the corpus's
+# standing refusals.
+[dependencies]
+weaver-trace = { path = "../weaver-trace" }
+rusqlite = { version = "0.37", features = ["bundled"] }
+serde_json = { version = "1", features = ["raw_value"] }
+nix = { version = "0.31", features = ["socket", "fs", "uio", "user", "poll"] }
