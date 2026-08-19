@@ -248,14 +248,19 @@ pub enum ContentBlock {
 }
 ```
 
-**The role set matches the closed message-kind set one to one.**
-`weaver-trace-PRD` section 3.1 carries `message.system`, `message.user`,
-`message.assistant`, and `message.tool_result`, four kinds for four roles,
-and the harness authors one kind per message, so a role mapping to no kind
-or to two would put a judgment on the authoring path that the kind set has
-already made. The mapping is one to one and total, and the assertion is
-named for that property rather than for a count, so a role that joins with
-its kind moves the sets together and renames nothing. An earlier name,
+**Every declared role maps to exactly one message kind, and the mapping
+is total over the declared set.** `weaver-trace-PRD` section 3.1 carries a
+`message.*` kind per role - `message.system`, `message.user`,
+`message.assistant`, `message.tool_result` against the four roles this
+section declares - and the harness authors one kind per message, so a role
+mapping to no kind or to two would put a judgment on the authoring path
+that the kind set has already made. The invariant is scoped to the
+declared sets rather than claiming either closed: `Role` is non-exhaustive
+by this Spec's own election, and a role that joins later joins WITH its
+kind, the two sets, the mapping, and this assertion's paragraph moving in
+one act, which is what the system role's act itself demonstrates. The
+assertion is named for the property rather than for a count, so that
+coupled movement renames nothing. An earlier name,
 `traits-role-set-three`, carried the count and retired with the system
 role's act.
 
