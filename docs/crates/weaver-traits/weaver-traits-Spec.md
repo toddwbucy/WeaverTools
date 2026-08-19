@@ -4,6 +4,16 @@
 merged charter. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, the system role lands. `Role` gains `System`, the
+growing set carrying it per this Spec's own non-exhaustive election, and
+the licensed combinations gain one line: a `System` message carries `Text`
+blocks. The slot the control loop's system prompt has ridden in user role
+since PR 207's standing practice now exists in its own name, and the
+message a system role becomes is `message.system`, the trace charter and
+the harness-trace contract moving in the same act. The count-named
+assertion `traits-role-set-three` retires for
+`traits-role-kind-one-to-one`, the durable property named instead of the
+count, the code's citation moving with it in this act.
 **Revised:** 2026-08-18, the tool boundary ruling retires section 5's interim
 reading. The gate holds one tool, the shell, its own verb dispatched with no
 table, so no current party dispatches `tool-trait` and the harness-gate
@@ -212,7 +222,8 @@ the two definitions in this crate a merged contract draws, the message model
 by the trace contract and `tool-trait` by the harness-gate contract as of the
 tool workflow's opening, and its shape is fixed by what two consumers need:
 the harness assembles prompts from it, and the trace
-records `message.user`, `message.assistant`, and `message.tool_result` payloads
+records `message.system`, `message.user`, `message.assistant`, and
+`message.tool_result` payloads
 carrying it, opaque to the recorder per `weaver-trace-PRD` section 3.
 
 ```rust
@@ -223,6 +234,7 @@ pub struct Message {
 
 #[non_exhaustive]
 pub enum Role {
+    System,
     User,
     Assistant,
     ToolResult,
@@ -236,29 +248,42 @@ pub enum ContentBlock {
 }
 ```
 
-**The role set is three because the closed event-kind set is three.**
-`weaver-trace-PRD` section 3.1 carries `message.user`, `message.assistant`, and
-`message.tool_result`, and the harness authors one kind per message, so a role
-mapping to no kind or to two would put a judgment on the authoring path that the
-kind set has already made. The mapping is one to one and total.
+**Every declared role maps to exactly one message kind, and the mapping
+is total over the declared set.** `weaver-trace-PRD` section 3.1 carries a
+`message.*` kind per role - `message.system`, `message.user`,
+`message.assistant`, `message.tool_result` against the four roles this
+section declares - and the harness authors one kind per message, so a role
+mapping to no kind or to two would put a judgment on the authoring path
+that the kind set has already made. The invariant is scoped to the
+declared sets rather than claiming either closed: `Role` is non-exhaustive
+by this Spec's own election, and a role that joins later joins WITH its
+kind, the two sets, the mapping, and this assertion's paragraph moving in
+one act, which is what the system role's act itself demonstrates. The
+assertion is named for the property rather than for a count, so that
+coupled movement renames nothing. An earlier name,
+`traits-role-set-three`, carried the count and retired with the system
+role's act.
 
 ```graph
-node: traits-role-set-three
+node: traits-role-kind-one-to-one
 kind: assertion
 tag: review
 
 edge: asserts
 from: weaver-traits
-to: traits-role-set-three
+to: traits-role-kind-one-to-one
 ```
 
 
 **The licensed combinations are stated, because the shape cannot state them.** A
+`System` message carries `Text` blocks: the operator's or the loop's framing
+of the field, never a call and never a result. A
 `User` message carries `Text` blocks. An `Assistant` message carries `Text` and
 `ToolCall` blocks, in the order the model emitted them. A `ToolResult` message
 carries `ToolResult` blocks. Every other pairing is unlicensed: an `Assistant`
 message holding a `ToolResult` block, a `User` message holding a `ToolCall`, a
-`ToolResult` message holding prose.
+`ToolResult` message holding prose. Where a system message may sit in a
+conversation is the loop's composition and no rule of this shape.
 
 **The harness refuses an unlicensed message and the recorder does not.** The
 harness is the sole author and the only party that reads a message as a message,
@@ -356,7 +381,7 @@ to: traits-content-block-internally-tagged
 
 
 **A tool result appears in two positions and the redundancy is only apparent.**
-`Role::ToolResult` says which of the three event kinds the message becomes, and
+`Role::ToolResult` says which of the four event kinds the message becomes, and
 `ContentBlock::ToolResult` carries the result's content. A reader seeing
 `tool_result` in both places is reading a kind and a block tag, and the licensed
 combinations above are what make the pairing checkable rather than coincidental.
