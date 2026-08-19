@@ -225,8 +225,9 @@ and the next load's channel asks again against holdings that never moved.
 
 A change to the distillate's shape, to the election's semantics, to the
 ask vocabulary, or to the answer's shape or its ordering guarantees
-touches this contract, and every party merges in the same act. The serve direction's first shape was a change under this protocol and
-landed 2026-08-19 with the loop act the charter named, which is the
+touches this contract, and every party merges in the same act. The serve
+direction's first shape was a change under this protocol and landed
+2026-08-19 with the loop act the charter named, which is the
 sentence above kept as the rule it demonstrated: a second ask name enters
 by the same door.
 
