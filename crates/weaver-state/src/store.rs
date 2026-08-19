@@ -241,9 +241,11 @@ pub fn parse_ask(frame: &str) -> Option<Ask> {
         return Some(Ask::Shape);
     }
     let recall = ask.get("recall")?;
-    Some(Ask::Recall {
-        last_turns: recall.get("last-turns").and_then(|n| n.as_u64()),
-    })
+    let last_turns = match recall.get("last-turns") {
+        None => None,
+        Some(bound) => Some(bound.as_u64()?),
+    };
+    Some(Ask::Recall { last_turns })
 }
 
 /// Whether a seam frame is the shape ask, kept for the standing tests: the
@@ -267,24 +269,29 @@ pub struct RecalledEvent {
 impl Store {
     /// The recall query, per `weaver-state-Spec` section 4: the event rows
     /// of the four message kinds with their field pairs, ordered by the
-    /// `id` column, bounded where asked to the distinct `turn` values of
-    /// the most recent turns by id, the rows outside them left unread.
+    /// `id` column, bounded where asked to the distinct session, run, and
+    /// turn triples of the most recent turns by id, the rows outside them
+    /// left unread. The bound keys the whole turn identity because a turn
+    /// label recurs across runs, and a label alone would recall an older
+    /// run's turn beside its namesake.
     pub fn recall(&self, last_turns: Option<u64>) -> Result<Vec<RecalledEvent>, CustodyFault> {
         let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
-        let bound: Option<Vec<String>> = match last_turns {
+        let bound: Option<Vec<(String, String, String)>> = match last_turns {
             None => None,
             Some(count) => {
                 let mut turns_query = self
                     .connection
                     .prepare_cached(
-                        "SELECT turn FROM (
-                             SELECT turn, MAX(id) AS last FROM event
-                             WHERE turn IS NOT NULL GROUP BY turn
+                        "SELECT session, run, turn FROM (
+                             SELECT session, run, turn, MAX(id) AS last FROM event
+                             WHERE turn IS NOT NULL GROUP BY session, run, turn
                          ) ORDER BY last DESC LIMIT ?1",
                     )
                     .map_err(fault)?;
-                let turns: Vec<String> = turns_query
-                    .query_map([count as i64], |row| row.get(0))
+                let turns: Vec<(String, String, String)> = turns_query
+                    .query_map([count as i64], |row| {
+                        Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+                    })
                     .map_err(fault)?
                     .collect::<Result<_, _>>()
                     .map_err(fault)?;
@@ -321,7 +328,9 @@ impl Store {
         let mut recalled = Vec::new();
         for (id, session, run, turn, kind, sequence) in rows {
             if let (Some(kept), Some(turn_ref)) = (&bound, &turn)
-                && !kept.contains(turn_ref)
+                && !kept
+                    .iter()
+                    .any(|(s, r, t)| s == &session && r == &run && t == turn_ref)
             {
                 continue;
             }
@@ -595,11 +604,54 @@ mod tests {
         );
         for not_an_ask in [
             r#"{"ask":{"summarize":{}}}"#,
+            r#"{"ask":{"recall":{"last-turns":-3}}}"#,
+            r#"{"ask":{"recall":{"last-turns":"three"}}}"#,
+            r#"{"ask":{"recall":{"last-turns":2.5}}}"#,
             r#"{"envelope":{}}"#,
             "not json",
         ] {
             assert!(parse_ask(not_an_ask).is_none(), "{not_an_ask}");
         }
+    }
+
+    /// The bounded recall keys its turns by session, run, and turn
+    /// together: a turn label recurring across runs names two different
+    /// turns, and the bound must not recall the older run's events beside
+    /// its namesake's.
+    #[test]
+    fn a_bounded_recall_keeps_colliding_turn_labels_apart() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        let message = |run: &str, turn: &str, text: &str, sequence: i64| Distillate {
+            session: "s".into(),
+            run: run.into(),
+            turn: Some(turn.into()),
+            kind: "message.user".into(),
+            sequence,
+            pairs: vec![("content".into(), format!("\"{text}\""))],
+        };
+        for landing in [
+            message("r-1", "t-1", "old one", 1),
+            message("r-1", "t-2", "old two", 2),
+            message("r-2", "t-1", "new one", 1),
+            message("r-2", "t-2", "new two", 2),
+        ] {
+            store.land(&landing).expect("lands");
+        }
+        let bounded = store.recall(Some(2)).expect("recalls");
+        let quoted: Vec<&str> = bounded
+            .iter()
+            .map(|event| event.pairs[0].1.as_str())
+            .collect();
+        assert_eq!(
+            quoted,
+            vec!["\"new one\"", "\"new two\""],
+            "the bound keeps the newer run's turns and no namesakes"
+        );
+        let whole = store.recall(None).expect("recalls");
+        assert_eq!(whole.len(), 4, "the unbounded recall reads every message");
+        let _ = std::fs::remove_file(&path);
     }
 
     /// The parse demands the envelope whole: a frame missing any envelope

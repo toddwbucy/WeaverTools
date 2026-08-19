@@ -135,6 +135,11 @@ fn the_measurement_splices_and_never_quotes() {
         encoded["body"]["measurement"].is_object(),
         "the measurement nests in the adjacent body as an object: {bytes}"
     );
+    assert_eq!(
+        encoded["body"]["resident"], 64,
+        "the fullness rides as typed members of the body: {bytes}"
+    );
+    assert_eq!(encoded["body"]["capacity"], 4096, "{bytes}");
     assert!(
         bytes.contains(r#""measurement":{"tokens":[151643,872]"#),
         "the measurement is a member, spliced: {bytes}"

@@ -594,6 +594,8 @@ impl PartialEq for Generation {
             && self.finish == other.finish
             && self.request.get() == other.request.get()
             && self.measurement.get() == other.measurement.get()
+            && self.resident == other.resident
+            && self.capacity == other.capacity
     }
 }
 

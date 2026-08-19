@@ -2,6 +2,12 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-19, third of this date, the recall bound keys the
+whole turn identity. Review of the arc's code act found the bound as
+spelled, distinct turn values alone, recalls an older run's events
+wherever a turn label recurs across runs. Section 4 resolves the bound as
+the distinct session, run, and turn triples of the most recent turns by
+id.
 **Revised:** 2026-08-19, second of this date, the assertion records land.
 The code act of 2026-08-18 shipped three conformance headers citing
 assertions no document declared, which is the defect the counting clause
@@ -190,10 +196,11 @@ back on the channel as one answer frame, the frame's byte shape riding the
 encoding election of section 6. The `recall` ask reads the event rows of
 the four message kinds with their field pairs, ordered by the `id` column
 like every landing-order answer, and where `last-turns` bounds it the
-bound resolves as the distinct `turn` values of the most recent turns by
-id, the rows outside them left unread. The answer serves each event as
-the distillate's own shape, envelope and pairs, because custody serves
-what it kept in the form it kept it. A malformed ask is dropped whole the
+bound resolves as the distinct session, run, and turn triples of the most
+recent turns by id, the rows outside them left unread, a turn label
+recurring across runs naming two different turns. The answer serves each
+event as the distillate's own shape, envelope and pairs, because custody
+serves what it kept in the form it kept it. A malformed ask is dropped whole the
 way a malformed distillate is, and the resulting silence is the harness's
 bound to convert into a missing answer.
 

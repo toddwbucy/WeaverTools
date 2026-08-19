@@ -57,8 +57,14 @@ pub fn drive(seat: &mut Ports<'_>, text: &str) -> Result<TurnOutcome, TurnError>
         && seat.fullness().is_some_and(|(resident, capacity)| {
             pressured(resident, capacity)
         })
-        && seat.flush().is_some()
     {
+        // The flush is driven for its effect and its record event, and its
+        // confirmation gates nothing here: a missing answer cannot prove
+        // the flush did not land, so the re-entry is composed either way.
+        // Where the flush landed the model needs the restoration, and
+        // where it did not the recap costs a few duplicated tokens on a
+        // seam already failing.
+        let _ = seat.flush();
         Some(reentry_text(seat.recall(Some(RECALL_TURNS))))
     } else {
         None
@@ -96,8 +102,10 @@ fn pressured(resident: u64, capacity: u64) -> bool {
 /// The re-entry the loop composes from custody's recall: the system prompt
 /// again, because the flush retired the resident copy, then the recent
 /// conversation quoted so the model re-enters mid-dialogue rather than
-/// cold. A missing recall composes the honest fallback: the model is told
-/// the context was reset and nothing more.
+/// cold. The quotes share one budget across the whole recall, so the
+/// re-entry cannot rebuild the pressure the flush just relieved. A missing
+/// recall composes the honest fallback: the model is told the context was
+/// reset and nothing more.
 fn reentry_text(recalled: Option<Vec<Recalled>>) -> String {
     let mut text = String::from(SYSTEM_PROMPT);
     text.push_str(
@@ -108,6 +116,7 @@ fn reentry_text(recalled: Option<Vec<Recalled>>) -> String {
         text.push_str("\n(The record could not be reached: continue from the request alone.)");
         return text;
     };
+    let mut budget = QUOTE_BOUND;
     for event in &events {
         let speaker = match event.kind.as_str() {
             "message.user" => "user",
@@ -118,7 +127,7 @@ fn reentry_text(recalled: Option<Vec<Recalled>>) -> String {
         let Some((_, content)) = event.pairs.iter().find(|(key, _)| key == "content") else {
             continue;
         };
-        for line in quoted_texts(content) {
+        for line in quoted_texts(content, &mut budget) {
             text.push('\n');
             text.push_str(speaker);
             text.push_str(": ");
@@ -130,8 +139,10 @@ fn reentry_text(recalled: Option<Vec<Recalled>>) -> String {
 
 /// The text blocks out of a recalled content value, which is the canonical
 /// JSON the election kept: an array of blocks, the text ones quoted and
-/// everything else left where custody holds it.
-fn quoted_texts(content: &str) -> Vec<String> {
+/// everything else left where custody holds it. Every quote draws on the
+/// one budget the whole re-entry shares, and a block arriving after the
+/// budget is spent quotes nothing.
+fn quoted_texts(content: &str, budget: &mut usize) -> Vec<String> {
     let Ok(blocks) = serde_json::from_str::<serde_json::Value>(content) else {
         return Vec::new();
     };
@@ -141,30 +152,31 @@ fn quoted_texts(content: &str) -> Vec<String> {
     blocks
         .iter()
         .filter_map(|block| {
-            block
-                .get("text")
-                .and_then(|text| text.as_str())
-                .map(|text| {
-                    let mut kept = String::new();
-                    for piece in text.split_whitespace() {
-                        if kept.len() + piece.len() > QUOTE_BOUND {
-                            kept.push_str(" ...");
-                            break;
-                        }
-                        if !kept.is_empty() {
-                            kept.push(' ');
-                        }
-                        kept.push_str(piece);
-                    }
-                    kept
-                })
+            let text = block.get("text")?.as_str()?;
+            if *budget == 0 {
+                return None;
+            }
+            let mut kept = String::new();
+            for piece in text.split_whitespace() {
+                if piece.len() > *budget {
+                    *budget = 0;
+                    kept.push_str(" ...");
+                    break;
+                }
+                if !kept.is_empty() {
+                    kept.push(' ');
+                }
+                kept.push_str(piece);
+                *budget -= piece.len();
+            }
+            Some(kept)
         })
         .collect()
 }
 
-/// How much of one recalled message the re-entry quotes. The loop's own
-/// bound: a re-entry that quoted everything would rebuild the pressure the
-/// flush just relieved.
+/// How much recalled text the whole re-entry quotes, one budget shared
+/// across every message and block. The loop's own bound: a re-entry that
+/// quoted everything would rebuild the pressure the flush just relieved.
 const QUOTE_BOUND: usize = 600;
 
 /// The loop's judgment over the served shape, and the place the three-way
@@ -340,6 +352,36 @@ mod tests {
         let long = "word ".repeat(400);
         let bounded = reentry_text(Some(vec![event("message.user", long.trim())]));
         assert!(bounded.contains(" ..."), "the quote is bounded: {bounded}");
+    }
+
+    /// The quote budget is one ceiling across the whole re-entry, not one
+    /// allowance per message: many recalled messages stop quoting where
+    /// the budget runs out, so a busy recall cannot rebuild the pressure
+    /// the flush just relieved.
+    #[test]
+    fn the_quote_budget_spans_the_whole_recall() {
+        let event = |text: &str| Recalled {
+            kind: "message.user".to_string(),
+            turn: Some("t-1".into()),
+            sequence: "1".into(),
+            pairs: vec![(
+                "content".into(),
+                format!(r#"[{{"type":"text","text":"{text}"}}]"#),
+            )],
+        };
+        let long = "word ".repeat(60);
+        let many: Vec<Recalled> = (0..10).map(|_| event(long.trim())).collect();
+        let text = reentry_text(Some(many));
+        assert!(
+            text.len() < SYSTEM_PROMPT.len() + 2 * QUOTE_BOUND,
+            "one budget bounds the whole re-entry, got {} chars: {text}",
+            text.len()
+        );
+        assert!(text.contains(" ..."), "the cut is marked: {text}");
+        assert!(
+            text.contains("user: word"),
+            "the budget quotes before it cuts: {text}"
+        );
     }
 
     /// A flushed turn's delta carries the re-entry between the opening and
