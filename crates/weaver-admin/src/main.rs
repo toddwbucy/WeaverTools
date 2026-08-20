@@ -348,6 +348,7 @@ fn run_load(
         &inventory.identity,
         &agent.0,
         &socket_path,
+        inventory.config.loop_file.as_deref(),
     ))
     .map_err(|from_status| refusal_for_failed_start(config, &agent.0, from_status))?;
     standing.unit_started = true;

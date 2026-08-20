@@ -6,11 +6,14 @@
 //! so this reaches an agent by the `worker-binary` configuration and
 //! nothing else.
 //!
-//! The loop file's path arrives by the `WEAVER_PY_LOOP` environment
-//! variable, which a deployment sets through the standing `unit-properties`
-//! configuration (`Environment=WEAVER_PY_LOOP=...`), no admin change
-//! involved. Unset, the default below stands. The loop files themselves
-//! live in `dev_python`, the developer's directory by the standing prefix.
+//! The loop file resolves in a fixed order, per `weaver-harness-Spec`
+//! section 1 and the ruling of 2026-08-20 on issue #243: the `--loop-file`
+//! flag first, the declaration's member arriving on the unit's argument
+//! vector because the loop is a member of the agent's harness and unique
+//! to it, then the `WEAVER_PY_LOOP` environment variable as the
+//! developer's bench override, then the default below. The loop files
+//! themselves live in `dev_python`, the developer's directory by the
+//! standing prefix.
 //!
 //! The binary compiles behind the `pyworker` feature, per
 //! `weaver-harness-Spec` section 1, so no default build touches the
@@ -33,15 +36,28 @@ fn main() -> ExitCode {
     let (Some(socket), Some(spu), Some(gate)) = (args.next(), args.next(), args.next()) else {
         eprintln!(
             "pyworker <coordination-socket> <spu-binary> <gate-binary> [identity] \
-             [--headroom-bytes N] [--classify-binary PATH]   (loop file: $WEAVER_PY_LOOP)"
+             [--loop-file PATH] [--headroom-bytes N] [--classify-binary PATH]   \
+             (loop file otherwise: $WEAVER_PY_LOOP)"
         );
         return ExitCode::FAILURE;
     };
     let mut identity = String::new();
     let mut parameters = OrganParameters::default();
     let mut classify: Option<std::path::PathBuf> = None;
+    let mut declared_loop: Option<std::path::PathBuf> = None;
     while let Some(argument) = args.next() {
         match argument.as_str() {
+            // The agent's declared loop, per `weaver-harness-Spec` section 1
+            // and the ruling of 2026-08-20 on issue #243: the loop is a
+            // member of this agent's harness and unique to it, so the
+            // declaration's flag wins the resolve below.
+            "--loop-file" => match args.next() {
+                Some(value) => declared_loop = Some(value.into()),
+                None => {
+                    eprintln!("pyworker: --loop-file takes a value");
+                    return ExitCode::FAILURE;
+                }
+            },
             "--headroom-bytes" => match args.next() {
                 Some(value) => parameters.headroom_bytes = Some(value),
                 None => {
@@ -66,9 +82,14 @@ fn main() -> ExitCode {
             positional => identity = positional.to_string(),
         }
     }
-    let loop_path = std::path::PathBuf::from(
-        std::env::var("WEAVER_PY_LOOP").unwrap_or_else(|_| DEFAULT_LOOP.to_string()),
-    );
+    // The resolve order per `weaver-harness-Spec` section 1: the declared
+    // flag first, the environment's name second as the developer's bench
+    // override, the deployed default last.
+    let loop_path = declared_loop.unwrap_or_else(|| {
+        std::path::PathBuf::from(
+            std::env::var("WEAVER_PY_LOOP").unwrap_or_else(|_| DEFAULT_LOOP.to_string()),
+        )
+    });
 
     let listener = match bind_coordination(std::path::Path::new(&socket)) {
         Ok(listener) => listener,
