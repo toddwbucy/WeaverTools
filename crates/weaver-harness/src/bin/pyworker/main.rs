@@ -37,7 +37,7 @@ fn main() -> ExitCode {
         eprintln!(
             "pyworker <coordination-socket> <spu-binary> <gate-binary> [identity] \
              [--loop-file PATH] [--headroom-bytes N] [--classify-binary PATH]   \
-             (loop file otherwise: $WEAVER_PY_LOOP)"
+             (loop file: --loop-file, else $WEAVER_PY_LOOP, else the deployed default)"
         );
         return ExitCode::FAILURE;
     };

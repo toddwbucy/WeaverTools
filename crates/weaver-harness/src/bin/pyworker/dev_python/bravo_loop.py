@@ -266,7 +266,15 @@ def memory_search(events, subject):
                 window = window + "..."
             if window not in hits:
                 hits.append(window)
-    return hits[-MEMORY_HITS:]
+                # The retention is streaming: at most MEMORY_HITS windows
+                # are ever held, oldest discarded as newer ones arrive, so
+                # the scan's memory is bounded by the answer's own cap. The
+                # dedup is against the retained set, so a fact recurring
+                # after falling out re-enters as recent, which is the
+                # newest-hits-last reading the return already promises.
+                if len(hits) > MEMORY_HITS:
+                    hits.pop(0)
+    return hits
 
 
 def memory_followup(seat, emission):
