@@ -441,21 +441,42 @@ impl DecodeChannel {
 
 impl DecodeChannel {
     /// Send one token directive as bare JSON, per the decode contract: the
-    /// seam carries the token trio and no envelope, one write one message.
+    /// seam carries the token trio and no envelope, one write one message,
+    /// and a frame past the envelope crosses as the segment series the
+    /// contract admits for either end - the directives are small today and
+    /// the law is symmetric anyway.
     pub fn send_directive(
         &self,
         directive: &weaver_types::TokenDirective,
     ) -> Result<(), ChannelFault> {
         let body = serde_json::to_vec(directive).map_err(|_| ChannelFault::Undecodable)?;
-        send_octets(self.end.as_fd(), &body)
+        if body.len() <= weaver_types::MAX_ENVELOPE_BYTES {
+            return send_octets(self.end.as_fd(), &body);
+        }
+        if body.len() > weaver_types::DECODE_MESSAGE_BOUND {
+            return Err(ChannelFault::Truncated {
+                bound: weaver_types::DECODE_MESSAGE_BOUND,
+            });
+        }
+        let segments = body.len().div_ceil(weaver_types::MAX_ENVELOPE_BYTES);
+        let preamble = format!("{{\"segments\":{segments},\"bytes\":{}}}", body.len());
+        send_octets(self.end.as_fd(), preamble.as_bytes())?;
+        for slice in body.chunks(weaver_types::MAX_ENVELOPE_BYTES) {
+            send_octets(self.end.as_fd(), slice)?;
+        }
+        Ok(())
     }
 
-    /// Receive one decode frame, blocking. A frame is a `TokenAnswer` or a
-    /// `TokenRefusal`, the two sharing the seam with disjoint tag vocabularies,
-    /// so the receive distinguishes them rather than reading only the answer
-    /// and losing a refusal to an undecodable fault.
+    /// Receive one decode frame, blocking, reassembling a segment series
+    /// into the one frame it carries: the series is the channel's fact and
+    /// no layer above it sees a segment, per the decode contract. A frame
+    /// is a `TokenAnswer` or a `TokenRefusal`, the two sharing the seam
+    /// with disjoint tag vocabularies, so the receive distinguishes them
+    /// rather than reading only the answer and losing a refusal to an
+    /// undecodable fault.
     pub fn recv_reply(&self) -> Result<DecodeReply, ChannelFault> {
-        let octets = recv_octets(self.end.as_fd())?;
+        let first = recv_octets(self.end.as_fd())?;
+        let octets = reassemble_if_series(first, || recv_octets(self.end.as_fd()))?;
         if let Ok(answer) = serde_json::from_slice::<weaver_types::TokenAnswer>(&octets) {
             return Ok(DecodeReply::Answer(answer));
         }
@@ -622,6 +643,51 @@ fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
     Ok(())
 }
 
+/// Reassemble a segment series where the first frame is its preamble, per
+/// `weaver-types-Spec` section 4.4, the mirror of the SPU side's: the
+/// kindless shape is reserved rather than guessed, the preamble validates
+/// whole before the first slice is read, and a short, long, or inconsistent
+/// series is a channel fault, never a partial frame.
+fn reassemble_if_series(
+    first: Vec<u8>,
+    mut next: impl FnMut() -> Result<Vec<u8>, ChannelFault>,
+) -> Result<Vec<u8>, ChannelFault> {
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&first) else {
+        return Ok(first);
+    };
+    let Some(object) = value.as_object() else {
+        return Ok(first);
+    };
+    if object.contains_key("kind") {
+        return Ok(first);
+    }
+    let (Some(segments), Some(bytes), 2) = (
+        object.get("segments").and_then(|v| v.as_u64()),
+        object.get("bytes").and_then(|v| v.as_u64()),
+        object.len(),
+    ) else {
+        return Err(ChannelFault::Undecodable);
+    };
+    let bytes = bytes as usize;
+    if bytes <= weaver_types::MAX_ENVELOPE_BYTES || bytes > weaver_types::DECODE_MESSAGE_BOUND {
+        return Err(ChannelFault::Undecodable);
+    }
+    if segments as usize != bytes.div_ceil(weaver_types::MAX_ENVELOPE_BYTES) {
+        return Err(ChannelFault::Undecodable);
+    }
+    let mut whole = Vec::with_capacity(bytes);
+    for _ in 0..segments {
+        whole.extend_from_slice(&next()?);
+        if whole.len() > bytes {
+            return Err(ChannelFault::Undecodable);
+        }
+    }
+    if whole.len() != bytes {
+        return Err(ChannelFault::Undecodable);
+    }
+    Ok(whole)
+}
+
 fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
     let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
     let mut slices = [std::io::IoSliceMut::new(&mut buffer)];
@@ -722,3 +788,61 @@ pub unsafe fn place_child_ends(ends: &[&ChildEnd]) -> Result<(), nix::Error> {
 /// pre-move bookkeeping allocation-free, which the async-signal-safe bound
 /// between fork and exec requires.
 const MAX_PLACED_ENDS: usize = 8;
+
+#[cfg(test)]
+mod series_tests {
+    use super::*;
+    use nix::sys::socket::{AddressFamily, SockFlag, SockType, socketpair};
+
+    /// **A segmented answer arrives whole**, per the decode contract's
+    /// checkable: the far end sends the preamble and its counted slices,
+    /// and `recv_reply` hands up the one parsed frame with no layer above
+    /// the channel seeing a segment.
+    #[test]
+    fn a_segmented_answer_arrives_whole() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::empty(),
+        )
+        .expect("pair");
+        let channel = DecodeChannel { end: near };
+        let answer = weaver_types::TokenAnswer::Token {
+            token: 7,
+            piece: "x".repeat(100_000),
+        };
+        let body = serde_json::to_vec(&answer).expect("renders");
+        assert!(body.len() > weaver_types::MAX_ENVELOPE_BYTES, "the fixture is oversized");
+        let preamble = format!(
+            "{{\"segments\":{},\"bytes\":{}}}",
+            body.len().div_ceil(weaver_types::MAX_ENVELOPE_BYTES),
+            body.len()
+        );
+        send_octets(far.as_fd(), preamble.as_bytes()).expect("preamble");
+        for slice in body.chunks(weaver_types::MAX_ENVELOPE_BYTES) {
+            send_octets(far.as_fd(), slice).expect("slice");
+        }
+        match channel.recv_reply().expect("reassembles") {
+            DecodeReply::Answer(weaver_types::TokenAnswer::Token { token, piece }) => {
+                assert_eq!(token, 7);
+                assert_eq!(piece.len(), 100_000, "byte-identical through the series");
+            }
+            other => panic!("the one frame, parsed: {other:?}"),
+        }
+    }
+
+    /// A kindless frame that is not the exact preamble refuses as
+    /// undecodable rather than being read around, the reserved shape's own
+    /// rule on this side of the seam.
+    #[test]
+    fn a_malformed_preamble_shape_refuses() {
+        assert!(matches!(
+            reassemble_if_series(b"{\"segments\":2,\"extra\":true}".to_vec(), || panic!()),
+            Err(ChannelFault::Undecodable)
+        ));
+        let through =
+            reassemble_if_series(b"{\"kind\":\"not_open\"}".to_vec(), || panic!()).expect("passes");
+        assert_eq!(through, b"{\"kind\":\"not_open\"}");
+    }
+}

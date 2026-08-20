@@ -30,6 +30,14 @@ use crate::config::{FieldName, GateInstruction, SpuInstruction, ToolName};
 /// payload of identifiers.
 pub const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
 
+/// The decode seam's total message bound, per `weaver-types-Spec` section
+/// 4.4's segment series: a frame past the envelope crosses as a preamble
+/// and counted slices, reassembled under this bound. Eight mebibytes,
+/// elected against the close's growth - a four-thousand-token turn's close
+/// measures in the hundreds of kibibytes, so the bound covers a sixteenfold
+/// cap without renegotiation.
+pub const DECODE_MESSAGE_BOUND: usize = 8 * 1024 * 1024;
+
 /// One message on an organ channel.
 ///
 /// Three members of one object, nothing flattened, so no two layers can

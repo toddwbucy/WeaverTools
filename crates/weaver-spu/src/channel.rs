@@ -25,7 +25,7 @@ use nix::dir::Dir;
 use nix::fcntl::{FcntlArg, FdFlag, OFlag, fcntl};
 use nix::sys::socket::{MsgFlags, recv, send};
 use nix::sys::stat::Mode;
-use weaver_types::{MAX_ENVELOPE_BYTES, OrganEnvelope};
+use weaver_types::{DECODE_MESSAGE_BOUND, MAX_ENVELOPE_BYTES, OrganEnvelope};
 
 /// The lifecycle channel's inherited number. Descriptor 3 is the channel every
 /// organ has, which is why it is first.
@@ -214,22 +214,37 @@ impl LifecycleChannel {
 }
 
 impl DecodeSocket {
-    /// Send one message. No envelope method exists on this type: the decode
-    /// socket is not an organ channel and the confinement is the absent surface.
+    /// Send one message, segmenting past the envelope per the decode
+    /// contract's segment series: a frame within the envelope crosses as it
+    /// always did, a larger one crosses as the preamble and its counted raw
+    /// slices, and one past the total bound is this side's own fault. No
+    /// envelope method exists on this type: the decode socket is not an
+    /// organ channel and the confinement is the absent surface.
     pub fn send_octets(&self, body: &[u8]) -> Result<(), ChannelFault> {
-        if body.len() > MAX_ENVELOPE_BYTES {
+        if body.len() <= MAX_ENVELOPE_BYTES {
+            return send_octets(self.end.as_fd(), body);
+        }
+        if body.len() > DECODE_MESSAGE_BOUND {
             return Err(ChannelFault::Truncated {
-                bound: MAX_ENVELOPE_BYTES,
+                bound: DECODE_MESSAGE_BOUND,
             });
         }
-        send_octets(self.end.as_fd(), body)
+        let segments = body.len().div_ceil(MAX_ENVELOPE_BYTES);
+        let preamble = format!("{{\"segments\":{segments},\"bytes\":{}}}", body.len());
+        send_octets(self.end.as_fd(), preamble.as_bytes())?;
+        for slice in body.chunks(MAX_ENVELOPE_BYTES) {
+            send_octets(self.end.as_fd(), slice)?;
+        }
+        Ok(())
     }
 
     /// Receive one message, faulting on truncation on the same grounds the
-    /// lifecycle end does: the obligation attaches to the socket type, and both
-    /// ends carry it.
+    /// lifecycle end does, and reassembling a segment series into the one
+    /// frame it carries: the series is the channel's fact and no caller
+    /// sees a segment.
     pub fn recv_octets(&self) -> Result<Vec<u8>, ChannelFault> {
-        recv_octets(self.end.as_fd())
+        let first = recv_octets(self.end.as_fd())?;
+        reassemble_if_series(first, || recv_octets(self.end.as_fd()))
     }
 
     /// Receive one message without blocking, for the cancel poll at token
@@ -294,6 +309,53 @@ pub fn adopt_classify() -> Result<ClassifySocket, EntryFault> {
     set_close_on_exec(end.as_fd())?;
     clear_dumpable()?;
     Ok(ClassifySocket { end })
+}
+
+/// Reassemble a segment series where the first frame is its preamble, per
+/// `weaver-types-Spec` section 4.4. The kindless shape is reserved rather
+/// than guessed: a JSON object without a `kind` member is either exactly
+/// the two-integer preamble or a channel fault, and the preamble validates
+/// whole before the first slice is read - the byte length past the envelope
+/// and within the total bound, the count exactly what the length requires
+/// at the envelope size, the slices totaling exactly the declared bytes.
+fn reassemble_if_series(
+    first: Vec<u8>,
+    mut next: impl FnMut() -> Result<Vec<u8>, ChannelFault>,
+) -> Result<Vec<u8>, ChannelFault> {
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&first) else {
+        return Ok(first);
+    };
+    let Some(object) = value.as_object() else {
+        return Ok(first);
+    };
+    if object.contains_key("kind") {
+        return Ok(first);
+    }
+    let (Some(segments), Some(bytes), 2) = (
+        object.get("segments").and_then(|v| v.as_u64()),
+        object.get("bytes").and_then(|v| v.as_u64()),
+        object.len(),
+    ) else {
+        return Err(ChannelFault::Undecodable);
+    };
+    let bytes = bytes as usize;
+    if bytes <= MAX_ENVELOPE_BYTES || bytes > DECODE_MESSAGE_BOUND {
+        return Err(ChannelFault::Undecodable);
+    }
+    if segments as usize != bytes.div_ceil(MAX_ENVELOPE_BYTES) {
+        return Err(ChannelFault::Undecodable);
+    }
+    let mut whole = Vec::with_capacity(bytes);
+    for _ in 0..segments {
+        whole.extend_from_slice(&next()?);
+        if whole.len() > bytes {
+            return Err(ChannelFault::Undecodable);
+        }
+    }
+    if whole.len() != bytes {
+        return Err(ChannelFault::Undecodable);
+    }
+    Ok(whole)
 }
 
 fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
@@ -424,23 +486,135 @@ mod tests {
         assert_eq!(socket.recv_octets(), Ok(exact));
     }
 
-    /// **This crate asserts the bound on its own writes too.** A writer that can
-    /// exceed the receiver's buffer produces the truncation the receiver is
-    /// obliged to fault on.
+    /// **This crate asserts the bound on its own writes too**, and since the
+    /// segment series the bound it asserts is the total one: a write past
+    /// the envelope segments rather than refusing, per the decode
+    /// contract's amendment on issue #236, and a write past
+    /// `DECODE_MESSAGE_BOUND` is this side's own fault, refused before the
+    /// socket.
     ///
-    /// Perturbation: delete the `body.len() > MAX_ENVELOPE_BYTES` branch from
-    /// `DecodeSocket::send_octets` and this test fails. Watched under exactly
-    /// that removal.
+    /// Perturbation: delete the total-bound branch from
+    /// `DecodeSocket::send_octets` and this test fails. Watched under
+    /// exactly that removal.
     #[test]
     fn a_write_past_the_bound_refuses_before_it_reaches_the_socket() {
         let (writer, _reader) = seqpacket_pair();
         let socket = decode_from_owned(writer);
-        let oversized = vec![b'z'; MAX_ENVELOPE_BYTES + 1];
+        let oversized = vec![b'z'; DECODE_MESSAGE_BOUND + 1];
         assert_eq!(
             socket.send_octets(&oversized),
             Err(ChannelFault::Truncated {
-                bound: MAX_ENVELOPE_BYTES
+                bound: DECODE_MESSAGE_BOUND
             })
         );
+    }
+}
+
+#[cfg(test)]
+mod series_tests {
+    use super::*;
+    use nix::sys::socket::{AddressFamily, SockFlag, SockType, socketpair};
+    use std::os::fd::OwnedFd;
+
+    fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
+        let (a, b) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::empty(),
+        )
+        .expect("pair");
+        (a, b)
+    }
+
+    /// **A close past the envelope arrives byte-identical**, the contract's
+    /// checkable: the series is the channel's fact and the caller sees the
+    /// one frame, watched to fail when the carriage is removed.
+    #[test]
+    fn an_oversized_frame_round_trips_byte_identical() {
+        let (a, b) = seqpacket_pair();
+        let sender = DecodeSocket { end: a };
+        let receiver = DecodeSocket { end: b };
+        let body: Vec<u8> = (0..200_000u32).map(|i| (i % 251) as u8).collect();
+        sender.send_octets(&body).expect("segments");
+        let back = receiver.recv_octets().expect("reassembles");
+        assert_eq!(back, body, "byte-identical through the series");
+        // And a small frame still crosses as one write.
+        sender.send_octets(b"{\"kind\":\"at_rest\"}").expect("plain");
+        assert_eq!(receiver.recv_octets().expect("plain"), b"{\"kind\":\"at_rest\"}");
+    }
+
+    /// **An interrupted series faults whole**: a peer closing before its
+    /// declared count leaves no partial frame, the contract's checkable.
+    #[test]
+    fn an_interrupted_series_faults_whole() {
+        let (a, b) = seqpacket_pair();
+        let receiver = DecodeSocket { end: b };
+        {
+            let sender = DecodeSocket { end: a };
+            let preamble = format!("{{\"segments\":4,\"bytes\":{}}}", 200_000);
+            super::send_octets(sender.end.as_fd(), preamble.as_bytes()).expect("preamble");
+            super::send_octets(sender.end.as_fd(), &[7u8; MAX_ENVELOPE_BYTES]).expect("one");
+            // the sender dies here, two slices short
+        }
+        assert!(matches!(
+            receiver.recv_octets(),
+            Err(ChannelFault::Closed)
+        ));
+    }
+
+    /// The preamble validates whole before any slice is read: the kindless
+    /// shape is reserved, and every inconsistent spelling refuses.
+    #[test]
+    fn the_preamble_validates_before_any_slice() {
+        let fault = |first: &str| {
+            matches!(
+                reassemble_if_series(first.as_bytes().to_vec(), || panic!("no slice read")),
+                Err(ChannelFault::Undecodable)
+            )
+        };
+        // a kindful frame passes through untouched
+        let through = reassemble_if_series(b"{\"kind\":\"at_rest\"}".to_vec(), || {
+            panic!("no slice read")
+        })
+        .expect("passes");
+        assert_eq!(through, b"{\"kind\":\"at_rest\"}");
+        // non-JSON and non-object pass through for the caller to judge
+        assert!(reassemble_if_series(b"not json".to_vec(), || panic!()).is_ok());
+        assert!(reassemble_if_series(b"[1,2]".to_vec(), || panic!()).is_ok());
+        // kindless and not the exact preamble: refused, never guessed
+        assert!(fault("{\"segments\":2}"), "one member");
+        assert!(fault("{\"segments\":2,\"bytes\":200000,\"extra\":1}"), "three members");
+        assert!(fault("{\"segments\":-2,\"bytes\":200000}"), "negative count");
+        // bytes within one envelope: the sender had no series to send
+        assert!(fault("{\"segments\":1,\"bytes\":100}"));
+        // bytes past the total bound
+        assert!(fault(&format!(
+            "{{\"segments\":129,\"bytes\":{}}}",
+            DECODE_MESSAGE_BOUND + 1
+        )));
+        // a count inconsistent with the length
+        assert!(fault("{\"segments\":5,\"bytes\":200000}"), "too many");
+        assert!(fault("{\"segments\":2,\"bytes\":200000}"), "too few");
+    }
+
+    /// A series whose slices exceed or fall short of the declared bytes is
+    /// a channel fault, never a partial frame.
+    #[test]
+    fn a_series_totals_exactly_its_declared_bytes() {
+        let slices = vec![vec![1u8; MAX_ENVELOPE_BYTES], vec![2u8; 10]];
+        let mut feed = slices.clone().into_iter();
+        let preamble = format!("{{\"segments\":2,\"bytes\":{}}}", MAX_ENVELOPE_BYTES + 10);
+        let whole = reassemble_if_series(preamble.into_bytes(), || {
+            Ok(feed.next().expect("scripted"))
+        })
+        .expect("exact total reassembles");
+        assert_eq!(whole.len(), MAX_ENVELOPE_BYTES + 10);
+        let mut feed = vec![vec![1u8; MAX_ENVELOPE_BYTES], vec![2u8; 11]].into_iter();
+        let preamble = format!("{{\"segments\":2,\"bytes\":{}}}", MAX_ENVELOPE_BYTES + 10);
+        assert!(matches!(
+            reassemble_if_series(preamble.into_bytes(), || Ok(feed.next().expect("scripted"))),
+            Err(ChannelFault::Undecodable)
+        ));
     }
 }
