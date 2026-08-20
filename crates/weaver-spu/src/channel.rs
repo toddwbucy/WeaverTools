@@ -25,7 +25,7 @@ use nix::dir::Dir;
 use nix::fcntl::{FcntlArg, FdFlag, OFlag, fcntl};
 use nix::sys::socket::{MsgFlags, recv, send};
 use nix::sys::stat::Mode;
-use weaver_types::{DECODE_MESSAGE_BOUND, MAX_ENVELOPE_BYTES, OrganEnvelope};
+use weaver_types::{DECODE_MESSAGE_BOUND, MAX_ENVELOPE_BYTES, OrganEnvelope, SegmentPreamble};
 
 /// The lifecycle channel's inherited number. Descriptor 3 is the channel every
 /// organ has, which is why it is first.
@@ -229,9 +229,12 @@ impl DecodeSocket {
                 bound: DECODE_MESSAGE_BOUND,
             });
         }
-        let segments = body.len().div_ceil(MAX_ENVELOPE_BYTES);
-        let preamble = format!("{{\"segments\":{segments},\"bytes\":{}}}", body.len());
-        send_octets(self.end.as_fd(), preamble.as_bytes())?;
+        let preamble = SegmentPreamble {
+            segments: body.len().div_ceil(MAX_ENVELOPE_BYTES) as u64,
+            bytes: body.len() as u64,
+        };
+        let preamble = serde_json::to_vec(&preamble).map_err(|_| ChannelFault::Undecodable)?;
+        send_octets(self.end.as_fd(), &preamble)?;
         for slice in body.chunks(MAX_ENVELOPE_BYTES) {
             send_octets(self.end.as_fd(), slice)?;
         }
@@ -250,9 +253,18 @@ impl DecodeSocket {
     /// Receive one message without blocking, for the cancel poll at token
     /// boundaries: a boundary check that blocked would defeat the bound it
     /// exists to provide, per `weaver-spu-Spec` section 4.3's polled cancel.
-    /// `None` is the quiet channel, distinct from every fault.
+    /// `None` is the quiet channel, distinct from every fault. A preamble
+    /// arriving here consumes its declared slices before returning, the
+    /// series being one message to every rule: once the first frame is in
+    /// hand the remainder is already sent and ordered, so the completion
+    /// blocks only on datagrams in flight.
     pub fn try_recv_octets(&self) -> Result<Option<Vec<u8>>, ChannelFault> {
-        recv_with(self.end.as_fd(), MsgFlags::MSG_DONTWAIT)
+        match recv_with(self.end.as_fd(), MsgFlags::MSG_DONTWAIT)? {
+            None => Ok(None),
+            Some(first) => {
+                reassemble_if_series(first, || recv_octets(self.end.as_fd())).map(Some)
+            }
+        }
     }
 
     pub fn as_fd(&self) -> BorrowedFd<'_> {
@@ -331,22 +343,20 @@ fn reassemble_if_series(
     if object.contains_key("kind") {
         return Ok(first);
     }
-    let (Some(segments), Some(bytes), 2) = (
-        object.get("segments").and_then(|v| v.as_u64()),
-        object.get("bytes").and_then(|v| v.as_u64()),
-        object.len(),
-    ) else {
+    let Ok(preamble) = serde_json::from_slice::<SegmentPreamble>(&first) else {
         return Err(ChannelFault::Undecodable);
     };
-    let bytes = bytes as usize;
+    let Ok(bytes) = usize::try_from(preamble.bytes) else {
+        return Err(ChannelFault::Undecodable);
+    };
     if bytes <= MAX_ENVELOPE_BYTES || bytes > DECODE_MESSAGE_BOUND {
         return Err(ChannelFault::Undecodable);
     }
-    if segments as usize != bytes.div_ceil(MAX_ENVELOPE_BYTES) {
+    if preamble.segments != bytes.div_ceil(MAX_ENVELOPE_BYTES) as u64 {
         return Err(ChannelFault::Undecodable);
     }
     let mut whole = Vec::with_capacity(bytes);
-    for _ in 0..segments {
+    for _ in 0..preamble.segments {
         whole.extend_from_slice(&next()?);
         if whole.len() > bytes {
             return Err(ChannelFault::Undecodable);

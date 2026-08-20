@@ -38,6 +38,19 @@ pub const MAX_ENVELOPE_BYTES: usize = 64 * 1024;
 /// cap without renegotiation.
 pub const DECODE_MESSAGE_BOUND: usize = 8 * 1024 * 1024;
 
+/// The segment series' preamble, per `weaver-types-Spec` section 4.4:
+/// exactly two members, both unsigned, and nothing else - the
+/// unknown-field refusal is what makes a three-member kindless frame a
+/// fault rather than a guess. The floor holds the shape and no logic:
+/// each side of the seam owns its own segmentation and reassembly, per
+/// the charter's one-rule carve-out.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SegmentPreamble {
+    pub segments: u64,
+    pub bytes: u64,
+}
+
 /// One message on an organ channel.
 ///
 /// Three members of one object, nothing flattened, so no two layers can

@@ -458,9 +458,12 @@ impl DecodeChannel {
                 bound: weaver_types::DECODE_MESSAGE_BOUND,
             });
         }
-        let segments = body.len().div_ceil(weaver_types::MAX_ENVELOPE_BYTES);
-        let preamble = format!("{{\"segments\":{segments},\"bytes\":{}}}", body.len());
-        send_octets(self.end.as_fd(), preamble.as_bytes())?;
+        let preamble = weaver_types::SegmentPreamble {
+            segments: body.len().div_ceil(weaver_types::MAX_ENVELOPE_BYTES) as u64,
+            bytes: body.len() as u64,
+        };
+        let preamble = serde_json::to_vec(&preamble).map_err(|_| ChannelFault::Undecodable)?;
+        send_octets(self.end.as_fd(), &preamble)?;
         for slice in body.chunks(weaver_types::MAX_ENVELOPE_BYTES) {
             send_octets(self.end.as_fd(), slice)?;
         }
@@ -661,22 +664,20 @@ fn reassemble_if_series(
     if object.contains_key("kind") {
         return Ok(first);
     }
-    let (Some(segments), Some(bytes), 2) = (
-        object.get("segments").and_then(|v| v.as_u64()),
-        object.get("bytes").and_then(|v| v.as_u64()),
-        object.len(),
-    ) else {
+    let Ok(preamble) = serde_json::from_slice::<weaver_types::SegmentPreamble>(&first) else {
         return Err(ChannelFault::Undecodable);
     };
-    let bytes = bytes as usize;
+    let Ok(bytes) = usize::try_from(preamble.bytes) else {
+        return Err(ChannelFault::Undecodable);
+    };
     if bytes <= weaver_types::MAX_ENVELOPE_BYTES || bytes > weaver_types::DECODE_MESSAGE_BOUND {
         return Err(ChannelFault::Undecodable);
     }
-    if segments as usize != bytes.div_ceil(weaver_types::MAX_ENVELOPE_BYTES) {
+    if preamble.segments != bytes.div_ceil(weaver_types::MAX_ENVELOPE_BYTES) as u64 {
         return Err(ChannelFault::Undecodable);
     }
     let mut whole = Vec::with_capacity(bytes);
-    for _ in 0..segments {
+    for _ in 0..preamble.segments {
         whole.extend_from_slice(&next()?);
         if whole.len() > bytes {
             return Err(ChannelFault::Undecodable);

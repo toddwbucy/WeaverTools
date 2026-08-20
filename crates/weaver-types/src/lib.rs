@@ -99,6 +99,7 @@ pub use wire::{
     DECODE_MESSAGE_BOUND, Generation, LabelAnswer, LabelDirective, LabelRefusal, LifecycleAnswer,
     LifecycleDirective,
     LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position, RefusingOrgan,
-    RunId, ScoredLabel, SessionId, TokenAnswer, TokenDirective, TokenRefusal, ToolExecution,
+    RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer, TokenDirective, TokenRefusal,
+    ToolExecution,
     ToolOutcome, TurnFrame, TurnKey,
 };
