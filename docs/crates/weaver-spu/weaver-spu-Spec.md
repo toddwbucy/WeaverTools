@@ -491,7 +491,8 @@ bound asserted on this crate's own writes. Since the segment series of
 per `weaver-types-Spec` section 4.4, its reads reassemble a series under
 the total bound with a short or oversized series a channel fault, and a
 send that cannot complete prints its fault and the frame's size before
-service ends, per issue #236's two defects closed together. The election and its bound are
+service ends, per issue #236's two defects closed together. The election
+and its bound are
 `weaver-types-Spec` section 4.3's, declared there as two records rather than
 one, the bound sitting beside the election rather than inside it, and this crate
 carries the obligation without redeclaring either. **The two claims stated here
