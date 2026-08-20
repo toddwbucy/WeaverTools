@@ -215,12 +215,39 @@ fn render_delta(family: &dyn family::Family, delta: &[Message]) -> Result<String
 /// `weaver-types-Spec` section 4.4's provisional encoding.
 fn send_answer(decode: &DecodeSocket, answer: &TokenAnswer) -> Result<(), ChannelFault> {
     let body = serde_json::to_vec(answer).map_err(|_| ChannelFault::Undecodable)?;
-    decode.send_octets(&body)
+    let sent = decode.send_octets(&body);
+    if let Err(fault) = &sent {
+        // **A failed send ends service, and it says so before it does.**
+        // The silent return here was issue #236's second defect: a close
+        // that outgrew the envelope exited this process with no output at
+        // all, and two days of archaeology stood where one line belonged.
+        // The fault and the frame's size are the whole diagnosis.
+        eprintln!(
+            "{}",
+            serde_json::json!({
+                "send_failed": format!("{fault:?}"),
+                "answer_bytes": body.len(),
+            })
+        );
+    }
+    sent
 }
 
 fn send_refusal(decode: &DecodeSocket, refusal: &TokenRefusal) -> Result<(), ChannelFault> {
     let body = serde_json::to_vec(refusal).map_err(|_| ChannelFault::Undecodable)?;
-    decode.send_octets(&body)
+    let sent = decode.send_octets(&body);
+    if let Err(fault) = &sent {
+        // The refusal's carriage failing is the same silent class, said
+        // the same way.
+        eprintln!(
+            "{}",
+            serde_json::json!({
+                "send_failed": format!("{fault:?}"),
+                "refusal_bytes": body.len(),
+            })
+        );
+    }
+    sent
 }
 
 /// A decode fault the seam cannot answer dies loudly: the fault exchange's
