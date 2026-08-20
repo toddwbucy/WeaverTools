@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-20, the segment series takes shape. Per the decode
+contract's amendment on issue #236: a frame past the envelope crosses as
+a preamble spelling its count and byte length, then raw octet slices
+reassembled to the one frame, recognized by the `kind` member the
+preamble lacks, bounded in total at eight mebibytes as
+`DECODE_MESSAGE_BOUND`. Section 4.4 carries the spelling beside the
+encoding it segments.
 **Revised:** 2026-08-19, seventh of this date, the classify role joins the
 declaration. `SpuInstruction` gains `classify`, optional by presence per
 `weaver-spu-PRD` section 15.3, carrying the model binding at the smaller
@@ -1534,6 +1541,23 @@ already, so the election changes one function on each side and nothing above it.
 that buys the ordering is `weaver-spu-Spec` section 9's, which names the
 assertion and the seam it is watched on. A node restated here would give the
 mapper two sources for one record.
+
+**The segment series, added 2026-08-20 per the decode contract's section 1
+and issue #236.** A frame whose serialized form exceeds
+[`MAX_ENVELOPE_BYTES`] crosses as a series: one preamble datagram spelling
+`{"segments":N,"bytes":M}`, then exactly N datagrams of raw octet slices in
+order, each within the envelope bound, whose concatenation is the M bytes
+of the one serialized frame, parsed as though it had crossed whole. The
+preamble is recognized by what it lacks: every trio frame carries `kind`
+and the preamble carries none, so a receiver reads the members it has. The
+total bound is eight mebibytes, `DECODE_MESSAGE_BOUND`, elected against the
+close's growth: a four-thousand-token turn's close measures in the
+hundreds of kibibytes, the bound covers a sixteenfold cap without
+renegotiation, and a series past it or arriving short of its count is a
+channel fault, never a partial message, per the contract. A frame within
+the envelope crosses as it always did, so the series costs nothing where
+it is not needed, and either end may send one, the closes being the only
+frames that grow today.
 
 ### 4.5 The label trio
 

@@ -4,6 +4,14 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-20, the decode reads reassemble the series. Per the
+decode contract's amendment on issue #236: the decode channel's receive
+recognizes the segment preamble by the `kind` member it lacks, collects
+its counted slices under the total bound `weaver-types-Spec` section 4.4
+elects, and hands one whole frame up, a short or oversized series the
+same channel fault a truncation is. The seat, the ports, and every
+consumer above the channel are untouched: the series is the channel's
+fact and no layer above it sees a segment.
 **Revised:** 2026-08-19, fifth of this date, the seat gains the classify
 port. With the classifier code act's opening, through section 6's front
 door: content in, the artifact's scored labels back, or the missing leg's

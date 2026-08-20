@@ -4,6 +4,12 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-20, the close crosses in segments. Per the decode
+contract's amendment on issue #236: this crate's sends segment any frame
+past the envelope under `weaver-types-Spec` section 4.4's spelling, the
+receive obligation of section 2 gains the series' reassembly under the
+total bound, and the send that cannot complete says so before service
+ends, the silent exit being the issue's second defect.
 **Revised:** 2026-08-19, third of this date, the classify submodule is
 represented. Section 11 lands with the classifier code act's opening:
 the second bin target `weaver-spu-classify`, settling charter section
@@ -480,7 +486,12 @@ second in whatever encoding the measurement of section 12 elects. Both ends
 carry the receive obligation the `SOCK_SEQPACKET` election attaches: a buffer
 sized to the envelope bound on the lifecycle channel, a read returning with
 `MSG_TRUNC` set treated as a channel fault and never a message, and the same
-bound asserted on this crate's own writes. The election and its bound are
+bound asserted on this crate's own writes. Since the segment series of
+2026-08-20, the decode socket's writes segment any frame past the envelope
+per `weaver-types-Spec` section 4.4, its reads reassemble a series under
+the total bound with a short or oversized series a channel fault, and a
+send that cannot complete prints its fault and the frame's size before
+service ends, per issue #236's two defects closed together. The election and its bound are
 `weaver-types-Spec` section 4.3's, declared there as two records rather than
 one, the bound sitting beside the election rather than inside it, and this crate
 carries the obligation without redeclaring either. **The two claims stated here
