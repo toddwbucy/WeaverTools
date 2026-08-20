@@ -130,6 +130,8 @@ pub enum Kind {
     TurnStarted,
     #[serde(rename = "turn.closed")]
     TurnClosed,
+    #[serde(rename = "message.system")]
+    MessageSystem,
     #[serde(rename = "message.user")]
     MessageUser,
     #[serde(rename = "message.assistant")]

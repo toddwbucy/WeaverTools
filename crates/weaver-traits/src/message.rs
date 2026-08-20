@@ -27,7 +27,7 @@ pub struct Message {
     pub content: Vec<ContentBlock>,
 }
 
-/// The message's role, mapping one to one onto the trace's three
+/// The message's role, mapping one to one onto the trace's four
 /// `message.*` event kinds.
 ///
 /// Fieldless, so it serializes as a plain renamed string, `"user"`, per the
@@ -37,6 +37,11 @@ pub struct Message {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
+    /// The framing of the field, the operator's or the loop's, per the
+    /// system role act of 2026-08-19: carries `Text` blocks only, never a
+    /// call and never a result, and where it sits in a conversation is
+    /// the loop's composition and no rule of this shape.
+    System,
     User,
     Assistant,
     ToolResult,

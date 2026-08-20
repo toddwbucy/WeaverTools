@@ -61,9 +61,19 @@ fn content_block_is_internally_tagged() {
 ///
 /// Perturbation: a hand-written Deserialize with a fallback arm makes these pass
 /// a value through; the derive refuses, and removing the refusal is watched to
-/// flip both assertions. Verified by feeding a role this crate does not define.
+/// flip both assertions. Verified by feeding a role this crate does not define -
+/// the example was "system" until the system role act made it real, so the
+/// unknown here is one no conversation model names.
 #[test]
 fn unknown_tag_refuses() {
-    assert!(serde_json::from_str::<Role>("\"system\"").is_err());
+    assert!(serde_json::from_str::<Role>("\"narrator\"").is_err());
     assert!(serde_json::from_str::<ContentBlock>("{\"type\":\"image\",\"data\":\"...\"}").is_err());
+}
+
+/// The system role is real since its act: it round-trips as "system" and
+/// its licensed content is text alone, per the Spec's combinations.
+#[test]
+fn the_system_role_round_trips() {
+    let role: Role = serde_json::from_str("\"system\"").expect("real since its act");
+    assert_eq!(serde_json::to_string(&role).unwrap(), "\"system\"");
 }

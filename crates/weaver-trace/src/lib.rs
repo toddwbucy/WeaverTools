@@ -39,6 +39,7 @@
 //!         Kind::SessionClosed => "session.closed",
 //!         Kind::TurnStarted => "turn.started",
 //!         Kind::TurnClosed => "turn.closed",
+//!         Kind::MessageSystem => "message.system",
 //!         Kind::MessageUser => "message.user",
 //!         Kind::MessageAssistant => "message.assistant",
 //!         Kind::MessageToolResult => "message.tool_result",

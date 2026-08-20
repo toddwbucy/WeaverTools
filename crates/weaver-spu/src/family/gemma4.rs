@@ -144,6 +144,12 @@ impl Gemma4 {
     /// **This family's role map, which is why it does not call
     /// [`super::common_role_name`].**
     ///
+    /// `Role::System` refuses rather than rendering: this family's template
+    /// carries no system turn, and inventing `<|turn>system` would be the
+    /// silent substitution the registry refuses one level up. A loop driving
+    /// a gemma agent frames the field in its user turns, as every loop did
+    /// before the slot existed.
+    ///
     /// `Role::ToolResult` refuses rather than rendering as a turn. This family
     /// has no tool turn: its template carries tool results as standalone
     /// `<|tool_response>` blocks outside the turn structure, and inventing
