@@ -129,7 +129,7 @@ def event_texts(events):
             continue
         for block in blocks:
             piece = block.get("text") if isinstance(block, dict) else None
-            if piece:
+            if isinstance(piece, str) and piece:
                 texts.append((speaker, piece))
     return texts
 
@@ -164,35 +164,51 @@ def reentry(events):
 def memory_lines(emission):
     """The sigil lines of one emission: (remembered facts, recall subjects).
 
-    Line-anchored on purpose: a sentence mentioning the convention does not
-    fire it, only a line that begins with the sigil does.
+    Column-zero-anchored on purpose: a sentence mentioning the convention
+    does not fire it, and neither does an indented occurrence - a quoted
+    line or a code block carrying the sigil is content, not an ask. Only a
+    line that begins the sigil at its first column fires.
     """
     remembers, recalls = [], []
     for line in (emission or "").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("REMEMBER:"):
-            fact = stripped[len("REMEMBER:"):].strip()
+        if line.startswith("REMEMBER:"):
+            fact = line[len("REMEMBER:"):].strip()
             if fact:
                 remembers.append(fact)
-        elif stripped.startswith("RECALL:"):
-            subject = stripped[len("RECALL:"):].strip()
+        elif line.startswith("RECALL:"):
+            subject = line[len("RECALL:"):].strip()
             if subject:
                 recalls.append(subject)
     return remembers, recalls
 
 
+# The loop's own voice, excluded from search: feedback quoting a hit
+# would match the next ask for the same subject, and the miss line
+# naming a subject would answer it - an echo chamber either way. The
+# openers below are every text this loop authors as feedback.
+FEEDBACK_OPENERS = (
+    "Saved.",
+    "From your memory:",
+    "Your memory holds nothing about",
+    "(Your memory could not be reached.)",
+)
+
+
 def memory_search(events, subject):
     """The premade query: a case-insensitive match of the subject against
     custody's texts, newest hits last, each quoted in a window around the
-    match. RECALL lines are excluded - they are asks, not facts - and
-    REMEMBER lines are exactly what should surface, so they stay.
+    match. RECALL lines are excluded - they are asks, not facts - the
+    loop's own feedback is excluded - it echoes - and REMEMBER lines are
+    exactly what should surface, so they stay.
     """
     needle = subject.lower()
     hits = []
     for _, piece in event_texts(events):
+        if piece.lstrip().startswith(FEEDBACK_OPENERS):
+            continue
         for line in piece.splitlines():
             stripped = line.strip()
-            if stripped.startswith("RECALL:"):
+            if line.startswith("RECALL:"):
                 continue
             at = stripped.lower().find(needle)
             if at < 0:
