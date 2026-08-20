@@ -418,6 +418,7 @@ mod seam_success {
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
                             ("context-capacity".to_string(), 4096.0),
+                            ("seed".to_string(), 11.0),
                         ]
                             .into_iter()
                             .collect(),
@@ -608,6 +609,16 @@ mod seam_success {
         assert!(
             request["sampling"]["temperature"].is_number(),
             "and the effective sampling"
+        );
+        // **The declared seed reaches the effective sampling**, which is the
+        // whole of the tunable path added 2026-08-20: the value this
+        // fixture supplies is the value the request reports, so a recorded
+        // run names the draw it was and is re-entered by declaring it
+        // again. A frozen knob would report the compiled value here and
+        // this would fail, which is the perturbation.
+        assert_eq!(
+            request["sampling"]["seed"], 11.0,
+            "the declared seed is the effective one"
         );
         let measurement: serde_json::Value =
             serde_json::from_str(generation.measurement.get()).expect("the measurement is JSON");
