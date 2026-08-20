@@ -174,7 +174,7 @@ impl Family for Qwen2 {
 
 #[cfg(test)]
 mod system_role_tests {
-    use super::super::{Family, Role};
+    use super::super::Role;
     use weaver_traits::{ContentBlock, Message};
 
     /// The system turn renders in the family's own template shape, per the
