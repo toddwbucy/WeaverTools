@@ -554,8 +554,8 @@ quantity bracketing one cut, where this payload records one count and the
 ceiling it is measured against. What the two have in common is the occasion
 rather than the shape. A generation moves the resident context exactly as a
 flush does, and the accumulation ruling above holds only while every
-operation that moves it is recorded. The counts are what make the accumulation checkable rather than
-merely reconstructible, and the difference is the whole reason to spend two
+operation that moves it is recorded. The counts are what make the accumulation checkable
+rather than merely reconstructible, and the difference is the whole reason to spend two
 integers on it. Neither is recoverable from the events around them.
 Reconstructing the resident count means re-tokenizing every recorded
 contribution through the template that rendered it, which needs the artifact
