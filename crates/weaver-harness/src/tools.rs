@@ -45,7 +45,26 @@ use weaver_types::ToolOutcome;
 /// that answers every result with another call would otherwise hold the turn
 /// open without limit. The bound is a refusal of further calls rather than of
 /// the turn: the final generation's emission stands.
-pub(crate) const MAX_TOOL_ROUNDS: usize = 4;
+///
+/// **Raised from four on 2026-08-20, against a task that measured it.** Four
+/// was set where a round trip was a demonstration, and it stops a staged
+/// task at its fourth step: a problem whose stages depend on each other -
+/// an area, then the counts it divides into, then the prices those counts
+/// carry, then the total - reaches the bound mid-derivation and the model
+/// finishes from what it holds, which is where a model starts inventing
+/// numbers. A bound that turns a tool user into a fabricator is measuring
+/// the bound rather than the model. The number is what the ordinary
+/// long-chain task needs with room over it, not a ceiling anyone should
+/// reach.
+///
+/// **What it does not bound stays worth knowing.** A round is one
+/// generation and its calls, so this counts sequential dependence and never
+/// the calls inside one round: the emission of 2026-08-20 that carried
+/// thirty-three identical calls spent one round for all of them and was
+/// held by the turn's token cap instead. Against a runaway the real stops
+/// are that cap and the session's capacity, this one guarding the shape
+/// they do not, a model that answers every result with one more call.
+pub(crate) const MAX_TOOL_ROUNDS: usize = 32;
 
 /// A tool result the gate exchange granted.
 ///
