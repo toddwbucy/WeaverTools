@@ -625,8 +625,16 @@ fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
 fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
     let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
     let mut slices = [std::io::IoSliceMut::new(&mut buffer)];
-    let message = recvmsg::<()>(end.as_raw_fd(), &mut slices, None, MsgFlags::empty())
-        .map_err(|_| ChannelFault::Closed)?;
+    // A signal landing mid-call is not the peer's doing, the same rule the
+    // send side runs: retry rather than report a closed channel that is not
+    // closed.
+    let message = loop {
+        match recvmsg::<()>(end.as_raw_fd(), &mut slices, None, MsgFlags::empty()) {
+            Ok(message) => break message,
+            Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => return Err(ChannelFault::Closed),
+        }
+    };
     if message.flags.contains(MsgFlags::MSG_TRUNC) {
         return Err(ChannelFault::Truncated {
             bound: MAX_ENVELOPE_BYTES,

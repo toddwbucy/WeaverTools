@@ -291,6 +291,16 @@ fn the_label_trio_round_trips_through_bytes() {
             },
         ],
     };
+    let ready = weaver_types::LabelAnswer::Ready;
+    let bytes = serde_json::to_string(&ready).expect("serializes");
+    let encoded: serde_json::Value = serde_json::from_str(&bytes).expect("valid JSON");
+    assert_eq!(
+        encoded["kind"], "ready",
+        "the readiness emission carries the adjacent envelope: {bytes}"
+    );
+    let back: weaver_types::LabelAnswer = serde_json::from_str(&bytes).expect("returns");
+    assert_eq!(back, ready);
+
     let bytes = serde_json::to_string(&scored).expect("serializes");
     let encoded: serde_json::Value = serde_json::from_str(&bytes).expect("valid JSON");
     assert_eq!(
