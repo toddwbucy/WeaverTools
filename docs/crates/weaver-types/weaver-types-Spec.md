@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-20, the segment series takes shape. Per the decode
+contract's amendment on issue #236: a frame past the envelope crosses as
+a preamble spelling its count and byte length, then raw octet slices
+reassembled to the one frame, recognized by the `kind` member the
+preamble lacks, bounded in total at eight mebibytes as
+`DECODE_MESSAGE_BOUND`. Section 4.4 carries the spelling beside the
+encoding it segments.
 **Revised:** 2026-08-19, seventh of this date, the classify role joins the
 declaration. `SpuInstruction` gains `classify`, optional by presence per
 `weaver-spu-PRD` section 15.3, carrying the model binding at the smaller
@@ -1534,6 +1541,33 @@ already, so the election changes one function on each side and nothing above it.
 that buys the ordering is `weaver-spu-Spec` section 9's, which names the
 assertion and the seam it is watched on. A node restated here would give the
 mapper two sources for one record.
+
+**The segment series, added 2026-08-20 per the decode contract's section 1
+and issue #236.** A frame whose serialized form exceeds
+[`MAX_ENVELOPE_BYTES`] crosses as a series: one preamble datagram spelling
+`{"segments":N,"bytes":M}`, then exactly N datagrams of raw octet slices in
+order, each within the envelope bound, whose concatenation is the M bytes
+of the one serialized frame, parsed as though it had crossed whole. The
+preamble is recognized by what it lacks, and the absence is a reserved
+shape rather than a guess: every trio frame carries `kind`, so a frame
+without one is either exactly the preamble - two members, both unsigned
+integers, nothing else - or a channel fault, and a kindless frame that is
+not the exact preamble refuses as undecodable rather than being read
+around. The preamble validates before any slice is read: `bytes` must
+exceed the envelope bound, or the sender had no series to send, and must
+not exceed the total bound. `segments` must equal exactly the datagrams
+the byte length requires at the envelope size, so a count inconsistent
+with `bytes` - too many for the length, too few to carry it, or past the
+hundred-twenty-eight the total bound admits - refuses before the first
+slice, and the slices must total exactly `bytes`, a short, long, or
+interrupted series a channel fault, never a partial message. The
+total bound is eight mebibytes, `DECODE_MESSAGE_BOUND`, elected against the
+close's growth: a four-thousand-token turn's close measures in the
+hundreds of kibibytes, the bound covers a sixteenfold cap without
+renegotiation. A frame within
+the envelope crosses as it always did, so the series costs nothing where
+it is not needed, and either end may send one, the closes being the only
+frames that grow today.
 
 ### 4.5 The label trio
 

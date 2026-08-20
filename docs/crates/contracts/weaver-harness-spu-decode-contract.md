@@ -8,6 +8,13 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-20, the close crosses in segments. Per issue #236: a
+long turn's close outgrew the envelope bound and the seam killed what it
+could not carry, silently. Section 1 gains the segment series - one
+message to every rule, each segment one write within the envelope, the
+spelling and the total bound the Spec's - and section 8 gains its
+checkable. With the series, any declared turn cap is servable and no
+answer size is a death.
 **Revised:** 2026-08-19, second of this date, the flush names its cut.
 Per the operator's ruling: the cleanup line is the loop's, because the
 loop knows what it does not want to re-decode, and a fixed outcome made
@@ -149,6 +156,21 @@ it, so no contract that touches this seam carries framing. Which socket
 type supplies the property is the Spec's election, taken with the hot-path
 measurement this seam uniquely owes, since the per-token volume here is
 what the loop-0 elections deliberately did not price.
+
+**A message larger than the envelope crosses as a segment series, added
+2026-08-19 by issue #236.** The generate exchange's close grows with the
+turn - the emission, its parse, the request, and the measurement all scale
+with the tokens - and a close past the envelope bound has to cross rather
+than kill: the alternative was the silent death that issue records, an
+answer the seam could not carry ending the organ with nothing said, and a
+turn cap the declaration validates that the seam could never serve. The
+series is one message to every rule of this document: it counts once, it
+orders where its message orders, and an answer's series arrives whole
+before the answer exists. Each segment is one write within the envelope
+bound, so the framing property above is untouched. How a series is
+spelled, recognized, and bounded in total is the Spec's, and a series
+violating the total bound or arriving short is a channel fault, never a
+partial message.
 
 **Close-on-exec on both ends, by the split the corpus already runs.** The
 harness's end carries the flag from the pair's creation, so no tool
@@ -461,6 +483,13 @@ How each check is implemented is Spec work. What must be checkable:
   span, one at the resident count, and one beyond it each resolve to the
   clamped length, the confirmation's counts agreeing with the outcome in
   every case and the identity prefix never cut.
+- A close past the envelope bound crosses whole: a generation whose close
+  exceeds one envelope arrives reassembled and byte-identical, watched to
+  fail when the segment carriage is removed, and a series past the total
+  bound faults rather than truncating.
+- An interrupted series faults whole: a peer that closes before delivering
+  its declared count leaves no partial frame in the receiver's hands, the
+  fault the same one a truncation raises.
 - An aborted generation leaves the session accepting the next turn's
   delta cleanly, watched to fail when the terminator step is removed.
 - The stop lands within a token boundary of the cancel's arrival.
