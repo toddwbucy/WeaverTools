@@ -4,6 +4,12 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, fourth of this date, the classify kinds take
+shape. `Kind` gains `ClassifyRequest` and `ClassifyOutput` with their
+explicit renames, the counts move to eighteen, and the kind-to-payload
+mapping gains two dispositions shaped here on the flush's precedent:
+`ClassifyAsk`, the content sent, and `ClassifyOutcome`, scored or refused,
+per the charter's same-act edit.
 **Revised:** 2026-08-19, third of this date, the flush reaches the record.
 `Kind` gains `Flush` with its explicit rename, the counts move to sixteen
 and the ordinals to seventeenth, and the kind-to-payload mapping gains the
@@ -248,6 +254,8 @@ pub enum Kind {
     #[serde(rename = "model.request")]        ModelRequest,
     #[serde(rename = "model.output")]         ModelOutput,
     #[serde(rename = "model.measurement")]    ModelMeasurement,
+    #[serde(rename = "classify.request")]     ClassifyRequest,
+    #[serde(rename = "classify.output")]      ClassifyOutput,
 }
 
 #[serde(untagged)]
@@ -258,6 +266,8 @@ pub enum Payload {
     ModelRequest(Box<serde_json::value::RawValue>),
     ModelOutput(ModelOutput),
     ModelMeasurement(Box<serde_json::value::RawValue>),
+    ClassifyRequest(ClassifyAsk),
+    ClassifyOutput(ClassifyOutcome),
     Deferred(Box<serde_json::value::RawValue>),
 }
 
@@ -269,6 +279,16 @@ pub struct ModelOutput {
 pub struct FlushCounts {
     pub resident_before: u64,
     pub resident_after: u64,
+}
+
+pub struct ClassifyAsk {
+    pub content: String,
+}
+
+#[serde(tag = "outcome", rename_all = "snake_case")]
+pub enum ClassifyOutcome {
+    Scored { labels: Vec<(String, f64)> },
+    Refused { refusal: String },
 }
 
 #[serde(tag = "close", rename_all = "snake_case")]
@@ -285,7 +305,7 @@ the derive default emits `"MessageUser"` and `rename_all = "snake_case"` emits
 it to a scheme would put a second spelling of every kind on the wire, which is the
 one-name-two-nodes defect the Document Format rules against for identifiers and
 which reads the same way for a consumer keying on a kind. The mapping is total:
-sixteen variants, sixteen renames, and the wire spelling is the charter's.
+eighteen variants, eighteen renames, and the wire spelling is the charter's.
 
 ```graph
 node: trace-kind-explicit-renames
@@ -328,10 +348,10 @@ from: weaver-trace
 to: trace-subsystem-case-set
 ```
 
-**Sixteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
+**Eighteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
-attribute that let a consumer absorb a seventeenth kind into a wildcard would defeat
+attribute that let a consumer absorb a further kind into a wildcard would defeat
 the closure the corpus keys on.
 
 ```graph
@@ -507,14 +527,18 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, sixteen kinds and nine
+**The kind-to-payload mapping is total, eighteen kinds and eleven
 dispositions.** `load`, `unload`, `session.closed`, and `turn.started` carry
 `None`. The four message kinds carry `Message`. `turn.closed` carries
 `TurnClosed`. `fault` carries `Fault`. `flush` carries `FlushCounts`, the
 resident token counts before and after, both plain integers. The three
 model kinds carry their three
-own shapes, one each. The tool bracket's two carry `Deferred`. Four plus four
-plus one plus one plus one plus three plus two is sixteen, which is the whole of
+own shapes, one each. The classify pair carries its two own shapes,
+`ClassifyAsk` and `ClassifyOutcome`, the outcome scored or refused so a
+refusal the exchange met is the record's fact and never a fabricated
+answer. The tool bracket's two carry `Deferred`. Four plus four
+plus one plus one plus one plus three plus two plus two is eighteen, which is
+the whole of
 charter section 3.1's set. The count is stated because an earlier draft of this
 paragraph assigned thirteen and left `turn.started` homeless, and it is
 recounted here because the token workflow's trace act of 2026-08-02 moved four
@@ -534,7 +558,9 @@ to: trace-kind-payload-mapping-total
 draws the line.** The trace owns the boxes and the organ owns the contents, so
 a payload whose content an organ produced splices, and a payload this crate
 consumes and shapes is the exception. `Fault` splices, `fault-report` being the
-floor's shape the reporting organ renders. **`model.request` and
+floor's shape the reporting organ renders. The classify pair shapes on the
+flush's precedent: plain small data the harness authors from typed wire
+answers, no organ-rendered box standing to splice. **`model.request` and
 `model.measurement` splice on the same rule, reversing an earlier reading of
 this section.** The earlier text shaped the measurement here because its
 readings are what no other crate defines, but the streaming ruling made the SPU

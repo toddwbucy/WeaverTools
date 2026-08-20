@@ -6,6 +6,13 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, third of this date, the classify kinds enter the
+record. Section 3.1 gains `classify.request` and `classify.output`,
+seventeenth and eighteenth, on `weaver-spu-PRD` section 15.5's demand: the
+label seam's every exchange is recorded, the pair brackets nothing, the
+turn member is optional because a classify between turns belongs to no
+turn, and a death mid-exchange authors no fabricated answer. Arrives with
+the trace half of the classifier's owed acts.
 **Revised:** 2026-08-19, second of this date, the flush reaches the record.
 The kind set gains `flush`, sixteenth, under this charter's adding-one
 rule and by the standing condition the ruling of 2026-08-12 set for
@@ -314,9 +321,19 @@ its closure.
 | `model.request` | the decode boundary, request side |
 | `model.output` | the decode boundary, response side |
 | `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
+| `classify.request` | the label seam, request side: the content the loop sent for classification |
+| `classify.output` | the label seam, response side: every label of the artifact's head scored, or the typed refusal met |
 
-Sixteen kinds. Adding one is an edit to this charter and to every contract whose
+Eighteen kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
+`classify.request` and `classify.output` are the seventeenth and eighteenth,
+added 2026-08-19 with the classifier's charter, per `weaver-spu-PRD` section
+15.5's demand: every exchange of the label seam is recorded by the sole
+writer, an unrecorded semantic exchange being the precedent that charter
+refuses. The pair brackets nothing and each is recorded when it occurs, the
+turn member optional because a classify between turns belongs to no turn, a
+death mid-exchange authors no fabricated answer, and what a closure means is
+the fault custody rule's.
 `flush` is the sixteenth, added 2026-08-19 by the ruling of 2026-08-12's own
 condition: a reachable flush adds its event, and the context-management arc
 made it reachable. Its payload carries the resident token counts before and

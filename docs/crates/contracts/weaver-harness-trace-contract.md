@@ -5,6 +5,11 @@
 separately.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, third of this date, the classify kinds join the
+set. `classify.request` and `classify.output` per the charter's same-act
+rule, authored by the harness at the label seam's exchange, the payloads
+this crate's own shapes, and the turn member optional because a classify
+between turns belongs to no turn.
 **Revised:** 2026-08-19, second of this date, the flush reaches the record.
 The kind set gains `flush` per the charter's same-act rule, authored by
 the harness when its loop's flush confirms, the payload this crate's own
