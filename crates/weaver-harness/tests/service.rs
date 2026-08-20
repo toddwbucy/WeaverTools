@@ -100,6 +100,7 @@ impl Peer {
             let harness = Harness::listen(
                 listener,
                 OrganBinaries {
+                    classify: None,
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
@@ -391,6 +392,7 @@ fn dropping_the_harness_closes_the_listener() {
             let harness = Harness::listen(
                 listener,
                 OrganBinaries {
+                    classify: None,
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },

@@ -245,6 +245,57 @@ impl DecodeSocket {
     }
 }
 
+/// The classify process's one end, per `weaver-spu-Spec` section 11: the
+/// label seam at descriptor 3, the count check at one, the same hygiene
+/// sets, the same receive obligation. A count above one means the fork
+/// discipline upstream failed and this process is not the one to continue
+/// past it.
+pub const CLASSIFY_FD: RawFd = 3;
+
+/// The label seam's end, per `weaver-harness-spu-classify-contract`
+/// section 1: not an organ channel, so this type offers octets and no
+/// envelope, the confinement being the absent surface.
+#[derive(Debug)]
+pub struct ClassifySocket {
+    end: OwnedFd,
+}
+
+impl ClassifySocket {
+    /// Send one message, the bound asserted on this side's own writes.
+    pub fn send_octets(&self, body: &[u8]) -> Result<(), ChannelFault> {
+        if body.len() > MAX_ENVELOPE_BYTES {
+            return Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES,
+            });
+        }
+        send_octets(self.end.as_fd(), body)
+    }
+
+    /// Receive one message, `MSG_TRUNC` a channel fault and never a message.
+    pub fn recv_octets(&self) -> Result<Vec<u8>, ChannelFault> {
+        recv_octets(self.end.as_fd())
+    }
+}
+
+/// Adopt the classify process's one end and perform the same sets the
+/// two-end adoption performs, in the same order: count, wrap, close-on-exec,
+/// dumpable clear.
+pub fn adopt_classify() -> Result<ClassifySocket, EntryFault> {
+    let held = descriptors_beyond_the_standard_streams()?;
+    if held != 1 {
+        return Err(EntryFault::DescriptorCountWrong { found: held });
+    }
+    let borrowed = unsafe { BorrowedFd::borrow_raw(CLASSIFY_FD) };
+    fcntl(borrowed, FcntlArg::F_GETFD).map_err(|_| EntryFault::DescriptorsUnusable)?;
+    // SAFETY: the number was confirmed open above, the count check confirmed
+    // exactly one beyond the standard streams, and this is the classify
+    // binary's one construction of an owned handle from an inherited number.
+    let end = unsafe { OwnedFd::from_raw_fd(CLASSIFY_FD) };
+    set_close_on_exec(end.as_fd())?;
+    clear_dumpable()?;
+    Ok(ClassifySocket { end })
+}
+
 fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
     loop {
         match send(end.as_raw_fd(), body, MsgFlags::empty()) {

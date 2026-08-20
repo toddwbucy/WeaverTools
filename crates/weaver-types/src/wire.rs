@@ -86,6 +86,11 @@ pub enum Position {
 /// loop. `Fault` enters on different grounds: a fault report is what any organ
 /// hands the harness across whatever channel it holds, and the gate has no
 /// second socket to carry it.
+// The size skew is the admit's instruction, loop 0's low-volume diagnostic
+// traffic: twice per run and once per stop, so a box would trade wire-shape
+// churn for nothing measurable. The lint crossed its threshold when the
+// instruction gained the classify role, not when the shape changed kind.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "body", rename_all = "snake_case")]
 pub enum Payload {

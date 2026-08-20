@@ -285,5 +285,5 @@ fn the_classify_role_is_optional_by_presence() {
         concat!("    tunable-values: {}\n", "  classify: {}\n"),
     );
     let err = parse(&missing_binding).expect_err("a present section is whole");
-    assert!(matches!(err.kind, ConfigErrorKind::MissingField { .. }), "{err:?}");
+    assert!(matches!(err.kind, ConfigErrorKind::MissingField), "{err:?}");
 }

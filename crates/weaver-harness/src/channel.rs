@@ -474,6 +474,71 @@ pub enum DecodeReply {
     Refusal(weaver_types::TokenRefusal),
 }
 
+/// The label seam's near end, per `weaver-harness-spu-classify-contract`
+/// section 1: not an organ channel, so this type carries the label trio and
+/// no envelope, its own name keeping the envelope's assumptions off a seam
+/// that does not take them, the way [`DecodeChannel`] does for the token
+/// seam.
+#[derive(Debug)]
+pub struct ClassifyChannel {
+    end: OwnedFd,
+}
+
+impl ClassifyChannel {
+    /// Creates the classify pair, `SOCK_SEQPACKET` per `weaver-spu-Spec`
+    /// section 11, beside the SPU's two the way those are made before the
+    /// fork that carries them.
+    pub fn pair() -> Result<(ClassifyChannel, ChildEnd), ChannelFault> {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .map_err(|_| ChannelFault::Closed)?;
+        Ok((ClassifyChannel { end: near }, ChildEnd { end: far }))
+    }
+
+    /// Send one classify ask as bare JSON, the bound asserted on this side's
+    /// own writes per the contract: a frame that would exceed it fails here,
+    /// at the send, and the caller converts the failure to the standing
+    /// absence.
+    pub fn send_directive(
+        &self,
+        directive: &weaver_types::LabelDirective,
+    ) -> Result<(), ChannelFault> {
+        let body = serde_json::to_vec(directive).map_err(|_| ChannelFault::Undecodable)?;
+        if body.len() > weaver_types::MAX_ENVELOPE_BYTES {
+            return Err(ChannelFault::Truncated {
+                bound: weaver_types::MAX_ENVELOPE_BYTES,
+            });
+        }
+        send_octets(self.end.as_fd(), &body)
+    }
+
+    /// Receive one label frame, blocking: an answer or a typed refusal, the
+    /// two sharing the seam with disjoint tag vocabularies the way the
+    /// decode seam's do.
+    pub fn recv_reply(&self) -> Result<ClassifyReply, ChannelFault> {
+        let octets = recv_octets(self.end.as_fd())?;
+        if let Ok(answer) = serde_json::from_slice::<weaver_types::LabelAnswer>(&octets) {
+            return Ok(ClassifyReply::Answer(answer));
+        }
+        if let Ok(refusal) = serde_json::from_slice::<weaver_types::LabelRefusal>(&octets) {
+            return Ok(ClassifyReply::Refusal(refusal));
+        }
+        Err(ChannelFault::Undecodable)
+    }
+}
+
+/// One frame off the label seam: an answer or a typed refusal, per the
+/// classify contract's section 2.
+#[derive(Debug)]
+pub enum ClassifyReply {
+    Answer(weaver_types::LabelAnswer),
+    Refusal(weaver_types::LabelRefusal),
+}
+
 impl AsFd for DecodeChannel {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.end.as_fd()
