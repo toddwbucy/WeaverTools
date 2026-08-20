@@ -215,6 +215,7 @@ mod seam_success {
             1,
             LifecycleDirective::Admit {
                 instruction: SpuInstruction {
+                    classify: None,
                     decoder: DecoderInstruction {
                         model_binding: ModelBinding {
                             artifact: ArtifactRef(model.to_string_lossy().into_owned()),
@@ -299,6 +300,7 @@ mod seam_success {
             1,
             LifecycleDirective::Admit {
                 instruction: SpuInstruction {
+                    classify: None,
                     decoder: DecoderInstruction {
                         model_binding: ModelBinding {
                             artifact: ArtifactRef(model.to_string_lossy().into_owned()),
@@ -403,6 +405,7 @@ mod seam_success {
             1,
             LifecycleDirective::Admit {
                 instruction: SpuInstruction {
+                    classify: None,
                     decoder: DecoderInstruction {
                         model_binding: ModelBinding {
                             artifact: ArtifactRef(model.to_string_lossy().into_owned()),
@@ -517,6 +520,7 @@ mod seam_success {
             1,
             LifecycleDirective::Admit {
                 instruction: SpuInstruction {
+                    classify: None,
                     decoder: DecoderInstruction {
                         model_binding: ModelBinding {
                             artifact: ArtifactRef(model.to_string_lossy().into_owned()),

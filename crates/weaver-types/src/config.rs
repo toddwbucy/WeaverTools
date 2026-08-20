@@ -96,6 +96,21 @@ pub struct ElectedKindConfig {
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct SpuInstruction {
     pub decoder: DecoderInstruction,
+    /// The classify role, the section's second key, per `weaver-types-Spec`
+    /// section 2 as of the classifier act: optional by presence, absence
+    /// being the operator's declaration that the agent runs no classifier,
+    /// per `weaver-spu-PRD` section 15.3.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub classify: Option<ClassifyInstruction>,
+}
+
+/// The classify role's declaration: the model binding at the smaller size,
+/// per `weaver-types-Spec` section 2. Every field of a present section is
+/// required, the no-defaulting rule untouched by the section's own option.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct ClassifyInstruction {
+    pub model_binding: ModelBinding,
 }
 
 /// The decode role's declaration: which model serves it and whether the

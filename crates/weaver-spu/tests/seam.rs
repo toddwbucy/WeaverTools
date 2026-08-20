@@ -78,7 +78,9 @@ fn binding() -> ModelBinding {
 }
 
 fn instruction() -> SpuInstruction {
+    classify: None,
     SpuInstruction {
+        classify: None,
         decoder: DecoderInstruction {
             model_binding: binding(),
             residual_readout_election: false,

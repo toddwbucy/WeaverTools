@@ -1607,6 +1607,7 @@ mod tests {
             session: SessionId("s-election".into()),
             run: weaver_types::RunId("r-1".into()),
             spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
                 decoder: weaver_types::DecoderInstruction {
                     model_binding: weaver_types::ModelBinding {
                         artifact: weaver_types::ArtifactRef("unreachable".into()),
@@ -1728,6 +1729,7 @@ mod tests {
             session: SessionId("rehearsal".into()),
             run: weaver_types::RunId("r-1".into()),
             spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
                 decoder: weaver_types::DecoderInstruction {
                     model_binding: weaver_types::ModelBinding {
                         artifact: weaver_types::ArtifactRef(fixture.to_string_lossy().into_owned()),

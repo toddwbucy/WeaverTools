@@ -263,6 +263,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                 session: weaver_types::SessionId("s-1".into()),
                 run: weaver_types::RunId("r-1".into()),
                 spu_instruction: weaver_types::SpuInstruction {
+                    classify: None,
                     decoder: weaver_types::DecoderInstruction {
                         model_binding: weaver_types::ModelBinding {
                             artifact: weaver_types::ArtifactRef("qwen".into()),

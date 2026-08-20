@@ -254,3 +254,73 @@ fn the_decode_refuses_the_noncanonical_forms() {
     };
     assert_eq!(canonical.octets().expect("canonical"), b"AB");
 }
+
+/// The label trio round-trips through bytes, per `weaver-types-Spec` section
+/// 4.5: the directive and refusal internally tagged, the answer adjacent
+/// because the fault's account splices, which is the shared tagging test's
+/// spliced-member arm and would fail internal tagging at deserialization.
+#[test]
+fn the_label_trio_round_trips_through_bytes() {
+    let ask = weaver_types::LabelDirective::Classify {
+        turn: Some(weaver_types::TurnKey("t-3".into())),
+        content: "the recalled passage".to_string(),
+    };
+    let bytes = serde_json::to_string(&ask).expect("serializes");
+    assert!(bytes.contains(r#""kind":"classify""#), "{bytes}");
+    let back: weaver_types::LabelDirective = serde_json::from_str(&bytes).expect("returns");
+    assert_eq!(back, ask);
+
+    let no_turn = weaver_types::LabelDirective::Classify {
+        turn: None,
+        content: "between turns".to_string(),
+    };
+    let bytes = serde_json::to_string(&no_turn).expect("serializes");
+    let back: weaver_types::LabelDirective = serde_json::from_str(&bytes).expect("returns");
+    assert_eq!(back, no_turn, "the turn identity is conditional: {bytes}");
+
+    let scored = weaver_types::LabelAnswer::Scored {
+        turn: Some(weaver_types::TurnKey("t-3".into())),
+        labels: vec![
+            weaver_types::ScoredLabel {
+                label: "entailment".into(),
+                score: 0.91,
+            },
+            weaver_types::ScoredLabel {
+                label: "not_entailment".into(),
+                score: 0.09,
+            },
+        ],
+    };
+    let bytes = serde_json::to_string(&scored).expect("serializes");
+    assert!(
+        bytes.contains(r#""kind":"scored""#) && bytes.contains(r#""body""#),
+        "the answer is adjacently tagged: {bytes}"
+    );
+    let back: weaver_types::LabelAnswer = serde_json::from_str(&bytes).expect("returns");
+    assert_eq!(back, scored);
+
+    let account = serde_json::value::RawValue::from_string(
+        r#"{"organ":"spu-classify","detail":"device lost"}"#.to_string(),
+    )
+    .expect("valid JSON splices");
+    let fault = weaver_types::LabelAnswer::Fault(weaver_types::FaultReport {
+        case: weaver_types::FaultCase::DeviceFaultDuringGeneration,
+        account,
+    });
+    let bytes = serde_json::to_string(&fault).expect("serializes");
+    assert!(
+        bytes.contains(r#""account":{"organ":"spu-classify""#),
+        "the account is a member, spliced: {bytes}"
+    );
+    let back: weaver_types::LabelAnswer = serde_json::from_str(&bytes).expect("the splice returns");
+    assert_eq!(back, fault);
+
+    let refusal = weaver_types::LabelRefusal::Oversized {
+        requested: 9000,
+        bound: 8192,
+    };
+    let bytes = serde_json::to_string(&refusal).expect("serializes");
+    assert!(bytes.contains(r#""kind":"oversized""#), "{bytes}");
+    let back: weaver_types::LabelRefusal = serde_json::from_str(&bytes).expect("returns");
+    assert_eq!(back, refusal);
+}

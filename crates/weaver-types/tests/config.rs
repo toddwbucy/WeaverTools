@@ -253,3 +253,37 @@ fn a_partial_state_election_refuses() {
         assert!(parse(&source).is_err(), "{tail} must refuse");
     }
 }
+
+/// The classify role is optional by presence, per `weaver-types-Spec`
+/// section 2 as of the classifier act: absence parses as the operator
+/// declaring no classifier, presence requires the binding whole, and an
+/// unknown key inside the section refuses like any other.
+#[test]
+fn the_classify_role_is_optional_by_presence() {
+    let without = parse(&full_config()).expect("parses");
+    assert!(without.spu_instruction.classify.is_none());
+
+    let with = full_config().replace(
+        "    tunable-values: {}\n",
+        concat!(
+            "    tunable-values: {}\n",
+            "  classify:\n",
+            "    model-binding:\n",
+            "      artifact: modernbert-base-zeroshot\n",
+            "      devices: [0]\n",
+        ),
+    );
+    let config = parse(&with).expect("parses with the role");
+    let classify = config.spu_instruction.classify.expect("present");
+    assert_eq!(
+        classify.model_binding.devices,
+        vec![weaver_types::DeviceOrdinal(0)]
+    );
+
+    let missing_binding = full_config().replace(
+        "    tunable-values: {}\n",
+        concat!("    tunable-values: {}\n", "  classify: {}\n"),
+    );
+    let err = parse(&missing_binding).expect_err("a present section is whole");
+    assert!(matches!(err.kind, ConfigErrorKind::MissingField { .. }), "{err:?}");
+}
