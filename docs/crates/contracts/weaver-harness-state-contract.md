@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-20, the opener names its session. The `election`
+term gains the session the load declared, so the custodian can bound its
+answers to it. The ground is `weaver-state-PRD` section 4's within-a-session
+ruling, which the code could not honor while the member learned a session
+only as a column on arriving distillates. Per the operator's ruling of this
+date the fact rides the opener rather than the ask, being load-declared and
+standing for the channel's life.
 **Revised:** 2026-08-19, third of this date, recall joins the asks. The
 vocabulary's ask set gains `recall` by section 7's own door, elected
 against the context-management loop's real need per issue #221's arc: a
@@ -72,8 +79,18 @@ custody rule of apex section 5.2: the floor carries only what the harness
 itself consumes, and what crosses here is consumed by state.
 
 **This seam's own.** Four terms. The `election`: the seam's opener, the
-elected kinds and their payload key paths as the load declared them, sent
-whole at every standing of the channel and never per event. The
+session the load declared and the elected kinds with their payload key paths
+as the load declared them, sent whole at every standing of the channel and
+never per event. **The session rides the opener rather than the ask**, per
+the operator's ruling of 2026-08-20 on the custody defect: it is a
+load-declared fact standing for the channel's life, the same shape as the
+election it sits beside, and a restarted member relearns it with its
+reopened channel exactly as it relearns the election. An asker naming its
+own session on every question would put the fact on the wire per ask and
+would make the asking loop state something it has no reason to know. What
+the member does with it is its own, per section 2: the holdings answer
+within the declared session and not across it, which is
+`weaver-state-PRD` section 4's boundary made reachable rather than assumed. The
 `distillate`: one distilled event, carrying the envelope whole and the
 elected payload pairs beside it, each pair a payload key path and the value
 the canonical JSON held at it. The `ask`: one question the harness puts to
@@ -150,6 +167,14 @@ is answered against exactly the holdings the seam carried before it**,
 which is what makes a served fact attributable to a position in the stream:
 every distillate sent ahead of the ask is in the answer's view and nothing
 sent after it is.
+
+**Every answer is bounded to the session the opener declared**, per the
+operator's ruling of 2026-08-20. Holdings a member accumulated under an
+earlier session are outside every answer's view, whatever else is true of
+them, so an ask cannot reach across the boundary `weaver-state-PRD` section
+4 draws. This is a property of the answers rather than of the file: what
+becomes of an earlier session's rows on disk is deliberately not settled
+here, per the same ruling, and stands as its own question.
 
 **The ask vocabulary is closed and enumerated here, and it holds two
 names: `shape` and `recall`.** The shape ask carries no members, one

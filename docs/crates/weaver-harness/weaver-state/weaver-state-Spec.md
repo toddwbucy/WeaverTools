@@ -2,6 +2,14 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-20, custody answers within its session. Section 4
+gains the serve restriction: every read bounds to the session the
+contract's amended opener carries, which is `weaver-state-PRD` section 4's
+within-a-session boundary made a property of the answers rather than an
+assumption about the file. Both queries had read the whole table and
+answered across every session a store held. One perturbation assertion
+lands. Section 6's retirement cell narrows to the disk alone, the operator
+having ruled removal a separate act.
 **Revised:** 2026-08-19, third of this date, the recall bound keys the
 whole turn identity. Review of the arc's code act found the bound as
 spelled, distinct turn values alone, recalls an older run's events
@@ -187,7 +195,38 @@ to: state-distillate-lands-whole
 loop that lands distillates, which is what delivers the contract's
 answered-against clause without a lock or a snapshot: the holdings at the
 ask's position are the holdings, because nothing lands between reading the
-ask and answering it. The `shape` ask runs one grouped count over the event
+ask and answering it.
+
+**Every serve query restricts to the opener's session, and the restriction
+is the query's rather than the caller's.** The contract's `election` carries
+the session the load declared, per its 2026-08-20 amendment, and this crate
+holds it for the channel's life and puts it in the `WHERE` of every read
+below. It is stated here as a shape rather than left to a reader because
+the defect it repairs was invisible: both queries once read the whole table,
+answering across every session a store file had ever held, and the answers
+looked perfectly well formed - a shape ask reporting a lifetime's runs as
+this session's, and a recall reaching a fact the operator believed a session
+cut had retired. Nothing surfaced it until a fresh session reported
+twenty-eight earlier runs it never had. **A store file holding more than one
+session is the normal case rather than the broken one**, sessions outliving
+runs and the file outliving sessions, so the restriction is what makes
+`weaver-state-PRD` section 4's within-a-session boundary a property of the
+answers instead of an assumption about the file. What becomes of an earlier
+session's rows on disk is section 6's open question and deliberately not
+settled here, per the operator's ruling of the same date: unreachable is
+what this act delivers, and removal is its own election.
+
+```graph
+node: state-serve-restricts-to-the-session
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-state
+to: state-serve-restricts-to-the-session
+```
+
+The `shape` ask runs one grouped count over the event
 table, and the landing order the contract's first-seen clause asks for is
 the `id` column's, custody's own order key: the run groups are ordered by
 the least `id` each holds, each carrying its kinds and their counts as the
@@ -235,7 +274,13 @@ against the context-injection loop's real ask per the charter's cell.
 - **The retirement mechanics.** The session's close retires the holdings,
   and the act that gives sessions a close in practice elects how the file
   is removed, sessions today outliving every run this workshop has
-  produced.
+  produced. **Sharpened 2026-08-20 rather than closed**: the serve
+  restriction of section 4 makes an earlier session's holdings unreachable,
+  so the charter's boundary now holds in the answers, and what remains open
+  is the disk - whether a session's close removes its rows, and what an
+  operator may recover after it. The operator ruled the two apart in that
+  act, so a reader meeting this cell is meeting a narrowed question rather
+  than the original one.
 - **The member's account name and the territory's exact key.** Deployment
   facts, elected where the spawn path lands, the way every path in the
   admin configuration is.
