@@ -8,10 +8,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 **Revised:** 2026-08-19, sixth of this date, the label trio takes shape.
 Section 4.5 holds the classify contract's trio the way 4.4 holds the
 decode contract's: the cases spelled once from the contract's enumeration,
-internally tagged throughout because no member splices, and JSON as a
-settled election against the loop 0 criterion, there being no hot path to
-measure. Arrives with the floor half of the classifier's owed acts, per
-the contract's section 9.
+the directive and refusal internally tagged and the answer adjacent
+because the fault's account splices, and JSON as a settled election
+against the loop 0 criterion, there being no hot path to measure. Arrives
+with the floor half of the classifier's owed acts, per the contract's
+section 9.
 **Revised:** 2026-08-19, fifth of this date, the flush names its cut.
 `TokenDirective::Flush` gains `keep`, the resident length the session
 returns to, per the operator's ruling that the cleanup line is the
@@ -1557,26 +1558,38 @@ content and the turn identity as the floor's satellite type, optional
 because apex invariant 5.3 is conditional on an existing turn: the loop
 that classifies between turns, composing its re-entry before any turn
 opens, belongs to none and carries none, and a classify within a turn
-carries the key. Whatever arrived is echoed back on `Scored` byte-exact,
-absence included, which is the contract's echo stated over the option.
+carries the key. The classifier echoes the turn identity back on `Scored`
+exactly as it arrived, absence included, and the equality is the decoded
+value's: the satellite type compares by its string, the wire spelling
+being serde's, which is the level the contract's echo is checked at.
 `Ready` is the readiness emission, `NotAdmitted` its typed failure
 traveling in the enter aggregate, and `NotReady` refuses a directive that
 arrived before either, per the contract's ordering. `Oversized` names the
 artifact's own bound the way the decode seam's overflow names the
-session's, and `MalformedContent` is a frame the process could decode as a
-directive and not serve. `Fault` rides the answer set the way the token
-trio carries it, one `fault-report` definition with a further carriage.
-Every label of the artifact's head crosses in `Scored` with none elided
-and none beyond, per the contract's completeness guarantee, so the vector
-is the head and its order is the head's own.
+session's, both counts denominated in the artifact's own tokens, the
+tokenizer's count of the content against the bound the artifact resolved,
+one unit stated once. `MalformedContent` is a frame the process could
+decode as a directive and not serve. `Fault` rides the answer set the way
+the token trio carries it, one `fault-report` definition with a further
+carriage. Every label of the artifact's head crosses in `Scored` with
+none elided and none beyond, per the contract's completeness guarantee,
+so the vector is the head and its order is the head's own. A score is a
+finite JSON number, one per label, `NaN` and either infinity excluded: the
+wire cannot carry what JSON cannot spell, and a scorer producing one has
+faulted rather than answered.
 
-**Internally tagged, all three, and JSON without a deferral.** The answer
-carries no spliced member, so the adjacent tagging 4.4's answer needed has
-nothing to buy here, and the traffic is one ask and one whole answer per
-the asking loop's election, low in volume and diagnostic in audience, the
-loop 0 criterion rather than the decode seam's. That is a settled election
-against a stated criterion, not 4.4's provisional one: there is no
-hot-path measurement to wait for, because there is no hot path.
+**Tagged the way 4.4 tags, and JSON without a deferral.** `LabelDirective`
+and `LabelRefusal` are internally tagged, their value-carrying cases plain
+data. `LabelAnswer` is adjacently tagged with `kind` and `body`, because
+`Fault` carries the floor's `fault-report` whose account is a spliced
+member, unquoted pre-serialized JSON under the shared field rules: a
+spliced member cannot ride an internally tagged enum, whose deserializer
+buffers the content a splice must read raw, which is the same fact that
+shaped `TokenAnswer`. The traffic is one ask and one whole answer per the
+asking loop's election, low in volume and diagnostic in audience, the
+loop 0 criterion rather than the decode seam's, so JSON is a settled
+election against a stated criterion, not 4.4's provisional one: there is
+no hot-path measurement to wait for, because there is no hot path.
 
 **No record is added here.** The trio's nodes are the charter's, declared
 at `weaver-types-PRD` section 2.3 with their `defines` edges, per the same
