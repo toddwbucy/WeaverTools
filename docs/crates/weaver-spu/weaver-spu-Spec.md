@@ -2114,11 +2114,25 @@ process.
 
 **The channel takes the `SOCK_SEQPACKET` election of section 2 unchanged**,
 one write one message from the socket type, with the same receive
-obligation. The traffic sits far inside the envelope: the ask is bounded by
-the artifact's own token bound before any datagram limit is met, and the
-answer is a label vector whose size is the head's. The encoding is the
+obligation stated for this seam explicitly: the receive buffer is sized to
+the election's 64 kibibyte bound, a read returning with `MSG_TRUNC` set is
+a channel fault and never a message, and each side asserts the bound on
+its own writes. A frame that would exceed the bound therefore fails at the
+send, which on the harness's side the seat converts into the same absence
+every failed ask serves, so the wire bound needs no second refusal name:
+the artifact's token bound is judged after tokenization on the process's
+side, per the trio's `Oversized`, and the datagram bound before any send
+on the asker's. The answer is a label vector whose size is the head's,
+nowhere near the bound. The encoding is the
 label trio's settled JSON, per `weaver-types-Spec` section 4.5, and unlike
 the token seam's it defers nothing: there is no hot path to measure.
+
+**The classify process receives exactly one descriptor, its label seam
+end, and section 2's count check holds here at one.** The check stays a
+count rather than an identification, per section 2's own reasoning, and a
+count above one means the discipline upstream failed and this process is
+not the one to continue past it. The decode-carrying process's own count
+stays two and this act moves neither.
 
 **The binding rides `spu-instruction` as a `classify` subsection beside
 `decoder`**, per `weaver-types-Spec` section 2: the artifact and its device
@@ -2129,7 +2143,17 @@ the decoder's admission judges its own, the model first per the charter's
 ordering, and the readiness emission is the label seam's first message.
 
 **The first classify family is `modernbert`, entering section 5's registry
-with its capabilities declared.** It serves classify and nothing else,
+with its capabilities declared, and the registry's selection gains the
+operation as a filter.** Charter section 14 already has every family
+declaring what operations its models serve, and the selection reads that
+declaration: a decode admission selects among families declaring decode,
+by architecture and the marker set as before, and a classify admission
+selects among families declaring classify the same way, so neither
+operation's candidates shadow the other's. The template joins the key only
+where a family renders one, per the template-joins-the-key ruling, and a
+classify family renders none, so its key is the architecture and the
+operation alone. The decoder's selection behavior does not move.
+`modernbert` serves classify and nothing else,
 renders no template, and reads its head from the artifact's own
 declaration, the label names being the artifact's `id2label` in index
 order, which is the head defining its labels the charter requires. The
