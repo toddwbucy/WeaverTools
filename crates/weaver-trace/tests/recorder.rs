@@ -549,3 +549,47 @@ fn the_subsystem_spellings_are_pinned_and_the_engine_is_not_the_organ() {
         "the organ and its engine are two attributions, which is the split's point"
     );
 }
+
+/// The classify pair admits with a turn and without one, per the charter's
+/// adding text - a classify between turns belongs to no turn - and the
+/// pairing is enforced: each kind takes exactly its own payload, and a
+/// scored outcome under the request kind refuses.
+#[test]
+fn the_classify_pair_is_turn_optional_and_pairing_enforced() {
+    let (mut r, _path) = recorder();
+    r.submit(event(Kind::Load, None, None)).unwrap();
+    let ask = || {
+        Some(Payload::ClassifyRequest(weaver_trace::ClassifyAsk {
+            content: "the recalled passage".into(),
+        }))
+    };
+    let outcome = || {
+        Some(Payload::ClassifyOutput(weaver_trace::ClassifyOutcome::Scored {
+            labels: vec![("entailment".into(), 0.9), ("not_entailment".into(), 0.1)],
+        }))
+    };
+    r.submit(event(Kind::ClassifyRequest, None, ask()))
+        .expect("between turns, no turn");
+    r.submit(event(Kind::ClassifyOutput, None, outcome()))
+        .expect("the outcome follows");
+    r.submit(event(Kind::ClassifyRequest, Some("t-1"), ask()))
+        .expect("within a turn, the key rides");
+    r.submit(event(
+        Kind::ClassifyOutput,
+        Some("t-1"),
+        Some(Payload::ClassifyOutput(
+            weaver_trace::ClassifyOutcome::Refused {
+                refusal: "oversized".into(),
+            },
+        )),
+    ))
+    .expect("a refusal is the record's own fact");
+    assert!(
+        r.submit(event(Kind::ClassifyRequest, None, outcome())).is_err(),
+        "the pairing is total"
+    );
+    assert!(
+        r.submit(event(Kind::ClassifyOutput, None, None)).is_err(),
+        "the outcome carries its account"
+    );
+}
