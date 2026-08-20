@@ -7,6 +7,7 @@
 //! conforms: trace-bracket-kind-omits-payload
 //! conforms: trace-envelope-flattens
 //! conforms: trace-turn-close-internally-tagged
+//! conforms: trace-output-carries-the-counts
 //!
 //! The perturbation-verified tests of `weaver-trace-Spec` section 10. Each
 //! names its perturbation, the mutation under which it was watched to fail.
@@ -332,6 +333,52 @@ fn absent_measurement_members_emit_nothing() {
     assert!(
         !line.contains("reductions"),
         "an unproduced reading emits no member: {line}"
+    );
+}
+
+/// **The output carries the session's position**, per `weaver-trace-Spec`
+/// section 3: an analysis placing a turn inside the context has the record
+/// and nothing else once the run is over, and a member that serializes is
+/// lost silently - the line still renders and every consumer still parses.
+///
+/// Perturbation: drop either count from `ModelOutput` and this fails.
+#[test]
+fn the_output_carries_the_counts() {
+    let (mut r, _path) = recorder();
+    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::TurnStarted, Some("t-1"), None))
+        .unwrap();
+    r.submit(event(
+        Kind::ModelOutput,
+        Some("t-1"),
+        Some(Payload::ModelOutput(weaver_trace::ModelOutput {
+            emission: "the answer".into(),
+            finish: weaver_trace::Finish::Completed,
+            resident: 26_214,
+            capacity: 32_768,
+        })),
+    ))
+    .unwrap();
+    let line = r
+        .structure()
+        .by_kind(Kind::ModelOutput)
+        .next()
+        .unwrap()
+        .line
+        .clone();
+    let rendered: serde_json::Value = serde_json::from_str(&line).expect("the line is one value");
+    let payload = rendered
+        .get("payload")
+        .expect("the output carries a payload");
+    assert_eq!(
+        payload.get("resident").and_then(|v| v.as_u64()),
+        Some(26_214),
+        "the resident count reaches the record: {line}"
+    );
+    assert_eq!(
+        payload.get("capacity").and_then(|v| v.as_u64()),
+        Some(32_768),
+        "the capacity reaches the record: {line}"
     );
 }
 

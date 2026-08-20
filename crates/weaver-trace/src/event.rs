@@ -271,6 +271,14 @@ pub enum ClassifyOutcome {
 pub struct ModelOutput {
     pub emission: String,
     pub finish: Finish,
+    /// The session's token count as this generation closed and the ceiling
+    /// the load resolved, per `weaver-trace-Spec` section 3: the pair the
+    /// flush's counts and the overflow refusal carry, recorded here because
+    /// a generation moves the resident context as a flush does. The harness
+    /// reads them at this same close to answer the seat's fullness port, so
+    /// the record and the loop take one reading rather than two.
+    pub resident: u64,
+    pub capacity: u64,
 }
 
 /// How the generation ended, per the charter: completed or stopped.

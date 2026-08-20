@@ -840,6 +840,11 @@ impl<'a> Ports<'a> {
                         weaver_types::Finish::Stopped => weaver_trace::Finish::Stopped,
                         weaver_types::Finish::Length => weaver_trace::Finish::Length,
                     },
+                    // The same reading the fullness port answers from,
+                    // written down: an analysis placing a turn in the
+                    // context has no other source once the run is over.
+                    resident: generation.resident,
+                    capacity: generation.capacity,
                 })),
             )
             .map_err(|_| TurnError::ChannelLost)?;
