@@ -143,7 +143,11 @@ extension seam the children list of section 6 names. Which loop an agent runs
 is the agent's own declared fact, per the operator's ruling of 2026-08-20: the
 loop is a member of that agent's harness and unique to it. A worker whose loop
 is compiled carries it in the binary its unit starts, and a worker that reads
-its loop from a file runs the one the agent's declaration names. Absence means
+its loop from a file runs the one the agent's declaration names. A compiled
+worker handed a declared loop file refuses at its own argument parse and the
+load fails loudly, because a declaration the installation cannot honor is an
+error to surface rather than a fact to ignore, the residual-readout rule's
+own reasoning one field over. Absence means
 the worker's own default, the compiled body or the installed file, which is
 what lets every declaration written before the member stand. The earlier form
 of this sentence called the loop a provisioning fact rather than a

@@ -850,8 +850,13 @@ invocation's own input composes.** Its values are the coordination socket
 path of section 7, which this crate already derives from that same validated
 name, the two organ binary paths section 9 holds among the operator's
 installed values, and, where the declaration carries one, the agent's loop
-file as a named flag, per `weaver-types-Spec` section 2 and the operator's
-ruling of 2026-08-20 on issue #243. The loop file is the vector's one
+file as the named flag `--loop-file`, one token on both sides of the vector,
+composed here and parsed by the worker under the same spelling, per
+`weaver-types-Spec` section 2 and the operator's
+ruling of 2026-08-20 on issue #243. A worker that holds no file-read loop
+refuses the flag at its own argument parse, named rather than ignored, so a
+declaration the installation cannot honor fails the load loudly instead of
+standing as a fact with no effect. The loop file is the vector's one
 declaration-sourced value and it widens nothing: the declaration is the
 operator's file, validated at section 4's inventory before any unit is asked,
 and the worker resolves the path under the agent's own identity, so the value
