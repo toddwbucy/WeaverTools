@@ -292,9 +292,14 @@ fn the_label_trio_round_trips_through_bytes() {
         ],
     };
     let bytes = serde_json::to_string(&scored).expect("serializes");
-    assert!(
-        bytes.contains(r#""kind":"scored""#) && bytes.contains(r#""body""#),
+    let encoded: serde_json::Value = serde_json::from_str(&bytes).expect("valid JSON");
+    assert_eq!(
+        encoded["kind"], "scored",
         "the answer is adjacently tagged: {bytes}"
+    );
+    assert!(
+        encoded["body"]["labels"].is_array() && encoded["body"]["labels"][0]["label"].is_string(),
+        "the labels nest in the adjacent body: {bytes}"
     );
     let back: weaver_types::LabelAnswer = serde_json::from_str(&bytes).expect("returns");
     assert_eq!(back, scored);
@@ -308,10 +313,13 @@ fn the_label_trio_round_trips_through_bytes() {
         account,
     });
     let bytes = serde_json::to_string(&fault).expect("serializes");
+    let encoded: serde_json::Value = serde_json::from_str(&bytes).expect("valid JSON");
+    assert_eq!(encoded["kind"], "fault", "{bytes}");
     assert!(
-        bytes.contains(r#""account":{"organ":"spu-classify""#),
-        "the account is a member, spliced: {bytes}"
+        encoded["body"]["account"].is_object(),
+        "the account is a member, spliced as an object: {bytes}"
     );
+    assert_eq!(encoded["body"]["account"]["organ"], "spu-classify", "{bytes}");
     let back: weaver_types::LabelAnswer = serde_json::from_str(&bytes).expect("the splice returns");
     assert_eq!(back, fault);
 
@@ -320,7 +328,34 @@ fn the_label_trio_round_trips_through_bytes() {
         bound: 8192,
     };
     let bytes = serde_json::to_string(&refusal).expect("serializes");
-    assert!(bytes.contains(r#""kind":"oversized""#), "{bytes}");
+    let encoded: serde_json::Value = serde_json::from_str(&bytes).expect("valid JSON");
+    assert_eq!(encoded["kind"], "oversized", "{bytes}");
     let back: weaver_types::LabelRefusal = serde_json::from_str(&bytes).expect("returns");
     assert_eq!(back, refusal);
+}
+
+/// The seam's receive distinguishes an answer from a refusal by trying the
+/// two vocabularies in order, so the property it rests on is watched here:
+/// no refusal's serialization deserializes as an answer.
+#[test]
+fn no_label_refusal_reads_as_an_answer() {
+    for refusal in [
+        weaver_types::LabelRefusal::NotAdmitted {
+            reason: "device lost".into(),
+        },
+        weaver_types::LabelRefusal::NotReady,
+        weaver_types::LabelRefusal::Oversized {
+            requested: 9000,
+            bound: 8192,
+        },
+        weaver_types::LabelRefusal::MalformedContent,
+    ] {
+        let bytes = serde_json::to_string(&refusal).expect("serializes");
+        assert!(
+            serde_json::from_str::<weaver_types::LabelAnswer>(&bytes).is_err(),
+            "{bytes} must not read as an answer"
+        );
+        let back: weaver_types::LabelRefusal = serde_json::from_str(&bytes).expect("returns");
+        assert_eq!(back, refusal);
+    }
 }

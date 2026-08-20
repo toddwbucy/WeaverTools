@@ -61,6 +61,9 @@ pub mod engine {
     pub enum ClassifyFault {
         NotAdmitted(String),
         Oversized { requested: u64, bound: u64 },
+        /// The content the tokenizer refused: the ask's defect, answered as
+        /// the malformed refusal, never as a device fault.
+        Malformed(String),
         Forward(String),
     }
 
@@ -72,7 +75,6 @@ pub mod engine {
         labels: Vec<String>,
         bound: usize,
         device: Device,
-        pad: u32,
     }
 
     impl Classifier {
@@ -152,7 +154,6 @@ pub mod engine {
                 labels,
                 bound: config.max_position_embeddings,
                 device,
-                pad: config.pad_token_id,
             })
         }
 
@@ -168,7 +169,7 @@ pub mod engine {
             let encoding = self
                 .tokenizer
                 .encode(content, true)
-                .map_err(|e| ClassifyFault::Forward(format!("tokenize failed: {e}")))?;
+                .map_err(|e| ClassifyFault::Malformed(format!("tokenize refused: {e}")))?;
             let ids: Vec<u32> = encoding.get_ids().to_vec();
             if ids.len() > self.bound {
                 return Err(ClassifyFault::Oversized {
@@ -176,7 +177,6 @@ pub mod engine {
                     bound: self.bound as u64,
                 });
             }
-            let _ = self.pad;
             let input = Tensor::new(ids.as_slice(), &self.device)
                 .and_then(|t| t.unsqueeze(0))
                 .map_err(|e| ClassifyFault::Forward(e.to_string()))?;

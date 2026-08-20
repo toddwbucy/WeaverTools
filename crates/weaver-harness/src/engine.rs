@@ -44,6 +44,11 @@ use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 /// construction here, so the refusal arm is for callers less careful.
 pub(crate) const TOOL_CALL_CLOCK_MS: u64 = 30_000;
 
+/// The classify answer's bound, generous against a forward of tens of
+/// milliseconds: the turn thread's protection, and its expiry retires the
+/// arm one-strike, the state seam's economics on the label seam.
+pub(crate) const CLASSIFY_ANSWER_BOUND_MS: u64 = 30_000;
+
 /// How many envelopes one run's shelf may hold before the surplus is
 /// dropped and the drop recorded: the bound on both the queue and the
 /// serve loop's appetite, a refusal of hoarding rather than of the client.
@@ -271,6 +276,11 @@ impl<'a> Ports<'a> {
     /// loop holds it to ask.
     pub fn classify(&mut self, content: &str) -> Option<Vec<(String, f64)>> {
         let channel = self.classify?;
+        // The one-strike retirement, the state seam's economics: an arm
+        // that missed its bound once is not asked again.
+        if channel.retired() {
+            return None;
+        }
         self.author
             .author(
                 self.recorder,
@@ -287,11 +297,12 @@ impl<'a> Ports<'a> {
             content: content.to_string(),
         });
         if asked.is_err() {
-            self.author_classify_refused("unsent");
+            channel.retire();
+            self.author_classify_refused("channel_lost");
             return None;
         }
         loop {
-            match channel.recv_reply() {
+            match channel.recv_reply_within(CLASSIFY_ANSWER_BOUND_MS) {
                 Ok(crate::channel::ClassifyReply::Answer(
                     weaver_types::LabelAnswer::Scored { labels, .. },
                 )) => {
@@ -346,7 +357,14 @@ impl<'a> Ports<'a> {
                     self.author_classify_refused(name);
                     return None;
                 }
-                Err(_) => return None,
+                // The bound expired or the channel faulted: the arm retires
+                // one-strike, and the record's output names the loss rather
+                // than leaving the request unanswered.
+                Err(_) => {
+                    channel.retire();
+                    self.author_classify_refused("channel_lost");
+                    return None;
+                }
             }
         }
     }

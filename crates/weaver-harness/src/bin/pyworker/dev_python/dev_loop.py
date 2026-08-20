@@ -13,8 +13,12 @@
 #                                         identity prefix and the resident
 #                                         count
 #   seat.classify(text)    -> list|None   [(label, score)] from the classify
-#                                         artifact's head, or None where no
-#                                         classifier is declared
+#                                         artifact's head; None covers every
+#                                         absence alike - no classifier
+#                                         declared, the ask refused typed,
+#                                         the content malformed, or the
+#                                         channel lost - the record holding
+#                                         which, never this return
 #   seat.recall(n)         -> list|None   message events, newest n turns:
 #                                         {"kind", "turn", "sequence",
 #                                          "pairs": {key: json_text}}

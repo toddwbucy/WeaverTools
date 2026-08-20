@@ -482,6 +482,13 @@ pub enum DecodeReply {
 #[derive(Debug)]
 pub struct ClassifyChannel {
     end: OwnedFd,
+    /// One-strike retirement, the state seam's economics on this seam: a
+    /// timeout or a channel fault retires the arm, and every later ask
+    /// answers the missing leg's absence immediately rather than paying
+    /// the bound again against a peer already proven unresponsive. A
+    /// `Cell` because the seat holds the channel by shared reference on
+    /// the one serving thread.
+    retired: std::cell::Cell<bool>,
 }
 
 impl ClassifyChannel {
@@ -496,7 +503,49 @@ impl ClassifyChannel {
             SockFlag::SOCK_CLOEXEC,
         )
         .map_err(|_| ChannelFault::Closed)?;
-        Ok((ClassifyChannel { end: near }, ChildEnd { end: far }))
+        Ok((
+            ClassifyChannel {
+                end: near,
+                retired: std::cell::Cell::new(false),
+            },
+            ChildEnd { end: far },
+        ))
+    }
+
+    /// Whether the arm has been retired, per the one-strike economics.
+    pub fn retired(&self) -> bool {
+        self.retired.get()
+    }
+
+    /// Retire the arm: the peer missed its bound or the channel faulted,
+    /// and nothing asks it again.
+    pub fn retire(&self) {
+        self.retired.set(true);
+    }
+
+    /// Receive one label frame inside a bound: the wait is a poll deadline,
+    /// so a hung peer costs the bound once rather than the serving thread
+    /// forever, and the expiry is a channel fault the caller converts.
+    pub fn recv_reply_within(&self, bound_ms: u64) -> Result<ClassifyReply, ChannelFault> {
+        let deadline =
+            std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
+        loop {
+            let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+            if remaining.is_zero() {
+                return Err(ChannelFault::Closed);
+            }
+            let wait = remaining.as_millis().min(u128::from(u16::MAX)) as u16;
+            let mut fds = [nix::poll::PollFd::new(
+                self.end.as_fd(),
+                nix::poll::PollFlags::POLLIN,
+            )];
+            match nix::poll::poll(&mut fds, wait) {
+                Ok(0) => return Err(ChannelFault::Closed),
+                Ok(_) => return self.recv_reply(),
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(_) => return Err(ChannelFault::Closed),
+            }
+        }
     }
 
     /// Send one classify ask as bare JSON, the bound asserted on this side's

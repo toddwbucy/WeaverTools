@@ -289,6 +289,11 @@ struct SpuChannels {
     pid: nix::unistd::Pid,
 }
 
+/// The classify readiness bound: generous against an admission that loads a
+/// sub-gigabyte artifact in seconds, because the expiry refuses the whole
+/// load and a slow disk should not read as a dead child.
+const CLASSIFY_READY_BOUND_MS: u64 = 60_000;
+
 /// The classify arm, per `weaver-harness-Spec` section 6: the label seam's
 /// near end and the process behind it, standing only where the declaration
 /// carried the binding, falling whole under the unwind like every arm.
@@ -1167,10 +1172,13 @@ impl Harness {
             drop(child);
             let arm = ClassifyArm { channel, pid };
             // Readiness gates service, per the contract: the seam's first
-            // message is the admission's outcome, and a typed refusal or a
-            // closure refuses the load whole, the arm reaped rather than
-            // leaked.
-            match arm.channel.recv_reply() {
+            // message is the admission's outcome, and a typed refusal, a
+            // closure, or the bound's expiry refuses the load whole. The
+            // wait is bounded because a child hung mid-admission would
+            // otherwise hold the load forever, and the expiry path kills
+            // before it reaps: a process still loading weights does not
+            // exit on a channel it has not read yet.
+            match arm.channel.recv_reply_within(CLASSIFY_READY_BOUND_MS) {
                 Ok(crate::channel::ClassifyReply::Answer(
                     weaver_types::LabelAnswer::Ready,
                 )) => {
@@ -1178,6 +1186,7 @@ impl Harness {
                 }
                 _ => {
                     drop(arm.channel);
+                    let _ = nix::sys::signal::kill(arm.pid, nix::sys::signal::Signal::SIGKILL);
                     reap(arm.pid);
                     after_load!(run, LifecycleRefusal::NoResidency);
                 }

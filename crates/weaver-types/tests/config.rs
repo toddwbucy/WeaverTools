@@ -286,4 +286,18 @@ fn the_classify_role_is_optional_by_presence() {
     );
     let err = parse(&missing_binding).expect_err("a present section is whole");
     assert!(matches!(err.kind, ConfigErrorKind::MissingField), "{err:?}");
+
+    let unknown_key = full_config().replace(
+        "    tunable-values: {}\n",
+        concat!(
+            "    tunable-values: {}\n",
+            "  classify:\n",
+            "    model-binding:\n",
+            "      artifact: modernbert-base-zeroshot\n",
+            "      devices: [0]\n",
+            "    threshold: 0.5\n",
+        ),
+    );
+    let err = parse(&unknown_key).expect_err("an unknown key inside the section refuses");
+    assert!(matches!(err.kind, ConfigErrorKind::UnknownField), "{err:?}");
 }

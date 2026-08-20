@@ -20,7 +20,7 @@ use weaver_types::{FaultCase, FaultReport, LabelAnswer, LabelDirective, LabelRef
 
 fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
-    let (Some(artifact), Some(device)) = (args.next(), args.next()) else {
+    let (Some(artifact), Some(device), None) = (args.next(), args.next(), args.next()) else {
         eprintln!("weaver-spu-classify <artifact-dir> <device-ordinal>");
         return ExitCode::FAILURE;
     };
@@ -125,6 +125,11 @@ fn serve(seam: &ClassifySocket, classifier: &Classifier) -> ExitCode {
             Err(ClassifyFault::Oversized { requested, bound }) => {
                 send_refusal(seam, &LabelRefusal::Oversized { requested, bound })
             }
+            // The tokenizer refusing the content is the ask's defect, per
+            // the trio's cases, never a device fault.
+            Err(ClassifyFault::Malformed(_)) => {
+                send_refusal(seam, &LabelRefusal::MalformedContent)
+            }
             // The in-flight fault is this exchange's typed answer, per the
             // contract, and the seam serves on: the next exchange is
             // independent by construction.
@@ -146,8 +151,12 @@ fn serve(seam: &ClassifySocket, classifier: &Classifier) -> ExitCode {
                 )
             }
         };
-        if outcome.is_err() {
-            return ExitCode::SUCCESS;
+        match outcome {
+            Ok(()) => {}
+            // The peer gone is the release; this process's own answer
+            // exceeding the bound is its own defect, reported as one.
+            Err(ChannelFault::Truncated { .. }) => return ExitCode::FAILURE,
+            Err(_) => return ExitCode::SUCCESS,
         }
     }
 }
