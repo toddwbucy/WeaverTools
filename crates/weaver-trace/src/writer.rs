@@ -398,6 +398,7 @@ fn turn_required(kind: Kind) -> bool {
         | Kind::ClassifyOutput => false,
         Kind::TurnStarted
         | Kind::TurnClosed
+        | Kind::MessageSystem
         | Kind::MessageUser
         | Kind::MessageAssistant
         | Kind::MessageToolResult
@@ -409,10 +410,10 @@ fn turn_required(kind: Kind) -> bool {
     }
 }
 
-/// The total kind-to-payload mapping, seventeen kinds and eleven
-/// dispositions as built, the eighteenth kind (`message.system`) owed by
-/// the Role::System code act, enforced here because the untagged payload
-/// leaves serde unable to.
+/// The total kind-to-payload mapping, eighteen kinds and eleven
+/// dispositions, matching charter section 3.1 whole since the system role
+/// act landed its code, enforced here because the untagged payload leaves
+/// serde unable to.
 fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
     matches!(
         (kind, payload),
@@ -420,7 +421,8 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
             Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::TurnStarted,
             None
         ) | (
-            Kind::MessageUser | Kind::MessageAssistant | Kind::MessageToolResult,
+            Kind::MessageSystem | Kind::MessageUser | Kind::MessageAssistant
+                | Kind::MessageToolResult,
             Some(Payload::Message(_))
         ) | (Kind::TurnClosed, Some(Payload::TurnClosed(_)))
             | (Kind::Fault, Some(Payload::Fault(_)))

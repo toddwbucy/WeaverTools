@@ -103,6 +103,7 @@ impl From<RenderRefusal> for TokenRefusal {
 /// No test can construct its subject today, every current case being rendered.
 pub fn common_role_name(role: &Role) -> Result<&'static str, RenderRefusal> {
     Ok(match role {
+        Role::System => "system",
         Role::User => "user",
         Role::Assistant => "assistant",
         Role::ToolResult => "tool",

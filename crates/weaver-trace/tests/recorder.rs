@@ -593,3 +593,33 @@ fn the_classify_pair_is_turn_optional_and_pairing_enforced() {
         "the outcome carries its account"
     );
 }
+
+/// The system kind is real since its act: it admits under the message
+/// payload inside a turn, refuses without one like its siblings, and the
+/// wire spelling is the charter's dotted name.
+#[test]
+fn the_system_kind_admits_like_its_siblings() {
+    let (mut r, path) = recorder();
+    r.submit(event(Kind::Load, None, None)).unwrap();
+    let seq = r
+        .submit(event(
+            Kind::MessageSystem,
+            Some("t-1"),
+            Some(Payload::Message(
+                raw_payload("{\"role\":\"system\",\"content\":[]}").unwrap(),
+            )),
+        ))
+        .expect("admits inside a turn");
+    assert!(seq.0 > 0);
+    assert!(
+        r.submit(event(Kind::MessageSystem, None, Some(Payload::Message(
+            raw_payload("{}").unwrap(),
+        ))))
+        .is_err(),
+        "turn-required like its siblings"
+    );
+    r.drain().unwrap();
+    let mut out = String::new();
+    File::open(&path).unwrap().read_to_string(&mut out).unwrap();
+    assert!(out.contains("\"message.system\""), "the dotted spelling");
+}

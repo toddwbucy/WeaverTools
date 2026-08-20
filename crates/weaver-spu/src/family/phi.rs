@@ -93,6 +93,7 @@ pub fn sep_renderer() -> &'static dyn Family {
 /// the silent substitution the registry refuses one level up.
 fn role_name(role: &Role) -> Result<&'static str, RenderRefusal> {
     Ok(match role {
+        Role::System => "system",
         Role::User => "user",
         Role::Assistant => "assistant",
         _ => return Err(RenderRefusal::MalformedForFamily),

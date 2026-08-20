@@ -150,8 +150,8 @@ impl Seat {
     }
 
     /// Run one turn with the given delta: a list of {"role": str, "text":
-    /// str}, roles "user" and "assistant" only - the tool-result role is a
-    /// grant, not a spelling, and has no door here. Answers the outcome as
+    /// str}, roles "system", "user", and "assistant" - the tool-result role
+    /// is a grant, not a spelling, and has no door here. Answers the outcome as
     /// a dictionary, or raises with the refusal, either way recording the
     /// result as the crossing's return.
     fn turn(
@@ -162,11 +162,12 @@ impl Seat {
         let mut messages = Vec::with_capacity(delta.len());
         for entry in &delta {
             let role = match entry.get("role").map(String::as_str) {
+                Some("system") => Role::System,
                 Some("user") => Role::User,
                 Some("assistant") => Role::Assistant,
                 other => {
                     return Err(PyValueError::new_err(format!(
-                        "a delta message's role is \"user\" or \"assistant\", got {other:?}"
+                        "a delta message's role is \"system\", \"user\", or \"assistant\", got {other:?}"
                     )));
                 }
             };

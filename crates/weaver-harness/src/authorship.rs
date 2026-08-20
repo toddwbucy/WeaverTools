@@ -91,6 +91,7 @@ impl Author {
     ) -> Result<Result<Sequence, Failure>, UnlicensedMessage> {
         licensed(message)?;
         let kind = match message.role {
+            Role::System => Kind::MessageSystem,
             Role::User => Kind::MessageUser,
             Role::Assistant => Kind::MessageAssistant,
             // **The tool-result door is the grant's and never this one**, per
@@ -198,15 +199,18 @@ pub fn harness_report(case: weaver_types::FaultCase, account: &str) -> weaver_ty
     weaver_types::FaultReport { case, account }
 }
 
-/// The licensing rule of `weaver-traits-Spec` section 3: a `User` message
-/// carries `Text` blocks, an `Assistant` message carries `Text` and `ToolCall`
-/// blocks, a `ToolResult` message carries `ToolResult` blocks, and every other
-/// pairing is unlicensed.
+/// The licensing rule of `weaver-traits-Spec` section 3: a `System` message
+/// carries `Text` blocks - the operator's or the loop's framing of the
+/// field, never a call and never a result - a `User` message carries `Text`
+/// blocks, an `Assistant` message carries `Text` and `ToolCall` blocks, a
+/// `ToolResult` message carries `ToolResult` blocks, and every other pairing
+/// is unlicensed.
 pub fn licensed(message: &Message) -> Result<(), UnlicensedMessage> {
     for block in &message.content {
         let ok = matches!(
             (&message.role, block),
-            (Role::User, ContentBlock::Text { .. })
+            (Role::System, ContentBlock::Text { .. })
+                | (Role::User, ContentBlock::Text { .. })
                 | (Role::Assistant, ContentBlock::Text { .. })
                 | (Role::Assistant, ContentBlock::ToolCall(_))
                 | (Role::ToolResult, ContentBlock::ToolResult(_))
@@ -223,6 +227,7 @@ pub fn licensed(message: &Message) -> Result<(), UnlicensedMessage> {
 
 fn role_name(role: &Role) -> &'static str {
     match role {
+        Role::System => "system",
         Role::User => "user",
         Role::Assistant => "assistant",
         Role::ToolResult => "tool_result",

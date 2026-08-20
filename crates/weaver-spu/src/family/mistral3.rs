@@ -158,6 +158,12 @@ impl Family for Mistral3 {
 
     /// **The role decides the wrapper rather than filling a placeholder.**
     ///
+    /// `Role::System` refuses rather than rendering, and `render_delta` is
+    /// the refusal point: this family's template names no system turn in
+    /// the material the module was built from, so the role's arm answers
+    /// `RenderRefusal::MalformedForFamily` rather than inventing a shape.
+    /// It renders when the template authority names one, and not before.
+    ///
     /// `Role::ToolResult` refuses rather than rendering. Mistral carries tool
     /// results in their own `[TOOL_RESULTS]` block rather than as a turn, and
     /// inventing a shape for it would be the silent substitution the registry
