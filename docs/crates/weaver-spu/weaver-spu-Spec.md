@@ -3,6 +3,17 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-20, the seed becomes the run's own. Section 8's
+seed moves from `Frozen` to `OperatorTunable` on the operator's ruling,
+the rest of the sampling surface staying frozen so a gathered
+distribution reports the task rather than the sampler. Apex section 8's
+own terms carry it: the declared starting field is available "when the
+binary declares one", and a frozen seed "narrows variance and buys audit
+rather than determinism", which one binary drawing one trajectory per
+task delivers neither of. Re-entry moves from per binary to per run, the
+effective seed already riding every request's sampling block. A
+declaration supplying no seed refuses the load, per this section's
+no-defaulting rule.
 **Date filed:** 2026-08-02
 **Revised:** 2026-08-20, the close crosses in segments. Per the decode
 contract's amendment on issue #236: this crate's sends segment any frame
@@ -1559,8 +1570,25 @@ to: spu-disposition-compels-election
 window, and the seed.** The seed is a knob for the first time in this code's
 lineage: the archived tree carried it as a hardcoded default and a determinism
 test and never made it configurable, so the disposition mechanism is its first
-real home, and a frozen seed beside a frozen sampling surface is what makes a
-binary's declared starting field re-enterable, per apex section 8. Compile-pin
+real home.
+
+**The seed is operator-tunable as of 2026-08-20 and the rest of the surface
+stays frozen**, per the operator's ruling and apex section 8's own terms. That
+section makes stochastic re-entry from a declared starting field available
+"when the binary declares one" and says what freezing buys: a frozen seed
+"narrows variance and buys audit rather than determinism". Freezing it here
+bought neither, because one binary then draws one trajectory per task however
+many times it is run, and a distribution over a task needs draws rather than
+repetitions of one. Re-entry survives the move and improves: the effective
+seed rides every `model.request`'s sampling block already, so a recorded run
+names the draw it was and is re-entered by declaring that seed again, which is
+the same property held per run instead of per binary. What must not move
+beside it is the rest of the surface - temperature, the truncating filters,
+and the penalty pair stay `Frozen` - because a distribution gathered while
+those varied would report the sampler rather than the task. The no-defaulting
+rule reaches the new election in full: a declaration that supplies no `seed`
+refuses the load naming it, per this section's own rule below, so a run can
+never draw under a seed nobody chose. Compile-pin
 on the operator's election of 2026-08-04, superseding this clause's earlier
 non-purchase ruling: the membership is a struct literal a doctest reads, every
 member riding its `Disposition`, so a knob added or dropped stops the build,

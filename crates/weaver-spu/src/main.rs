@@ -146,7 +146,13 @@ const KNOBS: Knobs = Knobs {
     top_p: Disposition::Frozen(0.95),
     repetition_penalty: Disposition::Frozen(1.1),
     repetition_window: Disposition::Frozen(64),
-    seed: Disposition::Frozen(11),
+    // **The seed is the run's own as of 2026-08-20**, per `weaver-spu-Spec`
+    // section 8. Frozen, one binary drew one trajectory per task however
+    // many times it ran, so a distribution over a task had no draws to
+    // gather. The rest of the surface stays frozen beside it: a
+    // distribution gathered while temperature or the filters varied would
+    // report the sampler rather than the task.
+    seed: Disposition::OperatorTunable,
 };
 
 /// The context capacity and the per-turn generation ceiling, elected the same
@@ -1067,6 +1073,8 @@ mod tests {
                 tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
                             ("context-capacity".to_string(), 4096.0),
+                            // The seat's own draw, tunable as of 2026-08-20.
+                            ("seed".to_string(), 11.0),
                         ]
                     .into_iter()
                     .collect(),
