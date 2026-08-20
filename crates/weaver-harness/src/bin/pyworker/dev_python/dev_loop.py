@@ -23,22 +23,48 @@
 #                                         {"kind", "turn", "sequence",
 #                                          "pairs": {key: json_text}}
 #   seat.turn(delta)       -> dict        runs one turn, delta is a list of
-#                                         {"role": "user"|"assistant",
-#                                          "text": str}
+#                                         {"role": "system"|"user"|
+#                                          "assistant", "text": str}
 #
 # drive(seat, text) is the one crossing. Run at least one turn: a crossing
 # that runs none falls back to a plain unshaped turn.
 #
 # Every judgment below is the loop's alone: the trigger, the recall depth,
-# the quote budget, and what the re-entry says. The framework holds no
-# threshold anywhere - if this loop never checks pressure, nothing flushes
-# on its behalf and the wall answers with the honest backstops.
+# the quote budget, the memory conventions, and what every injected line
+# says. The framework holds no threshold and no convention anywhere.
+#
+# THE MEMORY CONVENTIONS, series one. The model queries and saves its own
+# state through its outputs: a line "RECALL: <subject>" asks memory, a line
+# "REMEMBER: <fact>" saves one. Both are loop-detected in the emission and
+# dispatched inward against the state seam - internal tools, never the
+# gate's. A REMEMBER needs no write call at all: the line is already in the
+# recorded emission, distilled into custody through the record's one
+# ingress, so the save IS the utterance and the loop's job is the
+# acknowledgment that keeps a generic model using the convention. A RECALL
+# runs the premade query: recall custody, match the subject, answer labeled
+# or report the miss honestly. Every contribution this loop authors - the
+# opening, the re-entry, the feedback - rides the system role, the loop's
+# own voice per the system role act, which is what lets the search exclude
+# it by kind and the operator exclude it from custody at the election, no
+# text ever matched to decide whose voice a message is.
 
 import json
 
 SYSTEM_PROMPT = (
     "You are a careful assistant. Answer from what you know, say plainly "
     "when you do not know, and keep answers as short as the question allows."
+)
+
+# The teaching, series one's framing: memory as the model's own faculty,
+# one rigid line per verb, and the promise of feedback. Re-taught after a
+# flush because the reset retires the resident copy of this paragraph too.
+MEMORY_PROMPT = (
+    "You have a private memory for this session.\n"
+    "To save a fact you will need later, write a line: REMEMBER: <the fact>\n"
+    "To ask your memory about something, write a line: RECALL: <subject> "
+    "and stop your answer there.\n"
+    "Memory results arrive labeled 'From your memory:'. A save is "
+    "confirmed with 'Saved.'"
 )
 
 # The flush trigger: four fifths of capacity, checked between turns. Set
@@ -50,6 +76,18 @@ PRESSURE = 4 / 5
 # quoted everything would rebuild the pressure the flush just relieved.
 RECALL_TURNS = 4
 QUOTE_BOUND = 600
+
+# The memory conventions' own judgments. Rounds cap the detect-and-refeed
+# cycle the way the tool rounds are capped. Asks per round and hits per
+# ask keep an answer a working set. The quote bound is per hit, centered
+# on the match. MISS_REDIRECT is the experiment's second arm: None tells
+# the truth and stops, a string is appended to the miss to point the model
+# somewhere else.
+MEMORY_ROUNDS = 3
+MEMORY_ASKS = 3
+MEMORY_HITS = 4
+MEMORY_QUOTE = 300
+MISS_REDIRECT = None
 
 
 def pressured(fullness):
@@ -73,22 +111,19 @@ def continuity(shape):
     )
 
 
-def reentry(events):
-    text = SYSTEM_PROMPT + (
-        "\n\nThe working context was reset to stay within its limit. "
-        "Recent conversation, restored from the session's record:"
-    )
-    if events is None:
-        return text + (
-            "\n(The record could not be reached: continue from the "
-            "request alone.)"
-        )
-    budget = QUOTE_BOUND
-    speakers = {"message.user": "user", "message.assistant": "assistant"}
-    for event in events:
-        speaker = speakers.get(event["kind"])
-        raw = event["pairs"].get("content")
-        if not speaker or raw is None or budget <= 0:
+def event_texts(events):
+    """Every text block out of recalled message events, in landing order."""
+    texts = []
+    speakers = {
+        "message.system": "system",
+        "message.user": "user",
+        "message.assistant": "assistant",
+        "message.tool_result": "tool",
+    }
+    for event in events or []:
+        speaker = speakers.get(event.get("kind"))
+        raw = event.get("pairs", {}).get("content")
+        if not speaker or raw is None:
             continue
         try:
             blocks = json.loads(raw)
@@ -98,19 +133,122 @@ def reentry(events):
             continue
         for block in blocks:
             piece = block.get("text") if isinstance(block, dict) else None
-            if piece is None or budget <= 0:
-                continue
-            kept = []
-            for word in piece.split():
-                if len(word) > budget:
-                    kept.append("...")
-                    budget = 0
-                    break
-                kept.append(word)
-                budget -= len(word)
-            if kept:
-                text += "\n" + speaker + ": " + " ".join(kept)
+            if isinstance(piece, str) and piece:
+                texts.append((speaker, piece))
+    return texts
+
+
+def reentry(events):
+    text = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT + (
+        "\n\nThe working context was reset to stay within its limit. "
+        "Recent conversation, restored from the session's record:"
+    )
+    if events is None:
+        return text + (
+            "\n(The record could not be reached: continue from the "
+            "request alone.)"
+        )
+    budget = QUOTE_BOUND
+    for speaker, piece in event_texts(events):
+        if speaker not in ("user", "assistant") or budget <= 0:
+            continue
+        kept = []
+        for word in piece.split():
+            if len(word) > budget:
+                kept.append("...")
+                budget = 0
+                break
+            kept.append(word)
+            budget -= len(word)
+        if kept:
+            text += "\n" + speaker + ": " + " ".join(kept)
     return text
+
+
+def memory_lines(emission):
+    """The sigil lines of one emission: (remembered facts, recall subjects).
+
+    Column-zero-anchored on purpose: a sentence mentioning the convention
+    does not fire it, and neither does an indented occurrence - a quoted
+    line or a code block carrying the sigil is content, not an ask. Only a
+    line that begins the sigil at its first column fires.
+    """
+    remembers, recalls = [], []
+    for line in (emission or "").splitlines():
+        if line.startswith("REMEMBER:"):
+            fact = line[len("REMEMBER:"):].strip()
+            if fact:
+                remembers.append(fact)
+        elif line.startswith("RECALL:"):
+            subject = line[len("RECALL:"):].strip()
+            if subject:
+                recalls.append(subject)
+    return remembers, recalls
+
+
+def memory_search(events, subject):
+    """The premade query: a case-insensitive match of the subject against
+    custody's texts, newest hits last, each quoted in a window around the
+    match. RECALL lines are excluded - they are asks, not facts - the
+    loop's own voice is excluded by its role - the system kind is the
+    loop's and the operator's framing, and feedback quoting a hit would
+    match the next ask for the same subject, an echo chamber - and
+    REMEMBER lines are exactly what should surface, so they stay. The
+    role is the marker: no text is matched to decide whose voice a
+    message is, so a genuine record beginning with any feedback phrase
+    stays searchable.
+    """
+    needle = subject.lower()
+    hits = []
+    for speaker, piece in event_texts(events):
+        if speaker == "system":
+            continue
+        for line in piece.splitlines():
+            stripped = line.strip()
+            if line.startswith("RECALL:"):
+                continue
+            at = stripped.lower().find(needle)
+            if at < 0:
+                continue
+            start = max(0, at - MEMORY_QUOTE // 3)
+            window = stripped[start : start + MEMORY_QUOTE]
+            if start > 0:
+                window = "..." + window
+            if start + MEMORY_QUOTE < len(stripped):
+                window = window + "..."
+            if window not in hits:
+                hits.append(window)
+    return hits[-MEMORY_HITS:]
+
+
+def memory_followup(seat, emission):
+    """The inward dispatch: None where the emission holds no sigil, else
+    the one contribution answering every sigil it held - saves confirmed,
+    recalls answered labeled or missed honestly.
+    """
+    remembers, recalls = memory_lines(emission)
+    if not remembers and not recalls:
+        return None
+    parts = []
+    if remembers:
+        parts.append("Saved.")
+    if recalls:
+        events = seat.recall(None)
+        for subject in recalls[:MEMORY_ASKS]:
+            if events is None:
+                parts.append("(Your memory could not be reached.)")
+                break
+            found = memory_search(events, subject)
+            if found:
+                parts.append(
+                    "From your memory:\n" + "\n".join("- " + hit for hit in found)
+                )
+            else:
+                miss = f"Your memory holds nothing about {subject}."
+                if MISS_REDIRECT:
+                    miss += " " + MISS_REDIRECT
+                parts.append(miss)
+    return "\n".join(parts)
 
 
 def drive(seat, text):
@@ -121,12 +259,21 @@ def drive(seat, text):
     # - a missing answer cannot prove the flush did not land.
     if not first and pressured(seat.fullness()):
         seat.flush()
-        delta.append({"role": "user", "text": reentry(seat.recall(RECALL_TURNS))})
+        delta.append({"role": "system", "text": reentry(seat.recall(RECALL_TURNS))})
     if first:
-        opening = SYSTEM_PROMPT
+        opening = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT
         line = continuity(seat.session_shape())
         if line:
             opening += "\n\n" + line
-        delta.append({"role": "user", "text": opening})
+        delta.append({"role": "system", "text": opening})
     delta.append({"role": "user", "text": text})
-    seat.turn(delta)
+    outcome = seat.turn(delta)
+    # The memory rounds: detect the sigils, dispatch inward, refeed, and
+    # stop when an emission holds none or the cap lands. A follow-up turn
+    # that refuses fails the request whole, which is the crossing's
+    # standing economics.
+    for _ in range(MEMORY_ROUNDS):
+        follow = memory_followup(seat, (outcome or {}).get("emission", ""))
+        if follow is None:
+            break
+        outcome = seat.turn([{"role": "system", "text": follow}])
