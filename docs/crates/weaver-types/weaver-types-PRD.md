@@ -6,6 +6,13 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, second of this date, the classify binding gains
+its reader. Section 2.1's rule that a section gains a field in the act
+that gives that field a reader is exercised: the SPU's declaration section
+gains the classify role's binding with the classifier code act's opening,
+optional by presence per `weaver-spu-PRD` section 15.3, the shape being
+the Spec's. No vocabulary node moves, `agent-config` carrying the section
+as it carried the decoder's.
 **Revised:** 2026-08-19, the label trio lands. Section 2.3 gains
 `label-directive`, `label-answer`, and `label-refusal` on
 `weaver-harness-spu-classify-contract` section 7's demand, the fourth

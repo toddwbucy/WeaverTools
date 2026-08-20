@@ -4,6 +4,13 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, fifth of this date, the seat gains the classify
+port. With the classifier code act's opening, through section 6's front
+door: content in, the artifact's scored labels back, or the missing leg's
+absence. Section 1's listing gains `src/classify.rs` and the file count
+moves to nine, the enter fan-out grows the arm charter section 15.3 of
+`weaver-spu-PRD` names where the declaration carries the binding, and the
+harness authors the record's classify pair on each exchange's outcome.
 **Revised:** 2026-08-19, fourth of this date, the flush port carries the
 cut. Per the operator's ruling that the cleanup line is the loop's and
 the decode contract's amended flush exchange: the seat's flush takes
@@ -204,6 +211,7 @@ leftovers.
     src/tools.rs       the tool system, blocked, section 6
     src/engine.rs      loop 1's seat, the extension seam, section 6
     src/state.rs       the state seam's ask end, section 6
+    src/classify.rs    the label seam's ask end, section 6
 
     src/bin/worker/main.rs    the composition root, framework, section 6
     src/bin/worker/dev_loop/  the loop body, the developer's, section 6
@@ -212,7 +220,7 @@ leftovers.
     src/bin/pyworker/py_loop.rs  the connector at the crossing, framework, section 6
     src/bin/pyworker/dev_python/ the loop files, the developer's, section 6
 
-Eight library files, two of them placements, the way `weaver-traits-Spec`
+Nine library files, two of them placements, the way `weaver-traits-Spec`
 section 1 places its blocked and deferred modules, and two bin targets: the
 demonstration worker, arriving with the wiring act, and the Python-iterating
 worker, entering the tree 2026-08-19 behind the `pyworker` feature.
@@ -1626,6 +1634,25 @@ serving thread itself: the tee's feed and the seat's ask both run on it, so
 no ask can interleave a distillate's octets, and the member's answers are
 the only traffic that ever flows toward this crate, so whatever the wait
 reads is the answer or is malformed, with no third case to disambiguate.
+
+**The seat carries the classify port, 2026-08-19, through the same front
+door, with the classifier code act's opening.** `Ports` grows one call:
+content in, the artifact's scored labels back, or nothing where the leg is
+down, was never declared, refused typed, or answered malformed, each
+converted at the seat into the same absence a missing leg serves. The
+seam's ask end lives in `src/classify.rs`, a clone of `src/state.rs` at
+the label seam's size, holding the channel end the enter fan-out stood up:
+where the declaration's `spu-instruction` carries a `classify` subsection
+the fan-out grows an arm per `weaver-spu-PRD` section 15.3, the harness
+creating the pair before the fork like the other two SPU seams and holding
+its own end on the run, the arm standing and falling all-or-nothing under
+the unwind like every arm before it, and where the declaration carries no
+subsection no process is forked and the port answers as the missing leg.
+On the exchange's outcome the harness authors the record's
+`classify.request` and `classify.output`, per `weaver-trace-PRD` section
+3.1's seventeenth and eighteenth kinds, the turn carried where one stands
+open and absent where the loop asks between turns, and a typed refusal
+lands as the output's own refused case rather than as a fabricated answer.
 
 ### 6.1 The decode surface, chartered
 
