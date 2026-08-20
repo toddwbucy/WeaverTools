@@ -4,17 +4,15 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-20, second of this date, the seed becomes the
-run's own. Section 8's seed moves from `Frozen` to `OperatorTunable` on the operator's ruling,
-the rest of the sampling surface staying frozen so a gathered
-distribution reports the task rather than the sampler. Apex section 8's
-own terms carry it: the declared starting field is available "when the
-binary declares one", and a frozen seed "narrows variance and buys audit
-rather than determinism", which one binary drawing one trajectory per
-task delivers neither of. Re-entry moves from per binary to per run, the
-effective seed already riding every request's sampling block. A
-declaration supplying no seed refuses the load, per this section's
-no-defaulting rule.
+**Revised:** 2026-08-20, second of this date, the seed becomes the run's own. Section
+8's seed moves from `Frozen` to `OperatorTunable` on the operator's ruling, the rest of
+the sampling surface staying frozen so a gathered distribution reports the task rather
+than the sampler. Apex section 8's own terms carry it: the declared starting field is
+available "when the binary declares one", and a frozen seed "narrows variance and buys
+audit rather than determinism", which one binary drawing one trajectory per task
+delivers neither of. Re-entry moves from per binary to per run, the effective seed
+already riding every request's sampling block. A declaration supplying no seed refuses
+the load, per this section's no-defaulting rule.
 **Revised:** 2026-08-20, the close crosses in segments. Per the decode
 contract's amendment on issue #236: this crate's sends segment any frame
 past the envelope under `weaver-types-Spec` section 4.4's spelling, the
