@@ -543,12 +543,18 @@ requirement. A record that kept only the parse could not answer what the
 model said, and one that kept only the verbatim would make every consumer a
 parser of every family.
 
-**It carries the session's two counts beside them, the resident and the
-capacity as the generation closed.** The pair is the same pair the flush's
-counts are and the overflow refusal's are, recorded here because a
-generation moves the resident context exactly as a flush does, and the
-accumulation ruling above holds only while every operation that moves it is
-recorded. The counts are what make the accumulation checkable rather than
+**It carries the session's two counts beside them: `resident`, the count as
+this generation closed, and `capacity`, the ceiling the load resolved.** The
+pair is the overflow refusal's exactly, the two numbers that refusal names
+after the wall. **It is not the flush's pair and the difference is worth
+holding**, because both sections speak of resident counts and a reader who
+merged them would look for a capacity the flush does not carry: `flush`
+records `resident_before` and `resident_after`, two counts of the same
+quantity bracketing one cut, where this payload records one count and the
+ceiling it is measured against. What the two have in common is the occasion
+rather than the shape. A generation moves the resident context exactly as a
+flush does, and the accumulation ruling above holds only while every
+operation that moves it is recorded. The counts are what make the accumulation checkable rather than
 merely reconstructible, and the difference is the whole reason to spend two
 integers on it. Neither is recoverable from the events around them.
 Reconstructing the resident count means re-tokenizing every recorded
