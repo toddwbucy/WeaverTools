@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-20, third of this date, the output carries the
+position. Section 6's three-model-events clause names the two session
+counts riding `model.output`, the resident and the capacity this crate
+already reads at that close for the seat's fullness port, per
+`weaver-trace-PRD` section 3.1's same-act edit. One reading serves the
+record and the loop both.
 **Revised:** 2026-08-20, second of this date, the declared loop wins the
 resolve. Per the charter's ruling of this date on issue #243: the loop
 is a member of each agent's harness and unique to it, so section 1's
@@ -1722,7 +1728,10 @@ and the tool workflow may reopen.
 conformance is checked.** `model.request` carries the turn's rendered contribution
 the answer's close splices, the delta per the ruling of 2026-08-12, the full
 effective context being the accumulation the record determines. `model.output`
-carries the emission verbatim and its finish, and
+carries the emission verbatim, its finish, and the generation's two session
+counts, the resident and the capacity this crate already reads at the same
+close to answer the seat's fullness port, so the record and the loop take
+one reading rather than two, and
 `model.measurement` carries the measurement the close splices, each event the
 harness authoring what the SPU rendered, the organ owning the content and the trace
 owning the boxes per the custody model. The rendered contribution and the measurement
