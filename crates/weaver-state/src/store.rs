@@ -554,8 +554,13 @@ mod tests {
     /// lifetime's runs as this session's, and a recall reaching a fact the
     /// operator believed a session cut had retired.
     ///
-    /// Perturbation: drop either `WHERE session` and this fails, the older
-    /// session's run and message appearing in the newer session's answers.
+    /// Perturbation: drop any of the three `WHERE session` predicates and
+    /// this fails. Dropping the shape's or the recall's event predicate
+    /// surfaces the older session's run and message in the newer session's
+    /// answers. Dropping the turn-selection subquery's spends the
+    /// `last-turns` bound on an older session's turn and leaves the bounded
+    /// recall empty - fail-closed, because the event predicate still holds,
+    /// but the answer is wrong either way.
     #[test]
     fn the_answers_stay_inside_the_running_session() {
         let path = scratch();
@@ -600,6 +605,26 @@ mod tests {
             !recalled[0].pairs.iter().any(|(_, v)| v.contains("vault")),
             "and never the retired session's content"
         );
+
+        // A bounded recall reads the turn-selection subquery, which the
+        // unbounded ask above never touches. The older session's second
+        // turn lands last so it holds the highest id: unbounded by session,
+        // `LIMIT 1` would elect it, and the event query - still bounded -
+        // would then find no row of it to read.
+        let mut later_stale = landed("old", "r-old", "message.user", 2);
+        later_stale.turn = Some("t-2".into());
+        later_stale.pairs = vec![("payload.content".into(), "\"the vault code again\"".into())];
+        store.land(&later_stale).expect("lands");
+
+        let bounded = store.recall("new", Some(1)).expect("recalls");
+        assert_eq!(
+            bounded.len(),
+            1,
+            "the bound selects the running session's turn, not the newest \
+             turn on the file: {bounded:?}"
+        );
+        assert_eq!(bounded[0].run, "r-new");
+        assert_eq!(bounded[0].turn.as_deref(), Some("t-1"));
 
         // The older session is not destroyed, only unreachable: removal is
         // section 6's open question, deliberately not this act's.

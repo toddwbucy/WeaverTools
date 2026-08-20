@@ -189,9 +189,6 @@ fn stand_and_accept(socket: &str, peer_uid: u32) -> Option<std::os::unix::net::U
     }
 }
 
-/// The opener's shape: `{"election":{"all_kinds":true,"keys":[...]}}`. A
-/// malformed opener falls back to the default election, the envelope of
-/// every kind, which is the contract's default and never a guess.
 /// The session the opener names, per the contract's `election` term as
 /// amended 2026-08-20. Absent where the frame does not parse or carries no
 /// session, which the caller reads as the empty session.
@@ -200,6 +197,9 @@ fn parse_session(line: &str) -> Option<String> {
     Some(value.get("session")?.as_str()?.to_string())
 }
 
+/// The opener's shape: `{"election":{"all_kinds":true,"keys":[...]}}`. A
+/// malformed opener falls back to the default election, the envelope of
+/// every kind, which is the contract's default and never a guess.
 fn parse_election(line: &str) -> Option<Election> {
     let value: serde_json::Value = serde_json::from_str(line).ok()?;
     let election = value.get("election")?;
