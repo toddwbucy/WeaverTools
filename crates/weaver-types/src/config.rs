@@ -47,6 +47,15 @@ pub struct AgentConfig {
     /// absence at inventory, so the worker never re-derives it.
     #[serde(default)]
     pub state_election: Option<StateElection>,
+    /// The agent's loop file, per `weaver-types-Spec` section 2 and the
+    /// ruling of 2026-08-20 on issue #243: the loop is a member of this
+    /// agent's harness and unique to it. The second optional field, by the
+    /// required-field rule's own exception because `weaver-harness-PRD`
+    /// section 2 rules what absence means - the worker's own default loop.
+    /// It reaches the worker on the unit's argument vector, never in an
+    /// exchange, because no exchange carries a path.
+    #[serde(default)]
+    pub loop_file: Option<PathBuf>,
 }
 
 /// The operator's election of payload key paths for the state tee, per
