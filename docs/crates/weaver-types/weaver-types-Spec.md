@@ -1524,13 +1524,16 @@ determines the shape and the floor holds it.
 
 ```rust
 pub enum LabelDirective {
-    Classify { turn: TurnKey, content: String },
+    Classify {
+        turn: Option<TurnKey>,
+        content: String,
+    },
 }
 
 pub enum LabelAnswer {
     Ready,
     Scored {
-        turn: TurnKey,
+        turn: Option<TurnKey>,
         labels: Vec<ScoredLabel>,
     },
     Fault(FaultReport),
@@ -1550,8 +1553,12 @@ pub enum LabelRefusal {
 ```
 
 **The cases are the contract's, spelled once.** `Classify` carries the
-content and the turn identity as the floor's satellite type, the trace
-context the contract requires echoed back on `Scored` byte-exact.
+content and the turn identity as the floor's satellite type, optional
+because apex invariant 5.3 is conditional on an existing turn: the loop
+that classifies between turns, composing its re-entry before any turn
+opens, belongs to none and carries none, and a classify within a turn
+carries the key. Whatever arrived is echoed back on `Scored` byte-exact,
+absence included, which is the contract's echo stated over the option.
 `Ready` is the readiness emission, `NotAdmitted` its typed failure
 traveling in the enter aggregate, and `NotReady` refuses a directive that
 arrived before either, per the contract's ordering. `Oversized` names the
