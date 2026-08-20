@@ -4,6 +4,12 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-20, the record holds the context position. Section
+3's `ModelOutput` gains `resident` and `capacity`, plain integers meeting
+the same shaping test its emission and finish meet, on the charter's
+same-act edit. The election stated beside them is that they land in this
+payload rather than in the measurement's splice, which the harness may not
+open without retiring the splice rule. One perturbation assertion lands.
 **Revised:** 2026-08-19, fourth of this date, the classify kinds take
 shape. `Kind` gains `ClassifyRequest` and `ClassifyOutput` with their
 explicit renames, the counts move to eighteen, and the kind-to-payload
@@ -274,6 +280,8 @@ pub enum Payload {
 pub struct ModelOutput {
     pub emission: String,
     pub finish: Finish,
+    pub resident: u64,
+    pub capacity: u64,
 }
 
 pub struct FlushCounts {
@@ -578,6 +586,21 @@ forces no transform. The rule is the charter's section 2.5 read through the
 custody model: this crate defines the record's own schema, the envelope and the
 kinds and the finish, and carries every organ-produced content opaque.
 
+**The session's two counts join it 2026-08-20 and meet the same test.** The
+resident count and the capacity as the generation closed are plain integers
+the harness already holds typed, reading them at every close to answer the
+seat's fullness port, so shaping them forces no transform either and this
+crate's own `FlushCounts` is the standing precedent for a count in its
+schema. The charter's grounds are its accumulation ruling: a generation
+moves the resident context as a flush does, and the pair is what makes the
+accumulation checkable rather than merely reconstructible. **They land in
+this payload rather than in the measurement's splice**, which is the
+election worth stating, because the measurement is the SPU's rendering
+carried opaque and a harness that opened it to insert two members would be
+editing an organ's content, retiring the splice rule in the same breath
+that invoked it. The output is where the harness's own reading of the
+generation belongs, beside the finish it converts at its one site.
+
 ```graph
 node: trace-splice-or-shape
 kind: assertion
@@ -586,6 +609,23 @@ tag: review
 edge: asserts
 from: weaver-trace
 to: trace-splice-or-shape
+```
+
+**The counts reaching the record is a perturbation, not a review read.** A
+member that serializes is easy to add and easy to lose, and losing it is
+silent: the record still renders, every consumer still parses, and only an
+analysis run months later finds the field absent where it needed it. The
+test renders a `model.output` payload and reads both counts back off the
+canonical form, watched to fail with either member dropped from the shape.
+
+```graph
+node: trace-output-carries-the-counts
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-output-carries-the-counts
 ```
 
 **`model.request`'s splice holds the sampling values and `model.measurement`'s

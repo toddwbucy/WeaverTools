@@ -6,6 +6,18 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-20, the record holds the context position. Section
+3.1's `model.output` gains the session's resident count and capacity as
+the generation closed, the pair the flush's counts and the overflow
+refusal already carry. The grounds are this charter's own accumulation
+ruling, which holds while every operation that moves the resident context
+is recorded, and a generation moves it as a flush does. The
+derived-quantity refusal is not reopened: it refused the effective prompt,
+a restatement growing by the square of the conversation, where these are
+two readings per generation that no accumulation confirms without
+repeating the tokenization. The shape lands in `weaver-trace-Spec`
+section 3 and the authoring sentence in `weaver-harness-Spec` section 6,
+both in this act.
 **Revised:** 2026-08-19, third of this date, the classify kinds enter the
 record. Section 3.1 gains `classify.request` and `classify.output`,
 seventeenth and eighteenth, on `weaver-spu-PRD` section 15.5's demand: the
@@ -530,6 +542,48 @@ bridge between them, which is the outbound half of the same end-to-end
 requirement. A record that kept only the parse could not answer what the
 model said, and one that kept only the verbatim would make every consumer a
 parser of every family.
+
+**It carries the session's two counts beside them: `resident`, the count as
+this generation closed, and `capacity`, the ceiling the load resolved.** The
+pair is the overflow refusal's exactly, the two numbers that refusal names
+after the wall. **It is not the flush's pair and the difference is worth
+holding**, because both sections speak of resident counts and a reader who
+merged them would look for a capacity the flush does not carry: `flush`
+records `resident_before` and `resident_after`, two counts of the same
+quantity bracketing one cut, where this payload records one count and the
+ceiling it is measured against. What the two have in common is the occasion
+rather than the shape. A generation moves the resident context exactly as a
+flush does, and the accumulation ruling above holds only while every
+operation that moves it is recorded. The counts are what make the accumulation checkable
+rather than merely reconstructible, and the difference is the whole reason to spend two
+integers on it. Neither is recoverable from the events around them.
+Reconstructing the resident count means re-tokenizing every recorded
+contribution through the template that rendered it, which needs the artifact
+in hand and answers only where the artifact still exists. The capacity is
+worse and is why it is named here rather than left implied: it is the load's
+resolved ceiling and no turn states it, so no accumulation over the other
+events reaches it at all, and recording it in this payload is the only place
+a reader learns it.
+
+**This does not reopen the derived-quantity refusal above, and the
+distinction is exact.** What that ruling refused was recording the full
+effective prompt, a quantity the record determines and whose storage grows
+by the square of the conversation. Two integers per generation grow by the
+turn and are a reading rather than a restatement: the number the decoder
+held, as it held it, which no accumulation over the record can confirm
+without repeating the tokenization the measurement already performed. The
+refusal was of bloat and duplication, and neither reaches a count.
+
+**The forcing case is an analysis that must place a turn in the context.**
+An agent asked in a late turn for a fact stated in an early one is answering
+either from resident context or from custody, and which of the two it was is
+the finding, not a detail. Without the counts, the record dates a turn
+relative to a flush and no closer, so two probes at opposite ends of a full
+context read identically, and any comparison whose treatment shortens the
+context cannot separate the mechanism from the length. **A reading taken at
+the seam and not written down cannot be recovered from the finished record**,
+which is the property this crate exists to prevent and is why the pair lands
+now rather than when an experiment wants it.
 
 **`model.measurement` carries the instrument readings, and its field list is
 section 3.1's row as this act corrects it.** The row loses the sampler
