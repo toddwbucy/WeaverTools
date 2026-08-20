@@ -543,18 +543,27 @@ requirement. A record that kept only the parse could not answer what the
 model said, and one that kept only the verbatim would make every consumer a
 parser of every family.
 
-**It carries the session's two counts beside them, the resident and the
-capacity as the generation closed.** The pair is the same pair the flush's
-counts are and the overflow refusal's are, recorded here because a
-generation moves the resident context exactly as a flush does, and the
-accumulation ruling above holds only while every operation that moves it is
-recorded. The counts are what make the accumulation checkable rather than
-merely reconstructible, and the difference is the whole reason to spend two
-integers on it. Reconstructing the resident count means re-tokenizing every
-recorded contribution through the template that rendered it, which needs the
-artifact in hand and answers only where the artifact still exists, and the
-capacity is not in the record at all, being the load's resolved ceiling
-rather than anything a turn states.
+**It carries the session's two counts beside them: `resident`, the count as
+this generation closed, and `capacity`, the ceiling the load resolved.** The
+pair is the overflow refusal's exactly, the two numbers that refusal names
+after the wall. **It is not the flush's pair and the difference is worth
+holding**, because both sections speak of resident counts and a reader who
+merged them would look for a capacity the flush does not carry: `flush`
+records `resident_before` and `resident_after`, two counts of the same
+quantity bracketing one cut, where this payload records one count and the
+ceiling it is measured against. What the two have in common is the occasion
+rather than the shape. A generation moves the resident context exactly as a
+flush does, and the accumulation ruling above holds only while every
+operation that moves it is recorded. The counts are what make the accumulation checkable
+rather than merely reconstructible, and the difference is the whole reason to spend two
+integers on it. Neither is recoverable from the events around them.
+Reconstructing the resident count means re-tokenizing every recorded
+contribution through the template that rendered it, which needs the artifact
+in hand and answers only where the artifact still exists. The capacity is
+worse and is why it is named here rather than left implied: it is the load's
+resolved ceiling and no turn states it, so no accumulation over the other
+events reaches it at all, and recording it in this payload is the only place
+a reader learns it.
 
 **This does not reopen the derived-quantity refusal above, and the
 distinction is exact.** What that ruling refused was recording the full
