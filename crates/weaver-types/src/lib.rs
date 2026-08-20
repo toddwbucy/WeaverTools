@@ -89,14 +89,15 @@ mod wire;
 #[cfg(feature = "config")]
 pub use config::parse;
 pub use config::{
-    AgentConfig, ArtifactRef, ConfigError, ConfigErrorKind, DecoderInstruction, DeviceOrdinal,
-    ElectedKindConfig, FieldName, GateInstruction, ModelBinding, SpuInstruction, StateElection,
-    ToolName, TraceSink,
+    AgentConfig, ArtifactRef, ClassifyInstruction, ConfigError, ConfigErrorKind,
+    DecoderInstruction, DeviceOrdinal, ElectedKindConfig, FieldName, GateInstruction, ModelBinding,
+    SpuInstruction, StateElection, ToolName, TraceSink,
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{
     AgentName, AgentState, AgentSummary, EnterPayload, ExchangeId, FaultCase, FaultReport, Finish,
-    Generation, LifecycleAnswer, LifecycleDirective, LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener,
-    OrganEnvelope, Payload, Position, RefusingOrgan, RunId, SessionId, TokenAnswer, TokenDirective,
-    TokenRefusal, ToolExecution, ToolOutcome, TurnFrame, TurnKey,
+    Generation, LabelAnswer, LabelDirective, LabelRefusal, LifecycleAnswer, LifecycleDirective,
+    LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position, RefusingOrgan,
+    RunId, ScoredLabel, SessionId, TokenAnswer, TokenDirective, TokenRefusal, ToolExecution,
+    ToolOutcome, TurnFrame, TurnKey,
 };

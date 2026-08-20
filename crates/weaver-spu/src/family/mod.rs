@@ -61,6 +61,7 @@ pub mod gemma4;
 pub mod gpt_oss;
 pub mod llama;
 pub mod mistral3;
+pub mod modernbert;
 pub mod phi;
 pub mod qwen2;
 

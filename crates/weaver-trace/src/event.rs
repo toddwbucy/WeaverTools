@@ -150,6 +150,10 @@ pub enum Kind {
     ModelOutput,
     #[serde(rename = "model.measurement")]
     ModelMeasurement,
+    #[serde(rename = "classify.request")]
+    ClassifyRequest,
+    #[serde(rename = "classify.output")]
+    ClassifyOutput,
 }
 
 /// What an event carries beside its envelope. Untagged: the envelope's `kind`
@@ -196,6 +200,14 @@ pub enum Payload {
     /// splices, its unproduced members produced absent by the SPU rather than
     /// omitted by a serde election of this crate's.
     ModelMeasurement(Box<RawValue>),
+    /// The label seam's request side, shaped on the flush's precedent:
+    /// plain small data the harness authors from typed wire answers, per
+    /// charter section 3.1's seventeenth kind.
+    ClassifyRequest(ClassifyAsk),
+    /// The label seam's response side: scored or refused, so a typed
+    /// refusal the exchange met is the record's own fact and never a
+    /// fabricated answer, per charter section 3.1's eighteenth kind.
+    ClassifyOutput(ClassifyOutcome),
     /// The payloads whose shapes their own workflows settle, since the trace
     /// act of 2026-08-02 the tool bracket's two alone. Raw bytes in the
     /// interim rather than a placeholder struct, because a struct shaped
@@ -234,6 +246,23 @@ pub enum StopReason {
 pub struct FlushCounts {
     pub resident_before: u64,
     pub resident_after: u64,
+}
+
+/// The classify ask's account: the content the loop sent, per
+/// `weaver-trace-Spec` section 3 as of the classifier act.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ClassifyAsk {
+    pub content: String,
+}
+
+/// The classify answer's account: every label of the artifact's head
+/// scored, or the typed refusal the exchange met, named. Tagged the way
+/// `TurnClose` is, one shape for both outcomes.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(tag = "outcome", rename_all = "snake_case")]
+pub enum ClassifyOutcome {
+    Scored { labels: Vec<(String, f64)> },
+    Refused { refusal: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]

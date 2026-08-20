@@ -2,7 +2,7 @@
 # dev_loop carries, here to iterate at conversation speed. Edit this file
 # and the NEXT TURN runs the edit - the connector reads it per crossing.
 #
-# The seat offers exactly six calls:
+# The seat offers exactly seven calls:
 #   seat.assembled_empty() -> bool        first-turn test
 #   seat.session_shape()   -> list|None   [{"run": str, "kinds": {k: n}}]
 #   seat.fullness()        -> tuple|None  (resident, capacity), plain counts
@@ -12,6 +12,13 @@
 #                                         line, bounded by the seam at the
 #                                         identity prefix and the resident
 #                                         count
+#   seat.classify(text)    -> list|None   [(label, score)] from the classify
+#                                         artifact's head; None covers every
+#                                         absence alike - no classifier
+#                                         declared, the ask refused typed,
+#                                         the content malformed, or the
+#                                         channel lost - the record holding
+#                                         which, never this return
 #   seat.recall(n)         -> list|None   message events, newest n turns:
 #                                         {"kind", "turn", "sequence",
 #                                          "pairs": {key: json_text}}

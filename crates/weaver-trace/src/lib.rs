@@ -49,6 +49,8 @@
 //!         Kind::ModelRequest => "model.request",
 //!         Kind::ModelOutput => "model.output",
 //!         Kind::ModelMeasurement => "model.measurement",
+//!         Kind::ClassifyRequest => "classify.request",
+//!         Kind::ClassifyOutput => "classify.output",
 //!     }
 //! }
 //! ```
@@ -140,7 +142,8 @@ mod writer;
 
 pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
-    Envelope, Event, Finish, FlushCounts, Kind, Line, ModelOutput, Payload, RunRef, SessionRef,
+    ClassifyAsk, ClassifyOutcome, Envelope, Event, Finish, FlushCounts, Kind, Line, ModelOutput,
+    Payload, RunRef, SessionRef,
     StopReason, Subsystem, TurnClose, TurnRef, raw_payload,
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};

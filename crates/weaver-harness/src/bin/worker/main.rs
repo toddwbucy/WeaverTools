@@ -24,7 +24,7 @@ fn main() -> ExitCode {
     let (Some(socket), Some(spu), Some(gate)) = (args.next(), args.next(), args.next()) else {
         eprintln!(
             "worker <coordination-socket> <spu-binary> <gate-binary> [identity] \
-             [--headroom-bytes N]"
+             [--headroom-bytes N] [--classify-binary PATH]"
         );
         return ExitCode::FAILURE;
     };
@@ -34,12 +34,23 @@ fn main() -> ExitCode {
     // behaves as every deployment did before this vector existed.
     let mut identity = String::new();
     let mut parameters = OrganParameters::default();
+    let mut classify: Option<std::path::PathBuf> = None;
     while let Some(argument) = args.next() {
         match argument.as_str() {
             "--headroom-bytes" => match args.next() {
                 Some(value) => parameters.headroom_bytes = Some(value),
                 None => {
                     eprintln!("worker: --headroom-bytes takes a value");
+                    return ExitCode::FAILURE;
+                }
+            },
+            // The classify process's binary, per weaver-spu-Spec section
+            // 11: optional because the arm is, provisioned where the
+            // declaration will carry the binding.
+            "--classify-binary" => match args.next() {
+                Some(value) => classify = Some(value.into()),
+                None => {
+                    eprintln!("worker: --classify-binary takes a value");
                     return ExitCode::FAILURE;
                 }
             },
@@ -63,6 +74,7 @@ fn main() -> ExitCode {
     let harness = match Harness::listen(
         listener,
         OrganBinaries {
+            classify,
             spu: spu.into(),
             gate: gate.into(),
         },

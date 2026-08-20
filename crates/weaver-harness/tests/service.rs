@@ -100,6 +100,7 @@ impl Peer {
             let harness = Harness::listen(
                 listener,
                 OrganBinaries {
+                    classify: None,
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },
@@ -263,6 +264,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                 session: weaver_types::SessionId("s-1".into()),
                 run: weaver_types::RunId("r-1".into()),
                 spu_instruction: weaver_types::SpuInstruction {
+                    classify: None,
                     decoder: weaver_types::DecoderInstruction {
                         model_binding: weaver_types::ModelBinding {
                             artifact: weaver_types::ArtifactRef("qwen".into()),
@@ -390,6 +392,7 @@ fn dropping_the_harness_closes_the_listener() {
             let harness = Harness::listen(
                 listener,
                 OrganBinaries {
+                    classify: None,
                     spu: "/nonexistent/spu".into(),
                     gate: "/nonexistent/gate".into(),
                 },

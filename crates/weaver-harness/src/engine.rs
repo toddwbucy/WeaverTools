@@ -44,6 +44,11 @@ use crate::channel::{CoordinationListener, DecodeChannel, OrganChannel};
 /// construction here, so the refusal arm is for callers less careful.
 pub(crate) const TOOL_CALL_CLOCK_MS: u64 = 30_000;
 
+/// The classify answer's bound, generous against a forward of tens of
+/// milliseconds: the turn thread's protection, and its expiry retires the
+/// arm one-strike, the state seam's economics on the label seam.
+pub(crate) const CLASSIFY_ANSWER_BOUND_MS: u64 = 30_000;
+
 /// How many envelopes one run's shelf may hold before the surplus is
 /// dropped and the drop recorded: the bound on both the queue and the
 /// serve loop's appetite, a refusal of hoarding rather than of the client.
@@ -85,6 +90,10 @@ pub struct Ports<'a> {
     /// end where the leg stands, and `None` where it does not, which the
     /// port serves as the same absence a missing answer does.
     state: Option<&'a mut crate::state::StateSeam>,
+    /// The classify port's seam, per `weaver-harness-Spec` section 6: the
+    /// label seam's near end where the arm stands, and `None` where the
+    /// declaration carried no binding.
+    classify: Option<&'a crate::channel::ClassifyChannel>,
     /// The session's fullness as the last generation carried it, per the
     /// context ports of `weaver-harness-Spec` section 6: written by the
     /// turn from the decode answer, read by the loop before the wall.
@@ -168,6 +177,7 @@ impl<'a> Ports<'a> {
         pending: Option<&'a mut Option<OrganChannel>>,
         gate: Option<GatePort<'a>>,
         state: Option<&'a mut crate::state::StateSeam>,
+        classify: Option<&'a crate::channel::ClassifyChannel>,
         fullness: &'a mut Option<(u64, u64)>,
     ) -> Self {
         Ports {
@@ -180,6 +190,7 @@ impl<'a> Ports<'a> {
             pending,
             gate,
             state,
+            classify,
             fullness,
         }
     }
@@ -253,6 +264,126 @@ impl<'a> Ports<'a> {
     /// three-way division.
     pub fn session_shape(&mut self) -> Option<crate::state::SessionShape> {
         self.state.as_mut()?.ask_shape()
+    }
+
+    /// The classify port, per `weaver-harness-Spec` section 6: content in,
+    /// the artifact's scored labels back in the head's own order, or `None`
+    /// where the leg is down, was never declared, refused typed, or
+    /// answered malformed - each converted at the seat into the same
+    /// absence a missing leg serves. Both sides of the exchange are
+    /// authored into the record per the charter's classify pair, the turn
+    /// member absent because the seat lends between turns, which is when a
+    /// loop holds it to ask.
+    pub fn classify(&mut self, content: &str) -> Option<Vec<(String, f64)>> {
+        let channel = self.classify?;
+        // The one-strike retirement, the state seam's economics: an arm
+        // that missed its bound once is not asked again.
+        if channel.retired() {
+            return None;
+        }
+        self.author
+            .author(
+                self.recorder,
+                Kind::ClassifyRequest,
+                Subsystem::Harness,
+                None,
+                Some(Payload::ClassifyRequest(weaver_trace::ClassifyAsk {
+                    content: content.to_string(),
+                })),
+            )
+            .ok()?;
+        let asked = channel.send_directive(&weaver_types::LabelDirective::Classify {
+            turn: None,
+            content: content.to_string(),
+        });
+        if asked.is_err() {
+            channel.retire();
+            self.author_classify_refused("channel_lost");
+            return None;
+        }
+        loop {
+            match channel.recv_reply_within(CLASSIFY_ANSWER_BOUND_MS) {
+                Ok(crate::channel::ClassifyReply::Answer(
+                    weaver_types::LabelAnswer::Scored { labels, .. },
+                )) => {
+                    let scored: Vec<(String, f64)> = labels
+                        .into_iter()
+                        .map(|scored| (scored.label, scored.score))
+                        .collect();
+                    self.author
+                        .author(
+                            self.recorder,
+                            Kind::ClassifyOutput,
+                            Subsystem::Harness,
+                            None,
+                            Some(Payload::ClassifyOutput(
+                                weaver_trace::ClassifyOutcome::Scored {
+                                    labels: scored.clone(),
+                                },
+                            )),
+                        )
+                        .ok()?;
+                    return Some(scored);
+                }
+                // A late readiness is not this exchange's answer: skipped,
+                // the way the flush skips an interleaved at-rest.
+                Ok(crate::channel::ClassifyReply::Answer(weaver_types::LabelAnswer::Ready)) => {
+                    continue;
+                }
+                // The in-flight fault is this exchange's typed answer, per
+                // the contract, and the record's fault event carries it by
+                // the fault custody rule.
+                Ok(crate::channel::ClassifyReply::Answer(weaver_types::LabelAnswer::Fault(
+                    report,
+                ))) => {
+                    let rendered = serde_json::to_string(&report).ok()?;
+                    let payload = weaver_trace::raw_payload(&rendered)?;
+                    let _ = self.author.author(
+                        self.recorder,
+                        Kind::Fault,
+                        Subsystem::Spu,
+                        None,
+                        Some(Payload::Fault(payload)),
+                    );
+                    return None;
+                }
+                Ok(crate::channel::ClassifyReply::Refusal(refusal)) => {
+                    let name = match refusal {
+                        weaver_types::LabelRefusal::NotAdmitted { .. } => "not_admitted",
+                        weaver_types::LabelRefusal::NotReady => "not_ready",
+                        weaver_types::LabelRefusal::Oversized { .. } => "oversized",
+                        weaver_types::LabelRefusal::MalformedContent => "malformed_content",
+                    };
+                    self.author_classify_refused(name);
+                    return None;
+                }
+                // The bound expired or the channel faulted: the arm retires
+                // one-strike, and the record's output names the loss rather
+                // than leaving the request unanswered.
+                Err(_) => {
+                    channel.retire();
+                    self.author_classify_refused("channel_lost");
+                    return None;
+                }
+            }
+        }
+    }
+
+    /// The refused outcome is the record's own fact, per the charter's
+    /// eighteenth kind: authored where a typed refusal closed the exchange,
+    /// never fabricated into an answer.
+    fn author_classify_refused(&mut self, refusal: &str) {
+        let _ = self.author.author(
+            self.recorder,
+            Kind::ClassifyOutput,
+            Subsystem::Harness,
+            None,
+            Some(Payload::ClassifyOutput(
+                weaver_trace::ClassifyOutcome::Refused {
+                    refusal: refusal.to_string(),
+                },
+            )),
+        );
     }
 
     /// The prompt loop 0 assembled from the working structure, a read loop 1
@@ -948,6 +1079,7 @@ mod tests {
                 None,
                 None,
                 None,
+                None,
                 &mut fullness,
             );
             let delta = vec![Message {
@@ -1084,6 +1216,7 @@ mod tests {
                 &mut turn_ordinal,
                 None,
                 &listener,
+                None,
                 None,
                 None,
                 None,
@@ -1277,6 +1410,7 @@ mod tests {
                     held: &mut held,
                 }),
                 None,
+                None,
                 &mut fullness,
             );
             let delta = vec![Message {
@@ -1381,6 +1515,7 @@ mod tests {
             &mut turn_ordinal,
             None,
             &listener,
+            None,
             None,
             None,
             None,
@@ -1511,6 +1646,7 @@ mod tests {
                 None,
                 &listener,
                 Some(&mut slot),
+                None,
                 None,
                 None,
                 &mut fullness,

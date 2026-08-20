@@ -33,6 +33,13 @@ path = "src/main.rs"
 [build-dependencies]
 cc = "1"
 
+[[bin]]
+# The classify process, per weaver-spu-Spec section 11: the second bin
+# target, behind the device gate because its forward is candle's.
+name = "weaver-spu-classify"
+path = "src/bin/classify.rs"
+required-features = ["cuda"]
+
 [features]
 default = []
 # Each gate names what it buys, per Spec section 1.1. A build with neither

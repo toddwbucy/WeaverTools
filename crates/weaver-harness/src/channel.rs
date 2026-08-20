@@ -474,6 +474,120 @@ pub enum DecodeReply {
     Refusal(weaver_types::TokenRefusal),
 }
 
+/// The label seam's near end, per `weaver-harness-spu-classify-contract`
+/// section 1: not an organ channel, so this type carries the label trio and
+/// no envelope, its own name keeping the envelope's assumptions off a seam
+/// that does not take them, the way [`DecodeChannel`] does for the token
+/// seam.
+#[derive(Debug)]
+pub struct ClassifyChannel {
+    end: OwnedFd,
+    /// One-strike retirement, the state seam's economics on this seam: a
+    /// timeout or a channel fault retires the arm, and every later ask
+    /// answers the missing leg's absence immediately rather than paying
+    /// the bound again against a peer already proven unresponsive. A
+    /// `Cell` because the seat holds the channel by shared reference on
+    /// the one serving thread.
+    retired: std::cell::Cell<bool>,
+}
+
+impl ClassifyChannel {
+    /// Creates the classify pair, `SOCK_SEQPACKET` per `weaver-spu-Spec`
+    /// section 11, beside the SPU's two the way those are made before the
+    /// fork that carries them.
+    pub fn pair() -> Result<(ClassifyChannel, ChildEnd), ChannelFault> {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .map_err(|_| ChannelFault::Closed)?;
+        Ok((
+            ClassifyChannel {
+                end: near,
+                retired: std::cell::Cell::new(false),
+            },
+            ChildEnd { end: far },
+        ))
+    }
+
+    /// Whether the arm has been retired, per the one-strike economics.
+    pub fn retired(&self) -> bool {
+        self.retired.get()
+    }
+
+    /// Retire the arm: the peer missed its bound or the channel faulted,
+    /// and nothing asks it again.
+    pub fn retire(&self) {
+        self.retired.set(true);
+    }
+
+    /// Receive one label frame inside a bound: the wait is a poll deadline,
+    /// so a hung peer costs the bound once rather than the serving thread
+    /// forever, and the expiry is a channel fault the caller converts.
+    pub fn recv_reply_within(&self, bound_ms: u64) -> Result<ClassifyReply, ChannelFault> {
+        let deadline =
+            std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
+        loop {
+            let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+            if remaining.is_zero() {
+                return Err(ChannelFault::Closed);
+            }
+            let wait = remaining.as_millis().min(u128::from(u16::MAX)) as u16;
+            let mut fds = [nix::poll::PollFd::new(
+                self.end.as_fd(),
+                nix::poll::PollFlags::POLLIN,
+            )];
+            match nix::poll::poll(&mut fds, wait) {
+                Ok(0) => return Err(ChannelFault::Closed),
+                Ok(_) => return self.recv_reply(),
+                Err(nix::errno::Errno::EINTR) => continue,
+                Err(_) => return Err(ChannelFault::Closed),
+            }
+        }
+    }
+
+    /// Send one classify ask as bare JSON, the bound asserted on this side's
+    /// own writes per the contract: a frame that would exceed it fails here,
+    /// at the send, and the caller converts the failure to the standing
+    /// absence.
+    pub fn send_directive(
+        &self,
+        directive: &weaver_types::LabelDirective,
+    ) -> Result<(), ChannelFault> {
+        let body = serde_json::to_vec(directive).map_err(|_| ChannelFault::Undecodable)?;
+        if body.len() > weaver_types::MAX_ENVELOPE_BYTES {
+            return Err(ChannelFault::Truncated {
+                bound: weaver_types::MAX_ENVELOPE_BYTES,
+            });
+        }
+        send_octets(self.end.as_fd(), &body)
+    }
+
+    /// Receive one label frame, blocking: an answer or a typed refusal, the
+    /// two sharing the seam with disjoint tag vocabularies the way the
+    /// decode seam's do.
+    pub fn recv_reply(&self) -> Result<ClassifyReply, ChannelFault> {
+        let octets = recv_octets(self.end.as_fd())?;
+        if let Ok(answer) = serde_json::from_slice::<weaver_types::LabelAnswer>(&octets) {
+            return Ok(ClassifyReply::Answer(answer));
+        }
+        if let Ok(refusal) = serde_json::from_slice::<weaver_types::LabelRefusal>(&octets) {
+            return Ok(ClassifyReply::Refusal(refusal));
+        }
+        Err(ChannelFault::Undecodable)
+    }
+}
+
+/// One frame off the label seam: an answer or a typed refusal, per the
+/// classify contract's section 2.
+#[derive(Debug)]
+pub enum ClassifyReply {
+    Answer(weaver_types::LabelAnswer),
+    Refusal(weaver_types::LabelRefusal),
+}
+
 impl AsFd for DecodeChannel {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.end.as_fd()
@@ -511,8 +625,16 @@ fn send_octets(end: BorrowedFd<'_>, body: &[u8]) -> Result<(), ChannelFault> {
 fn recv_octets(end: BorrowedFd<'_>) -> Result<Vec<u8>, ChannelFault> {
     let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
     let mut slices = [std::io::IoSliceMut::new(&mut buffer)];
-    let message = recvmsg::<()>(end.as_raw_fd(), &mut slices, None, MsgFlags::empty())
-        .map_err(|_| ChannelFault::Closed)?;
+    // A signal landing mid-call is not the peer's doing, the same rule the
+    // send side runs: retry rather than report a closed channel that is not
+    // closed.
+    let message = loop {
+        match recvmsg::<()>(end.as_raw_fd(), &mut slices, None, MsgFlags::empty()) {
+            Ok(message) => break message,
+            Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => return Err(ChannelFault::Closed),
+        }
+    };
     if message.flags.contains(MsgFlags::MSG_TRUNC) {
         return Err(ChannelFault::Truncated {
             bound: MAX_ENVELOPE_BYTES,

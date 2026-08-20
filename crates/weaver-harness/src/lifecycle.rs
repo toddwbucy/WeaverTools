@@ -157,6 +157,11 @@ fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
 pub struct OrganBinaries {
     pub spu: PathBuf,
     pub gate: PathBuf,
+    /// The classify process's binary, `weaver-spu-classify`, per
+    /// `weaver-spu-Spec` section 11: optional because the arm is, and a
+    /// declaration carrying the binding with no binary provisioned refuses
+    /// the load rather than standing half an arm.
+    pub classify: Option<PathBuf>,
 }
 
 /// The construction parameters this worker hands its organs, per
@@ -248,6 +253,10 @@ struct Run {
     /// state port. `None` where the leg is not standing, which the port
     /// serves as the same absence a missing answer does.
     state: Option<crate::state::StateSeam>,
+    /// The classify arm, per `weaver-harness-Spec` section 6: `None` where
+    /// the declaration carried no binding, which the port serves as the
+    /// missing leg's absence.
+    classify: Option<ClassifyArm>,
     /// The session's fullness as the last generation carried it, granted to
     /// the seat as the fullness read, per the context ports of the Spec's
     /// section 6.
@@ -277,6 +286,19 @@ struct SpuChannels {
     decode: DecodeChannel,
     /// Retained so the leave can reap the organ rather than leaving a zombie
     /// entry for the life of the worker.
+    pid: nix::unistd::Pid,
+}
+
+/// The classify readiness bound: generous against an admission that loads a
+/// sub-gigabyte artifact in seconds, because the expiry refuses the whole
+/// load and a slow disk should not read as a dead child.
+const CLASSIFY_READY_BOUND_MS: u64 = 60_000;
+
+/// The classify arm, per `weaver-harness-Spec` section 6: the label seam's
+/// near end and the process behind it, standing only where the declaration
+/// carried the binding, falling whole under the unwind like every arm.
+struct ClassifyArm {
+    channel: crate::channel::ClassifyChannel,
     pid: nix::unistd::Pid,
 }
 
@@ -688,6 +710,7 @@ impl Harness {
                         Some(pending),
                         gate_port,
                         run.state.as_mut(),
+                        run.classify.as_ref().map(|arm| &arm.channel),
                         &mut run.fullness,
                     );
                     match entry(&mut ports, &text) {
@@ -1014,6 +1037,7 @@ impl Harness {
         // drains. Dropping it here would orphan whatever forked and leave an
         // unclosed bracket on the stream.
         let mut run = Run {
+            classify: None,
             recorder,
             author,
             session,
@@ -1108,6 +1132,65 @@ impl Harness {
             payload.spu_instruction.decoder.identity.clone(),
         ) {
             after_load!(run, refusal);
+        }
+
+        // The classify arm, per `weaver-harness-Spec` section 6 and
+        // `weaver-spu-PRD` section 15.3: where the declaration carries the
+        // binding the fan-out grows this arm, the model having admitted
+        // first so a device too small for both refuses deterministically at
+        // this arm and names it. Absent binding, no process: the port then
+        // serves the missing leg's absence.
+        if let Some(instruction) = payload.spu_instruction.classify.as_ref() {
+            let Some(binary) = self.organs.classify.as_ref() else {
+                // A binding with no binary provisioned is half an arm, and
+                // half an arm refuses rather than standing.
+                after_load!(run, LifecycleRefusal::ConfigInvalid {
+                    field: Some(weaver_types::FieldName("classify".into())),
+                });
+            };
+            let (channel, child) = match crate::channel::ClassifyChannel::pair() {
+                Ok(pair) => pair,
+                Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+            };
+            let Some(device) = instruction.model_binding.devices.first() else {
+                after_load!(run, LifecycleRefusal::ConfigInvalid {
+                    field: Some(weaver_types::FieldName("classify".into())),
+                });
+            };
+            let arguments = vec![
+                instruction.model_binding.artifact.0.clone(),
+                device.0.to_string(),
+            ];
+            // SAFETY: as the SPU's fork above, on the serving thread, the
+            // child performing only the async-signal-safe calls.
+            let pid = match unsafe {
+                crate::spawn::fork_organ(binary, &[&child], &arguments)
+            } {
+                Ok(pid) => pid,
+                Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
+            };
+            drop(child);
+            let arm = ClassifyArm { channel, pid };
+            // Readiness gates service, per the contract: the seam's first
+            // message is the admission's outcome, and a typed refusal, a
+            // closure, or the bound's expiry refuses the load whole. The
+            // wait is bounded because a child hung mid-admission would
+            // otherwise hold the load forever, and the expiry path kills
+            // before it reaps: a process still loading weights does not
+            // exit on a channel it has not read yet.
+            match arm.channel.recv_reply_within(CLASSIFY_READY_BOUND_MS) {
+                Ok(crate::channel::ClassifyReply::Answer(
+                    weaver_types::LabelAnswer::Ready,
+                )) => {
+                    run.classify = Some(arm);
+                }
+                _ => {
+                    drop(arm.channel);
+                    let _ = nix::sys::signal::kill(arm.pid, nix::sys::signal::Signal::SIGKILL);
+                    reap(arm.pid);
+                    after_load!(run, LifecycleRefusal::NoResidency);
+                }
+            }
         }
 
         // The gate pair is created only after the SPU's answer confirms
@@ -1220,6 +1303,7 @@ impl Harness {
                     None,
                     None,
                     run.state.as_mut(),
+                    run.classify.as_ref().map(|arm| &arm.channel),
                     &mut run.fullness,
                 ))
             }
@@ -1293,6 +1377,13 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
         if let Err(refusal) = lowered {
             first_refusal.get_or_insert(refusal);
         }
+    }
+    if let Some(classify) = run.classify.take() {
+        // Closure is the release, per the classify contract's failure
+        // section: the process exits on its seam's close and the reap reads
+        // it out, the arm falling second because it stood second to last.
+        drop(classify.channel);
+        reap(classify.pid);
     }
     let _ = run.author.author(
         &mut run.recorder,
@@ -1533,6 +1624,7 @@ mod tests {
         let (decode, _spu_decode) = DecodeChannel::pair().expect("decode pair");
         (
             Run {
+                classify: None,
                 recorder,
                 author,
                 session,
@@ -1597,6 +1689,7 @@ mod tests {
         let mut harness = Harness {
             coordination: listener,
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent/weaver-spu".into(),
                 gate: "/nonexistent/weaver-gate".into(),
             },
@@ -1607,6 +1700,7 @@ mod tests {
             session: SessionId("s-election".into()),
             run: weaver_types::RunId("r-1".into()),
             spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
                 decoder: weaver_types::DecoderInstruction {
                     model_binding: weaver_types::ModelBinding {
                         artifact: weaver_types::ArtifactRef("unreachable".into()),
@@ -1718,6 +1812,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: spu.clone(),
                 gate: gate.clone(),
             },
@@ -1728,6 +1823,7 @@ mod tests {
             session: SessionId("rehearsal".into()),
             run: weaver_types::RunId("r-1".into()),
             spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
                 decoder: weaver_types::DecoderInstruction {
                     model_binding: weaver_types::ModelBinding {
                         artifact: weaver_types::ArtifactRef(fixture.to_string_lossy().into_owned()),
@@ -1887,6 +1983,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
@@ -1934,6 +2031,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
@@ -1985,6 +2083,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
@@ -2002,6 +2101,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
@@ -2023,6 +2123,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent/spu".into(),
                 gate: "/nonexistent/gate".into(),
             },
@@ -2130,6 +2231,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent".into(),
                 gate: "/nonexistent".into(),
             },
@@ -2227,6 +2329,7 @@ mod tests {
         let mut harness = Harness {
             coordination: test_listener(),
             organs: OrganBinaries {
+                classify: None,
                 spu: "/nonexistent".into(),
                 gate: "/nonexistent".into(),
             },

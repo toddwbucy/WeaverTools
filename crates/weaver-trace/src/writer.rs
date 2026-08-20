@@ -387,7 +387,15 @@ fn turn_forbidden(kind: Kind) -> bool {
 
 fn turn_required(kind: Kind) -> bool {
     match kind {
-        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Fault | Kind::Flush => false,
+        // The classify pair is turn-optional like `fault`: a classify
+        // between turns belongs to no turn, per the charter's adding text.
+        Kind::Load
+        | Kind::Unload
+        | Kind::SessionClosed
+        | Kind::Fault
+        | Kind::Flush
+        | Kind::ClassifyRequest
+        | Kind::ClassifyOutput => false,
         Kind::TurnStarted
         | Kind::TurnClosed
         | Kind::MessageUser
@@ -401,8 +409,10 @@ fn turn_required(kind: Kind) -> bool {
     }
 }
 
-/// The total kind-to-payload mapping, fourteen kinds and eight dispositions,
-/// enforced here because the untagged payload leaves serde unable to.
+/// The total kind-to-payload mapping, seventeen kinds and eleven
+/// dispositions as built, the eighteenth kind (`message.system`) owed by
+/// the Role::System code act, enforced here because the untagged payload
+/// leaves serde unable to.
 fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
     matches!(
         (kind, payload),
@@ -418,6 +428,8 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
             | (Kind::ModelRequest, Some(Payload::ModelRequest(_)))
             | (Kind::ModelOutput, Some(Payload::ModelOutput(_)))
             | (Kind::ModelMeasurement, Some(Payload::ModelMeasurement(_)))
+            | (Kind::ClassifyRequest, Some(Payload::ClassifyRequest(_)))
+            | (Kind::ClassifyOutput, Some(Payload::ClassifyOutput(_)))
             | (
                 Kind::ToolCallStarted | Kind::ToolCallCompleted,
                 Some(Payload::Deferred(_))

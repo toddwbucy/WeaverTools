@@ -117,6 +117,16 @@ impl Seat {
         Ok(Some(recalled))
     }
 
+    /// The classify port: content in, the artifact's scored labels back as
+    /// a list of (label, score) tuples in the head's own order, or None
+    /// where the leg is down, was never declared, refused typed, or
+    /// answered malformed - the same absence a missing leg serves. The
+    /// judgment over the scores is the loop's alone.
+    fn classify(&mut self, content: &str) -> PyResult<Option<Vec<(String, f64)>>> {
+        let ports = self.ports_mut()?;
+        Ok(ports.classify(content))
+    }
+
     /// The session's shape from the state member, or None where the leg is
     /// down or the answer missed: a list of runs in first-seen order, each
     /// {"run": str, "kinds": {kind: count}}.

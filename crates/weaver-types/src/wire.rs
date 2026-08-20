@@ -86,6 +86,11 @@ pub enum Position {
 /// loop. `Fault` enters on different grounds: a fault report is what any organ
 /// hands the harness across whatever channel it holds, and the gate has no
 /// second socket to carry it.
+// The size skew is the admit's instruction, loop 0's low-volume diagnostic
+// traffic: twice per run and once per stop, so a box would trade wire-shape
+// churn for nothing measurable. The lint crossed its threshold when the
+// instruction gained the classify role, not when the shape changed kind.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "body", rename_all = "snake_case")]
 pub enum Payload {
@@ -554,6 +559,61 @@ pub enum TokenRefusal {
         capacity: u64,
     },
     MalformedDelta,
+}
+
+/// The label seam's ask, per `weaver-types-Spec` section 4.5: the content to
+/// classify and the turn identity where one stands, optional because apex
+/// invariant 5.3 is conditional on an existing turn and the loop that
+/// classifies between turns belongs to none.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum LabelDirective {
+    Classify {
+        turn: Option<TurnKey>,
+        content: String,
+    },
+}
+
+/// The label seam's answer, per `weaver-types-Spec` section 4.5. `Ready` is
+/// the readiness emission, the seam's first message and the fan-out arm's
+/// confirmation. `Scored` carries every label of the artifact's head, none
+/// elided and none beyond, the turn identity echoed exactly as it arrived.
+///
+/// Adjacently tagged under the spliced-member arm of section 4.3's test:
+/// `Fault` wraps `FaultReport`, whose account is a spliced `RawValue`, the
+/// same fact that shaped `TokenAnswer`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", content = "body", rename_all = "snake_case")]
+pub enum LabelAnswer {
+    Ready,
+    Scored {
+        turn: Option<TurnKey>,
+        labels: Vec<ScoredLabel>,
+    },
+    Fault(FaultReport),
+}
+
+/// One label of the artifact's head with its score, the head's softmax: a
+/// finite JSON number by construction over finite logits, per
+/// `weaver-types-Spec` section 4.5, a scorer producing otherwise having
+/// faulted rather than answered.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScoredLabel {
+    pub label: String,
+    pub score: f64,
+}
+
+/// The label seam's typed refusals, per `weaver-types-Spec` section 4.5.
+/// `NotAdmitted` is the readiness edge's failure, traveling in the enter
+/// aggregate. `Oversized` counts in the artifact's own tokens, the
+/// tokenizer's count of the content against the bound the artifact resolved.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum LabelRefusal {
+    NotAdmitted { reason: String },
+    NotReady,
+    Oversized { requested: u64, bound: u64 },
+    MalformedContent,
 }
 
 /// What a generation answers with: shaped where the harness consumes and
