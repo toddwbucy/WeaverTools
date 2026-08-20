@@ -4,6 +4,15 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-20, the declared loop rides the vector. Per the
+operator's ruling on issue #243: the agent's declaration may name its
+worker's loop file, per `weaver-types-Spec` section 2, and section 6's
+argument vector carries it to the unit as a named flag, the vector's one
+declaration-sourced value. The authority argument re-runs unchanged: the
+declaration is the operator's file, validated at inventory before any
+unit is asked, and the worker resolves the path under the agent's own
+identity, so nothing the invocation's input composes reaches the vector
+and nothing the agent uid lacked is granted.
 **Revised:** 2026-08-16, a failed prior unit stops being called a bind
 failure. The refusal is read from the state ask, where `failed` covers one
 condition, rather than from the start ask's status, which the systemd contract
@@ -836,14 +845,25 @@ to: admin-cloexec-atomic-at-creation
 template lives in admin's own service configuration, per section 9, and the
 only value interpolated is the validated agent name of section 4, so the
 delegated authority stays bounded by the allow-list exactly as charter
-section 7 requires. **The argument vector the ask carries takes no second
-variable.** Its three values are the coordination socket path of section 7,
-which this crate already derives from that same validated name, and the two
-organ binary paths section 9 holds among the operator's installed values. A
-builder who let any of the three be composed from the invocation's own input
-would be widening the delegated authority by the route the name check closes,
-so the shape to hold is that the vector reads the allow-listed name and the
-operator's file and reads nothing else.
+section 7 requires. **The argument vector the ask carries takes no value the
+invocation's own input composes.** Its values are the coordination socket
+path of section 7, which this crate already derives from that same validated
+name, the two organ binary paths section 9 holds among the operator's
+installed values, and, where the declaration carries one, the agent's loop
+file as a named flag, per `weaver-types-Spec` section 2 and the operator's
+ruling of 2026-08-20 on issue #243. The loop file is the vector's one
+declaration-sourced value and it widens nothing: the declaration is the
+operator's file, validated at section 4's inventory before any unit is asked,
+and the worker resolves the path under the agent's own identity, so the value
+grants nothing the agent uid did not already have, per the bare clause below.
+An absent member puts no flag on the vector, the worker's own default
+standing, per `weaver-harness-PRD` section 2. A builder who let any of these
+values be composed from the invocation's own input would be widening the
+delegated authority by the route the name check closes, so the shape to hold
+is that the vector reads the allow-listed name and the operator's files, the
+installed values and the validated declaration, and reads nothing else. An
+earlier form of this clause counted three values and named the name the one
+variable, written before any declaration member rode the vector.
 
 **The unit declares no descriptor-bearing open, and the absence is the
 assertion.** Under the

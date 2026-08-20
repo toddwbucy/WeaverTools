@@ -5,6 +5,16 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-20, the loop is the agent's own. Per the operator,
+on issue #243: the loop is a member of each agent's harness and unique
+to it, so which loop an agent runs is the agent's declared fact. Section
+2's composability passage moves: a worker that reads its loop from a
+file runs the one the declaration names, absence meaning the worker's
+own default, and the earlier reading of the loop as a provisioning fact
+rather than a configuration field retires where the loop is a file. The
+member lands in `weaver-types-Spec` section 2, the carriage in
+`weaver-admin-Spec` section 6, and the worker's precedence in
+`weaver-harness-Spec` section 1, all in this act.
 **Revised:** 2026-08-19, the serve direction takes its shape. Section 4's
 State row gains the ask and the answer riding the same channel as the
 distillate stream, per the contract's change protocol, and the asking loop
@@ -129,9 +139,18 @@ together with the engine machinery a loop is built from: tool dispatch, batch
 partitioning, and the surfaces the rest of this section names. The loop itself,
 loop 1, is the builder's, per the composability ruling of 2026-08-02: written at
 the worker composition root against what this crate exposes, which is the
-extension seam the children list of section 6 names, compiled into the worker
-binary, and immutable there, so which loop an agent runs is which binary its
-unit starts, a provisioning fact rather than a configuration field. What holds
+extension seam the children list of section 6 names. Which loop an agent runs
+is the agent's own declared fact, per the operator's ruling of 2026-08-20: the
+loop is a member of that agent's harness and unique to it. A worker whose loop
+is compiled carries it in the binary its unit starts, and a worker that reads
+its loop from a file runs the one the agent's declaration names. Absence means
+the worker's own default, the compiled body or the installed file, which is
+what lets every declaration written before the member stand. The earlier form
+of this sentence called the loop a provisioning fact rather than a
+configuration field, and the ruling retires that reading where the loop is a
+file: two agents drawing one shared file differ only by conditionals inside
+it, which contaminates any comparison run between them, and separating
+experimental arms is exactly what a per-agent declaration is for. What holds
 for every loop 1 alike is loop 0's bracket discipline: the operator's interrupt
 arrives as the stop exchange of `weaver-admin-harness-contract` section 3,
 aborts whatever is in flight, and returns the agent to loaded and idle,
