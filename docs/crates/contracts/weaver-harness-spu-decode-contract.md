@@ -487,6 +487,9 @@ How each check is implemented is Spec work. What must be checkable:
   exceeds one envelope arrives reassembled and byte-identical, watched to
   fail when the segment carriage is removed, and a series past the total
   bound faults rather than truncating.
+- An interrupted series faults whole: a peer that closes before delivering
+  its declared count leaves no partial frame in the receiver's hands, the
+  fault the same one a truncation raises.
 - An aborted generation leaves the session accepting the next turn's
   delta cleanly, watched to fail when the terminator step is removed.
 - The stop lands within a token boundary of the cancel's arrival.

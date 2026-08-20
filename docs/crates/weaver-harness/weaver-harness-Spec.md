@@ -8,8 +8,11 @@ floor. Code is written against it under the gates of Working Process section 6.
 decode contract's amendment on issue #236: the decode channel's receive
 recognizes the segment preamble by the `kind` member it lacks, collects
 its counted slices under the total bound `weaver-types-Spec` section 4.4
-elects, and hands one whole frame up, a short or oversized series the
-same channel fault a truncation is. The seat, the ports, and every
+elects, validates the preamble before reading a slice - the counts
+consistent, the bounds held, a kindless frame that is not the exact
+preamble refused as undecodable rather than read around - and hands one
+whole frame up, a short, oversized, or interrupted series the same
+channel fault a truncation is. The seat, the ports, and every
 consumer above the channel are untouched: the series is the channel's
 fact and no layer above it sees a segment.
 **Revised:** 2026-08-19, fifth of this date, the seat gains the classify

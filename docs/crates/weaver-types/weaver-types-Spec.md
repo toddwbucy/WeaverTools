@@ -1548,13 +1548,23 @@ and issue #236.** A frame whose serialized form exceeds
 `{"segments":N,"bytes":M}`, then exactly N datagrams of raw octet slices in
 order, each within the envelope bound, whose concatenation is the M bytes
 of the one serialized frame, parsed as though it had crossed whole. The
-preamble is recognized by what it lacks: every trio frame carries `kind`
-and the preamble carries none, so a receiver reads the members it has. The
+preamble is recognized by what it lacks, and the absence is a reserved
+shape rather than a guess: every trio frame carries `kind`, so a frame
+without one is either exactly the preamble - two members, both unsigned
+integers, nothing else - or a channel fault, and a kindless frame that is
+not the exact preamble refuses as undecodable rather than being read
+around. The preamble validates before any slice is read: `bytes` must
+exceed the envelope bound, or the sender had no series to send, and must
+not exceed the total bound. `segments` must equal exactly the datagrams
+the byte length requires at the envelope size, so a count inconsistent
+with `bytes` - too many for the length, too few to carry it, or past the
+hundred-twenty-eight the total bound admits - refuses before the first
+slice, and the slices must total exactly `bytes`, a short, long, or
+interrupted series a channel fault, never a partial message. The
 total bound is eight mebibytes, `DECODE_MESSAGE_BOUND`, elected against the
 close's growth: a four-thousand-token turn's close measures in the
 hundreds of kibibytes, the bound covers a sixteenfold cap without
-renegotiation, and a series past it or arriving short of its count is a
-channel fault, never a partial message, per the contract. A frame within
+renegotiation. A frame within
 the envelope crosses as it always did, so the series costs nothing where
 it is not needed, and either end may send one, the closes being the only
 frames that grow today.
