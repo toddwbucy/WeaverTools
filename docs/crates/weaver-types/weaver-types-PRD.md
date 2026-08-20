@@ -6,6 +6,13 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-19, the label trio lands. Section 2.3 gains
+`label-directive`, `label-answer`, and `label-refusal` on
+`weaver-harness-spu-classify-contract` section 7's demand, the fourth
+arrival and the naming ruling's currency case again: the label seam's
+loop is loop 1 and variable, so the trio is named for the seam's
+currency. The cases are the classify contract's enumeration, one owner
+and one drawer, and the shapes land in the Spec with this act.
 **Revised:** 2026-08-17. The count of contracts drawing `gate-instruction`
 moves from two to three: `weaver-admin-harness-contract` closes the draw the
 route act named as owed, the enter directive having carried the instruction
@@ -438,9 +445,10 @@ to: authorization-predicate
 protocol vocabulary out of this crate until a written contract needed it.
 `weaver-admin-harness-contract` section 8 was the first, arriving with four,
 `weaver-harness-spu-decode-contract` section 7 the second, arriving with the
-token trio on 2026-08-02, and `weaver-harness-gate-contract` section 7 the
+token trio on 2026-08-02, `weaver-harness-gate-contract` section 7 the
 third, arriving with `turn-frame` and `fault-report` in the same workflow's
-gate act. Nothing
+gate act, and `weaver-harness-spu-classify-contract` section 7 the fourth,
+arriving with the label trio on 2026-08-19. Nothing
 else enters this subsection until another contract draws it, a definition
 arriving without a contract behind it being the reserved-slot error apex section
 9 forbids, in schema form. `harness-alert` was
@@ -476,6 +484,19 @@ today, and the session and turn identities ride inside the cases as the
 floor's satellite types rather than as vocabulary of their own. The
 representation is the token workflow's, elected with the hot-path
 measurement, per the criterion below.
+
+**The label trio arrives on the classify contract's demand, under the same
+currency case.** `label-directive`, `label-answer`, and `label-refusal`
+carry the label seam's traffic, per `weaver-harness-spu-classify-contract`
+section 7, drawn 2026-08-19 with the classifier's charter: that seam's loop
+is loop 1 and variable, so the trio is named for the currency, the label.
+The cases are the classify contract's enumeration, one owner and one drawer
+today, and the turn identity rides inside the cases as the floor's
+satellite type, the way the token trio already carries it. The traffic is
+one ask and one whole answer per the asking loop's election, low in volume
+and diagnostic in audience like loop 0's rather than like the decode
+seam's, and the Spec elects its encoding against that criterion beside the
+shapes it holds.
 
 **The turn frame is one definition for two directions, and its opacity is the
 point.** `turn-frame` arrives on `weaver-harness-gate-contract` section 7's
@@ -592,6 +613,27 @@ to: turn-frame
 edge: defines
 from: weaver-types
 to: fault-report
+
+node: label-directive
+kind: vocabulary
+
+node: label-answer
+kind: vocabulary
+
+node: label-refusal
+kind: vocabulary
+
+edge: defines
+from: weaver-types
+to: label-directive
+
+edge: defines
+from: weaver-types
+to: label-answer
+
+edge: defines
+from: weaver-types
+to: label-refusal
 ```
 
 ## 3. What it must not hold
