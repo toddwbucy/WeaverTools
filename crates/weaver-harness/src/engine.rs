@@ -840,6 +840,11 @@ impl<'a> Ports<'a> {
                         weaver_types::Finish::Stopped => weaver_trace::Finish::Stopped,
                         weaver_types::Finish::Length => weaver_trace::Finish::Length,
                     },
+                    // The same reading the fullness port answers from,
+                    // written down: an analysis placing a turn in the
+                    // context has no other source once the run is over.
+                    resident: generation.resident,
+                    capacity: generation.capacity,
                 })),
             )
             .map_err(|_| TurnError::ChannelLost)?;
@@ -1048,8 +1053,12 @@ mod tests {
                 }],
                 emission: "one word".into(),
                 finish: Finish::Completed,
-                resident: 64,
-                capacity: 4096,
+                // Deliberately unroundable: a site forwarding a zero, a
+                // default, or the other member would fail the assertion
+                // below, where 64 and 4096 could each be arrived at by
+                // accident.
+                resident: 1237,
+                capacity: 8191,
                 request,
                 measurement,
             }));
@@ -1115,6 +1124,32 @@ mod tests {
                 Kind::TurnClosed,
             ],
             "the whole bracket authored in order"
+        );
+
+        // **The output's counts are the generation's**, per
+        // `weaver-trace-Spec` section 3. The trace crate's own test proves
+        // the pair serializes; this one proves the authoring site forwards
+        // what the seam delivered rather than a default, which is the half
+        // that lives in this crate.
+        //
+        // Perturbation: forward a zero, a constant, or the members swapped,
+        // and this fails.
+        let output_line = recorder
+            .structure()
+            .by_kind(Kind::ModelOutput)
+            .next()
+            .expect("the output authored")
+            .line
+            .to_string();
+        let output: serde_json::Value =
+            serde_json::from_str(&output_line).expect("the output line is one value");
+        assert_eq!(
+            output["payload"]["resident"], 1237,
+            "the generation's resident count reaches the record: {output_line}"
+        );
+        assert_eq!(
+            output["payload"]["capacity"], 8191,
+            "and its capacity: {output_line}"
         );
 
         // The model events splice what the peer rendered: the request carries
