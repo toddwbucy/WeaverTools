@@ -49,6 +49,8 @@
 # text ever matched to decide whose voice a message is.
 
 import json
+import os
+import pwd
 
 SYSTEM_PROMPT = (
     "You are a careful assistant. Answer from what you know, say plainly "
@@ -88,6 +90,64 @@ MEMORY_ASKS = 3
 MEMORY_HITS = 4
 MEMORY_QUOTE = 300
 MISS_REDIRECT = None
+
+# THE EXTERNAL TOOL, one agent wide. The shell is the gate's one held
+# tool, merged and standing, and the calculator is a script provisioned
+# in the agent's own home - so the whole grant is this advertisement and
+# nothing else. It goes to the agents named below and no other, which is
+# the experiment's ablation line: the taught agent calls a tool, the
+# untaught agent is the bare-model arm. The worker runs as its agent's
+# own uid, so the uid names the seat's agent with no new plumbing, and a
+# uid the password file cannot name advertises nothing.
+try:
+    AGENT = pwd.getpwuid(os.getuid()).pw_name
+except KeyError:
+    AGENT = ""
+
+TOOL_AGENTS = {"weaver-bravo"}
+
+# The advertisement speaks the family's trained shape - the tools block
+# and the tool_call envelope are the forms the artifact's tuning expects
+# - and then binds it to the one provisioned script. The last line is
+# the experiment's instruction: arithmetic goes through the tool, not
+# through the weights.
+TOOL_PROMPT = (
+    "# Tools\n"
+    "\n"
+    "You may call one or more functions to assist with the user query.\n"
+    "\n"
+    "You are provided with function signatures within <tools></tools> "
+    "XML tags:\n"
+    "<tools>\n"
+    '{"type": "function", "function": {"name": "bash", "description": '
+    '"Runs one shell command in your home directory. Your calculator '
+    "lives there: ./calc \\\"EXPRESSION\\\" prints the value of an "
+    "arithmetic expression. Numbers, + - * / // % ** and parentheses "
+    'only.", "parameters": {"type": "object", "properties": {"command": '
+    '{"type": "string", "description": "the shell command to run"}}, '
+    '"required": ["command"]}}}\n'
+    "</tools>\n"
+    "\n"
+    "For each function call, return a json object with function name "
+    "and arguments within <tool_call></tool_call> XML tags:\n"
+    "<tool_call>\n"
+    '{"name": <function-name>, "arguments": <args-json-object>}\n'
+    "</tool_call>\n"
+    "Use your calculator for every arithmetic operation rather than "
+    "computing in your head."
+)
+
+
+def teachings():
+    """The opening's and the re-entry's shared curriculum: the system
+    prompt, the memory conventions, and - for a tool agent alone - the
+    tool advertisement. One builder so the flush cannot retire a lesson
+    the opening taught.
+    """
+    parts = [SYSTEM_PROMPT, MEMORY_PROMPT]
+    if AGENT in TOOL_AGENTS:
+        parts.append(TOOL_PROMPT)
+    return "\n\n".join(parts)
 
 
 def pressured(fullness):
@@ -139,7 +199,7 @@ def event_texts(events):
 
 
 def reentry(events):
-    text = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT + (
+    text = teachings() + (
         "\n\nThe working context was reset to stay within its limit. "
         "Recent conversation, restored from the session's record:"
     )
@@ -261,7 +321,7 @@ def drive(seat, text):
         seat.flush()
         delta.append({"role": "system", "text": reentry(seat.recall(RECALL_TURNS))})
     if first:
-        opening = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT
+        opening = teachings()
         line = continuity(seat.session_shape())
         if line:
             opening += "\n\n" + line
