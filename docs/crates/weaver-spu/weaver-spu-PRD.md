@@ -8,6 +8,13 @@ and this crate's part in the workflow now finishing is one thing, admitting a mo
 later releasing it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-19, second of this date, the classifier is chartered.
+Section 13.1's rule for later operation types is exercised for the first
+time: section 15 charters the classify submodule in its own process under
+this domain root, with its own socket and its own contract,
+`weaver-harness-spu-classify-contract`, cut with this act per apex section
+10. Section 2 counts two submodules, section 6 counts three seams, and
+section 10 gains the binary-spelling cell. Nothing multiplies the organ.
 **Revised:** 2026-08-19, the flush names its cut. Per the operator's
 ruling: the cleanup line is the loop's, because the loop knows what it
 does not want to re-decode, and a fixed outcome made one policy true for
@@ -120,9 +127,10 @@ ruling of 2026-08-02: the family libraries of section 14, where everything a
 model family defines once is defined once, and the presentation of Unix
 sockets over which the harness hands work in and takes results back. Each
 semantic domain of processing is tied to its own submodule, the decoder the
-first and in this pass the only one, per section 13. The encoder and the
-later operation types arrive as their own submodules when their workflows
-charter them, and nothing here reserves their shape.
+first per section 13 and the classifier the second per section 15,
+chartered 2026-08-19 with its workflow. The encoder and the later operation
+types arrive as their own submodules when their workflows charter them, and
+nothing here reserves their shape.
 
 **Model residency.** The device-side fact that one model's weights are present and ready
 to serve, established by an admit and ended by a release. Residency is what the two
@@ -418,17 +426,21 @@ the seam above and there is no reason for this seam to differ.
 
 ## 6. The seam
 
-This crate holds two seams, both to `weaver-harness`. The residency seam is the
+This crate holds three seams, all to `weaver-harness`. The residency seam is the
 two-initiator channel that makes this crate an organ, governed by
-`weaver-harness-spu-contract`, and the token seam is the decoder cut's own socket,
-governed by `weaver-harness-spu-decode-contract` and not an organ channel. The sentence
-here counted one until the cut of 2026-08-02 landed the second, and the table below has
-carried both since.
+`weaver-harness-spu-contract`. The token seam is the decoder cut's own socket,
+governed by `weaver-harness-spu-decode-contract` and not an organ channel. The
+label seam is the classify submodule's own socket, governed by
+`weaver-harness-spu-classify-contract` since the classifier act of 2026-08-19,
+operation surface like the token seam and not an organ channel, per section
+15.2. The sentence here counted one until the cut of 2026-08-02 landed the
+second and two until the classifier act landed the third.
 
 | Seam | Peer | What crosses |
 |---|---|---|
 | Residency | `weaver-harness` | The harness asks this crate to admit the model binding it was handed and later to release it. This crate confirms or refuses with a reason the enter aggregate can carry unchanged. |
 | Token | `weaver-harness` | The harness opens the resident decode session, appends each turn's delta, and receives the generation with its measurement. The stop's cancel and the flush cross here. Per section 13 and `weaver-harness-spu-decode-contract`. |
+| Label | `weaver-harness` | The harness sends content with the turn's trace context and receives every label the classify artifact defines, each scored, whole. The submodule's readiness and its faults cross here too. Per section 15 and `weaver-harness-spu-classify-contract`. |
 
 ```graph
 edge: seam
@@ -441,6 +453,12 @@ edge: seam
 from: weaver-spu
 to: weaver-harness
 via: weaver-harness-spu-decode-contract
+tag: socket
+
+edge: seam
+from: weaver-spu
+to: weaver-harness
+via: weaver-harness-spu-classify-contract
 tag: socket
 
 edge: floor-link
@@ -713,6 +731,12 @@ human's ruling of 2026-08-01, and the convention changed: wire vocabulary is nam
 for the loop whose traffic it carries, direction being a fact about a loop's walk
 rather than a name on a two-initiator channel. This seam draws loop 0's trio and owes
 the floor nothing, per `weaver-types-PRD` section 2.3.
+
+**The classify submodule's binary spelling.** Whether the classify process of
+section 15 runs this crate's one binary under a role argument or a second bin
+target of the same crate is representation, and either satisfies section 15.1.
+**Settled by:** the Spec's election in the classifier's code act, recorded with
+its reasoning.
 
 ## 11. Edits owed in the same act
 
@@ -1003,3 +1027,91 @@ backend can shard a model across** are facts the
 family module states, and admission judges a binding against them, which
 is how 13.7's refusal knows to fire and how section 4.1 step 3 knows whether an
 assigned set is servable. The declaration's shape is the Spec's.
+
+## 15. Classifying content: the classify submodule and the label seam
+
+Chartered 2026-08-19 with its workflow, the loop-side relevance work of the
+context-management arc: a loop that rebuilds a working set from custody
+needs a judgment about content it cannot make from string mechanics alone,
+and a classification is semantic processing, which is this domain and no
+other crate's. The operator's ruling of the same date drew the line this
+section builds on: the loop owns the why and the when, and this crate
+processes and never judges what its output is for.
+
+### 15.1 The submodule
+
+**The classifier is the second operation submodule, and section 13.1's rule
+for later types is exercised for the first time.** It arrives as its own
+submodule in its own process under this domain root, with its own socket
+and its own contract, the sockets and processes multiplying while the organ
+does not. The lifecycle channel stays the one two-initiator channel and it
+stays with the decode-carrying process, so the organ test of apex section
+5.4 still names exactly one organ here. The separate process is the failure
+boundary: the decoder's process dies of a poisoned session or an engine
+fault, and a classifier riding inside it would die of the decoder's wounds,
+so each submodule fails alone under the one domain root.
+
+### 15.2 The label seam
+
+**The third seam to the harness, on its own socket, created by the harness
+before the fork like the other two.** Possession authenticates it, the pair
+having no name and no second opener, and it is operation surface rather
+than an organ channel, the same classification section 13.2 carries for the
+token seam. It is governed by `weaver-harness-spu-classify-contract`, cut
+with this act per apex section 10, and the seam edge lands in section 6
+beside its siblings.
+
+### 15.3 The artifact and its admission
+
+**The classify artifact is declared beside the model binding and admitted
+at load under the one authority.** An agent that declares no classifier
+runs none, the submodule optional by presence like every optional leg, and
+the seat's ask then answers as a missing leg. Where the declaration carries
+the binding, the enter fan-out grows an arm: the harness forks the classify
+process as it forks its siblings, the binding arrives at exec, and the
+process admits before it serves, its readiness or its typed refusal
+traveling in the enter aggregate like any other arm. Admission law is
+unchanged in every word that matters: a conflict is discovered at
+admission and nowhere earlier, the refusal names itself, and nothing
+evicts. **The model admits before the classifier**, so where the pair
+exceeds the device the refusal is deterministically the classifier's and
+names its own arm rather than whichever raced last. A load failing at
+either arm fails whole, per the lifecycle's standing shape and section 5's
+partway rule, leaving nothing admitted behind it, and unload releases the
+set.
+
+### 15.4 The exchange
+
+**Stateless, whole, and turn-attributed.** The harness sends content with
+the turn's trace context, and the answer carries every label the artifact
+defines, each with its score, in one message. There is no session, no
+accumulation, and nothing retained between exchanges: two identical asks
+within one admission answer identically, which is the statelessness a
+later reader can check, and the claim ends at the admission's edge, a
+re-admitted artifact being a new scorer.
+The artifact's head defines the label set and the ask carries content
+alone, because a per-ask label set would be the asker teaching the model
+mid-exchange, which is a different instrument this charter does not hold.
+The loop's why never crosses: this crate learns what to classify and never
+what the answer is for. A content exceeding the artifact's own bound
+refuses typed with the bound named, the overflow discipline of section
+13.3 in this submodule's shape.
+
+### 15.5 The record
+
+**Every exchange is recorded by the harness, per the custody rule.** The
+classify ask and its answer land as their own event kinds, authored by the
+sole writer and distilled through the tee like everything else, because an
+unrecorded semantic exchange would be the first in this program and the
+precedent is refused. The kinds land in `weaver-trace-PRD` section 3 and
+are owed by this act, the demand existing now. Quick searches over custody
+are exactly what the recording buys: the labels reach `weaver-state` as
+record, never as a side channel.
+
+### 15.6 The faults this submodule raises
+
+The set is 13.10's shape at this submodule's size, each survived by the
+worker and authored by the harness as the `fault` event: a device fault
+during a forward, and a residency degraded outside any single exchange. An
+oversized content is a typed refusal on the exchange rather than a fault,
+and a death is observed through closure, both per the contract.
