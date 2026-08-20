@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, sixth of this date, the label trio takes shape.
+Section 4.5 holds the classify contract's trio the way 4.4 holds the
+decode contract's: the cases spelled once from the contract's enumeration,
+internally tagged throughout because no member splices, and JSON as a
+settled election against the loop 0 criterion, there being no hot path to
+measure. Arrives with the floor half of the classifier's owed acts, per
+the contract's section 9.
 **Revised:** 2026-08-19, fifth of this date, the flush names its cut.
 `TokenDirective::Flush` gains `keep`, the resident length the session
 returns to, per the operator's ruling that the cleanup line is the
@@ -1507,6 +1514,66 @@ already, so the election changes one function on each side and nothing above it.
 that buys the ordering is `weaver-spu-Spec` section 9's, which names the
 assertion and the seam it is watched on. A node restated here would give the
 mapper two sources for one record.
+
+### 4.5 The label trio
+
+**The demand is the classify contract's**, sections 2 and 5, drawn 2026-08-19
+with the classifier's charter, and this subsection holds the result the way
+4.4 holds the token trio's: the party under the construction's demand
+determines the shape and the floor holds it.
+
+```rust
+pub enum LabelDirective {
+    Classify { turn: TurnKey, content: String },
+}
+
+pub enum LabelAnswer {
+    Ready,
+    Scored {
+        turn: TurnKey,
+        labels: Vec<ScoredLabel>,
+    },
+    Fault(FaultReport),
+}
+
+pub struct ScoredLabel {
+    pub label: String,
+    pub score: f64,
+}
+
+pub enum LabelRefusal {
+    NotAdmitted { reason: String },
+    NotReady,
+    Oversized { requested: u64, bound: u64 },
+    MalformedContent,
+}
+```
+
+**The cases are the contract's, spelled once.** `Classify` carries the
+content and the turn identity as the floor's satellite type, the trace
+context the contract requires echoed back on `Scored` byte-exact.
+`Ready` is the readiness emission, `NotAdmitted` its typed failure
+traveling in the enter aggregate, and `NotReady` refuses a directive that
+arrived before either, per the contract's ordering. `Oversized` names the
+artifact's own bound the way the decode seam's overflow names the
+session's, and `MalformedContent` is a frame the process could decode as a
+directive and not serve. `Fault` rides the answer set the way the token
+trio carries it, one `fault-report` definition with a further carriage.
+Every label of the artifact's head crosses in `Scored` with none elided
+and none beyond, per the contract's completeness guarantee, so the vector
+is the head and its order is the head's own.
+
+**Internally tagged, all three, and JSON without a deferral.** The answer
+carries no spliced member, so the adjacent tagging 4.4's answer needed has
+nothing to buy here, and the traffic is one ask and one whole answer per
+the asking loop's election, low in volume and diagnostic in audience, the
+loop 0 criterion rather than the decode seam's. That is a settled election
+against a stated criterion, not 4.4's provisional one: there is no
+hot-path measurement to wait for, because there is no hot path.
+
+**No record is added here.** The trio's nodes are the charter's, declared
+at `weaver-types-PRD` section 2.3 with their `defines` edges, per the same
+one-source rule the token trio states above.
 
 ## 5. What is enforced, and by which instrument
 
