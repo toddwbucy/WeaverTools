@@ -23,8 +23,8 @@
 #                                         {"kind", "turn", "sequence",
 #                                          "pairs": {key: json_text}}
 #   seat.turn(delta)       -> dict        runs one turn, delta is a list of
-#                                         {"role": "user"|"assistant",
-#                                          "text": str}
+#                                         {"role": "system"|"user"|
+#                                          "assistant", "text": str}
 #
 # drive(seat, text) is the one crossing. Run at least one turn: a crossing
 # that runs none falls back to a plain unshaped turn.
@@ -42,7 +42,11 @@
 # ingress, so the save IS the utterance and the loop's job is the
 # acknowledgment that keeps a generic model using the convention. A RECALL
 # runs the premade query: recall custody, match the subject, answer labeled
-# or report the miss honestly.
+# or report the miss honestly. Every contribution this loop authors - the
+# opening, the re-entry, the feedback - rides the system role, the loop's
+# own voice per the system role act, which is what lets the search exclude
+# it by kind and the operator exclude it from custody at the election, no
+# text ever matched to decide whose voice a message is.
 
 import json
 
@@ -182,29 +186,22 @@ def memory_lines(emission):
     return remembers, recalls
 
 
-# The loop's own voice, excluded from search: feedback quoting a hit
-# would match the next ask for the same subject, and the miss line
-# naming a subject would answer it - an echo chamber either way. The
-# openers below are every text this loop authors as feedback.
-FEEDBACK_OPENERS = (
-    "Saved.",
-    "From your memory:",
-    "Your memory holds nothing about",
-    "(Your memory could not be reached.)",
-)
-
-
 def memory_search(events, subject):
     """The premade query: a case-insensitive match of the subject against
     custody's texts, newest hits last, each quoted in a window around the
     match. RECALL lines are excluded - they are asks, not facts - the
-    loop's own feedback is excluded - it echoes - and REMEMBER lines are
-    exactly what should surface, so they stay.
+    loop's own voice is excluded by its role - the system kind is the
+    loop's and the operator's framing, and feedback quoting a hit would
+    match the next ask for the same subject, an echo chamber - and
+    REMEMBER lines are exactly what should surface, so they stay. The
+    role is the marker: no text is matched to decide whose voice a
+    message is, so a genuine record beginning with any feedback phrase
+    stays searchable.
     """
     needle = subject.lower()
     hits = []
-    for _, piece in event_texts(events):
-        if piece.lstrip().startswith(FEEDBACK_OPENERS):
+    for speaker, piece in event_texts(events):
+        if speaker == "system":
             continue
         for line in piece.splitlines():
             stripped = line.strip()
@@ -262,13 +259,13 @@ def drive(seat, text):
     # - a missing answer cannot prove the flush did not land.
     if not first and pressured(seat.fullness()):
         seat.flush()
-        delta.append({"role": "user", "text": reentry(seat.recall(RECALL_TURNS))})
+        delta.append({"role": "system", "text": reentry(seat.recall(RECALL_TURNS))})
     if first:
         opening = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT
         line = continuity(seat.session_shape())
         if line:
             opening += "\n\n" + line
-        delta.append({"role": "user", "text": opening})
+        delta.append({"role": "system", "text": opening})
     delta.append({"role": "user", "text": text})
     outcome = seat.turn(delta)
     # The memory rounds: detect the sigils, dispatch inward, refeed, and
@@ -279,4 +276,4 @@ def drive(seat, text):
         follow = memory_followup(seat, (outcome or {}).get("emission", ""))
         if follow is None:
             break
-        outcome = seat.turn([{"role": "user", "text": follow}])
+        outcome = seat.turn([{"role": "system", "text": follow}])
