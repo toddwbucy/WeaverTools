@@ -8,6 +8,10 @@ and this crate's part in the workflow now finishing is one thing, admitting a mo
 later releasing it.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-19, third of this date, the binary-spelling cell
+settles. The classifier code act's opening lands the Spec's section 11,
+which elects the second bin target with its reasoning, and section 10's
+cell records the settlement.
 **Revised:** 2026-08-19, second of this date, the classifier is chartered.
 Section 13.1's rule for later operation types is exercised for the first
 time: section 15 charters the classify submodule in its own process under
@@ -732,11 +736,12 @@ for the loop whose traffic it carries, direction being a fact about a loop's wal
 rather than a name on a two-initiator channel. This seam draws loop 0's trio and owes
 the floor nothing, per `weaver-types-PRD` section 2.3.
 
-**The classify submodule's binary spelling.** Whether the classify process of
-section 15 runs this crate's one binary under a role argument or a second bin
-target of the same crate is representation, and either satisfies section 15.1.
-**Settled by:** the Spec's election in the classifier's code act, recorded with
-its reasoning.
+**The classify submodule's binary spelling, settled.** Whether the classify
+process of section 15 runs this crate's one binary under a role argument or a
+second bin target of the same crate was representation, and either satisfied
+section 15.1. **Settled** at the classifier code act's opening: the Spec's
+section 11 elects the second bin target, `weaver-spu-classify`, with the
+reasoning recorded there.
 
 ## 11. Edits owed in the same act
 

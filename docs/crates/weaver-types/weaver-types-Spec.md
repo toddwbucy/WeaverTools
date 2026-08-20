@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-19, seventh of this date, the classify role joins the
+declaration. `SpuInstruction` gains `classify`, optional by presence per
+`weaver-spu-PRD` section 15.3, carrying the model binding at the smaller
+size: the second role key, arriving with the act that builds it exactly as
+section 2's role-not-slot rule promised. The external citation to
+`weaver-spu-Spec`'s open elections follows that document's renumbering to
+section 12 in the same act.
 **Revised:** 2026-08-19, sixth of this date, the label trio takes shape.
 Section 4.5 holds the classify contract's trio the way 4.4 holds the
 decode contract's: the cases spelled once from the contract's enumeration,
@@ -355,6 +362,11 @@ pub struct ElectedKindConfig {
 
 pub struct SpuInstruction {
     pub decoder: DecoderInstruction,
+    pub classify: Option<ClassifyInstruction>,
+}
+
+pub struct ClassifyInstruction {
+    pub model_binding: ModelBinding,
 }
 
 pub struct DecoderInstruction {
@@ -438,14 +450,21 @@ it. That is what keeps a deployment's lock a lock rather than a default.
 section 2.1 rules that an organ's fields are named together and cross together,
 and `spu-instruction` is that rule's first application: one declaration admin
 validates, the harness carries uninterpreted, and the SPU consumes.
-**`decoder` names a role rather than a slot.** The organ's chartered domain is
+**`decoder` names a role rather than a slot, and `classify` is the second
+role, arriving 2026-08-19 with the act that builds it.** The organ's
+chartered domain is
 every semantic operation in the text modality, per `weaver-spu-PRD` section 8,
-and the decode role is the one whose seam stands,
-`weaver-harness-spu-decode-contract`, so the key names something built, with a
-reader today. An embedder key arrives in the act that builds an embedder, named
+and the decode role is the one whose seam stood first,
+`weaver-harness-spu-decode-contract`, so each key names something built, with a
+reader today. The `classify` subsection carries the model binding at the
+smaller size and is optional by presence, per `weaver-spu-PRD` section 15.3:
+its absence is the operator declaring the agent runs no classifier, a
+declaration rather than a default, so the no-defaulting rule below is
+untouched by it. An embedder key arrives in the act that builds an embedder, named
 here as absent rather than carried empty, which is the near side of apex
 section 9. The no-defaulting argument below survives the nesting untouched:
-every field of the section is required, absence refuses the load, and the depth
+every field of a present section is required, absence of a required field
+refuses the load, and the depth
 at which a field sits changes nothing about what its absence means.
 
 **The identity material rides the decoder's section**, resolving the open
@@ -1501,7 +1520,7 @@ every intermediate reads the seam the batch way.
 
 **The encoding stays deferred and the deferral is the encoding's alone.** The
 hot-path measurement elects it, per section 4.3's boundary rule and
-`weaver-spu-Spec` section 11, and the measurement is taken against real decode
+`weaver-spu-Spec` section 12, and the measurement is taken against real decode
 traffic which the first demonstration produces. Until that traffic exists the
 seam carries this trio as JSON, the same encoding loop 0 carries, and **that is a
 provisional election with a stated trigger rather than an answer**: it is

@@ -4,6 +4,15 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-19, third of this date, the classify submodule is
+represented. Section 11 lands with the classifier code act's opening:
+the second bin target `weaver-spu-classify`, settling charter section
+10's binary-spelling cell, the label seam on section 2's `SOCK_SEQPACKET`
+election, the binding as `spu-instruction`'s `classify` subsection, the
+`modernbert` family entering section 5's registry serving classify alone
+with its head read from the artifact's own declaration, and structural
+statelessness. Open elections renumber to section 12, the one external
+citation moving in the same act.
 **Revised:** 2026-08-19, second of this date, the flush names its cut.
 Section 4.4 reaches the ask's kept length instead of the fixed prefix,
 per charter section 13.9 as amended on the operator's ruling, and the
@@ -467,7 +476,7 @@ to: spu-descriptor-count-check
 **The lifecycle channel carries the organ envelope and the decode socket does
 not.** Per charter section 13.2 the decode socket is not an organ channel, so
 the envelope crosses only on the first end, and the token trio crosses the
-second in whatever encoding the measurement of section 11 elects. Both ends
+second in whatever encoding the measurement of section 12 elects. Both ends
 carry the receive obligation the `SOCK_SEQPACKET` election attaches: a buffer
 sized to the envelope bound on the lifecycle channel, a read returning with
 `MSG_TRUNC` set treated as a channel fault and never a message, and the same
@@ -477,7 +486,7 @@ one, the bound sitting beside the election rather than inside it, and this crate
 carries the obligation without redeclaring either. **The two claims stated here
 carry two instruments, and the reason they differ is the reason one was unbought.**
 The envelope's confinement to the first end becomes watchable the day the decode
-socket's encoding is settled, which section 11 holds open, so no capture test has
+socket's encoding is settled, which section 12 holds open, so no capture test has
 a settled shape to assert against yet, and it stays review's by non-purchase on
 that ground. The truncation fault was reachable all along and three sibling Specs
 buy the instrument for it, `weaver-harness-Spec` section 8, `weaver-admin-Spec`
@@ -1458,7 +1467,7 @@ device.** Apex section 3 step 6 has the activations reduced in place and the
 reduction returning by the same path as the generation, so no per-layer tensor
 crosses the seam and the volume the seam carries is the reduction's. Review's
 by non-purchase, a capture of the decode seam under an elected readout being
-the watch and section 11's open encoding being what it waits on.
+the watch and section 12's open encoding being what it waits on.
 
 ```graph
 node: spu-reduction-in-place-at-the-tap
@@ -1969,7 +1978,7 @@ disposition, so those ground in nothing.
 absence is that invariant's own scope rather than a gap: every directive on the
 residency seam belongs to no turn and apex section 5.2 exempts it by name, and on
 the decode seam, where the work does belong to a turn, this document asserts
-nothing about attribution because that seam's encoding is section 11's open
+nothing about attribution because that seam's encoding is section 12's open
 election. The nine claims section 0 names are another Spec's to ground, including
 the socket election and the envelope bound the truncation obligation rests on.
 
@@ -2084,7 +2093,100 @@ from: weaver-spu
 to: spu-kernels-cross-with-their-fixtures
 ```
 
-## 11. Open elections
+## 11. The classify submodule
+
+How charter section 15 is represented: the process, its binary, its channel,
+its family, and the exchange's execution. Written against
+`weaver-harness-spu-classify-contract` and `weaver-types-Spec` sections 2 and
+4.5, and everything here restates a charter clause or elects a representation
+against one.
+
+**The binary is a second bin target of this crate, `weaver-spu-classify`,
+settling charter section 10's cell.** The alternative was one binary under a
+role argument, and the named binary wins on the provisioning ground the
+worker-binary precedent set: which binary a unit starts is a provisioning
+fact stated plainly, and a role flag on the decode binary would let one
+mistyped argument stand a decoder where a classifier was meant, refusing
+nothing at the point the mistake was made. The bin shares this crate's
+library, its family registry, and its admission judgment, which is what
+keeps the one-authority claim a fact about the crate rather than about a
+process.
+
+**The channel takes the `SOCK_SEQPACKET` election of section 2 unchanged**,
+one write one message from the socket type, with the same receive
+obligation stated for this seam explicitly: the receive buffer is sized to
+the election's 64 kibibyte bound, a read returning with `MSG_TRUNC` set is
+a channel fault and never a message, and each side asserts the bound on
+its own writes. A frame that would exceed the bound therefore fails at the
+send, which on the harness's side the seat converts into the same absence
+every failed ask serves, so the wire bound needs no second refusal name:
+the artifact's token bound is judged after tokenization on the process's
+side, per the trio's `Oversized`, and the datagram bound before any send
+on the asker's. The answer is a label vector whose size is the head's,
+nowhere near the bound. The encoding is the
+label trio's settled JSON, per `weaver-types-Spec` section 4.5, and unlike
+the token seam's it defers nothing: there is no hot path to measure.
+
+**The classify process receives exactly one descriptor, its label seam
+end, and section 2's count check holds here at one.** The check stays a
+count rather than an identification, per section 2's own reasoning, and a
+count above one means the discipline upstream failed and this process is
+not the one to continue past it. The decode-carrying process's own count
+stays two and this act moves neither.
+
+**The binding rides `spu-instruction` as a `classify` subsection beside
+`decoder`**, per `weaver-types-Spec` section 2: the artifact and its device
+assignment, the same shape at the smaller size, handed to the classify
+process at its exec per charter section 15.3. Admission judges the binding
+against the family's declared capabilities and the device's room exactly as
+the decoder's admission judges its own, the model first per the charter's
+ordering, and the readiness emission is the label seam's first message.
+
+**The first classify family is `modernbert`, entering section 5's registry
+with its capabilities declared, and the registry's selection gains the
+operation as a filter.** Charter section 14 already has every family
+declaring what operations its models serve, and the selection reads that
+declaration: a decode admission selects among families declaring decode,
+by architecture and the marker set as before, and a classify admission
+selects among families declaring classify the same way, so neither
+operation's candidates shadow the other's. The template joins the key only
+where a family renders one, per the template-joins-the-key ruling, and a
+classify family renders none, so its key is the architecture and the
+operation alone. The decoder's selection behavior does not move.
+`modernbert` serves classify and nothing else,
+renders no template, and reads its head from the artifact's own
+declaration, the label names being the artifact's `id2label` in index
+order, which is the head defining its labels the charter requires. The
+scores are the head's softmax, finite by construction over finite logits,
+one per label. Where the logits arrive non-finite the exchange faults
+rather than answers, per the trio's finiteness rule. The forward is the
+fork's `ModernBertForSequenceClassification`, and the tokenizer walks the
+same artifact-sidecar path the native decode families walk.
+
+**Statelessness is structural.** The process holds the admitted artifact
+and no session type: each exchange tokenizes, forwards, and answers from
+its own stack, nothing written that outlives the answer, which is what the
+contract's identical-asks conformance watches from outside.
+
+```graph
+node: spu-classify-answer-is-the-head
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-spu
+to: spu-classify-answer-is-the-head
+
+node: spu-classify-stateless
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-spu
+to: spu-classify-stateless
+```
+
+## 12. Open elections
 
 Each names what settles it, and none is this Spec's to settle alone.
 
