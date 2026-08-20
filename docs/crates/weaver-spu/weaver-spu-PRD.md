@@ -1073,10 +1073,12 @@ process admits before it serves, its readiness or its typed refusal
 traveling in the enter aggregate like any other arm. Admission law is
 unchanged in every word that matters: a conflict is discovered at
 admission and nowhere earlier, the refusal names itself, and nothing
-evicts. **The model admits before the classifier**, so a device too small
-for both refuses deterministically and the refusal names the smaller
-tenant rather than whichever raced last. The load is all or nothing, per
-the lifecycle's standing shape, and unload releases the set.
+evicts. **The model admits before the classifier**, so where the pair
+exceeds the device the refusal is deterministically the classifier's and
+names its own arm rather than whichever raced last. A load failing at
+either arm fails whole, per the lifecycle's standing shape and section 5's
+partway rule, leaving nothing admitted behind it, and unload releases the
+set.
 
 ### 15.4 The exchange
 
@@ -1084,7 +1086,9 @@ the lifecycle's standing shape, and unload releases the set.
 the turn's trace context, and the answer carries every label the artifact
 defines, each with its score, in one message. There is no session, no
 accumulation, and nothing retained between exchanges: two identical asks
-answer identically, which is the statelessness a later reader can check.
+within one admission answer identically, which is the statelessness a
+later reader can check, and the claim ends at the admission's edge, a
+re-admitted artifact being a new scorer.
 The artifact's head defines the label set and the ask carries content
 alone, because a per-ask label set would be the asker teaching the model
 mid-exchange, which is a different instrument this charter does not hold.

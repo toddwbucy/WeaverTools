@@ -107,8 +107,10 @@ being the acknowledgment.
 start, per `weaver-spu-PRD` section 15.3, and its first message on this seam
 is the admission's outcome: ready, or a typed refusal naming itself the way
 the model's admission refusals do, either traveling in the enter aggregate
-as the fan-out arm's answer. Nothing else crosses before it in either
-direction.
+as the fan-out arm's answer. The harness asks nothing before it, and a
+directive arriving before readiness anyway is refused as not ready and
+never answered late, section 3's ordering rule stating the same edge from
+its side.
 
 **Classify.** Opened by the harness, carrying the content to classify and
 the turn's trace context, per apex invariant 5.3. The answer returns whole:
@@ -223,8 +225,11 @@ How each check is implemented is Spec work. What must be checkable:
 
 - Statelessness: two identical asks within one admission answer with
   identical scores, watched to fail when anything is retained between them.
-- Completeness: the answer's label count equals the artifact head's, with a
-  silent top-k the perturbation that must fail.
+- Completeness: the answer's labels are the artifact head's exactly, each
+  present once and none beyond, with a silent top-k, a duplicated label,
+  and an invented label the perturbations that must fail. A count alone
+  cannot check this, because a duplicate hides a missing label behind a
+  matching total.
 - The bound refuses typed: a content past the artifact's bound answers the
   refusal naming the bound, and the seam keeps serving after it.
 - Readiness gates service: a classify before the readiness emission is
