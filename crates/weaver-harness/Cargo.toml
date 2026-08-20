@@ -21,7 +21,7 @@ weaver-traits = { path = "../weaver-traits" }
 weaver-types = { path = "../weaver-types", default-features = false }
 weaver-trace = { path = "../weaver-trace" }
 serde_json.workspace = true
-nix = { version = "0.31", features = ["socket", "fs", "process", "uio", "user", "poll"] }
+nix = { version = "0.31", features = ["socket", "fs", "process", "uio", "user", "poll", "signal"] }
 # The embedded interpreter of the python-iterating worker, per
 # weaver-harness-Spec section 1: optional behind the pyworker feature, so no
 # default build compiles or links it and the manifest assertions above keep
