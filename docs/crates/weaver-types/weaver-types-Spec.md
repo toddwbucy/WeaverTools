@@ -5,6 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-20, second of this date, the loop joins the
+declaration. Per the operator's ruling on issue #243: `AgentConfig`
+gains `loop_file`, optional beside `state_election` and by the same
+exception, `weaver-harness-PRD` section 2 ruling its absence as the
+worker's own default loop. Present, it names the loop file the agent's
+worker runs, the loop being a member of the agent's harness and unique
+to it. The carriage is `weaver-admin-Spec` section 6's, in the same
+act.
 **Revised:** 2026-08-20, the segment series takes shape. Per the decode
 contract's amendment on issue #236: a frame past the envelope crosses as
 a preamble spelling its count and byte length, then raw octet slices
@@ -355,6 +363,7 @@ pub struct AgentConfig {
     pub gate_instruction: GateInstruction,
     pub trace_sink: TraceSink,
     pub state_election: Option<StateElection>,
+    pub loop_file: Option<PathBuf>,
 }
 
 pub struct StateElection {
@@ -513,8 +522,8 @@ temptation named.** The surface is the union of what the organs register, per
 one struct's field list, and the refusal is against that surface rather than against a
 fixed type. The property below is unchanged by that and is why the rule exists.
 Charter section 5 rules that absence is never read as a default unless the charter
-says a field is optional and says what its absence means. One field is optional,
-and it is optional by exactly that rule's own terms: `state_election` may be
+says a field is optional and says what its absence means. Two fields are optional,
+each by exactly that rule's own terms. `state_election` may be
 absent because `weaver-state-PRD` section 4 rules what absence means, the
 default election, the envelope of every kind and nothing more, so a deployment
 that elects nothing still holds the session's shape by the charter's sentence
@@ -526,7 +535,15 @@ adding payload paths on top of the envelope every kind already crosses
 with. `EnterPayload` carries the election resolved,
 admin filling that ruled default at inventory, so the worker never re-derives
 an absence. When the block is present, both its members are required, the
-required-field discipline resuming inside it. Every other field is required.
+required-field discipline resuming inside it. `loop_file` may be absent
+because `weaver-harness-PRD` section 2 rules what absence means, the worker's
+own default loop, the compiled body or the installed file, so a declaration
+written before the member existed still parses and still means what it meant.
+Present, it names the loop file the agent's worker runs, the loop being a
+member of that agent's harness and unique to it per the same section's ruling
+of 2026-08-20, and it reaches the worker in the unit's argument vector per
+`weaver-admin-Spec` section 6 rather than in any exchange, because no exchange
+carries a path. Every other field is required.
 The residual-readout election is what a builder will reach to default,
 to off, and it is exactly the one that must not: an operator who stated no readout
 has not thereby declined it, and admin refusing the load is how that operator

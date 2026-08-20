@@ -4,6 +4,14 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-20, second of this date, the declared loop wins the
+resolve. Per the charter's ruling of this date on issue #243: the loop
+is a member of each agent's harness and unique to it, so section 1's
+`pyworker` passage resolves its loop file in a fixed order, the
+declaration's `--loop-file` flag first, the environment's name second as
+the developer's bench override, the deployed default last. The member is
+`weaver-types-Spec` section 2's and the carriage is `weaver-admin-Spec`
+section 6's, in the same act.
 **Revised:** 2026-08-20, the decode reads reassemble the series. Per the
 decode contract's amendment on issue #236: the decode channel's receive
 recognizes the segment preamble by the `kind` member it lacks, collects
@@ -261,9 +269,15 @@ arguments and same crossing, with the loop body marshalled into an embedded
 interpreter by `py_loop`: the loop file is read and compiled per crossing,
 so the builder iterates at conversation speed and freezes the result into
 a Rust `dev_loop` to deploy. The loop files live under `dev_python`, the
-developer's directory by the standing prefix, and the file the crossing
-runs is the one `WEAVER_PY_LOOP` names, the deployed default standing where
-it is unset. The binary and its interpreter dependency enter the manifest
+developer's directory by the standing prefix. The file the crossing runs is
+resolved in a fixed order, per charter section 2's ruling of 2026-08-20 on
+issue #243: the `--loop-file` flag first, the declaration's member arriving
+on the argument vector per `weaver-admin-Spec` section 6, then the name
+`WEAVER_PY_LOOP` carries, the developer's bench override, then the deployed
+default. The flag wins because the declaration is the agent's own fact and
+the loop is a member of that agent's harness, unique to it, so an
+environment leaking across agents cannot silently share what the
+declarations separated. The binary and its interpreter dependency enter the manifest
 behind the `pyworker` feature, the dependency optional and the bin target
 carrying `required-features`, so no default build compiles or links an
 interpreter and the deployed worker's build is untouched. The blade holds

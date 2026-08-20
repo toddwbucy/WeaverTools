@@ -216,6 +216,25 @@ fn an_absent_state_election_is_none() {
     );
 }
 
+/// The second optional field, per the ruling of 2026-08-20 on issue #243:
+/// absent means the worker's own default loop, so every declaration written
+/// before the member existed still parses, which is the absence path the
+/// standing fixtures exercise. Present, it names the agent's own loop file.
+#[test]
+fn the_loop_file_is_optional_and_names_a_path_when_present() {
+    let config = parse(&full_config()).expect("parses");
+    assert_eq!(config.loop_file, None);
+    let source = format!(
+        "{}loop-file: /etc/weaver/agents/alpha.loop.py\n",
+        full_config()
+    );
+    let config = parse(&source).expect("parses");
+    assert_eq!(
+        config.loop_file,
+        Some(std::path::PathBuf::from("/etc/weaver/agents/alpha.loop.py"))
+    );
+}
+
 /// A present election parses whole, keys meaningful beside all-kinds true.
 #[test]
 fn a_present_state_election_parses() {

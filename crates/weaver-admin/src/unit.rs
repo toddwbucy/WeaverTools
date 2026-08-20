@@ -136,6 +136,7 @@ pub fn start(
     identity: &str,
     agent: &str,
     coordination_socket: &std::path::Path,
+    loop_file: Option<&std::path::Path>,
 ) -> std::io::Result<std::process::ExitStatus> {
     Command::new(&template.run_tool)
         .args(start_arguments(
@@ -143,6 +144,7 @@ pub fn start(
             identity,
             agent,
             coordination_socket,
+            loop_file,
         ))
         .status()
 }
@@ -153,18 +155,22 @@ pub fn start(
 /// add it here, which is what keeps that test from passing over a drifted
 /// invocation.
 ///
-/// **The worker's own arguments follow the binary and take no second
-/// variable**, per `weaver-admin-Spec` section 6. The socket path is derived
-/// by the caller from the validated agent name, and the two binaries are the
-/// operator's installed values, so the vector reads the allow-listed name and
-/// the operator's file and reads nothing else. A builder who let any of the
-/// three be composed from the invocation's own input would widen the
-/// delegated authority by the route the name check closes.
+/// **The worker's own arguments follow the binary and take no value the
+/// invocation's own input composes**, per `weaver-admin-Spec` section 6. The
+/// socket path is derived by the caller from the validated agent name, the
+/// two binaries are the operator's installed values, and the loop file is
+/// the vector's one declaration-sourced value, the operator's file validated
+/// at inventory, resolved by the worker under the agent's own identity. So
+/// the vector reads the allow-listed name and the operator's files and reads
+/// nothing else. A builder who let any of these be composed from the
+/// invocation's own input would widen the delegated authority by the route
+/// the name check closes.
 fn start_arguments(
     template: &UnitTemplate,
     identity: &str,
     agent: &str,
     coordination_socket: &std::path::Path,
+    loop_file: Option<&std::path::Path>,
 ) -> Vec<String> {
     let mut args = vec![
         "--unit".to_string(),
@@ -187,6 +193,13 @@ fn start_arguments(
     if let Some(headroom) = &template.headroom_bytes {
         args.push("--headroom-bytes".to_string());
         args.push(headroom.clone());
+    }
+    // The declaration's loop file, per `weaver-admin-Spec` section 6: the
+    // vector's one declaration-sourced value, absent from the vector where
+    // absent from the declaration so the worker's own default stands.
+    if let Some(loop_file) = loop_file {
+        args.push("--loop-file".to_string());
+        args.push(loop_file.display().to_string());
     }
     args
 }
@@ -275,6 +288,7 @@ mod tests {
             "weaver-alpha",
             "alpha",
             std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
         );
         for banned in [
             "StandardOutput=",
@@ -313,6 +327,7 @@ mod tests {
             "weaver-alpha",
             "alpha",
             std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
         );
         assert!(rendered.iter().any(|a| a == "--property=User=weaver-alpha"));
         assert!(
@@ -366,6 +381,7 @@ mod tests {
             "weaver-alpha",
             "alpha",
             std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
         );
         assert_eq!(
             rendered[rendered.len() - 4..],
@@ -376,6 +392,53 @@ mod tests {
                 "/usr/libexec/weaver-gate".to_string(),
             ],
             "the binary and its three arguments close the vector: {rendered:?}"
+        );
+    }
+
+    /// **The declared loop rides the vector, and only where declared**, per
+    /// `weaver-admin-Spec` section 6: the vector's one declaration-sourced
+    /// value crosses as a named flag after the positional arguments, and an
+    /// absent member puts no flag on the vector so the worker's own default
+    /// stands.
+    ///
+    /// Perturbation: push the flag unconditionally and the absent half fails.
+    /// Drop the push and the declared half fails.
+    #[test]
+    fn the_declared_loop_rides_the_vector_and_only_where_declared() {
+        let template = UnitTemplate {
+            run_tool: "/bin/true".into(),
+            control_tool: "/bin/true".into(),
+            properties: vec![],
+            worker: "/usr/libexec/weaver-worker".into(),
+            spu: "/usr/libexec/weaver-spu".into(),
+            gate: "/usr/libexec/weaver-gate".into(),
+            headroom_bytes: None,
+        };
+        let declared = start_arguments(
+            &template,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            Some(std::path::Path::new("/etc/weaver/agents/alpha.loop.py")),
+        );
+        assert_eq!(
+            declared[declared.len() - 2..],
+            [
+                "--loop-file".to_string(),
+                "/etc/weaver/agents/alpha.loop.py".to_string(),
+            ],
+            "the declared loop closes the vector as a named flag: {declared:?}"
+        );
+        let absent = start_arguments(
+            &template,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
+        );
+        assert!(
+            !absent.iter().any(|a| a == "--loop-file"),
+            "an absent member puts no flag on the vector: {absent:?}"
         );
     }
 }
