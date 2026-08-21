@@ -117,7 +117,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         devices: vec![DeviceOrdinal(0)],
     };
 
-    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
+    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false);
     let resident = match admitted {
         Ok(resident) => resident,
         Err(refusal) => panic!("the admit succeeds against a real artifact, got {refusal:?}"),
@@ -139,7 +139,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
 
     // Nothing is idempotent: a second admit refuses on the ordering with an
     // identical binding, while the first residency stands.
-    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
+    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false);
     assert!(
         matches!(
             second,
@@ -223,6 +223,7 @@ mod seam_success {
                         },
                         residual_readout_election: true,
                     field_election: None,
+                    surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -310,6 +311,7 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -417,6 +419,7 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
@@ -534,6 +537,7 @@ mod seam_success {
                         },
                         residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),

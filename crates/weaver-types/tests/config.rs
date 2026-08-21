@@ -357,3 +357,49 @@ fn a_declared_field_election_carries_its_depth() {
         .expect("present");
     assert_eq!(election.depth, 50);
 }
+
+/// **A declaration written before the surprisal election parses, and reads
+/// as declining the vector.** The field takes `serde(default)` because the
+/// election elects a reading out rather than in, per `weaver-spu-PRD`
+/// section 13.12, so the absent member and an explicit `false` mean the
+/// same thing to this crate. What keeps them distinguishable to a consumer
+/// is the record rather than this struct: the `load` event carries the
+/// election as a member serialized even when false.
+#[test]
+fn an_absent_surprisal_election_declines_the_vector() {
+    let config = parse(&full_config()).expect("parses");
+    assert!(
+        !config.spu_instruction.decoder.surprisal_election,
+        "the standing fixture predates the election and declines it"
+    );
+}
+
+/// A declared election parses, and the kebab spelling is the file's.
+#[test]
+fn a_declared_surprisal_election_parses() {
+    let source = full_config().replace(
+        "    residual-readout-election: false\n",
+        "    residual-readout-election: false\n    surprisal-election: true\n",
+    );
+    let config = parse(&source).expect("parses");
+    assert!(
+        config.spu_instruction.decoder.surprisal_election,
+        "the operator elected the vector"
+    );
+}
+
+/// **A misspelled election refuses rather than defaulting quietly.** The
+/// instruction denies unknown fields, so an operator who writes
+/// `surprisal-elections` is told, where a permissive parse would hand back
+/// a declaration that reads as declining the vector it asked for.
+#[test]
+fn a_misspelled_surprisal_election_refuses() {
+    let source = full_config().replace(
+        "    residual-readout-election: false\n",
+        "    residual-readout-election: false\n    surprisal-elections: true\n",
+    );
+    assert!(
+        parse(&source).is_err(),
+        "an unknown member refuses rather than being ignored"
+    );
+}

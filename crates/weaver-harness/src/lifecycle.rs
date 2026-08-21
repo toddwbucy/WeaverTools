@@ -1046,6 +1046,7 @@ impl Harness {
                 .field_election
                 .as_ref()
                 .map(|election| election.depth),
+            surprisal: payload.spu_instruction.decoder.surprisal_election,
         };
         author
             .author(
@@ -1653,6 +1654,7 @@ mod tests {
                 Some(Payload::Elections(weaver_trace::Elections {
                     residual_readout: false,
                     field: None,
+                    surprisal: false,
                 })),
             )
             .expect("load");
@@ -1760,6 +1762,7 @@ mod tests {
                     },
                     residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -1859,6 +1862,7 @@ mod tests {
                     },
                     residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
                     identity: vec![weaver_traits::Message {
                         role: weaver_traits::Role::System,
                         content: vec![weaver_traits::ContentBlock::Text {
@@ -1986,6 +1990,7 @@ mod tests {
                     },
                     residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },

@@ -65,6 +65,7 @@ fn elections() -> Payload {
     Payload::Elections(weaver_trace::Elections {
         residual_readout: false,
         field: None,
+        surprisal: false,
     })
 }
 

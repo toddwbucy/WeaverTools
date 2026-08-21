@@ -155,6 +155,7 @@ fn a_split_artifact_larger_than_any_card_admits_across_the_pair() {
             &single,
             Headroom(2 * 1024 * 1024 * 1024),
             ReadoutElection(false),
+            false,
         );
         // The refusal must be the room refusal on the probed card, or the
         // probe proves nothing: any other refusal - a family miss, a bad
@@ -190,6 +191,7 @@ fn a_split_artifact_larger_than_any_card_admits_across_the_pair() {
             &binding,
             Headroom(2 * 1024 * 1024 * 1024),
             ReadoutElection(false),
+            false,
         )
         .expect("the split admits across the pair");
 
@@ -247,6 +249,7 @@ fn a_model_larger_than_one_card_admits_across_a_pair() {
         &binding,
         Headroom(2 * 1024 * 1024 * 1024),
         ReadoutElection(false),
+        false,
     ) {
         Ok(resident) => resident,
         Err(refusal) => panic!("the pair admit: {refusal:?}"),

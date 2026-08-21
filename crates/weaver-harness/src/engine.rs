@@ -1112,6 +1112,7 @@ mod tests {
                 Some(Payload::Elections(weaver_trace::Elections {
                     residual_readout: false,
                     field: None,
+                    surprisal: false,
                 })),
             )
             .expect("load");
@@ -1287,6 +1288,7 @@ mod tests {
                 Some(Payload::Elections(weaver_trace::Elections {
                     residual_readout: false,
                     field: None,
+                    surprisal: false,
                 })),
             )
             .expect("load");
@@ -1481,6 +1483,7 @@ mod tests {
                 Some(Payload::Elections(weaver_trace::Elections {
                     residual_readout: false,
                     field: None,
+                    surprisal: false,
                 })),
             )
             .expect("load");
@@ -1650,6 +1653,7 @@ mod tests {
                 Some(Payload::Elections(weaver_trace::Elections {
                     residual_readout: false,
                     field: Some(2),
+                    surprisal: false,
                 })),
             )
             .expect("load");
@@ -1870,6 +1874,7 @@ mod tests {
                 Some(Payload::Elections(weaver_trace::Elections {
                     residual_readout: false,
                     field: None,
+                    surprisal: false,
                 })),
             )
             .expect("load");
