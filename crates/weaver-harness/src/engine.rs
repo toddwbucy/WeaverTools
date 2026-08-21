@@ -1071,7 +1071,16 @@ mod tests {
                 .expect("recorder");
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
-            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                })),
+            )
             .expect("load");
         let mut turn_ordinal = 0u64;
 
@@ -1237,7 +1246,16 @@ mod tests {
                 .expect("recorder");
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
-            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                })),
+            )
             .expect("load");
         let mut turn_ordinal = 0u64;
 
@@ -1422,7 +1440,16 @@ mod tests {
                 .expect("recorder");
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
-            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                })),
+            )
             .expect("load");
         let mut turn_ordinal = 0u64;
         let mut gate_ordinal = 0u64;
@@ -1666,7 +1693,16 @@ mod tests {
                 .expect("recorder");
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
-            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                })),
+            )
             .expect("load");
         let mut turn_ordinal = 0u64;
         let mut slot = Some(verb_end);

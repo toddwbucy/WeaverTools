@@ -259,6 +259,65 @@ pub fn entropy_bits(logits: &[f32]) -> f32 {
     (nats / LN_2).max(0.0)
 }
 
+/// The probability field at one position: the `depth` most probable
+/// candidates in descending order with their probabilities, and the rank
+/// the drawn token landed on.
+///
+/// Per `weaver-spu-Spec` section 7.5, computed from the same logits the
+/// entropy and the surprisal are computed from, at the same site and
+/// before the sampler consumes the distribution.
+///
+/// **A partial selection rather than a sort.** The depth is small against
+/// a vocabulary in the hundreds of thousands, so the whole vector is
+/// scanned once to find the depth's worth of leaders and only those are
+/// ordered. Sorting the vocabulary would cost the run for a result the
+/// caller discards.
+///
+/// **Probabilities rather than logits**, in shifted space for the reason
+/// the entropy is: a consumer re-normalising per position would repeat
+/// arithmetic already done over the whole vocabulary, and a raw logit
+/// tells a reader nothing without the normaliser beside it.
+///
+/// `None` where the distribution carries no finite normaliser or the drawn
+/// index is outside it, which is the absent-rather-than-zero rule the
+/// signals follow.
+pub fn field(logits: &[f32], drawn: usize, depth: usize) -> Option<(Vec<(u32, f32)>, u32)> {
+    let (max, shifted_lse) = shifted_normaliser(logits)?;
+    if drawn >= logits.len() || depth == 0 {
+        return None;
+    }
+    let probability = |logit: f32| ((logit - max) - shifted_lse).exp();
+
+    // One pass for the leaders, holding at most `depth` of them. The list
+    // stays ordered as it fills, so the insert is a walk over a short
+    // vector rather than a sort of a long one.
+    let mut leaders: Vec<(u32, f32)> = Vec::with_capacity(depth + 1);
+    for (index, &logit) in logits.iter().enumerate() {
+        if leaders.len() == depth && logit <= leaders[depth - 1].1 {
+            continue;
+        }
+        let at = leaders
+            .iter()
+            .position(|(_, held)| logit > *held)
+            .unwrap_or(leaders.len());
+        leaders.insert(at, (index as u32, logit));
+        leaders.truncate(depth);
+    }
+
+    // The realized rank is the drawn token's place among the leaders. A
+    // draw outside them is reported as the depth itself, which reads as
+    // "past what was reported" and never as a rank that was observed.
+    let realized = leaders
+        .iter()
+        .position(|(token, _)| *token as usize == drawn)
+        .unwrap_or(depth) as u32;
+    let ranked = leaders
+        .into_iter()
+        .map(|(token, logit)| (token, probability(logit)))
+        .collect();
+    Some((ranked, realized))
+}
+
 /// Surprisal of one token under the distribution, in bits.
 ///
 /// `-log2 p` for the drawn token, taken in shifted space for the same reason
@@ -462,5 +521,58 @@ mod tests {
             PromptPartition::new(vec![4, 2, 11], text_len),
             Err(PartitionDefect::NotAscending { at: 1 })
         );
+    }
+
+    /// **The field ranks by probability and names the realized rank**, per
+    /// `weaver-spu-Spec` section 7.5. A uniform vector plus one peak has a
+    /// known order, so the ranking is checkable without depending on the
+    /// arithmetic the entropy tests already buy.
+    ///
+    /// Perturbation: rank ascending instead of descending and the leader
+    /// assertion fails; drop the realized lookup and the rank does.
+    #[test]
+    fn the_field_ranks_and_names_the_draw() {
+        let mut logits = vec![0.0f32; 32];
+        logits[7] = 10.0;
+        logits[3] = 5.0;
+        logits[19] = 1.0;
+        let (ranked, realized) = field(&logits, 3, 4).expect("a field");
+        assert_eq!(ranked.len(), 4, "the depth's worth of candidates");
+        assert_eq!(ranked[0].0, 7, "the peak leads");
+        assert_eq!(ranked[1].0, 3, "then the second");
+        assert_eq!(ranked[2].0, 19, "then the third");
+        assert!(
+            ranked[0].1 > ranked[1].1 && ranked[1].1 > ranked[2].1,
+            "descending probability: {ranked:?}"
+        );
+        assert_eq!(realized, 1, "the drawn token's own rank");
+        let total: f32 = ranked.iter().map(|(_, p)| p).sum();
+        assert!(
+            total > 0.0 && total < 1.0 + 1e-4,
+            "probabilities, not logits: {total}"
+        );
+    }
+
+    /// **A draw outside the reported depth reads as past it**, never as a
+    /// rank that was observed. The alternative, reporting rank zero or
+    /// omitting the member, would put a token at the front of a field it
+    /// was not in.
+    #[test]
+    fn a_draw_below_the_depth_reads_as_past_it() {
+        let mut logits = vec![0.0f32; 32];
+        for (at, value) in [(7, 10.0), (3, 5.0), (19, 1.0)] {
+            logits[at] = value;
+        }
+        let (_, realized) = field(&logits, 11, 3).expect("a field");
+        assert_eq!(realized, 3, "the depth itself, meaning past the report");
+    }
+
+    /// A depth of zero and an index outside the vector are absences rather
+    /// than empty fields, the rule the signals follow.
+    #[test]
+    fn the_field_is_absent_rather_than_empty() {
+        let logits = vec![0.0f32, 1.0, 2.0];
+        assert!(field(&logits, 0, 0).is_none(), "no depth, no field");
+        assert!(field(&logits, 9, 2).is_none(), "no such draw, no field");
     }
 }
