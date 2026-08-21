@@ -1,7 +1,7 @@
 # WeaverTools - Technical Report
 
 **Status:** DRAFT. Describes `WeaverTools` at `fbcb73e`, 2026-08-21. Sections 5
-through 14 are planned in appendix A rather than drafted.
+through 15 are planned in appendix A rather than drafted.
 
 **Date started:** 2026-08-21
 **Document ID:** `weaver-tools-technical-report`
@@ -323,10 +323,34 @@ recorded whichever side set them. Why the loop is compiled rather than
 configured, and how that holds variance to a range so what remains is
 attributable to the thing under study.
 
-**14. What stands, and what does not.** The demonstration rather than the count,
+**14. The apparatus in use.** The measurement regime stands outside this
+repository, registers each test with its method before it runs, and carries with
+every result the conditions that make it comparable: the commit, the build
+profile, and the identity of the binaries measured rather than the profile's bare
+claim. What it has produced is the section, and one result carries it. **Two
+identical agents, sampling independently, scored 2.890 and 2.730, t=1.33,
+indistinguishable at five percent.** That is the A/A test, and it says the rig
+adds nothing of its own, so a later difference between two arms is the
+treatment's. Every claim this architecture makes about held variance reduces to
+that, and it was tested rather than asserted.
+
+Three further results show the instruments earning their place. The measurement
+payload is not decoration: over two hundred rounds the model's own per-token
+surprisal predicted its score, r = -0.300. Recording tokens rather than a seed is
+not bookkeeping: forty recorded runaways were re-run against a raised generation
+ceiling with the same seeds, and each generation came back byte-identical to the
+original until the old ceiling and differed only after it, which is the property
+section 10 argues for, demonstrated. And the negative results are kept beside the
+positive ones, two hypotheses built on an entropy signal having died on the
+evidence, there being no branch point and no in-flight predictor worth the name
+at 59.5 percent against a 51 percent base rate.
+
+**15. What stands, and what does not.** The demonstration rather than the count,
 since a crate can report a high conformance figure while completing no turn and a
 completed turn is not a count of claims met. Both engines serving, the trace over
-its turns, and the assertions still open named with what each waits on. Against
+its turns, a series of two hundred rounds and eight hundred turns completed with
+no aborts and no missing traces, and the assertions still open named with what
+each waits on. Against
 that, what is deferred: client-facing streaming, the status ask, and the memory
 leg, each with a named door rather than a reserved slot. Closing on what the
 trade costs, including the program's own judgment that a local proto-stateful
