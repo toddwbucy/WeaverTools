@@ -222,6 +222,7 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: true,
+                    field_election: None,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -308,6 +309,7 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
+                    field_election: None,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -414,6 +416,7 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
+                    field_election: None,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
@@ -530,6 +533,7 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
+                    field_election: None,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),

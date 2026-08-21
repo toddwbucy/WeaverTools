@@ -320,3 +320,40 @@ fn the_classify_role_is_optional_by_presence() {
     let err = parse(&unknown_key).expect_err("an unknown key inside the section refuses");
     assert!(matches!(err.kind, ConfigErrorKind::UnknownField), "{err:?}");
 }
+
+/// **An absent field election renders no member**, per the act's own rule
+/// that an absence is absent rather than null. The instruction is
+/// serialized into the enter directive, so a null here would put an
+/// explicit nothing on the seam where the shape means absence.
+#[test]
+fn an_absent_field_election_renders_nothing() {
+    let config = parse(&full_config()).expect("parses");
+    assert_eq!(
+        config.spu_instruction.decoder.field_election, None,
+        "the standing fixture declares none"
+    );
+    // The rendering half is the seam's: the instruction is serialized into
+    // the enter directive, and `skip_serializing_if` is what keeps an
+    // absence absent there rather than an explicit null.
+    let rendered = serde_json::to_string(&config.spu_instruction).expect("renders");
+    assert!(
+        !rendered.contains("field-election") && !rendered.contains("field_election"),
+        "no member for an absent election: {rendered}"
+    );
+}
+
+/// A declared election parses whole and survives the round trip.
+#[test]
+fn a_declared_field_election_carries_its_depth() {
+    let source = full_config().replace(
+        "    residual-readout-election: false\n",
+        "    residual-readout-election: false\n    field-election:\n      depth: 50\n",
+    );
+    let config = parse(&source).expect("parses");
+    let election = config
+        .spu_instruction
+        .decoder
+        .field_election
+        .expect("present");
+    assert_eq!(election.depth, 50);
+}

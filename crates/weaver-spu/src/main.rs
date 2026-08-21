@@ -182,6 +182,11 @@ const SESSION_PARAMETERS: SessionParameters = SessionParameters {
 struct Effective {
     knobs: EffectiveKnobs,
     session: EffectiveSessionParameters,
+    /// The probability field's declared depth where its election stood,
+    /// per `weaver-spu-Spec` section 7.5. Resolved at admit beside the
+    /// knobs, because it is judged against the sampling cutoff that
+    /// resolve produces and it stands for the residency the same way.
+    field_depth: Option<u32>,
 }
 
 /// Resolve both sets against what the declaration supplied.
@@ -193,6 +198,7 @@ struct Effective {
 /// keeps a declaration's mistake from costing device work.
 fn resolve_effective(supplied: &TunableValues) -> Result<Effective, KnobRefusal> {
     Ok(Effective {
+        field_depth: None,
         knobs: KNOBS.resolve(supplied)?,
         session: SESSION_PARAMETERS.resolve(supplied)?,
     })
@@ -554,11 +560,38 @@ fn serve_decode(
                         }
                     }
                 };
+                // **The field's own intermediate**, per the decode contract's
+                // section 2: one message per retained token where the
+                // election stands, closing nothing, carrying its position
+                // because the token message crosses per renderable piece and
+                // cannot pair one. Absent where unelected: no message is
+                // sent rather than an empty one.
+                let mut on_field = |position: u64, ranked: Vec<(u32, f32)>, realized: u32| {
+                    if stream_fatal.get() {
+                        return;
+                    }
+                    let frame = TokenAnswer::Field {
+                        position,
+                        ranked: ranked
+                            .into_iter()
+                            .map(|(token, probability)| weaver_types::Candidate {
+                                token,
+                                probability,
+                            })
+                            .collect(),
+                        realized,
+                    };
+                    if send_answer(decode, &frame).is_err() {
+                        stream_fatal.set(true);
+                    }
+                };
                 let generated = match standing.session.append_and_generate(
                     &delta_tokens,
                     &stop,
                     &mut cancel,
                     &mut on_token,
+                    effective.field_depth.map(|d| d as usize),
+                    &mut on_field,
                 ) {
                     Ok(generated) => generated,
                     Err(DecodeFault::Overflow {
@@ -946,6 +979,31 @@ fn dispatch(
                     });
                 }
             };
+            // **The field's depth is judged here, against the cutoff the
+            // resolve just produced**, per `weaver-spu-Spec` section 7.5.
+            // The sampler truncates before it draws, so top-k puts a real
+            // wall in the field while the reported depth is an artifact of
+            // the reporting, and telling them apart requires reporting past
+            // the wall. Two integers answer it, so it is answered before any
+            // device work rather than at the first turn.
+            if let Some(election) = &decoder.field_election {
+                if election.depth < resolved.knobs.top_k {
+                    *position = SeamPosition::AdmitRefused;
+                    eprintln!(
+                        "{}",
+                        serde_json::json!({
+                            "refusal": "field_depth_below_cutoff",
+                            "depth": election.depth,
+                            "cutoff": resolved.knobs.top_k,
+                        })
+                    );
+                    return Payload::Refusal(LifecycleRefusal::ConfigInvalid {
+                        field: Some(weaver_types::FieldName(
+                            "spu-instruction.decoder.field-election.depth".to_string(),
+                        )),
+                    });
+                }
+            }
             match residency.admit(
                 &decoder.model_binding,
                 Headroom(headroom),
@@ -953,6 +1011,8 @@ fn dispatch(
             ) {
                 Ok(_) => {
                     *position = SeamPosition::Admitted;
+                    let mut resolved = resolved;
+                    resolved.field_depth = decoder.field_election.as_ref().map(|e| e.depth);
                     *effective = Some(resolved);
                     Payload::Answer(LifecycleAnswer::Admitted)
                 }
@@ -1069,6 +1129,7 @@ mod tests {
             decoder: DecoderInstruction {
                 model_binding: binding(),
                 residual_readout_election: false,
+                    field_election: None,
                 identity: vec![],
                 tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),

@@ -59,6 +59,15 @@ fn event(kind: Kind, turn: Option<&str>, payload: Option<Payload>) -> Event {
     }
 }
 
+/// The elections a load declares. Every `load` event carries them as of
+/// 2026-08-21, so a record says what posture it was written in.
+fn elections() -> Payload {
+    Payload::Elections(weaver_trace::Elections {
+        residual_readout: false,
+        field: None,
+    })
+}
+
 fn user_message(turn: &str) -> Event {
     event(
         Kind::MessageUser,
@@ -78,7 +87,7 @@ fn user_message(turn: &str) -> Event {
 #[test]
 fn one_line_per_event() {
     let (mut r, path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let prose = "line one\nline two";
     let rendered =
         serde_json::to_string(&serde_json::json!({"role":"user","text":prose})).expect("renders");
@@ -121,7 +130,7 @@ fn raw_newline_octets_refuse_construction() {
 #[test]
 fn large_integers_render_as_decimal_strings() {
     let (mut r, path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     r.drain().unwrap();
     let mut out = String::new();
     File::open(&path).unwrap().read_to_string(&mut out).unwrap();
@@ -147,7 +156,7 @@ fn large_integers_render_as_decimal_strings() {
 #[test]
 fn refused_submission_touches_neither_sink() {
     let (mut r, path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let err = r
         .submit(event(Kind::MessageUser, Some("t-1"), None))
         .unwrap_err();
@@ -177,7 +186,7 @@ fn refused_submission_touches_neither_sink() {
 #[test]
 fn structure_bytes_are_stream_bytes() {
     let (mut r, path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     r.submit(user_message("t-1")).unwrap();
     r.submit(event(
         Kind::TurnClosed,
@@ -205,7 +214,7 @@ fn structure_bytes_are_stream_bytes() {
 #[test]
 fn sequence_is_gapless_over_admitted_events() {
     let (mut r, _path) = recorder();
-    let a = r.submit(event(Kind::Load, None, None)).unwrap();
+    let a = r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let _ = r
         .submit(event(Kind::MessageUser, Some("t"), None))
         .unwrap_err();
@@ -220,13 +229,26 @@ fn sequence_is_gapless_over_admitted_events() {
     );
 }
 
-/// A bracket kind emits no payload member at all, and the envelope flattens:
-/// the line is one flat object keyed on kind at the top level.
+/// A payload-free kind emits no payload member at all, and the envelope
+/// flattens: the line is one flat object keyed on kind at the top level.
+///
+/// **Read on `unload` rather than `load` as of 2026-08-21**, `load` having
+/// stopped being payload-free when it began carrying the diagnostic
+/// elections of its load. The property under test is the rendering's and
+/// not that kind's, so it moves to a kind that still holds it and the run
+/// bracket's other half is the nearest one.
 #[test]
 fn bracket_kind_omits_payload_and_line_is_flat() {
     let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
-    let line = r.structure().iter().next().unwrap().line.clone();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
+    r.submit(event(Kind::Unload, None, None)).unwrap();
+    let line = r
+        .structure()
+        .by_kind(Kind::Unload)
+        .next()
+        .unwrap()
+        .line
+        .clone();
     assert!(
         !line.contains("\"payload\""),
         "no payload member on a bracket kind: {line}"
@@ -240,7 +262,7 @@ fn bracket_kind_omits_payload_and_line_is_flat() {
         "declaration order from the top: {line}"
     );
     assert!(
-        line.contains("\"kind\":\"load\""),
+        line.contains("\"kind\":\"unload\""),
         "the dotted-name scheme's kind member: {line}"
     );
 }
@@ -249,7 +271,7 @@ fn bracket_kind_omits_payload_and_line_is_flat() {
 #[test]
 fn turn_close_is_internally_tagged() {
     let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     r.submit(event(Kind::TurnStarted, Some("t-1"), None))
         .unwrap();
     r.submit(event(
@@ -302,7 +324,7 @@ fn absent_measurement_members_emit_nothing() {
     // carries exactly what the organ rendered, no serde election of this
     // crate's between them.
     let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     r.submit(event(Kind::TurnStarted, Some("t-1"), None))
         .unwrap();
     let measurement = weaver_trace::raw_payload(
@@ -345,7 +367,7 @@ fn absent_measurement_members_emit_nothing() {
 #[test]
 fn the_output_carries_the_counts() {
     let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     r.submit(event(Kind::TurnStarted, Some("t-1"), None))
         .unwrap();
     r.submit(event(
@@ -387,7 +409,7 @@ fn the_output_carries_the_counts() {
 #[test]
 fn boundary_derives_after_drain() {
     let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     r.submit(event(Kind::TurnStarted, Some("t-1"), None))
         .unwrap();
     r.drain().unwrap();
@@ -402,7 +424,7 @@ fn boundary_derives_after_drain() {
 #[test]
 fn foreign_session_refuses() {
     let (mut r, _path) = recorder();
-    let mut e = event(Kind::Load, None, None);
+    let mut e = event(Kind::Load, None, Some(elections()));
     e.envelope.session = SessionRef("s-2".into());
     let err = r.submit(e).unwrap_err();
     assert!(matches!(err, Failure::RefusedOnSubmit { .. }));
@@ -418,7 +440,7 @@ fn foreign_session_refuses() {
 #[test]
 fn pretty_printed_payload_refuses_at_render() {
     let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let pretty = "{\n  \"role\": \"user\",\n  \"content\": []\n}";
     let bypassed = serde_json::value::RawValue::from_string(pretty.to_string())
         .expect("valid JSON, construction alone admits it");
@@ -457,7 +479,7 @@ fn turn_on_run_level_kind_refuses() {
         );
     }
     assert_eq!(r.structure().len(), 0);
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     r.submit(event(Kind::TurnStarted, Some("t-1"), None))
         .unwrap();
     let fault = raw_payload("{\"kind\":\"stub\"}").unwrap();
@@ -482,7 +504,7 @@ fn failed_write_is_terminal_and_named() {
         SessionRef("s-1".into()),
     )
     .expect("receives");
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let err = r.drain().unwrap_err();
     match err {
         Failure::CommitFailed { sequence, .. } => assert_eq!(sequence, Sequence(0)),
@@ -522,7 +544,7 @@ fn high_water_reports_on_recorded_events() {
         SessionRef("s-1".into()),
     )
     .expect("receives");
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let mut submitted = 1usize;
     let mut reported = 0usize;
     let mut depth_at_first_report = None;
@@ -604,7 +626,7 @@ fn the_subsystem_spellings_are_pinned_and_the_engine_is_not_the_organ() {
 #[test]
 fn the_classify_pair_is_turn_optional_and_pairing_enforced() {
     let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let ask = || {
         Some(Payload::ClassifyRequest(weaver_trace::ClassifyAsk {
             content: "the recalled passage".into(),
@@ -647,7 +669,7 @@ fn the_classify_pair_is_turn_optional_and_pairing_enforced() {
 #[test]
 fn the_system_kind_admits_like_its_siblings() {
     let (mut r, path) = recorder();
-    r.submit(event(Kind::Load, None, None)).unwrap();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let seq = r
         .submit(event(
             Kind::MessageSystem,

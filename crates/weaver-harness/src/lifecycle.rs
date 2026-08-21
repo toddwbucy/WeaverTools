@@ -1031,8 +1031,30 @@ impl Harness {
         // The load event is the run's opening and the origin of its monotonic
         // clock, so the author is constructed at this moment.
         let author = Author::new(&session, &payload.run);
+        // **The load declares the posture it was written in**, per
+        // `weaver-trace-PRD` section 3.2: each diagnostic election of this
+        // enter, named individually and none bundled. This crate is the
+        // party that holds them already - they arrive in the enter's SPU
+        // instruction - so the declaration costs one read of what is in
+        // hand. Without it a record holding no field and a record whose
+        // election stood and produced nothing are one absence on disk.
+        let elections = weaver_trace::Elections {
+            residual_readout: payload.spu_instruction.decoder.residual_readout_election,
+            field: payload
+                .spu_instruction
+                .decoder
+                .field_election
+                .as_ref()
+                .map(|election| election.depth),
+        };
         author
-            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(elections)),
+            )
             .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
 
         // **Past this line the bracket stands**, so every refusal below
@@ -1606,7 +1628,16 @@ mod tests {
                 .expect("recorder");
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
-            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                })),
+            )
             .expect("load");
         if let Some(turn) = turn {
             let key = TurnKey(turn.to_string());
@@ -1711,6 +1742,7 @@ mod tests {
                         devices: vec![weaver_types::DeviceOrdinal(0)],
                     },
                     residual_readout_election: false,
+                    field_election: None,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -1834,6 +1866,7 @@ mod tests {
                         devices: vec![weaver_types::DeviceOrdinal(0)],
                     },
                     residual_readout_election: false,
+                    field_election: None,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },

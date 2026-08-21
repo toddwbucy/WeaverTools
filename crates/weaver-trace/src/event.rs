@@ -152,6 +152,12 @@ pub enum Kind {
     ModelOutput,
     #[serde(rename = "model.measurement")]
     ModelMeasurement,
+    /// The probability field at one decode position, per charter section
+    /// 3.1's nineteenth kind. The first kind recorded per position rather
+    /// than per turn, and the first recorded only while an election
+    /// stands.
+    #[serde(rename = "model.field")]
+    ModelField,
     #[serde(rename = "classify.request")]
     ClassifyRequest,
     #[serde(rename = "classify.output")]
@@ -168,9 +174,10 @@ pub enum Kind {
 /// back, the working structure holding rendered lines, and the asymmetry is a
 /// compile property pinned at the crate root.
 ///
-/// The kind-to-payload mapping is total, fourteen kinds and eight
-/// dispositions: `load`, `unload`, `session.closed`, and `turn.started` carry
-/// no payload; the three message kinds carry `Message`; `turn.closed` carries
+/// The kind-to-payload mapping is total, nineteen kinds and thirteen
+/// dispositions: `unload`, `session.closed`, and `turn.started` carry
+/// no payload, and `load` stopped being among them 2026-08-21, carrying
+/// the diagnostic elections of its load so a record declares its posture; the three message kinds carry `Message`; `turn.closed` carries
 /// `TurnClosed`; `fault` carries `Fault`; the three model kinds carry their
 /// three own shapes; and the tool bracket's two carry `Deferred`.
 #[derive(Debug, Clone, Serialize)]
@@ -193,6 +200,15 @@ pub enum Payload {
     /// carries opaque.
     ModelRequest(Box<RawValue>),
     ModelOutput(ModelOutput),
+    /// One decode position's ranked candidates, per charter section 3.1.
+    /// Shaped rather than spliced on the same test the output meets: a
+    /// decode position, a vector of pairs, and an index, all plain values
+    /// the harness holds typed on their way through.
+    ModelField(ModelField),
+    /// The diagnostic elections the load declared, carried by its `load`
+    /// event so a record declares the posture it was written in, per
+    /// charter section 3.2.
+    Elections(Elections),
     /// The flush's account: the resident token counts before and after the
     /// decode context returned to its prefix, per charter section 3.1's
     /// sixteenth kind. Both from the SPU's confirmation, the one authority
@@ -279,6 +295,48 @@ pub struct ModelOutput {
     /// the record and the loop take one reading rather than two.
     pub resident: u64,
     pub capacity: u64,
+}
+
+/// One decode position's probability field, per `weaver-trace-Spec`
+/// section 3: the ranked candidates with their probabilities and the rank
+/// the draw landed on.
+///
+/// **Recorded only while the field election of `weaver-spu-PRD` section
+/// 13.11 stands**, which makes it the first kind of which that is true.
+/// Whether the election stood is the `load` event's to say, per charter
+/// section 3.2, so an absent field is distinguishable from an election
+/// that stood and produced nothing.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ModelField {
+    pub position: u64,
+    pub ranked: Vec<Candidate>,
+    pub realized: u32,
+}
+
+/// One ranked candidate: the token and the probability the distribution
+/// gave it at that position.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Candidate {
+    pub token: u32,
+    pub probability: f32,
+}
+
+/// The diagnostic elections a load declared, per charter section 3.2.
+///
+/// **Each is named individually and none is bundled under a profile
+/// name.** A named set drifts as members join it, and every record already
+/// carrying the name silently becomes a record of something else. Naming
+/// each is what keeps a record's posture recoverable from the record:
+/// without it, a record holding no field and a record whose election stood
+/// and produced nothing are one absence on disk, a configuration and a
+/// fault wearing one face.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Elections {
+    pub residual_readout: bool,
+    /// The field's declared depth where its election stood, absent where
+    /// it did not.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub field: Option<u32>,
 }
 
 /// How the generation ended, per the charter: completed or stopped.

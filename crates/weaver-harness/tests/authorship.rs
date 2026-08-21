@@ -49,7 +49,16 @@ fn author() -> (Author, Recorder) {
 fn unlicensed_message_is_refused_before_submit() {
     let (author, mut recorder) = author();
     author
-        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
         .expect("load");
     let turn = TurnKey("t-1".to_string());
     author
@@ -175,7 +184,16 @@ fn the_licensing_table_holds_in_both_directions() {
 fn timestamps_are_stamped_at_authoring() {
     let (author, mut recorder) = author();
     author
-        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
         .expect("load");
     author
         .author(
@@ -223,7 +241,16 @@ fn assembly_sees_only_message_kinds() {
     let (author, mut recorder) = author();
     let turn = TurnKey("t-1".to_string());
     author
-        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
         .unwrap();
     author
         .author(
@@ -317,7 +344,16 @@ fn assembly_is_deterministic() {
     let (author, mut recorder) = author();
     let turn = TurnKey("t-1".to_string());
     author
-        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
         .unwrap();
     author
         .author(
@@ -370,7 +406,16 @@ fn prompt_part_order_is_fixed() {
     let (author, mut recorder) = author();
     let turn = TurnKey("t-1".to_string());
     author
-        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
         .unwrap();
     author
         .author(
@@ -411,7 +456,16 @@ fn prompt_part_order_is_fixed() {
 fn fault_payload_is_carried_unchanged() {
     let (author, mut recorder) = author();
     author
-        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
         .unwrap();
     let account = "{\"organ\":\"spu\",\"detail\":\"device unavailable\"}";
     assert!(
@@ -453,7 +507,16 @@ fn undecodable_message_records_are_counted() {
     let (author, mut recorder) = author();
     let turn = TurnKey("t-1".to_string());
     author
-        .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+        .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
         .unwrap();
     author
         .author(
@@ -509,7 +572,16 @@ fn an_undecodable_record_refuses_the_seat_and_authors_a_fault() {
         let (author, mut recorder) = author();
         let turn = TurnKey("t-1".to_string());
         author
-            .author(&mut recorder, Kind::Load, Subsystem::Harness, None, None)
+            .author(
+            &mut recorder,
+            Kind::Load,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elections(weaver_trace::Elections {
+                residual_readout: false,
+                field: None,
+            })),
+        )
             .unwrap();
         author
             .author(

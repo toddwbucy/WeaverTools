@@ -271,6 +271,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                             devices: vec![weaver_types::DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
+                    field_election: None,
                         identity: vec![],
                         tunable_values: Default::default(),
                     },

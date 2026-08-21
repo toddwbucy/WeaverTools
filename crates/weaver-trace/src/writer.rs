@@ -406,21 +406,26 @@ fn turn_required(kind: Kind) -> bool {
         | Kind::ToolCallCompleted
         | Kind::ModelRequest
         | Kind::ModelOutput
-        | Kind::ModelMeasurement => true,
+        | Kind::ModelMeasurement
+        // The field is a decode position's, and every decode position
+        // belongs to the turn that generated it.
+        | Kind::ModelField => true,
     }
 }
 
-/// The total kind-to-payload mapping, eighteen kinds and eleven
-/// dispositions, matching charter section 3.1 whole since the system role
-/// act landed its code, enforced here because the untagged payload leaves
-/// serde unable to.
+/// The total kind-to-payload mapping, nineteen kinds and thirteen
+/// dispositions, matching charter section 3.1 whole, enforced here because
+/// the untagged payload leaves serde unable to. **`load` stopped being
+/// payload-free 2026-08-21**: it carries the diagnostic elections of its
+/// load, so a record declares the posture it was written in.
 fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
     matches!(
         (kind, payload),
         (
-            Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::TurnStarted,
+            Kind::Unload | Kind::SessionClosed | Kind::TurnStarted,
             None
-        ) | (
+        ) | (Kind::Load, Some(Payload::Elections(_)))
+            | (
             Kind::MessageSystem | Kind::MessageUser | Kind::MessageAssistant
                 | Kind::MessageToolResult,
             Some(Payload::Message(_))
@@ -430,6 +435,7 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
             | (Kind::ModelRequest, Some(Payload::ModelRequest(_)))
             | (Kind::ModelOutput, Some(Payload::ModelOutput(_)))
             | (Kind::ModelMeasurement, Some(Payload::ModelMeasurement(_)))
+            | (Kind::ModelField, Some(Payload::ModelField(_)))
             | (Kind::ClassifyRequest, Some(Payload::ClassifyRequest(_)))
             | (Kind::ClassifyOutput, Some(Payload::ClassifyOutput(_)))
             | (

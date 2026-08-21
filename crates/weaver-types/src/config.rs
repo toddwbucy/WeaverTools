@@ -58,6 +58,20 @@ pub struct AgentConfig {
     pub loop_file: Option<PathBuf>,
 }
 
+/// The probability field's election, per `weaver-types-Spec` section 2: how
+/// many candidates are ranked and reported at each decode position.
+///
+/// **The depth has a floor and the floor is the sampling cutoff**, judged
+/// by the SPU at admit per `weaver-spu-Spec` section 7.5 rather than here.
+/// The sampler truncates before it draws, so top-k puts a real wall in the
+/// field where the reported depth is an artifact of the reporting, and
+/// telling them apart requires reporting past the wall.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct FieldElection {
+    pub depth: u32,
+}
+
 /// The operator's election of payload key paths for the state tee, per
 /// `weaver-types-Spec` section 2. The resolved default's spelling is fixed
 /// there so two resolvers cannot disagree: `all_kinds` true and `keys`
@@ -131,6 +145,19 @@ pub struct ClassifyInstruction {
 pub struct DecoderInstruction {
     pub model_binding: ModelBinding,
     pub residual_readout_election: bool,
+    /// The probability field's election, per `weaver-types-Spec` section 2
+    /// and `weaver-spu-PRD` section 13.11. Optional because the election is
+    /// what makes the field exist and its absence is the ordinary posture
+    /// rather than a value withheld, which is why it takes no default and
+    /// its absence is not read as one.
+    ///
+    /// **It stands beside the readout's election and is never merged with
+    /// it.** Each diagnostic election stands alone and none is bundled
+    /// under a name for a set: a named set drifts as members join it, and
+    /// every record already carrying the name becomes a record of
+    /// something else without any event saying so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub field_election: Option<FieldElection>,
     /// The session's identity material: the canonical messages the identity
     /// prefix is rendered from, configuration rather than history, per
     /// `weaver-types-Spec` section 2. Required like every field, and an
