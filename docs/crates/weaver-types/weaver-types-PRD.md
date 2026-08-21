@@ -24,6 +24,14 @@ and one drawer, and the shapes land in the Spec with this act.
 moves from two to three: `weaver-admin-harness-contract` closes the draw the
 route act named as owed, the enter directive having carried the instruction
 since the fan-out was drawn. Owed by #105, and no definition moves.
+**Revised:** 2026-08-21, the field election joins the file. Section 2.1
+gains `field-election`, a vocabulary node this crate defines and the
+artifact holds, on `weaver-spu-PRD` section 13.11: the operator's election
+of the probability field at a declared depth, optional because the
+election is the thing that makes it exist. It stands beside the readout's
+election rather than merging with it, no diagnostic election being bundled
+with another, and the depth's judgment is the SPU's at admit. The shape is
+`weaver-types-Spec` section 2's.
 **Revised:** 2026-08-19, the tee's election joins the file. Section 2.1
 gains `state-election`, a vocabulary node this crate defines and the
 artifact holds, drawn by `weaver-admin-harness-contract` in the same act:
@@ -162,6 +170,18 @@ per `weaver-admin-PRD` section 2 and ruling C of 2026-07-31, and the SPU judges
 the devices it was assigned at admission, per `weaver-spu-PRD` section 4.1.
 Nothing selects.
 
+**The field election joins the file 2026-08-21**, on `weaver-spu-PRD`
+section 13.11. It is the operator's election of the probability field at a
+declared depth, optional in the file because the election is what makes
+it exist and its absence is the ordinary posture rather than a value
+withheld. It sits beside `residual-readout-election` and is deliberately
+not merged with it: each diagnostic election stands alone and none is
+bundled under a name for a set, because a named set drifts as members
+join it and every record already carrying the name becomes a record of
+something else. What the depth means to the reader that judges it is the
+SPU's, at admit, where it meets the sampling cutoff it may not fall
+below.
+
 ```graph
 node: agent-config
 kind: artifact
@@ -187,6 +207,9 @@ kind: vocabulary
 node: state-election
 kind: vocabulary
 
+node: field-election
+kind: vocabulary
+
 edge: defines
 from: weaver-types
 to: model-binding
@@ -202,6 +225,10 @@ to: permission-mode
 edge: defines
 from: weaver-types
 to: residual-readout-election
+
+edge: defines
+from: weaver-types
+to: field-election
 
 edge: defines
 from: weaver-types
