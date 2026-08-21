@@ -187,7 +187,9 @@ def event_texts(events):
 
 
 def reentry(events):
-    text = teachings() + (
+    # The identity prefix survives the flush by the seam's own bound, so a
+    # re-entry restores the conversation and re-teaches nothing.
+    text = (
         "\n\nThe working context was reset to stay within its limit. "
         "Recent conversation, restored from the session's record:"
     )
@@ -317,11 +319,13 @@ def drive(seat, text):
         seat.flush()
         delta.append({"role": "system", "text": reentry(seat.recall(RECALL_TURNS))})
     if first:
-        opening = teachings()
+        # The teachings are the declaration's identity as of 2026-08-20,
+        # seated at load by the Open directive and immune to the flush, so
+        # the loop no longer teaches them and the opening turn carries only
+        # what the declaration cannot know: the session's own shape.
         line = continuity(seat.session_shape())
         if line:
-            opening += "\n\n" + line
-        delta.append({"role": "system", "text": opening})
+            delta.append({"role": "system", "text": line})
     delta.append({"role": "user", "text": text})
     outcome = seat.turn(delta)
     # The memory rounds: detect the sigils, dispatch inward, refeed, and

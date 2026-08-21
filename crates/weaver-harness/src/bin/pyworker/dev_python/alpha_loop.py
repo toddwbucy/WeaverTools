@@ -89,6 +89,54 @@ MEMORY_HITS = 4
 MEMORY_QUOTE = 300
 MISS_REDIRECT = None
 
+# THE EXTERNAL TOOL. This is bravo's loop, the taught arm of the
+# ablation, declared by bravo's `loop-file` per issue #243: the loop is
+# a member of this agent's harness and unique to it, so the teaching
+# below is unconditional here and absent from the untaught arm's file
+# rather than gated by any conditional a shared file would need. The
+# shell is the gate's one held tool, merged and standing, and the
+# calculator is a script provisioned in this agent's own home - so the
+# whole grant is this advertisement and nothing else.
+
+# The advertisement speaks the family's trained shape - the tools block
+# and the tool_call envelope are the forms the artifact's tuning expects
+# - and then binds it to the one provisioned script. The last line is
+# the experiment's instruction: arithmetic goes through the tool, not
+# through the weights.
+TOOL_PROMPT = (
+    "# Tools\n"
+    "\n"
+    "You may call one or more functions to assist with the user query.\n"
+    "\n"
+    "You are provided with function signatures within <tools></tools> "
+    "XML tags:\n"
+    "<tools>\n"
+    '{"type": "function", "function": {"name": "bash", "description": '
+    '"Runs one shell command in your home directory. Your calculator '
+    "lives there: ./calc \\\"EXPRESSION\\\" prints the value of an "
+    "arithmetic expression. Numbers, + - * / // % ** and parentheses "
+    'only.", "parameters": {"type": "object", "properties": {"command": '
+    '{"type": "string", "description": "the shell command to run"}}, '
+    '"required": ["command"]}}}\n'
+    "</tools>\n"
+    "\n"
+    "For each function call, return a json object with function name "
+    "and arguments within <tool_call></tool_call> XML tags:\n"
+    "<tool_call>\n"
+    '{"name": <function-name>, "arguments": <args-json-object>}\n'
+    "</tool_call>\n"
+    "Use your calculator for every arithmetic operation rather than "
+    "computing in your head."
+)
+
+
+def teachings():
+    """The opening's and the re-entry's shared curriculum: the system
+    prompt, the memory conventions, and the tool advertisement. One
+    builder so the flush cannot retire a lesson the opening taught.
+    """
+    return "\n\n".join([SYSTEM_PROMPT, MEMORY_PROMPT, TOOL_PROMPT])
+
 
 def pressured(fullness):
     if not fullness:
@@ -139,7 +187,9 @@ def event_texts(events):
 
 
 def reentry(events):
-    text = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT + (
+    # The identity prefix survives the flush by the seam's own bound, so a
+    # re-entry restores the conversation and re-teaches nothing.
+    text = (
         "\n\nThe working context was reset to stay within its limit. "
         "Recent conversation, restored from the session's record:"
     )
@@ -269,11 +319,13 @@ def drive(seat, text):
         seat.flush()
         delta.append({"role": "system", "text": reentry(seat.recall(RECALL_TURNS))})
     if first:
-        opening = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT
+        # The teachings are the declaration's identity as of 2026-08-20,
+        # seated at load by the Open directive and immune to the flush, so
+        # the loop no longer teaches them and the opening turn carries only
+        # what the declaration cannot know: the session's own shape.
         line = continuity(seat.session_shape())
         if line:
-            opening += "\n\n" + line
-        delta.append({"role": "system", "text": opening})
+            delta.append({"role": "system", "text": line})
     delta.append({"role": "user", "text": text})
     outcome = seat.turn(delta)
     # The memory rounds: detect the sigils, dispatch inward, refeed, and
