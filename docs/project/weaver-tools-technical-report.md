@@ -150,19 +150,29 @@ Where one crate asks another **process** to do something, the seam is a Unix
 domain socket governed by a named contract, and it authenticates its peer. There
 is no listening network socket in the program, at any depth.
 
+That is the invariant, and every seam standing today meets it. One chartered seam
+does not yet exist to meet it: the gate's agent-opened socket, whose predicate
+admits registered tools but whose contract is unwritten and whose binding end is
+undecided. For that seam the sentence above states the rule it will have to
+satisfy rather than a mechanism now running, and appendix B carries it.
+
 The first question an engineer asks is why not localhost, and the answer has
 three parts that stand separately.
 
 **Latency.** An agent routes through the harness on every exchange, so any
-per-hop cost compounds directly into the loop, per token, at batch one. Loopback
-still pays the TCP stack, the kernel network path, and serialization on each of
-those hops. A Unix socket collapses that to nearly nothing while keeping the same
-topology. This is the program's one conceded theory claim, that latency is the
-enemy of agency.
+per-hop cost compounds directly into the loop, per token, at batch one. What a
+Unix socket removes from that cost is the transport overhead: loopback traverses
+the TCP stack and the kernel's network path, and a Unix socket does not, while
+keeping the same topology. What it does not remove is serialization. Every seam
+here encodes and parses what crosses it, JSON on the interior seams and NDJSON at
+the boundary, and that cost is paid on a Unix socket exactly as it would be on
+loopback. The saving is the network path rather than the whole of what a hop
+costs, and a reader should size the claim to that. This is the program's one
+conceded theory claim, that latency is the enemy of agency.
 
-**It is reasoned rather than measured, and it is the one claim in this report
-that is.** No per-hop figure for loopback against a Unix socket, at the message
-sizes these seams carry, has been taken in this repository, and the measurement
+**It is reasoned rather than measured.** No per-hop figure for loopback against
+a Unix socket, at the message sizes these seams carry, has been taken in this
+repository, and the measurement
 regime that would take one stands outside it. What the corpus carries instead is
 a measurement of the consequence rather than of the transport. The previous tree
 ran production on full-history resend and measured a single exploration turn
@@ -186,8 +196,18 @@ What this gives up is real and is not hedged: no fungibility across machines, no
 distributed uptime, no failover, and no direct network applicability of the
 deployed whole. The topology is network-shaped on purpose, a hub and spoke of
 content-neutral duplex channels being the same architecture a network uses on a
-quieter substrate, so a seam that runs over a socket today can run over a wire
-tomorrow. Nothing was coded to the substrate, only to the topology.
+quieter substrate. **The implementation is not substrate-neutral, and this report
+will not imply that it is.** The seams are Unix-specific in code: `UnixListener`
+and `UnixStream` at the named sockets, `socketpair` at the unnamed pairs,
+`SO_PEERCRED` for credentials, and `SCM_RIGHTS` for descriptor passing. Moving a
+seam to a wire would need framing and a peer-authentication mechanism that do not
+exist here, and appendix B carries that as future work. What carries upward is
+the topology and the contracts, which are written against what crosses a seam
+rather than against how it crosses. The apex makes the narrower version of this
+point about the gate alone, that the boundary is relocatable because a gate which
+parsed content would have to know what produced it, and adds that the property is
+a consequence rather than a plan and that the program builds nothing to exploit
+it.
 
 **Authentication takes two forms and they are one property.** Where a channel has
 a name, the peer is authenticated by credential. Where it has none, the channel
@@ -426,6 +446,10 @@ built and shown rather than because the wording softened.
 - **The memory leg.** Out entirely, arriving through apex section 9's door as a
   socket peer with its own contract. No seam, stub, reserved slot, or dormant
   contract party is carried in anticipation of it.
+- **Any seam over a wire.** The transports in code are Unix-specific, and a seam
+  crossing a machine boundary would need its own framing and a peer-authentication
+  mechanism to replace `SO_PEERCRED`. Neither exists. The topology would carry, the
+  implementation would not.
 - **Shard widths beyond two.** A pair is what the salvaged tensor-parallel path
   implements. An N-way forward and its all-reduce are work this program does
   rather than salvage it inherits.
