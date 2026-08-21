@@ -50,22 +50,13 @@
 
 import json
 
-SYSTEM_PROMPT = (
-    "You are a careful assistant. Answer from what you know, say plainly "
-    "when you do not know, and keep answers as short as the question allows."
-)
-
-# The teaching, series one's framing: memory as the model's own faculty,
-# one rigid line per verb, and the promise of feedback. Re-taught after a
-# flush because the reset retires the resident copy of this paragraph too.
-MEMORY_PROMPT = (
-    "You have a private memory for this session.\n"
-    "To save a fact you will need later, write a line: REMEMBER: <the fact>\n"
-    "To ask your memory about something, write a line: RECALL: <subject> "
-    "and stop your answer there.\n"
-    "Memory results arrive labeled 'From your memory:'. A save is "
-    "confirmed with 'Saved.'"
-)
+# THE PROMPTS ARE NOT HERE EITHER, for the same reason the teaching is not:
+# the system prompt and the memory conventions are seated by the
+# declaration's identity block, and this file held a second copy of both
+# that nothing read. Two copies of one text is one fact in two places with
+# no authority named, and the copy that is not the one in force is the one
+# a reader trusts by being nearer the code. The text in force is in the
+# agent's own declaration under `identity:`.
 
 # The flush trigger: four fifths of capacity, checked between turns. Set
 # this to what your setup wants - it is policy, not physics.
@@ -89,53 +80,25 @@ MEMORY_HITS = 4
 MEMORY_QUOTE = 300
 MISS_REDIRECT = None
 
-# THE EXTERNAL TOOL. This is bravo's loop, the taught arm of the
-# ablation, declared by bravo's `loop-file` per issue #243: the loop is
-# a member of this agent's harness and unique to it, so the teaching
-# below is unconditional here and absent from the untaught arm's file
-# rather than gated by any conditional a shared file would need. The
-# shell is the gate's one held tool, merged and standing, and the
-# calculator is a script provisioned in this agent's own home - so the
-# whole grant is this advertisement and nothing else.
-
-# The advertisement speaks the family's trained shape - the tools block
-# and the tool_call envelope are the forms the artifact's tuning expects
-# - and then binds it to the one provisioned script. The last line is
-# the experiment's instruction: arithmetic goes through the tool, not
-# through the weights.
-TOOL_PROMPT = (
-    "# Tools\n"
-    "\n"
-    "You may call one or more functions to assist with the user query.\n"
-    "\n"
-    "You are provided with function signatures within <tools></tools> "
-    "XML tags:\n"
-    "<tools>\n"
-    '{"type": "function", "function": {"name": "bash", "description": '
-    '"Runs one shell command in your home directory. Your calculator '
-    "lives there: ./calc \\\"EXPRESSION\\\" prints the value of an "
-    "arithmetic expression. Numbers, + - * / // % ** and parentheses "
-    'only.", "parameters": {"type": "object", "properties": {"command": '
-    '{"type": "string", "description": "the shell command to run"}}, '
-    '"required": ["command"]}}}\n'
-    "</tools>\n"
-    "\n"
-    "For each function call, return a json object with function name "
-    "and arguments within <tool_call></tool_call> XML tags:\n"
-    "<tool_call>\n"
-    '{"name": <function-name>, "arguments": <args-json-object>}\n'
-    "</tool_call>\n"
-    "Use your calculator for every arithmetic operation rather than "
-    "computing in your head."
-)
-
-
-def teachings():
-    """The opening's and the re-entry's shared curriculum: the system
-    prompt, the memory conventions, and the tool advertisement. One
-    builder so the flush cannot retire a lesson the opening taught.
-    """
-    return "\n\n".join([SYSTEM_PROMPT, MEMORY_PROMPT, TOOL_PROMPT])
+# THE ABLATION LINE IS NOT HERE. It moved into the declaration's identity
+# block on 2026-08-20, seated at load by the Open directive and immune to
+# the flush, so what one arm is taught and another is not is a difference
+# between two `identity:` blocks in two agent declarations and never a
+# difference between two loop files.
+#
+# **This paragraph replaces one that said the opposite while being
+# unreachable.** The file carried a tool advertisement and a curriculum
+# builder that nothing called, under a comment declaring them the live
+# mechanism and declaring the teaching absent from the untaught arm's file
+# while both arm files were byte-identical and both carried it. Two
+# accounts of where the ablation lives stood in one file, the false one in
+# dead code. It cost a seat an afternoon on 2026-08-21: the untaught arm
+# was built by editing this file, which changed nothing, while both
+# declarations went on teaching the tool.
+#
+# The loop teaches nothing. What it still builds for the opening turn is
+# the session's own shape, which is the one thing a declaration cannot
+# know, and that is `continuity` below.
 
 
 def pressured(fullness):
