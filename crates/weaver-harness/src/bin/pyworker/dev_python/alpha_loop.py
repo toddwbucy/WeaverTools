@@ -50,22 +50,13 @@
 
 import json
 
-SYSTEM_PROMPT = (
-    "You are a careful assistant. Answer from what you know, say plainly "
-    "when you do not know, and keep answers as short as the question allows."
-)
-
-# The teaching, series one's framing: memory as the model's own faculty,
-# one rigid line per verb, and the promise of feedback. Re-taught after a
-# flush because the reset retires the resident copy of this paragraph too.
-MEMORY_PROMPT = (
-    "You have a private memory for this session.\n"
-    "To save a fact you will need later, write a line: REMEMBER: <the fact>\n"
-    "To ask your memory about something, write a line: RECALL: <subject> "
-    "and stop your answer there.\n"
-    "Memory results arrive labeled 'From your memory:'. A save is "
-    "confirmed with 'Saved.'"
-)
+# THE PROMPTS ARE NOT HERE EITHER, for the same reason the teaching is not:
+# the system prompt and the memory conventions are seated by the
+# declaration's identity block, and this file held a second copy of both
+# that nothing read. Two copies of one text is one fact in two places with
+# no authority named, and the copy that is not the one in force is the one
+# a reader trusts by being nearer the code. The text in force is in the
+# agent's own declaration under `identity:`.
 
 # The flush trigger: four fifths of capacity, checked between turns. Set
 # this to what your setup wants - it is policy, not physics.
@@ -88,6 +79,26 @@ MEMORY_ASKS = 3
 MEMORY_HITS = 4
 MEMORY_QUOTE = 300
 MISS_REDIRECT = None
+
+# THE ABLATION LINE IS NOT HERE. It moved into the declaration's identity
+# block on 2026-08-20, seated at load by the Open directive and immune to
+# the flush, so what one arm is taught and another is not is a difference
+# between two `identity:` blocks in two agent declarations and never a
+# difference between two loop files.
+#
+# **This paragraph replaces one that said the opposite while being
+# unreachable.** The file carried a tool advertisement and a curriculum
+# builder that nothing called, under a comment declaring them the live
+# mechanism and declaring the teaching absent from the untaught arm's file
+# while both arm files were byte-identical and both carried it. Two
+# accounts of where the ablation lives stood in one file, the false one in
+# dead code. It cost a seat an afternoon on 2026-08-21: the untaught arm
+# was built by editing this file, which changed nothing, while both
+# declarations went on teaching the tool.
+#
+# The loop teaches nothing. What it still builds for the opening turn is
+# the session's own shape, which is the one thing a declaration cannot
+# know, and that is `continuity` below.
 
 
 def pressured(fullness):
@@ -139,7 +150,9 @@ def event_texts(events):
 
 
 def reentry(events):
-    text = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT + (
+    # The identity prefix survives the flush by the seam's own bound, so a
+    # re-entry restores the conversation and re-teaches nothing.
+    text = (
         "\n\nThe working context was reset to stay within its limit. "
         "Recent conversation, restored from the session's record:"
     )
@@ -269,11 +282,13 @@ def drive(seat, text):
         seat.flush()
         delta.append({"role": "system", "text": reentry(seat.recall(RECALL_TURNS))})
     if first:
-        opening = SYSTEM_PROMPT + "\n\n" + MEMORY_PROMPT
+        # The teachings are the declaration's identity as of 2026-08-20,
+        # seated at load by the Open directive and immune to the flush, so
+        # the loop no longer teaches them and the opening turn carries only
+        # what the declaration cannot know: the session's own shape.
         line = continuity(seat.session_shape())
         if line:
-            opening += "\n\n" + line
-        delta.append({"role": "system", "text": opening})
+            delta.append({"role": "system", "text": line})
     delta.append({"role": "user", "text": text})
     outcome = seat.turn(delta)
     # The memory rounds: detect the sigils, dispatch inward, refeed, and

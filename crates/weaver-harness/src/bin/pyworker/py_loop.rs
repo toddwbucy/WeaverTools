@@ -15,6 +15,7 @@
 //! conversation speed, then freeze the loop into a Rust composition root
 //! for deployment - iterate fast, then freeze.
 
+use std::ffi::CString;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -245,7 +246,25 @@ pub fn drive(
                 return held.last.take();
             }
         };
-        let outcome = PyModule::from_code(py, &source, c"dev_loop.py", c"dev_loop")
+        // **The compiled module is named for the file that was read**, per
+        // the ruling of 2026-08-20 on issue #243 making the loop a member
+        // of one agent's harness. The name was `dev_loop.py` for every
+        // loop whatever the path, so a traceback from one agent's loop
+        // named another's file, and with two arms running two files a
+        // failure could not be attributed to an arm from the log alone.
+        // Python holds both as C strings, so the conversion can fail on an
+        // interior NUL and falls back to the old constant rather than
+        // refusing the turn: a name is worth less than the crossing.
+        let file_name = CString::new(loop_path.to_string_lossy().as_bytes())
+            .unwrap_or_else(|_| c"dev_loop.py".to_owned());
+        let module_name = CString::new(
+            loop_path
+                .file_stem()
+                .map(|stem| stem.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "dev_loop".to_string()),
+        )
+        .unwrap_or_else(|_| c"dev_loop".to_owned());
+        let outcome = PyModule::from_code(py, &source, &file_name, &module_name)
             .and_then(|module| module.getattr("drive"))
             .and_then(|entry| entry.call1((&proxy, text)));
         if let Err(error) = outcome {
