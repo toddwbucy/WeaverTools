@@ -9,8 +9,10 @@ recorded contribution and the mapping is recounted. Per the charter's
 same-act edit on issue #258. `message.system` gains a second author, the
 seated identity prefix reaching the record at the run's opening with no
 turn on the classify precedent, so the accumulation rule's base sits inside the
-record rather than in the configuration. Section 3's `Payload` and its
-kind-to-payload paragraph are recounted to nineteen kinds and twelve
+record rather than in the configuration. `message.system` becomes
+turn-optional, the first kind whose turn is sometimes rather than always
+present, the other three message kinds unmoved. Section 3's `Payload` and
+its kind-to-payload paragraph are recounted to nineteen kinds and thirteen
 dispositions: `ModelField`, `Elections`, and `Flush` stood in the crate and
 in neither, added by acts that recounted the kind set and not this mapping.
 **Revised:** 2026-08-21, the field enters the record and the load names
@@ -570,8 +572,9 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, nineteen kinds and twelve
-dispositions.** `unload`, `session.closed`, and `turn.started` carry `None`.
+**The kind-to-payload mapping is total, nineteen kinds and thirteen
+dispositions**, the payload-free case counting as one of them. `unload`,
+`session.closed`, and `turn.started` carry `None`.
 `load` carries `Elections`. The four message kinds carry `Message`.
 `turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` carries
 `FlushCounts`, the resident token counts before and after, both plain
@@ -588,8 +591,8 @@ it was wrong silently.** An earlier draft assigned thirteen and left
 `turn.started` homeless. Then the acts of 2026-08-19 and 2026-08-21 added
 `flush`, the classify pair, `model.field`, and the load's elections to the
 kind set and to the code, and this paragraph and the enum above it were
-recounted in neither, so both stood at eighteen kinds and nine dispositions
-while the crate compiled twelve. **A mapping that is stale reads exactly
+recounted in neither, so both stood at eighteen kinds and eleven dispositions
+while the crate compiled thirteen. **A mapping that is stale reads exactly
 like a mapping that is total**, which is why the recount lands as prose here
 and as a member list above rather than as a claim about totality alone.
 
@@ -668,11 +671,18 @@ carrying that name becomes a record of something else without any event
 saying so. Naming each election is what keeps a record's posture
 recoverable from the record.
 
-**The identity prefix's events carry no turn, and the envelope already
-allows it.** A prefix is seated at open and precedes every turn of the run,
-so the turn member is absent rather than filled with the turn that happens
-to come first, on the precedent the classify pair set for an exchange
-belonging to no turn. **The door is a second one rather than the message
+**The identity prefix's events carry no turn, and `message.system`
+becomes turn-optional to admit them.** A prefix is seated at open and
+precedes every turn of the run, so the turn member is absent rather than
+filled with the turn that happens to come first, on the precedent the
+classify pair set for an exchange belonging to no turn. **The kind moves
+sides in the recorder's turn rule**, which held every message kind to a
+turn and refused a turnless one as a malformed submission. The rule above
+is unchanged in what it means: the turn is present exactly when the event
+belongs to one, and `message.system` is the first kind for which that is
+sometimes and not always. The other three message kinds do not move, a
+user, assistant, or tool-result message with no turn being malformed as it
+ever was. **The door is a second one rather than the message
 door widened.** `author_message` takes a turn key by value and the licensing
 rule it applies is the turn's, so widening it to an optional turn would put
 a turnless path inside the door every turn message goes through. The prefix
