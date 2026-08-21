@@ -307,7 +307,14 @@ pub fn field(logits: &[f32], drawn: usize, depth: usize) -> Option<(Vec<(u32, f3
     // One pass for the leaders, holding at most `depth` of them. The list
     // stays ordered as it fills, so the insert is a walk over a short
     // vector rather than a sort of a long one.
-    let mut leaders: Vec<(u32, f32)> = Vec::with_capacity(depth + 1);
+    // **The capacity is the depth or the vocabulary, whichever is smaller.**
+    // A vector can hold no more leaders than there are logits, and the depth
+    // is the operator's declared number with a floor at the sampling cutoff
+    // and no ceiling anywhere, so a declaration's stray digit would
+    // otherwise reserve that many slots before the first comparison. The
+    // depth itself stays whole below, where an out-of-depth draw is reported
+    // against the number that was declared rather than the number reserved.
+    let mut leaders: Vec<(u32, f32)> = Vec::with_capacity(depth.min(logits.len()) + 1);
     for (index, &logit) in logits.iter().enumerate() {
         if leaders.len() == depth && logit <= leaders[depth - 1].1 {
             continue;
@@ -601,6 +608,20 @@ mod tests {
         assert!(surprisal_bits(&logits, 2).is_none(), "no surprisal");
         assert!(field(&logits, 2, 2).is_none(), "no field");
         assert_eq!(entropy_bits(&logits), 0.0, "and the entropy reports none");
+    }
+
+    /// **A depth past the vocabulary answers the vocabulary**, without
+    /// reserving the declared number of slots. The depth carries a floor at
+    /// the sampling cutoff and no ceiling, so this is the shape a stray
+    /// digit in a declaration takes, and it must be an ordinary answer
+    /// rather than an allocation.
+    #[test]
+    fn a_depth_past_the_vocabulary_answers_the_vocabulary() {
+        let logits = vec![0.0f32, 3.0, 1.0, 2.0];
+        let (ranked, realized) = field(&logits, 1, 1_000_000).expect("a field");
+        assert_eq!(ranked.len(), logits.len(), "no more leaders than logits");
+        assert_eq!(ranked[0].0, 1, "still ranked by probability");
+        assert_eq!(realized, 0, "and the draw keeps its rank");
     }
 
     /// A depth of zero and an index outside the vector are absences rather
