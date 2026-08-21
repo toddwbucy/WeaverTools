@@ -362,7 +362,7 @@ its closure.
 | `fault` | a fault the worker survived, reported by an organ and authored by the harness |
 | `model.request` | the decode boundary, request side |
 | `model.output` | the decode boundary, response side |
-| `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
+| `model.measurement` | input and output token identifiers, entropies, the generation's perplexity, the decode timings, model identity with its weights hash, the prompt-block partition, and where their elections stand the surprisals and the residual reductions |
 | `classify.request` | the label seam, request side: the content the loop sent for classification |
 | `classify.output` | the label seam, response side: every label of the artifact's head scored, or the typed refusal met |
 | `model.field` | one decode position's ranked candidates with their probabilities and the rank the draw landed on, when the field election stands |
@@ -662,9 +662,13 @@ now rather than when an experiment wants it.
 section 3.1's row as this act corrects it.** The row loses the sampler
 parameters, which move to the request above because an input to a decode is
 part of what was asked, and gains the surprisals and the decode timings, which
-were readings the row had never named. What this subsection adds is the
-producing obligations
-that make those readings trustworthy, stated as content because a reading
+were readings the row had never named. **The row separates the
+unconditional readings from the elected ones as of 2026-08-21**: the
+entropies, the perplexity, and the timings are produced for every
+generation, while the surprisals and the residual reductions are produced
+where their elections stand and are absent where they do not. What this
+subsection adds is the producing obligations that make those readings
+trustworthy, stated as content because a reading
 produced wrongly is not the same fact recorded imperfectly. The per-token
 signals are computed against the pre-sampler distribution, because a signal
 taken after the sampler measures the sampler. They are positionally paired

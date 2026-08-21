@@ -9,8 +9,12 @@ exchanges that carry work arrive with the token workflow.
 **Revised:** 2026-08-21, the elections become three at this seam. Section 7
 draws `surprisal-election` on `weaver-spu-PRD` section 13.12, and draws
 `field-election`, which was defined on this date and drawn by neither
-contract it crosses. No exchange changes and no refusal case is added: the
-elections ride inside `spu-instruction` as the readout's always has.
+contract it crosses. Section 5 gains the field's depth-cutoff case, which
+the far end has refused since the field shipped and this enumeration had
+not named, and states what each of the three is judged against. **No new
+refusal type and no new exchange**: the elections ride inside
+`spu-instruction` as the readout's always has, and the wire type is
+unchanged.
 **Revised:** 2026-08-16, the admit carries the operator-tunable values. They
 arrive with the binding in the instruction that already crosses once, which is
 the crossing that suits them, the SPU building its sampler after this exchange
@@ -281,9 +285,29 @@ because the harness answers nothing on this seam. The cases:
 - the binding does not resolve to an artifact this crate can reach
 - the artifact does not parse, or declares a shape this crate cannot serve
 - the device cannot take what admission requires
-- the election asks a readout the family's engine cannot honor
+- an election asks a readout the family's engine cannot honor
+- an election asks a field depth below the sampling cutoff
 - the directive is out of order for the channel's state
 - there is no residency to release
+
+**What each election is judged against at admit, and what refuses.** Three
+elections cross inside `spu-instruction` and the SPU judges each against
+what this deployment can honor, per `weaver-spu-PRD` sections 13.7, 13.11,
+and 13.12. The readout refuses where the family's engine cannot tap it. The
+field refuses where the declared depth falls below the sampling cutoff, per
+`weaver-spu-Spec`'s rule that a depth reporting no further than the sampler
+already cuts cannot distinguish the sampler's wall from the reporting's
+edge. The surprisal is judged against nothing and refuses on no ground: it
+sizes nothing and asks the engine for nothing the generation was not
+already computing, so it is carried and obeyed rather than tested.
+
+**No new refusal type and no new exchange arrive with any of them.** The
+wire type is `lifecycle-refusal` as it has been, the cases above are its
+cases, and an election's rejection reaches the harness the way every admit
+refusal does, typed and naming itself. The enumeration gains the field's
+case because that case existed at the far end of this seam and this
+document had not named it, which is a defect in the enumeration rather than
+a change to the seam.
 
 **The set is open and its exit is named.** `weaver-spu-PRD` section 10 holds the cell,
 carrying the candidate list the old tree's device authority offers as mechanics, and the

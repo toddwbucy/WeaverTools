@@ -17,8 +17,9 @@ is what keeps the election from being the recording level the trace charter
 retired. Entropy does not move. 13.10 gains its fault.
 **Revised:** 2026-08-21, third of this date, the generation records its
 bound. Section 13.6 gains the resolved per-turn ceiling and the stop
-condition as things that travel with the generation, per the ruling on issue
-#258: both are effective values 13.8's disposition rule already covered and
+condition as things that travel with the generation, per the ruling on
+issue #258: both are effective values 13.8's disposition rule already
+covered and
 neither reached the record, leaving a `finish` of `length` explained by a
 number no consumer can read. Section 8's dispositions are unchanged.
 **Revised:** 2026-08-21, the probability field is chartered. Section 13
@@ -1123,11 +1124,13 @@ survives, reported to the harness and authored by it as the `fault` event:
   would leave a viewer unable to tell an absent election from a broken
   one.
 - **Surprisal fault while elected.** The per-position vector could not be
-  produced with its election standing, the generation itself surviving.
-  **The perplexity is the case that makes this reportable rather than
-  silent**: it is produced from the same terms, so a vector that failed
-  while the scalar stood would leave a record whose two readings of one
-  generation disagree about whether the generation was read at all.
+  produced with its election standing, the generation itself surviving,
+  reported for the reason the readout's and the field's faults are: an
+  elected observation that silently stopped observing is the lie 13.7
+  refuses. **The fault does not depend on the perplexity.** The scalar may
+  stand or fail beside it, and a standing scalar corroborates what the
+  record already says rather than being what makes the failure reportable,
+  the election alone being the thing that was promised and not kept.
 
 An overflow is a typed refusal on the exchange rather than a fault, and a
 death is observed through closure rather than reported, both per the
@@ -1194,9 +1197,10 @@ the act that builds it, per Working Process section 6.
 ### 13.12 The surprisal, and what stands in its place
 
 **The election governs production, and what it elects is a vector rather
-than an instrument.** Per the operator's ruling of 2026-08-21 on issue
-#258. The per-position surprisal, the drawn token's own surprise in bits,
-has been unconditional since the measurement was written and belongs to no
+than an instrument.** Per the operator's ruling of 2026-08-21 on
+issue #258. The per-position surprisal, the drawn token's own surprise in
+bits, has been unconditional since the measurement was written and belongs
+to no
 arrangement of apex section 8. It is elected per load beside the field and
 the readout, unbundled from both for the reason they are unbundled from
 each other.
@@ -1231,8 +1235,9 @@ is whether a reading per position is produced at all, and unelected none
 is.
 
 **Entropy does not move, and its argument is not this one.** The
-distribution's entropy at each position stays unconditional, per issue
-#258's navigation tier: it is how a run carrying no election says which
+distribution's entropy at each position stays unconditional, per
+issue #258's navigation tier: it is how a run carrying no election says
+which
 turn deserves reloading with one, and a record that cannot aim an
 instrumented run has lost more than seven megabytes buys back. The two
 readings are computed at the same place against the same distribution and

@@ -1379,6 +1379,16 @@ what makes the unelected posture a smaller computation rather than a
 withheld reading, per the charter's own line on where the election is
 honest.
 
+**Which readings are unconditional and which turn on an election.** The
+entropies and the perplexity are produced for every generation, the first
+per position and the second per generation. The surprisals and the residual
+reductions are produced where their elections stand. **The absence rule
+below is about a reading that was not produced**, which after 2026-08-21 is
+either an election that did not stand or a reading a family cannot serve,
+and it is not a licence for an unconditional reading to go missing: an
+entropy vector absent from a generation that drew tokens is a defect rather
+than a posture.
+
 **The vectors are positionally paired with the token identifiers and absent
 when not produced,** per charter section 13.6 and `weaver-trace-PRD` section
 3.2. This crate produces no empty vector to mean nothing was measured: it
