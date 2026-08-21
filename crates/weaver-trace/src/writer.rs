@@ -395,10 +395,16 @@ fn turn_required(kind: Kind) -> bool {
         | Kind::Fault
         | Kind::Flush
         | Kind::ClassifyRequest
-        | Kind::ClassifyOutput => false,
+        | Kind::ClassifyOutput
+        // **`message.system` serves two cases and so is turn-optional**, per
+        // `weaver-trace-Spec` section 3 as of the prefix act. A system
+        // message submitted inside a turn carries that turn as every other
+        // message kind does. The seated identity prefix carries none,
+        // preceding every turn of the run, and the turn is present exactly
+        // when the message belongs to one.
+        | Kind::MessageSystem => false,
         Kind::TurnStarted
         | Kind::TurnClosed
-        | Kind::MessageSystem
         | Kind::MessageUser
         | Kind::MessageAssistant
         | Kind::MessageToolResult

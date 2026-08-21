@@ -1057,6 +1057,23 @@ impl Harness {
             )
             .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
 
+        // **The seated prefix reaches the record beside the load**, per
+        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5.
+        // The accumulation rule of the trace charter's section 3.2 bases the
+        // effective context on the identity prefix, and before this the
+        // prefix lived in the configuration alone, so a consumer holding the
+        // record could not close the reconstruction. The write is one read of
+        // what is in hand: the same instruction the elections came from.
+        //
+        // A refusal here is a defect in the declaration rather than a reason
+        // to abandon the load, and it is dropped rather than raised: the door
+        // refuses a role that is not system, the enter's own validation is
+        // what judges a declaration, and a load that has already bracketed
+        // does not fail on a record it could not write.
+        for message in &payload.spu_instruction.decoder.identity {
+            let _ = author.author_identity(&mut recorder, message);
+        }
+
         // **Past this line the bracket stands**, so every refusal below
         // carries the partial run back rather than dropping it: the leave that
         // follows unwinds exactly what stood up, closes the bracket, and

@@ -663,11 +663,18 @@ fn the_classify_pair_is_turn_optional_and_pairing_enforced() {
     );
 }
 
-/// The system kind is real since its act: it admits under the message
-/// payload inside a turn, refuses without one like its siblings, and the
+/// The system kind is real since its act, and turn-optional since the
+/// prefix act: it admits under the message payload inside a turn, admits
+/// with no turn because the seated identity prefix belongs to none, and the
 /// wire spelling is the charter's dotted name.
+///
+/// **The asymmetry is the point and is asserted here rather than assumed.**
+/// This test read `turn-required like its siblings` until the prefix act,
+/// which moved this one kind and left the other three where they were, so
+/// what it watches now is that the move was to one kind and not to the
+/// message kinds as a class.
 #[test]
-fn the_system_kind_admits_like_its_siblings() {
+fn the_system_kind_is_turn_optional_and_its_siblings_are_not() {
     let (mut r, path) = recorder();
     r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
     let seq = r
@@ -680,13 +687,29 @@ fn the_system_kind_admits_like_its_siblings() {
         ))
         .expect("admits inside a turn");
     assert!(seq.0 > 0);
-    assert!(
-        r.submit(event(Kind::MessageSystem, None, Some(Payload::Message(
-            raw_payload("{}").unwrap(),
-        ))))
-        .is_err(),
-        "turn-required like its siblings"
-    );
+    r.submit(event(
+        Kind::MessageSystem,
+        None,
+        Some(Payload::Message(
+            raw_payload("{\"role\":\"system\",\"content\":[]}").unwrap(),
+        )),
+    ))
+    .expect("and admits with no turn, the seated prefix belonging to none");
+    for sibling in [
+        Kind::MessageUser,
+        Kind::MessageAssistant,
+        Kind::MessageToolResult,
+    ] {
+        assert!(
+            r.submit(event(
+                sibling,
+                None,
+                Some(Payload::Message(raw_payload("{}").unwrap())),
+            ))
+            .is_err(),
+            "the other message kinds are turn-required as they were"
+        );
+    }
     r.drain().unwrap();
     let mut out = String::new();
     File::open(&path).unwrap().read_to_string(&mut out).unwrap();

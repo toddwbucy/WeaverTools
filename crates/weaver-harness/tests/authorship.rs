@@ -614,3 +614,55 @@ fn an_undecodable_record_refuses_the_seat_and_authors_a_fault() {
         "and the message it stood for is absent from the prompt"
     );
 }
+
+/// **The identity door writes system messages and refuses every other
+/// role.** A door that wrote what it was not built for would launder a bad
+/// declaration into a record that reads as well formed, which is the
+/// tool-result door's own reasoning applied to the prefix.
+///
+/// Perturbation: remove the role guard from `author_identity` and the user
+/// message below is authored as `message.system`, a role the record then
+/// carries under the wrong kind with nothing saying so. Watched under
+/// exactly that removal.
+///
+/// conforms: harness-identity-door-writes-system-only
+#[test]
+fn the_identity_door_writes_system_only() {
+    let (author, mut recorder) = author();
+    let prefix = Message {
+        role: Role::System,
+        content: vec![ContentBlock::Text {
+            text: "You are a careful assistant.".into(),
+        }],
+    };
+    author
+        .author_identity(&mut recorder, &prefix)
+        .expect("the prefix is licensed")
+        .expect("and it records");
+
+    let impostor = Message {
+        role: Role::User,
+        content: vec![ContentBlock::Text {
+            text: "not a prefix".into(),
+        }],
+    };
+    let refused = author.author_identity(&mut recorder, &impostor);
+    assert!(
+        refused.is_err(),
+        "a role that is not system is refused at the identity door"
+    );
+
+    let lines: Vec<&weaver_trace::Record> = recorder.structure().iter().collect();
+    assert_eq!(lines.len(), 1, "only the prefix reached the record");
+    assert_eq!(
+        lines[0].kind,
+        weaver_trace::Kind::MessageSystem,
+        "and it reached it as message.system"
+    );
+    let value: serde_json::Value =
+        serde_json::from_str(lines[0].line.as_ref()).expect("the line parses");
+    assert!(
+        value.get("turn").is_none(),
+        "the prefix belongs to no turn, a prefix preceding every turn there is"
+    );
+}
