@@ -448,8 +448,15 @@ built and shown rather than because the wording softened.
   contract party is carried in anticipation of it.
 - **Any seam over a wire.** The transports in code are Unix-specific, and a seam
   crossing a machine boundary would need its own framing and a peer-authentication
-  mechanism to replace `SO_PEERCRED`. Neither exists. The topology would carry, the
-  implementation would not.
+  mechanism to replace `SO_PEERCRED`. Neither exists. **Descriptor passing is the
+  hard case of the three and is named separately for it.** `SCM_RIGHTS` has no
+  wire analogue: a descriptor is a capability the kernel hands across a local
+  socket and rechecks at no point afterwards, and there is nothing to send over
+  TCP that is the same kind of thing. Custody rests on that mechanism, the sink
+  reaching the recorder as an already-open descriptor and the recorder offering no
+  call that takes a path, so a wire seam would need a different custody design
+  rather than a port of this one. The topology would carry, the implementation
+  would not.
 - **Shard widths beyond two.** A pair is what the salvaged tensor-parallel path
   implements. An N-way forward and its all-reduce are work this program does
   rather than salvage it inherits.
