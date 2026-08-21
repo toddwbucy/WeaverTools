@@ -4,6 +4,13 @@
 Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-21, the probability field is represented. Section
+7.5 lands it at section 6's own site, the logits already being held there
+for the signals, as a partial selection to the declared depth with the
+realized rank beside it. The depth refuses below the sampling cutoff at
+admit, two integers compared before any device work. Two perturbation
+assertions land, the second being the observational watch charter section
+13.11 obliges and the split-run technique rests on.
 **Revised:** 2026-08-20, second of this date, the seed becomes the run's own. Section
 8's seed moves from `Frozen` to `OperatorTunable` on the operator's ruling, the rest of
 the sampling surface staying frozen so a gathered distribution reports the task rather
@@ -1533,6 +1540,65 @@ edge: asserts
 from: weaver-spu
 to: spu-tap-failure-is-a-fault
 ```
+
+## 7.5 The probability field
+
+**It is produced at the signals' own site and from the same read**, per
+charter section 13.11. Section 6 already takes the distribution before the
+sampler and already holds the logits as a host-side vector to compute the
+entropy and the surprisal, so the field costs no additional read and no
+additional copy: it is a ranking of a vector this crate is already
+holding. Producing it anywhere else would either read a state the draw has
+moved past or pay for the vector twice.
+
+**The ranking is a partial selection and not a sort**, the depth being
+small against a vocabulary in the hundreds of thousands. What is reported
+is the depth's worth of candidates in descending probability with the
+realized rank beside them, probabilities rather than logits because the
+consumer's axis is probability and a consumer re-normalising per position
+would be doing the same arithmetic this crate already did.
+
+**The depth refuses below the sampling cutoff, at admit.** Charter
+section 13.11 rules the floor and the mechanism is this section's: the
+effective top-k of section 8 is known at admit, the declared depth is
+known at admit, and a depth below it refuses there naming both numbers.
+Refusing at the first turn instead would spend the admit's device work to
+learn what a comparison of two integers answers, which is the
+fail-cheap-or-lie-expensive rule again.
+
+```graph
+node: spu-field-depth-refused-below-the-cutoff
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-field-depth-refused-below-the-cutoff
+```
+
+**The field is observational and that is a test rather than a claim.**
+Charter section 13.11 obliges an elected field to change no token, and
+section 10 buys it: one declaration, one seed, the same turn run with the
+election standing and without it, the token sequences compared whole. The
+watch is what makes the split-run technique legitimate - two agents
+carrying two elections and their records joined at token position - which
+is otherwise a joint over sequences nothing proved identical.
+
+```graph
+node: spu-field-changes-no-token
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-field-changes-no-token
+```
+
+**Absent where unelected, and the absence has no shape.** No empty vector
+crosses per position and no member sits null on the intermediate: the
+message is not sent. A consumer counts what was produced rather than
+filtering what was not, per the decode contract's section 2, and why the
+election did not stand is the load event's to say rather than this seam's.
 
 ## 8. Sampling, and the dispositions
 
