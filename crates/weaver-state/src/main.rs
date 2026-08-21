@@ -67,6 +67,13 @@ fn main() -> std::process::ExitCode {
         // standing, and an empty stand is the honest outcome.
         return std::process::ExitCode::SUCCESS;
     };
+    // **The session the opener declared bounds every answer.** Held for the
+    // channel's life beside the election, per the contract's amended term.
+    // An opener that names none leaves it empty, which matches no row, so a
+    // custodian that could not learn its session answers nothing rather than
+    // answering across every session the file holds - the defect this
+    // repairs, where unbounded reads looked perfectly well formed.
+    let session = parse_session(&opener).unwrap_or_default();
     let election = parse_election(&opener).unwrap_or_default();
     if let Err(fault) = store.index_election(&election) {
         eprintln!("{}", serde_json::json!({"state_fault": format!("{fault:?}")}));
@@ -86,9 +93,11 @@ fn main() -> std::process::ExitCode {
             // is silence the harness's bound converts, per the contract:
             // custody never invents an answer shape for a fault.
             let frame = match ask {
-                Ask::Shape => store.shape().map(|shape| render_shape_answer(&shape)),
+                Ask::Shape => store
+                    .shape(&session)
+                    .map(|shape| render_shape_answer(&shape)),
                 Ask::Recall { last_turns } => store
-                    .recall(last_turns)
+                    .recall(&session, last_turns)
                     .map(|events| render_recall_answer(&events)),
             };
             if let Ok(frame) = frame
@@ -178,6 +187,14 @@ fn stand_and_accept(socket: &str, peer_uid: u32) -> Option<std::os::unix::net::U
             }
         }
     }
+}
+
+/// The session the opener names, per the contract's `election` term as
+/// amended 2026-08-20. Absent where the frame does not parse or carries no
+/// session, which the caller reads as the empty session.
+fn parse_session(line: &str) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_str(line).ok()?;
+    Some(value.get("session")?.as_str()?.to_string())
 }
 
 /// The opener's shape: `{"election":{"all_kinds":true,"keys":[...]}}`. A
@@ -302,7 +319,7 @@ mod tests {
                 paths: vec!["close".into(), "request.sampling".into()],
             }],
         };
-        let opener = weaver_trace::opener(&sent);
+        let opener = weaver_trace::opener("s-1", &sent);
         let received = parse_election(opener.trim_end()).expect("the opener parses");
         assert!(!received.all_kinds);
         assert_eq!(

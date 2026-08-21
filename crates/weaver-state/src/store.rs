@@ -1,5 +1,6 @@
 //! conforms: state-distillate-lands-whole
 //! conforms: state-indexes-built-at-load
+//! conforms: state-serve-restricts-to-the-session
 //!
 //! The custody, per `weaver-state-Spec` section 3: sqlite behind the seam,
 //! never reached as a file, the distillate landing whole or not at all.
@@ -182,28 +183,31 @@ impl Store {
     /// key, each carrying its kinds and their counts as the envelope
     /// spelled them. An organized envelope fact carrying no judgment about
     /// what any count means to a turn, per the three-way division.
-    pub fn shape(&self) -> Result<Vec<RunShape>, CustodyFault> {
+    pub fn shape(&self, session: &str) -> Result<Vec<RunShape>, CustodyFault> {
         let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
         let mut runs_query = self
             .connection
-            .prepare_cached("SELECT run FROM event GROUP BY run ORDER BY MIN(id)")
+            .prepare_cached(
+                "SELECT run FROM event WHERE session = ?1
+                 GROUP BY run ORDER BY MIN(id)",
+            )
             .map_err(fault)?;
         let runs: Vec<String> = runs_query
-            .query_map([], |row| row.get(0))
+            .query_map([session], |row| row.get(0))
             .map_err(fault)?
             .collect::<Result<_, _>>()
             .map_err(fault)?;
         let mut kinds_query = self
             .connection
             .prepare_cached(
-                "SELECT kind, COUNT(*) FROM event WHERE run = ?1
+                "SELECT kind, COUNT(*) FROM event WHERE session = ?1 AND run = ?2
                  GROUP BY kind ORDER BY kind",
             )
             .map_err(fault)?;
         let mut shaped = Vec::with_capacity(runs.len());
         for run in runs {
             let kinds: Vec<(String, i64)> = kinds_query
-                .query_map([&run], |row| Ok((row.get(0)?, row.get(1)?)))
+                .query_map([session, run.as_str()], |row| Ok((row.get(0)?, row.get(1)?)))
                 .map_err(fault)?
                 .collect::<Result<_, _>>()
                 .map_err(fault)?;
@@ -274,7 +278,11 @@ impl Store {
     /// left unread. The bound keys the whole turn identity because a turn
     /// label recurs across runs, and a label alone would recall an older
     /// run's turn beside its namesake.
-    pub fn recall(&self, last_turns: Option<u64>) -> Result<Vec<RecalledEvent>, CustodyFault> {
+    pub fn recall(
+        &self,
+        session: &str,
+        last_turns: Option<u64>,
+    ) -> Result<Vec<RecalledEvent>, CustodyFault> {
         let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
         let bound: Option<Vec<(String, String, String)>> = match last_turns {
             None => None,
@@ -284,12 +292,13 @@ impl Store {
                     .prepare_cached(
                         "SELECT session, run, turn FROM (
                              SELECT session, run, turn, MAX(id) AS last FROM event
-                             WHERE turn IS NOT NULL GROUP BY session, run, turn
-                         ) ORDER BY last DESC LIMIT ?1",
+                             WHERE turn IS NOT NULL AND session = ?1
+                             GROUP BY session, run, turn
+                         ) ORDER BY last DESC LIMIT ?2",
                     )
                     .map_err(fault)?;
                 let turns: Vec<(String, String, String)> = turns_query
-                    .query_map([count as i64], |row| {
+                    .query_map(rusqlite::params![session, count as i64], |row| {
                         Ok((row.get(0)?, row.get(1)?, row.get(2)?))
                     })
                     .map_err(fault)?
@@ -302,13 +311,14 @@ impl Store {
             .connection
             .prepare_cached(
                 "SELECT id, session, run, turn, kind, sequence FROM event
-                 WHERE kind IN ('message.system', 'message.user',
+                 WHERE session = ?1
+                   AND kind IN ('message.system', 'message.user',
                                 'message.assistant', 'message.tool_result')
                  ORDER BY id",
             )
             .map_err(fault)?;
         let rows: Vec<(i64, String, String, Option<String>, String, i64)> = events_query
-            .query_map([], |row| {
+            .query_map([session], |row| {
                 Ok((
                     row.get(0)?,
                     row.get(1)?,
@@ -532,6 +542,96 @@ mod tests {
         }
     }
 
+    /// **Custody answers within its session and not across it**, per
+    /// `weaver-state-Spec` section 4 and `weaver-state-PRD` section 4's
+    /// boundary. A store file holding more than one session is the normal
+    /// case: sessions outlive runs and the file outlives sessions, so both
+    /// serve queries bound to the session the opener declared.
+    ///
+    /// The defect this pins was invisible in exactly the way that matters.
+    /// Unbounded, both queries answered over every session the file held
+    /// and every answer looked well formed - a shape ask reporting a
+    /// lifetime's runs as this session's, and a recall reaching a fact the
+    /// operator believed a session cut had retired.
+    ///
+    /// Perturbation: drop any of the three `WHERE session` predicates and
+    /// this fails. Dropping the shape's or the recall's event predicate
+    /// surfaces the older session's run and message in the newer session's
+    /// answers. Dropping the turn-selection subquery's spends the
+    /// `last-turns` bound on an older session's turn and leaves the bounded
+    /// recall empty - fail-closed, because the event predicate still holds,
+    /// but the answer is wrong either way.
+    #[test]
+    fn the_answers_stay_inside_the_running_session() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        store
+            .index_election(&Election::default())
+            .expect("indexes");
+
+        // An earlier session's holdings, still on disk where a session cut
+        // left them, and a message it may not serve into the new session.
+        store.land(&landed("old", "r-old", "load", 0)).expect("lands");
+        let mut stale = landed("old", "r-old", "message.user", 1);
+        stale.turn = Some("t-1".into());
+        stale.pairs = vec![("payload.content".into(), "\"the vault code\"".into())];
+        store.land(&stale).expect("lands");
+
+        store.land(&landed("new", "r-new", "load", 0)).expect("lands");
+        let mut fresh = landed("new", "r-new", "message.user", 1);
+        fresh.turn = Some("t-1".into());
+        fresh.pairs = vec![("payload.content".into(), "\"hello\"".into())];
+        store.land(&fresh).expect("lands");
+
+        assert_eq!(store.held().expect("held"), 4, "the file holds both");
+
+        let shape = store.shape("new").expect("shapes");
+        assert_eq!(
+            shape.len(),
+            1,
+            "the shape holds the running session's runs alone: {shape:?}"
+        );
+        assert_eq!(shape[0].run, "r-new");
+
+        let recalled = store.recall("new", None).expect("recalls");
+        assert_eq!(
+            recalled.len(),
+            1,
+            "the recall reads the running session's messages alone: {recalled:?}"
+        );
+        assert_eq!(recalled[0].run, "r-new");
+        assert!(
+            !recalled[0].pairs.iter().any(|(_, v)| v.contains("vault")),
+            "and never the retired session's content"
+        );
+
+        // A bounded recall reads the turn-selection subquery, which the
+        // unbounded ask above never touches. The older session's second
+        // turn lands last so it holds the highest id: unbounded by session,
+        // `LIMIT 1` would elect it, and the event query - still bounded -
+        // would then find no row of it to read.
+        let mut later_stale = landed("old", "r-old", "message.user", 2);
+        later_stale.turn = Some("t-2".into());
+        later_stale.pairs = vec![("payload.content".into(), "\"the vault code again\"".into())];
+        store.land(&later_stale).expect("lands");
+
+        let bounded = store.recall("new", Some(1)).expect("recalls");
+        assert_eq!(
+            bounded.len(),
+            1,
+            "the bound selects the running session's turn, not the newest \
+             turn on the file: {bounded:?}"
+        );
+        assert_eq!(bounded[0].run, "r-new");
+        assert_eq!(bounded[0].turn.as_deref(), Some("t-1"));
+
+        // The older session is not destroyed, only unreachable: removal is
+        // section 6's open question, deliberately not this act's.
+        let old_shape = store.shape("old").expect("shapes");
+        assert_eq!(old_shape.len(), 1, "the older session's rows stand");
+    }
+
     /// The shape holds the runs in first-landed order by the id column,
     /// interleaved landings included, each with its counts by kind, and
     /// the answer frame renders the contract's spelling.
@@ -549,7 +649,7 @@ mod tests {
         ] {
             store.land(&landed("s", run, kind, sequence)).expect("lands");
         }
-        let shape = store.shape().expect("shapes");
+        let shape = store.shape("s").expect("shapes");
         assert_eq!(shape.len(), 2);
         assert_eq!(shape[0].run, "r-1", "first landed leads");
         assert_eq!(
@@ -572,12 +672,12 @@ mod tests {
         let _ = std::fs::remove_file(&path);
         let mut store = Store::open(&path).expect("opens");
         store.land(&landed("s", "r-1", "load", 0)).expect("lands");
-        let before = store.shape().expect("shapes");
+        let before = store.shape("s").expect("shapes");
         assert_eq!(before[0].kinds, vec![("load".to_string(), 1)]);
         store
             .land(&landed("s", "r-1", "turn.closed", 1))
             .expect("lands");
-        let after = store.shape().expect("shapes");
+        let after = store.shape("s").expect("shapes");
         assert_eq!(
             after[0].kinds,
             vec![("load".to_string(), 1), ("turn.closed".to_string(), 1)]
@@ -639,7 +739,7 @@ mod tests {
         ] {
             store.land(&landing).expect("lands");
         }
-        let bounded = store.recall(Some(2)).expect("recalls");
+        let bounded = store.recall("s", Some(2)).expect("recalls");
         let quoted: Vec<&str> = bounded
             .iter()
             .map(|event| event.pairs[0].1.as_str())
@@ -649,7 +749,7 @@ mod tests {
             vec!["\"new one\"", "\"new two\""],
             "the bound keeps the newer run's turns and no namesakes"
         );
-        let whole = store.recall(None).expect("recalls");
+        let whole = store.recall("s", None).expect("recalls");
         assert_eq!(whole.len(), 4, "the unbounded recall reads every message");
         let _ = std::fs::remove_file(&path);
     }
