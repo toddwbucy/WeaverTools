@@ -125,6 +125,10 @@ fn a_safetensors_artifact_generates_through_the_native_engine() {
             },
             &mut NeverCancels,
             &mut |_token| {},
+            None,
+            &mut |_, _, _| {},
+            11,
+            64,
         )
         .expect("the generation completes");
 
@@ -200,6 +204,10 @@ fn the_pair_agrees_with_the_single_card() {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                11,
+                64,
             )
             .expect("generates");
         let text = resident.detokenize(&generated.tokens).expect("detokenizes");
@@ -282,6 +290,10 @@ fn an_elected_readout_travels_with_the_generation() {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                11,
+                64,
             )
             .expect("generates");
         match (elected, &generated.residual_norms) {
@@ -402,6 +414,10 @@ fn the_pair_reports_its_pace() {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                11,
+                64,
             )
             .expect("generates");
         let elapsed = started.elapsed().as_secs_f64();
@@ -504,6 +520,10 @@ fn a_large_sharded_safetensors_serves_across_the_pair() {
             },
             &mut NeverCancels,
             &mut |_| {},
+            None,
+            &mut |_, _, _| {},
+            11,
+            64,
         )
         .expect("the 32B generates");
     let secs = opened.elapsed().as_secs_f64();

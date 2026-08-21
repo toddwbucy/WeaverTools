@@ -187,6 +187,10 @@ pub struct GgufEngine<'a> {
     /// a buffer nothing filled.
     logits_at: Option<i32>,
     closed: bool,
+    /// The knobs the chain is rebuilt from at each generation, per
+    /// `weaver-spu-Spec` section 8.5. Held because the chain holds nothing
+    /// between generations and is therefore built rather than reset.
+    knobs: EffectiveKnobs,
 }
 
 impl<'a> GgufEngine<'a> {
@@ -222,11 +226,29 @@ impl<'a> GgufEngine<'a> {
                 detail: format!("new_context: {error}"),
             })?;
 
-        // The chain order is the one llama.cpp's own samplers assume:
-        // penalties, then the truncating filters, then temperature, then the
-        // draw. A distribution sampler last is what makes the seed mean
-        // something.
-        let sampler = LlamaSampler::chain_simple([
+        let sampler = Self::chain(knobs, knobs.seed);
+
+        Ok(GgufEngine {
+            context,
+            sampler,
+            logits_at: None,
+            closed: false,
+            knobs: *knobs,
+        })
+    }
+
+    /// The sampler chain, built from the knobs and one seed.
+    ///
+    /// **The chain order is the one llama.cpp's own samplers assume**:
+    /// penalties, then the truncating filters, then temperature, then the
+    /// draw. A distribution sampler last is what makes the seed mean
+    /// something.
+    ///
+    /// One function so the open and the per-generation rebuild cannot
+    /// drift: a chain built two ways in two places is two samplers that
+    /// agree until someone edits one of them.
+    fn chain(knobs: &EffectiveKnobs, seed: u64) -> LlamaSampler {
+        LlamaSampler::chain_simple([
             LlamaSampler::penalties(
                 knobs.repetition_window as i32,
                 knobs.repetition_penalty,
@@ -236,15 +258,15 @@ impl<'a> GgufEngine<'a> {
             LlamaSampler::top_k(knobs.top_k as i32),
             LlamaSampler::top_p(knobs.top_p, 1),
             LlamaSampler::temp(knobs.temperature),
-            LlamaSampler::dist(knobs.seed as u32),
-        ]);
-
-        Ok(GgufEngine {
-            context,
-            sampler,
-            logits_at: None,
-            closed: false,
-        })
+            // **Both halves fold in**, per `weaver-spu-Spec` section 8.5's
+            // derivation. This sampler takes a `u32` where the derivation
+            // answers a `u64` and the native path consumes the whole of
+            // it, so a plain truncation would drop every distinction above
+            // bit 31 and leave the two engines drawing from different
+            // amounts of one seed. Folding keeps the upper half's
+            // contribution in the value that reaches the draw.
+            LlamaSampler::dist(((seed >> 32) ^ (seed & 0xFFFF_FFFF)) as u32),
+        ])
     }
 
     fn engine_fault(detail: impl Into<String>) -> DecodeFault {
@@ -253,25 +275,35 @@ impl<'a> GgufEngine<'a> {
         }
     }
 
-    /// Drop the penalty window after a cache rewrite.
-    ///
-    /// **A reset is the whole of it, and it is exact rather than an
-    /// approximation.** `sample` is the only place anything is accepted, so
-    /// the window holds sampled tokens and nothing else: a prefix reaches
-    /// residency through `decode_at`, which accepts nothing. Both flush paths
-    /// retain exactly the prefix, so every token that survives one is a token
-    /// the sampler never saw, and the correct window afterwards is empty.
-    ///
-    /// Without this the penalties stage keeps scoring against tokens the
-    /// truncation removed, so one resident state draws differently depending
-    /// on a history nothing represents, and the frozen seed stops meaning what
-    /// the chain order was built to make it mean.
-    fn forget_sampled(&mut self) {
-        self.sampler.reset();
-    }
 }
 
 impl Backend for GgufEngine<'_> {
+    /// **Built afresh, and the window restored from the tail**, per
+    /// `weaver-spu-Spec` section 8.5.
+    ///
+    /// The chain accumulates its penalty window from the tokens it
+    /// accepts, so a chain built new has an empty one and would leave a
+    /// generation's opening tokens unpenalised against what preceded them.
+    /// The caller supplies the resident tail the knobs describe and it is
+    /// fed straight in, which is the same window read from the state
+    /// rather than carried in the sampler. The native path already read
+    /// the tail directly, so one source makes the two engines agree by
+    /// construction rather than by two implementations staying in step.
+    ///
+    /// **Nothing is reset.** `LlamaSampler::reset` reaches every sampler
+    /// in the chain, which reseeded the draw while clearing the window and
+    /// is the coupling this retires. A chain that is built rather than
+    /// reset has nothing to clear.
+    fn reseed(&mut self, seed: u64, window: &[TokenId]) -> Result<(), DecodeFault> {
+        if self.closed {
+            return Err(Self::engine_fault("the engine is closed"));
+        }
+        let mut sampler = Self::chain(&self.knobs, seed);
+        sampler.accept_many(window.iter().map(|token| LlamaToken(token.0 as i32)));
+        self.sampler = sampler;
+        Ok(())
+    }
+
     fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
         if self.closed {
             return Err(Self::engine_fault("the engine is closed"));
@@ -380,7 +412,13 @@ impl Backend for GgufEngine<'_> {
         // Leaving it readable would let a sample after a truncation draw from
         // the state the truncation removed.
         self.logits_at = None;
-        self.forget_sampled();
+        // **Nothing is cleared here as of 2026-08-21**, per
+        // `weaver-spu-Spec` section 8.5. The penalty window is read from
+        // the resident tail when each generation reseeds, so after this
+        // rewrite the next read is of the rewritten tail. The reset that
+        // stood here cleared the window and reseeded the draw together,
+        // llama.cpp's chain reset reaching every sampler in it, which is
+        // the coupling that ruling retires.
         Ok(())
     }
 
@@ -390,7 +428,13 @@ impl Backend for GgufEngine<'_> {
         }
         self.context.clear_kv_cache();
         self.logits_at = None;
-        self.forget_sampled();
+        // **Nothing is cleared here as of 2026-08-21**, per
+        // `weaver-spu-Spec` section 8.5. The penalty window is read from
+        // the resident tail when each generation reseeds, so after this
+        // rewrite the next read is of the rewritten tail. The reset that
+        // stood here cleared the window and reseeded the draw together,
+        // llama.cpp's chain reset reaching every sampler in it, which is
+        // the coupling that ruling retires.
         Ok(())
     }
 
@@ -571,6 +615,10 @@ mod tests {
                 },
                 &mut NeverCancels,
                 &mut |_| streamed += 1,
+                None,
+                &mut |_, _, _| {},
+                11,
+                64,
             )
             .expect("the generation runs");
 
@@ -694,41 +742,74 @@ mod tests {
         );
     }
 
-    /// **A flush takes the penalty window with the tokens it removed.**
+    /// **Two seeds differing only above bit 31 reach the draw as two
+    /// seeds.** This sampler takes a `u32` where the derivation answers a
+    /// `u64`, so a plain truncation would make `0x0000_0000_0000_0001` and
+    /// `0xFFFF_FFFF_0000_0001` one seed - and the native path, which
+    /// consumes the whole `u64`, would disagree with it. The fold is what
+    /// keeps the upper half in the value that draws.
     ///
-    /// The window holds sampled tokens and nothing else, since `sample` is the
-    /// only place anything is accepted, and both flush paths retain exactly the
-    /// prefix. So the window after either is empty, and a run that follows one
-    /// draws as though it were the first.
+    /// Read against the arithmetic rather than against a device, so it
+    /// runs without a model: what is under test is the narrowing, and the
+    /// narrowing is a pure function.
     ///
-    /// What this reads is that the seed still means something across a flush:
-    /// two runs from the same resident state draw the same token, which is
-    /// false when a stale window penalizes one of them and not the other.
-    ///
-    /// Perturbation: drop `forget_sampled` from `reestablish` and this fails,
-    /// the second run drawing differently because the first run's tokens are
-    /// still being penalized. Watched under exactly that change.
+    /// Perturbation: write `seed as u32` and the two collapse.
     #[test]
-    fn a_flush_takes_the_penalty_window_with_it() {
+    fn both_halves_of_the_derived_seed_reach_the_draw() {
+        let narrow = |seed: u64| ((seed >> 32) ^ (seed & 0xFFFF_FFFF)) as u32;
+        assert_ne!(
+            narrow(0x0000_0000_0000_0001),
+            narrow(0xFFFF_FFFF_0000_0001),
+            "seeds differing only above bit 31 must not collapse"
+        );
+        // The derivation's own neighbours, which is where this matters.
+        let turn = weaver_types::TurnKey("t-1".to_string());
+        let a = crate::sampling::derived_seed(11, &turn, 0);
+        let b = crate::sampling::derived_seed(11, &turn, 1);
+        assert_ne!(narrow(a), narrow(b), "adjacent generations stay apart");
+        // And the fold is not lossy in the ordinary direction: a value
+        // whose upper half is zero passes through unchanged, so nothing
+        // that worked before this act now narrows differently.
+        assert_eq!(narrow(0x0000_0000_DEAD_BEEF), 0xDEAD_BEEF);
+    }
+
+    /// **A reseed restores the window from the tail it is handed**, per
+    /// `weaver-spu-Spec` section 8.5, which is what makes a flush harmless
+    /// to sampling rather than something a flush has to repair.
+    ///
+    /// What this reads is that the seed still means something across a
+    /// rewrite: the same resident state, reseeded with the same seed and
+    /// the same window, draws the same token. It replaces a test that read
+    /// the same property through `forget_sampled`, which delivered it by
+    /// clearing the window and reseeding the draw together - the coupling
+    /// that ruling retires.
+    ///
+    /// Perturbation: drop the `accept_many` from `reseed` and this fails,
+    /// the second draw seeing an empty window where the first saw a full
+    /// one.
+    #[test]
+    fn a_reseed_restores_the_window_it_is_handed() {
         let Some(model) = model_or_skip() else { return };
         let mut engine = engine(&model);
         let prefix = [TokenId(9707), TokenId(11), TokenId(1879)];
+        let window = [TokenId(9707), TokenId(11)];
 
         engine.decode_at(&prefix, 0).expect("the prefix decodes");
+        engine.reseed(4242, &window).expect("the first reseed");
         let first = engine.sample().expect("a token is drawn");
-        // Make it resident and draw again, so the window is not empty.
-        engine.decode_at(&[first], prefix.len()).expect("resident");
-        engine.sample().expect("a second token is drawn");
 
-        engine.reestablish().expect("the flush runs");
+        // Rewrite the cache and come back to the same resident state.
+        engine.reestablish().expect("the rewrite runs");
         engine
             .decode_at(&prefix, 0)
             .expect("the prefix decodes again");
+        engine.reseed(4242, &window).expect("the second reseed");
         let after = engine.sample().expect("a token is drawn");
 
         assert_eq!(
             first, after,
-            "the same resident state draws the same token, the window having gone with the flush"
+            "one seed and one window draw one token, whatever happened to \
+             the cache between them"
         );
     }
 

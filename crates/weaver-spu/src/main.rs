@@ -328,6 +328,14 @@ struct OpenedSession<'r> {
     /// and a template identity worth the name is issues #88 and #129's.
     template: &'static str,
     generation_opener: &'static str,
+    /// **Which generation of the current turn the next one is**, per
+    /// `weaver-spu-Spec` section 8.5, counted from zero and reset when the
+    /// turn changes. A turn runs as many generations as its tool rounds,
+    /// and two of them sharing a derived seed would draw one stream twice.
+    /// Counting within the turn rather than across the residency is what
+    /// keeps the derivation free of history: replaying a turn issues the
+    /// same generations in the same order.
+    turn_generations: Option<(weaver_types::TurnKey, u64)>,
     /// **The family's stop conditions, promoted against this artifact.** Built
     /// once at open, because the vocabulary cannot change under a residency and
     /// a set rebuilt per turn would be the same answer at a per-turn cost.
@@ -464,6 +472,7 @@ fn serve_decode(
                             template: declaration.template,
                             generation_opener: declaration.generation_opener,
                             stop,
+                            turn_generations: None,
                         })
                     });
                 match outcome {
@@ -494,7 +503,7 @@ fn serve_decode(
                 }
             }
 
-            TokenDirective::AppendAndGenerate { delta, .. } => {
+            TokenDirective::AppendAndGenerate { turn, delta } => {
                 // The directive carries no sampling value to refuse: the
                 // values reached this crate in the declaration and the engine
                 // took them when the session opened.
@@ -585,6 +594,27 @@ fn serve_decode(
                         stream_fatal.set(true);
                     }
                 };
+                // **This generation's ordinal within its turn**, per
+                // `weaver-spu-Spec` section 8.5: zero for a turn's first
+                // generation and one more for each tool round after it,
+                // reset when the turn changes. The count is held rather
+                // than derived because the seam carries no ordinal and the
+                // sequence of calls is the thing a replay reissues.
+                let generation_in_turn = match &mut standing.turn_generations {
+                    Some((held, count)) if *held == turn => {
+                        *count += 1;
+                        *count
+                    }
+                    slot => {
+                        *slot = Some((turn.clone(), 0));
+                        0
+                    }
+                };
+                let generation_seed = weaver_spu::sampling::derived_seed(
+                    effective.knobs.seed,
+                    &turn,
+                    generation_in_turn,
+                );
                 let generated = match standing.session.append_and_generate(
                     &delta_tokens,
                     &stop,
@@ -592,6 +622,8 @@ fn serve_decode(
                     &mut on_token,
                     effective.field_depth.map(|d| d as usize),
                     &mut on_field,
+                    generation_seed,
+                    effective.knobs.repetition_window as usize,
                 ) {
                     Ok(generated) => generated,
                     Err(DecodeFault::Overflow {
@@ -661,7 +693,15 @@ fn serve_decode(
                             "top_p": knobs.top_p,
                             "repetition_penalty": knobs.repetition_penalty,
                             "repetition_window": knobs.repetition_window,
+                            // **Both seeds**, per `weaver-spu-Spec` section
+                            // 8.5. `seed` keeps the meaning it always had,
+                            // the declared run seed, so every record
+                            // written before the derivation still reads
+                            // correctly. `generation_seed` is what this
+                            // generation drew from, recorded so a re-entry
+                            // can be checked rather than supplied.
                             "seed": knobs.seed,
+                            "generation_seed": generation_seed,
                         },
                     })
                     .to_string(),

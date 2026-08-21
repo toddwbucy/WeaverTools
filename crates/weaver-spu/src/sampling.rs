@@ -322,6 +322,44 @@ impl Knobs {
     }
 }
 
+/// The seed one generation draws from, per `weaver-spu-Spec` section 8.5.
+///
+/// **Stated to the bit there and implemented here to match**, because two
+/// builds differing by one constant produce runs that cannot be compared
+/// and nothing says so. The Spec carries test vectors and the test below
+/// is those vectors.
+///
+/// The three inputs fix the stream and nothing else: the declared seed the
+/// operator wrote, the turn's reference, and which generation of that turn
+/// this is, counted from zero. A turn runs as many generations as its tool
+/// rounds, and two sharing a seed would draw one stream twice.
+pub fn derived_seed(declared: u64, turn: &weaver_types::TurnKey, generation: u64) -> u64 {
+    let state = splitmix64_finalize(declared ^ fnv1a_64(turn.0.as_bytes()));
+    splitmix64_finalize(state ^ generation)
+}
+
+/// The turn's reference as a number, FNV-1a over its UTF-8 bytes. The
+/// reference is a string admin minted and this crate needs a number from
+/// it without caring what it spells.
+fn fnv1a_64(bytes: &[u8]) -> u64 {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in bytes {
+        hash = (hash ^ u64::from(*byte)).wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    hash
+}
+
+/// `splitmix64`'s finalizer: short enough to state in full, standard
+/// enough to be recognised, and well distributed on sequential inputs,
+/// the last mattering because the generation ordinal is sequential and
+/// adjacent turns must not draw adjacent streams.
+fn splitmix64_finalize(x: u64) -> u64 {
+    let mut z = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    z ^ (z >> 31)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -494,6 +532,64 @@ mod tests {
         assert!(
             elections.resolve(&at_the_bound).is_err(),
             "2^64 is the value u64::MAX as f64 rounds to, and it is refused"
+        );
+    }
+
+    /// **The Spec's own vectors**, per `weaver-spu-Spec` section 8.5. They
+    /// are the specification's rather than this implementation's, computed
+    /// independently of it, so a build disagreeing with one has a defect
+    /// rather than a variation.
+    ///
+    /// Perturbation: change any constant, reorder the two mixes, or make
+    /// the ordinal one-based, and every row fails.
+    #[test]
+    fn the_derivation_matches_the_specs_vectors() {
+        let turn = |t: &str| weaver_types::TurnKey(t.to_string());
+        assert_eq!(fnv1a_64(b"t-1"), 0x5627_0919_43b2_a601);
+        assert_eq!(fnv1a_64(b"t-2"), 0x5627_0619_43b2_a0e8);
+        for (declared, label, generation, expected) in [
+            (0u64, "t-1", 0u64, 0x4587_63dd_2277_adccu64),
+            (11, "t-1", 0, 0x6025_a13a_d2f4_a430),
+            (11, "t-1", 1, 0x5144_c61d_6c67_c975),
+            (11, "t-2", 0, 0x25f1_b675_aac3_c47d),
+            (2_814_393_375, "t-2", 3, 0xcf4a_d3d2_e2e1_4630),
+            (u64::MAX, "t-1", 0, 0x007b_e97c_ffce_ca04),
+        ] {
+            assert_eq!(
+                derived_seed(declared, &turn(label), generation),
+                expected,
+                "declared {declared}, turn {label}, generation {generation}"
+            );
+        }
+    }
+
+    /// **Adjacent inputs draw distant streams**, which is why the finalizer
+    /// is there at all: the ordinal is sequential and turn references
+    /// differ by a character, so a derivation without avalanche would put
+    /// neighbouring runs on neighbouring streams.
+    #[test]
+    fn adjacent_inputs_do_not_draw_adjacent_streams() {
+        let turn = |t: &str| weaver_types::TurnKey(t.to_string());
+        let base = derived_seed(11, &turn("t-1"), 0);
+        let next_generation = derived_seed(11, &turn("t-1"), 1);
+        let next_turn = derived_seed(11, &turn("t-2"), 0);
+        assert_eq!((base ^ next_generation).count_ones(), 33);
+        assert_eq!((base ^ next_turn).count_ones(), 31);
+    }
+
+    /// A second run of the same turn under the same declared seed derives
+    /// the same value, which is the property the whole ruling exists for.
+    #[test]
+    fn the_same_three_inputs_derive_the_same_seed() {
+        let turn = weaver_types::TurnKey("t-7".to_string());
+        assert_eq!(
+            derived_seed(2_814_393_375, &turn, 2),
+            derived_seed(2_814_393_375, &turn, 2)
+        );
+        assert_ne!(
+            derived_seed(2_814_393_375, &turn, 2),
+            derived_seed(2_814_393_375, &turn, 3),
+            "and a different generation of it does not"
         );
     }
 }

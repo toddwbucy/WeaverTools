@@ -228,6 +228,8 @@ impl<'a> Session<'a> {
         on_token: &mut dyn FnMut(TokenId),
         field: Option<usize>,
         on_field: &mut dyn FnMut(u64, Vec<(u32, f32)>, u32),
+        seed: u64,
+        penalty_window: usize,
     ) -> Result<Generated, DecodeFault> {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
@@ -260,6 +262,37 @@ impl<'a> Session<'a> {
         }
         self.resident.extend_from_slice(delta);
         let prefill_ns = prefill_started.elapsed().as_nanos() as u64;
+
+        // **The sampler is built here, after the delta is resident and
+        // before the first draw**, per `weaver-spu-Spec` section 8.5. It
+        // holds nothing from the last generation: the seed is the
+        // caller's, derived from the declared one and this generation's
+        // identity, and the penalty window is the resident tail read now.
+        //
+        // **After the delta rather than before it, because the delta is in
+        // the window.** The native path reads the tail live at each draw
+        // and therefore sees the delta's tokens, so a window taken before
+        // the prefill would penalise a different set on the two engines,
+        // which is the divergence this section's one-source rule exists to
+        // prevent. After a flush the tail is the truncated tail, which is
+        // why nothing needs clearing.
+        //
+        // **And after the overflow check**, so a refused generation
+        // reseeds nothing: a refusal that had already rebuilt the sampler
+        // would leave the session altered by a call that answered an
+        // error.
+        //
+        // **A failure here poisons rather than returns**, because the delta
+        // is already decoded and resident above. A fault that answered
+        // plainly would leave a session whose state holds a delta no
+        // generation ever consumed, appendable and quietly wrong, which is
+        // the disagreement the poison exists to refuse. This sits after a
+        // commit and therefore takes the commit's discipline.
+        let window_start = self.resident.len().saturating_sub(penalty_window);
+        let window: Vec<TokenId> = self.resident[window_start..].to_vec();
+        if let Err(fault) = self.backend.reseed(seed, &window) {
+            return Err(self.poison(fault));
+        }
         let decode_started = std::time::Instant::now();
 
         let mut produced = Vec::new();
@@ -453,6 +486,9 @@ mod tests {
     /// back after the session has taken ownership of the backend.
     #[derive(Default)]
     struct Log {
+        /// Every reseed the session asked for, in order: the seed it
+        /// derived and the penalty window it read from the resident tail.
+        reseeds: Vec<(u64, Vec<TokenId>)>,
         decoded: Vec<(Vec<TokenId>, usize)>,
         truncated: Vec<usize>,
         reestablished: usize,
@@ -486,6 +522,14 @@ mod tests {
     struct Recorder(Rc<RefCell<Log>>, Vec<f32>);
 
     impl Backend for Recorder {
+        /// The seam's own, recorded rather than acted on: this backend
+        /// samples from a script, so what a reseed does here is note that
+        /// it happened and with what.
+        fn reseed(&mut self, seed: u64, window: &[TokenId]) -> Result<(), DecodeFault> {
+            self.0.borrow_mut().reseeds.push((seed, window.to_vec()));
+            Ok(())
+        }
+
         fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
             let mut log = self.0.borrow_mut();
             let call = log.decoded.len();
@@ -575,6 +619,8 @@ mod tests {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                11,
+                64,
             )
             .expect("the generation runs");
 
@@ -622,6 +668,8 @@ mod tests {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                11,
+                64,
             )
             .expect("the generation runs");
 
@@ -743,6 +791,8 @@ mod tests {
                 &mut |token| streamed.push(token),
                 None,
                 &mut |_, _, _| {},
+                11,
+                64,
             )
             .expect("the generation runs");
         assert_eq!(
@@ -763,7 +813,7 @@ mod tests {
         let mut cancel = NeverCancels;
 
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
             .expect("first turn");
         let after_first = session.resident_len();
         assert!(
@@ -773,7 +823,7 @@ mod tests {
 
         let before = log.borrow().decoded.len();
         session
-            .append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+            .append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
             .expect("second turn");
 
         let (tokens, position) = log.borrow().decoded[before].clone();
@@ -793,7 +843,7 @@ mod tests {
         let mut seen = session.resident_len();
         for delta in [TokenId(3), TokenId(4), TokenId(5)] {
             session
-                .append_and_generate(&[delta], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+                .append_and_generate(&[delta], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
                 .expect("a turn");
             assert!(
                 session.resident_len() > seen,
@@ -813,7 +863,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(99)], 128);
         let mut cancel = NeverCancels;
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
             .expect("a turn");
         assert_eq!(generated.stopped, Stopped::Complete);
         assert_eq!(
@@ -835,7 +885,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
             .expect("a cancelled turn");
         assert_eq!(generated.stopped, Stopped::Cancelled);
         assert_eq!(
@@ -857,7 +907,7 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
             .expect("a cancelled turn");
         assert_eq!(
             generated.tokens,
@@ -887,6 +937,8 @@ mod tests {
             &mut |_| {},
             None,
             &mut |_, _, _| {},
+            11,
+            64,
         );
         match refusal {
             Err(DecodeFault::Overflow {
@@ -912,7 +964,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
             .expect("a turn");
         session.flush(0).expect("flush");
         assert_eq!(session.resident_len(), session.prefix_len());
@@ -929,7 +981,7 @@ mod tests {
             let (mut session, log) = with_mechanism(vec![TokenId(99), TokenId(98)], 128, mechanism);
             let mut cancel = NeverCancels;
             session
-                .append_and_generate(&[TokenId(3), TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+                .append_and_generate(&[TokenId(3), TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
                 .expect("a turn");
             (session, log)
         };
@@ -988,7 +1040,7 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
             .expect("a turn");
         let grown = session.resident_len();
         assert_eq!(
@@ -1019,7 +1071,7 @@ mod tests {
         assert!(session.flush(0).is_err(), "the flush reports its failure");
         let mut cancel = NeverCancels;
         assert_eq!(
-            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}),
+            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64),
             Err(DecodeFault::NotOpen),
             "the session no longer serves"
         );
@@ -1041,12 +1093,12 @@ mod tests {
         let mut cancel = NeverCancels;
         assert!(
             session
-                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {})
+                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
                 .is_err(),
             "the fault surfaces"
         );
         assert_eq!(
-            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}),
+            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64),
             Err(DecodeFault::NotOpen),
             "and the session no longer serves"
         );
@@ -1054,6 +1106,76 @@ mod tests {
             session.open(&[TokenId(1)]),
             Err(DecodeFault::NotOpen),
             "and cannot be reopened over its closed backend"
+        );
+    }
+
+    /// **The sampler holds nothing between generations, a flush included**,
+    /// per `weaver-spu-Spec` section 8.5. Two generations with a flush
+    /// between them: each is reseeded with the seed its caller derived, and
+    /// the second's penalty window is the truncated resident tail rather
+    /// than anything the sampler carried across.
+    ///
+    /// This is the case the retired coupling lived in. The GGUF chain's
+    /// reset cleared the penalty window and reseeded the draw together,
+    /// so a flush moved the stream at a point nothing in the record
+    /// explained - and two arms of a comparison differing in resident
+    /// length crossed the flush threshold at different turns.
+    ///
+    /// Perturbation: reseed once at open rather than per generation and
+    /// the second call never arrives, so the count fails.
+    #[test]
+    fn the_sampler_is_rebuilt_per_generation_across_a_flush() {
+        let (mut session, log) = opened(vec![TokenId(7), TokenId(8)], 128);
+        let stop = stop_at(50);
+        let mut cancel = NeverCancels;
+
+        session
+            .append_and_generate(&[TokenId(3)], &stop, &mut cancel, &mut |_| {},
+                                 None, &mut |_, _, _| {}, 0xAAAA, 2)
+            .expect("the first generation runs");
+        let window_before = log.borrow().reseeds[0].1.len();
+        session.flush(0).expect("the flush lands");
+        session
+            .append_and_generate(&[TokenId(4)], &stop, &mut cancel, &mut |_| {},
+                                 None, &mut |_, _, _| {}, 0xBBBB, 2)
+            .expect("the second generation runs");
+
+        let reseeds = log.borrow().reseeds.clone();
+        assert_eq!(reseeds.len(), 2, "one reseed per generation: {reseeds:?}");
+        assert_eq!(reseeds[0].0, 0xAAAA, "each takes its caller's seed");
+        assert_eq!(reseeds[1].0, 0xBBBB, "and the flush does not change it");
+
+        // **The window's tokens, not its length.** A length alone passes
+        // on a window holding the wrong tokens, and the ordering this
+        // guards is exactly about which tokens are in it: the reseed
+        // follows the prefill, so each window ends with that generation's
+        // own delta. Taken before the prefill both windows end at the
+        // prefix and the deltas are missing, which is the native path's
+        // disagreement this pins.
+        assert_eq!(
+            reseeds[0].1,
+            vec![TokenId(2), TokenId(3)],
+            "the first window is the last two resident, the bound holding: \
+             one of the prefix and the delta after it"
+        );
+        assert_eq!(
+            reseeds[1].1,
+            vec![TokenId(2), TokenId(4)],
+            "and the second is the flush's prefix with the second delta, \
+             the first generation's tokens having gone with the flush"
+        );
+        // **The second window does not grow, which is the whole point.**
+        // A generation ran between the two and produced tokens, so a
+        // window carried inside the sampler would hold them still. Read
+        // from the resident tail after a flush, it is the prefix again,
+        // exactly what the first generation saw.
+        assert_eq!(
+            reseeds[1].1.len(),
+            window_before,
+            "the window follows the resident state rather than accumulating: \
+             {:?} against {:?}",
+            reseeds[1].1,
+            reseeds[0].1
         );
     }
 }

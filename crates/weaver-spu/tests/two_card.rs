@@ -70,6 +70,10 @@ fn generate_plain(resident: &weaver_spu::residency::Resident) -> (Vec<TokenId>, 
             },
             &mut NeverCancels,
             &mut |_| {},
+            None,
+            &mut |_, _, _| {},
+            11,
+            64,
         )
         .expect("generates");
     let text = resident.detokenize(&generated.tokens).expect("detokenizes");
