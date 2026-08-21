@@ -1,8 +1,10 @@
 # WeaverTools - Technical Report
 
-**Status:** DRAFT. Describes `WeaverTools` at `fbcb73e`, 2026-08-21. Sections 5
-through 15 are planned in appendix A rather than drafted. Appendix B carries what
-is not built, not proven, or not measured.
+**Status:** LIVING. In `main` and outside the document set. **This document is
+subject to change as development continues**, it is never ratified, and nothing
+in the corpus is written against it. Describes `WeaverTools` at `fbcb73e`,
+2026-08-21. Sections 5 through 15 are planned in appendix A rather than drafted,
+and appendix B carries what is not built, not proven, or not measured.
 
 **Date started:** 2026-08-21
 **Document ID:** `weaver-tools-technical-report`
