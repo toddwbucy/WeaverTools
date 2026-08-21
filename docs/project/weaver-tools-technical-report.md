@@ -1,7 +1,8 @@
 # WeaverTools - Technical Report
 
 **Status:** DRAFT. Describes `WeaverTools` at `fbcb73e`, 2026-08-21. Sections 5
-through 15 are planned in appendix A rather than drafted.
+through 15 are planned in appendix A rather than drafted. Appendix B carries what
+is not built, not proven, or not measured.
 
 **Date started:** 2026-08-21
 **Document ID:** `weaver-tools-technical-report`
@@ -16,6 +17,13 @@ It is not a specification. The corpus under `docs/` is the authority on every
 claim made here, and a builder implementing against WeaverTools reads the
 contracts, which carry the vocabulary that crosses each seam, the errors it can
 return, and the ordering it relies on and provides.
+
+**The system is under construction, and this report says so wherever it is
+true.** Where something described here is chartered but not built, built but not
+proven, or claimed but not measured, the sentence describing it says which, and
+appendix B collects every such case in one place. A reader looking for the holes
+should not have to infer them from careful phrasing, and a report that read as
+finished would be the more comfortable document and the less useful one.
 
 ---
 
@@ -115,11 +123,13 @@ process to identify. The custodian sits behind a Unix socket, and that socket is
 a member seam rather than an organ channel: one party asks and the other answers,
 where an organ channel has either party able to open an exchange.
 
-`weaver-internal` is neither organ nor submodule. It parents to the system, and
-it is linked rather than dialed, holding no channel with the harness at all. It
-is the operator's promotion space, where a capability that could stand as a
-script outside the agent is mounted inside instead, because a control loop wants
-an answer at a latency and a determinism the shell round trip cannot give.
+`weaver-internal` fits neither definition, and this report notes that rather
+than resolving it. It holds callables the loop dispatches inward, linked into the
+worker rather than reached over a socket, so it holds no channel with the harness
+and fails the organ test. Its parent edge points at the system rather than at an
+organ, which is what a domain root's edge does, so the submodule definition does
+not reach it either. **Whether that is a gap in the test or a misparent is a
+question for the apex and not for this document.** Appendix B carries it.
 
 The hub holds an allowance no other crate holds. Every organ presents its
 contracts to the harness and nothing to any other organ, so a conflict between
@@ -321,37 +331,141 @@ and why no safety classifier exists or is planned.
 disposition on every knob, frozen or operator-tunable, with the effective values
 recorded whichever side set them. Why the loop is compiled rather than
 configured, and how that holds variance to a range so what remains is
-attributable to the thing under study.
+attributable to the thing under study. The section states the clock's mechanics
+and does not argue them: there is one clock, the load boundary is an event on it
+rather than a second tempo, and what that buys for attribution. The argument, and
+the alternatives it rules out, belong to the reasoning-loop formalism, which sits
+on an open pull request rather than in the tree, so that citation is owed.
 
 **14. The apparatus in use.** The measurement regime stands outside this
 repository, registers each test with its method before it runs, and carries with
 every result the conditions that make it comparable: the commit, the build
 profile, and the identity of the binaries measured rather than the profile's bare
-claim. What it has produced is the section, and one result carries it. **Two
-identical agents, sampling independently, scored 2.890 and 2.730, t=1.33,
-indistinguishable at five percent.** That is the A/A test, and it says the rig
-adds nothing of its own, so a later difference between two arms is the
-treatment's. Every claim this architecture makes about held variance reduces to
-that, and it was tested rather than asserted.
+claim. **Standing outside the repository makes this the one section a reader
+holding the tree cannot check**, which is said here rather than left to be
+noticed, and appendix B carries it as owed.
 
-Three further results show the instruments earning their place. The measurement
-payload is not decoration: over two hundred rounds the model's own per-token
-surprisal predicted its score, r = -0.300. Recording tokens rather than a seed is
-not bookkeeping: forty recorded runaways were re-run against a raised generation
-ceiling with the same seeds, and each generation came back byte-identical to the
-original until the old ceiling and differed only after it, which is the property
-section 10 argues for, demonstrated. And the negative results are kept beside the
-positive ones, two hypotheses built on an entropy signal having died on the
-evidence, there being no branch point and no in-flight predictor worth the name
-at 59.5 percent against a 51 percent base rate.
+The result the section rests on is an A/A test. Two agents identical in model
+artifact, declaration identity, loop file, and calculator, differing only in
+which device they held and which seeds they drew, each ran one hundred rounds of
+a four-turn task scored against fixed numeric answer keys, so the grader is a key
+comparison rather than a second stochastic instrument sitting inside the test.
+Alpha scored 2.890 of 4 with a standard deviation of 0.859, bravo 2.730 with
+0.847, a difference of 0.160 against a standard error of 0.121, t = 1.33.
+
+**That is a failure to detect a difference and not a demonstration that none
+exists**, and the distinction is the section's to make, because an underpowered
+A/A test passes trivially and a reader who knows the statistics will say so. What
+the numbers support is a bound rather than a null. At this sample size and these
+standard deviations the test would have caught a difference of about 0.34 points
+with eighty percent power, and the ninety percent confidence interval on the
+observed difference runs from -0.04 to +0.36. So the rig's own contribution to
+the score is bounded above by roughly 0.36 points on a four-point scale rather
+than shown to be zero, and a treatment expected to move the score by less than
+that is not yet separable from the machine. The unit of observation is the round
+and not the turn, one hundred per arm, because turns within a round are strongly
+dependent: every one of the fifty-seven rounds that answered turn two went on to
+convert turn four.
+
+Two further results show instruments earning their place, and a third shows the
+discipline working. The measurement payload is not decoration, the model's own
+per-token surprisal correlating with its score at r = -0.300 over two hundred
+rounds, which is about nine percent of the variance and is a signal rather than a
+predictor. Forty recorded runaways re-run against a raised generation ceiling
+with the same declared seeds came back byte-identical to the original until the
+old ceiling and differed only after it, **which demonstrates the third of apex
+section 8's three unranked arrangements, stochastic re-entry from a frozen
+starting field, and not the deterministic re-feed section 10 argues for.** Those
+generations were re-sampled and matched because the seed and the sampling surface
+were the same, where a re-feed pushes recorded tokens back through the forward
+pass and re-samples nothing. The re-feed is owed its own demonstration. And the
+negative results are kept beside the positive ones, two hypotheses built on the
+entropy signal having died on the evidence, there being no branch point and no
+in-flight predictor worth the name at 59.5 percent against a 51 percent base
+rate.
 
 **15. What stands, and what does not.** The demonstration rather than the count,
 since a crate can report a high conformance figure while completing no turn and a
 completed turn is not a count of claims met. Both engines serving, the trace over
-its turns, a series of two hundred rounds and eight hundred turns completed with
-no aborts and no missing traces, and the assertions still open named with what
-each waits on. Against
+its turns, the series section 14 reports rather than a second telling of it, and
+the assertions still open named with what each waits on. Against
 that, what is deferred: client-facing streaming, the status ask, and the memory
 leg, each with a named door rather than a reserved slot. Closing on what the
 trade costs, including the program's own judgment that a local proto-stateful
 agent is a defensible intermediate and an indefensible end state.
+
+---
+
+## Appendix B. What is not built, not proven, or not measured
+
+Every case the report describes and cannot yet stand behind, in one place, so a
+reader does not have to find them by reading closely. Each says which of the
+three it is. This list shrinks as the work lands and the report is refreshed
+against a later commit, and an entry that leaves it does so because something was
+built and shown rather than because the wording softened.
+
+**Not built, and chartered.**
+
+- **The gate's agent-opened socket.** Chartered for registered applications that
+  bind a listening port. No exchange of the harness-gate seam reaches it, and its
+  contract is the tool workflow's to author. Section 4 says so at the point of
+  description.
+- **The GGUF residual readout tap.** The fork's eval callback is pinned and the
+  pin is bought by a compile-fail doctest, but nothing drives a tap through it.
+  The native tap stands. An elected GGUF load therefore refuses at admit by name.
+  Two assertions wait on this, `spu-two-taps-one-shape` above all.
+- **The idle report.** No report authors without a turn because nothing authors
+  one at all, which is what `harness-idle-report-authors-without-a-turn` waits on.
+- **Client-facing streaming.** Deferred, and it arrives as an extension to the
+  world contract rather than as a replacement for it. One line in and one line out
+  is the resting shape.
+- **The status ask.** `show` and `list` refuse today, the init system's three unit
+  values not mapping onto the four agent states, and a translation is where
+  invention would enter. The observation exchange retires the refusal when it
+  lands.
+- **The memory leg.** Out entirely, arriving through apex section 9's door as a
+  socket peer with its own contract. No seam, stub, reserved slot, or dormant
+  contract party is carried in anticipation of it.
+- **Shard widths beyond two.** A pair is what the salvaged tensor-parallel path
+  implements. An N-way forward and its all-reduce are work this program does
+  rather than salvage it inherits.
+
+**Built, and not yet proven.**
+
+- **Deterministic re-feed.** Apex section 8's second arrangement is what section
+  10 argues for, and the demonstration on record is of the third. Pushing a
+  recorded token sequence back through the forward pass with nothing re-sampled
+  is owed its own run.
+- **`spu-one-forward-per-prompt`.** Watchable under the standing native tap and
+  waiting only on its count being taken.
+
+**Claimed, and not measured.**
+
+- **Latency is the enemy of agency.** The program's one conceded theory claim, and
+  section 3 marks it. No per-hop figure for loopback against a Unix socket at
+  these message sizes has been taken in this repository.
+- **The headroom on the admit judgment.** A construction parameter at the worker's
+  composition root until a measurement on a real artifact against a real device
+  replaces it. Whether it is a constant, a fraction, or derived from the
+  artifact's declared shape is unsettled.
+
+**Owed by this report rather than by the code.**
+
+- **Section 14 cannot be checked from the tree.** The measurement regime's
+  registrations and results stand outside this repository. Until they travel with
+  the release or move into it, section 14 is the one section whose sources a
+  reader holding the tree cannot reach, which breaks the standard the rest of the
+  report holds to.
+- **The equivalence bound in section 14 is computed here**, from the reported
+  means, standard deviations, and sample sizes. It is not a pre-registered power
+  analysis, and a series designed against a target effect would state the bound
+  before running rather than after.
+- **The reasoning-loop formalism is not in the tree.** Section 13 cites it for the
+  clock argument and it sits on an open pull request, so the citation resolves to
+  nothing a reader can open.
+- **`weaver-internal` is unclassified.** It fails the organ test and the submodule
+  definition does not reach it, while its parent edge makes it a domain root.
+  That is an apex question, and the report describes the crate without settling
+  what it is.
+- **The apex's roster stands at seven against a tree of nine.** Section 2 states
+  both rather than choosing, and the reconciliation is the apex's act.
