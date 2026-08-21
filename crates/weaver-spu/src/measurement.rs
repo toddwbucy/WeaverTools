@@ -212,15 +212,31 @@ impl Accumulator {
 /// answer is one bit each. Measured before this shape was chosen.
 ///
 /// `None` where the maximum is not finite, which is the empty slice and the
-/// all-infinite one.
+/// all-infinite one, and `None` where the sum is not a positive finite
+/// number.
+///
+/// **The second guard is not implied by the first.** `f32::max` answers the
+/// other operand when one is `NaN`, so a vector carrying a `NaN` beside real
+/// logits has a finite maximum and a `NaN` sum, and `ln` of that is `NaN`.
+/// Without the guard every reading taken from it is `NaN`: an entropy, a
+/// surprisal, and every probability of the field. **Absent is the honest
+/// answer and `NaN` is not**, per the absent-rather-than-zero rule this
+/// module keeps - the caller abandons the run's signals rather than
+/// recording a number that means nothing. A healthy forward pass produces no
+/// such vector, which is why this guards a degraded device rather than an
+/// ordinary path.
 fn shifted_normaliser(logits: &[f32]) -> Option<(f32, f32)> {
     let max = logits.iter().copied().fold(f32::NEG_INFINITY, f32::max);
     if !max.is_finite() {
         return None;
     }
     // Every argument to `exp` is at most zero, so nothing overflows however
-    // large the logits are.
+    // large the logits are, and the maximum's own term is exactly one, so a
+    // sum over real logits is at least one and never zero.
     let sum: f32 = logits.iter().map(|logit| (logit - max).exp()).sum();
+    if !sum.is_finite() || sum <= 0.0 {
+        return None;
+    }
     Some((max, sum.ln()))
 }
 
@@ -565,6 +581,26 @@ mod tests {
         }
         let (_, realized) = field(&logits, 11, 3).expect("a field");
         assert_eq!(realized, 3, "the depth itself, meaning past the report");
+    }
+
+    /// **A `NaN` among real logits is an absence, not a `NaN` reading.**
+    /// `f32::max` skips it in the fold, so the maximum is finite while the
+    /// sum is not, and every reading taken from that sum would be `NaN`
+    /// without the normaliser's second guard.
+    ///
+    /// Perturbation: drop the `sum.is_finite()` guard and the surprisal
+    /// answers `Some(NaN)` and the field answers `NaN` probabilities, both
+    /// of which a consumer records as though they meant something.
+    #[test]
+    fn a_broken_distribution_is_absent_rather_than_nan() {
+        let logits = vec![1.0f32, f32::NAN, 3.0, 2.0];
+        assert!(
+            logits.iter().copied().fold(f32::NEG_INFINITY, f32::max).is_finite(),
+            "the fixture's maximum is finite, which is what makes it the case"
+        );
+        assert!(surprisal_bits(&logits, 2).is_none(), "no surprisal");
+        assert!(field(&logits, 2, 2).is_none(), "no field");
+        assert_eq!(entropy_bits(&logits), 0.0, "and the entropy reports none");
     }
 
     /// A depth of zero and an index outside the vector are absences rather

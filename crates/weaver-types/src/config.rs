@@ -156,7 +156,7 @@ pub struct DecoderInstruction {
     /// under a name for a set: a named set drifts as members join it, and
     /// every record already carrying the name becomes a record of
     /// something else without any event saying so.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub field_election: Option<FieldElection>,
     /// The session's identity material: the canonical messages the identity
     /// prefix is rendered from, configuration rather than history, per
