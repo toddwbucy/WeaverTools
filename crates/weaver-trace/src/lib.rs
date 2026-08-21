@@ -50,6 +50,7 @@
 //!         Kind::ModelRequest => "model.request",
 //!         Kind::ModelOutput => "model.output",
 //!         Kind::ModelMeasurement => "model.measurement",
+//!         Kind::ModelField => "model.field",
 //!         Kind::ClassifyRequest => "classify.request",
 //!         Kind::ClassifyOutput => "classify.output",
 //!     }
@@ -143,7 +144,8 @@ mod writer;
 
 pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
-    ClassifyAsk, ClassifyOutcome, Envelope, Event, Finish, FlushCounts, Kind, Line, ModelOutput,
+    Candidate, ClassifyAsk, ClassifyOutcome, Elections, Envelope, Event, Finish, FlushCounts,
+    Kind, Line, ModelField, ModelOutput,
     Payload, RunRef, SessionRef,
     StopReason, Subsystem, TurnClose, TurnRef, raw_payload,
 };
