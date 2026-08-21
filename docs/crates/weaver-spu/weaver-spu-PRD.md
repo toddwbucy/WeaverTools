@@ -15,6 +15,15 @@ sampler's wall stays distinguishable from the reporting's edge. The
 election is per feature and named individually in the load's record, no
 profile bundling any set of them, and an elected field must be shown to
 change no token before it ships. 13.10 gains its fault.
+**Revised:** 2026-08-21, second of this date, the seed derives per
+generation. Per the operator's ruling on issue #255: section 13.8's
+re-enterability claim was false of its mechanism, one sampler standing for
+the residency with every draw advancing one stream and a flush reseeding
+it while clearing the penalty window. A generation now draws from a seed
+derived from the run's, the turn, and which generation of that turn it is,
+and the sampler holds nothing across generations, its penalty window read
+from the resident tail rather than accumulated. Apex section 8 needs no
+amendment, having claimed only that freezing narrows variance.
 **Date filed:** 2026-07-31
 **Revised:** 2026-08-19, third of this date, the binary-spelling cell
 settles. The classifier code act's opening lands the Spec's section 11,
@@ -954,10 +963,43 @@ composition root or left operator-tunable, the builder's election per knob,
 and the effective values are recorded whichever side set them, because a
 disposition changes who sets a value and never whether the record holds
 it. The prior program never made its seed configurable at all, so the
-disposition mechanism is the seed's first real home, and a frozen seed
-plus a frozen sampling surface is what makes a binary's declared starting
-field re-enterable, per apex section 8's stochastic re-entry arrangement.
+disposition mechanism is the seed's first real home.
 The knob enumeration and its types are the Spec's and the floor's.
+
+**The declared seed is the run's, and each generation draws from its own,
+derived.** Per the operator's ruling of 2026-08-21 on issue #255. An
+earlier form of this section said a frozen seed plus a frozen sampling
+surface was what made a binary's declared starting field re-enterable, per
+apex section 8's third arrangement. That was false of the mechanism
+underneath it: one sampler stood for the residency and every draw advanced
+one stream, so a generation's draws depended on every draw before it, and
+a flush reseeded the stream as a side effect of clearing the penalty
+window. Freezing the seed did not deliver what freezing was said to
+deliver, and apex section 8 is untouched by the correction, having only
+ever said that freezing narrows variance and buys audit rather than
+determinism.
+
+**A generation's draws depend on the run's seed and on which generation it
+is, and on nothing that happened before it.** The derivation is the Spec's
+and its inputs are the declared seed, the turn, and which generation of
+that turn this is, the last because a turn runs as many generations as its
+tool rounds and two of them sharing a seed would draw one stream twice.
+What this buys is stated rather than assumed: a recorded generation is
+re-entered by declaring the run's seed again, without replaying what
+preceded it, and two arms of one comparison meet each turn at the same
+draw so a difference between them is the treatment's.
+
+**The sampler holds nothing across generations.** It is built for each
+from the derived seed, and the penalty window is restored from the
+resident tail rather than accumulated, which is the same window read two
+ways and makes the two engines agree by construction. **The flush stops
+being coupled to sampling at all**: a window read from the resident tail
+after a truncation is the truncated tail, so nothing needs clearing and
+nothing gets reseeded by accident. The defect that ruling closes was
+invisible in the record and would have eaten a paired comparison silently,
+the two arms differing in resident length by construction, crossing the
+flush threshold at different turns, and one reseeding where the other did
+not.
 
 ### 13.9 The flush
 

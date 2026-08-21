@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-21, third of this date, the seed's derivation takes
+shape. Section 8.5 lands it: `splitmix64` over the declared seed, the
+turn, and the generation ordinal within that turn, the last because tool
+rounds put several generations in one turn. The sampler is built per
+generation and holds nothing between them, its penalty window read from
+the resident tail rather than accumulated, which makes the two engines
+agree by construction and retires the flush's coupling to sampling rather
+than repairing it. The request records both seeds. Two perturbation
+assertions land.
 **Date filed:** 2026-08-02
 **Revised:** 2026-08-21, the probability field is represented. Section
 7.5 lands it at section 6's own site, the logits already being held there
@@ -1744,6 +1753,82 @@ edge: asserts
 from: weaver-spu
 to: spu-effective-values-recorded
 ```
+
+## 8.5 The seed's derivation
+
+**One function, stated here so two readers cannot differ.** The effective
+seed of a generation is `splitmix64` applied to the declared seed mixed
+with the turn and with which generation of that turn this is:
+
+```rust
+pub fn derived_seed(declared: u64, turn: &TurnKey, generation: u64) -> u64
+```
+
+The turn enters as the 64-bit FNV-1a of its reference's bytes, because the
+reference is a string the operator's admin minted and this crate needs a
+number from it without caring what it spells. The three are combined by
+mixing each into the state in order and passing the result through
+`splitmix64`'s finalizer, which is chosen for being short enough to state
+in full, standard enough to be recognised, and well distributed on
+sequential inputs - the last mattering because the generation ordinal is
+sequential and adjacent turns must not draw adjacent streams.
+
+**The generation ordinal counts within its turn and resets with it.** A
+turn runs as many generations as its tool rounds, up to the harness's
+bound, and two of them sharing a seed would draw one stream twice: the
+model would answer its own tool result with the same run of luck that
+produced the call. Counting within the turn rather than across the
+residency is what keeps the derivation free of history, since replaying a
+turn issues the same generations in the same order.
+
+**Nothing about the count is carried between residencies**, so a second
+run of the same turn under the same declared seed derives the same
+effective seed. That is the property the whole ruling exists for.
+
+```graph
+node: spu-seed-derives-per-generation
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-seed-derives-per-generation
+```
+
+**The sampler is built per generation and holds nothing between them.**
+Both engines construct their sampler from the effective seed at the start
+of each generation, so no stream survives a generation boundary and no
+generation's draws depend on another's. The penalty window is restored
+from the resident tail rather than accumulated across generations, the
+window's length being a knob and the tail being where the tokens are: the
+native path already read the tail directly and the GGUF chain accumulated
+its own copy, so reading one source makes the two agree by construction
+rather than by two implementations staying in step.
+
+**This retires the flush's coupling to sampling rather than repairing
+it.** The GGUF chain's reset cleared the penalty window and reseeded the
+draw together, because llama.cpp's chain reset reaches every sampler in
+it. With the window read from the resident tail there is nothing to clear:
+after a truncation the tail is the truncated tail, and after a
+re-establishment it is what was re-established. The reset is not called
+and the accident it carried cannot recur.
+
+```graph
+node: spu-sampler-holds-nothing-between-generations
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-sampler-holds-nothing-between-generations
+```
+
+**The request records both seeds.** The rendered sampling block carries
+the declared seed and the effective one beside it, because either alone
+is a half-answer: the declared seed does not say what this generation
+drew from, and the effective seed does not say what to declare in order to
+re-enter it. This crate renders that block, so the pair reaches the record
+without the trace crate learning either name.
 
 ## 9. The failure vocabulary
 
