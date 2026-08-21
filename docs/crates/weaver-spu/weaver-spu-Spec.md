@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-21, third of this date, the seed's derivation takes
+shape. Section 8.5 lands it: `splitmix64` over the declared seed, the
+turn, and the generation ordinal within that turn, the last because tool
+rounds put several generations in one turn. The sampler is built per
+generation and holds nothing between them, its penalty window read from
+the resident tail rather than accumulated, which makes the two engines
+agree by construction and retires the flush's coupling to sampling rather
+than repairing it. The request records both seeds. Two perturbation
+assertions land.
 **Date filed:** 2026-08-02
 **Revised:** 2026-08-21, the probability field is represented. Section
 7.5 lands it at section 6's own site, the logits already being held there
@@ -1744,6 +1753,169 @@ edge: asserts
 from: weaver-spu
 to: spu-effective-values-recorded
 ```
+
+## 8.5 The seed's derivation
+
+**One function, stated here so two readers cannot differ.** The derived
+seed of a generation is `splitmix64` applied to the declared seed mixed
+with the turn and with which generation of that turn this is:
+
+```rust
+pub fn derived_seed(declared: u64, turn: &TurnKey, generation: u64) -> u64
+```
+
+**It is stated to the bit, because two implementations that differ by one
+constant produce runs that cannot be compared and nothing says so.** All
+arithmetic is on `u64` and wraps. The turn enters as a hash rather than as
+itself, the reference being a string admin minted and this crate needing a
+number from it without caring what it spells.
+
+    fnv1a(bytes):                       the reference's UTF-8 bytes
+      h = 0xcbf29ce484222325
+      for each byte b:  h = (h XOR b) * 0x100000001b3
+      answer h
+
+    finalize(x):                        splitmix64's finalizer
+      z = x + 0x9e3779b97f4a7c15
+      z = (z XOR (z >> 30)) * 0xbf58476d1ce4e5b9
+      z = (z XOR (z >> 27)) * 0x94d049bb133111eb
+      answer z XOR (z >> 31)
+
+    derived_seed(declared, turn, generation):
+      state = finalize(declared XOR fnv1a(turn))
+      answer  finalize(state XOR generation)
+
+**The generation ordinal is zero-based**, so the first generation of a
+turn is zero and the base case below pins it. `splitmix64`'s finalizer is
+chosen for being short enough to state in full, standard enough to be
+recognised, and well distributed on sequential inputs, the last mattering
+because the ordinal is sequential and adjacent turns must not draw
+adjacent streams. Measured on the vectors below, adjacent ordinals differ
+in 33 of 64 bits and adjacent turns in 31.
+
+**Test vectors, which an implementation checks itself against.** They are
+the specification's, computed independently of any implementation, and a
+build that disagrees with one has a defect rather than a variation.
+
+    declared              turn   generation   effective
+    0                     t-1    0            0x458763dd2277adcc
+    11                    t-1    0            0x6025a13ad2f4a430
+    11                    t-1    1            0x5144c61d6c67c975
+    11                    t-2    0            0x25f1b675aac3c47d
+    2814393375            t-2    3            0xcf4ad3d2e2e14630
+    18446744073709551615  t-1    0            0x007be97cffceca04
+
+    fnv1a("t-1") = 0x5627091943b2a601
+    fnv1a("t-2") = 0x5627061943b2a0e8
+
+**The generation ordinal counts within its turn and resets with it.** A
+turn runs as many generations as its tool rounds, up to the harness's
+bound, and two of them sharing a seed would draw one stream twice: the
+model would answer its own tool result with the same run of luck that
+produced the call. Counting within the turn rather than across the
+residency is what keeps the derivation free of history, since replaying a
+turn issues the same generations in the same order.
+
+**Nothing about the count is carried between residencies**, so a second
+run of the same turn under the same declared seed derives the same value.
+That is the property the whole ruling exists for, and what it takes to use
+it is worth stating exactly, since a reader who supplies the wrong member
+gets an answer rather than a refusal.
+
+**Re-entering a recorded generation supplies the whole sampling block and
+checks one member of it.** The declared seed, read from `seed`. The rest
+of that block's values beside it, temperature and the truncating filters
+and the penalty pair, because the stream those three inputs fix is read
+through them and a different filter answers differently. The turn, as its
+reference. The generation's index within that turn, zero-based. And the
+same resident context and weights standing behind all of it, since the
+derivation governs the stream and never the distribution it is read
+against.
+
+The block is the record's own, one place holding every value the sampler
+ran with, so a re-entry reads it rather than assembling the surface from
+a declaration that may have moved since.
+
+**`generation_seed` is not among what is supplied.** It is the recorded value a
+correct re-entry reproduces, which makes it the check rather than an
+input, and nothing in this crate accepts a seed by that route: the sampler
+is built from `derived_seed` of the three above and from nothing else.
+Supplying it in place of them is not a shortcut but a different operation
+this program does not offer.
+
+```graph
+node: spu-seed-derives-per-generation
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-seed-derives-per-generation
+```
+
+**The sampler is built per generation and holds nothing between them.**
+Both engines construct their sampler from the derived seed at the start
+of each generation, so no stream survives a generation boundary and no
+generation's draws depend on another's. The penalty window is restored
+from the resident tail rather than accumulated across generations, the
+window's length being a knob and the tail being where the tokens are: the
+native path already read the tail directly and the GGUF chain accumulated
+its own copy, so reading one source makes the two agree by construction
+rather than by two implementations staying in step.
+
+**This retires the flush's coupling to sampling rather than repairing
+it.** The GGUF chain's reset cleared the penalty window and reseeded the
+draw together, because llama.cpp's chain reset reaches every sampler in
+it. With the window read from the resident tail there is nothing to clear:
+after a truncation the tail is the truncated tail, and after a
+re-establishment it is what was re-established. The reset is not called
+and the accident it carried cannot recur.
+
+**The watch is a flush standing between two generations**, which is the
+case the retired coupling lived in: two generations of one turn with a
+flush between them draw the streams their ordinals name, and the second's
+stream is what it would have been had no flush happened. Watched under the
+reset's restoration, which reseeds the second generation to the declared
+value and fails the comparison.
+
+```graph
+node: spu-sampler-holds-nothing-between-generations
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-sampler-holds-nothing-between-generations
+```
+
+**The request records both seeds, under these two names.** The rendered
+sampling block of the `model.request` carries them as `u64`:
+
+    seed              the declared run seed, resolved from the disposition
+    generation_seed   the derived value this generation drew from
+
+**`seed` keeps the meaning it already had**, which is the reason for the
+naming rather than a preference between words. Every record written before
+this act carries `seed` as the value the sampler was built from, and that
+value was the declared one because the two were the same number. Reusing
+the name for the derived value would silently reinterpret every earlier
+record, and the 2026-08-20 corpus is the one this program's first findings
+rest on. The new member takes the new name.
+
+**Neither is called effective**, and this section's prose does not use the
+word for them either: this crate already spends it on the knobs a
+disposition resolved, and `seed` is one of those. A member named for the
+derivation says what it is without borrowing a word that already means
+something one layer up.
+
+Both are recorded because either alone is a half-answer. The declared seed
+does not say what a generation drew from, and the derived seed does not
+say what to declare in order to re-enter it. Section 10's capture of the
+sampling block reads both members and their values, the same instrument
+that already watches which knobs cross.
+
+This crate renders the block, so the pair reaches the record without the
+trace crate learning either name.
 
 ## 9. The failure vocabulary
 

@@ -15,6 +15,15 @@ sampler's wall stays distinguishable from the reporting's edge. The
 election is per feature and named individually in the load's record, no
 profile bundling any set of them, and an elected field must be shown to
 change no token before it ships. 13.10 gains its fault.
+**Revised:** 2026-08-21, second of this date, the seed derives per
+generation. Per the operator's ruling on issue #255: section 13.8's
+re-enterability claim was false of its mechanism, one sampler standing for
+the residency with every draw advancing one stream and a flush reseeding
+it while clearing the penalty window. A generation now draws from a seed
+derived from the run's, the turn, and which generation of that turn it is,
+and the sampler holds nothing across generations, its penalty window read
+from the resident tail rather than accumulated. Apex section 8 needs no
+amendment, having claimed only that freezing narrows variance.
 **Date filed:** 2026-07-31
 **Revised:** 2026-08-19, third of this date, the binary-spelling cell
 settles. The classifier code act's opening lands the Spec's section 11,
@@ -954,10 +963,92 @@ composition root or left operator-tunable, the builder's election per knob,
 and the effective values are recorded whichever side set them, because a
 disposition changes who sets a value and never whether the record holds
 it. The prior program never made its seed configurable at all, so the
-disposition mechanism is the seed's first real home, and a frozen seed
-plus a frozen sampling surface is what makes a binary's declared starting
-field re-enterable, per apex section 8's stochastic re-entry arrangement.
+disposition mechanism is the seed's first real home.
 The knob enumeration and its types are the Spec's and the floor's.
+
+**The declared seed is the run's, and each generation draws from its own,
+derived.** Per the operator's ruling of 2026-08-21 on issue #255. An
+earlier form of this section said a frozen seed plus a frozen sampling
+surface was what made a binary's declared starting field re-enterable, per
+apex section 8's third arrangement. That was false of the mechanism
+underneath it: one sampler stood for the residency and every draw advanced
+one stream, so a generation's draws depended on every draw before it, and
+a flush reseeded the stream as a side effect of clearing the penalty
+window. Freezing the seed did not deliver what freezing was said to
+deliver, and apex section 8 is untouched by the correction, having only
+ever said that freezing narrows variance and buys audit rather than
+determinism.
+
+**The sampler's random stream depends on the run's seed and on which
+generation it is, and on nothing that happened before it.** The claim is
+about the stream and not about the draw, and the distinction is the whole
+of what this section promises. A draw is that stream read against a
+distribution, and the distribution is the model's answer to everything
+resident, so what a generation produces depends on its context exactly as
+much as it ever did. What stops depending on history is the luck.
+
+The derivation is the Spec's and its inputs are the declared seed, the
+turn, and which generation of that turn this is, the last because a turn
+runs as many generations as its tool rounds and two of them sharing a seed
+would draw one stream twice.
+
+**Re-entering a generation takes the seed, the surface, and the state.** A
+reader supplies the declared seed, the turn, and the generation's index,
+which fix the stream. **The rest of the effective sampling values beside
+them**, because a stream is only half of a draw: the temperature and the
+truncating filters decide what the stream selects, and the penalty pair
+decides against what. A re-entry differing in any of them draws the same
+luck through a different filter and answers something else. And the same
+resident tail and the same weights standing behind all of it, since the
+state governs the distribution the whole apparatus is read against.
+
+**The values are the requirement rather than where they come from.** Today
+every one but the seed is frozen at the composition root, so a re-entry on
+the same binary carries them without asking, and the record holds them
+regardless because a disposition changes who sets a value and never
+whether the record holds it. That is what makes them re-suppliable when a
+binary changes its mind about which are frozen, and it is why apex section
+8 lists the sampling parameters among what deterministic re-feed requires
+rather than listing the seed alone.
+
+**The derived value is what a re-entry reproduces rather than what it is
+given.** It is recorded so a reader can check that the stream came out
+where it should, and this program offers no route that accepts it: a
+sampler is built from the three inputs above and from nothing else.
+Reading it as a substitute for them would be a different operation than
+the one on offer, and it would be one nothing here performs.
+
+What the ruling removes is narrower than it may sound, and worth keeping
+narrow: the need to replay every draw that preceded a generation in order
+to reach its stream. That is a smaller thing than replaying a run, and
+the program still claims no run again.
+
+**Two arms of one comparison meet each turn at the same stream**, so where
+they differ, the difference is the treatment's and the context's rather
+than the sampler's position. That is what a paired comparison needed and
+could not have while one stream ran the length of a residency.
+
+**Both seeds are recorded, and the requirement is this charter's.** The
+disposition rule above already has the effective values recorded whichever
+side set them, because a disposition changes who sets a value and never
+whether the record holds it. Under derivation the effective value is two
+values, and neither alone answers what a reader needs: the declared seed
+does not say what a generation drew from, and the derived seed does not
+say what to declare in order to re-enter it. A record carrying one of them
+supports neither re-entry nor audit. Which members carry them and how they
+spell is the Spec's.
+
+**The sampler holds nothing across generations.** It is built for each
+from the derived seed, and the penalty window is restored from the
+resident tail rather than accumulated, which is the same window read two
+ways and makes the two engines agree by construction. **The flush stops
+being coupled to sampling at all**: a window read from the resident tail
+after a truncation is the truncated tail, so nothing needs clearing and
+nothing gets reseeded by accident. The defect that ruling closes was
+invisible in the record and would have eaten a paired comparison silently,
+the two arms differing in resident length by construction, crossing the
+flush threshold at different turns, and one reseeding where the other did
+not.
 
 ### 13.9 The flush
 
