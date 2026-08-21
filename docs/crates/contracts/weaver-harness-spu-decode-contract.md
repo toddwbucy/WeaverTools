@@ -337,11 +337,17 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   section 5, so a report never interleaves a stream.
 - Messages within one exchange are ordered, and the intermediate messages
   of append-and-generate, token and field alike, all precede its answer.
-- A position's field message precedes the token message that carries the
-  same position's piece, because the field is read before the sampler
-  draws and the piece exists only after. A consumer joining the two joins
-  on the position the field names, never on arrival order alone, since a
-  piece may span several tokens and their fields.
+- A retained token's field message precedes the token message its piece
+  eventually lands in, because the field is read before the sampler draws
+  and a piece exists only after. **The two streams are not joinable on
+  this seam and no wording here should suggest they are.** The field
+  stream is positionally self-describing, one message per retained token
+  naming its own position. The token stream is the emission's rhythm,
+  crossing once per renderable piece and carrying no position, a piece
+  spanning as many tokens as the family's rendering needs. A consumer
+  wanting a position's text joins in the record rather than here, where
+  `model.measurement` pairs the output token identifiers positionally,
+  and detokenizing is that consumer's own work.
 - An answer to append-and-generate arrives only after the session is
   well-framed for the next turn, stopped or complete alike, so the
   harness may rely on the session's coherence without inspecting it.

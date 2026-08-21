@@ -635,7 +635,7 @@ to: trace-splice-or-shape
 ```
 
 **`model.field` is shaped here and not spliced, on the same test the
-output meets.** Its members are a count, a vector of pairs, and an index,
+output meets.** Its members are a decode position, a vector of pairs, and an index,
 all of them plain values the harness holds typed on their way through, so
 shaping forces no transform and the splice rule's subject does not arise.
 It is the record's first per-position kind, and the granularity is the
