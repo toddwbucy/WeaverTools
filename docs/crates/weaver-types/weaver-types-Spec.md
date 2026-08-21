@@ -5,6 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-21, the field takes its shapes. `DecoderInstruction`
+gains `field_election`, optional because the election is, carrying the
+depth the operator declared per `weaver-spu-PRD` section 13.11.
+`TokenAnswer` gains `Field`, the decode seam's second intermediate, which
+carries its own position because a token message crosses per renderable
+piece and cannot pair one. `Candidate` is the ranked pair. Absent where
+the election is absent and never present-and-empty, the rule the
+measurement's unproduced readings already follow.
 **Revised:** 2026-08-20, second of this date, the loop joins the
 declaration. Per the operator's ruling on issue #243: `AgentConfig`
 gains `loop_file`, optional beside `state_election` and by the same
@@ -388,8 +396,13 @@ pub struct ClassifyInstruction {
 pub struct DecoderInstruction {
     pub model_binding: ModelBinding,
     pub residual_readout_election: bool,
+    pub field_election: Option<FieldElection>,
     pub identity: Vec<weaver_traits::Message>,
     pub tunable_values: BTreeMap<String, f64>,
+}
+
+pub struct FieldElection {
+    pub depth: u32,
 }
 
 pub enum TraceSink {
@@ -1365,6 +1378,7 @@ pub enum TokenDirective {
 pub enum TokenAnswer {
     Opened,
     Token { token: u32, piece: String },
+    Field { position: u64, ranked: Vec<Candidate>, realized: u32 },
     Generated(Generation),
     AtRest,
     Flushed {
@@ -1413,6 +1427,11 @@ pub struct Generation {
     pub measurement: Box<serde_json::value::RawValue>,
     pub resident: u64,
     pub capacity: u64,
+}
+
+pub struct Candidate {
+    pub token: u32,
+    pub probability: f32,
 }
 
 pub enum Finish {
