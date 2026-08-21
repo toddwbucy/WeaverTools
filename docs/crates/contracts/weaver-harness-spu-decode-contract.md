@@ -250,7 +250,8 @@ travels in the request and only
 there**, per the ruling of 2026-08-17 on #129: it is an input-side fact of
 the same kind as the sampling values, which moved to the request for the
 same reason, and a member carried by both boxes of one turn's pair would be
-one fact in two places with no authority named. **A second intermediate crosses where the field election stands**, added
+one fact in two places with no authority named. **A second intermediate crosses where
+the field election stands**, added
 2026-08-21 on `weaver-spu-PRD` section 13.11. It carries one decode
 position's ranked candidates with their probabilities and the rank the
 draw landed on, one message per retained token, and like the token
@@ -376,7 +377,8 @@ confirmation, the typed refusals, and the fault reports.
 resident state to rewind, and the weakest family sets the rule for all.
 That the identity prefix is permanent from open to release, the flush's
 outcome included. That an aborted generation leaves the session
-well-framed before its answer returns. That an elected field is read from the same distribution the
+well-framed before its answer returns. That an elected field is read from the same
+distribution the
 measurement is read from and before the sampler consumes it, so the two
 never describe different states of one position, and that it names its
 position rather than relying on arrival order. That an elected field
