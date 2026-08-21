@@ -6,6 +6,14 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-21, second of this date, the surprisal is elected and
+two draws are repaired. Section 2.1 gains `surprisal-election`, a
+vocabulary node this crate defines and the artifact holds, on
+`weaver-spu-PRD` section 13.12: the operator's election of the per-position
+surprisal vector, a flag because a reading that exists per position has
+nothing to size. The draws paragraph moves from four drawn fields to six,
+`field-election` having been added on this date and drawn by neither
+contract it crosses, against the rule the paragraph below it states.
 **Revised:** 2026-08-19, second of this date, the classify binding gains
 its reader. Section 2.1's rule that a section gains a field in the act
 that gives that field a reader is exercised: the SPU's declaration section
@@ -182,6 +190,23 @@ something else. What the depth means to the reader that judges it is the
 SPU's, at admit, where it meets the sampling cutoff it may not fall
 below.
 
+**The surprisal election joins the file 2026-08-21**, on `weaver-spu-PRD`
+section 13.12. It is the operator's election of the per-position surprisal
+vector, a plain flag rather than a depth because there is nothing to size:
+the reading exists per decode position or it does not. It sits beside the
+field's election and the readout's, unbundled for the reason those two are
+unbundled.
+
+**It is the first election whose absence is the ordinary posture of a
+reading the record already carried.** The other two elect an observation
+into existence. This one elects one out, the surprisal vector having been
+unconditional since the measurement was written, and what stands in its
+place by default is the per-generation perplexity of section 13.12 rather
+than nothing. The distinction matters to a reader of old records: a
+measurement written before this act carries the vector with no election
+beside it, and a measurement written after carries the flag whichever way
+it fell.
+
 ```graph
 node: agent-config
 kind: artifact
@@ -210,6 +235,9 @@ kind: vocabulary
 node: field-election
 kind: vocabulary
 
+node: surprisal-election
+kind: vocabulary
+
 edge: defines
 from: weaver-types
 to: model-binding
@@ -229,6 +257,10 @@ to: residual-readout-election
 edge: defines
 from: weaver-types
 to: field-election
+
+edge: defines
+from: weaver-types
+to: surprisal-election
 
 edge: defines
 from: weaver-types
@@ -289,8 +321,9 @@ Each field is a vocabulary node this crate defines and the artifact holds, becau
 contract's clause draws a field rather than the whole file and an edge needs
 something to point at.
 
-**Which fields a contract draws, and why the rest are internal rather than owed.** Four
-are drawn: `model-binding` and `residual-readout-election` by
+**Which fields a contract draws, and why the rest are internal rather than owed.** Six
+are drawn: `model-binding`, `residual-readout-election`, `field-election`,
+and `surprisal-election` by
 `weaver-harness-spu-contract` and by `weaver-admin-harness-contract`,
 `gate-instruction` by its three, `weaver-admin-harness-contract` joining the
 two gate seams as of 2026-08-17, the seam it crosses first joining the seams
@@ -306,6 +339,18 @@ the un-freezable bound admin holds. `permission-mode` elects the floor's mode
 vocabulary, which is the argument the two-crate floor rests on, and the harness reads
 the mode. `tool-set` elects `tool-trait` by the same argument, and its element shape
 arrives with the tool workflow.
+
+**`field-election` was added to this file on 2026-08-21 and drawn by
+neither contract until this act, which is the same defect one paragraph
+below closed for the readout.** The rule that paragraph states is that a
+field the SPU judges at admission is a field that reached it across a seam,
+and section 2.1 says in its own words that the depth's judgment is the
+SPU's at admit. So the election was declared here, held by the artifact,
+judged at the far end of two seams, and drawn by neither, which is a
+definition the graph shows nothing carrying. **A rule stated once is not a
+rule applied**, and the act that added the next election read the
+paragraph's conclusion about one node rather than its argument about any.
+`surprisal-election` is drawn in the act that adds it, which is this one.
 
 **`residual-readout-election` is drawn rather than internal, and an earlier wording of
 this section had it both ways.** That wording listed the election among the fields read

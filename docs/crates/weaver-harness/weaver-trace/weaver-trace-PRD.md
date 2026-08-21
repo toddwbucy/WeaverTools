@@ -5,6 +5,12 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-21, third of this date, the surprisal's election
+lands. The ruling section 5 carried as owed on this date is landed by the
+act that adds the election, `weaver-spu-PRD` section 13.12, and section
+3.2's `load` gains the third election beside the readout's and the field's.
+The per-generation perplexity stays in the navigation tier, so a cold
+record is still rankable where the vector is not carried.
 **Revised:** 2026-08-21, the field enters the record and the load
 declares its posture. Section 3.1's kind set gains `model.field`,
 nineteenth, on `weaver-spu-PRD` section 13.11's election: one decode
@@ -356,7 +362,7 @@ its closure.
 | `fault` | a fault the worker survived, reported by an organ and authored by the harness |
 | `model.request` | the decode boundary, request side |
 | `model.output` | the decode boundary, response side |
-| `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
+| `model.measurement` | input and output token identifiers, entropies, the generation's perplexity, the decode timings, model identity with its weights hash, the prompt-block partition, and where their elections stand the surprisals and the residual reductions |
 | `classify.request` | the label seam, request side: the content the loop sent for classification |
 | `classify.output` | the label seam, response side: every label of the artifact's head scored, or the typed refusal met |
 | `model.field` | one decode position's ranked candidates with their probabilities and the rank the draw landed on, when the field election stands |
@@ -656,9 +662,16 @@ now rather than when an experiment wants it.
 section 3.1's row as this act corrects it.** The row loses the sampler
 parameters, which move to the request above because an input to a decode is
 part of what was asked, and gains the surprisals and the decode timings, which
-were readings the row had never named. What this subsection adds is the
-producing obligations
-that make those readings trustworthy, stated as content because a reading
+were readings the row had never named. **The row separates the
+readings that carry an election from those that do not, as of
+2026-08-21**: the surprisals and the residual reductions are produced where
+their elections stand, while the entropies and the perplexity carry no
+election and are produced wherever a distribution was read. **Carrying no
+election is not the same as always present**, a backend serving no
+distribution measuring nothing and the generation still answering, per
+`weaver-spu-Spec` section 6. What this
+subsection adds is the producing obligations that make those readings
+trustworthy, stated as content because a reading
 produced wrongly is not the same fact recorded imperfectly. The per-token
 signals are computed against the pre-sampler distribution, because a signal
 taken after the sampler measures the sampler. They are positionally paired
@@ -925,6 +938,12 @@ delta and output in order, and this act closes that chain by recording its
 first link. **The member's name is owed a correction** in the crate that
 renders it, which is where the name is declared.
 
+**The surprisal's election joins the load's declaration**, per section
+3.2's rule that each is named individually and none bundled. The reading it
+governs is the SPU's to produce, so what this crate holds is the flag and
+what the SPU holds is the consequence, which is the same division the field
+and the readout already run on.
+
 **Emission is required by no arrangement, and the training target is not an
 arrangement.** Per the operator's ruling of 2026-08-21: apex section 9 puts
 training out of scope entirely, so no arrangement of section 8 rests on the
@@ -936,14 +955,22 @@ message even where the two agree byte for byte. **Where they disagree the
 disagreement is the finding**, so neither is dropped in favor of the other
 and a divergence is filed rather than resolved by preferring one.
 
-**What this sort rules and does not yet land.** The surprisal vector belongs
-to no arrangement and is ruled an election rather than a default, per the
-operator of 2026-08-21, with a per-generation perplexity kept in navigation
-so a cold record stays rankable without carrying a reading per position.
-That ruling lands in the act that adds the election, because an election is
-a member of the SPU instruction and reaches this crate across two contracts,
-and every party to a contract merges in the act that moves it. It is named
-here as owed rather than left to be rediscovered.
+**What this sort rules, and where it landed.** The surprisal vector belongs
+to no arrangement and is an election rather than a default, per the operator
+of 2026-08-21, with a per-generation perplexity kept in navigation so a cold
+record stays rankable without carrying a reading per position. **The
+election landed in the act of this date that added it**, `weaver-spu-PRD`
+section 13.12, which is where it had to land: an election is a member of the
+SPU instruction and reaches this crate across two contracts, so every party
+merged together rather than this charter ruling ahead of them.
+
+**The load's elections are three and the tier is the reason they are named
+one by one.** A record whose posture is recoverable from itself is what
+section 3.2's refusal of a profile name buys, and the third election is the
+first that can be absent while its reading is present, in every record
+written before this act. A consumer therefore reads the absence of the flag
+as a record predating the election rather than as an election declined,
+which is a distinction the flag's presence makes and its absence cannot.
 
 ## 6. What this crate guarantees
 

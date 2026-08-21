@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-21, second of this date, the surprisal renders on its
+election. The measurement's `surprisals` member renders where the election
+of charter section 13.12 stands and is absent where it does not, on the
+absent-not-empty rule already in this section, and `perplexity` renders
+wherever a distribution was read, absent on the one ground the entropies
+are absent on rather than on its own. The accumulator holds no vector.
 **Revised:** 2026-08-21, the generation's bound renders. The request's box
 gains a `stop` object, `max_tokens` with the stop token set and the
 terminator beside it, per charter section 13.6's clause of this date on
@@ -1353,6 +1359,48 @@ edge: asserts
 from: weaver-spu
 to: spu-log-sum-exp-stable
 ```
+
+**The surprisal vector renders where its election stands and the
+perplexity carries no election**, per charter section 13.12. Unelected and
+with a distribution read, the measurement carries `perplexity` and no
+`surprisals` member, and the absence is the same absence every unproduced
+reading takes: no member rather than an empty vector, on the rule stated
+just below. Elected, both
+render, and a consumer that finds them disagreeing has found a defect
+rather than two readings.
+
+**`perplexity` carries no election and is absent on the one ground the
+entropies are absent on**, which is that nothing was measured. A mean needs
+terms, and a backend serving no distribution supplies none, so a generation
+that measured nothing renders no perplexity and no entropies together. An
+earlier form of this clause called it a plain number that always renders,
+which was wrong about the same case the entropies already document and
+would have obliged this crate to render a mean of nothing.
+
+**The accumulator behind it holds no vector.** The mean is carried forward
+per position and the terms are discarded as they are used, which is what
+makes the unelected posture a smaller computation rather than a withheld
+reading, per the charter's own line on where the election is honest.
+
+**Which readings turn on an election and which do not, and why absence is
+still one rule.** The surprisals and the residual reductions are produced
+where their elections stand. The entropies and the perplexity carry no
+election and are produced wherever the distribution is there to read.
+**That is not the same as always.** A backend serving no distribution
+measures nothing and the generation still answers, per the signals' own
+rule that an absent observability is a reported absence rather than a
+fault, so an unelected reading is absent exactly when nothing was measured
+and an elected one is absent when either its election did not stand or
+nothing was measured. The absence rule below covers every reading on the
+same terms, and what an election adds is a second reason a member may be
+missing rather than a second kind of absence.
+
+**A consumer cannot tell those two reasons apart from the measurement, and
+does not have to.** The `load` event's elections say which readings were
+asked for, per `weaver-trace-Spec` section 3, so an absent surprisal beside
+a standing election is a reading that was not measured, and the same
+absence beside a declined election is a reading that was not asked for.
+The record carries the pair rather than the measurement carrying a reason.
 
 **The vectors are positionally paired with the token identifiers and absent
 when not produced,** per charter section 13.6 and `weaver-trace-PRD` section

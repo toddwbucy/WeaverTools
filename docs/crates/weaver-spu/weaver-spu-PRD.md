@@ -7,10 +7,19 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-21, fourth of this date, the surprisal is elected.
+Section 13 gains 13.12 on the operator's ruling on issue #258: the
+per-position surprisal vector becomes a per-load election, the first that
+elects a reading out rather than in, and the generation's perplexity is
+produced in its place whichever way the election falls. The accumulator
+behind a mean is argued as arithmetic rather than a produced reading, which
+is what keeps the election from being the recording level the trace charter
+retired. Entropy does not move. 13.10 gains its fault.
 **Revised:** 2026-08-21, third of this date, the generation records its
 bound. Section 13.6 gains the resolved per-turn ceiling and the stop
-condition as things that travel with the generation, per the ruling on issue
-#258: both are effective values 13.8's disposition rule already covered and
+condition as things that travel with the generation, per the ruling on
+issue #258: both are effective values 13.8's disposition rule already
+covered and
 neither reached the record, leaving a `finish` of `length` explained by a
 number no consumer can read. Section 8's dispositions are unchanged.
 **Revised:** 2026-08-21, the probability field is chartered. Section 13
@@ -1114,6 +1123,14 @@ survives, reported to the harness and authored by it as the `fault` event:
   lie, and a field that stopped being produced while its election stood
   would leave a viewer unable to tell an absent election from a broken
   one.
+- **Surprisal fault while elected.** The per-position vector could not be
+  produced with its election standing, the generation itself surviving,
+  reported for the reason the readout's and the field's faults are: an
+  elected observation that silently stopped observing is the lie 13.7
+  refuses. **The fault does not depend on the perplexity.** The scalar may
+  stand or fail beside it, and a standing scalar corroborates what the
+  record already says rather than being what makes the failure reportable,
+  the election alone being the thing that was promised and not kept.
 
 An overflow is a typed refusal on the exchange rather than a fault, and a
 death is observed through closure rather than reported, both per the
@@ -1176,6 +1193,58 @@ invisibly, so the obligation on this crate is that an elected field
 changes no token: the same declaration and the same seed produce the same
 token sequence with the election on and off. The demonstration belongs to
 the act that builds it, per Working Process section 6.
+
+### 13.12 The surprisal, and what stands in its place
+
+**The election governs production, and what it elects is a vector rather
+than an instrument.** Per the operator's ruling of 2026-08-21 on
+issue #258. The per-position surprisal, the drawn token's own surprise in
+bits, has been unconditional since the measurement was written and belongs
+to no
+arrangement of apex section 8. It is elected per load beside the field and
+the readout, unbundled from both for the reason they are unbundled from
+each other.
+
+**This election runs the other way from the two beside it, and the
+difference is worth stating.** 13.7 and 13.11 elect an observation into
+existence, so unelected there is nothing and the record says so by absence.
+Here the reading already existed and the election is what keeps it, so the
+default posture is the smaller record rather than the larger. Measured over
+the series of 2026-08-20, the vector was thirty-six percent of the bytes a
+run produced, against under ten percent for everything apex section 8
+enumerates.
+
+**What stands in its place is the generation's perplexity, and it is a
+different reading rather than the same one summarized.** Two to the power
+of the mean surprisal, one number per generation, produced whether or not
+the vector is elected and absent where the distribution was not there to
+read, which is the one ground the entropies are absent on rather than a
+ground of its own. It is what the vector was read for in practice: a
+generation's difficulty, comparable across runs, which is what lets a cold
+record be ranked without a device.
+
+**The accumulator is not a produced reading, and this is the line that
+keeps the election honest.** Section 5's ruling of 2026-08-02 has the
+recorder filter nothing and what an operator elects govern production, so
+an election that computed a reading and then declined to write it down
+would be a recording level wearing an election's name. Computing a mean
+requires each term, and the terms are arithmetic in flight rather than
+readings produced: nothing holds them, nothing could report them, and they
+do not survive the position that made them. **The test is whether the
+absence is recoverable from what remains**, and it is not, a mean being
+lossy in exactly the way the ruling cares about. What the election governs
+is whether a reading per position is produced at all, and unelected none
+is.
+
+**Entropy does not move, and its argument is not this one.** The
+distribution's entropy at each position stays unconditional, per
+issue #258's navigation tier: it is how a run carrying no election says
+which
+turn deserves reloading with one, and a record that cannot aim an
+instrumented run has lost more than seven megabytes buys back. The two
+readings are computed at the same place against the same distribution and
+are elected differently, which is a fact about what they are read for
+rather than about what they cost.
 
 ## 14. The family libraries
 
