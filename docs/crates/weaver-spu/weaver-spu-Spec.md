@@ -1822,14 +1822,21 @@ That is the property the whole ruling exists for, and what it takes to use
 it is worth stating exactly, since a reader who supplies the wrong member
 gets an answer rather than a refusal.
 
-**Re-entering a recorded generation supplies four things and checks a
-fifth.** The declared seed, read from the `seed` member of that
-generation's `model.request`. The turn, as its reference. The generation's
-index within that turn, zero-based. And the same resident context and
-weights standing behind them, since the derivation governs the stream and
-never the distribution it is read against.
+**Re-entering a recorded generation supplies the whole sampling block and
+checks one member of it.** The declared seed, read from `seed`. The rest
+of that block's values beside it, temperature and the truncating filters
+and the penalty pair, because the stream those three inputs fix is read
+through them and a different filter answers differently. The turn, as its
+reference. The generation's index within that turn, zero-based. And the
+same resident context and weights standing behind all of it, since the
+derivation governs the stream and never the distribution it is read
+against.
 
-**`generation_seed` is not among the four.** It is the recorded value a
+The block is the record's own, one place holding every value the sampler
+ran with, so a re-entry reads it rather than assembling the surface from
+a declaration that may have moved since.
+
+**`generation_seed` is not among what is supplied.** It is the recorded value a
 correct re-entry reproduces, which makes it the check rather than an
 input, and nothing in this crate accepts a seed by that route: the sampler
 is built from `derived_seed` of the three above and from nothing else.

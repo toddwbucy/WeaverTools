@@ -992,12 +992,24 @@ turn, and which generation of that turn this is, the last because a turn
 runs as many generations as its tool rounds and two of them sharing a seed
 would draw one stream twice.
 
-**Re-entering a generation takes the seed and the state both.** A reader
-supplies the declared seed, the turn, and the generation's index, and
-stands the same resident tail and the same weights behind them. All four,
-because the derivation governs the stream and the state governs what the
-stream is read against, and a reader holding one of the two answers
-something the record never held.
+**Re-entering a generation takes the seed, the surface, and the state.** A
+reader supplies the declared seed, the turn, and the generation's index,
+which fix the stream. **The rest of the effective sampling values beside
+them**, because a stream is only half of a draw: the temperature and the
+truncating filters decide what the stream selects, and the penalty pair
+decides against what. A re-entry differing in any of them draws the same
+luck through a different filter and answers something else. And the same
+resident tail and the same weights standing behind all of it, since the
+state governs the distribution the whole apparatus is read against.
+
+**The values are the requirement rather than where they come from.** Today
+every one but the seed is frozen at the composition root, so a re-entry on
+the same binary carries them without asking, and the record holds them
+regardless because a disposition changes who sets a value and never
+whether the record holds it. That is what makes them re-suppliable when a
+binary changes its mind about which are frozen, and it is why apex section
+8 lists the sampling parameters among what deterministic re-feed requires
+rather than listing the seed alone.
 
 **The derived value is what a re-entry reproduces rather than what it is
 given.** It is recorded so a reader can check that the stream came out
