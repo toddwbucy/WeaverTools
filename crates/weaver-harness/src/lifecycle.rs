@@ -1057,6 +1057,23 @@ impl Harness {
             )
             .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
 
+        // **The seated prefix reaches the record beside the load**, per
+        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5.
+        // The accumulation rule of the trace charter's section 3.2 bases the
+        // effective context on the identity prefix, and before this the
+        // prefix lived in the configuration alone, so a consumer holding the
+        // record could not close the reconstruction. The write is one read of
+        // what is in hand: the same instruction the elections came from.
+        //
+        // A refusal here is a defect in the declaration rather than a reason
+        // to abandon the load, and it is dropped rather than raised: the door
+        // refuses a role that is not system, the enter's own validation is
+        // what judges a declaration, and a load that has already bracketed
+        // does not fail on a record it could not write.
+        for message in &payload.spu_instruction.decoder.identity {
+            let _ = author.author_identity(&mut recorder, message);
+        }
+
         // **Past this line the bracket stands**, so every refusal below
         // carries the partial run back rather than dropping it: the leave that
         // follows unwinds exactly what stood up, closes the bracket, and
@@ -1792,6 +1809,108 @@ mod tests {
         let frame: serde_json::Value = serde_json::from_str(&distilled).expect("frame parses");
         assert_eq!(frame["envelope"]["kind"], "load");
         assert_eq!(frame["envelope"]["session"], "s-election");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **The seated prefix reaches the record through the real enter path.**
+    /// The door itself is watched in the authorship suite. What this buys is
+    /// the call site: that `enter` reads the identity out of the SPU
+    /// instruction it was handed and authors it, in order, after the load.
+    /// Without it the door could be correct and never called, which is the
+    /// shape the defect took before this act, the prefix having been seated
+    /// at open and written down nowhere.
+    ///
+    /// The fan-out fails after-load at the SPU exec as its sibling above
+    /// does, which is what makes the test cheap: the load event and the
+    /// prefix precede the forks, so no organ has to run for the record to
+    /// be complete at the point this reads it.
+    #[test]
+    fn the_entered_identity_reaches_the_record() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-identity-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("scratch");
+        let listener =
+            crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
+        let sink_path = dir.join("trace.ndjson");
+        let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+        let mut harness = Harness {
+            coordination: listener,
+            organs: OrganBinaries {
+                classify: None,
+                spu: "/nonexistent/weaver-spu".into(),
+                gate: "/nonexistent/weaver-gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::BeforeEnter,
+        };
+        let payload = weaver_types::EnterPayload {
+            session: SessionId("s-identity".into()),
+            run: weaver_types::RunId("r-1".into()),
+            spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef("unreachable".into()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    field_election: None,
+                    identity: vec![weaver_traits::Message {
+                        role: weaver_traits::Role::System,
+                        content: vec![weaver_traits::ContentBlock::Text {
+                            text: "You are a careful assistant.".into(),
+                        }],
+                    }],
+                    tunable_values: Default::default(),
+                },
+            },
+            gate_instruction: weaver_types::GateInstruction {
+                access_rule: weaver_types::AccessRule {
+                    allowed_uids: Default::default(),
+                    allowed_gids: Default::default(),
+                    denied_uids: Default::default(),
+                },
+            },
+            state_election: weaver_types::StateElection {
+                all_kinds: false,
+                keys: Vec::new(),
+            },
+        };
+        let mut run = match harness.enter(payload, Some(sink)) {
+            Err(EnterFailure::AfterLoad(run, _)) => run,
+            Ok(_) => panic!("the bogus fan-out cannot succeed"),
+            Err(EnterFailure::BeforeLoad(refusal)) => {
+                panic!("failed before the load: {refusal:?}")
+            }
+        };
+        let _ = leave(&mut run);
+        drop(run);
+
+        let held = std::fs::read_to_string(&sink_path).expect("the sink reads back");
+        let events: Vec<serde_json::Value> = held
+            .lines()
+            .map(|line| serde_json::from_str(line).expect("each line parses"))
+            .collect();
+        assert_eq!(events[0]["kind"], "load", "the load opens the run");
+        assert_eq!(
+            events[1]["kind"], "message.system",
+            "and the seated prefix follows it"
+        );
+        assert!(
+            events[1].get("turn").is_none(),
+            "carrying no turn, a prefix preceding every turn there is"
+        );
+        let payload_text = events[1]["payload"]["content"][0]["text"]
+            .as_str()
+            .expect("the prefix carries its text");
+        assert_eq!(
+            payload_text, "You are a careful assistant.",
+            "and the text is the one the instruction declared"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 

@@ -132,6 +132,52 @@ impl Author {
         ))
     }
 
+    /// Authors one seated identity message as `message.system`, the door for
+    /// the prefix and the only turnless message door, per
+    /// `weaver-harness-Spec` section 6. The prefix is seated at open through
+    /// the declaration and passes `author_message` at no point, so before
+    /// this door the accumulation rule of `weaver-trace-PRD` section 3.2
+    /// based the effective context on a fact the record did not hold.
+    ///
+    /// **The turn is absent rather than borrowed from the turn that follows**,
+    /// a prefix preceding every turn of the run, on the precedent the
+    /// classify pair set for an exchange belonging to no turn.
+    ///
+    /// **Every role but system refuses here**, on the reasoning
+    /// `author_message` refuses a tool result: a door that writes what it was
+    /// not built for launders a bad declaration into a record that looks well
+    /// formed.
+    ///
+    /// conforms: harness-identity-door-writes-system-only
+    pub fn author_identity(
+        &self,
+        recorder: &mut Recorder,
+        message: &Message,
+    ) -> Result<Result<Sequence, Failure>, UnlicensedMessage> {
+        if !matches!(message.role, Role::System) {
+            return Err(UnlicensedMessage {
+                role: role_name(&message.role),
+                block: "identity-door-system-only",
+            });
+        }
+        licensed(message)?;
+        let rendered = serde_json::to_string(message).map_err(|_| UnlicensedMessage {
+            role: "system",
+            block: "unrenderable",
+        })?;
+        let payload = raw_payload(&rendered).ok_or(UnlicensedMessage {
+            role: "system",
+            block: "unrenderable",
+        })?;
+        Ok(self.author(
+            recorder,
+            Kind::MessageSystem,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Message(payload)),
+        ))
+    }
+
     /// Authors a tool-result message from the granted value, the one door
     /// for the role, per `weaver-harness-Spec` section 6: the record is
     /// minted from the grant at this site and nowhere else, so what enters

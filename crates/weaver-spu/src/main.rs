@@ -703,6 +703,29 @@ fn serve_decode(
                             "seed": knobs.seed,
                             "generation_seed": generation_seed,
                         },
+                        // **The bound the generation ran under**, per
+                        // `weaver-spu-Spec` section 8 and charter section
+                        // 13.6. A `finish` of `length` is otherwise
+                        // explained by a number living in this binary's
+                        // composition root or in an operator's file and
+                        // readable from no record, so a re-feed cannot
+                        // reproduce where the cut fell. These are the
+                        // resolved values this crate holds at the
+                        // generation rather than the declared ones an
+                        // instruction carried, on the same disposition
+                        // rule the sampling block follows. It rides the
+                        // request rather than the measurement because a
+                        // bound is an input-side fact, which is the
+                        // template identity's own ground.
+                        "stop": {
+                            "max_tokens": stop.max_tokens,
+                            "stop_tokens": stop
+                                .stop_tokens
+                                .iter()
+                                .map(|t| t.0)
+                                .collect::<Vec<u32>>(),
+                            "terminator": stop.terminator.0,
+                        },
                     })
                     .to_string(),
                 ) {
