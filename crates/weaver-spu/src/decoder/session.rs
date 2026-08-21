@@ -281,9 +281,18 @@ impl<'a> Session<'a> {
         // reseeds nothing: a refusal that had already rebuilt the sampler
         // would leave the session altered by a call that answered an
         // error.
+        //
+        // **A failure here poisons rather than returns**, because the delta
+        // is already decoded and resident above. A fault that answered
+        // plainly would leave a session whose state holds a delta no
+        // generation ever consumed, appendable and quietly wrong, which is
+        // the disagreement the poison exists to refuse. This sits after a
+        // commit and therefore takes the commit's discipline.
         let window_start = self.resident.len().saturating_sub(penalty_window);
         let window: Vec<TokenId> = self.resident[window_start..].to_vec();
-        self.backend.reseed(seed, &window)?;
+        if let Err(fault) = self.backend.reseed(seed, &window) {
+            return Err(self.poison(fault));
+        }
         let decode_started = std::time::Instant::now();
 
         let mut produced = Vec::new();
@@ -1122,13 +1131,13 @@ mod tests {
 
         session
             .append_and_generate(&[TokenId(3)], &stop, &mut cancel, &mut |_| {},
-                                 None, &mut |_, _, _| {}, 0xAAAA, 64)
+                                 None, &mut |_, _, _| {}, 0xAAAA, 2)
             .expect("the first generation runs");
         let window_before = log.borrow().reseeds[0].1.len();
         session.flush(0).expect("the flush lands");
         session
             .append_and_generate(&[TokenId(4)], &stop, &mut cancel, &mut |_| {},
-                                 None, &mut |_, _, _| {}, 0xBBBB, 64)
+                                 None, &mut |_, _, _| {}, 0xBBBB, 2)
             .expect("the second generation runs");
 
         let reseeds = log.borrow().reseeds.clone();
@@ -1145,15 +1154,15 @@ mod tests {
         // disagreement this pins.
         assert_eq!(
             reseeds[0].1,
-            vec![TokenId(1), TokenId(2), TokenId(3)],
-            "the first window is the identity prefix with the first delta \
-             after it"
+            vec![TokenId(2), TokenId(3)],
+            "the first window is the last two resident, the bound holding: \
+             one of the prefix and the delta after it"
         );
         assert_eq!(
             reseeds[1].1,
-            vec![TokenId(1), TokenId(2), TokenId(4)],
-            "and the second is the prefix the flush returned to with the \
-             second delta, the first generation's tokens having gone"
+            vec![TokenId(2), TokenId(4)],
+            "and the second is the flush's prefix with the second delta, \
+             the first generation's tokens having gone with the flush"
         );
         // **The second window does not grow, which is the whole point.**
         // A generation ran between the two and produced tokens, so a
