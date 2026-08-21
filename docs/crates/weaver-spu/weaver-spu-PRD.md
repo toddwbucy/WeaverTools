@@ -7,6 +7,14 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-21, the probability field is chartered. Section 13
+gains 13.11: a per-load observability election on the ranked candidates
+at each decode position, shaped on 13.7's readout because it is the same
+kind of thing. The depth carries a floor at the sampling cutoff, so the
+sampler's wall stays distinguishable from the reporting's edge. The
+election is per feature and named individually in the load's record, no
+profile bundling any set of them, and an elected field must be shown to
+change no token before it ships. 13.10 gains its fault.
 **Date filed:** 2026-07-31
 **Revised:** 2026-08-19, third of this date, the binary-spelling cell
 settles. The classifier code act's opening lands the Spec's section 11,
@@ -987,11 +995,74 @@ survives, reported to the harness and authored by it as the `fault` event:
 - **Readout fault while elected.** The tap failed with readout elected,
   the generation itself surviving, reported because an elected
   observability that silently stopped observing is the lie 13.7 refuses.
+- **Field fault while elected.** The distribution could not be read or
+  ranked with the field elected, the generation itself surviving,
+  reported for the reason the readout's fault is: 13.11 refuses the same
+  lie, and a field that stopped being produced while its election stood
+  would leave a viewer unable to tell an absent election from a broken
+  one.
 
 An overflow is a typed refusal on the exchange rather than a fault, and a
 death is observed through closure rather than reported, both per the
 contracts. The gate's cases arrive with its turn direction, and the
 corpus-wide case set closes there, per section 10.
+
+### 13.11 The probability field
+
+**The election governs production and this crate is where production
+happens**, the same shape as 13.7's readout and deliberately so. The
+agent's configuration elects the field per load, the election reaching
+this crate at admit beside the binding, and elected it carries a depth:
+how many candidates are ranked and reported at each position. Not
+elected, nothing is ranked and no affordance idles.
+
+**What the field is, and what it is not.** At each decode position the
+distribution over the vocabulary exists for exactly as long as it takes
+the sampler to consume it, and 13.6's measurement already reads it there
+to take the entropy and the surprisal. Those are collapses of the
+distribution to one number each, and no pair of collapsed statistics
+recovers which tokens were available or in what order. **The field is
+that ordering**: the ranked candidates with their probabilities and which
+rank the draw landed on, produced at the same site and from the same
+distribution as the measurement, because a field taken after the draw
+would report a state the sampler has already moved past.
+
+**The depth has a floor and the floor is the sampling cutoff.** The
+sampler truncates before it draws, so there is a wall the operator's own
+top-k election puts in the field, and that wall is a fact about the run
+where the reported depth is an artifact of the reporting. Distinguishing
+them requires reporting past the wall: at a depth below the cutoff the
+two coincide exactly where the field is widest, which is where anyone
+looks. A declaration electing the field at a depth below the sampling
+cutoff therefore refuses at admit, naming both numbers, and the margin
+above the cutoff is what makes the wall a measurement rather than an
+assumption.
+
+**The election is per feature, per load, and recorded.** No profile
+names a bundle of elections, because a named bundle's contents drift and
+every record already carrying that name silently becomes a record of
+something else. Each election stands alone in the configuration, is
+frozen for the residency, and is named individually in the record of the
+load, so a record declares the posture it was written in. **A record
+without a field is then distinguishable from a record whose election
+stood and produced nothing**, which is the difference between a
+configuration and a fault, and no consumer can recover it from the
+absence alone.
+
+**Diagnostic elections are accepted rather than mitigated.** A field at
+useful depth costs decode time at every position and grows the record by
+an order of magnitude, and the answer to that is that it is off unless
+someone wants it, not that it is made cheap enough to forget. The same
+rule is owed to what follows: residual capture is expected and is
+larger than this by orders of magnitude, and it arrives as its own
+election under this pattern rather than as a widening of this one.
+
+**An election must be observational before it ships.** A diagnostic that
+changed the run it observes would corrupt every use of it and would do so
+invisibly, so the obligation on this crate is that an elected field
+changes no token: the same declaration and the same seed produce the same
+token sequence with the election on and off. The demonstration belongs to
+the act that builds it, per Working Process section 6.
 
 ## 14. The family libraries
 

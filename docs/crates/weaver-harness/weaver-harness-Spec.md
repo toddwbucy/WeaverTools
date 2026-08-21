@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-21, the field authors per position and the load
+names its elections. Section 6's model-events clause gains the fourth
+event, one `model.field` per `Field` intermediate, authored as it arrives
+rather than accumulated. The `load` event gains the enter's diagnostic
+elections, each individually, the harness being the party that holds them
+already.
 **Revised:** 2026-08-20, third of this date, the output carries the
 position. Section 6's three-model-events clause names the two session
 counts riding `model.output`, the resident and the capacity this crate
@@ -1734,7 +1740,21 @@ close to answer the seat's fullness port, so the record and the loop take
 one reading rather than two, and
 `model.measurement` carries the measurement the close splices, each event the
 harness authoring what the SPU rendered, the organ owning the content and the trace
-owning the boxes per the custody model. The rendered contribution and the measurement
+owning the boxes per the custody model. **A fourth model event authors per
+decode position where the field election stands**, as of 2026-08-21:
+each `Field` intermediate of the decode seam becomes one `model.field`
+event, authored as it arrives rather than accumulated, because
+accumulating a generation's worth would hold megabytes to write them at
+a close that has other work. It is shaped rather than spliced, per
+`weaver-trace-Spec` section 3, its members being plain values this crate
+holds typed on the way through.
+
+**The load event carries the elections the enter declared**, each named
+individually, per `weaver-trace-PRD` section 3.2. The harness is the
+party that knows them: they arrive in the enter's SPU instruction and
+the harness authors the bracket, so the record's declaration of its own
+posture costs one read of what it already holds. The rendered contribution and the
+measurement
 splice into their own boxes, one member per box per the streaming ruling, and the
 harness checks each spliced member's conformance to its event's accepting shape at
 the author call, the price the splice's opacity is paid at.

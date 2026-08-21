@@ -73,6 +73,15 @@ record box, which is the record's request side gaining its wire source.
 Section 3 orders the intermediates before the answer, section 4's supplies
 follow, and the guarantee lands that the stream and the close never disagree
 about what was drawn. The stream changes the rhythm and not the record.
+**Revised:** 2026-08-21, the field crosses as a second intermediate.
+Section 2's append-and-generate gains one message per retained token where
+the field election of `weaver-spu-PRD` section 13.11 stands: the position,
+its ranked candidates with probabilities, and the realized rank. It closes
+nothing, as the token intermediate closes nothing, and it is separate from
+that intermediate rather than inside it because the token message crosses
+per renderable piece and a piece may span several tokens. Absent where the
+election is absent, never present and empty. Section 3's ordering and
+section 4's supplies follow.
 **Document ID:** `weaver-harness-spu-decode-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
@@ -241,7 +250,25 @@ travels in the request and only
 there**, per the ruling of 2026-08-17 on #129: it is an input-side fact of
 the same kind as the sampling values, which moved to the request for the
 same reason, and a member carried by both boxes of one turn's pair would be
-one fact in two places with no authority named. **The stream changes the seam's rhythm
+one fact in two places with no authority named. **A second intermediate crosses where
+the field election stands**, added
+2026-08-21 on `weaver-spu-PRD` section 13.11. It carries one decode
+position's ranked candidates with their probabilities and the rank the
+draw landed on, one message per retained token, and like the token
+intermediate it closes nothing. **It is a separate message rather than a
+member of the token's**, and the reason is mechanical rather than
+aesthetic: the token intermediate crosses once per renderable piece and a
+piece may span several tokens, so a field carried inside it would be
+paired with a position it does not name. The field's own message carries
+its position and is paired by that.
+
+**Where the election does not stand the message does not cross**, rather
+than crossing empty, so a consumer counts what was produced instead of
+filtering what was not. A party that receives no field message learns
+nothing about why from the seam, the election's record being the load
+event's per `weaver-trace-PRD` section 3.2 and not this seam's to carry.
+
+**The stream changes the seam's rhythm
 and not the record's
 shape**: the emission and the measurement arrive whole at the close, so a
 consumer that ignores every intermediate message reads the exchange
@@ -308,8 +335,19 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   time after the session opens, and it takes no answer. A fault arising
   while an exchange is outstanding is that exchange's typed answer, per
   section 5, so a report never interleaves a stream.
-- Messages within one exchange are ordered, and the intermediate token
-  messages of append-and-generate all precede its answer.
+- Messages within one exchange are ordered, and the intermediate messages
+  of append-and-generate, token and field alike, all precede its answer.
+- A retained token's field message precedes the token message its piece
+  eventually lands in, because the field is read before the sampler draws
+  and a piece exists only after. **The two streams are not joinable on
+  this seam and no wording here should suggest they are.** The field
+  stream is positionally self-describing, one message per retained token
+  naming its own position. The token stream is the emission's rhythm,
+  crossing once per renderable piece and carrying no position, a piece
+  spanning as many tokens as the family's rendering needs. A consumer
+  wanting a position's text joins in the record rather than here, where
+  `model.measurement` pairs the output token identifiers positionally,
+  and detokenizing is that consumer's own work.
 - An answer to append-and-generate arrives only after the session is
   well-framed for the next turn, stopped or complete alike, so the
   harness may rely on the session's coherence without inspecting it.
@@ -337,15 +375,23 @@ verbatim emission and the canonical parse both reaching the record, per
 the operator's end-to-end requirement.
 
 **The SPU supplies** the opened confirmation, the token stream as each is
-drawn, each generation with its measurement and elected reductions, the
-stopped partials, the flush confirmation, the typed refusals, and the
-fault reports.
+drawn, the field stream where its election stands, each generation with
+its measurement and elected reductions, the stopped partials, the flush
+confirmation, the typed refusals, and the fault reports.
 
 **The SPU guarantees** that the session only advances: nothing ever asks
 resident state to rewind, and the weakest family sets the rule for all.
 That the identity prefix is permanent from open to release, the flush's
 outcome included. That an aborted generation leaves the session
-well-framed before its answer returns. That the measurement is produced
+well-framed before its answer returns. That an elected field is read from the same
+distribution the
+measurement is read from and before the sampler consumes it, so the two
+never describe different states of one position, and that it names its
+position rather than relying on arrival order. That an elected field
+changes no token: the same declaration and seed produce the same sequence
+with the election standing and without it, an observation that altered
+what it observed being worthless in a way no consumer could detect. That
+the measurement is produced
 at production time, positionally paired, absent rather than zeroed, and
 that nothing is retained after the answer: produced, reported, gone. That
 an overflow refuses, typed, and sheds nothing silently. That a refusal

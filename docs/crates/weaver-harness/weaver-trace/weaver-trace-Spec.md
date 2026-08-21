@@ -4,6 +4,12 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-21, the field enters the record and the load names
+its elections. Section 3's `Kind` gains `ModelField` with its explicit
+rename, the counts moving to nineteen, and the kind-to-payload mapping
+gains `ModelField` with `Candidate` beside it. The `load` event's payload
+becomes `Elections`, each diagnostic election named individually and none
+bundled, per the charter's same-act edit.
 **Revised:** 2026-08-20, the record holds the context position. Section
 3's `ModelOutput` gains `resident` and `capacity`, plain integers meeting
 the same shaping test its emission and finish meet, on the charter's
@@ -259,6 +265,7 @@ pub enum Kind {
     #[serde(rename = "fault")]                Fault,
     #[serde(rename = "model.request")]        ModelRequest,
     #[serde(rename = "model.output")]         ModelOutput,
+    #[serde(rename = "model.field")]          ModelField,
     #[serde(rename = "model.measurement")]    ModelMeasurement,
     #[serde(rename = "classify.request")]     ClassifyRequest,
     #[serde(rename = "classify.output")]      ClassifyOutput,
@@ -282,6 +289,22 @@ pub struct ModelOutput {
     pub finish: Finish,
     pub resident: u64,
     pub capacity: u64,
+}
+
+pub struct ModelField {
+    pub position: u64,
+    pub ranked: Vec<Candidate>,
+    pub realized: u32,
+}
+
+pub struct Candidate {
+    pub token: u32,
+    pub probability: f32,
+}
+
+pub struct Elections {
+    pub residual_readout: bool,
+    pub field: Option<u32>,
 }
 
 pub struct FlushCounts {
@@ -610,6 +633,22 @@ edge: asserts
 from: weaver-trace
 to: trace-splice-or-shape
 ```
+
+**`model.field` is shaped here and not spliced, on the same test the
+output meets.** Its members are a decode position, a vector of pairs, and an index,
+all of them plain values the harness holds typed on their way through, so
+shaping forces no transform and the splice rule's subject does not arise.
+It is the record's first per-position kind, and the granularity is the
+charter's rather than this document's election.
+
+**The `load` event carries an `Elections` payload**, per the charter's
+same-act edit, naming each diagnostic election of the load individually.
+A boolean for the readout and the field's depth where it stands, absent
+where it does not. **The shape refuses a profile name deliberately**:
+a set named once drifts as members join it, and every record already
+carrying that name becomes a record of something else without any event
+saying so. Naming each election is what keeps a record's posture
+recoverable from the record.
 
 **The counts reaching the record is a perturbation, not a review read.** A
 member that serializes is easy to add and easy to lose, and losing it is
