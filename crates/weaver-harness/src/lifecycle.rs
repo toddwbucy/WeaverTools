@@ -1018,7 +1018,11 @@ impl Harness {
             std::os::unix::net::UnixStream::connect(self.coordination.state_socket())
         {
             let ask_end = channel.try_clone();
-            if let Ok(tee) = weaver_trace::Tee::open(channel, election) {
+            // The session rides the opener beside the election, both being
+            // facts this enter declared, per the contract's amended term:
+            // the custodian bounds its answers to it, so a store holding an
+            // earlier session answers within the running one.
+            if let Ok(tee) = weaver_trace::Tee::open(channel, session.0.clone(), election) {
                 recorder.attach_tee(tee);
                 state_seam = ask_end.ok().map(crate::state::StateSeam::new);
             }

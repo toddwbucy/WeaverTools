@@ -49,12 +49,20 @@ impl Default for Election {
 /// The seam's opener frame, sent whole at every standing of the channel and
 /// never per event, per the contract's ingest clause: the custodian builds
 /// its indexes from it before the first distillate.
-pub fn opener(election: &Election) -> String {
+///
+/// **It carries the session beside the election** as of 2026-08-20, both
+/// being facts the load declared and neither changing while the channel
+/// stands. The custodian bounds every answer to the session named here, so
+/// a store file holding more than one session answers within the running
+/// one, per `weaver-state-Spec` section 4.
+pub fn opener(session: &str, election: &Election) -> String {
     #[derive(Serialize)]
     struct Opener<'a> {
+        session: &'a str,
         election: &'a Election,
     }
-    let mut frame = serde_json::to_string(&Opener { election }).expect("the election renders");
+    let mut frame =
+        serde_json::to_string(&Opener { session, election }).expect("the election renders");
     frame.push('\n');
     frame
 }
@@ -153,6 +161,10 @@ fn value_at<'a>(payload: &'a RawValue, path: &str) -> Option<&'a RawValue> {
 /// once the harness attaches it at load. Opening writes the election as the
 /// channel's first traffic, per the contract.
 pub struct Tee {
+    /// The session the load declared, carried so the opener can name it and
+    /// the custodian can bound its answers to it, per the contract's
+    /// amended election term.
+    session: String,
     election: Election,
     channel: UnixStream,
 }
@@ -161,10 +173,18 @@ impl Tee {
     /// Stand the tee on a channel: the opener goes first, and the stream is
     /// set nonblocking because the contract forbids backpressure onto the
     /// turn path in any form.
-    pub fn open(channel: UnixStream, election: Election) -> std::io::Result<Tee> {
+    pub fn open(
+        channel: UnixStream,
+        session: String,
+        election: Election,
+    ) -> std::io::Result<Tee> {
         channel.set_nonblocking(true)?;
-        let mut tee = Tee { election, channel };
-        if !tee.send(opener(&tee.election).as_bytes()) {
+        let mut tee = Tee {
+            session,
+            election,
+            channel,
+        };
+        if !tee.send(opener(&tee.session, &tee.election).as_bytes()) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::BrokenPipe,
                 "the state seam refused the opener",
