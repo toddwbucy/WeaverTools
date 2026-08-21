@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-21, the generation's bound renders. The request's box
+gains a `stop` object, `max_tokens` with the stop token set and the
+terminator beside it, per charter section 13.6's clause of this date on
+issue #258. It rides the request rather than the measurement on the
+template identity's rule, a bound being an input-side fact, and it renders
+the resolved values rather than the declared. No election changes and the
+partition is untouched.
 **Revised:** 2026-08-21, third of this date, the seed's derivation takes
 shape. Section 8.5 lands it: `splitmix64` over the declared seed, the
 turn, and the generation ordinal within that turn, the last because tool
@@ -1407,6 +1414,24 @@ two places with no authority named, the defect G5 files. The code and
 up to them. The harness
 carries both opaque, neither assembled from members it would parse the splice
 to read.
+**The generation's bound renders in the request's box beside the sampling
+values**, per charter section 13.6's clause of this date. It is a `stop`
+object carrying `max_tokens`, the resolved per-turn ceiling, `stop_tokens`,
+the identifier set in force, and `terminator`, the family's own turn ender.
+The box is the request's rather than the measurement's on the rule the
+template identity settles just above: a bound is an input-side fact, what
+the generation was told, and the `finish` it explains is what was read off
+the answer.
+
+**The values are the resolved ones and never the declared ones.** The
+ceiling arrives frozen from the composition root or tunable from the
+operator's file, so this crate renders what `effective.session` holds at the
+generation rather than what any instruction carried, which is the same rule
+the sampling block already follows. **The stop object is absent from no
+generation**, because unlike an unproduced reading there is no state in
+which a generation ran under no bound, so a missing `stop` is a defect
+rather than an absence with a meaning.
+
 The partition comes from the tokenizer's offsets, which is the salvaged
 `tokenize_with_offsets` mechanic with its invariant intact: the last offset
 equals the rendered text's length, so a partition covers the prompt exactly

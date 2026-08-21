@@ -4,6 +4,15 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-21, second of this date, the prefix becomes a
+recorded contribution and the mapping is recounted. Per the charter's
+same-act edit on issue #258. `message.system` gains a second author, the
+seated identity prefix reaching the record at the run's opening with no
+turn on the classify precedent, so the accumulation rule's base sits inside the
+record rather than in the configuration. Section 3's `Payload` and its
+kind-to-payload paragraph are recounted to nineteen kinds and twelve
+dispositions: `ModelField`, `Elections`, and `Flush` stood in the crate and
+in neither, added by acts that recounted the kind set and not this mapping.
 **Revised:** 2026-08-21, the field enters the record and the load names
 its elections. Section 3's `Kind` gains `ModelField` with its explicit
 rename, the counts moving to nineteen, and the kind-to-payload mapping
@@ -278,6 +287,9 @@ pub enum Payload {
     Fault(Box<serde_json::value::RawValue>),
     ModelRequest(Box<serde_json::value::RawValue>),
     ModelOutput(ModelOutput),
+    ModelField(ModelField),
+    Elections(Elections),
+    Flush(FlushCounts),
     ModelMeasurement(Box<serde_json::value::RawValue>),
     ClassifyRequest(ClassifyAsk),
     ClassifyOutput(ClassifyOutcome),
@@ -558,22 +570,28 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, eighteen kinds and eleven
-dispositions.** `load`, `unload`, `session.closed`, and `turn.started` carry
-`None`. The four message kinds carry `Message`. `turn.closed` carries
-`TurnClosed`. `fault` carries `Fault`. `flush` carries `FlushCounts`, the
-resident token counts before and after, both plain integers. The three
-model kinds carry their three
-own shapes, one each. The classify pair carries its two own shapes,
-`ClassifyAsk` and `ClassifyOutcome`, the outcome scored or refused so a
-refusal the exchange met is the record's fact and never a fabricated
-answer. The tool bracket's two carry `Deferred`. Four plus four
-plus one plus one plus one plus three plus two plus two is eighteen, which is
-the whole of
-charter section 3.1's set. The count is stated because an earlier draft of this
-paragraph assigned thirteen and left `turn.started` homeless, and it is
-recounted here because the token workflow's trace act of 2026-08-02 moved four
-kinds out of `Deferred` and the dispositions went from four to eight.
+**The kind-to-payload mapping is total, nineteen kinds and twelve
+dispositions.** `unload`, `session.closed`, and `turn.started` carry `None`.
+`load` carries `Elections`. The four message kinds carry `Message`.
+`turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` carries
+`FlushCounts`, the resident token counts before and after, both plain
+integers. The four model kinds carry their four own shapes, one each. The
+classify pair carries its two own shapes, `ClassifyAsk` and
+`ClassifyOutcome`, the outcome scored or refused so a refusal the exchange
+met is the record's fact and never a fabricated answer. The tool bracket's
+two carry `Deferred`. Three plus one plus four plus one plus one plus one
+plus four plus two plus two is nineteen, which is the whole of charter
+section 3.1's set.
+
+**The count is stated because it has twice been wrong, and the second time
+it was wrong silently.** An earlier draft assigned thirteen and left
+`turn.started` homeless. Then the acts of 2026-08-19 and 2026-08-21 added
+`flush`, the classify pair, `model.field`, and the load's elections to the
+kind set and to the code, and this paragraph and the enum above it were
+recounted in neither, so both stood at eighteen kinds and nine dispositions
+while the crate compiled twelve. **A mapping that is stale reads exactly
+like a mapping that is total**, which is why the recount lands as prose here
+and as a member list above rather than as a claim about totality alone.
 
 ```graph
 node: trace-kind-payload-mapping-total
@@ -649,6 +667,26 @@ a set named once drifts as members join it, and every record already
 carrying that name becomes a record of something else without any event
 saying so. Naming each election is what keeps a record's posture
 recoverable from the record.
+
+**The identity prefix's events carry no turn, and the envelope already
+allows it.** A prefix is seated at open and precedes every turn of the run,
+so the turn member is absent rather than filled with the turn that happens
+to come first, on the precedent the classify pair set for an exchange
+belonging to no turn. **The door is a second one rather than the message
+door widened.** `author_message` takes a turn key by value and the licensing
+rule it applies is the turn's, so widening it to an optional turn would put
+a turnless path inside the door every turn message goes through. The prefix
+gets its own door, stated in `weaver-harness-Spec` section 6 in this act,
+and the record shows the same kind from both.
+
+**Nothing re-reads the prefix into a later prompt.** The assembled structure
+sweeps the three turn-bearing message kinds, `message.user`,
+`message.assistant`, and `message.tool_result`, and takes the identity from
+the declaration, so `message.system` entering the record adds no message to
+any assembly. That exclusion predates this act and is what makes recording
+the prefix a record change rather than a behavior change, which is the
+property an elected diagnostic is held to and the one this act holds itself
+to as well.
 
 **The counts reaching the record is a perturbation, not a review read.** A
 member that serializes is easy to add and easy to lose, and losing it is

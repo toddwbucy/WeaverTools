@@ -14,6 +14,21 @@ volume is what buys both exceptions. Section 3.2's `load` event gains the
 diagnostic elections of its load, each named individually and never
 bundled under a profile, so a record holding no field is distinguishable
 from one whose election stood and produced nothing.
+**Revised:** 2026-08-21, second of this date, the record sorts by
+arrangement. Per the operator's rulings on issue #258. Section 5 sorts what
+the record holds into three tiers, the first being apex section 8's own
+enumeration read rather than a design of this crate's, and states
+navigation's job as finding which turn to rerun. The identity prefix is
+recorded at the run's opening under `message.system`, the kind section 3.1
+already declares for it, because this charter's accumulation rule
+bases the effective context on a prefix the configuration carried and the
+record did not, leaving a consumer holding only the record unable to close
+the reconstruction it is promised. Section 3.2's `model.request` gains the
+resolved per-turn ceiling and the stop condition in force, without which a
+`finish` of `length` reproduces from nothing. Emission is held by no
+arrangement, training being out of scope by apex section 9. The surprisal's
+demotion to an election is ruled and owed, landing with the act that adds
+the election.
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-20, the record holds the context position. Section
 3.1's `model.output` gains the session's resident count and capacity as
@@ -531,6 +546,17 @@ envelope's field and is not repeated in the payload. A fault the worker does
 not survive is not this kind, per the contracts, because the party that would
 report it is the one that died.
 
+**`model.request` also carries the bound the generation ran under**, per
+the ruling of 2026-08-21 on issue #258: the resolved per-turn token ceiling
+and the stop condition in force, effective values whichever side set them,
+on the same disposition rule the sampling values ride. **A `finish` of
+`length` is otherwise unreproducible from the record**, because the bound
+that produced it lives in the worker's composition root or in an operator's
+file and nowhere a consumer can read, and a re-feed that does not know where
+the cut fell observes a generation the run never had. The stop token set
+travels for the same reason and closes the same kind of gap: a generation
+ending on a stop token is explained by a set the record did not hold.
+
 **`model.request` carries what the model was asked this turn, the turn's
 rendered contribution, per the operator's ruling of 2026-08-12.** The turn's
 delta as the family library rendered it, the identity of the template that
@@ -540,7 +566,8 @@ section 13.8. The seam is append-only, so what the model received grows each
 turn while only the delta crosses, and the full effective context is what
 the record determines rather than what any one event stores: the
 accumulation of the recorded contributions under their recorded template
-identities, from the identity prefix the configuration carries. Recording
+identities, from the identity prefix the run's opening records, per
+section 5. Recording
 the full effective prompt per turn would store a derived quantity the record
 already determines, one fact in two places, and would grow the account by
 the square of the conversation, the resend pathology the append-only seam
@@ -828,6 +855,95 @@ and RAM is the one thing an operator cannot reclaim downstream. The lever is the
 production election, which is the honest place for a lever: not producing a
 measurement is cheaper than producing and discarding it, and discarding it after
 the fact is the operator's to do on the operator's own compute.
+
+**The record sorts into three tiers, and what sorts a member is which
+arrangement needs it rather than what it costs.** Per the operator's rulings
+of 2026-08-21 on issue #258. The first tier is apex section 8's enumeration
+for deterministic re-feed, read rather than designed here: input token
+identifiers, output token identifiers, model identity and weights hash,
+sampling parameters, and the prompt-block partition. The second is
+navigation. The third is diagnostic, elected at the source per section 5's
+own rule and produced only while its election stands. **No tier is a
+recording level and none reaches the recorder,** which still filters
+nothing: a tier names why a member is produced, and production governs the
+record exactly as it did before this sort.
+
+**Navigation is a tier because aiming an instrumented run is work the
+ordinary record has to do.** The diagnostic cycle starts from a failure in a
+run that carried no election, so the trace of that run is what says which
+turn deserves reloading with the field on. Entropy across position is what
+says it. The tier's members are recoverable by a re-feed rather than lost
+without them, so what carrying them buys is the aiming step, and what
+dropping them costs is a forward pass over the whole run before the search
+can begin. Decode timings sit in the tier for a different reason: a splice
+win is priced by paired timings across two arms, and a member that could be
+absent from one arm prices nothing.
+
+**The identity prefix is recorded at the run's opening, as the messages it
+is.** Section 3.2 determines the full effective context by accumulating the
+recorded contributions from the identity prefix, and before this act that
+prefix lived in the configuration alone. A consumer handed the record and not
+the configuration could therefore not perform the accumulation this charter
+promises, which left the replayability claim above resting on a fact outside
+the record. **The remedy is a contribution rather than a new shape.** The
+prefix is a system message and section 3.1 already carries
+`message.system`, so what closes the rule is writing the prefix as the kind
+it is rather than inventing a member to hold the same text under another
+name. **The kind is reachable today and the prefix does not reach it**: a
+system message submitted inside a turn is licensed and authored, while the
+prefix is seated through the declaration at open and passes no door at all,
+which is why the gap reads as an empty kind in a record rather than as a
+missing kind in the set.
+
+**Three properties make this the cheap fix rather than a convenient one.**
+This crate holds the prefix already, arriving in the enter's SPU instruction,
+so the write costs one read of what is in hand and moves no seam. The
+assembled structure re-reads the three turn-bearing message kinds and takes
+the prefix from the declaration, so a recorded prefix enters no later prompt
+and the record gains a fact without the loop gaining a message. And the event
+belongs to no turn, on the precedent the classify pair set, because a prefix
+seated at open precedes every turn there is.
+
+**It is recorded as text rather than as token identifiers.** Apex section 8
+asks for tokenization reproducible from what is recorded rather than for the
+tokens themselves, and the model identity, the weights hash, and the template
+identity ride in every measurement already. The identifiers are the SPU's and
+reach the record by the partition span `weaver-spu-Spec` section 6 names as
+owed, which this act does not deliver and does not need.
+
+**A measurement's input member is the turn's delta and not the generation's
+input.** The distinction is this charter's own, per section 3.2: the seam is
+append-only, only the delta crosses, and the effective context is what the
+record determines rather than what any one event stores. It is stated here
+because the member reads as apex section 8's first enumerated input to a
+consumer who has not read that rule, and a driver feeding the delta where
+the input belongs observes a forward pass that never happened. The remedy is
+not to store the input per generation, which is the derived quantity section
+3.2 refuses and would grow the account by the square of the conversation.
+The input at any position is the seated prefix followed by every recorded
+delta and output in order, and this act closes that chain by recording its
+first link. **The member's name is owed a correction** in the crate that
+renders it, which is where the name is declared.
+
+**Emission is required by no arrangement, and the training target is not an
+arrangement.** Per the operator's ruling of 2026-08-21: apex section 9 puts
+training out of scope entirely, so no arrangement of section 8 rests on the
+record serving as a training corpus, and `model.output`'s emission is not
+held by the first tier on that ground. What holds it instead is the
+end-to-end requirement of 2026-08-02 already stated in section 3.2, the
+model's own rendering being a different fact from the harness's canonical
+message even where the two agree byte for byte. **Where they disagree the
+disagreement is the finding**, so neither is dropped in favor of the other
+and a divergence is filed rather than resolved by preferring one.
+
+**What this sort rules and does not yet land.** The surprisal vector belongs
+to no arrangement and is ruled an election rather than a default, per the
+operator of 2026-08-21, with a per-generation perplexity kept in navigation
+so a cold record stays rankable without carrying a reading per position.
+That ruling lands in the act that adds the election, because an election is
+a member of the SPU instruction and reaches this crate across two contracts,
+and every party to a contract merges in the act that moves it. It is named
+here as owed rather than left to be rediscovered.
 
 ## 6. What this crate guarantees
 

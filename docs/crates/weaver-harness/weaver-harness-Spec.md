@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-21, second of this date, the prefix is authored.
+Section 6 gains `author_identity`, a second message door writing the seated
+identity prefix as `message.system` with no turn, per `weaver-trace-PRD`
+section 5's ruling on issue #258: the accumulation rule's base moves from
+the configuration into the record. The door refuses every role but system on
+the tool-result door's reasoning. One assertion lands.
 **Revised:** 2026-08-21, the field authors per position and the load
 names its elections. Section 6's model-events clause gains the fourth
 event, one `model.field` per `Field` intermediate, authored as it arrives
@@ -1758,6 +1764,36 @@ measurement
 splice into their own boxes, one member per box per the streaming ruling, and the
 harness checks each spliced member's conformance to its event's accepting shape at
 the author call, the price the splice's opacity is paid at.
+
+**The seated identity prefix is authored beside the load, one
+`message.system` per message**, per `weaver-trace-PRD` section 5. The
+harness is again the party that holds it, arriving in the same enter's SPU
+instruction beside the elections, so the write is one read of what is in
+hand. The events carry no turn, a prefix preceding every turn of the run,
+and they are authored after the load event so the run's bracket stands over
+them.
+
+**The door is `author_identity` and not `author_message`.** The message
+door takes a turn key and applies the licensing rule to it, so admitting a
+turnless message there would put a path with no turn inside the door every
+turn message uses. The second door authors the same kind with the turn
+member absent, applies the same licensing rule to the message itself, and
+refuses every role but system, because the only thing it exists to write is
+a prefix. **A role reaching it that is not system is a defect in the
+declaration rather than a message to record**, and it refuses on the same
+reasoning the tool-result door refuses in the message door: a door that
+writes what it was not built for launders a bad declaration into a record
+that looks well formed.
+
+```graph
+node: harness-identity-door-writes-system-only
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-identity-door-writes-system-only
+```
 
 **The stop is heard mid-stream by `poll`, which is why it joined the surface.**
 While a generation streams token by token, loop 0 waits against two descriptors at
