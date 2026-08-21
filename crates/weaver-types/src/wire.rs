@@ -545,6 +545,26 @@ pub enum TokenAnswer {
         token: u32,
         piece: String,
     },
+    /// The probability field at one decode position, per
+    /// `weaver-harness-spu-decode-contract` section 2 as of 2026-08-21 and
+    /// `weaver-spu-PRD` section 13.11: the ranked candidates with their
+    /// probabilities and the rank the draw landed on. An intermediate like
+    /// [`TokenAnswer::Token`], closing nothing.
+    ///
+    /// **Its own message rather than a member of the token's**, and the
+    /// reason is mechanical: a token message crosses once per renderable
+    /// piece and a piece may span several tokens, so a field carried inside
+    /// one would be paired with a position it does not name. It carries its
+    /// position and a consumer joins on that.
+    ///
+    /// **Absent where the election is absent**, the message simply not
+    /// sent, so a consumer counts what was produced rather than filtering
+    /// what was not.
+    Field {
+        position: u64,
+        ranked: Vec<Candidate>,
+        realized: u32,
+    },
     Generated(Generation),
     AtRest,
     /// The flush confirmed, carrying both resident counts: the SPU is the
@@ -635,6 +655,19 @@ pub enum LabelRefusal {
     NotReady,
     Oversized { requested: u64, bound: u64 },
     MalformedContent,
+}
+
+/// One ranked candidate of the probability field: the token and the
+/// probability the distribution gave it at that position, per
+/// `weaver-types-Spec` section 4.4.
+///
+/// The probability rather than the logit, because the consumer's axis is
+/// probability and a consumer re-normalising per position would repeat
+/// arithmetic the SPU already did over the whole vocabulary.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Candidate {
+    pub token: u32,
+    pub probability: f32,
 }
 
 /// What a generation answers with: shaped where the harness consumes and

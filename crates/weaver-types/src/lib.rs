@@ -90,13 +90,13 @@ mod wire;
 pub use config::parse;
 pub use config::{
     AgentConfig, ArtifactRef, ClassifyInstruction, ConfigError, ConfigErrorKind,
-    DecoderInstruction, DeviceOrdinal, ElectedKindConfig, FieldName, GateInstruction, ModelBinding,
+    DecoderInstruction, DeviceOrdinal, ElectedKindConfig, FieldElection, FieldName, GateInstruction, ModelBinding,
     SpuInstruction, StateElection, ToolName, TraceSink,
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{
     AgentName, AgentState, AgentSummary, EnterPayload, ExchangeId, FaultCase, FaultReport, Finish,
-    DECODE_MESSAGE_BOUND, Generation, LabelAnswer, LabelDirective, LabelRefusal, LifecycleAnswer,
+    Candidate, DECODE_MESSAGE_BOUND, Generation, LabelAnswer, LabelDirective, LabelRefusal, LifecycleAnswer,
     LifecycleDirective,
     LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position, RefusingOrgan,
     RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer, TokenDirective, TokenRefusal,
