@@ -1848,6 +1848,13 @@ after a truncation the tail is the truncated tail, and after a
 re-establishment it is what was re-established. The reset is not called
 and the accident it carried cannot recur.
 
+**The watch is a flush standing between two generations**, which is the
+case the retired coupling lived in: two generations of one turn with a
+flush between them draw the streams their ordinals name, and the second's
+stream is what it would have been had no flush happened. Watched under the
+reset's restoration, which reseeds the second generation to the declared
+value and fails the comparison.
+
 ```graph
 node: spu-sampler-holds-nothing-between-generations
 kind: assertion
@@ -1858,12 +1865,33 @@ from: weaver-spu
 to: spu-sampler-holds-nothing-between-generations
 ```
 
-**The request records both seeds.** The rendered sampling block carries
-the declared seed and the effective one beside it, because either alone
-is a half-answer: the declared seed does not say what this generation
-drew from, and the effective seed does not say what to declare in order to
-re-enter it. This crate renders that block, so the pair reaches the record
-without the trace crate learning either name.
+**The request records both seeds, under these two names.** The rendered
+sampling block of the `model.request` carries them as `u64`:
+
+    seed              the declared run seed, resolved from the disposition
+    generation_seed   the derived value this generation drew from
+
+**`seed` keeps the meaning it already had**, which is the reason for the
+naming rather than a preference between words. Every record written before
+this act carries `seed` as the value the sampler was built from, and that
+value was the declared one because the two were the same number. Reusing
+the name for the derived value would silently reinterpret every earlier
+record, and the 2026-08-20 corpus is the one this program's first findings
+rest on. The new member takes the new name.
+
+**Neither is called effective**, though the prose above does: this crate
+already spends that word on the knobs a disposition resolved, and `seed`
+is one of them. A member named for the derivation says what it is without
+borrowing a word that already means something one layer up.
+
+Both are recorded because either alone is a half-answer. The declared seed
+does not say what a generation drew from, and the derived seed does not
+say what to declare in order to re-enter it. Section 10's capture of the
+sampling block reads both members and their values, the same instrument
+that already watches which knobs cross.
+
+This crate renders the block, so the pair reaches the record without the
+trace crate learning either name.
 
 ## 9. The failure vocabulary
 

@@ -979,15 +979,33 @@ deliver, and apex section 8 is untouched by the correction, having only
 ever said that freezing narrows variance and buys audit rather than
 determinism.
 
-**A generation's draws depend on the run's seed and on which generation it
-is, and on nothing that happened before it.** The derivation is the Spec's
-and its inputs are the declared seed, the turn, and which generation of
-that turn this is, the last because a turn runs as many generations as its
-tool rounds and two of them sharing a seed would draw one stream twice.
-What this buys is stated rather than assumed: a recorded generation is
-re-entered by declaring the run's seed again, without replaying what
-preceded it, and two arms of one comparison meet each turn at the same
-draw so a difference between them is the treatment's.
+**The sampler's random stream depends on the run's seed and on which
+generation it is, and on nothing that happened before it.** The claim is
+about the stream and not about the draw, and the distinction is the whole
+of what this section promises. A draw is that stream read against a
+distribution, and the distribution is the model's answer to everything
+resident, so what a generation produces depends on its context exactly as
+much as it ever did. What stops depending on history is the luck.
+
+The derivation is the Spec's and its inputs are the declared seed, the
+turn, and which generation of that turn this is, the last because a turn
+runs as many generations as its tool rounds and two of them sharing a seed
+would draw one stream twice.
+
+**Re-entering a generation takes the seed and the state both.** A reader
+supplies the declared seed, the turn, and the generation's index, and
+stands the same resident tail and the same weights behind them. The
+recorded derived seed shortcuts the first three and shortcuts nothing
+else: handed a derived seed and a different context, an engine draws the
+same luck against a different distribution and answers something the
+record never held. What the ruling removes is the need to replay every
+draw that preceded a generation in order to reach its stream, which is a
+different and smaller thing than replaying a run.
+
+**Two arms of one comparison meet each turn at the same stream**, so where
+they differ, the difference is the treatment's and the context's rather
+than the sampler's position. That is what a paired comparison needed and
+could not have while one stream ran the length of a residency.
 
 **Both seeds are recorded, and the requirement is this charter's.** The
 disposition rule above already has the effective values recorded whichever
