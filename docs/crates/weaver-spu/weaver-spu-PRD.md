@@ -7,6 +7,12 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-21, third of this date, the generation records its
+bound. Section 13.6 gains the resolved per-turn ceiling and the stop
+condition as things that travel with the generation, per the ruling on issue
+#258: both are effective values 13.8's disposition rule already covered and
+neither reached the record, leaving a `finish` of `length` explained by a
+number no consumer can read. Section 8's dispositions are unchanged.
 **Revised:** 2026-08-21, the probability field is chartered. Section 13
 gains 13.11: a per-load observability election on the ranked candidates
 at each decode position, shaped on 13.7's readout because it is the same
@@ -940,6 +946,22 @@ different facts. The timings, the model's identity with its weights hash,
 the template identity, and the block partition of 13.4 travel with the
 generation, and nothing is retained here afterward: produced, reported,
 gone, per section 3's no-state rule.
+
+**The bound the generation ran under travels with it**, per the ruling of
+2026-08-21 on issue #258 and `weaver-trace-PRD` section 3.2. The resolved
+per-turn ceiling and the stop condition in force are effective values, and
+section 13.8's disposition rule already says an effective value is recorded
+whichever side set it, so this is that rule reaching a value it had not
+reached rather than a new obligation. **The ceiling is the case that forces
+it.** It is frozen in the composition root or set in an operator's file, per
+`weaver-spu-Spec` section 8, so a consumer holding the record alone can read
+`finish: "length"` and have no way to learn where the cut fell. The stop
+token set is the same shape of fact for a generation that ended on one.
+
+**This is the producing side rather than the field list**, per 13.6: what a
+consumer is owed is `weaver-trace-PRD`'s, and what this charter fixes is
+that the values are the resolved ones this crate holds at the moment of the
+generation, not the declared ones an instruction carried.
 
 ### 13.7 Residual readout
 
