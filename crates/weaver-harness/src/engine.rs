@@ -713,6 +713,39 @@ impl<'a> Ports<'a> {
                     .map_err(|_| TurnError::ChannelLost)?
                 {
                     crate::channel::DecodeReply::Answer(TokenAnswer::Token { .. }) => continue,
+                    // **The field authors as it arrives**, per
+                    // `weaver-harness-Spec` section 6: one `model.field`
+                    // per intermediate, written at the moment it lands
+                    // rather than accumulated, because a generation's worth
+                    // would hold megabytes to write them at a close that
+                    // has other work. It closes no exchange, so the loop
+                    // goes on waiting for one that does.
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Field {
+                        position,
+                        ranked,
+                        realized,
+                    }) => {
+                        self.author
+                            .author(
+                                self.recorder,
+                                Kind::ModelField,
+                                Subsystem::SpuDecoder,
+                                Some(turn),
+                                Some(Payload::ModelField(weaver_trace::ModelField {
+                                    position,
+                                    ranked: ranked
+                                        .into_iter()
+                                        .map(|candidate| weaver_trace::Candidate {
+                                            token: candidate.token,
+                                            probability: candidate.probability,
+                                        })
+                                        .collect(),
+                                    realized,
+                                })),
+                            )
+                            .map_err(|_| TurnError::ChannelLost)?;
+                        continue;
+                    }
                     crate::channel::DecodeReply::Answer(TokenAnswer::Generated(generation)) => {
                         break generation;
                     }
@@ -1533,6 +1566,142 @@ mod tests {
             line_of(Kind::MessageToolResult).contains("1591"),
             "the granted content is the record's"
         );
+    }
+
+    /// **Each field intermediate authors one `model.field` event**, per
+    /// `weaver-harness-Spec` section 6. The intermediates close nothing, so
+    /// the turn runs on and the close arrives as it always did: the record
+    /// gains the field's events and loses none of the bracket.
+    ///
+    /// Perturbation: discard the field arm the way the token arm is
+    /// discarded and the kinds assertion fails, the events never authored.
+    #[test]
+    fn each_field_intermediate_authors_its_event() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+
+        let decode = crate::channel::decode_from_owned(near);
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let _ = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let send_answer = |answer: &weaver_types::TokenAnswer| {
+                let bytes = serde_json::to_vec(answer).expect("answer renders");
+                send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+            };
+            // Two positions of field, and a token intermediate between them
+            // to prove the two streams interleave without either being lost.
+            for position in [0u64, 1] {
+                send_answer(&weaver_types::TokenAnswer::Field {
+                    position,
+                    ranked: vec![
+                        weaver_types::Candidate {
+                            token: 11,
+                            probability: 0.75,
+                        },
+                        weaver_types::Candidate {
+                            token: 12,
+                            probability: 0.25,
+                        },
+                    ],
+                    realized: 0,
+                });
+                send_answer(&weaver_types::TokenAnswer::Token {
+                    token: 11,
+                    piece: "hi".into(),
+                });
+            }
+            let request = serde_json::value::RawValue::from_string(
+                r#"{"rendered":"x","template":"t","sampling":{"seed":11}}"#.to_string(),
+            )
+            .unwrap();
+            let measurement = serde_json::value::RawValue::from_string(
+                r#"{"model":"m","weights_hash":"h","input_tokens":[1],"output_tokens":[11],"blocks":[{"label":"turn-delta","start":0,"end":1}],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#
+                    .to_string(),
+            )
+            .unwrap();
+            send_answer(&weaver_types::TokenAnswer::Generated(Generation {
+                content: vec![weaver_traits::ContentBlock::Text { text: "hi".into() }],
+                emission: "hi".into(),
+                finish: Finish::Completed,
+                resident: 12,
+                capacity: 4096,
+                request,
+                measurement,
+            }));
+        });
+
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: Some(2),
+                })),
+            )
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let listener = test_listener();
+        let outcome = {
+            let mut fullness = None;
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+                None,
+                None,
+                None,
+                &mut fullness,
+            );
+            let delta = vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text { text: "hi".into() }],
+            }];
+            ports.turn(delta).expect("the turn completes")
+        };
+        peer.join().expect("the decode peer finishes");
+        assert_eq!(outcome.emission, "hi", "the close still closes the turn");
+
+        let fields: Vec<String> = recorder
+            .structure()
+            .by_kind(Kind::ModelField)
+            .map(|r| r.line.to_string())
+            .collect();
+        assert_eq!(fields.len(), 2, "one event per intermediate: {fields:?}");
+        for (at, line) in fields.iter().enumerate() {
+            let rendered: serde_json::Value =
+                serde_json::from_str(line).expect("the line is one value");
+            assert_eq!(
+                rendered["payload"]["position"], at as u64,
+                "the position the intermediate named: {line}"
+            );
+            assert_eq!(
+                rendered["payload"]["ranked"][0]["token"], 11,
+                "the ranking crosses whole: {line}"
+            );
+            assert_eq!(rendered["payload"]["realized"], 0, "and the realized rank");
+            assert_eq!(
+                rendered["subsystem"], "spu_decoder",
+                "stamped where the field was produced: {line}"
+            );
+        }
     }
 
     /// **A fabricated tool result in loop 1's delta refuses before anything
