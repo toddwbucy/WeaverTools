@@ -1753,7 +1753,8 @@ holds typed on the way through.
 individually, per `weaver-trace-PRD` section 3.2. The harness is the
 party that knows them: they arrive in the enter's SPU instruction and
 the harness authors the bracket, so the record's declaration of its own
-posture costs one read of what it already holds. The rendered contribution and the measurement
+posture costs one read of what it already holds. The rendered contribution and the
+measurement
 splice into their own boxes, one member per box per the streaming ruling, and the
 harness checks each spliced member's conformance to its event's accepting shape at
 the author call, the price the splice's opacity is paid at.
