@@ -6,6 +6,11 @@ only, which is the residency half of what this pair will eventually agree on. Th
 exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-21, the elections become three at this seam. Section 7
+draws `surprisal-election` on `weaver-spu-PRD` section 13.12, and draws
+`field-election`, which was defined on this date and drawn by neither
+contract it crosses. No exchange changes and no refusal case is added: the
+elections ride inside `spu-instruction` as the readout's always has.
 **Revised:** 2026-08-16, the admit carries the operator-tunable values. They
 arrive with the binding in the instruction that already crosses once, which is
 the crossing that suits them, the SPU building its sampler after this exchange
@@ -72,6 +77,14 @@ to: model-binding
 edge: draws
 from: weaver-harness-spu-contract
 to: residual-readout-election
+
+edge: draws
+from: weaver-harness-spu-contract
+to: field-election
+
+edge: draws
+from: weaver-harness-spu-contract
+to: surprisal-election
 
 edge: draws
 from: weaver-harness-spu-contract
@@ -340,8 +353,8 @@ and a group is stated even when empty, because an explicit nothing is an asserti
 someone checked and an absent group is silence.
 
 **Drawn from `weaver-types`:** `organ-envelope`, `model-binding`,
-`residual-readout-election`, `lifecycle-directive`, `lifecycle-answer`,
-`lifecycle-refusal`.
+`residual-readout-election`, `field-election`, `surprisal-election`,
+`lifecycle-directive`, `lifecycle-answer`, `lifecycle-refusal`.
 
 `organ-envelope` is the carrier every organ channel draws, and it is drawn here rather
 than defined here. The definition stays in `weaver-types` and the mechanics it serves
@@ -360,6 +373,19 @@ crosses beside the binding inside `spu-instruction`, the section
 `weaver-types-Spec` section 2 shapes, and the section is representation rather
 than a term: what this seam agrees on is the definition, not the grouping that
 carries it.
+
+`field-election` and `surprisal-election` are drawn on the same argument
+and cross the same way, inside `spu-instruction` beside the binding. The
+first was added to `weaver-types` on 2026-08-21 and drawn by neither
+contract it crosses until this act, which left a definition the graph
+showed no seam carrying while the SPU judged its depth at admit. The second
+is drawn in the act that adds it.
+
+**Three elections cross here and none is bundled with another.** A name for
+a set drifts as members join it, so what crosses is three terms and the
+number is expected to grow. The SPU is the party that acts on all three,
+and neither party interprets an election beyond carrying it to the crate
+that does.
 
 `lifecycle-directive`, `lifecycle-answer`, and `lifecycle-refusal` are loop 0's
 trio, named for the loop per the human's ruling of 2026-08-01, and this contract

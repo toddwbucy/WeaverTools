@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-21, second of this date, the surprisal renders on its
+election. The measurement's `surprisals` member renders where the election
+of charter section 13.12 stands and is absent where it does not, on the
+absent-not-empty rule already in this section, and `perplexity` renders
+always as a plain number with no option, a generation that drew a token
+having a mean whatever was elected. The accumulator holds no vector.
 **Revised:** 2026-08-21, the generation's bound renders. The request's box
 gains a `stop` object, `max_tokens` with the stop token set and the
 terminator beside it, per charter section 13.6's clause of this date on
@@ -1353,6 +1359,25 @@ edge: asserts
 from: weaver-spu
 to: spu-log-sum-exp-stable
 ```
+
+**The surprisal vector renders where its election stands and the
+perplexity renders always**, per charter section 13.12. Unelected, the
+measurement carries `perplexity` and no `surprisals` member, and the
+absence is the same absence every unproduced reading takes: no member
+rather than an empty vector, on the rule stated just below. Elected, both
+render, and a consumer that finds them disagreeing has found a defect
+rather than two readings.
+
+**`perplexity` is a plain number and not an option**, which separates it
+from every other reading in this measurement. The others are absent when
+the election that produces them did not stand. This one has no election: a
+generation that drew a token has a mean surprisal, so a measurement without
+it is a measurement that failed to render rather than one that measured
+nothing. **The accumulator behind it holds no vector.** The mean is carried
+forward per position and the terms are discarded as they are used, which is
+what makes the unelected posture a smaller computation rather than a
+withheld reading, per the charter's own line on where the election is
+honest.
 
 **The vectors are positionally paired with the token identifiers and absent
 when not produced,** per charter section 13.6 and `weaver-trace-PRD` section

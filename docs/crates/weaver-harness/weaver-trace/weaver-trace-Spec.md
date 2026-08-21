@@ -4,6 +4,11 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-21, third of this date, the elections become three.
+Section 3's `Elections` gains `surprisal`, a plain boolean serialized even
+when false, per the charter's same-act edit on issue #258: absent, false,
+and true are three states, the first being a record older than the
+election. The field's `Option` is unchanged.
 **Revised:** 2026-08-21, second of this date, the prefix becomes a
 recorded contribution and the mapping is recounted. Per the charter's
 same-act edit on issue #258. `message.system` gains a second author, the
@@ -319,6 +324,7 @@ pub struct Candidate {
 pub struct Elections {
     pub residual_readout: bool,
     pub field: Option<u32>,
+    pub surprisal: bool,
 }
 
 pub struct FlushCounts {
@@ -697,6 +703,15 @@ any assembly. That exclusion predates this act and is what makes recording
 the prefix a record change rather than a behavior change, which is the
 property an elected diagnostic is held to and the one this act holds itself
 to as well.
+
+**The surprisal's election is a plain boolean and is present rather than
+skipped when false**, which is the opposite election from the field's
+`Option` beside it. The field's absence means no field was asked for and
+its presence carries the depth, so `None` is the whole of what an absent
+election has to say. The surprisal's `false` is a fact worth writing: it
+distinguishes a record whose operator declined the vector from a record
+written before the election existed, where the member is absent altogether.
+**Absent, false, and true are three states and the shape keeps them three.**
 
 **The counts reaching the record is a perturbation, not a review read.** A
 member that serializes is easy to add and easy to lose, and losing it is

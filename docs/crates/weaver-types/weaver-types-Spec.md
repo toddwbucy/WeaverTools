@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-21, the decoder instruction carries a third election.
+`DecoderInstruction` gains `surprisal_election`, a bare boolean beside the
+field's option, per `weaver-types-PRD` section 2.1's clause of this date on
+issue #258. A flag rather than an option because a per-position reading has
+no size to declare.
 **Revised:** 2026-08-21, the field takes its shapes. `DecoderInstruction`
 gains `field_election`, optional because the election is, carrying the
 depth the operator declared per `weaver-spu-PRD` section 13.11.
@@ -397,6 +402,7 @@ pub struct DecoderInstruction {
     pub model_binding: ModelBinding,
     pub residual_readout_election: bool,
     pub field_election: Option<FieldElection>,
+    pub surprisal_election: bool,
     pub identity: Vec<weaver_traits::Message>,
     pub tunable_values: BTreeMap<String, f64>,
 }
@@ -425,6 +431,18 @@ pub enum ConfigErrorKind {
     BadValue,
 }
 ```
+
+**`surprisal_election` is a bare `bool` and `field_election` is an
+`Option`, which is a difference in what each has to say rather than an
+inconsistency.** A field that is elected carries a depth, so the option
+holds the value and its absence is the whole of an unelected field. A
+surprisal has no size: the vector exists per decode position or it does
+not, so the flag is the whole of it either way. **False is not the same as
+absent here**, per `weaver-trace-Spec` section 3: a declaration written
+before this election existed omits the member, and serde fills the default,
+so the two states a reader must keep apart are kept apart in the record
+this crate feeds rather than in this struct.
+
 
 **`tunable_values` is the route `Disposition::OperatorTunable` names.** The SPU
 elects per parameter at its composition root whether a value is compiled in or

@@ -5,6 +5,11 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-21, the elections become three at this seam. Section 8
+draws `surprisal-election` on `weaver-spu-PRD` section 13.12 and draws
+`field-election`, defined on this date and drawn by neither contract it
+crosses. Both ride inside `spu-instruction` in the enter directive, as the
+readout's election has since the route act. No exchange changes.
 **Revised:** 2026-08-17, the gate instruction's draw is closed. The route act
 named the gap and did not close it, its extent being the election's route, so
 section 8's clause read as complete while a payload term crossed it unnamed.
@@ -395,8 +400,9 @@ the exchanges above are the whole of what either learns.
 `lifecycle-answer`, `lifecycle-refusal`, `peer-identity` as of the inversion
 ruling of 2026-08-05, because the identity the harness reads at every accept is
 the floor's, `model-binding` and `residual-readout-election` as of the
-route act of 2026-08-10, `gate-instruction` as of 2026-08-17, and
-`state-election` as of 2026-08-19.
+route act of 2026-08-10, `gate-instruction` as of 2026-08-17,
+`state-election` as of 2026-08-19, and `field-election` with
+`surprisal-election` as of 2026-08-21.
 
 ```graph
 edge: draws
@@ -432,6 +438,17 @@ configuration, defined at `weaver-types-PRD` section 2.1, and both cross inside
 section is representation rather than a term of its own, so the draws name the
 definitions and not the grouping.
 
+**`field-election` and `surprisal-election` are drawn as of 2026-08-21, and
+the first was owed from the act that defined it.** Both cross inside
+`spu-instruction` beside the binding, and both reach the SPU by this seam
+first or by none, which is the route act's own argument applied to the two
+elections added after it. The field's election was defined on this date and
+drawn by neither contract it crosses, so the graph carried a definition no
+seam admitted to carrying while the SPU judged its depth at admit. **The
+rule that catches this is `weaver-types-PRD`'s**, that a field the SPU
+judges is a field that reached it across a seam, and it was stated for the
+readout and not applied to what followed.
+
 **`gate-instruction` is drawn as of 2026-08-17, and the route act named it
 owed.** It crosses inside the same directive as the two above and had the same
 gap: the enter directive has carried it since the fan-out was drawn, per
@@ -451,6 +468,14 @@ to: model-binding
 edge: draws
 from: weaver-admin-harness-contract
 to: residual-readout-election
+
+edge: draws
+from: weaver-admin-harness-contract
+to: field-election
+
+edge: draws
+from: weaver-admin-harness-contract
+to: surprisal-election
 
 edge: draws
 from: weaver-admin-harness-contract
