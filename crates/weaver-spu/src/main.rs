@@ -381,6 +381,9 @@ fn render_measurement(
     // supplies none, so a generation that measured nothing renders no
     // perplexity and no entropies together. It is not a member that always
     // stands, which would oblige this crate to render a mean of nothing.
+    // The perplexity is finite where it is present, guaranteed by the
+    // accumulator that produced it, so this renders a number or no member
+    // and never the `null` `serde_json` gives a non-finite float.
     if let Some(perplexity) = generated.signals.perplexity {
         measurement["perplexity"] = serde_json::json!(perplexity);
     }
@@ -1145,6 +1148,7 @@ mod tests {
     use weaver_types::{
         AgentName, ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction,
     };
+
 
     /// **Every argument is read before the answer is given.**
     ///

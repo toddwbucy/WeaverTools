@@ -1918,6 +1918,113 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// **The declared elections reach the load record, all three of them.**
+    /// The authorship suite watches the door and this watches the mapping:
+    /// that `enter` reads each election out of the SPU instruction it was
+    /// handed and writes it into the record's `load`, rather than writing a
+    /// default that happens to match the fixture.
+    ///
+    /// **Both states are run because a boolean that is always false passes
+    /// a test that never sets it true.** The surprisal's election is the
+    /// one this matters most for: its `false` is a written member rather
+    /// than an omission, so a mapping that dropped the value entirely and a
+    /// mapping that carried it would look alike on a declined load.
+    #[test]
+    fn the_declared_elections_reach_the_load_record() {
+        for elected in [false, true] {
+            let dir = std::env::temp_dir().join(format!(
+                "weaver-elections-{}-{elected}-{:?}",
+                std::process::id(),
+                std::thread::current().id()
+            ));
+            let _ = std::fs::remove_dir_all(&dir);
+            std::fs::create_dir_all(&dir).expect("scratch");
+            let listener =
+                crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
+            let sink_path = dir.join("trace.ndjson");
+            let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+            let mut harness = Harness {
+                coordination: listener,
+                organs: OrganBinaries {
+                    classify: None,
+                    spu: "/nonexistent/weaver-spu".into(),
+                    gate: "/nonexistent/weaver-gate".into(),
+                },
+                parameters: OrganParameters::default(),
+                state: ChannelState::BeforeEnter,
+            };
+            let payload = weaver_types::EnterPayload {
+                session: SessionId("s-elections".into()),
+                run: weaver_types::RunId("r-1".into()),
+                spu_instruction: weaver_types::SpuInstruction {
+                    classify: None,
+                    decoder: weaver_types::DecoderInstruction {
+                        model_binding: weaver_types::ModelBinding {
+                            artifact: weaver_types::ArtifactRef("unreachable".into()),
+                            devices: vec![weaver_types::DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: elected,
+                        field_election: elected
+                            .then(|| weaver_types::FieldElection { depth: 50 }),
+                        surprisal_election: elected,
+                        identity: Vec::new(),
+                        tunable_values: Default::default(),
+                    },
+                },
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
+                },
+                state_election: weaver_types::StateElection {
+                    all_kinds: false,
+                    keys: Vec::new(),
+                },
+            };
+            let mut run = match harness.enter(payload, Some(sink)) {
+                Err(EnterFailure::AfterLoad(run, _)) => run,
+                Ok(_) => panic!("the bogus fan-out cannot succeed"),
+                Err(EnterFailure::BeforeLoad(refusal)) => {
+                    panic!("failed before the load: {refusal:?}")
+                }
+            };
+            let _ = leave(&mut run);
+            drop(run);
+
+            let held = std::fs::read_to_string(&sink_path).expect("the sink reads back");
+            let load: serde_json::Value = serde_json::from_str(
+                held.lines().next().expect("the load opens the run"),
+            )
+            .expect("the load parses");
+            assert_eq!(load["kind"], "load");
+            assert_eq!(
+                load["payload"]["residual_readout"],
+                serde_json::json!(elected),
+                "the readout's election is the one that was declared"
+            );
+            assert_eq!(
+                load["payload"]["surprisal"],
+                serde_json::json!(elected),
+                "and so is the surprisal's, written down either way"
+            );
+            if elected {
+                assert_eq!(
+                    load["payload"]["field"],
+                    serde_json::json!(50),
+                    "the field carries the declared depth"
+                );
+            } else {
+                assert!(
+                    load["payload"].get("field").is_none(),
+                    "and an unelected field is an absence rather than a null"
+                );
+            }
+            let _ = std::fs::remove_dir_all(&dir);
+        }
+    }
+
     /// **The turn rehearses on the device**, the live run's shape inside
     /// the suite: the real enter fan-out forks the real organ binaries,
     /// the SPU admits real weights on the device, the session opens with

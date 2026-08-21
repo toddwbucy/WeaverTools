@@ -245,8 +245,18 @@ impl Accumulator {
         // are absent there: a mean of no terms is not a number this crate
         // has, and rendering one would be the empty vector's defect wearing
         // a scalar's shape.
+        // **Finite or absent, never a number the wire cannot carry.** A
+        // surprisal is `shifted_lse - (logit - max)`, so a logit far enough
+        // below the maximum overflows that subtraction and the mean reaches
+        // infinity. `serde_json` renders a non-finite float as `null`, which
+        // would put a member on the wire carrying nothing, and that is the
+        // empty vector's defect wearing a scalar's shape. The absence is
+        // produced here rather than filtered at the rendering because
+        // production is where this crate's absences are decided, per Spec
+        // section 6.
         let perplexity = (self.steps > 0)
-            .then(|| (self.surprisal_sum / self.steps as f64).exp2());
+            .then(|| (self.surprisal_sum / self.steps as f64).exp2())
+            .filter(|mean| mean.is_finite());
         Signals {
             entropy_bits: NonEmpty::from_vec(self.entropy),
             surprisal_bits: NonEmpty::from_vec(self.surprisal),
@@ -515,6 +525,32 @@ mod tests {
         );
         // 2 ** ((2 + 4 + 6) / 3) is 2 ** 4.
         assert_eq!(plain.perplexity, Some(16.0));
+    }
+
+    /// **A mean the wire cannot carry is absent rather than rendered.**
+    /// `serde_json` gives a non-finite float as `null`, so a member present
+    /// and carrying nothing is what an unguarded overflow would put on the
+    /// wire. An infinite surprisal is reachable by arithmetic rather than by
+    /// any path this crate can be talked into, which is why it is asserted
+    /// here rather than left to a reading of the code.
+    ///
+    /// Perturbation: drop the `is_finite` filter in `finish` and the
+    /// infinite case answers `Some(inf)`. Watched under exactly that.
+    #[test]
+    fn an_unrepresentable_mean_is_absent() {
+        let mut overflowed = Accumulator::new(false);
+        overflowed.record(1.0, f32::INFINITY);
+        overflowed.record(1.0, 2.0);
+        assert!(
+            overflowed.finish().perplexity.is_none(),
+            "an infinite mean is not a number this crate hands the record"
+        );
+
+        let mut ordinary = Accumulator::new(false);
+        ordinary.record(1.0, 2.0);
+        let perplexity = ordinary.finish().perplexity.expect("a finite mean stands");
+        assert!(perplexity.is_finite());
+        assert_eq!(perplexity, 4.0);
     }
 
     /// **A generation that measured nothing renders no perplexity**, per

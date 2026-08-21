@@ -146,6 +146,123 @@ fn a_safetensors_artifact_generates_through_the_native_engine() {
     eprintln!("native emission: {text:?}");
 }
 
+/// **The surprisal's election reaches the native engine's session and
+/// governs what it produces**, per `weaver-spu-PRD` section 13.12. The
+/// election is carried at admit and held by the session for the residency's
+/// life, so what this proves is the whole route on the engine the unit
+/// tests do not exercise: declaration, admit, session, generation, reading.
+///
+/// **Both states run against the same artifact and the same seed.** A test
+/// that only elected would pass with an election nothing consults, and one
+/// that only declined would pass with a vector nothing ever builds. The
+/// perplexity standing in both arms is the property the charter rests the
+/// election's honesty on: the terms are computed either way and only their
+/// keeping differs.
+#[test]
+fn the_surprisal_election_governs_the_native_session() {
+    let Some(dir) = artifact_dir() else {
+        eprintln!("SKIP the_surprisal_election_governs_the_native_session: no artifact");
+        return;
+    };
+    if !cuda_present() {
+        eprintln!("SKIP the_surprisal_election_governs_the_native_session: no CUDA device");
+        return;
+    }
+
+    let prompt =
+        "<|im_start|>user\nReply with exactly one word: hello<|im_end|>\n<|im_start|>assistant\n";
+    let mut seen = Vec::new();
+    for elected in [false, true] {
+        let mut residency = Residency::new();
+        let binding = ModelBinding {
+            artifact: ArtifactRef(dir.to_string_lossy().into_owned()),
+            devices: vec![DeviceOrdinal(0)],
+        };
+        let resident = residency
+            .admit(
+                &binding,
+                Headroom(64 * 1024 * 1024),
+                ReadoutElection(false),
+                elected,
+            )
+            .expect("the admit succeeds against a real artifact");
+        let prefix = resident.tokenize(prompt).expect("the prompt tokenizes");
+        let close = resident
+            .tokenize("<|im_end|>")
+            .expect("the close tokenizes");
+        let [terminator] = close.as_slice() else {
+            panic!("the turn close promotes to one token, got {close:?}");
+        };
+        // Greedy, so the two arms decode the same tokens and a difference
+        // between them is the election's doing rather than the sampler's.
+        let knobs = EffectiveKnobs {
+            temperature: 0.0,
+            top_k: 1,
+            top_p: 1.0,
+            repetition_penalty: 1.0,
+            repetition_window: 0,
+            seed: 11,
+        };
+        let mut session = resident
+            .open_session(&knobs, 512)
+            .expect("the session opens");
+        session.open(&prefix).expect("the prefix decodes");
+        let generated = session
+            .append_and_generate(
+                &[],
+                &StopCondition {
+                    stop_tokens: vec![*terminator],
+                    terminator: *terminator,
+                    max_tokens: 16,
+                },
+                &mut NeverCancels,
+                &mut |_token| {},
+                None,
+                &mut |_, _, _| {},
+                11,
+                64,
+            )
+            .expect("the generation completes");
+
+        assert!(!generated.tokens.is_empty(), "the model answered");
+        assert!(
+            generated.signals.entropy_bits.is_some(),
+            "the entropy carries no election and stands in both arms"
+        );
+        assert!(
+            generated.signals.perplexity.is_some(),
+            "and so does the perplexity, which is what stands in the \
+             vector's place"
+        );
+        assert_eq!(
+            generated.signals.surprisal_bits.is_some(),
+            elected,
+            "the vector is kept exactly where the election stands"
+        );
+        if elected {
+            assert_eq!(
+                generated.signals.surprisal_bits.as_ref().map(|b| b.len()),
+                generated.signals.entropy_bits.as_ref().map(|b| b.len()),
+                "and it is paired with the entropy position for position"
+            );
+        }
+        seen.push((generated.tokens.clone(), generated.signals.perplexity));
+    }
+
+    let (declined_tokens, declined_perplexity) = &seen[0];
+    let (elected_tokens, elected_perplexity) = &seen[1];
+    assert_eq!(
+        declined_tokens, elected_tokens,
+        "the election changes no token, which is the behaviour-neutral bar \
+         every diagnostic in this program is held to"
+    );
+    assert_eq!(
+        declined_perplexity, elected_perplexity,
+        "and the mean is the same mean, the election having governed what \
+         was kept rather than what was computed"
+    );
+}
+
 /// The pair serves the same artifact the single card serves, and greedy
 /// decoding answers the same first tokens: the sharded forward is the same
 /// model cut in half, so the strongest cheap assertion is agreement with the
