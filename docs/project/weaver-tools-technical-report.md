@@ -1,291 +1,277 @@
 # WeaverTools - Technical Report
 
-**Status:** DRAFT. Outside the document set, never ratified, and nothing in the
-corpus is written against it. Describes `WeaverTools` at `fbcb73e`, 2026-08-21,
-per section 0.7. Section 0 is written and sections 1 through 16 are planned in
-appendix A rather than drafted.
+**Status:** DRAFT. Describes `WeaverTools` at `fbcb73e`, 2026-08-21. Sections 5
+through 14 are planned in appendix A rather than drafted.
 
 **Date started:** 2026-08-21
 **Document ID:** `weaver-tools-technical-report`
 **Editorial:** ASCII, no em-dashes, no semicolons.
 
-Companion to `README.md` and to `WeaverTools-PRD`. The README is the doorway and
-is short by design. The apex is the design and is checkable against the code.
-This document is the walk between them, written for a reader who has neither the
-corpus nor a reason yet to read it.
+This document describes a built system: what it is made of, how a turn moves
+through it, what it records, and what it will not do. It describes the system at
+one commit, named above, because the system moves and a description with no
+commit beside it cannot be checked against anything.
+
+It is not a specification. The corpus under `docs/` is the authority on every
+claim made here, and a builder implementing against WeaverTools reads the
+contracts, which carry the vocabulary that crosses each seam, the errors it can
+return, and the ordering it relies on and provides.
 
 ---
 
-## 0. What this document is, and is not
+## 1. The problem
 
-### 0.1 What it is
+Current infrastructure serves stateless transactional work well and serves
+sustained agency poorly. The symptom most builders meet first is narrower than
+that and more annoying: an agent misbehaves, and nobody can say why. The failure
+is not the model's alone and not the scaffolding's alone. It happens somewhere in
+the traffic between them, and that traffic is exactly what a conventional
+deployment leaves unobservable.
 
-A traversal of a settled document set, performed for a reader standing outside
-it. At the commit this document describes the corpus is 27,266 lines under
-`docs/`, one apex over nine crate charters, ten contracts and the material they
-draw, and nine Specs, and it is written for the seats that build the system. An
-engineer meeting WeaverTools for the first time will not read it, and should not
-have to in order to learn what was built, how it is put together, and what it
-does and does not do.
+Diagnosing it requires saying what kind of failure it was, and for that this
+program borrows an instrument. Warren Weaver, introducing Shannon's *Mathematical
+Theory of Communication* in 1949, distinguished three levels at which
+communication can fail. **Level A, the technical problem:** how accurately are the
+symbols transmitted. **Level B, the semantic problem:** how precisely do the
+transmitted symbols convey the intended meaning. **Level C, the effectiveness
+problem:** how effectively does the received meaning change conduct.
 
-So this document walks the set once, in the order a reader needs rather than the
-order the corpus is filed in, and it carries the reader to the corpus at every
-step rather than standing in for it. The apex, the charters, and the Specs remain
-the authority on every claim made here.
+The three are a dependency hierarchy rather than a list, and each level's ceiling
+is set by the one beneath it. You cannot convey more meaning than the channel
+permits, and you cannot produce more effective action than the conveyed meaning
+supports. This is the pattern engineers already know from network stacks and from
+operating system layering. Its consequence is that a single fault travels the
+whole stack while changing appearance at each layer, surfacing as an
+effectiveness problem at Level C when its ceiling was set at Level A.
 
-The motion is one the corpus already performs. A workflow document walks a
-settled set and authors no edges of its own, per Document Format section 2, and
-where it and a charter disagree the charter yields nothing. This document is that
-same walk aimed outward instead of inward.
+A conventional agent deployment smears the three levels across a network nobody
+controls. The model is behind an API, the scaffolding is somewhere else, retries
+and timeouts and serialization sit between them, and when the assembly fails the
+levels cannot be separated well enough to ask which one gave way.
 
-### 0.2 What it is not
+WeaverTools separates them by construction. It pins Level A: one agent, one
+machine, kernel-enforced identity, and boundaries preserved on every seam, so
+transmission stops being a variable rather than being measured as one. It
+captures Level B: every symbol that crossed every seam, in order, in one
+canonical form, which is the trace. What is left over is Level C, whether the
+agent behaves the way its operator needs, and that is the question the apparatus
+exists to make answerable rather than guessable.
 
-It is not a fourth document kind. Working Process section 4 produces three kinds
-at three levels and no fourth, and this document is none of them: it charters
-nothing, states no contract, and elects no representation. It authors no node and
-no edge, it carries no `graph` block, and the mapping does not read it. A reader
-who finds a claim here and the same claim in a charter has found one statement
-and its restatement, and the charter is the one that governs.
+Tooling of this class exists inside the large labs and does not leave them.
+Outside, the same work gets improvised one script at a time.
 
-It is not ratified and cannot become so. Ratification is a property of the
-document set, and this document is outside the set by construction rather than by
-oversight.
+## 2. What the system is
 
-It is not a specification, and nothing is built against it. A builder who wants to
-implement against WeaverTools reads the contracts, which are written for exactly
-that and carry the vocabulary, the errors, and the ordering guarantees each seam
-relies on and provides, per apex section 5.3.
+An agent is **three processes on one machine**, plus a fourth program that stands
+outside every agent and does not run while one is serving.
 
-### 0.3 The register, and why it is the README's
+    worker      the composition root: the harness, the recorder, and the floor,
+                linked into one binary, binding the coordination socket
+    weaver-spu  the model organ, holding weights on the device
+    weaver-gate the outer membrane, the only door the world reaches
+    weaver-admin root-run, one invocation per verb, then exit
 
-The vision's section 0 fixes three registers and puts the program's ambition in
-exactly one of them. The README stays on engineering principles with one theory
-claim conceded and defended. The Spec corpus carries current work alone. The
-vision carries the destination. A document released with the project is a fourth
-register, and it takes the README's and extends it.
+Nine crates make those four programs. Two are the floor, shared vocabulary every
+domain draws from and no domain contains, linked rather than dialed because a
+type definition cannot be sent over a socket.
 
-What that admits: the architecture, the mechanisms, the measurements, the
-lifecycle, the failure cases, and the one conceded claim, that latency is the
-enemy of agency, argued rather than asserted.
+    weaver-types      1,323    the floor: config, identity, wire shapes
+    weaver-traits       314    the floor: messages, roles, permissions, tools
+    weaver-trace      1,443    the recorder and the in-RAM working structure
+    weaver-state      1,178    the session custodian, sqlite behind a socket
+    weaver-harness    7,050    the switchboard, the loops, trace authorship
+    weaver-spu       12,061    residency, two decode engines, measurement
+    weaver-gate       2,280    the boundary, and the shell as its own verb
+    weaver-admin      3,093    lifecycle authorization and custody of the sink
+    weaver-internal     297    functions the loop dispatches inward
 
-What that excludes: agentic-performance claims of every kind, the organism model
-of cortex and brainstem and hippocampus, and the hypothesis the program exists to
-test. Those are the vision's and the hypothesis document's, and they are excluded
-here for a reason that is not modesty. Everything in this report is meant to be
-checkable by a reader with the repository in hand. A claim about what an
-individuated agent will eventually do is not checkable that way, and one such
-claim standing beside forty checkable ones teaches the reader to treat all
-forty-one as the same kind of statement.
+Figures are lines of Rust under `src/`, 29,039 in total, with a further 7,300 in
+integration tests.
 
-The exclusion runs one direction only. This document names the hypothesis as the
-program's motive, cites where it is stated, and does not restate or defend it.
+**An organ is a crate that governs a domain and holds a two-initiator channel
+with the harness.** Both properties, and neither alone. The test does real work:
+`weaver-trace` governs a domain and crosses no process line, so it is linked
+rather than dialed and authenticates nothing, there being no second process to
+identify. `weaver-state` sits behind a socket and is a member seam rather than an
+organ channel. Four crates pass both halves, and the harness is one of them, its
+domain being coordination.
 
-### 0.4 The sourcing rule
+That makes the harness the hub, and the hub holds an allowance no other crate
+holds. Every organ presents its contracts to the harness and nothing to any other
+organ, so a conflict between two organs is settled in the contracts each holds
+with the harness rather than between them. There are no lateral edges. Adding an
+organ is a socket and a contract onto the hub rather than surgery on everything
+already standing.
 
-Every claim in this report is one of two kinds, and a claim of neither kind does
-not go in.
+The harness is content-neutral, and that is checkable rather than a slogan. It
+holds no weights and performs no forward pass. It dispatches on the payload kind
+of a message rather than on anything inside it. The instruction that configures
+the SPU and the one that configures the gate both cross the harness
+uninterpreted, resolved by their consumers. The gate relays in both directions
+opaque, with order preserved, and does not parse the line it carries.
 
-**A corpus claim** traces to a merged document by section, and the citation is
-written rather than implied. Where the corpus states a thing in two places, the
-report cites the one the corpus names authoritative, per G5.
+## 3. Every seam is a Unix socket
 
-**An artifact claim** names something a reader can inspect: a trace taken on a
-stated date, a test that a stated instrument buys, a manifest, a fork revision, a
-figure from the measurement regime with the conditions that make it comparable.
+Where one crate asks another **process** to do something, the seam is a Unix
+domain socket governed by a named contract, and it authenticates its peer. There
+is no listening network socket in the program, at any depth.
 
-The rule is written down before the drafting rather than after it, because a
-report a program writes about itself is precisely where unfalsifiable claims
-enter that program. This corpus already holds the argument in its own terms: a
-clean automated gate is evidence the gate did not fire and is not evidence of
-correctness, per apex section 11. A report full of confident prose is the same
-instrument with the same failure mode.
+The first question an engineer asks is why not localhost, and the answer has
+three parts that stand separately.
 
-### 0.5 What this report may not claim
+**Latency.** An agent routes through the harness on every exchange, so any
+per-hop cost compounds directly into the loop, per token, at batch one. Loopback
+still pays the TCP stack, the kernel network path, and serialization on each of
+those hops. A Unix socket collapses that to nearly nothing while keeping the same
+topology. This is the program's one conceded theory claim, that latency is the
+enemy of agency, and it is conceded rather than smuggled: the agent that pauses
+behaves worse, so the cheapest transport is a behavioral requirement rather than
+an optimization.
 
-Four refusals the apex makes bind this document, and a report that quietly
-dropped them would be selling something the corpus declines to sell.
+**Security.** A Unix socket inherits the operating system's trust model, which
+means `SO_PEERCRED`, filesystem permissions, and kernel-enforced identity.
+Localhost inherits the network's, which means authentication built above a
+surface that is reachable as a network port by construction. Going OS-level is
+what lets trust belong to the kernel and leaves no organ with a network surface
+to defend.
 
-**No run-again claim.** The loop is stochastic and does not reproduce, in any
-arrangement, per apex section 8. A frozen seed narrows variance and buys audit
-rather than determinism. The seed's per-generation derivation of 2026-08-21
-removes the need to replay every draw preceding a generation in order to reach
-its stream, which is a smaller thing than replaying a run, and the program still
-claims no run again.
+**Measurement.** When the object of study is a stochastic engine, every component
+between the observer and it is noise in the instrument. Removing network
+variability is not a convenience here. It is what makes a reading attributable.
 
-**No fungibility and no service reliability.** One agent on one machine gives up
-horizontal scale, failover, and rolling replacement, per apex section 12. Nothing
-in the program holds a contract with the world itself, at any depth.
+What this gives up is real and is not hedged: no fungibility across machines, no
+distributed uptime, no failover, and no direct network applicability of the
+deployed whole. The topology is network-shaped on purpose, a hub and spoke of
+content-neutral duplex channels being the same architecture a network uses on a
+quieter substrate, so a seam that runs over a socket today can run over a wire
+tomorrow. Nothing was coded to the substrate, only to the topology.
 
-**No end state.** The apex's own judgment, section 13, is that a local
-proto-stateful agent is a defensible intermediate and an indefensible end state,
-and that measured at stage one alone, giving up redundancy to co-locate such an
-agent is the worse engineering choice. That sentence belongs in this report at
-full strength.
+**Authentication takes two forms and they are one property.** Where a channel has
+a name, the peer is authenticated by credential. Where it has none, the channel
+is a connected pair and possession of the descriptor is the authentication.
 
-**No claim on the far side of a tool.** What a tool reaches on its own side is
-not this program's to bound, per apex section 3.
+The named cases are worth stating concretely, because each was shaped by
+something the kernel does rather than by preference:
 
-### 0.6 The publish boundary
+- **The coordination socket** is bound by the worker inside the agent's sandbox
+  as its first act, and `weaver-admin` dials in, one connection per verb. The
+  harness reads `SO_PEERCRED` at every accept, before any byte, and refuses every
+  peer that is not root. The direction was inverted in August 2026 for exactly
+  this reason: the earlier design expected the agent's own uid, which every tool
+  the agent can reach also satisfies, so an elected shell could have presented a
+  credential the check would have accepted. Now it dials and is refused.
+- **The gate's world socket** is authenticated at accept against a floor
+  predicate that admits front-end principals. The gate runs as the agent uid, so
+  it knows the one uid the boundary exists to exclude, its own, and adds it to
+  the deny set at raise unconditionally, with denial winning over permission, so
+  no operator mistake readmits the agent to its own front door.
+- **The organ pairs** between the harness and the SPU and gate are unnamed
+  `socketpair`s created before each fork. `SO_PEERCRED` on such a pair reports
+  the creating process for both ends and therefore distinguishes nothing. The
+  unnamed pair is chosen because it removes the second party, not because it
+  identifies one.
 
-This document is publish-destined, which makes it the one artifact in the
-workspace where the boundary binds on every line rather than in principle.
+One asymmetry is recorded rather than papered over. Where the gate dials rather
+than accepts, `SO_PEERCRED` reports the credentials captured for the listening
+socket rather than those of the process that accepted, verified against a live
+kernel: a dialing client's read returned the pid that called `listen`, not the
+one that called `accept`. The kernel does not support symmetric identification
+here, and that is carried as a demand on the tool contract still to be written.
 
-Out: commercial, go-to-market, and strategy material of every kind, and any
-distinction drawn between a single operator and a multi-tenant deployment. Organ
-names that belong to the vision stay in the vision, and where this report needs
-to name what they name, it says memory or state.
+## 4. One turn, end to end
 
-Visibility is checked rather than assumed. As of 2026-08-21 `toddwbucy/WeaverTools`
-is private, so releasing this report names an act that has not yet happened, and
-the boundary binds at that act rather than at this draft.
+A turn is one request through to its final answer. Nine steps carry it, and the
+trace events named at each are the record the next section is about.
 
-### 0.7 Currency, and the commit it describes
+1. A client dials the gate's world socket and sends **one NDJSON line**, UTF-8,
+   one request per line, the newline being the framing.
+2. The gate authenticates the peer by credential and relays the line inward
+   without reading it. A request forwarded is a request gone: the gate keeps no
+   work state.
+3. The harness assigns the turn its key and authors `turn.started`. Every event
+   from here carries that key at every seam it crosses, and every response
+   carries it back.
+4. The harness assembles the prompt.
+5. It sends a decode request to the SPU over the decode channel, and authors
+   `model.request`.
+6. The SPU generates against the resident session and returns the generation
+   together with its measurement payload, tagged with the turn key. The harness
+   authors `model.output` and `model.measurement`.
+7. If the emission carries a tool call, the family parse recovers it and the
+   harness opens one execution exchange per recovered call, serially, in the
+   order recovered. `tool.call.started` and `tool.call.completed` bracket it, and
+   control returns to step 5 with the result in the next prompt.
+8. The harness authors `turn.closed`, whose payload states the close kind rather
+   than leaving it to be inferred from an absence.
+9. The response leaves through the gate as **one NDJSON line out**.
 
-The system this report describes moves daily. The header names the commit and the
-date the description was taken, and every figure in the report carries the same,
-because a count with no commit beside it is a number nobody can check and a number
-nobody can check is the thing this program spent a year learning to distrust.
-
-A figure that has moved since the header's commit is a defect in the report rather
-than in the system. Refreshing them is a pass over this document and not a
-ceremony.
-
-### 0.8 Vocabulary
-
-The corpus holds its terms hard, and a report that softened them for an outside
-reader would teach that reader a vocabulary the repository does not use. Three
-rules follow.
-
-**Where the corpus names a thing, the report uses that name.** Organ, seam,
-socket, link, residency, election, disposition, assertion, and the rest carry the
-meaning their charters give them, and the report glosses each at first use rather
-than substituting a friendlier word.
-
-**Where the README established a phrase the corpus does not carry, the report may
-use it and cites the mechanism rather than the phrase.** The content-neutral
-switchboard is the standing case. It appears in the README and appears nowhere in
-the corpus, and what it names is checkable: the harness holds no weights and
-performs no forward pass, it dispatches on payload kind rather than on content,
-the instructions it carries to the SPU and the gate cross it uninterpreted, and
-the gate relays opaque in both directions with order preserved.
-
-**The forbidden vocabulary of the Working Rules binds here as it binds
-everywhere.** No Id, Ego, SuperEgo, or Freudian framing. Trace, reflection, and
-substrate-state are the canonical terms.
+Two properties of that path are load-bearing. **Each event is emitted once**,
+with no second write to reconcile. And the turn is already closed at step 8
+before the answer leaves at step 9, which is the rule that the crossing delivers
+and does not clock. A gate that dies mid-delivery loses the delivery rather than
+the turn.
 
 ---
 
-## Appendix A. The plan of the report
+## Appendix A. Sections not yet drafted
 
-Sixteen sections, each named with the claim it makes and the sources it draws on.
-This section exists so the shape can be ruled on before prose is written, and it
-shrinks as sections land, the way the vision shrinks toward the built system.
+**5. The trace.** NDJSON with no framing layer, one line per event, the closed
+kind set at nineteen, the flattened envelope, and two clocks that answer
+different questions. Why every integer that can exceed the double-safe range
+serializes as a decimal string. The bracketing grammar: session over run over
+turn, strictly nested, interior events adding depth to a turn and never adding
+turns.
 
-**1. The problem, and the diagnostic instrument.** Agent failures are
-unobservable because the traffic between the model and the scaffolding is
-unobservable, and a conventional deployment smears the levels at which a failure
-can sit across a network nobody controls. Warren Weaver's three levels as the
-diagnostic. Sources: README, apex sections 1 and 13.
+**6. Custody.** The recorder's write surface takes descriptors and never paths,
+not as a convenience and not behind a feature. Who opens the sink, which flag
+rides the open file description and which rides the descriptor, and why
+close-on-exec is set at the receive rather than checked. The threat walk: a tool
+that has read `/proc/self/fd` and wants a second handle, and why it finds no call
+that takes what it learned.
 
-**2. What the system is.** One agent, one machine, three processes, and the organs
-behind them. The organ test, both halves of it, and why `weaver-trace` is a link
-rather than a socket while `weaver-state` is a member seam rather than an organ
-channel. Why the harness is the hub and why that is the one allowance no other
-crate holds. The switchboard reading is carried under 0.8's second rule. Sources:
-apex sections 3, 5.4, 5.5, 12, `weaver-harness-PRD` 3 through 5,
-`weaver-organ-channel`.
+**7. What holds state, and for how long.** The working structure in RAM, the hot
+KV cache, and the session custodian behind its socket. The two asks it serves.
+Why every run begins empty and nothing the agent can draw on survives the
+session.
 
-**3. The seams, and why not localhost.** Latency, security, and measurement, each
-standing on its own, and what the trade gives up. The conceded theory claim,
-argued here and nowhere else in the report. Sources: README, apex section 5.1.
-
-**4. One turn, end to end.** The nine-step path from a line arriving at the gate
-to a line leaving it. Sources: apex section 3, `basic-inference-loop`.
-
-**5. The trace.** NDJSON with no framing layer, the closed kind set at nineteen,
-the flattened envelope, the two clocks that answer different questions, and the
-bracketing rule that every open has a close that says which kind it was. Sources:
-`weaver-trace-PRD` sections 2 and 3, `weaver-trace-Spec` sections 2 and 3.
-
-**6. Custody.** The write surface takes descriptors and never paths. Who opens the
-sink, which flag rides the open file description and which rides the descriptor,
-and why close-on-exec is set rather than checked. The threat walk: a tool that has
-read `/proc/self/fd` and wants a second handle, and why it fails. Sources:
-`weaver-trace-PRD` 4.1, `weaver-trace-Spec` 7 and 10,
-`weaver-admin-harness-contract` 2 and 5, `weaver-state-PRD` 4.
-
-**7. What holds state, and for how long.** The working structure in RAM, the
-session, and the two things that deliberately outlive a turn. What the state
-custodian ingests and the two asks it serves. Why nothing the agent can draw on
-survives the session. Sources: `weaver-trace-PRD` 2.2, `weaver-state-PRD`,
-`weaver-harness-state-contract`.
-
-**8. The model organ.** Residency as the whole of what it owns, admission as the
-one check on the device, the five admit steps and the point in them past which a
-refusal stops being free, the two decode engines as peers, and the device judgment
-read from the driver rather than from a ledger. Sources: `weaver-spu-PRD` 1
-through 4, `weaver-spu-Spec` 1.1, 3, 4.
+**8. The model organ.** Residency as the whole of what it owns. Admission as the
+one check on the device, its five steps, and the point past which a refusal stops
+being free. Two decode engines as peers rather than a legacy and a target, with
+the backend decided by the artifact rather than by configuration. Why the device
+judgment reads the driver rather than the crate's own ledger.
 
 **9. Observability as an election.** The measurement payload, the residual-stream
 readout, and the probability field, each elected per load, named individually in
-the record, and refused at admit where the engine cannot honor it. The obligation
-that an elected diagnostic changes no token. Why an absence has no shape. Sources:
-apex 7.2, `weaver-spu-PRD` 13.6 through 13.11, `weaver-trace-PRD` 3.1.
+the record so a record declares the posture it was written in, and refused at
+admit where the engine cannot honor it. The obligation that an elected diagnostic
+changes no token, and why an absence has no shape.
 
 **10. Replay, and what it is not.** The five inputs a record must carry, why
 tokens are recorded rather than a seed, the template problem that makes canonical
-messages insufficient, and the per-generation seed derivation. Closing on the
-refusal of section 0.5. Sources: apex 8, `weaver-trace-PRD` 3.1 and 3.2,
-`weaver-spu-PRD` 13.8.
+messages insufficient, and the per-generation seed derivation of 2026-08-21.
+Ending on the refusal: the program makes no run-again claim, in any arrangement.
 
-**11. The lifecycle, and the deployment.** Loop 0 as the framework's own, the four
-parties over three sockets, what refuses and what rolls back, loaded-and-idle as a
-first-class state, and the shape a real installation takes on one machine.
-Sources: apex 6, `load-unload-path`, `weaver-admin-PRD`, and the installed layout.
+**11. The lifecycle.** Loop 0 as the framework's own, four parties over three
+sockets, what refuses a load and what a rollback guarantees, loaded-and-idle as a
+first-class state, and gate last up and first down.
 
-**12. The boundary.** What crosses the gate and in which direction, the port test
-that decides internal from external, the grip as two contracts rather than one,
-and the tools this framework does not build. The narrowing of 2026-08-18 belongs
-here at its full strength: the gate holds one tool, the shell, as its own outbound
-verb rather than as a guest, there is no tool table, a name that is not the
-shell's refuses by name and never by nearest match, and the agent's wider roster
-is scripts it writes in its own home and reaches through that one verb. Two
-mechanisms carry the section: a tool result has exactly one construction site and
-no route through serde or conversion, so a loop that would fabricate one has no
-door, and there is no safety classifier and none is planned, because a heuristic
-standing where a boundary already stands is the weaker of the two. Sources: apex
-9, `weaver-gate-PRD`, `weaver-gate-world-contract`,
-`weaver-harness-gate-contract`.
+**12. The boundary.** What crosses the gate and in which direction. The port test
+that decides internal from external. One tool, the shell, as the gate's own
+outbound verb rather than a guest, with no tool table and a refusal by name
+rather than a nearest match. Why a tool result has exactly one construction site,
+and why no safety classifier exists or is planned.
 
-**13. The builder's seat.** What a builder writes and what they inherit, the
-disposition on every knob, the compiled loop and why immutability is the feature,
-and variance held to a range so that what remains is attributable to the thing
-under study. Rendered in this report's register, with the motive left in the
-vision. Sources: `weaver-harness-PRD`, `weaver-harness-Spec` 6.
+**13. The builder's seat.** What a builder writes and what they inherit. A
+disposition on every knob, frozen or operator-tunable, with the effective values
+recorded whichever side set them. Why the loop is compiled rather than
+configured, and how that holds variance to a range so what remains is
+attributable to the thing under study.
 
-**14. How it was built.** Documents first, a graph generated from those documents,
-then code citing the assertions it conforms to. The four enforcement devices and
-why a runtime test cannot pin the absence of a trait implementation. The
-perturbation rule. This section is the report's least conventional and is placed
-late deliberately, because it is the part a reader will weigh only after seeing
-what it produced. Sources: Working Process, Document Format, apex 11.
-
-**15. What stands today, and what does not.** The demonstration rather than the
-count: a trace over its turns, both decode engines serving, the census at the
-stated commit, and the open assertions named with what each waits on. The corpus's
-own caution is the section's spine, that a crate can report a high conformance
-figure while completing no turn and a completed turn is likewise not a count of
-claims met, so the reader is pointed at the trace for whether the deliverable
-runs. What does not stand belongs here at equal length and is named rather than
-omitted: client-facing streaming is deferred and arrives as an extension to the
-world contract rather than a replacement, a status ask refuses today because the
-init system's three values do not map onto the four agent states and a
-translation is where invention would enter, and the memory leg is out entirely
-with a named door rather than a reserved slot. Sources: Working Process section 7,
-the conformance headers, a captured trace, `weaver-gate-PRD` 8,
-`weaver-admin-Spec`.
-
-**16. What the trade costs.** The four refusals restated as engineering
-consequences, the limitations a reader should weigh before adopting anything here,
-and the question the apparatus exists to make answerable rather than answer.
-Sources: apex 12 and 13.
+**14. What stands, and what does not.** The demonstration rather than the count,
+since a crate can report a high conformance figure while completing no turn and a
+completed turn is not a count of claims met. Both engines serving, the trace over
+its turns, and the assertions still open named with what each waits on. Against
+that, what is deferred: client-facing streaming, the status ask, and the memory
+leg, each with a named door rather than a reserved slot. Closing on what the
+trade costs, including the program's own judgment that a local proto-stateful
+agent is a defensible intermediate and an indefensible end state.
