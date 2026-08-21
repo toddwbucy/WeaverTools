@@ -1,5 +1,8 @@
 # WeaverTools
 
+**Context engineering is the practice of making context salient at the
+moment of decision for the model.**
+
 A local-first agent framework whose primary artifact is the trace: one agent, one
 machine, every organ behind its own socket, and one record of everything that
 crossed between them.
