@@ -989,6 +989,16 @@ re-entered by declaring the run's seed again, without replaying what
 preceded it, and two arms of one comparison meet each turn at the same
 draw so a difference between them is the treatment's.
 
+**Both seeds are recorded, and the requirement is this charter's.** The
+disposition rule above already has the effective values recorded whichever
+side set them, because a disposition changes who sets a value and never
+whether the record holds it. Under derivation the effective value is two
+values, and neither alone answers what a reader needs: the declared seed
+does not say what a generation drew from, and the derived seed does not
+say what to declare in order to re-enter it. A record carrying one of them
+supports neither re-entry nor audit. Which members carry them and how they
+spell is the Spec's.
+
 **The sampler holds nothing across generations.** It is built for each
 from the derived seed, and the penalty window is restored from the
 resident tail rather than accumulated, which is the same window read two

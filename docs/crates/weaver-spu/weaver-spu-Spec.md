@@ -1764,14 +1764,49 @@ with the turn and with which generation of that turn this is:
 pub fn derived_seed(declared: u64, turn: &TurnKey, generation: u64) -> u64
 ```
 
-The turn enters as the 64-bit FNV-1a of its reference's bytes, because the
-reference is a string the operator's admin minted and this crate needs a
-number from it without caring what it spells. The three are combined by
-mixing each into the state in order and passing the result through
-`splitmix64`'s finalizer, which is chosen for being short enough to state
-in full, standard enough to be recognised, and well distributed on
-sequential inputs - the last mattering because the generation ordinal is
-sequential and adjacent turns must not draw adjacent streams.
+**It is stated to the bit, because two implementations that differ by one
+constant produce runs that cannot be compared and nothing says so.** All
+arithmetic is on `u64` and wraps. The turn enters as a hash rather than as
+itself, the reference being a string admin minted and this crate needing a
+number from it without caring what it spells.
+
+    fnv1a(bytes):                       the reference's UTF-8 bytes
+      h = 0xcbf29ce484222325
+      for each byte b:  h = (h XOR b) * 0x100000001b3
+      answer h
+
+    finalize(x):                        splitmix64's finalizer
+      z = x + 0x9e3779b97f4a7c15
+      z = (z XOR (z >> 30)) * 0xbf58476d1ce4e5b9
+      z = (z XOR (z >> 27)) * 0x94d049bb133111eb
+      answer z XOR (z >> 31)
+
+    derived_seed(declared, turn, generation):
+      state = finalize(declared XOR fnv1a(turn))
+      answer  finalize(state XOR generation)
+
+**The generation ordinal is zero-based**, so the first generation of a
+turn is zero and the base case below pins it. `splitmix64`'s finalizer is
+chosen for being short enough to state in full, standard enough to be
+recognised, and well distributed on sequential inputs, the last mattering
+because the ordinal is sequential and adjacent turns must not draw
+adjacent streams. Measured on the vectors below, adjacent ordinals differ
+in 33 of 64 bits and adjacent turns in 31.
+
+**Test vectors, which an implementation checks itself against.** They are
+the specification's, computed independently of any implementation, and a
+build that disagrees with one has a defect rather than a variation.
+
+    declared              turn   generation   effective
+    0                     t-1    0            0x458763dd2277adcc
+    11                    t-1    0            0x6025a13ad2f4a430
+    11                    t-1    1            0x5144c61d6c67c975
+    11                    t-2    0            0x25f1b675aac3c47d
+    2814393375            t-2    3            0xcf4ad3d2e2e14630
+    18446744073709551615  t-1    0            0x007be97cffceca04
+
+    fnv1a("t-1") = 0x5627091943b2a601
+    fnv1a("t-2") = 0x5627061943b2a0e8
 
 **The generation ordinal counts within its turn and resets with it.** A
 turn runs as many generations as its tool rounds, up to the harness's
