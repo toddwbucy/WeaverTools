@@ -663,10 +663,13 @@ section 3.1's row as this act corrects it.** The row loses the sampler
 parameters, which move to the request above because an input to a decode is
 part of what was asked, and gains the surprisals and the decode timings, which
 were readings the row had never named. **The row separates the
-unconditional readings from the elected ones as of 2026-08-21**: the
-entropies, the perplexity, and the timings are produced for every
-generation, while the surprisals and the residual reductions are produced
-where their elections stand and are absent where they do not. What this
+readings that carry an election from those that do not, as of
+2026-08-21**: the surprisals and the residual reductions are produced where
+their elections stand, while the entropies and the perplexity carry no
+election and are produced wherever a distribution was read. **Carrying no
+election is not the same as always present**, a backend serving no
+distribution measuring nothing and the generation still answering, per
+`weaver-spu-Spec` section 6. What this
 subsection adds is the producing obligations that make those readings
 trustworthy, stated as content because a reading
 produced wrongly is not the same fact recorded imperfectly. The per-token

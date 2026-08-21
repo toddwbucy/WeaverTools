@@ -1217,7 +1217,9 @@ enumerates.
 **What stands in its place is the generation's perplexity, and it is a
 different reading rather than the same one summarized.** Two to the power
 of the mean surprisal, one number per generation, produced whether or not
-the vector is elected. It is what the vector was read for in practice: a
+the vector is elected and absent where the distribution was not there to
+read, which is the one ground the entropies are absent on rather than a
+ground of its own. It is what the vector was read for in practice: a
 generation's difficulty, comparable across runs, which is what lets a cold
 record be ranked without a device.
 
