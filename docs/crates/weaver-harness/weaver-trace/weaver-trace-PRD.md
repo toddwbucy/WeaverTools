@@ -5,6 +5,15 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-21, the field enters the record and the load
+declares its posture. Section 3.1's kind set gains `model.field`,
+nineteenth, on `weaver-spu-PRD` section 13.11's election: one decode
+position's ranked candidates, the first kind recorded per position rather
+than per turn, and the first recorded only while an election stands. The
+volume is what buys both exceptions. Section 3.2's `load` event gains the
+diagnostic elections of its load, each named individually and never
+bundled under a profile, so a record holding no field is distinguishable
+from one whose election stood and produced nothing.
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-20, the record holds the context position. Section
 3.1's `model.output` gains the session's resident count and capacity as
@@ -335,9 +344,30 @@ its closure.
 | `model.measurement` | input and output token identifiers, entropies and surprisals, the decode timings, model identity with its weights hash, the prompt-block partition, residual reductions |
 | `classify.request` | the label seam, request side: the content the loop sent for classification |
 | `classify.output` | the label seam, response side: every label of the artifact's head scored, or the typed refusal met |
+| `model.field` | one decode position's ranked candidates with their probabilities and the rank the draw landed on, when the field election stands |
 
-Eighteen kinds. Adding one is an edit to this charter and to every contract whose
+Nineteen kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
+**`model.field` is the nineteenth**, added 2026-08-21 on `weaver-spu-PRD`
+section 13.11's election. It is the first kind recorded per decode position
+rather than per turn or per exchange, and the granularity is forced rather
+than chosen: the field is the ordering of candidates at one position, and a
+per-generation collapse of it would be a single message of megabytes,
+past the decode seam's own bound. **It is recorded only while its election
+stands**, which is the first kind of which that is true, and the exception
+is what the election exists to buy: the volume is an order of magnitude
+past everything else the record carries, so a kind always present would
+make the record unaffordable rather than complete.
+
+**The record declares the posture it was written in.** Section 3.2's `load`
+event carries every diagnostic election of the load by name, because
+without it a record holding no field is indistinguishable from a record
+whose election stood and produced nothing - a configuration and a fault
+wearing the same absence. No election is bundled under a profile name: a
+named set drifts as features are added to it, and every earlier record
+carrying the name silently becomes a record of something else, which is
+the provenance defect this charter exists to prevent.
+
 `classify.request` and `classify.output` are the seventeenth and eighteenth,
 added 2026-08-19 with the classifier's charter, per `weaver-spu-PRD` section
 15.5's demand: every exchange of the label seam is recorded by the sole
@@ -446,6 +476,16 @@ cannot be empty**, and that is what makes run numbers verifiable by whoever read
 the account rather than merely declared. The program runs no such check since the
 cut of 2026-08-01, the reading being the consumer's, and the property holds either
 way because it is a property of what is written.
+
+**The `load` event carries the diagnostic elections of its load, each by
+name.** A record has to declare the posture it was written in, per section
+3.1: an election that stood and produced nothing and an election that was
+never made are the same absence on disk, and the difference between them
+is a fault and a configuration. Naming them at the bracket's opening puts
+the declaration where a reader meets it before any event it governs, and
+costs one event per run rather than one member per event. What it names
+is each election individually and never a profile, for the drift reason
+section 3.1 states.
 
 The bracket is defined here beside the run field deliberately. A run label that
 could be stamped without the events existing to verify it against would be an
