@@ -262,6 +262,10 @@ pub struct NativeEngine {
     /// any decode refuses rather than reading a buffer nothing filled.
     logits: Option<Vec<f32>>,
     sampler: LogitsProcessor,
+    /// The sampling shape the knobs describe, held so each generation's
+    /// sampler is rebuilt from it and the derived seed, per
+    /// `weaver-spu-Spec` section 8.5.
+    sampling: Sampling,
     /// The repetition knobs, applied at sample over the resident tail: an
     /// effective value the record claims was in effect must be in effect,
     /// and the GGUF engine applies these in its sampler chain.
@@ -331,7 +335,8 @@ impl NativeEngine {
             device,
             resident: Vec::new(),
             logits: None,
-            sampler: LogitsProcessor::from_sampling(knobs.seed, sampling),
+            sampler: LogitsProcessor::from_sampling(knobs.seed, sampling.clone()),
+            sampling,
             repetition_penalty: knobs.repetition_penalty,
             repetition_window: knobs.repetition_window as usize,
             capacity: capacity as usize,
@@ -418,6 +423,17 @@ pub(crate) fn layer_norm_figure(layer: &Tensor) -> candle_core::Result<f32> {
 }
 
 impl Backend for NativeEngine {
+    /// **Rebuilt outright**, per `weaver-spu-Spec` section 8.5. A
+    /// `LogitsProcessor` is a plain value holding the sampler and nothing
+    /// else: this path applies the repetition penalty itself, reading the
+    /// resident tail at each draw, so the window argument is already
+    /// satisfied by state this engine keeps and rebuilding costs nothing
+    /// beyond the value.
+    fn reseed(&mut self, seed: u64, _window: &[TokenId]) -> Result<(), DecodeFault> {
+        self.sampler = LogitsProcessor::from_sampling(seed, self.sampling.clone());
+        Ok(())
+    }
+
     fn decode_at(&mut self, tokens: &[TokenId], position: usize) -> Result<(), DecodeFault> {
         if self.closed {
             return Err(Self::engine_fault("the engine is closed"));

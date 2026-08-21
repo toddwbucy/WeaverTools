@@ -98,6 +98,23 @@ pub trait Backend {
     /// Sample one token from the current state.
     fn sample(&mut self) -> Result<TokenId, DecodeFault>;
 
+    /// Build this generation's sampler from its derived seed, per
+    /// `weaver-spu-Spec` section 8.5.
+    ///
+    /// **Called at the start of every generation and nowhere else.** The
+    /// sampler holds nothing between generations: it is built here from
+    /// the seed the derivation named, and the penalty window is restored
+    /// from the resident tail the caller supplies rather than accumulated
+    /// across generations. One stream standing for a residency is what
+    /// made a generation's draws depend on every draw before it, and what
+    /// let a flush reseed the draw while clearing the window.
+    ///
+    /// `window` is the resident tail the penalty knobs describe, newest
+    /// last, already truncated to the window length by the caller. After a
+    /// flush it is the truncated tail, so nothing needs clearing and the
+    /// accident cannot recur.
+    fn reseed(&mut self, seed: u64, window: &[TokenId]) -> Result<(), DecodeFault>;
+
     /// Truncate resident state back to a position.
     ///
     /// **Only a family declaring [`FlushMechanism::TruncateToPosition`] may
