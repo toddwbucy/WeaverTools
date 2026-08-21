@@ -1756,7 +1756,7 @@ to: spu-effective-values-recorded
 
 ## 8.5 The seed's derivation
 
-**One function, stated here so two readers cannot differ.** The effective
+**One function, stated here so two readers cannot differ.** The derived
 seed of a generation is `splitmix64` applied to the declared seed mixed
 with the turn and with which generation of that turn this is:
 
@@ -1817,8 +1817,24 @@ residency is what keeps the derivation free of history, since replaying a
 turn issues the same generations in the same order.
 
 **Nothing about the count is carried between residencies**, so a second
-run of the same turn under the same declared seed derives the same
-effective seed. That is the property the whole ruling exists for.
+run of the same turn under the same declared seed derives the same value.
+That is the property the whole ruling exists for, and what it takes to use
+it is worth stating exactly, since a reader who supplies the wrong member
+gets an answer rather than a refusal.
+
+**Re-entering a recorded generation supplies four things and checks a
+fifth.** The declared seed, read from the `seed` member of that
+generation's `model.request`. The turn, as its reference. The generation's
+index within that turn, zero-based. And the same resident context and
+weights standing behind them, since the derivation governs the stream and
+never the distribution it is read against.
+
+**`generation_seed` is not among the four.** It is the recorded value a
+correct re-entry reproduces, which makes it the check rather than an
+input, and nothing in this crate accepts a seed by that route: the sampler
+is built from `derived_seed` of the three above and from nothing else.
+Supplying it in place of them is not a shortcut but a different operation
+this program does not offer.
 
 ```graph
 node: spu-seed-derives-per-generation
@@ -1831,7 +1847,7 @@ to: spu-seed-derives-per-generation
 ```
 
 **The sampler is built per generation and holds nothing between them.**
-Both engines construct their sampler from the effective seed at the start
+Both engines construct their sampler from the derived seed at the start
 of each generation, so no stream survives a generation boundary and no
 generation's draws depend on another's. The penalty window is restored
 from the resident tail rather than accumulated across generations, the
@@ -1879,10 +1895,11 @@ the name for the derived value would silently reinterpret every earlier
 record, and the 2026-08-20 corpus is the one this program's first findings
 rest on. The new member takes the new name.
 
-**Neither is called effective**, though the prose above does: this crate
-already spends that word on the knobs a disposition resolved, and `seed`
-is one of them. A member named for the derivation says what it is without
-borrowing a word that already means something one layer up.
+**Neither is called effective**, and this section's prose does not use the
+word for them either: this crate already spends it on the knobs a
+disposition resolved, and `seed` is one of those. A member named for the
+derivation says what it is without borrowing a word that already means
+something one layer up.
 
 Both are recorded because either alone is a half-answer. The declared seed
 does not say what a generation drew from, and the derived seed does not
