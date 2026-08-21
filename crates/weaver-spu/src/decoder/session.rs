@@ -235,16 +235,6 @@ impl<'a> Session<'a> {
             return Err(DecodeFault::NotOpen);
         }
 
-        // **The sampler is built here and holds nothing from the last
-        // generation**, per `weaver-spu-Spec` section 8.5. The seed is the
-        // caller's, derived from the declared one and this generation's
-        // identity, and the penalty window is the resident tail rather
-        // than anything the sampler carried across. After a flush the tail
-        // is the truncated tail, which is why nothing needs clearing.
-        let window_start = self.resident.len().saturating_sub(penalty_window);
-        let window: Vec<TokenId> = self.resident[window_start..].to_vec();
-        self.backend.reseed(seed, &window)?;
-
         // **Overflow refuses and sheds nothing.** This crate evicts and compacts
         // nothing: either would be this crate deciding which part of the agent's
         // context matters, which is the harness's domain. The refusal carries
@@ -272,6 +262,28 @@ impl<'a> Session<'a> {
         }
         self.resident.extend_from_slice(delta);
         let prefill_ns = prefill_started.elapsed().as_nanos() as u64;
+
+        // **The sampler is built here, after the delta is resident and
+        // before the first draw**, per `weaver-spu-Spec` section 8.5. It
+        // holds nothing from the last generation: the seed is the
+        // caller's, derived from the declared one and this generation's
+        // identity, and the penalty window is the resident tail read now.
+        //
+        // **After the delta rather than before it, because the delta is in
+        // the window.** The native path reads the tail live at each draw
+        // and therefore sees the delta's tokens, so a window taken before
+        // the prefill would penalise a different set on the two engines,
+        // which is the divergence this section's one-source rule exists to
+        // prevent. After a flush the tail is the truncated tail, which is
+        // why nothing needs clearing.
+        //
+        // **And after the overflow check**, so a refused generation
+        // reseeds nothing: a refusal that had already rebuilt the sampler
+        // would leave the session altered by a call that answered an
+        // error.
+        let window_start = self.resident.len().saturating_sub(penalty_window);
+        let window: Vec<TokenId> = self.resident[window_start..].to_vec();
+        self.backend.reseed(seed, &window)?;
         let decode_started = std::time::Instant::now();
 
         let mut produced = Vec::new();
@@ -1123,6 +1135,26 @@ mod tests {
         assert_eq!(reseeds.len(), 2, "one reseed per generation: {reseeds:?}");
         assert_eq!(reseeds[0].0, 0xAAAA, "each takes its caller's seed");
         assert_eq!(reseeds[1].0, 0xBBBB, "and the flush does not change it");
+
+        // **The window's tokens, not its length.** A length alone passes
+        // on a window holding the wrong tokens, and the ordering this
+        // guards is exactly about which tokens are in it: the reseed
+        // follows the prefill, so each window ends with that generation's
+        // own delta. Taken before the prefill both windows end at the
+        // prefix and the deltas are missing, which is the native path's
+        // disagreement this pins.
+        assert_eq!(
+            reseeds[0].1,
+            vec![TokenId(1), TokenId(2), TokenId(3)],
+            "the first window is the identity prefix with the first delta \
+             after it"
+        );
+        assert_eq!(
+            reseeds[1].1,
+            vec![TokenId(1), TokenId(2), TokenId(4)],
+            "and the second is the prefix the flush returned to with the \
+             second delta, the first generation's tokens having gone"
+        );
         // **The second window does not grow, which is the whole point.**
         // A generation ran between the two and produced tokens, so a
         // window carried inside the sampler would hold them still. Read

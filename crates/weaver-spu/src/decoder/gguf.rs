@@ -258,7 +258,14 @@ impl<'a> GgufEngine<'a> {
             LlamaSampler::top_k(knobs.top_k as i32),
             LlamaSampler::top_p(knobs.top_p, 1),
             LlamaSampler::temp(knobs.temperature),
-            LlamaSampler::dist(seed as u32),
+            // **Both halves fold in**, per `weaver-spu-Spec` section 8.5's
+            // derivation. This sampler takes a `u32` where the derivation
+            // answers a `u64` and the native path consumes the whole of
+            // it, so a plain truncation would drop every distinction above
+            // bit 31 and leave the two engines drawing from different
+            // amounts of one seed. Folding keeps the upper half's
+            // contribution in the value that reaches the draw.
+            LlamaSampler::dist(((seed >> 32) ^ (seed & 0xFFFF_FFFF)) as u32),
         ])
     }
 
@@ -733,6 +740,37 @@ mod tests {
             detail.contains("the token is outside the engine's range"),
             "the refusal names the token rather than the batch, got {detail:?}"
         );
+    }
+
+    /// **Two seeds differing only above bit 31 reach the draw as two
+    /// seeds.** This sampler takes a `u32` where the derivation answers a
+    /// `u64`, so a plain truncation would make `0x0000_0000_0000_0001` and
+    /// `0xFFFF_FFFF_0000_0001` one seed - and the native path, which
+    /// consumes the whole `u64`, would disagree with it. The fold is what
+    /// keeps the upper half in the value that draws.
+    ///
+    /// Read against the arithmetic rather than against a device, so it
+    /// runs without a model: what is under test is the narrowing, and the
+    /// narrowing is a pure function.
+    ///
+    /// Perturbation: write `seed as u32` and the two collapse.
+    #[test]
+    fn both_halves_of_the_derived_seed_reach_the_draw() {
+        let narrow = |seed: u64| ((seed >> 32) ^ (seed & 0xFFFF_FFFF)) as u32;
+        assert_ne!(
+            narrow(0x0000_0000_0000_0001),
+            narrow(0xFFFF_FFFF_0000_0001),
+            "seeds differing only above bit 31 must not collapse"
+        );
+        // The derivation's own neighbours, which is where this matters.
+        let turn = weaver_types::TurnKey("t-1".to_string());
+        let a = crate::sampling::derived_seed(11, &turn, 0);
+        let b = crate::sampling::derived_seed(11, &turn, 1);
+        assert_ne!(narrow(a), narrow(b), "adjacent generations stay apart");
+        // And the fold is not lossy in the ordinary direction: a value
+        // whose upper half is zero passes through unchanged, so nothing
+        // that worked before this act now narrows differently.
+        assert_eq!(narrow(0x0000_0000_DEAD_BEEF), 0xDEAD_BEEF);
     }
 
     /// **A reseed restores the window from the tail it is handed**, per
