@@ -16,7 +16,8 @@ The refusal carries no ask, `classify.request` already holding the content
 under its own kind. **The kind emitted is the class's existing `refusal`**:
 no kind is added, no disposition is added, and this seam's refusal cases are
 unchanged in number and in meaning. What moves is which kind carries the
-refused half.
+refused half. The crate authors the retired shape until the act that
+migrates it, which follows this one, per gate H1's direction.
 **Date filed:** 2026-08-19
 **Document ID:** `weaver-harness-spu-classify-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3

@@ -752,6 +752,14 @@ retires and one arrives in the same act, `ClassifyOutcome` for
 `ClassifyScored`, so twenty-one kinds and fifteen dispositions still hold. A
 refused classify authors no `classify.output` at all.
 
+**The crate carries `ClassifyOutcome` until the act that migrates it**,
+which follows this one: seven references stand in `weaver-trace` and
+`weaver-harness`, and `engine.rs` still authors a refusal as
+`Kind::ClassifyOutput` with the string inside. **Read this section as what is
+authorized and the crate as what is built**, per gate H1's direction, the
+window between a merged Spec and the code answering to it being the ordinary
+one.
+
 **`refusal` splices where `elision` and the flush shape**, which is the
 custody line rather than an inconsistency: a refusal is the refusing party's
 account and this crate carries an organ's account opaque, exactly as it
