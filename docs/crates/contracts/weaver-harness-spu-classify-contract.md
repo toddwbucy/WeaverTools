@@ -13,7 +13,10 @@ harness authors `refusal` rather than a `classify.output` carrying a string,
 per the operator's ruling of this date and `weaver-trace-PRD` section 3.1's
 twenty-first kind. The exchange is recorded whole as section 15.5 demands.
 The refusal carries no ask, `classify.request` already holding the content
-under its own kind. No exchange changes and no refusal case is added.
+under its own kind. **The kind emitted is the class's existing `refusal`**:
+no kind is added, no disposition is added, and this seam's refusal cases are
+unchanged in number and in meaning. What moves is which kind carries the
+refused half.
 **Date filed:** 2026-08-19
 **Document ID:** `weaver-harness-spu-classify-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3

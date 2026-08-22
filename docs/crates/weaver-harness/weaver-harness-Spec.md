@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, fourth of this date, the classify refusal changes
+kind. Section 6's classify clause authors `classify.request` and then either
+`classify.output` or `refusal`, per the classify contract's clause of this
+date: the guarantee that a refusal never lands as a fabricated answer is
+unchanged and the kind that carries it is the class's rather than the
+output's own variant.
 **Revised:** 2026-08-22, third of this date, pressure is asked for. The
 recorder's depth moved off the failure path per `weaver-trace-Spec`, so
 section 6 reads it after authoring rather than receiving a `Failure` in
@@ -1785,10 +1791,14 @@ its own end on the run, the arm standing and falling all-or-nothing under
 the unwind like every arm before it, and where the declaration carries no
 subsection no process is forked and the port answers as the missing leg.
 On the exchange's outcome the harness authors the record's
-`classify.request` and `classify.output`, per `weaver-trace-PRD` section
-3.1's seventeenth and eighteenth kinds, the turn carried where one stands
-open and absent where the loop asks between turns, and a typed refusal
-lands as the output's own refused case rather than as a fabricated answer.
+`classify.request` and then either `classify.output` or `refusal`, per
+`weaver-trace-PRD` section 3.1, the turn carried where one stands open and
+absent where the loop asks between turns. **A typed refusal lands as a
+`refusal` and never as a fabricated answer**, which is unchanged in what it
+guarantees and changed in which kind carries it: it was the output's own
+refused case until 2026-08-22, when the refusal class took every seam's
+typed refusal into one kind and `classify.output` became the scored labels
+alone.
 
 ### 6.1 The decode surface, chartered
 
