@@ -1242,12 +1242,22 @@ pub enum SubmitRefusal {
 }
 ```
 
-Four cases, matching `weaver-harness-trace-contract` section 5 one to one, which
-is a count both moved together on 2026-08-22 when pressure stopped being a
-failure. Nothing returns a partial result with a success status, and every refusal
-names its case rather than carrying a string, so a caller branches on a value.
+Four cases, matching `weaver-harness-trace-contract` section 5 one to one.
+**Both counts moved together on 2026-08-22**, when pressure stopped being a
+failure and left each enumeration in the same act. Nothing returns a partial
+result with a success status, and every refusal names its case rather than
+carrying a string, so a caller branches on a value.
 `Failure` is exhaustive, so a fifth case reaches every caller at compile time in
 the act that adds it.
+
+**The crate carries the retired variant until the act that removes it**, which
+follows this one. `Failure::CommitPressure` stands in the built enum and `submit`
+still returns it after the event has reached the working structure and the
+writer's queue, which is the behaviour this section stopped specifying rather
+than the behaviour it describes. **A reader comparing the two should read this
+section as what is authorized and the crate as what is built**, per gate H1's
+direction: a Spec merges and code answers to it, so the window between them is
+the ordinary one and not a divergence to reconcile.
 
 ```graph
 node: trace-failure-enum-exhaustive

@@ -11,7 +11,9 @@ recorder rather than an outcome of a submission, the event having reached
 the working structure and the queue before the depth was read, so a party
 acting on it as a failure treated a recorded event as a lost one. The
 conformance clause is unchanged in what it asks and says which surface
-answers it. A sink that stops being writable stays a failure.
+answers it. A sink that stops being writable stays a failure. **The crate
+carries the retired variant until the act that removes it**, which follows
+this one, per gate H1's direction.
 **Revised:** 2026-08-19, third of this date, the classify kinds join the
 set. `classify.request` and `classify.output` per the charter's same-act
 rule: the harness authors instances of `weaver-trace`'s typed payload
