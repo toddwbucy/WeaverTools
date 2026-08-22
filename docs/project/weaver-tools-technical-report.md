@@ -4,7 +4,8 @@
 subject to change as development continues**, it is never ratified, and nothing
 in the corpus is written against it. Describes `WeaverTools` at `fbcb73e`,
 2026-08-21. Sections 5 through 15 are planned in appendix A rather than drafted,
-and appendix B carries what is not built, not proven, or not measured.
+appendix B carries what is not built, not proven, or not measured, and appendix C
+states the formulation as design intent rather than as description.
 
 **Date started:** 2026-08-21
 **Document ID:** `weaver-tools-technical-report`
@@ -502,3 +503,165 @@ built and shown rather than because the wording softened.
   what it is.
 - **The apex's roster stands at seven against a tree of nine.** Section 2 states
   both rather than choosing, and the reconciliation is the apex's act.
+- **Appendix C is not checkable from the tree.** It states what an agent is taken
+  to be rather than what this code does, so a build neither confirms nor falsifies
+  it, and its own status line says so. The argument behind the notation sits in the
+  agent paper, which is not in this repository, so that citation resolves to
+  nothing a reader holding the tree can open.
+- **The loop numbering is unsettled between the two documents.** The formulation
+  numbers the primary reasoning loop `L_0` where this report calls the lifecycle
+  loop zero and the inference loop loop one. Appendix C states the collision and
+  names a candidate resolution it does not adopt. The ruling is the apex's.
+
+---
+
+## Appendix C. The formulation
+
+**Status: descriptive of design intent. Not checkable against the tree, and not
+ratified.** Every other claim in this report can be verified by a reader holding
+the commit named at the top. This appendix cannot, because it states what an
+agent is taken to be rather than what this code does, and a definition verifies
+against argument rather than against a build. It is placed here so that the
+mapping in the last part of the appendix is available to a reader who wants it
+and skippable by one who does not. The argument for the notation is not made
+here. It is made in the agent paper (Bucy, 2026), and this appendix states the
+result of that argument and the reading of it.
+
+The notation exists in this document for one reason beyond description. Work that
+comes later will need a fixed object to cite, and a formulation carried in a
+released technical report at a named commit is a firmer citation than one carried
+in a working draft.
+
+### C.1 The statement
+
+$$A = B\Big[\, (H,\, M) \,+\, \{\,T,\, V,\, \ldots\,\} ,\quad
+\big\langle\, L_0,\, L_1,\, \ldots,\, L_n \,\big\rangle \,\Big]$$
+
+Read left to right, the three kinds of bracket are three different claims and the
+difference between them is the whole content of the statement.
+
+**Round parentheses hold the required core.** A harness and a model, and neither
+can be removed and leave an agent standing. H appears here as a part rather than
+as a placeholder for everything that is not the model, which is what it was in
+the coarser statements this one replaces.
+
+**Braces hold the optional inventory, unordered.** Tools, validators, and
+whatever else a builder supplies. The set is unordered because membership implies
+no position, and nothing about being available to the assembly says when or
+whether it is reached for.
+
+**Angle brackets hold the loops, ordered.** The ordering is not notational
+tidiness. It is the lever the builder holds in fact, and an unordered set would
+misstate the one thing that is decided at build time. **Two agents with identical
+inventories and different arrays are different agents**, and nothing in the
+braces has to change for that to be true.
+
+**B is the bound, and it stands outside all of it**, because the boundary is not
+one of the agent's parts. It is the line that decides which parts are the agent's
+at all.
+
+### C.2 Why the bound is outside
+
+The reason B is not written inside the bracket is an argument this report
+demonstrates in code without stating. Writing the agent as a harness applied to a
+model puts the outer bracket in the harness's hands, which says the harness draws
+the line around the agent. **A line drawn by the harness moves whenever the
+harness is reconfigured, and a boundary that travels with its contents is not a
+boundary.** So the bracket comes off the harness and is handed to whatever draws
+it in fact, which puts the harness inside the bound beside the model rather than
+around it. Both are parts. Neither is the edge.
+
+Section 3 is the built answer. The bound here is the kernel's: an agent uid,
+filesystem permissions on the socket paths, and `SO_PEERCRED` at every accept. No
+crate in this program can widen it, which is the property the argument asks for
+and the reason the security paragraph of section 3 is not a preference among
+equals.
+
+**One reading has to be refused where the letter is introduced.** `weaver-gate`
+is not B. The gate is a crate, an organ, and one of the nine parts section 2
+enumerates, which puts it inside the bracket with everything else. **The gate is
+a part standing at the bound. The bound is the uid.** A reader who takes the gate
+for B would have this report contradicting itself on its second page, since B is
+defined as not one of the agent's parts and the gate is enumerated as one. The
+gate is where crossings are authorized. It is not what makes a crossing a
+crossing.
+
+### C.3 The recurrence
+
+The loops are written as an array rather than described because what a loop does
+is a relation, and a relation is written with the state on both sides of it. One
+pass of the primary loop, with `y` as what the model produces and `C` as the
+context assembled for it:
+
+$$\begin{aligned}
+y  &= M(C) \\
+C' &= L\big(C,\, y,\, T,\, V,\, \ldots\big)
+\end{aligned}$$
+
+`y` leaves as the deliverable and returns as an argument to the next context. A
+composition applied once is finished, and this is a recurrence rather than a
+composition, so `C'` is not `C` and the assembly that runs a second time is not
+narrowing the field it narrowed the first time.
+
+Context is the third place of a three-place relation the core alone cannot state.
+There is the part that does the managing, which is the harness. There is what is
+managed, which is the model's state, a property of the model and never a term of
+its own. And there is what the managing is done with, which is context, assembled
+from the inventory:
+
+$$C = H(T,\, V,\, \ldots)$$
+
+That the model's state is not a term is worth one sentence, because this report
+has a crate whose name invites the confusion. `weaver-state` is the session
+custodian and holds session records. The model's state is the resident field on
+the device, a property of the part and not something handed to it, which is why
+what crosses the input surface is context rather than state.
+
+### C.4 The terms, and where each is realized
+
+The mapping is a true enumeration and is set out as one. It names design intent
+against description, not a proof, and where the tree does not occupy a position
+the entry says so rather than finding a nearest match.
+
+- **H, the harness.** The job of assembling context and running the loops. It
+  maps to the harness's domain rather than to `weaver-harness` alone, since trace
+  authorship and session custody are submodules under that domain. Section 2 for
+  the domain, step 4 of section 4 for the assembly.
+- **M, the model.** The artifact and its resident state, held by `weaver-spu`.
+  The organ is not M. The organ is what holds M resident and admits it. Section
+  2, and planned section 8.
+- **C, the context.** The prompt assembled at step 4 of section 4 and sent at
+  step 5.
+- **T, tools.** One occupant today, the shell, which section 4 describes as the
+  gate's own outbound verb rather than a guest it hosts. Planned section 12.
+- **V, validators.** **An unoccupied position.** Nothing in the tree fills it.
+  The braces being an optional inventory is what permits that, and naming the
+  position empty is more useful than pretending the slot is not there.
+- **The array.** Section 13's compiled-rather-than-configured loop is the built
+  form of the claim that ordering is the lever. What a builder inherits is an
+  array they did not choose at runtime, which is what holds variance to a range.
+- **B, the bound.** Section 3. Agent uid, socket permissions, `SO_PEERCRED`.
+
+### C.5 Two defects this appendix carries
+
+**The loop subscripts collide with the report's.** The formulation numbers the
+primary reasoning loop `L_0`. This report calls the lifecycle loop zero and the
+inference loop loop one. The same subscript therefore names two different loops
+across the two documents, and a reader moving between them will be misled. The
+recurrence above is written with a bare `L` to avoid asserting a numbering that
+is not settled.
+
+There is a candidate resolution and it is not adopted here. The lifecycle loop
+may not be a member of the array at all. Loading and unloading is the drawing and
+erasing of B rather than a loop the bounded thing runs, and section 13 already
+holds that there is one clock and the load boundary is an event on it rather than
+a second tempo. Under that reading the array holds inference-side loops only, the
+collision dissolves, and the formulation's `L_0` and the report's loop one are
+the same object. **That is a ruling the apex has not made**, and this appendix
+states the collision rather than settling it.
+
+**The formulation is a definition and the rest of this report is a description.**
+Nothing here is falsified by a build failing, and nothing here is confirmed by
+one passing. A reader should hold this appendix to the standard a definition is
+held to, which is whether it draws its distinctions where the joints are, and not
+to the standard the fifteen sections above hold themselves to.
