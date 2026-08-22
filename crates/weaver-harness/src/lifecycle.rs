@@ -275,6 +275,15 @@ struct Run {
     /// the seat as the fullness read, per the context ports of the Spec's
     /// section 6.
     fullness: Option<(u64, u64)>,
+    /// Whether the recorder's pressure has been reported since it last
+    /// crossed the high-water mark, per `weaver-harness-Spec` section 4.
+    ///
+    /// **Held by the run because the condition is the run's.** A seat is
+    /// granted per turn and a full queue outlives any one turn, so a flag
+    /// scoped to the seat would report again on every turn while the depth
+    /// stayed high, which is the repetition the once-per-crossing rule
+    /// refuses.
+    pressure_reported: bool,
     turn_in_flight: Option<TurnKey>,
     /// Each initiator numbers exchanges on its own channel, so the SPU's and
     /// the gate's counters are separate and neither is hardcoded.
@@ -726,6 +735,7 @@ impl Harness {
                         run.state.as_mut(),
                         run.classify.as_ref().map(|arm| &arm.channel),
                         &mut run.fullness,
+                    &mut run.pressure_reported,
                     );
                     match entry(&mut ports, &text) {
                         // A turn the operator's stop aborted answers the
@@ -1104,6 +1114,7 @@ impl Harness {
             gate: None,
             state: state_seam,
             fullness: None,
+            pressure_reported: false,
             turn_in_flight: None,
             spu_ordinal: 0,
             gate_ordinal: 0,
@@ -1363,6 +1374,7 @@ impl Harness {
                     run.state.as_mut(),
                     run.classify.as_ref().map(|arm| &arm.channel),
                     &mut run.fullness,
+                    &mut run.pressure_reported,
                 ))
             }
             // Before enter and after leave there is no standing interior to
@@ -1705,6 +1717,7 @@ mod tests {
                 gate: None,
                 state: None,
                 fullness: None,
+                pressure_reported: false,
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
                 spu_ordinal: 0,
                 gate_ordinal: 0,

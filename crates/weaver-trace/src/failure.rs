@@ -19,9 +19,6 @@ pub enum Failure {
         sequence: Sequence,
         source: WriteError,
     },
-    CommitPressure {
-        queued: usize,
-    },
     AppendFailed {
         sequence: Sequence,
     },

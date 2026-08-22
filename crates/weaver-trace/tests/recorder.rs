@@ -529,12 +529,18 @@ fn failed_write_is_terminal_and_named() {
     ));
 }
 
-/// `CommitPressure` has one meaning: the high-water report on a recorded
-/// event. The test drives a real pipe past the mark, confirms every reported
-/// submission landed in the structure, reads the depth at the report, then
-/// kills the sink and confirms the terminal-failure discard keeps the
-/// accounting consistent. The absolute-full case blocks by design and is not
-/// driven here, the block being backpressure a test cannot observe ending.
+/// Pressure is a reading on a recorded event and never a failure of one, per
+/// `weaver-trace-Spec` section 9 as of 2026-08-22. The test drives a real
+/// pipe past the mark, confirms every submission landed in the structure,
+/// reads the depth from the recorder at the crossing, then kills the sink and
+/// confirms the terminal-failure discard keeps the accounting consistent. The
+/// absolute-full case blocks by design and is not driven here, the block
+/// being backpressure a test cannot observe ending.
+///
+/// **This test asserted the property before the shape carried it.** It read
+/// the depth off `Err(Failure::CommitPressure)` while asserting in the same
+/// breath that "the report is not a refusal", which is the contradiction the
+/// shape now resolves: a submission that landed answers `Ok`.
 #[test]
 fn high_water_reports_on_recorded_events() {
     use weaver_trace::HIGH_WATER_MARK;
@@ -556,12 +562,15 @@ fn high_water_reports_on_recorded_events() {
             Some(Payload::Fault(raw_payload("{\"kind\":\"stub\"}").unwrap())),
         )) {
             Ok(_) => submitted += 1,
-            Err(Failure::CommitPressure { queued }) => {
-                submitted += 1;
-                reported += 1;
-                depth_at_first_report = Some(queued);
-            }
-            Err(other) => panic!("unexpected: {other:?}"),
+            Err(other) => panic!("a submission that lands answers Ok: {other:?}"),
+        }
+        // The reading is taken after the submission, which is where the
+        // harness takes it: the depth is the recorder's own and not the
+        // submission's answer.
+        let pressure = r.pressure();
+        if pressure.over_mark {
+            reported += 1;
+            depth_at_first_report = Some(pressure.queued);
         }
     }
     assert!(reported > 0, "the mark was crossed and reported");
@@ -804,4 +813,62 @@ fn an_elision_refuses_a_turn() {
         "and it carries the span it removed: {}",
         elisions[0]
     );
+}
+
+
+/// **A submission that lands answers `Ok` whatever the queue holds**, per
+/// `weaver-trace-Spec` section 9 as of 2026-08-22, and the depth is a
+/// reading taken from the recorder rather than an answer to a submission.
+///
+/// The property that makes this the right shape: past the mark, the event is
+/// in the working structure and the answer is `Ok`. Before this act the same
+/// event produced `Err`, so a caller could not act on pressure without also
+/// treating a recorded event as a lost one.
+///
+/// Perturbation: return `Err` past the mark again and the first assertion
+/// fires on a submission whose event is in the structure beside it.
+#[test]
+fn a_submission_past_the_mark_still_answers_ok() {
+    use weaver_trace::HIGH_WATER_MARK;
+    let (reader, pipe_writer) = std::io::pipe().expect("pipe");
+    let mut r = Recorder::receive(
+        OwnedFd::from(pipe_writer),
+        RunRef("r-1".into()),
+        SessionRef("s-1".into()),
+    )
+    .expect("receives");
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
+
+    let mut submitted = 1usize;
+    while !r.pressure().over_mark && submitted < 4 * HIGH_WATER_MARK {
+        r.submit(event(
+            Kind::Fault,
+            None,
+            Some(Payload::Fault(raw_payload("{\"kind\":\"stub\"}").unwrap())),
+        ))
+        .expect("a submission that lands answers Ok");
+        submitted += 1;
+    }
+    assert!(r.pressure().over_mark, "the mark was crossed");
+
+    // The one that matters: past the mark, still Ok, and in the structure.
+    let before = r.structure().len();
+    r.submit(event(
+        Kind::Fault,
+        None,
+        Some(Payload::Fault(raw_payload("{\"kind\":\"stub\"}").unwrap())),
+    ))
+    .expect("a submission past the mark answers Ok because its event landed");
+    assert_eq!(
+        r.structure().len(),
+        before + 1,
+        "and the event it answered for is in the structure"
+    );
+    assert!(
+        r.pressure().queued > HIGH_WATER_MARK,
+        "the depth is readable and says what it holds"
+    );
+
+    drop(reader);
+    let _ = r.drain();
 }

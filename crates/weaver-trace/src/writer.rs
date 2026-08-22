@@ -312,11 +312,36 @@ impl Recorder {
             self.tee = None;
         }
         self.writer.enqueue(sequence, line);
-        let queued = self.writer.queued();
-        if queued > HIGH_WATER_MARK {
-            return Err(Failure::CommitPressure { queued });
-        }
+        // **The event has landed and the answer says so**, per
+        // `weaver-trace-Spec` section 9 as of 2026-08-22. Pressure was
+        // returned here as a `Failure` after this point, so a caller reading
+        // that `Err` was told its event had not been recorded when it had,
+        // and every caller that discarded the result treated a recorded
+        // event as a lost one. What the queue holds is read from
+        // `pressure` rather than carried back in place of a sequence.
         Ok(sequence)
+    }
+
+    /// The writer's queue depth against the mark at which pressure is
+    /// reported, per `weaver-trace-Spec` section 9.
+    ///
+    /// **A property of this recorder rather than of any submission**, so a
+    /// caller with no interest in pressure is correct without saying so and
+    /// one that wants to throttle asks. That is what keeps the mistake this
+    /// replaces unavailable rather than corrected: a return that carried
+    /// pressure in place of a sequence could be misread at the next port
+    /// anyone adds, and a reading nobody takes changes nothing.
+    ///
+    /// **This crate reports and never authors.** What the harness does with
+    /// the depth is its own, per charter section 2's sole-writer rule, and a
+    /// recorder that emitted its own pressure event would have ended that
+    /// rule in the act of reporting on it.
+    pub fn pressure(&self) -> Pressure {
+        let queued = self.writer.queued();
+        Pressure {
+            queued,
+            over_mark: queued > HIGH_WATER_MARK,
+        }
     }
 
     pub fn structure(&self) -> &WorkingStructure {
@@ -425,6 +450,18 @@ fn turn_required(kind: Kind) -> bool {
         // belongs to the turn that generated it.
         | Kind::ModelField => true,
     }
+}
+
+/// What the writer's queue holds, and whether it has passed the mark.
+///
+/// **Carrying the mark's verdict beside the depth is what keeps the
+/// comparison in one place.** A caller deciding for itself whether 769 is
+/// pressure would be holding a second copy of a constant this crate owns,
+/// and the two would drift the first time the mark moved.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Pressure {
+    pub queued: usize,
+    pub over_mark: bool,
 }
 
 /// The total kind-to-payload mapping, twenty-one kinds and fifteen
