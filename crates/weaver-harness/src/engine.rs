@@ -307,10 +307,16 @@ impl<'a> Ports<'a> {
     /// seam returned, each party writing what it is the authority on, and
     /// the answer echoes no span for exactly that reason.
     ///
-    /// Answers the pair, or `None` where the seam refused or broke. A
-    /// refused span authors no event: nothing was elided, and an event
-    /// saying otherwise would be a record of a state change that did not
-    /// happen.
+    /// Answers the pair, or `None` where the seam refused or broke.
+    ///
+    /// **A refused span authors no `elision` and does author a `refusal`**,
+    /// per the clerking act of 2026-08-22. Nothing was elided, so an
+    /// `elision` event would be a record of a state change that did not
+    /// happen. What did happen is that a span was turned away, which the
+    /// `refusal` event carries with the span the loop named, no other kind
+    /// holding a span that was refused. **This sentence read "authors no
+    /// event" until that act**, which was true of the record it was written
+    /// against.
     ///
     /// conforms: harness-elision-authors-from-the-ask
     pub fn elide(&mut self, from: u64, to: u64) -> Option<(u64, u64)> {
