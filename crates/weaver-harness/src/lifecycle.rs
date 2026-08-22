@@ -1991,10 +1991,14 @@ mod tests {
             event["payload"]["asked"]["ask"], "enter",
             "the ask is named"
         );
-        assert!(
-            event["payload"]["refusal"].is_string()
-                || event["payload"]["refusal"].is_object(),
-            "and the seam's own case travels: {event}"
+        // **Compared against the refusal itself, not against its shape.** A
+        // type check passes for any case the seam could have sent, so it
+        // would have held while the record carried the wrong refusal, which
+        // is the failure this whole class was written to end.
+        assert_eq!(
+            event["payload"]["refusal"],
+            serde_json::to_value(&refusal).expect("the refusal renders"),
+            "the seam's own case travels whole: {event}"
         );
         assert!(
             event.get("turn").is_none(),
