@@ -312,6 +312,17 @@ pub struct Resident {
     /// admit and read at session open: an elected residency taps, an
     /// unelected one runs the plain forward, and nothing later re-decides.
     pub readout: ReadoutElection,
+    /// The surprisal election this residency was admitted under, per
+    /// charter section 13.12.
+    ///
+    /// **It is judged against nothing and so takes no election type.** The
+    /// readout is judged against what the family's engine can tap and the
+    /// field's depth against the sampling cutoff, so each of those carries
+    /// a type that records a judgment. This one sizes nothing and asks the
+    /// engine for nothing the generation was not already computing, so it
+    /// is carried and obeyed rather than tested, and a bare boolean is the
+    /// whole of what there is to hold.
+    pub surprisal_elected: bool,
     /// The model itself. Private: what the rest of the crate may do with a
     /// residency is a question for the decode acts, and nothing reaches the
     /// engine around the seam.
@@ -357,6 +368,7 @@ impl Resident {
                     Box::new(engine),
                     capacity as usize,
                     self.flush_mechanism()?,
+                    self.surprisal_elected,
                 ))
             }
             #[cfg(feature = "cuda")]
@@ -371,6 +383,7 @@ impl Resident {
                     Box::new(engine),
                     capacity as usize,
                     self.flush_mechanism()?,
+                    self.surprisal_elected,
                 ))
             }
             // On a build carrying no backend `LoadedModel` has no cases, so
@@ -557,6 +570,7 @@ impl Residency {
         binding: &ModelBinding,
         headroom: Headroom,
         readout: ReadoutElection,
+        surprisal_elected: bool,
     ) -> Result<&Resident, AdmitRefusal> {
         if self.admit_attempted {
             return Err(AdmitRefusal::AlreadyAttempted);
@@ -657,6 +671,7 @@ impl Residency {
             devices: binding.devices.clone(),
             weights_hash,
             readout,
+            surprisal_elected,
             model,
         });
         Ok(self.resident.as_ref().expect("set immediately above"))
@@ -879,7 +894,7 @@ mod tests {
             devices: vec![DeviceOrdinal(0)],
         };
         let first = residency
-            .admit(&binding, Headroom(0), ReadoutElection(false))
+            .admit(&binding, Headroom(0), ReadoutElection(false), false)
             .err();
         assert_eq!(
             first,
@@ -887,7 +902,7 @@ mod tests {
             "the fixture refuses at step one"
         );
         let second = residency
-            .admit(&binding, Headroom(0), ReadoutElection(false))
+            .admit(&binding, Headroom(0), ReadoutElection(false), false)
             .err();
         assert_eq!(
             second,
@@ -958,7 +973,7 @@ mod tests {
         };
         assert_eq!(
             residency
-                .admit(&binding, Headroom(0), ReadoutElection(false))
+                .admit(&binding, Headroom(0), ReadoutElection(false), false)
                 .err(),
             Some(AdmitRefusal::DuplicateDevice { ordinal: 0 }),
             "the refusal is the set's shape, before any driver condition"

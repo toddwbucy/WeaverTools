@@ -84,6 +84,7 @@ fn instruction() -> SpuInstruction {
             model_binding: binding(),
             residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
             identity: vec![],
             tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),

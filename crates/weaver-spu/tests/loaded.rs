@@ -117,7 +117,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         devices: vec![DeviceOrdinal(0)],
     };
 
-    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
+    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false);
     let resident = match admitted {
         Ok(resident) => resident,
         Err(refusal) => panic!("the admit succeeds against a real artifact, got {refusal:?}"),
@@ -139,7 +139,7 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
 
     // Nothing is idempotent: a second admit refuses on the ordering with an
     // identical binding, while the first residency stands.
-    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false));
+    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false);
     assert!(
         matches!(
             second,
@@ -223,6 +223,7 @@ mod seam_success {
                         },
                         residual_readout_election: true,
                     field_election: None,
+                    surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -309,7 +310,8 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
-                    field_election: None,
+                        field_election: None,
+                        surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -416,7 +418,8 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
-                    field_election: None,
+                        field_election: None,
+                        surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
@@ -485,6 +488,154 @@ mod seam_success {
         let _ = std::fs::remove_file(&log_path);
     }
 
+    /// **An elected surprisal reaches the wire, and the perplexity stands
+    /// beside it rather than instead of it.** The declined posture is
+    /// pinned by the seam test below, which is this suite's ordinary
+    /// fixture, so what this adds is the other state: the election has to
+    /// be watched in both, a flag that is always false passing a test that
+    /// never sets it true.
+    ///
+    /// The election is fixed at admit for the residency's life, per
+    /// `weaver-spu-PRD` section 13.12, so a second admit is what it takes
+    /// to see the other arm rather than a second directive.
+    #[test]
+    fn an_elected_surprisal_reaches_the_wire() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP an_elected_surprisal: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP an_elected_surprisal: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-surprisal-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+
+        // The declaration elects the surprisal, which is the one thing
+        // that differs from the seam test below: the ceiling, the model,
+        // and the directives are that test's, so a difference in the
+        // measurement is the election's doing.
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: SpuInstruction {
+                    classify: None,
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                        field_election: None,
+                        surprisal_election: true,
+                        identity: vec![],
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 9.0),
+                            ("context-capacity".to_string(), 4096.0),
+                            ("seed".to_string(), 11.0),
+                        ]
+                            .into_iter()
+                            .collect(),
+                    },
+                },
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+
+        let message = |text: &str| Message {
+            role: Role::User,
+            content: vec![ContentBlock::Text { text: text.into() }],
+        };
+        let send = |directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+        let recv = || -> TokenAnswer {
+            let frame = decode.recv_octets().expect("an answer arrives");
+            serde_json::from_slice(&frame).expect("the answer parses")
+        };
+
+        send(&TokenDirective::Open {
+            session: SessionId("s-surprisal".into()),
+            messages: vec![message("You count plainly.")],
+        });
+        assert_eq!(recv(), TokenAnswer::Opened, "the session opens");
+
+        send(&TokenDirective::AppendAndGenerate {
+            turn: TurnKey("t-1".into()),
+            delta: vec![message(
+                "Count upward from one, comma separated, without stopping.",
+            )],
+        });
+        let mut streamed = 0usize;
+        let generation = loop {
+            match recv() {
+                TokenAnswer::Token { .. } => streamed += 1,
+                TokenAnswer::Generated(generation) => break generation,
+                other => panic!("tokens then the close, got {other:?}"),
+            }
+        };
+        assert!(streamed > 0, "the model answered across the seam");
+        let measurement: serde_json::Value =
+            serde_json::from_str(generation.measurement.get()).expect("measurement is JSON");
+        // **The elected posture on the wire**, the other half of what
+        // `an_opened_session_generates_across_the_decode_seam` pins for the
+        // declined one. Both members stand, and they are paired with the
+        // tokens position for position, which is the property that makes a
+        // per-position reading readable at all.
+        let tokens = measurement["output_tokens"]
+            .as_array()
+            .expect("output tokens")
+            .len();
+        let surprisals = measurement["surprisals"]
+            .as_array()
+            .expect("the elected vector is on the wire")
+            .len();
+        assert_eq!(
+            surprisals, tokens,
+            "the vector is paired with the tokens: {measurement}"
+        );
+        assert_eq!(
+            measurement["entropies"].as_array().map(Vec::len),
+            Some(tokens),
+            "and so is the entropy, which carries no election"
+        );
+        assert!(
+            measurement["perplexity"].is_number(),
+            "the perplexity stands beside the vector rather than instead \
+             of it: {measurement}"
+        );
+
+        drop(decode);
+        drop(lifecycle);
+        let _ = child.wait();
+        let _ = std::fs::remove_file(&log_path);
+    }
+
     #[test]
     fn an_opened_session_generates_across_the_decode_seam() {
         use weaver_traits::{ContentBlock, Message, Role};
@@ -533,7 +684,8 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: false,
-                    field_election: None,
+                        field_election: None,
+                        surprisal_election: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -644,6 +796,35 @@ mod seam_success {
         assert!(
             measurement["timings"]["decode_ns"].is_string(),
             "the timings ride the decimal-string rule"
+        );
+
+        // **The unelected posture on the wire**, per `weaver-spu-PRD`
+        // section 13.12: this fixture declares no surprisal election, so
+        // the vector is absent and the perplexity stands in its place. The
+        // entropies carry no election and are here either way.
+        //
+        // **The absence is checked as an absent member rather than a null.**
+        // A member present and carrying nothing is the empty vector's
+        // defect wearing another shape, and it is what an unguarded
+        // serialization would produce.
+        assert!(
+            measurement.get("surprisals").is_none(),
+            "no election, no vector, and no member for it: {measurement}"
+        );
+        assert!(
+            measurement["perplexity"].is_number(),
+            "the perplexity stands in the vector's place: {measurement}"
+        );
+        assert!(
+            measurement["entropies"]
+                .as_array()
+                .is_some_and(|bits| !bits.is_empty()),
+            "and the entropy carries no election at all"
+        );
+        assert_eq!(
+            measurement["entropies"].as_array().map(Vec::len),
+            measurement["output_tokens"].as_array().map(Vec::len),
+            "the entropy is paired with the tokens position for position"
         );
 
         send(&TokenDirective::Flush { keep: 0 });

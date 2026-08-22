@@ -65,6 +65,7 @@ fn elections() -> Payload {
     Payload::Elections(weaver_trace::Elections {
         residual_readout: false,
         field: None,
+        surprisal: false,
     })
 }
 
@@ -714,4 +715,52 @@ fn the_system_kind_is_turn_optional_and_its_siblings_are_not() {
     let mut out = String::new();
     File::open(&path).unwrap().read_to_string(&mut out).unwrap();
     assert!(out.contains("\"message.system\""), "the dotted spelling");
+}
+
+/// **The surprisal's election is written even when declined.** Charter
+/// section 3.2 names each election individually so a record's posture is
+/// recoverable from the record, and this one is the first that can be
+/// absent while the reading it governs is present: every record written
+/// before 2026-08-21 carries the surprisal vector and no flag beside it.
+/// Absent, false, and true are therefore three states, and only an
+/// explicit `false` separates a declined election from a record older than
+/// the election.
+///
+/// Perturbation: give `surprisal` a `skip_serializing_if` that drops the
+/// false, and the declined case becomes indistinguishable from the old
+/// record. Watched under exactly that.
+#[test]
+fn a_declined_surprisal_election_is_written_down() {
+    let (mut r, path) = recorder();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
+    r.submit(event(
+        Kind::Load,
+        None,
+        Some(Payload::Elections(weaver_trace::Elections {
+            residual_readout: false,
+            field: None,
+            surprisal: true,
+        })),
+    ))
+    .unwrap();
+    r.drain().unwrap();
+
+    let mut out = String::new();
+    File::open(&path).unwrap().read_to_string(&mut out).unwrap();
+    let lines: Vec<&str> = out.lines().collect();
+    assert!(
+        lines[0].contains("\"surprisal\":false"),
+        "the declined election is on the wire: {}",
+        lines[0]
+    );
+    assert!(
+        lines[1].contains("\"surprisal\":true"),
+        "and so is the standing one: {}",
+        lines[1]
+    );
+    assert!(
+        !lines[0].contains("\"field\""),
+        "while the field's absence stays an absence, the two elections \
+         shaped differently on purpose"
+    );
 }

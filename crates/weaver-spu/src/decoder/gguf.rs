@@ -593,6 +593,7 @@ mod tests {
             Box::new(engine(&model)),
             512,
             crate::decoder::backend::FlushMechanism::TruncateToPosition,
+            false,
         );
 
         // A short identity prefix, then a turn's delta.

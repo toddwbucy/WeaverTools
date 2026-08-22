@@ -158,6 +158,21 @@ pub struct DecoderInstruction {
     /// something else without any event saying so.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub field_election: Option<FieldElection>,
+    /// The per-position surprisal's election, per `weaver-types-Spec`
+    /// section 2 and `weaver-spu-PRD` section 13.12. A bare boolean beside
+    /// the field's option because a per-position reading has no size to
+    /// declare: the vector exists at every position or at none.
+    ///
+    /// **This election runs the other way from the two above it.** They
+    /// elect an observation into existence, so unelected there is nothing.
+    /// This one elects a reading out: the vector was unconditional until
+    /// 2026-08-21 and the default posture is now the smaller record, with
+    /// the generation's perplexity standing in its place. `default` is
+    /// therefore `false` and means the vector is not produced, which is
+    /// also what a declaration written before the election existed says by
+    /// omitting the field.
+    #[serde(default)]
+    pub surprisal_election: bool,
     /// The session's identity material: the canonical messages the identity
     /// prefix is rendered from, configuration rather than history, per
     /// `weaver-types-Spec` section 2. Required like every field, and an

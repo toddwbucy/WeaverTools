@@ -147,6 +147,16 @@ pub struct Session<'a> {
     /// would decode against a closed engine.
     poisoned: bool,
     flush_mechanism: FlushMechanism,
+    /// Whether the per-position surprisal is produced, per charter section
+    /// 13.12.
+    ///
+    /// **It sits on the session rather than on the generation because it is
+    /// fixed for the load.** The field's election is per call, the depth
+    /// being a thing a caller could vary, and this one cannot vary: the
+    /// operator elected it once at admit and every generation of the
+    /// residency answers to that. A parameter on the generation would
+    /// invite a caller to disagree with the load it is serving.
+    surprisal_elected: bool,
 }
 
 impl<'a> Session<'a> {
@@ -154,6 +164,7 @@ impl<'a> Session<'a> {
         backend: Box<dyn Backend + 'a>,
         capacity: usize,
         flush_mechanism: FlushMechanism,
+        surprisal_elected: bool,
     ) -> Session<'a> {
         Session {
             backend,
@@ -163,6 +174,7 @@ impl<'a> Session<'a> {
             opened: false,
             poisoned: false,
             flush_mechanism,
+            surprisal_elected,
         }
     }
 
@@ -296,7 +308,7 @@ impl<'a> Session<'a> {
         let decode_started = std::time::Instant::now();
 
         let mut produced = Vec::new();
-        let mut signals = measurement::Accumulator::new();
+        let mut signals = measurement::Accumulator::new(self.surprisal_elected);
         let stopped = loop {
             // **The cancel is checked between sampled tokens**, which bounds
             // the stop by one token's decode rather than by a kernel's
@@ -605,6 +617,7 @@ mod tests {
             Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
             64,
             FlushMechanism::TruncateToPosition,
+            false,
         );
         session.open(&[TokenId(7)]).expect("the prefix lands");
         let generated = session
@@ -654,6 +667,7 @@ mod tests {
             Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
             64,
             FlushMechanism::TruncateToPosition,
+            false,
         );
         session.open(&[TokenId(7)]).expect("the prefix lands");
         let generated = session
@@ -732,6 +746,7 @@ mod tests {
             Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
             capacity,
             mechanism,
+            false,
         );
         session.open(&[TokenId(1), TokenId(2)]).expect("open");
         (session, log)

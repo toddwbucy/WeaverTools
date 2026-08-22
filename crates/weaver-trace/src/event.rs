@@ -337,6 +337,16 @@ pub struct Elections {
     /// it did not.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub field: Option<u32>,
+    /// Whether the per-position surprisal was elected, per
+    /// `weaver-spu-PRD` section 13.12.
+    ///
+    /// **Serialized even when false**, which is the opposite election from
+    /// the field's option above. The field's absence is the whole of what
+    /// an unelected field has to say. This one distinguishes a record
+    /// whose operator declined the vector from a record written before the
+    /// election existed, where the member is absent altogether: absent,
+    /// false, and true are three states and the shape keeps them three.
+    pub surprisal: bool,
 }
 
 /// How the generation ended, per the charter: completed or stopped.

@@ -375,6 +375,18 @@ fn render_measurement(
         measurement["surprisals"] =
             serde_json::json!(bits.iter().map(|b| f64::from(*b)).collect::<Vec<f64>>());
     }
+    // **The perplexity carries no election and is absent on the one ground
+    // the entropies are absent on**, per Spec section 6 and charter section
+    // 13.12: a mean needs terms, and a backend serving no distribution
+    // supplies none, so a generation that measured nothing renders no
+    // perplexity and no entropies together. It is not a member that always
+    // stands, which would oblige this crate to render a mean of nothing.
+    // The perplexity is finite where it is present, guaranteed by the
+    // accumulator that produced it, so this renders a number or no member
+    // and never the `null` `serde_json` gives a non-finite float.
+    if let Some(perplexity) = generated.signals.perplexity {
+        measurement["perplexity"] = serde_json::json!(perplexity);
+    }
     // The residual reductions where the residency was admitted with readout
     // elected, per Spec sections 6 and 7: one norm per layer per forward
     // this generation ran, and absent rather than empty like every reading.
@@ -1071,6 +1083,7 @@ fn dispatch(
                 &decoder.model_binding,
                 Headroom(headroom),
                 ReadoutElection(decoder.residual_readout_election),
+                decoder.surprisal_election,
             ) {
                 Ok(_) => {
                     *position = SeamPosition::Admitted;
@@ -1136,6 +1149,7 @@ mod tests {
         AgentName, ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction,
     };
 
+
     /// **Every argument is read before the answer is given.**
     ///
     /// Perturbation: return on the first `--headroom-bytes` rather than
@@ -1191,8 +1205,9 @@ mod tests {
             classify: None,
             decoder: DecoderInstruction {
                 model_binding: binding(),
-                residual_readout_election: false,
+                    residual_readout_election: false,
                     field_election: None,
+                    surprisal_election: false,
                 identity: vec![],
                 tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),

@@ -116,8 +116,20 @@ impl<T> NonEmpty<T> {
 pub struct Signals {
     /// Entropy of the distribution at each step, in bits.
     pub entropy_bits: Option<NonEmpty<f32>>,
-    /// Surprisal of the token drawn at each step, in bits.
+    /// Surprisal of the token drawn at each step, in bits, where its
+    /// election stands, per charter section 13.12.
     pub surprisal_bits: Option<NonEmpty<f32>>,
+    /// Two to the power of the mean surprisal, one number for the whole
+    /// generation, per charter section 13.12.
+    ///
+    /// **It carries no election and is absent on the one ground the
+    /// entropies are absent on**, which is that nothing was measured. A
+    /// mean needs terms and a backend serving no distribution supplies
+    /// none, so a generation that measured nothing renders no perplexity
+    /// and no entropies together. It is not a plain number that always
+    /// stands: that reading would oblige this crate to render a mean of
+    /// nothing.
+    pub perplexity: Option<f64>,
 }
 
 impl Signals {
@@ -126,6 +138,7 @@ impl Signals {
         Signals {
             entropy_bits: None,
             surprisal_bits: None,
+            perplexity: None,
         }
     }
 
@@ -144,7 +157,25 @@ impl Signals {
 #[derive(Debug)]
 pub struct Accumulator {
     entropy: Vec<f32>,
+    /// Kept only where the surprisal's election stands. Unelected this
+    /// stays empty and the mean below is what the generation reports.
     surprisal: Vec<f32>,
+    /// Whether the per-position vector is kept, per charter section 13.12.
+    surprisal_elected: bool,
+    /// The running sum of surprisal in bits and the count of terms, which
+    /// is the whole of what the perplexity needs.
+    ///
+    /// **This is the line that keeps the election honest.** Section 5 of
+    /// `weaver-trace-PRD` has an election govern production rather than
+    /// recording, so an election that computed a vector and declined to
+    /// write it down would be a recording level wearing an election's
+    /// name. A sum and a count are arithmetic in flight: nothing holds the
+    /// terms, nothing could report them, and they do not survive the
+    /// position that made them. The mean is lossy in exactly the way that
+    /// ruling cares about, so the unelected posture is a smaller
+    /// computation rather than a withheld reading.
+    surprisal_sum: f64,
+    steps: usize,
     /// **Cleared the moment a retained token could not be measured.** The
     /// vectors are positionally paired with the tokens the generation answers
     /// with, so a gap is not a shorter vector: it is a vector whose every
@@ -158,20 +189,36 @@ impl Default for Accumulator {
         Accumulator {
             entropy: Vec::new(),
             surprisal: Vec::new(),
+            surprisal_elected: false,
+            surprisal_sum: 0.0,
+            steps: 0,
             complete: true,
         }
     }
 }
 
 impl Accumulator {
-    pub fn new() -> Self {
-        Accumulator::default()
+    /// A generation's accumulator, told at its construction whether the
+    /// per-position surprisal is elected. The election is fixed for the
+    /// generation because it is fixed for the load.
+    pub fn new(surprisal_elected: bool) -> Self {
+        Accumulator {
+            surprisal_elected,
+            ..Accumulator::default()
+        }
     }
 
     /// Record one step, from the distribution the sampler has not yet seen.
     pub fn record(&mut self, entropy_bits: f32, surprisal_bits: f32) {
         self.entropy.push(entropy_bits);
-        self.surprisal.push(surprisal_bits);
+        if self.surprisal_elected {
+            self.surprisal.push(surprisal_bits);
+        }
+        // The sum accumulates whichever way the election fell, in `f64`
+        // because a `f32` sum over a long generation loses the low bits of
+        // every late term to the magnitude of the early ones.
+        self.surprisal_sum += f64::from(surprisal_bits);
+        self.steps += 1;
     }
 
     /// Abandon the measurement: a retained token could not be measured, so the
@@ -194,9 +241,26 @@ impl Accumulator {
         if !self.complete {
             return Signals::absent();
         }
+        // Absent where nothing was measured, on the same ground the vectors
+        // are absent there: a mean of no terms is not a number this crate
+        // has, and rendering one would be the empty vector's defect wearing
+        // a scalar's shape.
+        // **Finite or absent, never a number the wire cannot carry.** A
+        // surprisal is `shifted_lse - (logit - max)`, so a logit far enough
+        // below the maximum overflows that subtraction and the mean reaches
+        // infinity. `serde_json` renders a non-finite float as `null`, which
+        // would put a member on the wire carrying nothing, and that is the
+        // empty vector's defect wearing a scalar's shape. The absence is
+        // produced here rather than filtered at the rendering because
+        // production is where this crate's absences are decided, per Spec
+        // section 6.
+        let perplexity = (self.steps > 0)
+            .then(|| (self.surprisal_sum / self.steps as f64).exp2())
+            .filter(|mean| mean.is_finite());
         Signals {
             entropy_bits: NonEmpty::from_vec(self.entropy),
             surprisal_bits: NonEmpty::from_vec(self.surprisal),
+            perplexity,
         }
     }
 }
@@ -419,6 +483,100 @@ impl PromptPartition {
 
 #[cfg(test)]
 mod tests {
+
+    /// **The election governs the vector and never the mean.** Charter
+    /// section 13.12 has the unelected posture be a smaller computation
+    /// rather than a withheld reading, and the way that stays true is that
+    /// the perplexity is identical either way: the terms are the same
+    /// terms, and only whether they are kept differs.
+    ///
+    /// Perturbation: make `record` push the surprisal whatever the
+    /// election, and the unelected run reports a vector. Watched under
+    /// exactly that removal.
+    #[test]
+    fn the_election_keeps_the_vector_and_never_moves_the_mean() {
+        let steps = [(1.0_f32, 2.0_f32), (3.0, 4.0), (5.0, 6.0)];
+
+        let mut elected = Accumulator::new(true);
+        let mut plain = Accumulator::new(false);
+        for (entropy, surprisal) in steps {
+            elected.record(entropy, surprisal);
+            plain.record(entropy, surprisal);
+        }
+        let elected = elected.finish();
+        let plain = plain.finish();
+
+        assert!(
+            elected.surprisal_bits.is_some(),
+            "the elected run keeps the vector"
+        );
+        assert!(
+            plain.surprisal_bits.is_none(),
+            "and the unelected run keeps none, absent rather than empty"
+        );
+        assert_eq!(
+            elected.entropy_bits, plain.entropy_bits,
+            "the entropy carries no election and does not move"
+        );
+        assert_eq!(
+            elected.perplexity, plain.perplexity,
+            "and the mean is the same mean, the election having governed \
+             what was kept rather than what was computed"
+        );
+        // 2 ** ((2 + 4 + 6) / 3) is 2 ** 4.
+        assert_eq!(plain.perplexity, Some(16.0));
+    }
+
+    /// **A mean the wire cannot carry is absent rather than rendered.**
+    /// `serde_json` gives a non-finite float as `null`, so a member present
+    /// and carrying nothing is what an unguarded overflow would put on the
+    /// wire. An infinite surprisal is reachable by arithmetic rather than by
+    /// any path this crate can be talked into, which is why it is asserted
+    /// here rather than left to a reading of the code.
+    ///
+    /// Perturbation: drop the `is_finite` filter in `finish` and the
+    /// infinite case answers `Some(inf)`. Watched under exactly that.
+    #[test]
+    fn an_unrepresentable_mean_is_absent() {
+        let mut overflowed = Accumulator::new(false);
+        overflowed.record(1.0, f32::INFINITY);
+        overflowed.record(1.0, 2.0);
+        assert!(
+            overflowed.finish().perplexity.is_none(),
+            "an infinite mean is not a number this crate hands the record"
+        );
+
+        let mut ordinary = Accumulator::new(false);
+        ordinary.record(1.0, 2.0);
+        let perplexity = ordinary.finish().perplexity.expect("a finite mean stands");
+        assert!(perplexity.is_finite());
+        assert_eq!(perplexity, 4.0);
+    }
+
+    /// **A generation that measured nothing renders no perplexity**, per
+    /// charter section 13.12: a mean needs terms, and a backend serving no
+    /// distribution supplies none. The scalar is absent on the one ground
+    /// the vectors are absent on rather than on a ground of its own.
+    #[test]
+    fn nothing_measured_reports_no_perplexity() {
+        let nothing = Accumulator::new(true).finish();
+        assert!(nothing.entropy_bits.is_none());
+        assert!(nothing.surprisal_bits.is_none());
+        assert!(
+            nothing.perplexity.is_none(),
+            "a mean of no terms is not a number this crate has"
+        );
+
+        let mut abandoned = Accumulator::new(true);
+        abandoned.record(1.0, 2.0);
+        abandoned.abandon();
+        assert!(
+            abandoned.finish().perplexity.is_none(),
+            "and a broken pairing takes the mean with it, the vector it \
+             summarizes being the one the record will not carry"
+        );
+    }
+
     use super::*;
 
     /// **The stable form survives logits a naive exponential cannot.**
@@ -509,12 +667,12 @@ mod tests {
     /// exactly that change.
     #[test]
     fn a_generation_that_measured_nothing_is_absent_rather_than_empty() {
-        let signals = Accumulator::new().finish();
+        let signals = Accumulator::new(true).finish();
         assert_eq!(signals.entropy_bits, None);
         assert_eq!(signals.surprisal_bits, None);
         assert_eq!(signals.steps(), 0);
 
-        let mut one = Accumulator::new();
+        let mut one = Accumulator::new(true);
         one.record(1.0, 2.0);
         let measured = one.finish();
         assert_eq!(measured.steps(), 1, "and one step is present, not absent");
