@@ -381,7 +381,7 @@ fn admit(event: &Event, session: &SessionRef, run: &RunRef) -> Result<(), Failur
 fn turn_forbidden(kind: Kind) -> bool {
     matches!(
         kind,
-        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Flush
+        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Flush | Kind::Elision
     )
 }
 
@@ -394,6 +394,9 @@ fn turn_required(kind: Kind) -> bool {
         | Kind::SessionClosed
         | Kind::Fault
         | Kind::Flush
+        // The elision is asked between turns on the flush's ground, so it
+        // belongs to no turn for the flush's reason.
+        | Kind::Elision
         | Kind::ClassifyRequest
         | Kind::ClassifyOutput
         // **`message.system` serves two cases and so is turn-optional**, per
@@ -419,7 +422,7 @@ fn turn_required(kind: Kind) -> bool {
     }
 }
 
-/// The total kind-to-payload mapping, nineteen kinds and thirteen
+/// The total kind-to-payload mapping, twenty kinds and fourteen
 /// dispositions, matching charter section 3.1 whole, enforced here because
 /// the untagged payload leaves serde unable to. **`load` stopped being
 /// payload-free 2026-08-21**: it carries the diagnostic elections of its
@@ -438,6 +441,7 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
         ) | (Kind::TurnClosed, Some(Payload::TurnClosed(_)))
             | (Kind::Fault, Some(Payload::Fault(_)))
             | (Kind::Flush, Some(Payload::Flush(_)))
+            | (Kind::Elision, Some(Payload::Elision(_)))
             | (Kind::ModelRequest, Some(Payload::ModelRequest(_)))
             | (Kind::ModelOutput, Some(Payload::ModelOutput(_)))
             | (Kind::ModelMeasurement, Some(Payload::ModelMeasurement(_)))

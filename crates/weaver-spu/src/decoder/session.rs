@@ -180,6 +180,14 @@ impl<'a> Session<'a> {
 
     /// What is resident now. The session's own account of itself, which the
     /// overflow refusal hands back to the harness.
+    /// The resident sequence itself, for tests and for the elision's own
+    /// assertion: the counts cannot show that surviving positions kept
+    /// their order, and order is what the decode contract guarantees.
+    #[cfg(test)]
+    pub fn resident_tokens(&self) -> &[TokenId] {
+        &self.resident
+    }
+
     pub fn resident_len(&self) -> usize {
         self.resident.len()
     }
@@ -464,6 +472,60 @@ impl<'a> Session<'a> {
         // position.
         self.resident.truncate(kept);
         Ok(())
+    }
+
+    /// Make a half-open span of the resident sequence absent, per charter
+    /// section 13.13. Answers the resident counts either side.
+    ///
+    /// **The span is state and never the record.** These positions index
+    /// the sequence this type holds resident, and nothing in this program
+    /// removes anything from a trace.
+    ///
+    /// **The bounds refuse rather than clamp**, which is the flush's rule
+    /// reversed and deliberately: an over-large `keep` describes less
+    /// context than exists and the arithmetic satisfies it without
+    /// misreporting, while a span overlapping the identity prefix, running
+    /// past the resident count, ending before it starts, or empty
+    /// describes no removable region and has no smaller true version.
+    ///
+    /// conforms: spu-elision-refuses-an-unremovable-span
+    pub fn elide(&mut self, from: usize, to: usize) -> Result<(usize, usize), DecodeFault> {
+        if !self.opened {
+            return Err(DecodeFault::NotOpen);
+        }
+        if from < self.prefix_len || to > self.resident.len() || to <= from {
+            return Err(DecodeFault::UnremovableSpan {
+                from: from as u64,
+                to: to as u64,
+                prefix: self.prefix_len as u64,
+                resident: self.resident.len() as u64,
+            });
+        }
+        let before = self.resident.len();
+        // The sequence the session will hold: what preceded the span
+        // followed by what followed it, every surviving position keeping
+        // its order, per the decode contract's no-resequencing guarantee.
+        let mut kept: Vec<TokenId> = Vec::with_capacity(before - (to - from));
+        kept.extend_from_slice(&self.resident[..from]);
+        kept.extend_from_slice(&self.resident[to..]);
+        // **An interior removal has no truncation mechanism.** The flush
+        // can roll a backend back to a position because its outcome is a
+        // prefix of what stood. This outcome is not a prefix of anything
+        // the backend holds, so the sequence is re-established whatever the
+        // family's flush mechanism is, per charter 13.13's rule that the
+        // outcome is specified and the mechanism the Spec's.
+        let outcome = self
+            .backend
+            .reestablish()
+            .and_then(|()| self.backend.decode_at(&kept, 0));
+        // A failure partway leaves the backend and this account
+        // disagreeing, exactly as a failed flush does, so the session
+        // closes rather than carrying the disagreement.
+        if let Err(fault) = outcome {
+            return Err(self.poison(fault));
+        }
+        self.resident = kept;
+        Ok((before, self.resident.len()))
     }
 
     pub fn close(&mut self) {
@@ -1138,6 +1200,127 @@ mod tests {
     ///
     /// Perturbation: reseed once at open rather than per generation and
     /// the second call never arrives, so the count fails.
+    /// **A span describing no removable region refuses, and the session
+    /// stands.** Charter 13.13 gives four such spans and the refusal is the
+    /// contract's typed case rather than a fault: the ask was answerable
+    /// and wrong. **The empty span is the one worth asserting hardest**,
+    /// because eliding nothing succeeds trivially and would report a state
+    /// change that did not happen.
+    ///
+    /// Perturbation: drop `to <= from` from the guard and the empty span
+    /// answers `Ok` with equal counts, an elision authored over nothing.
+    /// Watched under exactly that removal.
+    ///
+    /// conforms: spu-elision-refuses-an-unremovable-span
+    #[test]
+    fn an_unremovable_span_refuses_and_the_session_stands() {
+        let (mut session, _log) = with_mechanism(
+            vec![TokenId(5), TokenId(6), TokenId(0)],
+            64,
+            FlushMechanism::TruncateToPosition,
+        );
+        session
+            .append_and_generate(
+                &[TokenId(3)],
+                &StopCondition {
+                    stop_tokens: vec![TokenId(9)],
+                    terminator: TokenId(0),
+                    max_tokens: 8,
+                },
+                &mut NeverCancels,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                11,
+                64,
+            )
+            .expect("a generation stands so there is an interior");
+
+        let resident = session.resident_len();
+        let prefix = 2;
+        for (from, to, why) in [
+            (0, resident, "a span over the identity prefix"),
+            (prefix, resident + 1, "a span past the resident count"),
+            (resident, prefix, "a span ending before it starts"),
+            (prefix, prefix, "an empty span"),
+        ] {
+            let refused = session.elide(from, to);
+            assert!(
+                matches!(refused, Err(DecodeFault::UnremovableSpan { .. })),
+                "{why} refuses, got {refused:?}"
+            );
+            assert_eq!(
+                session.resident_len(),
+                resident,
+                "and {why} leaves the session as it found it"
+            );
+        }
+    }
+
+    /// **The elision removes exactly its span and resequences nothing**,
+    /// which is the decode contract's guarantee: what remains is the
+    /// sequence it was, shorter, with every surviving position in the order
+    /// it held.
+    ///
+    /// Perturbation: build the kept vector from `[to..]` alone, or reverse
+    /// the tail, and the counts still agree while the membership or the
+    /// order does not. The counts cannot catch either, which is why this
+    /// asserts the tokens themselves.
+    #[test]
+    fn the_elision_removes_its_span_and_keeps_the_rest_in_order() {
+        let (mut session, _log) = with_mechanism(
+            vec![
+                TokenId(5),
+                TokenId(0),
+                TokenId(6),
+                TokenId(0),
+                TokenId(7),
+                TokenId(0),
+            ],
+            64,
+            FlushMechanism::ReestablishAndReprefill,
+        );
+        for token in [TokenId(3), TokenId(4), TokenId(8)] {
+            session
+                .append_and_generate(
+                    &[token],
+                    &StopCondition {
+                        stop_tokens: vec![TokenId(9)],
+                        terminator: TokenId(0),
+                        max_tokens: 8,
+                    },
+                    &mut NeverCancels,
+                    &mut |_| {},
+                    None,
+                    &mut |_, _, _| {},
+                    11,
+                    64,
+                )
+                .expect("the generation runs");
+        }
+
+        let before_tokens = session.resident_tokens().to_vec();
+        let resident = before_tokens.len();
+        // An interior span: past the prefix and short of the end, so what
+        // survives is a head and a tail rather than a prefix.
+        let (from, to) = (3, 5);
+        assert!(to < resident, "the fixture leaves a tail to preserve");
+        let expected: Vec<TokenId> = before_tokens[..from]
+            .iter()
+            .chain(before_tokens[to..].iter())
+            .copied()
+            .collect();
+
+        let (was, now) = session.elide(from, to).expect("the span is removable");
+        assert_eq!(was, resident, "the before count is what stood");
+        assert_eq!(now, resident - (to - from), "and exactly the span went");
+        assert_eq!(
+            session.resident_tokens(),
+            expected.as_slice(),
+            "the survivors keep their order and their membership"
+        );
+    }
+
     #[test]
     fn the_sampler_is_rebuilt_per_generation_across_a_flush() {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(8)], 128);

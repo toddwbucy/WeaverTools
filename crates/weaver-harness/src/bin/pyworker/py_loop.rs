@@ -87,6 +87,28 @@ impl Seat {
         Ok(ports.flush(keep))
     }
 
+    /// The elision: a half-open span of resident positions leaves the
+    /// session, `from` inclusive and `to` exclusive, answering the resident
+    /// counts either side or None where the seam refused or the leg is
+    /// down.
+    ///
+    /// **Which span to elide is this loop's election.** The port forwards
+    /// what it is given unjudged, per `weaver-harness-Spec` section 6: the
+    /// mechanic is the program's and what to keep is the operator's,
+    /// written here.
+    ///
+    /// **Valid between turns only**, on the flush's ground: a span named
+    /// against a resident sequence that is still growing names positions
+    /// that will have moved by the time it lands.
+    ///
+    /// **A refusal answers None and elides nothing.** The span is refused
+    /// when it overlaps the identity prefix, runs past the resident count,
+    /// ends before it starts, or is empty.
+    fn elide(&mut self, from: u64, to: u64) -> PyResult<Option<(u64, u64)>> {
+        let ports = self.ports_mut()?;
+        Ok(ports.elide(from, to))
+    }
+
     /// Custody's recall: the conversation's message events in landing
     /// order, bounded to the most recent turns where a bound is given, or
     /// None where the leg is down. Each event is {"kind": str, "turn":

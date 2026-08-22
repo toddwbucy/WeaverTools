@@ -47,6 +47,7 @@
 //!         Kind::ToolCallCompleted => "tool.call.completed",
 //!         Kind::Fault => "fault",
 //!         Kind::Flush => "flush",
+//!         Kind::Elision => "elision",
 //!         Kind::ModelRequest => "model.request",
 //!         Kind::ModelOutput => "model.output",
 //!         Kind::ModelMeasurement => "model.measurement",
@@ -144,7 +145,7 @@ mod writer;
 
 pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
-    Candidate, ClassifyAsk, ClassifyOutcome, Elections, Envelope, Event, Finish, FlushCounts,
+    Candidate, ClassifyAsk, ClassifyOutcome, Elections, Envelope, Event, Finish, ElisionSpan, FlushCounts,
     Kind, Line, ModelField, ModelOutput,
     Payload, RunRef, SessionRef,
     StopReason, Subsystem, TurnClose, TurnRef, raw_payload,
