@@ -5,6 +5,12 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-22, the lifecycle refusal is clerked. An enter refused
+after its bracket stands reaches the record as a `refusal` carrying
+`lifecycle-refusal`, authored by the harness into the run it unwinds, per
+`weaver-trace-PRD` section 3.1's twenty-first kind and the operator's ruling
+of this date. The answer to admin is unchanged. A refusal falling before the
+bracket reaches no record, which is named rather than closed.
 **Revised:** 2026-08-21, the elections become three at this seam. Section 8
 draws `surprisal-election` on `weaver-spu-PRD` section 13.12 and draws
 `field-election`, defined on this date and drawn by neither contract it
@@ -437,6 +443,21 @@ configuration, defined at `weaver-types-PRD` section 2.1, and both cross inside
 `spu-instruction`, the section `weaver-types-Spec` section 2 shapes. The
 section is representation rather than a term of its own, so the draws name the
 definitions and not the grouping.
+
+**A lifecycle refusal is clerked where the run stands, 2026-08-22.** Per the
+operator's ruling that a refusal is clerked in one kind for every seam. An
+enter refused after its bracket has been authored reaches the record as a
+`refusal` naming this seam and carrying `lifecycle-refusal`, authored by the
+harness into the run it is about to unwind, per `weaver-trace-PRD` section
+3.1's twenty-first kind. The refusal still travels to admin in the answer,
+unchanged, and the record gains what the answer alone never left behind.
+
+**An enter refused before its bracket stands reaches no record at all**, and
+this act does not change that. The `load` event opens the run, a refusal
+falling earlier has no run to author into, and no later event can carry it.
+**The refusal reaches the operator's answer and nothing else**, which is a
+hole named here rather than closed, since closing it means authoring into a
+run that does not exist.
 
 **`field-election` and `surprisal-election` are drawn as of 2026-08-21, and
 the first was owed from the act that defined it.** Both cross inside

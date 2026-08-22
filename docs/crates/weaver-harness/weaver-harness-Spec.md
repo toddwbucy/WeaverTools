@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, fifth of this date, the lifecycle refusal is
+clerked. Section 6 gains the clause: an enter refused after its bracket
+stands is authored as a `refusal` into the run this crate unwinds, before
+the unwind, at the aggregate's one arm rather than at each of the thirteen
+paths that raise one. A refusal falling before the bracket reaches no
+record, there being no run to author into.
 **Revised:** 2026-08-22, fourth of this date, the classify refusal changes
 kind. Section 6's classify clause authors `classify.request` and then either
 `classify.output` or `refusal`, per the classify contract's clause of this
@@ -1700,6 +1706,19 @@ model.request ruling rests on. After a flush the assembly's working
 structure still holds the whole conversation and the decode context does
 not, which is exactly the divergence the loop then closes with the recall
 ask and its own composed re-entry.
+
+**A lifecycle refusal reaches the record where the run stands.** An enter
+refused after its bracket has been authored is clerked into the run this
+crate is about to unwind, before the unwind, so the record carries why the
+run ended and not only that it did. **One site clerks all thirteen refusal
+paths**, the aggregate's own arm, rather than each `after_load` naming its
+own: a refusal is one kind of event whatever raised it, and thirteen sites
+authoring separately would be thirteen chances to author differently.
+
+**An enter refused before its bracket stands reaches no record**, the load
+event being what opens the run. This crate authors nothing there because
+there is nothing to author into, and the hole is named at
+`weaver-admin-harness-contract` rather than closed here.
 
 **Every typed refusal this crate receives is authored, 2026-08-22.** Per
 the operator's ruling and the decode contract's clause of the same date. A
