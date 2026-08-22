@@ -474,10 +474,17 @@ impl<'a> Ports<'a> {
     /// the artifact's scored labels back in the head's own order, or `None`
     /// where the leg is down, was never declared, refused typed, or
     /// answered malformed - each converted at the seat into the same
-    /// absence a missing leg serves. Both sides of the exchange are
-    /// authored into the record per the charter's classify pair, the turn
-    /// member absent because the seat lends between turns, which is when a
-    /// loop holds it to ask.
+    /// absence a missing leg serves.
+    ///
+    /// **The exchange is recorded whole and its second half chooses a
+    /// kind**, as of 2026-08-22: the ask authors `classify.request`, a
+    /// scored answer authors `classify.output`, a typed refusal authors
+    /// `refusal`, and a lost leg authors a `fault`, a death not being a
+    /// refusal per the classify contract's section 5. **The seat's `None`
+    /// covers all four absences alike** and the record is where they part,
+    /// which is the division the port was built on rather than a new one.
+    /// The turn member is absent because the seat lends between turns,
+    /// which is when a loop holds it to ask.
     pub fn classify(&mut self, content: &str) -> Option<Vec<(String, f64)>> {
         let channel = self.classify?;
         // The one-strike retirement, the state seam's economics: an arm
@@ -561,8 +568,12 @@ impl<'a> Ports<'a> {
                     return None;
                 }
                 // The bound expired or the channel faulted: the arm retires
-                // one-strike, and the record's output names the loss rather
-                // than leaving the request unanswered.
+                // one-strike, and the record carries the loss as a `fault`
+                // rather than leaving the request unanswered. **A lost leg
+                // is a death and not a refusal**, per the classify
+                // contract's section 5, so it does not reach the record
+                // under `Kind::Refusal`, which carries this seam's typed
+                // cases and nothing else.
                 Err(_) => {
                     channel.retire();
                     self.author_classify_lost();

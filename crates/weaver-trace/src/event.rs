@@ -241,9 +241,14 @@ pub enum Payload {
     /// plain small data the harness authors from typed wire answers, per
     /// charter section 3.1's seventeenth kind.
     ClassifyRequest(ClassifyAsk),
-    /// The label seam's response side: scored or refused, so a typed
-    /// refusal the exchange met is the record's own fact and never a
-    /// fabricated answer, per charter section 3.1's eighteenth kind.
+    /// The label seam's response side: the scored labels alone, per charter
+    /// section 3.1's eighteenth kind.
+    ///
+    /// **A refused classify authors no output at all** and reaches the
+    /// record under `Refusal`, as of 2026-08-22. The guarantee this variant
+    /// carried is unchanged and moved with it: a typed refusal the exchange
+    /// met is the record's own fact and never a fabricated answer. What
+    /// changed is that one kind stopped meaning two things.
     ClassifyOutput(ClassifyScored),
     /// The payloads whose shapes their own workflows settle, since the trace
     /// act of 2026-08-02 the tool bracket's two alone. Raw bytes in the
