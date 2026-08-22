@@ -247,6 +247,61 @@ impl<'a> Ports<'a> {
         Some(counts)
     }
 
+    /// The elision ask, per `weaver-harness-Spec` section 6 and
+    /// `weaver-spu-PRD` section 13.13: the loop names a half-open span of
+    /// resident positions, the span is forwarded unjudged, and the answered
+    /// pair says what the session held either side.
+    ///
+    /// **Which span to elide is the loop's election and this crate holds no
+    /// policy about it.** A call that judged a span would be this crate
+    /// deciding what a context is worth, which is the possession section
+    /// 13.9 places with the loop.
+    ///
+    /// **The record's event is authored from the ask and not the answer.**
+    /// The span comes from what the loop named and the counts from what the
+    /// seam returned, each party writing what it is the authority on, and
+    /// the answer echoes no span for exactly that reason.
+    ///
+    /// Answers the pair, or `None` where the seam refused or broke. A
+    /// refused span authors no event: nothing was elided, and an event
+    /// saying otherwise would be a record of a state change that did not
+    /// happen.
+    ///
+    /// conforms: harness-elision-authors-from-the-ask
+    pub fn elide(&mut self, from: u64, to: u64) -> Option<(u64, u64)> {
+        self.decode
+            .send_directive(&TokenDirective::Elide { from, to })
+            .ok()?;
+        let counts = loop {
+            match self.decode.recv_reply().ok()? {
+                crate::channel::DecodeReply::Answer(TokenAnswer::Elided {
+                    resident_before,
+                    resident_after,
+                }) => break (resident_before, resident_after),
+                crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                _ => return None,
+            }
+        };
+        self.author
+            .author(
+                self.recorder,
+                Kind::Elision,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elision(weaver_trace::ElisionSpan {
+                    from,
+                    to,
+                    resident_before: counts.0,
+                    resident_after: counts.1,
+                })),
+            )
+            .ok()?;
+        if let Some((_, capacity)) = *self.fullness {
+            *self.fullness = Some((counts.1, capacity));
+        }
+        Some(counts)
+    }
+
     /// The recall ask, per `weaver-harness-state-contract` section 2: the
     /// conversation as custody holds it, in landing order, bounded to the
     /// most recent turns where a bound is given. `None` is the dead peer at
@@ -1029,6 +1084,115 @@ mod tests {
     /// **A turn runs, and loop 0 authors the whole bracket.** Loop 1 supplies
     /// the delta and receives the outcome, and the record carries the turn's
     /// user message, the three model events, the assistant's turn, and the
+    /// **The elision's event is authored from the ask and not the answer.**
+    /// The seam echoes no span, per the decode contract, so the only place
+    /// the record can get one is what the loop named. A site reading the
+    /// span off the answer would have nothing to read, and a site
+    /// defaulting it would write a record of a removal that did not happen
+    /// where one did.
+    ///
+    /// The scripted peer answers counts that are deliberately unroundable
+    /// and a span the harness never sent, so a member arrived at by
+    /// accident or by echo fails here.
+    ///
+    /// conforms: harness-elision-authors-from-the-ask
+    #[test]
+    fn the_elision_event_carries_the_span_the_loop_named() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv elide");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the elide parses");
+            assert_eq!(
+                directive,
+                weaver_types::TokenDirective::Elide { from: 41, to: 57 },
+                "the port forwards the span unjudged"
+            );
+            let answer = weaver_types::TokenAnswer::Elided {
+                resident_before: 1237,
+                resident_after: 1221,
+            };
+            let bytes = serde_json::to_vec(&answer).expect("answer renders");
+            send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+        });
+
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                })),
+            )
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let listener = test_listener();
+        let counts = {
+            let mut fullness = Some((1237, 8191));
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+                None,
+                None,
+                None,
+                &mut fullness,
+            );
+            let counts = ports.elide(41, 57).expect("the elision holds");
+            assert_eq!(
+                fullness,
+                Some((1221, 8191)),
+                "the fullness follows the shortened state"
+            );
+            counts
+        };
+        peer.join().expect("the decode peer finishes");
+        assert_eq!(counts, (1237, 1221), "the seam's counts reach the loop");
+
+        let lines: Vec<&weaver_trace::Record> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::Elision)
+            .collect();
+        assert_eq!(lines.len(), 1, "one elision, one event");
+        let event: serde_json::Value =
+            serde_json::from_str(lines[0].line.as_ref()).expect("the line parses");
+        assert_eq!(event["payload"]["from"], 41, "the span comes from the ask");
+        assert_eq!(event["payload"]["to"], 57, "both bounds of it");
+        assert_eq!(
+            event["payload"]["resident_before"], 1237,
+            "and the counts come from the answer"
+        );
+        assert_eq!(event["payload"]["resident_after"], 1221);
+        assert!(
+            event.get("turn").is_none(),
+            "an elision is asked between turns and belongs to none"
+        );
+    }
+
     /// close, in that order. The decode peer is scripted here rather than a
     /// real SPU: it streams two tokens and then the generation whole, which is
     /// what the turn method consumes and authors.

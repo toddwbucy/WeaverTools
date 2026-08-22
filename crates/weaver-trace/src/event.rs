@@ -144,6 +144,8 @@ pub enum Kind {
     ToolCallCompleted,
     #[serde(rename = "fault")]
     Fault,
+    #[serde(rename = "elision")]
+    Elision,
     #[serde(rename = "flush")]
     Flush,
     #[serde(rename = "model.request")]
@@ -214,6 +216,9 @@ pub enum Payload {
     /// sixteenth kind. Both from the SPU's confirmation, the one authority
     /// on either number.
     Flush(FlushCounts),
+    /// The elision's span and the resident counts either side, per
+    /// `weaver-trace-PRD` section 3.1's twentieth kind.
+    Elision(ElisionSpan),
     /// The instrument readings, the SPU-rendered measurement the harness
     /// splices, its unproduced members produced absent by the SPU rather than
     /// omitted by a serde election of this crate's.
@@ -262,6 +267,26 @@ pub enum StopReason {
 /// parse, and how the generation ended.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct FlushCounts {
+    pub resident_before: u64,
+    pub resident_after: u64,
+}
+
+/// What an elision removed and what the session held either side.
+///
+/// **The span is on the event because the counts cannot stand in for it.**
+/// A flush is fully described by what it leaves, its outcome being a
+/// prefix. An elision removes an interior, so two elisions reporting
+/// identical counts can have removed different positions and left
+/// different sequences. An edit that does not say where it fell is not
+/// replayable, and the replay is this crate's own promise.
+///
+/// **The span comes from the harness's ask and the counts from the SPU's
+/// answer**, each party writing what it is the authority on, per the decode
+/// contract.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct ElisionSpan {
+    pub from: u64,
+    pub to: u64,
     pub resident_before: u64,
     pub resident_after: u64,
 }

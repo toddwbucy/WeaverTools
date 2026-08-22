@@ -58,6 +58,21 @@ pub enum DecodeFault {
         requested: usize,
         capacity: usize,
     },
+    /// The elision's span describes no removable region, per charter
+    /// section 13.13: it overlaps the identity prefix, runs past the
+    /// resident count, ends before it starts, or is empty.
+    ///
+    /// **A refusal rather than a fault**, typed on the seam, because the
+    /// ask was answerable and wrong rather than the session being unwell.
+    /// It carries the span it refused and the two bounds it was judged
+    /// against, so the loop reads why rather than guessing which edge it
+    /// crossed.
+    UnremovableSpan {
+        from: u64,
+        to: u64,
+        prefix: u64,
+        resident: u64,
+    },
     /// The device or the engine failed underneath.
     Engine { detail: String },
     /// This build was not compiled to serve this artifact's container.

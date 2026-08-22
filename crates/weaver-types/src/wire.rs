@@ -515,6 +515,19 @@ pub enum TokenDirective {
     /// resident count, zero being the prefix-only state the flush has
     /// always meant.
     Flush { keep: u64 },
+    /// The elision names a half-open span of resident positions, per the
+    /// decode contract as amended 2026-08-22 and `weaver-spu-PRD` section
+    /// 13.13: `from` inclusive, `to` exclusive, and what the span covers
+    /// leaves the resident sequence while everything else keeps its order.
+    ///
+    /// **The pair says what leaves where the flush's `keep` says what
+    /// stays.** They also take opposite rules at their edges: an
+    /// over-large `keep` bounds, and a span describing no removable region
+    /// refuses, there being a smaller true version of the first and none of
+    /// the second.
+    ///
+    /// **These positions index the resident sequence and never a trace.**
+    Elide { from: u64, to: u64 },
 }
 
 /// The decode seam's answer, per `weaver-types-Spec` section 4.4. A cancel
@@ -574,6 +587,14 @@ pub enum TokenAnswer {
         resident_before: u64,
         resident_after: u64,
     },
+    /// The elision confirmed, carrying both resident counts and echoing no
+    /// span: the harness named the span and needs no confirmation of its
+    /// own ask, the SPU is the one authority on either count, and each
+    /// party writes what it is the authority on, per the decode contract.
+    Elided {
+        resident_before: u64,
+        resident_after: u64,
+    },
     /// The seam's one SPU-originated emission, per the decode contract's
     /// second ruling of 2026-08-12: a case of the answer because the
     /// SPU-to-harness traffic is one enum, and the prose fact the type cannot
@@ -600,6 +621,20 @@ pub enum TokenRefusal {
         capacity: u64,
     },
     MalformedDelta,
+    /// The elision's span describes no removable region, per the decode
+    /// contract as amended 2026-08-22: it overlaps the identity prefix,
+    /// runs past the resident count, ends before it starts, or is empty.
+    ///
+    /// **It carries the span it refused and the bounds it was judged
+    /// against**, because the loop reads a refusal to learn which edge it
+    /// crossed. A refusal saying only that the ask was wrong sends the loop
+    /// back to guess between four cases it could have distinguished.
+    UnremovableSpan {
+        from: u64,
+        to: u64,
+        prefix: u64,
+        resident: u64,
+    },
 }
 
 /// The label seam's ask, per `weaver-types-Spec` section 4.5: the content to

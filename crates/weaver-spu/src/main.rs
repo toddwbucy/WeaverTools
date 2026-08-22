@@ -119,14 +119,22 @@ fn judge_decode(
             DecodePosition::BeforeOpen,
             TokenDirective::AppendAndGenerate { .. }
             | TokenDirective::Cancel { .. }
-            | TokenDirective::Flush { .. },
+            | TokenDirective::Flush { .. }
+            | TokenDirective::Elide { .. },
         ) => Some(TokenRefusal::NotOpen),
         // A second open refuses rather than rewinding.
         (DecodePosition::AtRest, TokenDirective::Open { .. }) => Some(TokenRefusal::OutOfOrder),
         (DecodePosition::AtRest, TokenDirective::AppendAndGenerate { .. }) => None,
-        (DecodePosition::AtRest, TokenDirective::Cancel { .. } | TokenDirective::Flush { .. }) => {
-            None
-        }
+        // The elision is valid between turns on the flush's ground and for
+        // its reason, per the decode contract: a span named against a
+        // resident sequence that is still growing names positions that will
+        // have moved by the time it lands. `AtRest` is that window.
+        (
+            DecodePosition::AtRest,
+            TokenDirective::Cancel { .. }
+            | TokenDirective::Flush { .. }
+            | TokenDirective::Elide { .. },
+        ) => None,
     }
 }
 
@@ -832,6 +840,60 @@ fn serve_decode(
                         // A failed flush closes the session, and a session
                         // this process cannot restore to its fixed outcome is
                         // a service it stops providing.
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                }
+            }
+            TokenDirective::Elide { from, to } => {
+                let standing = opened.as_mut().expect("at rest implies an open session");
+                // Saturating for the reason the flush's keep saturates, and
+                // in the direction that refuses rather than the one that
+                // removes: a bound past the platform's range stays large, so
+                // a span naming it fails the resident check instead of
+                // wrapping onto a region that exists.
+                let from = usize::try_from(from).unwrap_or(usize::MAX);
+                let to = usize::try_from(to).unwrap_or(usize::MAX);
+                match standing.session.elide(from, to) {
+                    Ok((resident_before, resident_after)) => {
+                        // Both counts from the one authority, and no span:
+                        // the harness named it and writes the record's
+                        // `elision` event from its own ask, per the decode
+                        // contract's rule that each party writes what it is
+                        // the authority on.
+                        let elided = TokenAnswer::Elided {
+                            resident_before: resident_before as u64,
+                            resident_after: resident_after as u64,
+                        };
+                        if send_answer(decode, &elided).is_err() {
+                            return Err(());
+                        }
+                    }
+                    // **An unremovable span is a refusal and the session
+                    // stands**, which is where this parts company with the
+                    // flush: the ask was answerable and wrong rather than the
+                    // session being unwell, and a refusal leaves the session
+                    // as the directive found it.
+                    Err(DecodeFault::UnremovableSpan {
+                        from,
+                        to,
+                        prefix,
+                        resident,
+                    }) => {
+                        let refusal = TokenRefusal::UnremovableSpan {
+                            from,
+                            to,
+                            prefix,
+                            resident,
+                        };
+                        if send_refusal(decode, &refusal).is_err() {
+                            return Err(());
+                        }
+                    }
+                    Err(fault) => {
+                        // A re-establish that failed partway leaves the
+                        // backend and the session's account disagreeing, and
+                        // that session stops being served.
                         eprintln!("{}", decode_fault_line(&fault));
                         return Err(());
                     }

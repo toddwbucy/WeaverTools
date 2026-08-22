@@ -145,6 +145,12 @@ fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
         weaver_types::TokenRefusal::OutOfOrder => "the ask was out of order for the seam",
         weaver_types::TokenRefusal::Overflow { .. } => "the session cannot take the delta",
         weaver_types::TokenRefusal::MalformedDelta => "the delta was malformed for the family",
+        // The span's own numbers are the loop's to read off the refusal, so
+        // this rendering says the kind and leaves the arithmetic where a
+        // reader can act on it rather than flattening it into prose.
+        weaver_types::TokenRefusal::UnremovableSpan { .. } => {
+            "the elision named no removable span"
+        }
     }
 }
 
