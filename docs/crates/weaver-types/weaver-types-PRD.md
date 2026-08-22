@@ -12,7 +12,9 @@ findings share: a conversion may narrow a refusal for a reader and may not
 be the only record of it. Three narrowings are named, a crate's refusal into
 its seam's vocabulary, a seam refusal into a client's sentence, and the
 gate's bind detail into standard error, with the derived rendering and the
-`refusal` kind as what makes the first two safe.
+`refusal` kind as what makes the first two safe **while the source
+record stands**, a narrowing being safe by the original remaining available
+rather than by the rendering being derived.
 **Revised:** 2026-08-22, second of this date, the refusal record joins the
 file. Section 2.1 gains `refusal-record`, a vocabulary node this crate
 defines: the seam that refused and that seam's own typed case with its
@@ -164,16 +166,32 @@ found as three:
 - A crate's own refusal converts into the seam vocabulary that crosses.
   `AdmitRefusal`, `FamilyRefusal`, `ReadoutRefusal`, `DeviceRefusal`, and
   `KnobRefusal` each become a `lifecycle-refusal`, and `RenderRefusal`
-  becomes a `token-refusal`. **`RaiseRefusal` is the case that shows the
-  cost**: the gate's bind failure carries a detail the closed set has no
-  field for, so the detail goes to standard error and the seam carries
-  `BindFailed` alone.
+  becomes a `token-refusal`. **`RaiseRefusal` is the case that shows what
+  the rule demands**: the gate's bind failure carries a detail the closed
+  set has no field for, so the seam carries `BindFailed` alone and the
+  detail goes to standard error. **That satisfies the rule only because the
+  deployment retains it.** The organ's streams are inherited and
+  `weaver-admin-Spec` refuses to set `StandardError=` on the unit it starts,
+  so the manager's default carries the detail to its journal, which is where
+  `weaver-admin-systemd-contract` section 7 already places a failure's cause.
+
+  **The retention is out of band and the rule does not treat that as equal
+  to the record.** The journal is the manager's and this program does not
+  read it, per that same contract, so an operator clearing a bind path has
+  the detail and a consumer replaying a trace does not. **Naming which of
+  the two a narrowing leaves behind is part of applying the rule**, and a
+  narrowing whose only carrier is neither the record nor a retained
+  out-of-band channel is the case the rule forbids outright.
 - A seam refusal renders for a client that is owed a sentence rather than a
   case. That rendering is **derived from the recorded refusal** rather than
   matched in parallel, so the client's account cannot say what the record
   does not.
 - A refusal reaches the record as itself, which is what the clerking act of
-  this date provides and what makes the first two narrowings safe.
+  this date provides. **This is the condition the other two rest on**: a
+  derived rendering is safe because the record holds what it narrowed, and a
+  seam vocabulary is safe because the case it carries reaches the record
+  whole. **Remove the source record and both become the only copy again**,
+  which is the state the rule forbids rather than a lesser version of it.
 
 **The narrowing is not the defect and being the only copy is.** A client
 sentence that drops four integers is right to drop them. What would be wrong
