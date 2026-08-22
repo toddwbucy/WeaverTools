@@ -256,10 +256,24 @@ fn the_surprisal_election_governs_the_native_session() {
         "the election changes no token, which is the behaviour-neutral bar \
          every diagnostic in this program is held to"
     );
-    assert_eq!(
-        declined_perplexity, elected_perplexity,
-        "and the mean is the same mean, the election having governed what \
-         was kept rather than what was computed"
+    // **The mean is compared within a tolerance and the tokens are not.**
+    // The two arms are separate residencies over the same weights, and apex
+    // section 8 puts residual determinism "within GPU float tolerance"
+    // rather than at the bit: a different allocation can select a different
+    // kernel, and a last-bit difference in one logit moves a surprisal and
+    // so the mean. The tokens are discrete and carry no such slack, which is
+    // why the behaviour-neutral claim above is asserted exactly and this one
+    // is not. A relative bound rather than an absolute one, perplexity being
+    // a magnitude that varies with the vocabulary rather than a quantity
+    // near one.
+    let declined = declined_perplexity.expect("the declined arm reports a mean");
+    let elected = elected_perplexity.expect("the elected arm reports one too");
+    let spread = (declined - elected).abs() / declined.abs().max(elected.abs());
+    assert!(
+        spread < 1e-6,
+        "the mean is the same mean within tolerance, the election having \
+         governed what was kept rather than what was computed: {declined} \
+         against {elected}, relative spread {spread}"
     );
 }
 

@@ -516,7 +516,7 @@ mod seam_success {
         let (lifecycle, child_lifecycle) = seqpacket_pair();
         let (decode_parent, child_decode) = seqpacket_pair();
         let log_path = std::env::temp_dir().join(format!(
-            "weaver-spu-ceiling-child-{}.log",
+            "weaver-spu-surprisal-child-{}.log",
             std::process::id()
         ));
         let log = std::fs::File::create(&log_path).expect("a child log file");
@@ -534,11 +534,10 @@ mod seam_success {
         bound_receives(&decode_parent, 120);
         let decode = weaver_spu::channel::decode_from_owned(decode_parent);
 
-        // The declaration elects a ceiling far below any natural stop, so
-        // the only way the count below comes out right is the declared
-        // value reaching the generation's stop condition: a test at 4096
-        // would pass whenever a short answer finished naturally, proving
-        // only that the knob did not refuse.
+        // The declaration elects the surprisal, which is the one thing
+        // that differs from the seam test below: the ceiling, the model,
+        // and the directives are that test's, so a difference in the
+        // measurement is the election's doing.
         let admitted = ask(
             &lifecycle,
             1,
