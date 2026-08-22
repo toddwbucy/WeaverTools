@@ -5,6 +5,15 @@
 separately.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-22, pressure leaves the failure enumeration. Section 5
+holds four cases where it held five: commit pressure is a condition of the
+recorder rather than an outcome of a submission, the event having reached
+the working structure and the queue before the depth was read, so a party
+acting on it as a failure treated a recorded event as a lost one. The
+conformance clause is unchanged in what it asks and says which surface
+answers it. A sink that stops being writable stays a failure. **The crate
+carries the retired variant until the act that removes it**, which follows
+this one, per gate H1's direction.
 **Revised:** 2026-08-19, third of this date, the classify kinds join the
 set. `classify.request` and `classify.output` per the charter's same-act
 rule: the harness authors instances of `weaver-trace`'s typed payload
@@ -325,10 +334,17 @@ crate's Spec.
   for it, and that is a different failure.
 - **Commit failed.** The event was admitted and the stream writer could not hand it
   to the sink. The session is failed rather than continued.
-- **Commit pressure.** The stream cannot keep pace and the writer's queue is
-  growing. Surfaced as an event while the sink remains writable, or as a fatal
-  error when it does not, and what follows is the marked election of
-  `weaver-admin-operator-contract` section 3.
+**Commit pressure is not among them, as of 2026-08-22.** The stream failing
+to keep pace while the sink stays writable is a condition of the recorder
+rather than an outcome of a submission: the event was admitted, it reached
+the working structure and the writer's queue, and it is not lost. It was
+enumerated here as a failure and returned as one, so a party acting on it
+treated a recorded event as an event that had not landed. **The depth is
+read from the recorder instead**, and the harness authors the `fault` naming
+`RecorderCommitPressure` on the crossing, which is what the conformance
+clause below has always asked for. A sink that stops being writable is a
+failure and stays one, under commit failed.
+
 - **Append failed after admission.** The working structure could not take the
   event, one side of the fan-out failing against the other. **The recorder owns
   the resolution:** fail loudly. It must never continue against a silently stale
@@ -393,7 +409,8 @@ How each check is implemented is Spec work. What must be checkable is stated her
 - Every descriptor the harness holds is close-on-exec, supplied at the one receive
   site.
 - Commit pressure is surfaced as an event while the sink remains writable and is
-  fatal when it is not.
+  fatal when it is not. **The surfacing is the harness's authored `fault` and
+  never a returned failure**, the submission it followed having landed.
 - Every `turn.closed` states its close kind, clean or stopped with reason.
 - A decode reaches the record as both layers, the verbatim emission and the
   canonical parse, neither standing for the other.
