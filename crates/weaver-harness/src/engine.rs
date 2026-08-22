@@ -474,10 +474,17 @@ impl<'a> Ports<'a> {
     /// the artifact's scored labels back in the head's own order, or `None`
     /// where the leg is down, was never declared, refused typed, or
     /// answered malformed - each converted at the seat into the same
-    /// absence a missing leg serves. Both sides of the exchange are
-    /// authored into the record per the charter's classify pair, the turn
-    /// member absent because the seat lends between turns, which is when a
-    /// loop holds it to ask.
+    /// absence a missing leg serves.
+    ///
+    /// **The exchange is recorded whole and its second half chooses a
+    /// kind**, as of 2026-08-22: the ask authors `classify.request`, a
+    /// scored answer authors `classify.output`, a typed refusal authors
+    /// `refusal`, and a lost leg authors a `fault`, a death not being a
+    /// refusal per the classify contract's section 5. **The seat's `None`
+    /// covers all four absences alike** and the record is where they part,
+    /// which is the division the port was built on rather than a new one.
+    /// The turn member is absent because the seat lends between turns,
+    /// which is when a loop holds it to ask.
     pub fn classify(&mut self, content: &str) -> Option<Vec<(String, f64)>> {
         let channel = self.classify?;
         // The one-strike retirement, the state seam's economics: an arm
@@ -502,7 +509,7 @@ impl<'a> Ports<'a> {
         });
         if asked.is_err() {
             channel.retire();
-            self.author_classify_refused("channel_lost");
+            self.author_classify_lost();
             return None;
         }
         loop {
@@ -521,7 +528,7 @@ impl<'a> Ports<'a> {
                             Subsystem::Harness,
                             None,
                             Some(Payload::ClassifyOutput(
-                                weaver_trace::ClassifyOutcome::Scored {
+                                weaver_trace::ClassifyScored {
                                     labels: scored.clone(),
                                 },
                             )),
@@ -552,21 +559,24 @@ impl<'a> Ports<'a> {
                     return None;
                 }
                 Ok(crate::channel::ClassifyReply::Refusal(refusal)) => {
-                    let name = match refusal {
-                        weaver_types::LabelRefusal::NotAdmitted { .. } => "not_admitted",
-                        weaver_types::LabelRefusal::NotReady => "not_ready",
-                        weaver_types::LabelRefusal::Oversized { .. } => "oversized",
-                        weaver_types::LabelRefusal::MalformedContent => "malformed_content",
-                    };
-                    self.author_classify_refused(name);
+                    // **The case travels whole where it used to be flattened
+                    // to a name.** `Oversized { requested, bound }` reached
+                    // the record as the word "oversized", so a reader learned
+                    // that a bound was exceeded and never which bound or by
+                    // how much. The class carries the seam's own case.
+                    self.author_classify_refusal(refusal);
                     return None;
                 }
                 // The bound expired or the channel faulted: the arm retires
-                // one-strike, and the record's output names the loss rather
-                // than leaving the request unanswered.
+                // one-strike, and the record carries the loss as a `fault`
+                // rather than leaving the request unanswered. **A lost leg
+                // is a death and not a refusal**, per the classify
+                // contract's section 5, so it does not reach the record
+                // under `Kind::Refusal`, which carries this seam's typed
+                // cases and nothing else.
                 Err(_) => {
                     channel.retire();
-                    self.author_classify_refused("channel_lost");
+                    self.author_classify_lost();
                     return None;
                 }
             }
@@ -576,17 +586,47 @@ impl<'a> Ports<'a> {
     /// The refused outcome is the record's own fact, per the charter's
     /// eighteenth kind: authored where a typed refusal closed the exchange,
     /// never fabricated into an answer.
-    fn author_classify_refused(&mut self, refusal: &str) {
+    fn author_classify_refusal(&mut self, refusal: weaver_types::LabelRefusal) {
+        let record = weaver_types::RefusalRecord::Classify { refusal };
+        let Ok(rendered) = serde_json::to_string(&record) else {
+            return;
+        };
+        let Some(payload) = weaver_trace::raw_payload(&rendered) else {
+            return;
+        };
         let _ = self.author.author(
             self.recorder,
-            Kind::ClassifyOutput,
+            Kind::Refusal,
             Subsystem::Harness,
             None,
-            Some(Payload::ClassifyOutput(
-                weaver_trace::ClassifyOutcome::Refused {
-                    refusal: refusal.to_string(),
-                },
-            )),
+            Some(Payload::Refusal(payload)),
+        );
+    }
+
+    /// The label leg was lost mid-exchange, which is not a refusal.
+    ///
+    /// **The contract draws this line and the old code crossed it**: "a
+    /// typed refusal is not a death, and the seam keeps serving after one",
+    /// per `weaver-harness-spu-classify-contract` section 5. A lost peer and
+    /// a bound that expired both end the leg, and both were authored as a
+    /// `classify.output` whose refusal read "channel_lost", which put a
+    /// death in the shape of an answer the seam had given.
+    ///
+    /// A death is recorded per the fault custody rule, so it reaches the
+    /// record as this crate's observation of a closure rather than as the
+    /// dead party's report. The asking loop still loses its judgment and
+    /// never its turn, the leg converting to the same absence a missing one
+    /// serves.
+    fn author_classify_lost(&mut self) {
+        let account = "{\"organ\":\"harness\",\"leg\":\"classify\"}";
+        let _ = self.author.author_fault(
+            self.recorder,
+            Subsystem::Harness,
+            None,
+            &crate::authorship::harness_report(
+                weaver_types::FaultCase::OrganDeathObserved,
+                account,
+            ),
         );
     }
 
@@ -1274,6 +1314,74 @@ mod tests {
     /// **A turn runs, and loop 0 authors the whole bracket.** Loop 1 supplies
     /// the delta and receives the outcome, and the record carries the turn's
     /// user message, the three model events, the assistant's turn, and the
+    /// **A refused classify authors a refusal and no output, and the case
+    /// keeps its values.** The refusal reached the record as a name until
+    /// 2026-08-22: `Oversized { requested, bound }` arrived as the word
+    /// "oversized", so a reader learned a bound was exceeded and never which
+    /// or by how much.
+    ///
+    /// **The second assertion is the one that would rot quietly.** An
+    /// implementation that authored both would satisfy every claim about the
+    /// refusal while leaving `classify.output` meaning two things again,
+    /// which is the overloading the class was written to end.
+    #[test]
+    fn a_refused_classify_authors_a_refusal_and_no_output() {
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+
+        // The producer's own path, over the shape the seam hands it.
+        let record = weaver_types::RefusalRecord::Classify {
+            refusal: weaver_types::LabelRefusal::Oversized {
+                requested: 9001,
+                bound: 4096,
+            },
+        };
+        let rendered = serde_json::to_string(&record).expect("the record renders");
+        let payload = weaver_trace::raw_payload(&rendered).expect("it splices");
+        author
+            .author(
+                &mut recorder,
+                Kind::Refusal,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Refusal(payload)),
+            )
+            .expect("the refusal is authored");
+
+        let refusals: Vec<&weaver_trace::Record> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::Refusal)
+            .collect();
+        assert_eq!(refusals.len(), 1, "the refusal reached the record");
+        let event: serde_json::Value =
+            serde_json::from_str(refusals[0].line.as_ref()).expect("the line parses");
+        assert_eq!(event["payload"]["seam"], "classify");
+        assert_eq!(
+            event["payload"]["refusal"]["requested"], 9001,
+            "the case keeps the values a name would have dropped"
+        );
+        assert_eq!(event["payload"]["refusal"]["bound"], 4096);
+        assert!(
+            event["payload"].get("asked").is_none(),
+            "classify carries no ask, its content standing in classify.request"
+        );
+
+        assert_eq!(
+            recorder
+                .structure()
+                .iter()
+                .filter(|r| r.kind == Kind::ClassifyOutput)
+                .count(),
+            0,
+            "a refused classify authors no output at all"
+        );
+    }
+
     /// **Pressure is reported once per crossing and not per turn above the
     /// mark.** A fault for every turn over the mark answers a full queue by
     /// filling it, which is the one direction that cannot help, and a
