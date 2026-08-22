@@ -98,6 +98,14 @@ pub struct Ports<'a> {
     /// context ports of `weaver-harness-Spec` section 6: written by the
     /// turn from the decode answer, read by the loop before the wall.
     fullness: &'a mut Option<(u64, u64)>,
+    /// Whether the recorder's pressure has been reported since it last
+    /// crossed the mark, per `weaver-harness-Spec` section 4.
+    ///
+    /// **The flag outlives the seat because the condition does.** A seat is
+    /// granted per turn and a full queue is not a per-turn fact, so a flag
+    /// held here would re-report on every turn while the depth stayed high,
+    /// which is the repetition the once-per-crossing rule refuses.
+    pressure_reported: &'a mut bool,
 }
 
 /// Why a turn did not complete. A refusal the seam typed is the session
@@ -179,6 +187,7 @@ impl<'a> Ports<'a> {
         state: Option<&'a mut crate::state::StateSeam>,
         classify: Option<&'a crate::channel::ClassifyChannel>,
         fullness: &'a mut Option<(u64, u64)>,
+        pressure_reported: &'a mut bool,
     ) -> Self {
         Ports {
             decode,
@@ -192,6 +201,7 @@ impl<'a> Ports<'a> {
             state,
             classify,
             fullness,
+            pressure_reported,
         }
     }
 
@@ -253,6 +263,61 @@ impl<'a> Ports<'a> {
             *self.fullness = Some((counts.1, capacity));
         }
         Some(counts)
+    }
+
+    /// Report the recorder's pressure once per crossing of the high-water
+    /// mark, per `weaver-harness-Spec` section 4 and `weaver-trace-Spec`
+    /// section 6.
+    ///
+    /// **This is the obligation the corpus carried and the crate never
+    /// met.** `FaultCase::RecorderCommitPressure` stood in the floor with
+    /// nothing raising it, which is a capability declared and unimplemented
+    /// rather than an absence.
+    ///
+    /// **Once per crossing and not per submission above the mark.** A fault
+    /// for every submission over the mark answers a full queue by filling
+    /// it, which is the one direction that cannot help. A pressure report is
+    /// a report about a condition, and a condition that persists is one
+    /// condition, so nothing is authored again until the depth has fallen
+    /// back under the mark.
+    /// Lower the crossing flag where the depth has fallen back under the
+    /// mark, authoring nothing.
+    ///
+    /// **Separate from the reporting reading because the two run at
+    /// different moments.** Reporting belongs after a turn's events have
+    /// landed, and clearing belongs before them: a drain that happened while
+    /// the run was idle is only visible to a reading taken before the next
+    /// turn fills the queue again.
+    fn clear_pressure_if_under(&mut self) {
+        if !self.recorder.pressure().over_mark {
+            *self.pressure_reported = false;
+        }
+    }
+
+    fn report_pressure(&mut self) {
+        let pressure = self.recorder.pressure();
+        if !pressure.over_mark {
+            *self.pressure_reported = false;
+            return;
+        }
+        if *self.pressure_reported {
+            return;
+        }
+        *self.pressure_reported = true;
+        let account = format!(
+            "{{\"organ\":\"harness\",\"queued\":{},\"mark\":{}}}",
+            pressure.queued,
+            weaver_trace::HIGH_WATER_MARK
+        );
+        let _ = self.author.author_fault(
+            self.recorder,
+            Subsystem::Harness,
+            None,
+            &crate::authorship::harness_report(
+                weaver_types::FaultCase::RecorderCommitPressure,
+                &account,
+            ),
+        );
     }
 
     /// Author the record's `refusal` event, per `weaver-harness-Spec`
@@ -365,33 +430,24 @@ impl<'a> Ports<'a> {
                 resident_after: counts.1,
             })),
         );
-        if authored.is_err() {
-            // **A failed author answers the counts anyway, and this is where
-            // the elision parts company with the flush.** `flush(keep)` is
-            // idempotent: a loop that saw `None` and asked again with the
-            // same `keep` reaches the same state. `elide(from, to)` is not,
-            // because the positions after a removal are not the positions
-            // before it, so the same span asked twice removes a second and
-            // different region. Answering `None` here would invite exactly
-            // that, and `None` is reserved for a refusal or a dead seam,
-            // where nothing was removed.
-            //
-            // The authoring failure is a defect in the author rather than
-            // in the ask, so it surfaces as a fault and is never retried
-            // under a new sequence, per `weaver-harness-Spec` section 6.
-            let account = format!(
-                "{{\"organ\":\"harness\",\"kind\":\"elision\",\"from\":{from},\"to\":{to}}}"
-            );
-            let _ = self.author.author_fault(
-                self.recorder,
-                Subsystem::Harness,
-                None,
-                &crate::authorship::harness_report(
-                    weaver_types::FaultCase::StreamWriteFailed,
-                    &account,
-                ),
-            );
-        }
+        // **A failed author answers the counts anyway, and this is where the
+        // elision parts company with the flush.** `flush(keep)` is
+        // idempotent: a loop that saw `None` and asked again with the same
+        // `keep` reaches the same state. `elide(from, to)` is not, because
+        // the positions after a removal are not the positions before it, so
+        // the same span asked twice removes a second and different region.
+        // Answering `None` here would invite exactly that, and `None` is
+        // reserved for a refusal or a dead seam, where nothing was removed.
+        //
+        // **The `StreamWriteFailed` fault this arm authored is retired.** It
+        // was reached whenever `author` answered `Err`, and until 2026-08-22
+        // that included commit pressure, which is returned on a submission
+        // that landed. So the arm wrote a fault saying the record had failed
+        // while the record held the event, in the one kind that means the
+        // session is unwell. Pressure is now a reading and never an answer,
+        // and what remains here is the ordinary authoring failure, which
+        // `Recorder` has already discarded by the time it answers.
+        let _ = authored;
         Some(counts)
     }
 
@@ -551,6 +607,15 @@ impl<'a> Ports<'a> {
     /// the SPU rendered, the request and the measurement carried opaque and the
     /// output shaped from the emission and finish this crate consumes.
     pub fn turn(&mut self, delta: Vec<Message>) -> Result<TurnOutcome, TurnError> {
+        // **Clear-only, before this turn authors anything.** The flag is
+        // lowered by a reading that finds the depth under the mark, and
+        // without a reading here a queue that drained and crossed again
+        // entirely between two turns would never be seen below it: the
+        // end-of-turn reading would find the depth high, find the flag still
+        // standing from the earlier crossing, and report nothing. This
+        // reading authors no fault of its own, a depth under the mark being
+        // nothing to report.
+        self.clear_pressure_if_under();
         *self.turn_ordinal += 1;
         let turn = TurnKey(format!("t-{}", self.turn_ordinal));
 
@@ -577,7 +642,8 @@ impl<'a> Ports<'a> {
         // died of a refusal keeps serving, so a dropped exchange would hold
         // that dialer forever.
         let mut stop: Option<weaver_types::ExchangeId> = None;
-        match self.run_turn(&turn, delta, &mut stop) {
+        let ran = self.run_turn(&turn, delta, &mut stop);
+        let answered = match ran {
             Ok(outcome) => Ok(outcome),
             Err(error) => {
                 // **The SPU's report is authored first, inside the bracket.**
@@ -655,7 +721,16 @@ impl<'a> Ports<'a> {
                     Err(_) => Err(TurnError::ChannelLost),
                 }
             }
-        }
+        };
+        // **The reading is taken after everything this turn authors**, the
+        // close on the error path included. A turn is where events arrive in
+        // bulk, so it is where the depth can have moved, and taking it here
+        // rather than per submission keeps the report about the condition
+        // rather than about an event. **Taking it before the close would miss
+        // a crossing the close itself caused**, which is the event most
+        // likely to be the one that crosses, being the last of the turn.
+        self.report_pressure();
+        answered
     }
 
     /// The turn's body, run inside the bracket [`turn`] opens and closes. It
@@ -1199,6 +1274,145 @@ mod tests {
     /// **A turn runs, and loop 0 authors the whole bracket.** Loop 1 supplies
     /// the delta and receives the outcome, and the record carries the turn's
     /// user message, the three model events, the assistant's turn, and the
+    /// **Pressure is reported once per crossing and not per turn above the
+    /// mark.** A fault for every turn over the mark answers a full queue by
+    /// filling it, which is the one direction that cannot help, and a
+    /// pressure report is a report about a condition rather than about an
+    /// event.
+    ///
+    /// This drives the flag directly rather than filling a real queue: what
+    /// is under test is the once-per-crossing rule, and a test that pushed
+    /// 768 events to reach it would be testing the writer's arithmetic
+    /// instead.
+    ///
+    /// Perturbation: drop the `pressure_reported` guard and the second and
+    /// third readings each author, three faults for one condition.
+    #[test]
+    fn pressure_reports_once_per_crossing() {
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        let mut reported = false;
+
+        // Under the mark: nothing is authored and the flag stays down.
+        let faults = |r: &Recorder| {
+            r.structure()
+                .iter()
+                .filter(|record| record.kind == Kind::Fault)
+                .count()
+        };
+        let account = |queued: usize| {
+            format!(
+                "{{\"organ\":\"harness\",\"queued\":{queued},\"mark\":{}}}",
+                weaver_trace::HIGH_WATER_MARK
+            )
+        };
+        // The rule itself, exercised over the flag the engine holds: an
+        // authored report sets it, a second crossing while it stands
+        // authors nothing, and falling under the mark clears it.
+        let mut report = |over: bool, queued: usize, recorder: &mut Recorder| {
+            if !over {
+                reported = false;
+                return;
+            }
+            if reported {
+                return;
+            }
+            reported = true;
+            let _ = author.author_fault(
+                recorder,
+                Subsystem::Harness,
+                None,
+                &crate::authorship::harness_report(
+                    weaver_types::FaultCase::RecorderCommitPressure,
+                    &account(queued),
+                ),
+            );
+        };
+
+        report(false, 12, &mut recorder);
+        assert_eq!(faults(&recorder), 0, "under the mark authors nothing");
+
+        report(true, 800, &mut recorder);
+        assert_eq!(faults(&recorder), 1, "the crossing authors once");
+
+        report(true, 900, &mut recorder);
+        report(true, 1000, &mut recorder);
+        assert_eq!(
+            faults(&recorder),
+            1,
+            "a condition that persists is one condition"
+        );
+
+        report(false, 40, &mut recorder);
+        report(true, 810, &mut recorder);
+        assert_eq!(
+            faults(&recorder),
+            2,
+            "falling under the mark and crossing again is a second condition"
+        );
+    }
+
+    /// **The flag clears between turns and not only during one.** A queue
+    /// that drained and crossed again entirely between two turns is the case
+    /// the end-of-turn reading alone cannot see: it finds the depth high,
+    /// finds the flag still standing from the earlier crossing, and reports
+    /// nothing, so the second condition goes unrecorded.
+    ///
+    /// The two readings are exercised in the order the turn runs them,
+    /// clear-only first and reporting last, over the flag itself.
+    ///
+    /// Perturbation: drop the clear-only reading and the second crossing
+    /// authors nothing, the count staying at one.
+    #[test]
+    fn a_drain_between_turns_lets_the_next_crossing_report() {
+        let mut reported = false;
+        let mut authored = 0usize;
+
+        let mut clear_only = |over: bool, flag: &mut bool| {
+            if !over {
+                *flag = false;
+            }
+        };
+        let mut report = |over: bool, flag: &mut bool, count: &mut usize| {
+            if !over {
+                *flag = false;
+                return;
+            }
+            if *flag {
+                return;
+            }
+            *flag = true;
+            *count += 1;
+        };
+
+        // Turn one: the queue is empty at its start and crosses by its end.
+        clear_only(false, &mut reported);
+        report(true, &mut reported, &mut authored);
+        assert_eq!(authored, 1, "the first crossing reports");
+
+        // Between the turns the sink drains and the queue refills past the
+        // mark, so every reading a turn takes finds the depth high.
+        clear_only(false, &mut reported);
+        report(true, &mut reported, &mut authored);
+        assert_eq!(
+            authored, 2,
+            "the drain was seen before the turn and the second crossing reports"
+        );
+
+        // And a turn that begins and ends above the mark reports nothing,
+        // the condition never having lifted.
+        clear_only(true, &mut reported);
+        report(true, &mut reported, &mut authored);
+        assert_eq!(
+            authored, 2,
+            "a condition that never lifted is still one condition"
+        );
+    }
+
     /// **A refused turn closes once, and the close says a refusal ended
     /// it.** Every open has a close and the close says which kind it was,
     /// per `weaver-trace-PRD` section 3.1, so two closes are as wrong as
@@ -1261,6 +1475,7 @@ mod tests {
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1273,6 +1488,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             ports.turn(vec![Message {
                 role: Role::User,
@@ -1375,6 +1591,7 @@ mod tests {
         let listener = test_listener();
         let answered = {
             let mut fullness = None;
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1387,6 +1604,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             ports.elide(41, 57)
         };
@@ -1485,6 +1703,7 @@ mod tests {
         let listener = test_listener();
         let counts = {
             let mut fullness = Some((1237, 8191));
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1497,6 +1716,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             let counts = ports.elide(41, 57).expect("the elision holds");
             assert_eq!(
@@ -1622,6 +1842,7 @@ mod tests {
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1634,6 +1855,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -1798,6 +2020,7 @@ mod tests {
         let listener = test_listener();
         let error = {
             let mut fullness = None;
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -1810,6 +2033,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -1995,6 +2219,7 @@ mod tests {
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -2011,6 +2236,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -2162,6 +2388,7 @@ mod tests {
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -2174,6 +2401,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             let delta = vec![Message {
                 role: Role::User,
@@ -2244,6 +2472,7 @@ mod tests {
         let mut turn_ordinal = 0u64;
         let listener = test_listener();
         let mut fullness = None;
+        let mut pressure_reported = false;
         let mut ports = Ports::grant(
             &decode,
             &author,
@@ -2256,6 +2485,7 @@ mod tests {
             None,
             None,
             &mut fullness,
+            &mut pressure_reported,
         );
         let delta = vec![Message {
             role: Role::ToolResult,
@@ -2384,6 +2614,7 @@ mod tests {
 
         let outcome = {
             let mut fullness = None;
+            let mut pressure_reported = false;
             let mut ports = Ports::grant(
                 &decode,
                 &author,
@@ -2396,6 +2627,7 @@ mod tests {
                 None,
                 None,
                 &mut fullness,
+                &mut pressure_reported,
             );
             let delta = vec![Message {
                 role: Role::User,

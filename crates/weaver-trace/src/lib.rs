@@ -68,7 +68,6 @@
 //!     match f {
 //!         Failure::RefusedOnSubmit { .. } => "refused",
 //!         Failure::CommitFailed { .. } => "commit_failed",
-//!         Failure::CommitPressure { .. } => "commit_pressure",
 //!         Failure::AppendFailed { .. } => "append_failed",
 //!         Failure::WriteTargetUnusable { .. } => "write_target_unusable",
 //!     }

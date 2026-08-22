@@ -283,14 +283,20 @@ impl Recorder {
     /// than trusted, since a gapless run-scoped order cannot be authored by
     /// the caller.
     ///
-    /// An `Err(CommitPressure)` has exactly one meaning: the event was
-    /// admitted, appended, and queued, and the queue has crossed the
-    /// high-water mark while the sink remains writable. The harness authors a
-    /// `fault` event in response; this crate authors no event and holds no
-    /// event kind. At the queue's full depth a submission blocks instead,
-    /// which is the deployment's loss bound expressed as backpressure - the
-    /// high-water report warned first, and a terminal write failure frees the
-    /// block by discarding.
+    /// **A submission that lands answers `Ok` whatever the queue holds.**
+    /// Pressure was returned here as an `Err` until 2026-08-22, after the
+    /// event had reached the working structure and the queue, so a caller
+    /// reading it was told the opposite of what happened. The queue's state
+    /// is read from [`Recorder::pressure`] instead, and the harness authors
+    /// the `fault` in response; this crate authors no event and holds no
+    /// event kind.
+    ///
+    /// **At the queue's full depth a submission blocks**, which is the
+    /// deployment's loss bound expressed as backpressure: the high-water
+    /// reading warns first, and a terminal write failure frees the block by
+    /// discarding. A block is not an answer this returns, so a caller that
+    /// never reads the depth meets backpressure as latency rather than as a
+    /// value.
     pub fn submit(&mut self, mut event: Event) -> Result<Sequence, Failure> {
         admit(&event, &self.session, &self.run)?;
         if let Some(failure) = self.writer.standing_failure() {
@@ -312,11 +318,36 @@ impl Recorder {
             self.tee = None;
         }
         self.writer.enqueue(sequence, line);
-        let queued = self.writer.queued();
-        if queued > HIGH_WATER_MARK {
-            return Err(Failure::CommitPressure { queued });
-        }
+        // **The event has landed and the answer says so**, per
+        // `weaver-trace-Spec` section 9 as of 2026-08-22. Pressure was
+        // returned here as a `Failure` after this point, so a caller reading
+        // that `Err` was told its event had not been recorded when it had,
+        // and every caller that discarded the result treated a recorded
+        // event as a lost one. What the queue holds is read from
+        // `pressure` rather than carried back in place of a sequence.
         Ok(sequence)
+    }
+
+    /// The writer's queue depth against the mark at which pressure is
+    /// reported, per `weaver-trace-Spec` section 9.
+    ///
+    /// **A property of this recorder rather than of any submission**, so a
+    /// caller with no interest in pressure is correct without saying so and
+    /// one that wants to throttle asks. That is what keeps the mistake this
+    /// replaces unavailable rather than corrected: a return that carried
+    /// pressure in place of a sequence could be misread at the next port
+    /// anyone adds, and a reading nobody takes changes nothing.
+    ///
+    /// **This crate reports and never authors.** What the harness does with
+    /// the depth is its own, per charter section 2's sole-writer rule, and a
+    /// recorder that emitted its own pressure event would have ended that
+    /// rule in the act of reporting on it.
+    pub fn pressure(&self) -> Pressure {
+        let queued = self.writer.queued();
+        Pressure {
+            queued,
+            over_mark: queued > HIGH_WATER_MARK,
+        }
     }
 
     pub fn structure(&self) -> &WorkingStructure {
@@ -425,6 +456,18 @@ fn turn_required(kind: Kind) -> bool {
         // belongs to the turn that generated it.
         | Kind::ModelField => true,
     }
+}
+
+/// What the writer's queue holds, and whether it has passed the mark.
+///
+/// **Carrying the mark's verdict beside the depth is what keeps the
+/// comparison in one place.** A caller deciding for itself whether 769 is
+/// pressure would be holding a second copy of a constant this crate owns,
+/// and the two would drift the first time the mark moved.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Pressure {
+    pub queued: usize,
+    pub over_mark: bool,
 }
 
 /// The total kind-to-payload mapping, twenty-one kinds and fifteen
