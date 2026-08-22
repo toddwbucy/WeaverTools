@@ -280,6 +280,20 @@ impl<'a> Ports<'a> {
     /// a report about a condition, and a condition that persists is one
     /// condition, so nothing is authored again until the depth has fallen
     /// back under the mark.
+    /// Lower the crossing flag where the depth has fallen back under the
+    /// mark, authoring nothing.
+    ///
+    /// **Separate from the reporting reading because the two run at
+    /// different moments.** Reporting belongs after a turn's events have
+    /// landed, and clearing belongs before them: a drain that happened while
+    /// the run was idle is only visible to a reading taken before the next
+    /// turn fills the queue again.
+    fn clear_pressure_if_under(&mut self) {
+        if !self.recorder.pressure().over_mark {
+            *self.pressure_reported = false;
+        }
+    }
+
     fn report_pressure(&mut self) {
         let pressure = self.recorder.pressure();
         if !pressure.over_mark {
@@ -593,6 +607,15 @@ impl<'a> Ports<'a> {
     /// the SPU rendered, the request and the measurement carried opaque and the
     /// output shaped from the emission and finish this crate consumes.
     pub fn turn(&mut self, delta: Vec<Message>) -> Result<TurnOutcome, TurnError> {
+        // **Clear-only, before this turn authors anything.** The flag is
+        // lowered by a reading that finds the depth under the mark, and
+        // without a reading here a queue that drained and crossed again
+        // entirely between two turns would never be seen below it: the
+        // end-of-turn reading would find the depth high, find the flag still
+        // standing from the earlier crossing, and report nothing. This
+        // reading authors no fault of its own, a depth under the mark being
+        // nothing to report.
+        self.clear_pressure_if_under();
         *self.turn_ordinal += 1;
         let turn = TurnKey(format!("t-{}", self.turn_ordinal));
 
@@ -620,14 +643,7 @@ impl<'a> Ports<'a> {
         // that dialer forever.
         let mut stop: Option<weaver_types::ExchangeId> = None;
         let ran = self.run_turn(&turn, delta, &mut stop);
-        // **The reading is taken once a turn, after its events have landed.**
-        // A turn is where events arrive in bulk, so it is where the depth can
-        // have moved, and taking it here rather than per submission keeps the
-        // report about the condition rather than about an event. The reading
-        // is taken on both paths: a turn that failed still authored what it
-        // authored before failing.
-        self.report_pressure();
-        match ran {
+        let answered = match ran {
             Ok(outcome) => Ok(outcome),
             Err(error) => {
                 // **The SPU's report is authored first, inside the bracket.**
@@ -705,7 +721,16 @@ impl<'a> Ports<'a> {
                     Err(_) => Err(TurnError::ChannelLost),
                 }
             }
-        }
+        };
+        // **The reading is taken after everything this turn authors**, the
+        // close on the error path included. A turn is where events arrive in
+        // bulk, so it is where the depth can have moved, and taking it here
+        // rather than per submission keeps the report about the condition
+        // rather than about an event. **Taking it before the close would miss
+        // a crossing the close itself caused**, which is the event most
+        // likely to be the one that crosses, being the last of the turn.
+        self.report_pressure();
+        answered
     }
 
     /// The turn's body, run inside the bracket [`turn`] opens and closes. It
@@ -1328,6 +1353,63 @@ mod tests {
             faults(&recorder),
             2,
             "falling under the mark and crossing again is a second condition"
+        );
+    }
+
+    /// **The flag clears between turns and not only during one.** A queue
+    /// that drained and crossed again entirely between two turns is the case
+    /// the end-of-turn reading alone cannot see: it finds the depth high,
+    /// finds the flag still standing from the earlier crossing, and reports
+    /// nothing, so the second condition goes unrecorded.
+    ///
+    /// The two readings are exercised in the order the turn runs them,
+    /// clear-only first and reporting last, over the flag itself.
+    ///
+    /// Perturbation: drop the clear-only reading and the second crossing
+    /// authors nothing, the count staying at one.
+    #[test]
+    fn a_drain_between_turns_lets_the_next_crossing_report() {
+        let mut reported = false;
+        let mut authored = 0usize;
+
+        let mut clear_only = |over: bool, flag: &mut bool| {
+            if !over {
+                *flag = false;
+            }
+        };
+        let mut report = |over: bool, flag: &mut bool, count: &mut usize| {
+            if !over {
+                *flag = false;
+                return;
+            }
+            if *flag {
+                return;
+            }
+            *flag = true;
+            *count += 1;
+        };
+
+        // Turn one: the queue is empty at its start and crosses by its end.
+        clear_only(false, &mut reported);
+        report(true, &mut reported, &mut authored);
+        assert_eq!(authored, 1, "the first crossing reports");
+
+        // Between the turns the sink drains and the queue refills past the
+        // mark, so every reading a turn takes finds the depth high.
+        clear_only(false, &mut reported);
+        report(true, &mut reported, &mut authored);
+        assert_eq!(
+            authored, 2,
+            "the drain was seen before the turn and the second crossing reports"
+        );
+
+        // And a turn that begins and ends above the mark reports nothing,
+        // the condition never having lifted.
+        clear_only(true, &mut reported);
+        report(true, &mut reported, &mut authored);
+        assert_eq!(
+            authored, 2,
+            "a condition that never lifted is still one condition"
         );
     }
 

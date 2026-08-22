@@ -283,14 +283,20 @@ impl Recorder {
     /// than trusted, since a gapless run-scoped order cannot be authored by
     /// the caller.
     ///
-    /// An `Err(CommitPressure)` has exactly one meaning: the event was
-    /// admitted, appended, and queued, and the queue has crossed the
-    /// high-water mark while the sink remains writable. The harness authors a
-    /// `fault` event in response; this crate authors no event and holds no
-    /// event kind. At the queue's full depth a submission blocks instead,
-    /// which is the deployment's loss bound expressed as backpressure - the
-    /// high-water report warned first, and a terminal write failure frees the
-    /// block by discarding.
+    /// **A submission that lands answers `Ok` whatever the queue holds.**
+    /// Pressure was returned here as an `Err` until 2026-08-22, after the
+    /// event had reached the working structure and the queue, so a caller
+    /// reading it was told the opposite of what happened. The queue's state
+    /// is read from [`Recorder::pressure`] instead, and the harness authors
+    /// the `fault` in response; this crate authors no event and holds no
+    /// event kind.
+    ///
+    /// **At the queue's full depth a submission blocks**, which is the
+    /// deployment's loss bound expressed as backpressure: the high-water
+    /// reading warns first, and a terminal write failure frees the block by
+    /// discarding. A block is not an answer this returns, so a caller that
+    /// never reads the depth meets backpressure as latency rather than as a
+    /// value.
     pub fn submit(&mut self, mut event: Event) -> Result<Sequence, Failure> {
         admit(&event, &self.session, &self.run)?;
         if let Some(failure) = self.writer.standing_failure() {
