@@ -541,8 +541,15 @@ fault's, so the two kinds of ending never share a spelling.
 **`elision` joins the kind set, twentieth, and the record grows where the
 state shrinks.** Per `weaver-spu-PRD` section 13.13 as chartered
 2026-08-22. The harness names a span of the SPU's resident sequence, the
-SPU makes it absent, and this record gains one event carrying the resident
-counts either side, exactly as `flush` does for the cut.
+SPU makes it absent, and this record gains one event carrying the span that
+was elided beside the resident counts either side.
+
+**The span is on the event because the counts cannot stand in for it.** A
+flush is fully described by what it leaves, its outcome being a prefix. An
+elision removes an interior, so two elisions reporting identical counts can
+have removed different positions and left different sequences. **An edit
+that does not say where it fell is not replayable**, and the replay below is
+this crate's own promise rather than a convenience.
 
 **Nothing is removed from a record, and this is the act that could have
 looked like an exception.** The state is a distillation of the record and
@@ -559,13 +566,18 @@ flush: a contribution recorded before an elision that covered it was in the
 model's context and then was not. **An accumulation that ignores the edits
 reconstructs a context no generation ever ran against**, which was true of
 the flush already and is easier to trip over here, an elision leaving no
-gap in the sequence it edits.
+gap in the sequence it edits. **The replay consumes the recorded
+coordinates**: the elision event names the span it removed, and a consumer
+applies it at those positions rather than inferring an extent from a
+difference of counts.
 
 ### 3.2 The payload shapes the token workflow settles
 
-Six of the fifteen kinds carried no chartered shape, and this subsection
-settles four of them on the token workflow's acts of 2026-08-02: `fault` and
-the three `model.*` kinds. The tool bracket's two are the remaining pair and
+Six of the fifteen kinds the set held at the time carried no chartered
+shape, and this subsection settles four of them on the token workflow's
+acts of 2026-08-02: `fault` and the three `model.*` kinds. **The fifteen is
+the count of that date and not of this document**, the set standing at
+twenty since the elision joined it. The tool bracket's two are the remaining pair and
 stay deferred with the tool workflow, per section 9. What follows is content
 and its obligations, which is this document's level. How any of it is
 represented is the Spec's.

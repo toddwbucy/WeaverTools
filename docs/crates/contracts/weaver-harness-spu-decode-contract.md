@@ -13,7 +13,7 @@ one: the harness names a half-open span of the resident sequence and the
 SPU makes it absent, per `weaver-spu-PRD` section 13.13 as chartered in
 this act. **The span is state and never the record.** It is valid only
 between turns on the flush's ground, and it refuses rather than bounds,
-because a span describing no removable region has no honest smaller
+because a span describing no removable region has no smaller true
 version the way an over-large `keep` does. Section 5 gains the refusal and
 the SPU still decides nothing, executing the span the ask names.
 **Revised:** 2026-08-20, the close crosses in segments. Per issue #236: a
@@ -201,7 +201,7 @@ never its success, and what a death means is section 5's.
 
 ## 2. The exchanges
 
-Four exchanges and one emission. The exchanges are opened by the harness.
+Five exchanges and one emission. The exchanges are opened by the harness.
 The emission is the SPU's fault report, the origination the residency
 contract deferred, arriving here because the faults it carries are
 decode-domain traffic, and it is an emission rather than a fifth exchange
@@ -320,11 +320,14 @@ carries no operation that removes anything from a trace.
 reversed and deliberately.** A `keep` the flush cannot honour describes
 less context than exists and the arithmetic satisfies it without
 misreporting. A span overlapping the identity prefix, running past the
-resident count, or ending before it starts describes no removable region,
-and it has no smaller true version to fall back to. The answer confirms after the
-outcome holds and carries the resident counts before and after, the SPU
-being the one authority on either number and the harness authoring the
-record's `elision` event from exactly them.
+resident count, ending before it starts, or empty with its end equal to its
+start describes no removable region, and it has no smaller true version to
+fall back to. **An empty span refuses rather than eliding nothing**, a span
+removing no position being one the loop computed wrongly. The answer
+confirms after the outcome holds and carries the span it elided beside the
+resident counts before and after: the SPU is the one authority on the
+counts, and the harness authors the record's `elision` event from the span
+it named and the counts it was given.
 
 **The SPU decides nothing here.** It executes the span the ask names, as
 it executes the cut the flush names. Which part of a context is worth
@@ -449,7 +452,8 @@ Refusals are typed and enumerable. The cases:
   session's account of itself
 - the delta is malformed for the family, under the framing candidate
 - the elision's span describes no removable region: it overlaps the
-  identity prefix, runs past the resident count, or ends before it starts
+  identity prefix, runs past the resident count, ends before it starts, or
+  is empty with its end equal to its start
 
 **A fault inside a generation is the exchange's typed answer**, naming the
 fault the way section 13.10 enumerates, and the turn fails with its
@@ -563,8 +567,16 @@ until the tool workflow authors that contract and the count is read again.
 How each check is implemented is Spec work. What must be checkable:
 
 - A session never rewinds: no operation of this seam reduces the resident
-  state except the flush, whose outcome is the kept prefix and never less
-  than the identity prefix.
+  state except the flush and the elision. The flush's outcome is the kept
+  prefix and never less than the identity prefix. The elision's outcome
+  holds the identity prefix entire and preserves the order of every
+  position it did not remove, so what remains is the sequence it was,
+  shorter, and never a resequencing.
+- The elision's bounds hold at their edges: a span inside the resident
+  count elides exactly its own length, and a span overlapping the identity
+  prefix, running past the resident count, ending before it starts, or
+  empty is refused rather than clamped, the confirmation's counts agreeing
+  with the outcome in every case that holds.
 - The cut's bounds hold at their edges: a keep of zero, one inside the
   span, one at the resident count, and one beyond it each resolve to the
   clamped length, the confirmation's counts agreeing with the outcome in

@@ -333,6 +333,13 @@ What the elision removes is the SPU's resident sequence, and this crate's
 other obligation is unchanged by it: the trace gains an event and loses
 nothing, because nothing in this program removes anything from a record.
 
+**This crate writes the span it named into that event.** The SPU is the
+authority on the resident counts and this crate is the authority on the
+ask, so the record carries both and a consumer can see them disagree. The
+span is what makes the event replayable: an interior removal reporting only
+counts says how much went and never which positions, and the reconstruction
+`weaver-trace-PRD` section 3.2 promises needs the where.
+
 **The trace primitive goes to `weaver-trace`.** The span type, the event schema, the
 stream mechanics, the working structure, and the export
 formatters are that crate's. The harness authors events. `weaver-trace` defines

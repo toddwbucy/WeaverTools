@@ -1112,63 +1112,6 @@ the outcome rather than the mechanism, and the mechanism the Spec's per
 family. The harness still holds no handle to the cache and touches
 nothing, per section 2.
 
-### 13.13 The elision
-
-**The harness names a span of the resident sequence and this crate makes it
-absent.** Per the operator's rulings of 2026-08-22. The ask carries the
-span's bounds, the session's resident sequence afterward is what stood
-before with those positions gone and what followed them re-established
-against the shortened prefix, and the confirmation carries the resident
-counts either side. **The span is state and never the record**: what is
-elided is the sequence this crate holds resident, and no operation in this
-program removes anything from a trace.
-
-**This crate decides nothing here, which is 13.9's rule facing a third
-way.** Section 13.9 places which part of the context matters outside this
-crate twice over, for eviction and for retention, on the ground that it is
-cognition and belongs to the loop. Naming a span is the loop exercising that
-same possession rather than this crate acquiring it: the harness knows what
-it does not want re-read, says so in positions, and this crate executes what
-the ask names exactly as it executes the flush's cut. **A crate that chose
-the span would be judging what a context is worth**, and that is the thing
-the rule refuses in all three directions.
-
-**The outcome is specified and the mechanism is the Spec's per family**,
-which is 13.9's shape and for its reason. Where a family's state permits a
-rollback to the span's start the outcome is reached by rolling back and
-re-establishing the tail, and where it cannot it is reached by
-re-establishing the kept sequence whole. The invariant is that the resident
-sequence afterward is the concatenation, in order, of what preceded the span
-and what followed it.
-
-**The identity prefix stays permanent and bounds the ask from below**, per
-the prefix invariant the flush already answers to. A span reaching into the
-prefix is refused rather than clamped, which differs from the flush's cut on
-purpose: a `keep` below the prefix is an ask for less context that the
-arithmetic satisfies without misreporting, while a span overlapping the
-prefix is an ask to remove what the session is defined by, and it has no
-smaller true version.
-
-**Nothing is inserted, and the seam stays append-only.** The elision removes
-and does not replace. Whatever should stand where the span stood arrives as
-the next contribution and therefore lands at the end, because this seam
-appends and this act does not change that. **Injection is not this act's to
-charter**: apex section 9 already places it with the harness, a function
-loop injecting a computed result where a stochastic one would otherwise go,
-so the two halves the calculator work needs are already divided between two
-parties and only this one was missing.
-
-**The state and the record disagree afterward, and that is the design.** The
-record holds the elided material and gains an event saying it was elided.
-The state holds neither the material nor a marker: a context carrying a
-scar would be a reserved slot for a reader that does not exist, and the
-model is not the party the elision is accountable to. **The record is that
-party.** A consumer reconstructing what the model held at any turn replays
-the record's edits, the flushes and now the elisions, rather than
-accumulating contributions naively, which is the accumulation rule
-`weaver-trace-PRD` section 3.2 already carries meeting a second kind of
-edit.
-
 ### 13.10 The faults this submodule raises
 
 The enumeration section 10's cell waited on, each a fault the worker
@@ -1191,7 +1134,11 @@ survives, reported to the harness and authored by it as the `fault` event:
   one.
 - **Elision refused.** The span's bounds do not describe a removable
   region: it overlaps the identity prefix, it runs past the resident count,
-  or its end precedes its start. A refusal rather than a fault, typed on the
+  its end precedes its start, or it is empty, the end equalling the start.
+  **The empty span refuses rather than succeeding on nothing**, because a
+  span that removes no position is a span the loop computed wrongly, and an
+  answer confirming an elision that elided nothing would report a state
+  change that did not happen. A refusal rather than a fault, typed on the
   seam, because the ask was answerable and wrong rather than the session
   being unwell.
 - **Surprisal fault while elected.** The per-position vector could not be
@@ -1316,6 +1263,63 @@ instrumented run has lost more than seven megabytes buys back. The two
 readings are computed at the same place against the same distribution and
 are elected differently, which is a fact about what they are read for
 rather than about what they cost.
+
+### 13.13 The elision
+
+**The harness names a span of the resident sequence and this crate makes it
+absent.** Per the operator's rulings of 2026-08-22. The ask carries the
+span's bounds, the session's resident sequence afterward is what stood
+before with those positions gone and what followed them re-established
+against the shortened prefix, and the confirmation carries the resident
+counts either side. **The span is state and never the record**: what is
+elided is the sequence this crate holds resident, and no operation in this
+program removes anything from a trace.
+
+**This crate decides nothing here, which is 13.9's rule facing a third
+way.** Section 13.9 places which part of the context matters outside this
+crate twice over, for eviction and for retention, on the ground that it is
+cognition and belongs to the loop. Naming a span is the loop exercising that
+same possession rather than this crate acquiring it: the harness knows what
+it does not want re-read, says so in positions, and this crate executes what
+the ask names exactly as it executes the flush's cut. **A crate that chose
+the span would be judging what a context is worth**, and that is the thing
+the rule refuses in all three directions.
+
+**The outcome is specified and the mechanism is the Spec's per family**,
+which is 13.9's shape and for its reason. Where a family's state permits a
+rollback to the span's start the outcome is reached by rolling back and
+re-establishing the tail, and where it cannot it is reached by
+re-establishing the kept sequence whole. The invariant is that the resident
+sequence afterward is the concatenation, in order, of what preceded the span
+and what followed it.
+
+**The identity prefix stays permanent and bounds the ask from below**, per
+the prefix invariant the flush already answers to. A span reaching into the
+prefix is refused rather than clamped, which differs from the flush's cut on
+purpose: a `keep` below the prefix is an ask for less context that the
+arithmetic satisfies without misreporting, while a span overlapping the
+prefix is an ask to remove what the session is defined by, and it has no
+smaller true version.
+
+**Nothing is inserted, and the seam stays append-only.** The elision removes
+and does not replace. Whatever should stand where the span stood arrives as
+the next contribution and therefore lands at the end, because this seam
+appends and this act does not change that. **Injection is not this act's to
+charter**: apex section 9 already places it with the harness, a function
+loop injecting a computed result where a stochastic one would otherwise go,
+so the two halves the calculator work needs are already divided between two
+parties and only this one was missing.
+
+**The state and the record disagree afterward, and that is the design.** The
+record holds the elided material and gains an event saying it was elided.
+The state holds neither the material nor a marker: a context carrying a
+scar would be a reserved slot for a reader that does not exist, and the
+model is not the party the elision is accountable to. **The record is that
+party.** A consumer reconstructing what the model held at any turn replays
+the record's edits, the flushes and now the elisions, rather than
+accumulating contributions naively, which is the accumulation rule
+`weaver-trace-PRD` section 3.2 already carries meeting a second kind of
+edit.
 
 ## 14. The family libraries
 
