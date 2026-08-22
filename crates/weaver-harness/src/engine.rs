@@ -282,22 +282,50 @@ impl<'a> Ports<'a> {
                 _ => return None,
             }
         };
-        self.author
-            .author(
-                self.recorder,
-                Kind::Elision,
-                Subsystem::Harness,
-                None,
-                Some(Payload::Elision(weaver_trace::ElisionSpan {
-                    from,
-                    to,
-                    resident_before: counts.0,
-                    resident_after: counts.1,
-                })),
-            )
-            .ok()?;
+        // **Past the seam's confirmation the removal has happened**, so this
+        // crate's account of the session follows it before anything else can
+        // fail. Everything below reports what already holds.
         if let Some((_, capacity)) = *self.fullness {
             *self.fullness = Some((counts.1, capacity));
+        }
+        let authored = self.author.author(
+            self.recorder,
+            Kind::Elision,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Elision(weaver_trace::ElisionSpan {
+                from,
+                to,
+                resident_before: counts.0,
+                resident_after: counts.1,
+            })),
+        );
+        if authored.is_err() {
+            // **A failed author answers the counts anyway, and this is where
+            // the elision parts company with the flush.** `flush(keep)` is
+            // idempotent: a loop that saw `None` and asked again with the
+            // same `keep` reaches the same state. `elide(from, to)` is not,
+            // because the positions after a removal are not the positions
+            // before it, so the same span asked twice removes a second and
+            // different region. Answering `None` here would invite exactly
+            // that, and `None` is reserved for a refusal or a dead seam,
+            // where nothing was removed.
+            //
+            // The authoring failure is a defect in the author rather than
+            // in the ask, so it surfaces as a fault and is never retried
+            // under a new sequence, per `weaver-harness-Spec` section 6.
+            let account = format!(
+                "{{\"organ\":\"harness\",\"kind\":\"elision\",\"from\":{from},\"to\":{to}}}"
+            );
+            let _ = self.author.author_fault(
+                self.recorder,
+                Subsystem::Harness,
+                None,
+                &crate::authorship::harness_report(
+                    weaver_types::FaultCase::StreamWriteFailed,
+                    &account,
+                ),
+            );
         }
         Some(counts)
     }

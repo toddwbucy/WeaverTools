@@ -381,7 +381,7 @@ fn admit(event: &Event, session: &SessionRef, run: &RunRef) -> Result<(), Failur
 fn turn_forbidden(kind: Kind) -> bool {
     matches!(
         kind,
-        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Flush
+        Kind::Load | Kind::Unload | Kind::SessionClosed | Kind::Flush | Kind::Elision
     )
 }
 

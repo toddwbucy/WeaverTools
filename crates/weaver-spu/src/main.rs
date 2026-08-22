@@ -852,9 +852,18 @@ fn serve_decode(
                 // removes: a bound past the platform's range stays large, so
                 // a span naming it fails the resident check instead of
                 // wrapping onto a region that exists.
-                let from = usize::try_from(from).unwrap_or(usize::MAX);
-                let to = usize::try_from(to).unwrap_or(usize::MAX);
-                match standing.session.elide(from, to) {
+                // **The asked span is kept whole and only the judged copy
+                // narrows.** Saturating for the reason the flush's keep
+                // saturates, and in the direction that refuses rather than
+                // the one that removes: a bound past the platform's range
+                // stays large, so a span naming it fails the resident check
+                // instead of wrapping onto a region that exists. The refusal
+                // below reports `from` and `to` as they arrived, because a
+                // loop told its span was `usize::MAX` on a narrow target
+                // learns nothing about the span it sent.
+                let judged_from = usize::try_from(from).unwrap_or(usize::MAX);
+                let judged_to = usize::try_from(to).unwrap_or(usize::MAX);
+                match standing.session.elide(judged_from, judged_to) {
                     Ok((resident_before, resident_after)) => {
                         // Both counts from the one authority, and no span:
                         // the harness named it and writes the record's
@@ -875,10 +884,7 @@ fn serve_decode(
                     // session being unwell, and a refusal leaves the session
                     // as the directive found it.
                     Err(DecodeFault::UnremovableSpan {
-                        from,
-                        to,
-                        prefix,
-                        resident,
+                        prefix, resident, ..
                     }) => {
                         let refusal = TokenRefusal::UnremovableSpan {
                             from,

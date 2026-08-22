@@ -764,3 +764,44 @@ fn a_declined_surprisal_election_is_written_down() {
          shaped differently on purpose"
     );
 }
+
+
+/// **An elision refuses a turn rather than merely not needing one.** It is
+/// asked between turns on the flush's ground, so a turn on one is a
+/// malformed submission and not a posture, which is the distinction
+/// `turn_forbidden` draws and `turn_required` cannot: a kind that is merely
+/// turn-optional admits both.
+///
+/// Perturbation: move `Kind::Elision` out of `turn_forbidden` and leave it
+/// turn-optional, and the turn-bearing submission below is admitted.
+/// Watched under exactly that move.
+#[test]
+fn an_elision_refuses_a_turn() {
+    let (mut r, path) = recorder();
+    r.submit(event(Kind::Load, None, Some(elections()))).unwrap();
+    let span = || {
+        Some(Payload::Elision(weaver_trace::ElisionSpan {
+            from: 41,
+            to: 57,
+            resident_before: 1237,
+            resident_after: 1221,
+        }))
+    };
+    r.submit(event(Kind::Elision, None, span()))
+        .expect("a turnless elision is the ordinary case");
+    assert!(
+        r.submit(event(Kind::Elision, Some("t-1"), span())).is_err(),
+        "an elision carrying a turn is refused rather than admitted"
+    );
+    r.drain().unwrap();
+
+    let mut out = String::new();
+    File::open(&path).unwrap().read_to_string(&mut out).unwrap();
+    let elisions: Vec<&str> = out.lines().filter(|l| l.contains("\"elision\"")).collect();
+    assert_eq!(elisions.len(), 1, "only the turnless one reached the sink");
+    assert!(
+        elisions[0].contains("\"from\":41") && elisions[0].contains("\"to\":57"),
+        "and it carries the span it removed: {}",
+        elisions[0]
+    );
+}
