@@ -4,6 +4,11 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, fourth of this date, the classify outcome loses its
+refusal. `ClassifyOutcome` becomes `ClassifyScored`, a struct rather than an
+enum, its `Refused` variant having moved to the `refusal` kind per the
+charter's clause of this date and a single-variant enum being a reserved
+slot. The counts are unchanged, one disposition retiring as another arrives.
 **Revised:** 2026-08-22, third of this date, pressure leaves the failure
 vocabulary. `Failure` loses `CommitPressure`, which `submit` returned after the
 event was already in the working structure and the writer's queue, so a caller
@@ -62,8 +67,8 @@ open without retiring the splice rule. One perturbation assertion lands.
 shape. `Kind` gains `ClassifyRequest` and `ClassifyOutput` with their
 explicit renames, the counts move to eighteen, and the kind-to-payload
 mapping gains two dispositions shaped here on the flush's precedent:
-`ClassifyAsk`, the content sent, and `ClassifyOutcome`, scored or refused,
-per the charter's same-act edit.
+`ClassifyAsk`, the content sent, and `ClassifyScored`, the labels the
+artifact's head returned, per the charter's same-act edit.
 **Revised:** 2026-08-19, third of this date, the flush reaches the record.
 `Kind` gains `Flush` with its explicit rename, the counts move to sixteen
 and the ordinals to seventeenth, and the kind-to-payload mapping gains the
@@ -329,7 +334,7 @@ pub enum Payload {
     Refusal(Box<serde_json::value::RawValue>),
     ModelMeasurement(Box<serde_json::value::RawValue>),
     ClassifyRequest(ClassifyAsk),
-    ClassifyOutput(ClassifyOutcome),
+    ClassifyOutput(ClassifyScored),
     Deferred(Box<serde_json::value::RawValue>),
 }
 
@@ -373,10 +378,8 @@ pub struct ClassifyAsk {
     pub content: String,
 }
 
-#[serde(tag = "outcome", rename_all = "snake_case")]
-pub enum ClassifyOutcome {
-    Scored { labels: Vec<(String, f64)> },
-    Refused { refusal: String },
+pub struct ClassifyScored {
+    pub labels: Vec<(String, f64)>,
 }
 
 #[serde(tag = "close", rename_all = "snake_case")]
@@ -626,8 +629,10 @@ after, both plain integers, two kinds over one shape because the two
 operations report the same two facts. The four model kinds carry their four
 own shapes, one each. The
 classify pair carries its two own shapes, `ClassifyAsk` and
-`ClassifyOutcome`, the outcome scored or refused so a refusal the exchange
-met is the record's fact and never a fabricated answer. The tool bracket's
+`ClassifyScored`. **A refused classify authors no output at all** and
+reaches the record under `refusal`, so a refusal the exchange met is still
+the record's fact and never a fabricated answer, carried by the kind the
+class gives it rather than by the outcome's own variant. The tool bracket's
 two carry `Deferred`. Three plus one plus four plus one plus one plus two
 plus four plus two plus two plus one is twenty-one, which is the whole of
 charter section 3.1's set.
@@ -733,6 +738,27 @@ edits, and an edit that does not say where it fell is not replayable. So
 stay because they are the SPU's own account of the outcome against the
 harness's account of the ask, which is a disagreement worth being able to
 see.
+
+**`ClassifyOutcome` becomes `ClassifyScored` and stops being an enum.** It
+held two variants and one of them, the free-form `Refused { refusal: String
+}`, moved to the `refusal` kind on 2026-08-22. **What is left is one shape
+and takes a struct**, because a single-variant enum kept against a second
+that may come is a reserved slot for a reader that does not exist, which
+this corpus refuses. A second outcome arriving later brings its own shape in
+the act that adds it.
+
+**The kind-to-payload mapping is unchanged in its counts.** One disposition
+retires and one arrives in the same act, `ClassifyOutcome` for
+`ClassifyScored`, so twenty-one kinds and fifteen dispositions still hold. A
+refused classify authors no `classify.output` at all.
+
+**The crate carries `ClassifyOutcome` until the act that migrates it**,
+which follows this one: seven references stand in `weaver-trace` and
+`weaver-harness`, and `engine.rs` still authors a refusal as
+`Kind::ClassifyOutput` with the string inside. **Read this section as what is
+authorized and the crate as what is built**, per gate H1's direction, the
+window between a merged Spec and the code answering to it being the ordinary
+one.
 
 **`refusal` splices where `elision` and the flush shape**, which is the
 custody line rather than an inconsistency: a refusal is the refusing party's

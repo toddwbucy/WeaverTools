@@ -8,6 +8,16 @@ seam: the third seam between the same parties, on its own socket, per section
 act. The residency and token seams keep their own contracts and no document of
 the three restates another.
 
+**Revised:** 2026-08-22, the refused ask is clerked as a refusal. The
+harness authors `refusal` rather than a `classify.output` carrying a string,
+per the operator's ruling of this date and `weaver-trace-PRD` section 3.1's
+twenty-first kind. The exchange is recorded whole as section 15.5 demands.
+The refusal carries no ask, `classify.request` already holding the content
+under its own kind. **The kind emitted is the class's existing `refusal`**:
+no kind is added, no disposition is added, and this seam's refusal cases are
+unchanged in number and in meaning. What moves is which kind carries the
+refused half. The crate authors the retired shape until the act that
+migrates it, which follows this one, per gate H1's direction.
 **Date filed:** 2026-08-19
 **Document ID:** `weaver-harness-spu-classify-contract`
 **Parent:** `WeaverTools-PRD`, invariant 5.3
@@ -121,6 +131,25 @@ asks answer identically within one admission. A content exceeding the
 artifact's own bound is refused typed with the bound named. The label set is
 the artifact's and never the ask's: an ask carries content alone, per
 `weaver-spu-PRD` section 15.4.
+
+**A refused ask reaches the record as a refusal, 2026-08-22.** Per the
+operator's ruling that a refusal is clerked in one kind for every seam. The
+harness authors `classify.request` when it sends and, on a refusal, authors
+`refusal` carrying this seam's own typed case rather than a
+`classify.output`. **The exchange is recorded whole either way**, which is
+what `weaver-spu-PRD` section 15.5 demands, and what changes is which kind
+carries the half that was refused.
+
+**The refusal carries no ask**, alone among the seams in the class. Its ask
+is the content, and `classify.request` already holds that under its own
+kind, so reproducing it in the refusal would be one fact in two places.
+**Where an ask already reaches the record the refusal names the seam and
+stops**, per `weaver-types-Spec` section 4's rule for the record.
+
+**This retires a shape rather than adding one.** The refusal travelled to
+the record as a string inside `classify.output`, and it was the one refusal
+in the program that reached the record at all. Being free-form, it was also
+the one example of the shape the class rejects.
 
 **Report a fault.** Emitted by the classify process at rest, carrying a
 `fault-report` naming a case of `weaver-spu-PRD` section 15.6, and owed

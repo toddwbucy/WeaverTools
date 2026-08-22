@@ -5,6 +5,13 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-22, fourth of this date, the classify refusal joins the
+class. Section 3.1's `classify.output` carries the scored labels alone: a
+refused classify authors `classify.request` and then `refusal`, per the
+operator's ruling that a refusal is clerked in one kind for every seam. The
+exchange is recorded whole as section 15.5 demands and the half that was
+refused changes kind. The free-form string this retires was the one example
+of the shape the class rejects.
 **Revised:** 2026-08-22, the refusal is clerked. Section 3.1's kind set
 gains `refusal`, twenty-first, one kind for every seam, carrying the
 organ's own typed case opaque as `fault` does and shaped by the floor so a
@@ -377,7 +384,7 @@ its closure.
 | `model.output` | the decode boundary, response side |
 | `model.measurement` | input and output token identifiers, entropies, the generation's perplexity, the decode timings, model identity with its weights hash, the prompt-block partition, and where their elections stand the surprisals and the residual reductions |
 | `classify.request` | the label seam, request side: the content the loop sent for classification |
-| `classify.output` | the label seam, response side: every label of the artifact's head scored, or the typed refusal met |
+| `classify.output` | the label seam, response side: every label of the artifact's head scored |
 | `model.field` | one decode position's ranked candidates with their probabilities and the rank the draw landed on, when the field election stands |
 
 Nineteen kinds. Adding one is an edit to this charter and to every contract whose
@@ -410,6 +417,25 @@ refuses. The pair brackets nothing and each is recorded when it occurs, the
 turn member optional because a classify between turns belongs to no turn, a
 death mid-exchange authors no fabricated answer, and what a closure means is
 the fault custody rule's.
+**`classify.output` stopped carrying a refusal 2026-08-22.** Per the
+operator's ruling on the refusal class: the outcome the seam scored is one
+fact and a refusal is another, and carrying both under one kind made a
+reader disambiguate on every read. A refused classify now authors
+`classify.request` and then `refusal`, where a scored one authors
+`classify.request` and then `classify.output`. **The exchange is still
+recorded whole**, which is what section 15.5 of the SPU's charter demands,
+and what changed is which kind carries the half that was refused.
+
+**This retires the free-form shape the class was written against.** The
+refusal travelled as a string, which is the one thing the ruling of this
+date rejects: a consumer dispatches on a declared type rather than parsing
+prose, and the one refusal that already reached the record was the one
+example of the shape being refused. **Records written before this act carry
+the old shape**, and the operator's ruling accepts that: the program is in
+development, its traces are rebuilt against each binary, and a permanent
+exception in the place the class is meant to be uniform would have cost
+more than the discontinuity does.
+
 `flush` is the sixteenth, added 2026-08-19 by the ruling of 2026-08-12's own
 condition: a reachable flush adds its event, and the context-management arc
 made it reachable. Its payload carries the resident token counts before and
