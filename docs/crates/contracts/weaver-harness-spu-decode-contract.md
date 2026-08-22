@@ -8,6 +8,12 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, second of this date, the refusal is clerked.
+Section 5 states that every refusal on this seam reaches the record, the
+harness authoring the `refusal` event from the ask it sent and the case the
+SPU returned, per `weaver-trace-PRD` section 3.1's twenty-first kind. The
+SPU authors nothing and this seam's one emission is unchanged. No exchange
+changes and no refusal case is added.
 **Revised:** 2026-08-22, the elision joins the seam. The exchanges gain
 one: the harness names a half-open span of the resident sequence and the
 SPU makes it absent, per `weaver-spu-PRD` section 13.13 as chartered in
@@ -464,6 +470,27 @@ Refusals are typed and enumerable. The cases:
 - the elision's span describes no removable region: it overlaps the
   identity prefix, runs past the resident count, ends before it starts, or
   is empty with its end equal to its start
+
+**Every refusal on this seam is clerked, and the harness is the party that
+clerks it.** Per the operator's ruling of 2026-08-22. The SPU answers the
+refusal and the harness authors the record's `refusal` event from it,
+carrying the ask it sent beside the case the SPU returned, per
+`weaver-trace-PRD` section 3.1's twenty-first kind. **The SPU authors
+nothing**, which is unchanged: this seam has one SPU-originated message and
+it is the fault report.
+
+**A refused ask leaves no other mark, which is why the event is owed.**
+Before this ruling a refusal between turns reached the loop as an absence
+and the record as nothing, so a reader could not tell an ask that was turned
+away from an ask never made. Inside a turn it reached the client's close as
+prose with its values dropped. **Neither is recoverable after the run**, and
+the run most likely to produce a surprising refusal is the first one a new
+port is driven in.
+
+**Where a refusal ends a turn the close says so too**, carrying the stop
+reason the trace charter adds in the same act. The two are not one fact
+twice: the close says the bracket ended and the event says what was refused,
+which is the division a fault already runs on here.
 
 **A fault inside a generation is the exchange's typed answer**, naming the
 fault the way section 13.10 enumerates, and the turn fails with its

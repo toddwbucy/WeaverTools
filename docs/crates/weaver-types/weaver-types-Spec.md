@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, second of this date, the refusal record takes its
+shape. `RefusalRecord` names the seam and carries that seam's own case, with
+the ask beside it where the seam's asks reach no event of their own, per
+`weaver-types-PRD` section 2.1's clause of this date. `TokenAsk` and
+`LifecycleAsk` arrive with it. Classify carries no ask, its content already
+reaching the record under its own kind.
 **Revised:** 2026-08-22, the elision takes its wire shape.
 `TokenDirective` gains `Elide { from, to }`, a half-open span of resident
 positions, and `TokenAnswer` gains `Elided` carrying the resident counts
@@ -1416,6 +1422,38 @@ pub enum TokenAnswer {
     Fault(FaultReport),
 }
 
+/// What a seam turned away, as the record carries it.
+///
+/// **The seam is named and the case is the seam's own.** A consumer
+/// dispatches on the variant, which is what typing this here buys over a
+/// reason field the trace would have to carry as prose.
+pub enum RefusalRecord {
+    Decode { asked: TokenAsk, refusal: TokenRefusal },
+    Lifecycle { asked: LifecycleAsk, refusal: LifecycleRefusal },
+    Classify { refusal: LabelRefusal },
+}
+
+/// Which ask a decode refusal answered, so the record says what was
+/// refused and not only why.
+#[serde(tag = "ask", rename_all = "snake_case")]
+pub enum TokenAsk {
+    Open,
+    AppendAndGenerate,
+    Cancel,
+    Flush { keep: u64 },
+    Elide { from: u64, to: u64 },
+}
+
+/// Which lifecycle ask a refusal answered.
+#[serde(tag = "ask", rename_all = "snake_case")]
+pub enum LifecycleAsk {
+    Enter,
+    Leave,
+    Stop,
+    Admit,
+    Release,
+}
+
 pub enum TokenRefusal {
     NotOpen,
     OutOfOrder,
@@ -1423,6 +1461,26 @@ pub enum TokenRefusal {
     MalformedDelta,
 }
 ```
+
+**`RefusalRecord` carries the ask beside the refusal, and that pairing is
+the point.** A refusal alone says why a party said no. What a diagnostic
+reader works backwards from is what was asked, and for the two asks that
+carry values the ask is where the values are: a `Flush { keep }` refused and
+an `Elide { from, to }` refused differ in what the loop wanted, not in the
+refusal's own case. **The ask is reproduced rather than referenced** because
+the record cannot point at a directive it never carried, the decode seam's
+asks reaching no event of their own.
+
+**Classify carries no ask.** Its directive is the content, which the
+`classify.request` event already holds under its own kind, so reproducing it
+here would be one fact in two places. Where an ask already reaches the
+record the refusal names the kind and stops.
+
+**The three arms are the seams that produce typed refusals**, per the
+inventory of 2026-08-22: the decode seam, the lifecycle seams which share
+one vocabulary, and the classify seam. The gate's `RaiseRefusal` is absent
+because it crosses no seam, reaching the harness as
+`LifecycleRefusal::BindFailed`, which the lifecycle arm already carries.
 
 **`Elide` names a half-open span and `Flush` names a length, which is the
 difference between removing an interior and shortening a tail.** The bounds

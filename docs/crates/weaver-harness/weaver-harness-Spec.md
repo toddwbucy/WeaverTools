@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, second of this date, the refusal is authored.
+Section 6 gains the clause: a typed refusal answering an ask this crate sent
+becomes a `refusal` event carrying the ask and the seam's case, authored
+before the port answers, per the decode contract's clause of this date. The
+ports' returns are unchanged and a turn ended by a refusal closes under the
+stop reason the trace charter adds.
 **Revised:** 2026-08-22, the seat carries the elision port. Section 6
 gains it beside the flush's, taking `from` and `to` and forwarding them
 unjudged, per `weaver-spu-PRD` section 13.13 and the operator's ruling of
@@ -1661,6 +1667,24 @@ model.request ruling rests on. After a flush the assembly's working
 structure still holds the whole conversation and the decode context does
 not, which is exactly the divergence the loop then closes with the recall
 ask and its own composed re-entry.
+
+**Every typed refusal this crate receives is authored, 2026-08-22.** Per
+the operator's ruling and the decode contract's clause of the same date. A
+refusal answering an ask this crate sent becomes a `refusal` event carrying
+the ask and the seam's own case, and the port then answers its caller as it
+did before. **Authoring precedes answering**, on the announce-after-record
+rule this section already runs on: a loop told a span was refused before the
+record holds the refusal could act on it and leave no trace of why.
+
+**The ports answer `None` for a refusal exactly as they did**, which is
+deliberate. A port's answer is what its caller can act on, the record is
+what a later reader works backwards from, and widening every port's return
+to carry a refusal it cannot repair would put a diagnostic burden on the
+party least able to use it. What changes is that the refusal stops
+vanishing.
+
+**Where a refusal ends a turn, the close carries `Refused`.** The event and
+the close are the division a fault already runs on here.
 
 **The seat carries the elision port, 2026-08-22, through the same door.**
 The elision is chartered at `weaver-spu-PRD` section 13.13 and crosses the

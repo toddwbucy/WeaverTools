@@ -5,6 +5,13 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-22, the refusal is clerked. Section 3.1's kind set
+gains `refusal`, twenty-first, one kind for every seam, carrying the
+organ's own typed case opaque as `fault` does and shaped by the floor so a
+consumer dispatches rather than parses. The stopped close gains a third
+reason, a refused turn having matched neither of the two and closed under a
+reason that could only misreport it. The close and the event are the same
+division `fault` already runs on.
 **Revised:** 2026-08-22, the elision reaches the record. Section 3.1's
 kind set gains `elision`, twentieth, carrying the resident counts either
 side as `flush` does, per `weaver-spu-PRD` section 13.13. The state
@@ -535,8 +542,19 @@ limit closes clean**, stated with the `Length` finish of 2026-08-19: the
 turn ran to its own end and the bracket closed whole, the cut being a fact
 about the generation that `model.output.finish` carries and the answered
 close may surface as `finish: "length"` per the world contract, while the
-stopped close stays reserved for the aborts, the stop directive's and a
-fault's, so the two kinds of ending never share a spelling.
+stopped close stays reserved for the aborts, the stop directive's, a
+fault's, and as of 2026-08-22 a refusal's, so the kinds of ending never
+share a spelling.
+
+**A turn ended by a seam refusal gains its own stop reason**, per the
+operator's ruling on the refusal class. The close had two reasons and a
+refused turn matched neither, so it ended under a reason that could only
+misreport what ended it. **The close and the refusal event are two records
+of two facts rather than one fact twice**, which is the division `fault`
+already runs on: the close says the bracket ended and which kind of ending
+it was, the event says what happened, and neither is recoverable from the
+other. A reader walking brackets needs the first and a reader diagnosing
+needs the second.
 
 **`elision` joins the kind set, twentieth, and the record grows where the
 state shrinks.** Per `weaver-spu-PRD` section 13.13 as chartered
@@ -570,6 +588,32 @@ gap in the sequence it edits. **The replay consumes the recorded
 coordinates**: the elision event names the span it removed, and a consumer
 applies it at those positions rather than inferring an extent from a
 difference of counts.
+
+**`refusal` joins the kind set, twenty-first, and it is one kind for every
+seam.** Per the operator's ruling of 2026-08-22. A typed refusal crossing
+any seam of this program reaches the record here: what was asked, which seam
+answered, and the seam's own case with the values it carries.
+
+**It is not the `fault` kind and the distinction is the contracts' own.** A
+refusal is an answerable ask that was wrong, and the party that refused is
+well. `fault` says an organ is not well. Clerking a refusal as a fault would
+report a healthy session as unwell, which is the misreport the seam
+contracts already refuse in their own words, and it would put the record's
+consumers on the wrong remediation.
+
+**And it is not a member of the kind that was refused.** One kind meaning
+both an operation that happened and one that did not is an overloading a
+reader disambiguates on every read, so `elision` says a span went and
+`refusal` says a span was turned away.
+
+**The payload is the organ's, carried opaque.** A refusal is produced by the
+party that refused, so it splices, per the custody rule of 2026-08-11 that
+already governs `fault`. What makes it typed rather than free-form is that
+its shape is the floor's: `weaver-types` declares the record and each seam's
+case, so a consumer dispatches on a declared type rather than parsing prose.
+**This crate neither knows nor versions the seam vocabularies**, which is
+what its own no-dependency rule requires and what a typed payload declared
+here would have broken.
 
 ### 3.2 The payload shapes the token workflow settles
 

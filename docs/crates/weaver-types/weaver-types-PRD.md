@@ -6,6 +6,13 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-22, second of this date, the refusal record joins the
+file. Section 2.1 gains `refusal-record`, a vocabulary node this crate
+defines: the seam that refused and that seam's own typed case with its
+values, per the operator's ruling that a refusal is clerked. It is defined
+here rather than in `weaver-trace` because that crate depends on no crate of
+this program and a refusal typed there would make it hold and version four
+seam vocabularies.
 **Revised:** 2026-08-21, second of this date, the surprisal is elected and
 two draws are repaired. Section 2.1 gains `surprisal-election`, a
 vocabulary node this crate defines and the artifact holds, on
@@ -207,6 +214,24 @@ measurement written before this act carries the vector with no election
 beside it, and a measurement written after carries the flag whichever way
 it fell.
 
+**The refusal record joins the wire vocabulary 2026-08-22**, per the
+operator's ruling that a refusal is clerked. It names the seam that refused
+and carries that seam's own typed case with the values the case holds, so
+what reaches the record is the refusal itself rather than a rendering of it.
+
+**It is defined here because the trace cannot define it.** `weaver-trace`
+depends on no crate of this program, so a refusal typed in that crate would
+oblige it to hold four seam vocabularies and version them as seams change.
+Defining the record here puts the type where the seams' own refusals already
+live, and the trace carries it opaque exactly as it carries `fault-report`.
+**A consumer dispatches on this definition**, which is the whole reason the
+record is typed rather than a reason field: nothing dispatches on prose it
+must parse back into the type the sender declined to declare.
+
+**It grows as seams add refusals, and that cost is accepted.** A seam that
+gains a refusal case gains it here, in the same act, on the rule this
+section already runs on for every wire term.
+
 ```graph
 node: agent-config
 kind: artifact
@@ -238,6 +263,9 @@ kind: vocabulary
 node: surprisal-election
 kind: vocabulary
 
+node: refusal-record
+kind: vocabulary
+
 edge: defines
 from: weaver-types
 to: model-binding
@@ -261,6 +289,10 @@ to: field-election
 edge: defines
 from: weaver-types
 to: surprisal-election
+
+edge: defines
+from: weaver-types
+to: refusal-record
 
 edge: defines
 from: weaver-types
