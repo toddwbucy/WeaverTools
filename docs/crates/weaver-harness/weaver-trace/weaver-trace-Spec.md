@@ -4,6 +4,14 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, third of this date, pressure leaves the failure
+vocabulary. `Failure` loses `CommitPressure`, which `submit` returned after the
+event was already in the working structure and the writer's queue, so a caller
+reading that `Err` was told the opposite of what had happened. The depth is read
+from the recorder instead, a caller ignoring it being correct by default. What the
+harness does with it is unchanged and was never implemented: it authors a `fault`
+naming `RecorderCommitPressure`, per the fault-carrier ruling this clause already
+carried.
 **Revised:** 2026-08-22, second of this date, the refusal takes its kind.
 Section 3's `Kind` gains `Refusal` with its explicit rename and `Payload`
 gains `Refusal`, spliced on the custody rule that carries an organ's
@@ -1098,11 +1106,29 @@ to: trace-whole-events-only
 
 **Pressure is reported to the harness and never authored by this crate.** When the
 queue exceeds its high-water mark while the sink remains writable, the recorder
-surfaces `CommitPressure` to its caller. The harness authors a `fault` event in
+surfaces the queue's depth to its caller. The harness authors a `fault` event in
 response, per the fault-carrier ruling of 2026-08-01, which is the only way a
 pressure condition reaches the record: this crate authors no event and holds no
 event kind, per charter section 2, and a recorder that emitted its own pressure
 event would have ended the sole-writer property in the act of reporting on it.
+
+**Pressure is not a failure and stopped being carried as one 2026-08-22.** It was
+`Failure::CommitPressure`, returned from `submit` **after** the event was pushed to
+the working structure and enqueued to the writer. The event had landed. A caller
+reading that `Err` was told its event did not, which is the opposite of what
+happened, and every caller that discarded the result treated a recorded event as a
+lost one. **The record was right and the caller was wrong about it**, which is a
+corruption the diagnostic posture cannot catch: reading the trace finds no lie
+because the trace holds none.
+
+**So the depth rides the success path and the failure vocabulary loses the
+variant.** A submission that landed answers that it landed. What the depth is at
+that moment is a property of the recorder rather than of the submission, so it is
+read from the recorder rather than widened into every caller's `Ok`: a caller with
+no interest in pressure is correct without saying so, and a caller that wants to
+throttle asks. **The mistake becomes unavailable rather than corrected**, which is
+what the ten discard sites could not achieve by being patched, the type having
+stayed able to produce the same bug at the next port anyone adds.
 
 ```graph
 node: trace-pressure-reported-not-authored
@@ -1205,7 +1231,6 @@ act, and the ruling dissolved the subject instead.
 pub enum Failure {
     RefusedOnSubmit { reason: SubmitRefusal },
     CommitFailed { sequence: Sequence, source: WriteError },
-    CommitPressure { queued: usize },
     AppendFailed { sequence: Sequence },
     WriteTargetUnusable { source: WriteError },
 }

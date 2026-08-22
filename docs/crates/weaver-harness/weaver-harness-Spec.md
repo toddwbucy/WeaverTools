@@ -4,6 +4,13 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, third of this date, pressure is asked for. The
+recorder's depth moved off the failure path per `weaver-trace-Spec`, so
+section 6 reads it after authoring rather than receiving a `Failure` in
+place of a sequence. The obligation is unchanged and was never implemented:
+a `fault` naming `RecorderCommitPressure`, authored when the mark is first
+crossed and not again until the depth falls back under it, a persisting
+condition being one condition.
 **Revised:** 2026-08-22, second of this date, the refusal is authored.
 Section 6 gains the clause: a typed refusal answering an ask this crate sent
 becomes a `refusal` event carrying the ask and the seam's case, authored
@@ -1252,6 +1259,22 @@ edge: asserts
 from: weaver-harness
 to: harness-announce-after-record
 ```
+
+**Pressure is asked for rather than delivered, as of 2026-08-22.** It
+arrived as a `Failure` the recorder returned, which this crate could not act
+on without also treating a recorded event as a lost one, the variant being
+returned after the event had landed. `weaver-trace-Spec` moved the depth to
+the recorder's own surface, so **this crate reads it after authoring rather
+than receiving it in place of a sequence.** The obligation below is
+unchanged: pressure reaches the operator as a `fault` naming
+`RecorderCommitPressure`, and it is this crate that authors it.
+
+**The reading is per authored event and the fault is not.** A fault for
+every submission above the mark would answer a full queue by filling it,
+which is the one direction that cannot help, so the report is authored when
+the mark is first crossed and not again until the depth has fallen back
+under it. **A pressure report is a report about a condition rather than
+about an event**, and a condition that persists is one condition.
 
 **A fault the worker survives is authored, not signalled.** The pressure and
 failure reports the recorder surfaces, and the organ deaths observed through
