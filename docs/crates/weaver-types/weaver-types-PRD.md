@@ -6,6 +6,13 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-22, third of this date, a conversion is not the only
+record. Section 2.1's refusal clauses gain the rule the clerking act's
+findings share: a conversion may narrow a refusal for a reader and may not
+be the only record of it. Three narrowings are named, a crate's refusal into
+its seam's vocabulary, a seam refusal into a client's sentence, and the
+gate's bind detail into standard error, with the derived rendering and the
+`refusal` kind as what makes the first two safe.
 **Revised:** 2026-08-22, second of this date, the refusal record joins the
 file. Section 2.1 gains `refusal-record`, a vocabulary node this crate
 defines: the seam that refused and that seam's own typed case with its
@@ -147,6 +154,33 @@ of 2026-08-04:
   presence and needs no domain knowledge to do it. What a good value looks like is the
   organ's to know, per apex section 5.5, and an organ answering for its own domain is
   what keeps admin from having to hold a view of every domain at once.
+
+**A conversion may narrow a refusal for a reader and may not be the only
+record of it**, per the operator's ruling of 2026-08-22. A refusal crosses
+boundaries on its way to whoever must act on it, and every boundary is a
+chance to lose what it carried. The rule is one rule because the losses were
+found as three:
+
+- A crate's own refusal converts into the seam vocabulary that crosses.
+  `AdmitRefusal`, `FamilyRefusal`, `ReadoutRefusal`, `DeviceRefusal`, and
+  `KnobRefusal` each become a `lifecycle-refusal`, and `RenderRefusal`
+  becomes a `token-refusal`. **`RaiseRefusal` is the case that shows the
+  cost**: the gate's bind failure carries a detail the closed set has no
+  field for, so the detail goes to standard error and the seam carries
+  `BindFailed` alone.
+- A seam refusal renders for a client that is owed a sentence rather than a
+  case. That rendering is **derived from the recorded refusal** rather than
+  matched in parallel, so the client's account cannot say what the record
+  does not.
+- A refusal reaches the record as itself, which is what the clerking act of
+  this date provides and what makes the first two narrowings safe.
+
+**The narrowing is not the defect and being the only copy is.** A client
+sentence that drops four integers is right to drop them. What would be wrong
+is that sentence standing as the whole account, which is the state every one
+of the three was in before this rule. **Where a conversion is the only
+carrier, the loss is permanent and silent**, and the party that would notice
+is downstream of the boundary that dropped it.
 
 **The file's readers are still admin and the harness and no organ reads it.** An organ
 receives the slice it registered across its own seam, handed to it by the harness at
