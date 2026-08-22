@@ -6,6 +6,15 @@ before the whole set is merged. Ratification is the mapping of the whole documen
 set into the graph, and it belongs to the set rather than to this document.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-22, third of this date, a conversion is not the only
+record. Section 2.1's refusal clauses gain the rule the clerking act's
+findings share: a conversion may narrow a refusal for a reader and may not
+be the only record of it. Three narrowings are named, a crate's refusal into
+its seam's vocabulary, a seam refusal into a client's sentence, and the
+gate's bind detail into standard error, with the derived rendering and the
+`refusal` kind as what makes the first two safe **while the source
+record stands**, a narrowing being safe by the original remaining available
+rather than by the rendering being derived.
 **Revised:** 2026-08-22, second of this date, the refusal record joins the
 file. Section 2.1 gains `refusal-record`, a vocabulary node this crate
 defines: the seam that refused and that seam's own typed case with its
@@ -147,6 +156,49 @@ of 2026-08-04:
   presence and needs no domain knowledge to do it. What a good value looks like is the
   organ's to know, per apex section 5.5, and an organ answering for its own domain is
   what keeps admin from having to hold a view of every domain at once.
+
+**A conversion may narrow a refusal for a reader and may not be the only
+record of it**, per the operator's ruling of 2026-08-22. A refusal crosses
+boundaries on its way to whoever must act on it, and every boundary is a
+chance to lose what it carried. The rule is one rule because the losses were
+found as three:
+
+- A crate's own refusal converts into the seam vocabulary that crosses.
+  `AdmitRefusal`, `FamilyRefusal`, `ReadoutRefusal`, `DeviceRefusal`, and
+  `KnobRefusal` each become a `lifecycle-refusal`, and `RenderRefusal`
+  becomes a `token-refusal`. **`RaiseRefusal` is the case that shows what
+  the rule demands**: the gate's bind failure carries a detail the closed
+  set has no field for, so the seam carries `BindFailed` alone and the
+  detail goes to standard error. **That satisfies the rule only because the
+  deployment retains it.** The organ's streams are inherited and
+  `weaver-admin-Spec` refuses to set `StandardError=` on the unit it starts,
+  so the manager's default carries the detail to its journal, which is where
+  `weaver-admin-systemd-contract` section 7 already places a failure's cause.
+
+  **The retention is out of band and the rule does not treat that as equal
+  to the record.** The journal is the manager's and this program does not
+  read it, per that same contract, so an operator clearing a bind path has
+  the detail and a consumer replaying a trace does not. **Naming which of
+  the two a narrowing leaves behind is part of applying the rule**, and a
+  narrowing whose only carrier is neither the record nor a retained
+  out-of-band channel is the case the rule forbids outright.
+- A seam refusal renders for a client that is owed a sentence rather than a
+  case. That rendering is **derived from the recorded refusal** rather than
+  matched in parallel, so the client's account cannot say what the record
+  does not.
+- A refusal reaches the record as itself, which is what the clerking act of
+  this date provides. **This is the condition the other two rest on**: a
+  derived rendering is safe because the record holds what it narrowed, and a
+  seam vocabulary is safe because the case it carries reaches the record
+  whole. **Remove the source record and both become the only copy again**,
+  which is the state the rule forbids rather than a lesser version of it.
+
+**The narrowing is not the defect and being the only copy is.** A client
+sentence that drops four integers is right to drop them. What would be wrong
+is that sentence standing as the whole account, which is the state every one
+of the three was in before this rule. **Where a conversion is the only
+carrier, the loss is permanent and silent**, and the party that would notice
+is downstream of the boundary that dropped it.
 
 **The file's readers are still admin and the harness and no organ reads it.** An organ
 receives the slice it registered across its own seam, handed to it by the harness at
