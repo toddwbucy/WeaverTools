@@ -393,6 +393,11 @@ fn turn_required(kind: Kind) -> bool {
         | Kind::Unload
         | Kind::SessionClosed
         | Kind::Fault
+        // A refusal is turn-optional for the fault's reason: an append
+        // refused falls inside a turn and a flush or an elision refused
+        // falls between them, so the turn is present exactly when the
+        // refused ask belonged to one.
+        | Kind::Refusal
         | Kind::Flush
         // The elision is asked between turns on the flush's ground, so it
         // belongs to no turn for the flush's reason.
@@ -422,7 +427,7 @@ fn turn_required(kind: Kind) -> bool {
     }
 }
 
-/// The total kind-to-payload mapping, twenty kinds and fourteen
+/// The total kind-to-payload mapping, twenty-one kinds and fifteen
 /// dispositions, matching charter section 3.1 whole, enforced here because
 /// the untagged payload leaves serde unable to. **`load` stopped being
 /// payload-free 2026-08-21**: it carries the diagnostic elections of its
@@ -442,6 +447,7 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
             | (Kind::Fault, Some(Payload::Fault(_)))
             | (Kind::Flush, Some(Payload::Flush(_)))
             | (Kind::Elision, Some(Payload::Elision(_)))
+            | (Kind::Refusal, Some(Payload::Refusal(_)))
             | (Kind::ModelRequest, Some(Payload::ModelRequest(_)))
             | (Kind::ModelOutput, Some(Payload::ModelOutput(_)))
             | (Kind::ModelMeasurement, Some(Payload::ModelMeasurement(_)))

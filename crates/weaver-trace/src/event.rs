@@ -146,6 +146,11 @@ pub enum Kind {
     Fault,
     #[serde(rename = "elision")]
     Elision,
+    /// A typed refusal on any seam, per charter section 3.1's twenty-first
+    /// kind: which ask was refused, which seam answered, and that seam's own
+    /// case with the values it carries.
+    #[serde(rename = "refusal")]
+    Refusal,
     #[serde(rename = "flush")]
     Flush,
     #[serde(rename = "model.request")]
@@ -219,6 +224,15 @@ pub enum Payload {
     /// The elision's span and the resident counts either side, per
     /// `weaver-trace-PRD` section 3.1's twentieth kind.
     Elision(ElisionSpan),
+    /// The refusing party's own account, spliced.
+    ///
+    /// **Spliced rather than shaped**, on the custody rule that already
+    /// governs `Fault`: a refusal is produced by the party that refused, and
+    /// its shape is the floor's `refusal-record` rather than this crate's.
+    /// A typed payload declared here would make this crate hold four seam
+    /// vocabularies and version them as seams change, which its own
+    /// no-dependency rule forbids.
+    Refusal(Box<RawValue>),
     /// The instrument readings, the SPU-rendered measurement the harness
     /// splices, its unproduced members produced absent by the SPU rather than
     /// omitted by a serde election of this crate's.
@@ -257,6 +271,14 @@ pub enum TurnClose {
 pub enum StopReason {
     Directive,
     Fault,
+    /// The turn ended because a seam refused an ask it carried, per the
+    /// charter's clause of 2026-08-22.
+    ///
+    /// **The close and the `refusal` event are two records of two facts.**
+    /// This says the bracket ended and which kind of ending it was, the
+    /// event says what was refused, and neither is recoverable from the
+    /// other. It is the division `Fault` already runs on.
+    Refused,
 }
 
 /// The decode boundary, request side: the rendered prompt as the family

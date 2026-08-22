@@ -139,6 +139,14 @@ fn render_close_with_finish(
 
 /// A decode refusal rendered as the stopped close's reason, content for the
 /// client rather than the wire case itself.
+///
+/// **Derived from the recorded refusal rather than matched in parallel**,
+/// per `weaver-types-Spec` section 4's conversion rule: a conversion may
+/// narrow a refusal for a reader and may not be the only record of it. The
+/// same value that reaches the record reaches this function, so the client's
+/// sentence cannot say something the record does not. It stays lossy, a
+/// client being owed a sentence rather than four integers, and what it stops
+/// being is independent.
 fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
     match refusal {
         weaver_types::TokenRefusal::NotOpen => "the session is not open",

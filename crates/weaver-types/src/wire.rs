@@ -605,6 +605,70 @@ pub enum TokenAnswer {
     Fault(FaultReport),
 }
 
+/// What a seam turned away, as the record carries it, per
+/// `weaver-types-Spec` section 4 and `weaver-trace-PRD` section 3.1's
+/// twenty-first kind.
+///
+/// **The seam is named and the case is the seam's own**, so a consumer
+/// dispatches on the variant. That is what typing this here buys over a
+/// reason field the trace would carry as prose, and it is defined in this
+/// crate because `weaver-trace` depends on no crate of this program and a
+/// refusal typed there would make it hold and version four seam
+/// vocabularies.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "seam", rename_all = "snake_case")]
+pub enum RefusalRecord {
+    Decode {
+        asked: TokenAsk,
+        refusal: TokenRefusal,
+    },
+    Lifecycle {
+        asked: LifecycleAsk,
+        refusal: LifecycleRefusal,
+    },
+    /// **Classify carries no ask**, its content standing in the
+    /// `classify.request` event the harness authored before the exchange.
+    Classify {
+        refusal: LabelRefusal,
+    },
+}
+
+/// Which decode ask a refusal answered.
+///
+/// **A value rides the ask when no other event carries it, and is named and
+/// left alone when one does**, per `weaver-types-Spec` section 4. The open's
+/// messages reach `message.system`, the append's delta is authored as the
+/// turn's message kinds before the exchange, and the cancel's turn is the
+/// envelope's field on every event. A refused flush's cut and a refused
+/// elision's span reach no event at all, the `elision` kind recording only
+/// removals that happened, so those two carry.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "ask", rename_all = "snake_case")]
+pub enum TokenAsk {
+    Open,
+    AppendAndGenerate,
+    Cancel,
+    Flush { keep: u64 },
+    Elide { from: u64, to: u64 },
+}
+
+/// Which lifecycle ask a refusal answered, named without reproducing the
+/// declaration, which the load event's own posture carries.
+///
+/// **An enter refused before its bracket is established has no run record**,
+/// the load event being what opens the run, so such a refusal reaches the
+/// operator's answer and nothing else. That hole is named in
+/// `weaver-types-Spec` section 4 rather than closed by this type.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "ask", rename_all = "snake_case")]
+pub enum LifecycleAsk {
+    Enter,
+    Leave,
+    Stop,
+    Admit,
+    Release,
+}
+
 /// The decode seam's refusal, per `weaver-types-Spec` section 4.4: the four
 /// cases are the decode contract's section 5 and this type adds none.
 /// `OutOfOrder` is the same word loop 0's refusal carries and is not the same
