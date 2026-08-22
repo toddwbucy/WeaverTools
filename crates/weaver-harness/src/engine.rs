@@ -255,26 +255,6 @@ impl<'a> Ports<'a> {
         Some(counts)
     }
 
-    /// Close a turn's bracket as stopped, naming why.
-    ///
-    /// **Every open has a close and the close says which kind it was**, per
-    /// `weaver-trace-PRD` section 3.1. A refused turn had no reason that
-    /// named it until 2026-08-22, so it closed under one that could only
-    /// misreport, and this is the site that stopped it doing so.
-    ///
-    /// Best-effort, on the fault path's own reasoning: a close that cannot
-    /// author leaves the record untrustworthy whatever the first cause was,
-    /// and the caller's error is already travelling.
-    fn close_turn_stopped(&mut self, turn: &TurnKey, reason: weaver_trace::StopReason) {
-        let _ = self.author.author(
-            self.recorder,
-            Kind::TurnClosed,
-            Subsystem::Harness,
-            Some(turn),
-            Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
-        );
-    }
-
     /// Author the record's `refusal` event, per `weaver-harness-Spec`
     /// section 6 and the decode contract's clause of 2026-08-22.
     ///
@@ -621,14 +601,24 @@ impl<'a> Ports<'a> {
                 // report that cannot author is the same untrustworthiness one
                 // event earlier, so it takes the same answer, after the close
                 // is still attempted for the bracket's sake.
+                // **One close for one bracket, its reason chosen here.** The
+                // reason belongs at the single site that closes rather than
+                // at each site that fails: a failing arm that closed for
+                // itself would leave this one closing again, and the record
+                // would carry two closes for one turn with the second
+                // misreporting the first. A refused turn ended because a
+                // seam turned an ask away and the record says so, per
+                // `weaver-trace-PRD` section 3.1's clause of 2026-08-22.
+                let reason = match &error {
+                    TurnError::Refused { .. } => weaver_trace::StopReason::Refused,
+                    _ => weaver_trace::StopReason::Fault,
+                };
                 match self.author.author(
                     self.recorder,
                     Kind::TurnClosed,
                     Subsystem::Harness,
                     Some(&turn),
-                    Some(Payload::TurnClosed(TurnClose::Stopped {
-                        reason: weaver_trace::StopReason::Fault,
-                    })),
+                    Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
                 ) {
                     Ok(_) => {
                         // **Announce after record**, on the failure path as on
@@ -936,7 +926,6 @@ impl<'a> Ports<'a> {
                             refusal.clone(),
                             Some(turn),
                         );
-                        self.close_turn_stopped(turn, weaver_trace::StopReason::Refused);
                         return Err(TurnError::Refused {
                             turn: turn.clone(),
                             refusal,
@@ -1204,6 +1193,116 @@ mod tests {
     /// **A turn runs, and loop 0 authors the whole bracket.** Loop 1 supplies
     /// the delta and receives the outcome, and the record carries the turn's
     /// user message, the three model events, the assistant's turn, and the
+    /// **A refused turn closes once, and the close says a refusal ended
+    /// it.** Every open has a close and the close says which kind it was,
+    /// per `weaver-trace-PRD` section 3.1, so two closes are as wrong as
+    /// none: a reader walking brackets meets a second close attributed to a
+    /// turn already ended, and the later one overwrites the earlier one's
+    /// account.
+    ///
+    /// Perturbation: close at the failing arm as well as here, which is what
+    /// the first draft of this act did, and the count below reads two with
+    /// the second naming a fault. Watched under exactly that.
+    #[test]
+    fn a_refused_turn_closes_once_and_names_the_refusal() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            let refusal = weaver_types::TokenRefusal::Overflow {
+                resident: 4091,
+                requested: 137,
+                capacity: 4096,
+            };
+            let bytes = serde_json::to_vec(&refusal).expect("the refusal renders");
+            send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send refusal");
+        });
+
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                })),
+            )
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let listener = test_listener();
+        let outcome = {
+            let mut fullness = None;
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+                None,
+                None,
+                None,
+                &mut fullness,
+            );
+            ports.turn(vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "say a word".into(),
+                }],
+            }])
+        };
+        peer.join().expect("the decode peer finishes");
+        assert!(
+            matches!(outcome, Err(TurnError::Refused { .. })),
+            "the refusal still reaches the caller"
+        );
+
+        let closes: Vec<&weaver_trace::Record> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::TurnClosed)
+            .collect();
+        assert_eq!(closes.len(), 1, "one bracket, one close");
+        let close: serde_json::Value =
+            serde_json::from_str(closes[0].line.as_ref()).expect("the close parses");
+        assert_eq!(close["payload"]["close"], "stopped");
+        assert_eq!(
+            close["payload"]["reason"], "refused",
+            "and the reason names what ended the turn"
+        );
+
+        let refusals = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::Refusal)
+            .count();
+        assert_eq!(refusals, 1, "the refusal itself reached the record too");
+    }
+
     /// **A refused ask reaches the record, and the values that ride are the
     /// ones nothing else holds.** Before 2026-08-22 a refusal between turns
     /// reached the loop as an absence and the record as nothing, so a reader
