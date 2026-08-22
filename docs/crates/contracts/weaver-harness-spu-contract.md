@@ -6,6 +6,11 @@ only, which is the residency half of what this pair will eventually agree on. Th
 exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-22, the refusal on this seam is clerked. The organ's
+refusal travels as it did and the harness authors the record's `refusal`
+carrying `lifecycle-refusal`, per `weaver-trace-PRD` section 3.1's
+twenty-first kind and the operator's ruling of this date. The organ authors
+nothing and no exchange changes.
 **Revised:** 2026-08-21, the elections become three at this seam. Section 7
 draws `surprisal-election` on `weaver-spu-PRD` section 13.12, and draws
 `field-election`, which was defined on this date and drawn by neither
@@ -308,6 +313,18 @@ refusal does, typed and naming itself. The enumeration gains the field's
 case because that case existed at the far end of this seam and this
 document had not named it, which is a defect in the enumeration rather than
 a change to the seam.
+
+**A refusal on this seam is clerked, 2026-08-22.** Per the operator's ruling
+that a refusal is clerked in one kind for every seam. The SPU's refusal
+travels to the harness as it did, and the harness authors the record's
+`refusal` naming this seam and carrying `lifecycle-refusal`, per
+`weaver-trace-PRD` section 3.1's twenty-first kind. **The SPU authors
+nothing**, which is unchanged, and the refusal still reaches admin in the
+enter aggregate.
+
+**Where the refusal falls before the run's bracket stands it reaches no
+record**, the `load` event being what opens the run. That is named at
+`weaver-admin-harness-contract` and is not closed by this act.
 
 **The set is open and its exit is named.** `weaver-spu-PRD` section 10 holds the cell,
 carrying the candidate list the old tree's device authority offers as mechanics, and the

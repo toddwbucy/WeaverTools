@@ -7,6 +7,11 @@ v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise a
 the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-22, the refusal on this seam is clerked. The organ's
+refusal travels as it did and the harness authors the record's `refusal`
+carrying `lifecycle-refusal`, per `weaver-trace-PRD` section 3.1's
+twenty-first kind and the operator's ruling of this date. The organ authors
+nothing and no exchange changes.
 **Revised:** 2026-08-18, the tool boundary ruling re-grounds the execution
 exchange. The gate holds one tool, the shell, which is this crate's own
 outbound verb: the agent's effect on the world crosses this membrane, and the
@@ -370,6 +375,18 @@ keying on it there.
 
 **Nothing on this seam retries.** A refused directive returns to the harness, which
 unwinds, and a re-sent directive would put two attempts behind one operator intent.
+
+**A refusal on this seam is clerked, 2026-08-22.** Per the operator's ruling
+that a refusal is clerked in one kind for every seam. The organ's refusal
+travels to the harness, and the harness authors the record's `refusal`
+naming this seam and carrying `lifecycle-refusal`, per `weaver-trace-PRD`
+section 3.1's twenty-first kind. **The organ authors nothing**, which is
+unchanged, and the refusal still reaches admin in the enter aggregate as it
+did.
+
+**Where the refusal falls before the run's bracket stands it reaches no
+record**, the `load` event being what opens the run. That is named at
+`weaver-admin-harness-contract` and is not closed by this act.
 
 ## 6. Prohibitions
 
