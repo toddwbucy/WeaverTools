@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, the elision takes its wire shape.
+`TokenDirective` gains `Elide { from, to }`, a half-open span of resident
+positions, and `TokenAnswer` gains `Elided` carrying the resident counts
+either side as `Flushed` does, per the decode contract as amended this date.
+The span is state and never the record.
 **Revised:** 2026-08-21, the decoder instruction carries a third election.
 `DecoderInstruction` gains `surprisal_election`, a bare boolean beside the
 field's option, per `weaver-types-PRD` section 2.1's clause of this date on
@@ -1391,6 +1396,7 @@ pub enum TokenDirective {
     },
     Cancel { turn: TurnKey },
     Flush { keep: u64 },
+    Elide { from: u64, to: u64 },
 }
 
 pub enum TokenAnswer {
@@ -1400,6 +1406,10 @@ pub enum TokenAnswer {
     Generated(Generation),
     AtRest,
     Flushed {
+        resident_before: u64,
+        resident_after: u64,
+    },
+    Elided {
         resident_before: u64,
         resident_after: u64,
     },
@@ -1413,6 +1423,27 @@ pub enum TokenRefusal {
     MalformedDelta,
 }
 ```
+
+**`Elide` names a half-open span and `Flush` names a length, which is the
+difference between removing an interior and shortening a tail.** The bounds
+are resident positions, `from` inclusive and `to` exclusive, and the pair
+describes what leaves rather than what stays: the flush's `keep` says what
+the session returns to, and a span says what the session loses. **They take
+opposite rules at their edges**, per the decode contract as amended
+2026-08-22: an over-large `keep` bounds, and a span describing no removable
+region refuses, because a smaller true version of the first exists and of
+the second does not.
+
+**`Elided` carries the same pair `Flushed` carries** and for the same
+reason: the SPU is the one authority on either count and the harness
+authors the record's event from exactly them. Two answers of one shape are
+two facts rather than one, so they take two cases rather than a shared case
+with a discriminant, on this Spec's standing rule that a name earns its own
+variant where a reader would otherwise infer which operation ran.
+
+**The span is state.** These positions index the resident sequence the SPU
+holds, never the trace, and no directive on this seam removes anything from
+a record.
 
 **The tunable map left this directive in the act that routed it to the
 declaration**, per `weaver-spu-Spec` section 8, so nothing sampling-related

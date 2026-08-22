@@ -8,6 +8,14 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, the elision joins the seam. The exchanges gain
+one: the harness names a half-open span of the resident sequence and the
+SPU makes it absent, per `weaver-spu-PRD` section 13.13 as chartered in
+this act. **The span is state and never the record.** It is valid only
+between turns on the flush's ground, and it refuses rather than bounds,
+because a span describing no removable region has no smaller true
+version the way an over-large `keep` does. Section 5 gains the refusal and
+the SPU still decides nothing, executing the span the ask names.
 **Revised:** 2026-08-20, the close crosses in segments. Per issue #236: a
 long turn's close outgrew the envelope bound and the seam killed what it
 could not carry, silently. Section 1 gains the segment series - one
@@ -193,7 +201,7 @@ never its success, and what a death means is section 5's.
 
 ## 2. The exchanges
 
-Four exchanges and one emission. The exchanges are opened by the harness.
+Five exchanges and one emission. The exchanges are opened by the harness.
 The emission is the SPU's fault report, the origination the residency
 contract deferred, arriving here because the faults it carries are
 decode-domain traffic, and it is an emission rather than a fifth exchange
@@ -300,6 +308,38 @@ before and after the truncate: the SPU is the one authority on either
 number, and the harness authors the record's `flush` event from exactly
 them.
 
+**Elide a span.** The harness names a half-open span of the resident
+sequence and the SPU makes it absent: afterward the resident sequence is
+what preceded the span followed by what followed it, the tail
+re-established against the shortened prefix, the outcome fixed against the
+named bounds and the mechanism the Spec's per family, per `weaver-spu-PRD`
+section 13.13. **The span is state and never the record**, and this seam
+carries no operation that removes anything from a trace.
+
+**The ask is refused rather than bounded, which is the flush's rule
+reversed and deliberately.** A `keep` the flush cannot honour describes
+less context than exists and the arithmetic satisfies it without
+misreporting. A span overlapping the identity prefix, running past the
+resident count, ending before it starts, or empty with its end equal to its
+start describes no removable region, and it has no smaller true version to
+fall back to. **An empty span refuses rather than eliding nothing**, a span
+removing no position being one the loop computed wrongly. The answer
+confirms after the outcome holds and carries the resident counts before and
+after, and it does not echo the span. **Each party writes what it is the
+authority on**: the harness named the span and needs no confirmation of its
+own ask, the SPU is the one authority on either count, and the record's
+`elision` event is authored from the span the harness held and the counts
+the SPU returned.
+
+**The SPU decides nothing here.** It executes the span the ask names, as
+it executes the cut the flush names. Which part of a context is worth
+keeping is the loop's, per `weaver-spu-PRD` section 13.9 and 13.13, and an
+organ choosing the span would be an organ judging what a context is worth.
+
+**Nothing is inserted.** The elision removes and does not replace, and this
+seam stays append-only: whatever should stand where the span stood arrives
+as the next delta and lands at the end.
+
 **Report a fault.** Emitted by the SPU, the seam's one SPU-originated
 message and not an exchange, carrying a `fault-report` naming a case of
 `weaver-spu-PRD` section 13.10 that arose outside any outstanding
@@ -331,6 +371,9 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   rest, the validity window being the session rather than the generation.
 - Flush is valid only between turns. A flush while a generation is in
   flight is refused, the cancel existing for exactly that case.
+- Elision is valid only between turns, on the flush's ground and for its
+  reason: a span named against a resident sequence that is still growing
+  names positions that will have moved by the time it lands.
 - The fault report is emitted only at rest, no exchange outstanding, any
   time after the session opens, and it takes no answer. A fault arising
   while an exchange is outstanding is that exchange's typed answer, per
@@ -352,6 +395,8 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   well-framed for the next turn, stopped or complete alike, so the
   harness may rely on the session's coherence without inspecting it.
 - An answer to flush arrives only after the kept-prefix state holds.
+- An answer to elision arrives only after the shortened state holds, on the
+  flush's rule and for its reason.
 
 ## 4. What each party supplies and guarantees
 
@@ -360,8 +405,9 @@ change is a supplies change by construction and a Spec writer reads this
 list.
 
 **The harness supplies** the session's identity material at open, each
-turn's context and delta, the cancel, and the flush. The sampling values
-are not among them and reach the SPU in the declaration instead.
+turn's context and delta, the cancel, the flush, and the elision's span.
+The sampling values are not among them and reach the SPU in the
+declaration instead.
 
 **The harness guarantees** that it opens no session before residency
 confirms and no second session ever. That one generation is in flight at
@@ -377,13 +423,18 @@ the operator's end-to-end requirement.
 **The SPU supplies** the opened confirmation, the token stream as each is
 drawn, the field stream where its election stands, each generation with
 its measurement and elected reductions, the stopped partials, the flush
-confirmation, the typed refusals, and the fault reports.
+confirmation, the elision confirmation with its resident counts either
+side, the typed refusals, and the fault reports.
 
 **The SPU guarantees** that the session only advances: nothing ever asks
 resident state to rewind, and the weakest family sets the rule for all.
 That the identity prefix is permanent from open to release, the flush's
-outcome included. That an aborted generation leaves the session
-well-framed before its answer returns. That an elected field is read from the same
+outcome and the elision's included, a span reaching the prefix being
+refused rather than trimmed to spare it. That an elision removes exactly
+the span it was given and preserves the order of every position it did
+not, so what remains is the sequence it was and never a resequencing. That
+an aborted generation leaves the session well-framed before its answer
+returns. That an elected field is read from the same
 distribution the
 measurement is read from and before the sampler consumes it, so the two
 never describe different states of one position, and that it names its
@@ -410,6 +461,9 @@ Refusals are typed and enumerable. The cases:
 - the session cannot take the next delta, the overflow named with the
   session's account of itself
 - the delta is malformed for the family, under the framing candidate
+- the elision's span describes no removable region: it overlaps the
+  identity prefix, runs past the resident count, ends before it starts, or
+  is empty with its end equal to its start
 
 **A fault inside a generation is the exchange's typed answer**, naming the
 fault the way section 13.10 enumerates, and the turn fails with its
@@ -523,8 +577,16 @@ until the tool workflow authors that contract and the count is read again.
 How each check is implemented is Spec work. What must be checkable:
 
 - A session never rewinds: no operation of this seam reduces the resident
-  state except the flush, whose outcome is the kept prefix and never less
-  than the identity prefix.
+  state except the flush and the elision. The flush's outcome is the kept
+  prefix and never less than the identity prefix. The elision's outcome
+  holds the identity prefix entire and preserves the order of every
+  position it did not remove, so what remains is the sequence it was,
+  shorter, and never a resequencing.
+- The elision's bounds hold at their edges: a span inside the resident
+  count elides exactly its own length, and a span overlapping the identity
+  prefix, running past the resident count, ending before it starts, or
+  empty is refused rather than clamped, the confirmation's counts agreeing
+  with the outcome in every case that holds.
 - The cut's bounds hold at their edges: a keep of zero, one inside the
   span, one at the resident count, and one beyond it each resolve to the
   clamped length, the confirmation's counts agreeing with the outcome in

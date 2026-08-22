@@ -4,6 +4,17 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, second of this date, the elision records where it
+fell. `Elision` carries `ElisionSpan`, `from` and `to` beside the resident
+counts, rather than the `FlushCounts` the first draft of this act gave it.
+A flush is described by the count it leaves and an interior removal is not,
+so the counts alone could not support the replay charter section 3.2
+promises. The disposition count is unchanged at fourteen.
+**Revised:** 2026-08-22, the elision takes its kind. Section 3's `Kind`
+gains `Elision` with its explicit rename, the counts moving to twenty, and
+the kind-to-payload mapping gains `Elision` carrying `FlushCounts`, the
+same two facts under a different kind rather than a second struct with
+identical members.
 **Revised:** 2026-08-21, third of this date, the elections become three.
 Section 3's `Elections` gains `surprisal`, a plain boolean serialized even
 when false, per the charter's same-act edit on issue #258: absent, false,
@@ -272,6 +283,7 @@ pub enum Kind {
     #[serde(rename = "turn.started")]         TurnStarted,
     #[serde(rename = "turn.closed")]          TurnClosed,
     #[serde(rename = "flush")]                Flush,
+    #[serde(rename = "elision")]              Elision,
     #[serde(rename = "message.system")]       MessageSystem,
     #[serde(rename = "message.user")]         MessageUser,
     #[serde(rename = "message.assistant")]    MessageAssistant,
@@ -297,6 +309,7 @@ pub enum Payload {
     ModelField(ModelField),
     Elections(Elections),
     Flush(FlushCounts),
+    Elision(ElisionSpan),
     ModelMeasurement(Box<serde_json::value::RawValue>),
     ClassifyRequest(ClassifyAsk),
     ClassifyOutput(ClassifyOutcome),
@@ -325,6 +338,13 @@ pub struct Elections {
     pub residual_readout: bool,
     pub field: Option<u32>,
     pub surprisal: bool,
+}
+
+pub struct ElisionSpan {
+    pub from: u64,
+    pub to: u64,
+    pub resident_before: u64,
+    pub resident_after: u64,
 }
 
 pub struct FlushCounts {
@@ -578,18 +598,20 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, nineteen kinds and thirteen
+**The kind-to-payload mapping is total, twenty kinds and fourteen
 dispositions**, the payload-free case counting as one of them. `unload`,
 `session.closed`, and `turn.started` carry `None`.
 `load` carries `Elections`. The four message kinds carry `Message`.
-`turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` carries
-`FlushCounts`, the resident token counts before and after, both plain
-integers. The four model kinds carry their four own shapes, one each. The
+`turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` and
+`elision` each carry `FlushCounts`, the resident token counts before and
+after, both plain integers, two kinds over one shape because the two
+operations report the same two facts. The four model kinds carry their four
+own shapes, one each. The
 classify pair carries its two own shapes, `ClassifyAsk` and
 `ClassifyOutcome`, the outcome scored or refused so a refusal the exchange
 met is the record's fact and never a fabricated answer. The tool bracket's
-two carry `Deferred`. Three plus one plus four plus one plus one plus one
-plus four plus two plus two is nineteen, which is the whole of charter
+two carry `Deferred`. Three plus one plus four plus one plus one plus two
+plus four plus two plus two is twenty, which is the whole of charter
 section 3.1's set.
 
 **The count is stated because it has twice been wrong, and the second time
@@ -676,6 +698,23 @@ a set named once drifts as members join it, and every record already
 carrying that name becomes a record of something else without any event
 saying so. Naming each election is what keeps a record's posture
 recoverable from the record.
+
+**`elision` carries its coordinates and `flush` does not need to.** An
+earlier draft of this section gave the elision `FlushCounts` on the reading
+that the two operations report the same two facts. They do not. **A flush is
+fully described by the count it leaves**, its outcome being a prefix, so
+`resident_after` names the surviving sequence exactly. An elision removes an
+interior, and two elisions with identical counts can remove different
+positions and leave different sequences, so the counts alone say how much
+went and never which.
+
+**Without the span the record cannot support the replay this crate promises.**
+Charter section 3.2 has a consumer reconstruct a context by replaying the
+edits, and an edit that does not say where it fell is not replayable. So
+`ElisionSpan` carries `from` and `to` beside the two counts, and the counts
+stay because they are the SPU's own account of the outcome against the
+harness's account of the ask, which is a disagreement worth being able to
+see.
 
 **The identity prefix's events carry no turn, and `message.system`
 becomes turn-optional to admit them.** A prefix is seated at open and
