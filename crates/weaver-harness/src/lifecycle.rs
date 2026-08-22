@@ -137,6 +137,43 @@ fn render_close_with_finish(
     serde_json::Value::Object(map).to_string()
 }
 
+/// Author the record's `refusal` for a lifecycle refusal that reached a
+/// standing run, per `weaver-harness-Spec` section 6.
+///
+/// **The run stays entered and this is not a close.** A refused enter leaves
+/// a run in place holding what the fan-out forked, and what ends the bracket
+/// is the operator's `leave` arriving later, so this authors an event inside
+/// a standing run rather than a last word before teardown.
+///
+/// **The ask is named and not reproduced.** `LifecycleAsk::Enter` says which
+/// directive was refused, and the declaration it carried is not copied in:
+/// the load event already holds the run's posture, and reproducing a
+/// declaration here would be one fact in two places, per
+/// `weaver-types-Spec` section 4's rule for the record.
+///
+/// Best-effort. A refusal that could not be recorded is a defect in the
+/// author rather than in the ask, and the answer to admin is already
+/// travelling.
+fn author_lifecycle_refusal(run: &mut Run, refusal: &LifecycleRefusal) {
+    let record = weaver_types::RefusalRecord::Lifecycle {
+        asked: weaver_types::LifecycleAsk::Enter,
+        refusal: refusal.clone(),
+    };
+    let Ok(rendered) = serde_json::to_string(&record) else {
+        return;
+    };
+    let Some(payload) = weaver_trace::raw_payload(&rendered) else {
+        return;
+    };
+    let _ = run.author.author(
+        &mut run.recorder,
+        Kind::Refusal,
+        Subsystem::Harness,
+        None,
+        Some(weaver_trace::Payload::Refusal(payload)),
+    );
+}
+
 /// A decode refusal rendered as the stopped close's reason, content for the
 /// client rather than the wire case itself.
 ///
@@ -923,7 +960,17 @@ impl Harness {
                         // stream is clean and the position holds.
                         self.refuse(connection, &exchange, refusal)?;
                     }
-                    Err(EnterFailure::AfterLoad(run, refusal)) => {
+                    Err(EnterFailure::AfterLoad(mut run, refusal)) => {
+                        // **The refusal is clerked before the answer goes
+                        // out**, per `weaver-harness-Spec` section 6 and the
+                        // admin contract's clause of 2026-08-22: a bracket
+                        // that stands is a run whose record can say why its
+                        // enter was refused, and the answer alone leaves
+                        // nothing behind. This is the one site for all
+                        // thirteen paths that raise a lifecycle refusal, a
+                        // refusal being one kind of event whatever raised
+                        // it.
+                        author_lifecycle_refusal(&mut run, &refusal);
                         // The bracket stands, so the run stays in place for
                         // the leave that unwinds it. Dropping it here would
                         // orphan what forked and leave the bracket unclosed.
@@ -1839,6 +1886,135 @@ mod tests {
         let frame: serde_json::Value = serde_json::from_str(&distilled).expect("frame parses");
         assert_eq!(frame["envelope"]["kind"], "load");
         assert_eq!(frame["envelope"]["session"], "s-election");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **A refused enter leaves its reason in the run's record.** Before
+    /// 2026-08-22 a lifecycle refusal reached admin's answer and nothing
+    /// else, so a trace showed a run that loaded and then stopped, with the
+    /// reason living only in an answer no reader of the record holds.
+    ///
+    /// The run here is the one a real after-load refusal produces, taken
+    /// from the enter path rather than assembled, so the record it carries
+    /// is the record that would have been written.
+    ///
+    /// **What this pins and what it does not.** It pins the shape: that a
+    /// lifecycle refusal reaching a standing run becomes a `refusal` naming
+    /// the seam and the ask, carrying the seam's own case, belonging to no
+    /// turn, and closing nothing. **It does not pin the call site.** The
+    /// clerking happens in the serve loop's after-load arm, which needs a
+    /// coordination connection to reach, and this test calls the authoring
+    /// directly, so removing the call from that arm leaves this test
+    /// passing. Watched under exactly that removal, which is how the gap is
+    /// known rather than assumed.
+    ///
+    /// The call site is one line in one arm and the arm is read in review.
+    /// A test that drove it would drive the whole serve loop, which is the
+    /// shape `the_turn_rehearses_on_the_device` already carries for the
+    /// turn, and it is the honest place to add this if the arm ever grows a
+    /// second path.
+    #[test]
+    fn a_refused_enter_leaves_its_reason_in_the_record() {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-refused-enter-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("scratch");
+        let listener =
+            crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
+        let sink = OwnedFd::from(File::create(dir.join("trace.ndjson")).expect("sink"));
+        let mut harness = Harness {
+            coordination: listener,
+            organs: OrganBinaries {
+                classify: None,
+                spu: "/nonexistent/weaver-spu".into(),
+                gate: "/nonexistent/weaver-gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::BeforeEnter,
+        };
+        let payload = weaver_types::EnterPayload {
+            session: SessionId("s-refused".into()),
+            run: weaver_types::RunId("r-1".into()),
+            spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef("unreachable".into()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    field_election: None,
+                    surprisal_election: false,
+                    identity: Vec::new(),
+                    tunable_values: Default::default(),
+                },
+            },
+            gate_instruction: weaver_types::GateInstruction {
+                access_rule: weaver_types::AccessRule {
+                    allowed_uids: Default::default(),
+                    allowed_gids: Default::default(),
+                    denied_uids: Default::default(),
+                },
+            },
+            state_election: weaver_types::StateElection {
+                all_kinds: false,
+                keys: Vec::new(),
+            },
+        };
+        // The fan-out fails after-load at the SPU exec, which is the arm
+        // this test exists for: the bracket stands and the refusal is the
+        // enter's own.
+        let (mut run, refusal) = match harness.enter(payload, Some(sink)) {
+            Err(EnterFailure::AfterLoad(run, refusal)) => (*run, refusal),
+            Ok(_) => panic!("the bogus fan-out cannot succeed"),
+            Err(EnterFailure::BeforeLoad(refusal)) => {
+                panic!("failed before the load: {refusal:?}")
+            }
+        };
+
+        author_lifecycle_refusal(&mut run, &refusal);
+
+        let refusals: Vec<&weaver_trace::Record> = run
+            .recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::Refusal)
+            .collect();
+        assert_eq!(refusals.len(), 1, "the refusal reached the run's record");
+        let event: serde_json::Value =
+            serde_json::from_str(refusals[0].line.as_ref()).expect("the line parses");
+        assert_eq!(event["payload"]["seam"], "lifecycle");
+        assert_eq!(
+            event["payload"]["asked"]["ask"], "enter",
+            "the ask is named"
+        );
+        assert!(
+            event["payload"]["refusal"].is_string()
+                || event["payload"]["refusal"].is_object(),
+            "and the seam's own case travels: {event}"
+        );
+        assert!(
+            event.get("turn").is_none(),
+            "an enter belongs to no turn"
+        );
+
+        // **The bracket is still open**, which is the property the shape
+        // rests on: a refused enter authors an event inside a standing run
+        // and the close belongs to the leave.
+        assert_eq!(
+            run.recorder
+                .structure()
+                .iter()
+                .filter(|r| r.kind == Kind::TurnClosed)
+                .count(),
+            0,
+            "a refused enter closes no turn"
+        );
+
+        let _ = leave(&mut run);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
