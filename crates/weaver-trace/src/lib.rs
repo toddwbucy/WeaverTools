@@ -48,6 +48,7 @@
 //!         Kind::Fault => "fault",
 //!         Kind::Flush => "flush",
 //!         Kind::Elision => "elision",
+//!         Kind::Refusal => "refusal",
 //!         Kind::ModelRequest => "model.request",
 //!         Kind::ModelOutput => "model.output",
 //!         Kind::ModelMeasurement => "model.measurement",

@@ -226,6 +226,14 @@ impl<'a> Ports<'a> {
                     resident_after,
                 }) => break (resident_before, resident_after),
                 crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                // **Authored before the port answers**, on the
+                // announce-after-record rule: a loop told its cut was
+                // refused before the record holds the refusal could act on
+                // it and leave no trace of why.
+                crate::channel::DecodeReply::Refusal(refusal) => {
+                    self.author_refusal(weaver_types::TokenAsk::Flush { keep }, refusal, None);
+                    return None;
+                }
                 _ => return None,
             }
         };
@@ -247,6 +255,43 @@ impl<'a> Ports<'a> {
         Some(counts)
     }
 
+    /// Author the record's `refusal` event, per `weaver-harness-Spec`
+    /// section 6 and the decode contract's clause of 2026-08-22.
+    ///
+    /// **The ask is named and its values ride only where no other event
+    /// holds them.** A refused flush's cut and a refused elision's span
+    /// reach no other kind, so they travel here. The open's messages, the
+    /// append's delta, and the cancel's turn each reach the record under
+    /// their own kinds before the exchange, so the ask is named and left
+    /// alone.
+    ///
+    /// **Best-effort and never the caller's failure.** A refusal that could
+    /// not be recorded is a defect in the author rather than in the ask, and
+    /// the port still answers what it was going to answer: refusing to
+    /// report a refusal twice over would leave the loop with neither the
+    /// answer nor the record.
+    fn author_refusal(
+        &mut self,
+        asked: weaver_types::TokenAsk,
+        refusal: weaver_types::TokenRefusal,
+        turn: Option<&TurnKey>,
+    ) {
+        let record = weaver_types::RefusalRecord::Decode { asked, refusal };
+        let Ok(rendered) = serde_json::to_string(&record) else {
+            return;
+        };
+        let Some(payload) = weaver_trace::raw_payload(&rendered) else {
+            return;
+        };
+        let _ = self.author.author(
+            self.recorder,
+            Kind::Refusal,
+            Subsystem::Harness,
+            turn,
+            Some(Payload::Refusal(payload)),
+        );
+    }
+
     /// The elision ask, per `weaver-harness-Spec` section 6 and
     /// `weaver-spu-PRD` section 13.13: the loop names a half-open span of
     /// resident positions, the span is forwarded unjudged, and the answered
@@ -262,10 +307,16 @@ impl<'a> Ports<'a> {
     /// seam returned, each party writing what it is the authority on, and
     /// the answer echoes no span for exactly that reason.
     ///
-    /// Answers the pair, or `None` where the seam refused or broke. A
-    /// refused span authors no event: nothing was elided, and an event
-    /// saying otherwise would be a record of a state change that did not
-    /// happen.
+    /// Answers the pair, or `None` where the seam refused or broke.
+    ///
+    /// **A refused span authors no `elision` and does author a `refusal`**,
+    /// per the clerking act of 2026-08-22. Nothing was elided, so an
+    /// `elision` event would be a record of a state change that did not
+    /// happen. What did happen is that a span was turned away, which the
+    /// `refusal` event carries with the span the loop named, no other kind
+    /// holding a span that was refused. **This sentence read "authors no
+    /// event" until that act**, which was true of the record it was written
+    /// against.
     ///
     /// conforms: harness-elision-authors-from-the-ask
     pub fn elide(&mut self, from: u64, to: u64) -> Option<(u64, u64)> {
@@ -279,6 +330,20 @@ impl<'a> Ports<'a> {
                     resident_after,
                 }) => break (resident_before, resident_after),
                 crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                // The span rides the record because no event holds a span
+                // that was refused, the `elision` kind recording only
+                // removals that happened.
+                // The span rides the record because no event holds a span
+                // that was refused, the `elision` kind recording only
+                // removals that happened.
+                crate::channel::DecodeReply::Refusal(refusal) => {
+                    self.author_refusal(
+                        weaver_types::TokenAsk::Elide { from, to },
+                        refusal,
+                        None,
+                    );
+                    return None;
+                }
                 _ => return None,
             }
         };
@@ -542,14 +607,24 @@ impl<'a> Ports<'a> {
                 // report that cannot author is the same untrustworthiness one
                 // event earlier, so it takes the same answer, after the close
                 // is still attempted for the bracket's sake.
+                // **One close for one bracket, its reason chosen here.** The
+                // reason belongs at the single site that closes rather than
+                // at each site that fails: a failing arm that closed for
+                // itself would leave this one closing again, and the record
+                // would carry two closes for one turn with the second
+                // misreporting the first. A refused turn ended because a
+                // seam turned an ask away and the record says so, per
+                // `weaver-trace-PRD` section 3.1's clause of 2026-08-22.
+                let reason = match &error {
+                    TurnError::Refused { .. } => weaver_trace::StopReason::Refused,
+                    _ => weaver_trace::StopReason::Fault,
+                };
                 match self.author.author(
                     self.recorder,
                     Kind::TurnClosed,
                     Subsystem::Harness,
                     Some(&turn),
-                    Some(Payload::TurnClosed(TurnClose::Stopped {
-                        reason: weaver_trace::StopReason::Fault,
-                    })),
+                    Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
                 ) {
                     Ok(_) => {
                         // **Announce after record**, on the failure path as on
@@ -845,6 +920,18 @@ impl<'a> Ports<'a> {
                         });
                     }
                     crate::channel::DecodeReply::Refusal(refusal) => {
+                        // **The refusal is authored inside the turn's
+                        // bracket and the close names it outside**, which is
+                        // the division a fault already runs on here: the
+                        // event says what was refused and the close says the
+                        // bracket ended. The ask is the append, named
+                        // without its delta, which the turn's message kinds
+                        // carried into the record before this exchange.
+                        self.author_refusal(
+                            weaver_types::TokenAsk::AppendAndGenerate,
+                            refusal.clone(),
+                            Some(turn),
+                        );
                         return Err(TurnError::Refused {
                             turn: turn.clone(),
                             refusal,
@@ -1112,6 +1199,228 @@ mod tests {
     /// **A turn runs, and loop 0 authors the whole bracket.** Loop 1 supplies
     /// the delta and receives the outcome, and the record carries the turn's
     /// user message, the three model events, the assistant's turn, and the
+    /// **A refused turn closes once, and the close says a refusal ended
+    /// it.** Every open has a close and the close says which kind it was,
+    /// per `weaver-trace-PRD` section 3.1, so two closes are as wrong as
+    /// none: a reader walking brackets meets a second close attributed to a
+    /// turn already ended, and the later one overwrites the earlier one's
+    /// account.
+    ///
+    /// Perturbation: close at the failing arm as well as here, which is what
+    /// the first draft of this act did, and the count below reads two with
+    /// the second naming a fault. Watched under exactly that.
+    #[test]
+    fn a_refused_turn_closes_once_and_names_the_refusal() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            let refusal = weaver_types::TokenRefusal::Overflow {
+                resident: 4091,
+                requested: 137,
+                capacity: 4096,
+            };
+            let bytes = serde_json::to_vec(&refusal).expect("the refusal renders");
+            send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send refusal");
+        });
+
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                })),
+            )
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let listener = test_listener();
+        let outcome = {
+            let mut fullness = None;
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+                None,
+                None,
+                None,
+                &mut fullness,
+            );
+            ports.turn(vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "say a word".into(),
+                }],
+            }])
+        };
+        peer.join().expect("the decode peer finishes");
+        assert!(
+            matches!(outcome, Err(TurnError::Refused { .. })),
+            "the refusal still reaches the caller"
+        );
+
+        let closes: Vec<&weaver_trace::Record> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::TurnClosed)
+            .collect();
+        assert_eq!(closes.len(), 1, "one bracket, one close");
+        let close: serde_json::Value =
+            serde_json::from_str(closes[0].line.as_ref()).expect("the close parses");
+        assert_eq!(close["payload"]["close"], "stopped");
+        assert_eq!(
+            close["payload"]["reason"], "refused",
+            "and the reason names what ended the turn"
+        );
+
+        let refusals = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::Refusal)
+            .count();
+        assert_eq!(refusals, 1, "the refusal itself reached the record too");
+    }
+
+    /// **A refused ask reaches the record, and the values that ride are the
+    /// ones nothing else holds.** Before 2026-08-22 a refusal between turns
+    /// reached the loop as an absence and the record as nothing, so a reader
+    /// could not tell an ask turned away from an ask never made.
+    ///
+    /// The scripted peer refuses an elision whose span is deliberately
+    /// unroundable, so a member arrived at by default fails here.
+    ///
+    /// Perturbation: drop the `DecodeReply::Refusal` arm back to the
+    /// wildcard and the port answers `None` with the record silent, which is
+    /// the state this act exists to end. Watched under exactly that.
+    #[test]
+    fn a_refused_ask_reaches_the_record() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv elide");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the elide parses");
+            assert_eq!(
+                directive,
+                weaver_types::TokenDirective::Elide { from: 41, to: 57 }
+            );
+            let refusal = weaver_types::TokenRefusal::UnremovableSpan {
+                from: 41,
+                to: 57,
+                prefix: 12,
+                resident: 1237,
+            };
+            // The refusal crosses as itself: the seam frames an answer and a
+            // refusal alike and the reader discriminates by parse.
+            let bytes = serde_json::to_vec(&refusal).expect("the refusal renders");
+            send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send refusal");
+        });
+
+        let session = SessionId("s-1".into());
+        let sink = tempfile();
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                })),
+            )
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let listener = test_listener();
+        let answered = {
+            let mut fullness = None;
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+                None,
+                None,
+                None,
+                &mut fullness,
+            );
+            ports.elide(41, 57)
+        };
+        peer.join().expect("the decode peer finishes");
+        assert!(answered.is_none(), "a refused span answers None as it did");
+
+        let refusals: Vec<&weaver_trace::Record> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::Refusal)
+            .collect();
+        assert_eq!(refusals.len(), 1, "the refusal reached the record");
+        let event: serde_json::Value =
+            serde_json::from_str(refusals[0].line.as_ref()).expect("the line parses");
+        assert_eq!(event["payload"]["seam"], "decode");
+        assert_eq!(
+            event["payload"]["asked"]["ask"], "elide",
+            "the ask is named"
+        );
+        assert_eq!(
+            event["payload"]["asked"]["from"], 41,
+            "and its span rides, no other event holding a span that was refused"
+        );
+        assert_eq!(event["payload"]["asked"]["to"], 57);
+        assert_eq!(
+            event["payload"]["refusal"]["prefix"], 12,
+            "the seam's own case keeps its values"
+        );
+        assert!(
+            event.get("turn").is_none(),
+            "an elision is asked between turns, so its refusal belongs to none"
+        );
+    }
+
     /// **The elision's event is authored from the ask and not the answer.**
     /// The seam echoes no span, per the decode contract, so the only place
     /// the record can get one is what the loop named. A site reading the

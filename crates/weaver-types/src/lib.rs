@@ -95,11 +95,12 @@ pub use config::{
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{
+    LifecycleAsk,
     AgentName, AgentState, AgentSummary, EnterPayload, ExchangeId, FaultCase, FaultReport, Finish,
     Candidate, DECODE_MESSAGE_BOUND, Generation, LabelAnswer, LabelDirective, LabelRefusal, LifecycleAnswer,
     LifecycleDirective,
     LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position, RefusingOrgan,
-    RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer, TokenDirective, TokenRefusal,
+    RefusalRecord, RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer, TokenAsk, TokenDirective, TokenRefusal,
     ToolExecution,
     ToolOutcome, TurnFrame, TurnKey,
 };
