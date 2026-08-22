@@ -1480,12 +1480,12 @@ mod tests {
         let mut reported = false;
         let mut authored = 0usize;
 
-        let mut clear_only = |over: bool, flag: &mut bool| {
+        let clear_only = |over: bool, flag: &mut bool| {
             if !over {
                 *flag = false;
             }
         };
-        let mut report = |over: bool, flag: &mut bool, count: &mut usize| {
+        let report = |over: bool, flag: &mut bool, count: &mut usize| {
             if !over {
                 *flag = false;
                 return;
