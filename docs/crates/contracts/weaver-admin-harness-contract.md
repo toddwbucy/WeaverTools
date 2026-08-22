@@ -7,9 +7,10 @@ human's ruling of 2026-07-31.
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-22, the lifecycle refusal is clerked. An enter refused
 after its bracket stands reaches the record as a `refusal` carrying
-`lifecycle-refusal`, authored by the harness into the run it unwinds, per
-`weaver-trace-PRD` section 3.1's twenty-first kind and the operator's ruling
-of this date. The answer to admin is unchanged. A refusal falling before the
+`lifecycle-refusal`, authored by the harness into the run, which stays
+entered until the operator's `leave` unwinds it, per `weaver-trace-PRD`
+section 3.1's twenty-first kind and the operator's ruling of this date. The
+answer to admin is unchanged. A refusal falling before the
 bracket reaches no record, which is named rather than closed.
 **Revised:** 2026-08-21, the elections become three at this seam. Section 8
 draws `surprisal-election` on `weaver-spu-PRD` section 13.12 and draws
@@ -448,9 +449,17 @@ definitions and not the grouping.
 operator's ruling that a refusal is clerked in one kind for every seam. An
 enter refused after its bracket has been authored reaches the record as a
 `refusal` naming this seam and carrying `lifecycle-refusal`, authored by the
-harness into the run it is about to unwind, per `weaver-trace-PRD` section
-3.1's twenty-first kind. The refusal still travels to admin in the answer,
-unchanged, and the record gains what the answer alone never left behind.
+harness into the run, per `weaver-trace-PRD` section 3.1's twenty-first
+kind. The refusal still travels to admin in the answer, unchanged, and the
+record gains what the answer alone never left behind.
+
+**The run stays entered and the refusal does not unwind it.** A bracket that
+stands is a run in place, and what unwinds it is the operator's `leave`,
+arriving later as its own directive: the refused enter leaves a run holding
+what it forked, which is why dropping it here would orphan those processes
+and leave the bracket unclosed. **So the refusal is an event inside a
+standing run rather than a last word before teardown**, and the close that
+ends the bracket is the leave's.
 
 **An enter refused before its bracket stands reaches no record at all**, and
 this act does not change that. The `load` event opens the run, a refusal
