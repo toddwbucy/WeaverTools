@@ -244,7 +244,7 @@ pub enum Payload {
     /// The label seam's response side: scored or refused, so a typed
     /// refusal the exchange met is the record's own fact and never a
     /// fabricated answer, per charter section 3.1's eighteenth kind.
-    ClassifyOutput(ClassifyOutcome),
+    ClassifyOutput(ClassifyScored),
     /// The payloads whose shapes their own workflows settle, since the trace
     /// act of 2026-08-02 the tool bracket's two alone. Raw bytes in the
     /// interim rather than a placeholder struct, because a struct shaped
@@ -321,13 +321,17 @@ pub struct ClassifyAsk {
 }
 
 /// The classify answer's account: every label of the artifact's head
-/// scored, or the typed refusal the exchange met, named. Tagged the way
-/// `TurnClose` is, one shape for both outcomes.
+/// scored.
+///
+/// **A struct rather than an enum, as of 2026-08-22.** It held two variants
+/// and the second, a free-form `Refused { refusal: String }`, moved to the
+/// `refusal` kind when the refusal class took every seam's typed refusal
+/// into one. A single-variant enum kept against a second that may come is a
+/// reserved slot for a reader that does not exist, so what is left takes a
+/// struct and a later outcome brings its own shape in the act that adds it.
 #[derive(Debug, Clone, PartialEq, Serialize)]
-#[serde(tag = "outcome", rename_all = "snake_case")]
-pub enum ClassifyOutcome {
-    Scored { labels: Vec<(String, f64)> },
-    Refused { refusal: String },
+pub struct ClassifyScored {
+    pub labels: Vec<(String, f64)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]

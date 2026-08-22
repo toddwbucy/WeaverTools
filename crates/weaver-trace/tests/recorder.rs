@@ -643,7 +643,7 @@ fn the_classify_pair_is_turn_optional_and_pairing_enforced() {
         }))
     };
     let outcome = || {
-        Some(Payload::ClassifyOutput(weaver_trace::ClassifyOutcome::Scored {
+        Some(Payload::ClassifyOutput(weaver_trace::ClassifyScored {
             labels: vec![("entailment".into(), 0.9), ("not_entailment".into(), 0.1)],
         }))
     };
@@ -653,16 +653,20 @@ fn the_classify_pair_is_turn_optional_and_pairing_enforced() {
         .expect("the outcome follows");
     r.submit(event(Kind::ClassifyRequest, Some("t-1"), ask()))
         .expect("within a turn, the key rides");
+    // **A refused classify authors no output at all**, per the charter's
+    // clause of 2026-08-22: the refusal reaches the record under its own
+    // kind and `classify.output` carries the scored labels alone.
     r.submit(event(
-        Kind::ClassifyOutput,
+        Kind::Refusal,
         Some("t-1"),
-        Some(Payload::ClassifyOutput(
-            weaver_trace::ClassifyOutcome::Refused {
-                refusal: "oversized".into(),
-            },
+        Some(Payload::Refusal(
+            raw_payload(
+                "{\"seam\":\"classify\",\"refusal\":{\"refusal\":\"oversized\"}}",
+            )
+            .unwrap(),
         )),
     ))
-    .expect("a refusal is the record's own fact");
+    .expect("a refusal is the record's own fact, under the class's kind");
     assert!(
         r.submit(event(Kind::ClassifyRequest, None, outcome())).is_err(),
         "the pairing is total"
