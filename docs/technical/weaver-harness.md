@@ -35,8 +35,11 @@ Not drafted. Each seam named once, its contract linked to
 [the contracts page](contracts.md), and its socket-or-link tag with the grounds
 stated. The contract is linked and never restated.
 
-Seams: five. Boundary, decode, classify, coordination, and state. See the contracts page
-for each.
+Seams: five, per `weaver-harness-PRD` section 4. Boundary to `weaver-gate`, decode
+to `weaver-spu`, coordination to `weaver-admin`, state to `weaver-state`, and the
+fifth to `weaver-trace`, which crosses no process line and is tagged link rather
+than socket. The classify arm's seam is declared at the SPU's side, and the
+charter's count of five predates it. See the contracts page for each.
 
 ## How it works
 

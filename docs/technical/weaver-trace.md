@@ -59,5 +59,7 @@ level, no filter, no mutation surface on the structure.
 Not drafted. This crate's slice of the overview page's appendix B, each entry
 named to the work or the measurement that would close it.
 
-Known today: nothing crate-local. The kind set moved to nineteen on 2026-08-21 and the
-Spec's counts trail it.
+Known today: nothing crate-local. The kind set stands at twenty, `model.field` arriving
+2026-08-21 and `elision` 2026-08-22, and several of the Spec's own counts trail it: its
+variant-and-rename sentence still reads eighteen and its compiler note still says a
+seventeenth kind breaks every consumer's match.
