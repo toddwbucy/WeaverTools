@@ -324,10 +324,12 @@ resident count, ending before it starts, or empty with its end equal to its
 start describes no removable region, and it has no smaller true version to
 fall back to. **An empty span refuses rather than eliding nothing**, a span
 removing no position being one the loop computed wrongly. The answer
-confirms after the outcome holds and carries the span it elided beside the
-resident counts before and after: the SPU is the one authority on the
-counts, and the harness authors the record's `elision` event from the span
-it named and the counts it was given.
+confirms after the outcome holds and carries the resident counts before and
+after, and it does not echo the span. **Each party writes what it is the
+authority on**: the harness named the span and needs no confirmation of its
+own ask, the SPU is the one authority on either count, and the record's
+`elision` event is authored from the span the harness held and the counts
+the SPU returned.
 
 **The SPU decides nothing here.** It executes the span the ask names, as
 it executes the cut the flush names. Which part of a context is worth
@@ -393,6 +395,8 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   well-framed for the next turn, stopped or complete alike, so the
   harness may rely on the session's coherence without inspecting it.
 - An answer to flush arrives only after the kept-prefix state holds.
+- An answer to elision arrives only after the shortened state holds, on the
+  flush's rule and for its reason.
 
 ## 4. What each party supplies and guarantees
 
@@ -401,8 +405,9 @@ change is a supplies change by construction and a Spec writer reads this
 list.
 
 **The harness supplies** the session's identity material at open, each
-turn's context and delta, the cancel, and the flush. The sampling values
-are not among them and reach the SPU in the declaration instead.
+turn's context and delta, the cancel, the flush, and the elision's span.
+The sampling values are not among them and reach the SPU in the
+declaration instead.
 
 **The harness guarantees** that it opens no session before residency
 confirms and no second session ever. That one generation is in flight at
@@ -418,13 +423,18 @@ the operator's end-to-end requirement.
 **The SPU supplies** the opened confirmation, the token stream as each is
 drawn, the field stream where its election stands, each generation with
 its measurement and elected reductions, the stopped partials, the flush
-confirmation, the typed refusals, and the fault reports.
+confirmation, the elision confirmation with its resident counts either
+side, the typed refusals, and the fault reports.
 
 **The SPU guarantees** that the session only advances: nothing ever asks
 resident state to rewind, and the weakest family sets the rule for all.
 That the identity prefix is permanent from open to release, the flush's
-outcome included. That an aborted generation leaves the session
-well-framed before its answer returns. That an elected field is read from the same
+outcome and the elision's included, a span reaching the prefix being
+refused rather than trimmed to spare it. That an elision removes exactly
+the span it was given and preserves the order of every position it did
+not, so what remains is the sequence it was and never a resequencing. That
+an aborted generation leaves the session well-framed before its answer
+returns. That an elected field is read from the same
 distribution the
 measurement is read from and before the sampler consumes it, so the two
 never describe different states of one position, and that it names its
