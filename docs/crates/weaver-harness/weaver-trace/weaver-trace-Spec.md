@@ -4,6 +4,11 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, the elision takes its kind. Section 3's `Kind`
+gains `Elision` with its explicit rename, the counts moving to twenty, and
+the kind-to-payload mapping gains `Elision` carrying `FlushCounts`, the
+same two facts under a different kind rather than a second struct with
+identical members.
 **Revised:** 2026-08-21, third of this date, the elections become three.
 Section 3's `Elections` gains `surprisal`, a plain boolean serialized even
 when false, per the charter's same-act edit on issue #258: absent, false,
@@ -272,6 +277,7 @@ pub enum Kind {
     #[serde(rename = "turn.started")]         TurnStarted,
     #[serde(rename = "turn.closed")]          TurnClosed,
     #[serde(rename = "flush")]                Flush,
+    #[serde(rename = "elision")]              Elision,
     #[serde(rename = "message.system")]       MessageSystem,
     #[serde(rename = "message.user")]         MessageUser,
     #[serde(rename = "message.assistant")]    MessageAssistant,
@@ -297,6 +303,7 @@ pub enum Payload {
     ModelField(ModelField),
     Elections(Elections),
     Flush(FlushCounts),
+    Elision(FlushCounts),
     ModelMeasurement(Box<serde_json::value::RawValue>),
     ClassifyRequest(ClassifyAsk),
     ClassifyOutput(ClassifyOutcome),
@@ -578,18 +585,20 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, nineteen kinds and thirteen
+**The kind-to-payload mapping is total, twenty kinds and fourteen
 dispositions**, the payload-free case counting as one of them. `unload`,
 `session.closed`, and `turn.started` carry `None`.
 `load` carries `Elections`. The four message kinds carry `Message`.
-`turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` carries
-`FlushCounts`, the resident token counts before and after, both plain
-integers. The four model kinds carry their four own shapes, one each. The
+`turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` and
+`elision` each carry `FlushCounts`, the resident token counts before and
+after, both plain integers, two kinds over one shape because the two
+operations report the same two facts. The four model kinds carry their four
+own shapes, one each. The
 classify pair carries its two own shapes, `ClassifyAsk` and
 `ClassifyOutcome`, the outcome scored or refused so a refusal the exchange
 met is the record's fact and never a fabricated answer. The tool bracket's
-two carry `Deferred`. Three plus one plus four plus one plus one plus one
-plus four plus two plus two is nineteen, which is the whole of charter
+two carry `Deferred`. Three plus one plus four plus one plus one plus two
+plus four plus two plus two is twenty, which is the whole of charter
 section 3.1's set.
 
 **The count is stated because it has twice been wrong, and the second time
@@ -676,6 +685,14 @@ a set named once drifts as members join it, and every record already
 carrying that name becomes a record of something else without any event
 saying so. Naming each election is what keeps a record's posture
 recoverable from the record.
+
+**`elision` carries `FlushCounts` and does not get a shape of its own.**
+The two operations report the same two facts, the resident count before and
+the resident count after, and a second struct with identical members would
+be one shape in two places with no authority named. **The kind is what
+separates them**, which is the envelope's job and not the payload's, and a
+consumer reading `elision` knows an interior span went where reading
+`flush` tells it a tail did.
 
 **The identity prefix's events carry no turn, and `message.system`
 becomes turn-optional to admit them.** A prefix is seated at open and

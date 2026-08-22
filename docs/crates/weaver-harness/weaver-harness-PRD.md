@@ -5,6 +5,11 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-22, the harness names the elision's span. The clause
+placing the flush decision here gains the elision beside it, per
+`weaver-spu-PRD` section 13.13: the same division of cognition from
+execution, this crate naming positions and the SPU judging nothing, and the
+cache still not held. The span is state and the record still loses nothing.
 **Revised:** 2026-08-20, the loop is the agent's own. Per the operator,
 on issue #243: the loop is a member of each agent's harness and unique
 to it, so which loop an agent runs is the agent's declared fact. Section
@@ -317,6 +322,16 @@ interior and given up the arbitration that made residency accountable.
 The harness decides when a KV flush happens. It does not hold the cache and does
 not reach into it. Eviction granularity is constrained by the append-only session
 protocol and is settled in that crate's PRD and the contract, not here.
+
+**The harness also names the span an elision removes**, per the operator's
+rulings of 2026-08-22 and `weaver-spu-PRD` section 13.13. The same division
+holds and is the reason the decision sits here: which part of a context is
+worth keeping is cognition, the SPU judges nothing, and naming positions is
+this crate exercising a possession it already had rather than reaching into
+a cache it still does not hold. **The span is state and never the record.**
+What the elision removes is the SPU's resident sequence, and this crate's
+other obligation is unchanged by it: the trace gains an event and loses
+nothing, because nothing in this program removes anything from a record.
 
 **The trace primitive goes to `weaver-trace`.** The span type, the event schema, the
 stream mechanics, the working structure, and the export

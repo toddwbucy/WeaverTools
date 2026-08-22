@@ -8,6 +8,14 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, the elision joins the seam. The exchanges gain
+one: the harness names a half-open span of the resident sequence and the
+SPU makes it absent, per `weaver-spu-PRD` section 13.13 as chartered in
+this act. **The span is state and never the record.** It is valid only
+between turns on the flush's ground, and it refuses rather than bounds,
+because a span describing no removable region has no honest smaller
+version the way an over-large `keep` does. Section 5 gains the refusal and
+the SPU still decides nothing, executing the span the ask names.
 **Revised:** 2026-08-20, the close crosses in segments. Per issue #236: a
 long turn's close outgrew the envelope bound and the seam killed what it
 could not carry, silently. Section 1 gains the segment series - one
@@ -300,6 +308,33 @@ before and after the truncate: the SPU is the one authority on either
 number, and the harness authors the record's `flush` event from exactly
 them.
 
+**Elide a span.** The harness names a half-open span of the resident
+sequence and the SPU makes it absent: afterward the resident sequence is
+what preceded the span followed by what followed it, the tail
+re-established against the shortened prefix, the outcome fixed against the
+named bounds and the mechanism the Spec's per family, per `weaver-spu-PRD`
+section 13.13. **The span is state and never the record**, and this seam
+carries no operation that removes anything from a trace.
+
+**The ask is refused rather than bounded, which is the flush's rule
+reversed and deliberately.** A `keep` the flush cannot honour describes
+less context than exists and the arithmetic satisfies it without
+misreporting. A span overlapping the identity prefix, running past the
+resident count, or ending before it starts describes no removable region,
+and it has no smaller true version to fall back to. The answer confirms after the
+outcome holds and carries the resident counts before and after, the SPU
+being the one authority on either number and the harness authoring the
+record's `elision` event from exactly them.
+
+**The SPU decides nothing here.** It executes the span the ask names, as
+it executes the cut the flush names. Which part of a context is worth
+keeping is the loop's, per `weaver-spu-PRD` section 13.9 and 13.13, and an
+organ choosing the span would be an organ judging what a context is worth.
+
+**Nothing is inserted.** The elision removes and does not replace, and this
+seam stays append-only: whatever should stand where the span stood arrives
+as the next delta and lands at the end.
+
 **Report a fault.** Emitted by the SPU, the seam's one SPU-originated
 message and not an exchange, carrying a `fault-report` naming a case of
 `weaver-spu-PRD` section 13.10 that arose outside any outstanding
@@ -331,6 +366,9 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   rest, the validity window being the session rather than the generation.
 - Flush is valid only between turns. A flush while a generation is in
   flight is refused, the cancel existing for exactly that case.
+- Elision is valid only between turns, on the flush's ground and for its
+  reason: a span named against a resident sequence that is still growing
+  names positions that will have moved by the time it lands.
 - The fault report is emitted only at rest, no exchange outstanding, any
   time after the session opens, and it takes no answer. A fault arising
   while an exchange is outstanding is that exchange's typed answer, per
@@ -410,6 +448,8 @@ Refusals are typed and enumerable. The cases:
 - the session cannot take the next delta, the overflow named with the
   session's account of itself
 - the delta is malformed for the family, under the framing candidate
+- the elision's span describes no removable region: it overlaps the
+  identity prefix, runs past the resident count, or ends before it starts
 
 **A fault inside a generation is the exchange's typed answer**, naming the
 fault the way section 13.10 enumerates, and the turn fails with its

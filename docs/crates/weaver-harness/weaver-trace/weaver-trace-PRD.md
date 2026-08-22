@@ -5,6 +5,12 @@ written together and merged together, and no Spec is written against any member
 before the whole set is merged. Ratification is the mapping of the whole document
 set into the graph, and it belongs to the set rather than to this document.
 
+**Revised:** 2026-08-22, the elision reaches the record. Section 3.1's
+kind set gains `elision`, twentieth, carrying the resident counts either
+side as `flush` does, per `weaver-spu-PRD` section 13.13. The state
+shrinks and the record grows: nothing is removed from a trace by this or
+any operation, and a consumer reconstructing a context replays the edits
+rather than accumulating contributions naively.
 **Revised:** 2026-08-21, third of this date, the surprisal's election
 lands. The ruling section 5 carried as owed on this date is landed by the
 act that adds the election, `weaver-spu-PRD` section 13.12, and section
@@ -531,6 +537,29 @@ about the generation that `model.output.finish` carries and the answered
 close may surface as `finish: "length"` per the world contract, while the
 stopped close stays reserved for the aborts, the stop directive's and a
 fault's, so the two kinds of ending never share a spelling.
+
+**`elision` joins the kind set, twentieth, and the record grows where the
+state shrinks.** Per `weaver-spu-PRD` section 13.13 as chartered
+2026-08-22. The harness names a span of the SPU's resident sequence, the
+SPU makes it absent, and this record gains one event carrying the resident
+counts either side, exactly as `flush` does for the cut.
+
+**Nothing is removed from a record, and this is the act that could have
+looked like an exception.** The state is a distillation of the record and
+is never stored back into it, per section 3.2, and an elision edits the
+distillation. What reaches this crate is the fact that it happened and its
+extent. **A reader of a trace can therefore see what the model no longer
+held**, which a reader of the state cannot, and that asymmetry is the
+elision's whole accountability.
+
+**A consumer reconstructing what the model held replays the edits.** The
+accumulation of section 3.2 runs from the identity prefix through the
+recorded contributions, and it now meets a second kind of edit beside the
+flush: a contribution recorded before an elision that covered it was in the
+model's context and then was not. **An accumulation that ignores the edits
+reconstructs a context no generation ever ran against**, which was true of
+the flush already and is easier to trip over here, an elision leaving no
+gap in the sequence it edits.
 
 ### 3.2 The payload shapes the token workflow settles
 
