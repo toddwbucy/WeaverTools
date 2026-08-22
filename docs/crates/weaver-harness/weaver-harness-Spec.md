@@ -1422,10 +1422,14 @@ from: weaver-harness
 to: harness-refused-submission-not-retried
 ```
 
-**Pressure becomes an event, authored by this crate.** When the recorder
-surfaces `CommitPressure`, the harness authors the `fault` event in response,
+**Pressure becomes an event, authored by this crate.** The harness reads the
+recorder's queue depth after authoring and, on the crossing of the high-water
+mark, authors the `fault` event naming `FaultCase::RecorderCommitPressure`,
 per `weaver-trace-Spec` section 6, carrying the floor's `fault-report` as
-section 3 states.
+section 3 states. **The depth is read rather than returned** as of
+2026-08-22: it arrived as a `Failure` the recorder handed back after the
+event had already landed, so acting on it meant treating a recorded event as
+a lost one.
 Nothing on any turn path waits on the sink, per `weaver-harness-PRD` section
 5, and the working structure's return is the acknowledgment the interior
 proceeds on. The authoring itself is section 3's record and is not restated

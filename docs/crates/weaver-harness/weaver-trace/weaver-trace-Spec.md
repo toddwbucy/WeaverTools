@@ -1242,11 +1242,12 @@ pub enum SubmitRefusal {
 }
 ```
 
-Five cases, matching `weaver-harness-trace-contract` section 5 one to one. Nothing
-returns a partial result with a success status, and every refusal names its case
-rather than carrying a string, so a caller branches on a value. `Failure` is
-exhaustive, so a sixth case reaches every caller at compile time in the act that
-adds it.
+Four cases, matching `weaver-harness-trace-contract` section 5 one to one, which
+is a count both moved together on 2026-08-22 when pressure stopped being a
+failure. Nothing returns a partial result with a success status, and every refusal
+names its case rather than carrying a string, so a caller branches on a value.
+`Failure` is exhaustive, so a fifth case reaches every caller at compile time in
+the act that adds it.
 
 ```graph
 node: trace-failure-enum-exhaustive
