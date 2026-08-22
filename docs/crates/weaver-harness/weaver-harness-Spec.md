@@ -105,6 +105,16 @@ not an agent's. The organ argv clause of this date is narrowed rather than
 withdrawn: the headroom term stays on it, and a parameter belonging to one agent
 reaches its organ in the declaration instead. Both routes end at the same
 composition root, which is why the distinction is stated.
+**Revised:** 2026-08-15, the gate socket is the program's. Section 3's raise carries
+the socket this crate supplies beside the instruction it carries uninterpreted,
+derived as a sibling of the coordination socket it bound. The listener retains the
+path it bound, an exception to the no-paths rule argued the way the organ binaries
+are: a deployment fact supplied at construction rather than a name resolved at use.
+**Revised:** 2026-08-15, second this date, the close names its turn. Section 8's
+response renders the turn key and the run reference beside the kind where a turn
+opened, this crate composing what the gate relays. Both are carried from what the turn
+already holds rather than rebuilt, a second construction being a second chance to
+disagree with the record.
 **Revised:** 2026-08-13, the dev boundary is in the filesystem, per the
 architecture seat's directive of this date. Section 1 gains the worker bin
 target and the `dev_` convention: directories the developer edits carry the
@@ -172,16 +182,6 @@ reads the peer credential and refuses what is not root. The credential check arr
 from `weaver-admin-Spec`, where the accept used to happen, and the adopted end's
 close-on-exec retires with the end. The listener is not closed after an accept,
 admin being per-invocation.
-**Revised:** 2026-08-15, the gate socket is the program's. Section 3's raise carries
-the socket this crate supplies beside the instruction it carries uninterpreted,
-derived as a sibling of the coordination socket it bound. The listener retains the
-path it bound, an exception to the no-paths rule argued the way the organ binaries
-are: a deployment fact supplied at construction rather than a name resolved at use.
-**Revised:** 2026-08-15, second this date, the close names its turn. Section 8's
-response renders the turn key and the run reference beside the kind where a turn
-opened, this crate composing what the gate relays. Both are carried from what the turn
-already holds rather than rebuilt, a second construction being a second chance to
-disagree with the record.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
