@@ -4,6 +4,13 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, second of this date, the refusal takes its kind.
+Section 3's `Kind` gains `Refusal` with its explicit rename and `Payload`
+gains `Refusal`, spliced on the custody rule that carries an organ's
+account opaque, the counts moving to twenty-one kinds and fifteen
+dispositions. `StopReason` gains `Refused`. Two counts that had gone stale
+ride with the recount, the variant sentence reading eighteen and the
+compiler note naming a seventeenth kind.
 **Revised:** 2026-08-22, second of this date, the elision records where it
 fell. `Elision` carries `ElisionSpan`, `from` and `to` beside the resident
 counts, rather than the `FlushCounts` the first draft of this act gave it.
@@ -284,6 +291,7 @@ pub enum Kind {
     #[serde(rename = "turn.closed")]          TurnClosed,
     #[serde(rename = "flush")]                Flush,
     #[serde(rename = "elision")]              Elision,
+    #[serde(rename = "refusal")]              Refusal,
     #[serde(rename = "message.system")]       MessageSystem,
     #[serde(rename = "message.user")]         MessageUser,
     #[serde(rename = "message.assistant")]    MessageAssistant,
@@ -310,6 +318,7 @@ pub enum Payload {
     Elections(Elections),
     Flush(FlushCounts),
     Elision(ElisionSpan),
+    Refusal(Box<serde_json::value::RawValue>),
     ModelMeasurement(Box<serde_json::value::RawValue>),
     ClassifyRequest(ClassifyAsk),
     ClassifyOutput(ClassifyOutcome),
@@ -376,7 +385,7 @@ the derive default emits `"MessageUser"` and `rename_all = "snake_case"` emits
 it to a scheme would put a second spelling of every kind on the wire, which is the
 one-name-two-nodes defect the Document Format rules against for identifiers and
 which reads the same way for a consumer keying on a kind. The mapping is total:
-eighteen variants, eighteen renames, and the wire spelling is the charter's.
+twenty-one variants, twenty-one renames, and the wire spelling is the charter's.
 
 ```graph
 node: trace-kind-explicit-renames
@@ -598,8 +607,9 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, twenty kinds and fourteen
-dispositions**, the payload-free case counting as one of them. `unload`,
+**The kind-to-payload mapping is total, twenty-one kinds and fifteen
+dispositions**, the payload-free case counting as one of them. `refusal`
+carries `Refusal`, spliced, the organ's own account of what it turned away. `unload`,
 `session.closed`, and `turn.started` carry `None`.
 `load` carries `Elections`. The four message kinds carry `Message`.
 `turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` and
@@ -611,8 +621,8 @@ classify pair carries its two own shapes, `ClassifyAsk` and
 `ClassifyOutcome`, the outcome scored or refused so a refusal the exchange
 met is the record's fact and never a fabricated answer. The tool bracket's
 two carry `Deferred`. Three plus one plus four plus one plus one plus two
-plus four plus two plus two is twenty, which is the whole of charter
-section 3.1's set.
+plus four plus two plus two plus one is twenty-one, which is the whole of
+charter section 3.1's set.
 
 **The count is stated because it has twice been wrong, and the second time
 it was wrong silently.** An earlier draft assigned thirteen and left
@@ -715,6 +725,20 @@ edits, and an edit that does not say where it fell is not replayable. So
 stay because they are the SPU's own account of the outcome against the
 harness's account of the ask, which is a disagreement worth being able to
 see.
+
+**`refusal` splices where `elision` and the flush shape**, which is the
+custody line rather than an inconsistency: a refusal is the refusing party's
+account and this crate carries an organ's account opaque, exactly as it
+carries `fault`. The counts on an elision are this crate's to shape because
+the harness holds them as plain values on the way through. A refusal's case
+set is four seam vocabularies wide and grows with the seams, and declaring
+it here would make this crate depend on what it must not depend on and
+version what it does not own.
+
+**`StopReason` gains `Refused`**, per the charter's same-act edit. It is a
+satellite by section 11 and its variants are not enumerated here, but the
+addition is the charter's rather than a naming choice: a close that cannot
+say a refusal ended the turn says something else instead.
 
 **The identity prefix's events carry no turn, and `message.system`
 becomes turn-optional to admit them.** A prefix is seated at open and
@@ -1232,7 +1256,7 @@ to: trace-append-failed-no-recovery
 
 **Enforced by the compiler.**
 
-- The kind enum is exhaustive, so a seventeenth kind breaks every consumer's match.
+- The kind enum is exhaustive, so a twenty-second kind breaks every consumer's match.
 - `WorkingStructure` exposes no mutation surface: every public accessor yields a
   shared reference and the append is crate-private, so alteration after landing is
   unrepresentable rather than merely forbidden. This is the signature half of the

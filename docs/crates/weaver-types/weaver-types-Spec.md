@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-22, second of this date, the refusal record takes its
+shape. `RefusalRecord` names the seam and carries that seam's own case, with
+the ask beside it where the seam's asks reach no event of their own, per
+`weaver-types-PRD` section 2.1's clause of this date. `TokenAsk` and
+`LifecycleAsk` arrive with it. Classify carries no ask, its content already
+reaching the record under its own kind.
 **Revised:** 2026-08-22, the elision takes its wire shape.
 `TokenDirective` gains `Elide { from, to }`, a half-open span of resident
 positions, and `TokenAnswer` gains `Elided` carrying the resident counts
@@ -1416,6 +1422,38 @@ pub enum TokenAnswer {
     Fault(FaultReport),
 }
 
+/// What a seam turned away, as the record carries it.
+///
+/// **The seam is named and the case is the seam's own.** A consumer
+/// dispatches on the variant, which is what typing this here buys over a
+/// reason field the trace would have to carry as prose.
+pub enum RefusalRecord {
+    Decode { asked: TokenAsk, refusal: TokenRefusal },
+    Lifecycle { asked: LifecycleAsk, refusal: LifecycleRefusal },
+    Classify { refusal: LabelRefusal },
+}
+
+/// Which ask a decode refusal answered, so the record says what was
+/// refused and not only why.
+#[serde(tag = "ask", rename_all = "snake_case")]
+pub enum TokenAsk {
+    Open,
+    AppendAndGenerate,
+    Cancel,
+    Flush { keep: u64 },
+    Elide { from: u64, to: u64 },
+}
+
+/// Which lifecycle ask a refusal answered.
+#[serde(tag = "ask", rename_all = "snake_case")]
+pub enum LifecycleAsk {
+    Enter,
+    Leave,
+    Stop,
+    Admit,
+    Release,
+}
+
 pub enum TokenRefusal {
     NotOpen,
     OutOfOrder,
@@ -1423,6 +1461,58 @@ pub enum TokenRefusal {
     MalformedDelta,
 }
 ```
+
+**`RefusalRecord` names the ask beside the refusal, and carries a value only
+where the record holds it nowhere else.** A refusal alone says why a party
+said no. What a diagnostic reader works backwards from is what was asked, so
+the variant always says which directive was refused. **What the variant does
+not do is reproduce the directive**, and the rule deciding that is one rule
+rather than a judgment per case: **a value rides the ask when no other event
+carries it, and is named and left alone when one does.**
+
+Applied to the decode seam:
+
+```
+Open                  the messages are the identity prefix, and
+                      message.system carries them since the prefix act
+AppendAndGenerate     the delta is authored as the turn's message kinds
+                      before the exchange, so a refused append still has
+                      its content in the record
+Cancel                the turn is the envelope's field on every event
+Flush { keep }        carried: no event holds the cut a flush asked for
+Elide { from, to }    carried: no event holds a span that was refused,
+                      the elision event recording only removals that
+                      happened
+```
+
+**Completing the three would be duplication rather than fidelity**, one fact
+in two places with no authority named, which this corpus files as a defect.
+The record is not lossless about the ask and does not claim to be: it is
+complete about the ask's identity and about the values that would otherwise
+be lost.
+
+**Classify carries no ask at all**, which is the same rule at its limit. Its
+directive is the content, `classify.request` holds it under its own kind,
+and nothing of the ask would otherwise be lost.
+
+**`LifecycleAsk` follows the rule and has a gap the rule cannot close.** The
+directive is named and the declaration is not reproduced, the load event
+carrying the run's posture.
+
+**An enter refused before its bracket is established has no run record**,
+because the `load` event is what opens the run and a refusal reaching that
+far has not authored one. There is no run to author the refusal into and no
+later event that could carry it, whether or not a sink descriptor was taken
+before the refusal fell. **The refusal reaches the operator's answer and
+nothing else**, which is unchanged by this act and is the whole of what such
+a refusal leaves behind. **That is a hole this act does not fill**, named
+here so a reader does not take the lifecycle arm as covering it.
+
+**The three arms are the seams that produce typed refusals**, per the
+inventory of 2026-08-22: the decode seam, the lifecycle seams which share
+one vocabulary, and the classify seam. The gate's `RaiseRefusal` is absent
+because it crosses no seam, reaching the harness as
+`LifecycleRefusal::BindFailed`, which the lifecycle arm already carries.
 
 **`Elide` names a half-open span and `Flush` names a length, which is the
 difference between removing an interior and shortening a tail.** The bounds
