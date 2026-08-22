@@ -591,8 +591,16 @@ difference of counts.
 
 **`refusal` joins the kind set, twenty-first, and it is one kind for every
 seam.** Per the operator's ruling of 2026-08-22. A typed refusal crossing
-any seam of this program reaches the record here: what was asked, which seam
-answered, and the seam's own case with the values it carries.
+any seam of this program reaches the record here: which ask was refused,
+which seam answered, and the seam's own case with the values it carries.
+
+**The ask is named rather than reproduced, and a value rides it only where
+no other event holds that value.** A refused flush's cut and a refused
+elision's span reach no other kind, so they ride. An open's messages, an
+append's delta, and a cancel's turn each reach the record under kinds of
+their own before the exchange, so the refusal names the ask and stops.
+**This charter's own refusal of derived quantities is the reason**, one fact
+in two places being the defect rather than the redundancy being a safety.
 
 **It is not the `fault` kind and the distinction is the contracts' own.** A
 refusal is an answerable ask that was wrong, and the party that refused is

@@ -473,9 +473,13 @@ Refusals are typed and enumerable. The cases:
 
 **Every refusal on this seam is clerked, and the harness is the party that
 clerks it.** Per the operator's ruling of 2026-08-22. The SPU answers the
-refusal and the harness authors the record's `refusal` event from it,
-carrying the ask it sent beside the case the SPU returned, per
-`weaver-trace-PRD` section 3.1's twenty-first kind. **The SPU authors
+refusal and the harness authors the record's `refusal` event from it, naming
+the ask it sent beside the case the SPU returned, per `weaver-trace-PRD`
+section 3.1's twenty-first kind. **A flush's `keep` and an elision's span
+ride the record because no other event holds them**, and the open's
+messages, the append's delta, and the cancel's turn are named without being
+reproduced, each reaching the record under its own kind before the exchange
+this seam refused. **The SPU authors
 nothing**, which is unchanged: this seam has one SPU-originated message and
 it is the fault report.
 

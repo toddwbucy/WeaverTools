@@ -1670,10 +1670,22 @@ ask and its own composed re-entry.
 
 **Every typed refusal this crate receives is authored, 2026-08-22.** Per
 the operator's ruling and the decode contract's clause of the same date. A
-refusal answering an ask this crate sent becomes a `refusal` event carrying
-the ask and the seam's own case, and the port then answers its caller as it
-did before. **Authoring precedes answering**, on the announce-after-record
-rule this section already runs on: a loop told a span was refused before the
+refusal answering an ask this crate sent becomes a `refusal` event naming
+the ask and carrying the seam's own case, and the port then answers its
+caller as it did before.
+
+**The ask is named and its values ride only where no other event holds
+them**, per `weaver-types-Spec`'s rule for the record: this crate authors a
+refused flush's `keep` and a refused elision's span because nothing else
+records either, and names the open, the append, and the cancel without
+reproducing them because the identity prefix, the turn's delta, and the turn
+key each already reach the record under their own kinds. **A classify
+refusal carries no ask at all**, its content standing in the
+`classify.request` event this crate authored before the exchange, and
+reproducing it would be one fact in two places.
+
+**Authoring precedes answering**, on the announce-after-record rule this
+section already runs on: a loop told a span was refused before the
 record holds the refusal could act on it and leave no trace of why.
 
 **The ports answer `None` for a refusal exactly as they did**, which is

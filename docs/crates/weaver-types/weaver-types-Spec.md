@@ -1462,19 +1462,44 @@ pub enum TokenRefusal {
 }
 ```
 
-**`RefusalRecord` carries the ask beside the refusal, and that pairing is
-the point.** A refusal alone says why a party said no. What a diagnostic
-reader works backwards from is what was asked, and for the two asks that
-carry values the ask is where the values are: a `Flush { keep }` refused and
-an `Elide { from, to }` refused differ in what the loop wanted, not in the
-refusal's own case. **The ask is reproduced rather than referenced** because
-the record cannot point at a directive it never carried, the decode seam's
-asks reaching no event of their own.
+**`RefusalRecord` names the ask beside the refusal, and carries a value only
+where the record holds it nowhere else.** A refusal alone says why a party
+said no. What a diagnostic reader works backwards from is what was asked, so
+the variant always says which directive was refused. **What the variant does
+not do is reproduce the directive**, and the rule deciding that is one rule
+rather than a judgment per case: **a value rides the ask when no other event
+carries it, and is named and left alone when one does.**
 
-**Classify carries no ask.** Its directive is the content, which the
-`classify.request` event already holds under its own kind, so reproducing it
-here would be one fact in two places. Where an ask already reaches the
-record the refusal names the kind and stops.
+Applied to the decode seam:
+
+    Open                  the messages are the identity prefix, and
+                          `message.system` carries them since the prefix act
+    AppendAndGenerate     the delta is authored as the turn's message kinds
+                          before the exchange, so a refused append still has
+                          its content in the record
+    Cancel                the turn is the envelope's field on every event
+    Flush { keep }        carried: no event holds the cut a flush asked for
+    Elide { from, to }    carried: no event holds a span that was refused,
+                          the `elision` event recording only removals that
+                          happened
+
+**Completing the three would be duplication rather than fidelity**, one fact
+in two places with no authority named, which this corpus files as a defect.
+The record is not lossless about the ask and does not claim to be: it is
+complete about the ask's identity and about the values that would otherwise
+be lost.
+
+**Classify carries no ask at all**, which is the same rule at its limit. Its
+directive is the content, `classify.request` holds it under its own kind,
+and nothing of the ask would otherwise be lost.
+
+**`LifecycleAsk` follows the rule and has a gap the rule cannot close.** The
+directive is named and the declaration is not reproduced, the load event
+carrying the run's posture. But an enter refused **before** its bracket
+stands has no record at all, there being no run to author into, so the
+refusal reaches the operator's answer and nothing else. **That is a hole
+this act does not fill**, and it is named here so a reader does not read the
+lifecycle arm as covering it.
 
 **The three arms are the seams that produce typed refusals**, per the
 inventory of 2026-08-22: the decode seam, the lifecycle seams which share
