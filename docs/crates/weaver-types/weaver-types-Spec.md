@@ -1472,16 +1472,18 @@ carries it, and is named and left alone when one does.**
 
 Applied to the decode seam:
 
-    Open                  the messages are the identity prefix, and
-                          `message.system` carries them since the prefix act
-    AppendAndGenerate     the delta is authored as the turn's message kinds
-                          before the exchange, so a refused append still has
-                          its content in the record
-    Cancel                the turn is the envelope's field on every event
-    Flush { keep }        carried: no event holds the cut a flush asked for
-    Elide { from, to }    carried: no event holds a span that was refused,
-                          the `elision` event recording only removals that
-                          happened
+```
+Open                  the messages are the identity prefix, and
+                      message.system carries them since the prefix act
+AppendAndGenerate     the delta is authored as the turn's message kinds
+                      before the exchange, so a refused append still has
+                      its content in the record
+Cancel                the turn is the envelope's field on every event
+Flush { keep }        carried: no event holds the cut a flush asked for
+Elide { from, to }    carried: no event holds a span that was refused,
+                      the elision event recording only removals that
+                      happened
+```
 
 **Completing the three would be duplication rather than fidelity**, one fact
 in two places with no authority named, which this corpus files as a defect.
@@ -1495,11 +1497,16 @@ and nothing of the ask would otherwise be lost.
 
 **`LifecycleAsk` follows the rule and has a gap the rule cannot close.** The
 directive is named and the declaration is not reproduced, the load event
-carrying the run's posture. But an enter refused **before** its bracket
-stands has no record at all, there being no run to author into, so the
-refusal reaches the operator's answer and nothing else. **That is a hole
-this act does not fill**, and it is named here so a reader does not read the
-lifecycle arm as covering it.
+carrying the run's posture.
+
+**An enter refused before its bracket is established has no run record**,
+because the `load` event is what opens the run and a refusal reaching that
+far has not authored one. There is no run to author the refusal into and no
+later event that could carry it, whether or not a sink descriptor was taken
+before the refusal fell. **The refusal reaches the operator's answer and
+nothing else**, which is unchanged by this act and is the whole of what such
+a refusal leaves behind. **That is a hole this act does not fill**, named
+here so a reader does not take the lifecycle arm as covering it.
 
 **The three arms are the seams that produce typed refusals**, per the
 inventory of 2026-08-22: the decode seam, the lifecycle seams which share
