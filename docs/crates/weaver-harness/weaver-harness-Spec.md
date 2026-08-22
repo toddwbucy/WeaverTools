@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-22, the seat carries the elision port. Section 6
+gains it beside the flush's, taking `from` and `to` and forwarding them
+unjudged, per `weaver-spu-PRD` section 13.13 and the operator's ruling of
+this date that the mechanic is the program's and the policy the loop's.
+On the confirmation the harness authors the record's `elision` event from
+the span the loop named and the counts the seam returned.
 **Revised:** 2026-08-21, second of this date, the prefix is authored.
 Section 6 gains `author_identity`, a second message door writing the seated
 identity prefix as `message.system` with no turn, per `weaver-trace-PRD`
@@ -99,6 +105,16 @@ not an agent's. The organ argv clause of this date is narrowed rather than
 withdrawn: the headroom term stays on it, and a parameter belonging to one agent
 reaches its organ in the declaration instead. Both routes end at the same
 composition root, which is why the distinction is stated.
+**Revised:** 2026-08-15, the gate socket is the program's. Section 3's raise carries
+the socket this crate supplies beside the instruction it carries uninterpreted,
+derived as a sibling of the coordination socket it bound. The listener retains the
+path it bound, an exception to the no-paths rule argued the way the organ binaries
+are: a deployment fact supplied at construction rather than a name resolved at use.
+**Revised:** 2026-08-15, second this date, the close names its turn. Section 8's
+response renders the turn key and the run reference beside the kind where a turn
+opened, this crate composing what the gate relays. Both are carried from what the turn
+already holds rather than rebuilt, a second construction being a second chance to
+disagree with the record.
 **Revised:** 2026-08-13, the dev boundary is in the filesystem, per the
 architecture seat's directive of this date. Section 1 gains the worker bin
 target and the `dev_` convention: directories the developer edits carry the
@@ -166,16 +182,6 @@ reads the peer credential and refuses what is not root. The credential check arr
 from `weaver-admin-Spec`, where the accept used to happen, and the adopted end's
 close-on-exec retires with the end. The listener is not closed after an accept,
 admin being per-invocation.
-**Revised:** 2026-08-15, the gate socket is the program's. Section 3's raise carries
-the socket this crate supplies beside the instruction it carries uninterpreted,
-derived as a sibling of the coordination socket it bound. The listener retains the
-path it bound, an exception to the no-paths rule argued the way the organ binaries
-are: a deployment fact supplied at construction rather than a name resolved at use.
-**Revised:** 2026-08-15, second this date, the close names its turn. Section 8's
-response renders the turn key and the run reference beside the kind where a turn
-opened, this crate composing what the gate relays. Both are carried from what the turn
-already holds rather than rebuilt, a second construction being a second chance to
-disagree with the record.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
@@ -1655,6 +1661,30 @@ model.request ruling rests on. After a flush the assembly's working
 structure still holds the whole conversation and the decode context does
 not, which is exactly the divergence the loop then closes with the recall
 ask and its own composed re-entry.
+
+**The seat carries the elision port, 2026-08-22, through the same door.**
+The elision is chartered at `weaver-spu-PRD` section 13.13 and crosses the
+decode seam as its own exchange. The port takes `from` and `to`, a
+half-open span of resident positions forwarded to the directive unjudged,
+and answers the resident counts either side, `None` where the seam refused.
+
+**Which span to elide is the loop's election and this crate holds no
+policy about it.** The mechanic is here and what to keep is the operator's,
+written in the loop that operator owns: a port that judged a span would be
+this crate deciding what a context is worth, which is the possession
+`weaver-spu-PRD` section 13.9 places with the loop and 13.13 keeps there.
+The seat forwards, the seam refuses a span describing no removable region,
+and the loop reads the refusal as it reads the flush's resolution.
+
+**On the confirmation the harness authors the record's `elision` event**,
+carrying the span the loop named beside the resident counts the seam
+returned, per `weaver-trace-PRD` section 3.1's twentieth kind. **The span
+comes from the ask and not from the answer**, the answer echoing no span
+because each party writes what it is the authority on, per the decode
+contract. A context that shrank without a record would break the same
+accumulation the flush's event exists to protect, and an interior removal
+breaks it harder: a flush leaves a suffix a reader could infer from the
+counts, and an elision leaves a sequence no count describes.
 
 **The seat carries the state port, 2026-08-19, through the front door this
 section names.** The context-injection loop needed a port the granted
