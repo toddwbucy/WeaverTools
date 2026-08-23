@@ -7,6 +7,16 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-22, fifth of this date, the readout owes what the field
+owed. Section 13.7 gains the observational bar 13.11 has carried since the
+field was chartered: an elected readout changes no token, shown before a tap
+ships and shown per tap rather than once for the election. The readout was
+chartered first and never carried it, which left the tap most able to
+perturb under the clause that did not forbid it. Its admission rule moves
+with it: the ground for refusing an elected readout is the family's
+declaration rather than the serving engine's capability, both engines
+tapping as of this date, and a family declares a tap only where the bar
+has been shown for it.
 **Revised:** 2026-08-22, the elision is chartered. Section 13 gains 13.13
 on the operator's rulings of this date: the harness names a span of the
 resident sequence and this crate makes it absent, the outcome specified and
@@ -990,10 +1000,43 @@ admit beside the binding, the two crossing as one instruction. Elected, the
 per-layer activations are reduced in place at the tap and the reductions
 return on the same path as the generation, per apex section 3 step 6. Not
 elected, no tap runs and no
-affordance idles. **An instruction that elects readout against a backend
-whose engine cannot tap refuses at admit,** because a load that grants an
+affordance idles. **An instruction that elects readout against a family
+that declares no tap refuses at admit,** because a load that grants an
 observability election it cannot honor fails at its cheapest moment or
 lies at its most expensive one.
+
+**The family's declaration is the ground and the engine is not.** While
+one of the two engines could not tap at all, which engine would serve was
+a second ground for refusing, and standing that engine's tap on
+2026-08-22 retired it: both engines tap, so which one serves says nothing
+about whether the election can be honored. A family that declares no tap
+refuses whichever engine would have served it. **And a family declares a
+tap only where the bar below has been shown for it**, on the engine that
+would serve it, so the declaration is a record of a measurement rather
+than a statement of intent.
+
+**An elected readout must be observational, and this clause was owed.** A
+diagnostic that changed the run it observes would corrupt every use of it
+and would do so invisibly, so the obligation is that an elected readout
+changes no token: the same declaration and the same seed produce the same
+token sequence with the election on and off, shown before the tap ships.
+The demonstration belongs to the act that builds each tap, per Working
+Process section 6.
+
+**The rule is 13.11's and arrives here late rather than newly.** The field's
+clause of 2026-08-21 stated it for the field, and the readout, chartered
+first, never carried it. **That gap was not academic for the tap
+this act stands**: reading the residual on the GGUF path installs
+a scheduler callback, which changes how the graph is computed rather than
+only what is read from it, so the one tap most able to perturb was the one
+under the clause that did not forbid perturbing. The bar is stated for
+every tap, present and future, rather than for the one that exposed the
+absence.
+
+**Shown per tap and never once for the election.** Two backends tap by two
+mechanisms, so a demonstration on one says nothing about the other, and a
+tap's neutrality is a property of the built path rather than of the
+election that asks for it.
 
 ### 13.8 Sampling, and the dispositions
 
