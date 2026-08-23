@@ -31,6 +31,24 @@ use weaver_types::{ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding,
 /// out differently.
 const MODEL: &str = "/opt/weaver/models/qwen2.5-0.5b-instruct-q6_k.gguf";
 
+/// A fixture whose family declares no residual tap, for the readout refusal.
+///
+/// **The refusal needs an untapping family and no longer accepts any GGUF.**
+/// Until 2026-08-22 the container was itself a ground for refusing an elected
+/// readout, so [`MODEL`] served that test as well as every other. The GGUF tap
+/// stands as of that date and `qwen2` declares it, so [`MODEL`] is now
+/// admitted under an election and the refusal has to be reached through a
+/// family that declares nothing. SmolLM2 selects a `llama` entry, which
+/// declares `taps_readout: false`, and it is the smallest artifact here that
+/// does.
+const UNTAPPED_MODEL: &str = "/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf";
+
+fn untapped_model_present() -> Option<PathBuf> {
+    Path::new(UNTAPPED_MODEL)
+        .is_file()
+        .then(|| PathBuf::from(UNTAPPED_MODEL))
+}
+
 fn model_present() -> Option<PathBuf> {
     match std::env::var_os("WEAVER_TEST_GGUF") {
         // An explicit request that cannot be met is a failure rather than a
@@ -171,11 +189,19 @@ mod seam_success {
 
     /// **The election the wire carries is the election the judgment
     /// receives.** An admit whose instruction elects readout against a family
-    /// whose engine cannot tap refuses at admit, per Spec section 7 and
-    /// charter step 3. The refusal crosses as `DeviceCannotAdmit`, the floor
-    /// case the election failure maps onto, and it lands at the third step,
-    /// so the device this file otherwise requires is never touched on this
-    /// path.
+    /// that declares no tap refuses at admit, per Spec section 7 and charter
+    /// step 3. The refusal crosses as `DeviceCannotAdmit`, the floor case the
+    /// election failure maps onto, and it lands at the third step, so the
+    /// device this file otherwise requires is never touched on this path.
+    ///
+    /// **The fixture moved when the ground did.** This read the refusal
+    /// against [`MODEL`] while the container was a ground and every GGUF load
+    /// refused an election. The GGUF tap stood on 2026-08-22 and `qwen2`
+    /// declares it, so [`MODEL`] is admitted under an election now and the
+    /// refusal is reached through [`UNTAPPED_MODEL`], whose family declares
+    /// nothing. **That the fixture had to move is the point**: the test was
+    /// asserting a property of the container and now asserts one of the
+    /// declaration, which is where the judgment always was in code.
     ///
     /// Perturbation: replace the dispatched election at the admit arm with
     /// `ReadoutElection(false)`, the placeholder the routeless seam once
@@ -186,8 +212,10 @@ mod seam_success {
     /// distinguishes nothing.
     #[test]
     fn an_admit_electing_readout_refuses_across_the_seam() {
-        let Some(model) = model_present() else {
-            eprintln!("SKIP an_admit_electing_readout_refuses: no model at {MODEL}");
+        let Some(model) = untapped_model_present() else {
+            eprintln!(
+                "SKIP an_admit_electing_readout_refuses: no model at {UNTAPPED_MODEL}"
+            );
             return;
         };
         if device_context().is_none() {
@@ -239,7 +267,7 @@ mod seam_success {
         assert_eq!(
             refused.payload,
             Payload::Refusal(LifecycleRefusal::DeviceCannotAdmit),
-            "an elected readout no shipped family can honor refuses at admit"
+            "an elected readout a family does not declare refuses at admit"
         );
         assert_eq!(refused.exchange.ordinal, 1, "on the exchange that asked");
 
