@@ -7,6 +7,12 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-22, fifth of this date, the readout owes what the field
+owed. Section 13.7 gains the observational bar 13.11 has carried since the
+field was chartered: an elected readout changes no token, shown before a tap
+ships and shown per tap rather than once for the election. The readout was
+chartered first and never carried it, which left the tap most able to
+perturb under the clause that did not forbid it.
 **Revised:** 2026-08-22, the elision is chartered. Section 13 gains 13.13
 on the operator's rulings of this date: the harness names a span of the
 resident sequence and this crate makes it absent, the outcome specified and
@@ -994,6 +1000,29 @@ affordance idles. **An instruction that elects readout against a backend
 whose engine cannot tap refuses at admit,** because a load that grants an
 observability election it cannot honor fails at its cheapest moment or
 lies at its most expensive one.
+
+**An elected readout must be observational, and this clause was owed.** A
+diagnostic that changed the run it observes would corrupt every use of it
+and would do so invisibly, so the obligation is that an elected readout
+changes no token: the same declaration and the same seed produce the same
+token sequence with the election on and off, shown before the tap ships.
+The demonstration belongs to the act that builds each tap, per Working
+Process section 6.
+
+**The rule is 13.11's and arrives here late rather than newly.** The field's
+clause of 2026-08-21 stated it for the field, and the readout, chartered
+first, never carried it. **That gap is not academic for the tap this
+program has yet to stand**: reading the residual on the GGUF path installs
+a scheduler callback, which changes how the graph is computed rather than
+only what is read from it, so the one tap most able to perturb was the one
+under the clause that did not forbid perturbing. The bar is stated for
+every tap, present and future, rather than for the one that exposed the
+absence.
+
+**Shown per tap and never once for the election.** Two backends tap by two
+mechanisms, so a demonstration on one says nothing about the other, and a
+tap's neutrality is a property of the built path rather than of the
+election that asks for it.
 
 ### 13.8 Sampling, and the dispositions
 
