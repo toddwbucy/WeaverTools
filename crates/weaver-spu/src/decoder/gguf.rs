@@ -770,8 +770,10 @@ mod tests {
     /// device one, a fusion candidate straddling a window boundary going
     /// unapplied and the unfused kernel not being bit-identical to the
     /// fused, and no CPU run can reach it. The charter's bar is therefore a
-    /// measurement against the real artifact on the real device pair and is
-    /// owed separately. What this buys is the whole of the rest: that the
+    /// measurement against the real artifact on the real device pair, taken
+    /// in `tests/readout_neutral.rs` and kept beside this rather than
+    /// replacing it: a failure there against a pass here localises a defect
+    /// to the device path immediately. What this buys is the whole of the rest: that the
     /// tap mutates no engine state, consumes nothing from the sampler, and
     /// perturbs no arithmetic that the host path shares with the device one.
     ///

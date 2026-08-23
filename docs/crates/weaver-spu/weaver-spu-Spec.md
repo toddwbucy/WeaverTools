@@ -3,6 +3,17 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-23, first of this date, the deployed family declares
+its tap. Section 7 records the measurement that authorises it: sixty-four
+tokens identical with the election on and off at each of two seeds, against
+`Qwen-AgentWorld-35B-A3B-Q8_0` on one card, the elected run folding one
+figure per layer per forward and the two seeds drawing sequences that
+differ, so the comparison is known to discriminate. The tap was plausibly
+observational and is now measured so, on the one architecture and the one
+device pair where the fusion hazard exists. The bar gains an assertion whose
+instrument is the run's perturbation, a reading being unable to reach the
+hazard.
+
 **Revised:** 2026-08-22, third of this date, the GGUF tap stands. Section 7
 carries its mechanics: the scheduler's eval callback installed at context
 creation, the per-layer `l_out-<il>` tensor it reads, the per-ubatch firing,
@@ -1599,13 +1610,42 @@ is: a family that does not declare its native tap still refuses, at admit,
 per charter section 13.7's rule that a load granting an election it cannot
 honor fails at its cheapest moment.
 
-**The deployed artifact still refuses, and that is a separate act.** The
-registry's `qwen35moe` declares `taps_readout: false`, so an elected readout
-against what this workshop runs today refuses on the flag with the container
-no longer in the way. **Flipping that flag is a claim about the family**
-rather than a line in a table, and the claim is that this tap reads that
-architecture's residual correctly and changes no token doing it, which is
-charter section 13.7's bar and is shown by a run rather than by a reading.
+**The deployed artifact serves the election as of 2026-08-23, and the run
+that bought it is named.** The registry's `qwen35moe` declared
+`taps_readout: false` while the claim was unmeasured, because flipping that
+flag is a claim about the family rather than a line in a table: that this
+tap reads that architecture's residual correctly and changes no token doing
+it. Both halves were measured against `Qwen-AgentWorld-35B-A3B-Q8_0` on one
+card, forty layers and two hundred fifty-six experts of which eight fire per
+token. Sixty-four tokens drawn under one declaration are identical with the
+election on and off, at each of two seeds, and the elected run folded one
+figure per layer per forward. **Two seeds rather than one, because the
+comparison has to be known to discriminate**: an equality that held for
+every input would pass whatever the tap did, and the two sequences differing
+is what says it would not. The flag stands on that measurement.
+
+**The bar is a run and the run is kept.** Charter section 13.7 has an
+elected readout change no token, shown per tap rather than once for the
+election, and section 10's non-purchase rule would leave this to a reading
+if the reading could reach it. It cannot: the hazard is that installing the
+callback turns one compute into a walk of windows and unapplies a fusion
+candidate straddling a boundary, and no host run touches a fused kernel.
+The measurement is therefore an instrument in the tree rather than a note
+in this document, and it is watched failing under a one-seed perturbation,
+which is what tags it: Document Format section 5 fixes an assertion's
+instrument to five names and apex section 11's third device makes a
+behavioral test perturbation-verified by obligation, whatever the section
+that argues it calls the run.
+
+```graph
+node: spu-elected-readout-changes-no-token
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-elected-readout-changes-no-token
+```
 
 **The bar this tap must clear is why the mechanics above matter.** Installing
 an eval callback changes how the scheduler computes the graph, not only what
@@ -1613,10 +1653,11 @@ is read from it: one compute over a split becomes a walk of windows with a
 synchronize after each, and a fusion candidate straddling a window boundary
 is not applied. A fused kernel and its unfused equivalent are not guaranteed
 bit-identical in floating point, and `l_out-<il>` sits next to a normalise
-that is a fusion candidate. **So this tap is plausibly observational and not
-provably so from reading the source**, and charter section 13.7's
+that is a fusion candidate. **So no reading of the source settles whether
+this tap is observational**, which is why charter section 13.7's
 demonstration is a measurement against the real artifact on the real device
-pair rather than an argument. The one-shape claim is review's by
+pair rather than an argument, and why the run recorded above is the thing
+that answers it. The one-shape claim is review's by
 non-purchase, the pin section 10 buys on this seam being the fork's callback
 and not the shape either tap returns.
 
