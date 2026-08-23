@@ -588,7 +588,15 @@ pub const REGISTRY: &[Declaration] = &[
         renderer: qwen2::renderer,
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::ReestablishAndReprefill,
-        taps_readout: false,
+        // **Declared on a measurement, 2026-08-23**, per charter section
+        // 13.7's bar and the Spec's rule that flipping this is a claim about
+        // the family rather than a line in a table. The claim is that the
+        // GGUF tap reads this architecture's residual correctly and changes
+        // no token doing it, and it is bought by
+        // `tests/readout_neutral.rs` against the deployed artifact on a real
+        // device. This is the architecture the workshop serves, so the
+        // election it grants is one an operator can actually make.
+        taps_readout: true,
     },
     Declaration {
         // **The first entry that had to grow a module rather than cite one.**

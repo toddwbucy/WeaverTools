@@ -232,7 +232,7 @@ mod tests {
     /// test still catches.
     #[test]
     fn no_shipped_family_advertises_a_tap_it_cannot_perform() {
-        const TAPPED: &[&str] = &["qwen2"];
+        const TAPPED: &[&str] = &["qwen2", "qwen35moe"];
         for declaration in crate::family::REGISTRY {
             assert_eq!(
                 declaration.taps_readout,
