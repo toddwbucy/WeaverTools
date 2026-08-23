@@ -342,6 +342,39 @@ The three cells, settled with the ratification. H2 runs as a review query agains
 the graph for now, a build script being a later mechanization of the same check.
 H1's mechanical bar is the Spec's own instruments: the doctests, compile pins, and
 perturbation tests land with the code they pin, with clippy and fmt as the floor.
+
+**The bar names instruments and owes the invocation that runs them.** That absence
+is the defect of #288 and is closed here. `cargo test --workspace` is **not** the
+suite. It compiles `weaver-spu` with `default = []`, which is no engine, so it runs
+none of the model-loading, decode, device, or family-selection tests. Measured
+2026-08-23: it reports 398 passing and does not run 51.
+
+The suite is two invocations and a machine is honest about which it can offer.
+
+    the host suite     cargo test --workspace
+                       cargo test -p weaver-spu --features gguf
+
+    the device suite   cargo test --workspace --all-features
+
+The host suite needs no card and runs everywhere the C++ toolchain builds
+llama.cpp. The device suite needs the pair and the fixtures, and it is the one whose
+green means the suite is green. **A merge states which it ran**, because a claim of
+green that does not say which suite is a claim about an unnamed subset.
+
+**Coverage is not readable from any one manifest.** Cargo unifies features across a
+workspace, so a crate's tests may run because a different crate wanted the feature.
+`weaver-types` gains twenty-one config tests under `--workspace` only because
+`weaver-admin` takes that feature for its own reasons, and nothing connects the two.
+Were admin to stop needing it, those tests would stop running with no edit to
+`weaver-types` and nothing reporting the change. So a run states the features it
+resolved rather than the features it was asked for.
+
+**The three bars are not equally held today, and saying so is the point of naming
+them.** Measured 2026-08-23: the device suite passes, `cargo clippy --workspace
+--all-targets` reports six warnings, and `cargo fmt --all --check` reports a hundred
+and thirty-nine diffs. A floor stated and unmet reads to a later seat as a floor that
+was never meant, so either the tree rises to it or the bar is rewritten to what the
+work actually holds. That ruling is the operator's and is not taken here.
 A failing H3 case files as a known gap with a named owner rather than blocking
 merge, for the loop 0 act only, because the bare-minimum milestone does not wait
 on refusal-path coverage - and the gaps are named at filing so the exception does
