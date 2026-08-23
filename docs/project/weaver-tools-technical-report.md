@@ -1233,9 +1233,12 @@ its method before it runs, and it carries with every result the conditions that
 make it comparable: the commit, the build profile, and the identity of the binaries
 measured rather than the profile's bare claim.
 
-**Standing outside the repository makes this the one numbered section a reader
-holding the tree cannot check**, which is said here rather than left to be noticed.
-Appendix B carries it as owed.
+**Standing outside the repository makes this the one numbered section whose own
+sources a reader holding the tree cannot reach**, which is said here rather than
+left to be noticed. Section 13 is the narrower case and not a second of these: its
+own claims are checkable and one citation it makes is not, the clock argument
+sitting on an open pull request. Appendix B carries all three, appendix C being
+uncheckable on a third ground.
 
 ### The A/A test, and what it does and does not show
 
@@ -1479,9 +1482,10 @@ built and shown rather than because the wording softened.
 
 - **Section 14 cannot be checked from the tree.** The measurement regime's
   registrations and results stand outside this repository. Until they travel with
-  the release or move into it, section 14 is the one numbered section whose
+  the release or move into it, section 14 is the one numbered section whose own
   sources a reader holding the tree cannot reach, which breaks the standard the
-  rest of the report holds to.
+  rest of the report holds to. Section 13's owed citation below is the narrower
+  case, its own claims being checkable where these sources are not.
 - **The equivalence bound in section 14 is computed here**, from the reported
   means, standard deviations, and sample sizes. It is not a pre-registered power
   analysis, and a series designed against a target effect would state the bound
