@@ -457,17 +457,23 @@ fn an_elected_readout_travels_with_the_generation() {
     }
 }
 
-/// An elected readout against a GGUF residency refuses at admit, naming
-/// the family: the native tap stands and the GGUF tap does not, and a
-/// load that succeeded and failed at the first turn would be the
-/// expensive lie the charter forbids.
+/// An elected readout against a family that declares no tap refuses at
+/// admit, naming the family, because a load that succeeded and failed at
+/// the first turn would be the expensive lie the charter forbids.
+///
+/// **The container stopped being the ground on 2026-08-22.** This read the
+/// refusal against a qwen2 GGUF while the GGUF tap did not exist and every
+/// GGUF load refused an election whatever its family declared. Both engines
+/// tap now, so the refusal is reached through SmolLM2, whose family selects
+/// a `llama` entry declaring nothing. The contrast this test once drew,
+/// native taps and GGUF does not, is retired rather than repaired: what it
+/// watches now is the residency path reading the declaration, which is a
+/// different and still live claim.
 #[test]
 fn an_elected_readout_refuses_a_gguf_residency_at_admit() {
-    let gguf = PathBuf::from(
-        "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct-GGUF/qwen2.5-0.5b-instruct-q8_0.gguf",
-    );
+    let gguf = PathBuf::from("/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf");
     if !gguf.is_file() {
-        eprintln!("SKIP an_elected_readout_refuses_gguf: no GGUF artifact");
+        eprintln!("SKIP an_elected_readout_refuses_gguf: no untapping GGUF artifact");
         return;
     }
     let mut residency = Residency::new();
