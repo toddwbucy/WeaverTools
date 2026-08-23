@@ -2,8 +2,8 @@
 
 **Status:** LIVING. In `main` and outside the document set. **This document is
 subject to change as development continues**, it is never ratified, and nothing
-in the corpus is written against it. Describes `WeaverTools` at `fbcb73e`,
-2026-08-21. Sections 5 through 15 are planned in appendix A rather than drafted,
+in the corpus is written against it. Describes `WeaverTools` at `da5a503`,
+2026-08-22. Sections 5 through 15 are planned in appendix A rather than drafted,
 appendix B carries what is not built, not proven, or not measured, and appendix C
 states the formulation as design intent rather than as description.
 
@@ -20,6 +20,15 @@ It is not a specification. The corpus under `docs/` is the authority on every
 claim made here, and a builder implementing against WeaverTools reads the
 contracts, which carry the vocabulary that crosses each seam, the errors it can
 return, and the ordering it relies on and provides.
+
+**It is also not the technical site**, which stands at `docs/technical/` as one
+paper per crate over a shared contracts page. The division is by question rather
+than by audience. A crate paper answers what one crate is and what it refuses,
+reading out that crate's merged documents and restating no contract. This report
+answers what the assembly does, which is a question no crate paper is positioned
+to take, and it carries the material that belongs to no crate: the level
+argument, the seam rule, the turn, and the holes. Where the two disagree the
+merged corpus settles it and both are defects.
 
 **The system is under construction, and this report says so wherever it is
 true.** Where something described here is chartered but not built, built but not
@@ -92,17 +101,17 @@ Nine crates make those four programs. Two are the floor, shared vocabulary every
 domain draws from and no domain contains, linked rather than dialed because a
 type definition cannot be sent over a socket.
 
-    weaver-types      1,323    the floor: config, identity, wire shapes
+    weaver-types      1,498    the floor: config, identity, wire shapes
     weaver-traits       314    the floor: messages, roles, permissions, tools
-    weaver-trace      1,443    the recorder and the in-RAM working structure
+    weaver-trace      1,632    the recorder and the in-RAM working structure
     weaver-state      1,178    the session custodian, sqlite behind a socket
-    weaver-harness    7,050    the switchboard, the loops, trace authorship
-    weaver-spu       12,061    residency, two decode engines, measurement
+    weaver-harness    8,659    the switchboard, the loops, trace authorship
+    weaver-spu       13,185    residency, two decode engines, measurement
     weaver-gate       2,280    the boundary, and the shell as its own verb
     weaver-admin      3,093    lifecycle authorization and custody of the sink
     weaver-internal     297    functions the loop dispatches inward
 
-Figures are lines of Rust under `src/`, 29,039 in total, with a further 7,300 in
+Figures are lines of Rust under `src/`, 32,136 in total, with a further 8,070 in
 integration tests.
 
 **The apex governs exactly seven crate charters** and names them: admin, harness,
@@ -288,6 +297,31 @@ trace events named at each are the record the next section is about.
    than leaving it to be inferred from an absence.
 9. The response leaves through the gate as **one NDJSON line out**.
 
+**Where the resident context has to give ground, the edit is recorded.** Between
+decodes the loop may return the decode context to its prefix, which is a flush, or
+remove an interior span of it, which is an elision. Each crosses the decode seam
+as its own exchange and each reaches the record, `flush` carrying the resident
+counts either side and `elision` carrying those counts beside the half-open span
+the loop named. **Which span to elide is the loop's election and the harness holds
+no policy about it**, the seat forwarding the span unjudged, because a port that
+judged one would be the switchboard deciding what a context is worth. The span
+comes from the ask and the counts from the answer, each party writing what it is
+the authority on. The two edits are recorded differently because they are
+differently recoverable: a flush leaves a suffix a reader could infer from the
+counts alone, and an elision leaves a sequence no count describes.
+
+**Where a seam refuses, two records are written and neither implies the other.**
+Each of the three asks that cross an organ channel can come back refused, and the
+refusal reaches the record as its own event carrying the refusing party's own
+account, the floor's refusal record naming which seam answered and carrying that
+seam's case with the values it holds. Where the refusal ends the turn,
+`turn.closed` carries `Refused`. **The close says the bracket ended and which kind
+of ending it was, the event says what was refused, and neither is recoverable from
+the other**, which is the division the fault event already runs on. The recorder
+splices that account rather than shaping it, since a refusal is produced by the
+party that refused, and typing it in the recorder would make the recorder hold and
+version seam vocabularies it otherwise knows nothing about.
+
 **The gate's second socket is chartered and unreached.** It is opened by the
 agent rather than by the world, it admits registered applications that bind a
 listening port, and no exchange of the harness-gate seam reaches it in this pass.
@@ -305,7 +339,7 @@ the turn.
 ## Appendix A. Sections not yet drafted
 
 **5. The trace.** NDJSON with no framing layer, one line per event, the closed
-kind set at nineteen, the flattened envelope, and two clocks that answer
+kind set at twenty-one, the flattened envelope, and two clocks that answer
 different questions. Why every integer that can exceed the double-safe range
 serializes as a decimal string. The bracketing grammar: session over run over
 turn, strictly nested, interior events adding depth to a turn and never adding
@@ -364,9 +398,10 @@ on an open pull request rather than in the tree, so that citation is owed.
 repository, registers each test with its method before it runs, and carries with
 every result the conditions that make it comparable: the commit, the build
 profile, and the identity of the binaries measured rather than the profile's bare
-claim. **Standing outside the repository makes this the one section a reader
-holding the tree cannot check**, which is said here rather than left to be
-noticed, and appendix B carries it as owed.
+claim. **Standing outside the repository makes this the one numbered section a
+reader holding the tree cannot check**, which is said here rather than left to be
+noticed, and appendix B carries it as owed together with appendix C, which is
+uncheckable on a different ground.
 
 The result the section rests on is an A/A test. Two agents identical in model
 artifact, declaration identity, loop file, and calculator, differing only in
@@ -436,7 +471,10 @@ built and shown rather than because the wording softened.
 - **The GGUF residual readout tap.** The fork's eval callback is pinned and the
   pin is bought by a compile-fail doctest, but nothing drives a tap through it.
   The native tap stands. An elected GGUF load therefore refuses at admit by name.
-  Two assertions wait on this, `spu-two-taps-one-shape` above all.
+  Two assertions wait on this, `spu-two-taps-one-shape` above all. **Two pull
+  requests are open against this entry** and it is the one here nearest to
+  closing, which is said so that a reader meeting it after they merge knows to
+  distrust the date at the top rather than the work.
 - **The idle report.** No report authors without a turn because nothing authors
   one at all, which is what `harness-idle-report-authors-without-a-turn` waits on.
 - **Client-facing streaming.** Deferred, and it arrives as an extension to the
@@ -487,9 +525,9 @@ built and shown rather than because the wording softened.
 
 - **Section 14 cannot be checked from the tree.** The measurement regime's
   registrations and results stand outside this repository. Until they travel with
-  the release or move into it, section 14 is the one section whose sources a
-  reader holding the tree cannot reach, which breaks the standard the rest of the
-  report holds to.
+  the release or move into it, section 14 is the one numbered section whose
+  sources a reader holding the tree cannot reach, which breaks the standard the
+  rest of the report holds to.
 - **The equivalence bound in section 14 is computed here**, from the reported
   means, standard deviations, and sample sizes. It is not a pre-registered power
   analysis, and a series designed against a target effect would state the bound
@@ -509,23 +547,25 @@ built and shown rather than because the wording softened.
   agent paper, which is not in this repository, so that citation resolves to
   nothing a reader holding the tree can open.
 - **The loop numbering is unsettled between the two documents.** The formulation
-  numbers the primary reasoning loop `L_0` where this report calls the lifecycle
-  loop zero and the inference loop loop one. Appendix C states the collision and
-  names a candidate resolution it does not adopt. The ruling is the apex's.
+  numbers the primary reasoning loop `L_0` where this report numbers the lifecycle
+  loop zero and leaves the inference loop unnumbered. Appendix C states the
+  collision and names a candidate resolution it does not adopt. The ruling is the
+  apex's.
 
 ---
 
 ## Appendix C. The formulation
 
 **Status: descriptive of design intent. Not checkable against the tree, and not
-ratified.** Every other claim in this report can be verified by a reader holding
-the commit named at the top. This appendix cannot, because it states what an
-agent is taken to be rather than what this code does, and a definition verifies
-against argument rather than against a build. It is placed here so that the
-mapping in the last part of the appendix is available to a reader who wants it
-and skippable by one who does not. The argument for the notation is not made
-here. It is made in the agent paper (Bucy, 2026), and this appendix states the
-result of that argument and the reading of it.
+ratified.** The claims in this report are meant to be verifiable by a reader
+holding the commit named at the top, and appendix B collects the ones that are
+not. This appendix is among them, and on a ground the others do not share: it
+states what an agent is taken to be rather than what this code does, and a
+definition verifies against argument rather than against a build. It is placed
+here so that the mapping in the last part of the appendix is available to a
+reader who wants it and skippable by one who does not. The argument for the
+notation is not made here. It is made in the agent paper (Bucy, 2026), and this
+appendix states the result of that argument and the reading of it.
 
 The notation exists in this document for one reason beyond description. Work that
 comes later will need a fixed object to cite, and a formulation carried in a
@@ -537,8 +577,9 @@ in a working draft.
 $$A = B\Big[\, (H,\, M) \,+\, \{\,T,\, V,\, \ldots\,\} ,\quad
 \big\langle\, L_0,\, L_1,\, \ldots,\, L_n \,\big\rangle \,\Big]$$
 
-Read left to right, the three kinds of bracket are three different claims and the
-difference between them is the whole content of the statement.
+Read left to right, the outer square brackets are B applied to everything the
+agent is, and the three kinds of bracket inside them are three different claims
+whose difference is the whole content of the statement.
 
 **Round parentheses hold the required core.** A harness and a model, and neither
 can be removed and leave an agent standing. H appears here as a part rather than
@@ -580,10 +621,10 @@ equals.
 **One reading has to be refused where the letter is introduced.** `weaver-gate`
 is not B. The gate is a crate, an organ, and one of the nine parts section 2
 enumerates, which puts it inside the bracket with everything else. **The gate is
-a part standing at the bound. The bound is the uid.** A reader who takes the gate
-for B would have this report contradicting itself on its second page, since B is
-defined as not one of the agent's parts and the gate is enumerated as one. The
-gate is where crossings are authorized. It is not what makes a crossing a
+a part standing at the bound. The bound is the kernel's.** A reader who takes the
+gate for B would have this report contradicting itself on its second page, since
+B is defined as not one of the agent's parts and the gate is enumerated as one.
+The gate is where crossings are authorized. It is not what makes a crossing a
 crossing.
 
 ### C.3 The recurrence
@@ -637,31 +678,33 @@ the entry says so rather than finding a nearest match.
 - **V, validators.** **An unoccupied position.** Nothing in the tree fills it.
   The braces being an optional inventory is what permits that, and naming the
   position empty is more useful than pretending the slot is not there.
-- **The array.** Section 13's compiled-rather-than-configured loop is the built
-  form of the claim that ordering is the lever. What a builder inherits is an
+- **The array.** Planned section 13's compiled-rather-than-configured loop is the
+  built form of the claim that ordering is the lever. What a builder inherits is an
   array they did not choose at runtime, which is what holds variance to a range.
 - **B, the bound.** Section 3. Agent uid, socket permissions, `SO_PEERCRED`.
 
 ### C.5 Two defects this appendix carries
 
 **The loop subscripts collide with the report's.** The formulation numbers the
-primary reasoning loop `L_0`. This report calls the lifecycle loop zero and the
-inference loop loop one. The same subscript therefore names two different loops
-across the two documents, and a reader moving between them will be misled. The
+primary reasoning loop `L_0`. This report numbers the lifecycle loop zero, in the
+plan for section 11, and leaves the inference loop unnumbered. Subscript zero
+therefore names the lifecycle loop on one side and the reasoning loop on the
+other, and a reader moving between the two documents will be misled. The
 recurrence above is written with a bare `L` to avoid asserting a numbering that
 is not settled.
 
 There is a candidate resolution and it is not adopted here. The lifecycle loop
 may not be a member of the array at all. Loading and unloading is the drawing and
-erasing of B rather than a loop the bounded thing runs, and section 13 already
-holds that there is one clock and the load boundary is an event on it rather than
-a second tempo. Under that reading the array holds inference-side loops only, the
-collision dissolves, and the formulation's `L_0` and the report's loop one are
-the same object. **That is a ruling the apex has not made**, and this appendix
+erasing of B rather than a loop the bounded thing runs, and the plan for section
+13 already carries the claim that there is one clock and the load boundary is an
+event on it rather than a second tempo. Under that reading the array holds
+inference-side loops only, `L_0` is the inference loop this report leaves
+unnumbered, and the collision dissolves. **That is a ruling the apex has not
+made**, and this appendix
 states the collision rather than settling it.
 
 **The formulation is a definition and the rest of this report is a description.**
 Nothing here is falsified by a build failing, and nothing here is confirmed by
 one passing. A reader should hold this appendix to the standard a definition is
 held to, which is whether it draws its distinctions where the joints are, and not
-to the standard the fifteen sections above hold themselves to.
+to the standard the numbered sections above hold themselves to.
