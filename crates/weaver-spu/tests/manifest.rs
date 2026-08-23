@@ -44,12 +44,27 @@ const DOCUMENTED: &[&str] = &[
 /// The prefix `markers.rs` builds its per-family names from.
 const VOCAB_PREFIX: &str = "WEAVER_VOCAB_";
 
-/// Every `WEAVER_*` identifier appearing in this crate's test sources.
+/// Every `WEAVER_*` name appearing as a string literal in this crate's test
+/// sources.
 ///
 /// Read off disk rather than compiled in, because a `cfg`-gated target is not
 /// compiled on a host build and its variables would vanish from a compiled
 /// inventory exactly when the gate is what hid them. That is the failure this
 /// whole issue is about, and it would be reproduced here.
+///
+/// **The quote is what makes this a name rather than prose.** An earlier form
+/// searched the bare text and read a doc comment's `WEAVER_VOCAB_<FAMILY>` as a
+/// variable no test asks the environment for. Requiring the surrounding quote
+/// leaves comments, documentation, and diagnostic prose out without a parser.
+///
+/// **Anchoring to `env::var` call sites was considered and rejected.** Two
+/// access shapes exist here: `loaded.rs` and its neighbours call
+/// `env::var_os` directly, while `markers.rs` and `selection.rs` carry the name
+/// as a field of a fixture table and look it up elsewhere. A scan anchored to
+/// the call site would miss eighteen of the twenty-one names, which is the
+/// under-reporting this test exists to prevent. A real token parse would reach
+/// both, and it would put a parser in the dependency set of a crate whose Spec
+/// section 1.1 argues every dependency it takes.
 fn variables_in_tests() -> BTreeSet<String> {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
     let mut found = BTreeSet::new();
@@ -68,8 +83,12 @@ fn variables_in_tests() -> BTreeSet<String> {
         let source = fs::read_to_string(&path).expect("the source reads");
         let bytes = source.as_bytes();
         let mut at = 0;
-        while let Some(start) = source[at..].find("WEAVER_") {
-            let start = at + start;
+        // A name is `"WEAVER_..."`, quoted. Both access shapes in this crate
+        // put it in a string literal: a direct `env::var_os` argument, and a
+        // fixture table's field. Prose carries it in backticks or bare, and is
+        // left out by the opening quote alone.
+        while let Some(offset) = source[at..].find("\"WEAVER_") {
+            let start = at + offset + 1;
             let mut end = start;
             while end < bytes.len()
                 && (bytes[end].is_ascii_uppercase()
@@ -78,13 +97,9 @@ fn variables_in_tests() -> BTreeSet<String> {
             {
                 end += 1;
             }
-            // **A placeholder in prose is not a variable.** `markers.rs`
-            // documents its per-family form as `WEAVER_VOCAB_<FAMILY>`, and a
-            // scanner reading that as a name would report a variable that no
-            // test ever asks the environment for. The angle bracket is what
-            // separates the documented shape from a real name.
-            let placeholder = bytes.get(end) == Some(&b'<');
-            if !placeholder {
+            // The literal must close where the name ends, or the match is a
+            // longer string that merely begins with the prefix.
+            if bytes.get(end) == Some(&b'"') {
                 found.insert(source[start..end].to_string());
             }
             at = end;
