@@ -20,10 +20,23 @@
 //! which engine produced it. **The native tap stands as of 2026-08-19** for
 //! the families whose declarations say so, at both widths, folding each
 //! layer's device-side norm through [`Reduction::fold_norm`]. **The GGUF tap
-//! is not stood**: the Spec is explicit that standing it up is code this
-//! program writes rather than salvage it inherits, and [`judge`] reads the
-//! container beside the family's flag so an elected GGUF load refuses at
-//! admit rather than serving turns without what was elected.
+//! stands as of 2026-08-22**, in [`crate::decoder::gguf_tap`], reading
+//! `l_out-<il>` off the ggml scheduler's eval callback and folding through
+//! [`Reduction::fold`]. Both answer [`Reduction`], so [`judge`] now reads
+//! the family's flag alone: the container stopped being a ground for
+//! refusing on the day the second tap stood.
+//!
+//! **What the GGUF tap has shown and what it still owes.** `weaver-spu-PRD`
+//! section 13.7 obliges an elected readout to change no token, per tap
+//! rather than once for the election. The GGUF tap is watched clearing that
+//! bar on the host backend, in `gguf.rs`, which reaches everything but the
+//! one hazard the Spec names: installing the callback turns one graph
+//! compute into a walk of windows, and a fusion candidate straddling a
+//! window boundary goes unapplied, which is a device concern no host run
+//! can reach. **The measurement on the real device pair is therefore owed**
+//! and the tap is not shipped against a family until it is taken. The
+//! deployed family declares no tap, so nothing in service elects this
+//! path today.
 //!
 //! **A tap that fails while elected is a fault, not an absence.** Per charter
 //! section 13.10: an elected observability that silently stopped observing is a
@@ -134,20 +147,26 @@ pub trait Tap {
 /// **This runs on the admit path and nowhere else.** Moving it later is what
 /// section 10's watch perturbs: the load then succeeds and the first turn
 /// fails, which is the expensive lie the charter's rule forbids.
+/// **The container is not a parameter.** It was one while the GGUF tap did
+/// not exist and the container was therefore a second ground for refusing.
+/// The tap stands, the ground is gone, and a parameter kept against a reader
+/// that no longer exists is the reserved slot the apex forbids: the next
+/// reader would take its presence for a judgment this function makes.
 pub fn judge(
     election: ReadoutElection,
     declaration: &Declaration,
-    container: crate::artifact::Container,
 ) -> Result<(), ReadoutRefusal> {
     if !election.elected() {
         return Ok(());
     }
-    // The flag says the family's native tap stands. The container says which
-    // engine will serve, and the GGUF tap is not stood - the Spec is
-    // explicit that standing it up is code this program writes - so an
-    // elected GGUF load refuses here, at admit, rather than serving turns
-    // whose measurement quietly lacks what the operator elected.
-    if !declaration.taps_readout || container == crate::artifact::Container::Gguf {
+    // **The family's flag is the whole of the ground.** The container was a
+    // second ground while the GGUF tap did not exist, and it stopped being
+    // one when the tap stood on 2026-08-22: both engines tap now, so which
+    // one will serve says nothing about whether the election can be
+    // honored, and a family that does not declare its tap still refuses
+    // here, at admit, rather than serving turns whose measurement quietly
+    // lacks what the operator elected.
+    if !declaration.taps_readout {
         return Err(ReadoutRefusal::NotTappable {
             family: declaration.family,
         });
@@ -194,23 +213,13 @@ mod tests {
     /// this test buys is the judgment itself.
     #[test]
     fn an_election_the_family_cannot_honor_is_refused() {
-        use crate::artifact::Container;
         assert_eq!(
-            judge(ReadoutElection(true), &UNTAPPABLE, Container::Safetensors),
+            judge(ReadoutElection(true), &UNTAPPABLE),
             Err(ReadoutRefusal::NotTappable {
                 family: "untappable"
             })
         );
-        assert_eq!(
-            judge(ReadoutElection(true), &TAPPABLE, Container::Safetensors),
-            Ok(())
-        );
-        // The GGUF tap is not stood whatever the family declares, so the
-        // container refuses what the flag alone would admit.
-        assert_eq!(
-            judge(ReadoutElection(true), &TAPPABLE, Container::Gguf),
-            Err(ReadoutRefusal::NotTappable { family: "tappable" })
-        );
+        assert_eq!(judge(ReadoutElection(true), &TAPPABLE), Ok(()));
     }
 
     /// **A shipped family advertises a tap only where one stands.** The
@@ -242,26 +251,19 @@ mod tests {
     /// walks every family this binary actually carries.
     #[test]
     fn an_elected_readout_refuses_against_every_shipped_family() {
-        use crate::artifact::Container;
         for declaration in crate::family::REGISTRY {
-            // The GGUF tap is not stood for any family.
+            // **The declaration is the whole answer** as of the tap act.
+            // While the GGUF tap did not exist this loop asserted a blanket
+            // refusal under that container and read the flag only under
+            // safetensors, which is the asymmetry the tap removes.
             assert_eq!(
-                judge(ReadoutElection(true), declaration, Container::Gguf),
-                Err(ReadoutRefusal::NotTappable {
-                    family: declaration.family
-                }),
-                "{} cannot honor an election under GGUF",
-                declaration.family
-            );
-            // The native side answers the declaration.
-            assert_eq!(
-                judge(ReadoutElection(true), declaration, Container::Safetensors).is_ok(),
+                judge(ReadoutElection(true), declaration).is_ok(),
                 declaration.taps_readout,
-                "{} disagrees with its own flag under safetensors",
+                "{} disagrees with its own flag",
                 declaration.family
             );
             assert_eq!(
-                judge(ReadoutElection(false), declaration, Container::Gguf),
+                judge(ReadoutElection(false), declaration),
                 Ok(()),
                 "{} serves an unelected load",
                 declaration.family
@@ -274,14 +276,7 @@ mod tests {
     /// a requirement.
     #[test]
     fn an_unelected_load_is_served_by_an_untappable_family() {
-        assert_eq!(
-            judge(
-                ReadoutElection(false),
-                &UNTAPPABLE,
-                crate::artifact::Container::Gguf
-            ),
-            Ok(())
-        );
+        assert_eq!(judge(ReadoutElection(false), &UNTAPPABLE), Ok(()));
     }
 
     /// **The reduction keeps a figure per layer and never the layer.** What

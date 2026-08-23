@@ -363,7 +363,12 @@ impl Resident {
         match &self.model {
             #[cfg(feature = "gguf")]
             LoadedModel::Gguf(model) => {
-                let engine = crate::decoder::gguf::GgufEngine::open(model, knobs, capacity)?;
+                let engine = crate::decoder::gguf::GgufEngine::open(
+                    model,
+                    knobs,
+                    capacity,
+                    self.readout.elected(),
+                )?;
                 Ok(Session::new(
                     Box::new(engine),
                     capacity as usize,
@@ -617,7 +622,7 @@ impl Residency {
         // first turn instead, the load succeeds and the turn fails, which is
         // the expensive lie the rule forbids and what section 10's watch
         // perturbs.
-        readout::judge(readout, declaration, header.container).map_err(AdmitRefusal::Readout)?;
+        readout::judge(readout, declaration).map_err(AdmitRefusal::Readout)?;
         judge_distinct(&binding.devices)?;
         // The shard each device must hold, read from the held descriptor
         // rather than from the name. The width was judged above, so the
