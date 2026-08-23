@@ -55,6 +55,7 @@ use llama_cpp_2::sampling::LlamaSampler;
 use llama_cpp_2::token::LlamaToken;
 
 use crate::decoder::backend::{Backend, DecodeFault, TokenId};
+use crate::decoder::gguf_tap;
 use crate::sampling::EffectiveKnobs;
 use llama_cpp_2::model::params::{LlamaModelParams, LlamaSplitMode};
 
@@ -191,6 +192,30 @@ pub struct GgufEngine<'a> {
     /// `weaver-spu-Spec` section 8.5. Held because the chain holds nothing
     /// between generations and is therefore built rather than reset.
     knobs: EffectiveKnobs,
+    /// The residual tap's state where the load elected readout, per Spec
+    /// section 7, and `None` where it did not.
+    ///
+    /// **Deliberately a raw pointer rather than a `Box`.** The ggml
+    /// scheduler calls back into this state from inside `decode`, which
+    /// runs under `&mut self`, and a `Box` field would have that borrow
+    /// claim the state exclusively for the whole of the call the callback
+    /// writes during. A raw pointer makes no such claim. Ownership is not
+    /// thereby shared: this struct is the one owner and [`Drop`] is what
+    /// frees it.
+    tap: Option<std::ptr::NonNull<gguf_tap::TapState>>,
+}
+
+impl Drop for GgufEngine<'_> {
+    fn drop(&mut self) {
+        if let Some(state) = self.tap.take() {
+            // Safety: allocated by `Box::into_raw` in `open`, handed to
+            // nothing but this context, and taken here so a second drop
+            // cannot reach it. The context is still standing when this
+            // runs, holding the pointer as its `cb_eval_user_data`, and
+            // never dereferences it: freeing a context computes no graph.
+            drop(unsafe { Box::from_raw(state.as_ptr()) });
+        }
+    }
 }
 
 impl<'a> GgufEngine<'a> {
@@ -200,10 +225,15 @@ impl<'a> GgufEngine<'a> {
     /// **The sampler is built once, from the effective values.** The knobs
     /// resolved at the composition root per Spec section 8, so nothing here
     /// re-reads a disposition or learns which side supplied a value.
+    /// **The readout election arrives here and nowhere later.** `cb_eval`
+    /// is a context parameter, so a tap can only be installed as the context
+    /// is created, which is why the election travels from admit rather than
+    /// from the turn that would like it.
     pub fn open(
         model: &'a ResidentModel,
         knobs: &EffectiveKnobs,
         capacity: u32,
+        readout: bool,
     ) -> Result<GgufEngine<'a>, DecodeFault> {
         let backend = backend().map_err(|_| DecodeFault::Engine {
             detail: "the llama backend is not initialised".into(),
@@ -219,6 +249,23 @@ impl<'a> GgufEngine<'a> {
         let params = LlamaContextParams::default()
             .with_n_ctx(Some(capacity))
             .with_n_batch(capacity.get());
+        // The state is allocated before the context because the context is
+        // handed its address, and it is leaked out of its box here so that
+        // no later `&mut self` claims the pointee the callback writes to.
+        let tap = readout.then(|| {
+            std::ptr::NonNull::from(Box::leak(gguf_tap::TapState::new(
+                model.model().n_layer() as usize,
+            )))
+        });
+        let params = match tap {
+            // Safety: the pointer is this engine's own allocation, freed by
+            // its `Drop` and by nothing else, and the context that holds it
+            // is a field of the same struct, so it cannot outlive it.
+            Some(state) => unsafe {
+                params.with_eval_callback(Some(gguf_tap::tap), state.as_ptr() as *mut std::ffi::c_void)
+            },
+            None => params,
+        };
         let context = model
             .model()
             .new_context(backend, params)
@@ -234,6 +281,7 @@ impl<'a> GgufEngine<'a> {
             logits_at: None,
             closed: false,
             knobs: *knobs,
+            tap,
         })
     }
 
@@ -267,6 +315,14 @@ impl<'a> GgufEngine<'a> {
             // contribution in the value that reaches the draw.
             LlamaSampler::dist(((seed >> 32) ^ (seed & 0xFFFF_FFFF)) as u32),
         ])
+    }
+
+    /// The tap's state where one stands.
+    fn tap_mut(&mut self) -> Option<&mut gguf_tap::TapState> {
+        // Safety: the pointer came from `Box::leak`, this struct is its one
+        // owner, and the reference borrows `self` so it cannot outlive the
+        // engine or coexist with a second one.
+        self.tap.map(|state| unsafe { &mut *state.as_ptr() })
     }
 
     fn engine_fault(detail: impl Into<String>) -> DecodeFault {
@@ -342,6 +398,13 @@ impl Backend for GgufEngine<'_> {
             .decode(&mut batch)
             .map_err(|error| Self::engine_fault(format!("decode: {error}")))?;
         self.logits_at = Some(last as i32);
+        // **The tap's fault is raised by the decode it happened in.** The
+        // callback cannot fail the graph without abandoning the rest of it,
+        // so the walk latches and this is where an elected readout that
+        // stopped observing becomes a fault rather than a shorter reduction.
+        if let Some(state) = self.tap_mut() {
+            state.commit()?;
+        }
         Ok(())
     }
 
@@ -438,6 +501,10 @@ impl Backend for GgufEngine<'_> {
         Ok(())
     }
 
+    fn take_reduction(&mut self) -> Option<crate::readout::Reduction> {
+        self.tap_mut().map(|state| state.drain())
+    }
+
     fn close(&mut self) {
         // The context and the sampler release with this value. What close marks
         // is that nothing further may be asked, which every method above reads.
@@ -491,7 +558,7 @@ mod tests {
     }
 
     fn engine(model: &ResidentModel) -> GgufEngine<'_> {
-        GgufEngine::open(model, &frozen(), 512).expect("the context opens")
+        GgufEngine::open(model, &frozen(), 512, false).expect("the context opens")
     }
 
     /// The fixture these tests decode against.
@@ -533,6 +600,217 @@ mod tests {
             }
         };
         Some(host_only(&path).expect("the model loads on the host"))
+    }
+
+    /// **An unelected engine taps nothing**, which is the absence the
+    /// backend's default `None` states and this is the GGUF engine honoring
+    /// it rather than answering an empty reduction. An empty reduction and no
+    /// reduction read the same to a consumer that only counts figures, and
+    /// they mean different things.
+    #[test]
+    fn an_unelected_engine_taps_nothing() {
+        let Some(model) = model_or_skip() else { return };
+        let mut engine = engine(&model);
+        engine
+            .decode_at(&[TokenId(9707), TokenId(11), TokenId(1879)], 0)
+            .expect("the prompt decodes");
+        assert!(
+            engine.take_reduction().is_none(),
+            "an unelected load answers no reduction at all"
+        );
+    }
+
+    /// **The tap folds one figure per layer, per decode, against real
+    /// weights**, per Spec section 7.
+    ///
+    /// This is the end-to-end reading of the whole mechanism: the callback
+    /// installed at context creation, the name matched against what the
+    /// context formatted, the last column copied off a real buffer, and the
+    /// count checked against the model's own layer count rather than against
+    /// a number written here.
+    ///
+    /// **The figures must vary.** A tap that read the wrong column, or read
+    /// an unwritten buffer, would answer the right count of the wrong thing,
+    /// and a run of identical or zero norms is what that looks like. The
+    /// residual grows through a transformer's depth, so figures that are
+    /// finite, positive, and not all equal is the cheapest reading that a
+    /// buffer of zeros and a constant both fail.
+    #[test]
+    fn the_elected_tap_folds_one_figure_per_layer() {
+        let Some(model) = model_or_skip() else { return };
+        let layers = model.model().n_layer() as usize;
+        assert!(layers > 1, "the fixture must have layers to count");
+        let mut engine =
+            GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
+
+        engine
+            .decode_at(&[TokenId(9707), TokenId(11), TokenId(1879)], 0)
+            .expect("the prompt decodes");
+        let first = engine.take_reduction().expect("an elected engine taps");
+        assert_eq!(
+            first.layers(),
+            layers,
+            "one figure per layer of the model itself"
+        );
+        let norms = first.per_layer_norm();
+        assert!(
+            norms.iter().all(|norm| norm.is_finite() && *norm > 0.0),
+            "the figures are the model's: {norms:?}"
+        );
+        assert!(
+            norms.iter().any(|norm| *norm != norms[0]),
+            "a constant run means the wrong column: {norms:?}"
+        );
+
+        // **The drain empties.** A second decode folds its own set and the
+        // reduction handed back holds that set alone, so a generation cannot
+        // report figures belonging to the one before it.
+        assert_eq!(
+            engine.take_reduction().expect("still elected").layers(),
+            0,
+            "the drain left nothing behind"
+        );
+        engine
+            .decode_at(&[TokenId(1879)], 3)
+            .expect("a single token decodes");
+        assert_eq!(
+            engine.take_reduction().expect("still elected").layers(),
+            layers,
+            "the second decode folds its own layers"
+        );
+    }
+
+    /// **A prefill longer than the micro-batch still folds one set.**
+    ///
+    /// The callback fires per ubatch rather than per decode, so a prefill
+    /// that splits crosses it several times, and a tap that folded as it
+    /// went would answer a multiple of the layer count whose extra figures
+    /// belong to positions nothing sampled from. The staging discipline is
+    /// what makes this one set, and this is the test that reads it: the
+    /// default micro-batch is 512, so a prompt past that splits.
+    #[test]
+    fn a_split_prefill_folds_one_set_and_not_one_per_ubatch() {
+        let Some(model) = model_or_skip() else { return };
+        let layers = model.model().n_layer() as usize;
+        let capacity = 2048;
+        let mut engine =
+            GgufEngine::open(&model, &frozen(), capacity, true).expect("the context opens");
+
+        // Past the 512 micro-batch and inside the capacity above.
+        let prompt: Vec<TokenId> = (0..600).map(|_| TokenId(1879)).collect();
+        engine.decode_at(&prompt, 0).expect("the prompt decodes");
+
+        assert_eq!(
+            engine.take_reduction().expect("an elected engine taps").layers(),
+            layers,
+            "a split prefill folds the layer count once, not once per ubatch"
+        );
+    }
+
+    /// **The figures are the last position's, whatever the batching.**
+    ///
+    /// The count tests above would pass a tap reading any column, and the
+    /// column is the one thing about this tap that cannot be read off the
+    /// name. So this reads it by a route that has no column to choose: a
+    /// single-token decode has exactly one, and it must agree with the same
+    /// position taken as the tail of a batched prefill.
+    ///
+    /// Perturbation: taking column zero, or `nb[1]` as the offset instead of
+    /// the stride, diverges the two here while every count stays right.
+    ///
+    /// The tolerance is relative and loose because a batched matmul and a
+    /// single-row one accumulate in different orders on this backend. What
+    /// is being told apart is the same position from a different one, which
+    /// is a difference of tens of percent rather than of ulps.
+    #[test]
+    fn the_figures_belong_to_the_last_position_however_it_was_batched() {
+        let Some(model) = model_or_skip() else { return };
+        let prompt = [TokenId(9707), TokenId(11), TokenId(1879), TokenId(0)];
+
+        let mut batched =
+            GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
+        batched.decode_at(&prompt, 0).expect("the prompt decodes");
+        let batched = batched.take_reduction().expect("elected").per_layer_norm().to_vec();
+
+        // The same last position, reached one token at a time, so the tap has
+        // one column to take and cannot have taken the wrong one.
+        let mut singly =
+            GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
+        for (position, token) in prompt.iter().enumerate() {
+            singly
+                .decode_at(&[*token], position)
+                .expect("a single token decodes");
+            // Everything but the last is context, and its figures are not
+            // what this compares.
+            if position + 1 < prompt.len() {
+                singly.take_reduction();
+            }
+        }
+        let singly = singly.take_reduction().expect("elected").per_layer_norm().to_vec();
+
+        assert_eq!(batched.len(), singly.len(), "the same layer count either way");
+        for (layer, (a, b)) in batched.iter().zip(&singly).enumerate() {
+            let apart = (a - b).abs() / a.max(*b);
+            assert!(
+                apart < 0.05,
+                "layer {layer} reads {a} batched and {b} singly, \
+                 which is a different position rather than a different order"
+            );
+        }
+    }
+
+    /// **The tap changes no token**, watched on this backend.
+    ///
+    /// `weaver-spu-PRD` section 13.7 obliges an elected readout to change no
+    /// token: the same declaration and the same seed produce the same token
+    /// sequence with the election on and off. **What this test buys and what
+    /// it does not**: it reads the property on the host backend, where the
+    /// scheduler has one backend and the windowing the callback forces costs
+    /// synchronisation and nothing else. The hazard the Spec names is a
+    /// device one, a fusion candidate straddling a window boundary going
+    /// unapplied and the unfused kernel not being bit-identical to the
+    /// fused, and no CPU run can reach it. The charter's bar is therefore a
+    /// measurement against the real artifact on the real device pair and is
+    /// owed separately. What this buys is the whole of the rest: that the
+    /// tap mutates no engine state, consumes nothing from the sampler, and
+    /// perturbs no arithmetic that the host path shares with the device one.
+    ///
+    /// Perturbation: making the tap accept the token it observed, or drawing
+    /// from the sampler inside the callback, diverges the two runs here.
+    #[test]
+    fn the_tap_changes_no_token_on_this_backend() {
+        let Some(model) = model_or_skip() else { return };
+        let prompt = [TokenId(9707), TokenId(11), TokenId(1879)];
+
+        let draw = |readout: bool| {
+            let mut engine =
+                GgufEngine::open(&model, &frozen(), 512, readout).expect("the context opens");
+            engine.decode_at(&prompt, 0).expect("the prompt decodes");
+            let mut drawn = Vec::new();
+            for step in 0..16 {
+                let token = engine.sample().expect("a token is drawn");
+                drawn.push(token);
+                engine
+                    .decode_at(&[token], prompt.len() + step)
+                    .expect("the draw decodes");
+            }
+            drawn
+        };
+
+        let without = draw(false);
+        let with = draw(true);
+        assert_eq!(
+            with, without,
+            "the elected run drew a different sequence, so the tap is not observational"
+        );
+        // The comparison is only worth something if the elected run tapped.
+        let mut elected =
+            GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
+        elected.decode_at(&prompt, 0).expect("the prompt decodes");
+        assert!(
+            elected.take_reduction().is_some_and(|r| r.layers() > 0),
+            "the elected run observed nothing, so the comparison is vacuous"
+        );
     }
 
     /// **The engine decodes a prompt and draws a token from it.** The first
@@ -706,11 +984,11 @@ mod tests {
     fn a_zero_capacity_refuses() {
         let Some(model) = model_or_skip() else { return };
         assert!(
-            GgufEngine::open(&model, &frozen(), 0).is_err(),
+            GgufEngine::open(&model, &frozen(), 0, false).is_err(),
             "a session that can hold nothing is refused at the open"
         );
         assert!(
-            GgufEngine::open(&model, &frozen(), 1).is_ok(),
+            GgufEngine::open(&model, &frozen(), 1, false).is_ok(),
             "a positive capacity still opens"
         );
     }
