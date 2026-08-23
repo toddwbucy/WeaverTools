@@ -6,7 +6,7 @@ Code is written against it under the gates of Working Process section 6.
 **Revised:** 2026-08-22, third of this date, the GGUF tap stands. Section 7
 carries its mechanics: the scheduler's eval callback installed at context
 creation, the per-layer `l_out-<il>` tensor it reads, the per-ubatch firing,
-the final layer's gathered width, and the last position's column as the copy.
+the final layer's gathered column count, and the last column as the copy.
 The refusal narrows from the container to the family's declaration, so an
 elected GGUF load is judged on what its family declares. The deployed
 `qwen35moe` still declares no tap, which is named as a separate act. The
@@ -1569,20 +1569,28 @@ the archived tree and never driven, and standing it up is code this program
 writes rather than salvage it inherits.
 
 **The GGUF tap stands as of 2026-08-22, and these are its mechanics.** The
-callback is installed on the context at creation, the wrapper exposing it as
-`with_eval_callback` against an unmodified upstream member of
-`llama_context_params`. Every decoder-only body in the fork ends its layer
-with the tensor named `l_out-<il>`, formatted by the context's own graph
-callback, shaped `[n_embd, n_tokens]`, and that is the post-residual-add
-value the readout reduces.
+callback is installed on the context at creation. **The member it sets is
+upstream and the setter that reaches it is not**: `llama_context_params`
+carries `cb_eval` and `cb_eval_user_data` in unmodified upstream llama.cpp,
+and what the fork adds is the Rust setter `with_eval_callback` that writes
+them. Nothing upstream of the fork exposes that setter, which is the whole
+of what section 10's pin holds open. Every decoder-only body in the fork
+ends its layer with the tensor named `l_out-<il>`, formatted by the
+context's own graph callback and shaped `[n_embd, n_tokens]` at every layer
+but the last, and that is the post-residual-add value the readout reduces.
 
 **Three facts a reader would otherwise learn by breaking something.** The
 callback fires per **ubatch** rather than per decode call, so a prefill
 crosses it many times where a single-token decode crosses it once. The final
-layer applies a row gather, so its width is not the others'. And the copy is
-the last position's column alone, contiguous at `f32` and about eight
-kibibytes a layer, where copying whole tensors at a full batch would move
-gigabytes per prefill and is not viable.
+layer gathers its rows to the output positions before the residual add, so
+what the callback sees there is `[n_embd, n_outputs]`: **the first dimension
+is the others' and the second is not**, which is the reverse of what a
+reader told only that the shape differs would look for. The gather keeps the
+batch order of the positions it retains, so the final column carries the
+last position in both shapes and one rule reads both. And the copy is that
+column alone, contiguous at `f32` and about eight kibibytes a layer, where
+copying whole tensors at a full batch would move gigabytes per prefill and
+is not viable.
 
 **The refusal narrows to the flag.** `readout::judge` refused an elected
 GGUF load on the container, because the tap did not exist. With the tap
