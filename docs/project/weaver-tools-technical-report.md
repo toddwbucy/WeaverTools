@@ -644,11 +644,16 @@ B carries it as owed.
 
 ## 8. The model organ
 
-**Residency is the whole of what the SPU owns**, and stating it that narrowly is
-what keeps the organ from becoming a second harness. Residency is the device-side
-fact that one model's weights are present and ready to serve, established by an
-admit and ended by a release. It is what the two exchanges of the organ channel
-move between, and it is the whole of what this crate publishes about itself.
+**Residency is the whole of what the SPU publishes about itself**, and stating it
+that narrowly is what keeps the organ from becoming a second harness. Residency is
+the device-side fact that one model's weights are present and ready to serve,
+established by an admit and ended by a release, and it is what the two exchanges of
+the organ channel move between.
+
+**What the crate owns is wider than what it publishes**, and the two are not one
+claim. The hot cache of section 7 is the other holding, owned here and flushed on
+the harness's terms. Residency is the published fact. The cache is state this crate
+holds and publishes nothing about.
 
 ### Admission is the one check on the device
 
@@ -1109,13 +1114,23 @@ and the record says timeout where the truth was a full buffer.
 
 The gate guarantees an answer to every execution opened inside the raised window,
 carrying one of four contents. **So the harness's result construction site fires
-exactly once per opened call, and a call never dangles.**
+exactly once per opened call, and no call inside a raised window dangles.**
 
 That is a stronger property than it looks. With one construction site there is no
-path on which a call quietly yields two results, and none on which it yields none
-and leaves the loop waiting on an answer that is not coming. The kill clock is the
-caller's own number rather than one the gate chose, and the guarantee is the
-seam's rather than a convention both sides observe.
+path on which a call quietly yields two results, and none on which a live gate
+leaves the loop waiting on an answer that is not coming. The kill clock is the
+caller's own number rather than one the gate chose, and the guarantee is the seam's
+rather than a convention both sides observe.
+
+**The guarantee is scoped to a live gate, and the other case is not an answer.** A
+gate that dies with an execution open supplies none of the four contents. What the
+harness observes instead is closure, and **closure is not an answer** on this seam.
+After the enter aggregate, that death is the loss of the agent's reachability,
+observed through closure and authored to the stream as a `fault`, which is where
+the operator's tooling keys on it. So the exactly-once property holds inside the
+window rather than across the gate's own failure - which is the same boundary
+section 4 names from the response side when it says a gate dying mid-delivery loses
+the delivery rather than the turn.
 
 ### No safety classifier exists, and none is planned
 
