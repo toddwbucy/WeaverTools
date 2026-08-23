@@ -33,10 +33,12 @@
 //! one hazard the Spec names: installing the callback turns one graph
 //! compute into a walk of windows, and a fusion candidate straddling a
 //! window boundary goes unapplied, which is a device concern no host run
-//! can reach. **The measurement on the real device pair is therefore owed**
-//! and the tap is not shipped against a family until it is taken. The
-//! deployed family declares no tap, so nothing in service elects this
-//! path today.
+//! can reach. **The measurement on the real device pair was therefore owed
+//! and is taken**, in `tests/readout_neutral.rs`, against the artifact this
+//! workshop deploys: two seeds, each drawing a sequence identical with the
+//! election on and off, the elected run folding one figure per layer per
+//! forward. The deployed family declares its tap on that run, so the
+//! election is one an operator in service can make.
 //!
 //! **A tap that fails while elected is a fault, not an absence.** Per charter
 //! section 13.10: an elected observability that silently stopped observing is a

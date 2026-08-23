@@ -5,12 +5,14 @@ Code is written against it under the gates of Working Process section 6.
 
 **Revised:** 2026-08-23, first of this date, the deployed family declares
 its tap. Section 7 records the measurement that authorises it: sixty-four
-tokens identical with the election on and off against
+tokens identical with the election on and off at each of two seeds, against
 `Qwen-AgentWorld-35B-A3B-Q8_0` on one card, the elected run folding one
-figure per layer per forward. The tap was plausibly observational and is
-now measured so, on the one architecture and the one device pair where the
-fusion hazard exists. The bar gains an assertion whose instrument is the
-run's perturbation, a reading being unable to reach the hazard.
+figure per layer per forward and the two seeds drawing sequences that
+differ, so the comparison is known to discriminate. The tap was plausibly
+observational and is now measured so, on the one architecture and the one
+device pair where the fusion hazard exists. The bar gains an assertion whose
+instrument is the run's perturbation, a reading being unable to reach the
+hazard.
 
 **Revised:** 2026-08-22, third of this date, the GGUF tap stands. Section 7
 carries its mechanics: the scheduler's eval callback installed at context
@@ -1615,10 +1617,12 @@ flag is a claim about the family rather than a line in a table: that this
 tap reads that architecture's residual correctly and changes no token doing
 it. Both halves were measured against `Qwen-AgentWorld-35B-A3B-Q8_0` on one
 card, forty layers and two hundred fifty-six experts of which eight fire per
-token. Sixty-four tokens drawn at one seed under one declaration are
-identical with the election on and off, and the elected run folded two
-thousand six hundred figures over sixty-five forwards, one per layer per
-forward. The flag stands on that measurement.
+token. Sixty-four tokens drawn under one declaration are identical with the
+election on and off, at each of two seeds, and the elected run folded one
+figure per layer per forward. **Two seeds rather than one, because the
+comparison has to be known to discriminate**: an equality that held for
+every input would pass whatever the tap did, and the two sequences differing
+is what says it would not. The flag stands on that measurement.
 
 **The bar is a run and the run is kept.** Charter section 13.7 has an
 elected readout change no token, shown per tap rather than once for the
@@ -1649,10 +1653,11 @@ is read from it: one compute over a split becomes a walk of windows with a
 synchronize after each, and a fusion candidate straddling a window boundary
 is not applied. A fused kernel and its unfused equivalent are not guaranteed
 bit-identical in floating point, and `l_out-<il>` sits next to a normalise
-that is a fusion candidate. **So this tap is plausibly observational and not
-provably so from reading the source**, and charter section 13.7's
+that is a fusion candidate. **So no reading of the source settles whether
+this tap is observational**, which is why charter section 13.7's
 demonstration is a measurement against the real artifact on the real device
-pair rather than an argument. The one-shape claim is review's by
+pair rather than an argument, and why the run recorded above is the thing
+that answers it. The one-shape claim is review's by
 non-purchase, the pin section 10 buys on this seam being the fork's callback
 and not the shape either tap returns.
 
