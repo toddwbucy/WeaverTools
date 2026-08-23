@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-23, first of this date, the deployed family declares
+its tap. Section 7 records the measurement that authorises it: sixty-four
+tokens identical with the election on and off against
+`Qwen-AgentWorld-35B-A3B-Q8_0` on one card, the elected run folding one
+figure per layer per forward. The tap was plausibly observational and is
+now measured so, on the one architecture and the one device pair where the
+fusion hazard exists. The bar gains an assertion whose instrument is the
+run's perturbation, a reading being unable to reach the hazard.
+
 **Revised:** 2026-08-22, third of this date, the GGUF tap stands. Section 7
 carries its mechanics: the scheduler's eval callback installed at context
 creation, the per-layer `l_out-<il>` tensor it reads, the per-ubatch firing,
@@ -1599,13 +1608,40 @@ is: a family that does not declare its native tap still refuses, at admit,
 per charter section 13.7's rule that a load granting an election it cannot
 honor fails at its cheapest moment.
 
-**The deployed artifact still refuses, and that is a separate act.** The
-registry's `qwen35moe` declares `taps_readout: false`, so an elected readout
-against what this workshop runs today refuses on the flag with the container
-no longer in the way. **Flipping that flag is a claim about the family**
-rather than a line in a table, and the claim is that this tap reads that
-architecture's residual correctly and changes no token doing it, which is
-charter section 13.7's bar and is shown by a run rather than by a reading.
+**The deployed artifact serves the election as of 2026-08-23, and the run
+that bought it is named.** The registry's `qwen35moe` declared
+`taps_readout: false` while the claim was unmeasured, because flipping that
+flag is a claim about the family rather than a line in a table: that this
+tap reads that architecture's residual correctly and changes no token doing
+it. Both halves were measured against `Qwen-AgentWorld-35B-A3B-Q8_0` on one
+card, forty layers and two hundred fifty-six experts of which eight fire per
+token. Sixty-four tokens drawn at one seed under one declaration are
+identical with the election on and off, and the elected run folded two
+thousand six hundred figures over sixty-five forwards, one per layer per
+forward. The flag stands on that measurement.
+
+**The bar is a run and the run is kept.** Charter section 13.7 has an
+elected readout change no token, shown per tap rather than once for the
+election, and section 10's non-purchase rule would leave this to a reading
+if the reading could reach it. It cannot: the hazard is that installing the
+callback turns one compute into a walk of windows and unapplies a fusion
+candidate straddling a boundary, and no host run touches a fused kernel.
+The measurement is therefore an instrument in the tree rather than a note
+in this document, and it is watched failing under a one-seed perturbation,
+which is what tags it: Document Format section 5 fixes an assertion's
+instrument to five names and apex section 11's third device makes a
+behavioral test perturbation-verified by obligation, whatever the section
+that argues it calls the run.
+
+```graph
+node: spu-elected-readout-changes-no-token
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-elected-readout-changes-no-token
+```
 
 **The bar this tap must clear is why the mechanics above matter.** Installing
 an eval callback changes how the scheduler computes the graph, not only what
