@@ -26,9 +26,13 @@
 //! callback fires per **ubatch**, so a prefill longer than the micro-batch
 //! crosses it several times and only the last of those carries the position
 //! the decode asked logits for. And the final layer gathers its rows to the
-//! output positions before the residual add, so its column count is one
-//! where the earlier layers' is the ubatch's width, which is why the tap
-//! takes the last column rather than a fixed index.
+//! output positions before the residual add, so the callback sees
+//! `[n_embd, n_outputs]` there where the earlier layers give
+//! `[n_embd, n_tokens]`: `ggml_get_rows` keeps `ne[0]` and replaces `ne[1]`,
+//! so it is the column count that moves and not the width. The gather keeps
+//! the batch order of the positions it retains, so the final column carries
+//! the last position in both shapes, which is why the tap takes the last
+//! column rather than a fixed index and needs no case for the final layer.
 //!
 //! **A ubatch is staged and committed rather than folded as it arrives.**
 //! The figures for the ubatch in flight go to [`TapState::staging`], layer
