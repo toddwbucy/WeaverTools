@@ -21,6 +21,13 @@ pub mod session;
 #[cfg(feature = "gguf")]
 pub mod gguf;
 
+/// The GGUF path's residual tap, per `weaver-spu-Spec` section 7. Its own
+/// module because it is the readout's one unsafe surface: a C callback the
+/// ggml scheduler invokes from inside the graph walk, which nothing else in
+/// this crate needs and nothing else should have to read around.
+#[cfg(feature = "gguf")]
+pub mod gguf_tap;
+
 /// The candle-native backend, the second peer of the seam. Its residency
 /// half loads safetensors onto the admitted device through the pinned candle
 /// fork, and its decode half implements the five primitives over a session's
