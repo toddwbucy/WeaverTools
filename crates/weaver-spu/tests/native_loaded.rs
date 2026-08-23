@@ -457,17 +457,26 @@ fn an_elected_readout_travels_with_the_generation() {
     }
 }
 
-/// An elected readout against a GGUF residency refuses at admit, naming
-/// the family: the native tap stands and the GGUF tap does not, and a
-/// load that succeeded and failed at the first turn would be the
-/// expensive lie the charter forbids.
+/// An elected readout against a family that declares no tap refuses at
+/// admit, naming the family, because a load that succeeded and failed at
+/// the first turn would be the expensive lie the charter forbids.
+///
+/// **The container stopped being the ground on 2026-08-22.** This read the
+/// refusal against a qwen2 GGUF while the GGUF tap did not exist and every
+/// GGUF load refused an election whatever its family declared. Both engines
+/// tap now, so the refusal is reached through SmolLM2, whose family selects
+/// a `llama` entry declaring nothing. The contrast this test once drew,
+/// native taps and GGUF does not, is retired rather than repaired: what it
+/// watches now is the residency path reading the declaration, which is a
+/// different and still live claim.
 #[test]
 fn an_elected_readout_refuses_a_gguf_residency_at_admit() {
-    let gguf = PathBuf::from(
-        "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct-GGUF/qwen2.5-0.5b-instruct-q8_0.gguf",
-    );
+    let gguf = PathBuf::from("/opt/weaver/models/smollm2-360m-instruct-q8_0.gguf");
     if !gguf.is_file() {
-        eprintln!("SKIP an_elected_readout_refuses_gguf: no GGUF artifact");
+        eprintln!(
+            "SKIP an_elected_readout_refuses_gguf: no GGUF artifact from a family \
+             that declares no tap"
+        );
         return;
     }
     let mut residency = Residency::new();
@@ -481,6 +490,99 @@ fn an_elected_readout_refuses_a_gguf_residency_at_admit() {
     assert!(
         format!("{refusal:?}").contains("NotTappable"),
         "refused for the tap, got {refusal:?}"
+    );
+}
+
+/// **An elected readout against a GGUF family that declares a tap is
+/// admitted, and the reduction arrives.** The positive half of the rule
+/// above, and the half that pins #284.
+///
+/// **Watched: without this, restoring the container ground fails nothing.**
+/// Measured 2026-08-23 by putting that ground back in `residency.rs` and
+/// running this crate's suite under both engines: every test passed. The
+/// negative cases cannot catch it, because each reaches its refusal through
+/// a family that declares no tap and would refuse under either rule, and
+/// `readout::judge`'s own unit tests call the judgment directly and never
+/// travel the admit path. So the substance of the narrowing had no watch on
+/// this path at all, which is what this test is.
+///
+/// **It reads the engine and not only the judgment.** An admission that
+/// succeeded while the election never reached the backend would satisfy a
+/// bare `is_ok`, so the reduction is drawn from a real generation and
+/// counted against the artifact's own layer count.
+#[test]
+fn an_elected_readout_is_admitted_by_a_gguf_family_that_declares_a_tap() {
+    let gguf = PathBuf::from(
+        "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct-GGUF/qwen2.5-0.5b-instruct-q8_0.gguf",
+    );
+    if !gguf.is_file() {
+        eprintln!(
+            "SKIP an_elected_readout_is_admitted: no GGUF artifact from a family \
+             that declares a tap"
+        );
+        return;
+    }
+    // The artifact's own `qwen2.block_count`, named rather than derived from
+    // the reduction under test, which would agree with itself whatever the
+    // tap did.
+    const LAYERS: usize = 24;
+
+    let mut residency = Residency::new();
+    let binding = ModelBinding {
+        artifact: ArtifactRef(gguf.to_string_lossy().into_owned()),
+        devices: vec![DeviceOrdinal(0)],
+    };
+    let resident = residency
+        .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(true), false)
+        .expect("a family declaring a tap admits an elected readout");
+
+    let knobs = EffectiveKnobs {
+        temperature: 0.0,
+        top_k: 1,
+        top_p: 1.0,
+        repetition_penalty: 1.0,
+        repetition_window: 0,
+        seed: 11,
+    };
+    let prompt =
+        "<|im_start|>user\nReply with exactly one word: hello<|im_end|>\n<|im_start|>assistant\n";
+    let prefix = resident.tokenize(prompt).expect("tokenizes");
+    let mut session = resident.open_session(&knobs, 512).expect("session opens");
+    session.open(&prefix).expect("prefix decodes");
+    let close = resident.tokenize("<|im_end|>").expect("close tokenizes");
+    let [terminator] = close.as_slice() else {
+        panic!("one close token");
+    };
+    let generated = session
+        .append_and_generate(
+            &[],
+            &StopCondition {
+                stop_tokens: close.clone(),
+                terminator: *terminator,
+                max_tokens: 4,
+            },
+            &mut NeverCancels,
+            &mut |_| {},
+            None,
+            &mut |_, _, _| {},
+            11,
+            64,
+        )
+        .expect("generates");
+
+    let norms = generated
+        .residual_norms
+        .expect("elected across the admit, so the generation answers a reduction");
+    assert!(!norms.is_empty(), "the reduction is empty");
+    assert_eq!(
+        norms.len() % LAYERS,
+        0,
+        "one figure per layer per forward: {} figures against {LAYERS} layers",
+        norms.len()
+    );
+    assert!(
+        norms.iter().all(|n| n.is_finite() && *n > 0.0),
+        "the figures are the model's rather than an unwritten buffer"
     );
 }
 
