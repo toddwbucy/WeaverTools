@@ -94,7 +94,10 @@ fn artifact() -> Option<PathBuf> {
 /// and the charter's clause is about the declaration an operator writes.
 /// Sampling at a fixed seed reads the distribution's values and not only
 /// their order, so it is the more sensitive of the two probes.
-fn draw(resident: &weaver_spu::residency::Resident, seed: u64) -> (Vec<TokenId>, Option<Vec<f32>>) {
+fn draw(
+    resident: &weaver_spu::residency::Resident,
+    seed: u64,
+) -> (Vec<TokenId>, Option<Vec<f32>>) {
     let prefix = resident
         .tokenize("Explain, in a short paragraph, why the sky looks blue.")
         .expect("the prompt tokenizes");
@@ -160,7 +163,13 @@ fn an_elected_readout_changes_no_token_on_the_device() {
         return;
     }
     let _device = device_lock();
-    const SEED: u64 = 4242;
+    // **Two seeds, and the pair is what makes the comparison mean
+    // something.** Each seed is its own neutrality reading, and the two
+    // together are the sensitivity check: a comparison that cannot tell two
+    // sequences apart would pass this test whatever the tap did, and the
+    // only way to know it can is to hand it two sequences that must differ.
+    // This was a perturbation run by hand and is now a standing assertion.
+    const SEEDS: [u64; 2] = [4242, 4243];
 
     // Unelected first, so the comparison's reference is taken by the path
     // that has no tap in it at all rather than by a tap asked to stand down.
@@ -173,12 +182,24 @@ fn an_elected_readout_changes_no_token_on_the_device() {
             false,
         )
         .expect("the artifact admits unelected");
-    let (without, no_norms) = draw(&resident, SEED);
-    assert!(
-        no_norms.is_none(),
-        "an unelected load answered a reduction, so the election is not what gates the tap"
-    );
-    drop(resident);
+    let without: Vec<Vec<TokenId>> = SEEDS
+        .iter()
+        .map(|seed| {
+            let (drawn, no_norms) = draw(&resident, *seed);
+            assert!(
+                no_norms.is_none(),
+                "an unelected load answered a reduction, so the election is not what \
+                 gates the tap"
+            );
+            drawn
+        })
+        .collect();
+    // **The residency is what holds the card**, `admit` answering a borrow
+    // of a resident the residency owns, so dropping the borrow frees nothing
+    // and this artifact would still be resident when the elected admit runs.
+    // Two copies do not fit on one card, so getting this wrong fails loudly
+    // rather than quietly, but it is worth naming: the owner is the thing to
+    // drop.
     drop(residency);
 
     let (mut residency, binding) = binding_for(&path);
@@ -190,44 +211,79 @@ fn an_elected_readout_changes_no_token_on_the_device() {
             false,
         )
         .expect("the artifact admits with readout elected, which is the flag's claim");
-    let (with, norms) = draw(&resident, SEED);
+    let elected: Vec<(Vec<TokenId>, Vec<f32>)> = SEEDS
+        .iter()
+        .map(|seed| {
+            let (drawn, norms) = draw(&resident, *seed);
+            (drawn, norms.expect("an elected load answers a reduction"))
+        })
+        .collect();
 
-    // **The elected run must have tapped**, or the comparison is between two
-    // uninstrumented runs and proves nothing.
-    let norms = norms.expect("an elected load answers a reduction");
-    assert!(
-        !norms.is_empty() && norms.len() % LAYERS == 0,
-        "the reduction folds one figure per layer per forward: {} figures against {LAYERS} layers",
-        norms.len()
-    );
-    assert!(
-        norms.iter().all(|n| n.is_finite() && *n > 0.0),
-        "the figures are the model's rather than an unwritten buffer"
-    );
-    assert!(
-        norms.iter().any(|n| *n != norms[0]),
-        "a constant run of figures means the wrong column or an unwritten buffer"
+    // **The comparison is known to discriminate.** The two seeds must draw
+    // different sequences, or an equality that holds for every input would
+    // be reading nothing and the neutrality assertions below would pass on
+    // a tap that rewrote every token.
+    assert_ne!(
+        without[0], without[1],
+        "the two seeds drew the same sequence, so this comparison cannot tell \
+         sequences apart and proves nothing about the tap"
     );
 
-    assert!(
-        !without.is_empty(),
-        "the reference run drew nothing, so there is no sequence to compare"
-    );
-    assert_eq!(
-        with, without,
-        "the elected run drew a different sequence, so this tap is not observational \
-         on this device and the election cannot ship for this family"
-    );
+    for (index, seed) in SEEDS.iter().enumerate() {
+        let (with, norms) = &elected[index];
+
+        // **The elected run must have tapped**, or the comparison is between
+        // two uninstrumented runs and proves nothing.
+        assert!(
+            norms.iter().all(|n| n.is_finite() && *n > 0.0),
+            "seed {seed}: the figures are the model's rather than an unwritten buffer"
+        );
+        assert!(
+            norms.iter().any(|n| *n != norms[0]),
+            "seed {seed}: a constant run of figures means the wrong column"
+        );
+
+        // **A thin comparison proves little.** A run that stopped after one
+        // token would satisfy an equality without exercising the tap across
+        // a generation, so the reference has to be a real one.
+        assert!(
+            with.len() >= 32,
+            "seed {seed}: the run drew {} tokens, too few to compare",
+            with.len()
+        );
+        // **The count is the invariant rather than a constant.** One forward
+        // for the prefix and one per token drawn, so the figures are fixed by
+        // what the generation did rather than by a number written here, which
+        // would pin the model's stopping behaviour instead of the tap's
+        // arithmetic.
+        assert_eq!(
+            norms.len(),
+            (with.len() + 1) * LAYERS,
+            "seed {seed}: {} figures against {} forwards at {LAYERS} layers",
+            norms.len(),
+            with.len() + 1
+        );
+
+        assert_eq!(
+            *with, without[index],
+            "seed {seed}: the elected run drew a different sequence, so this tap is not \
+             observational on this device and the election cannot ship for this family"
+        );
+    }
+    let norms = &elected[0].1;
 
     // **The measurement states itself.** A demonstration whose output is a
     // bare `ok` leaves a later reader to take on faith that it compared
     // anything, and this one exists precisely because the property could not
     // be taken on faith.
     println!(
-        "  readout neutrality, {} on device 0: {} tokens identical with the \
-         election on and off, {} figures folded over {} forwards at {LAYERS} layers",
+        "  readout neutrality, {} on device 0, {} seeds: {} and {} tokens drawn, \
+         each identical with the election on and off, {} figures folded over {} \
+         forwards at {LAYERS} layers",
         path.file_name().unwrap_or_default().to_string_lossy(),
-        with.len(),
+        SEEDS.len(),
+        elected[0].0.len(),
+        elected[1].0.len(),
         norms.len(),
         norms.len() / LAYERS,
     );
