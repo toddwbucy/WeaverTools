@@ -588,11 +588,23 @@ rather than absent**, which is the whole difference between it and the structure
 above.
 
 It is also **the one surface in this program holding state that nothing could
-reconstruct even in principle**, which is why the apex singles it out by name and
-assigns its ownership rule to the SPU's charter rather than to the crate that
-benefits from it. The rule has three parts. **The SPU owns the cache. The harness
-owns the flush decision.** And **the harness is forbidden to touch it**, holds no
-handle to it, and therefore cannot protect or corrupt any region of it.
+reconstruct even in principle**, which is the charter's phrase and needs its scope
+said, because the paragraph above has losing it cost time rather than capability.
+The two claims are compatible, and what separates them is what would do the
+reconstructing. **Nothing the program retains can rebuild it**: the trace holds no
+device state, the working structure holds none, and no other crate holds a handle
+to it, so there is no record it could be restored from. What re-establishes it is
+the decoder computing it again over the resident context, the apex's own
+description being the same content precomputed. That is recomputation at the device
+rather than reconstruction from anything kept, and it is why the loss is paid in
+time.
+
+The claim is why the apex singles the cache out by name and assigns its ownership
+rule to the SPU's charter rather than to the crate that benefits from it.
+
+The rule has three parts. **The SPU owns the cache. The harness owns the flush
+decision.** And **the harness is forbidden to touch it**, holds no handle to it,
+and therefore cannot protect or corrupt any region of it.
 
 That third part is the one worth pausing on. Because losing the cache costs real
 compute, it is the surface most likely to grow quietly into session state if the
@@ -866,11 +878,18 @@ path. The third alone waits on a binary's declared disposition.
 
 ### Why tokens rather than a seed
 
-The seed is recorded, and it is recorded so a reader can check that the stream came
-out where it should. **This program offers no route that accepts it.** A sampler is
-built from its declared inputs and from nothing else, so reading a seed back as a
-substitute for the token path would be a different operation than the one on offer,
-and it is one nothing here performs.
+Two seeds have to be told apart here, because only one of them is refused. **The
+declared seed is accepted**, and it is a sampling knob like the others, carrying a
+disposition and reaching the SPU when a generation is admitted. **The derived value
+is what a re-entry reproduces rather than what it is given.** It is recorded so a
+reader can check that the stream came out where it should, and no route accepts it
+back: a sampler is built from the declared seed, the turn, and the generation's
+index, and from nothing else.
+
+So a re-entry reuses the declared seed recorded for that generation and derives the
+rest. **What no seed of either kind does is stand in for the token path.** Reading
+one back as a substitute for the recorded tokens would be a different operation than
+the one on offer, and it is one nothing here performs.
 
 The distinction matters because a seed is a claim about a mechanism and a token
 path is a record of an outcome. A seed replays only if every intervening draw is
