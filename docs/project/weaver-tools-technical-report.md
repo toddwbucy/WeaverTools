@@ -2,8 +2,8 @@
 
 **Status:** LIVING. In `main` and outside the document set. **This document is
 subject to change as development continues**, it is never ratified, and nothing
-in the corpus is written against it. Describes `WeaverTools` at `da5a503`,
-2026-08-22. All fifteen sections are drafted, appendix B carries what is not
+in the corpus is written against it. Describes `WeaverTools` at `0475b3d`,
+2026-08-23. All fifteen sections are drafted, appendix B carries what is not
 built, not proven, or not measured, and appendix C states the formulation as
 design intent rather than as description.
 
@@ -87,7 +87,7 @@ Outside, the same work gets improvised one script at a time.
 
 ## 2. What the system is
 
-An agent is **three processes on one machine**, plus a fourth program that stands
+An agent is **four processes on one machine**, plus a fifth program that stands
 outside every agent and does not run while one is serving.
 
     worker      the composition root: the harness, the recorder, and the floor,
@@ -95,7 +95,14 @@ outside every agent and does not run while one is serving.
     weaver-spu  the model organ, holding weights on the device
     weaver-gate the boundary, crossed in both directions: work in, response
                 out, and the tool calls that reach the world
+    weaver-state the session custodian, sqlite behind its own socket
     weaver-admin root-run, one invocation per verb, then exit
+
+**The count follows the socket rule rather than a roster.** A seam is tagged socket
+where a process line is crossed and link where none is, so each of the three
+interior sockets names a process and the worker is the fourth. An earlier count of
+three predates `weaver-state`, chartered 2026-08-18, and is the same omission the
+roster below carries.
 
 Nine crates make those four programs. Two are the floor, shared vocabulary every
 domain draws from and no domain contains, linked rather than dialed because a
@@ -106,19 +113,22 @@ type definition cannot be sent over a socket.
     weaver-trace      1,632    the recorder and the in-RAM working structure
     weaver-state      1,178    the session custodian, sqlite behind a socket
     weaver-harness    8,659    the switchboard, the loops, trace authorship
-    weaver-spu       13,185    residency, two decode engines, measurement
+    weaver-spu       13,886    residency, two decode engines, measurement
     weaver-gate       2,280    the boundary, and the shell as its own verb
     weaver-admin      3,093    lifecycle authorization and custody of the sink
     weaver-internal     297    functions the loop dispatches inward
 
-Figures are lines of Rust under `src/`, 32,136 in total, with a further 8,070 in
+Figures are lines of Rust under `src/`, 32,837 in total, with a further 8,490 in
 integration tests.
 
 **The apex governs exactly seven crate charters** and names them: admin, harness,
 spu, gate, trace, traits, and types. `weaver-state` and `weaver-internal` were
-chartered on 2026-08-18, after the set ratified, and the apex's enumeration has
-not been amended to name them. A reader holding both documents should read that
-list as the ratified set rather than as the current tree.
+chartered on 2026-08-18 and the apex's enumeration has not been amended to name
+them. **Both are ratified**, per the operator's ruling of 2026-08-23 that a charter
+ratifies on its own by conforming to the pattern the set-wide act of 2026-08-04
+established. What is stale is the apex's count rather than either crate's standing,
+so a reader holding both documents should read that list as the apex's roster rather
+than as the current tree.
 
 **An organ is a crate that governs a domain and holds a two-initiator channel
 with the harness.** Both properties, and neither alone. The harness is the organ
@@ -288,7 +298,12 @@ trace events named at each are the record the next section is about.
    holds exactly one. The shell is the gate's own outbound verb rather than a
    guest it hosts, forked into its own process group and supervised against the
    caller's clock, with section 12 carrying the mechanics. The answer is one of
-   four contents, and a result is one of them.
+   four contents, told apart by tag alone on the rule of who speaks in the return:
+   **result**, the tool answering in its own words, a nonzero exit among them.
+   **refused**, the gate speaking in its own voice, nothing having run. **errored**,
+   the invocation machinery having failed, the speaker being the infrastructure.
+   And **killed**, the caller's clock having expired. All four are content rather
+   than channel faults, because each is a fact the next turn reasons over.
    `tool.call.started` and `tool.call.completed` bracket the call, and control
    returns to step 5 with the result in the next prompt.
 8. The harness authors `turn.closed`, whose payload states the close kind rather
@@ -648,9 +663,9 @@ exchange. The ask vocabulary is closed and holds two names.
 
 **The apex says two things hold state across turns inside one session, and the tree
 now holds three.** The apex enumerates the working structure and the hot cache.
-`weaver-state` was chartered 2026-08-18, after the set ratified, and holds across
-runs rather than merely across turns, which is more than either of the two the
-apex names. The enumeration has not been amended. This report states both rather
+`weaver-state` was chartered 2026-08-18 and holds across runs rather than merely
+across turns, which is more than either of the two the apex names. The
+enumeration has not been amended. This report states both rather
 than choosing, on the same footing as the crate roster of section 2, and appendix
 B carries it as owed.
 
@@ -841,10 +856,16 @@ engine declares. The family is known from the header read at step 2, so the chec
 costs no device work and **an election the engine cannot honour refuses before any
 device is taken.**
 
-That path is live today rather than theoretical. **The GGUF container has no
-residual readout tap**, so an elected readout against a GGUF artifact refuses at
-admit by name. The native tap stands. Appendix B carries the gap, and it is the
-entry there nearest to closing.
+That path is live today, and what it reads changed on 2026-08-22. **Both taps now
+stand** - the native one since 2026-08-19 and the GGUF one since 2026-08-22, reading
+the per-layer tensor off the ggml scheduler's eval callback. Both answer the same
+reduction, so **the container stopped being a ground for refusing on the day the
+second tap stood**, and the judgment now reads the family's declaration alone.
+
+A refusal still happens, on the narrower ground. The deployed family declares no tap,
+so an elected readout against it refuses at admit by name, and **nothing in service
+elects the GGUF path today.** What the tap owes before it ships against a family is a
+neutrality measurement on the real device pair, which appendix B carries.
 
 ## 10. Replay, and what it is not
 
@@ -1292,6 +1313,15 @@ exists**, and the distinction is this section's to make rather than a reader's t
 supply. An underpowered A/A test passes trivially, and a reader who knows the
 statistics will say so before they trust anything else here.
 
+**Two limits are structural rather than matters of power, and they bound what any
+result from this design could mean.** The test compares two arms, so it sees only
+what varies between them: **a contribution the rig makes to both arms alike is
+invisible to it at any size**, and the same near-zero difference would be reported
+whether the machine adds nothing or adds the same thing twice. And the arms differ
+in device and in seed simultaneously, so **those two are perfectly confounded** and
+the differential the test does bound cannot be attributed to either. What the number
+below bounds is between-arm variation from the two taken together.
+
 What the numbers support is a bound rather than a null. At this sample size and
 these standard deviations the test would have caught a difference of about 0.34
 points with eighty percent power, and the ninety percent confidence interval on the
@@ -1327,9 +1357,15 @@ is owed its own demonstration**, and appendix B holds the debt.
 
 ### The negative results are kept beside the positive ones
 
-Two hypotheses built on the entropy signal died on the evidence. There is no branch
-point, and no in-flight predictor worth the name at 59.5 percent against a 51
-percent base rate.
+Two hypotheses built on the entropy signal did not survive their tests. There is no
+branch point, and no in-flight predictor was detected, the reading being 59.5 percent
+against a 51 percent base rate.
+
+**That is reported without an n and without an interval, which is below the standard
+this section set two paragraphs above**, so the entry is a failure to detect rather
+than a demonstration that nothing is there. 59.5 against 51 is the kind of margin a
+modest sample produces by chance, and without the sample size a reader cannot tell
+which happened here. Appendix B carries the figures as owed.
 
 They are reported here for the same reason the bound above is reported instead of a
 null: **a regime that publishes only what worked is not a regime**, and the two
@@ -1371,11 +1407,12 @@ The corpus holds **285 assertion records across nine Specs**. They divide by
 instrument as 130 review, 87 perturbation, 28 compile-pin, 26 manifest, and 14
 compile-fail.
 
-**Fifty-nine source files carry a conformance header, and between them they cite
-258 of those 285 assertion nodes.** Twenty-seven are declared and not yet cited by
-any header, and the open set includes the ones appendix B already names by hand -
+**Sixty source files carry a conformance header, and between them they cite 259 of
+those 285 assertion nodes.** Twenty-six are declared and not yet cited by any header,
+and the open set includes the ones appendix B already names by hand -
 `harness-idle-report-authors-without-a-turn`, `spu-one-forward-per-prompt`, and
-`spu-field-changes-no-token` among them.
+`spu-field-changes-no-token` among them. `spu-two-taps-one-shape` left that set on
+2026-08-22 when the GGUF tap landed carrying its header.
 
 **That figure is a fact to read and not a target to reach.** An assertion that no
 code cites yet is a piece of work not done, and driving the number up by loosening
@@ -1455,13 +1492,6 @@ built and shown rather than because the wording softened.
   bind a listening port. No exchange of the harness-gate seam reaches it, and its
   contract is the tool workflow's to author. Section 4 says so at the point of
   description.
-- **The GGUF residual readout tap.** The fork's eval callback is pinned and the
-  pin is bought by a compile-fail doctest, but nothing drives a tap through it.
-  The native tap stands. An elected GGUF load therefore refuses at admit by name.
-  Two assertions wait on this, `spu-two-taps-one-shape` above all. **Two pull
-  requests are open against this entry** and it is the one here nearest to
-  closing, which is said so that a reader meeting it after they merge knows to
-  distrust the date at the top rather than the work.
 - **The idle report.** No report authors without a turn because nothing authors
   one at all, which is what `harness-idle-report-authors-without-a-turn` waits on.
 - **Client-facing streaming.** Deferred, and it arrives as an extension to the
@@ -1474,6 +1504,9 @@ built and shown rather than because the wording softened.
 - **The memory leg.** Out entirely, arriving through apex section 9's door as a
   socket peer with its own contract. No seam, stub, reserved slot, or dormant
   contract party is carried in anticipation of it.
+**Not built, and not chartered either.** Named because a reader will look for them,
+not because anything promises them.
+
 - **Any seam over a wire.** The transports in code are Unix-specific, and a seam
   crossing a machine boundary would need its own framing and a peer-authentication
   mechanism to replace `SO_PEERCRED`. Neither exists. **Descriptor passing is the
@@ -1491,6 +1524,16 @@ built and shown rather than because the wording softened.
 
 **Built, and not yet proven.**
 
+- **The GGUF tap's neutrality on a real device pair.** The tap landed 2026-08-22 and
+  carries `spu-two-taps-one-shape`, so it is built and the container is no longer a
+  ground for refusing. Its neutrality is watched clearing the no-token-change bar on
+  the host backend, **which reaches everything but the one hazard the Spec names**:
+  installing the callback turns one graph compute into a walk of windows, and a
+  fusion candidate straddling a window boundary goes unapplied, which is a device
+  concern no host run can reach. **The tap is not shipped against a family until that
+  measurement is taken**, and the deployed family declares no tap, so nothing in
+  service elects the path today.
+
 - **Deterministic re-feed.** Apex section 8's second arrangement is what section
   10 argues for, and the demonstration on record is of the third. Pushing a
   recorded token sequence back through the forward pass with nothing re-sampled
@@ -1503,6 +1546,23 @@ built and shown rather than because the wording softened.
 - **Latency is the enemy of agency.** The program's one conceded theory claim, and
   section 3 marks it. No per-hop figure for loopback against a Unix socket at
   these message sizes has been taken in this repository.
+- **The encoding's share of the per-token cost.** Section 3 concedes that
+  serialization is paid on a Unix socket exactly as on loopback, and names JSON on
+  the interior seams. The decode seam carries **one message per retained token**, so
+  that cost lands per token, which is the same place section 3 says a per-hop cost
+  compounds. **If the encoding dominates what the transport saves, the argument's
+  own logic points at the encoding rather than at the transport.** No measurement
+  separates them, and the claim should not be published as settled until one does.
+- **The surprisal correlation's provenance.** Whether r = -0.300 over two hundred
+  rounds was pre-registered or found post hoc on the rounds the A/A ran on is not
+  recorded, and the two carry different evidential weight.
+- **The effective range of the score.** Every one of the fifty-seven rounds that
+  answered turn two converted turn four, which suggests the usable range may be
+  narrower than the four points the scale declares. If it is, every bound stated in
+  points is tighter than it reads.
+- **The entropy result's n and interval.** Section 14 reports 59.5 percent against a
+  51 percent base rate with neither, so what died on the evidence and what merely
+  went undetected cannot be told apart from the report.
 - **The headroom on the admit judgment.** A construction parameter at the worker's
   composition root until a measurement on a real artifact against a real device
   replaces it. Whether it is a constant, a fraction, or derived from the
@@ -1534,8 +1594,8 @@ built and shown rather than because the wording softened.
 - **The apex's roster stands at seven against a tree of nine.** Section 2 states
   both rather than choosing, and the reconciliation is the apex's act.
 - **The apex counts two state holders and the tree has three.** `weaver-state` was
-  chartered 2026-08-18, after the set ratified, and holds across runs rather than
-  merely across turns. Section 7 states both rather than choosing, on the same
+  chartered 2026-08-18 and holds across runs rather than merely across turns.
+  Section 7 states both rather than choosing, on the same
   footing as the roster above, and the amendment is the apex's act.
 - **Appendix C is not checkable from the tree.** It states what an agent is taken
   to be rather than what this code does, so a build neither confirms nor falsifies

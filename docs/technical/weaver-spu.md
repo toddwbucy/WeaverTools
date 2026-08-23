@@ -3,7 +3,7 @@ title: weaver-spu
 summary: model residency, two decode engines, and the measurement that rides a generation
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 
@@ -60,4 +60,4 @@ Not drafted. This crate's slice of the overview page's appendix B, each entry
 named to the work or the measurement that would close it.
 
 Known today: the GGUF readout tap. The pin exists and nothing drives it, so
-`spu-two-taps-one-shape` stays open.
+`spu-two-taps-one-shape` closed 2026-08-22 when the GGUF tap landed carrying it.

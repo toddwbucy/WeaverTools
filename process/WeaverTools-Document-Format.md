@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.16, 2026-08-16. Companion to the Working Process. Project
+**Version:** v0.17, 2026-08-23. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -516,8 +516,10 @@ and never by hand.
 
 ## 9. When mapping runs
 
-Mapping runs continuously, from the first charter, and ratification remains the mapping
-of the whole set.
+Mapping runs continuously, from the first charter. **Ratification is per-charter as of
+2026-08-23**, per the operator's ruling of that date and Working Process section 2 as
+amended, so a charter ratifies on its own by conforming to the pattern the set-wide act
+of 2026-08-04 established.
 
 A format that is mechanical from the first charter can be mapped the day that charter
 lands, which surfaces a missing edge while one document is still in hand rather than in
@@ -525,8 +527,17 @@ a terminal pass over nine. The alternative concentrates every mapping defect int
 pass at the end of phase one, where each fix is a phase one reopening and the document
 that would answer it was written weeks earlier.
 
-Continuous mapping does not move ratification earlier. A mapped document is not a
-ratified one, the set ratifies together or not at all, and an intermediate build is a
-check rather than a milestone. What continuous mapping buys is that phase two's closing
-checklist meets a graph that has already been built many times rather than one being
-attempted for the first time.
+**Mapping is still not ratification, and the two were separated before the rule
+changed.** A mapped document is not thereby a ratified one, and an intermediate build
+is a check rather than a milestone. What changed on 2026-08-23 is what supplies
+ratification, which is now the charter clearing its gates rather than a set-wide act.
+What has not changed is that the graph records rather than confers it.
+
+What continuous mapping buys is that phase two's closing checklist met a graph that
+had already been built many times rather than one being attempted for the first time.
+
+**The set-level mark records the founding act and is unchanged.** Whether a ratified
+charter carries its own `tag: ratified` beside it is open, and it is this document's
+question rather than the Working Process's, since the mark is generated from the
+notation defined here. Until it is settled the mark means the 2026-08-04 act and
+nothing narrower.

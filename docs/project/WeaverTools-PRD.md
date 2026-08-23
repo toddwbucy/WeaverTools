@@ -1,10 +1,16 @@
 # WeaverTools - Primary PRD
 
-**Status:** MERGED 2026-07-28. RATIFIED 2026-08-04 as a member of the document set,
-per the operator's ruling of that date: the whole set mapped into the graph on the
-HADES server and ratifies as the complete document set for the toolless inference
-deliverable. Ratification belongs to the set rather than to any one document, per
-Working Process section 2, and section 0's system record carries the set-level mark.
+**Status:** MERGED 2026-07-28. RATIFIED 2026-08-04 in the set-wide act, per the
+operator's ruling of that date: the whole set mapped into the graph on the HADES
+server and ratifies as the complete document set for the toolless inference
+deliverable. Section 0's system record carries the set-level mark, which records that
+founding act.
+
+**Ratification has been per-charter since 2026-08-23**, per the operator's ruling of
+that date and Working Process section 2 as amended. A charter ratifies on its own by
+conforming to the pattern the 2026-08-04 act established, so the set is whatever the
+charters currently say. The set-wide form was a requirement of its moment, when
+nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
 **Revised:** 2026-08-17, the custody rule is stated once. Section 5.2 carries

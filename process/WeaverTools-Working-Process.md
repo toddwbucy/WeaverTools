@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.27, 2026-08-16. Companion to the Working Rules, the Document
+**Version:** v0.28, 2026-08-23. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -93,21 +93,54 @@ of this date flipped the merged set's DRAFT headers, which had been wrong in the
 direction this rule closes, and the earlier finding against a branch pre-asserting
 MERGED resolves the other way: pre-asserting the post-merge state is the practice,
 and the defect would be merging without the human's call, not the header. The
-boundary of the flip is doctrinal rather than enumerated: every member header
-reads MERGED alone, ratification is represented only at the set level because no
-document ratifies alone, and the same sweep retired the source-of-truth "for now"
+boundary of the flip is doctrinal rather than enumerated: every member header read
+MERGED alone at that sweep, ratification being represented only at the set level
+under the rule of the time, and the same sweep retired the source-of-truth "for now"
 from every member header, ratification having ended the provisionality the phrase
-carried.
+carried. **The set-level-only half of that sentence is retired**, per the ruling of
+2026-08-23 recorded below.
 
-**RATIFIED.** The whole document set has been written and mapped into the graph. The
-mapping is the ratification. After it, a document does not change, and a change found
-necessary during implementation is not a patch. Coding stops and the work re-enters
-authoring.
+**RATIFIED.** The document conforms to the pattern the set-wide act of 2026-08-04
+established, and clearing its gates is how it shows that. After ratification a
+document does not change, and a change found necessary during implementation is not a
+patch. Coding stops and the work re-enters authoring.
 
-Ratification is a property of the set and never of one file. No document ratifies
-alone, so an individual status header tops out at MERGED and a single set-level record
-carries ratification. A header that reads RATIFIED before the mapping has run is
-asserting something the project has no mechanism to have produced.
+**A charter ratifies on its own**, per the operator's ruling of 2026-08-23. A crate
+that has been chartered and has cleared its gates is ratified, and **the set is
+whatever the charters currently say** rather than a snapshot of one date. A member
+header may read RATIFIED.
+
+**The set-wide act of 2026-08-04 was a requirement of its moment rather than a
+standing obligation.** Nothing existed then to be consistent with, so consistency had
+to be established across the whole corpus at once. That act built the skeleton every
+later charter is built on. It is not a ceremony to repeat whenever a charter lands.
+
+**The rule this replaces was scaffolding, and it is recorded as such rather than
+quietly dropped.** It read that ratification is a property of the set and never of
+one file, that no document ratifies alone, and that a member header tops out at
+MERGED. That was correct while the pattern was being established, because a document
+ratifying alone before a pattern existed would have been ratifying against nothing.
+The pattern is established and the gates carry what the ceremony carried, so the rule
+is retired rather than softened.
+
+**Which gates a document clears alone, and which it cannot.** G1, G2, and G3 are
+document-scoped and a charter clears them by itself. G4 has two halves: the draw
+side, that every name a vocabulary clause draws resolves to a definition that exists,
+is checkable per document and is cleared here. **The definition side, that every
+definition is named by some clause or stated to be internal, cannot be checked from
+one document, and neither can G5 or G6.** To know a definition is unused, or a fact
+stated twice on purpose, you must read the set, and nothing the document declares
+bounds that search. Those two run at the release inventory, and until they do a
+per-charter ratification is a claim about the document rather than about the set's
+coherence.
+
+**G7 is not in that class and is grouped apart.** It spans more than one document, but
+**a ruling names the documents it changes, so the list to check is declared and
+finite.** That is a volume problem rather than a scope one, and it runs with the
+ruling rather than at any close. **The graph's set-level mark is unchanged by this and
+continues to record
+the founding act**, the question of whether a ratified charter carries its own tag
+being the Document Format's rather than this document's.
 
 **The project documents sit outside this model.** The Working Process, the Working
 Rules, the Document Format, and the Handoff Format govern the set rather than belonging
@@ -208,8 +241,17 @@ where the containing section is the grounds.
 **G4, vocabulary.** Every name a contract's vocabulary clause draws from another crate
 resolves to a definition that exists in that crate. Every definition a crate holds is
 either named by some clause or stated to be internal. Where a clause and the floor
-disagree, the document names which side yields and why. This gate is meaningless
-against a partial contract set and is run at phase close, over the whole set.
+disagree, the document names which side yields and why.
+
+**The gate has two halves and they run on different occasions**, per the per-charter
+ruling of 2026-08-23, which removed the phase close that used to carry both. The draw
+side, that every name drawn resolves, is checkable against one document and runs when
+that document lands, and again over every document drawing from a crate whose
+definitions an act moves. **The floor's ritual already requires that second act to
+update every affected PRD and contract, so this is the check that the ritual was
+carried rather than a separate sweep.** The definition side, that every definition is
+drawn or declared internal, is meaningless against a partial set and runs at the
+release inventory, over the whole set.
 
 **G5, duplication authority.** Where the same fact is stated in two documents on
 purpose, one is named authoritative, and divergence is a defect to file rather than
@@ -349,9 +391,14 @@ not become the permanent state. After loop 0, a failing H3 case blocks merge.
 
 ## 7. Current position
 
-The set is RATIFIED, 2026-08-04, per the operator's ruling recorded in section 5.
-Phase one closed with the whole set merged: seven charters, seven Specs, the
-contract layer, and the assertion records under their instruments. Phase two ran
+The set was ratified set-wide on 2026-08-04 per the operator's ruling recorded in
+section 5, and **charters have ratified on their own since 2026-08-23**, so the set
+is whatever the charters currently say. Phase one closed with the whole set merged:
+seven charters, seven Specs, the contract layer, and the assertion records under
+their instruments. **Two crates have been chartered since**, `weaver-state` and
+`weaver-internal`, both on 2026-08-18, and both are ratified under the per-charter
+rule. The apex's enumeration still names seven and its amendment is the operator's
+act. Phase two ran
 on the HADES server per `HANDOFF-2026-08-04-hades-graph-build`, the graph stood up
 from the merged set, and the set-level mark rides the apex's system record.
 

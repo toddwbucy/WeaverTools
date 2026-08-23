@@ -3,7 +3,7 @@ title: weaver-state
 summary: the session custodian: sqlite behind a credential-checked socket, ingest and serve
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 

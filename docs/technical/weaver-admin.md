@@ -3,7 +3,7 @@ title: weaver-admin
 summary: lifecycle authorization, boundary verification, and custody of the sink
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 

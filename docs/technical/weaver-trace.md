@@ -3,7 +3,7 @@ title: weaver-trace
 summary: the recorder, and the in-RAM working structure the loop reasons over
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 

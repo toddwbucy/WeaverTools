@@ -3,7 +3,7 @@ title: weaver-traits
 summary: the floor's vocabulary: messages, roles, permission modes, and the tool surface
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 

@@ -3,7 +3,7 @@ title: weaver-internal
 summary: callables the loop dispatches inward, and never through the gate
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 

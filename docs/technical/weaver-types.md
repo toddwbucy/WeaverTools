@@ -3,7 +3,7 @@ title: weaver-types
 summary: the floor's shapes: the agent declaration, peer identity, and the wire vocabulary loop 0 speaks
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 

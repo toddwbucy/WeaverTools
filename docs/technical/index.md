@@ -3,7 +3,7 @@ title: WeaverTools Technical Documentation
 summary: per-crate technical papers for a local-first agent framework whose primary artifact is the trace
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools
 ---
 
@@ -15,9 +15,14 @@ The code described here is unreleased and is scheduled for release in the first
 quarter of 2027. These pages are published as a dated snapshot of a system under
 construction, and each says on its face what it does not yet have.
 
-One paper per crate, a contracts page every paper cites, and an overview holding
-what belongs to no crate. A paper reads out a merged document and never decides
-anything: where a paper and its source disagree, the paper is the defect.
+One paper per crate, a contracts page every paper cites, two pages for the surfaces
+an operator writes against, a page for an instrument that is not built, and an
+overview holding what belongs to no crate. A paper
+reads out a merged document and never decides anything: where a paper and its
+source disagree, the paper is the defect.
+
+This page is the roster. [The introduction](README.md) says what the set is, what
+governs it, and where to start depending on what you came for.
 
 ## The floor
 
@@ -52,6 +57,25 @@ A crate that governs a domain and holds a two-initiator channel with the harness
 
 - [weaver-internal](weaver-internal.md) - callables the loop dispatches inward,
   and never through the gate
+
+## The surfaces an operator writes against
+
+Where judgment enters the program rather than travels through it.
+
+- [The loop](loop.md) - loop 0 and loop 1, the seat's eight calls, the one
+  crossing, and everything the framework refuses to decide
+- [Extending the program](extending.md) - the floor, the contracts, a new organ,
+  and the ritual that carries a change to all of them in one act
+
+## Instruments
+
+The built instruments are described where they are built, in the crate papers and
+the contracts. This one has its own page because it is unbuilt, and because its
+preconditions are the part worth knowing early.
+
+- [The Jacobian lens](jacobian-lens.md) - a per-layer readout of the interior, why
+  it captures during the run and reads at analysis, what it would cost, and the two
+  questions that gate it
 
 ## Across all of them
 

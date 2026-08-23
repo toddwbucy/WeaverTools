@@ -3,7 +3,7 @@ title: weaver-gate
 summary: the agent's boundary, and the shell as the crate's own outbound verb
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 
