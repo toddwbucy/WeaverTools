@@ -67,11 +67,14 @@ can be owed and none exists. What the stream accumulates - the session record -
 lives on the operator's side of the sink, and the program neither reads it back
 nor vouches for what stands behind the descriptor.
 
-**The tee.** A third reader of the same rendering: a per-event, key-based
-selection whose output feeds the state seam. It selects and never computes -
-the envelope crosses whole on every distilled event, the election ranges over
-payload keys alone, and it is fixed at load, so what was elected is a load
-condition the record carries like any other.
+**The tee.** A third reader of the same rendering: a per-event selection whose
+output feeds the state seam. It selects and never computes. The election matches
+on the event's kind, then selects payload keys by path, and the identifying
+members - session, run, turn, kind, and sequence - cross on every distilled
+event and are not electable, so no election can produce an unattributable row.
+The subsystem, the causal parent, and the timestamps stay with the full record.
+The election is fixed at load, so what was elected is a load condition the
+record carries like any other.
 
 ## Seams
 
@@ -95,8 +98,10 @@ and offered to the tee's election.
 **The sequence is the order and the clock is the instrument.** The sequence is
 strictly increasing and gapless over admitted events, scoped to the run.
 Session-wide order is assembled by the consumer from the run reference and the
-sequence - strict order inside a run, calendar order between runs - because the
-program holds nothing across a residency.
+sequence, because the program holds nothing across a residency: strict order
+inside a run, and between runs the order the operator's clock saw the loads in -
+a calendar account, not a monotonic guarantee, which is all a program alive for
+one residency at a time can put on an identifier.
 
 **Every run begins empty.** The working structure starts with nothing, the run's
 first authored event is its load line - which carries every diagnostic election
@@ -115,8 +120,11 @@ writable route into the record.
 
 **The committed boundary is interrogable while the process lives**: what was
 handed to the sink, what the queue still holds, what failed. It is not a promise
-that nothing is lost - the writer's queue is forfeit to process death, and the
-record truncates at a whole-event boundary, never inside one.
+that nothing is lost. The writer's queue is forfeit to process death, the writer
+hands the sink one complete line per write and retries a short write to
+completion rather than reporting it as success, and durability behind the
+descriptor is the operator's - committed means handed to the sink, not made
+safe on anyone's disk.
 
 ## What it refuses
 
