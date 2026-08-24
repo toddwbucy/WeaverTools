@@ -167,12 +167,27 @@ fn a_split_artifact_larger_than_any_card_admits_across_the_pair() {
                     ordinal: refused_at,
                     free,
                     needed,
+                    total,
                 },
             )) => {
                 assert_eq!(*refused_at, ordinal, "the refusal names the probed card");
                 assert!(
                     needed > free,
                     "the refusal carries the inequality: needed {needed} against free {free}"
+                );
+                // **The capacity is what makes the inequality readable**, per
+                // Spec section 5. Needed against free says the load did not
+                // fit. Only the capacity says whether the card is too small or
+                // held by something else, and this probe is the first case: an
+                // idle card whose whole capacity is under the need.
+                assert!(
+                    *total >= *free,
+                    "a card cannot have more free than it has: free {free}, total {total}"
+                );
+                assert!(
+                    needed > total,
+                    "this probe is the too-small reading, so the need exceeds the whole \
+                     card rather than merely what was free: needed {needed}, total {total}"
                 );
             }
             other => panic!(
