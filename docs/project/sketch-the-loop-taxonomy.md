@@ -123,14 +123,30 @@ exact-match comparison of a replay against the original, and again with the read
 elected, to show the read is passive. **A readout from an uncertified replay is a
 picture of an unknown run.**
 
+**An output comparison means nothing unless the input was the same one, so the
+certification checks the input first.** Apex section 8 names what a deterministic
+re-feed requires, exactly: input token ids, output token ids, model identity with its
+weights hash, sampling parameters, and the prompt-block partition. **The template's
+identity travels with them**, which is what closes the gap canonical messages leave:
+the same conversation rendered under a later template is a different prompt, so a
+replay that re-rendered rather than re-fed would be comparing two different runs and
+finding them different. **Certification is therefore two claims and not one** - that
+the input was identical, established from the record, and that the output matched.
+
 **No second instrument lands before the first replay is certified**, because a second
 tap sharing an uncertified replay inherits the uncertainty rather than dividing it.
 
 **The production column needs no replay certification**, because nothing is being
-replayed. The calculator is the standing proof that cut-and-recompute works, and the
-diagnostic side inherits a mechanic that earned its correctness elsewhere. **That
-ordering is a plan and not yet a record**: the harness-SPU splice amendment has not
-landed, so `weaver-internal`'s own cell still waits on it.
+replayed. What it needs instead is for the mechanic to work, and **that is not yet
+shown.** The calculator crate stands, but the cut-and-recompute wiring it would use
+waits on the harness-SPU splice amendment, and `weaver-internal`'s own cell says so.
+
+**So the inheritance is conditional and the condition is unmet.** The intended
+ordering is that the mechanic earns its correctness on the production side and the
+diagnostic side inherits it. Until the splice lands and is shown working there, the
+diagnostic side would be inheriting a mechanic nothing has exercised, which is the
+same defect as a readout over an uncertified replay one level up. **A plan, not a
+record.**
 
 ## 8. The mechanic and the motive
 
