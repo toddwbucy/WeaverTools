@@ -4,6 +4,11 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, the seam papers land. Section 6's seam paragraph
+records the landing and corrects its own account of the declaring side: the
+seam edge is declared here, from the initiating side, per the pattern the
+harness-state seam set, and not by state as the paragraph first said. The
+owed list narrows to the driver, its Spec, and the null replay.
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-diagnostic-PRD`
 **Parent:** the WeaverTools suite, whose governing document is deliberately
@@ -157,12 +162,23 @@ serve identically, and whether their readouts agree is a finding.
 ## 6. The seam, the custody, and what this charter leaves owed
 
 **The preload crosses a second seam on the state member, per the operator's
-ruling of 2026-08-24**: `weaver-diagnostic-state-contract`, initiated by
-this crate, checked against the operator principal, on the precedent of the
-gate's two doors. The contract and `weaver-state-PRD`'s second door land
-together in the seam-papers act, which is where the seam and party edges are
-declared, the declaring side being state's. This charter declares no seam
-edge, and until that act lands the seam is owed rather than open.
+ruling of 2026-08-24, and the papers stand**: `weaver-diagnostic-state-contract`,
+initiated by this crate, checked against the operator principal, on the
+precedent of the gate's two doors. The contract, `weaver-state-PRD`'s second
+door, and `weaver-state-Spec`'s mechanics landed together in the seam-papers
+act of the same date. The seam is declared here, from the initiating side,
+which is the pattern the harness-state seam set: the from side's charter
+carries the edge. An earlier form of this paragraph placed the declaration
+with state and the landing in the future, and both halves are corrected by
+the act that landed it.
+
+```graph
+edge: seam
+from: weaver-diagnostic
+to: weaver-state
+via: weaver-diagnostic-state-contract
+tag: socket
+```
 
 **Custody is unchanged and needs no exception.** The trace path is declared
 material, so the driver reads the operator-held stream as an operator
@@ -187,5 +203,5 @@ Open cells, each named rather than implied:
   the chartering ruling as a sketch that does not exist in this tree. The
   reference is recorded here so the ghost is a known gap rather than a
   silent one.
-- **The driver and its Spec** are owed behind the seam papers, and the null
-  replay of section 4 is owed behind the driver.
+- **The driver and its Spec** are owed next, the seam papers having landed,
+  and the null replay of section 4 is owed behind the driver.
