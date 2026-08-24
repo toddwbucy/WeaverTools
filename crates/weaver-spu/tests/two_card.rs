@@ -182,12 +182,14 @@ fn a_split_artifact_larger_than_any_card_admits_across_the_pair() {
                 // idle card whose whole capacity is under the need.
                 assert!(
                     *total >= *free,
-                    "a card cannot have more free than it has: free {free}, total {total}"
+                    "a card cannot have more free than it holds: \
+                     free {free}, total {total}"
                 );
                 assert!(
                     needed > total,
-                    "this probe is the too-small reading, so the need exceeds the whole \
-                     card rather than merely what was free: needed {needed}, total {total}"
+                    "this probe is the too-small reading, so the need exceeds \
+                     the whole card rather than merely what was free: \
+                     needed {needed}, total {total}"
                 );
             }
             other => panic!(
