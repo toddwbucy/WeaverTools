@@ -122,7 +122,7 @@ admin's today, per the fault-carrier ruling of 2026-08-01.
 channels, and this seam draws it in part since the inversion ruling of 2026-08-05.
 What lands here unchanged: boundary preservation as a property of the channel, the
 non-inheritance split, and closure never read as an answer. What does not: the
-unnamed connected pair, authentication by possession, the holder in transit, and
+unaddressable connected pair, authentication by possession, the holder in transit, and
 the channel's life bound to the far process, each departed from below with the
 departure stated as this seam's own. The organ channels the harness creates keep
 the drawn shape whole, and this seam is the one that left it.
@@ -169,12 +169,13 @@ access to the already-open sink itself, and its own principal is never checked a
 what the sink refers to. So the principal the worker held at the moment of receipt was
 never what made the handoff safe, and the clause that said the drop does not gate what
 may
-cross is now a statement about a uid that never changes.
+cross is now a statement about a principal that never changes.
 
 **The worker's memory is unreadable to processes sharing its own principal**, which
 is what stops one of them from attaching to the worker and driving this channel and
-the trace sink directly, and it closes the substrate's own listing of a process's open
-handles as a second route to them. **The property resets when a process replaces its
+the trace sink directly, **and it closes the second route by which such a process
+could enumerate what the worker holds.** **The property resets when a process replaces
+its
 image**, so the requirement is stated against the last replacement. This is the whole
 of what the removed ordering was protecting and it stands unchanged.
 

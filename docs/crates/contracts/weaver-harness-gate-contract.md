@@ -15,7 +15,7 @@ nothing and no exchange changes.
 **Revised:** 2026-08-18, the tool boundary ruling re-grounds the execution
 exchange. The gate holds one tool, the shell, which is this crate's own
 outbound verb: the agent's effect on the world crosses this membrane, and the
-shell is that crossing's general form, bounded by the uid that is the agent's
+shell is that crossing's general form, bounded by the principal that is the agent's
 outer protective shell per `weaver-tools-vision` section 6. The calculator
 leaves for `weaver-internal`, dispatched inward and never this seam's
 traffic. The answer's contents grow from three to four, killed on the clock
@@ -120,9 +120,10 @@ Format section 4. This document names its parties and does not restate the edge.
 
 `weaver-organ-channel` states the elected mechanics. Four facts are this seam's.
 
-**The creating party is the harness and the pair is unnamed.** The harness creates a
-connected pair during the enter fan-out, after the SPU has confirmed residency, and
-forks the gate holding one end, the same act the residency seam uses. The pair is
+**The creating party is the harness and the pair is unaddressable.** The harness
+creates the connected pair during the enter fan-out, after the SPU has confirmed
+residency, then creates the gate's process holding one end, the same act the residency
+seam uses. The pair is
 created and inherited inside one act, with no third process holding an end in transit.
 
 **Possession is the authentication on this pair, and the named socket this seam
@@ -320,8 +321,9 @@ reaches the invocation's whole process group.
 **The harness guarantees** that the instruction it sends is the instruction admin
 sent it, unaltered and uninterpreted. It guarantees that it opens no exchange this
 document does not enumerate. It guarantees that it creates this seam's channel and
-passes its handle to the child it creates and no other, every handle it holds being
-withheld from children at that moment, per section 1. It guarantees that it raises the
+passes that end to the child it creates and no other, **every other handle it holds
+being withheld from that child at the moment it is created**, per section 1. It
+guarantees that it raises the
 gate
 last and lowers it first within the fan-outs, per apex section 6. It guarantees that
 it does not treat an answer as authorization for anything beyond the exchange that
@@ -347,7 +349,8 @@ guarantees that a refusal leaves nothing held, no listener and no half-bound soc
 so a refusal is true about the boundary rather than merely true about the attempt. It
 guarantees that it answers a refusal rather than exiting on one. It guarantees that
 it admits only the principals the boundary predicate names and that the predicate
-excludes the agent uid, per `weaver-gate-PRD` section 2. It guarantees that it
+excludes the agent's own principal, per `weaver-gate-PRD` section 2. It guarantees that
+it
 authors no trace event, holds no handle beyond this seam's end and its listener,
 retains nothing across a raise and a lower, and exits on observing closure.
 

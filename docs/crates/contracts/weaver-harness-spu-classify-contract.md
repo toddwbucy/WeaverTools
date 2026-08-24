@@ -84,11 +84,13 @@ section 6.** This document names its parties and does not restate the edge.
 
 ## 1. The channel
 
-**An unnamed connected pair, created by the harness before the child exists, beside
-the lifecycle and token pairs.** The classify process receives its end at its
-own child, per `weaver-spu-PRD` section 15.3, and no other handle beyond
-what that section's child carries. Possession authenticates, because a pair
-with no name has no second opener, and the channel lives exactly as long as
+**An unaddressable connected pair, created by the harness before the child exists,
+beside the lifecycle and token pairs.** **The classify process receives one end when it
+is created and the harness retains the other**, per `weaver-spu-PRD` section 15.3, and
+it holds no handle beyond what that section names. Possession authenticates, because a
+pair
+no third party can address has no second opener, and the channel lives exactly as long
+as
 the process at its far end.
 
 **One write is one message, and the property comes from the socket type.**

@@ -166,11 +166,12 @@ section 6.** This document names its parties and does not restate the edge.
 
 ## 1. The channel
 
-**An unnamed connected pair, created by the harness before the child exists, beside
-the lifecycle pair.** The same act creates both, the same child carries both
-ends, and `weaver-spu-PRD` section 7 counts them: the SPU receives its two
-channel ends and no other handle. Possession authenticates, because a
-pair with no name has no second opener, and the channel lives exactly as
+**An unaddressable connected pair, created by the harness before the child exists,
+beside the lifecycle pair.** The same act creates both pairs, **the child carries one
+end of each and the harness retains the counterparts**, and `weaver-spu-PRD` section 7
+counts them: the SPU receives its two channel ends and no other handle. Possession
+authenticates, because a
+pair no third party can address has no second opener, and the channel lives exactly as
 long as the process at its far end.
 
 **One write is one message, and the property comes from the socket type.**

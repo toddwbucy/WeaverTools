@@ -117,9 +117,9 @@ from this side.
 
 `weaver-organ-channel` states the mechanics. Four facts are this seam's.
 
-**The creating party is the harness and the pair is unnamed.** The harness creates a
-connected pair before it creates, and the child holds one end from its first
-instruction.
+**The creating party is the harness and the pair is unaddressable.** The harness
+creates the connected pair first and the child process second, **so the child holds
+its end from its first instruction** and the harness retains the counterpart.
 The harness creates because it is the party that exists first, which is the
 creating-party rule of `weaver-organ-channel` section 2 landing on this seam, and it is
 the ruled topology of 2026-07-31 rather than an assumption. This is apex section 5.1's
@@ -130,8 +130,10 @@ coordination seam above pays a cell for that question and this one does not.
 
 **Possession is the authentication, per `weaver-organ-channel` section 2, and one fact
 of it is this seam's.** A named socket admits any number of connections, and a dial
-from the agent uid proves nothing about which process dialed, an elected `bash` tool
-being one candidate. The unnamed pair removes the dial entirely, so the peer is the
+from the agent's own principal proves nothing about which process dialed, an elected
+`bash` tool
+being one candidate. The unaddressable pair removes the dial entirely, so the peer is
+the
 exact process the harness forked, because holding an end is the only way onto the
 channel.
 
