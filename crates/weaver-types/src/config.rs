@@ -19,13 +19,14 @@ use serde::{Deserialize, Serialize};
 use crate::identity::AccessRule;
 use crate::wire::SessionId;
 
-/// The declared surface of an agent, six fields under five keys, every one
-/// required.
+/// The declared surface of an agent.
 ///
 /// Absence is a refusal rather than a default: an operator who stated no
 /// residual readout has not thereby declined it, and admin refusing the load is
 /// how that operator learns the file is incomplete. This is why the type derives
-/// no `Default` and [`parse`] returns no partial value.
+/// no `Default` and [`parse`] returns no partial value. The optional fields
+/// are each optional by that rule's own exception, a governing document ruling
+/// what absence means, and each names its ruling where it is declared.
 ///
 /// Field names are kebab-case on disk and snake_case here, by explicit election,
 /// and `deny_unknown_fields` is the fixed-surface mechanism: a field no organ
@@ -38,7 +39,19 @@ pub struct AgentConfig {
     pub spu_instruction: SpuInstruction,
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,
-    pub gate_instruction: GateInstruction,
+    /// What this load is for, per `weaver-types-Spec` section 2 and
+    /// `weaver-agents-PRD` section 6: absence means serving, so a declaration
+    /// written before the member existed declares what it always meant. Admin
+    /// resolves the absence at inventory, the one site, per
+    /// `weaver-admin-Spec` section 7.
+    #[serde(default)]
+    pub binding_kind: Option<BindingKind>,
+    /// Optional at the parse and conditional at the inventory: presence
+    /// follows the resolved kind, a serving binding requiring it and a
+    /// diagnostic binding excluding it, per `weaver-types-Spec` section 2.
+    /// The parse checks each field alone, so the cross-field rule is admin's.
+    #[serde(default)]
+    pub gate_instruction: Option<GateInstruction>,
     pub trace_sink: TraceSink,
     /// The tee's election, per `weaver-types-Spec` section 2: the one
     /// optional field, optional by the required-field rule's own exception
@@ -56,6 +69,22 @@ pub struct AgentConfig {
     /// exchange, because no exchange carries a path.
     #[serde(default)]
     pub loop_file: Option<PathBuf>,
+}
+
+/// What a load is for, per `weaver-agents-PRD` section 6 as amended
+/// 2026-08-24: a serving binding raises the whole interior and a diagnostic
+/// binding raises it without Gate, for the replay apex section 8 places
+/// outside the agent.
+///
+/// Closed at two variants because the apex names exactly two kinds: a third
+/// kind is an apex act before it is a variant. Not an election - an election
+/// turns an observation on or off inside a load whose shape is settled, and
+/// the kind is the shape.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum BindingKind {
+    Serving,
+    Diagnostic,
 }
 
 /// The probability field's election, per `weaver-types-Spec` section 2: how

@@ -8,6 +8,7 @@
 //! conforms: harness-one-sink-descriptor
 //! conforms: harness-decode-pair-created-before-the-fork
 //! conforms: harness-gate-pair-waits-on-residency
+//! conforms: harness-diagnostic-enter-forks-no-gate
 //! conforms: harness-scoped-refusal-account
 //! conforms: harness-left-follows-drain
 //! conforms: harness-announce-after-record
@@ -1040,8 +1041,11 @@ impl Harness {
         }
     }
 
-    /// Enter runs four steps in the charter's order, and the answer is the
-    /// aggregate.
+    /// Enter runs the charter's steps in order, and the answer is the
+    /// aggregate. The fan-out's extent follows the match on the payload's
+    /// binding, per `weaver-harness-Spec` section 3: the serving case runs
+    /// the whole walk and the diagnostic case ends it at the SPU's
+    /// confirmation, forking no gate.
     fn enter(
         &mut self,
         payload: weaver_types::EnterPayload,
@@ -1309,6 +1313,17 @@ impl Harness {
             }
         }
 
+        // The fan-out's extent follows the kind, per `weaver-harness-Spec`
+        // section 3: the serving case runs the gate step and the diagnostic
+        // case ends the fan-out at the SPU's confirmation - no pair created,
+        // no binary forked, no raise opened. The run state's gate arm stays
+        // empty for the whole residency, so the leave and the unwind lower
+        // what stands, reading the same option they always read.
+        let gate_instruction = match &payload.binding {
+            weaver_types::EnterBinding::Serving { gate_instruction } => gate_instruction,
+            weaver_types::EnterBinding::Diagnostic => return Ok(run),
+        };
+
         // The gate pair is created only after the SPU's answer confirms
         // residency: one organ's readiness gates another organ's
         // construction, which neither organ can see from inside its domain.
@@ -1330,7 +1345,7 @@ impl Harness {
             run.gate_ordinal,
             weaver_types::RefusingOrgan::Gate,
             LifecycleDirective::Raise {
-                instruction: payload.gate_instruction.clone(),
+                instruction: gate_instruction.clone(),
                 // The socket is this crate's rather than the declaration's,
                 // per `weaver-gate-PRD` section 2, named beside the
                 // coordination socket so the manager's runtime directory
@@ -1841,11 +1856,13 @@ mod tests {
                     tunable_values: Default::default(),
                 },
             },
-            gate_instruction: weaver_types::GateInstruction {
-                access_rule: weaver_types::AccessRule {
-                    allowed_uids: Default::default(),
-                    allowed_gids: Default::default(),
-                    denied_uids: Default::default(),
+            binding: weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
                 },
             },
             state_election: weaver_types::StateElection {
@@ -1952,11 +1969,13 @@ mod tests {
                     tunable_values: Default::default(),
                 },
             },
-            gate_instruction: weaver_types::GateInstruction {
-                access_rule: weaver_types::AccessRule {
-                    allowed_uids: Default::default(),
-                    allowed_gids: Default::default(),
-                    denied_uids: Default::default(),
+            binding: weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
                 },
             },
             state_election: weaver_types::StateElection {
@@ -2079,11 +2098,13 @@ mod tests {
                     tunable_values: Default::default(),
                 },
             },
-            gate_instruction: weaver_types::GateInstruction {
-                access_rule: weaver_types::AccessRule {
-                    allowed_uids: Default::default(),
-                    allowed_gids: Default::default(),
-                    denied_uids: Default::default(),
+            binding: weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
                 },
             },
             state_election: weaver_types::StateElection {
@@ -2178,11 +2199,13 @@ mod tests {
                         tunable_values: Default::default(),
                     },
                 },
-                gate_instruction: weaver_types::GateInstruction {
-                    access_rule: weaver_types::AccessRule {
-                        allowed_uids: Default::default(),
-                        allowed_gids: Default::default(),
-                        denied_uids: Default::default(),
+                binding: weaver_types::EnterBinding::Serving {
+                    gate_instruction: weaver_types::GateInstruction {
+                        access_rule: weaver_types::AccessRule {
+                            allowed_uids: Default::default(),
+                            allowed_gids: Default::default(),
+                            denied_uids: Default::default(),
+                        },
                     },
                 },
                 state_election: weaver_types::StateElection {
@@ -2230,6 +2253,98 @@ mod tests {
             }
             let _ = std::fs::remove_dir_all(&dir);
         }
+    }
+
+    /// **A diagnostic enter forks no gate.** The real SPU admits the real
+    /// fixture and the fan-out ends at that confirmation: ready, with the
+    /// gate arm never stood. The gate binary handed in is deliberately
+    /// nonexistent, which is the discriminator - perturb `enter` to run the
+    /// gate step whatever the kind and this fork fails `BindFailed`, so a
+    /// passing run is one the gate step never touched rather than one it
+    /// survived. Watched to fail under exactly that perturbation, run on the
+    /// device 2026-08-24. Same gating as the rehearsal below: the
+    /// device-featured SPU built and the fixture present, under
+    /// `WEAVER_REHEARSAL=1`.
+    #[test]
+    fn the_diagnostic_enter_forks_no_gate() {
+        let fixture = std::path::Path::new("/opt/weaver/models/qwen2.5-0.5b-instruct-q6_k.gguf");
+        let target = std::env::current_exe()
+            .expect("the test binary knows itself")
+            .parent()
+            .and_then(std::path::Path::parent)
+            .expect("the target profile dir")
+            .to_path_buf();
+        let spu = std::env::var("WEAVER_SPU_BIN")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| target.join("weaver-spu"));
+        if std::env::var("WEAVER_REHEARSAL").is_err() || !fixture.exists() || !spu.exists() {
+            eprintln!(
+                "SKIP the_diagnostic_enter_forks_no_gate: set WEAVER_REHEARSAL=1 with the \
+                 device-featured SPU built, needs {} and {}",
+                fixture.display(),
+                spu.display()
+            );
+            return;
+        }
+
+        let scratch =
+            std::env::temp_dir().join(format!("weaver-diagnostic-{}", std::process::id()));
+        std::fs::create_dir_all(&scratch).expect("scratch");
+        let sink_path = scratch.join("diagnostic.ndjson");
+        let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                classify: None,
+                spu: spu.clone(),
+                // The discriminator: a gate step that runs cannot fork this.
+                gate: "/nonexistent/weaver-gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::BeforeEnter,
+        };
+        let payload = weaver_types::EnterPayload {
+            session: SessionId("diagnostic".into()),
+            run: weaver_types::RunId("r-1".into()),
+            spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef(fixture.to_string_lossy().into_owned()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    field_election: None,
+                    surprisal_election: false,
+                    identity: Vec::new(),
+                    tunable_values: [
+                        ("max-tokens-per-turn".to_string(), 4096.0),
+                        ("context-capacity".to_string(), 4096.0),
+                        ("seed".to_string(), 11.0),
+                    ]
+                    .into_iter()
+                    .collect(),
+                },
+            },
+            binding: weaver_types::EnterBinding::Diagnostic,
+            state_election: weaver_types::StateElection::default(),
+        };
+
+        let mut run = match harness.enter(payload, Some(sink)) {
+            Ok(run) => run,
+            Err(EnterFailure::BeforeLoad(refusal)) => panic!("enter refused early: {refusal:?}"),
+            Err(EnterFailure::AfterLoad(_, refusal)) => panic!("enter refused: {refusal:?}"),
+        };
+
+        // Ready with the arm never stood: the fan-out ended at the SPU's
+        // confirmation, per `weaver-harness-Spec` section 3.
+        assert!(run.gate.is_none(), "a diagnostic run stands no gate arm");
+
+        // The leave lowers what stands, and the gate arm is not among it.
+        leave(&mut run).expect("the leave unwinds the diagnostic run");
+        drop(run);
+        let _ = std::fs::remove_dir_all(&scratch);
     }
 
     /// **The turn rehearses on the device**, the live run's shape inside
@@ -2306,14 +2421,26 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     identity: Vec::new(),
-                    tunable_values: Default::default(),
+                    // The deployed root's three operator-tunables, required
+                    // at admit since the seed act of 2026-08-19. The empty
+                    // map this carried predates that election and refused
+                    // every rehearsal since, invisibly behind the env gate.
+                    tunable_values: [
+                        ("max-tokens-per-turn".to_string(), 4096.0),
+                        ("context-capacity".to_string(), 4096.0),
+                        ("seed".to_string(), 11.0),
+                    ]
+                    .into_iter()
+                    .collect(),
                 },
             },
-            gate_instruction: weaver_types::GateInstruction {
-                access_rule: weaver_types::AccessRule {
-                    allowed_uids: std::collections::BTreeSet::new(),
-                    allowed_gids: std::collections::BTreeSet::new(),
-                    denied_uids: std::collections::BTreeSet::new(),
+            binding: weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: std::collections::BTreeSet::new(),
+                        allowed_gids: std::collections::BTreeSet::new(),
+                        denied_uids: std::collections::BTreeSet::new(),
+                    },
                 },
             },
             state_election: weaver_types::StateElection::default(),

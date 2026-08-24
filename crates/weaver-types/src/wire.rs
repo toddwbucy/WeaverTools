@@ -3,6 +3,7 @@
 //! conforms: types-envelope-bound-64k
 //! conforms: types-socket-seqpacket
 //! conforms: types-frame-survives-arbitrary-octets
+//! conforms: types-enter-binding-disagreement-unrepresentable
 //!
 //! The loop 0 wire vocabulary, per `weaver-types-Spec` section 4: the envelope
 //! every organ channel carries and loop 0's trio, named for the loop whose
@@ -310,11 +311,31 @@ pub struct EnterPayload {
     pub session: SessionId,
     pub run: RunId,
     pub spu_instruction: SpuInstruction,
-    pub gate_instruction: GateInstruction,
+    /// The kind resolved, with what the kind requires riding inside it.
+    pub binding: EnterBinding,
     /// The tee's election, resolved: admin fills the ruled default where
     /// the declaration is silent, per `weaver-admin-harness-contract`
     /// section 5, so what crosses is always the election whole.
     pub state_election: crate::config::StateElection,
+}
+
+/// The binding kind as admin resolved it, per `weaver-types-Spec` section 4:
+/// the config holds the kind as the operator may state it and this enum holds
+/// it decided, so the resolution point is visible in the types.
+///
+/// **A directive disagreeing with its kind is unrepresentable rather than
+/// refused.** The gate instruction rides inside the serving case, so a
+/// diagnostic enter has no field for it and a serving enter cannot omit it -
+/// the wrong pairing is a struct that does not exist. The grouping is
+/// representation rather than a term of its own: the vocabulary node stays
+/// `binding-kind` alone.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum EnterBinding {
+    Serving {
+        gate_instruction: crate::config::GateInstruction,
+    },
+    Diagnostic,
 }
 
 /// A session's identifier. An identifier choice with no cross-crate

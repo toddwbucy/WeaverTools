@@ -199,6 +199,50 @@ fn a_finite_tunable_value_parses() {
     );
 }
 
+/// The binding kind, absent, is None: admin resolves the absence to serving,
+/// per `weaver-types-PRD` section 2.1, so every declaration written before
+/// the member existed still parses and still means what it always meant -
+/// which is the path every fixture in this file exercises.
+#[test]
+fn an_absent_binding_kind_is_none() {
+    let config = parse(&full_config()).expect("parses");
+    assert_eq!(config.binding_kind, None);
+}
+
+/// A diagnostic declaration parses without a gate instruction: the kind is
+/// stated, the instruction is absent, and the parse accepts both because it
+/// checks each field alone.
+#[test]
+fn a_diagnostic_declaration_parses_without_a_gate_instruction() {
+    let source = full_config()
+        .replace(
+            "gate-instruction:
+  access-rule:
+    allowed-uids: [1000]
+    allowed-gids: []
+    denied-uids: [1701]
+",
+            "binding-kind: diagnostic
+",
+        );
+    let config = parse(&source).expect("parses");
+    assert_eq!(config.binding_kind, Some(weaver_types::BindingKind::Diagnostic));
+    assert_eq!(config.gate_instruction, None);
+}
+
+/// A diagnostic declaration carrying a gate instruction still parses, because
+/// the cross-field rule is admin's at inventory rather than the parse's, per
+/// `weaver-types-Spec` section 2. The parse yielding the pair is what lets
+/// admin refuse it with the field named, before any unit starts.
+#[test]
+fn the_kind_gate_disagreement_is_the_inventorys_not_the_parses() {
+    let source = full_config() + "binding-kind: diagnostic
+";
+    let config = parse(&source).expect("parses");
+    assert_eq!(config.binding_kind, Some(weaver_types::BindingKind::Diagnostic));
+    assert!(config.gate_instruction.is_some());
+}
+
 /// The one optional field: absent means None, which admin resolves to the
 /// ruled default, and the standing fixtures above never mention it, which
 /// is the absence path exercised by every test in this file.
