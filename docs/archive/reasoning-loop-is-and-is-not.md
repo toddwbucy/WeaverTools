@@ -2,7 +2,7 @@
 
 **Status:** ARCHIVED 2026-08-23. Never cited by anything but its own companion. Its
 IS and IS NOT lists are the part most directly overtaken by the loop taxonomy settled
-2026-08-23.
+2026-08-23 and recorded at `sketch-the-loop-taxonomy`.
 
 Previously: v0.2, 2026-08-11. Architecture-seat material, outside the document set,
 landed by the authoring seat with the discussion's edits applied. Companion to

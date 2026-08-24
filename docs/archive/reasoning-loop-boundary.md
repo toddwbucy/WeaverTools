@@ -3,9 +3,10 @@
 **Status:** ARCHIVED 2026-08-23. Its section 2 criterion was ratified by the
 operator 2026-08-11 and the two-level model it states is carried by
 `weaver-agents-PRD` in the apex's own words. Citations to this document were dropped
-on that date. **The loop taxonomy settled 2026-08-23 supersedes the two-level model
-and is not yet written down anywhere**, which is worth knowing before reading this as
-current.
+on that date. **The loop taxonomy settled 2026-08-23 supersedes the two-level model**
+and is
+recorded at `sketch-the-loop-taxonomy`, which is worth reading before taking this one
+as current.
 
 Previously: v0.3, 2026-08-11. Architecture-seat material, outside the document set,
 landed by the authoring seat with the discussion's edits applied. **The criterion of
