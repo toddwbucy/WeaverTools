@@ -110,10 +110,18 @@ works, what it refuses, and what it has not built.
 corpus, which is the authority on every claim it makes. **Where a paper and its
 source disagree, the paper is the defect** and the source stands.
 
-**One document here is not a paper.** `weaver-agents/weaver-agents-PRD.md` is the
-domain's charter. It decides, the papers beside it read it out, and the fixed status
-line above belongs to the papers rather than to it. It sits in the domain's directory
-because that is what it governs.
+**No charter or Spec lives here, and that is the rule rather than the current
+state.** PRDs and Specs are build documents and they live under `docs/crates/`. They
+are what these pages are read out of, and **they are not part of what is published**:
+at release this site is the public face and the corpus behind it is not. A paper may
+name a charter as its source. It may not stand beside one.
+
+**The `Sources:` lines are drafting scaffold and do not survive drafting.** An
+undrafted section names the charter sections it will be read out of, so whoever
+writes it knows where to look. A drafted section carries the substance instead and the
+line goes. At release the papers are prose and the corpus they came from is not
+shipped, so a published page pointing a reader at a document they cannot open would be
+a defect rather than a citation.
 
 **No page restates a contract.** The contracts page is the single site for a
 contract read-out here, so a crate paper names its seams and links rather than
