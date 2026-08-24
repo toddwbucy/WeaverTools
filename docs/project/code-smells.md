@@ -3,6 +3,12 @@
 **Status:** RUNNING. Opened 2026-08-03 alongside the axiom layer. Entries accumulate
 as they are found and nothing here is retired without a note saying why.
 
+**Checked against the corpus 2026-08-24 and no entry was retired.** All four axioms
+the entries ground in still stand, no entry cites a document that has moved or been
+archived, and none carries a framing the corpus has retired since. **Two rejections in
+section 4 were corrected** where the corpus had moved under them, and the one
+invariant with no entry is now named.
+
 **Date filed:** 2026-08-03
 **Document ID:** `code-smells`
 **Parent:** `weaver-agents-PRD`
@@ -801,6 +807,14 @@ job.
 
 ---
 
+**One invariant carries no smell.** Four of the apex's five axioms ground an entry
+here. `axiom-harness-integrates-by-the-loop` grounds none, which is a gap in coverage
+rather than a defect in an entry: no construction violating it has been met twice, and
+none has been argued from the invariant. **Recorded so the absence is read as unmet
+rather than as unreachable.**
+
+---
+
 ## 4. Considered and rejected
 
 Recorded so the same candidates are not re-litigated. Each failed the acceptance test.
@@ -809,9 +823,11 @@ Recorded so the same candidates are not re-litigated. Each failed the acceptance
   real finding about that file is 2.1, since it hosts the wire vocabulary of features
   whose producers never landed. Grounded there instead.
 - **Hand-rolled protocol framing duplicated across many files.** Real repetition, but
-  the new program's external contract is line-delimited JSON over Unix sockets, so the
-  duplicated artifact does not exist here to be duplicated. The accept-loop half carries
-  and is 3.1.
+  the new program's external contract makes the newline the framing, so there is no
+  framing layer to hand-roll and no duplicated artifact to find. **The rejection rests
+  on the framing rather than on the substrate**, which is what keeps it standing after
+  the contract went transport-silent on 2026-08-24 and stopped naming a socket type.
+  The accept-loop half carries and is 3.1.
 - **A wire enum restated in three conversion functions.** Guarded duplication in one
   file with a test pinning the pairs. Not the shape that hurt the tree.
 - **A required wire field made optional for compatibility.** Promising until the
@@ -819,8 +835,13 @@ Recorded so the same candidates are not re-litigated. Each failed the acceptance
   fails the test. The undefended instance of the same shape is inside 1.4.
 - **A composition root emitting session-open and session-close events.** Two events,
   both process bookends, written by the process owning the record's file handle. A
-  legitimate near-neighbour of 1.6 rather than an instance of it. **The new program's
-  composition root will face the same question and should answer it deliberately.**
+  legitimate near-neighbour of 1.6 rather than an instance of it.
+
+  **The new program faced the question and answered it, which closes this note.** The
+  bookends are `load` and `unload`, they bracket the run rather than the process, and
+  `session.closed` is a third kind saying the session will not be resumed, which is a
+  different claim from a run ending. **The harness authors all three as sole writer**,
+  so no component writes its own bookend and the near-neighbour never arises.
 - **A crate with both trace calls and prints.** Not the same defect as 2.3, since those
 crates do reach the trace and the prints are largely command-line output from binaries.
 - **A static authorization memo with no invalidation.** One sighting, bounded, with a

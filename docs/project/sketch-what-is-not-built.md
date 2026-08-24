@@ -154,7 +154,14 @@ down, not in what is built.
   same question as the entry below: a domain ruling belongs in `weaver-agents-PRD` and
   a statement of what the program is for belongs at a suite level that has no
   document.
-- **The suite has no apex.** The document that carried that name governs the
+- **The suite has no apex, deliberately, per the operator's ruling of 2026-08-24.**
+  It is not an omission at this stage. **The architectural pattern is worth a rough
+  draft PRD and the scope's details are not**, because those details are still moving
+  and a document that pins them early costs more to unwind than it saves. The entry
+  stays in this register as a state rather than a defect, and what would close it is
+  the scope settling rather than someone writing the page. What follows below is
+  therefore context and not an owed edit: The document that carried that name governs
+  the
   weaver-agents domain, corrected 2026-08-23. Crates outside the agent boundary,
   `weaver-web` and `weaver-diagnostic`, parent to the suite and refine nothing that
   is written. Naming the gap is the honest form until a second consumer makes the
