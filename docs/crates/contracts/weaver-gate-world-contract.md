@@ -68,19 +68,28 @@ party is named in prose and the missing category rides
 
 ## 1. The channel
 
-The named Unix socket the raise directive carries, supplied by the harness
-inside the unit's runtime directory and bound by the gate, per `weaver-gate-PRD`
-section 2. The access rule beside it is the operator's, so what the world meets
-is a door the program placed and a predicate the operator wrote. It
-exists between raise and lower and at no other time: a connection before ready or
-after stopped finds no listener, which is the boundary the lifecycle protects.
+The named endpoint the raise directive carries, supplied by the harness and bound by
+the gate, per `weaver-gate-PRD` section 2. **What kind of endpoint it is and where it
+lives are the Spec's**, and a consumer needs neither: it is given the name and finds a
+listener there. The access rule beside it is the operator's, so what the world meets is
+a door the program placed and a predicate the operator wrote. It exists between raise
+and lower and at no other time: a connection before ready or after stopped finds no
+listener, which is the boundary the lifecycle protects.
 
-**Admission is by peer credential.** Every connection is authenticated by
-`SO_PEERCRED` and judged by the `authorization-predicate` of `weaver-types-PRD`
-section 2.2, admitting front-end principals only. **The predicate excludes the agent
-uid**, so an elected tool cannot dial the agent's own mouth and prompt it through its
-own front door. Whoever connects gets to converse with the agent and gets nothing
-else.
+**Admission is by verified peer identity.** Every connection carries a principal
+identity **the channel authenticates rather than the caller asserts**, and that
+identity is judged by the `authorization-predicate` of `weaver-types-PRD` section
+2.2, admitting front-end principals only. **The predicate excludes the agent's own
+principal**, so an elected tool cannot dial the agent's own mouth and prompt it
+through its own front door. Whoever connects gets to converse with the agent and gets
+nothing else.
+
+**The mechanism is the Spec's.** What this page requires is that the identity be
+verified by the channel rather than claimed in the message, and that a peer failing
+the predicate be refused before any byte of its ask is read. What supplies that
+verification is a property of the substrate the seam runs on and is named in
+`weaver-gate-Spec`. **A consumer builds against the property and not against the
+mechanism**, which is what lets the same page stand if the substrate changes.
 
 ## 2. What crosses in, and its format
 
