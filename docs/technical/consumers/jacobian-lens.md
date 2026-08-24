@@ -61,6 +61,12 @@ captures. The analysis reads.** Nothing about the lens has to be decided while a
 is in flight, and a lens that did not exist when the run happened can still be
 pointed at it.
 
+**Custody does not bend for it.** The capture is authored by the harness like every
+other event and recorded by `weaver-trace`, which is the sole writer. **A diagnostic
+consumer reads the operator-held stream and writes nothing to it**, the same terms
+every consumer meets, so an instrument gains no route to the record its subject could
+not already be trusted with.
+
 ## What it would cost
 
 Against the deployed artifact at `n_embd` 2048 and `n_layer` 40, and the 2026-08-20
@@ -72,8 +78,11 @@ series at 3,011,135 generated tokens, at bf16 and 4 KiB per layer per position:
 | 4 layers | 49.3 GB |
 | 40 layers | 493 GB |
 
-For comparison, the probability field at depth 50 is 3.1 GB and **the whole record
-today is 0.137 GB.**
+For comparison, the probability field at full depth 50 is 3.1 GB and **the whole
+record today is 0.137 GB.** Both figures are the feature request's, taken against the
+2026-08-20 series. **Whether the 0.137 GB carries any conditionally emitted
+`model.field` is not stated there**, so the two should be read as an order-of-magnitude
+comparison rather than a like-for-like one until the election state behind them is.
 
 **So conditional emission is a precondition here rather than a relief.** For the
 field, conditional pricing was an optimisation. Here it is the difference between

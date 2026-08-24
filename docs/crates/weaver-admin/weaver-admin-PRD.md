@@ -1070,9 +1070,10 @@ citing that contract is an owed edit, per section 11.
 
 ## 11. Edits owed
 
-Apex section 10 requires that a change touching a contract merges with every party in
-one act, and gate G7 asks that a ruling name the documents it changes. This
-section is that register. Nothing below is applied by this document, and the items
+Apex section 10 requires that a change touching a contract names every party, and
+gate G7 asks that a ruling name the documents it changes. A party that does not merge
+with the change is named as owed here. This section is that register. Nothing below is
+applied by this document, and the items
 already carried in `open-items` are cited rather than restated.
 
 **An entry leaves this register when the edit lands.** The register is the G7 instrument

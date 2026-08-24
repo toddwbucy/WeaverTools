@@ -411,10 +411,10 @@ The set was ratified set-wide on 2026-08-04 per the operator's ruling recorded i
 section 5, and **charters have ratified on their own since 2026-08-23**, so the set
 is whatever the charters currently say. Phase one closed with the whole set merged:
 seven charters, seven Specs, the contract layer, and the assertion records under
-their instruments. **Two crates have been chartered since**, `weaver-state` and
-`weaver-internal`, both on 2026-08-18, and both are ratified under the per-charter
-rule. The apex's enumeration still names seven and its amendment is the operator's
-act. Phase two ran
+their instruments. **Two crates were chartered since**, `weaver-state` and
+`weaver-internal`, both on
+2026-08-18, both ratified under the per-charter rule, and **both joined the apex's
+enumeration on 2026-08-23 when it was corrected to nine.** Phase two ran
 on the HADES server per `HANDOFF-2026-08-04-hades-graph-build`, the graph stood up
 from the merged set, and the set-level mark rides the apex's system record.
 

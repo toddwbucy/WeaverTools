@@ -850,7 +850,8 @@ to the Working Process, section 2, and are not restated here.
 
 No amendment banners. No supersession notices. No citations into retired
 documents. No obligations patched inline because their referent was withdrawn.
-If a change touches a contract, every party to that contract merges in the same act.
+If a change touches a contract, it names every party to that contract, and a party
+that does not merge with it is named as owed in that document's register.
 
 Every one of those devices is a reasonable local decision. Together they are
 how a corpus stops being coherent while every individual document still looks

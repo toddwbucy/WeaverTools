@@ -464,13 +464,18 @@ rebrand was deliberately deferred. **Both are withdrawn**, displaced by the ruli
 2026-08-23, and the paragraph is rewritten rather than deleted so the reason survives
 its plan.
 
-Each satellite already has its door, which is why the shape costs the corpus
+Each consumer already has its door, which is why the shape costs the corpus
 nothing today. weaver-web builds on the two external contracts the ruling of
 2026-08-01 wrote for exactly this party, `weaver-gate-world-contract` and
 `weaver-admin-operator-contract`, pages an outside consumer builds against
 and nothing else, on the consumer's own compute per the live-view ruling.
-weaver-train stands on the clause that kept the native path alive, a program
-that intends training as a continuation cannot let that path decay. And the
+weaver-diagnostic reaches the same way, consuming a trace an operator holds and
+never touching weights.
+
+**A post-training leg is a direction and not a consumer.** The clause that kept
+the native path alive is what it would stand on, a program that intends training
+as a continuation being unable to let that path decay, but nothing is chartered
+and no door is owed. And the
 gaps a real frontend will meet each have a named front door, though not
 one shape of door: streaming and a status ask enter by amending the two
 external contracts in docs acts, the operator's read on state enters

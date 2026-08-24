@@ -27,8 +27,11 @@ the register and it is easy to lose.
 
 ## What it does not yet do
 
-- **It is scoped to the agent framework** and inherits that from the report. The
-  suite has consumers now, and what they cannot stand behind is not here.
+- **It is scoped to the agent framework, with one exception it owns deliberately.**
+  Suite topology is tracked here - the missing suite apex, and the consumers that
+  parent to a suite level nothing governs - because no suite-level register exists to
+  hold it. **What the consumers themselves cannot stand behind is not here**, and
+  wants its own register once there is more than one of them.
 - **Entries are not linked to the assertions or charter cells that also track
   them**, so an entry can close in a Spec and linger here.
 

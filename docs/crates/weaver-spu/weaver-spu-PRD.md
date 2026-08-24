@@ -796,8 +796,9 @@ reasoning recorded there.
 
 ## 11. Edits owed
 
-Apex section 10 requires that a change touching a contract merges with every party in
-one act, and this section is that register. Nothing below is applied by this document.
+Apex section 10 requires that a change touching a contract names every party, and a
+party that does not merge with the change is named as owed here. This section is that
+register. Nothing below is applied by this document.
 An entry leaves this register when the edit lands, because a ruling recorded and not
 landed reads as settled and an entry landed and not cleared reads as outstanding.
 

@@ -262,7 +262,7 @@ re-entry to authoring rather than a defect.
 ```
 process/WeaverTools-Working-Process.md    section 5, the checklist that ratifies
 process/WeaverTools-Document-Format.md    sections 3 to 6, the notation
-docs/project/weaver-agents-PRD.md           section 5, the five invariants
+docs/technical/weaver-agents/weaver-agents-PRD.md   section 5, the five invariants
 docs/project/code-smells.md               section 1.2's note on seam identity
 ```
 

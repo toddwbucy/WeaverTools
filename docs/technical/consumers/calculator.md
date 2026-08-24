@@ -28,8 +28,10 @@ So it is filed here as a note rather than as a member of this directory, for one
 reason: **the mechanic a diagnostic consumer would need already exists, and it exists
 because the calculator needed it first.** A reader arriving at
 [the Jacobian lens](jacobian-lens.md) and wondering what it would take to perturb a
-replay should know that the perturbation mechanic is built, is running in production,
-and is not theirs to invent.
+replay should know that the perturbation mechanic is chartered and specified here, is
+not theirs to invent, and is not finished either. **The calculator is built. The
+cut-and-recompute wiring it needs is not**, which section 8 below states rather than
+leaves to be discovered.
 
 ## What it is
 
@@ -63,7 +65,9 @@ adjudicate a promotion.**
 ## It is the first member and it is the cap
 
 **No second framework member joins without an act that argues its corner** the way the
-apex argues the calculator's. That is a deliberate ceiling rather than a roadmap
+apex argues the calculator's, per `weaver-internal-PRD` section 2, which is the
+authority for the ceiling rather than this page. That is a deliberate ceiling rather
+than a roadmap
 waiting to be filled, and it is what keeps the inward corner from becoming the place
 tools accumulate once the gate has been made inconvenient.
 
@@ -81,10 +85,11 @@ substitution come from the operator and nothing is being corrected. **Same mecha
 motive removed**, and who chose the cut belongs to the consumer rather than to the
 harness.
 
-So the ordering is worth stating plainly: **the mechanic earns its correctness in
-production before any diagnostic consumer inherits it.** A perturbation over a replay
-is not a new capability the framework has to grow. It is an existing one pointed
-somewhere else.
+So the ordering is worth stating plainly: **the mechanic is meant to earn its
+correctness on the production side before any diagnostic consumer inherits it.** A
+perturbation over a replay is not a new capability the framework has to grow. It is a
+chartered one pointed somewhere else. **That ordering is a plan and not yet a record**:
+the splice amendment has not landed, so nothing has earned anything yet.
 
 ## What is not settled
 

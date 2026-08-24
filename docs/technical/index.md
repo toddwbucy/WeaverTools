@@ -61,9 +61,12 @@ A crate that governs a domain and holds a two-initiator channel with the harness
 - [weaver-internal](weaver-agents/weaver-internal.md) - callables the loop dispatches
   inward, and never through the gate
 
-## The surfaces an operator writes against
+## The surfaces written against
 
-Where judgment enters the program rather than travels through it.
+Where judgment enters the program rather than travels through it. **The loop is
+written per turn and takes effect on the next crossing. Extending the floor is a
+build-time change** and is grouped here because both are places a person decides
+something rather than places the framework does.
 
 - [The loop](weaver-agents/loop.md) - loop 0 and loop 1, the seat's eight calls, the one
   crossing, and everything the framework refuses to decide
