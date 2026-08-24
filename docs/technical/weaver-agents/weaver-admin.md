@@ -105,8 +105,9 @@ outlives every invocation. All three are on
 6. **Dial the channel, direct enter, receive the aggregate.** The directive
    carries the session identity, the run reference minted for this load, the
    binding's kind, the trace descriptor, the model binding, and - where the
-   kind declares one - the gate instruction. The engine fans it out, and the transition publishes only
-   after every component the binding declares has confirmed. A refusal names
+   kind declares one - the gate instruction. The engine fans it out, and the
+   transition publishes only after every component the binding declares has
+   confirmed. A refusal names
    where the fan-out stopped, so rollback undoes what admin's own acts built
    without asking a second question.
 
