@@ -52,7 +52,8 @@ occurs: the run brackets and the session close, the turn brackets, the four
 conversation messages, the tool brackets, the decode boundary with its
 measurement, the classify pair, the context edits - flush and elision, each
 carrying the resident counts either side - the fault, the refusal, and the
-per-position field when its election stands. Adding a kind is a document edit, because consumers key on the closure.
+per-position field when its election stands. Adding a kind is a document edit,
+because consumers key on the closure.
 Four payload shapes - the conversation messages - are deliberately opaque here:
 this crate records their octets and never decodes them, because the engine is
 the only party that reads a message as a message.
