@@ -13,6 +13,29 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-24, the binding declares its kind. Section 6 read its
+lifecycle rules against a fixed set of components, under which a load that
+never starts Gate never confirms Gate's transition and so never succeeds. The
+only lawful replay was then one against a full serving load, an agent under
+replay holding a live work ingress that nothing should dial, safety by
+abstinence where the document's own ground is declaration. The rules now
+measure a load against the components its binding declared, which is section
+8's claim-relative
+completeness applied to the lifecycle rather than a new device. Two kinds are
+named, serving and diagnostic, declared at the load and never entered
+afterward. **The work-ingress rule is untouched and the question it raises is
+named as owed**, because what a replay presents in place of work belongs to the
+act that draws that seam. The list's heading loses the word binding, which had
+meant obligatory one line above a new noun spelling the same letters. **The
+ruling lands in part on purpose and three documents are owed**, per the
+operator's ordering of this date: `weaver-admin-harness-contract` carries the
+declaration across the enter, because admin holds no channel to Gate and what
+does not cross that seam crosses nowhere, and `weaver-admin-Spec` and
+`weaver-harness-Spec` carry the assertion records that reading and honoring
+the kind conform to. Until those acts land, no load can declare a kind and
+every load is a serving load, so the documents describing the serving
+sequence remain correct about every load that can exist.
+
 **Revised:** 2026-08-17, the custody rule is stated once. Section 5.2 carries
 what the set followed in one place and contradicted in another: an organ
 renders the content of the events it causes, the harness authors the event,
@@ -676,12 +699,43 @@ cannot be a socket peer that confirms anything. It is the mechanism the harness
 records through, during the load and for the whole of the agent's residency
 thereafter.
 
-Binding rules:
+**An agent stands up under a binding, and the binding declares its kind.** The
+same weights serve more than one purpose, and which components a load brings up
+follows from the purpose rather than from the weights. A **serving** binding
+stands up the whole interior and takes work from outside. A **diagnostic**
+binding stands up the interior without Gate, for the replay of section 8, where
+a driver outside the agent drives the SPU over a record the operator holds. The
+kind is declared at the load and never entered afterward. Nothing puts a loaded
+agent into a kind, no verb moves between kinds, and an agent that is to serve
+and an agent that is to be replayed are two loads rather than two states of
+one. What that buys is that the wrong arrangement is unrepresentable rather
+than guarded against, there being no transition for a guard to sit on.
 
-- A lifecycle call succeeds only after every component transition is confirmed.
-- A partial load is never published as loaded.
-- Load starts Gate last. Unload stops Gate first. A Gate process never outlives
-  the worker interior it protects.
+**The rules below measure a load against the components its binding declared.**
+Measured against a fixed set they say a diagnostic binding cannot complete: a
+load that never starts Gate never confirms Gate's transition and so never
+succeeds. Section 8 places the replay driver outside the agent and does not
+say whether the agent under replay carries a live Gate, so the fixed reading
+does not contradict a promise so much as force the worse arrangement, a
+replaying agent holding an open work ingress nothing should dial. An ingress
+whose safety rests on nobody dialing it is a guard, and this section's own
+ground for the kinds is that a guard is what the declaration exists to
+replace. **The scoping is section 8's own move rather
+than a new one.** Completeness there is claim-relative, a record owing what its
+claimed arrangement requires and nothing beyond, and a load owes the components
+its binding declared on the same reasoning. What the rules protect is
+unchanged, that a published agent is whole, and whole is read against the
+declaration rather than against a list that assumed one purpose.
+
+Lifecycle rules:
+
+- A lifecycle call succeeds only after every component transition the binding
+  declares is confirmed.
+- A partial load is never published as loaded, partial being measured against
+  the components the binding declared.
+- A serving binding starts Gate last and stops Gate first, and a Gate process
+  never outlives the worker interior it protects. A diagnostic binding declares
+  no Gate, so it holds no such process and the ordering has nothing to order.
 - No lifecycle verb auto-chains another.
 - A GPU conflict is rejected at model admission, by the SPU, until the operator
   explicitly unloads the occupant. Admission refuses and never evicts, so no load,
@@ -691,6 +745,14 @@ Binding rules:
   Gate.
 - Activity stop, cancellation, or interruption returns the agent to
   loaded-and-idle. It does not unload the agent.
+
+**What a diagnostic binding takes in place of work is not settled here.** The
+work-ingress rule above is untouched and stands as written. A replay does
+present prompts, and whether they cross a seam of their own or arrive as
+material declared at the load is a contract question belonging to the act that
+draws that seam, named here as owed rather than answered in passing. Narrowing
+the ingress rule to make room for a seam nobody has drawn would settle by
+wording what the drawing has to decide.
 
 The lifecycle is the system's largest behavioral contract - four parties over
 three sockets - and it is filed at this level rather than under any one crate,
@@ -772,6 +834,12 @@ Custody places the replay driver outside the agent. The agent must not own or
 even read its own trace, so a tool that reads the operator-held stream and drives
 the SPU runs as an operator principal, over the operator's own storage. This is
 structural, not policy.
+
+**The load that carries this arrangement is the diagnostic binding of section
+6.** This section places the driver outside the agent and leaves the agent's
+own shape to the lifecycle, and the diagnostic binding is that shape: no Gate
+stands, so the record the driver feeds is the only source of prompts, by
+construction rather than by nobody dialing a live ingress.
 
 ## 9. Out of scope, and how it returns
 
