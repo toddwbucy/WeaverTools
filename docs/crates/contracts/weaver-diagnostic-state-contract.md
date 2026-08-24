@@ -2,6 +2,12 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-24, the seal ends the preload. Section 2 gains the
+seal, one empty frame after the last distillate, because a close looks the
+same from a finished sender and a dying one and the replay ask of
+`weaver-harness-state-contract` answers at the seal, which must not happen
+over a prefix that looks whole. Section 5's dead-driver clause names the
+prefix unsealed. Landed with the replay loop's act, every party merging.
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-diagnostic-state-contract`
 **Editorial:** Per the Working Rules.
@@ -111,8 +117,14 @@ sequence order, and is owed nothing back: the fact has one home and a
 confirmation whose one reader would discard it is the retired receipt's
 error, the same on this door as on the first.
 
-**The channel's close ends the preload.** One standing, one preload, and the
-driver owes at most one per standing of the member.
+**The seal ends the preload, and the close alone does not.** After the last
+distillate the driver sends the seal, one frame carrying nothing, and then
+closes. A close without the seal is a dead driver, per section 5, and the
+distinction is the whole of the seal's job: a channel's close looks the same
+from a finished sender and a dying one, and the party waiting on the
+preload, the replay ask of `weaver-harness-state-contract` section 2, must
+not answer over a prefix that looks whole. One standing, one preload, one
+seal, and the driver owes at most one preload per standing of the member.
 
 **The opener retires the declared session's prior holdings, in the same
 transaction that records it.** A preload therefore lands against empty and
@@ -171,7 +183,9 @@ direction still has exactly the two ends it had.
 
 **A dead driver costs the preload and never the holdings.** A distillate
 lands whole or not at all, per `weaver-state-Spec` section 4's transaction,
-so a driver dying mid-stream leaves a clean prefix and no corruption. The
+so a driver dying mid-stream leaves a clean prefix and no corruption, and
+the prefix is unsealed, so nothing downstream mistakes it for a whole
+preload. The
 recovery is the next preload's opener, which retires the prefix with
 everything else the session held, per section 2, so no cleanup act exists
 between the death and the retry and none is needed. What became of the
