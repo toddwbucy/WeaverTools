@@ -147,13 +147,30 @@ down, not in what is built.
   system node. Document Format section 3 requires them to name the same thing and
   makes the header the defect. It closes when the domain level lands in the graph,
   which is the same act as the entry below rather than a second one.
-- **Two settled rulings are unhoused, in different ways.** The loop taxonomy of
-  2026-08-23 is recorded, at `sketch-the-loop-taxonomy`, but as a sketch that decides
-  nothing rather than in a document that governs. **The two use cases are not recorded
-  at all.** Both are architecture rather than proposals, and where each lands is the
-  same question as the entry below: a domain ruling belongs in `weaver-agents-PRD` and
-  a statement of what the program is for belongs at a suite level that has no
-  document.
+- **Two settled rulings are unhoused, both now recorded and neither governing.** The
+  loop taxonomy of 2026-08-23 is at `sketch-the-loop-taxonomy` and the two use cases
+  are at `sketch-the-two-use-cases`, filed 2026-08-24. Both are sketches that decide
+  nothing rather than documents that govern, so recording them narrowed the entry
+  without closing it. Both are architecture rather than proposals, and where each
+  lands is the same question as the entry below: a domain ruling belongs in
+  `weaver-agents-PRD` and a statement of what the program is for belongs at a suite
+  level that has no document. **What closes this is the promotion rather than a third
+  sketch.**
+- **G2's transport silence has no stated scope, and the first case it meets is one it
+  gets wrong.** The rule says a contract naming a path, a descriptor, a socket type, or
+  a flag has taken a Spec's material. `weaver-admin-systemd-contract` names a Unix
+  socket's pathname at section 118, and that sentence is doing the contract's own work:
+  it is why the runtime directory is asked for, because a pathname outliving its binder
+  is the failure the ask prevents. **Substrate is substitutable at a seam between our
+  own organs and it is the counterparty at an external boundary**, and the three
+  external contracts - systemd, operator, world - are the second kind. The rule was
+  written for the first kind and does not say so. **This is left for the operator
+  rather than carved out here**, because narrowing a gate's reach is a ruling and
+  because over-applying this same ruling to the PRDs was already the week's mistake.
+  A second, separable residue: the word socket survives widely in the seam contracts,
+  some of it the rule working - `weaver-organ-channel` defers which socket type to the
+  Spec while contracting the obligation - and some of it plain substrate the sweep
+  missed.
 - **The suite has no apex, deliberately, per the operator's ruling of 2026-08-24.**
   It is not an omission at this stage. **The architectural pattern is worth a rough
   draft PRD and the scope's details are not**, because those details are still moving
