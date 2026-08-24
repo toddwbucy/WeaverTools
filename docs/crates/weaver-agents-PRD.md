@@ -13,7 +13,17 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
-**Revised:** 2026-08-24, the binding declares its kind. Section 6 read its
+**Revised:** 2026-08-24, second of this date, the diagnostic consumer charters.
+Section 0's boundary sentence read that outside crates reach an agent only
+across the two external contracts of 2026-08-01, which the preload seam of
+the operator's ruling of this date would violate as written. The sentence now
+scopes by kind: the serving boundary is unmoved, and a diagnostic binding
+adds the one ruled seam, on the state member, against the operator principal.
+`weaver-diagnostic-PRD` is the chartering act and the seam papers are owed
+behind it.
+
+**Revised:** 2026-08-24, first of this date, the binding declares its kind.
+Section 6 read its
 lifecycle rules against a fixed set of components, under which a load that
 never starts Gate never confirms Gate's transition and so never succeeds. The
 only lawful replay was then one against a full serving load, an agent under
@@ -120,9 +130,14 @@ chartered 2026-08-18 and both are ratified on their own, per the per-charter rul
 2026-08-23. The enumeration lagged them and this closes that lag.
 
 **Crates outside the agent boundary do not enter this roster and do not refine this
-document.** They parent to the suite and reach an agent only across the two external
-contracts of 2026-08-01. What governs them at the suite level is not yet written, and
-naming that gap is more honest than widening this document to cover it.
+document.** They parent to the suite. A serving binding is reached only across the two
+external contracts of 2026-08-01, and that boundary does not move. A diagnostic
+binding adds one seam, the preload of `weaver-diagnostic-state-contract`, per the
+operator's ruling of 2026-08-24: the ruled seam reaches the state member alone,
+checked against the operator principal, and exists only where the load declared the
+diagnostic kind, so the serving membrane is exactly what it was. What governs outside
+crates at the suite level is not yet written, and naming that gap is more honest than
+widening this document to cover it.
 
 ```graph
 node: WeaverTools
