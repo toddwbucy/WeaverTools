@@ -41,11 +41,14 @@ could not open.
 
 **Loop 0, the running agent service.** The thing that boots under its unit,
 comes up as the provisioned identity, binds the coordination socket inside its
-own sandbox, creates the unnamed pairs its organs are reached over, and sits
-there being one sealed agent. It binds exactly one name: the coordination
-socket is dialable by construction and the credential check is what refuses.
-Nothing else is dialable - the organ pairs have no names, and possession is
-their authentication.
+own sandbox, and sits there being one sealed agent. The organ pairs are
+created during the enter fan-out, in the order the binding declares - the
+decoder's residency confirms before the gate exists at all, and Gate stands
+last. **One inbound listener, and one other name.** The coordination socket is
+the harness's one listener, dialable by construction with the credential check
+refusing. The state seam rides a second named socket, stood at load and
+credential-checked the same way. The organ pairs have no names at all, and
+possession is their authentication.
 
 **The machinery loop 1 composes against.** The seat, granted on work that
 arrives owed an answer and on nothing else. A turn begins at the gate and
@@ -64,10 +67,13 @@ the decode seam in the family library, and the rendered reality returns on the
 report path, so the harness authors what the model saw without having rendered
 it. No model is a build or run dependency of this crate.
 
-**The model's view of the record.** The harness reasons over the whole working
-structure and renders into a prompt only the message sequence. Measurement
-events, lifecycle events, and custody records never enter a prompt - trace
-content reaches the model as ordinary conversation and in no other form.
+**The model's view of the record.** What reaches the model is the assembly
+floor above, whole: the identity prefix, the message sequence, the tool
+schemas. What is scoped is the record's part - the harness reasons over the
+whole working structure and renders from it only the message sequence.
+Measurement events, lifecycle events, and custody records never enter a
+prompt, so trace content reaches the model as ordinary conversation and in no
+other form.
 
 **The flush and the elision.** It decides when the decode context returns to
 its prefix and names the span an elision removes - which part of a context is
@@ -119,9 +125,11 @@ session - the identity prefix is rendered once per session and held resident,
 each turn appends only its delta. The alternative is resending the full
 history every turn, and the prior program measured one exploration turn
 climbing from 5,988 to 24,932 prompt tokens on that path. The generation
-returns with its measurement, the harness authors the boundary events, and a
-tool call crosses toward the gate as a new direction on the boundary seam -
-the tool is the gate's peer, not this crate's.
+returns with its measurement and the harness authors the boundary events.
+When the tool workflow lands its exchange, a tool call will cross toward the
+gate as a new direction on the boundary seam - the tool the gate's peer, not
+this crate's - and until then that direction is chartered, not running, per
+the last section.
 
 **The lifecycle fan-out.** Admin holds one seam and no channel to any organ,
 so the harness fans the enter and leave directives out along its own seams,
