@@ -111,11 +111,16 @@ thread spawned, no process forked, no socket dialed, anywhere in the crate.
 
 ## What is not built
 
-- **The calling surface.** Two surfaces are named - direct call for a pure
-  member, a socket handoff for a promoted one that holds state or risk - and
-  which the calculator takes is settled when its first caller lands, because
-  a surface elected before its caller exists is a reserved slot. Until that
-  act the interim minimum stands: one public pure function per member.
+- **The calling surface.** Two shapes are named and neither is elected. A
+  pure member is reachable by direct call. A promoted member that holds
+  state or risk would be reached across a socket standing outside this
+  crate - the mounting arrangement's, on the caller's side of the library
+  boundary - so its faults land on a seam rather than inside the caller.
+  Nothing here binds or depends on any of that: this crate stays the pure
+  library either way, and which shape the calculator takes is settled when
+  its first caller lands, because a surface elected before its caller
+  exists is a reserved slot. Until that act the interim minimum stands: one
+  public pure function per member.
 - **The autonomic wiring.** A three-gate ladder governs it - the signal
   exists, the signal is actionable, and the autonomic path beats the
   deliberate loop head to head - and the ladder gates the wiring, not the
