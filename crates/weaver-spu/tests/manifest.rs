@@ -177,8 +177,22 @@ fn targets_on_disk() -> BTreeSet<String> {
 #[test]
 fn every_target_appears_in_the_documented_table() {
     let on_disk = targets_on_disk();
-    let documented: BTreeSet<String> =
-        TABLE.iter().map(|(name, _, _)| name.to_string()).collect();
+    let rows: Vec<String> = TABLE.iter().map(|(name, _, _)| name.to_string()).collect();
+    let documented: BTreeSet<String> = rows.iter().cloned().collect();
+    // **One row per target, checked before the set swallows the evidence.**
+    // The comparisons below are over sets, and a set collapses a repeated row
+    // rather than reporting it. A duplicate naming the same gate and fixtures
+    // would pass every assertion here silently, and one naming different ones
+    // would fail further down against the source file, blaming the target for
+    // a defect in the table.
+    assert_eq!(
+        rows.len(),
+        documented.len(),
+        "weaver-spu-Spec section 1.2 carries {} rows naming {} targets, so a \
+         target is listed twice",
+        rows.len(),
+        documented.len()
+    );
     let undocumented: Vec<&String> = on_disk.difference(&documented).collect();
     assert!(
         undocumented.is_empty(),
