@@ -63,7 +63,10 @@ other door.
 operator's.** The instruction declares the access rule - the operator's
 election - and the engine supplies the endpoint in the raise directive, this
 crate binding it: a path inside the unit's runtime directory, which the
-service manager creates at start and destroys with the unit. Each party
+service manager creates before the unit's first instruction runs - so the
+directory exists before anything can bind in it - and destroys with the
+unit's contents at stop, measured against a live manager rather than
+assumed. Each party
 names what only it can know. A socket pathname outlives the process that
 bound it, so a name chosen anywhere else survives its worker and refuses the
 next load with a stale file. Placing it where nothing can outlive the unit
