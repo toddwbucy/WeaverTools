@@ -2,7 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-08-24, the preload door takes its mechanics. Section 4
+**Revised:** 2026-08-24, second of this date, the seal parks the replay
+ask. Section 4 gains the seal as a per-standing fact and the `replay` ask's
+mechanics: parked while a preload is open, answered at the seal against the
+sealed holdings, immediate otherwise, the query the recall's generalized
+past the four message kinds. One perturbation assertion lands.
+**Revised:** 2026-08-24, first of this date, the preload door takes its
+mechanics. Section 4
 gains the second door of `weaver-diagnostic-state-contract`: one landing
 path for both doors, which is the indistinguishability claim made
 structural, a kind-conditioned standing, and an inverted credential
@@ -275,6 +281,28 @@ name reaches the member follows section 2's pattern and is elected in the
 code act that opens the door. The credential judgment inverts the first
 door's: the accept on the preload name refuses a peer bearing the agent's
 uid before any byte is read, and admits the operator principal.
+
+**The seal is a per-standing fact and the replay ask reads it.** The member
+holds, for the channel's life, whether the preload door's stream sealed,
+per that contract's section 2, and a `replay` ask arriving while a preload
+is open parks until the seal lands, answered then against the sealed
+holdings in one frame stream like any answer. The parking is the serve
+loop's and blocks nothing else: distillates land and the other asks answer
+while a replay ask waits, one parked ask per channel sufficing because the
+asker is the one loop. A replay ask with no open preload answers
+immediately, the query being the recall's generalized past the four
+message kinds: every event row of the declared session with its field
+pairs, ordered by the `id` column, served as the distillate's own shape.
+
+```graph
+node: state-replay-answers-at-the-seal
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-state
+to: state-replay-answers-at-the-seal
+```
 
 ```graph
 node: state-preload-door-stands-only-diagnostic

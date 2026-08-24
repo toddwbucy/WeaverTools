@@ -4,6 +4,11 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-24, third of this date, the seat carries the replay
+port. Section 6 grows the port for the replay ask of
+`weaver-harness-state-contract` section 2, the front-door pattern the shape
+port set, with the bound the loop's own because this ask lawfully parks at
+an open preload until the seal.
 **Revised:** 2026-08-24, second of this date, the no-clauses name the gate.
 Section 3's diagnostic sentence read "no pair created, no binary forked",
 which out of its sentence's context covered the classify fork, a reading a
@@ -1842,6 +1847,18 @@ serving thread itself: the tee's feed and the seat's ask both run on it, so
 no ask can interleave a distillate's octets, and the member's answers are
 the only traffic that ever flows toward this crate, so whatever the wait
 reads is the answer or is malformed, with no third case to disambiguate.
+
+**The seat carries the replay port, 2026-08-24, through the same front
+door.** The diagnostic replay loop needed the session's elected events
+whole, and the capability enters as this clause beside
+`weaver-harness-state-contract`'s replay ask, landing in one act. `Ports`
+grows one call, the replay ask of that contract's section 2, returning the
+session's elected events in landing order as the member answered them, or
+nothing where the leg is down, the answer malformed, or the bound expired,
+the same dead-peer conversion the shape port performs. The bound is the
+loop's to pass, because the replay ask is the one whose answer lawfully
+waits, parked at an open preload until the seal, and only the asking loop
+knows how long a preload is worth waiting on.
 
 **The seat carries the classify port, 2026-08-19, through the same front
 door, with the classifier code act's opening.** `Ports` grows one call:

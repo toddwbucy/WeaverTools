@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-24, the replay ask joins the vocabulary. The ask set
+gains `replay` by section 7's own door, elected against the diagnostic
+replay loop's real need per the loop act of this date: the session's
+elected events whole, in landing order, and answered at the seal where the
+preload door's stream is open, so the loop never walks a prefix that looks
+whole. Section 2 shapes it, section 8 gains its conformance, and every
+party merges in the act.
 **Revised:** 2026-08-20, the opener names its session. The `election`
 term gains the session the load declared, so the custodian can bound its
 answers to it. The ground is `weaver-state-PRD` section 4's within-a-session
@@ -176,8 +183,8 @@ them, so an ask cannot reach across the boundary `weaver-state-PRD` section
 becomes of an earlier session's rows on disk is deliberately not settled
 here, per the same ruling, and stands as its own question.
 
-**The ask vocabulary is closed and enumerated here, and it holds two
-names: `shape` and `recall`.** The shape ask carries no members, one
+**The ask vocabulary is closed and enumerated here, and it holds three
+names: `shape`, `recall`, and `replay`.** The shape ask carries no members, one
 member instance holding
 one session, and asks for the session's shape - what happened, in what
 order, in which run, which is the phrase the charter uses for what the
@@ -199,7 +206,29 @@ whole and its elected pairs beside it - the distillate's own shape served
 back - so what returns is exactly what the election kept, no more
 recallable than it was distillable. Selection bounds and ordering are
 custody's organizing licence, and every judgment about what to keep,
-summarize, or drop in the rebuilt context is the loop's. A further ask
+summarize, or drop in the rebuilt context is the loop's.
+
+**The `replay` ask returns the session's elected events whole, in landing
+order**, added 2026-08-24 against the diagnostic replay loop's need: the
+loop walks a preloaded session positionally, and the four message kinds the
+recall serves are less than a replay reads, the rendered contributions and
+the recorded measurements being the point. The ask carries no members and
+the answer serves every held event of the declared session as the
+distillate's own shape, envelope and pairs, in landing order, no more
+replayable than it was distillable.
+
+**A replay ask on a session with an open preload answers at the seal.**
+The preload door of `weaver-diagnostic-state-contract` seals its stream,
+and an ask arriving while that door's preload is open is answered when the
+seal lands, against the sealed holdings, rather than immediately against a
+prefix. This is the one ask whose answer may wait, the waiting is not the
+custodian initiating, one answer still following one ask, and the asker's
+patience is its own, per section 3's bounded-wait rule: an answer the bound
+outlives is the same missing answer it always was. On a session with no
+open preload the replay ask answers immediately, against the holdings the
+stream carried before it, like its two siblings.
+
+A further ask
 name is a change under section 7 and does not exist until it merges
 there.
 
@@ -284,6 +313,12 @@ real election, real events crossing, and the holdings queried for exactly
 what the election named, attributable by envelope. The dead-peer clause is
 testable by killing the member mid-run and watching the turn path not
 notice. Both land with the code act that opens the seam.
+
+The replay ask is testable against the living pair under a diagnostic load:
+a preload landed and sealed, the ask answered with every elected event in
+landing order, and the same ask against an open unsealed preload observed
+waiting rather than answering over the prefix, which is the perturbation
+its assertion in `weaver-state-Spec` section 4 watches.
 
 The serve direction is testable against the living pair: a real load, real
 events landed, and the shape ask answered with exactly the runs and counts
