@@ -96,8 +96,15 @@ pub enum ReadoutRefusal {
 /// per-layer tensor without changing the type.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Reduction {
-    /// One figure per layer observed, in layer order.
+    /// One figure per layer observed, in layer order, across every forward
+    /// folded.
     per_layer_norm: Vec<f32>,
+    /// Layers per forward, established by the first forward folded.
+    ///
+    /// **Zero until something is folded**, because a reduction holding
+    /// nothing has no shape to report and reporting one would be an
+    /// assertion about a tap that never ran.
+    layers: usize,
 }
 
 impl Reduction {
@@ -108,21 +115,111 @@ impl Reduction {
     /// Fold one layer in, keeping the figure and dropping the activations.
     ///
     /// The caller's slice is borrowed and not retained, which is what "in
-    /// place" means here: this function is the only way into the reduction and
-    /// it keeps a scalar per layer.
-    pub fn fold(&mut self, activations: &[f32]) {
+    /// place" means here: it keeps a scalar per layer.
+    ///
+    /// **This declares no forward boundary**, so a reduction built only from
+    /// per-layer folds reports no layer count and no forward count. That is
+    /// the staging shape the GGUF tap uses while a forward is in flight, and
+    /// the completed forward reaches the reduction that answers through
+    /// [`Reduction::fold_forward`].
+    pub fn fold(&mut self, activations: &[f32]) -> Result<(), String> {
+        self.refuse_loose_after_a_forward()?;
         let sum_of_squares: f32 = activations.iter().map(|value| value * value).sum();
         self.per_layer_norm.push(sum_of_squares.sqrt());
+        Ok(())
     }
 
     /// Fold one layer whose norm was already taken on the device, which is
     /// the stronger reading of the in-place clause: the activations never
     /// leave the device at all and one scalar crosses.
-    pub fn fold_norm(&mut self, norm: f32) {
+    pub fn fold_norm(&mut self, norm: f32) -> Result<(), String> {
+        self.refuse_loose_after_a_forward()?;
         self.per_layer_norm.push(norm);
+        Ok(())
     }
 
+    /// **A reduction is a staging buffer or an accumulator, never both.**
+    ///
+    /// Loose folds build one forward's figures with no boundary between
+    /// them, which is the staging shape. `fold_forward` accumulates whole
+    /// forwards and records where each ended. Mixing them breaks the one
+    /// property section 6 asks the counts to have, in either order: a loose
+    /// figure after a forward grows the total without growing the forward
+    /// count, and a forward after loose figures leaves those figures inside
+    /// no forward at all. Both leave `layers` times `forwards` no longer
+    /// equal to `figures`, silently.
+    fn refuse_loose_after_a_forward(&self) -> Result<(), String> {
+        if self.layers == 0 {
+            return Ok(());
+        }
+        Err(format!(
+            "a loose figure cannot join a reduction that has folded {} forward(s) \
+             of {} layers, since the counts would then describe neither",
+            self.forwards(),
+            self.layers
+        ))
+    }
+
+    /// One forward's figures, in layer order, and the layer count with them.
+    ///
+    /// **The boundary is declared rather than inferred.** A flat run of
+    /// figures cannot say where one forward ended and the next began, and
+    /// that is the whole of the defect this closes: a reader was left
+    /// dividing by the token count plus one, an arithmetic that holds only
+    /// while every forward taps every layer.
+    ///
+    /// A forward whose layer count differs from the first is a defect in the
+    /// tap rather than a reading, so it is refused here rather than folded
+    /// into a shape the counts would then misdescribe.
+    pub fn fold_forward(&mut self, norms: &[f32]) -> Result<(), String> {
+        if norms.is_empty() {
+            return Err("a forward folded no layer at all".into());
+        }
+        // The other order: loose figures already staged here belong to no
+        // forward, and declaring one now would leave them outside every
+        // count.
+        if self.layers == 0 && !self.per_layer_norm.is_empty() {
+            return Err(format!(
+                "a forward cannot be declared over {} loose figures already \
+                 folded, which would belong to no forward",
+                self.per_layer_norm.len()
+            ));
+        }
+        if self.layers == 0 {
+            self.layers = norms.len();
+        } else if self.layers != norms.len() {
+            return Err(format!(
+                "a forward folded {} layers where the first folded {}",
+                norms.len(),
+                self.layers
+            ));
+        }
+        self.per_layer_norm.extend_from_slice(norms);
+        Ok(())
+    }
+
+    /// Layers per forward, and zero where nothing has been folded.
     pub fn layers(&self) -> usize {
+        self.layers
+    }
+
+    /// How many forwards were folded.
+    ///
+    /// Derived rather than counted, since the product of the two counts is
+    /// the array's length by construction and a third field would be a
+    /// second source for one fact.
+    pub fn forwards(&self) -> usize {
+        self.per_layer_norm.len().checked_div(self.layers).unwrap_or(0)
+    }
+
+    /// Every figure, across every forward.
+    ///
+    /// **Named for what it returns.** This was `layers` until 2026-08-24,
+    /// which was true only where exactly one forward had been folded, and
+    /// every caller happened to be in that case. A name true under a
+    /// condition nobody states is the shape of defect the perturbation
+    /// obligation exists to catch.
+    pub fn figures(&self) -> usize {
         self.per_layer_norm.len()
     }
 
@@ -281,16 +378,127 @@ mod tests {
         assert_eq!(judge(ReadoutElection(false), &UNTAPPABLE), Ok(()));
     }
 
+    /// **A forward folding a different layer count than the first is
+    /// refused**, per Spec section 6.
+    ///
+    /// This is the condition the counts exist to survive. Layer election is
+    /// named as an economy the readout may take, and the day it lands a tap
+    /// could fold four layers on one forward and forty on the next. Folded
+    /// flat, the two counts would then describe neither, and a reader
+    /// dividing by the token count would get a number that is wrong without
+    /// being detectably wrong.
+    ///
+    /// **No device produces this today**, which is why it is pinned here
+    /// rather than against a tap: on every artifact this workshop holds,
+    /// every forward taps every layer, so removing the engine's own short
+    /// forward guard changes nothing observable. A property whose violation
+    /// no fixture can produce is one a unit test has to hold.
+    #[test]
+    fn a_ragged_forward_is_refused_rather_than_folded_flat() {
+        let mut reduction = Reduction::new();
+        reduction
+            .fold_forward(&[1.0, 2.0, 3.0])
+            .expect("the first forward establishes the shape");
+        assert_eq!(reduction.layers(), 3);
+        assert_eq!(reduction.forwards(), 1);
+
+        let refused = reduction
+            .fold_forward(&[1.0, 2.0])
+            .expect_err("a shorter forward is refused");
+        assert!(
+            refused.contains("2 layers") && refused.contains("first folded 3"),
+            "the refusal names both counts: {refused}"
+        );
+
+        // **And the refusal leaves the reduction describable.** A forward
+        // half folded would give counts whose product is not the figure
+        // count, which is the state the whole clause exists to prevent.
+        assert_eq!(reduction.figures(), 3, "nothing of the ragged forward landed");
+        assert_eq!(
+            reduction.layers() * reduction.forwards(),
+            reduction.figures(),
+            "the counts still describe the figures"
+        );
+
+        // An empty forward is not a forward.
+        assert!(
+            Reduction::new().fold_forward(&[]).is_err(),
+            "a forward folding no layer is refused"
+        );
+    }
+
+    /// **Loose figures and folded forwards do not mix, in either order.**
+    ///
+    /// A reduction is a staging buffer, where loose folds build one forward's
+    /// figures with no boundary between them, or an accumulator, where whole
+    /// forwards arrive and each records where it ended. Mixing them breaks
+    /// the property section 6 asks the counts to have, and breaks it
+    /// silently: nothing errors and the figures still look like figures.
+    ///
+    /// **Reachable by no caller today**, which is why it is refused rather
+    /// than left to discipline. The GGUF tap stages loose and accumulates
+    /// forwards on two different reductions, and the native path folds only
+    /// forwards. A type whose misuse is currently impossible is one whose
+    /// misuse arrives with the next tap.
+    #[test]
+    fn a_reduction_is_a_staging_buffer_or_an_accumulator_and_not_both() {
+        // Forward first, then a loose figure: the total grows and the
+        // forward count does not.
+        let mut accumulating = Reduction::new();
+        accumulating
+            .fold_forward(&[1.0, 2.0, 3.0])
+            .expect("the first forward establishes the shape");
+        let refused = accumulating
+            .fold_norm(9.0)
+            .expect_err("a loose figure after a forward is refused");
+        assert!(
+            refused.contains("1 forward(s) of 3 layers"),
+            "the refusal names what the reduction already holds: {refused}"
+        );
+        assert!(
+            accumulating.fold(&[1.0, 1.0]).is_err(),
+            "and the activation form is refused on the same ground"
+        );
+        assert_eq!(
+            accumulating.layers() * accumulating.forwards(),
+            accumulating.figures(),
+            "the counts still describe the figures"
+        );
+
+        // Loose first, then a forward: those figures would belong to no
+        // forward at all.
+        let mut staged = Reduction::new();
+        staged.fold_norm(1.0).expect("a loose fold before any forward");
+        staged.fold_norm(2.0).expect("and another");
+        let refused = staged
+            .fold_forward(&[3.0, 4.0, 5.0])
+            .expect_err("a forward declared over loose figures is refused");
+        assert!(
+            refused.contains("2 loose figures"),
+            "the refusal names what would be orphaned: {refused}"
+        );
+        assert_eq!(staged.figures(), 2, "and nothing of the forward landed");
+        assert_eq!(staged.layers(), 0, "the reduction is still a staging buffer");
+    }
+
     /// **The reduction keeps a figure per layer and never the layer.** What
     /// leaves is a function of the layer count, not the activation width.
     #[test]
     fn the_reduction_holds_a_figure_per_layer_rather_than_the_layers() {
         let mut reduction = Reduction::new();
         // Two layers, wildly different widths. What comes out is two numbers.
-        reduction.fold(&[3.0, 4.0]);
-        reduction.fold(&vec![1.0; 4096]);
+        reduction.fold(&[3.0, 4.0]).expect("a loose fold before any forward");
+        reduction
+            .fold(&vec![1.0; 4096])
+            .expect("and another");
 
-        assert_eq!(reduction.layers(), 2);
+        // **Figures, not layers.** This asserted `layers()` until
+        // 2026-08-24, when that method returned the figure count and the two
+        // coincided here. They no longer do: `fold` accumulates without
+        // declaring a forward, so the layer count is still unset.
+        assert_eq!(reduction.figures(), 2);
+        assert_eq!(reduction.layers(), 0, "no forward has been declared");
+        assert_eq!(reduction.forwards(), 0, "and so none is counted");
         assert_eq!(reduction.per_layer_norm().len(), 2);
         assert!((reduction.per_layer_norm()[0] - 5.0).abs() < 1e-5);
         assert!((reduction.per_layer_norm()[1] - 64.0).abs() < 1e-3);

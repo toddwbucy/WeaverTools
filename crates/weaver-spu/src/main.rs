@@ -398,9 +398,22 @@ fn render_measurement(
     // The residual reductions where the residency was admitted with readout
     // elected, per Spec sections 6 and 7: one norm per layer per forward
     // this generation ran, and absent rather than empty like every reading.
-    if let Some(norms) = &generated.residual_norms {
-        measurement["residual_norms"] =
-            serde_json::json!(norms.iter().map(|n| f64::from(*n)).collect::<Vec<f64>>());
+    // **The shape renders beside the figures**, per Spec section 6. A flat
+    // array left a reader recovering the layer count by dividing its length
+    // by the token count plus one, which no document stated and which holds
+    // only while every forward taps every layer. Both counts are rendered so
+    // a reader checks rather than assumes, and their product is the array's
+    // length by construction.
+    if let Some(reduction) = &generated.residual {
+        measurement["residual_norms"] = serde_json::json!(
+            reduction
+                .per_layer_norm()
+                .iter()
+                .map(|n| f64::from(*n))
+                .collect::<Vec<f64>>()
+        );
+        measurement["residual_layers"] = serde_json::json!(reduction.layers());
+        measurement["residual_forwards"] = serde_json::json!(reduction.forwards());
     }
     measurement.to_string()
 }
