@@ -4,7 +4,16 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-24, the kind takes its shape. The enter fan-out's extent
+**Revised:** 2026-08-24, second of this date, the no-clauses name the gate.
+Section 3's diagnostic sentence read "no pair created, no binary forked",
+which out of its sentence's context covered the classify fork, a reading a
+code review took within hours of the act merging. The clauses now say gate
+pair and gate binary, and the passage states what the kind excludes in its
+own words: Gate alone, the classify arm being interior and elected by the
+instruction rather than the kind.
+
+**Revised:** 2026-08-24, first of this date, the kind takes its shape. The
+enter fan-out's extent
 follows the match on `EnterBinding`: the serving case runs the whole walk and
 the diagnostic case ends it at the SPU's confirmation, forking no gate. The
 leave lowers the gate where one stands, the run state's arm answering, so the
@@ -1158,8 +1167,13 @@ section 6 as amended 2026-08-24.
 **On a diagnostic binding the gate step does not exist.** The match on
 `EnterBinding` is where the fan-out learns its extent: the serving case
 carries the gate instruction and the walk above is whole, and the diagnostic
-case ends the fan-out at the SPU's confirmation, no pair created, no binary
-forked, no raise opened. Ready aggregates over the steps the kind declared,
+case ends the fan-out at the SPU's confirmation, no gate pair created, no
+gate binary forked, no raise opened. The three no-clauses name the gate step
+and nothing wider: the classify arm is interior, elected by the instruction
+that carries it rather than by the kind, and stands on a diagnostic load
+exactly as it would on a serving one. The kind excludes Gate alone, per apex
+section 6, and a reviewer reading the no-clauses as covering every fork read
+them wider than they bind. Ready aggregates over the steps the kind declared,
 per the contract's section 3 as revised this date. The run state's gate arm
 stays empty for the whole residency, which is what keeps the leave and the
 unwind honest without a second rule: both lower what stands, reading the
