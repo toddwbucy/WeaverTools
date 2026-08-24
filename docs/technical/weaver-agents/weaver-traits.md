@@ -60,7 +60,10 @@ name the model calls, the schema the tool advertises, and an execute method taki
 the arguments exactly as the model spoke them. It is object-safe on purpose, because
 the engine dispatches tools it does not know the identity of, and its future is
 sendable because the floor does not get to bound which executor the composition
-root chooses.
+root chooses. This is the shape as chartered today, and it is the least settled
+definition on the floor: no dispatch reaches it yet, and the tool workflow that
+will supply its one consumer may still move it - the last section carries what is
+open.
 
 **The provider surface.** The abstraction that keeps the engine transport-agnostic:
 the engine issues decode requests without naming a wire format, and the concrete
@@ -77,10 +80,15 @@ where the rendering happens, not where the shape is defined.
 
 ## Seams
 
-**None.** This crate is party to no contract, because it performs nothing and so
-has nothing to agree to. It is named in contracts rather than signing them: every
-contract in the program carries a clause naming the vocabulary it draws from the
-floor, and this crate's governance runs entirely through those clauses. See
+**None owned, and that is a statement about seams rather than participation.**
+This crate holds no process, binds no socket, and signs no contract, because it
+performs nothing and so has nothing to agree to. Its definitions still cross
+other parties' seams constantly - a conversation message rides the decode wire
+and lands in trace payloads, in exactly the shape defined here - but they cross
+as the vocabulary of someone else's exchange, never as an obligation this crate
+carries. It is named in contracts rather than signing them: every contract in
+the program carries a clause naming the vocabulary it draws from the floor, and
+this crate's governance runs entirely through those clauses. See
 [the contracts page](../contracts.md) for the seams that draw it.
 
 ## How it works
