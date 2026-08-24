@@ -130,7 +130,10 @@ fn draw(
             64,
         )
         .expect("the generation runs");
-    (generated.tokens, generated.residual_norms)
+    (
+        generated.tokens,
+        generated.residual.map(|r| r.per_layer_norm().to_vec()),
+    )
 }
 
 /// A fresh residency and its binding. **Fresh per election**, because a

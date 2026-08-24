@@ -650,8 +650,10 @@ mod tests {
         assert_eq!(
             first.layers(),
             layers,
-            "one figure per layer of the model itself"
+            "the reduction names the model's own layer count"
         );
+        assert_eq!(first.forwards(), 1, "one decode, one forward");
+        assert_eq!(first.figures(), layers, "and one figure per layer of it");
         let norms = first.per_layer_norm();
         assert!(
             norms.iter().all(|norm| norm.is_finite() && *norm > 0.0),
@@ -666,7 +668,7 @@ mod tests {
         // reduction handed back holds that set alone, so a generation cannot
         // report figures belonging to the one before it.
         assert_eq!(
-            engine.take_reduction().expect("still elected").layers(),
+            engine.take_reduction().expect("still elected").figures(),
             0,
             "the drain left nothing behind"
         );
@@ -674,9 +676,28 @@ mod tests {
             .decode_at(&[TokenId(1879)], 3)
             .expect("a single token decodes");
         assert_eq!(
-            engine.take_reduction().expect("still elected").layers(),
+            engine.take_reduction().expect("still elected").figures(),
             layers,
-            "the second decode folds its own layers"
+            "the decode after the drain folds its own layers alone"
+        );
+
+        // **Two forwards into one reduction, which is where the old naming
+        // lied.** With a single forward the figure count and the layer count
+        // coincide, and every caller happened to be in that case. Draining
+        // only after both decodes separates them.
+        engine
+            .decode_at(&[TokenId(1879)], 4)
+            .expect("a token decodes");
+        engine
+            .decode_at(&[TokenId(1879)], 5)
+            .expect("and another, undrained between");
+        let both = engine.take_reduction().expect("still elected");
+        assert_eq!(both.layers(), layers, "the layer count is the model's");
+        assert_eq!(both.forwards(), 2, "two decodes, two forwards");
+        assert_eq!(
+            both.figures(),
+            layers * 2,
+            "and the product of the counts is the figure count"
         );
     }
 

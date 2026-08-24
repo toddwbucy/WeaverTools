@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-24, second of this date, the reduction renders its own
+shape. Section 6 has the measurement carry the layer count and the forward
+count beside the figures, because a flat array left a reader dividing by the
+token count plus one to recover the first, an arithmetic no document stated
+and which holds only while every forward taps every layer. Layer election
+would make it silently wrong and every earlier reading retrospectively
+ambiguous. Owed to #293 ahead of the diagnostic work.
+
 **Revised:** 2026-08-24, first of this date, the room refusal names the
 capacity. Section 5 has it carry the device's total beside what was free,
 because the two figures alone cannot separate a card too small from a card
@@ -1568,6 +1576,37 @@ would have obliged this crate to render a mean of nothing.
 per position and the terms are discarded as they are used, which is what
 makes the unelected posture a smaller computation rather than a withheld
 reading, per the charter's own line on where the election is honest.
+
+**The reduction renders its own shape.** The residual reductions cross as one
+number per layer per forward, in order, and the layer count and the forward
+count render beside them. The layer count is what the tap folded per forward
+and the forward count is how many times it did, so their product is the
+array's length and a reader checks rather than assumes.
+
+**The figures crossed alone until 2026-08-24, and the shape was arithmetic.**
+A reader recovered the layer count by dividing the array's length by the token
+count plus one, which no document stated and which held only while every
+forward tapped every layer.
+
+**That is why the counts are recorded rather than derivable.** Layer election
+is named as an economy the readout may take, and under the old form the day it
+landed the division would have returned a wrong layer count rather than an
+error, while every reading taken before that day became retrospectively
+ambiguous with nothing in any record marking which side of the change it fell
+on. A record whose decomposition depends on a fact outside it is a record that
+cannot be read alone, which is the property the trace exists to have. A future
+election that taps a subset now says so in the record it produces rather than
+in a document a reader must already have found.
+
+```graph
+node: spu-reduction-renders-its-shape
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-reduction-renders-its-shape
+```
 
 **Which readings turn on an election and which do not, and why absence is
 still one rule.** The surprisals and the residual reductions are produced

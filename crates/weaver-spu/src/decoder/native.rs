@@ -367,11 +367,20 @@ impl NativeEngine {
                     let (logits, intermediates) = model
                         .forward_with_intermediates(&input, self.resident.len())
                         .map_err(|error| Self::engine_fault(&format!("forward: {error}")))?;
+                    // **One forward, handed over as one**, so the reduction
+                    // records where it ended rather than leaving the boundary
+                    // to arithmetic over the token count.
+                    let mut forward = Vec::with_capacity(intermediates.len());
                     for layer in &intermediates {
-                        let norm = layer_norm_figure(layer)
-                            .map_err(|error| Self::engine_fault(&format!("tap: {error}")))?;
-                        self.reduction.fold_norm(norm);
+                        forward.push(
+                            layer_norm_figure(layer).map_err(|error| {
+                                Self::engine_fault(&format!("tap: {error}"))
+                            })?,
+                        );
                     }
+                    self.reduction.fold_forward(&forward).map_err(|detail| {
+                        Self::engine_fault(&format!("tap: {detail}"))
+                    })?;
                     logits
                 } else {
                     model
@@ -390,9 +399,9 @@ impl NativeEngine {
                     let mut folded = Vec::new();
                     let logits =
                         model.forward(&ids, self.resident.len(), Some(&mut folded))?;
-                    for norm in folded {
-                        self.reduction.fold_norm(norm);
-                    }
+                    self.reduction.fold_forward(&folded).map_err(|detail| {
+                        Self::engine_fault(&format!("tap: {detail}"))
+                    })?;
                     return Ok(logits);
                 } else {
                     None
