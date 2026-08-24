@@ -344,22 +344,27 @@ H1's mechanical bar is the Spec's own instruments: the doctests, compile pins, a
 perturbation tests land with the code they pin, with clippy and fmt as the floor.
 
 **The bar names instruments and owes the invocation that runs them.** That absence
-is the defect of #288 and is closed here. `cargo test --workspace` is **not** the
-suite. It compiles `weaver-spu` with `default = []`, which is no engine, so it runs
-none of the model-loading, decode, device, or family-selection tests. Measured
-2026-08-23: it reports 398 passing and does not run 51.
+is the defect of #288 and is closed here. `cargo test --workspace` was **not** the
+suite: it compiled `weaver-spu` with no engine, so it ran none of the
+model-loading, decode, device, or family-selection tests. Measured 2026-08-23 it
+reported 398 passing and did not run 51.
 
 The suite is two invocations and a machine is honest about which it can offer.
 
     the host suite     cargo test --workspace
-                       cargo test -p weaver-spu --features gguf
 
     the device suite   cargo test --workspace --all-features
 
-The host suite needs no card and runs everywhere the C++ toolchain builds
-llama.cpp. The device suite needs the pair and the fixtures, and it is the one whose
-green means the suite is green. **A merge states which it ran**, because a claim of
-green that does not say which suite is a claim about an unnamed subset.
+**The host suite is one command as of the gguf default**, and was two while
+that gate was off, the second reaching a family surface the first could not
+compile. `weaver-spu-Spec` section 1.1 argues the change: the gates' shared
+reason, that a build with neither keeps the family surface testable on a
+machine with no device, covered the device gate and never covered the other.
+The host suite needs no card
+and runs everywhere the C++ toolchain builds llama.cpp. The device suite needs
+the pair and the fixtures, and it is the one whose green means the suite is
+green. **A merge states which it ran**, because a claim of green that does not
+say which suite is a claim about an unnamed subset.
 
 **Coverage is not readable from any one manifest.** Cargo unifies features across a
 workspace, so a crate's tests may run because a different crate wanted the feature.
