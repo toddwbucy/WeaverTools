@@ -280,7 +280,8 @@ there.
 - **The answer, only when asked.** Exactly one answer per well-formed ask,
   in arrival order, each answered against the holdings the stream carried
   before its ask, and no other traffic ever. The one stated exception is
-  the parked replay ask of section 2, which later asks lawfully pass. A custodian that spoke
+  the parked replay ask of section 2, which later asks lawfully pass. A
+  custodian that spoke
   unasked would be initiating, which its charter forbids.
 
 ## 5. Failure vocabulary
