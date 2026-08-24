@@ -117,8 +117,9 @@ from this side.
 
 `weaver-organ-channel` states the mechanics. Four facts are this seam's.
 
-**The creating party is the harness and the pair is unnamed.** The harness creates a
-connected pair before it forks, and the child holds one end from its first instruction.
+**The creating party is the harness and the pair is unaddressable.** The harness
+creates the connected pair first and the child process second, **so the child holds
+its end from its first instruction** and the harness retains the counterpart.
 The harness creates because it is the party that exists first, which is the
 creating-party rule of `weaver-organ-channel` section 2 landing on this seam, and it is
 the ruled topology of 2026-07-31 rather than an assumption. This is apex section 5.1's
@@ -129,8 +130,10 @@ coordination seam above pays a cell for that question and this one does not.
 
 **Possession is the authentication, per `weaver-organ-channel` section 2, and one fact
 of it is this seam's.** A named socket admits any number of connections, and a dial
-from the agent uid proves nothing about which process dialed, an elected `bash` tool
-being one candidate. The unnamed pair removes the dial entirely, so the peer is the
+from the agent's own principal proves nothing about which process dialed, an elected
+`bash` tool
+being one candidate. The unaddressable pair removes the dial entirely, so the peer is
+the
 exact process the harness forked, because holding an end is the only way onto the
 channel.
 
@@ -139,28 +142,35 @@ reconnected, not reopened, and not shared with a second SPU. A harness that has 
 this channel has lost the residency, not a connection to it, and section 5 says what
 that means.
 
-**The fork carries this end and nothing else.** At the moment of the fork the
-harness holds the trace descriptor and its channel to admin, both close-on-exec under
+**The child carries this end and nothing else.** At the moment the child is created the
+harness holds the trace sink and its channel to admin, both withheld from children under
 the receiver rule of `weaver-organ-channel` section 2, bound on that seam by
 `weaver-admin-harness-contract` section 2 and `weaver-harness-PRD` section 5. That
 discipline is what keeps them out of the SPU's process, and this contract binds the
 harness to it here rather than leaving the reader to derive it: **the harness passes
-this seam's descriptor across the fork and no other, and every descriptor it holds on
-another party's behalf is close-on-exec at the moment it forks.** The obligation is the
+this seam's handle to the child it creates and no other, and every handle it holds on
+another party's behalf is withheld from its children at the moment it creates.** The
+obligation is the
 harness's because the harness is the only party that can meet it, in the same way
-close-on-exec at the receive is the harness's obligation on the seam above and not
-admin's. The SPU clears its own dumpable flag after its final exec, per `weaver-spu-PRD`
-section 7, which stops a same-uid process from attaching to it and driving this channel.
-The SPU also sets close-on-exec on its own end of this channel after that same final
-exec, and the step is a set rather than a check, per `weaver-organ-channel` section 2,
-so that no subprocess a later workflow spawns from the SPU inherits the seam. The
+establishing it at the receive is the harness's obligation on the seam above and not
+admin's. The SPU makes its own memory unreadable to processes sharing its principal
+after its
+final image replacement, per `weaver-spu-PRD` section 7, which stops one of them from
+attaching to it and driving this channel.
+The SPU also re-establishes the property on its own end of this channel after that same
+final
+image replacement, and the step is a set rather than a check, per `weaver-organ-channel`
+section 2,
+so that no child process a later workflow spawns from the SPU inherits the seam. The
 harness's own end of this channel carries the same flag from the moment the pair is
-created, before any fork rather than after one. The flag fires at exec, so the copy of
-that end the SPU fork carries closes at the SPU's own final exec, which is what keeps a
+created, before any child exists rather than after one. The property is established
+before any child, so the copy of
+that end the SPU's child carries closes at the SPU's own final image replacement, which
+is what keeps a
 second end of this seam out of the SPU's address space, per `weaver-spu-PRD` section
-7's rule that the crate receives the channel end and no other descriptor. And it is
+7's rule that the crate receives the channel end and no other handle. And it is
 what keeps this end out of every tool the harness elects for the life of the seam,
-since the harness forks a subprocess per tool call and a descriptor without the flag
+since the harness creates a child process per tool call and a handle without the flag
 survives every one of those forks, an inherited end there handing the tool surface a
 release directive on the residency seam.
 
@@ -209,7 +219,7 @@ so this exchange gains no power to move what a deployment locked.
 
 **No exchange carries a path.** The harness sends the instruction it was handed and
 the SPU resolves the binding inside it against what it can reach, and neither party
-learns a trace path or a record name from the other. This is the descriptor
+learns a trace path or a record name from the other. This is the handle
 discipline of `weaver-harness-PRD` section 5
 reaching a second seam.
 
@@ -253,10 +263,13 @@ the directive to release.
 it, unaltered and uninterpreted, because a harness that adjusted one would put a
 second reading of the agent's configuration between the operator's declaration and the
 device. It guarantees that it opens no exchange this document does not enumerate. It
-guarantees that it creates this seam's channel and passes its descriptor across the
-fork, and that every descriptor it holds on another party's behalf is close-on-exec at
+guarantees that it creates this seam's channel and passes its handle across the
+child it creates, and that every handle it holds on another party's behalf is withheld
+from children
+at
 that moment, per section 1. It guarantees that its own end of this channel is
-close-on-exec from the pair's creation, per section 1, so that no process it forks for
+withheld from children from the pair's creation, per section 1, so that no process it
+forks for
 the life of this seam inherits it. It guarantees that it does not treat a confirmation
 as authorization for anything beyond the exchange that produced it.
 
@@ -269,8 +282,9 @@ guarantees that a refusal leaves no device memory held on this residency's accou
 that a refusal is true about the device rather than merely true about the attempt. It
 guarantees that it answers a refusal rather than exiting on one, because a party that
 exited would replace a typed reason with an observed death. It guarantees that it
-authors no trace event and holds no descriptor to the record. It guarantees that its own
-end of this channel is close-on-exec after its final exec, per section 1, a set rather
+authors no trace event and holds no handle to the record. It guarantees that its own
+end of this channel is withheld from children after its final image replacement, per
+section 1, a set rather
 than a check. It guarantees that it retains nothing across a residency, so a released
 device is released whole.
 
@@ -370,10 +384,11 @@ operator intent.
 path. It does not alter the binding it was handed. It does not ask the SPU to author an
 event on its behalf, because it is the sole writer of the trace and an organ that
 authored would end that property. It does not treat a directive as authorization for
-anything beyond the directive. It does not pass a descriptor across the fork other than
+anything beyond the directive. It does not pass a handle to the child it creates other
+than
 this seam's.
 
-**On the SPU.** It authors no trace event and holds no descriptor to the record. It
+**On the SPU.** It authors no trace event and holds no handle to the record. It
 opens no exchange this document does not enumerate, which in this pass means it opens
 none, and the direction reserved for it is deferred rather than forbidden. It reaches no
 other crate and holds no channel to `weaver-admin`, because admin holds one seam and

@@ -63,8 +63,10 @@ than improvised.
 The operator's asks reach the program by an invocation the operating system already
 governs, per `weaver-admin-PRD` section 8, and an executed program is no seam by the
 Working Process test, so the socket this section carried until 2026-08-05 has no
-subject. What remains is a real crossing: the program writes a descriptor, something
-of the operator's stands behind it, and neither side sees the other's interior. It is
+subject. What remains is a real crossing: **admin passes the sink handle across the
+boundary
+and the program writes through it**, something of the operator's stands behind it, and
+neither side sees the other's interior. It is
 not network ingress and breaches nothing Gate holds, on the grounds
 `weaver-admin-PRD` section 3 states.
 
@@ -110,12 +112,13 @@ agent's configuration, validated by admin at load like every other field, and th
 stream is connected to it under root, the role's principal. A file, a pipe, and a socket
 into the operator's tooling are all conforming sinks, and the program treats them
 alike: it writes the stream and holds no opinion about what stands behind the
-descriptor. The mechanism is the Spec's.
+handle. The mechanism is the Spec's.
 
-**Custody survives the ruling and survives the recut.** The agent uid does not reach
+**Custody survives the ruling and survives the recut.** The agent principal does not
+reach
 the stream's sink, per the boundary `weaver-admin-PRD` section 2 verifies, so the
 record's exclusion of the agent does not depend on who persists it. What the recut of
-2026-08-05 changed is the principal holding the descriptor, from a service account to
+2026-08-05 changed is the principal holding the handle, from a service account to
 root, which narrows the set of parties that can reach the record rather than widening
 it. What it did not change is the direction of the exclusion: the agent writes
 through a handle and reaches nothing behind it.

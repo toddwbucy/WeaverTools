@@ -35,14 +35,15 @@ it fails. It is read alongside `weaver-admin-PRD`.
 
 **Its subject is the agent's service lifetime and nothing else, per the operator's
 ruling of 2026-08-05.** The trace's handoff was weighed at this boundary and stays
-where it was: admin opens the sink under root and passes the descriptor inside the
+where it was: admin opens the sink under root and passes the handle inside the
 enter directive, per `weaver-admin-harness-contract` section 3. Placing it here was
 examined and declined, because the far side of every sink shape is already the
 operator's, a file persisting on its own and a pipe or socket held by the operator's
 own reader, so nothing needed a holder that a per-invocation admin lacks. The
-placement would also have put the record on the unit's standard output, which is
-inherited across fork and exec by design, handing every organ the harness forks a
-writable handle to the agent's own account. That is the leak the close-on-exec
+placement would also have put the record on the unit's own output stream, **which is
+inherited by every process the unit starts, by design**, handing each organ the
+harness creates a writable handle to the agent's own account. That is the leak the
+non-inheritance
 discipline exists to prevent, and buying it back would have cost a new obligation
 where a tested one already stands.
 
@@ -102,7 +103,7 @@ widen it.
 
 **The argument vector carries what the worker cannot discover and nothing else.** The
 coordination socket's path, which the worker binds as its first act, and the two
-organ binaries it forks once a load reaches it. A worker cannot bind a name it was
+organ binaries it creates once a load reaches it. A worker cannot bind a name it was
 never told, and this ask is the only path from the operator's installed values into a
 process that does not yet exist, so the alternative is not a smaller ask but a worker
 that refuses its own start. **The vector widens nothing this boundary did not already
@@ -128,8 +129,8 @@ when the unit stops.
 
 **A state ask.** One unit named, its activity reported.
 
-**No descriptor crosses in either direction**, per section 0. The unit is started
-bare, it binds its own coordination socket, and the trace's descriptor reaches it
+**No handle crosses in either direction**, per section 0. The unit is started
+bare, it binds its own coordination socket, and the trace's handle reaches it
 over that socket rather than through the manager.
 
 **No agent work of any kind crosses**, in either direction and under any framing. The
@@ -191,7 +192,7 @@ condition so a later pass weighs a stated trade rather than rediscovering it.
 - A state ask is valid at any time and transitions nothing.
 - A stop ask is answered when the unit has stopped rather than when the stop was
   accepted, so an unload that returns has a stopped unit behind it.
-- Nothing here is ordered against the trace's descriptor, which crosses on a seam
+- Nothing here is ordered against the trace's handle, which crosses on a seam
   this boundary does not touch.
 
 ## 5. What each party supplies and guarantees

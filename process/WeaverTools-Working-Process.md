@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.28, 2026-08-23. Companion to the Working Rules, the Document
+**Version:** v0.29, 2026-08-24. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -215,6 +215,25 @@ live in the Working Rules section 1.
 **G2, level.** Nothing in the document belongs to a different level. A PRD carrying
 protocol, a contract carrying representation, or a spec carrying rationale fails this
 gate, and the material relocates rather than being trimmed.
+
+**Transport silence is part of this gate as of 2026-08-24.** A contract states what
+crosses, what it means, and how it fails. **It does not name the mechanism that
+carries it.** A contract naming a filesystem path, a descriptor, a socket type, a
+flag, or a latency the substrate happens to provide has taken a Spec's material into
+a contract, which is this gate's own case read one level finer.
+
+**The failure mode is vocabulary rather than subject, which is why it needs stating
+separately.** A custody obligation genuinely belongs in a contract, so the gate reads
+clean on the question it was written to ask and the defect passes. What is at the
+wrong level is the wording: **"sets close-on-exec at the fork" names a flag where
+"does not permit a child process to inherit the handle" names the obligation.** The
+obligation survives a change of substrate. The flag does not.
+
+**The test is mechanical.** Read the clause with the substrate removed. If nothing is
+left to require, the clause was representation and relocates. If the requirement
+stands and only the noun goes, the noun is rewritten and the clause stays. **This is
+what makes an organ relocatable in principle**, and a contract that fails it has
+decided the substrate on behalf of every later deployment.
 
 **Rationale is developed in the PRD and may be restated in the Spec,** per the
 human's ruling of 2026-08-01, which is what the spec clause above means and what

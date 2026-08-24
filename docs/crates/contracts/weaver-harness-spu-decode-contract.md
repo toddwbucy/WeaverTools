@@ -166,11 +166,12 @@ section 6.** This document names its parties and does not restate the edge.
 
 ## 1. The channel
 
-**An unnamed connected pair, created by the harness before the fork, beside
-the lifecycle pair.** The same act creates both, the same fork carries both
-ends, and `weaver-spu-PRD` section 7 counts them: the SPU receives its two
-channel ends and no other descriptor. Possession authenticates, because a
-pair with no name has no second opener, and the channel lives exactly as
+**An unaddressable connected pair, created by the harness before the child exists,
+beside the lifecycle pair.** The same act creates both pairs, **the child carries one
+end of each and the harness retains the counterparts**, and `weaver-spu-PRD` section 7
+counts them: the SPU receives its two channel ends and no other handle. Possession
+authenticates, because a
+pair no third party can address has no second opener, and the channel lives exactly as
 long as the process at its far end.
 
 **One write is one message, and the property comes from the socket type.**
@@ -195,10 +196,10 @@ spelled, recognized, and bounded in total is the Spec's, and a series
 violating the total bound or arriving short is a channel fault, never a
 partial message.
 
-**Close-on-exec on both ends, by the split the corpus already runs.** The
+**Non-inheritance on both ends, by the split the corpus already runs.** The
 harness's end carries the flag from the pair's creation, so no tool
-subprocess the harness forks inherits a handle to the decode seam. The
-SPU's end is set after its final exec, a set and not a check, so nothing a
+child process the harness creates inherits a handle to the decode seam. The
+SPU's end is set after its final image replacement, a set and not a check, so nothing a
 later workflow spawns from the SPU inherits it either.
 
 **Closure is not an answer.** A closed channel with an exchange outstanding
@@ -516,7 +517,7 @@ It does not resend history the session already holds, because the resend
 is the anti-pattern the append-only protocol exists against. It does not
 treat an answer as authorization beyond its exchange.
 
-**On the SPU.** It authors no trace event and holds no descriptor to the
+**On the SPU.** It authors no trace event and holds no handle to the
 record. It opens no exchange at all, the fault report being an emission,
 and it has no exchange in which to ask, per section 2's dataflow rule, so
 an SPU that needs the harness to act has a fault to report and never a

@@ -59,5 +59,12 @@ refuses and never evicts.
 Not drafted. This crate's slice of the overview page's appendix B, each entry
 named to the work or the measurement that would close it.
 
-Known today: the GGUF readout tap. The pin exists and nothing drives it, so
-`spu-two-taps-one-shape` closed 2026-08-22 when the GGUF tap landed carrying it.
+Known today, and none of it is the tap itself: **both taps stand**, the native one
+since 2026-08-19 and the GGUF one since 2026-08-22, which closed
+`spu-two-taps-one-shape`. What is owed is the GGUF tap's neutrality measurement on a
+real device pair, the host backend reaching every hazard but the one the Spec names,
+and until it is taken the tap ships against no family. The deployed family declares
+no tap, so nothing in service elects the path. Beside that: `spu-one-forward-per-prompt`
+is watchable and uncounted, the admit headroom is a construction parameter, which
+reading admission judges free memory against is unruled, and shard widths beyond two
+are unbuilt.
