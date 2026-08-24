@@ -148,8 +148,9 @@ the record, so the posture the record was written in is part of the record.
 
 **Decoding the conversation.** Four kinds carry messages and this crate carries
 their octets opaquely. Every guarantee it makes - canonical bytes, gapless
-sequence, whole events, typed refusal - requires knowing nothing about what a
-message says, and a dependency it does not demand is refused on that ground.
+sequence, one complete line per write, typed refusal - requires knowing nothing
+about what a message says, and a dependency it does not demand is refused on
+that ground.
 
 ## What is not built
 
