@@ -27,6 +27,31 @@ the edges are decided when there is code to draw them against.
 smell. A smell says what pattern to look for, what it breaks, and how a reader or a
 query would find it, because a smell that cannot be looked for is a preference.
 
+**A smell is architectural unless it says otherwise, and a few do.** The architecture
+is silent about substrate, which is what lets an organ move, so a smell that is really
+a fact about this deployment would import a local decision into a rule meant to
+survive one.
+
+**Naming a substrate is not the test, and using it as one would misfile most of this
+document.** Entries here say socket and path because that is what this deployment
+runs on, and saying so costs them nothing. The test is the one G2 applies to a
+contract: **change the substrate and see whether the entry still detects something.**
+If the pattern survives with a different noun, the entry is architectural however it
+is worded. If the pattern has nothing left to find, it was local.
+
+Most survive. "One seam carrying two services" is the same defect over a wire as over
+a socket. **Two do not**, and each says so at its head: a filesystem node's lifetime
+and a listener's accept policy are not defects on a substrate that has neither.
+
+**Where an entry is local, the scope filters which modules are in question, not how
+many may be compared.** A local entry applies to the modules that bind the thing, so
+a query for it selects those and ignores the rest. **Within that set it may compare
+freely, and for some entries it must**: "one syscall, several accept policies" is a
+disagreement between binding modules, and an entry confined to one module could never
+see it. Scoping narrows the population, not the reasoning over it.
+
+An entry with no scope line is architectural and applies everywhere.
+
 **Where an entry cites the quarry it is evidence, not a carry.** The archived tree is
 a parts source read and never edited, per the carry rule. A sighting there proves the
 pattern is reachable by this team on this architecture, which is the only thing a
@@ -454,6 +479,9 @@ unconditionally on every path.
 
 **Identifier:** `smell-unowned-socket-node`
 **Grounds:** `axiom-floor-is-vocabulary-behavior-is-socket`, with repetition
+**Scope:** local substrate. A filesystem node has a lifetime only where the seam is
+carried by one, so this detects nothing on a substrate without paths. It applies to
+the modules that bind, and not to the architecture.
 
 **The pattern.** A process binding a Unix socket creates a filesystem node, and nothing
 owns that node. Each server hand-rolls both halves of its lifetime. The acquire half is
@@ -691,6 +719,12 @@ deliverable clause forbids the construction outright. The second sighting is wha
 promotes it, so each entry names both.
 
 ### 3.1 One syscall, several accept policies
+
+**Scope:** local substrate. The pattern is a listener's accept-error handling, which
+exists where a listener does, so it applies to the modules that bind and not to the
+architecture. **The detection is the comparison between them**: a single module's
+policy is never the defect, and the entry is only visible by reading the binding
+modules against each other.
 
 **Identifier:** `smell-per-seam-accept-policy`
 **Grounds:** repetition, with `axiom-floor-is-vocabulary-behavior-is-socket`
