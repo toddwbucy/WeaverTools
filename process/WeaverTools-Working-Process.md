@@ -436,10 +436,11 @@ of that act. Restoring the container ground afterwards, which undoes it
 entirely, **failed nothing in a hundred and sixty-four tests**. Every negative
 case reached its refusal through a family declaring no tap and so refused
 under either rule, and the judgment's own unit tests called it directly
-without travelling the admit path. There was no test to confirm the failure
-of, and the obligation as written had nothing to bite on. **So an act that
-narrows or widens a judgment perturbs the judgment**, restoring what it
-retired, and records what caught it. Where nothing does, that is the finding,
+without travelling the admit path. The obligation says to confirm that a test
+fails when its property is removed, and the property here had no test whose
+failure could be confirmed, so the obligation had nothing to bite on. **So an
+act that narrows or widens a judgment perturbs the judgment**, restoring what
+it retired, and records what caught it. Where nothing does, that is the finding,
 and the act owes the watch before it owes anything else.
 
 **A build requirement cannot be perturbed on the machine that has it.** The
