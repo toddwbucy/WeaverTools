@@ -44,9 +44,9 @@ every kind and nothing more, so a deployment that elects nothing still holds
 the session's shape - what happened, in what order, in which turn - and pays
 for no payload it never asked to keep.
 
-**The store.** An embedded relational store, elected on this workshop's own
-measurements rather than preference: an in-process query is a function call
-where a service on loopback pays a round trip per ask. It lives inside the
+**The store.** Sqlite - an embedded relational store, elected on this
+workshop's own measurements rather than preference: an in-process query is a
+function call where a service on loopback pays a round trip per ask. It lives inside the
 member's process as internal representation - the seam's traffic and the
 store's shape are two facts, and only the first is contracted.
 
@@ -143,7 +143,7 @@ is a reserved slot, and the cross-session return writes its own paper.
   exactly two ends.
 - **Persistence across sessions.** A second return through the same door, with
   its own paper, and nothing in this component anticipates it.
-- **The integration surface is thin.** Four conformance headers against
-  roughly twelve hundred lines and no integration test directory - the crate
-  is young, landed in the same week as its charter, and its test posture has
-  not caught up to its prose.
+- **The integration surface is thin.** Four conformance headers against 1,178
+  lines and no integration test directory - the crate is young, landed in the
+  same week as its charter, and its test posture has not caught up to its
+  prose.
