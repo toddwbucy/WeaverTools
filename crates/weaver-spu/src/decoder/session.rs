@@ -83,7 +83,11 @@ pub struct Generated {
     /// norm per layer per forward this generation ran, in order, drained
     /// from the tap when the generation closes. Absent rather than empty
     /// where nothing tapped, the record's own discipline.
-    pub residual_norms: Option<Vec<f32>>,
+    /// **The reduction itself rather than its figures**, so the shape
+    /// travels with them. A bare array left a reader dividing by the token
+    /// count plus one to recover the layer count, an arithmetic no document
+    /// stated and which holds only while every forward taps every layer.
+    pub residual: Option<crate::readout::Reduction>,
 }
 
 /// The family's stop condition and its terminator.
@@ -425,10 +429,7 @@ impl<'a> Session<'a> {
             signals: signals.finish(),
             prefill_ns,
             decode_ns: decode_started.elapsed().as_nanos() as u64,
-            residual_norms: self
-                .backend
-                .take_reduction()
-                .map(|reduction| reduction.per_layer_norm().to_vec()),
+            residual: self.backend.take_reduction(),
         })
     }
 

@@ -113,18 +113,23 @@ impl TapState {
                 detail: format!("the readout tap failed: {detail}"),
             });
         }
-        if staged.layers() != self.layers {
+        if staged.figures() != self.layers {
             return Err(DecodeFault::Engine {
                 detail: format!(
                     "the readout tap observed {} of {} layers",
-                    staged.layers(),
+                    staged.figures(),
                     self.layers
                 ),
             });
         }
-        for norm in staged.per_layer_norm() {
-            self.reduction.fold_norm(*norm);
-        }
+        // **Handed over as a forward, not as loose figures**, so the
+        // reduction records where this one ended. A flat extend would leave
+        // the boundary to arithmetic, which is the defect #293 names.
+        self.reduction
+            .fold_forward(staged.per_layer_norm())
+            .map_err(|detail| DecodeFault::Engine {
+                detail: format!("the readout tap folded a ragged forward: {detail}"),
+            })?;
         Ok(())
     }
 

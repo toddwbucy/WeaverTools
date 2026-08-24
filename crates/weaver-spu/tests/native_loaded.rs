@@ -427,31 +427,51 @@ fn an_elected_readout_travels_with_the_generation() {
                 64,
             )
             .expect("generates");
-        match (elected, &generated.residual_norms) {
+        match (elected, &generated.residual) {
             (false, None) => {}
-            (false, Some(_)) => panic!("width {width}: unelected but norms present"),
-            (true, None) => panic!("width {width}: elected but no norms"),
-            (true, Some(norms)) => {
-                // 24 layers, one figure per layer per forward, and the
-                // generation ran at least one forward.
-                assert!(!norms.is_empty(), "width {width}: empty norms");
-                assert_eq!(norms.len() % 24, 0, "width {width}: {} figures", norms.len());
+            (false, Some(_)) => {
+                panic!("width {width}: unelected but a reduction present")
+            }
+            (true, None) => panic!("width {width}: elected but no reduction"),
+            (true, Some(reduction)) => {
+                // **Read rather than divided.** This computed the layer count
+                // by dividing the figure count by a hardcoded twenty-four
+                // until 2026-08-24, which is the arithmetic #293 names: it
+                // held only while every forward tapped every layer, and no
+                // document said so.
+                let norms = reduction.per_layer_norm();
+                assert!(!norms.is_empty(), "width {width}: empty reduction");
+                assert_eq!(
+                    reduction.layers(),
+                    24,
+                    "width {width}: the artifact has twenty-four layers"
+                );
+                assert_eq!(
+                    reduction.layers() * reduction.forwards(),
+                    reduction.figures(),
+                    "width {width}: the counts do not describe the figures"
+                );
                 // The ceiling is exact on purpose: an empty delta decodes
                 // nothing, four sampled tokens decode once each, and the
                 // terminator's landing is the fifth, so a leaked prefix
                 // pass is the sixth and fails here rather than slipping
                 // under a slack bound.
-                let forwards = norms.len() / 24;
                 assert!(
-                    forwards <= 5,
-                    "width {width}: {forwards} forwards claims more than the turn ran, \
-                     the prefix leaked"
+                    reduction.forwards() <= 5,
+                    "width {width}: {} forwards claims more than the turn ran, \
+                     the prefix leaked",
+                    reduction.forwards()
                 );
                 assert!(
                     norms.iter().all(|n| n.is_finite() && *n > 0.0),
                     "width {width}: a figure is not a finite positive norm"
                 );
-                eprintln!("width {width} elected: {} figures over {forwards} forwards", norms.len());
+                eprintln!(
+                    "width {width} elected: {} figures, {} layers over {} forwards",
+                    reduction.figures(),
+                    reduction.layers(),
+                    reduction.forwards()
+                );
             }
         }
     }
@@ -570,15 +590,23 @@ fn an_elected_readout_is_admitted_by_a_gguf_family_that_declares_a_tap() {
         )
         .expect("generates");
 
-    let norms = generated
-        .residual_norms
+    let reduction = generated
+        .residual
         .expect("elected across the admit, so the generation answers a reduction");
+    let norms = reduction.per_layer_norm();
     assert!(!norms.is_empty(), "the reduction is empty");
+    // **Read rather than divided**, per Spec section 6. The modulus below
+    // stood in for a layer count the payload did not carry.
     assert_eq!(
-        norms.len() % LAYERS,
-        0,
-        "one figure per layer per forward: {} figures against {LAYERS} layers",
-        norms.len()
+        reduction.layers(),
+        LAYERS,
+        "the reduction names {} layers where the artifact has {LAYERS}",
+        reduction.layers()
+    );
+    assert_eq!(
+        reduction.layers() * reduction.forwards(),
+        reduction.figures(),
+        "the counts do not describe the figures"
     );
     assert!(
         norms.iter().all(|n| n.is_finite() && *n > 0.0),
