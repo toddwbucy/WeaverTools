@@ -8,6 +8,13 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-24, the residual reductions arrive with their shape.
+The measurement's enumeration named the reductions and not the two counts
+that describe them, which `weaver-spu-Spec` section 6 added in the same act:
+figures alone left a consumer deriving the layer count from the token count,
+an arithmetic that a subset-tapping election would break without breaking
+visibly. Owed to #293's first item, which reached this document and had not.
+
 **Revised:** 2026-08-22, fourth of this date, the classify refusal joins the
 class. Section 3.1's `classify.output` carries the scored labels alone: a
 refused classify authors `classify.request` and then `refusal`, per the
@@ -385,7 +392,7 @@ its closure.
 | `fault` | a fault the worker survived, reported by an organ and authored by the harness |
 | `model.request` | the decode boundary, request side |
 | `model.output` | the decode boundary, response side |
-| `model.measurement` | input and output token identifiers, entropies, the generation's perplexity, the decode timings, model identity with its weights hash, the prompt-block partition, and where their elections stand the surprisals and the residual reductions |
+| `model.measurement` | input and output token identifiers, entropies, the generation's perplexity, the decode timings, model identity with its weights hash, the prompt-block partition, and where their elections stand the surprisals and the residual reductions with the two counts that describe their shape |
 | `classify.request` | the label seam, request side: the content the loop sent for classification |
 | `classify.output` | the label seam, response side: every label of the artifact's head scored |
 | `model.field` | one decode position's ranked candidates with their probabilities and the rank the draw landed on, when the field election stands |
@@ -803,7 +810,13 @@ empty vector and a confident model are different facts and a zero that means
 neither is the silently partial account this charter forbids everywhere else.
 The residual reductions appear exactly when the residency was admitted with
 readout elected, per `weaver-spu-PRD` section 13.7, and a tap that failed
-while elected is a fault rather than an absence.
+while elected is a fault rather than an absence. **They arrive with the two
+counts that describe them**, how many layers a forward folded and how many
+forwards were folded, because figures alone leave a consumer deriving the
+shape from the token count and an election that taps a subset would make that
+derivation wrong without making it wrong visibly. A reading whose
+decomposition depends on a fact outside the record is a reading this charter
+cannot claim is joinable by position.
 
 **These four shapes close the deferral this charter carried, and the tool
 bracket's two are what remain.** Section 9's staged list keeps them, and
