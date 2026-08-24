@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-23, fourth of this date, the engine's device support
+rides the gate. Review found `llama-cpp-2` taking CUDA on its dependency
+line, unconditional, which the previous entry's default turned from harmless
+into a host build demanding a toolchain it has no use for. Section 1.1
+carries the weak routing and the reason. The subsections are reordered in
+the same act: 1.2 was authored above 1.1 and read as a restart.
+
 **Revised:** 2026-08-23, third of this date, the GGUF gate carries the
 default. Section 1.1 argues it: the pair's stated reason covers the device
 gate and never covered this one, since llama.cpp builds on the host, so
@@ -324,99 +331,6 @@ floor, this crate may use a nightly feature where the GPU path needs one, and
 names any it takes at the site, because a nightly requirement here is a
 requirement in one binary rather than everywhere.
 
-**The `gguf` gate is on by default as of 2026-08-23, and `cuda` is not.** The
-two gates were written together and only one of them earns its default. The
-argument the pair carried, that a build with neither keeps the family surface
-testable on a machine with no device, covers `cuda` and does not cover `gguf`:
-llama.cpp builds and runs on the host, so the GGUF engine's family selection,
-marker promotion, and decode tests need no card. Gating them bought nothing
-the argument named and cost twenty-eight tests, which `cargo test --workspace`
-could not reach because the gate they sat behind was off.
-
-**What the default costs, stated because it is a real cost.** A workspace build
-now compiles llama.cpp, so a machine building this tree whole needs the C++
-toolchain that build requires. A machine doing floor work alone is unaffected,
-since `cargo build -p weaver-types` reaches no engine. The trade is that
-whole-workspace operations gain a toolchain requirement and the workspace
-command gains the family surface, and the second is what the gate said it
-wanted to preserve.
-
-**`cuda` stays gated and the reason is unchanged.** It needs a device, a build
-that compiled candle CPU-only while claiming the device would load every
-safetensors artifact into host memory, and the room judgment at admit cannot
-see that lie. A machine with no card still builds and still runs everything
-that does not need one.
-
-```graph
-node: spu-gguf-is-the-default-gate
-kind: assertion
-tag: manifest
-
-edge: asserts
-from: weaver-spu
-to: spu-gguf-is-the-default-gate
-```
-
-### 1.2 The fixture surface, and what a machine can run
-
-**A skip is a pass to the harness.** `tests/loaded.rs` states the rule this section
-generalises: an explicit request that cannot be met is a failure rather than a skip,
-because a green run on a machine without the fixture reports that the engine was
-watched decoding when nothing was decoded. The implicit skip survives only for the
-machine that simply does not hold the artifact.
-
-**What was missing is the account.** A green result carried no record of which subset
-produced it, and no document enumerated what a machine would need to run everything.
-This section is that enumeration, and the manifest test pins it so the table cannot
-drift behind the tests.
-
-Two feature gates decide which targets compile at all, per section 1.1, and Working
-Process section 6 names the two invocations that reach them.
-
-| target | gate | fixtures it reads |
-|---|---|---|
-| `entry.rs` | none | none |
-| `manifest.rs` | none | none |
-| `seam.rs` | none | none |
-| `markers.rs` | `gguf` | `WEAVER_VOCAB_<FAMILY>`, one per registry entry |
-| `selection.rs` | `gguf` | `WEAVER_ARTIFACT_GEMMA4`, `WEAVER_ARTIFACT_MISTRAL_SMALL`, `WEAVER_ARTIFACT_PHI4`, `WEAVER_ARTIFACT_PHI4_MINI`, `WEAVER_ARTIFACT_SMOLLM2` |
-| `native_loaded.rs` | `cuda` | `WEAVER_ARTIFACT_QWEN25_SAFETENSORS`, `WEAVER_ARTIFACT_QWEN25_32B`, `WEAVER_MEASURE_PACE` |
-| `loaded.rs` | `cuda` and `gguf` | `WEAVER_TEST_GGUF` |
-| `two_card.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_TWO_CARD`, `WEAVER_ARTIFACT_SPLIT` |
-| `readout_neutral.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_READOUT` |
-
-**Two targets name a fixture they do not read, and the first form of this
-table recorded the mention as a read.** `seam.rs` cites `WEAVER_TEST_GGUF` in a
-header discussing the convention that a fixture-less machine verifies nothing,
-and `selection.rs` cites it to say in as many words that it is **not** reused.
-Both were transcribed from a text search that could not tell a citation from a
-read.
-
-**The per-target check caught both on its first run, where a crate-wide union
-could not.** That name is genuinely read by `loaded.rs`, so the union was
-satisfied while the mapping was false in two rows. This is why the assertion is
-per target rather than over the crate.
-
-**The vocabulary set is per family rather than fixed.** `markers.rs` asks each registry
-entry for its own artifact under `WEAVER_VOCAB_<FAMILY>`, so the set grows with the
-registry and a table listing thirteen names would be stale on the next family. The
-manifest test therefore checks the shape rather than the roster.
-
-**`WEAVER_DECODE_GGUF` is the decode module's own and is not a test target's.** It
-points the engine's unit suite at an artifact whose vocabulary those tests read, which
-is why it is separate from `WEAVER_TEST_GGUF`: one variable serving both would answer
-a load-path request by failing as an engine error rather than as the mismatch it is.
-
-```graph
-node: spu-fixture-surface-pinned
-kind: assertion
-tag: manifest
-
-edge: asserts
-from: weaver-spu
-to: spu-fixture-surface-pinned
-```
-
 ### 1.1 The dependency set, and each is argued
 
 **Internal, and one of them is a correction.** `weaver-types` is the charter's
@@ -568,6 +482,109 @@ tag: manifest
 edge: asserts
 from: weaver-spu
 to: spu-two-feature-gates
+```
+
+**The `gguf` gate is on by default as of 2026-08-23, and `cuda` is not.** The
+two gates were written together and only one of them earns its default. The
+argument the pair carried, that a build with neither keeps the family surface
+testable on a machine with no device, covers `cuda` and does not cover `gguf`:
+llama.cpp builds and runs on the host, so the GGUF engine's family selection,
+marker promotion, and decode tests need no card. Gating them bought nothing
+the argument named and cost twenty-eight tests, which `cargo test --workspace`
+could not reach because the gate they sat behind was off.
+
+**What the default costs, stated because it is a real cost.** A workspace build
+now compiles llama.cpp, so a machine building this tree whole needs the C++
+toolchain that build requires. A machine doing floor work alone is unaffected,
+since `cargo build -p weaver-types` reaches no engine. The trade is that
+whole-workspace operations gain a toolchain requirement and the workspace
+command gains the family surface, and the second is what the gate said it
+wanted to preserve.
+
+**`cuda` stays gated and the reason is unchanged.** It needs a device, a build
+that compiled candle CPU-only while claiming the device would load every
+safetensors artifact into host memory, and the room judgment at admit cannot
+see that lie. A machine with no card still builds and still runs everything
+that does not need one.
+
+**The engine's own device support rides this crate's gate rather than its
+dependency line.** It was unconditional until 2026-08-23, which was harmless
+while `gguf` was off by default and became a defect the moment it was on: a
+host build would have compiled llama.cpp against CUDA and demanded that
+toolchain on a machine with no card, which is the opposite of what the gate is
+for. The weak form keeps it conditional on `gguf` rather than pulling the
+engine in. **Read by a run rather than by the dependency tree**, which does not
+render weak features: under `cuda` the engine reports finding the devices and
+assigns layers to one, and under the default it reports no device at all.
+
+```graph
+node: spu-gguf-is-the-default-gate
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-spu
+to: spu-gguf-is-the-default-gate
+```
+
+### 1.2 The fixture surface, and what a machine can run
+
+**A skip is a pass to the harness.** `tests/loaded.rs` states the rule this section
+generalises: an explicit request that cannot be met is a failure rather than a skip,
+because a green run on a machine without the fixture reports that the engine was
+watched decoding when nothing was decoded. The implicit skip survives only for the
+machine that simply does not hold the artifact.
+
+**What was missing is the account.** A green result carried no record of which subset
+produced it, and no document enumerated what a machine would need to run everything.
+This section is that enumeration, and the manifest test pins it so the table cannot
+drift behind the tests.
+
+Two feature gates decide which targets compile at all, per section 1.1, and Working
+Process section 6 names the two invocations that reach them.
+
+| target | gate | fixtures it reads |
+|---|---|---|
+| `entry.rs` | none | none |
+| `manifest.rs` | none | none |
+| `seam.rs` | none | none |
+| `markers.rs` | `gguf` | `WEAVER_VOCAB_<FAMILY>`, one per registry entry |
+| `selection.rs` | `gguf` | `WEAVER_ARTIFACT_GEMMA4`, `WEAVER_ARTIFACT_MISTRAL_SMALL`, `WEAVER_ARTIFACT_PHI4`, `WEAVER_ARTIFACT_PHI4_MINI`, `WEAVER_ARTIFACT_SMOLLM2` |
+| `native_loaded.rs` | `cuda` | `WEAVER_ARTIFACT_QWEN25_SAFETENSORS`, `WEAVER_ARTIFACT_QWEN25_32B`, `WEAVER_MEASURE_PACE` |
+| `loaded.rs` | `cuda` and `gguf` | `WEAVER_TEST_GGUF` |
+| `two_card.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_TWO_CARD`, `WEAVER_ARTIFACT_SPLIT` |
+| `readout_neutral.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_READOUT` |
+
+**Two targets name a fixture they do not read, and the first form of this
+table recorded the mention as a read.** `seam.rs` cites `WEAVER_TEST_GGUF` in a
+header discussing the convention that a fixture-less machine verifies nothing,
+and `selection.rs` cites it to say in as many words that it is **not** reused.
+Both were transcribed from a text search that could not tell a citation from a
+read.
+
+**The per-target check caught both on its first run, where a crate-wide union
+could not.** That name is genuinely read by `loaded.rs`, so the union was
+satisfied while the mapping was false in two rows. This is why the assertion is
+per target rather than over the crate.
+
+**The vocabulary set is per family rather than fixed.** `markers.rs` asks each registry
+entry for its own artifact under `WEAVER_VOCAB_<FAMILY>`, so the set grows with the
+registry and a table listing thirteen names would be stale on the next family. The
+manifest test therefore checks the shape rather than the roster.
+
+**`WEAVER_DECODE_GGUF` is the decode module's own and is not a test target's.** It
+points the engine's unit suite at an artifact whose vocabulary those tests read, which
+is why it is separate from `WEAVER_TEST_GGUF`: one variable serving both would answer
+a load-path request by failing as an engine error rather than as the mismatch it is.
+
+```graph
+node: spu-fixture-surface-pinned
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-spu
+to: spu-fixture-surface-pinned
 ```
 
 ## 2. The two channel ends, and the process facts

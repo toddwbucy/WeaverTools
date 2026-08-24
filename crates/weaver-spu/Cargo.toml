@@ -54,6 +54,14 @@ default = ["gguf"]
 # which is what keeps the family surface testable on a machine with no device.
 cuda = [
     "dep:cudarc",
+    # **The engine's own device support rides this gate rather than its
+    # dependency line.** It was unconditional until 2026-08-23, which was
+    # harmless while gguf was off by default and became a defect the moment it
+    # was on: a host build would have compiled llama.cpp with CUDA and demanded
+    # that toolchain on a machine with no card, which is the opposite of what
+    # this gate is for. The `?` keeps it conditional on gguf rather than
+    # pulling the engine in.
+    "llama-cpp-2?/cuda",
     "dep:candle-core",
     "dep:candle-nn",
     "dep:candle-transformers",
@@ -104,7 +112,7 @@ walkdir = "2"
 # crates resolve to two distinct types for one C library and the flash-attention
 # policy type stops typechecking across them, which the archived tree recorded
 # against itself.
-llama-cpp-2 = { git = "https://github.com/toddwbucy/llama-cpp-rs", rev = "ecce255bcb14dd6d88f184cc8776c23a85afafeb", optional = true, default-features = false, features = ["cuda", "dynamic-link"] }
+llama-cpp-2 = { git = "https://github.com/toddwbucy/llama-cpp-rs", rev = "ecce255bcb14dd6d88f184cc8776c23a85afafeb", optional = true, default-features = false, features = ["dynamic-link"] }
 llama-cpp-sys-2 = { git = "https://github.com/toddwbucy/llama-cpp-rs", rev = "ecce255bcb14dd6d88f184cc8776c23a85afafeb", optional = true, default-features = false }
 
 # The candle fork, taken for `forward_with_intermediates`, the readout's
