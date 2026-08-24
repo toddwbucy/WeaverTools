@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-24, first of this date, the room refusal names the
+capacity. Section 5 has it carry the device's total beside what was free,
+because the two figures alone cannot separate a card too small from a card
+held by something else, and those want opposite repairs. Measured eight
+times under a deliberate occupant, the refusal was identical to a sizing
+defect. No case is added and none is classified. Act 4 of #288.
+
 **Revised:** 2026-08-23, fourth of this date, the engine's device support
 rides the gate. Review found `llama-cpp-2` taking CUDA on its dependency
 line, unconditional, which the previous entry's default turned from harmless
@@ -822,6 +829,40 @@ two-device implementation, `forward_tp2` with an all-reduce kernel written for
 a pair, per the survey. A wider set refuses against the declaration rather than
 against a hidden limit, so the day an N-way path lands the declaration changes
 and nothing else does.
+
+**The room refusal carries the device's capacity beside what was free.** The
+driver answers both when asked, and reporting only the free figure discards the
+one fact that separates two failures wanting opposite responses. A card with
+seven gibibytes free against a thirty-five gibibyte need is a card too small
+where its capacity is eight, and a card held by something else where its
+capacity is forty-eight. The first is a binding an operator must change. The
+second is a machine an operator must clear, and nothing is wrong with the
+binding at all.
+
+**Measured rather than supposed.** Under a deliberate occupant on 2026-08-23
+the refusal read `NoRoom { ordinal: 0, free: 7362707456, needed: 34911404576 }`
+eight times out of eight, identically, and that text is indistinguishable from
+a sizing defect in the binding. The failure is correct and the account of it is
+not, which is the lie the fail-cheap rule exists to prevent one level up: a
+refusal that names the wrong cause spends the operator's attention on the wrong
+repair.
+
+**No case is added and none is classified.** The refusal carries the third
+figure and says nothing about which reading applies, because a reader with all
+three can tell, and a `Contended` case would be a judgment this crate has no
+ground to make. The device is not this crate's to arbitrate beyond the one
+inequality, per charter section 4.1, and an occupant may be a second agent the
+operator wants there.
+
+```graph
+node: spu-room-refusal-carries-capacity
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-room-refusal-carries-capacity
+```
 
 **The three are judged cheapest first, and the ordering is this document's to
 elect.** Charter section 4.1 step 3 enumerates the three conditions and sequences
