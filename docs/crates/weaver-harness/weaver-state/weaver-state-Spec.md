@@ -294,8 +294,11 @@ the fact is true, surviving the preload channel's close, answered at the
 seal against the sealed holdings in one frame stream like any answer. The
 parking is the serve
 loop's and blocks nothing else: distillates land and the other asks answer
-while a replay ask waits, one parked ask per channel sufficing because the
-asker is the one loop. Where the member stands without the door, the ask
+while a replay ask waits, one parked slot per channel sufficing because a
+newer replay ask replaces the parked one, per the contract's retry
+mechanism, the replaced ask cleared unanswered and the seal answering
+whatever the slot holds when it lands. Where the member stands without the
+door, the ask
 answers
 immediately, the query being the recall's generalized past the four
 message kinds: every event row of the declared session with its field
