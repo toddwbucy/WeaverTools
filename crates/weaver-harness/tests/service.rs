@@ -277,11 +277,13 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                         tunable_values: Default::default(),
                     },
                 },
-                gate_instruction: weaver_types::GateInstruction {
-                    access_rule: weaver_types::AccessRule {
-                        allowed_uids: Default::default(),
-                        allowed_gids: Default::default(),
-                        denied_uids: Default::default(),
+                binding: weaver_types::EnterBinding::Serving {
+                    gate_instruction: weaver_types::GateInstruction {
+                        access_rule: weaver_types::AccessRule {
+                            allowed_uids: Default::default(),
+                            allowed_gids: Default::default(),
+                            denied_uids: Default::default(),
+                        },
                     },
                 },
                 state_election: weaver_types::StateElection::default(),

@@ -389,7 +389,10 @@ fn run_load(
                 session: inventory.config.session.clone(),
                 run: run_reference,
                 spu_instruction: inventory.config.spu_instruction.clone(),
-                gate_instruction: inventory.config.gate_instruction.clone(),
+                // The resolution happened at the inventory, the one site, so
+                // what crosses is the kind decided with what it requires
+                // riding inside it.
+                binding: inventory.binding.clone(),
                 // The resolution site the contract names: an absent
                 // declaration becomes the ruled default here, so what
                 // crosses is always the election whole and the worker

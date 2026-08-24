@@ -3,6 +3,7 @@
 //! conforms: admin-boundary-denies-agent-traversal
 //! conforms: admin-checks-no-device
 //! conforms: admin-identity-from-validated-name
+//! conforms: admin-kind-mismatch-refused-at-inventory
 //!
 //! The inventory, per `weaver-admin-Spec` section 4: **one function**, called
 //! by `validate` and by `load`'s steps 2 and 3, refusing at the first failure
@@ -11,7 +12,10 @@
 
 use std::path::Path;
 
-use weaver_types::{AgentConfig, AgentName, ConfigErrorKind, LifecycleRefusal, TraceSink};
+use weaver_types::{
+    AgentConfig, AgentName, BindingKind, ConfigErrorKind, EnterBinding, FieldName,
+    LifecycleRefusal, TraceSink,
+};
 
 /// What the boundary check needs to know about the host, supplied by the
 /// caller rather than discovered here, so a test can present a boundary
@@ -64,6 +68,10 @@ pub fn identity_for(name: &AgentName) -> String {
 pub struct Inventory {
     pub config: AgentConfig,
     pub identity: String,
+    /// The binding kind resolved, per `weaver-admin-Spec` section 7: the one
+    /// inventory function resolves it, so the verb and the load cannot
+    /// resolve differently, and what the enter carries is this value.
+    pub binding: EnterBinding,
 }
 
 /// The one inventory function.
@@ -96,6 +104,26 @@ pub fn take_inventory(
         | ConfigErrorKind::BadValue
         | ConfigErrorKind::Malformed => LifecycleRefusal::ConfigInvalid { field: e.field },
     })?;
+
+    // The kind conditions the gate instruction's presence, per
+    // `weaver-types-Spec` section 2: a serving declaration requires it and a
+    // diagnostic declaration excludes it. The parse checks each field alone,
+    // so the cross-field rule lands here, before any look at the filesystem
+    // and before any unit starts. Absence of the kind means serving, per
+    // `weaver-types-PRD` section 2.1, so a declaration written before the
+    // member existed resolves as it always meant.
+    let binding = match (
+        config.binding_kind.clone().unwrap_or(BindingKind::Serving),
+        config.gate_instruction.clone(),
+    ) {
+        (BindingKind::Serving, Some(gate_instruction)) => EnterBinding::Serving { gate_instruction },
+        (BindingKind::Diagnostic, None) => EnterBinding::Diagnostic,
+        _ => {
+            return Err(LifecycleRefusal::ConfigInvalid {
+                field: Some(FieldName("gate-instruction".into())),
+            });
+        }
+    };
 
     // The model artifact resolves to something readable. Nothing is repaired.
     if !artifact_readable(&config.spu_instruction.decoder.model_binding.artifact.0) {
@@ -132,7 +160,11 @@ pub fn take_inventory(
         return Err(LifecycleRefusal::BoundaryUnverified);
     }
 
-    Ok(Inventory { config, identity })
+    Ok(Inventory {
+        config,
+        identity,
+        binding,
+    })
 }
 
 fn artifact_readable(artifact: &str) -> bool {
@@ -274,6 +306,56 @@ mod tests {
             ),
             sink_dir.display()
         )
+    }
+
+    /// **A declaration whose gate instruction disagrees with its kind is
+    /// refused at the inventory, before any look at the filesystem.** The
+    /// refusal names the field, so the operator learns which member to move.
+    ///
+    /// Perturbation: remove the cross-field check from `take_inventory` and
+    /// the diagnostic-with-instruction case sails through to a load whose
+    /// binding admin cannot construct honestly. Watched under exactly that
+    /// removal. The boundary handed in is deliberately broken - a missing
+    /// home would refuse later - so a pass through to a boundary refusal is
+    /// the perturbation showing.
+    #[test]
+    fn a_kind_gate_disagreement_refuses_at_the_inventory() {
+        let root = scratch("kind");
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".to_string());
+        let bound = boundary(&root.join("absent-home"), 65533);
+
+        // Diagnostic, carrying the instruction its kind excludes.
+        let source = format!("{}binding-kind: diagnostic\n", config_source(&root));
+        let refused = take_inventory(&name, &source, &allow, &bound);
+        assert!(
+            matches!(
+                refused,
+                Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) }) if f.0 == "gate-instruction"
+            ),
+            "the diagnostic instruction refuses naming the field: {refused:?}"
+        );
+
+        // Serving, with the instruction its kind requires removed.
+        let source = config_source(&root).replace(
+            concat!(
+                "gate-instruction:\n",
+                "  access-rule:\n",
+                "    allowed-uids: [1000]\n",
+                "    allowed-gids: []\n",
+                "    denied-uids: [1701]\n"
+            ),
+            "",
+        );
+        let refused = take_inventory(&name, &source, &allow, &bound);
+        assert!(
+            matches!(
+                refused,
+                Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) }) if f.0 == "gate-instruction"
+            ),
+            "the serving omission refuses naming the field: {refused:?}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     /// **The second walk: the agent reaches the sink by path.** The
