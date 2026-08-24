@@ -5,6 +5,15 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-24, the kind takes its shape. `BindingKind` joins the
+config as an option whose absence means serving, `gate_instruction` becomes
+an option whose presence follows the resolved kind, and `EnterPayload`
+carries `EnterBinding`, the kind resolved with the gate instruction riding
+inside the serving case. The refusal question the contract left to this
+round is answered by shape: a directive disagreeing with its kind cannot be
+constructed. Per `weaver-agents-PRD` section 6 as amended this date and the
+contract act of the same date.
+
 **Revised:** 2026-08-22, second of this date, the refusal record takes its
 shape. `RefusalRecord` names the seam and carries that seam's own case, with
 the ask beside it where the seam's asks reach no event of their own, per
@@ -384,7 +393,8 @@ pub struct AgentConfig {
     pub spu_instruction: SpuInstruction,
     pub tool_set: Vec<ToolName>,
     pub permission_mode: weaver_traits::PermissionMode,
-    pub gate_instruction: GateInstruction,
+    pub binding_kind: Option<BindingKind>,
+    pub gate_instruction: Option<GateInstruction>,
     pub trace_sink: TraceSink,
     pub state_election: Option<StateElection>,
     pub loop_file: Option<PathBuf>,
@@ -398,6 +408,11 @@ pub struct StateElection {
 pub struct ElectedKindConfig {
     pub kind: String,
     pub paths: Vec<String>,
+}
+
+pub enum BindingKind {
+    Serving,
+    Diagnostic,
 }
 
 pub struct SpuInstruction {
@@ -585,7 +600,18 @@ Present, it names the loop file the agent's worker runs, the loop being a
 member of that agent's harness and unique to it per the same section's ruling
 of 2026-08-20, and it reaches the worker in the unit's argument vector per
 `weaver-admin-Spec` section 6 rather than in any exchange, because no exchange
-carries a path. Every other field is required.
+carries a path. `binding_kind` may be absent because `weaver-types-PRD`
+section 2.1 rules what absence means, a serving binding, so a declaration
+written before the member existed still parses and still means what it meant,
+on the same footing as `loop_file` above. The enum is closed at two cases
+because `weaver-agents-PRD` section 6 names exactly two kinds, and a third
+kind is an apex act before it is a variant. `gate_instruction` is an `Option`
+because its presence follows the resolved kind rather than standing alone: a
+serving binding requires it and a diagnostic binding excludes it, per the
+contract's shape rule of 2026-08-24. The parse cannot see that, checking each
+field alone, so both parse as options and the cross-field rule is admin's at
+inventory, before a process exists, per `weaver-admin-Spec` section 4. Every
+other field is required.
 The residual-readout election is what a builder will reach to default,
 to off, and it is exactly the one that must not: an operator who stated no readout
 has not thereby declined it, and admin refusing the load is how that operator
@@ -1059,8 +1085,13 @@ pub struct EnterPayload {
     pub session: SessionId,
     pub run: RunId,
     pub spu_instruction: SpuInstruction,
-    pub gate_instruction: GateInstruction,
+    pub binding: EnterBinding,
     pub state_election: StateElection,
+}
+
+pub enum EnterBinding {
+    Serving { gate_instruction: GateInstruction },
+    Diagnostic,
 }
 
 pub struct FaultReport {
@@ -1080,6 +1111,31 @@ pub enum FaultCase {
     OrganDeathObserved,
     MessageRecordUndecodable,
 }
+```
+
+**`EnterBinding` is the kind resolved, and a directive disagreeing with its
+kind is unrepresentable rather than refused.** The config holds the kind as
+the operator may state it, an option whose absence means serving, and the
+payload holds it as admin resolved it, so the resolution point is visible in
+the types: what crosses the seam has already been decided. The gate
+instruction rides inside the serving case, which answers the question
+`weaver-admin-harness-contract` section 8 left to this round: no refusal
+catches a directive whose members disagree with its kind, because the shape
+leaves no such directive to construct. A diagnostic enter has no field for
+the instruction and a serving enter cannot omit it, so the wrong pairing is
+a struct that does not exist, on the same ground as the one-case outcome of
+`weaver-harness-Spec` section 3. The grouping is representation rather than
+a term of its own, per the standing rule that the draws name the definitions
+and not the grouping, and the vocabulary node stays `binding-kind` alone.
+
+```graph
+node: types-enter-binding-disagreement-unrepresentable
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-types
+to: types-enter-binding-disagreement-unrepresentable
 ```
 
 **`PriorUnitUnreaped` is added because `BindFailed` was answering for two
@@ -1836,6 +1892,8 @@ one-source rule the token trio states above.
   refused.
 - `deny_unknown_fields` makes an unrecognized config key a parse error rather than a
   silent discard, against the surface this crate declares as one type today.
+- A directive disagreeing with its binding kind is unconstructable, the gate
+  instruction riding inside `EnterBinding`'s serving case, per section 4.
 
 **Enforced by a compile-fail test, because the property is an absence.**
 `PeerIdentity` implements no `Deserialize`: a doctest attempting to deserialize

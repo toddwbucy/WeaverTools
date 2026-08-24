@@ -4,6 +4,13 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-24, the kind takes its shape. The inventory resolves the
+declaration's binding kind, absence meaning serving, and constructs the enter
+payload's `EnterBinding` from it, refusing a declaration whose gate
+instruction disagrees with its kind as `ConfigInvalid` before any unit
+starts. Per the contract act of this date, which named the refusal's
+placement as this round's.
+
 **Revised:** 2026-08-20, the declared loop rides the vector. Per the
 operator's ruling on issue #243: the agent's declaration may name its
 worker's loop file, per `weaver-types-Spec` section 2, and section 6's
@@ -1039,6 +1046,30 @@ descriptor cross once, in the enter exchange, with no separate delivery to
 order against anything. The exchange identity is the floor's
 `ExchangeId { opener: Admin, ordinal }`, ordinals assigned serially by this
 crate, per `weaver-organ-channel` section 1.
+
+**The kind is resolved at the inventory and the payload carries it decided.**
+The declaration's `binding_kind` is an option whose absence means serving,
+per `weaver-types-Spec` section 2, and the one inventory function of section
+4 resolves it, so the verb and the load cannot resolve differently. The
+construction follows the resolved kind: a serving enter takes the
+declaration's gate instruction into `EnterBinding`'s serving case, and a
+diagnostic enter takes its absence. The cross-field rule lands here because
+only this crate sees the file whole: a serving declaration omitting the gate
+instruction and a diagnostic declaration carrying one are both refused at
+inventory as `ConfigInvalid` naming `gate-instruction`, before any unit
+starts, which is the taxonomy of `weaver-types-PRD` section 2.1 run over one
+more field. Past the inventory no disagreement exists to carry, the payload's
+shape holding what was resolved, per `weaver-types-Spec` section 4.
+
+```graph
+node: admin-kind-mismatch-refused-at-inventory
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-kind-mismatch-refused-at-inventory
+```
 
 **The run's identity is minted here and the session's is read.** They are two
 different kinds of value and the distinction is worth holding, because an
