@@ -1577,26 +1577,26 @@ per position and the terms are discarded as they are used, which is what
 makes the unelected posture a smaller computation rather than a withheld
 reading, per the charter's own line on where the election is honest.
 
-**The reduction renders its own shape, because a flat array of figures is
-not one.** The residual reductions cross as one number per layer per forward,
-in order, and the count of neither is recorded. A reader recovers the layer
-count by dividing the array's length by the token count plus one, which is an
-arithmetic no document states and which holds only while every forward taps
-every layer.
+**The reduction renders its own shape.** The residual reductions cross as one
+number per layer per forward, in order, and the layer count and the forward
+count render beside them. The layer count is what the tap folded per forward
+and the forward count is how many times it did, so their product is the
+array's length and a reader checks rather than assumes.
 
-**That invariant is one act from being false, and its failure is silent.**
-Layer election is named as an economy the readout may take, and the day it
-lands the division returns a wrong layer count rather than an error. Worse,
-every reading taken before that day becomes retrospectively ambiguous, with
-nothing in any record marking which side of the change it fell on. A record
-whose decomposition depends on a fact outside it is a record that cannot be
-read alone, which is the property the trace exists to have.
+**The figures crossed alone until 2026-08-24, and the shape was arithmetic.**
+A reader recovered the layer count by dividing the array's length by the token
+count plus one, which no document stated and which held only while every
+forward tapped every layer.
 
-**So the payload carries both counts beside the figures.** The layer count is
-what the tap folded per forward, and the forward count is how many times it
-did. Their product is the array's length, so a reader checks rather than
-assumes, and a future election that taps a subset says so in the record it
-produces rather than in a document a reader must already have found.
+**That is why the counts are recorded rather than derivable.** Layer election
+is named as an economy the readout may take, and under the old form the day it
+landed the division would have returned a wrong layer count rather than an
+error, while every reading taken before that day became retrospectively
+ambiguous with nothing in any record marking which side of the change it fell
+on. A record whose decomposition depends on a fact outside it is a record that
+cannot be read alone, which is the property the trace exists to have. A future
+election that taps a subset now says so in the record it produces rather than
+in a document a reader must already have found.
 
 ```graph
 node: spu-reduction-renders-its-shape
