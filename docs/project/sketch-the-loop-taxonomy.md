@@ -4,6 +4,16 @@
 records architecture settled in conversation on 2026-08-23 so that the corpus stops
 pointing at a ruling it does not hold.
 
+**The promotion is underway and split, per the operator's ruling of 2026-08-24: the
+taxonomy lands by what each document governs.** The binding kinds are landed - the
+apex's section 6 names serving and diagnostic, declared at the load with the rules
+measured against the declaration, and `weaver-admin-harness-contract` carries the
+declaration across the enter, acts of 2026-08-24. **The loop class is not landed
+and this sketch remains its only record**: the passive-reader membership test of
+section 5, the certification split of section 7, and the mechanic-motive line of
+section 8 follow in `weaver-diagnostic-PRD` once the seam papers exist, per the
+same ruling. This sketch archives when that act takes them, not before.
+
 **Why it exists at all.** `reasoning-loop-boundary` was archived carrying a status
 line saying its two-level model is superseded by this taxonomy. That was true and the
 taxonomy was written down nowhere, so the archive pointed at nothing. **A sketch that
