@@ -406,7 +406,8 @@ How each check is implemented is Spec work. What must be checkable is stated her
   structure holds, one rendering feeding both.
 - No write surface accepts a path. This is a compile-time property and is pinned as
   one, because a runtime test cannot demonstrate the absence of a function.
-- Every descriptor the harness holds is close-on-exec, supplied at the one receive
+- Every handle the harness holds is withheld from its children, established at the one
+  receive
   site.
 - Commit pressure is surfaced as an event while the sink remains writable and is
   fatal when it is not. **The surfacing is the harness's authored `fault` and

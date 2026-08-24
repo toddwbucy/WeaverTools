@@ -140,13 +140,15 @@ gate process never outlives the interior it fronts.
 
 **The fork carries this end and nothing else.** At the moment of the gate fork the
 harness holds the trace descriptor, its channel to admin,
-and its channel to the SPU, every one close-on-exec, the received ones by the receive
+and its channel to the SPU, every one withheld from children, the received ones by the
+receive
 rule and the created ones from creation, per `weaver-admin-harness-contract` section
 5 and `weaver-harness-spu-contract` section 1. That discipline is what keeps all of
 them out of the gate's process: **the gate receives this seam's end and no other
 descriptor, and a build in which the gate holds a trace, coordination, or
 residency handle is broken whether or not it uses one.** The gate sets its own end
-close-on-exec after its final exec and clears its dumpable flag in the same act, per
+re-establishes the property after its final image replacement and makes its memory
+unreadable to its own principal in the same act, per
 `weaver-gate-PRD` section 7.
 
 ## 2. The exchanges
@@ -319,7 +321,8 @@ reaches the invocation's whole process group.
 sent it, unaltered and uninterpreted. It guarantees that it opens no exchange this
 document does not enumerate. It guarantees that it creates this seam's channel and
 passes its descriptor across the fork and no other, every descriptor it holds being
-close-on-exec at that moment, per section 1. It guarantees that it raises the gate
+withheld from children at that moment, per section 1. It guarantees that it raises the
+gate
 last and lowers it first within the fan-outs, per apex section 6. It guarantees that
 it does not treat an answer as authorization for anything beyond the exchange that
 produced it.

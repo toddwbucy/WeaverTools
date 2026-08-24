@@ -120,10 +120,11 @@ crosses a process line.** A channel that crosses none has no descriptor to carry
 peer to authenticate, and no exec to survive, so it draws section 1 and none of this
 one.
 
-**An unnamed connected pair, created by one party and reaching the other.** It has no
-name in the filesystem, so no second process can open it, and possession of the
-descriptor is what identifies the peer. Those three properties are what an organ
-contract binds, and they hold whatever carries the end across.
+**A connected pair, created by one party and reaching the other, that no third party
+can open.** The channel is unaddressable from outside: there is no name a stranger
+could use to reach it, and **holding an end is what identifies a peer.** Those three
+properties are what an organ contract binds, and they hold whatever carries the end
+across. **What supplies them is the Spec's.**
 
 **One pair carries both directions.** The creating party and the initiating party are
 separate roles. Which party creates is the seam's own fact and belongs to its contract,
@@ -135,25 +136,30 @@ pair would push framing into every contract that draws this document, which is t
 violation this section exists to prevent. The requirement is stated as the property, and
 which socket type supplies it is the Spec's.
 
-**This channel authenticates its peer by possession rather than by credential.** On a
-pair created by one process and handed to another, `SO_PEERCRED` reports the creating
-process for both ends, so it distinguishes nothing. A named socket the peer dialed would
-report a usable credential and would also be dialable by anything running as the agent
-uid, which includes an elected `bash` tool. The unnamed pair is chosen because it
-removes the second party rather than because it authenticates one, and a channel no
-second party can open needs no credential to tell them apart. This is apex section 5.1's
+**This channel authenticates its peer by possession rather than by credential.** A
+pair created by one party and handed to another cannot distinguish its ends by asking
+the substrate who is on them, because both ends trace to the creator. An addressable
+channel could answer that question and would also be reachable by anything running as
+the agent's own principal, which includes an elected shell. **The pair is chosen
+because it removes the second party rather than because it authenticates one**, and a
+channel no second party can open needs no credential to tell them apart. This is apex
+section 5.1's
 possession case, and the invariant it satisfies is that no process in this program talks
 to another without the second knowing who the first is.
 
-**Close-on-exec does not survive a crossing, and the receiver is the only party that can
-supply it.** Close-on-exec is a property of the descriptor rather than of the open file
-description, so a party receiving a descriptor without asking for the flag accepts a
-handle with it clear, and every subprocess spawned from that point inherits the handle.
-The flag is also cleared by `execve`, so a party that sets it before an exec has to set
-it again after the last one, and the step is a set rather than a check: a step that
-finds the flag clear and reports rather than repairs leaves the channel inheritable by
-every subprocess. This is why the obligation splits across the parties in every organ
-contract rather than resting on the sender alone.
+**Non-inheritance does not survive a crossing, and the receiver is the only party that
+can supply it.** Whether a handle is withheld from a party's own children is a
+property of the handle rather than of the thing it opens, so **a party receiving an
+end without asking for that property accepts one its children will inherit**, and
+every process it spawns from that point holds the channel.
+
+**The obligation is a set rather than a check, and it survives whatever the party does
+next.** A step that finds the property absent and reports rather than repairs leaves
+the channel inheritable, which is no better than not looking. And a party that
+replaces its own image has to establish the property again afterwards, because
+whatever supplied it did not survive the replacement. **How a substrate expresses the
+property, and what clears it, is the Spec's.** This is why the obligation splits
+across the parties in every organ contract rather than resting on the sender alone.
 
 **A holder in transit is not a peer.** Where an intermediary places an end without
 retaining one, the possession property is stated against retention rather than against

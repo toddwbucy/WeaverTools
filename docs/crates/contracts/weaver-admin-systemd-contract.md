@@ -42,7 +42,7 @@ operator's, a file persisting on its own and a pipe or socket held by the operat
 own reader, so nothing needed a holder that a per-invocation admin lacks. The
 placement would also have put the record on the unit's standard output, which is
 inherited across fork and exec by design, handing every organ the harness forks a
-writable handle to the agent's own account. That is the leak the close-on-exec
+writable handle to the agent's own account. That is the leak the non-inheritance
 discipline exists to prevent, and buying it back would have cost a new obligation
 where a tested one already stands.
 

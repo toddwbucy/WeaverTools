@@ -120,8 +120,8 @@ admin's today, per the fault-carrier ruling of 2026-08-01.
 
 `weaver-organ-channel` section 2 states the process-boundary layer for the organ
 channels, and this seam draws it in part since the inversion ruling of 2026-08-05.
-What lands here unchanged: boundary preservation as a socket-type property, the
-close-on-exec split, and closure never read as an answer. What does not: the
+What lands here unchanged: boundary preservation as a property of the channel, the
+non-inheritance split, and closure never read as an answer. What does not: the
 unnamed connected pair, authentication by possession, the holder in transit, and
 the channel's life bound to the far process, each departed from below with the
 departure stated as this seam's own. The organ channels the harness creates keep
@@ -146,42 +146,48 @@ end, in transit or otherwise: it starts the unit and that is the whole of its pa
 
 **The credential is this seam's authentication, per apex 5.1's first case.** The
 invariant reads by credential where the channel has a name and by possession where
-it has none, and this channel has a name the harness bound. The harness reads
-`SO_PEERCRED` at every accept, before any byte, and refuses every peer that is not
-root. The name is reachable from inside the sandbox, so the check is what refuses
-an elected tool at the agent uid, and it discriminates where the earlier design's
+it has none, and this channel is addressable, bound by the harness. **The harness
+verifies the
+dialing peer's principal at every accept, before any byte, and refuses every peer
+that is not the operator's.** The channel is reachable from inside the sandbox, so
+that check is what refuses an elected tool holding the agent's own principal, and it
+discriminates where the earlier design's
 credential check could not: the expected peer is root, which no tool of the
 agent's holds. The second-opener case `weaver-organ-channel` section 2 rejects
 stays rejected, by refusal at accept rather than by an absent name.
 
-**The worker holds the agent uid from its first instruction and clears its dumpable
-flag after its final exec.** There is no drop, because the init system starts the unit
-at `weaver-<n>` under the delegation `weaver-admin-PRD` section 7 rules. An earlier
+**The worker holds the agent's own principal from its first instruction and makes its
+memory unreadable to that principal's other processes after its final image
+replacement.** There is no drop, because the init system starts the unit at the agent's
+principal under the delegation `weaver-admin-PRD` section 7 rules. An earlier
 form of this clause ordered a drop against the handoff, and the ordering had a subject
 only while the worker began life holding a higher principal.
 
 **Nothing about the handoff rested on the drop, which is why removing it costs nothing
-here.** A descriptor passed by `SCM_RIGHTS` is a capability, the kernel installs it
-against the same open file description, and the receiving uid is never checked against
-the file it refers to. So the uid the worker holds at the moment of receipt was never
-what made the handoff safe, and the clause that said the drop does not gate what may
+here.** **What crosses is a capability rather than a name**: the receiver is granted
+access to the already-open sink itself, and its own principal is never checked against
+what the sink refers to. So the principal the worker held at the moment of receipt was
+never what made the handoff safe, and the clause that said the drop does not gate what
+may
 cross is now a statement about a uid that never changes.
 
-**Clearing the dumpable flag is what stops a same-uid process from attaching** to the
-worker and driving this channel and the trace descriptor directly, and it closes
-`/proc/[pid]/fd` as a second route to them by reparenting the directory to root. **The
-flag resets on `execve`,** so the requirement is stated against the last exec. This is
-the whole of what the removed ordering was protecting and it stands unchanged.
+**The worker's memory is unreadable to processes sharing its own principal**, which
+is what stops one of them from attaching to the worker and driving this channel and
+the trace sink directly, and it closes the substrate's own listing of a process's open
+handles as a second route to them. **The property resets when a process replaces its
+image**, so the requirement is stated against the last replacement. This is the whole
+of what the removed ordering was protecting and it stands unchanged.
 
-**This section is authoritative for the flag.** It is a property admin relies on and
-cannot verify from outside the process, which is what a contract is for, so
-`weaver-admin-PRD` section 7 points here rather than restating it.
+**This section is authoritative for that property.** It is something admin relies on
+and cannot verify from outside the process, which is what a contract is for, so
+`weaver-admin-PRD` section 7 points here rather than restating it. **What supplies it
+is the Spec's.**
 
-**On this seam the close-on-exec obligation of `weaver-organ-channel` section 2 lands
-on the trace descriptor and this channel's own.** Close-on-exec rides the descriptor
-rather than the open file description, so a
-receiver calling `recvmsg` without `MSG_CMSG_CLOEXEC` accepts a handle with the flag
-clear, and every subprocess a tool call spawns from that point inherits a writable
+**On this seam the non-inheritance obligation of `weaver-organ-channel` section 2
+lands on the trace sink and on this channel's own end.** The property rides the handle
+rather than the thing it opens, so **a receiver that does not ask for it at the moment
+of receipt accepts a handle its children will inherit**, and every subprocess a tool
+call spawns from that point holds a writable
 handle to the trace. Admin can open the file correctly and still lose the property at
 the receive, so the obligation is the receiver's in section 5 rather than
 the sender's. This channel's own descriptors are the simple case since the
@@ -317,9 +323,9 @@ confirmation of departure, and the turn's fate on a stop.
 
 **The harness guarantees** that every connection is credential-checked at its
 accept, before any byte is read, and that a peer that is not root is refused, per
-section 2. It guarantees that every descriptor it accepts is accepted close-on-exec,
-per section 2, which is an obligation on the receiving call and cannot be met by the
-sender. It guarantees that it authors the run's bracket
+section 2. It guarantees that every handle it accepts is accepted withheld from its
+children, per section 2, **which is an obligation on the receiving call and cannot be
+met by the sender.** It guarantees that it authors the run's bracket
 events, that it writes only through the descriptor it was handed, that it resolves no
 path, and that a ready answer is given only after a standing working structure, an
 admitted model, and a started gate. It guarantees that a refusal names where the

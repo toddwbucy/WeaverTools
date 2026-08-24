@@ -140,18 +140,22 @@ this channel has lost the residency, not a connection to it, and section 5 says 
 that means.
 
 **The fork carries this end and nothing else.** At the moment of the fork the
-harness holds the trace descriptor and its channel to admin, both close-on-exec under
+harness holds the trace sink and its channel to admin, both withheld from children under
 the receiver rule of `weaver-organ-channel` section 2, bound on that seam by
 `weaver-admin-harness-contract` section 2 and `weaver-harness-PRD` section 5. That
 discipline is what keeps them out of the SPU's process, and this contract binds the
 harness to it here rather than leaving the reader to derive it: **the harness passes
 this seam's descriptor across the fork and no other, and every descriptor it holds on
-another party's behalf is close-on-exec at the moment it forks.** The obligation is the
+another party's behalf is withheld from its children at the moment it forks.** The
+obligation is the
 harness's because the harness is the only party that can meet it, in the same way
-close-on-exec at the receive is the harness's obligation on the seam above and not
-admin's. The SPU clears its own dumpable flag after its final exec, per `weaver-spu-PRD`
-section 7, which stops a same-uid process from attaching to it and driving this channel.
-The SPU also sets close-on-exec on its own end of this channel after that same final
+establishing it at the receive is the harness's obligation on the seam above and not
+admin's. The SPU makes its own memory unreadable to processes sharing its principal
+after its
+final image replacement, per `weaver-spu-PRD` section 7, which stops one of them from
+attaching to it and driving this channel.
+The SPU also re-establishes the property on its own end of this channel after that same
+final
 exec, and the step is a set rather than a check, per `weaver-organ-channel` section 2,
 so that no subprocess a later workflow spawns from the SPU inherits the seam. The
 harness's own end of this channel carries the same flag from the moment the pair is
@@ -254,9 +258,11 @@ it, unaltered and uninterpreted, because a harness that adjusted one would put a
 second reading of the agent's configuration between the operator's declaration and the
 device. It guarantees that it opens no exchange this document does not enumerate. It
 guarantees that it creates this seam's channel and passes its descriptor across the
-fork, and that every descriptor it holds on another party's behalf is close-on-exec at
+fork, and that every handle it holds on another party's behalf is withheld from children
+at
 that moment, per section 1. It guarantees that its own end of this channel is
-close-on-exec from the pair's creation, per section 1, so that no process it forks for
+withheld from children from the pair's creation, per section 1, so that no process it
+forks for
 the life of this seam inherits it. It guarantees that it does not treat a confirmation
 as authorization for anything beyond the exchange that produced it.
 
@@ -270,7 +276,8 @@ that a refusal is true about the device rather than merely true about the attemp
 guarantees that it answers a refusal rather than exiting on one, because a party that
 exited would replace a typed reason with an observed death. It guarantees that it
 authors no trace event and holds no descriptor to the record. It guarantees that its own
-end of this channel is close-on-exec after its final exec, per section 1, a set rather
+end of this channel is withheld from children after its final image replacement, per
+section 1, a set rather
 than a check. It guarantees that it retains nothing across a residency, so a released
 device is released whole.
 
