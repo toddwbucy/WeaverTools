@@ -66,8 +66,8 @@ crate binding it: a path inside the unit's runtime directory, which the
 service manager creates at start and destroys with the unit. Each party
 names what only it can know. A socket pathname outlives the process that
 bound it, so a name chosen anywhere else survives its worker and refuses the
-next load with a stale file. Placing it where nothing can outlive the unit makes the hazard
-unreachable rather than checked for.
+next load with a stale file. Placing it where nothing can outlive the unit
+makes the hazard unreachable rather than checked for.
 
 **The shell, as the crate's own outbound verb.** The one tool this crate
 executes is the shell - not a guest, but the general form of the agent's
