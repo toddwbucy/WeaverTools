@@ -59,11 +59,19 @@ the agent gets more state.
 
 ## 3. Use case one: the proto-stateful agent
 
-A proto-stateful agent carries no state outside its prompt. What looks like memory
-is a working structure rebuilt from scratch on every turn and recomputed through the
-decoder each time. This describes very nearly everything deployed on the internet
-right now, and it describes what WeaverTools currently holds, which is the
-weaver-agents domain.
+A proto-stateful agent holds real state within a session and none across sessions,
+per `weaver-agents-PRD` section 2. Two things persist across turns inside a session,
+the working structure the agent reasons over and the hot KV cache, and what the agent
+begins each session without is accumulated experience: no memory substrate of any
+kind, which is the whole of what this program defers. That is what WeaverTools
+currently holds, which is the weaver-agents domain.
+
+**The agents deployed on the internet right now are the narrower thing.** They carry
+no state outside the prompt, and what looks like memory is rebuilt from scratch every
+turn and recomputed through the decoder each time. An earlier vocabulary called our
+own stage stateless as well, which the ruling of 2026-08-01 retired as an
+overstatement. The distinction earns its place here because use case one is about
+standing in for that narrower behavior rather than about sharing it.
 
 Nothing in the architecture prevents this from being reproduced faithfully. The loop
 decides what the prompt contains at each position, so a loop written to discard the
@@ -191,17 +199,26 @@ while the scope is still moving, which is why this sketch is a sketch.
 **The contract layer went transport-silent on 2026-08-24**, and the accurate statement
 of what that sweep did is narrower than the property this section wants. It removed
 the named mechanisms of descriptor passing and process creation from the contracts.
-**It did not remove the word socket, which survives across the seam contracts and in
-places carries real weight** - `weaver-organ-channel` names ordering and boundary
-preservation as obligations and says outright that which socket type supplies them is
-the Spec's to elect, which is the rule working, while other sites name a socket as
-plain substrate and are residue the rule condemns. G2 carries the test going forward.
+**The enumerated case G2 gives is clean, and the word socket survives anyway.**
+`weaver-harness-spu-decode-contract` and `weaver-harness-spu-classify-contract` both
+require one write to produce one message and both leave which socket type supplies
+that write to the Spec's election. Those are the only two sites in the layer that say
+socket type at all, and they say it in order to defer it, which is the rule working
+exactly as written. **No contract names a specific type**, checked this date across
+the whole layer.
+
+What survives is the bare noun, naming an endpoint that gets bound and dialed rather
+than a mechanism that carries a message. Whether G2's enumeration reaches that use is
+the open scope question rather than a settled violation, and an earlier reading of
+this paragraph called it residue the rule condemns without checking. G2 carries the
+test going forward.
 The relocation property is therefore claimed by design and not yet demonstrated by the
 document set, and section 7 opens it as a cell rather than asserting it.
 
 ## 7. Open cells
 
-Each awaits a measurement rather than an argument.
+Each awaits a measurement rather than an argument, with one exception kept at the
+end: the documentation cell is answered, and it stays as the record of the question.
 
 **Seam relocatability.** Whether the named contracts are sufficient for an organ to
 move across a process or host boundary without change above the contract. The

@@ -3,10 +3,13 @@
 **Status:** ARCHIVED 2026-08-24. Nine items, verified one by one on that date: four
 were done, two had stopped being relevant, and three were live and became issues #309,
 #310, and #311. Those issues carry their own evidence rather than citing this file,
-because **this document was never tracked in git** and has no history to cite.
+because a working list that was never ratified is not an authority to cite.
 
-The untracking was deliberate and its reason is below. It means the archive holds the
-only copy, and the issues hold the only record of what was outstanding.
+**It was tracked briefly before it was untracked, and an earlier reading of this
+header said it never was.** It entered the tree 2026-07-28 at `594f48a`, took two
+edits, and left at `49e9c99` on 2026-07-29. Those four commits are its history, so the
+pre-deletion copy is recoverable and citable as provenance where one is wanted. The
+untracking was deliberate and its reason is below.
 
 Previously: **Status:** WORKING LIST. Not a member of the document set and never
 ratified, and
@@ -164,8 +167,8 @@ corpus in the re-authoring act.
 
 The batch of 2026-08-02 merged in five PRs on this date, the vision's four
 sections, the replayability correction, the charter rescope, the decoder cut,
-and the harness Spec, and its landed items left this list with it. Two items
-remain, both waiting on passes not yet open.
+and the harness Spec, and its landed items left this list with it. Three items
+remain, all waiting on passes not yet open.
 
 1. **The disposition mechanism's spec work.** `Disposition<T>`, `Frozen(value)`
    or `OperatorTunable` per knob, elected at the composition root. The principle
