@@ -1,6 +1,14 @@
 # Load/Unload Path
 
-**Status:** MERGED v0.3, 2026-08-05. Loop 0's composition, opened by the load event,
+**Status:** ARCHIVED 2026-08-23. Merged rather than draft, and archived because
+`weaver-harness-Spec` now carries its rules in its own words rather than citing them.
+**It remains a drafting source**: `docs/technical/weaver-agents/weaver-admin.md` names
+its sections 2 and 3 as what that paper reads out, so whoever drafts that paper reads
+this. `WeaverTools-Document-Format` section 2 carries the ruling that put it at the
+project level, which stands as a fact about the loop taxonomy rather than about where
+the file now sits.
+
+Previously: MERGED v0.3, 2026-08-05. Loop 0's composition, opened by the load event,
 closed by the unload event, with every loop nesting inside its bracket. It composes
 merged charters and contracts, binds no crate, and decides no seam. Where it and a
 merged document disagree, the charter stands and this document is corrected, because

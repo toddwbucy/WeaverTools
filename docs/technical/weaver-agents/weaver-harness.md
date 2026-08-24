@@ -32,7 +32,7 @@ surface, trace authorship.
 ## Seams
 
 Not drafted. Each seam named once, its contract linked to
-[the contracts page](contracts.md), and its socket-or-link tag with the grounds
+[the contracts page](../contracts.md), and its socket-or-link tag with the grounds
 stated. The contract is linked and never restated.
 
 Seams: seven, one per contract on the contracts page, this crate being a party to

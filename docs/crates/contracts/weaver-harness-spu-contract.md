@@ -33,7 +33,7 @@ judges the election at admit against what the family's engine can honor, per
 the election's refusal case, and section 7 draws
 `residual-readout-election`.
 **Document ID:** `weaver-harness-spu-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---

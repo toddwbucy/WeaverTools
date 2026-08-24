@@ -97,7 +97,7 @@ per renderable piece and a piece may span several tokens. Absent where the
 election is absent, never present and empty. Section 3's ordering and
 section 4's supplies follow.
 **Document ID:** `weaver-harness-spu-decode-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---

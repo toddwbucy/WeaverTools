@@ -1,6 +1,10 @@
 # The reasoning loop: IS and IS NOT
 
-**Status:** v0.2, 2026-08-11. Architecture-seat material, outside the document set,
+**Status:** ARCHIVED 2026-08-23. Never cited by anything but its own companion. Its
+IS and IS NOT lists are the part most directly overtaken by the loop taxonomy settled
+2026-08-23.
+
+Previously: v0.2, 2026-08-11. Architecture-seat material, outside the document set,
 landed by the authoring seat with the discussion's edits applied. Companion to
 `reasoning-loop-boundary`, which states the membership criterion, and to
 `finding-loop-agent-split`, which records how the boundary was arrived at. This
@@ -17,7 +21,7 @@ crates. The harness coordinates rather than orchestrates, the corpus's own pairi
 admin coordinates the load and the harness coordinates the turn, and the banned
 word appears only in the entry that refuses it. The network entry narrows to what
 the loop does not pay for, the security model living with the role-scoped socket
-handoffs in `verification-placement`. The individuation entry stands as the
+handoffs in `weaver-harness-PRD` section 5. The individuation entry stands as the
 firewall it is.
 
 The subject throughout is the reasoning loop. That is what was built and what is
@@ -77,7 +81,7 @@ with the reason it fails.
   entirely.
 - Not where verification happens. Latency bans in-loop checking, so faithfulness is
   held at author time by the vocabulary guard and after emission by the
-  observability consumer, per `verification-placement`.
+  observability consumer, per `weaver-harness-PRD` section 5.
 - Not durable. Durable substrate-resident state is written through admin, which is
   an egress and sits outside this membership rule.
 - Not evidence for individuation. The loop is the apparatus the hypothesis needs in

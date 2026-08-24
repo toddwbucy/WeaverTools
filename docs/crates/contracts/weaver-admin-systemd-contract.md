@@ -22,7 +22,7 @@ prohibitions stand unchanged because no part of the agent's declaration is in it
 boundary's reliance set does not move, this being a widening of what admin hands the
 manager rather than anything further asked of it.
 **Document ID:** `weaver-admin-systemd-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---

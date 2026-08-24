@@ -1,6 +1,13 @@
 # WeaverTools - Technical Report
 
-**Status:** LIVING. In `main` and outside the document set. **This document is
+**Status:** ARCHIVED 2026-08-23. A complete description of the system at `0475b3d`,
+fifteen sections and three appendices, superseded as the working account by
+`docs/technical/` as those papers are drafted. **Appendix B was lifted out first** to
+`sketch-what-is-not-built`, which carries the register forward, because the register
+outlived the document that housed it. Appendix C's formulation stays here and is what
+this document is most likely to be reached for.
+
+Previously: LIVING. In `main` and outside the document set. **This document is
 subject to change as development continues**, it is never ratified, and nothing
 in the corpus is written against it. Describes `WeaverTools` at `0475b3d`,
 2026-08-23. All fifteen sections are drafted, appendix B carries what is not
@@ -121,14 +128,18 @@ type definition cannot be sent over a socket.
 Figures are lines of Rust under `src/`, 32,837 in total, with a further 8,490 in
 integration tests.
 
-**The apex governs exactly seven crate charters** and names them: admin, harness,
-spu, gate, trace, traits, and types. `weaver-state` and `weaver-internal` were
-chartered on 2026-08-18 and the apex's enumeration has not been amended to name
-them. **Both are ratified**, per the operator's ruling of 2026-08-23 that a charter
-ratifies on its own by conforming to the pattern the set-wide act of 2026-08-04
-established. What is stale is the apex's count rather than either crate's standing,
-so a reader holding both documents should read that list as the apex's roster rather
-than as the current tree.
+**The apex governs nine crate charters** and names them: admin, harness, spu, gate,
+trace, traits, types, state, and internal. `weaver-state` and `weaver-internal` were
+chartered 2026-08-18, are ratified on their own under the per-charter rule of
+2026-08-23, and **joined the roster on that date when the apex was corrected**.
+
+**That correction also narrowed what the apex is.** It had been written as the apex
+of everything and named for the suite, which held while the agent framework was the
+only thing to govern. Its five invariants are agent-domain invariants, so **a crate
+outside the agent boundary refines none of them**, and the document governs the
+weaver-agents domain rather than the suite. Crates outside that boundary parent to
+the suite and reach an agent only across the two external contracts. What governs
+them at the suite level is not yet written.
 
 **An organ is a crate that governs a domain and holds a two-initiator channel
 with the harness.** Both properties, and neither alone. The harness is the organ
@@ -1480,135 +1491,9 @@ stand behind is in appendix B.
 
 ## Appendix B. What is not built, not proven, or not measured
 
-Every case the report describes and cannot yet stand behind, in one place, so a
-reader does not have to find them by reading closely. Each says which of the
-three it is. This list shrinks as the work lands and the report is refreshed
-against a later commit, and an entry that leaves it does so because something was
-built and shown rather than because the wording softened.
-
-**Not built, and chartered.**
-
-- **The gate's agent-opened socket.** Chartered for registered applications that
-  bind a listening port. No exchange of the harness-gate seam reaches it, and its
-  contract is the tool workflow's to author. Section 4 says so at the point of
-  description.
-- **The idle report.** No report authors without a turn because nothing authors
-  one at all, which is what `harness-idle-report-authors-without-a-turn` waits on.
-- **Client-facing streaming.** Deferred, and it arrives as an extension to the
-  world contract rather than as a replacement for it. One line in and one line out
-  is the resting shape.
-- **The status ask.** `show` and `list` refuse today, the init system's three unit
-  values not mapping onto the four agent states, and a translation is where
-  invention would enter. The observation exchange retires the refusal when it
-  lands.
-- **The memory leg.** Out entirely, arriving through apex section 9's door as a
-  socket peer with its own contract. No seam, stub, reserved slot, or dormant
-  contract party is carried in anticipation of it.
-**Not built, and not chartered either.** Named because a reader will look for them,
-not because anything promises them.
-
-- **Any seam over a wire.** The transports in code are Unix-specific, and a seam
-  crossing a machine boundary would need its own framing and a peer-authentication
-  mechanism to replace `SO_PEERCRED`. Neither exists. **Descriptor passing is the
-  hard case of the three and is named separately for it.** `SCM_RIGHTS` has no
-  wire analogue: a descriptor is a capability the kernel hands across a local
-  socket and rechecks at no point afterwards, and there is nothing to send over
-  TCP that is the same kind of thing. Custody rests on that mechanism, the sink
-  reaching the recorder as an already-open descriptor and the recorder offering no
-  call that takes a path, so a wire seam would need a different custody design
-  rather than a port of this one. The topology would carry, the implementation
-  would not.
-- **Shard widths beyond two.** A pair is what the salvaged tensor-parallel path
-  implements. An N-way forward and its all-reduce are work this program does
-  rather than salvage it inherits.
-
-**Built, and not yet proven.**
-
-- **The GGUF tap's neutrality on a real device pair.** The tap landed 2026-08-22 and
-  carries `spu-two-taps-one-shape`, so it is built and the container is no longer a
-  ground for refusing. Its neutrality is watched clearing the no-token-change bar on
-  the host backend, **which reaches everything but the one hazard the Spec names**:
-  installing the callback turns one graph compute into a walk of windows, and a
-  fusion candidate straddling a window boundary goes unapplied, which is a device
-  concern no host run can reach. **The tap is not shipped against a family until that
-  measurement is taken**, and the deployed family declares no tap, so nothing in
-  service elects the path today.
-
-- **Deterministic re-feed.** Apex section 8's second arrangement is what section
-  10 argues for, and the demonstration on record is of the third. Pushing a
-  recorded token sequence back through the forward pass with nothing re-sampled
-  is owed its own run.
-- **`spu-one-forward-per-prompt`.** Watchable under the standing native tap and
-  waiting only on its count being taken.
-
-**Claimed, and not measured.**
-
-- **Latency is the enemy of agency.** The program's one conceded theory claim, and
-  section 3 marks it. No per-hop figure for loopback against a Unix socket at
-  these message sizes has been taken in this repository.
-- **The encoding's share of the per-token cost.** Section 3 concedes that
-  serialization is paid on a Unix socket exactly as on loopback, and names JSON on
-  the interior seams. The decode seam carries **one message per retained token**, so
-  that cost lands per token, which is the same place section 3 says a per-hop cost
-  compounds. **If the encoding dominates what the transport saves, the argument's
-  own logic points at the encoding rather than at the transport.** No measurement
-  separates them, and the claim should not be published as settled until one does.
-- **The surprisal correlation's provenance.** Whether r = -0.300 over two hundred
-  rounds was pre-registered or found post hoc on the rounds the A/A ran on is not
-  recorded, and the two carry different evidential weight.
-- **The effective range of the score.** Every one of the fifty-seven rounds that
-  answered turn two converted turn four, which suggests the usable range may be
-  narrower than the four points the scale declares. If it is, every bound stated in
-  points is tighter than it reads.
-- **The entropy result's n and interval.** Section 14 reports 59.5 percent against a
-  51 percent base rate with neither, so what died on the evidence and what merely
-  went undetected cannot be told apart from the report.
-- **The headroom on the admit judgment.** A construction parameter at the worker's
-  composition root until a measurement on a real artifact against a real device
-  replaces it. Whether it is a constant, a fraction, or derived from the
-  artifact's declared shape is unsettled.
-- **Which reading admission judges free memory against.** Section 8 states the
-  argument for the driver over the crate's own ledger and does not settle it. What
-  is owed is a ruling taken with a measurement of what a driver query costs on the
-  admit path, and no driver query stands in the code today.
-
-**Owed by this report rather than by the code.**
-
-- **Section 14 cannot be checked from the tree.** The measurement regime's
-  registrations and results stand outside this repository. Until they travel with
-  the release or move into it, section 14 is the one numbered section whose own
-  sources a reader holding the tree cannot reach, which breaks the standard the
-  rest of the report holds to. Section 13's owed citation below is the narrower
-  case, its own claims being checkable where these sources are not.
-- **The equivalence bound in section 14 is computed here**, from the reported
-  means, standard deviations, and sample sizes. It is not a pre-registered power
-  analysis, and a series designed against a target effect would state the bound
-  before running rather than after.
-- **The reasoning-loop formalism is not in the tree.** Section 13 cites it for the
-  clock argument and it sits on an open pull request, so the citation resolves to
-  nothing a reader can open.
-- **`weaver-internal` is unclassified.** It fails the organ test and the submodule
-  definition does not reach it, while its parent edge makes it a domain root.
-  That is an apex question, and the report describes the crate without settling
-  what it is.
-- **The apex's roster stands at seven against a tree of nine.** Section 2 states
-  both rather than choosing, and the reconciliation is the apex's act.
-- **The apex counts two state holders and the tree has three.** `weaver-state` was
-  chartered 2026-08-18 and holds across runs rather than merely across turns.
-  Section 7 states both rather than choosing, on the same
-  footing as the roster above, and the amendment is the apex's act.
-- **Appendix C is not checkable from the tree.** It states what an agent is taken
-  to be rather than what this code does, so a build neither confirms nor falsifies
-  it, and its own status line says so. The argument behind the notation sits in the
-  agent paper, which is not in this repository, so that citation resolves to
-  nothing a reader holding the tree can open.
-- **The loop numbering is unsettled between the two documents.** The formulation
-  numbers the primary reasoning loop `L_0` where this report numbers the
-  framework's service loop zero and the builder's reasoning loop one, per section
-  11. Appendix C states the collision and names a candidate resolution it does not
-  adopt. The ruling is the apex's.
-
----
+**Lifted out 2026-08-23 to `sketch-what-is-not-built`**, which carries the register
+forward as a standing list. It is not reproduced here, because two copies of a
+register is how one of them goes stale.
 
 ## Appendix C. The formulation
 

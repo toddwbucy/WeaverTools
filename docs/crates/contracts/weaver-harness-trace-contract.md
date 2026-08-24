@@ -35,7 +35,7 @@ context being the accumulation the record determines.
 **Revised:** 2026-08-14, the run identifies itself. The consumer assembles session-wide
 order from admin's run reference and the sequence, renamed from the ordinal.
 **Document ID:** `weaver-harness-trace-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 **This is a contract, not a Spec.** It states the protocol two parties agree to. It

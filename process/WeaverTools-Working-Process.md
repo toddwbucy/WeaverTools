@@ -224,9 +224,11 @@ not do is develop that ground: a criterion argued first in a Spec has been settl
 outside the context that governs it, which is how a PRD and its Spec drift into
 saying different things about the same crate. The test is mechanical. Where a
 Spec's reasoning traces to a charter clause it is restatement and passes. Where it
-does not, the criterion lands in the PRD in the same act, and the Spec cites it.
-This is the alignment the colocation rule exists for, one PRD and one Spec in one
-crate directory, moving through one branch and one pull request together.
+does not, the criterion lands in the PRD and the Spec cites it, in the same act
+where that is practical and named as owed where it is not. This is the alignment the
+colocation rule exists for, one PRD and one Spec in one crate directory. **A Spec
+merging ahead of the charter clause it cites names that clause as owed**, which is
+the case the register exists for rather than a case the gate refuses.
 
 **G3, graph facts.** The crate has exactly one parent edge, naming its domain parent:
 the domain root for a member crate, and `WeaverTools` for a domain root. It carries no
@@ -268,6 +270,20 @@ list reads as settled to every later reader, so an unlanded ruling is worse than
 one. It is checkable by looking, since the ruling names the documents and the documents
 either carry the change or do not. Where a ruling is landed in part on purpose, the
 documents still owed are named as owed rather than left to be noticed.
+
+**That naming is the standing rule for every change, not only for rulings, as of
+2026-08-23.** A change names every document it affects. What lands with it, lands.
+What does not is named as owed, in the register that tracks it, and leaves that
+register when it lands.
+
+**Carrying a whole change in one act is no longer required, and the requirement is
+recorded rather than deleted.** Several documents said a change that could not be
+carried in one act had not been thought through. That was right while the set was
+being established, when nothing existed to be consistent with and a partial change
+would have left documents encoding different understandings of the same system with
+no register to catch it. The registers exist now, G7 checks them, and demanding
+simultaneity of a corpus this size buys nothing the register does not already buy.
+**What is required is that nothing a change touches goes unnamed.**
 
 Phase one closes when every crate in scope has a merged PRD, every seam has a merged
 contract, every spec is merged, and G4 and G6 hold across the whole set. Only seams
@@ -619,7 +635,9 @@ will keep.
 the framework to using it.** The apex deliverable stands and is exceeded,
 and the suite around it is named in the living vision's section 13,
 weaver-web standing up as the first outside consumer against the two
-external contracts of 2026-08-01, in its own tree beyond this corpus. What
+external contracts of 2026-08-01. **It stood in its own tree until 2026-08-23 and
+is absorbed into this one by the ruling of that date**, which leaves the contract
+coupling untouched and makes both sides of the seam editable in one commit. What
 that changes here is who leads: needs discovered in use pull framework acts
 through the change protocols, where the roadmap once pushed, and the
 predicted pulls are streaming through the gate's world contract, a status

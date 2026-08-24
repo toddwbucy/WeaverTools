@@ -15,11 +15,14 @@ The code described here is unreleased and is scheduled for release in the first
 quarter of 2027. These pages are published as a dated snapshot of a system under
 construction, and each says on its face what it does not yet have.
 
-One paper per crate, a contracts page every paper cites, two pages for the surfaces
-an operator writes against, a page for an instrument that is not built, and an
-overview holding what belongs to no crate. A paper
-reads out a merged document and never decides anything: where a paper and its
-source disagree, the paper is the defect.
+**The directories carry the boundary.** `weaver-agents/` holds the agent domain:
+nine crate papers and the two surfaces an operator writes against. `consumers/`
+holds what sits outside that boundary and reaches an agent only across a contract.
+The contracts page stays at the top because it is the seam itself, and the two
+external contracts on it are where that boundary is actually drawn.
+
+A paper reads out a merged document and never decides anything: where a paper and
+its source disagree, the paper is the defect.
 
 This page is the roster. [The introduction](README.md) says what the set is, what
 governs it, and where to start depending on what you came for.
@@ -28,54 +31,58 @@ governs it, and where to start depending on what you came for.
 
 Two crates every domain draws from and no domain contains.
 
-- [weaver-types](weaver-types.md) - the declaration, peer identity, and the wire
-  vocabulary loop 0 speaks
-- [weaver-traits](weaver-traits.md) - messages, roles, permission modes, and the
-  tool surface
+- [weaver-types](weaver-agents/weaver-types.md) - the declaration, peer identity, and
+  the wire vocabulary loop 0 speaks
+- [weaver-traits](weaver-agents/weaver-traits.md) - messages, roles, permission modes,
+  and the tool surface
 
 ## The organs
 
 A crate that governs a domain and holds a two-initiator channel with the harness.
 
-- [weaver-harness](weaver-harness.md) - the switchboard, the loops, and sole
-  authorship of the trace
-- [weaver-spu](weaver-spu.md) - model residency, two decode engines, and the
-  measurement that rides a generation
-- [weaver-gate](weaver-gate.md) - the agent's boundary, and the shell as its own
-  outbound verb
-- [weaver-admin](weaver-admin.md) - lifecycle authorization, boundary
+- [weaver-harness](weaver-agents/weaver-harness.md) - the switchboard, the loops, and
+  sole authorship of the trace
+- [weaver-spu](weaver-agents/weaver-spu.md) - model residency, two decode engines, and
+  the measurement that rides a generation
+- [weaver-gate](weaver-agents/weaver-gate.md) - the agent's boundary, and the shell as
+  its own outbound verb
+- [weaver-admin](weaver-agents/weaver-admin.md) - lifecycle authorization, boundary
   verification, and custody of the sink
 
 ## Under the harness's domain
 
-- [weaver-trace](weaver-trace.md) - the recorder, and the working structure the
-  loop reasons over
-- [weaver-state](weaver-state.md) - the session custodian, sqlite behind a
+- [weaver-trace](weaver-agents/weaver-trace.md) - the recorder, and the working
+  structure the loop reasons over
+- [weaver-state](weaver-agents/weaver-state.md) - the session custodian, sqlite behind a
   credential-checked socket
 
 ## Neither
 
-- [weaver-internal](weaver-internal.md) - callables the loop dispatches inward,
-  and never through the gate
+- [weaver-internal](weaver-agents/weaver-internal.md) - callables the loop dispatches
+  inward, and never through the gate
 
 ## The surfaces an operator writes against
 
 Where judgment enters the program rather than travels through it.
 
-- [The loop](loop.md) - loop 0 and loop 1, the seat's eight calls, the one
+- [The loop](weaver-agents/loop.md) - loop 0 and loop 1, the seat's eight calls, the one
   crossing, and everything the framework refuses to decide
-- [Extending the program](extending.md) - the floor, the contracts, a new organ,
-  and the ritual that carries a change to all of them in one act
+- [Extending the program](weaver-agents/extending.md) - the floor, the seams, a new
+  organ, and where the framework's requirements stop
 
-## Instruments
+## Consumers
 
-The built instruments are described where they are built, in the crate papers and
-the contracts. This one has its own page because it is unbuilt, and because its
+Outside the agent boundary, reaching an agent only across the two external
+contracts. The built instruments are described where they are built, in the crate
+papers. The lens has its own page because it is unbuilt, and because its
 preconditions are the part worth knowing early.
 
-- [The Jacobian lens](jacobian-lens.md) - a per-layer readout of the interior, why
-  it captures during the run and reads at analysis, what it would cost, and the two
+- [The Jacobian lens](consumers/jacobian-lens.md) - a per-layer readout of the interior,
+  why it captures during the run and reads at analysis, what it would cost, and the two
   questions that gate it
+- [The calculator](consumers/calculator.md) - **not a consumer**, noted here because
+  the perturbation mechanic a diagnostic consumer would need is already built and
+  running in production, and this is what built it
 
 ## Across all of them
 

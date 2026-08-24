@@ -1,6 +1,12 @@
 # weaver-spu - salvage survey
 
-**Status:** SURVEY, 2026-08-02, revised 2026-08-03 when the device-assignment
+**Status:** ARCHIVED 2026-08-23. The salvage it surveyed is done: `weaver-spu`
+stands built and the extraction it guided is complete. Kept rather than deleted
+because it is the record of what was taken from the quarry and why, which is the
+evidence G6 rests on, and G6 is what makes the quarry's deletion safe. Nothing cites
+it and nothing should.
+
+Previously: SURVEY, 2026-08-02, revised 2026-08-03 when the device-assignment
 ruling added a seventh yielding to section 3. Outside the document set, filed
 at `docs/project/`
 beside the other documents the mapping does not read. Reference, not prescription:

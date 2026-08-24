@@ -93,8 +93,10 @@ organ that holds them, and the holder is decided by the human's ruling of 2026-0
 loops belong to the harness unless specific to one domain and no other, a loop confined
 to one domain filing under that domain's own root. The first such directory is
 `docs/crates/weaver-harness/Loops/`, holding the basic inference loop alone. Loop 0's
-composition is not a loop and files at the project level as `load-unload-path`, per
-the operator's ruling of 2026-08-05: the loop taxonomy reaches loop 1 and above, and
+composition is not a loop and does not file under a `Loops/` directory, which is what
+the ruling settles. It was written as `load-unload-path`, archived 2026-08-23 once
+`weaver-harness-Spec` carried its rules directly. Per the operator's ruling of
+2026-08-05: the loop taxonomy reaches loop 1 and above, and
 the bracket the loops run inside is the harness's mechanism rather than a member of
 the taxonomy.
 
@@ -136,7 +138,7 @@ Those are settled by the seam and floor-link records, which do not read the
 directory. Nesting says which crate holds the domain, and its purpose is that
 someone who knows where a crate lives can find its documentation without a search.
 
-**The floor does not nest.** Which crates are floor is `WeaverTools-PRD` section 5.1's
+**The floor does not nest.** Which crates are floor is `weaver-agents-PRD` section 5.1's
 to say and not this document's, per section 8. What belongs here is where they sit:
 a floor crate is placed at the top of the crate tree rather than under a domain root.
 Filing one under a root would make every other root reach through that root's subtree
@@ -191,7 +193,7 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
-**axiom.** One of the apex's five invariants, declared by `WeaverTools-PRD` at the
+**axiom.** One of the apex's five invariants, declared by `weaver-agents-PRD` at the
 subsection that states it. An axiom is not a claim about a crate and binds no code
 directly. It is what a claim can be grounded in, so a query can ask which claims serve
 an invariant and which invariant a claim serves. There are five and the set is closed: a

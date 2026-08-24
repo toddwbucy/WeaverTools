@@ -1,5 +1,10 @@
 # HANDOFF 2026-08-10, the harness half of the turn
 
+**Status:** ARCHIVED 2026-08-23. Addressed to the session that opened the harness
+lane, and that lane is built. Its base pin `b1eae43` is far behind `main`, so what it
+says about where the work sits is a description of a tree that no longer exists.
+Nothing cites it.
+
 Version: v0.1, 2026-08-10. From the authoring seat at the close of the seam
 service act to the session that opens the harness lane. This is neither a batch
 nor a commission under Handoff Format v0.3: no documents are commissioned and no

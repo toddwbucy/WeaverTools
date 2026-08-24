@@ -1,6 +1,13 @@
 # Tool Egress Boundary
 
-**Status:** DRAFT v0.5, 2026-08-17. The ratified loop boundary of 2026-08-11
+**Status:** ARCHIVED 2026-08-23. Its conclusions are absorbed into
+`weaver-gate-PRD` section 8 - the compromise distinction, the boundary-not-containment
+reading, and the injection placement - and everything else it argued is stated in the
+apex, the gate charter, or the contracts. Kept rather than deleted because it is the
+only place those three were **argued** rather than stated, and the argument is worth
+reaching when one of them is questioned. Nothing depends on it for a decision.
+
+Previously: DRAFT v0.5, 2026-08-17. The ratified loop boundary of 2026-08-11
 refiles the internal tool: internal to the agent and external to the reasoning
 loop, per `finding-loop-agent-split` and issue #115, and section 2's bash
 sentence takes it, and the portless-tool classification is applied
@@ -26,7 +33,7 @@ registered-application form follows from invariant 5.1 and no arm is left to wei
 
 **Date filed:** 2026-08-07
 **Document ID:** `tool-egress-boundary-frame`
-**Parent:** `WeaverTools-PRD`
+**Parent:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
 
 ---
@@ -323,6 +330,11 @@ since a socket file outliving its tool is the squatting case arriving without an
 adversary. The gate's own predicate is the precedent for the first and
 `weaver-gate-Spec` is where the same questions were answered for the world-opened
 socket.
+
+**The three are the charter's as of 2026-08-23, and this section reads out rather
+than states them.** `weaver-gate-PRD` names them as the tool-seam contract's own and
+records the demand. This frame argued them and settles nothing, so where it and the
+charter differ the charter governs and this section is the defect.
 
 ## 8. Scope, and the line it holds
 

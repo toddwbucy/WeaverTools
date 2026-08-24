@@ -100,13 +100,20 @@ residual rather than the class the claim would need.
 
 ## What these documents are
 
-**One paper per crate, plus five that belong to no crate.** A crate paper answers
+**One paper per crate, plus six that belong to no crate**, and the directories
+carry the boundary: `weaver-agents/` for the domain, `consumers/` for what reaches
+an agent only across a contract, and the seam itself at the top. A crate paper answers
 what one crate is, what it owns, which seams it holds, how its primary operation
 works, what it refuses, and what it has not built.
 
-**They describe and decide nothing.** Every page is read out of the merged corpus
-under `docs/`, which is the authority on every claim any of them makes. **Where a
-paper and its source disagree, the paper is the defect** and the source stands.
+**The papers describe and decide nothing.** Every paper is read out of the merged
+corpus, which is the authority on every claim it makes. **Where a paper and its
+source disagree, the paper is the defect** and the source stands.
+
+**One document here is not a paper.** `weaver-agents/weaver-agents-PRD.md` is the
+domain's charter. It decides, the papers beside it read it out, and the fixed status
+line above belongs to the papers rather than to it. It sits in the domain's directory
+because that is what it governs.
 
 **No page restates a contract.** The contracts page is the single site for a
 contract read-out here, so a crate paper names its seams and links rather than
@@ -122,7 +129,7 @@ voices that can drift apart.
   under `docs/`. These pages read that set back for a reader and are governed by
   it, not members of it.
 - **Not a tutorial.** There is no getting-started path here, and the worked
-  examples a builder would most want are named as owed rather than supplied.
+  examples a builder would most want are still missing.
 - **Not finished.** See the state below.
 
 ## Four ways in
@@ -139,29 +146,29 @@ fits neither definition and is described rather than resolved.
 program's entire public surface, written for an outside consumer and for nothing
 else. Nothing else on this site is a surface you build against.
 
-**To write a loop**, read [The loop](loop.md) first. It is where an operator's
-judgment enters a turn, and it is the surface with the shortest turnaround: an edit
-runs on the next crossing. Then read the contracts for the seams the seat's calls
-cross.
+**To write a loop**, read [The loop](weaver-agents/loop.md) first. It is where an
+operator's judgment enters a turn, and it is the surface with the shortest turnaround:
+an edit runs on the next crossing. Then read the contracts for the seams the seat's
+calls cross.
 
-**To add something the program does not have yet** - a shape on a seam, a tool the
-trait set does not describe, a whole organ - read
-[Extending the program](extending.md). The floor is deliberately thin and grows by
-a ritual that carries a change to every affected document in one act, which is the
-part worth knowing before you start rather than after.
+**To add something the program does not have yet** - a shape on a seam, a tool the trait
+set does not describe, a whole organ - read [Extending the
+program](weaver-agents/extending.md). The floor is deliberately thin, a shape
+crosses a seam only if both sides name it at compile time, and the page is explicit
+about where the framework's requirements stop and your own practice begins.
 
 ## The state of this set today
 
-**Fourteen pages beside this one. Five are drafted and nine are structure only.**
+**Fifteen pages beside this one. Six are drafted and nine are structure only.**
 
-[The index](index.md), [Contracts](contracts.md), [The loop](loop.md),
-[Extending the program](extending.md), and [The Jacobian lens](jacobian-lens.md)
-carry their prose. The nine crate papers
-carry the six-section spine, the sources each
-section will be read out of, and the facts already checkable - each crate's seams
-with their tags, and what that crate is known today not to have built. Their
-sections say **Not drafted** where prose is owed, which is 54 sections at this
-commit.
+[The index](index.md), [Contracts](contracts.md), [The loop](weaver-agents/loop.md),
+[Extending the program](weaver-agents/extending.md), [The Jacobian
+lens](consumers/jacobian-lens.md), and [The calculator](consumers/calculator.md)
+carry their prose. The nine crate papers carry the
+six-section spine, the sources each section will be read out of, and the facts already
+checkable - each crate's seams with their tags, and what that crate is known today not
+to have built. Their sections say **Not drafted** where prose is owed, which is 54
+sections at this commit.
 
 That is stated as a number rather than softened, on the same principle the crate
 papers themselves follow: a reader looking for the holes should not have to infer
@@ -172,7 +179,7 @@ page carries `commit: unreleased` rather than a hash, because the application is
 moving target and **a hash that looks authoritative and is not is worse than an empty
 field** - two months on, no reader could tell which pages were verified against a
 tree and which were stamped in passing. The field is held rather than dropped so the
-template stays whole, and it is filled for real in one act at release, against the
+template stays whole, and it is filled for real at release, against the
 public release the documentation is tied to.
 
 ## A note on this file and the index

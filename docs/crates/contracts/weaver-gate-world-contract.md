@@ -30,7 +30,7 @@ drawing nothing from `weaver-trace`, the identifiers being the floor's and the
 record's users rather than its fields, and adds no draw, neither being a vocabulary
 definition.
 **Document ID:** `weaver-gate-world-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---

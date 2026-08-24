@@ -52,7 +52,7 @@ earlier wording assumed a standing admin and the recut of 2026-08-05 removed
 that premise, so the clause asked for something a per-invocation party cannot
 know. Section 3's supplies list renames with it.
 **Document ID:** `weaver-admin-harness-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---
@@ -631,7 +631,7 @@ reader of an earlier revision can tell a closed item from one that was never the
 - `weaver-harness-PRD`. The harness opens exchanges, and the alert emit point is not
   designed on the assumption that the record is its only sink. Landed in section 4,
   beside the seam table the clause describes.
-- `WeaverTools-PRD`. The organ definition, its two properties, and the harness as hub
+- `weaver-agents-PRD`. The organ definition, its two properties, and the harness as hub
   rather than spoke. Landed as invariant 5.4, taken early as a named exception to
   Working Process section 7 and recorded as such in apex section 5. This is the one
   item on this list that was registered and not applied under the apex rule, and the
@@ -645,6 +645,6 @@ reader of an earlier revision can tell a closed item from one that was never the
 - `weaver-harness-PRD` section 2. The interrupt's citation.
 - `weaver-trace-PRD` section 3.1 and `weaver-harness-trace-contract` section 3. The
   `turn.closed` payload states its close kind.
-- The `WeaverTools-PRD` correction list, deposited at review rather than by this
+- The `weaver-agents-PRD` correction list, deposited at review rather than by this
   act and cited by substance rather than position: the gate binds no network socket,
   restated at the apex re-authoring.

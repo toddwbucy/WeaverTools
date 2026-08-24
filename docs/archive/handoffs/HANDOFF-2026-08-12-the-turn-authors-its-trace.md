@@ -1,5 +1,11 @@
 # HANDOFF 2026-08-12, the turn authors its trace
 
+**Status:** ARCHIVED 2026-08-23. Addressed to the session that picked up after the
+harness half, and the turn authors its trace today. Its base pin `83baa5c` is far
+behind `main`. The two assertions it named as waiting, `spu-one-forward-per-prompt`
+and `spu-two-taps-one-shape`, are tracked in the report's appendix B rather than here,
+and the second closed 2026-08-22. Nothing cites it.
+
 Version: v0.1, 2026-08-12. From the authoring seat at the close of the harness
 half to the session that picks the work up. This is neither a batch nor a
 commission under Handoff Format v0.3: no documents are commissioned and no edits
