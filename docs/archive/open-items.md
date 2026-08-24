@@ -1,6 +1,6 @@
 # Open items
 
-**Status:** ARCHIVED 2026-08-24. Nine items, verified one by one on that date: five
+**Status:** ARCHIVED 2026-08-24. Nine items, verified one by one on that date: four
 were done, two had stopped being relevant, and three were live and became issues #309,
 #310, and #311. Those issues carry their own evidence rather than citing this file,
 because **this document was never tracked in git** and has no history to cite.
@@ -97,16 +97,16 @@ to land corrections after a crate branch rather than beside it.
    structural decision. The entry below is struck rather than deleted so a reader
    of an earlier copy can tell a relocated ruling from one withdrawn.
 
-   **`tool-trait` is drawn by no vocabulary clause and is blocked rather than cheap.**
+   ~~**`tool-trait` is drawn by no vocabulary clause and is blocked rather than cheap.**
    G4 makes the union of every clause the floor's required surface, and a definition no
    clause names unused. `tool-trait` is the one floor definition with no candidate
-   consumer, because tool dispatch is harness-internal and no seam crosses it.
+   consumer, because tool dispatch is harness-internal and no seam crosses it.~~
 
-   Filed earlier as cheap to settle while the remaining charters were written, and
+   ~~Filed earlier as cheap to settle while the remaining charters were written, and
    reclassified 2026-07-29. Tool-call protocol depends on the workflow and the workflow
    depends on organs that do not exist, so this waits on `weaver-spu` and
    `weaver-admin`. Do not settle it and do not open it. It cannot fail before phase
-   close by G4's own terms.
+   close by G4's own terms.~~
 
 3. **The two external-boundary contracts declare no `draws` edges at all.**
    Found by the audit the gate act's review provoked, 2026-08-02.
