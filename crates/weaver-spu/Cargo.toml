@@ -41,8 +41,15 @@ path = "src/bin/classify.rs"
 required-features = ["cuda"]
 
 [features]
-default = []
-# Each gate names what it buys, per Spec section 1.1. A build with neither
+# **gguf carries the default and cuda does not**, per Spec section 1.1. The
+# pair's older reason, that a build with neither keeps the family surface
+# testable on a machine with no device, covers cuda and never covered this
+# one: llama.cpp builds and runs on the host, so gating it hid twenty-eight
+# tests from the workspace command and bought nothing the reason named. The
+# cost it does carry is that a workspace build compiles llama.cpp and needs
+# that toolchain.
+default = ["gguf"]
+# Each gate names what it buys, per Spec section 1.1. A build without cuda
 # compiles the channels, the residency bookkeeping, and the family libraries,
 # which is what keeps the family surface testable on a machine with no device.
 cuda = [
