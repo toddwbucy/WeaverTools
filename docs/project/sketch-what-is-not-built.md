@@ -147,15 +147,18 @@ down, not in what is built.
   system node. Document Format section 3 requires them to name the same thing and
   makes the header the defect. It closes when the domain level lands in the graph,
   which is the same act as the entry below rather than a second one.
-- **Two settled rulings are unhoused, both now recorded and neither governing.** The
-  loop taxonomy of 2026-08-23 is at `sketch-the-loop-taxonomy` and the two use cases
-  are at `sketch-the-two-use-cases`, filed 2026-08-24. Both are sketches that decide
-  nothing rather than documents that govern, so recording them narrowed the entry
-  without closing it. Both are architecture rather than proposals, and where each
-  lands is the same question as the entry below: a domain ruling belongs in
-  `weaver-agents-PRD` and a statement of what the program is for belongs at a suite
-  level that has no document. **What closes this is the promotion rather than a third
-  sketch.**
+- **The taxonomy's promotion is underway and half of it has landed.** The operator's
+  ruling of 2026-08-24 splits it by what each document governs. The binding kinds
+  govern now: the apex's section 6 declares serving and diagnostic at the load, and
+  the declaration crosses the enter in `weaver-admin-harness-contract`, acts of
+  2026-08-24 with the owed Spec assertion records named in the apex's own revision
+  entry. **The loop class still governs nowhere** - the passive-reader membership
+  test, the certification split, and the mechanic-motive line wait for
+  `weaver-diagnostic-PRD` once the seam papers exist, and until then
+  `sketch-the-loop-taxonomy` is their only record. The two use cases remain at
+  `sketch-the-two-use-cases`, a sketch that decides nothing, and where they land is
+  the entry below: a statement of what the program is for belongs at a suite level
+  that has no document.
 - **G2's transport silence has no stated scope, and the first case it meets is one it
   gets wrong.** The rule says a contract naming a path, a descriptor, a socket type, or
   a flag has taken a Spec's material. `weaver-admin-systemd-contract` names a Unix
