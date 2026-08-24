@@ -61,9 +61,10 @@ other door.
 
 **Where the door stands is the program's, and who may pass is the
 operator's.** The instruction declares the access rule - the operator's
-election - and the program supplies the socket path, inside the unit's runtime
-directory, which the service manager creates at start and destroys with the
-unit. A socket pathname outlives the process that bound it, so a name chosen
+election - and the engine supplies the endpoint in the raise directive, this
+crate binding it: a path inside the unit's runtime directory, which the
+service manager creates at start and destroys with the unit. Each party names
+what only it can know. A socket pathname outlives the process that bound it, so a name chosen
 anywhere else survives its worker and refuses the next load with a stale
 file. Placing it where nothing can outlive the unit makes the hazard
 unreachable rather than checked for.
@@ -166,12 +167,16 @@ raise, are the whole of the surface area. Nothing chartered nothing opens.
   identity and not a tool, so a contract that does not close the mapping
   authenticates a user and admits an application it never checked.
 - **The dialing direction does not authenticate symmetrically, and closing
-  that is the contract's demand.** Where this crate accepts, the kernel
-  reports the dialing peer. Where this crate dials, the kernel reports the
-  credentials captured at the listener - verified against a live kernel
-  rather than read off a manual page - so a tool that listens under one
-  identity and drops to another presents the pre-drop identity, and the
-  check cannot by itself confirm the peer is the registered tool.
+  that is the contract's demand.** The mechanism is Linux's peer-credential
+  option on local sockets, and its two directions differ: where this crate
+  accepts, the kernel reports the connecting peer's own credentials - where
+  this crate dials, it reports the credentials captured when the far side
+  called listen, before any identity drop that followed. Verified against a
+  live kernel rather than read off a manual page. So a tool that listens
+  under one identity and drops to its provisioned one presents the pre-drop
+  identity, and the check cannot by itself confirm the peer is the
+  registered tool. A regression test pinning the pre-drop behavior is the
+  code's to add and is not in the tree.
 - **That seam's fault cases are unenumerated on purpose.** A registered tool
   unreachable or a dial refused are faults this crate will raise, and a case
   set written against a guess is the thing the fault enumeration refuses
