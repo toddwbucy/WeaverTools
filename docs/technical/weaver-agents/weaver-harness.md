@@ -127,9 +127,9 @@ history every turn, and the prior program measured one exploration turn
 climbing from 5,988 to 24,932 prompt tokens on that path. The generation
 returns with its measurement and the harness authors the boundary events.
 When the tool workflow lands its exchange, a tool call will cross toward the
-gate as a new direction on the boundary seam - the tool the gate's peer, not
-this crate's - and until then that direction is chartered, not running, per
-the last section.
+gate as a new direction on the boundary seam - the tool is the gate's peer by
+charter, not this crate's - and until then that direction is chartered, not
+running, per the last section.
 
 **The lifecycle fan-out.** Admin holds one seam and no channel to any organ,
 so the harness fans the enter and leave directives out along its own seams,
