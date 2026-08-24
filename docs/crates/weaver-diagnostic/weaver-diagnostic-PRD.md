@@ -8,7 +8,9 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 records the landing and corrects its own account of the declaring side: the
 seam edge is declared here, from the initiating side, per the pattern the
 harness-state seam set, and not by state as the paragraph first said. The
-owed list narrows to the driver, its Spec, and the null replay.
+owed list narrows to the driver, its Spec, and the null replay. The
+serving-binding refusal is restated in the papers' terms, the door's absence
+rather than a refusal at a seam that does not stand.
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-diagnostic-PRD`
 **Parent:** the WeaverTools suite, whose governing document is deliberately
@@ -186,10 +188,14 @@ principal, over the operator's own storage. The trace parser belongs to this
 crate, outside the agent. `weaver-state` never opens a trace file and
 `weaver-trace` keeps its write-only pin.
 
-**The refusal at the seam rests on the binding's declaration.** State learns
-the kind at its standing, from the party that stands it, which resolved the
-kind at inventory. A preload directive arriving at a serving binding's state
-member is refused at the seam, before any content crosses.
+**The refusal rests on the binding's declaration, and its form is the door's
+absence.** State learns the kind at its standing, from the party that stands
+it, which resolved the kind at inventory, and binds the preload name only
+under a diagnostic binding. A driver pointed at a serving agent therefore
+finds nothing to dial, per the contract: no directive arrives to be refused,
+because the seam it would cross does not stand. An earlier form of this
+paragraph described a refusal at the seam, which the landed papers made
+structural instead.
 
 Open cells, each named rather than implied:
 

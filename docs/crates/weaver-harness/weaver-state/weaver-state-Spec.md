@@ -8,7 +8,9 @@ path for both doors, which is the indistinguishability claim made
 structural, a kind-conditioned standing, and an inverted credential
 judgment. Two perturbation assertions land, the door's conditional standing
 and the wrong-peer refusal, and the name's route to the member is elected
-in the code act per section 2's own pattern.
+in the code act per section 2's own pattern. The preload opener's
+retirement makes the shared path idempotent at the preload grain, the
+delete hanging on that opener alone.
 
 **Revised:** 2026-08-20, custody answers within its session. Section 4
 gains the serve restriction: every read bounds to the session the
@@ -256,7 +258,15 @@ door does, and that is the mechanism of the contract's indistinguishability
 claim.** A distillate arriving on the preload channel parses, transacts, and
 lands exactly as one arriving from the tee, one code path and one store, so
 nothing marks how a holding arrived and the serve restriction binds to the
-preload opener's session the way it binds to the harness opener's. What is
+preload opener's session the way it binds to the harness opener's. **The one
+act the preload path adds is the opener's retirement**: receiving the
+preload election deletes the declared session's event and field rows in the
+same transaction that records the opener, before any distillate lands, per
+the contract's section 2. The path is thereby idempotent at the preload
+grain - re-running it replaces the session's holdings rather than appending
+to them - and a dead driver's prefix needs no cleanup act, the next opener
+being the cleanup. The first door's path performs no retirement and gains no
+branch: the delete hangs on the preload opener alone. What is
 new is the door's standing and its judgment, and both are conditioned facts:
 the member binds the preload name only where the party that stands it names
 one, and that party names it only under a diagnostic binding, holding the

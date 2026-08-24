@@ -7,7 +7,9 @@ door, per the operator's ruling of this date and the taxonomy promotion:
 `weaver-diagnostic-state-contract`, standing only under a diagnostic binding,
 admitting the operator principal and refusing the agent, carrying the first
 door's distillate shapes drawn rather than redefined. Section 5's
-who-else-may-ask cell is unchanged, the driver never asking. Every party to
+who-else-may-ask cell is unchanged, the driver never asking. The opener
+retires the declared session's prior holdings, so a retry replaces rather
+than doubles. Every party to
 the new contract merges in this act.
 
 **Revised:** 2026-08-19, second of this date, the election reaches the
@@ -146,9 +148,13 @@ credential, and the door itself does not exist under a serving binding, so
 the serving membrane of `weaver-agents-PRD` section 0 is untouched. No ask
 crosses it, ever: the driver is a sender and never an asker, so section 5's
 who-else-may-ask cell keeps its answer, the serve direction having exactly
-the two ends it had. The loss clause below covers the new door without
-amendment, the preload being rebuildable from the record more directly than
-any holding the tee fed.
+the two ends it had. The door's opener retires the declared session's prior
+holdings in the same transaction, per the contract's section 2, so a preload
+lands against empty whatever stood, and a retry after a dead driver is a
+replacement rather than a double - the recovery invariant stated before the
+loss clause leans on it. With that in place the loss clause below covers the
+new door without amendment, the preload being rebuildable from the record
+more directly than any holding the tee fed.
 
 The nesting under `weaver-harness` carries domain membership and nothing else,
 per apex section 5.4: nesting is never process topology, and this member

@@ -112,9 +112,18 @@ confirmation whose one reader would discard it is the retired receipt's
 error, the same on this door as on the first.
 
 **The channel's close ends the preload.** One standing, one preload, and the
-driver owes at most one per standing of the member: custody keeps what
-arrives and holds it total within the session, so a second preload onto the
-same standing would double the holdings, which nothing licenses.
+driver owes at most one per standing of the member.
+
+**The opener retires the declared session's prior holdings, in the same
+transaction that records it.** A preload therefore lands against empty and
+never beside anything, whatever the store held for that session, a whole
+earlier preload or a dead driver's prefix. That is what makes a retry a
+replacement rather than a double, and it is the record re-asserting itself
+rather than custodial judgment: the preload is the session's account
+projected from the authoritative record, so what it replaces was at best an
+older projection of the same authority. The retirement is this door's
+opener's and no other traffic performs it - the first door never retires
+anything, per its own contract.
 
 **Completeness is not this seam's judgment.** The record is the authority on
 what a whole preload would have carried, and whether the holdings match it is
@@ -163,8 +172,11 @@ direction still has exactly the two ends it had.
 **A dead driver costs the preload and never the holdings.** A distillate
 lands whole or not at all, per `weaver-state-Spec` section 4's transaction,
 so a driver dying mid-stream leaves a clean prefix and no corruption. The
-next standing of the member takes a fresh preload, and what became of the
-partial one is the certification's to notice.
+recovery is the next preload's opener, which retires the prefix with
+everything else the session held, per section 2, so no cleanup act exists
+between the death and the retry and none is needed. What became of the
+partial one is the certification's to notice, and it notices nothing once a
+whole preload has replaced it.
 
 **A malformed distillate is the sender's defect**, dropped whole without
 closing anything, exactly as the first door drops it.
