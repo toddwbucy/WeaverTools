@@ -177,9 +177,8 @@ down, not in what is built.
   and a document that pins them early costs more to unwind than it saves. The entry
   stays in this register as a state rather than a defect, and what would close it is
   the scope settling rather than someone writing the page. What follows below is
-  therefore context and not an owed edit: The document that carried that name governs
-  the
-  weaver-agents domain, corrected 2026-08-23. Crates outside the agent boundary,
+  therefore context and not an owed edit: the document that carried that name governs
+  the weaver-agents domain, corrected 2026-08-23. Crates outside the agent boundary,
   `weaver-web` and `weaver-diagnostic`, parent to the suite and refine nothing that
   is written. Naming the gap is the honest form until a second consumer makes the
   suite-level claims obvious enough to state from evidence.

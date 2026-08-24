@@ -59,11 +59,19 @@ the agent gets more state.
 
 ## 3. Use case one: the proto-stateful agent
 
-A proto-stateful agent carries no state outside its prompt. What looks like memory
-is a working structure rebuilt from scratch on every turn and recomputed through the
-decoder each time. This describes very nearly everything deployed on the internet
-right now, and it describes what WeaverTools currently holds, which is the
-weaver-agents domain.
+A proto-stateful agent holds real state within a session and none across sessions,
+per `weaver-agents-PRD` section 2. Two things persist across turns inside a session,
+the working structure the agent reasons over and the hot KV cache, and what the agent
+begins each session without is accumulated experience: no memory substrate of any
+kind, which is the whole of what this program defers. That is what WeaverTools
+currently holds, which is the weaver-agents domain.
+
+**The agents deployed on the internet right now are the narrower thing.** They carry
+no state outside the prompt, and what looks like memory is rebuilt from scratch every
+turn and recomputed through the decoder each time. An earlier vocabulary called our
+own stage stateless as well, which the ruling of 2026-08-01 retired as an
+overstatement. The distinction earns its place here because use case one is about
+standing in for that narrower behavior rather than about sharing it.
 
 Nothing in the architecture prevents this from being reproduced faithfully. The loop
 decides what the prompt contains at each position, so a loop written to discard the
@@ -201,7 +209,8 @@ document set, and section 7 opens it as a cell rather than asserting it.
 
 ## 7. Open cells
 
-Each awaits a measurement rather than an argument.
+Each awaits a measurement rather than an argument, with one exception kept at the
+end: the documentation cell is answered, and it stays as the record of the question.
 
 **Seam relocatability.** Whether the named contracts are sufficient for an organ to
 move across a process or host boundary without change above the contract. The
