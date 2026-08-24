@@ -226,7 +226,7 @@ a contract, which is this gate's own case read one level finer.
 separately.** A custody obligation genuinely belongs in a contract, so the gate reads
 clean on the question it was written to ask and the defect passes. What is at the
 wrong level is the wording: **"sets close-on-exec at the fork" names a flag where
-"does not permit a forked child to inherit the handle" names the obligation.** The
+"does not permit a child process to inherit the handle" names the obligation.** The
 obligation survives a change of substrate. The flag does not.
 
 **The test is mechanical.** Read the clause with the substrate removed. If nothing is

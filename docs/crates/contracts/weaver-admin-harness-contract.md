@@ -33,7 +33,7 @@ creating party inverts: the harness binds the coordination socket inside the age
 sandbox as its first act and admin dials in, one connection per verb, so the channel
 authenticates by credential at the harness's accept, root or refused, apex 5.1's
 first case where the earlier form argued the second. The init system carries no
-descriptor, admin is per-invocation with no standing end, and the
+handle, admin is per-invocation with no standing end, and the
 connection-lifetime rule restates against the listener. Section 5 gains the
 harness's refusal guarantee, section 6 its case, and section 8's possession
 negative inverts to a `peer-identity` draw.
@@ -141,7 +141,7 @@ per `weaver-admin-PRD` sections 1 and 7, so each verb's invocation connects to t
 socket the worker holds, is served, and closes with the verb. The bind is the
 worker's first act and the dial may arrive before it, so the dialing party retries
 within a bound the Spec states, and a bound exceeded is a refusal of the verb
-rather than a wait without end. The init system carries no descriptor and holds no
+rather than a wait without end. The init system carries no handle and holds no
 end, in transit or otherwise: it starts the unit and that is the whole of its part.
 
 **The credential is this seam's authentication, per apex 5.1's first case.** The
@@ -186,13 +186,14 @@ is the Spec's.**
 **On this seam the non-inheritance obligation of `weaver-organ-channel` section 2
 lands on the trace sink and on this channel's own end.** The property rides the handle
 rather than the thing it opens, so **a receiver that does not ask for it at the moment
-of receipt accepts a handle its children will inherit**, and every subprocess a tool
+of receipt accepts a handle its children will inherit**, and every child process a tool
 call spawns from that point holds a writable
 handle to the trace. Admin can open the file correctly and still lose the property at
 the receive, so the obligation is the receiver's in section 5 rather than
-the sender's. This channel's own descriptors are the simple case since the
+the sender's. This channel's own handles are the simple case since the
 inversion: the listener and every accepted connection are created after the
-worker's last exec with the flag asked for in the creating and accepting calls,
+worker's last image replacement with the flag asked for in the creating and accepting
+calls,
 so no set-again ordering exists on the worker's side, and admin's dialing end is
 flagged at its connect and dies with the verb.
 
@@ -208,7 +209,7 @@ second dial waiting at the listener rather than being answered concurrently.
 Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
-session identity, the run reference, the trace descriptor, the
+session identity, the run reference, the trace sink handle, the
 SPU instruction, the gate instruction, and the state election the tee applies. The
 last three are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU, the gate,
@@ -263,13 +264,13 @@ closes when the organs that can raise a fault have charters naming what they rai
 and the first of those is `weaver-spu-PRD`. This document binds nothing of it, the
 shape now being the event kind's, per `weaver-trace-PRD` section 3.1.
 
-**The trace descriptor crosses once, in the enter exchange.** It is not re-sent, not
-revoked, and not replaced. A harness that needs a descriptor it was not given has a
+**The trace sink handle crosses once, in the enter exchange.** It is not re-sent, not
+revoked, and not replaced. A harness that needs a handle it was not given has a
 failed load rather than a second request to make, because there is no exchange in
 which it asks for one.
 
 **No exchange carries a path.** Admin sends handles and the harness never learns a
-name, which is the descriptor discipline of `weaver-harness-PRD` section 5 stated as
+name, which is the handle discipline of `weaver-harness-PRD` section 5 stated as
 an obligation on the party that could break it.
 
 **No exchange carries work,** in any form and under any framing, in either direction.
@@ -303,12 +304,12 @@ this list.
 
 **Admin supplies** the session identity and the run reference for the run being
 entered, the
-trace descriptor, the SPU instruction the fan-out admits,
+trace sink handle, the SPU instruction the fan-out admits,
 the gate instruction the fan-out starts, the state election the tee applies,
 resolved to the ruled default where the declaration is silent, and the intent
 to stop.
 
-**Admin guarantees** that the trace descriptor it passes refers to the sink the
+**Admin guarantees** that the trace sink handle it passes refers to the sink the
 session's configuration declares, that the run reference distinguishes this run
 from every other run of that session, distinctness being the guarantee rather
 than any particular rendering of it and the session possibly spanning agents,
@@ -326,7 +327,7 @@ accept, before any byte is read, and that a peer that is not root is refused, pe
 section 2. It guarantees that every handle it accepts is accepted withheld from its
 children, per section 2, **which is an obligation on the receiving call and cannot be
 met by the sender.** It guarantees that it authors the run's bracket
-events, that it writes only through the descriptor it was handed, that it resolves no
+events, that it writes only through the handle it was handed, that it resolves no
 path, and that a ready answer is given only after a standing working structure, an
 admitted model, and a started gate. It guarantees that a refusal names where the
 fan-out stopped, so that admin rolls back on the answer alone. It guarantees that a
@@ -335,8 +336,8 @@ fault-carrier ruling, and that no run blocks on anything downstream of the
 emission. It guarantees that a stop answer follows the close event it reports, so
 the record holds the abort before the channel does.
 
-**Close-on-exec is the receiver's, and only the receiver can supply it.** The flag
-rides the descriptor rather than the open file description, so it does not cross with
+**Non-inheritance is the receiver's, and only the receiver can supply it.** The flag
+rides the handle rather than the open file description, so it does not cross with
 a passed handle and the receiving call is the one place it exists. It is a behavior
 rather than a type property on the receive path, so it takes the perturbation-verified
 test apex section 11 asks for rather than a compile-time pin. What can be pinned is
@@ -354,7 +355,7 @@ ask, because admin answers nothing. The cases:
 
 - the dialing peer's credential is not root, and the connection is refused at the
   accept before any exchange opens
-- the descriptor is absent, unusable, or does not carry the required flags
+- the handle is absent, unusable, or does not carry the required flags
 - an organ the enter fans out to refused, and the refusal names which organ and
   carries its reason, so the aggregate answer is one refusal rather than a report to
   parse
@@ -611,7 +612,7 @@ section 11's register.
 
 - `weaver-admin-PRD`. The seam is bilateral and the charter says so. That is a
   statement about admin being an organ rather than a statement about alerts.
-- `weaver-admin-PRD` section 10. The descriptor cell is unchanged in count, because one
+- `weaver-admin-PRD` section 10. The handle cell is unchanged in count, because one
   pair still carries the seam, and unchanged in its exit condition.
 - The G4 union grew from three values to five with the duplex rewrite of this
   contract, which drew `organ-envelope` and `harness-alert` where the simplex form
@@ -647,7 +648,7 @@ reader of an earlier revision can tell a closed item from one that was never the
 2026-07-31 carried every party in one act:
 
 - `weaver-admin-PRD` sections 3, 4.1, and 8. The activity-control split, the
-  descriptor payload at load, and the operator surface's stop conveyance.
+  handle payload at load, and the operator surface's stop conveyance.
 - `weaver-harness-PRD` section 2. The interrupt's citation.
 - `weaver-trace-PRD` section 3.1 and `weaver-harness-trace-contract` section 3. The
   `turn.closed` payload states its close kind.

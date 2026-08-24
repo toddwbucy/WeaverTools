@@ -49,7 +49,7 @@ contract is done.
 
 - **`weaver-harness`, the author.** Sole producer of trace content. Decides what is
   worth recording, when a session begins and ends, and what a turn is. Holds every
-  descriptor.
+  handle.
 - **`weaver-trace`, the recorder.** Assigns ordering, produces canonical form,
   holds the working structure, and hands the same rendering to the outbound
   stream. Holds no policy and decides nothing about content.
@@ -235,7 +235,7 @@ wall-clock is session-wide and is the calendar, monotonic is run-scoped and is t
 microsecond instrument. No field is ever read for the one job it cannot do.
 
 **Descriptors, never paths.** Every write target is supplied as an already-open
-descriptor, obtained from `weaver-admin` in the enter directive. The harness never
+handle, obtained from `weaver-admin` in the enter directive. The harness never
 asks the recorder to open a path, and the recorder offers no way to.
 
 **Everything authored, and no filtering at either end.** The harness submits every
@@ -349,7 +349,7 @@ failure and stays one, under commit failed.
   event, one side of the fan-out failing against the other. **The recorder owns
   the resolution:** fail loudly. It must never continue against a silently stale
   present, and there is no record to rebuild from since the cut of 2026-08-01.
-- **Write target unusable.** A descriptor is closed, is not writable, or does not
+- **Write target unusable.** A handle is closed, is not writable, or does not
   satisfy the required flags.
 
 Three entries left this vocabulary with the cut of 2026-08-01, unload divergence,
@@ -368,7 +368,7 @@ custody boundary, and its existence is the defect regardless of who calls it.
 
 **The harness may not reach the sink directly.** It writes through the recorder
 and reads through the working structure. It does not open, seek, or inspect what
-stands behind the descriptor, and it holds no path with which it could.
+stands behind the handle, and it holds no path with which it could.
 
 **Neither may write a second authoritative representation.** Derived views are
 permitted when they name the committed source range they represent and do not claim
@@ -406,9 +406,10 @@ How each check is implemented is Spec work. What must be checkable is stated her
   structure holds, one rendering feeding both.
 - No write surface accepts a path. This is a compile-time property and is pinned as
   one, because a runtime test cannot demonstrate the absence of a function.
-- Every handle the harness holds is withheld from its children, established at the one
-  receive
-  site.
+- **The sink handle is withheld from the harness's children.** A handle the harness
+  receives gains that property at the receive site, which is the only place a receiver
+  can supply it. A handle the harness creates has it from creation. This seam supplies
+  the first case and `weaver-organ-channel` section 2 governs the second.
 - Commit pressure is surfaced as an event while the sink remains writable and is
   fatal when it is not. **The surfacing is the harness's authored `fault` and
   never a returned failure**, the submission it followed having landed.

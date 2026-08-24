@@ -116,8 +116,9 @@ with the metaphor has read the metaphor as a guarantee.
 ## 2. The channel's shape
 
 **This section is the process-boundary layer and it holds only where the channel
-crosses a process line.** A channel that crosses none has no descriptor to carry, no
-peer to authenticate, and no exec to survive, so it draws section 1 and none of this
+crosses a process line.** A channel that crosses none has no handle to carry, no
+peer to authenticate, and no image replacement to survive, so it draws section 1 and
+none of this
 one.
 
 **A connected pair, created by one party and reaching the other, that no third party
@@ -185,7 +186,7 @@ Everything specific to its seam, which is more than it sounds like.
 
 - Which party creates the pair, and how the far end reaches the process that holds it.
 - What the channel's lifetime is bound to, since the far process differs by organ.
-- Which descriptors may and may not accompany it across whatever crossing delivers it,
+- Which handles may and may not accompany it across whatever crossing delivers it,
   and which party carries that obligation.
 - The exchange list, and what each exchange means.
 - The ordering rules over those exchanges, including which is first, which is terminal,

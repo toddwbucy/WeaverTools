@@ -84,10 +84,10 @@ section 6.** This document names its parties and does not restate the edge.
 
 ## 1. The channel
 
-**An unnamed connected pair, created by the harness before the fork, beside
+**An unnamed connected pair, created by the harness before the child exists, beside
 the lifecycle and token pairs.** The classify process receives its end at its
-own fork, per `weaver-spu-PRD` section 15.3, and no other descriptor beyond
-what that section's exec carries. Possession authenticates, because a pair
+own child, per `weaver-spu-PRD` section 15.3, and no other handle beyond
+what that section's child carries. Possession authenticates, because a pair
 with no name has no second opener, and the channel lives exactly as long as
 the process at its far end.
 
@@ -97,9 +97,9 @@ so this contract carries no framing. Which socket type supplies the property
 is the Spec's election. This seam owes no hot-path measurement: its traffic
 is one ask and one whole answer, never a per-token stream.
 
-**Close-on-exec on both ends, by the split the corpus already runs.** The
+**Non-inheritance on both ends, by the split the corpus already runs.** The
 harness's end carries the flag from the pair's creation, and the classify
-process's end is set after its final exec, so nothing either side later
+process's end is set after its final image replacement, so nothing either side later
 spawns inherits a handle to this seam.
 
 **Closure is not an answer.** A closed channel with an exchange outstanding
