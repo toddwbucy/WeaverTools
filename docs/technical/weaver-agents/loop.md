@@ -2,7 +2,7 @@
 title: The loop
 summary: the operator surface - the seat's calls, the one crossing, and everything the framework refuses to decide
 version: v0.1
-date: 2026-08-22
+date: 2026-08-24
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -63,6 +63,22 @@ sits there being one sealed agent.
 builder-facing surfaces reach loop 1 and above and exclude loop 0, so loop 0 is the
 service that runs your loop and is never itself supplied through either surface.
 
+## The seat drives a serving binding
+
+An agent stands up under a binding, and the binding declares its kind at the load -
+**serving or diagnostic**, and nothing moves between them afterward. Everything on
+this page is the serving kind's: a serving binding stands up the whole interior,
+work enters from outside, and the seat is where your loop shapes what happens to
+it.
+
+**A diagnostic binding is the other kind, and it is not written against the seat.**
+It stands up the interior without the work ingress, replays a finished record, and
+its driver sits outside the agent, reading a trace the operator holds. Nobody puts
+a running agent into a diagnostic mode - an agent to be served and an agent to be
+replayed are two loads of the same weights, so the wrong arrangement is not
+guarded against but unrepresentable. The diagnostic loop gets its own page when
+its consumer exists, and this page will point at it.
+
 ## The seat is eight calls
 
 The seat is what a loop is written against. It is a set of ports the harness
@@ -82,7 +98,8 @@ grants, not a library the loop links, and it is small enough to list.
 **A discrepancy this page reports rather than settles.** The loop file's header
 says the seat offers exactly seven calls and lists seven. The connector exposes
 eight, `elide` having arrived with the elision port of 2026-08-22 without the header
-being recounted.
+being recounted. Rechecked 2026-08-24: both counts stand, so the discrepancy does
+too.
 
 The table above is drawn from the connector. **That is a report and not a ruling.**
 This site's rule is that where a paper and its source disagree the paper is the
@@ -140,6 +157,9 @@ The springs are where wires land. They are not everywhere.
   which is what proto-stateful means.
 - **No handle to the hot cache.** The loop elects the flush and never touches what
   the flush clears.
+- **No loop changes its binding's kind.** The kind was declared at the load this
+  loop is running under, and there is no verb to move it - a replay is a different
+  load, not a state this loop can reach.
 
 ## A miswired loop costs the project and not the board
 
@@ -183,3 +203,7 @@ compiled array.**
 - **The argument for where the loop's boundary falls** sits in the reasoning-loop
   formalism, which is on an open pull request rather than in the tree, so that
   citation resolves to nothing a reader holding this commit can open.
+- **The diagnostic loop's page.** The binding kind is chartered and the serving
+  side of the split is this page. The replay side - what drives it, what
+  certifies it, what an instrument is - is owed its own page when that work
+  lands, and is a sketch in the project space until then.
