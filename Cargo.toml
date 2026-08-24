@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/weaver-traits", "crates/weaver-types", "crates/weaver-trace", "crates/weaver-harness", "crates/weaver-internal", "crates/weaver-admin", "crates/weaver-spu", "crates/weaver-gate", "crates/weaver-state"]
+members = ["crates/weaver-traits", "crates/weaver-types", "crates/weaver-trace", "crates/weaver-harness", "crates/weaver-internal", "crates/weaver-admin", "crates/weaver-spu", "crates/weaver-gate", "crates/weaver-state", "crates/weaver-web"]
 
 [workspace.package]
 edition = "2024"
