@@ -125,10 +125,15 @@ against a family that declares no tap refuses at admit, because a load that
 grants an observability election it cannot honor fails at its cheapest moment
 or lies at its most expensive one.
 
-**A readout that changes the run.** An elected readout must be observational:
-the same declaration and the same seed produce the same token sequence with the
-election on and off, demonstrated before a tap ships. The bar exists because
-the mechanism most able to perturb - a scheduler callback on one of the two
+**Shipping a tap that changes the run.** This refusal is spent before release,
+not at admission: an elected readout must be observational - the same
+declaration and the same seed produce the same token sequence with the election
+on and off - and the demonstration is owed by the act that builds each tap,
+per tap and per engine, before it ships. Nothing re-evaluates neutrality at
+runtime, and it is not a second admission predicate: the family declaration
+above is the one runtime ground for refusing an election, and a family declares
+a tap only where this bar has been shown for it. The bar exists because the
+mechanism most able to perturb - a scheduler callback on one of the two
 engines - was the one the earliest wording did not forbid perturbing.
 
 **Any route to the record.** It authors no event and holds no descriptor to the
