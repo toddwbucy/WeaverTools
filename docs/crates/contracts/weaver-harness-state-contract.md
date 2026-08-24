@@ -10,8 +10,11 @@ the member stands with the preload door, whatever the door's transport is
 doing, so the loop never walks a prefix that looks whole and never answers
 before the driver has dialed. The parked ask steps out of the arrival
 order as section 2's stated exception, later asks passing it, answers
-naming the ask they answer, and a second replay ask parking beside the
-first refused as malformed. Its view is the seal's position rather than
+naming the ask they answer, and a second replay ask replacing the
+parked one, the first cleared unanswered, because the asker's bound
+expires invisibly to the custodian and the retry must not find the channel
+jammed by an ask nobody is waiting on. Its view is the seal's position
+rather than
 the ask's, the one exception to the pre-ask snapshot, stated at that
 clause. Section 2 shapes it, section 8 gains its
 conformance, and every
@@ -248,8 +251,15 @@ it, and the replay's answer follows the seal whenever that is, its view
 the seal's position, every distillate received through the seal in it. What keeps
 the pairing unambiguous without a correlation member is that every answer
 names the ask it answers, per the answer's own shape, and at most one
-replay ask parks per channel: a second replay ask arriving while one parks
-is malformed, dropped whole per section 5, the asker's bound converting it.
+replay ask parks per channel: **a second replay ask arriving while one
+parks replaces it**, the first cleared unanswered, the seal answering the
+newest alone. Replacement is the retry's whole mechanism, because the
+asker's bound is the asker's own and its expiry crosses this seam as
+nothing at all: the custodian cannot clear a parked ask on a fact it
+cannot see, so what clears one is the next ask or the channel's close, and
+an asker whose patience ran out retries by asking again rather than by any
+un-ask this seam does not carry. The cleared ask's answer is never owed,
+its asker's bound having already converted it to the missing answer.
 An asker that cannot tell a late replay answer from a prompt shape answer
 has not read the answer's name, and no further identity crosses the seam
 for it. On a member standing without the preload
@@ -349,7 +359,11 @@ a preload landed and sealed, the ask answered with every elected event in
 landing order, and the same ask observed waiting in all three unsealed
 states, before the dial, mid-stream, and after a sealless close, rather
 than answering over emptiness or a prefix, which is the perturbation
-its assertion in `weaver-state-Spec` section 4 watches.
+its assertion in `weaver-state-Spec` section 4 watches. The retry sequence
+is its own case: a parked ask outlived by its asker's bound, a second
+replay ask replacing it on the same channel, the seal landing, and the
+answer arriving once, for the newest ask alone, the replaced one cleared
+unanswered.
 
 The serve direction is testable against the living pair: a real load, real
 events landed, and the shape ask answered with exactly the runs and counts
