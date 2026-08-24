@@ -4,6 +4,14 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-24, the kind takes its shape. The enter fan-out's extent
+follows the match on `EnterBinding`: the serving case runs the whole walk and
+the diagnostic case ends it at the SPU's confirmation, forking no gate. The
+leave lowers the gate where one stands, the run state's arm answering, so the
+diagnostic run reuses the unwind's reading rather than gaining a rule. Per
+`weaver-agents-PRD` section 6 as amended this date and the contract act of
+the same date.
+
 **Revised:** 2026-08-22, fifth of this date, the lifecycle refusal is
 clerked. Section 6 gains the clause: an enter refused after its bracket
 stands is authored as a `refusal` into that run, which stays entered until
@@ -1145,7 +1153,28 @@ SPU's answer has confirmed residency, per `weaver-harness-gate-contract`
 section 1, then fork the gate binary and open the raise exchange carrying the
 gate instruction uninterpreted **and the socket this crate supplies beside
 it**, the gate last so no work arrives before the interior serves, per apex
-section 6.
+section 6 as amended 2026-08-24.
+
+**On a diagnostic binding the gate step does not exist.** The match on
+`EnterBinding` is where the fan-out learns its extent: the serving case
+carries the gate instruction and the walk above is whole, and the diagnostic
+case ends the fan-out at the SPU's confirmation, no pair created, no binary
+forked, no raise opened. Ready aggregates over the steps the kind declared,
+per the contract's section 3 as revised this date. The run state's gate arm
+stays empty for the whole residency, which is what keeps the leave and the
+unwind honest without a second rule: both lower what stands, reading the
+same options the checked unwind above already reads, and an arm that never
+stood is an arm they never touch.
+
+```graph
+node: harness-diagnostic-enter-forks-no-gate
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-diagnostic-enter-forks-no-gate
+```
 
 **The gate's socket is a sibling of the coordination socket, and the
 derivation is the whole of this crate's part in it.** Per `weaver-gate-PRD`
@@ -1233,7 +1262,8 @@ to: harness-scoped-refusal-account
 ```
 
 **Leave runs the reverse order and drains before it answers.** Lower the gate
-first, refuse `ActivityNotAtRest` while a turn is in flight, author the
+first where one stands, the run state's arm answering whether it does,
+refuse `ActivityNotAtRest` while a turn is in flight, author the
 `unload` event, drain the writer's queue, and release the SPU. Left is
 answered only after the drain returns, which is what makes the answer mean
 what `weaver-admin-harness-contract` section 4 says it means, that everything
