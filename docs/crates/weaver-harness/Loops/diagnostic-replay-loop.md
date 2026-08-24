@@ -55,6 +55,21 @@ The operator sequences three acts, and the loop is the third:
    and re-feeds each turn's recorded contribution through the decode seam,
    and the readers elected at the load observe the forward passes.
 
+**The walk's unit is the generation, grouped from the envelope, and a
+grouping that does not resolve rejects the replay.** The answer's events
+group by run and turn from their envelopes, in landing order. Turn-bearing
+events feed the walk, and turnless ones, the seated prefix, the run
+brackets, a flush, inform input identity and feed nothing positionally.
+Within a turn, `model.request` and `model.measurement` events pair in
+landing order, each request to the first unpaired measurement after it,
+because a turn holds one pair per generation and tool rounds make several
+generations of one turn the ordinary case. A measurement with no preceding
+unpaired request, a request left unpaired at the turn's end, or counts
+that disagree reject the replay before any forward pass, naming the run
+and turn, and nothing is ever paired across turns: a replay over a
+grouping the record does not determine would be a replay of a conversation
+that never happened.
+
 **The re-feed is by the record and never by rendering.** The loop feeds the
 rendered contribution `model.request` recorded, per the operator's ruling of
 2026-08-12 that the record holds the rendered form precisely so a replay
@@ -88,8 +103,15 @@ The charter's section 4 procedure, as this loop performs it:
 2. **The null replay.** No reader elected. The recorded path re-feeds, the
    recomputed token identifiers match the recorded ones exactly, integers,
    or the certification fails naming the first divergent position.
-3. **Again, with the reader.** The same replay with the elected readout on.
-   The token path must match as before, and the reader's presence changing
+3. **Again, with the reader, as its own load.** The readout election rides
+   the declaration and is read at the load, per `weaver-agents-PRD` section
+   8, so the reader pass is a second load of the same declaration with the
+   election on rather than a later phase of the first: the decode state is
+   fresh by construction, each pass runs as its own run with its own run
+   reference, and the two passes' records never share a bracket, which is
+   what keeps the token-path comparison and the passivity claim clean of
+   each other. The token path must match as before, and the reader's
+   presence changing
    any token is the read failing its own passivity claim. The reader's
    vectors compare within the GPU float tolerance the apex names, per the
    charter's section 4 scoping.

@@ -4,9 +4,11 @@
 
 **Revised:** 2026-08-24, second of this date, the seal parks the replay
 ask. Section 4 gains the seal as a per-standing fact and the `replay` ask's
-mechanics: parked while a preload is open, answered at the seal against the
-sealed holdings, immediate otherwise, the query the recall's generalized
-past the four message kinds. One perturbation assertion lands.
+mechanics: where the member stands with the preload door the ask answers
+only at a seal, the fact held apart from the transport so a dead driver's
+close answers nothing, and immediate where the door does not stand, the
+query the recall's generalized past the four message kinds. One
+perturbation assertion lands.
 **Revised:** 2026-08-24, first of this date, the preload door takes its
 mechanics. Section 4
 gains the second door of `weaver-diagnostic-state-contract`: one landing
@@ -282,14 +284,19 @@ code act that opens the door. The credential judgment inverts the first
 door's: the accept on the preload name refuses a peer bearing the agent's
 uid before any byte is read, and admits the operator principal.
 
-**The seal is a per-standing fact and the replay ask reads it.** The member
-holds, for the channel's life, whether the preload door's stream sealed,
-per that contract's section 2, and a `replay` ask arriving while a preload
-is open parks until the seal lands, answered then against the sealed
-holdings in one frame stream like any answer. The parking is the serve
+**The seal is a per-standing fact, held apart from the transport, and the
+replay ask reads it alone.** The member holds, for its own standing's life,
+whether a preload has sealed, per that contract's section 2, and the fact
+is not the preload channel's openness: it is false before any dial, false
+mid-stream, false after a sealless close, and true from the seal frame on.
+Where the member stands with the preload door, a `replay` ask parks until
+the fact is true, surviving the preload channel's close, answered at the
+seal against the sealed holdings in one frame stream like any answer. The
+parking is the serve
 loop's and blocks nothing else: distillates land and the other asks answer
 while a replay ask waits, one parked ask per channel sufficing because the
-asker is the one loop. A replay ask with no open preload answers
+asker is the one loop. Where the member stands without the door, the ask
+answers
 immediately, the query being the recall's generalized past the four
 message kinds: every event row of the declared session with its field
 pairs, ordered by the `id` column, served as the distillate's own shape.

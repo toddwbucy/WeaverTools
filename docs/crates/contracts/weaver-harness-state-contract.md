@@ -5,9 +5,11 @@
 **Revised:** 2026-08-24, the replay ask joins the vocabulary. The ask set
 gains `replay` by section 7's own door, elected against the diagnostic
 replay loop's real need per the loop act of this date: the session's
-elected events whole, in landing order, and answered at the seal where the
-preload door's stream is open, so the loop never walks a prefix that looks
-whole. Section 2 shapes it, section 8 gains its conformance, and every
+elected events whole, in landing order, and answered only at a seal where
+the member stands with the preload door, whatever the door's transport is
+doing, so the loop never walks a prefix that looks whole and never answers
+before the driver has dialed. Section 2 shapes it, section 8 gains its
+conformance, and every
 party merges in the act.
 **Revised:** 2026-08-20, the opener names its session. The `election`
 term gains the session the load declared, so the custodian can bound its
@@ -217,16 +219,21 @@ the answer serves every held event of the declared session as the
 distillate's own shape, envelope and pairs, in landing order, no more
 replayable than it was distillable.
 
-**A replay ask on a session with an open preload answers at the seal.**
-The preload door of `weaver-diagnostic-state-contract` seals its stream,
-and an ask arriving while that door's preload is open is answered when the
-seal lands, against the sealed holdings, rather than immediately against a
-prefix. This is the one ask whose answer may wait, the waiting is not the
-custodian initiating, one answer still following one ask, and the asker's
-patience is its own, per section 3's bounded-wait rule: an answer the bound
-outlives is the same missing answer it always was. On a session with no
-open preload the replay ask answers immediately, against the holdings the
-stream carried before it, like its two siblings.
+**On a member standing with the preload door, a replay ask answers only at
+a seal.** The preload door of `weaver-diagnostic-state-contract` seals its
+stream, and the ask parks until a seal has landed, whatever the door's
+transport is doing: not yet dialed, open mid-stream, or closed without the
+seal all park it alike. The last is the clause's point, because a dead
+driver's channel closes and its prefix then looks exactly like holdings at
+rest, and a retry's opener may yet retire that prefix and seal a whole
+preload the parked ask should answer against. So the seal is the only fact
+that answers, transport openness answers nothing, and an ask on a standing
+that never seals is converted by the asker's bound into the missing answer
+it always was, per section 3's bounded-wait rule. This is the one ask whose
+answer may wait, the waiting is not the custodian initiating, and one
+answer still follows one ask. On a member standing without the preload
+door, the ask answers immediately, against the holdings the stream carried
+before it, like its two siblings.
 
 A further ask
 name is a change under section 7 and does not exist until it merges
@@ -316,8 +323,9 @@ notice. Both land with the code act that opens the seam.
 
 The replay ask is testable against the living pair under a diagnostic load:
 a preload landed and sealed, the ask answered with every elected event in
-landing order, and the same ask against an open unsealed preload observed
-waiting rather than answering over the prefix, which is the perturbation
+landing order, and the same ask observed waiting in all three unsealed
+states, before the dial, mid-stream, and after a sealless close, rather
+than answering over emptiness or a prefix, which is the perturbation
 its assertion in `weaver-state-Spec` section 4 watches.
 
 The serve direction is testable against the living pair: a real load, real
