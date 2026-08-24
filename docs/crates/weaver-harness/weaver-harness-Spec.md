@@ -12,7 +12,8 @@ pair and gate binary, and the passage states what the kind excludes in its
 own words: Gate alone, the classify arm being interior and elected by the
 instruction rather than the kind.
 
-**Revised:** 2026-08-24, first of this date, the kind takes its shape. The enter fan-out's extent
+**Revised:** 2026-08-24, first of this date, the kind takes its shape. The
+enter fan-out's extent
 follows the match on `EnterBinding`: the serving case runs the whole walk and
 the diagnostic case ends it at the SPU's confirmation, forking no gate. The
 leave lowers the gate where one stands, the run state's arm answering, so the
