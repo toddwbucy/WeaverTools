@@ -2,6 +2,16 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-24, the second door stands. Section 3 gains the preload
+door, per the operator's ruling of this date and the taxonomy promotion:
+`weaver-diagnostic-state-contract`, standing only under a diagnostic binding,
+admitting the operator principal and refusing the agent, carrying the first
+door's distillate shapes drawn rather than redefined. Section 5's
+who-else-may-ask cell is unchanged, the driver never asking. The opener
+retires the declared session's prior holdings, so a retry replaces rather
+than doubles. Every party to
+the new contract merges in this act.
+
 **Revised:** 2026-08-19, second of this date, the election reaches the
 declaration. Section 5's tee-charter cell closes its remaining part: the
 election's block in the agent's file is `state-election`, shaped at
@@ -126,6 +136,25 @@ every organ channel, and it authenticates its peer by credential, per the
 first invariant's rule for a channel with a name. Which end binds, how the
 descriptor travels, and the credential's exact judgment are the contract's
 mechanics, deliberately absent here.
+
+**A second door stands on this member as of 2026-08-24, and only under a
+diagnostic binding.** `weaver-diagnostic-state-contract` names it, initiator
+first: the diagnostic driver preloads the holdings from a finished trace it
+parsed outside the agent, and this member receives on a second socket what a
+live tee would have fed on the first, the same distillate shapes drawn from
+the first door's contract rather than redefined. The door's judgment inverts
+the first's, admitting the operator principal and refusing the agent's
+credential, and the door itself does not exist under a serving binding, so
+the serving membrane of `weaver-agents-PRD` section 0 is untouched. No ask
+crosses it, ever: the driver is a sender and never an asker, so section 5's
+who-else-may-ask cell keeps its answer, the serve direction having exactly
+the two ends it had. The door's opener retires the declared session's prior
+holdings in the same transaction, per the contract's section 2, so a preload
+lands against empty whatever stood, and a retry after a dead driver is a
+replacement rather than a double - the recovery invariant stated before the
+loss clause leans on it. With that in place the loss clause below covers the
+new door without amendment, the preload being rebuildable from the record
+more directly than any holding the tee fed.
 
 The nesting under `weaver-harness` carries domain membership and nothing else,
 per apex section 5.4: nesting is never process topology, and this member

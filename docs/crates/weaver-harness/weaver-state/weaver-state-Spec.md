@@ -2,6 +2,16 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-24, the preload door takes its mechanics. Section 4
+gains the second door of `weaver-diagnostic-state-contract`: one landing
+path for both doors, which is the indistinguishability claim made
+structural, a kind-conditioned standing, and an inverted credential
+judgment. Two perturbation assertions land, the door's conditional standing
+and the wrong-peer refusal, and the name's route to the member is elected
+in the code act per section 2's own pattern. The preload opener's
+retirement makes the shared path idempotent at the preload grain, the
+delete hanging on that opener alone.
+
 **Revised:** 2026-08-20, custody answers within its session. Section 4
 gains the serve restriction: every read bounds to the session the
 contract's amended opener carries, which is `weaver-state-PRD` section 4's
@@ -242,6 +252,47 @@ event as the distillate's own shape, envelope and pairs, because custody
 serves what it kept in the form it kept it. A malformed ask is dropped whole the
 way a malformed distillate is, and the resulting silence is the harness's
 bound to convert into a missing answer.
+
+**The preload door lands its distillates through the same path the first
+door does, and that is the mechanism of the contract's indistinguishability
+claim.** A distillate arriving on the preload channel parses, transacts, and
+lands exactly as one arriving from the tee, one code path and one store, so
+nothing marks how a holding arrived and the serve restriction binds to the
+preload opener's session the way it binds to the harness opener's. **The one
+act the preload path adds is the opener's retirement**: receiving the
+preload election deletes the declared session's event and field rows in the
+same transaction that records the opener, before any distillate lands, per
+the contract's section 2. The path is thereby idempotent at the preload
+grain - re-running it replaces the session's holdings rather than appending
+to them - and a dead driver's prefix needs no cleanup act, the next opener
+being the cleanup. The first door's path performs no retirement and gains no
+branch: the delete hangs on the preload opener alone. What is
+new is the door's standing and its judgment, and both are conditioned facts:
+the member binds the preload name only where the party that stands it names
+one, and that party names it only under a diagnostic binding, holding the
+resolved kind from the inventory per `weaver-admin-Spec` section 7. How the
+name reaches the member follows section 2's pattern and is elected in the
+code act that opens the door. The credential judgment inverts the first
+door's: the accept on the preload name refuses a peer bearing the agent's
+uid before any byte is read, and admits the operator principal.
+
+```graph
+node: state-preload-door-stands-only-diagnostic
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-state
+to: state-preload-door-stands-only-diagnostic
+
+node: state-preload-door-refuses-the-agent
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-state
+to: state-preload-door-refuses-the-agent
+```
 
 **Transformation is chartered and the shape aggregate is its first
 member.** The grouped count above is custody's derivation under the
