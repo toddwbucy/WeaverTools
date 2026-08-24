@@ -8,7 +8,10 @@ replay loop's real need per the loop act of this date: the session's
 elected events whole, in landing order, and answered only at a seal where
 the member stands with the preload door, whatever the door's transport is
 doing, so the loop never walks a prefix that looks whole and never answers
-before the driver has dialed. Section 2 shapes it, section 8 gains its
+before the driver has dialed. The parked ask steps out of the arrival
+order as section 2's stated exception, later asks passing it, answers
+naming the ask they answer, and a second replay ask parking beside the
+first refused as malformed. Section 2 shapes it, section 8 gains its
 conformance, and every
 party merges in the act.
 **Revised:** 2026-08-20, the opener names its session. The `election`
@@ -231,7 +234,18 @@ that answers, transport openness answers nothing, and an ask on a standing
 that never seals is converted by the asker's bound into the missing answer
 it always was, per section 3's bounded-wait rule. This is the one ask whose
 answer may wait, the waiting is not the custodian initiating, and one
-answer still follows one ask. On a member standing without the preload
+answer still follows one ask. **The parked ask steps out of the arrival
+order, and that is this clause's stated exception to section 4's ordering
+rule**: a shape or recall ask arriving while a replay ask parks is answered
+in its own arrival order, against the holdings the stream carried before
+it, and the replay's answer follows the seal whenever that is. What keeps
+the pairing unambiguous without a correlation member is that every answer
+names the ask it answers, per the answer's own shape, and at most one
+replay ask parks per channel: a second replay ask arriving while one parks
+is malformed, dropped whole per section 5, the asker's bound converting it.
+An asker that cannot tell a late replay answer from a prompt shape answer
+has not read the answer's name, and no further identity crosses the seam
+for it. On a member standing without the preload
 door, the ask answers immediately, against the holdings the stream carried
 before it, like its two siblings.
 
@@ -265,7 +279,8 @@ there.
   do, per the three-way division of `weaver-state-PRD` section 2.
 - **The answer, only when asked.** Exactly one answer per well-formed ask,
   in arrival order, each answered against the holdings the stream carried
-  before its ask, and no other traffic ever. A custodian that spoke
+  before its ask, and no other traffic ever. The one stated exception is
+  the parked replay ask of section 2, which later asks lawfully pass. A custodian that spoke
   unasked would be initiating, which its charter forbids.
 
 ## 5. Failure vocabulary

@@ -124,16 +124,26 @@ from a replay that did not certify.
 
 ## 4. Failure, in the loop's terms
 
-- **The seal never arrives.** The replay ask's patience is the loop's own,
-  per the contract's bounded-wait rule. At the bound the loop ends its run
-  having replayed nothing, and the operator reads the account, unloads, and
-  retries with the driver. A dead driver's prefix needs no cleanup, the
-  next preload's opener retiring it.
+- **The replay answer is absent, for any of its reasons.** The seat's
+  replay port serves nothing alike for a leg that is down, an answer that
+  is malformed, and a bound that expired on a seal that never came, per
+  `weaver-harness-Spec` section 6, and the loop does not tell them apart
+  by outcome: none is an empty replay. An empty session is a sealed answer
+  carrying zero events and fails input identity in the ordinary way, where
+  an absent answer is no answer at all, so the loop ends its run having
+  replayed nothing, the account saying so, and the operator reads it,
+  unloads, and retries with the driver. A dead driver's prefix needs no
+  cleanup, the next preload's opener retiring it.
 - **The holdings fail input identity.** The loop refuses at certification
   step one, named above.
 - **The decode seam refuses mid-replay.** The loop ends the run with the
-  account of where, and the partial forward work writes nothing anywhere,
-  the substrate being immutable by the third refusal.
+  account of where. The no-write guarantee is the third refusal's and
+  scopes to what outlives the run: no durable record, holding, or artifact
+  takes a byte from the partial work. The decode context the forwards
+  mutated and whatever measurement work was in flight are transient, die
+  with the run at the leave, and a retry is a fresh load meeting them
+  never, which is the same freshness the certification's two-load split
+  already rests on.
 
 ## 5. What this document does not carry
 
