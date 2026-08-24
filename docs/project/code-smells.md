@@ -28,21 +28,29 @@ smell. A smell says what pattern to look for, what it breaks, and how a reader o
 query would find it, because a smell that cannot be looked for is a preference.
 
 **A smell is architectural unless it says otherwise, and a few do.** The architecture
-is silent about substrate, which is what lets an organ move. **A smell that names a
-substrate is therefore a fact about this deployment rather than about the
-architecture**, and reading it as architectural would import a local decision into a
-rule that is supposed to survive one.
+is silent about substrate, which is what lets an organ move, so a smell that is really
+a fact about this deployment would import a local decision into a rule meant to
+survive one.
 
-The test is the same one G2 applies to a contract: **read the entry with the
-substrate removed and see whether a pattern is left to detect.** Most survive. "One
-seam carrying two services" is the same defect over a wire as over a socket, and it
-is stated in socket terms only because that is what this deployment runs on. **Two do
-not survive**, and each says so at its head: a filesystem node's lifetime and a
-listener's accept policy have no meaning on a substrate without them.
+**Naming a substrate is not the test, and using it as one would misfile most of this
+document.** Entries here say socket and path because that is what this deployment
+runs on, and saying so costs them nothing. The test is the one G2 applies to a
+contract: **change the substrate and see whether the entry still detects something.**
+If the pattern survives with a different noun, the entry is architectural however it
+is worded. If the pattern has nothing left to find, it was local.
 
-**Where an entry is local, its detection is local too.** It applies to the module
-that binds the thing, and a query for it is scoped there rather than run across the
-tree. An entry with no scope line is architectural and applies everywhere.
+Most survive. "One seam carrying two services" is the same defect over a wire as over
+a socket. **Two do not**, and each says so at its head: a filesystem node's lifetime
+and a listener's accept policy are not defects on a substrate that has neither.
+
+**Where an entry is local, the scope filters which modules are in question, not how
+many may be compared.** A local entry applies to the modules that bind the thing, so
+a query for it selects those and ignores the rest. **Within that set it may compare
+freely, and for some entries it must**: "one syscall, several accept policies" is a
+disagreement between binding modules, and an entry confined to one module could never
+see it. Scoping narrows the population, not the reasoning over it.
+
+An entry with no scope line is architectural and applies everywhere.
 
 **Where an entry cites the quarry it is evidence, not a carry.** The archived tree is
 a parts source read and never edited, per the carry rule. A sighting there proves the
@@ -713,8 +721,10 @@ promotes it, so each entry names both.
 ### 3.1 One syscall, several accept policies
 
 **Scope:** local substrate. The pattern is a listener's accept-error handling, which
-exists where a listener does. It applies to the modules that bind, and not to the
-architecture.
+exists where a listener does, so it applies to the modules that bind and not to the
+architecture. **The detection is the comparison between them**: a single module's
+policy is never the defect, and the entry is only visible by reading the binding
+modules against each other.
 
 **Identifier:** `smell-per-seam-accept-policy`
 **Grounds:** repetition, with `axiom-floor-is-vocabulary-behavior-is-socket`
