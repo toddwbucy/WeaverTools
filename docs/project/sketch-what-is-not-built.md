@@ -147,6 +147,11 @@ down, not in what is built.
   system node. Document Format section 3 requires them to name the same thing and
   makes the header the defect. It closes when the domain level lands in the graph,
   which is the same act as the entry below rather than a second one.
+- **Two settled rulings are recorded only as sketches.** The loop taxonomy of
+  2026-08-23 sits at `sketch-the-loop-taxonomy` and the two use cases sit nowhere at
+  all. Both are architecture rather than proposals, and where they land is the same
+  question as the entry below: a domain ruling belongs in `weaver-agents-PRD` and a
+  statement of what the program is for belongs at a suite level that has no document.
 - **The suite has no apex.** The document that carried that name governs the
   weaver-agents domain, corrected 2026-08-23. Crates outside the agent boundary,
   `weaver-web` and `weaver-diagnostic`, parent to the suite and refine nothing that
