@@ -152,8 +152,10 @@ down, not in what is built.
   govern: the binding kinds in the apex's section 6 and
   `weaver-admin-harness-contract`, with the Spec and code acts landed the same date,
   and the loop class in `weaver-diagnostic-PRD` sections 3 through 5, the chartering
-  act of 2026-08-24. What that charter leaves owed it names itself: the seam papers,
-  the driver, the null replay. The two use cases remain at
+  act of 2026-08-24. What that charter leaves owed it names itself in its section
+  6: the seam papers, the capture artifact, the driver with its Spec, the null
+  replay, and the instrument-suite sketch the chartering ruling cites, which does
+  not exist in this tree. The two use cases remain at
   `sketch-the-two-use-cases`, a sketch that decides nothing, and where they land is
   the entry below: a statement of what the program is for belongs at a suite level
   that has no document.

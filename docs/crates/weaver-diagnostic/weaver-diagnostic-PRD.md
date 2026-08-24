@@ -83,7 +83,9 @@ substrate's grants:
   wrong arrangement is unrepresentable rather than guarded against.
 - **The working structure is preloaded from a finished trace** and read
   positionally as the source of prompts, rather than accumulating. Same
-  organ, opposite direction.
+  organ, opposite direction. The preload crosses the ruled seam of section
+  6, owed to the seam-papers act, and until that act lands this refusal is
+  chartered and not yet drivable.
 - **Nothing writes back**, so the substrate under examination is immutable
   for the loop's duration.
 
@@ -109,7 +111,12 @@ wrongly amend it or wrongly fork it.
 **The null replay certifies the substrate.** The mechanic's correctness is
 not established by whether a readout is interpretable. It is established by
 exact-match comparison of a replay against its original, and then again with
-the readout elected, to show the read is passive. A readout from an
+the readout elected, to show the read is passive. Exact match is a claim
+about the token path, which is integers and matches or does not: the elected
+readout's vectors are deterministic given the same weights within GPU float
+tolerance, per `weaver-agents-PRD` section 8, so the passive-read comparison
+holds the token path exact and the vectors within that tolerance rather than
+demanding bitwise equality of floats. A readout from an
 uncertified replay is a picture of an unknown run.
 
 **Certification is two claims and not one.** An output comparison means
