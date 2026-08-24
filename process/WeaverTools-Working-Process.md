@@ -424,6 +424,41 @@ the pair and the fixtures, and it is the one whose green means the suite is
 green. **A merge states which it ran**, because a claim of green that does not
 say which suite is a claim about an unnamed subset.
 
+**The perturbation obligation reaches the rule, not only the test.** Apex
+section 11's third device is the standing rule: always confirm the test fails
+when the property is removed, because a test that passes either way converts
+unenforced into documented as enforced. That is stated for tests, and two
+cases fell outside it in the week of 2026-08-23.
+
+**A judgment can have no test to perturb.** #284 narrowed the readout refusal
+from the container to the family's declaration, which is the whole substance
+of that act. Restoring the container ground afterwards, which undoes it
+entirely, **failed nothing in a hundred and sixty-four tests**. Every negative
+case reached its refusal through a family declaring no tap and so refused
+under either rule, and the judgment's own unit tests called it directly
+without travelling the admit path. The obligation says to confirm that a test
+fails when its property is removed, and the property here had no test whose
+failure could be confirmed, so the obligation had nothing to bite on. **So an
+act that narrows or widens a judgment perturbs the judgment**, restoring what
+it retired, and records what caught it. Where nothing does, that is the finding,
+and the act owes the watch before it owes anything else.
+
+**A build requirement cannot be perturbed on the machine that has it.** The
+`gguf` gate carrying the default on 2026-08-23 left `llama-cpp-2` taking CUDA
+unconditionally, so a host build would have demanded a toolchain it has no use
+for. No test on this workstation can fail for that, because the machine it
+breaks does not exist here, and two documents asserted the opposite while the
+suite ran green. **So an act that changes what a build requires names the
+machine that can no longer build it**, and that naming is the check. A green
+suite is silent on this by construction rather than by oversight.
+
+**The record goes in the act.** A perturbation run and reported in a
+conversation is evidence that expires with the session. Named in the commit or
+the pull request, it is the one place a later reader can find out whether the
+property was ever watched. Apex section 11's closing line is the reason: a
+clean automated gate is evidence that the gate did not fire, and it is not
+evidence of correctness.
+
 **Coverage is not readable from any one manifest.** Cargo unifies features across a
 workspace, so a crate's tests may run because a different crate wanted the feature.
 `weaver-types` gains twenty-one config tests under `--workspace` only because
