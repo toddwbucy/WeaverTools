@@ -147,15 +147,15 @@ down, not in what is built.
   system node. Document Format section 3 requires them to name the same thing and
   makes the header the defect. It closes when the domain level lands in the graph,
   which is the same act as the entry below rather than a second one.
-- **The taxonomy's promotion is underway and half of it has landed.** The operator's
-  ruling of 2026-08-24 splits it by what each document governs. The binding kinds
-  govern now: the apex's section 6 declares serving and diagnostic at the load, and
-  the declaration crosses the enter in `weaver-admin-harness-contract`, acts of
-  2026-08-24 with the owed Spec assertion records named in the apex's own revision
-  entry. **The loop class still governs nowhere** - the passive-reader membership
-  test, the certification split, and the mechanic-motive line wait for
-  `weaver-diagnostic-PRD` once the seam papers exist, and until then
-  `sketch-the-loop-taxonomy` is their only record. The two use cases remain at
+- **The taxonomy's promotion is complete and its sketch is archived.** The operator's
+  ruling of 2026-08-24 split it by what each document governs, and both halves now
+  govern: the binding kinds in the apex's section 6 and
+  `weaver-admin-harness-contract`, with the Spec and code acts landed the same date,
+  and the loop class in `weaver-diagnostic-PRD` sections 3 through 5, the chartering
+  act of 2026-08-24. What that charter leaves owed it names itself in its section
+  6: the seam papers, the capture artifact, the driver with its Spec, the null
+  replay, and the instrument-suite sketch the chartering ruling cites, which does
+  not exist in this tree. The two use cases remain at
   `sketch-the-two-use-cases`, a sketch that decides nothing, and where they land is
   the entry below: a statement of what the program is for belongs at a suite level
   that has no document.
