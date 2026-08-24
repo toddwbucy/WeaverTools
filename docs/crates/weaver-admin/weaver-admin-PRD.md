@@ -6,6 +6,15 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-24, the kind crosses the enter. Per `weaver-agents-PRD`
+section 6 as amended this date, the enter directive of section 4.1 carries the
+kind of the binding, resolved to serving where the declaration is silent, and
+the gate instruction where the kind declares a Gate. The gate-last of the
+enter and the gate-first of the leave scope to a Gate that stands. Nothing
+else of this charter moves: validation runs the standing taxonomy of
+`weaver-types-PRD` section 2.1 over one more field, and no verb, seam, or
+refusal is added.
+
 **Revised:** 2026-08-17, the tool workflow's opening reaches section 3's
 cross-reference: `tool-trait` is no longer held blocked, the unblocking being
 the traits charter's own on the ratified loop boundary's inverted ground, and
@@ -427,14 +436,16 @@ order is the substance.
    connects to the socket the worker bound, retrying within a stated bound because
    the bind is the worker's first act and the dial may arrive first, the bound
    being the Spec's to state. The directive carries the session identity, the run
-   ordinal, the trace descriptor, the model binding, and the gate instruction, per
+   ordinal, the kind of the binding, the trace descriptor, the model binding, and,
+   where the kind declares a Gate, the gate instruction, per
    the contract. The descriptor rides inside the directive over the coordination
    channel as `SCM_RIGHTS` ancillary payload, per `weaver-harness-PRD` section 5,
    so the worker receives a handle and never a path and accepts it close-on-exec
    at its one receive site. Everything after the directive and before the answer
    is the harness's: it stands up an empty working structure, authors its `load`
    event, which is the record of admin's contact and the origin of the run's
-   monotonic clock, asks the SPU to admit the model, and starts Gate last so no
+   monotonic clock, asks the SPU to admit the model, and starts Gate last where
+   the kind declares one, so no
    work arrives before the interior can serve it. Admin holds no channel to either
    organ, per section 6, so what admin receives is one answer aggregating the
    fan-out, ready or a refusal naming where it stopped.
@@ -477,7 +488,8 @@ absent, has no counterpart on the way up.
 1. **Dial the channel, direct leave, and receive the aggregate.** The unload
    invocation connects to the socket the worker holds, the same way every verb
    reaches a running worker, per section 6. Everything between the directive and
-   the answer is the harness's, in its own order: it stops Gate first, so a Gate
+   the answer is the harness's, in its own order: it stops Gate first where one
+   stands, so a Gate
    process never outlives the interior it protects and nothing new arrives, and it
    refuses while a turn is in flight rather than racing one, because a turn
    interrupted mid-decode leaves the SPU holding a session. At rest it authors its

@@ -5,6 +5,17 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-24, the kind crosses the enter. Per `weaver-agents-PRD`
+section 6 as amended this date, a binding declares its kind and the lifecycle
+measures a load against the components the kind declares. The enter carries
+the kind, resolved to serving where the declaration is silent, and the gate
+instruction crosses where the kind declares a Gate and is absent as shape
+where it does not. The enter's gate-last and the leave's gate-first scope to
+a Gate that stands, and the ready guarantee reads against the declared
+components. Section 8 draws `binding-kind` from `weaver-types-PRD` section
+2.1. Which refusal catches a directive whose members disagree with its kind
+is named as the Spec round's.
+
 **Revised:** 2026-08-22, the lifecycle refusal is clerked. An enter refused
 after its bracket stands reaches the record as a `refusal` carrying
 `lifecycle-refusal`, authored by the harness into the run, which stays
@@ -210,23 +221,35 @@ second dial waiting at the listener rather than being answered concurrently.
 Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
-session identity, the run reference, the trace sink handle, the
-SPU instruction, the gate instruction, and the state election the tee applies. The
-last three are in the directive because the
+session identity, the run reference, the kind of the binding, the trace sink
+handle, the
+SPU instruction, the gate instruction where the kind declares a Gate, and the state
+election the tee applies. The
+instructions and the election are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU, the gate,
 or the state member, so if admin's intent for any of them does not cross this
-seam it crosses nowhere. The harness
+seam it crosses nowhere. The kind is in the directive on the same argument one
+step earlier: it decides which components the fan-out stands up, the fan-out is
+the harness's, and a kind that does not cross here reaches no party that acts
+on it. On a diagnostic enter the gate instruction is absent as a matter of
+shape rather than omission, because the instruction names what the fan-out is
+to start and a diagnostic fan-out starts no Gate. Which refusal catches a
+directive whose members disagree with its kind is the Spec round's to place.
+The harness
 stands up an empty working structure, authors its `load` event, asks the SPU to
-admit against the instruction it was handed, and starts Gate last. It answers ready
+admit against the instruction it was handed, and starts Gate last where the
+kind declares one. It answers ready
 only when
-every step of that fan-out has confirmed, or it refuses, and a refusal names where the
+every step of the fan-out its kind declares has confirmed, or it refuses, and a
+refusal names where the
 fan-out stopped, so that admin rolls back what was built without asking a second
 question. The answer, either way, closes the exchange and is the aggregate: one
 directive out, one answer back, and the organs appear in the answer's content rather
 than as parties to this seam.
 
 **Leave the run.** Opened by admin. Admin directs the harness to leave. The harness
-stops Gate first, refuses while a turn is in flight, authors its `unload` event,
+stops Gate first where one stands, refuses while a turn is in flight, authors
+its `unload` event,
 drains the writer's queue to the stream, and releases the SPU. It answers left, or
 it refuses, and a refusal names where the sequence stopped. The stream ends where
 the run did, finalized by nothing, per the ruling of 2026-08-01. As with enter, the
@@ -304,9 +327,11 @@ exchange payload change is a supplies change by construction, and a Spec writer 
 this list.
 
 **Admin supplies** the session identity and the run reference for the run being
-entered, the
+entered, the kind of the binding, resolved to serving where the declaration is
+silent, the
 trace sink handle, the SPU instruction the fan-out admits,
-the gate instruction the fan-out starts, the state election the tee applies,
+the gate instruction the fan-out starts where the kind declares a Gate, the
+state election the tee applies,
 resolved to the ruled default where the declaration is silent, and the intent
 to stop.
 
@@ -330,7 +355,8 @@ children, per section 2, **which is an obligation on the receiving call and cann
 met by the sender.** It guarantees that it authors the run's bracket
 events, that it writes only through the handle it was handed, that it resolves no
 path, and that a ready answer is given only after a standing working structure, an
-admitted model, and a started gate. It guarantees that a refusal names where the
+admitted model, and every further component the kind declares started, the
+gate where one is declared. It guarantees that a refusal names where the
 fan-out stopped, so that admin rolls back on the answer alone. It guarantees that a
 fault the worker survives is authored to the stream as a `fault` event, per the
 fault-carrier ruling, and that no run blocks on anything downstream of the
@@ -416,8 +442,8 @@ the exchanges above are the whole of what either learns.
 ruling of 2026-08-05, because the identity the harness reads at every accept is
 the floor's, `model-binding` and `residual-readout-election` as of the
 route act of 2026-08-10, `gate-instruction` as of 2026-08-17,
-`state-election` as of 2026-08-19, and `field-election` with
-`surprisal-election` as of 2026-08-21.
+`state-election` as of 2026-08-19, `field-election` with
+`surprisal-election` as of 2026-08-21, and `binding-kind` as of 2026-08-24.
 
 ```graph
 edge: draws
@@ -535,6 +561,21 @@ grouping.
 edge: draws
 from: weaver-admin-harness-contract
 to: state-election
+```
+
+**`binding-kind` is drawn as of 2026-08-24, with the act that adds it to the
+enter.** The standing argument holds in a shorter form than any seat's: the
+kind decides which components the fan-out stands up, the fan-out is the
+harness's, and a kind that does not cross this seam reaches no party that acts
+on it. The definition is `weaver-types-PRD` section 2.1's, per
+`weaver-agents-PRD` section 6 as amended this date, and it crosses at the
+directive's top level rather than inside any instruction, because its consumer
+is the harness itself and no organ reads it.
+
+```graph
+edge: draws
+from: weaver-admin-harness-contract
+to: binding-kind
 ```
 
 **Drawn from `weaver-traits`:** nothing. The clause is present with that answer

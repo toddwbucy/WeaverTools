@@ -9,6 +9,14 @@ than waiting on the set. The set-wide act of 2026-08-04 established the pattern 
 conforms to.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-24, the kind crosses the enter. Section 2.1 gains
+`binding-kind`, the operator's declaration of what a load is for, serving or
+diagnostic, per `weaver-agents-PRD` section 6 as amended this date. Absence
+means serving, so no existing declaration moves. It is defined here because
+both of the file's readers act on it and neither may define what the other
+consumes, drawn by `weaver-admin-harness-contract` in the same act, and the
+drawn count moves from six to seven.
+
 **Revised:** 2026-08-22, third of this date, a conversion is not the only
 record. Section 2.1's refusal clauses gain the rule the clerking act's
 findings share: a conversion may narrow a refusal for a reader and may not
@@ -269,6 +277,22 @@ measurement written before this act carries the vector with no election
 beside it, and a measurement written after carries the flag whichever way
 it fell.
 
+**The binding kind joins the file 2026-08-24**, on `weaver-agents-PRD` section 6
+as amended that date. It is the operator's declaration of what the load is for,
+serving or diagnostic, and the components the load stands up follow from it: a
+serving binding raises the whole interior and a diagnostic binding raises it
+without Gate, for the replay the apex's section 8 places outside the agent.
+Absence is the ordinary posture and means serving, so every declaration written
+before this act declares what it always meant. It sits beside the elections and
+is not one: an election turns an observation on or off inside a load whose
+shape is settled, where the kind is the shape, read before any component the
+kind governs exists. What it means to each reader is theirs, per this section's
+standing form: the operator states it, admin validates presence and form and
+carries it into the enter, and the harness stands up the components it
+declares, per the contract. No organ reads it, and the SPU in particular
+decodes the same under either kind, which is why it crosses at the directive's
+top level rather than inside `spu-instruction`.
+
 **The refusal record joins the wire vocabulary 2026-08-22**, per the
 operator's ruling that a refusal is clerked. It names the seam that refused
 and carries that seam's own typed case with the values the case holds, so
@@ -292,6 +316,9 @@ node: agent-config
 kind: artifact
 
 node: model-binding
+kind: vocabulary
+
+node: binding-kind
 kind: vocabulary
 
 node: tool-set
@@ -324,6 +351,10 @@ kind: vocabulary
 edge: defines
 from: weaver-types
 to: model-binding
+
+edge: defines
+from: weaver-types
+to: binding-kind
 
 edge: defines
 from: weaver-types
@@ -364,6 +395,10 @@ to: state-election
 edge: holds
 from: agent-config
 to: model-binding
+
+edge: holds
+from: agent-config
+to: binding-kind
 
 edge: holds
 from: agent-config
@@ -408,10 +443,13 @@ Each field is a vocabulary node this crate defines and the artifact holds, becau
 contract's clause draws a field rather than the whole file and an edge needs
 something to point at.
 
-**Which fields a contract draws, and why the rest are internal rather than owed.** Six
+**Which fields a contract draws, and why the rest are internal rather than owed.** Seven
 are drawn: `model-binding`, `residual-readout-election`, `field-election`,
 and `surprisal-election` by
 `weaver-harness-spu-contract` and by `weaver-admin-harness-contract`,
+`binding-kind` by `weaver-admin-harness-contract` alone as of 2026-08-24,
+the seam it crosses and the only one, its consumer being the harness that
+stands up what it declares,
 `gate-instruction` by its three, `weaver-admin-harness-contract` joining the
 two gate seams as of 2026-08-17, the seam it crosses first joining the seams
 that consume it, and `state-election` by `weaver-admin-harness-contract` as
