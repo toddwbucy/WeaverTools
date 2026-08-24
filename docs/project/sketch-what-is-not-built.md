@@ -168,9 +168,9 @@ down, not in what is built.
   rather than carved out here**, because narrowing a gate's reach is a ruling and
   because over-applying this same ruling to the PRDs was already the week's mistake.
   A second, separable residue: the word socket survives widely in the seam contracts,
-  some of it the rule working - `weaver-organ-channel` defers which socket type to the
-  Spec while contracting the obligation - and some of it plain substrate the sweep
-  missed.
+  some of it the rule working - `weaver-harness-spu-decode-contract` section 1
+  contracts the obligation and defers which socket type supplies it to the Spec - and
+  some of it plain substrate the sweep missed.
 - **The suite has no apex, deliberately, per the operator's ruling of 2026-08-24.**
   It is not an omission at this stage. **The architectural pattern is worth a rough
   draft PRD and the scope's details are not**, because those details are still moving

@@ -200,10 +200,10 @@ while the scope is still moving, which is why this sketch is a sketch.
 of what that sweep did is narrower than the property this section wants. It removed
 the named mechanisms of descriptor passing and process creation from the contracts.
 **It did not remove the word socket, which survives across the seam contracts and in
-places carries real weight** - `weaver-organ-channel` names ordering and boundary
-preservation as obligations and says outright that which socket type supplies them is
-the Spec's to elect, which is the rule working, while other sites name a socket as
-plain substrate and are residue the rule condemns. G2 carries the test going forward.
+places carries real weight** - `weaver-harness-spu-decode-contract` contracts one
+write being one message and says outright that which socket type supplies that is the
+Spec's election, which is the rule working, while other sites name a socket as plain
+substrate and are residue the rule condemns. G2 carries the test going forward.
 The relocation property is therefore claimed by design and not yet demonstrated by the
 document set, and section 7 opens it as a cell rather than asserting it.
 

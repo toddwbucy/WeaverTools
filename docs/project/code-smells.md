@@ -828,8 +828,9 @@ Recorded so the same candidates are not re-litigated. Each failed the acceptance
   on the framing rather than on the substrate**, which is what keeps it standing after
   the contract went transport-silent on 2026-08-24. That sweep removed the named
   mechanisms of descriptor passing and process creation, and it did not stop the
-  contracts naming a socket: `weaver-organ-channel` still names the socket type as
-  what supplies ordering and boundary preservation, leaving which type to the Spec.
+  contracts naming a socket: `weaver-harness-spu-decode-contract` section 1 still
+  names the socket type as what makes one write one message, leaving which type
+  supplies that to the Spec's election.
   The accept-loop half carries and is 3.1.
 - **A wire enum restated in three conversion functions.** Guarded duplication in one
   file with a test pinning the pairs. Not the shape that hurt the tree.
