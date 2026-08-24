@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-23, second of this date, the fixture surface is named.
+Section 1.2 enumerates which target each feature gate compiles and which
+artifact variables each reads, because a green run carried no account of the
+subset that produced it and no document said what a machine would need to
+run everything. The vocabulary set is checked by shape rather than by
+roster, since it grows with the registry. Owed to #288, whose finding is
+that the command in common use is blind to fifty-one tests.
+
 **Revised:** 2026-08-23, first of this date, the deployed family declares
 its tap. Section 7 records the measurement that authorises it: sixty-four
 tokens identical with the election on and off at each of two seeds, against
@@ -307,6 +315,66 @@ to: spu-nothing-laid-in-for-later-operations
 floor, this crate may use a nightly feature where the GPU path needs one, and
 names any it takes at the site, because a nightly requirement here is a
 requirement in one binary rather than everywhere.
+
+### 1.2 The fixture surface, and what a machine can run
+
+**A skip is a pass to the harness.** `tests/loaded.rs` states the rule this section
+generalises: an explicit request that cannot be met is a failure rather than a skip,
+because a green run on a machine without the fixture reports that the engine was
+watched decoding when nothing was decoded. The implicit skip survives only for the
+machine that simply does not hold the artifact.
+
+**What was missing is the account.** A green result carried no record of which subset
+produced it, and no document enumerated what a machine would need to run everything.
+This section is that enumeration, and the manifest test pins it so the table cannot
+drift behind the tests.
+
+Two feature gates decide which targets compile at all, per section 1.1, and Working
+Process section 6 names the two invocations that reach them.
+
+| target | gate | fixtures it reads |
+|---|---|---|
+| `entry.rs` | none | none |
+| `manifest.rs` | none | none |
+| `seam.rs` | none | none |
+| `markers.rs` | `gguf` | `WEAVER_VOCAB_<FAMILY>`, one per registry entry |
+| `selection.rs` | `gguf` | `WEAVER_ARTIFACT_GEMMA4`, `WEAVER_ARTIFACT_MISTRAL_SMALL`, `WEAVER_ARTIFACT_PHI4`, `WEAVER_ARTIFACT_PHI4_MINI`, `WEAVER_ARTIFACT_SMOLLM2` |
+| `native_loaded.rs` | `cuda` | `WEAVER_ARTIFACT_QWEN25_SAFETENSORS`, `WEAVER_ARTIFACT_QWEN25_32B`, `WEAVER_MEASURE_PACE` |
+| `loaded.rs` | `cuda` and `gguf` | `WEAVER_TEST_GGUF` |
+| `two_card.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_TWO_CARD`, `WEAVER_ARTIFACT_SPLIT` |
+| `readout_neutral.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_READOUT` |
+
+**Two targets name a fixture they do not read, and the first form of this
+table recorded the mention as a read.** `seam.rs` cites `WEAVER_TEST_GGUF` in a
+header discussing the convention that a fixture-less machine verifies nothing,
+and `selection.rs` cites it to say in as many words that it is **not** reused.
+Both were transcribed from a text search that could not tell a citation from a
+read.
+
+**The per-target check caught both on its first run, where a crate-wide union
+could not.** That name is genuinely read by `loaded.rs`, so the union was
+satisfied while the mapping was false in two rows. This is why the assertion is
+per target rather than over the crate.
+
+**The vocabulary set is per family rather than fixed.** `markers.rs` asks each registry
+entry for its own artifact under `WEAVER_VOCAB_<FAMILY>`, so the set grows with the
+registry and a table listing thirteen names would be stale on the next family. The
+manifest test therefore checks the shape rather than the roster.
+
+**`WEAVER_DECODE_GGUF` is the decode module's own and is not a test target's.** It
+points the engine's unit suite at an artifact whose vocabulary those tests read, which
+is why it is separate from `WEAVER_TEST_GGUF`: one variable serving both would answer
+a load-path request by failing as an engine error rather than as the mismatch it is.
+
+```graph
+node: spu-fixture-surface-pinned
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-spu
+to: spu-fixture-surface-pinned
+```
 
 ### 1.1 The dependency set, and each is argued
 
