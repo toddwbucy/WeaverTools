@@ -2,8 +2,11 @@
 
 **Status:** MERGED. In `main` and the source of truth. The crate PRD set is
 written together and merged together, and no Spec is written against any member
-before the whole set is merged. Ratification is the mapping of the whole document
-set into the graph, and it belongs to the set rather than to this document.
+before the whole set is merged. **Ratification became per-charter on 2026-08-23**, per
+Working
+Process section 2 as amended, so this document is ratified on its own terms rather
+than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
+conforms to.
 
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-22, third of this date, a conversion is not the only

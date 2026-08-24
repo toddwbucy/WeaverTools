@@ -7,10 +7,12 @@ documents carry a version and a date and no state, per Working Process section 2
 The Working Process says who is primary and in what order the work moves. This says
 what shape the documents take so that the graph can be built from them mechanically.
 
-Ratification is the mapping of the whole document set into the graph. A document that
-has to be interpreted before it can be mapped puts a human in the middle of the one
-step this project treats as the terminal gate, and an interpreted mapping is a hand
-edit wearing a different name. So the nodes and the edges are stated, not implied.
+**Ratification is per-charter as of 2026-08-23**, per Working Process section 2 as
+amended, and section 9 of this document carries what that changed. What has not
+changed is why the notation is mechanical: a document that has to be interpreted
+before it can be mapped puts a human in the middle of a step this project treats as a
+gate, and an interpreted mapping is a hand edit wearing a different name. So the nodes
+and the edges are stated, not implied.
 
 ## 0. What this document is for
 
@@ -437,9 +439,12 @@ third device is written as a blanket obligation on behavioral tests, always
 confirm the test fails when the property is removed, so a walk's test is
 perturbation-verified by that obligation whatever a section calls it. The walk
 itself is prose that derives the test and takes no node. On the system record, the
-vocabulary is `ratified`, present only after the set ratifies and absent before,
-which is what lets the graph's set-level mark be generated from the apex rather
-than hand-edited, per Working Process section 5's checklist item 6.
+vocabulary is `ratified`, which is what lets the graph's set-level mark be generated
+from the apex rather than hand-edited, per Working Process section 5's checklist item
+6. **It marks the set-wide act of 2026-08-04 and nothing narrower.** Since
+ratification became per-charter on 2026-08-23 a charter no longer waits on that mark,
+and whether a ratified charter carries its own `tag: ratified` is the open question
+section 9 names.
 
 A second key for the instrument would grow
 the fixed set for a fact the existing key already carries, and the point of the fixed
