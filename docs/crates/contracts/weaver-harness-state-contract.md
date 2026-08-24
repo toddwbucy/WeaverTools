@@ -11,7 +11,9 @@ doing, so the loop never walks a prefix that looks whole and never answers
 before the driver has dialed. The parked ask steps out of the arrival
 order as section 2's stated exception, later asks passing it, answers
 naming the ask they answer, and a second replay ask parking beside the
-first refused as malformed. Section 2 shapes it, section 8 gains its
+first refused as malformed. Its view is the seal's position rather than
+the ask's, the one exception to the pre-ask snapshot, stated at that
+clause. Section 2 shapes it, section 8 gains its
 conformance, and every
 party merges in the act.
 **Revised:** 2026-08-20, the opener names its session. The `election`
@@ -178,7 +180,11 @@ ask, in the order the asks arrived, and speaks at no other time. **An ask
 is answered against exactly the holdings the seam carried before it**,
 which is what makes a served fact attributable to a position in the stream:
 every distillate sent ahead of the ask is in the answer's view and nothing
-sent after it is.
+sent after it is. The parked replay ask of the paragraph below is this
+clause's one exception, its view being the seal's position rather than the
+ask's: it parks precisely because the holdings it is for arrive after it,
+so every distillate received through the seal is in its answer's view. The
+shape and recall asks keep the pre-ask view without exception.
 
 **Every answer is bounded to the session the opener declared**, per the
 operator's ruling of 2026-08-20. Holdings a member accumulated under an
@@ -238,7 +244,8 @@ answer still follows one ask. **The parked ask steps out of the arrival
 order, and that is this clause's stated exception to section 4's ordering
 rule**: a shape or recall ask arriving while a replay ask parks is answered
 in its own arrival order, against the holdings the stream carried before
-it, and the replay's answer follows the seal whenever that is. What keeps
+it, and the replay's answer follows the seal whenever that is, its view
+the seal's position, every distillate received through the seal in it. What keeps
 the pairing unambiguous without a correlation member is that every answer
 names the ask it answers, per the answer's own shape, and at most one
 replay ask parks per channel: a second replay ask arriving while one parks
