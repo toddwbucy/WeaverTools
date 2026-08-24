@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-23, third of this date, the GGUF gate carries the
+default. Section 1.1 argues it: the pair's stated reason covers the device
+gate and never covered this one, since llama.cpp builds on the host, so
+gating it bought nothing and cost twenty-eight tests the workspace command
+could not reach. The cost it does carry, a toolchain requirement on
+whole-workspace builds, is stated rather than left to be discovered. Act 3
+of #288.
+
 **Revised:** 2026-08-23, second of this date, the fixture surface is named.
 Section 1.2 enumerates which target each feature gate compiles and which
 artifact variables each reads, because a green run carried no account of the
@@ -315,6 +323,39 @@ to: spu-nothing-laid-in-for-later-operations
 floor, this crate may use a nightly feature where the GPU path needs one, and
 names any it takes at the site, because a nightly requirement here is a
 requirement in one binary rather than everywhere.
+
+**The `gguf` gate is on by default as of 2026-08-23, and `cuda` is not.** The
+two gates were written together and only one of them earns its default. The
+argument the pair carried, that a build with neither keeps the family surface
+testable on a machine with no device, covers `cuda` and does not cover `gguf`:
+llama.cpp builds and runs on the host, so the GGUF engine's family selection,
+marker promotion, and decode tests need no card. Gating them bought nothing
+the argument named and cost twenty-eight tests, which `cargo test --workspace`
+could not reach because the gate they sat behind was off.
+
+**What the default costs, stated because it is a real cost.** A workspace build
+now compiles llama.cpp, so a machine building this tree whole needs the C++
+toolchain that build requires. A machine doing floor work alone is unaffected,
+since `cargo build -p weaver-types` reaches no engine. The trade is that
+whole-workspace operations gain a toolchain requirement and the workspace
+command gains the family surface, and the second is what the gate said it
+wanted to preserve.
+
+**`cuda` stays gated and the reason is unchanged.** It needs a device, a build
+that compiled candle CPU-only while claiming the device would load every
+safetensors artifact into host memory, and the room judgment at admit cannot
+see that lie. A machine with no card still builds and still runs everything
+that does not need one.
+
+```graph
+node: spu-gguf-is-the-default-gate
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-spu
+to: spu-gguf-is-the-default-gate
+```
 
 ### 1.2 The fixture surface, and what a machine can run
 
