@@ -27,6 +27,23 @@ the edges are decided when there is code to draw them against.
 smell. A smell says what pattern to look for, what it breaks, and how a reader or a
 query would find it, because a smell that cannot be looked for is a preference.
 
+**A smell is architectural unless it says otherwise, and a few do.** The architecture
+is silent about substrate, which is what lets an organ move. **A smell that names a
+substrate is therefore a fact about this deployment rather than about the
+architecture**, and reading it as architectural would import a local decision into a
+rule that is supposed to survive one.
+
+The test is the same one G2 applies to a contract: **read the entry with the
+substrate removed and see whether a pattern is left to detect.** Most survive. "One
+seam carrying two services" is the same defect over a wire as over a socket, and it
+is stated in socket terms only because that is what this deployment runs on. **Two do
+not survive**, and each says so at its head: a filesystem node's lifetime and a
+listener's accept policy have no meaning on a substrate without them.
+
+**Where an entry is local, its detection is local too.** It applies to the module
+that binds the thing, and a query for it is scoped there rather than run across the
+tree. An entry with no scope line is architectural and applies everywhere.
+
 **Where an entry cites the quarry it is evidence, not a carry.** The archived tree is
 a parts source read and never edited, per the carry rule. A sighting there proves the
 pattern is reachable by this team on this architecture, which is the only thing a
@@ -454,6 +471,9 @@ unconditionally on every path.
 
 **Identifier:** `smell-unowned-socket-node`
 **Grounds:** `axiom-floor-is-vocabulary-behavior-is-socket`, with repetition
+**Scope:** local substrate. A filesystem node has a lifetime only where the seam is
+carried by one, so this detects nothing on a substrate without paths. It applies to
+the modules that bind, and not to the architecture.
 
 **The pattern.** A process binding a Unix socket creates a filesystem node, and nothing
 owns that node. Each server hand-rolls both halves of its lifetime. The acquire half is
@@ -691,6 +711,10 @@ deliverable clause forbids the construction outright. The second sighting is wha
 promotes it, so each entry names both.
 
 ### 3.1 One syscall, several accept policies
+
+**Scope:** local substrate. The pattern is a listener's accept-error handling, which
+exists where a listener does. It applies to the modules that bind, and not to the
+architecture.
 
 **Identifier:** `smell-per-seam-accept-policy`
 **Grounds:** repetition, with `axiom-floor-is-vocabulary-behavior-is-socket`
