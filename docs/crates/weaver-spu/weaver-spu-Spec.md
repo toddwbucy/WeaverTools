@@ -335,13 +335,26 @@ Process section 6 names the two invocations that reach them.
 | target | gate | fixtures it reads |
 |---|---|---|
 | `entry.rs` | none | none |
-| `seam.rs` | none | `WEAVER_TEST_GGUF` |
+| `manifest.rs` | none | none |
+| `seam.rs` | none | none |
 | `markers.rs` | `gguf` | `WEAVER_VOCAB_<FAMILY>`, one per registry entry |
-| `selection.rs` | `gguf` | `WEAVER_TEST_GGUF`, `WEAVER_ARTIFACT_GEMMA4`, `WEAVER_ARTIFACT_MISTRAL_SMALL`, `WEAVER_ARTIFACT_PHI4`, `WEAVER_ARTIFACT_PHI4_MINI`, `WEAVER_ARTIFACT_SMOLLM2` |
+| `selection.rs` | `gguf` | `WEAVER_ARTIFACT_GEMMA4`, `WEAVER_ARTIFACT_MISTRAL_SMALL`, `WEAVER_ARTIFACT_PHI4`, `WEAVER_ARTIFACT_PHI4_MINI`, `WEAVER_ARTIFACT_SMOLLM2` |
 | `native_loaded.rs` | `cuda` | `WEAVER_ARTIFACT_QWEN25_SAFETENSORS`, `WEAVER_ARTIFACT_QWEN25_32B`, `WEAVER_MEASURE_PACE` |
 | `loaded.rs` | `cuda` and `gguf` | `WEAVER_TEST_GGUF` |
 | `two_card.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_TWO_CARD`, `WEAVER_ARTIFACT_SPLIT` |
 | `readout_neutral.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_READOUT` |
+
+**Two targets name a fixture they do not read, and the first form of this
+table recorded the mention as a read.** `seam.rs` cites `WEAVER_TEST_GGUF` in a
+header discussing the convention that a fixture-less machine verifies nothing,
+and `selection.rs` cites it to say in as many words that it is **not** reused.
+Both were transcribed from a text search that could not tell a citation from a
+read.
+
+**The per-target check caught both on its first run, where a crate-wide union
+could not.** That name is genuinely read by `loaded.rs`, so the union was
+satisfied while the mapping was false in two rows. This is why the assertion is
+per target rather than over the crate.
 
 **The vocabulary set is per family rather than fixed.** `markers.rs` asks each registry
 entry for its own artifact under `WEAVER_VOCAB_<FAMILY>`, so the set grows with the
