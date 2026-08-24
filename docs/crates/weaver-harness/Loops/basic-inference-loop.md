@@ -5,6 +5,12 @@ loop, filed under the harness's `Loops/` container per the Document Format's
 container entry. It argues no edges of its own: the seams it walks are declared in
 the crate charters per Document Format section 4, and a graph block here would
 duplicate a record that already has a home.
+**Revised:** 2026-08-24, the loop names its binding. Section 2's lifecycle walk
+is scoped to a serving binding, per `weaver-agents-PRD` section 6 as amended
+this date. The walk itself is unchanged, because a serving load is what it
+always described, and the sentence exists so the gate-last and gate-first it
+recites read as the serving sequence rather than as every load's.
+
 **Revised:** 2026-08-14, the run identifies itself. The enter directive carries the run
 reference where it carried an ordinal, per `weaver-admin-PRD` section 10.
 **Parent:** `weaver-harness-PRD`
@@ -192,6 +198,11 @@ section 4. This loop walks load and unload, adds the stop exchange, and never
 reaches validate, which starts no process and joins no loop. Three operator acts,
 then, all crossing at admin, carried by the exchanges of
 `weaver-admin-harness-contract` section 3, and all three are merged.
+
+**This loop runs under a serving binding.** The kind that crosses in the enter
+declares the whole interior, Gate included, per `weaver-agents-PRD` section 6
+as amended 2026-08-24, and the walk below is that kind's. A diagnostic
+binding runs a different loop, owed to its own document.
 
 **Enter the run.** Admin resolves the session, opens the stream's sink under its
 own principal, and directs the harness to enter, supplying the session identity,
