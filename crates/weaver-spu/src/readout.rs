@@ -122,16 +122,42 @@ impl Reduction {
     /// the staging shape the GGUF tap uses while a forward is in flight, and
     /// the completed forward reaches the reduction that answers through
     /// [`Reduction::fold_forward`].
-    pub fn fold(&mut self, activations: &[f32]) {
+    pub fn fold(&mut self, activations: &[f32]) -> Result<(), String> {
+        self.refuse_loose_after_a_forward()?;
         let sum_of_squares: f32 = activations.iter().map(|value| value * value).sum();
         self.per_layer_norm.push(sum_of_squares.sqrt());
+        Ok(())
     }
 
     /// Fold one layer whose norm was already taken on the device, which is
     /// the stronger reading of the in-place clause: the activations never
     /// leave the device at all and one scalar crosses.
-    pub fn fold_norm(&mut self, norm: f32) {
+    pub fn fold_norm(&mut self, norm: f32) -> Result<(), String> {
+        self.refuse_loose_after_a_forward()?;
         self.per_layer_norm.push(norm);
+        Ok(())
+    }
+
+    /// **A reduction is a staging buffer or an accumulator, never both.**
+    ///
+    /// Loose folds build one forward's figures with no boundary between
+    /// them, which is the staging shape. `fold_forward` accumulates whole
+    /// forwards and records where each ended. Mixing them breaks the one
+    /// property section 6 asks the counts to have, in either order: a loose
+    /// figure after a forward grows the total without growing the forward
+    /// count, and a forward after loose figures leaves those figures inside
+    /// no forward at all. Both leave `layers` times `forwards` no longer
+    /// equal to `figures`, silently.
+    fn refuse_loose_after_a_forward(&self) -> Result<(), String> {
+        if self.layers == 0 {
+            return Ok(());
+        }
+        Err(format!(
+            "a loose figure cannot join a reduction that has folded {} forward(s) \
+             of {} layers, since the counts would then describe neither",
+            self.forwards(),
+            self.layers
+        ))
     }
 
     /// One forward's figures, in layer order, and the layer count with them.
@@ -148,6 +174,16 @@ impl Reduction {
     pub fn fold_forward(&mut self, norms: &[f32]) -> Result<(), String> {
         if norms.is_empty() {
             return Err("a forward folded no layer at all".into());
+        }
+        // The other order: loose figures already staged here belong to no
+        // forward, and declaring one now would leave them outside every
+        // count.
+        if self.layers == 0 && !self.per_layer_norm.is_empty() {
+            return Err(format!(
+                "a forward cannot be declared over {} loose figures already \
+                 folded, which would belong to no forward",
+                self.per_layer_norm.len()
+            ));
         }
         if self.layers == 0 {
             self.layers = norms.len();
@@ -391,14 +427,70 @@ mod tests {
         );
     }
 
+    /// **Loose figures and folded forwards do not mix, in either order.**
+    ///
+    /// A reduction is a staging buffer, where loose folds build one forward's
+    /// figures with no boundary between them, or an accumulator, where whole
+    /// forwards arrive and each records where it ended. Mixing them breaks
+    /// the property section 6 asks the counts to have, and breaks it
+    /// silently: nothing errors and the figures still look like figures.
+    ///
+    /// **Reachable by no caller today**, which is why it is refused rather
+    /// than left to discipline. The GGUF tap stages loose and accumulates
+    /// forwards on two different reductions, and the native path folds only
+    /// forwards. A type whose misuse is currently impossible is one whose
+    /// misuse arrives with the next tap.
+    #[test]
+    fn a_reduction_is_a_staging_buffer_or_an_accumulator_and_not_both() {
+        // Forward first, then a loose figure: the total grows and the
+        // forward count does not.
+        let mut accumulating = Reduction::new();
+        accumulating
+            .fold_forward(&[1.0, 2.0, 3.0])
+            .expect("the first forward establishes the shape");
+        let refused = accumulating
+            .fold_norm(9.0)
+            .expect_err("a loose figure after a forward is refused");
+        assert!(
+            refused.contains("1 forward(s) of 3 layers"),
+            "the refusal names what the reduction already holds: {refused}"
+        );
+        assert!(
+            accumulating.fold(&[1.0, 1.0]).is_err(),
+            "and the activation form is refused on the same ground"
+        );
+        assert_eq!(
+            accumulating.layers() * accumulating.forwards(),
+            accumulating.figures(),
+            "the counts still describe the figures"
+        );
+
+        // Loose first, then a forward: those figures would belong to no
+        // forward at all.
+        let mut staged = Reduction::new();
+        staged.fold_norm(1.0).expect("a loose fold before any forward");
+        staged.fold_norm(2.0).expect("and another");
+        let refused = staged
+            .fold_forward(&[3.0, 4.0, 5.0])
+            .expect_err("a forward declared over loose figures is refused");
+        assert!(
+            refused.contains("2 loose figures"),
+            "the refusal names what would be orphaned: {refused}"
+        );
+        assert_eq!(staged.figures(), 2, "and nothing of the forward landed");
+        assert_eq!(staged.layers(), 0, "the reduction is still a staging buffer");
+    }
+
     /// **The reduction keeps a figure per layer and never the layer.** What
     /// leaves is a function of the layer count, not the activation width.
     #[test]
     fn the_reduction_holds_a_figure_per_layer_rather_than_the_layers() {
         let mut reduction = Reduction::new();
         // Two layers, wildly different widths. What comes out is two numbers.
-        reduction.fold(&[3.0, 4.0]);
-        reduction.fold(&vec![1.0; 4096]);
+        reduction.fold(&[3.0, 4.0]).expect("a loose fold before any forward");
+        reduction
+            .fold(&vec![1.0; 4096])
+            .expect("and another");
 
         // **Figures, not layers.** This asserted `layers()` until
         // 2026-08-24, when that method returned the figure count and the two

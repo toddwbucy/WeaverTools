@@ -224,7 +224,13 @@ impl TapState {
         // 3 step 6: about eight kibibytes crossed off the device for one
         // layer and one scalar is kept, and `self.column` is overwritten by
         // the next layer rather than retained.
-        self.staging.fold(&self.column);
+        // The staging reduction folds loose figures and never a forward, so
+        // this refuses only if that discipline were broken above. Latched
+        // rather than ignored, because a tap that silently stopped folding is
+        // the absence the fault rule forbids.
+        if let Err(detail) = self.staging.fold(&self.column) {
+            self.latch(format!("l_out-{layer}: {detail}"));
+        }
     }
 }
 
@@ -356,7 +362,7 @@ mod tests {
     fn a_commit_short_of_the_layer_count_faults() {
         let mut state = TapState::new(24);
         for _ in 0..20 {
-            state.staging.fold_norm(1.0);
+            state.staging.fold_norm(1.0).expect("staging takes loose figures");
         }
         let fault = state.commit().expect_err("a short observation faults");
         assert!(
@@ -395,11 +401,11 @@ mod tests {
     #[test]
     fn the_drain_empties_what_it_hands_back() {
         let mut state = TapState::new(2);
-        state.staging.fold_norm(3.0);
-        state.staging.fold_norm(4.0);
+        state.staging.fold_norm(3.0).expect("staging takes loose figures");
+        state.staging.fold_norm(4.0).expect("staging takes loose figures");
         state.commit().expect("a full count commits");
-        state.staging.fold_norm(5.0);
-        state.staging.fold_norm(6.0);
+        state.staging.fold_norm(5.0).expect("staging takes loose figures");
+        state.staging.fold_norm(6.0).expect("staging takes loose figures");
         state.commit().expect("a second decode commits too");
 
         let drained = state.drain();
