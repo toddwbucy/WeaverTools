@@ -1,13 +1,20 @@
 # Reasoning-loop boundary
 
-**Status:** v0.3, 2026-08-11. Architecture-seat material, outside the document set,
+**Status:** ARCHIVED 2026-08-23. Its section 2 criterion was ratified by the
+operator 2026-08-11 and the two-level model it states is carried by
+`weaver-agents-PRD` in the apex's own words. Citations to this document were dropped
+on that date. **The loop taxonomy settled 2026-08-23 supersedes the two-level model
+and is not yet written down anywhere**, which is worth knowing before reading this as
+current.
+
+Previously: v0.3, 2026-08-11. Architecture-seat material, outside the document set,
 landed by the authoring seat with the discussion's edits applied. **The criterion of
 section 2 is ratified by the operator, 2026-08-11.** The one actionable item for the
 harness lane is in section 4 and is owed, not done.
 
 **Document ID:** `reasoning-loop-boundary`
 **Companions:** `finding-loop-agent-split`, `reasoning-loop-is-and-is-not`,
-`verification-placement`, and the figure `reasoning-loop-boundary.svg`.
+`weaver-harness-PRD` section 5, and the figure `reasoning-loop-boundary.svg`.
 **Editorial:** Per the Working Rules.
 
 Changed from v0.2: the criterion's second clause is sharpened so connection to the
@@ -175,6 +182,6 @@ These are open and belong to the seat with codebase context, not to this one.
 
 The admin face is an egress, not an instance of this criterion. The criterion sorts
 what the loop reaches for. Admin is how the record leaves and how the harness is
-started, and it is governed by `verification-placement` rather than by this
+started, and it is governed by `weaver-harness-PRD` section 5 rather than by this
 document. The figure draws both because both are real. This document defines only
 the inbound membership rule.

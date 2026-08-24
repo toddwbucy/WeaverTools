@@ -20,7 +20,7 @@ refused half. The crate authors the retired shape until the act that
 migrates it, which follows this one, per gate H1's direction.
 **Date filed:** 2026-08-19
 **Document ID:** `weaver-harness-spu-classify-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---

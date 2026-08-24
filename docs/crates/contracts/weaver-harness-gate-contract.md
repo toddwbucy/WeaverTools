@@ -40,7 +40,7 @@ seams its instruction names. **The exchange that reaches the second seam is not
 enumerated here**, arriving with the tool workflow, so this act removes a contradiction
 and shapes nothing. **The apex named this document as owed and this discharges it.**
 **Document ID:** `weaver-harness-gate-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---

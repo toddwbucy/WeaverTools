@@ -3,7 +3,7 @@ title: weaver-harness
 summary: the switchboard: the loops, the seams, and sole authorship of the trace
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 
@@ -32,14 +32,18 @@ surface, trace authorship.
 ## Seams
 
 Not drafted. Each seam named once, its contract linked to
-[the contracts page](contracts.md), and its socket-or-link tag with the grounds
+[the contracts page](../contracts.md), and its socket-or-link tag with the grounds
 stated. The contract is linked and never restated.
 
-Seams: five, per `weaver-harness-PRD` section 4. Boundary to `weaver-gate`, decode
-to `weaver-spu`, coordination to `weaver-admin`, state to `weaver-state`, and the
-fifth to `weaver-trace`, which crosses no process line and is tagged link rather
-than socket. The classify arm's seam is declared at the SPU's side, and the
-charter's count of five predates it. See the contracts page for each.
+Seams: seven, one per contract on the contracts page, this crate being a party to
+every internal seam the program has. Boundary to `weaver-gate`, coordination to
+`weaver-admin`, state to `weaver-state`, three to `weaver-spu` for residency,
+decode, and classify, and the seventh to `weaver-trace`, which crosses no process
+line and is tagged link rather than socket. **The charter's count of five is the
+figure this page carried and it is short by two**, the classify arm having been
+declared at the SPU's side after that count was taken, and residency and decode
+having been collapsed into one entry where both `weaver-spu` and the contracts page
+carry them separately. See the contracts page for each.
 
 ## How it works
 

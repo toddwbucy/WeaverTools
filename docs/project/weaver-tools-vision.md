@@ -8,7 +8,7 @@ is written against it.
 **Document ID:** `weaver-tools-vision`
 **Editorial:** ASCII, no em-dashes, no semicolons.
 
-Companion to `WeaverTools-PRD`. The PRD is design and is checkable against code.
+Companion to `weaver-agents-PRD`. The PRD is design and is checkable against code.
 This document is motive and is not. Where the PRD specifies one turn of the
 proto-stateful agent, this document holds the arc that turn is the first step
 of.
@@ -226,7 +226,7 @@ whole of what that user owns.
 the action, and where it was dispatched. An earlier cut of this section ran them
 together as one inside-versus-outside axis, which cannot classify the ordinary case
 of a memory lookup that reaches a database over a network, and which the apex already
-avoids: `WeaverTools-PRD` section 4 calls the calculator **a model-elected call whose
+avoids: `weaver-agents-PRD` section 4 calls the calculator **a model-elected call whose
 result the harness supplies deterministically**, and reserves autonomic for
 **harness-initiated** action.
 
@@ -276,7 +276,7 @@ changing the axis bought.
 **The outward corner, elected and dispatched through the gate, is what the rest of
 this section is about.** A tool there is external to the agent and not constitutive
 of it, and this program builds none of them: what it owns is the grip they are built
-to fit, per `WeaverTools-PRD` section 9. Its call leaves as ordinary model output,
+to fit, per `weaver-agents-PRD` section 9. Its call leaves as ordinary model output,
 crossing the gate opaque and logged, and the harness owns dispatch on the far side, so
 the gate never distinguishes a tool call from any other output. The return is symmetric:
 the result re-enters through the gate, opaque and logged, and reaches the model only as
@@ -442,24 +442,40 @@ class was the developer, and the work rightly faced them. Using the framework
 raises the development purpose one level, to the operator and the user, and
 what they meet is not a crate but a suite.
 
-The shape, held here so it is not lost and not scheduled: this repository's
-program becomes **weaver-agents**, the organism and its framework. Around it
-grow **weaver-web**, the frontend for admin and gate, **weaver-store**, a
-shared semantic store between agents, and eventually **weaver-train**, the
-post-training leg. **WeaverTools** becomes the name of the whole, the suite,
-and in the direction the operator holds, eventually the company built
-around it. The rebrand is deliberately deferred - the direction is
-held, the renaming act is not begun - and the satellite names are provisional,
-weaver-store sitting close enough to weaver-state on the page that the final
-name is chosen with the collision rule in hand.
+The shape: **WeaverTools** is the suite, which is this repository. Inside it
+**weaver-agents** is a domain, the organism and its framework, holding the agent
+crates. Beside that domain and outside its boundary sit the consumers,
+**weaver-web**, the frontend for admin and gate, and **weaver-diagnostic**, which
+consumes a trace and drives a replay. A shared semantic store and a post-training
+leg are directions rather than crates.
 
-Each satellite already has its door, which is why the shape costs the corpus
+**The rebrand is retired as unnecessary, 2026-08-23, and not merely deferred.** It
+existed because `WeaverTools` named two things at once, a repository and the whole
+around it, and a word naming two things has to be split. The operator's ruling
+removes the ambiguity from the other side: **the repository is the suite**, so the
+word names one thing and there is nothing left to rename. `weaver-agents` is a
+domain root carried by the graph as a parent edge per crate and checked by G3. It is
+not a repository, not a package, and not a crate-name prefix - a prefix scheme was
+considered and retired on the ground that it would be a second source of truth for a
+fact the edges already carry, and the one string no gate validates.
+
+An earlier form of this section held a three-act rename sequence and said the
+rebrand was deliberately deferred. **Both are withdrawn**, displaced by the ruling of
+2026-08-23, and the paragraph is rewritten rather than deleted so the reason survives
+its plan.
+
+Each consumer already has its door, which is why the shape costs the corpus
 nothing today. weaver-web builds on the two external contracts the ruling of
 2026-08-01 wrote for exactly this party, `weaver-gate-world-contract` and
 `weaver-admin-operator-contract`, pages an outside consumer builds against
 and nothing else, on the consumer's own compute per the live-view ruling.
-weaver-train stands on the clause that kept the native path alive, a program
-that intends training as a continuation cannot let that path decay. And the
+weaver-diagnostic reaches the same way, consuming a trace an operator holds and
+never touching weights.
+
+**A post-training leg is a direction and not a consumer.** The clause that kept
+the native path alive is what it would stand on, a program that intends training
+as a continuation being unable to let that path decay, but nothing is chartered
+and no door is owed. And the
 gaps a real frontend will meet each have a named front door, though not
 one shape of door: streaming and a status ask enter by amending the two
 external contracts in docs acts, the operator's read on state enters

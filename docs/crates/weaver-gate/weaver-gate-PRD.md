@@ -35,7 +35,7 @@ question a one-level model could ask, and it keeps that answer whole. What
 changes is that a second question now exists: the reasoning-loop criterion of
 2026-08-11 files every tool outside the loop without exception, so the forked
 internal tool is **internal to the agent and external to the loop**, both
-answers correct about the shell, per `finding-loop-agent-split`. A refiling
+answers correct about the shell. A refiling
 rather than a reversal: nothing leaves the agent, and which boundary the tool
 is filed against is what changed. Section 7's cell carries the sentence.
 **Revised:** 2026-08-07, the tool egress ruling lands here. Section 2's hook becomes
@@ -56,7 +56,7 @@ is the client's own rather than an instrument's. Both the turn key and the run
 reference cross, one not identifying without the other, and neither is a
 capability: a name admits nothing where every seam authenticates by credential.
 **Document ID:** `weaver-gate-PRD`
-**Parent:** `WeaverTools-PRD`
+**Parent:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
 
 ---
@@ -179,9 +179,11 @@ payload at all.
 **Which end binds the agent-opened seam is not this charter's to say.** On the
 world-opened seam it is settled and merged: the world dials, this crate binds and
 accepts, per `weaver-gate-world-contract`. On the agent-opened seam the transport is
-one of the three things `tool-egress-boundary-frame` section 7 names as the contract's
-own, beside which credential a registered tool presents and what a restart or a death
-leaves behind, and a charter that answered it here would settle by assertion what the
+one of three things this charter names as the tool-seam contract's own, beside which
+credential a registered tool presents and how that maps to its registration, and who
+binds each path with what ownership and mode, a path nothing owns exclusively being a
+path another process can bind first, and a charter that answered it here would settle by
+assertion what the
 frame parked for a reason: a path nothing owns exclusively is a path another process
 can bind first, and which end owns it decides that. **What this charter fixes is that
 the seam exists, that it is this crate's, and that it is single-initiator with the
@@ -200,8 +202,8 @@ reported the pid that called `listen`, not the pid that called `accept`.
 
 **This is a demand on the contract rather than a defect in the seam.** What closes it
 is the contract stating how a registered tool proves itself to a dialer, which is the
-first of the three things `tool-egress-boundary-frame` section 7 names as owed and is
-the same question read from the other end. A charter claiming symmetric identification
+first of the three owed above and is the same question read from the other end. A
+charter claiming symmetric identification
 would hand `weaver-gate-Spec` a premise the kernel does not support, so it is named
 here instead.
 
@@ -257,8 +259,10 @@ the merged rule, unchanged by the egress ruling.
 **On the agent-opened socket it admits registered tools only**, the principals the
 operator provisioned for that door and no others, per apex section 3 step 7. Which
 credential a registered tool presents and how that maps to its registration is the
-tool-seam contract's to state, per `tool-egress-boundary-frame` section 7, and this
-charter records the demand rather than inventing the answer.
+tool-seam contract's to state, and this charter records the demand rather than
+inventing the answer. **A credential names a uid and not a tool**, so a clause that
+does not close the mapping authenticates a user and admits an application it never
+checked.
 
 **Both predicates exclude the agent uid**, and the ground differs on each. On
 the world-opened socket an elected tool that could dial the agent's own mouth would let
@@ -469,6 +473,35 @@ None of these acquires a trait, a variant, a feature flag, or a config field in 
 pass. A charter naming a domain boundary is a decided boundary. An unbuilt interface
 waiting to be filled is the thing apex section 9 forbids.
 
+### 8.1 What the boundary is not asked to carry
+
+Three things sit next to this boundary and are not it, absorbed here from
+`tool-egress-boundary-frame` on 2026-08-23 when that frame was archived. Naming them
+keeps the boundary claim from being asked to carry weight it was not built for.
+
+**It is not a compromise answer.** This crate authorizes the processes on its list
+and refuses the rest, and it holds the door for the traffic it was configured to
+allow. **Whether a process that was authorized is later turned is a separate problem
+at a separate layer**, and loading it onto this crate is how network paranoia creeps
+back into the one place the socket floor cleared it out of. The question is parked
+with its own layer rather than answered here.
+
+**It is not the network-facing security layer.** A registered tool that reaches the
+world will want a firewall, application support, and a hardened surface. That layer
+is real and is not what this program is building. **This crate selects the
+application and does not select that application's destinations**, which is why the
+turn path states a boundary rather than a containment.
+
+**It is not an injection answer, and this is the corpus's only statement of where
+injection lives.** A tool's answer is world-authored content entering the next
+prompt, **so the answer path has an injection surface.** Its owner is the
+network-facing wrapper behind the tool contract rather than this crate, and the
+mechanisms that would address it, small activation networks and rerankers and
+categorizers inside the reasoning process, are not built. Injection is named here to
+place it and to demote it, so the boundary claim is not asked to contain it.
+**Nothing in this program mitigates it today**, and a reader should not infer from
+the gate's existence that anything does.
+
 ## 9. Staged requirements
 
 **The token workflow arrived on 2026-08-02 and ratified this list in place.**
@@ -512,7 +545,7 @@ category the
 Document Format lacked is owed to the Format by `weaver-admin-operator-contract`
 section 8, one register entry for both instances.
 
-## 11. Edits owed in the same act
+## 11. Edits owed
 
 Named here because a document whose reach cannot be read for the reach is a trap.
 These are owed by this act and this list is the authoritative one under G5. An entry
@@ -526,7 +559,7 @@ open-items entry on this contract's name settled with the name standing as filed
 - The section 2.3 entry this register carried dissolved with the naming ruling of
   2026-08-01: the seam draws loop 0's trio and owes the floor nothing, per the
   contract's section 7.
-- `WeaverTools-PRD`: the gate's rows and prose join the correction list's demotion
+- `weaver-agents-PRD`: the gate's rows and prose join the correction list's demotion
   entry, the component table, the section 3 path, and the organ framing of section 6,
   all filing with the re-authoring.
 

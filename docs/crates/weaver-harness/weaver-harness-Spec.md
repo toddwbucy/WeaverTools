@@ -124,8 +124,7 @@ completion alone, with the engine opening that exchange per recovered call.
 **Revised:** 2026-08-17, the loop boundary reaches section 6's tool notes,
 per issue #115: the subprocess language stands as mechanics and is retired as
 the settled model, every tool sitting outside the loop by the ratified
-criterion, with the forcing rationale of `finding-loop-agent-split` stated
-where the notes are.
+criterion, with the forcing rationale stated at section 6's retirement clause.
 **Revised:** 2026-08-16, second of that date, argv carries a host's fact and
 not an agent's. The organ argv clause of this date is narrowed rather than
 withdrawn: the headroom term stays on it, and a parameter belonging to one agent
@@ -927,8 +926,7 @@ to: harness-descriptors-owned-types
 ## 3. The lifecycle interior
 
 The harness type, the run state, and the fan-out of loop 0, per
-`weaver-admin-harness-contract` section 3 and the composition `load-unload-path`
-reads back.
+`weaver-admin-harness-contract` section 3.
 
 ```rust
 pub struct Harness { /* private */ }
@@ -1088,9 +1086,9 @@ keeps the arm's all-or-nothing shape where two options would admit a half-stood
 arm the unwind would have to reason about. The decode end takes its own type
 rather than `OrganChannel`, because `weaver-spu-PRD` section 13.2 rules that
 socket not an organ channel and a shared name would carry the envelope's
-assumptions onto a seam that does not take them. This is the mechanical form of
-`load-unload-path` section 4's rule that admin's unwind is a reap plus one
-directive: the directive works because the harness knows what stands. **The options
+assumptions onto a seam that does not take them. This is the mechanical form of the rule
+that admin's unwind is a reap plus one directive: the directive works because the
+harness knows what stands. **The options
 ground in apex section 5.5 and the two SPU-shaped records beside them do not.** A
 leave has to undo across domains what an enter built across them, and no organ can
 see whether the other stood up, so either the loop holds that knowledge or the unwind
@@ -1332,9 +1330,9 @@ from: weaver-harness
 to: harness-fault-payload-carried-unchanged
 ```
 
-**Loop 0 takes neither a type nor a trait, and the cell closes here.**
-`load-unload-path` section 8 holds the question for the Spec pass,
-demand-derived rather than reserved. The demand does not exist: the loop is
+**Loop 0 takes neither a type nor a trait, and the cell closes here.** The question
+was held open for this pass, demand-derived rather than reserved. The demand does not
+exist: the loop is
 the interval between two directives, its state is the `Run` struct above, and
 its control flow is the serial service, so an abstraction would have no second
 implementor and no caller that varies, which is the reserved slot apex section
@@ -1560,8 +1558,8 @@ issue #115. The kernel-bounds and tool-subprocess clauses stand as mechanics,
 the uid and descriptor discipline being true of whatever process shape the
 tool workflow elects, and they no longer describe where a tool sits: every
 tool is on the far side of the gate by the reasoning-loop criterion, without
-exception. The retirement is forced rather than preferential, per
-`finding-loop-agent-split`: enforcement by construction requires a tool
+exception. The retirement is forced rather than preferential: enforcement by
+construction requires a tool
 result constructible from exactly one source, and a harness-side execution
 path that must stay open cannot be closed by the type system, so the in-loop
 construction path and the enforcement are incompatible and the enforcement
@@ -1595,8 +1593,8 @@ could not author a tool-result turn would leave the conversation with a hole
 where the answer goes. One site, four contents, no second door. The author door for a
 tool-result message takes the grant and never the block, so a loop 1 that
 would fabricate a result has no door: not by construction, not by serde,
-not by conversion, which is `reasoning-loop-boundary` section 4's mechanism
-named and held. The record the trace and the render consume is authored by
+not by conversion, which is the enforcement mechanism named and held. The record the
+trace and the render consume is authored by
 this crate from the grant at that same site. The engine opens the execution
 exchange when the family parse recovers a call from the emission, one
 exchange per recovered call, **serially and in the order the parse recovered
@@ -1854,7 +1852,7 @@ the emission and its finish, and loop 1 authors nothing. Loop 0 drives the
 append-and-generate exchange, consumes the token stream, reads the close, and
 authors the record, which is the sole-writer property held where the turn runs
 rather than only where the load event is written. This is the custody model of
-`verification-placement`: loop 1 is the reasoning that supplies intent, loop 0 is
+`weaver-harness-PRD` section 5: loop 1 is the reasoning that supplies intent, loop 0 is
 the clerk that authors what happened, and the blade of section 6 is why the split
 falls here, a loop 1 that authored its own events reaching the trace by a route no
 seat granted. **The election flagged for the operator: the turn call authors

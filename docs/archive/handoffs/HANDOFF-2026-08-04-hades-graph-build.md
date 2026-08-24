@@ -1,6 +1,11 @@
 # HANDOFF 2026-08-04, the HADES graph build
 
-**Status:** SERVED 2026-08-04. The build this document commissioned ran the same day:
+**Status:** ARCHIVED 2026-08-23. The build it commissioned ran and the graph
+stands. `WeaverTools-Working-Process` cites it twice as the record of that build,
+which is provenance rather than a dependency: the checklist it reported is closed
+except for item 7, which waits on G6 and is tracked there rather than here.
+
+Previously: SERVED 2026-08-04. The build this document commissioned ran the same day:
 the graph stood up as `WeaverTools_v3`, the checklist was reported item by item, and
 the set was ratified per the operator's ruling recorded at Working Process section 5.
 The document stays as the record of what the build was asked to honor.
@@ -257,7 +262,7 @@ re-entry to authoring rather than a defect.
 ```
 process/WeaverTools-Working-Process.md    section 5, the checklist that ratifies
 process/WeaverTools-Document-Format.md    sections 3 to 6, the notation
-docs/project/WeaverTools-PRD.md           section 5, the five invariants
+docs/crates/weaver-agents-PRD.md          section 5, the five invariants
 docs/project/code-smells.md               section 1.2's note on seam identity
 ```
 

@@ -2,8 +2,11 @@
 
 **Status:** MERGED. In `main` and the source of truth. The crate PRD set is
 written together and merged together, and no Spec is written against any member
-before the whole set is merged. Ratification is the mapping of the whole document
-set into the graph, and it belongs to the set rather than to this document.
+before the whole set is merged. **Ratification became per-charter on 2026-08-23**, per
+Working
+Process section 2 as amended, so this document is ratified on its own terms rather
+than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
+conforms to.
 
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-22, third of this date, a conversion is not the only
@@ -75,7 +78,7 @@ that gives that field a reader, room made in advance being the reserved slot
 that section forbids. How the fields group is representation and stays the
 Spec's. No graph record moves, the six nodes and their edges being unchanged.
 **Document ID:** `weaver-types-PRD`
-**Parent:** `WeaverTools-PRD`
+**Parent:** `weaver-agents-PRD`
 **Depends on:** `weaver-traits`
 **Editorial:** Per the Working Rules.
 
@@ -119,8 +122,8 @@ obligations that run from a producer to a consumer.
 ## 2. What it holds
 
 Everything here is present because the harness demonstrably needs it. The set grows
-when a later crate demands more, by the ritual: a crate PRD added or changed updates
-the floor in the same act.
+when a later crate demands more, by the ritual: a crate PRD added or changed names
+the floor edit it needs, which lands with it or is named as owed.
 
 ### 2.1 The agent config
 
@@ -855,13 +858,16 @@ emits, are the same defect seen from two ends, and two readers that disagree abo
 one file is that defect a third way.
 
 **Compatibility posture is stated, not assumed.** A field added, removed, or given a
-new meaning is a change to every producer and consumer of the file in the same act.
+new meaning is a change to every producer and consumer of the file, and each is named
+whether or not it lands in the same act.
 Absence is never read as a default unless the charter says that field is optional and
 says what its absence means.
 
 **A change here is loud by design.** Everything above links this crate. The ritual
-carries it: a floor change updates every affected PRD and contract in one act, and a
-change that cannot be carried in one act has not been thought through.
+carries it: a floor change names every PRD and contract it affects, and what does
+not land with it is named as owed in the register that tracks it. An earlier form
+required one act and is retired per the ruling of 2026-08-23, the naming being what
+it was protecting.
 
 ## 6. The seams
 

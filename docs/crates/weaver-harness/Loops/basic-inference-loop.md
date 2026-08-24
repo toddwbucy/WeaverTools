@@ -75,7 +75,7 @@ apex binding and they do not. Admin arbitrates no hardware and reasons about the
 device at no point, the SPU is the one authority on the device, and apex section 6's
 GPU-conflict rejection relocates from the load driver to SPU model admission, the
 no-auto-evict guarantee moving with the rejection rather than leaving with it. The
-ruling reaches `WeaverTools-PRD` section 6, `weaver-admin-PRD` sections 2 through 6
+ruling reaches `weaver-agents-PRD` section 6, `weaver-admin-PRD` sections 2 through 6
 with the load renumbered to seven steps, `weaver-spu-PRD` sections 2, 3, and 4.1,
 and `weaver-harness-spu-contract` sections 4 and 6. This document takes no content
 edit under it, the basic loop never reaching the device.
@@ -276,7 +276,7 @@ The record moved, by ruling. Durability is the operator's as of 2026-08-01, the
 program's obligation ending at the tee, per `weaver-admin-operator-contract`
 section 3, and the record is what the stream accumulates on the operator's side of
 the sink. When the memory round comes, memory returns as a new socket peer under
-its own contract, per `WeaverTools-PRD` sections 5.1 and 9, and what it consumes is
+its own contract, per `weaver-agents-PRD` sections 5.1 and 9, and what it consumes is
 that round's question, answered against operator-held storage per the enter cell
 `weaver-admin-PRD` section 10 holds. The stream is the framework's obligation.
 Everything after the sink is the consumer's.

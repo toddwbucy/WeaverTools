@@ -3,7 +3,7 @@ title: Contracts
 summary: every seam this program governs, with its parties, its tag, and where the merged contract lives
 version: v0.1
 date: 2026-08-22
-commit: 0499eba
+commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
 
@@ -14,9 +14,10 @@ parent: WeaverTools Technical Documentation
 The code described here is unreleased and is scheduled for release in the first
 quarter of 2027.
 
-One page rather than one page per contract, which is overturnable and is settled
-here on length. This is the authoritative site for a contract read-out on this
-site, per G5. Every crate paper links here and none of them restates a contract.
+One page rather than one page per contract, settled on length and overturnable.
+**This is the one place a contract is read out here.** Every crate paper links to it
+and none of them restates a contract, so two pages cannot drift into two accounts of
+one seam.
 
 Each entry names the parties, what the seam carries, and the merged document that
 governs it. **The merged document is authoritative.** Where an entry here and its

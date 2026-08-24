@@ -246,7 +246,7 @@ absent-rather-than-zero serialization of its sections 3 and 10, which this
 crate's own refusal to produce an empty vector meets from the other side.
 
 **It is written from the merged corpus, with the salvage survey as its quarry
-map.** `docs/project/weaver-spu-salvage-survey.md` records what the archived
+map.** `docs/archive/weaver-spu-salvage-survey.md` records what the archived
 tree holds, what maps across, and the seven places its working code yields to
 merged rulings, the seventh filed with the device-assignment ruling. This
 document elects against the merged corpus and cites the

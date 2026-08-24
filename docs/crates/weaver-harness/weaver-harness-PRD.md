@@ -2,8 +2,11 @@
 
 **Status:** MERGED. In `main` and the source of truth. The crate PRD set is
 written together and merged together, and no Spec is written against any member
-before the whole set is merged. Ratification is the mapping of the whole document
-set into the graph, and it belongs to the set rather than to this document.
+before the whole set is merged. **Ratification became per-charter on 2026-08-23**, per
+Working
+Process section 2 as amended, so this document is ratified on its own terms rather
+than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
+conforms to.
 
 **Revised:** 2026-08-22, the harness names the elision's span. The clause
 placing the flush decision here gains the elision beside it, per
@@ -55,7 +58,7 @@ agent that boots under its unit and holds its sockets, which is why it is seated
 this crate directly rather than in the loop container, and why a builder's drop-in
 reaches loop 1 and above and never loop 0.
 **Document ID:** `weaver-harness-PRD`
-**Parent:** `WeaverTools-PRD`
+**Parent:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
 
 ---
@@ -421,7 +424,7 @@ The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and li
 `weaver-trace` as a member of its own domain under a contract. It links no other
 internal crate. The three are one dependency surface and two classifications, which is
 what the block below projects: two `floor-link` records and one `seam`. Calling all
-three floor vocabulary would use the word `WeaverTools-PRD` section 5.1 reserves for
+three floor vocabulary would use the word `weaver-agents-PRD` section 5.1 reserves for
 what every domain draws from and no domain contains. That is the whole
 dependency surface, and it is checkable against this list.
 
@@ -478,6 +481,32 @@ resolves through, and no record is declared here on admin's behalf.
 
 The trace is the primary artifact and this crate authors it. Three rules govern
 that, and they are separable.
+
+**Verification sits outside the loop, on latency grounds alone**, absorbed here from
+`verification-placement` on 2026-08-23 when that document was retired into this one.
+The placement says nothing about verification's importance. It is the loop's own cost
+model applied: a check on the hot path is paid on every event, and the loop's named
+purpose is processing meaning rather than auditing it.
+
+**What holds instead is split by when it runs.** At author time, the vocabulary
+guard: this crate authors every event and enforces the kind-to-payload pairing and
+the payload's conformance at the one submit call, which is where the splice's opacity
+is paid for. After emission, the observability consumer: the record leaves through
+admin's egress and faithfulness is checked where the record lands, **outside the
+process whose account it is.**
+
+**Corrective mechanisms are allowed for and none is built.** Nothing here precludes
+admin-level sockets for verification, remedial context, or other correction. What is
+ruled is that such mechanisms and their monitoring are external and secondary to the
+loop's named purpose. One consistency fact binds any of them: the coordination seam's
+contract guarantees that no directive carries work of any kind, **so a
+corrective-context path cannot ride the existing admin seam.** It arrives as a new
+socket under a new contract, which is the feature-add pattern this corpus already
+mandates. **Nothing is reserved for it meanwhile: no slot, no field, no dormant
+party.**
+
+The security model this rests on is the apex's role-scoped socket handoff and is not
+restated here.
 
 These rules defend against one adversary, the model reaching for its own trace
 through legitimate operation, whether an elected tool call or a recall path that

@@ -1,5 +1,10 @@
 # The decode loop's baseline: transfer against compute, measured per leg
 
+**Status:** ARCHIVED 2026-08-23. A measurement taken and reported. The decode
+loop it baselined is built, the figures stand as a reading of that day's tree, and
+nothing cites it. Kept because a baseline is only useful against a later measurement,
+and the later one has not been taken.
+
 **Measured 2026-08-17, per issue #102.** That issue filed estimates from
 adjacent kernel work so that SPU tuning would start from a measurement rather
 than from intuition, and said taking the numbers was the point. These are the

@@ -101,7 +101,7 @@ backend reaching a local serving process over a socket needs no such dependency
 and still moves the device out from under this crate, which is the gap the new
 clause closes. No cell opens or closes and no record moves.
 **Document ID:** `weaver-spu-PRD`
-**Parent:** `WeaverTools-PRD`
+**Parent:** `weaver-agents-PRD`
 **Companion contract:** `weaver-harness-spu-contract`, drafted with this document
 **Editorial:** Per the Working Rules.
 
@@ -794,10 +794,11 @@ section 15.1. **Settled** at the classifier code act's opening: the Spec's
 section 11 elects the second bin target, `weaver-spu-classify`, with the
 reasoning recorded there.
 
-## 11. Edits owed in the same act
+## 11. Edits owed
 
-Apex section 10 requires that a change touching a contract merges with every party in
-one act, and this section is that register. Nothing below is applied by this document.
+Apex section 10 requires that a change touching a contract names every party, and a
+party that does not merge with the change is named as owed here. This section is that
+register. Nothing below is applied by this document.
 An entry leaves this register when the edit lands, because a ruling recorded and not
 landed reads as settled and an entry landed and not cleared reads as outstanding.
 

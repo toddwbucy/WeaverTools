@@ -1,6 +1,12 @@
 # Finding: the loop and agent split as a result of the stripping method
 
-**Status:** finding, v0.1, 2026-08-11. Architecture-seat material, outside the
+**Status:** ARCHIVED 2026-08-23. Its forcing argument - that enforcement by
+construction requires a tool result constructible from exactly one source - is stated
+in `weaver-agents-PRD` and `weaver-harness-Spec` in their own words, and their
+citations to this document were dropped on that date so the governance documents carry
+it rather than lean on it. Kept because this is where the argument was made.
+
+Previously: finding, v0.1, 2026-08-11. Architecture-seat material, outside the
 document set, landed by the authoring seat as it arrived. This records how the
 reasoning-loop boundary was arrived at and what the corpus reversal it forces does
 and does not claim. It is a companion to `reasoning-loop-boundary` and it does not

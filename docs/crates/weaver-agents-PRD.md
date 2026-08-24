@@ -1,10 +1,16 @@
-# WeaverTools - Primary PRD
+# weaver-agents - Domain PRD
 
-**Status:** MERGED 2026-07-28. RATIFIED 2026-08-04 as a member of the document set,
-per the operator's ruling of that date: the whole set mapped into the graph on the
-HADES server and ratifies as the complete document set for the toolless inference
-deliverable. Ratification belongs to the set rather than to any one document, per
-Working Process section 2, and section 0's system record carries the set-level mark.
+**Status:** MERGED 2026-07-28. RATIFIED 2026-08-04 in the set-wide act, per the
+operator's ruling of that date: the whole set mapped into the graph on the HADES
+server and ratifies as the complete document set for the toolless inference
+deliverable. Section 0's system record carries the set-level mark, which records that
+founding act.
+
+**Ratification has been per-charter since 2026-08-23**, per the operator's ruling of
+that date and Working Process section 2 as amended. A charter ratifies on its own by
+conforming to the pattern the 2026-08-04 act established, so the set is whatever the
+charters currently say. The set-wide form was a requirement of its moment, when
+nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
 **Revised:** 2026-08-17, the custody rule is stated once. Section 5.2 carries
@@ -39,12 +45,12 @@ which is now the wrong door. **Three remain and the ruling is not implementable 
 they land**, and this entry is the record that says so.
 **Revised:** 2026-08-17, the ratified loop boundary reaches this document, per
 issue #115. The gate's row in the chain called it the outer membrane, and
-under the two-level model of `reasoning-loop-boundary`, ratified 2026-08-11,
+under the two-level model ratified 2026-08-11,
 **the gate is the loop's membrane and the agent's membrane is the network
 boundary**. The row takes the two-level vocabulary; sole work ingress, raised
 last and lowered first, and every other fact of the row stand. The reversal
-is forced rather than editorial, per `finding-loop-agent-split`: enforcement
-by construction requires a tool result constructible from exactly one source,
+is forced rather than editorial: enforcement by construction requires a tool result
+constructible from exactly one source,
 and a path that must stay open cannot be closed by the type system, so the
 one-level vocabulary cannot carry the boundary the enforcement closes.
 **Revised:** 2026-08-07, the tool egress ruling. The gate carries a second socket,
@@ -52,27 +58,48 @@ opened by the agent rather than by the world, and a tool call crosses it. Step 1
 clause that outbound tool connections do not pass through Gate is reversed, step 7's
 forked-subprocess tool becomes a registered application the harness addresses, item 5
 of section 4 follows, and section 9's grip becomes two contracts rather than one. The
-ground is `tool-egress-boundary-frame`, which argued it and settled nothing, and the
-ruling is the human's. What does not change is invariant 5.1, which is what the new
+ground was argued in the tool-egress frame, archived 2026-08-23 with its conclusions
+absorbed into `weaver-gate-PRD` section 8, and the ruling is the human's. What does
+not change is invariant 5.1, which is what the new
 shape follows from rather than an exception to.
-**Document ID:** `WeaverTools-PRD`
+**Document ID:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
 
 ---
 
 ## 0. What this document is
 
-This is the apex of the WeaverTools document set. Every crate PRD refines it,
-every Spec refines a crate PRD, and every contract is derived from the PRDs of
-its parties. Coherence across the set is checked by reading each document
-against this one rather than by reading twenty-one pairs against each other.
+**This is the apex of the weaver-agents domain, not of the suite.** Every crate PRD
+inside that domain refines it, every Spec refines a crate PRD, and every contract is
+derived from the PRDs of its parties. Coherence across the domain is checked by
+reading each document against this one rather than by reading pairs against each
+other.
 
-The set it governs is exactly seven crate PRDs:
+**The correction of 2026-08-23, recorded because the scaffolding is what needs
+explaining.** This document was written as the apex of everything and named for the
+suite, which was right while the agent framework was the only thing there was to
+govern. It is not right now. Its five invariants are agent-domain invariants: they
+speak of organs, sockets, the hub, and the turn, and **a crate outside the agent
+boundary refines none of them.** A consumer holds no organ, holds no two-initiator
+channel with the harness, and stands in no position the invariants describe. So the
+document governs a domain, and the name it carried claimed more.
+
+The domain it governs holds nine crate PRDs:
 
 ```
 weaver-admin    weaver-harness   weaver-spu      weaver-gate
-weaver-trace    weaver-traits    weaver-types
+weaver-trace    weaver-traits    weaver-types    weaver-state
+weaver-internal
 ```
+
+**`weaver-state` and `weaver-internal` join the roster in this act.** Both were
+chartered 2026-08-18 and both are ratified on their own, per the per-charter rule of
+2026-08-23. The enumeration lagged them and this closes that lag.
+
+**Crates outside the agent boundary do not enter this roster and do not refine this
+document.** They parent to the suite and reach an agent only across the two external
+contracts of 2026-08-01. What governs them at the suite level is not yet written, and
+naming that gap is more honest than widening this document to cover it.
 
 ```graph
 node: WeaverTools
@@ -80,12 +107,46 @@ kind: system
 tag: ratified
 ```
 
-Every crate's parent edge points here. This document declares no other edge,
-because a child declares its own parent and an apex holding a copy of the whole
-crate graph is a topology document under another name.
+**The graph does not yet carry the domain level this document now names, and that
+is stated rather than quietly deferred.** `WeaverTools` remains the one `system`
+node, the seven domain roots parent to it, and `weaver-trace` and `weaver-state`
+parent to `weaver-harness` as members. There is no `weaver-agents` node.
 
-They are written together, as one act, and merged together. This is the
-property that matters. A corpus assembled from documents written weeks apart
+Inserting one needs a decision this document cannot take alone. Document Format
+section 3 declares exactly one `system` node, gives `crate` to "every crate,
+whether a domain root or a member of one," and carries no kind for a level between
+them. It also holds that the parent edges "reproduce the directory tree exactly,"
+and `crates/` has no `weaver-agents/` directory to reproduce. **So the level lands
+either as a Format act adding a kind, or with the crate tree gaining the
+directory,** and until one of those happens the graph answers the older shape while
+this document answers the newer one. A reader meeting both should trust the graph
+about edges and this document about scope.
+
+**Two different parents are in play and the words for them have collided.** Every
+crate PRD in the domain declares this document as its **document parent**, in the
+`Parent:` header it carries. That is a fact about the corpus and it is true today.
+
+**The graph parent edge is a different relation and it is unchanged**, pointing at
+the `WeaverTools` system node exactly as described above. Nothing in this document
+moves an edge. A reader meeting the header and the edge should not read them as the
+same claim while the domain level is unbuilt.
+
+**Document Format section 3 holds that the header and the edge name the same thing,
+and today they do not.** That is a real disagreement rather than a wording
+preference, and the Format governs it: it says the edge governs and a disagreement
+is a defect in the header. **The header is not corrected here**, because correcting
+it would point every crate PRD back at a document that no longer governs the whole
+set, and the disagreement closes when the domain level lands rather than by moving
+the headers twice. It is named as owed.
+
+This document declares no edge of its own beyond the system node above, because a
+child declares its own parent and an apex holding a copy of the whole crate graph is
+a topology document under another name.
+
+**The founding set was written together, as one act, and merged together.** That
+was the property that mattered then, and it is a fact about that act rather than a
+standing requirement: crates chartered since have landed one at a time, and the
+register carries what each owes. A corpus assembled from documents written weeks apart
 encodes a different understanding of the system in each document, and the
 contradictions that result are not mistakes anyone made - they are what
 happens when documents from different moments are read as a single body.
@@ -184,8 +245,8 @@ states how it serves this path.
    gate selects the application and does not select that application's
    destinations, and the kernel-enforced containment the old clause named
    belongs to the network-facing layer this program is not building. The
-   distinction is `tool-egress-boundary-frame` section 5's and is why this step
-   states a boundary rather than a containment.
+   distinction is `weaver-gate-PRD` section 8's and is why this step states a
+   boundary rather than a containment.
 8. On a final answer the harness emits `turn.closed`, closing the bracket in
    the stream, the close naming its kind.
 9. The response returns through Gate to the client, one NDJSON line out,
@@ -806,7 +867,8 @@ to the Working Process, section 2, and are not restated here.
 
 No amendment banners. No supersession notices. No citations into retired
 documents. No obligations patched inline because their referent was withdrawn.
-If a change touches a contract, every party to that contract merges in the same act.
+If a change touches a contract, it names every party to that contract, and a party
+that does not merge with it is named as owed in that document's register.
 
 Every one of those devices is a reasonable local decision. Together they are
 how a corpus stops being coherent while every individual document still looks
@@ -815,7 +877,7 @@ maintained.
 The order of work is strict:
 
 ```
-1. This document and the seven crate PRDs, together
+1. This document and the seven crate PRDs of phase one, together
 2. Each crate PRD with its contracts, written as one act
 3. Specs, against the merged PRD and contract set
 4. Graph mapping, which ratifies the set

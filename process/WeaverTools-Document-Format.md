@@ -1,16 +1,18 @@
 # WeaverTools Document Format
 
-**Version:** v0.16, 2026-08-16. Companion to the Working Process. Project
+**Version:** v0.17, 2026-08-23. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
 The Working Process says who is primary and in what order the work moves. This says
 what shape the documents take so that the graph can be built from them mechanically.
 
-Ratification is the mapping of the whole document set into the graph. A document that
-has to be interpreted before it can be mapped puts a human in the middle of the one
-step this project treats as the terminal gate, and an interpreted mapping is a hand
-edit wearing a different name. So the nodes and the edges are stated, not implied.
+**Ratification is per-charter as of 2026-08-23**, per Working Process section 2 as
+amended, and section 9 of this document carries what that changed. What has not
+changed is why the notation is mechanical: a document that has to be interpreted
+before it can be mapped puts a human in the middle of a step this project treats as a
+gate, and an interpreted mapping is a hand edit wearing a different name. So the nodes
+and the edges are stated, not implied.
 
 ## 0. What this document is for
 
@@ -93,8 +95,10 @@ organ that holds them, and the holder is decided by the human's ruling of 2026-0
 loops belong to the harness unless specific to one domain and no other, a loop confined
 to one domain filing under that domain's own root. The first such directory is
 `docs/crates/weaver-harness/Loops/`, holding the basic inference loop alone. Loop 0's
-composition is not a loop and files at the project level as `load-unload-path`, per
-the operator's ruling of 2026-08-05: the loop taxonomy reaches loop 1 and above, and
+composition is not a loop and does not file under a `Loops/` directory, which is what
+the ruling settles. It was written as `load-unload-path`, archived 2026-08-23 once
+`weaver-harness-Spec` carried its rules directly. Per the operator's ruling of
+2026-08-05: the loop taxonomy reaches loop 1 and above, and
 the bracket the loops run inside is the harness's mechanism rather than a member of
 the taxonomy.
 
@@ -136,7 +140,7 @@ Those are settled by the seam and floor-link records, which do not read the
 directory. Nesting says which crate holds the domain, and its purpose is that
 someone who knows where a crate lives can find its documentation without a search.
 
-**The floor does not nest.** Which crates are floor is `WeaverTools-PRD` section 5.1's
+**The floor does not nest.** Which crates are floor is `weaver-agents-PRD` section 5.1's
 to say and not this document's, per section 8. What belongs here is where they sit:
 a floor crate is placed at the top of the crate tree rather than under a domain root.
 Filing one under a root would make every other root reach through that root's subtree
@@ -191,7 +195,7 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
-**axiom.** One of the apex's five invariants, declared by `WeaverTools-PRD` at the
+**axiom.** One of the apex's five invariants, declared by `weaver-agents-PRD` at the
 subsection that states it. An axiom is not a claim about a crate and binds no code
 directly. It is what a claim can be grounded in, so a query can ask which claims serve
 an invariant and which invariant a claim serves. There are five and the set is closed: a
@@ -435,9 +439,12 @@ third device is written as a blanket obligation on behavioral tests, always
 confirm the test fails when the property is removed, so a walk's test is
 perturbation-verified by that obligation whatever a section calls it. The walk
 itself is prose that derives the test and takes no node. On the system record, the
-vocabulary is `ratified`, present only after the set ratifies and absent before,
-which is what lets the graph's set-level mark be generated from the apex rather
-than hand-edited, per Working Process section 5's checklist item 6.
+vocabulary is `ratified`, which is what lets the graph's set-level mark be generated
+from the apex rather than hand-edited, per Working Process section 5's checklist item
+6. **It marks the set-wide act of 2026-08-04 and nothing narrower.** Since
+ratification became per-charter on 2026-08-23 a charter no longer waits on that mark,
+and whether a ratified charter carries its own `tag: ratified` is the open question
+section 9 names.
 
 A second key for the instrument would grow
 the fixed set for a fact the existing key already carries, and the point of the fixed
@@ -516,8 +523,10 @@ and never by hand.
 
 ## 9. When mapping runs
 
-Mapping runs continuously, from the first charter, and ratification remains the mapping
-of the whole set.
+Mapping runs continuously, from the first charter. **Ratification is per-charter as of
+2026-08-23**, per the operator's ruling of that date and Working Process section 2 as
+amended, so a charter ratifies on its own by conforming to the pattern the set-wide act
+of 2026-08-04 established.
 
 A format that is mechanical from the first charter can be mapped the day that charter
 lands, which surfaces a missing edge while one document is still in hand rather than in
@@ -525,8 +534,17 @@ a terminal pass over nine. The alternative concentrates every mapping defect int
 pass at the end of phase one, where each fix is a phase one reopening and the document
 that would answer it was written weeks earlier.
 
-Continuous mapping does not move ratification earlier. A mapped document is not a
-ratified one, the set ratifies together or not at all, and an intermediate build is a
-check rather than a milestone. What continuous mapping buys is that phase two's closing
-checklist meets a graph that has already been built many times rather than one being
-attempted for the first time.
+**Mapping is still not ratification, and the two were separated before the rule
+changed.** A mapped document is not thereby a ratified one, and an intermediate build
+is a check rather than a milestone. What changed on 2026-08-23 is what supplies
+ratification, which is now the charter clearing its gates rather than a set-wide act.
+What has not changed is that the graph records rather than confers it.
+
+What continuous mapping buys is that phase two's closing checklist met a graph that
+had already been built many times rather than one being attempted for the first time.
+
+**The set-level mark records the founding act and is unchanged.** Whether a ratified
+charter carries its own `tag: ratified` beside it is open, and it is this document's
+question rather than the Working Process's, since the mark is generated from the
+notation defined here. Until it is settled the mark means the 2026-08-04 act and
+nothing narrower.

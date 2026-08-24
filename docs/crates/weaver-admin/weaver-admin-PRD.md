@@ -69,7 +69,7 @@ can tell two runs apart is not. A run reference distinguishes rather than
 counts, which is what a per-invocation admin can answer, and the session is the
 operator's to name in the declaration. Nothing here promises continuity between
 two runs of one session.
-**Parent:** `WeaverTools-PRD`
+**Parent:** `weaver-agents-PRD`
 **Companion contract:** `weaver-admin-harness-contract`, written with this document
 **External boundaries:** `weaver-admin-operator-contract` for the record's exit and
 `weaver-admin-systemd-contract` for the unit, both parties outside the program
@@ -1068,11 +1068,12 @@ under G5, both charters carry their own validation obligations, and no third doc
 exists. **Settled by:** the human's ruling. Either way the Document Format's sentence
 citing that contract is an owed edit, per section 11.
 
-## 11. Edits owed in the same act
+## 11. Edits owed
 
-Apex section 10 requires that a change touching a contract merges with every party in
-one act, and gate G7 asks that a ruling name the documents it changes. This
-section is that register. Nothing below is applied by this document, and the items
+Apex section 10 requires that a change touching a contract names every party, and
+gate G7 asks that a ruling name the documents it changes. A party that does not merge
+with the change is named as owed here. This section is that register. Nothing below is
+applied by this document, and the items
 already carried in `open-items` are cited rather than restated.
 
 **An entry leaves this register when the edit lands.** The register is the G7 instrument
@@ -1085,7 +1086,7 @@ close-on-exec mechanism, and the drop-first privilege window left this way.
 
 **Four more left on 2026-07-31.** The apex 5.1 restatement and the 5.4 definition
 landed together, taken early as a named exception to Working Process section 7 and
-recorded as such in `WeaverTools-PRD` section 5. The five wire definitions landed in
+recorded as such in `weaver-agents-PRD` section 5. The five wire definitions landed in
 `weaver-types-PRD` section 2.3 rather than section 4, which is where this register
 said they would go, because 2.3 is where that charter keeps definitions and 4 is where
 it keeps the departure argument. Both were edited. The harness clause on opening

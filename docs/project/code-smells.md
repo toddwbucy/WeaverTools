@@ -5,7 +5,7 @@ as they are found and nothing here is retired without a note saying why.
 
 **Date filed:** 2026-08-03
 **Document ID:** `code-smells`
-**Parent:** `WeaverTools-PRD`
+**Parent:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
 
 ---

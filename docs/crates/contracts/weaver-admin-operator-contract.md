@@ -19,7 +19,7 @@ than retired because that boundary is real and because the 2026-08-01 durability
 ruling it carries is cited across the corpus. `peer-identity` and
 `authorization-predicate` are no longer drawn.
 **Document ID:** `weaver-admin-operator-contract`
-**Parent:** `WeaverTools-PRD`, invariant 5.3
+**Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
 
 ---
