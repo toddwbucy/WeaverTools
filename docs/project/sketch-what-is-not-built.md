@@ -142,6 +142,11 @@ down, not in what is built.
 - **`weaver-internal` is unclassified.** It fails the organ test and the submodule
   definition does not reach it, while its parent edge makes it a domain root.
   That is an apex question, and nothing settles what the crate is.
+- **The `Parent:` headers and the graph parent edges disagree.** Every crate PRD's
+  header names `weaver-agents-PRD` while its parent edge points at the `WeaverTools`
+  system node. Document Format section 3 requires them to name the same thing and
+  makes the header the defect. It closes when the domain level lands in the graph,
+  which is the same act as the entry below rather than a second one.
 - **The suite has no apex.** The document that carried that name governs the
   weaver-agents domain, corrected 2026-08-23. Crates outside the agent boundary,
   `weaver-web` and `weaver-diagnostic`, parent to the suite and refine nothing that

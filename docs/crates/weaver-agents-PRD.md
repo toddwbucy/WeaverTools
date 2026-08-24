@@ -122,9 +122,26 @@ directory,** and until one of those happens the graph answers the older shape wh
 this document answers the newer one. A reader meeting both should trust the graph
 about edges and this document about scope.
 
-Every crate's parent edge points here. This document declares no other edge,
-because a child declares its own parent and an apex holding a copy of the whole
-crate graph is a topology document under another name.
+**Two different parents are in play and the words for them have collided.** Every
+crate PRD in the domain declares this document as its **document parent**, in the
+`Parent:` header it carries. That is a fact about the corpus and it is true today.
+
+**The graph parent edge is a different relation and it is unchanged**, pointing at
+the `WeaverTools` system node exactly as described above. Nothing in this document
+moves an edge. A reader meeting the header and the edge should not read them as the
+same claim while the domain level is unbuilt.
+
+**Document Format section 3 holds that the header and the edge name the same thing,
+and today they do not.** That is a real disagreement rather than a wording
+preference, and the Format governs it: it says the edge governs and a disagreement
+is a defect in the header. **The header is not corrected here**, because correcting
+it would point every crate PRD back at a document that no longer governs the whole
+set, and the disagreement closes when the domain level lands rather than by moving
+the headers twice. It is named as owed.
+
+This document declares no edge of its own beyond the system node above, because a
+child declares its own parent and an apex holding a copy of the whole crate graph is
+a topology document under another name.
 
 **The founding set was written together, as one act, and merged together.** That
 was the property that mattered then, and it is a fact about that act rather than a
