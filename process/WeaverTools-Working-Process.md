@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.29, 2026-08-24. Companion to the Working Rules, the Document
+**Version:** v0.30, 2026-08-24. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -234,6 +234,20 @@ left to require, the clause was representation and relocates. If the requirement
 stands and only the noun goes, the noun is rewritten and the clause stays. **This is
 what makes an organ relocatable in principle**, and a contract that fails it has
 decided the substrate on behalf of every later deployment.
+
+**The rule is the contract's alone, and the other two levels are its opposite.**
+Substrate belongs in a PRD, which decides it: a charter ruling that this program
+opens no network surface, or that a seam is local, is a decision about substrate and
+is that document's to make. **Substrate is what a Spec is about.** A Spec naming no
+mechanism would have elected no representation, which is the whole of its job. Only
+the contract is silent, and it is silent for one reason: **so that what stands on
+either side of a seam can move without the page between them changing.**
+
+**Reading this as a corpus-wide ban is the available mistake and it was made before
+the rule was a day old.** A pass proposed stripping mechanisms from thirty-seven PRD
+sites, which would have taken decisions out of the documents that make them and left
+charters unable to say what they had ruled. The rule names contracts and means
+contracts.
 
 **Rationale is developed in the PRD and may be restated in the Spec,** per the
 human's ruling of 2026-08-01, which is what the spec clause above means and what
