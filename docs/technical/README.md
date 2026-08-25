@@ -170,7 +170,8 @@ about where the framework's requirements stop and your own practice begins.
 **Fifteen pages beside this one. Six are drafted and nine are structure only.**
 
 [The index](index.md), [Contracts](contracts.md), [The loop](weaver-agents/loop.md),
-[Extending the program](weaver-agents/extending.md), [The Jacobian
+[Extending the program](weaver-agents/extending.md),
+[weaver-web](consumers/weaver-web.md), [The Jacobian
 lens](consumers/jacobian-lens.md), and [The calculator](consumers/calculator.md)
 carry their prose. The nine crate papers carry the
 six-section spine, the sources each section will be read out of, and the facts already

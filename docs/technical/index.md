@@ -76,10 +76,13 @@ something rather than places the framework does.
 ## Consumers
 
 Outside the agent boundary, reaching an agent only across the two external
-contracts. The built instruments are described where they are built, in the crate
-papers. The lens has its own page because it is unbuilt, and because its
-preconditions are the part worth knowing early.
+contracts. Instruments built inside the boundary are described where they are
+built, in the crate papers. What is here either reaches in from outside or is
+noted here for what it proves.
 
+- [weaver-web](consumers/weaver-web.md) - the first consumer: the channel, the
+  lifecycle view, and the live trace view, and the working proof that a consumer
+  needs the two contracts and nothing else
 - [The Jacobian lens](consumers/jacobian-lens.md) - a per-layer readout of the interior,
   why it captures during the run and reads at analysis, what it would cost, and the two
   questions that gate it

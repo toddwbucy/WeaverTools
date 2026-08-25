@@ -74,6 +74,9 @@ crosses no process line, so it authenticates nothing. Read-out not drafted.
 **These two are the program's public surface**, written by the ruling of
 2026-08-01 for an outside consumer and for nothing else. A frontend or any other
 consumer builds against these and against no other document on this site.
+[weaver-web](consumers/weaver-web.md) is the first to do it, and it is the test
+of whether these two pages are sufficient: it links no crate of the agent domain
+and reads no other document here.
 
 ### weaver-gate-world-contract
 
