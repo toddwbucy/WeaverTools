@@ -25,7 +25,24 @@ description = "The WeaverTools suite's frontend: channel, lifecycle, and trace s
 tokio = { version = "1", features = ["full"] }
 axum = "0.8"
 askama = "0.14"
-sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros"] }
+# **0.9 rather than 0.8, and the reason is the workspace rather than this
+# crate.** On 0.8 the elected features resolved `sqlx-sqlite` into the graph,
+# and that driver reached a `libsqlite3-sys` at a version `weaver-state`
+# cannot share through rusqlite. Cargo permits one package linking `sqlite3`
+# in a graph, so the two made the whole workspace unresolvable rather than
+# only the crates that collide.
+#
+# **On 0.9 the driver is optional and these features do not enable it**, so
+# it is absent from the built graph rather than present at a reconciled
+# version: `cargo tree -p weaver-web` carries `sqlx-core`, `sqlx-macros`, and
+# `sqlx-postgres` and no sqlite at all. The one `libsqlite3-sys` in the tree
+# is reached through `weaver-state` and rusqlite alone, which `cargo tree -i
+# libsqlite3-sys` shows as its only path. Nothing of `weaver-state` moved.
+#
+# The lock file still lists `sqlx-sqlite`, as it lists any optional
+# dependency that resolves, and reading the lock for what is enabled is the
+# error this comment first made.
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.9"
