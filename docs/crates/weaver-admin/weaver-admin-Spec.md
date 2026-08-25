@@ -4,34 +4,51 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, ninth of this date, the recut's arithmetic is measured
+rather than asserted. The eighth act stated an endpoint of thirty-two that the
+paragraph's own lists did not reach, and measuring the file's assertion
+identifiers across the recut's span gives twelve departures, seven arrivals, and
+an endpoint of thirty-one. **The missing record on each side is one event**:
+`admin-unit-declares-one-open` became `admin-unit-declares-no-open`, which the
+paragraph had called neither a retirement nor an addition when the identifier's
+change makes it both. Thirty-two arrives at the next act with
+`admin-run-reference-distinguishes`, so three records have been added since the
+recut rather than two, reaching thirty-four. Section 6's watch names the removal
+each direction is perturbed by, every other perturbation record in this file
+naming its own, and stops crediting the serving direction to the member's half,
+which cannot fail on it: a member given a name binds it, which is that record
+holding rather than failing. **Both directions are this crate's alone**, the
+member's claim being about what it does with what it is given and the vector
+being the seam between the two crates rather than either one's behaviour.
 **Revised:** 2026-08-25, eighth of this date, the watch reads both directions.
-Moving it off the door and onto the vector left one direction unwatched, and it
-is the direction neither half of the split claim covers: a diagnostic load that
-silently loses its fourth value passes this crate's watch, which read the
-serving direction alone, and passes the member's vacuously, a member given no
-name binding none being exactly what its record asserts. **A hole covered by
-neither half of a split claim is the hole the split was bought to close**, so
-the watch now fails if either count moves. Section 10's new fourth conjunct
-claimed the four states of a run are known to the party that conducts it, which
-section 3 does not support - the manager's `active` covers `Idle` and `Active`
-and the fourth is a hole in the floor's enum - narrowed to the distinction that
-party does hold. The fourth edge's argument is argued once, in the lead that
+Moving it off the door and onto the vector left one direction unwatched, and it is the
+direction neither half of the split claim covers: a diagnostic load that silently loses
+its fourth value passes this crate's watch, which read the serving direction alone, and
+passes the member's vacuously, a member given no name binding none being exactly what
+its record asserts. **A hole covered by neither half of a split claim is the hole the
+split was bought to close**, so the watch now fails if either count moves. Section 10's
+new fourth conjunct claimed the four states of a run are known to the party that
+conducts it, which section 3 does not support: what this crate reads is the manager's
+three values under the manager's own names, and `active` covers both `Idle` and
+`Active`, so the distinction the claim rests on is the conducting party's and the other
+two floor states are not a running unit's to report at all. Narrowed to the distinction
+that party does hold. The fourth edge's argument is argued once, in the lead that
 enumerates it, the later site correcting the unedged list without re-arguing.
 **Revised:** 2026-08-25, seventh of this date, the watch reads this crate's own
-observable. Section 6's new record was perturbed by watching a serving load
-stand a door, which is the member's observable and not this crate's, so a
-member-side regression would have broken this crate's test and a member-side fix
-would have masked a break here - the one-test-for-two-crates shape the split was
-bought to prevent, reintroduced four lines from the sentence saying neither
-record stands for the other's behaviour. The watch is now the vector this crate
-composes, three values or four. Section 10's four-edge lead enumerates its
-fourth beside the other three rather than forty lines on, the recut's delta is
-named as the recut's so a rebuild does not read it as this Spec's, and both
-records added since are named so the figure is checkable. **The fifth entry
-carried a factual error of its own**: it said section 10 never received the
-restatement to thirty-two, which its own preceding sentence contradicts by
-reading that section as saying thirty-two records by tag. The tag census had
-been restated and the grounds lead had not.
+observable. Section 6's new record was perturbed by watching a serving load stand a
+door, which is the member's observable and not this crate's, so a member-side regression
+would have broken this crate's test and a member-side fix would have masked a break here
+- the one-test-for-two-crates shape the split was bought to prevent, reintroduced four
+lines from the sentence saying neither record stands for the other's behaviour. The
+watch is now the vector this crate composes, three values or four. Section 10's
+four-edge lead gains its fourth conjunct beside the other three, the recut's delta is
+named as the recut's so a rebuild does not read it as this Spec's, and both records
+added since are named so the figure is checkable. The argument's second copy forty lines
+down survived this act and is struck by the next. **The fifth entry carried a factual
+error of its own**: it said section 10 never received the restatement to thirty-two,
+which its own preceding sentence contradicts by reading that section as saying
+thirty-two records by tag. The tag census had been restated and the grounds lead had
+not.
 **Revised:** 2026-08-25, sixth of this date, the prose that spends the census
 catches up with it. The restatement of the fifth act corrected three totals and
 left three clauses that consume them, so section 10 disagreed with itself twice
@@ -1029,15 +1046,21 @@ resolve differently because only one site resolves.
 
 **The instrument is perturbation, and the claim is this site's half of a
 two-sided one.** **What is watched is the vector this crate composes, in both
-directions**: a serving inventory puts three values on it and a diagnostic one
-puts four, and the watch fails if either count moves. Both are needed and the
-second is the one that would otherwise fall through the whole pair. A serving
-load gaining a fourth value is caught here or by the member standing a door it
-should not, but **a diagnostic load silently losing its fourth value is caught
-by neither**: this crate's watch would pass on the serving direction alone, and
-the member's passes vacuously, a member given no name binding none being exactly
-what its record asserts. A hole covered by neither half of a split claim is the
-hole the split was bought to close.
+directions, and each names its removal.** A serving inventory puts three values
+on it, watched to fail when the kind's read is removed and a serving load
+carries four. A diagnostic inventory puts four, watched to fail when the
+diagnostic arm that appends the preload name is removed and a diagnostic load
+carries three.
+
+**Both directions are this crate's alone and the member's record covers
+neither**, which is why the second watch is written rather than left to the
+pair. The member's claim is about what it does with what it is given: given a
+name it binds one, given none it binds none. So a serving load wrongly carrying
+a fourth value ends with the member binding it, which is the member's record
+holding rather than failing, and a diagnostic load wrongly carrying three ends
+with the member binding nothing, which is the same record holding again. **A
+split claim covers the two crates' behaviours and not the seam between them**,
+and the vector is that seam.
 
 A door standing is the member's observable and is deliberately not the watch
 here: a test that read it would break on a member-side regression and be masked
@@ -1652,17 +1675,16 @@ The organ invariant keeps one edge and it is the device check's, the device
 having one authority and that authority not being this crate, which is the
 domain partition apex section 5.4 draws.
 
-**The four edges to the integration invariant are this crate's charter
-position stated from the other side.** Admin authorizes and does not execute,
-and the reason it does not is that integrating is the loop's: the stop answer is
-relayed unchanged because what a stop found is a fact about a run the harness
-conducts, the devices a binding assigns are unchecked because forming a view of
-them would be this crate reasoning about a domain it cannot see, the
-operations log stops at supervision because conduct is recorded in the trace the
-harness authors, and the residency read stays the manager's three values because
-telling a run at rest from a run serving is known to the party that conducts it
-and not to the one that started the unit. The ten owings
-below are the same rule at the document level.
+**The four edges to the integration invariant are this crate's charter position stated
+from the other side.** Admin authorizes and does not execute, and the reason it does not
+is that integrating is the loop's: the stop answer is relayed unchanged because what a
+stop found is a fact about a run the harness conducts, the devices a binding assigns are
+unchecked because forming a view of them would be this crate reasoning about a domain it
+cannot see, the operations log stops at supervision because conduct is recorded in the
+trace the harness authors, and the residency read stays the manager's three values
+because telling a run at rest from a run serving is known to the party that conducts it
+and not to the one that started the unit. The ten owings below are the same rule at the
+document level.
 
 **One edge moved and one was added beside an existing one.** Both of the organ
 invariant's edges were placed in the labelling pass, before the apex held a
@@ -1712,27 +1734,40 @@ test reaches are the review halves of splits this section's own bullets take,
 and a divided half counts with the bullet it divided out of, per Document
 Format section 3.
 
-**Ten records retired with the recut, one moved, and six were added, which took the
-count from thirty-six to thirty-two.** That was the recut's whole movement and it is not
-the whole movement since: two records have been added by later acts, reaching the
-thirty-four this section counts above: `admin-kind-mismatch-refused-at-inventory` on
-2026-08-24 and `admin-preload-name-follows-the-kind` on 2026-08-25. Both are named so
-this figure is checkable against the file the way every other figure here is. An earlier
-form of this lead called the recut's arithmetic the whole movement, which held only
-until the next act added a record. Retired: the operator surface's six, its stream
-election, its accept-time refusal, its refusal-by-closure, its serial answering, its
-bounded request line, and its bare wire shapes, each dying with the socket rather than
-relocating. The coordination channel's bind ordering, its directory's mode, its
-listener's closure after one accept, and the one exchange in flight per agent, the last
-four retiring with the acts and the map they described. Moved: the credential check, to
-`weaver-harness-Spec` section 2.3, where the accept now happens. Added: the root check
-and the answer-and-status agreement of section 2, the dial's bound of section 7, the
-residency read from the init system of section 3, the state ask that follows a failed
-dial, of section 6, and the unload's wait on a confirmed stop, of section 3. The unit's
-declared open inverted to a declared absence rather than retiring, so it is neither. **A
-rebuild reads this movement as the recut's delta and not as this Spec's**, two records
-having been added since by acts of their own, so a census taken against this paragraph
-alone lands two short of section 10's thirty-four.
+**Twelve records left with the recut, one of the twelve by moving, and seven
+arrived, which took the count from thirty-six to thirty-one.** Measured across
+the recut's span by diffing the file's own assertion identifiers rather than by
+counting the lists below. **The inversion is why the older reading came out one
+short on each side.** `admin-unit-declares-one-open` became
+`admin-unit-declares-no-open`, and an earlier form of this paragraph called that
+neither a retirement nor an addition. It is both: the identifier changed, so the
+graph lost a node and gained one, and a census that counts nodes counts two
+movements there. The lists below name ten departures and six arrivals and are
+each short by that one side.
+
+**Thirty-one was this span's endpoint and thirty-two arrived at the next act**,
+`admin-run-reference-distinguishes` with the run's identity. Three records have been
+added since, reaching the thirty-four this section counts above: that one, then
+`admin-kind-mismatch-refused-at-inventory` on 2026-08-24 and
+`admin-preload-name-follows-the-kind` on 2026-08-25, each named so this figure is
+checkable against the file the way every other figure here is. An earlier form of this
+lead stated no endpoint at all, and stating one is what exposed that the lists did not
+reach it. Retired: the operator surface's six, its stream election, its accept-time
+refusal, its refusal-by-closure, its serial answering, its bounded request line, and its
+bare wire shapes, each dying with the socket rather than relocating. The coordination
+channel's bind ordering, its directory's mode, its listener's closure after one accept,
+and the one exchange in flight per agent, the last four retiring with the acts and the
+map they described. Moved: the credential check, to `weaver-harness-Spec` section 2.3,
+where the accept now happens. Added: the root check and the answer-and-status agreement
+of section 2, the dial's bound of section 7, the residency read from the init system of
+section 3, the state ask that follows a failed dial, of section 6, and the unload's wait
+on a confirmed stop, of section 3. **The twelfth departure and the seventh arrival are
+one event**: `admin-unit-declares-one-open` became `admin-unit-declares-no-open`, which
+the lead above counts on both sides because the identifier moved and a graph counting
+nodes counts two movements there. **A rebuild reads this movement as the recut's delta
+and not as this Spec's**, three records having been added since by acts of their own, so
+a census taken against this paragraph alone lands three short of section 10's
+thirty-four.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live
