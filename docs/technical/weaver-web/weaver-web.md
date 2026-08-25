@@ -56,10 +56,19 @@ its own custody discipline, borrowed from the one the agent keeps over its trace
 **It is not the trace, never writes to the trace, and links to it by label only.**
 
 **The lifecycle view.** The three verbs an operator drives - `validate`, `load`,
-and `unload` - each answer rendered verbatim rather than interpreted. **Those
-three names are a deployment fact rather than a published surface**, the reach
-the contracts do not cover: they are what the installed binary accepts, observed
-rather than read off a page written for an outside party.
+and `unload`. **Those three names are a deployment fact rather than a published
+surface**, the reach the contracts do not cover: they are what the installed
+binary accepts, observed rather than read off a page written for an outside
+party.
+
+**An answer is rendered whole rather than byte for byte, and the difference is
+worth stating.** What the verb wrote is parsed when it parses, re-serialized for
+display, and shown pretty-printed, so the formatting and the key order on the
+page are the renderer's rather than the binary's. **Nothing is interpreted and
+nothing is dropped**: no field is renamed, summarized, or translated into a
+friendlier shape, and where the output does not parse at all the raw bytes are
+kept and shown, so a malformed answer surfaces as itself rather than as an
+error page.
 
 Load state is shown from the gate socket's existence and **labeled as the
 inference it is**, because the program has no
@@ -95,6 +104,13 @@ which is the operator's own command run on the operator's behalf under a rule
 the deployment declares - not a seam, and not contracted either. What it builds
 against there is the deployment's observed shape, and the gap is filed rather
 than papered over.
+
+**What that rule permits is worth naming rather than summarizing.** It admits
+one identity, running the admin binary, under each of the three verbs - and it
+admits any arguments after the verb, plus the configuration location through the
+environment. A wrapper accepting only a verb and a bare agent name would make the
+rule as narrow as the description usually given for it, and that narrowing is
+filed rather than done.
 
 ## How it works
 
