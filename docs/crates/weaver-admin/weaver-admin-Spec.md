@@ -4,6 +4,100 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, eleventh of this date, the watch stops degenerating and
+the pair stops claiming symmetry. Section 6's serving direction was watched by removing
+the kind's read, which degenerates to the serving default, so that half would have
+passed either way - the never-failing perturbation this same section rejects and apex
+section 11 counts as worse than no test. Both directions now act on the condition that
+appends the name, one made unconditional and one removed. **The two documents describing
+this pair carried the reading the widening superseded**, one direction for the vector
+and a perturbation of either side failing against its own, and both now say what section
+6 says: the vector is entirely this crate's and the member's record holds whichever way
+the name was wrong. The exception count is two rather than three,
+`admin-dial-retries-within-a-bound` naming its removal in the beyond-the-walks list
+under its description rather than its identifier, which a search keyed on identifiers
+could not see. **Entries in this stack stop correcting each other**: two corrections
+pointed at text later commits had already edited away, and since nothing here has
+merged, the entry is amended rather than answered.
+**Revised:** 2026-08-25, tenth of this date, the reconciliation counts the move
+and the convention stops being called universal. The recut lead asserted twelve
+departures while the sentence reconciling it to the lists said ten, the lists
+naming ten retired and one moved, so the reconciliation now reads eleven and the
+inversion is the twelfth. **The claim that every other perturbation record names
+its removal is withdrawn as false**: two of the fourteen name none anywhere in
+this document, and section 10 records which, because a perturbation tag without a
+named removal says a test exists and not what breaks it. Found while checking
+whether this file's convention was universal rather than assumed, which is the
+check the claim should have had before it was written.
+**Revised:** 2026-08-25, ninth of this date, the recut's arithmetic is measured
+rather than asserted. The recut paragraph asserted an endpoint its own lists did not
+reach, and measuring the file's assertion identifiers across the recut's span gives
+twelve departures, seven arrivals, and an endpoint of thirty-one. **The missing record
+on each side is one event**: `admin-unit-declares-one-open` became
+`admin-unit-declares-no-open`, which the paragraph had called neither a retirement nor
+an addition when the identifier's change makes it both. Thirty-two arrives at the next
+act with `admin-run-reference-distinguishes`, so three records have been added since the
+recut rather than two, reaching thirty-four. Section 6's watch names the removal each
+direction is perturbed by, which is this file's dominant convention rather than its
+universal one, and stops crediting the serving direction to the member's half, which
+cannot fail on it: a member given a name binds it, which is that record holding rather
+than failing. **Both directions are this crate's alone**, the member's claim being about
+what it does with what it is given and the vector being the seam between the two crates
+rather than either one's behaviour.
+**Revised:** 2026-08-25, eighth of this date, the watch reads both directions.
+Moving it off the door and onto the vector left one direction unwatched, and it is the
+direction neither half of the split claim covers: a diagnostic load that silently loses
+its fourth value passes this crate's watch, which read the serving direction alone, and
+passes the member's vacuously, a member given no name binding none being exactly what
+its record asserts. **A hole covered by neither half of a split claim is the hole the
+split was bought to close**, so the watch now fails if either count moves. Section 10's
+new fourth conjunct claimed the four states of a run are known to the party that
+conducts it, which section 3 does not support: what this crate reads is the manager's
+three values under the manager's own names, and `active` covers both `Idle` and
+`Active`, so the distinction the claim rests on is the conducting party's and the other
+two floor states are not a running unit's to report at all. Narrowed to the distinction
+that party does hold. The fourth edge's argument is argued once, in the lead that
+enumerates it, the later site correcting the unedged list without re-arguing.
+**Revised:** 2026-08-25, seventh of this date, the watch reads this crate's own
+observable. Section 6's new record was perturbed by watching a serving load stand a
+door, which is the member's observable and not this crate's, so a member-side regression
+would have broken this crate's test and a member-side fix would have masked a break here
+- the one-test-for-two-crates shape the split was bought to prevent, reintroduced four
+lines from the sentence saying neither record stands for the other's behaviour. The
+watch is now the vector this crate composes, three values or four. Section 10's
+four-edge lead gains its fourth conjunct beside the other three, the recut's delta is
+named as the recut's so a rebuild does not read it as this Spec's, and both records
+added since are named so the figure is checkable. The argument's second copy forty lines
+down survived this act and is struck by the next.
+**Revised:** 2026-08-25, sixth of this date, the prose that spends the census
+catches up with it. The restatement of the fifth act corrected three totals and
+left three clauses that consume them, so section 10 disagreed with itself twice
+inside sixty lines, which is worse than the stale figure was because the stale
+figure was at least self-consistent. The integration invariant's edge count goes
+to four. The residency read is struck from the unedged list, its own record
+carrying the fourth edge while a sentence sixty lines on called it unedged. And
+the recut's arithmetic is named as the recut's, taking thirty-six to thirty-two,
+with the two records added since reaching thirty-four. **The lesson the banner
+already carried, one level in**: an act that restates a count owes a read of the
+prose that spends it, not only of the totals.
+**Revised:** 2026-08-25, fifth of this date, the census catches up with the
+records. Section 10 read ten of thirty-one carrying eleven `grounds` edges,
+thirty-two records by tag, and twenty-one claims grounding in no invariant. The
+file holds thirty-four records, eleven of them carrying twelve edges, and
+twenty-three ungrounded, and the tag census runs fifteen review, fourteen
+perturbation, three manifest, two compile pin. **The arrears predate the act
+that found them** - the tag census had been restated to thirty-two and the
+grounds lead had not, so it still read thirty-one while the file held
+thirty-three - which is why the act adding a record is the act that owes the
+sweep. Measured from the file's own graph blocks rather than counted by hand.
+The new record also moves below the prose that argues it, per Document Format
+section 6, and the sentence its insertion had split is rejoined.
+**Revised:** 2026-08-25, fourth of this date, the assertion arrives with its
+clause. `admin-preload-name-follows-the-kind` was filed in the charter by the
+act of this date and belongs here, an assertion being a claim a Spec makes per
+the Document Format. It sits under section 6's vector clause with its
+instrument, and it is half of `state-preload-door-stands-only-diagnostic`, the
+member's side asserted in `weaver-state-Spec` section 4.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Four sentences gain the fact that makes them true rather than asserted. The
 runtime directory exists before the member binds because step 5's unit ask runs
@@ -970,6 +1064,44 @@ once and read here, which is the same single-resolution rule the enter
 payload's `EnterBinding` follows in section 7 - the verb and the load cannot
 resolve differently because only one site resolves.
 
+**The instrument is perturbation, and the claim is this site's half of a
+two-sided one.** **What is watched is the vector this crate composes, in both
+directions, and each names its removal.** A serving inventory puts three values
+on it, watched to fail when the arm that appends the preload name is made
+unconditional and a serving load carries four. A diagnostic inventory puts four,
+watched to fail when that same arm is removed and a diagnostic load carries
+three. **Two watches rather than one, because one would not fail on both
+directions**, and the pair is what apex section 11 asks of a perturbation
+record.
+
+**Both directions are this crate's alone and the member's record covers
+neither**, which is why the second watch is written rather than left to the
+pair. The member's claim is about what it does with what it is given: given a
+name it binds one, given none it binds none. So a serving load wrongly carrying
+a fourth value ends with the member binding it, which is the member's record
+holding rather than failing, and a diagnostic load wrongly carrying three ends
+with the member binding nothing, which is the same record holding again. **A
+split claim covers the two crates' behaviours and not the seam between them**,
+and the vector is that seam.
+
+A door standing is the member's observable and is deliberately not the watch
+here: a test that read it would break on a member-side regression and be masked
+by a member-side fix, which is the one-test-for-two-crates shape the split
+exists to prevent. The other half is the member's:
+`state-preload-door-stands-only-diagnostic`, asserted in `weaver-state-Spec`
+section 4, holds that the member binds no name it is not given. Neither record
+stands for the other's behaviour, which is why both exist.
+
+```graph
+node: admin-preload-name-follows-the-kind
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-preload-name-follows-the-kind
+```
+
 **Both names stand beside the coordination socket, and the derivation is shared
 rather than told.** Each is the validated agent name's runtime directory with a
 fixed leaf, so no value the invocation's input composes reaches either. **The
@@ -1523,12 +1655,12 @@ is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Ten of the
-thirty-one carry a `grounds` edge and those ten carry eleven edges, one
+**Which invariant each claim serves, and why most serve none.** Eleven of the
+thirty-four carry a `grounds` edge and those eleven carry twelve edges, one
 record grounding in two invariants. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
-and three to `axiom-harness-integrates-by-the-loop`.
+and four to `axiom-harness-integrates-by-the-loop`.
 **The test applied is whether the axiom is the reason the claim exists, or
 whether the claim is a precondition of the axiom's own stated reason,** per
 Document Format section 4. Remove the socket invariant and this crate has
@@ -1539,7 +1671,7 @@ nothing to bound, so those six ground in it. Remove it and the log is still
 NDJSON, the FIFO still opens nonblocking, the inventory still repairs nothing,
 and the identity is still built from the validated name, so those ground in
 nothing.
-**Twenty-one claims grounding in no invariant is the expected result and not a
+**Twenty-three claims grounding in no invariant is the expected result and not a
 gap**, per Document Format section 4: most of what this Spec elects is a
 rendering, a mode, an ordering, or a route, and representation is what the
 invariants are not about.
@@ -1565,14 +1697,16 @@ The organ invariant keeps one edge and it is the device check's, the device
 having one authority and that authority not being this crate, which is the
 domain partition apex section 5.4 draws.
 
-**The three edges to the integration invariant are this crate's charter
-position stated from the other side.** Admin authorizes and does not execute,
-and the reason it does not is that integrating is the loop's: the stop answer is
-relayed unchanged because what a stop found is a fact about a run the harness
-conducts, the devices a binding assigns are unchecked because forming a view of
-them would be this crate reasoning about a domain it cannot see, and the
-operations log stops at supervision because conduct is recorded in the trace the
-harness authors. The ten owings below are the same rule at the document level.
+**The four edges to the integration invariant are this crate's charter position stated
+from the other side.** Admin authorizes and does not execute, and the reason it does not
+is that integrating is the loop's: the stop answer is relayed unchanged because what a
+stop found is a fact about a run the harness conducts, the devices a binding assigns are
+unchecked because forming a view of them would be this crate reasoning about a domain it
+cannot see, the operations log stops at supervision because conduct is recorded in the
+trace the harness authors, and the residency read stays the manager's three values
+because telling a run at rest from a run serving is known to the party that conducts it
+and not to the one that started the unit. The ten owings below are the same rule at the
+document level.
 
 **One edge moved and one was added beside an existing one.** Both of the organ
 invariant's edges were placed in the labelling pass, before the apex held a
@@ -1601,19 +1735,27 @@ crate's contract delivers, keying on it is what a contract's vocabulary is for,
 and the record written is admin's own and sits wholly inside admin's domain.
 Apex section 5.5 binds what crosses between domains and does not reach what an
 organ does inside one, so an ordering held inside a verb grounds in nothing.
-The same reading leaves the load's step ordering, the inventory's one function,
-and the residency read from the init system unedged, each of them a sequence this
-crate holds or a fact it consults rather than a reconciliation between two
-domains.
+The same reading leaves the load's step ordering and the inventory's one
+function unedged, each a sequence this crate holds rather than a reconciliation
+between two domains. **The residency read is not among them**, being the fourth
+of the edges the lead above enumerates and argues, and an earlier form of this
+sentence listed it as unedged while its own record carried the edge.
 
 **Where the assertion records sit, and which of these this crate declares.**
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-two records in all,
-fifteen tagged for review, twelve for perturbation, three for the manifest,
+would sit apart from the prose that earns it. Thirty-four records in all,
+fifteen tagged for review, fourteen for perturbation, three for the manifest,
 and two for a compile pin. The residency record moved from review to
-perturbation on 2026-08-06, when the code act gave it a test. The elections take nodes
+perturbation on 2026-08-06, when the code act gave it a test. **Two of the
+fourteen perturbation records name no removal anywhere in this document**:
+`admin-unload-answers-after-confirmed-stop` and
+`admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
+named removal says a test exists and not what breaks it, which is the tag's whole
+content, so each is owed the sentence its neighbours carry. Found while checking
+whether this file's convention was universal, on the occasion of a record that
+follows it. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable, and two review tags come from the sorting rather than from an
 election: the verb's stopping short of any seam and the existence checks no
@@ -1621,22 +1763,39 @@ test reaches are the review halves of splits this section's own bullets take,
 and a divided half counts with the bullet it divided out of, per Document
 Format section 3.
 
-**Ten records retired with the recut, one moved, and six were added, which is
-the count's whole movement from thirty-six.** Retired: the operator surface's
-six, its stream election, its accept-time refusal, its refusal-by-closure, its
-serial answering, its bounded request line, and its bare wire shapes, each
-dying with the socket rather than relocating. The coordination channel's bind
-ordering, its directory's mode, its listener's closure after one accept, and
-the one exchange in flight per agent, the last four retiring with the acts and
-the map they described. Moved: the credential check, to
-`weaver-harness-Spec` section 2.3, where the accept now happens. Added: the
-root check and the answer-and-status agreement of section 2, the dial's bound
-of section 7, the residency read from the init system of section 3, the state
-ask that follows a failed dial, of section 6, and the unload's wait on a
-confirmed stop, of section 3. The unit's declared open inverted
-to a declared absence rather than retiring, so it is neither. A rebuild of the
-graph reads this movement as the act's assertion
-delta.
+**Twelve records left with the recut, one of the twelve by moving, and seven
+arrived, which took the count from thirty-six to thirty-one.** Measured across
+the recut's span by diffing the file's own assertion identifiers rather than by
+counting the lists below. **The inversion is why the older reading came out one
+short on each side.** `admin-unit-declares-one-open` became
+`admin-unit-declares-no-open`, and an earlier form of this paragraph called that
+neither a retirement nor an addition. It is both: the identifier changed, so the
+graph lost a node and gained one, and a census that counts nodes counts two
+movements there. The lists below name eleven departures, ten retired and one
+moved, and six arrivals, so each is short by the inversion's one side.
+
+**Thirty-one was this span's endpoint and thirty-two arrived at the next act**,
+`admin-run-reference-distinguishes` with the run's identity. Three records have been
+added since, reaching the thirty-four this section counts above: that one, then
+`admin-kind-mismatch-refused-at-inventory` on 2026-08-24 and
+`admin-preload-name-follows-the-kind` on 2026-08-25, each named so this figure is
+checkable against the file the way every other figure here is. An earlier form of this
+lead stated no endpoint at all, and stating one is what exposed that the lists did not
+reach it. Retired: the operator surface's six, its stream election, its accept-time
+refusal, its refusal-by-closure, its serial answering, its bounded request line, and its
+bare wire shapes, each dying with the socket rather than relocating. The coordination
+channel's bind ordering, its directory's mode, its listener's closure after one accept,
+and the one exchange in flight per agent, the last four retiring with the acts and the
+map they described. Moved: the credential check, to `weaver-harness-Spec` section 2.3,
+where the accept now happens. Added: the root check and the answer-and-status agreement
+of section 2, the dial's bound of section 7, the residency read from the init system of
+section 3, the state ask that follows a failed dial, of section 6, and the unload's wait
+on a confirmed stop, of section 3. **The twelfth departure and the seventh arrival are
+the one event the lead above argues**, the unit's declared open inverting to a declared
+absence. **A rebuild reads this movement as the recut's delta
+and not as this Spec's**, three records having been added since by acts of their own, so
+a census taken against this paragraph alone lands three short of section 10's
+thirty-four.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live

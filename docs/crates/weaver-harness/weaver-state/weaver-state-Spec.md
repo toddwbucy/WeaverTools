@@ -2,6 +2,26 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, third of this date, the pair stops claiming symmetry.
+Section 4 described the other half as holding the name given only under a
+diagnostic binding, which is one direction, and said a perturbation of either
+side fails against its own. `weaver-admin-Spec` section 6 holds the vector in
+both directions, and this record fails on neither: a member given a name binds
+it and a member given none binds none, which is this record holding whichever
+way the name was wrong. The two records divide the fact unevenly and now say so.
+**Revised:** 2026-08-25, second of this date, the record's name outlives its
+claim. `state-preload-door-stands-only-diagnostic` reads as the whole two-sided
+fact and this half asserts the narrower one, that the member binds no name it is
+not given. Named as owed rather than renamed here, a rename reaching every
+citing document and the conformance header code will carry.
+**Revised:** 2026-08-25, first of this date, the door's claim names its other
+half. Section 4's
+`state-preload-door-stands-only-diagnostic` is one side of a two-sided claim and
+said so nowhere: the member binds no name it is not given, and that the name is
+given only under a diagnostic binding is `weaver-admin`'s, recorded there as
+`admin-preload-name-follows-the-kind` in the act of this date. Both records now
+name the other, so a reader of either meets the pair rather than a claim that
+looks whole.
 **Revised:** 2026-08-24, second of this date, the seal parks the replay
 ask. Section 4 gains the seal as a per-standing fact and the `replay` ask's
 mechanics: where the member stands with the preload door the ask answers
@@ -317,6 +337,27 @@ edge: asserts
 from: weaver-state
 to: state-replay-answers-at-the-seal
 ```
+
+**`state-preload-door-stands-only-diagnostic`, below, is one half of a
+two-sided claim.** This crate's half is that the member binds no name it is not
+given. The other half is
+`weaver-admin`'s, `admin-preload-name-follows-the-kind` at
+`weaver-admin-Spec` section 6, which holds the vector in **both** directions: a
+serving inventory carries no name and a diagnostic one carries one. **The two
+records do not divide the fact evenly.** This crate's covers what the member
+does with what it is given, and the vector is entirely the other side's, because
+a member given a name binds it and a member given none binds none, which is this
+record holding rather than failing whichever way the name was wrong. The claim is
+recorded twice because the two crates' behaviours are two facts, and the seam
+between them is the other record's alone.
+
+**The identifier below still names the pair's claim and this half is narrower
+than its name.** `state-preload-door-stands-only-diagnostic` reads as the whole
+two-sided fact, and what this record now asserts is that the member binds no
+name it is not given, the kind being the other half's to hold. A rename reaches
+every document that cites it and the conformance header that will cite it from
+code, so it is its own act and is named here as owed rather than taken in an act
+about where an assertion sits.
 
 ```graph
 node: state-preload-door-stands-only-diagnostic

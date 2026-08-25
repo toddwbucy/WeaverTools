@@ -6,6 +6,20 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-25, fifth of this date, the pair stops claiming symmetry.
+Section 2 said the member's claim is partly this crate's and that a perturbation
+of either side fails against its own, which `weaver-admin-Spec` section 6 denies:
+the member's record holds whether the name was wrongly given or wrongly withheld,
+so it fails on neither direction and the vector is entirely this crate's. The
+paragraph now says what it owes rather than what it shares, and its opening
+sentence goes with the symmetry it stated.
+**Revised:** 2026-08-25, fourth of this date, the assertion goes where
+assertions go. The act of this date put `admin-preload-name-follows-the-kind` in this
+charter, and the Document Format's own definition has an assertion as a claim a Spec
+makes. The argument stays here, where the obligation is argued, and the record moves to
+`weaver-admin-Spec` section 6 under the vector clause, which is the clause the claim is
+about, with the instrument it is perturbed by. Found by reading this charter's own graph
+blocks against that definition rather than by a review.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Section 2's wait claimed a bound socket rather than a half-bound one, which a
 pathname cannot show: it observes a name and the worker's dial at step 6 is what
@@ -267,23 +281,17 @@ it, per `weaver-state-Spec` section 4, which is the same division the rest of
 this charter runs on: this crate resolves what the declaration meant, once, and
 hands the resolution down decided.
 
-**That makes a standing claim of the member's partly this crate's**, and the
-record follows the obligation. `state-preload-door-stands-only-diagnostic` is
-asserted by `weaver-state` and its mechanism is now two-sided: the member binds
-no name it is not given, and this crate gives one only under a diagnostic
-binding. The half that lives here is asserted here, so a perturbation of either
-side has a record to fail against rather than one crate's test standing for two
-crates' behaviour.
-
-```graph
-node: admin-preload-name-follows-the-kind
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-admin
-to: admin-preload-name-follows-the-kind
-```
+**That leaves the vector watched by nothing unless this crate watches it.**
+`state-preload-door-stands-only-diagnostic` is asserted by `weaver-state` and
+covers what the member does with what it is given. **What this crate owes is the
+vector in both directions**: a serving inventory carries no preload name and a
+diagnostic one carries one. It needs a record of its own because the member's
+covers neither direction - given a name it binds one and given none it binds
+none, which is that record holding however the name was wrong - so without one,
+the seam between the two crates is watched by nothing. **The
+record is the Spec's**, per the Document Format's definition of an assertion as
+a claim a Spec makes, and it sits in `weaver-admin-Spec` section 6 under the
+vector clause, which is the clause the claim is about.
 
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its
