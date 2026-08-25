@@ -101,8 +101,12 @@ residual rather than the class the claim would need.
 ## What these documents are
 
 **One paper per crate, plus six that belong to no crate**, and the directories
-carry the boundary: `weaver-agents/` for the domain, `consumers/` for what reaches
-an agent only across a contract, and the seam itself at the top. A crate paper answers
+carry the boundary: `weaver-agents/` for the agent domain, with
+`weaver-internal/` beneath it for the callables that crate mounts,
+[`weaver-web/`](weaver-web/weaver-web.md) for the frontend domain that reaches an
+agent only across a contract, [`weaver-diagnostic/`](weaver-diagnostic/jacobian-lens.md)
+for the instruments that read a finished record, and the seam itself at the top.
+A crate paper answers
 what one crate is, what it owns, which seams it holds, how its primary operation
 works, what it refuses, and what it has not built.
 
@@ -167,20 +171,22 @@ about where the framework's requirements stop and your own practice begins.
 
 ## The state of this set today
 
-**Fifteen pages beside this one. Six are drafted and nine are structure only.**
+**Sixteen pages beside this one, and all of them are drafted as of
+2026-08-24.** The nine crate papers took their prose across that day, the last
+of the 54 owed sections landing with `weaver-internal`, and `weaver-web` joined
+the set when the crate was absorbed, in its own directory beside the agent
+domain's rather than among the instruments.
 
-[The index](index.md), [Contracts](contracts.md), [The loop](weaver-agents/loop.md),
-[Extending the program](weaver-agents/extending.md), [The Jacobian
-lens](consumers/jacobian-lens.md), and [The calculator](consumers/calculator.md)
-carry their prose. The nine crate papers carry the
-six-section spine, the sources each section will be read out of, and the facts already
-checkable - each crate's seams with their tags, and what that crate is known today not
-to have built. Their sections say **Not drafted** where prose is owed, which is 54
-sections at this commit.
+**Drafted is not finished, and the difference is worth stating plainly.** Every
+page is a rough first pass read out of a merged document. What that buys is that
+a reader can now find any part of the system described somewhere on this site.
+What it does not buy is polish, worked examples, or a second pass against a
+moving tree: several pages already carry notes where a source and this site
+disagree, and where they do, the page is the defect.
 
-That is stated as a number rather than softened, on the same principle the crate
-papers themselves follow: a reader looking for the holes should not have to infer
-them from careful phrasing.
+Each page still says on its face what its subject does not have, which is the
+convention this set follows everywhere: a reader looking for the holes should
+not have to infer them from careful phrasing.
 
 **These pages are not tied to a commit yet, and the front matter says so.** Every
 page carries `commit: unreleased` rather than a hash, because the application is a

@@ -30,8 +30,10 @@ reads the output distribution at one position. The lens reads the interior at th
 same position, one layer at a time.
 
 The result that makes it worth the cost is **selectivity**, reported in the
-transformer-circuits workspace paper this request cites rather than by any
-measurement of this program's. Information a model uses correctly can be **entirely
+transformer-circuits workspace's published work rather than by any measurement of
+this program's. **This page carries no citation for it**, which is a gap rather
+than a style: a reader who wants to check the claim has nothing here to check it
+against, and the reference is owed. Information a model uses correctly can be **entirely
 absent** from the lens readout, and where it is absent the model cannot report on
 that information or reason flexibly with it. That converts a class of failure from a
 behavioural description into something with a mechanism attached.
@@ -88,8 +90,11 @@ comparison rather than a like-for-like one until the election state behind them 
 field, conditional pricing was an optimisation. Here it is the difference between
 possible and not. Measured against the same traces, the field's conditional shape
 gives an eleven-fold reduction at a one-bit threshold, with 5.3 percent of positions
-carrying full depth. Applied to a four-layer capture that turns roughly 49 GB into
-roughly 3 GB.
+carrying full depth. **The four-layer estimate follows the second figure rather than
+the first**: roughly 49 GB against 5.3 percent of positions is roughly 3 GB, where
+the eleven-fold overall reduction would give closer to 4.5. Which of the two a
+capture actually pays depends on whether partial-depth positions carry layers at
+all, and that is not settled here.
 
 ## What has to be true first, and what changed on 2026-08-22
 

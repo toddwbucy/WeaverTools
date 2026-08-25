@@ -15,9 +15,13 @@ The code described here is unreleased and is scheduled for release in the first
 quarter of 2027. These pages are published as a dated snapshot of a system under
 construction, and each says on its face what it does not yet have.
 
-**The directories carry the boundary.** `weaver-agents/` holds the agent domain:
-nine crate papers and the two surfaces an operator writes against. `consumers/`
-holds what sits outside that boundary and reaches an agent only across a contract.
+**The directories carry the boundary, and one level down they carry
+membership.** `weaver-agents/` holds the agent domain: nine crate papers, the two
+surfaces an operator writes against, and `weaver-internal/` beneath it for the
+callables that crate mounts. `weaver-web/` holds the frontend domain, outside the
+boundary, reaching an agent only across a contract. `weaver-diagnostic/` holds the
+instruments that read a finished record, and is the newest and least built of the
+three.
 The contracts page stays at the top because it is the seam itself, and the two
 external contracts on it are where that boundary is actually drawn.
 
@@ -60,6 +64,9 @@ A crate that governs a domain and holds a two-initiator channel with the harness
 
 - [weaver-internal](weaver-agents/weaver-internal.md) - callables the loop dispatches
   inward, and never through the gate
+  - [The calculator](weaver-agents/weaver-internal/calculator.md) - its first and
+    so far only member, and the reason the perturbation mechanic a diagnostic
+    instrument would need already exists
 
 ## The surfaces written against
 
@@ -73,19 +80,24 @@ something rather than places the framework does.
 - [Extending the program](weaver-agents/extending.md) - the floor, the seams, a new
   organ, and where the framework's requirements stop
 
-## Consumers
+## The frontend
 
-Outside the agent boundary, reaching an agent only across the two external
-contracts. The built instruments are described where they are built, in the crate
-papers. The lens has its own page because it is unbuilt, and because its
-preconditions are the part worth knowing early.
+Outside the agent boundary, reaching an agent only across the external contracts.
+The first thing to do so, and therefore the first real test of whether those
+contracts are enough to build against.
 
-- [The Jacobian lens](consumers/jacobian-lens.md) - a per-layer readout of the interior,
-  why it captures during the run and reads at analysis, what it would cost, and the two
-  questions that gate it
-- [The calculator](consumers/calculator.md) - **not a consumer**, noted here because
-  the perturbation mechanic a diagnostic consumer would need is already built and
-  running in production, and this is what built it
+- [weaver-web](weaver-web/weaver-web.md) - the channel, the lifecycle view, and
+  the live trace view, and the one reach the contracts turned out not to cover
+
+## The diagnostic domain
+
+The instruments that read a finished record rather than driving an agent. The
+domain is chartered and its crate papers are not written yet, so this directory
+holds one instrument and will gain the rest as that work lands.
+
+- [The Jacobian lens](weaver-diagnostic/jacobian-lens.md) - a per-layer readout of
+  the interior, why it captures during the run and reads at analysis, what it would
+  cost, and the two questions that gate it
 
 ## Across all of them
 

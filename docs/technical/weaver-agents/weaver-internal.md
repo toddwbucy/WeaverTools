@@ -47,7 +47,7 @@ of its own.
 **The space, and its first member.** The calculator - a scientific expression
 evaluator, a pure function from an expression string to a value or a refusal
 in its own words. It has its own page at
-[the calculator](../consumers/calculator.md), which also states plainly what
+[the calculator](weaver-internal/calculator.md), which also states plainly what
 is and is not wired today. The calculator is also the cap: no second
 framework-shipped member joins without an act that argues its corner the way
 the program argued this one's.

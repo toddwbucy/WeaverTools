@@ -74,6 +74,13 @@ crosses no process line, so it authenticates nothing. Read-out not drafted.
 **These two are the program's public surface**, written by the ruling of
 2026-08-01 for an outside consumer and for nothing else. A frontend or any other
 consumer builds against these and against no other document on this site.
+[weaver-web](weaver-web/weaver-web.md) is the first to build against them, and
+being first is what turned the sufficiency claim into a checkable one. **It found
+one reach these two do not cover.** Turns and the record are here. The lifecycle
+verbs are not: the operator contract governs the record and says outright that
+running the admin binary is running the crate rather than a channel it governs,
+so an outside consumer has no page for that surface and builds it on deployment
+fact. The ask for one is filed.
 
 ### weaver-gate-world-contract
 
