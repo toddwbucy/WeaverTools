@@ -54,17 +54,19 @@ roles instead of rearchitecting.
 
 ## Documents
 
-- [`docs/PRD.md`](docs/PRD.md) — what and why: the surfaces, the rulings
-  (display-engine constraint, scope, identity and responsibility), the
-  roadmap, and the asks filed upstream.
-- [`docs/SPEC.md`](docs/SPEC.md) — how: every representation election,
-  cited from the code that implements it.
+- [`weaver-web-PRD.md`](../../docs/crates/weaver-web/weaver-web-PRD.md) —
+  what and why: the surfaces, the rulings (display-engine constraint,
+  scope, identity and responsibility), the roadmap, and the asks filed
+  upstream.
+- [`weaver-web-Spec.md`](../../docs/crates/weaver-web/weaver-web-Spec.md) —
+  how: every representation election, cited from the code that implements
+  it.
 - [`deploy/`](deploy/) — the sudoers fragment, example config, and the
   verified agent-setup runbook for this box.
 
 ## Running
 
-```
+```sh
 cargo build
 weaver-web --config /etc/weaver-web/config.toml
 ```

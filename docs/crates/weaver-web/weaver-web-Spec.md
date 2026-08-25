@@ -57,44 +57,48 @@ One binary crate, `weaver-web`, per the one-binary discipline. Modules,
 not a workspace - the project splits into crates only when a second
 consumer of some module exists:
 
-    src/
-      main.rs          startup: config, store open, adapters, router, axum
-      config.rs        TOML config: agents, providers, listen, store path
-      store.rs         Postgres pool, migrations, the single writer task
-      registry.rs      participants: identity, adapter binding, policies
-      channel.rs       channel log: append, read, projection types
-      router.rs        invocation policy, mention parsing, dispatch
-      queue.rs         per-agent queue: single-flight, batch-on-drain
-      adapters/
-        gate.rs        weaver agent adapter: dial, frame, close
-        upstream.rs    upstream model adapter: HTTP providers
-      lifecycle.rs     verb invocation via sudo, JSON answer capture
-      traceview.rs     NDJSON tailers, run/turn grouping, ring buffer
-      web/
-        mod.rs         shared plumbing: state, sessions, errors, assets
-        user.rs        the user surface: gate-boundary routes (channels)
-        admin.rs       the admin surface: operator-boundary routes
-                       (lifecycle, trace), behind the role gate
-        templates/     askama templates: shell, channel, lifecycle, trace
+```
+src/
+  main.rs          startup: config, store open, adapters, router, axum
+  config.rs        TOML config: agents, providers, listen, store path
+  store.rs         Postgres pool, migrations, the single writer task
+  registry.rs      participants: identity, adapter binding, policies
+  channel.rs       channel log: append, read, projection types
+  router.rs        invocation policy, mention parsing, dispatch
+  queue.rs         per-agent queue: single-flight, batch-on-drain
+  adapters/
+    gate.rs        weaver agent adapter: dial, frame, close
+    upstream.rs    upstream model adapter: HTTP providers
+  lifecycle.rs     verb invocation via sudo, JSON answer capture
+  traceview.rs     NDJSON tailers, run/turn grouping, ring buffer
+  web/
+    mod.rs         shared plumbing: state, sessions, errors, assets
+    user.rs        the user surface: gate-boundary routes (channels)
+    admin.rs       the admin surface: operator-boundary routes
+                   (lifecycle, trace), behind the role gate
+    templates/     askama templates: shell, channel, lifecycle, trace
+```
 
 ## 3. Configuration
 
 TOML, path given by `--config`, default `/etc/weaver-web/config.toml`:
 
-    listen   = "0.0.0.0:8080"
-    database = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth
-    admins   = ["todd"]   # participant names holding the admin role
+```
+listen   = "0.0.0.0:8080"
+database = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth
+admins   = ["todd"]   # participant names holding the admin role
 
-    [[agents]]
-    name  = "alpha"
-    gate  = "/run/weaver-alpha/gate.sock"
-    trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
+[[agents]]
+name  = "alpha"
+gate  = "/run/weaver-alpha/gate.sock"
+trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
 
-    [[providers]]
-    name    = "claude"
-    api     = "anthropic"
-    model   = "claude-fable-5"
-    key_env = "ANTHROPIC_API_KEY"
+[[providers]]
+name    = "claude"
+api     = "anthropic"
+model   = "claude-fable-5"
+key_env = "ANTHROPIC_API_KEY"
+```
 
 Agents and providers declared here are *available*, and whether one
 participates in a given channel is registry state, not config. Upstream
@@ -106,51 +110,53 @@ stored in the config file or the database.
 Postgres, four tables, in the `weaver_web` database. Migrations are sqlx
 migration files in `migrations/`, applied at startup.
 
-    CREATE TABLE participants (
-      id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      name        TEXT NOT NULL UNIQUE,      -- mention handle, kebab-case
-      display     TEXT NOT NULL,
-      kind        TEXT NOT NULL,             -- 'human' | 'agent' | 'model'
-      adapter     TEXT,                      -- agents: config agent name
-                                             -- models: config provider name
-                                             -- humans: NULL
-      respond     TEXT NOT NULL DEFAULT 'mention',
-                                             -- 'mention' | 'never'
-      credential  BYTEA,                     -- NULL in v1; passkey public
-                                             -- key in the IAM era (PRD 6)
-      role        TEXT NOT NULL DEFAULT 'user'
-                                             -- 'user' | 'admin'; see
-                                             -- section 14
-    );
+```
+CREATE TABLE participants (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name        TEXT NOT NULL UNIQUE,      -- mention handle, kebab-case
+  display     TEXT NOT NULL,
+  kind        TEXT NOT NULL,             -- 'human' | 'agent' | 'model'
+  adapter     TEXT,                      -- agents: config agent name
+                                         -- models: config provider name
+                                         -- humans: NULL
+  respond     TEXT NOT NULL DEFAULT 'mention',
+                                         -- 'mention' | 'never'
+  credential  BYTEA,                     -- NULL in v1; passkey public
+                                         -- key in the IAM era (PRD 6)
+  role        TEXT NOT NULL DEFAULT 'user'
+                                         -- 'user' | 'admin'; see
+                                         -- section 14
+);
 
-    CREATE TABLE channels (
-      id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      name        TEXT NOT NULL UNIQUE,
-      topic       TEXT,
-      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
+CREATE TABLE channels (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name        TEXT NOT NULL UNIQUE,
+  topic       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-    CREATE TABLE members (
-      channel_id     BIGINT NOT NULL REFERENCES channels(id),
-      participant_id BIGINT NOT NULL REFERENCES participants(id),
-      joined_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-      PRIMARY KEY (channel_id, participant_id)
-    );
+CREATE TABLE members (
+  channel_id     BIGINT NOT NULL REFERENCES channels(id),
+  participant_id BIGINT NOT NULL REFERENCES participants(id),
+  joined_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (channel_id, participant_id)
+);
 
-    CREATE TABLE channel_events (
-      id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                                             -- global monotonic, the SSE cursor
-      channel_id     BIGINT NOT NULL REFERENCES channels(id),
-      ts             TIMESTAMPTZ NOT NULL DEFAULT now(),
-                                             -- server receipt time, the order
-      participant_id BIGINT REFERENCES participants(id),
-      kind           TEXT NOT NULL,
-      body           TEXT,                   -- message text, or detail JSON
-      run_label      TEXT,                   -- agent closes only, verbatim
-      turn_label     TEXT,                   -- agent closes only, verbatim
-      close_kind     TEXT                    -- 'answered'|'stopped'|'refused'
-    );
-    CREATE INDEX idx_events_channel ON channel_events(channel_id, id);
+CREATE TABLE channel_events (
+  id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                         -- global monotonic, the SSE cursor
+  channel_id     BIGINT NOT NULL REFERENCES channels(id),
+  ts             TIMESTAMPTZ NOT NULL DEFAULT now(),
+                                         -- server receipt time, the order
+  participant_id BIGINT REFERENCES participants(id),
+  kind           TEXT NOT NULL,
+  body           TEXT,                   -- message text, or detail JSON
+  run_label      TEXT,                   -- agent closes only, verbatim
+  turn_label     TEXT,                   -- agent closes only, verbatim
+  close_kind     TEXT                    -- 'answered'|'stopped'|'refused'
+);
+CREATE INDEX idx_events_channel ON channel_events(channel_id, id);
+```
 
 The identity column's monotonicity as an SSE cursor holds because all
 writes flow through the single writer (section 5) - with one writer there
@@ -220,10 +226,12 @@ One adapter instance per configured agent.
 The adapter builds the request `text` from the channel log, server-side
 (PRD 4.1):
 
-    [#general] Turn context. You are alpha. Messages since your last turn:
-    todd: <text>
-    claude: <text>
-    todd: @alpha <text>
+```
+[#general] Turn context. You are alpha. Messages since your last turn:
+todd: <text>
+claude: <text>
+todd: @alpha <text>
+```
 
 - Window: messages since the agent's last `close` in this channel,
   newest-last, truncated oldest-first to fit the line bound with the
@@ -282,16 +290,20 @@ as `message` events with no run or turn labels (they have no trace).
 
 `tokio::process::Command`:
 
-    sudo WEAVER_ADMIN_CONFIG=/etc/weaver/config \
-      /usr/local/libexec/weaver/weaver-admin <verb> <agent>
+```
+sudo WEAVER_ADMIN_CONFIG=/etc/weaver/config \
+  /usr/local/libexec/weaver/weaver-admin <verb> <agent>
+```
 
 stdout parsed as one JSON object, rendered verbatim and formatted,
 non-zero exit with unparseable stdout rendered as the raw bytes and the
 exit code, never swallowed. The sudoers fragment shipped in `deploy/`:
 
-    todd ALL=(root) NOPASSWD: /usr/local/libexec/weaver/weaver-admin validate *, \
-      /usr/local/libexec/weaver/weaver-admin load *, \
-      /usr/local/libexec/weaver/weaver-admin unload *
+```
+todd ALL=(root) NOPASSWD: /usr/local/libexec/weaver/weaver-admin validate *, \
+  /usr/local/libexec/weaver/weaver-admin load *, \
+  /usr/local/libexec/weaver/weaver-admin unload *
+```
 
 Load state: the gate socket path's existence, polled on a short interval
 and on demand before render, labeled as an inference in the UI (PRD 4.2).
@@ -326,21 +338,23 @@ the admin surface crosses the operator boundary, and every `/admin/*`
 route sits behind the role gate. The split is structural so the IAM act
 attaches authentication to existing roles rather than rearchitecting.
 
-    GET  /                                shell, redirects to /channels
-    POST /session                         open a session (v1: anonymous)
-    GET  /channels                        channel list
-    POST /channels                        create channel
-    GET  /channels/{name}                 channel view (page)
-    POST /channels/{name}/messages        post a message (form)
-    POST /channels/{name}/members         add participant
-    GET  /channels/{name}/stream          SSE: channel events from cursor
+```
+GET  /                                shell, redirects to /channels
+POST /session                         open a session (v1: anonymous)
+GET  /channels                        channel list
+POST /channels                        create channel
+GET  /channels/{name}                 channel view (page)
+POST /channels/{name}/messages        post a message (form)
+POST /channels/{name}/members         add participant
+GET  /channels/{name}/stream          SSE: channel events from cursor
 
-    GET  /admin/lifecycle                 lifecycle surface     [admin]
-    POST /admin/lifecycle/{agent}/{verb}  run a verb            [admin]
-    GET  /admin/trace/{agent}             trace surface         [admin]
-    GET  /admin/trace/{agent}/stream      SSE: trace events     [admin]
+GET  /admin/lifecycle                 lifecycle surface     [admin]
+POST /admin/lifecycle/{agent}/{verb}  run a verb            [admin]
+GET  /admin/trace/{agent}             trace surface         [admin]
+GET  /admin/trace/{agent}/stream      SSE: trace events     [admin]
 
-    GET  /assets/*                        vendored static assets
+GET  /assets/*                        vendored static assets
+```
 
 SSE events are named: the channel stream emits `event: channel` with an
 HTML fragment (htmx SSE swap) and `id:` set to the `channel_events.id`

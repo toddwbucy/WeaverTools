@@ -18,7 +18,16 @@ editable in one commit, which is what the absorption was for. Three
 collisions are surfaced and held rather than resolved: the edition, the
 licence, and the first database dependency in the workspace.
 
+**Revised:** 2026-08-19, the channel amendment. The chat surface becomes the
+multi-party channel surface on the operator's adoption of the front-end
+architecture exploration's three positions (report:
+`weaver-web/2026-08-19-frontend-architecture-buzz-prior-art.md`). The
+browser-as-display-engine rule hardens from stack preference to constraint,
+the IAM roadmap item gains its mechanism (passkeys, TLS bundled), and the
+authorship-responsibility ruling lands in section 6.
+
 **Date filed:** 2026-08-19
+**Author:** Todd W. Bucy, with Claude (authoring session)
 **Document ID:** `weaver-web-PRD`
 **Parent:** the WeaverTools suite, whose governing document is deliberately
 not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
@@ -37,15 +46,6 @@ edge: parent
 from: weaver-web
 to: WeaverTools
 ```
-
-**Revised:** 2026-08-19, the channel amendment. The chat surface becomes the
-multi-party channel surface on the operator's adoption of the front-end
-architecture exploration's three positions (report:
-`weaver-web/2026-08-19-frontend-architecture-buzz-prior-art.md`). The
-browser-as-display-engine rule hardens from stack preference to constraint,
-the IAM roadmap item gains its mechanism (passkeys, TLS bundled), and the
-authorship-responsibility ruling lands in section 6.
-**Author:** Todd W. Bucy, with Claude (authoring session)
 
 ---
 
@@ -290,9 +290,13 @@ additive rather than a migration.
 
 ## 7. Non-goals for v1
 
-- **Identity, authentication, and transport encryption.** No login, no
-  roles, no TLS. Deliberate deferral, held on the roadmap with a named
-  trigger and now a named mechanism (section 8).
+- **Identity, authentication, and transport encryption.** No login and no
+  TLS. Deliberate deferral, held on the roadmap with a named trigger and
+  now a named mechanism (section 8). **Roles are not among the deferrals
+  and are not access control either**: the user and admin roles exist and
+  are assigned from the configuration's admin list, which is boundary
+  hygiene over anonymous sessions until IAM supplies the identity proof
+  that would make them enforceable.
 - **Per-message signing and keys in the browser, permanently.** Excluded
   by the section 6 ruling and the section 3 constraint respectively, at
   every horizon, not merely in v1.
