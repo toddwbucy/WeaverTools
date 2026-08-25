@@ -4,6 +4,17 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, sixth of this date, the prose that spends the census
+catches up with it. The restatement of the fifth act corrected three totals and
+left three clauses that consume them, so section 10 disagreed with itself twice
+inside sixty lines, which is worse than the stale figure was because the stale
+figure was at least self-consistent. The integration invariant's edge count goes
+to four. The residency read is struck from the unedged list, its own record
+carrying the fourth edge while a sentence sixty lines on called it unedged. And
+the recut's arithmetic is named as the recut's, taking thirty-six to thirty-two,
+with the two records added since reaching thirty-four. **The lesson the banner
+already carried, one level in**: an act that restates a count owes a read of the
+prose that spends it, not only of the totals.
 **Revised:** 2026-08-25, fifth of this date, the census catches up with the
 records. Section 10 read ten of thirty-one carrying eleven `grounds` edges,
 thirty-two records by tag, and twenty-one claims grounding in no invariant. The
@@ -1600,7 +1611,7 @@ The organ invariant keeps one edge and it is the device check's, the device
 having one authority and that authority not being this crate, which is the
 domain partition apex section 5.4 draws.
 
-**The three edges to the integration invariant are this crate's charter
+**The four edges to the integration invariant are this crate's charter
 position stated from the other side.** Admin authorizes and does not execute,
 and the reason it does not is that integrating is the loop's: the stop answer is
 relayed unchanged because what a stop found is a fact about a run the harness
@@ -1636,10 +1647,13 @@ crate's contract delivers, keying on it is what a contract's vocabulary is for,
 and the record written is admin's own and sits wholly inside admin's domain.
 Apex section 5.5 binds what crosses between domains and does not reach what an
 organ does inside one, so an ordering held inside a verb grounds in nothing.
-The same reading leaves the load's step ordering, the inventory's one function,
-and the residency read from the init system unedged, each of them a sequence this
-crate holds or a fact it consults rather than a reconciliation between two
-domains.
+The same reading leaves the load's step ordering and the inventory's one
+function unedged, each a sequence this crate holds rather than a reconciliation
+between two domains. **The residency read is not among them.**
+`admin-residency-is-not-lifecycle-state` grounds in the integration invariant
+and is the fourth of the edges above, the manager's three values being a fact
+about a domain this crate does not conduct, and an earlier form of this sentence
+listed it as unedged while its own record carried the edge.
 
 **Where the assertion records sit, and which of these this crate declares.**
 The records are at the clauses that argue the claims, across sections 1
@@ -1656,8 +1670,13 @@ test reaches are the review halves of splits this section's own bullets take,
 and a divided half counts with the bullet it divided out of, per Document
 Format section 3.
 
-**Ten records retired with the recut, one moved, and six were added, which is
-the count's whole movement from thirty-six.** Retired: the operator surface's
+**Ten records retired with the recut, one moved, and six were added, which took
+the count from thirty-six to thirty-two.** That was the recut's whole movement
+and it is not the whole movement since: two records have been added by later
+acts, reaching the thirty-four this section counts above, the second of them
+`admin-preload-name-follows-the-kind` on 2026-08-25. An earlier form of this
+lead called the recut's arithmetic the whole movement, which held only until the
+next act added a record. Retired: the operator surface's
 six, its stream election, its accept-time refusal, its refusal-by-closure, its
 serial answering, its bounded request line, and its bare wire shapes, each
 dying with the socket rather than relocating. The coordination channel's bind

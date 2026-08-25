@@ -7,12 +7,12 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-25, fourth of this date, the assertion goes where
-assertions go. The act of this date put `admin-preload-name-follows-the-kind` in
-this charter, and the Document Format's own definition has an assertion as a
-claim a Spec makes. The argument stays here, where the obligation is argued, and
-the record moves to `weaver-admin-Spec` section 6 under the clause that gives
-the name, with the instrument it is perturbed by. Found by reading this
-charter's own graph blocks against that definition rather than by a review.
+assertions go. The act of this date put `admin-preload-name-follows-the-kind` in this
+charter, and the Document Format's own definition has an assertion as a claim a Spec
+makes. The argument stays here, where the obligation is argued, and the record moves to
+`weaver-admin-Spec` section 6 under the vector clause, which is the clause the claim is
+about, with the instrument it is perturbed by. Found by reading this charter's own graph
+blocks against that definition rather than by a review.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Section 2's wait claimed a bound socket rather than a half-bound one, which a
 pathname cannot show: it observes a name and the worker's dial at step 6 is what

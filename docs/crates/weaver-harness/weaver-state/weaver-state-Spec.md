@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, the door's claim names its other half. Section 4's
+`state-preload-door-stands-only-diagnostic` is one side of a two-sided claim and
+said so nowhere: the member binds no name it is not given, and that the name is
+given only under a diagnostic binding is `weaver-admin`'s, recorded there as
+`admin-preload-name-follows-the-kind` in the act of this date. Both records now
+name the other, so a reader of either meets the pair rather than a claim that
+looks whole.
 **Revised:** 2026-08-24, second of this date, the seal parks the replay
 ask. Section 4 gains the seal as a per-standing fact and the `replay` ask's
 mechanics: where the member stands with the preload door the ask answers
@@ -48,14 +55,6 @@ passes its stated trigger and stands with the reasoning recorded, and
 section 6 closes the serve surface election, the transformation vocabulary
 gaining its first member. Arrives with the context-injection loop's act,
 per the contract's change protocol.
-**Revised:** 2026-08-25, the door's claim names its other half. Section 4's
-`state-preload-door-stands-only-diagnostic` is one side of a two-sided claim and
-said so nowhere: the member binds no name it is not given, and that the name is
-given only under a diagnostic binding is `weaver-admin`'s, recorded there as
-`admin-preload-name-follows-the-kind` in the act of this date. Both records now
-name the other, so a reader of either meets the pair rather than a claim that
-looks whole.
-
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`
