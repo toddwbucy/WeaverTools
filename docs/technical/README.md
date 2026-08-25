@@ -105,7 +105,8 @@ carry the boundary: `weaver-agents/` for the agent domain, with
 `weaver-internal/` beneath it for the callables that crate mounts,
 [`weaver-web/`](weaver-web/weaver-web.md) for the frontend domain that reaches an
 agent only across a contract, [`weaver-diagnostic/`](weaver-diagnostic/jacobian-lens.md)
-for the instruments that read a finished record, and the seam itself at the top. A crate paper answers
+for the instruments that read a finished record, and the seam itself at the top.
+A crate paper answers
 what one crate is, what it owns, which seams it holds, how its primary operation
 works, what it refuses, and what it has not built.
 
