@@ -13,6 +13,13 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-24, fourth of this date, the record states its
+compatibility. Section 3 promised a version every consumer keys on and nothing
+in the record carried one, which read as a mechanism where there was none. The
+sentence now says what carrying means: nothing carries it today and nothing
+should while section 9's additive rule holds, the authority being
+`weaver-trace-PRD` section 6, and the act that first breaks the schema is the
+act at this level that adds the marker.
 **Revised:** 2026-08-24, third of this date, the diagnostic binding writes no
 record. Section 6 scoped the kinds by Gate alone, under which a diagnostic
 binding still declared a sink and still authored a run's events, which would
@@ -314,7 +321,13 @@ schema is the only schema. The working structure holds the same canonical form
 the stream carries rather than a projection of it, per the ruling of 2026-08-01,
 so no projection version exists and nothing can diverge between the two. A
 change to the durable event schema is the breaking change, and it is the one
-version every consumer keys on.
+version every consumer keys on. **Nothing carries that version today and
+nothing should**, per `weaver-trace-PRD` section 6, which holds the authority
+for this: while section 9's rule keeps the schema extending rather than
+changing, every record is of the one schema and a reader that skips what it
+does not recognise reads any vintage, so a version member would be a field
+whose only reader is unbuilt. The act that first breaks the schema is the act
+that adds the marker, and it is an act at this level.
 
 ## 4. Definition of done
 

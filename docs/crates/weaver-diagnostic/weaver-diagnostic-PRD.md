@@ -4,6 +4,18 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, third of this date, the input-format cell closes. It
+asked whether a version marker lands or the compatibility is stated some other
+way, and `weaver-trace-PRD` section 6 answers the second in the same act: the
+schema extends rather than changes, so no marker lands and a reader keys on
+nothing. What remains here is the obligation the answer puts on this crate's
+parser, to skip an unknown kind, ignore an unknown payload member, and let
+neither decide a grouping, which the replay's own grouping satisfies because it
+runs on the envelope's run and turn and on landing order, and to read a record
+that omits a member added after it was written without rejecting it and without
+deriving the member from the ones beside it, which is where this crate pays for
+the rule because the measurement's layer counts are younger than the traces it
+will be pointed at.
 **Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
 record and this crate names the other product. Section 6 records that
 `weaver-trace` has nothing to do in a replay at either end, not read because a
@@ -317,20 +329,28 @@ Open cells, each named rather than implied:
   material rather than the assembled diagnostic-trace, the assembly standing
   at the far end by the paragraph above, and the act that writes the
   directives is the act that fixes where the far end sits.
-- **The trace as an input format.** This crate parses a record whose shape is
-  declared in `weaver-trace-Spec` section 3, and no code is shared between
+- **The trace as an input format, settled 2026-08-24 and left here as the
+  obligation it puts on this crate.** This crate parses a record whose shape
+  is declared in `weaver-trace-Spec` section 3, and no code is shared between
   the writer and this parser, which is the boundary working as intended and
   is also two statements of one fact. The authority is `weaver-trace-Spec`
   and a divergence is a defect in this crate, per G5. **The record carries no
-  version marker**, and where a serving run only ever grew its vocabulary, a
-  replay reads that vocabulary as an input, so a parser written against one
-  set and pointed at a record written under another does not fail and instead
-  groups differently. Whether the marker lands on the record or the
-  compatibility is stated some other way is owed ahead of the driver, and it
-  is `weaver-trace`'s act rather than this crate's. **The cell runs both
-  directions.** The diagnostic-trace this crate writes is versionless on the
-  same terms, so its own readers meet the problem the paragraph above
-  describes, and the driver Spec settling the vocabulary settles only what
-  the shape is rather than how a reader learns which shape it holds. Neither
-  direction is closed by the shared serialization, that fixing the line and
-  not the vocabulary carried on it.
+  version marker and needs none**, per `weaver-trace-PRD` section 6: the
+  schema extends and does not change, so every vintage is the one schema and
+  a reader keys on nothing. What that costs this crate is a rule its parser
+  owes rather than a question it was owed. **The parser skips a kind it does
+  not know and ignores a payload member it does not know, and lets neither
+  decide a grouping.** The replay's grouping runs on run and turn from the
+  envelope and on request-to-measurement pairing in landing order, none of
+  which an unrecognised record can move, so the rule is satisfiable here
+  rather than merely stated. **The other direction binds this parser harder**:
+  a record written before a member existed omits it, and the parser reads that
+  record without rejecting it and without deriving the missing member from the
+  members beside it, per the same section. This crate is the place that rule
+  costs something, the layer counts on the measurement payload being younger
+  than the traces this crate will be pointed at, and deriving a layer count
+  from a norm array is the arithmetic the counts were added to retire. A
+  replay over a record that predates them is a replay whose layer count is
+  unknown rather than one whose layer count is guessed. The same rules bind
+  the diagnostic-trace's own readers, that record being versionless on the
+  same terms and for the same reason.
