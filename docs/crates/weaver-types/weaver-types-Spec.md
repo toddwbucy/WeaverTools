@@ -5,14 +5,23 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
-**Revised:** 2026-08-24, the kind takes its shape. `BindingKind` joins the
-config as an option whose absence means serving, `gate_instruction` becomes
-an option whose presence follows the resolved kind, and `EnterPayload`
-carries `EnterBinding`, the kind resolved with the gate instruction riding
-inside the serving case. The refusal question the contract left to this
-round is answered by shape: a directive disagreeing with its kind cannot be
-constructed. Per `weaver-agents-PRD` section 6 as amended this date and the
-contract act of the same date.
+**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
+record. `trace_sink` becomes an option and joins `gate_instruction` under the
+same conditional rule, a serving binding requiring each and a diagnostic
+binding excluding each, per `weaver-agents-PRD` section 6 as amended this date.
+An absent sink is stated as not a defaulted one, so no reader invents a path.
+The optional count was stale before this entry and is corrected in the same
+pass, reading two where the paragraph then named three, `binding_kind` having
+joined `state_election` and `loop_file` without the count following it. The
+entry below gains the ordinal the convention asks for, which it was filed
+without.
+**Revised:** 2026-08-24, first of this date, the kind takes its shape. `BindingKind`
+joins the config as an option whose absence means serving, `gate_instruction` becomes an
+option whose presence follows the resolved kind, and `EnterPayload` carries
+`EnterBinding`, the kind resolved with the gate instruction riding inside the serving
+case. The refusal question the contract left to this round is answered by shape: a
+directive disagreeing with its kind cannot be constructed. Per `weaver-agents-PRD`
+section 6 as amended this date and the contract act of the same date.
 
 **Revised:** 2026-08-22, second of this date, the refusal record takes its
 shape. `RefusalRecord` names the seam and carries that seam's own case, with
@@ -395,7 +404,7 @@ pub struct AgentConfig {
     pub permission_mode: weaver_traits::PermissionMode,
     pub binding_kind: Option<BindingKind>,
     pub gate_instruction: Option<GateInstruction>,
-    pub trace_sink: TraceSink,
+    pub trace_sink: Option<TraceSink>,
     pub state_election: Option<StateElection>,
     pub loop_file: Option<PathBuf>,
 }
@@ -579,8 +588,9 @@ temptation named.** The surface is the union of what the organs register, per
 one struct's field list, and the refusal is against that surface rather than against a
 fixed type. The property below is unchanged by that and is why the rule exists.
 Charter section 5 rules that absence is never read as a default unless the charter
-says a field is optional and says what its absence means. Two fields are optional,
-each by exactly that rule's own terms. `state_election` may be
+says a field is optional and says what its absence means. Three fields are
+optional by exactly that rule's own terms, and two more are options at the
+parse for a different reason, named after them. `state_election` may be
 absent because `weaver-state-PRD` section 4 rules what absence means, the
 default election, the envelope of every kind and nothing more, so a deployment
 that elects nothing still holds the session's shape by the charter's sentence
@@ -605,13 +615,19 @@ section 2.1 rules what absence means, a serving binding, so a declaration
 written before the member existed still parses and still means what it meant,
 on the same footing as `loop_file` above. The enum is closed at two cases
 because `weaver-agents-PRD` section 6 names exactly two kinds, and a third
-kind is an apex act before it is a variant. `gate_instruction` is an `Option`
-because its presence follows the resolved kind rather than standing alone: a
-serving binding requires it and a diagnostic binding excludes it, per the
-contract's shape rule of 2026-08-24. The parse cannot see that, checking each
-field alone, so both parse as options and the cross-field rule is admin's at
-inventory, before a process exists, per `weaver-admin-Spec` section 4. Every
-other field is required.
+kind is an apex act before it is a variant. `gate_instruction` and `trace_sink` are
+options for a reason the three above do not share: presence follows the
+resolved kind rather than standing alone, a serving binding requiring each and
+a diagnostic binding excluding each, per the contract's shape rule of
+2026-08-24 and `weaver-agents-PRD` section 6 as amended. A diagnostic binding
+declares no sink because it authors no event, which that section argues and
+this one represents. The parse cannot see a cross-field rule, checking each
+field alone, so the pair parses as options and the rule is admin's at
+inventory, before a process exists, per `weaver-admin-Spec` section 4. **An
+absent `trace-sink` is not a defaulted one**, and nothing here or downstream
+reads it as a path to invent: a serving binding whose declaration omits it is
+refused at inventory the way an omitted gate instruction is. Every other field
+is required.
 The residual-readout election is what a builder will reach to default,
 to off, and it is exactly the one that must not: an operator who stated no readout
 has not thereby declined it, and admin refusing the load is how that operator

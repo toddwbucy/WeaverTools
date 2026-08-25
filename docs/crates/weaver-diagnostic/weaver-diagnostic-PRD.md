@@ -4,20 +4,29 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
-**Revised:** 2026-08-24, the seam papers land. Section 6's seam paragraph
-records the landing and corrects its own account of the declaring side: the
-seam edge is declared here, from the initiating side, per the pattern the
-harness-state seam set, and not by state as the paragraph first said. The
-owed list narrows to the driver, its Spec, and the null replay. The
-serving-binding refusal is restated in the papers' terms, the door's absence
-rather than a refusal at a seam that does not stand.
-**Date filed:** 2026-08-24
-**Document ID:** `weaver-diagnostic-PRD`
-**Parent:** the WeaverTools suite, whose governing document is deliberately
-not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
-names the `WeaverTools` system node, and the header and the edge name the
-same thing.
-**Editorial:** Per the Working Rules.
+**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
+record and this crate names the other product. Section 6 records that
+`weaver-trace` has nothing to do in a replay at either end, not read because a
+reader is downstream of a file and not written because a replay performs no
+cognition to record, and names the **diagnostic-trace** as this crate's, alike
+to a trace only in the word. The harness relays it opaque and names no shape,
+which is what keeps the dependency from running outward across the boundary.
+The crate defines `diagnostic-trace` as a term in the same section.
+The owed list gains the diagnostic-trace's form and exit, both to the driver's
+Spec, and gains the trace-as-an-input-format cell, which is `weaver-trace`'s
+act and sits ahead of the driver. The entry below gains the ordinal the
+convention asks for, which it was filed without.
+**Revised:** 2026-08-24, first of this date, the seam papers land. Section 6's seam
+paragraph records the landing and corrects its own account of the declaring side: the
+seam edge is declared here, from the initiating side, per the pattern the harness-state
+seam set, and not by state as the paragraph first said. The owed list narrows to the
+driver, its Spec, and the null replay. The serving-binding refusal is restated in the
+papers' terms, the door's absence rather than a refusal at a seam that does not stand.
+**Date filed:** 2026-08-24 **Document ID:** `weaver-diagnostic-PRD` **Parent:** the
+WeaverTools suite, whose governing document is deliberately not yet written, per
+`weaver-agents-PRD` section 0. The graph parent edge names the `WeaverTools` system
+node, and the header and the edge name the same thing. **Editorial:** Per the Working
+Rules.
 
 ---
 
@@ -188,6 +197,40 @@ principal, over the operator's own storage. The trace parser belongs to this
 crate, outside the agent. `weaver-state` never opens a trace file and
 `weaver-trace` keeps its write-only pin.
 
+**The record runs one way only, and this crate owns the other product.** A
+diagnostic binding writes no trace, per `weaver-agents-PRD` section 6 as
+amended 2026-08-24, so `weaver-trace` has nothing to do in a replay at either
+end: it is not read, because a reader of a finished record is downstream of a
+file rather than a party to that crate, and it is not written, because a
+replay performs no cognition of its own to record. What a diagnostic run
+produces instead is the **diagnostic-trace**, the measurement of the run,
+which is this crate's shape and named here for the first time. **It is not a
+trace and does not share that crate's canonical form**, the two being alike
+only in the word, and this charter names them apart at the moment it names
+the second so no later reader has to.
+
+```graph
+node: diagnostic-trace
+kind: term
+
+edge: defines
+from: weaver-diagnostic
+to: diagnostic-trace
+```
+
+**The harness relays the diagnostic-trace and never names it.** The
+measurement returns from the SPU by the same path the generation does, per
+apex section 3 step 6, so it reaches the harness whatever the binding's kind.
+On a serving binding the harness authors it into the record. On a diagnostic
+one there is no record to author into, so the harness passes it outward
+holding it opaque, on the precedent `weaver-trace` already sets for message
+payloads, whose shapes it neither knows nor versions. That keeps the
+dependency running the one way the boundary allows: this crate sits outside
+the agent, so a harness that named this crate's shape would depend outward,
+and holding the payload opaque is what makes the relay cost nothing
+structurally. The exit path and its directives are owed with the driver,
+below.
+
 **The refusal rests on the binding's declaration, and its form is the door's
 absence.** State learns the kind at its standing, from the party that stands
 it, which resolved the kind at inventory, and binds the preload name only
@@ -211,3 +254,21 @@ Open cells, each named rather than implied:
   silent one.
 - **The driver and its Spec** are owed next, the seam papers having landed,
   and the null replay of section 4 is owed behind the driver.
+- **The diagnostic-trace's own shape** is owed with the driver's Spec, which
+  is the document permitted to name it. This section fixes what it is, whose
+  it is, and that the harness holds it opaque, and fixes nothing about its
+  form. **Its exit is owed in the same act**: it leaves by admin, per the
+  operator's ruling of 2026-08-24, and no directive carries it until that act
+  writes one, a declared route with no far end being the empty joint apex
+  section 9 refuses.
+- **The trace as an input format.** This crate parses a record whose shape is
+  declared in `weaver-trace-Spec` section 3, and no code is shared between
+  the writer and this parser, which is the boundary working as intended and
+  is also two statements of one fact. The authority is `weaver-trace-Spec`
+  and a divergence is a defect in this crate, per G5. **The record carries no
+  version marker**, and where a serving run only ever grew its vocabulary, a
+  replay reads that vocabulary as an input, so a parser written against one
+  set and pointed at a record written under another does not fail and instead
+  groups differently. Whether the marker lands on the record or the
+  compatibility is stated some other way is owed ahead of the driver, and it
+  is `weaver-trace`'s act rather than this crate's.

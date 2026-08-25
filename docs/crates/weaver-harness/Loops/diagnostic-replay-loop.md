@@ -1,7 +1,12 @@
 # Diagnostic Replay Loop
 
-**Status:** MERGED v0.1, 2026-08-24. The workflow document for the diagnostic
-replay loop, filed under the harness's `Loops/` container per the Document
+**Status:** MERGED v0.2, 2026-08-24. Revised the same date it was filed, the
+diagnostic binding writing no record: v0.1 had the run's record holding what
+diverged and had the loop's failures reaching the operator through an
+account, both of which assumed an authorship this kind of binding does not
+perform. The loop's outward voice is the answer it gives the driver, and the
+report's form is owed with the driver's Spec. The workflow document for the
+diagnostic replay loop, filed under the harness's `Loops/` container per the Document
 Format's container entry. It argues no edges of its own: the seams it walks
 are declared in the crate charters, and a graph block here would duplicate a
 record that already has a home.
@@ -116,11 +121,15 @@ The charter's section 4 procedure, as this loop performs it:
    vectors compare within the GPU float tolerance the apex names, per the
    charter's section 4 scoping.
 
-**A failed certification refuses the readout and keeps the run.** The run's
-record holds what was attempted and where it diverged, the capture artifact
-act shaping how, and an uncertified replay producing no artifact is the
-no-second-instrument rule's floor case: not even the first instrument reads
-from a replay that did not certify.
+**A failed certification refuses the readout and keeps the run.** What was
+attempted and where it diverged is the driver's to hold and report, not a
+record's: this run authors no events, per `weaver-agents-PRD` section 6 as
+amended 2026-08-24, so there is no bracket for a divergence to land in and
+the loop's whole outward voice is the answer it gives the driver. The form
+that report takes is owed with the driver's Spec, and the capture artifact
+act shapes what an artifact would have carried. An uncertified replay
+producing no artifact is the no-second-instrument rule's floor case: not
+even the first instrument reads from a replay that did not certify.
 
 ## 4. Failure, in the loop's terms
 
@@ -131,13 +140,14 @@ from a replay that did not certify.
   by outcome: none is an empty replay. An empty session is a sealed answer
   carrying zero events and fails input identity in the ordinary way, where
   an absent answer is no answer at all, so the loop ends its run having
-  replayed nothing, the account saying so, and the operator reads it,
-  unloads, and retries with the driver. A dead driver's prefix needs no
-  cleanup, the next preload's opener retiring it.
+  replayed nothing and answers the driver saying so, which is how the
+  operator learns it, before unloading and retrying. The account is the
+  driver's rather than a record's, this run authoring nothing. A dead
+  driver's prefix needs no cleanup, the next preload's opener retiring it.
 - **The holdings fail input identity.** The loop refuses at certification
   step one, named above.
-- **The decode seam refuses mid-replay.** The loop ends the run with the
-  account of where. The no-write guarantee is the third refusal's and
+- **The decode seam refuses mid-replay.** The loop ends the run and answers
+  the driver with where it stopped. The no-write guarantee is the third refusal's and
   scopes to what outlives the run: no durable record, holding, or artifact
   takes a byte from the partial work. The decode context the forwards
   mutated and whatever measurement work was in flight are transient, die

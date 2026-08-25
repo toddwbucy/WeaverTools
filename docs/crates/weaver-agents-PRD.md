@@ -13,6 +13,16 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-24, third of this date, the diagnostic binding writes no
+record. Section 6 scoped the kinds by Gate alone, under which a diagnostic
+binding still declared a sink and still authored a run's events, which would
+leave two records of one turn alike in kind with nothing saying which was
+lived. The kinds sentence, a new paragraph beside it, and a lifecycle rule
+beside Gate's now scope the record by kind as well: a serving binding declares
+the sink and authors into it, a diagnostic binding declares none and authors
+nothing, and what the replay produces instead is the diagnostic-trace, which is
+`weaver-diagnostic`'s. The parties merge in the same act, the sink handle being
+a term of `weaver-admin-harness-contract`.
 **Revised:** 2026-08-24, second of this date, the diagnostic consumer charters.
 Section 0's boundary sentence read that outside crates reach an agent only
 across the two external contracts of 2026-08-01, which the preload seam of
@@ -720,13 +730,26 @@ thereafter.
 same weights serve more than one purpose, and which components a load brings up
 follows from the purpose rather than from the weights. A **serving** binding
 stands up the whole interior and takes work from outside. A **diagnostic**
-binding stands up the interior without Gate, for the replay of section 8, where
-a driver outside the agent drives the SPU over a record the operator holds. The
+binding stands up the interior without Gate and without the record, for the
+replay of section 8, where a driver outside the agent drives the SPU over a
+record the operator holds. The
 kind is declared at the load and never entered afterward. Nothing puts a loaded
 agent into a kind, no verb moves between kinds, and an agent that is to serve
 and an agent that is to be replayed are two loads rather than two states of
 one. What that buys is that the wrong arrangement is unrepresentable rather
 than guarded against, there being no transition for a guard to sit on.
+
+**A diagnostic binding writes no record, because a replay performs no cognition
+of its own.** The trace is the record of what an agent did, authored by the
+harness as its sole writer and bracketed by the turn, and a replay does none of
+that: it re-executes a token path some record already holds, over prompts that
+arrive preloaded rather than raised. A replay that wrote a trace would leave the
+corpus holding two records of one turn, alike in kind and alike in shape, with
+nothing in either saying which was lived and which was re-executed. That is
+worse than an absence, because the second one reads as evidence. What the run
+produces in its place is the diagnostic-trace, a measurement of a turn rather
+than a record of one, which belongs to `weaver-diagnostic` and leaves by admin
+per `weaver-diagnostic-PRD` section 6.
 
 **The rules below measure a load against the components its binding declared.**
 Measured against a fixed set they say a diagnostic binding cannot complete: a
@@ -753,6 +776,9 @@ Lifecycle rules:
 - A serving binding starts Gate last and stops Gate first, and a Gate process
   never outlives the worker interior it protects. A diagnostic binding declares
   no Gate, so it holds no such process and the ordering has nothing to order.
+- A serving binding declares a trace sink and the harness authors the run's
+  record into it. A diagnostic binding declares none, so no sink handle crosses
+  the enter and the run authors no event at all.
 - No lifecycle verb auto-chains another.
 - A GPU conflict is rejected at model admission, by the SPU, until the operator
   explicitly unloads the occupant. Admission refuses and never evicts, so no load,

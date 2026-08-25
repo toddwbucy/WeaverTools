@@ -4,6 +4,17 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-24, fourth of this date, the diagnostic binding writes no record.
+Section 3's enter walk scopes the receive and the `Recorder` to a serving binding and
+states once that every later authorship site reads under one, a diagnostic run reaching
+such a site being a defect in the walk. The no-clauses paragraph of the same section
+said the kind excludes Gate alone, which this amendment makes false, and it now names
+the record beside Gate while keeping the no-clauses to the forks they were written for.
+The authorship claim lands as an assertion under the section arguing it, tagged
+perturbation. Section 8's sink count follows the kind rather than standing at one, and
+the assertion node keeps the name it was filed under, a rename being its own act.
+Section 9 names the diagnostic measurement's relay as owed with the driver, this crate
+naming no shape for it.
 **Revised:** 2026-08-24, third of this date, the seat carries the replay
 port. Section 6 grows the port for the replay ask of
 `weaver-harness-state-contract` section 2, the front-door pattern the shape
@@ -1150,13 +1161,38 @@ to: harness-decode-end-own-type
 ```
 
 **Enter runs four steps in the charter's order, and the answer is the
-aggregate.** Receive the sink descriptor from the directive's own message and
-construct the `Recorder`, which stands the empty working structure up. The
-count is one, per the human's ruling of 2026-08-02: the coordination
-contract's plural was residue of the retired live view, corrected to the
-singular in the same act as this sentence, and `weaver-trace-Spec` section
-5's receive takes the one sink descriptor this Spec builds to. Author
-the `load` event, the run's opening and the origin of its monotonic clock.
+aggregate.** On a serving binding, receive the sink descriptor from the
+directive's own message and construct the `Recorder`, which stands the empty
+working structure up. The count is one, per the human's ruling of 2026-08-02:
+the coordination contract's plural was residue of the retired live view,
+corrected to the singular in the same act as this sentence, and
+`weaver-trace-Spec` section 5's receive takes the one sink descriptor this
+Spec builds to. Author the `load` event, the run's opening and the origin of
+its monotonic clock.
+
+**On a diagnostic binding neither the receive nor the authorship happens.**
+That kind declares no sink and authors no event, per `weaver-agents-PRD`
+section 6 as amended 2026-08-24, so no descriptor arrives to receive, no
+`Recorder` is constructed, and the run opens without a `load` event because
+there is nothing for one to open. The monotonic clock the `load` event
+originates has no bracket to time and no reader to serve. Every later
+sentence of this Spec that authors an event reads under a serving binding,
+which is stated once here rather than repeated at each site, and a diagnostic
+run reaching an authorship site is a defect in the walk rather than a case
+the site handles. The instrument is perturbation: a diagnostic enter driven
+with no descriptor authors nothing, confirmed by watching an event reach a
+recorder once the kind's branch is removed, which the suite can drive because
+it already constructs diagnostic enters.
+
+```graph
+node: harness-diagnostic-authors-nothing
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-diagnostic-authors-nothing
+```
 Create the residency pair and the decode pair in one act, per
 `weaver-harness-spu-decode-contract` section 1, fork the SPU binary carrying
 both ends, and open the admit exchange on the lifecycle pair carrying the
@@ -1176,9 +1212,11 @@ case ends the fan-out at the SPU's confirmation, no gate pair created, no
 gate binary forked, no raise opened. The three no-clauses name the gate step
 and nothing wider: the classify arm is interior, elected by the instruction
 that carries it rather than by the kind, and stands on a diagnostic load
-exactly as it would on a serving one. The kind excludes Gate alone, per apex
-section 6, and a reviewer reading the no-clauses as covering every fork read
-them wider than they bind. Ready aggregates over the steps the kind declared,
+exactly as it would on a serving one. The kind excludes Gate and the record, per apex
+section 6 as amended 2026-08-24, and a reviewer reading the no-clauses as
+covering every fork read them wider than they bind. The record's exclusion is
+the paragraph above's and is not one of the three no-clauses, which name forks
+and the record is not one. Ready aggregates over the steps the kind declared,
 per the contract's section 3 as revised this date. The run state's gate arm
 stays empty for the whole residency, which is what keeps the leave and the
 unwind honest without a second rule: both lower what stands, reading the
@@ -1236,7 +1274,11 @@ orderings reconciled against each other, and neither can perform that reconcilia
 because neither can see the other's domain. The reverse unwind order the paragraph
 below opens with is the same fact read backwards and is argued here rather than
 there. The sink's count and the scoped account are a count and an ordering of this
-crate's interior, which no invariant is about.
+crate's interior, which no invariant is about. **The count is one on a serving
+enter and none on a diagnostic one** since the amendment of 2026-08-24, so the
+test that reaches it counts against the kind rather than against a constant.
+The node below keeps the name it was filed under, which states the serving
+case, a rename reaching every document that cites it and being its own act.
 
 ```graph
 node: harness-one-sink-descriptor
@@ -2476,6 +2518,16 @@ Each names what settles it, and none is this Spec's to settle alone.
   three organs on 2026-08-02 and the shape landed at `weaver-trace-PRD`
   section 3.2 as the floor's `fault-report`, so section 3's fault path is
   shaped and ungated.
+- **The diagnostic measurement's relay, and where it exits.** A diagnostic
+  run produces the diagnostic-trace, which is `weaver-diagnostic`'s and
+  reaches this crate over the decode seam the way a serving run's measurement
+  does. What this crate does with it is a relay rather than an authorship: it
+  names no shape, holds the payload opaque the way `weaver-trace` holds the
+  message payloads opaque, and hands it outward. The exit path and its
+  directives are owed to the driver act named in `weaver-diagnostic-PRD`
+  section 6, and until that act lands this crate relays nothing, because a
+  declared route with no far end is the empty joint apex section 9 refuses.
+  What is settled here is only that the shape is not this crate's to name.
 - **The config read, and the sink field's custody question.** The charter's
   `reads` edge to `agent-config` is exercised by no chartered workflow, so
   the read arrives with the tool workflow, which consumes the tool set and
