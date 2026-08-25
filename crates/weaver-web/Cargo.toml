@@ -1,0 +1,40 @@
+[package]
+name = "weaver-web"
+version = "0.1.0"
+# **Pinned rather than inherited, and the alignment is owed.** The workspace
+# is edition 2024 and this crate arrived on 2021. The migration is real work
+# - the sqlx and askama derives are where an edition move bites - and it is
+# not verifiable on the machine this absorption ran on, which has no network
+# to resolve this crate's dependency tree. Pinning states the fact rather
+# than claiming a migration nobody compiled.
+edition = "2021"
+# **Explicit rather than inherited, because the licences disagree.** The
+# workspace publishes nothing and carries UNLICENSED. This crate arrived
+# Apache-2.0 with its LICENSE file beside it. The suite's licence boundary
+# is an open operator question, so the absorption surfaces the collision
+# and holds rather than resolving it by inheritance.
+license = "Apache-2.0"
+publish = false
+description = "The WeaverTools suite's frontend: channel, lifecycle, and trace surfaces over weaver agents."
+
+# **The first database dependency in this tree, and it is this crate's
+# alone.** A frontend holding its own store is ordinary, and nothing else in
+# the workspace carries one. Whether the tree now has a database is the
+# question the absorption surfaces rather than answers.
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+axum = "0.8"
+askama = "0.14"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.9"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures = "0.3"
+anyhow = "1"
+uuid = { version = "1", features = ["v4"] }
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }

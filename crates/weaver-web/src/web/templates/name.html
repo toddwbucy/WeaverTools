@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}who are you - weaver-web{% endblock %}
+{% block body %}
+<h1>Who are you?</h1>
+<p>Pick the name your messages will carry. Sessions are anonymous
+continuity in v1; this name is the participant your session binds to.</p>
+<form method="post" action="/session">
+  <input name="name" pattern="[a-z0-9][a-z0-9_-]*" required autofocus
+         placeholder="kebab-case-name">
+  <button type="submit">Enter</button>
+</form>
+{% endblock %}

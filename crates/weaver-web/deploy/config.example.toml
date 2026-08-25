@@ -1,0 +1,29 @@
+# weaver-web configuration (Spec section 3).
+# Default path: /etc/weaver-web/config.toml, override with --config.
+
+listen   = "0.0.0.0:8080"
+database = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth
+
+# Participant names holding the admin role (the operator surface:
+# lifecycle verbs and trace views). v1 role assignment is this
+# declaration; sessions are anonymous until the IAM act, so this is
+# boundary hygiene, not access control, until then.
+admins = ["todd"]
+
+[[agents]]
+name  = "alpha"
+gate  = "/run/weaver-alpha/gate.sock"
+trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
+
+[[agents]]
+name  = "bravo"
+gate  = "/run/weaver-bravo/gate.sock"
+trace = "/home/todd/.weaveragents/weaver-bravo/trace.out"
+
+# Upstream model participants (adapter not yet implemented; a mention
+# of a model participant is ignored until it is).
+#[[providers]]
+#name    = "claude"
+#api     = "anthropic"
+#model   = "claude-fable-5"
+#key_env = "ANTHROPIC_API_KEY"

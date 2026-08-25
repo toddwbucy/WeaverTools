@@ -1,0 +1,420 @@
+//! The admin surface: everything that crosses the operator boundary -
+//! lifecycle verbs (sudo weaver-admin) and trace views. Every route
+//! here sits behind the role gate: the participant must hold the
+//! admin role. v1 role assignment is the config's admin list; IAM
+//! later changes how a session proves who it is, not this gate.
+
+use super::{nav_agents, session_participant, sse_cursor, AppResult, AppState};
+use crate::lifecycle;
+use crate::registry::Participant;
+use crate::traceview::TraceEvent;
+use askama::Template;
+use axum::extract::{Path, Query, State};
+use axum::http::{HeaderMap, StatusCode};
+use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
+use axum::response::{Html, IntoResponse, Response};
+use axum::routing::{get, post};
+use axum::Router;
+use std::collections::HashMap;
+use std::convert::Infallible;
+use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::StreamExt;
+
+pub fn routes() -> Router<AppState> {
+    Router::new()
+        .route("/lifecycle", get(lifecycle_page))
+        .route("/lifecycle/{agent}/{verb}", post(run_verb))
+        .route("/agents/{agent}/config", get(agent_config))
+        .route("/trace/{agent}", get(trace_page))
+        .route("/trace/{agent}/stream", get(trace_stream))
+}
+
+/// The role gate. Ok(participant) for an admin; Err(response) is the
+/// refusal, honest about which boundary was met.
+async fn require_admin(
+    state: &AppState,
+    headers: &HeaderMap,
+) -> anyhow::Result<Result<Participant, Response>> {
+    match session_participant(state, headers).await? {
+        Some(p) if p.is_admin() => Ok(Ok(p)),
+        Some(p) => Ok(Err((
+            StatusCode::FORBIDDEN,
+            format!(
+                "the operator surface requires the admin role; '{}' holds '{}'",
+                p.name, p.role
+            ),
+        )
+            .into_response())),
+        None => Ok(Err(axum::response::Redirect::to("/").into_response())),
+    }
+}
+
+// ---------- lifecycle ----------
+
+struct AgentRow {
+    name: String,
+    state: String,
+    socket: String,
+}
+
+#[derive(Template)]
+#[template(path = "lifecycle.html")]
+struct LifecyclePage {
+    nav_agents: Vec<String>,
+    who: String,
+    is_admin: bool,
+    agents: Vec<AgentRow>,
+    outcome: String,
+}
+
+fn agent_rows(state: &AppState) -> Vec<AgentRow> {
+    state
+        .cfg
+        .agents
+        .iter()
+        .map(|a| {
+            let loaded = state
+                .gates
+                .get(&a.name)
+                .map(|g| g.socket_exists())
+                .unwrap_or(false);
+            AgentRow {
+                name: a.name.clone(),
+                state: if loaded { "loaded".into() } else { "unloaded".into() },
+                socket: if loaded { "present".into() } else { "absent".into() },
+            }
+        })
+        .collect()
+}
+
+async fn lifecycle_page(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Response> {
+    let me = match require_admin(&state, &headers).await? {
+        Ok(p) => p,
+        Err(refusal) => return Ok(refusal),
+    };
+    let page = LifecyclePage {
+        nav_agents: nav_agents(&state.cfg),
+        who: me.name,
+        is_admin: true,
+        agents: agent_rows(&state),
+        outcome: String::new(),
+    };
+    Ok(Html(page.render()?).into_response())
+}
+
+async fn run_verb(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((agent, verb)): Path<(String, String)>,
+) -> AppResult<Response> {
+    let me = match require_admin(&state, &headers).await? {
+        Ok(p) => p,
+        Err(refusal) => return Ok(refusal),
+    };
+    if state.cfg.agent(&agent).is_none() {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    }
+    let outcome = lifecycle::run_verb(&verb, &agent).await?;
+    let page = LifecyclePage {
+        nav_agents: nav_agents(&state.cfg),
+        who: me.name,
+        is_admin: true,
+        agents: agent_rows(&state),
+        outcome: serde_json::to_string_pretty(&outcome)?,
+    };
+    Ok(Html(page.render()?).into_response())
+}
+
+// ---------- agent declaration, read-only ----------
+
+#[derive(Template)]
+#[template(path = "agent_config.html")]
+struct AgentConfigPage {
+    nav_agents: Vec<String>,
+    who: String,
+    is_admin: bool,
+    agent: String,
+    path: String,
+    content: String,
+}
+
+async fn agent_config(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(agent): Path<String>,
+) -> AppResult<Response> {
+    let me = match require_admin(&state, &headers).await? {
+        Ok(p) => p,
+        Err(refusal) => return Ok(refusal),
+    };
+    if state.cfg.agent(&agent).is_none() {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    }
+    let path = state.cfg.agent_declarations.join(format!("{agent}.yaml"));
+    let content = match tokio::fs::read_to_string(&path).await {
+        Ok(c) => c,
+        Err(e) => format!("could not read the declaration: {e}"),
+    };
+    let page = AgentConfigPage {
+        nav_agents: nav_agents(&state.cfg),
+        who: me.name,
+        is_admin: true,
+        agent,
+        path: path.display().to_string(),
+        content,
+    };
+    Ok(Html(page.render()?).into_response())
+}
+
+// ---------- trace ----------
+
+/// The view filters: fields the operator elected to hide, and a search
+/// needle. Both are view concerns, applied server-side per the
+/// display-engine constraint (PRD 3). Discontinuity marks bypass both:
+/// a gap in the record is never filterable out of sight.
+fn trace_filters(
+    params: &HashMap<String, String>,
+) -> (std::collections::BTreeSet<String>, Option<String>) {
+    let hidden = params
+        .keys()
+        .filter_map(|k| k.strip_prefix("hide.").map(str::to_owned))
+        .collect();
+    let q = params
+        .get("q")
+        .map(|s| s.trim().to_lowercase())
+        .filter(|s| !s.is_empty());
+    (hidden, q)
+}
+
+/// The search runs over the full raw event, not the filtered view, so
+/// hiding a field never hides a search hit.
+fn event_matches(ev: &TraceEvent, q: &Option<String>) -> bool {
+    if ev.mark.is_some() {
+        return true;
+    }
+    match q {
+        None => true,
+        Some(q) => serde_json::to_string(&ev.raw)
+            .map(|s| s.to_lowercase().contains(q.as_str()))
+            .unwrap_or(true),
+    }
+}
+
+/// Remove hidden fields from the rendered raw JSON. Top-level keys
+/// match by name; payload subkeys match as `payload.<key>`.
+fn filtered_raw(
+    raw: &serde_json::Value,
+    hidden: &std::collections::BTreeSet<String>,
+) -> serde_json::Value {
+    let mut v = raw.clone();
+    if let Some(obj) = v.as_object_mut() {
+        obj.retain(|k, _| !hidden.contains(k));
+        if let Some(p) = obj.get_mut("payload").and_then(|p| p.as_object_mut()) {
+            p.retain(|k, _| !hidden.contains(&format!("payload.{k}")));
+        }
+    }
+    v
+}
+
+/// Percent-encode a query value for the SSE URL the template carries.
+fn urlencode(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for b in s.bytes() {
+        match b {
+            b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(b as char)
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
+}
+
+#[derive(Template)]
+#[template(path = "trace_event.html")]
+struct TraceFragment {
+    seq: u64,
+    is_mark: bool,
+    mark: String,
+    run: String,
+    turn: String,
+    kind: String,
+    raw: String,
+}
+
+fn render_trace_event(
+    ev: &TraceEvent,
+    hidden: &std::collections::BTreeSet<String>,
+) -> String {
+    TraceFragment {
+        seq: ev.seq,
+        is_mark: ev.mark.is_some(),
+        mark: ev.mark.clone().unwrap_or_default(),
+        run: ev.run.clone().unwrap_or_default(),
+        turn: ev.turn.clone().unwrap_or_default(),
+        kind: ev.kind.clone().unwrap_or_else(|| "?".into()),
+        raw: serde_json::to_string_pretty(&filtered_raw(&ev.raw, hidden)).unwrap_or_default(),
+    }
+    .render()
+    .unwrap_or_else(|e| format!("<div class=\"tev\">render error: {e}</div>"))
+}
+
+struct FieldControl {
+    param: String,
+    label: String,
+    hidden: bool,
+}
+
+#[derive(Template)]
+#[template(path = "trace.html")]
+struct TracePage {
+    nav_agents: Vec<String>,
+    who: String,
+    is_admin: bool,
+    agent: String,
+    events: Vec<String>,
+    cursor: u64,
+    q: String,
+    controls: Vec<FieldControl>,
+    stream_url: String,
+}
+
+async fn trace_page(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(agent): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
+) -> AppResult<Response> {
+    let me = match require_admin(&state, &headers).await? {
+        Ok(p) => p,
+        Err(refusal) => return Ok(refusal),
+    };
+    let Some(snapshot) = state.traces.snapshot(&agent) else {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    };
+    let (hidden, q) = trace_filters(&params);
+    let cursor = snapshot.last().map(|e| e.seq).unwrap_or(0);
+
+    // The field list is the union of what the record itself carries:
+    // top-level keys plus payload subkeys, from the current window.
+    let mut keys = std::collections::BTreeSet::new();
+    for ev in &snapshot {
+        if let Some(obj) = ev.raw.as_object() {
+            for (k, v) in obj {
+                keys.insert(k.clone());
+                if k == "payload" {
+                    if let Some(p) = v.as_object() {
+                        for pk in p.keys() {
+                            keys.insert(format!("payload.{pk}"));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    let controls: Vec<FieldControl> = keys
+        .into_iter()
+        .map(|k| FieldControl {
+            param: format!("hide.{k}"),
+            hidden: hidden.contains(&k),
+            label: k,
+        })
+        .collect();
+
+    let mut stream_url = format!("/admin/trace/{agent}/stream?after={cursor}");
+    for h in &hidden {
+        stream_url.push_str(&format!("&hide.{}=on", urlencode(h)));
+    }
+    if let Some(q) = &q {
+        stream_url.push_str(&format!("&q={}", urlencode(q)));
+    }
+
+    let page = TracePage {
+        nav_agents: nav_agents(&state.cfg),
+        who: me.name,
+        is_admin: true,
+        agent,
+        events: snapshot
+            .iter()
+            .filter(|e| event_matches(e, &q))
+            .map(|e| render_trace_event(e, &hidden))
+            .collect(),
+        cursor,
+        q: q.unwrap_or_default(),
+        controls,
+        stream_url,
+    };
+    Ok(Html(page.render()?).into_response())
+}
+
+async fn trace_stream(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(agent): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
+) -> AppResult<Response> {
+    if let Err(refusal) = require_admin(&state, &headers).await? {
+        return Ok(refusal);
+    }
+    let Some(mut live) = state.traces.subscribe(&agent) else {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    };
+    // Clamp: a negative cursor would wrap into a huge u64 and filter
+    // everything out forever.
+    let mut cursor = sse_cursor(&headers, &params).max(0) as u64;
+    let (hidden, q) = trace_filters(&params);
+    let snapshot = state.traces.snapshot(&agent).unwrap_or_default();
+
+    let (tx, rx) = tokio::sync::mpsc::channel::<SseEvent>(64);
+    tokio::spawn(async move {
+        let start = cursor;
+        for ev in snapshot.iter().filter(|e| e.seq > start) {
+            cursor = ev.seq;
+            if !event_matches(ev, &q) {
+                continue;
+            }
+            let sse = SseEvent::default()
+                .event("trace")
+                .id(ev.seq.to_string())
+                .data(render_trace_event(ev, &hidden));
+            if tx.send(sse).await.is_err() {
+                return;
+            }
+        }
+        loop {
+            match live.recv().await {
+                Ok(ev) => {
+                    if ev.seq <= cursor {
+                        continue;
+                    }
+                    cursor = ev.seq;
+                    if !event_matches(&ev, &q) {
+                        continue;
+                    }
+                    let sse = SseEvent::default()
+                        .event("trace")
+                        .id(ev.seq.to_string())
+                        .data(render_trace_event(&ev, &hidden));
+                    if tx.send(sse).await.is_err() {
+                        return;
+                    }
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
+                    // The viewer fell behind the broadcast: a gap in
+                    // this view, marked rather than silently dropped.
+                    let sse = SseEvent::default().event("trace").data(format!(
+                        "<div class=\"tev tev-mark\"><span class=\"mark\">DISCONTINUITY: \
+                         viewer lagged, {n} events not shown</span></div>"
+                    ));
+                    if tx.send(sse).await.is_err() {
+                        return;
+                    }
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => return,
+            }
+        }
+    });
+
+    let stream = ReceiverStream::new(rx).map(Ok::<SseEvent, Infallible>);
+    Ok(Sse::new(stream).keep_alive(KeepAlive::default()).into_response())
+}
