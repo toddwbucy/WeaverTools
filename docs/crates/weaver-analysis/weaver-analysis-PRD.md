@@ -5,6 +5,16 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-08-25, the name is this crate's alone. `CLAUDE.md`'s scope
+guardrails listed `weaver-analysis` among the crates ruled out of the
+extraction, which the chartering act turned into one spelling naming two
+things, the defect Document Format section 2 names with the halves swapped.
+On the operator's ruling of this date the name is freed rather than
+disambiguated: the previous program's crate leaves that list and this charter
+holds the name outright. Nothing of the quarry's crosses on that account, the
+standing rule of `CLAUDE.md` being that material crosses only where a step in
+apex section 3 exercises it, which reaches every crate of the old tree whether
+or not a list names it.
 **Document ID:** `weaver-analysis-PRD`
 **Parent:** the WeaverTools suite, whose governing document is deliberately
 not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
