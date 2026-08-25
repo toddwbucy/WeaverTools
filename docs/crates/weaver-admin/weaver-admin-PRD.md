@@ -6,13 +6,6 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-08-25, fourth of this date, the assertion goes where
-assertions go. The act of this date put `admin-preload-name-follows-the-kind` in this
-charter, and the Document Format's own definition has an assertion as a claim a Spec
-makes. The argument stays here, where the obligation is argued, and the record moves to
-`weaver-admin-Spec` section 6 under the vector clause, which is the clause the claim is
-about, with the instrument it is perturbed by. Found by reading this charter's own graph
-blocks against that definition rather than by a review.
 **Revised:** 2026-08-25, fifth of this date, the pair stops claiming symmetry.
 Section 2 said the member's claim is partly this crate's and that a perturbation
 of either side fails against its own, which `weaver-admin-Spec` section 6 denies:
@@ -20,6 +13,13 @@ the member's record holds whether the name was wrongly given or wrongly withheld
 so it fails on neither direction and the vector is entirely this crate's. The
 paragraph now says what it owes rather than what it shares, and its opening
 sentence goes with the symmetry it stated.
+**Revised:** 2026-08-25, fourth of this date, the assertion goes where
+assertions go. The act of this date put `admin-preload-name-follows-the-kind` in this
+charter, and the Document Format's own definition has an assertion as a claim a Spec
+makes. The argument stays here, where the obligation is argued, and the record moves to
+`weaver-admin-Spec` section 6 under the vector clause, which is the clause the claim is
+about, with the instrument it is perturbed by. Found by reading this charter's own graph
+blocks against that definition rather than by a review.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Section 2's wait claimed a bound socket rather than a half-bound one, which a
 pathname cannot show: it observes a name and the worker's dial at step 6 is what
