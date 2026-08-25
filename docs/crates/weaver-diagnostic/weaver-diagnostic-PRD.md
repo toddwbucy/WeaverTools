@@ -12,7 +12,11 @@ cognition to record, and names the **diagnostic-trace** as this crate's, a
 trace in form and separate for how it is made rather than for what it looks
 like: one begets the other, a diagnostic-trace being made from a trace in a
 second context, so the two stand in a parent relation and a single type would
-leave a file unable to say which of the two it is. Canonical form stays
+leave a file unable to say which of the two it is. What the section shares is
+the canonical serialization and nothing above it, reader compatibility being
+the driver Spec's to define once the vocabulary and the readout's placement
+are elected, and the input-format cell now runs both directions because the
+diagnostic-trace is versionless on the same terms. Canonical form stays
 `weaver-trace-Spec`'s under G5, and this crate
 carries the diagnostic counterpart to that crate, the writer standing to a
 replay as `weaver-trace` stands to a turn. The harness relays opaque and
@@ -215,11 +219,15 @@ replay, named here for the first time.
 **The diagnostic-trace is a trace, and the two are separate for how they are
 made rather than for what they look like.** It carries the run the way a
 serving record carries one and carries the residual readout beside it, which
-is the bulk of it and the reason it exists. Sharing the form is the point: an
-instrument that already reads a record reads this one, and a reader that had
-to learn a second shape to see the same run twice would be paying for a
-distinction nothing needs. What differs is the making, and the making is
-the whole distinction.
+is the bulk of it and the reason it exists. **What is shared and settled here
+is the canonical serialization and nothing above it**, one line of UTF-8 JSON
+per record with the newline as the separator, per `weaver-trace-Spec` section
+2. Whether an instrument that reads a serving record reads this one is **not
+claimed**: that follows from the event vocabulary this writer reuses and from
+where the residual readout sits beside it, both of which are the driver
+Spec's election, so reader compatibility is that document's to define and to
+state the rules of. What differs is the making, and the making is the whole
+distinction.
 
 **One begets the other, in a different context.** A diagnostic-trace is made
 from a trace: the serving record is the replay's input, and the
@@ -319,4 +327,10 @@ Open cells, each named rather than implied:
   set and pointed at a record written under another does not fail and instead
   groups differently. Whether the marker lands on the record or the
   compatibility is stated some other way is owed ahead of the driver, and it
-  is `weaver-trace`'s act rather than this crate's.
+  is `weaver-trace`'s act rather than this crate's. **The cell runs both
+  directions.** The diagnostic-trace this crate writes is versionless on the
+  same terms, so its own readers meet the problem the paragraph above
+  describes, and the driver Spec settling the vocabulary settles only what
+  the shape is rather than how a reader learns which shape it holds. Neither
+  direction is closed by the shared serialization, that fixing the line and
+  not the vocabulary carried on it.
