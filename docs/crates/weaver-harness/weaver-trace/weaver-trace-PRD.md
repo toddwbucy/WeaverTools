@@ -8,7 +8,23 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
-**Revised:** 2026-08-24, the residual reductions arrive with their shape.
+**Revised:** 2026-08-24, second of this date, the record states its
+compatibility. Section 6 gains the guarantee that makes the record readable
+across vintages and the argument for why it carries no version, landing apex
+section 3's breaking-change sentence and apex section 9's additive rule where a
+reader of this crate meets them rather than only in a section about a feature
+that does not exist. Three things it settles: a reader skips a kind it does not
+know and ignores a payload member it does not know and lets neither decide a
+grouping, adding a member to an existing payload is extension and not
+reshaping, which this corpus has already done, and no version member is carried
+because one whose only reader is unbuilt is the reserved slot apex section 9
+forbids. The act that first breaks the schema is the act that adds the marker.
+This section is named authoritative for the claim, per G5. Raised by
+`weaver-diagnostic-PRD` section 6's input-format cell, which closes in the same
+act. The entry below gains the ordinal the convention asks for, which it was
+filed without.
+**Revised:** 2026-08-24, first of this date, the residual reductions arrive with their
+shape.
 The measurement's enumeration named the reductions and not the two counts
 that describe them, which `weaver-spu-Spec` section 6 added in the same act:
 figures alone left a consumer deriving the layer count from the token count,
@@ -1130,6 +1146,42 @@ which is a distinction the flag's presence makes and its absence cannot.
   same canonical bytes, so no reconciliation between them exists to owe.
 - Typed failure for every refusal. Nothing fails silently and nothing returns a
   partial result with a success status.
+- **Additive evolution, so any vintage of the record reads under any later
+  vocabulary.** Argued below, because the guarantee is the reason no version
+  member is carried and a bullet cannot hold both.
+
+**The record's compatibility is additive evolution, and that is why it carries
+no version.** Apex section 3 makes a change to the durable event schema the
+breaking change and names it the one version every consumer keys on, and apex
+section 9 fixes how the schema moves in the meantime: versioned once, extending
+additively, adding event kinds and payload shapes and not reshaping the ones
+that stand. Those two are the whole compatibility model, and the consequence is
+stated here rather than left to be discovered by whoever first reads an old
+record. **While the schema only extends, a reader needs no version to key on**,
+every vintage being the one schema met at a different moment. A reader that
+finds a kind it does not know skips it, a reader that finds a payload member it
+does not know ignores it, and neither changes what it makes of the records it
+does know. What a reader may never do is let either decide a grouping, because
+a grouping resting on what the reader failed to recognise is a wrong answer
+rather than a missing one, and a wrong answer here is silent.
+
+**Adding a member to an existing payload is extension and not reshaping**, and
+the corpus has already done it: the measurement payload gained its layer and
+forward counts in the act that closed the layer-count defect, beside the
+figures already standing and displacing none. Reshaping is renaming a member,
+changing its type, removing it, or changing what one already there means. The
+line is drawn because adding a member feels smaller than adding a kind and is
+the same operation seen from a reader's side.
+
+**No version member is carried, and carrying one today would be the error apex
+section 9 names.** A version whose only reader is unbuilt is a reserved slot,
+and that section's own sentence has a data field reserving a slot as readily as
+an interface does. So the mechanism for a break is stated rather than built:
+**a breaking change to the durable event schema is an apex act, and the act
+that breaks the schema is the act that adds the marker consumers key on.**
+Until such an act every record is of the one schema, and a reader that skips
+what it does not know reads any of them. This paragraph is the authority for
+that claim and a divergence anywhere else is a defect against it, per G5.
 
 What left this list on 2026-08-01, deliberately rather than by drift: exact
 recreation, run integrity on read, mechanical validity on read, and the per-turn
