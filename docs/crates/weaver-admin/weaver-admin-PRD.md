@@ -276,10 +276,12 @@ hands the resolution down decided.
 
 **That makes a standing claim of the member's partly this crate's.**
 `state-preload-door-stands-only-diagnostic` is asserted by `weaver-state` and
-its mechanism is two-sided: the member binds no name it is not given, and this
-crate gives one only under a diagnostic binding. The half that lives here needs
-a record of its own, so a perturbation of either side has something to fail
-against rather than one crate's test standing for two crates' behaviour. **The
+covers what the member does with what it is given. **What this crate owes is the
+vector in both directions**: a serving inventory carries no preload name and a
+diagnostic one carries one. It needs a record of its own because the member's
+covers neither direction - given a name it binds one and given none it binds
+none, which is that record holding however the name was wrong - so without one,
+the seam between the two crates is watched by nothing. **The
 record is the Spec's**, per the Document Format's definition of an assertion as
 a claim a Spec makes, and it sits in `weaver-admin-Spec` section 6 under the
 vector clause, which is the clause the claim is about.

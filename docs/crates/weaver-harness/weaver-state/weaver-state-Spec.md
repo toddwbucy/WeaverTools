@@ -335,10 +335,14 @@ to: state-replay-answers-at-the-seal
 two-sided claim.** This crate's half is that the member binds no name it is not
 given. The other half is
 `weaver-admin`'s, `admin-preload-name-follows-the-kind` at
-`weaver-admin-Spec` section 6, which holds that the name is given only under a
-diagnostic binding. Neither record stands for the other's behaviour, and a
-perturbation of either side fails against its own, which is why the claim is
-recorded twice rather than once with a footnote.
+`weaver-admin-Spec` section 6, which holds the vector in **both** directions: a
+serving inventory carries no name and a diagnostic one carries one. **The two
+records do not divide the fact evenly.** This crate's covers what the member
+does with what it is given, and the vector is entirely the other side's, because
+a member given a name binds it and a member given none binds none, which is this
+record holding rather than failing whichever way the name was wrong. The claim is
+recorded twice because the two crates' behaviours are two facts, and the seam
+between them is the other record's alone.
 
 **The identifier below still names the pair's claim and this half is narrower
 than its name.** `state-preload-door-stands-only-diagnostic` reads as the whole

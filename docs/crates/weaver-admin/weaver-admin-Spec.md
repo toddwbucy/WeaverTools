@@ -4,6 +4,21 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, eleventh of this date, the watch stops degenerating and
+the pair stops claiming symmetry. Section 6's serving direction was watched by
+removing the kind's read, which degenerates to the serving default, so that half
+would have passed either way - the never-failing perturbation section 3 rejects
+by name. Both directions now act on the condition that appends the name, one made
+unconditional and one removed. **The two documents describing this pair carried
+the eighth act's superseded reading**, one direction for the vector and a
+perturbation of either side failing against its own, and both now say what
+section 6 says: the vector is entirely this crate's and the member's record holds
+whichever way the name was wrong. The exception count is two rather than three,
+`admin-dial-retries-within-a-bound` naming its removal in section 10's walk under
+its description rather than its identifier, which a search keyed on identifiers
+could not see. **Entries in this stack stop correcting each other**: two
+corrections pointed at text later commits had already edited away, and since
+nothing here has merged, the entry is amended rather than answered.
 **Revised:** 2026-08-25, tenth of this date, the reconciliation counts the move
 and the convention stops being called universal. The recut lead asserted twelve
 departures while the sentence reconciling it to the lists said ten, the lists
@@ -15,22 +30,20 @@ named removal says a test exists and not what breaks it. Found while checking
 whether this file's convention was universal rather than assumed, which is the
 check the claim should have had before it was written.
 **Revised:** 2026-08-25, ninth of this date, the recut's arithmetic is measured
-rather than asserted. The eighth act stated an endpoint of thirty-two that the
-paragraph's own lists did not reach, and measuring the file's assertion
-identifiers across the recut's span gives twelve departures, seven arrivals, and
-an endpoint of thirty-one. **The missing record on each side is one event**:
-`admin-unit-declares-one-open` became `admin-unit-declares-no-open`, which the
-paragraph had called neither a retirement nor an addition when the identifier's
-change makes it both. Thirty-two arrives at the next act with
-`admin-run-reference-distinguishes`, so three records have been added since the
-recut rather than two, reaching thirty-four. Section 6's watch names the removal
-each direction is perturbed by, which is this file's dominant convention rather
-than its universal one, and stops crediting the serving direction to the member's
-half,
-which cannot fail on it: a member given a name binds it, which is that record
-holding rather than failing. **Both directions are this crate's alone**, the
-member's claim being about what it does with what it is given and the vector
-being the seam between the two crates rather than either one's behaviour.
+rather than asserted. The recut paragraph asserted an endpoint its own lists did not
+reach, and measuring the file's assertion identifiers across the recut's span gives
+twelve departures, seven arrivals, and an endpoint of thirty-one. **The missing record
+on each side is one event**: `admin-unit-declares-one-open` became
+`admin-unit-declares-no-open`, which the paragraph had called neither a retirement nor
+an addition when the identifier's change makes it both. Thirty-two arrives at the next
+act with `admin-run-reference-distinguishes`, so three records have been added since the
+recut rather than two, reaching thirty-four. Section 6's watch names the removal each
+direction is perturbed by, which is this file's dominant convention rather than its
+universal one, and stops crediting the serving direction to the member's half, which
+cannot fail on it: a member given a name binds it, which is that record holding rather
+than failing. **Both directions are this crate's alone**, the member's claim being about
+what it does with what it is given and the vector being the seam between the two crates
+rather than either one's behaviour.
 **Revised:** 2026-08-25, eighth of this date, the watch reads both directions.
 Moving it off the door and onto the vector left one direction unwatched, and it is the
 direction neither half of the split claim covers: a diagnostic load that silently loses
@@ -55,11 +68,7 @@ watch is now the vector this crate composes, three values or four. Section 10's
 four-edge lead gains its fourth conjunct beside the other three, the recut's delta is
 named as the recut's so a rebuild does not read it as this Spec's, and both records
 added since are named so the figure is checkable. The argument's second copy forty lines
-down survived this act and is struck by the next. **The fifth entry carried a factual
-error of its own**: it said section 10 never received the restatement to thirty-two,
-which its own preceding sentence contradicts by reading that section as saying
-thirty-two records by tag. The tag census had been restated and the grounds lead had
-not.
+down survived this act and is struck by the next.
 **Revised:** 2026-08-25, sixth of this date, the prose that spends the census
 catches up with it. The restatement of the fifth act corrected three totals and
 left three clauses that consume them, so section 10 disagreed with itself twice
@@ -1058,10 +1067,13 @@ resolve differently because only one site resolves.
 **The instrument is perturbation, and the claim is this site's half of a
 two-sided one.** **What is watched is the vector this crate composes, in both
 directions, and each names its removal.** A serving inventory puts three values
-on it, watched to fail when the kind's read is removed and a serving load
-carries four. A diagnostic inventory puts four, watched to fail when the
-diagnostic arm that appends the preload name is removed and a diagnostic load
-carries three.
+on it, watched to fail when the arm that appends the preload name is made
+unconditional and a serving load carries four. A diagnostic inventory puts four,
+watched to fail when that same arm is removed and a diagnostic load carries
+three. **Both removals act on the condition rather than on the kind's read**,
+because removing the read degenerates to the serving default and a serving watch
+would pass either way, which is the never-failing perturbation section 3 rejects
+by name.
 
 **Both directions are this crate's alone and the member's record covers
 neither**, which is why the second watch is written rather than left to the
@@ -1737,10 +1749,10 @@ section sorts by instrument and the arguments are elsewhere, so a block here
 would sit apart from the prose that earns it. Thirty-four records in all,
 fifteen tagged for review, fourteen for perturbation, three for the manifest,
 and two for a compile pin. The residency record moved from review to
-perturbation on 2026-08-06, when the code act gave it a test. **Three of the
+perturbation on 2026-08-06, when the code act gave it a test. **Two of the
 fourteen perturbation records name no removal anywhere in this document**:
-`admin-unload-answers-after-confirmed-stop`, `admin-dial-retries-within-a-bound`,
-and `admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
+`admin-unload-answers-after-confirmed-stop` and
+`admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
 named removal says a test exists and not what breaks it, which is the tag's whole
 content, so each is owed the sentence its neighbours carry. Found while checking
 whether this file's convention was universal, on the occasion of a record that
