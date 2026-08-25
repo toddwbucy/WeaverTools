@@ -55,9 +55,14 @@ record. The channel log is weaver-web's, on weaver-web's disk, with one writer -
 its own custody discipline, borrowed from the one the agent keeps over its trace.
 **It is not the trace, never writes to the trace, and links to it by label only.**
 
-**The lifecycle view.** The three verbs an operator drives, each answer rendered
-verbatim rather than interpreted. Load state is shown from the gate socket's
-existence and **labeled as the inference it is**, because the program has no
+**The lifecycle view.** The three verbs an operator drives - `validate`, `load`,
+and `unload` - each answer rendered verbatim rather than interpreted. **Those
+three names are a deployment fact rather than a published surface**, the reach
+the contracts do not cover: they are what the installed binary accepts, observed
+rather than read off a page written for an outside party.
+
+Load state is shown from the gate socket's existence and **labeled as the
+inference it is**, because the program has no
 status verb to ask and inventing one on the client side would be the frontend
 answering a question the framework has not.
 

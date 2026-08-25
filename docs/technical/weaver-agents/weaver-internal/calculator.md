@@ -1,6 +1,6 @@
 ---
 title: The calculator
-summary: weaver-internal's first and only member, the inward-dispatched reference tool, and the mechanic it already proves
+summary: weaver-internal's first and only member, the inward-dispatched reference tool, and the mechanic it charters but has not yet earned
 version: v0.1
 date: 2026-08-23
 commit: unreleased
@@ -71,7 +71,7 @@ than a roadmap
 waiting to be filled, and it is what keeps the inward corner from becoming the place
 tools accumulate once the gate has been made inconvenient.
 
-## The mechanic it proves, which is the reason for this note
+## The mechanic it charters, which is the reason for this note
 
 The calculator's autonomic firing uses **cut-and-recompute**: the loop cuts the
 context at a position and recomputes forward from there, so a deterministic result can
