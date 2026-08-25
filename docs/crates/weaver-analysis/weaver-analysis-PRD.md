@@ -5,7 +5,18 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
-**Revised:** 2026-08-25, the name is this crate's alone. `CLAUDE.md`'s scope
+**Revised:** 2026-08-25, second of this date, section 3 states what it sends and
+what governs the sink. The preload paragraph named distillates and a seal and
+left out the election, which `weaver-analysis-state-contract` section 2 makes
+the first traffic on every standing of the channel, carrying the replayed
+session's own name so the holdings answer to the name the loop asks against.
+All three are now named in their order. The delivery paragraph said no contract
+governs it, which overstates an absence into a licence: what is absent is a
+second contract with this crate as a party, and the sink itself is governed as
+it always was, `trace-sink` on the declaration under either kind, admin's
+custody and discriminant, and the operator contract on what crosses out.
+**Revised:** 2026-08-25, first of this date, the name is this crate's alone.
+`CLAUDE.md`'s scope
 guardrails listed `weaver-analysis` among the crates ruled out of the
 extraction, which the chartering act turned into one spelling naming two
 things, the defect Document Format section 2 names with the halves swapped.
@@ -105,8 +116,14 @@ and a divergence is a defect here, per G5. The reader rules of
 6 of that document is where they are argued rather than restated here.
 
 **It preloads what the parse projects**, across the one seam, per
-`weaver-analysis-state-contract`. What crosses is distillates and a seal, the
-seal being the fact the harness's replay ask answers at.
+`weaver-analysis-state-contract`, and it sends three things in one order. **The
+election opens the channel**, whole, as the first traffic on every standing,
+declaring the replayed session under its own name so the holdings answer to the
+name the loop later asks against. **Then a distillate per elected event**, in
+the record's sequence order, owed nothing back. **Then the seal**, one empty
+frame after the last distillate, which is the fact the harness's replay ask
+answers at and the only thing that tells a finished sender from a dying one.
+This crate sends all three and asks nothing on this seam.
 
 **It reads the diagnostic-trace off the sink.** The sink is admin's, opened for
 the binding under root by whatever discriminant the declaration named, per
@@ -114,10 +131,16 @@ the binding under root by whatever discriminant the declaration named, per
 the operator declares the shape, and whether this crate reads a finished file,
 drains a pipe, or holds a connection follows from that declaration rather than
 from anything here. Whether the reading trails the run or runs beside it
-follows the same way. **No contract governs the delivery and none is owed**,
-because a sink's reader is downstream of it rather than a party to it, which is
-the position every consumer of a serving trace already occupies, per
-`weaver-trace-PRD` section 1.
+follows the same way. **No separate diagnostic delivery contract is introduced
+and none is owed**, because a sink's reader is downstream of it rather than a
+party to it, which is the position every consumer of a serving trace already
+occupies, per `weaver-trace-PRD` section 1. **What governs the sink is
+unchanged and reaches both kinds**: the declaration carries `trace-sink` under
+either binding per `weaver-types-Spec` section 2, admin opens it by its
+discriminant and holds its custody per `weaver-admin-Spec` section 5, and
+`weaver-admin-operator-contract` section 3 governs what crosses out and whose
+durability it is. This crate inherits that arrangement rather than standing
+outside it.
 
 **It reads nothing for meaning from a replay that did not certify**, per
 `weaver-diagnostic-PRD` section 4, which carries the criterion because it
