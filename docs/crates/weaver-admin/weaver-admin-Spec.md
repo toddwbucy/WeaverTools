@@ -1070,9 +1070,11 @@ directions, and each names its removal.** A serving inventory puts three values
 on it, watched to fail when the arm that appends the preload name is made
 unconditional and a serving load carries four. A diagnostic inventory puts four,
 watched to fail when that same arm is removed and a diagnostic load carries
-three. **Both removals act on the condition rather than on the kind's read**,
-because removing the read degenerates to the serving default and a serving watch
-would pass either way, which is the never-failing perturbation this section
+three. **Each removes a different thing and neither removes the kind's read**:
+the serving watch removes the arm's condition so it always runs, and the
+diagnostic watch removes the arm itself so it never does. Removing the read is
+the edit to avoid, because it degenerates to the serving default and a serving
+watch would pass either way, which is the never-failing perturbation this section
 rejects above and apex section 11 counts as worse than no test.
 
 **Both directions are this crate's alone and the member's record covers
