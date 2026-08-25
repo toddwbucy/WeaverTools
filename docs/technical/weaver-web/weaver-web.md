@@ -61,14 +61,19 @@ surface**, the reach the contracts do not cover: they are what the installed
 binary accepts, observed rather than read off a page written for an outside
 party.
 
-**An answer is rendered whole rather than byte for byte, and the difference is
-worth stating.** What the verb wrote is parsed when it parses, re-serialized for
-display, and shown pretty-printed, so the formatting and the key order on the
-page are the renderer's rather than the binary's. **Nothing is interpreted and
-nothing is dropped**: no field is renamed, summarized, or translated into a
-friendlier shape, and where the output does not parse at all the raw bytes are
-kept and shown, so a malformed answer surfaces as itself rather than as an
-error page.
+**What survives an answer's rendering is its meaning, not its bytes.** The verb's
+output is decoded as text first, with any invalid sequence replaced rather than
+carried, and from there it takes one of two paths. Output that parses as JSON is
+re-serialized and pretty-printed, so the formatting and the key order on the page
+are the renderer's rather than the binary's. Output that does not parse is shown
+as the decoded text it became, which is what keeps a malformed answer surfacing as
+itself rather than as an error page. Empty output is shown as nothing at all.
+
+**What that buys is that nothing is interpreted**: no field is renamed,
+summarized, or translated into a friendlier shape, and no failure is swallowed.
+What it does not buy is a byte-exact reproduction of what the binary wrote, and
+the page says so rather than letting verbatim carry a promise the renderer
+does not make.
 
 Load state is shown from the gate socket's existence and **labeled as the
 inference it is**, because the program has no
