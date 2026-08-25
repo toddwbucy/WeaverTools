@@ -4,6 +4,16 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, tenth of this date, the reconciliation counts the move
+and the convention stops being called universal. The recut lead asserted twelve
+departures while the sentence reconciling it to the lists said ten, the lists
+naming ten retired and one moved, so the reconciliation now reads eleven and the
+inversion is the twelfth. **The claim that every other perturbation record names
+its removal is withdrawn as false**: three of the fourteen name none anywhere in
+this document, and section 10 records which, because a perturbation tag without a
+named removal says a test exists and not what breaks it. Found while checking
+whether this file's convention was universal rather than assumed, which is the
+check the claim should have had before it was written.
 **Revised:** 2026-08-25, ninth of this date, the recut's arithmetic is measured
 rather than asserted. The eighth act stated an endpoint of thirty-two that the
 paragraph's own lists did not reach, and measuring the file's assertion
@@ -14,8 +24,9 @@ paragraph had called neither a retirement nor an addition when the identifier's
 change makes it both. Thirty-two arrives at the next act with
 `admin-run-reference-distinguishes`, so three records have been added since the
 recut rather than two, reaching thirty-four. Section 6's watch names the removal
-each direction is perturbed by, every other perturbation record in this file
-naming its own, and stops crediting the serving direction to the member's half,
+each direction is perturbed by, which is this file's dominant convention rather
+than its universal one, and stops crediting the serving direction to the member's
+half,
 which cannot fail on it: a member given a name binds it, which is that record
 holding rather than failing. **Both directions are this crate's alone**, the
 member's claim being about what it does with what it is given and the vector
@@ -1726,7 +1737,14 @@ section sorts by instrument and the arguments are elsewhere, so a block here
 would sit apart from the prose that earns it. Thirty-four records in all,
 fifteen tagged for review, fourteen for perturbation, three for the manifest,
 and two for a compile pin. The residency record moved from review to
-perturbation on 2026-08-06, when the code act gave it a test. The elections take nodes
+perturbation on 2026-08-06, when the code act gave it a test. **Three of the
+fourteen perturbation records name no removal anywhere in this document**:
+`admin-unload-answers-after-confirmed-stop`, `admin-dial-retries-within-a-bound`,
+and `admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
+named removal says a test exists and not what breaks it, which is the tag's whole
+content, so each is owed the sentence its neighbours carry. Found while checking
+whether this file's convention was universal, on the occasion of a record that
+follows it. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable, and two review tags come from the sorting rather than from an
 election: the verb's stopping short of any seam and the existence checks no
@@ -1742,8 +1760,8 @@ short on each side.** `admin-unit-declares-one-open` became
 `admin-unit-declares-no-open`, and an earlier form of this paragraph called that
 neither a retirement nor an addition. It is both: the identifier changed, so the
 graph lost a node and gained one, and a census that counts nodes counts two
-movements there. The lists below name ten departures and six arrivals and are
-each short by that one side.
+movements there. The lists below name eleven departures, ten retired and one
+moved, and six arrivals, so each is short by the inversion's one side.
 
 **Thirty-one was this span's endpoint and thirty-two arrived at the next act**,
 `admin-run-reference-distinguishes` with the run's identity. Three records have been

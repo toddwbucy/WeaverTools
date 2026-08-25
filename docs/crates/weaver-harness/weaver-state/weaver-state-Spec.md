@@ -2,7 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-08-25, the door's claim names its other half. Section 4's
+**Revised:** 2026-08-25, second of this date, the record's name outlives its
+claim. `state-preload-door-stands-only-diagnostic` reads as the whole two-sided
+fact and this half asserts the narrower one, that the member binds no name it is
+not given. Named as owed rather than renamed here, a rename reaching every
+citing document and the conformance header code will carry.
+**Revised:** 2026-08-25, first of this date, the door's claim names its other
+half. Section 4's
 `state-preload-door-stands-only-diagnostic` is one side of a two-sided claim and
 said so nowhere: the member binds no name it is not given, and that the name is
 given only under a diagnostic binding is `weaver-admin`'s, recorded there as
@@ -333,6 +339,14 @@ given. The other half is
 diagnostic binding. Neither record stands for the other's behaviour, and a
 perturbation of either side fails against its own, which is why the claim is
 recorded twice rather than once with a footnote.
+
+**The identifier below still names the pair's claim and this half is narrower
+than its name.** `state-preload-door-stands-only-diagnostic` reads as the whole
+two-sided fact, and what this record now asserts is that the member binds no
+name it is not given, the kind being the other half's to hold. A rename reaches
+every document that cites it and the conformance header that will cite it from
+code, so it is its own act and is named here as owed rather than taken in an act
+about where an assertion sits.
 
 ```graph
 node: state-preload-door-stands-only-diagnostic
