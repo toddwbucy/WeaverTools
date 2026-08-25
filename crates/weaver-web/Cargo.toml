@@ -2,25 +2,25 @@
 name = "weaver-web"
 version = "0.1.0"
 # **Pinned rather than inherited, and the alignment is owed.** The workspace
-# is edition 2024 and this crate arrived on 2021. The migration is real work
-# - the sqlx and askama derives are where an edition move bites - and it is
-# not verifiable on the machine this absorption ran on, which has no network
-# to resolve this crate's dependency tree. Pinning states the fact rather
-# than claiming a migration nobody compiled.
+# is edition 2024 and this crate pins 2021. The migration is real work - the
+# sqlx and askama derives are where an edition move bites - and no build has
+# yet resolved this crate's dependency tree, the machine this workshop runs
+# on having no network to do it. Pinning states the fact rather than
+# claiming a migration nobody compiled. Held at the Spec's section 15.
 edition = "2021"
 # **Explicit rather than inherited, because the licences disagree.** The
-# workspace publishes nothing and carries UNLICENSED. This crate arrived
+# workspace publishes nothing and carries UNLICENSED. This crate carries
 # Apache-2.0 with its LICENSE file beside it. The suite's licence boundary
-# is an open operator question, so the absorption surfaces the collision
-# and holds rather than resolving it by inheritance.
+# is an open operator question, held rather than resolved by inheritance,
+# per the Spec's section 15.
 license = "Apache-2.0"
 publish = false
 description = "The WeaverTools suite's frontend: channel, lifecycle, and trace surfaces over weaver agents."
 
-# **The first database dependency in this tree, and it is this crate's
+# **The first database dependency in this workspace, and it is this crate's
 # alone.** A frontend holding its own store is ordinary, and nothing else in
-# the workspace carries one. Whether the tree now has a database is the
-# question the absorption surfaces rather than answers.
+# the workspace carries one. Whether the tree now has a database, or whether
+# this stays a property of one member, is held at the Spec's section 15.
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = "0.8"

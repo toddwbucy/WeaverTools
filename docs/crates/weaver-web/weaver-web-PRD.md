@@ -1,22 +1,22 @@
 # weaver-web - PRD (crate charter)
 
-**Status:** MERGED. In `main` and the source of truth. **Ratified on its own
-terms 2026-08-24**, per the operator's ruling of that date and the
-per-charter rule of 2026-08-23, conforming to the pattern the 2026-08-04 act
-established.
+**Status:** MERGED. In `main` and the source of truth. Ratified on its own
+terms under the per-charter rule of 2026-08-23, conforming to the pattern the
+2026-08-04 act established.
 
 **Revised:** 2026-08-24, the crate takes its place. It lands at
 `crates/weaver-web/` and this document at `docs/crates/weaver-web/`,
 container coming from the directory so placement is the declaration. The
 seam is unchanged: this crate is contract-coupled across
 `weaver-gate-world-contract` and `weaver-admin-operator-contract` and links
-no crate of this tree. Three collisions are surfaced and held rather than
+no crate of this workspace. Three collisions are surfaced and held rather than
 resolved: the edition, the licence, and the first database dependency in
 the workspace.
 
 **Revised:** 2026-08-19, the channel amendment. The chat surface becomes the
 multi-party channel surface on the operator's adoption of the front-end
-architecture exploration's three positions. The browser-as-display-engine
+architecture exploration's three positions, per the buzz prior-art survey of
+2026-08-19, held in the operator's report archive. The browser-as-display-engine
 rule hardens from stack preference to constraint, the IAM roadmap item gains
 its mechanism (passkeys, TLS bundled), and the authorship-responsibility
 ruling lands in section 6.
@@ -176,7 +176,7 @@ of whole-turn latency in a room.
 
 **Design constraints taken from the gate contract rather than chosen:**
 
-- **Whole-turn answers, honestly presented.** The gate does not stream. A
+- **Whole-turn answers, presented whole.** The gate does not stream. A
   clear in-flight state, never simulated streaming.
 - **Closes render by kind.** `answered` is the message body. `stopped`
   and `refused` render distinctly with the reason the close carries. An
@@ -364,9 +364,10 @@ the symmetric participant abstraction with agent-ness as additive metadata
 and an ownership edge, mention-gated invocation with per-participant
 respond policies and self-invocation suppression (agent-to-agent routing
 opened 2026-08-20 for coordination), and per-channel single-flight
-queueing with batch-on-drain. The survey's full read and the
-falsification case against forking were the exploration's own and are not
-reproduced here, this section carrying what it settled. Buzz's
+queueing with batch-on-drain. The survey's full read and the falsification
+case against forking are recorded in the exploration's report, the buzz
+prior-art survey of 2026-08-19 in the operator's report archive, and this
+section carries the three positions the operator adopted from it. Buzz's
 identity architecture - participant-held keys, client-side signing, the
 browser as protocol participant - is deliberately not adopted, per
 sections 3 and 6: its trust problem, verifiable authorship among mutually

@@ -1,8 +1,6 @@
 # weaver-web - Spec
 
-**Status:** MERGED. In `main` and the source of truth. **Ratified with its
-charter 2026-08-24**, per the operator's ruling of that date and the
-per-charter rule of 2026-08-23.
+**Status:** MERGED. In `main` and the source of truth.
 
 **Revised:** 2026-08-24, three elections recorded at section 15 as held
 rather than settled: the crate pins edition 2021 against the workspace's
@@ -399,8 +397,10 @@ to close:
 - **The edition.** This crate pins `edition = "2021"` where the workspace
   carries 2024 and every other member inherits it. The migration is real
   work rather than a manifest line, the derive-heavy dependencies being
-  where an edition move bites. The pin states the fact. Aligning is owed
-  and is its own act, with a build behind it.
+  where an edition move bites, and **no build has yet resolved this crate's
+  dependency tree** - the machine this workshop runs on cannot. The pin
+  states the fact. Aligning is owed and is its own act, with a build behind
+  it.
 - **The licence.** This crate carries `Apache-2.0` and its own `LICENSE`
   file where the workspace carries `UNLICENSED`. The suite's licence
   boundary is an open operator question, so neither inheritance nor silence
