@@ -1,6 +1,6 @@
 ---
 title: The calculator
-summary: the inward-dispatched reference tool, why it is noted beside the consumers rather than filed as one, and the mechanic it already proves
+summary: weaver-internal's first and only member, the inward-dispatched reference tool, and the mechanic it already proves
 version: v0.1
 date: 2026-08-23
 commit: unreleased
@@ -16,22 +16,22 @@ parent: WeaverTools Technical Documentation
 The code described here is unreleased and is scheduled for release in the first
 quarter of 2027.
 
-## It is not a consumer, and it is noted here anyway
+## Where it sits, and why that is worth a sentence
 
-**The calculator sits inside the agent boundary**, not outside it. It lives in
-`weaver-internal`, it is dispatched inward, and **it never crosses the gate**. A
-consumer reaches an agent across one of the two external contracts. The calculator is
-reached by the loop calling into the worker's own binary, with no seam and no contract
-between.
+**The calculator is inside the agent boundary**, and it files here for that
+reason: it is [weaver-internal](../weaver-internal.md)'s first member and so far
+its only one. It is dispatched inward, reached by the loop calling into the
+worker's own binary, with no seam and no contract between - and **it never crosses
+the gate**.
 
-So it is filed here as a note rather than as a member of this directory, for one
-reason: **the mechanic a diagnostic consumer would need already exists, and it exists
-because the calculator needed it first.** A reader arriving at
-[the Jacobian lens](jacobian-lens.md) and wondering what it would take to perturb a
-replay should know that the perturbation mechanic is chartered and specified here, is
-not theirs to invent, and is not finished either. **The calculator is built. The
-cut-and-recompute wiring it needs is not**, which section 8 below states rather than
-leaves to be discovered.
+That is worth stating because the thing it proves points outward. **The
+perturbation mechanic a diagnostic instrument would need already exists, and it
+exists because the calculator needed it first.** A reader arriving at
+[the Jacobian lens](../../weaver-diagnostic/jacobian-lens.md) and wondering what
+it would take to perturb a replay should know the mechanic is chartered and
+specified here, is not theirs to invent, and is not finished either. **The
+calculator is built. The cut-and-recompute wiring it needs is not**, which the
+last section states rather than leaves to be discovered.
 
 ## What it is
 

@@ -101,10 +101,11 @@ residual rather than the class the claim would need.
 ## What these documents are
 
 **One paper per crate, plus six that belong to no crate**, and the directories
-carry the boundary: `weaver-agents/` for the agent domain,
+carry the boundary: `weaver-agents/` for the agent domain, with
+`weaver-internal/` beneath it for the callables that crate mounts,
 [`weaver-web/`](weaver-web/weaver-web.md) for the frontend domain that reaches an
-agent only across a contract, `consumers/` for the instruments that read what an
-agent produced, and the seam itself at the top. A crate paper answers
+agent only across a contract, [`weaver-diagnostic/`](weaver-diagnostic/jacobian-lens.md)
+for the instruments that read a finished record, and the seam itself at the top. A crate paper answers
 what one crate is, what it owns, which seams it holds, how its primary operation
 works, what it refuses, and what it has not built.
 
