@@ -4,6 +4,19 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, eighth of this date, the watch reads both directions.
+Moving it off the door and onto the vector left one direction unwatched, and it
+is the direction neither half of the split claim covers: a diagnostic load that
+silently loses its fourth value passes this crate's watch, which read the
+serving direction alone, and passes the member's vacuously, a member given no
+name binding none being exactly what its record asserts. **A hole covered by
+neither half of a split claim is the hole the split was bought to close**, so
+the watch now fails if either count moves. Section 10's new fourth conjunct
+claimed the four states of a run are known to the party that conducts it, which
+section 3 does not support - the manager's `active` covers `Idle` and `Active`
+and the fourth is a hole in the floor's enum - narrowed to the distinction that
+party does hold. The fourth edge's argument is argued once, in the lead that
+enumerates it, the later site correcting the unedged list without re-arguing.
 **Revised:** 2026-08-25, seventh of this date, the watch reads this crate's own
 observable. Section 6's new record was perturbed by watching a serving load
 stand a door, which is the member's observable and not this crate's, so a
@@ -14,10 +27,11 @@ record stands for the other's behaviour. The watch is now the vector this crate
 composes, three values or four. Section 10's four-edge lead enumerates its
 fourth beside the other three rather than forty lines on, the recut's delta is
 named as the recut's so a rebuild does not read it as this Spec's, and both
-records added since are named so the figure is checkable. **The sixth entry
+records added since are named so the figure is checkable. **The fifth entry
 carried a factual error of its own**: it said section 10 never received the
-restatement to thirty-two, which its own next sentence contradicts. The tag
-census had been restated and the grounds lead had not.
+restatement to thirty-two, which its own preceding sentence contradicts by
+reading that section as saying thirty-two records by tag. The tag census had
+been restated and the grounds lead had not.
 **Revised:** 2026-08-25, sixth of this date, the prose that spends the census
 catches up with it. The restatement of the fifth act corrected three totals and
 left three clauses that consume them, so section 10 disagreed with itself twice
@@ -1014,13 +1028,21 @@ payload's `EnterBinding` follows in section 7 - the verb and the load cannot
 resolve differently because only one site resolves.
 
 **The instrument is perturbation, and the claim is this site's half of a
-two-sided one.** **What is watched is the vector this crate composes**, three
-values under a serving inventory and four under a diagnostic one, confirmed by
-watching a serving load put four on it once the kind's read is removed. A door
-standing is the member's observable and is deliberately not the watch here: a
-test that read it would break on a member-side regression and be masked by a
-member-side fix, which is the one-test-for-two-crates shape the split exists to
-prevent. The other half is the member's:
+two-sided one.** **What is watched is the vector this crate composes, in both
+directions**: a serving inventory puts three values on it and a diagnostic one
+puts four, and the watch fails if either count moves. Both are needed and the
+second is the one that would otherwise fall through the whole pair. A serving
+load gaining a fourth value is caught here or by the member standing a door it
+should not, but **a diagnostic load silently losing its fourth value is caught
+by neither**: this crate's watch would pass on the serving direction alone, and
+the member's passes vacuously, a member given no name binding none being exactly
+what its record asserts. A hole covered by neither half of a split claim is the
+hole the split was bought to close.
+
+A door standing is the member's observable and is deliberately not the watch
+here: a test that read it would break on a member-side regression and be masked
+by a member-side fix, which is the one-test-for-two-crates shape the split
+exists to prevent. The other half is the member's:
 `state-preload-door-stands-only-diagnostic`, asserted in `weaver-state-Spec`
 section 4, holds that the member binds no name it is not given. Neither record
 stands for the other's behaviour, which is why both exist.
@@ -1638,7 +1660,8 @@ conducts, the devices a binding assigns are unchecked because forming a view of
 them would be this crate reasoning about a domain it cannot see, the
 operations log stops at supervision because conduct is recorded in the trace the
 harness authors, and the residency read stays the manager's three values because
-the four states of a run are known to the party that conducts it. The ten owings
+telling a run at rest from a run serving is known to the party that conducts it
+and not to the one that started the unit. The ten owings
 below are the same rule at the document level.
 
 **One edge moved and one was added beside an existing one.** Both of the organ
@@ -1670,11 +1693,9 @@ Apex section 5.5 binds what crosses between domains and does not reach what an
 organ does inside one, so an ordering held inside a verb grounds in nothing.
 The same reading leaves the load's step ordering and the inventory's one
 function unedged, each a sequence this crate holds rather than a reconciliation
-between two domains. **The residency read is not among them.**
-`admin-residency-is-not-lifecycle-state` grounds in the integration invariant
-and is the fourth of the edges above, the manager's three values being a fact
-about a domain this crate does not conduct, and an earlier form of this sentence
-listed it as unedged while its own record carried the edge.
+between two domains. **The residency read is not among them**, being the fourth
+of the edges the lead above enumerates and argues, and an earlier form of this
+sentence listed it as unedged while its own record carried the edge.
 
 **Where the assertion records sit, and which of these this crate declares.**
 The records are at the clauses that argue the claims, across sections 1
