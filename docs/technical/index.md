@@ -16,8 +16,10 @@ quarter of 2027. These pages are published as a dated snapshot of a system under
 construction, and each says on its face what it does not yet have.
 
 **The directories carry the boundary.** `weaver-agents/` holds the agent domain:
-nine crate papers and the two surfaces an operator writes against. `consumers/`
-holds what sits outside that boundary and reaches an agent only across a contract.
+nine crate papers and the two surfaces an operator writes against. `weaver-web/`
+holds the frontend domain, which sits outside that boundary and reaches an agent
+only across a contract. `consumers/` holds the instruments - what reads an agent's
+output rather than driving it.
 The contracts page stays at the top because it is the seam itself, and the two
 external contracts on it are where that boundary is actually drawn.
 
@@ -73,16 +75,21 @@ something rather than places the framework does.
 - [Extending the program](weaver-agents/extending.md) - the floor, the seams, a new
   organ, and where the framework's requirements stop
 
+## The frontend
+
+Outside the agent boundary, reaching an agent only across the external contracts.
+The first thing to do so, and therefore the first real test of whether those
+contracts are enough to build against.
+
+- [weaver-web](weaver-web/weaver-web.md) - the channel, the lifecycle view, and
+  the live trace view, and the one reach the contracts turned out not to cover
+
 ## Consumers
 
-Outside the agent boundary, reaching an agent only across the two external
-contracts. Instruments built inside the boundary are described where they are
-built, in the crate papers. What is here either reaches in from outside or is
-noted here for what it proves.
+The instruments: what reads an agent's output rather than driving it. Those built
+inside the boundary are described where they are built, in the crate papers. What
+is here is either unbuilt or noted for what it proves.
 
-- [weaver-web](consumers/weaver-web.md) - the first consumer: the channel, the
-  lifecycle view, and the live trace view, and the working proof that a consumer
-  needs the two contracts and nothing else
 - [The Jacobian lens](consumers/jacobian-lens.md) - a per-layer readout of the interior,
   why it captures during the run and reads at analysis, what it would cost, and the two
   questions that gate it

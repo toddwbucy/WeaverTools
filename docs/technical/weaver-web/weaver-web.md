@@ -26,9 +26,18 @@ live view over an agent's record.
 **It is a consumer, and that word is structural here rather than descriptive.**
 It sits outside the agent boundary. It links no crate of the agent domain, holds
 no weights, authors nothing in the record, and knows the agent only as a socket
-to dial and a binary to run. Everything it is allowed to do is written on
-[the contracts page](../contracts.md) - two documents, which are its entire
-build surface. The agent never grips it and does not know it exists.
+to dial and a binary to run. The agent never grips it and does not know it
+exists.
+
+**Two of its three reaches are contracted and the third is not**, which this
+page states rather than rounds off. Turns cross the gate's world contract and
+the record arrives under the operator contract, both on
+[the contracts page](../contracts.md). **The lifecycle verbs are the exception**:
+the operator contract governs the record and says outright that running the admin
+binary is running the crate rather than a channel it governs, so there is no page
+written for an outside party to build that surface against. weaver-web builds it
+on deployment fact and has filed the ask for the page, which is the last section's
+business.
 
 That makes it the working proof of a claim the rest of this site makes
 repeatedly: that the boundary is real, that a consumer needs nothing but the
@@ -70,13 +79,17 @@ architecture change is tested against this constraint first.
 the crate papers use the word: no contract binds it to any component, because
 contracts bind parties inside the program and this sits outside.
 
-What it has instead is **the two external contracts, which are pages rather than
+What it has instead is **two external contracts, which are pages rather than
 partners** - written for whoever builds against them and owing nothing back.
 See [the contracts page](../contracts.md). Across the first it dials the gate
 socket and speaks one line per turn. Across the second it reads the record the
-operator holds. It reaches the operator's own lifecycle verbs by running them as
-a subprocess, which is not a seam either - it is the operator's command, run on
-the operator's behalf, under a rule the deployment declares.
+operator holds.
+
+**The third reach has no page.** It runs the lifecycle verbs as a subprocess,
+which is the operator's own command run on the operator's behalf under a rule
+the deployment declares - not a seam, and not contracted either. What it builds
+against there is the deployment's observed shape, and the gap is filed rather
+than papered over.
 
 ## How it works
 
@@ -143,6 +156,12 @@ around.
   whole-turn waits.
 - **A status verb to ask.** Load state is inferred from socket existence, which
   is why the interface labels it as an inference.
+- **A page for the verb invocation surface.** The two-contract rule intends
+  that an outside consumer builds against published pages and nothing else,
+  and the lifecycle verbs fall outside both: their shape lives in documents an
+  outside consumer is not meant to read. Until a page exists, this one reach
+  is built on deployment fact, and saying so is the difference between a gap
+  and a quiet exception.
 - **An operator read on agent state.** Session state exists inside the agent and
   the operator has no window on it.
 - **Upstream model participants.** The adapter seam is named and the first
