@@ -25,7 +25,15 @@ description = "The WeaverTools suite's frontend: channel, lifecycle, and trace s
 tokio = { version = "1", features = ["full"] }
 axum = "0.8"
 askama = "0.14"
-sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros"] }
+# **0.9 rather than 0.8, and the reason is the workspace rather than this
+# crate.** The sqlx facade depends on its sqlite driver unconditionally,
+# whatever features are elected, and on 0.8 that driver reaches a
+# libsqlite3-sys that `weaver-state` cannot share through rusqlite. Cargo
+# permits one package linking `sqlite3` in a graph, so the two versions made
+# the whole workspace unresolvable rather than only the crates that collide.
+# On 0.9 the graph carries one libsqlite3-sys and both crates resolve, with
+# nothing of `weaver-state` moved.
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.9"
