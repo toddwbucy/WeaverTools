@@ -325,8 +325,9 @@ from: weaver-state
 to: state-replay-answers-at-the-seal
 ```
 
-**The first of the two records below is one half of a two-sided claim.** This
-crate's half is that the member binds no name it is not given. The other half is
+**`state-preload-door-stands-only-diagnostic`, below, is one half of a
+two-sided claim.** This crate's half is that the member binds no name it is not
+given. The other half is
 `weaver-admin`'s, `admin-preload-name-follows-the-kind` at
 `weaver-admin-Spec` section 6, which holds that the name is given only under a
 diagnostic binding. Neither record stands for the other's behaviour, and a

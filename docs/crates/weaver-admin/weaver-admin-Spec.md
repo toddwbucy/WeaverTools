@@ -4,6 +4,20 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, seventh of this date, the watch reads this crate's own
+observable. Section 6's new record was perturbed by watching a serving load
+stand a door, which is the member's observable and not this crate's, so a
+member-side regression would have broken this crate's test and a member-side fix
+would have masked a break here - the one-test-for-two-crates shape the split was
+bought to prevent, reintroduced four lines from the sentence saying neither
+record stands for the other's behaviour. The watch is now the vector this crate
+composes, three values or four. Section 10's four-edge lead enumerates its
+fourth beside the other three rather than forty lines on, the recut's delta is
+named as the recut's so a rebuild does not read it as this Spec's, and both
+records added since are named so the figure is checkable. **The sixth entry
+carried a factual error of its own**: it said section 10 never received the
+restatement to thirty-two, which its own next sentence contradicts. The tag
+census had been restated and the grounds lead had not.
 **Revised:** 2026-08-25, sixth of this date, the prose that spends the census
 catches up with it. The restatement of the fifth act corrected three totals and
 left three clauses that consume them, so section 10 disagreed with itself twice
@@ -21,8 +35,9 @@ thirty-two records by tag, and twenty-one claims grounding in no invariant. The
 file holds thirty-four records, eleven of them carrying twelve edges, and
 twenty-three ungrounded, and the tag census runs fifteen review, fourteen
 perturbation, three manifest, two compile pin. **The arrears predate the act
-that found them** - the banner claimed a restatement to thirty-two that section
-10 never received - which is why the act adding a record is the act that owes the
+that found them** - the tag census had been restated to thirty-two and the
+grounds lead had not, so it still read thirty-one while the file held
+thirty-three - which is why the act adding a record is the act that owes the
 sweep. Measured from the file's own graph blocks rather than counted by hand.
 The new record also moves below the prose that argues it, per Document Format
 section 6, and the sentence its insertion had split is rejoined.
@@ -999,9 +1014,13 @@ payload's `EnterBinding` follows in section 7 - the verb and the load cannot
 resolve differently because only one site resolves.
 
 **The instrument is perturbation, and the claim is this site's half of a
-two-sided one.** A serving inventory driven through here puts three values on
-the vector and a diagnostic one puts four, confirmed by watching a serving load
-stand a door once the kind's read is removed. The other half is the member's:
+two-sided one.** **What is watched is the vector this crate composes**, three
+values under a serving inventory and four under a diagnostic one, confirmed by
+watching a serving load put four on it once the kind's read is removed. A door
+standing is the member's observable and is deliberately not the watch here: a
+test that read it would break on a member-side regression and be masked by a
+member-side fix, which is the one-test-for-two-crates shape the split exists to
+prevent. The other half is the member's:
 `state-preload-door-stands-only-diagnostic`, asserted in `weaver-state-Spec`
 section 4, holds that the member binds no name it is not given. Neither record
 stands for the other's behaviour, which is why both exist.
@@ -1616,9 +1635,11 @@ position stated from the other side.** Admin authorizes and does not execute,
 and the reason it does not is that integrating is the loop's: the stop answer is
 relayed unchanged because what a stop found is a fact about a run the harness
 conducts, the devices a binding assigns are unchecked because forming a view of
-them would be this crate reasoning about a domain it cannot see, and the
+them would be this crate reasoning about a domain it cannot see, the
 operations log stops at supervision because conduct is recorded in the trace the
-harness authors. The ten owings below are the same rule at the document level.
+harness authors, and the residency read stays the manager's three values because
+the four states of a run are known to the party that conducts it. The ten owings
+below are the same rule at the document level.
 
 **One edge moved and one was added beside an existing one.** Both of the organ
 invariant's edges were placed in the labelling pass, before the apex held a
@@ -1670,27 +1691,27 @@ test reaches are the review halves of splits this section's own bullets take,
 and a divided half counts with the bullet it divided out of, per Document
 Format section 3.
 
-**Ten records retired with the recut, one moved, and six were added, which took
-the count from thirty-six to thirty-two.** That was the recut's whole movement
-and it is not the whole movement since: two records have been added by later
-acts, reaching the thirty-four this section counts above, the second of them
-`admin-preload-name-follows-the-kind` on 2026-08-25. An earlier form of this
-lead called the recut's arithmetic the whole movement, which held only until the
-next act added a record. Retired: the operator surface's
-six, its stream election, its accept-time refusal, its refusal-by-closure, its
-serial answering, its bounded request line, and its bare wire shapes, each
-dying with the socket rather than relocating. The coordination channel's bind
-ordering, its directory's mode, its listener's closure after one accept, and
-the one exchange in flight per agent, the last four retiring with the acts and
-the map they described. Moved: the credential check, to
-`weaver-harness-Spec` section 2.3, where the accept now happens. Added: the
-root check and the answer-and-status agreement of section 2, the dial's bound
-of section 7, the residency read from the init system of section 3, the state
-ask that follows a failed dial, of section 6, and the unload's wait on a
-confirmed stop, of section 3. The unit's declared open inverted
-to a declared absence rather than retiring, so it is neither. A rebuild of the
-graph reads this movement as the act's assertion
-delta.
+**Ten records retired with the recut, one moved, and six were added, which took the
+count from thirty-six to thirty-two.** That was the recut's whole movement and it is not
+the whole movement since: two records have been added by later acts, reaching the
+thirty-four this section counts above: `admin-kind-mismatch-refused-at-inventory` on
+2026-08-24 and `admin-preload-name-follows-the-kind` on 2026-08-25. Both are named so
+this figure is checkable against the file the way every other figure here is. An earlier
+form of this lead called the recut's arithmetic the whole movement, which held only
+until the next act added a record. Retired: the operator surface's six, its stream
+election, its accept-time refusal, its refusal-by-closure, its serial answering, its
+bounded request line, and its bare wire shapes, each dying with the socket rather than
+relocating. The coordination channel's bind ordering, its directory's mode, its
+listener's closure after one accept, and the one exchange in flight per agent, the last
+four retiring with the acts and the map they described. Moved: the credential check, to
+`weaver-harness-Spec` section 2.3, where the accept now happens. Added: the root check
+and the answer-and-status agreement of section 2, the dial's bound of section 7, the
+residency read from the init system of section 3, the state ask that follows a failed
+dial, of section 6, and the unload's wait on a confirmed stop, of section 3. The unit's
+declared open inverted to a declared absence rather than retiring, so it is neither. **A
+rebuild reads this movement as the recut's delta and not as this Spec's**, two records
+having been added since by acts of their own, so a census taken against this paragraph
+alone lands two short of section 10's thirty-four.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live
