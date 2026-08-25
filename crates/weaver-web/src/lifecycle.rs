@@ -2,10 +2,9 @@
 //! object on stdout, rendered verbatim; failure never swallowed.
 
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use tokio::process::Command;
 
-const ADMIN_BIN: &str = "/usr/local/libexec/weaver/weaver-admin";
-const ADMIN_CONFIG: &str = "/etc/weaver/config";
 pub const VERBS: [&str; 3] = ["validate", "load", "unload"];
 
 /// Generous ceiling on a verb invocation: load blocks until the
@@ -27,7 +26,14 @@ pub struct VerbOutcome {
     pub timed_out: bool,
 }
 
-pub async fn run_verb(verb: &str, agent: &str) -> anyhow::Result<VerbOutcome> {
+/// Where the box installed the admin binary and its config - box
+/// facts, from the connector's config (Spec section 3).
+pub async fn run_verb(
+    verb: &str,
+    agent: &str,
+    admin_bin: &Path,
+    admin_config: &Path,
+) -> anyhow::Result<VerbOutcome> {
     if !VERBS.contains(&verb) {
         anyhow::bail!("'{verb}' is not a lifecycle verb");
     }
@@ -39,8 +45,8 @@ pub async fn run_verb(verb: &str, agent: &str) -> anyhow::Result<VerbOutcome> {
 
     let fut = Command::new("sudo")
         .arg("-n")
-        .arg(format!("WEAVER_ADMIN_CONFIG={ADMIN_CONFIG}"))
-        .arg(ADMIN_BIN)
+        .arg(format!("WEAVER_ADMIN_CONFIG={}", admin_config.display()))
+        .arg(admin_bin)
         .arg(verb)
         .arg(agent)
         .kill_on_drop(true)

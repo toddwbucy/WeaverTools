@@ -44,6 +44,13 @@ pub struct ConnectorConfig {
     /// deployment config.
     #[serde(default = "default_agent_declarations")]
     pub agent_declarations: PathBuf,
+    /// Where this box installed the admin binary and its config -
+    /// deployment facts that differ per box, defaulted to the
+    /// original deployment's paths.
+    #[serde(default = "default_admin_bin")]
+    pub admin_bin: PathBuf,
+    #[serde(default = "default_admin_config")]
+    pub admin_config: PathBuf,
     #[serde(default)]
     pub agents: Vec<AgentConfig>,
 }
@@ -99,4 +106,12 @@ impl ConnectorConfig {
     pub fn load(path: &Path) -> anyhow::Result<Self> {
         load_toml(path)
     }
+}
+
+fn default_admin_bin() -> PathBuf {
+    PathBuf::from("/usr/local/libexec/weaver/weaver-admin")
+}
+
+fn default_admin_config() -> PathBuf {
+    PathBuf::from("/etc/weaver/config")
 }

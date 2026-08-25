@@ -417,6 +417,8 @@ async fn connector_connection(
         // through the writer's channel.
         let (gates, cfg_decl, tx) =
             (gates.clone(), cfg.agent_declarations.clone(), tx.clone());
+        let (admin_bin, admin_config) =
+            (cfg.admin_bin.clone(), cfg.admin_config.clone());
         tasks.push(tokio::spawn(async move {
             let answer = match frame {
                 ToConnector::Turn { id, agent, text } => match gates.get(&agent) {
@@ -438,7 +440,8 @@ async fn connector_connection(
                     },
                 },
                 ToConnector::Verb { id, agent, verb } => {
-                    match lifecycle::run_verb(&verb, &agent).await {
+                    match lifecycle::run_verb(&verb, &agent, &admin_bin, &admin_config).await
+                    {
                         Ok(outcome) => ToServer::Verb { id, outcome: Some(outcome), error: None },
                         Err(e) => ToServer::Verb { id, outcome: None, error: Some(e.to_string()) },
                     }

@@ -125,12 +125,19 @@ The connector's, default `/etc/weaver-web/connector.toml`:
 ```
 server             = "127.0.0.1:8081"      # the link's dial target
 agent_declarations = "/etc/weaver/agents"  # the admin surface's read
+admin_bin          = "/usr/local/libexec/weaver/weaver-admin"
+admin_config       = "/etc/weaver/config"
 
 [[agents]]
 name  = "alpha"
 gate  = "/run/weaver-alpha/gate.sock"
 trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
 ```
+
+The admin binary's install path and its config location are deployment
+facts that differ per box, so they ride the connector's config with the
+original deployment's paths as defaults (the second box taught this:
+its admin lives under `/opt/weaver`).
 
 Agents and providers declared here are *available*, and whether one
 participates in a given channel is registry state, not config. Upstream
