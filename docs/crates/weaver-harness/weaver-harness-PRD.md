@@ -506,7 +506,12 @@ declared here on any organ's behalf. The state seam is a member seam rather
 than an organ channel, the asking side declares, and its record stands in the
 dependency block above with `weaver-harness-state-contract` as its `via`. A
 seam without the contract that governs it fails G3 rather than passing
-incompletely, and none is in that state now: the boundary seam, named turn
+incompletely, and none is in that state now, **which is true by the diagnostic
+member's edge being undeclared rather than by the relation being absent**: that
+member is linked and asked to record, and its record waits on
+`weaver-harness-diagnostic-contract` per the paragraph above, so the day the
+contract lands the edge and its `via` land together and this sentence still
+holds. The seams that do stand: the boundary seam, named turn
 ingress until the egress ruling gave it a second direction, resolves through
 `weaver-harness-gate-contract` as of the gate pair's merge on 2026-08-01, and
 the decode seam through `weaver-harness-spu-contract`.

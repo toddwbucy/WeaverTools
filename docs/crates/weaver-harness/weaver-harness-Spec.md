@@ -4,6 +4,12 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-24, seventh of this date, the run state stops electing the
+recorder. Section 3's `Run` held `recorder: Recorder`, `weaver-trace`'s
+concrete type, which a diagnostic run cannot fill and which settled the surface
+election section 9 holds open one screen away. The struct now says it is shown
+in its serving form and that what lets one field hold either mechanism is that
+election, the type moving in the act that writes the member's contract.
 **Revised:** 2026-08-24, sixth of this date, the third member reaches the
 manifest section. Section 2 named three internal crates and the floor plus one
 seam tagged `link`, which the composing-inside act left standing while making
@@ -1130,6 +1136,17 @@ to: axiom-contract-is-a-complete-interface
 
 **The run state is the fan-out's progress held as data, which is what makes the
 unwind total.**
+
+**The `recorder` field below is the serving shape and the diagnostic one is not
+elected here.** `Recorder` is `weaver-trace`'s concrete type, per
+`weaver-trace-Spec` section 5, and a diagnostic run authors through
+`weaver-diagnostic` instead, per apex section 6 as ruled 2026-08-24. What lets
+one field hold either - a shared trait, an enum over the two, or a generic
+parameter on `Run` - is exactly the election section 9 holds open with the
+member's Spec, and naming a type here would settle it one screen from where it
+is declared unsettled. The struct is shown in its current form, which is the
+form a serving binding builds, and the field's type moves in the act that
+writes the member's contract.
 
 ```rust
 struct Run {

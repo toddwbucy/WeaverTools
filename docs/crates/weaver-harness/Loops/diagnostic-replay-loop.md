@@ -46,7 +46,14 @@ The operator sequences three acts, and the loop is the third:
    the state member with its preload door, per `weaver-agents-PRD` section 6
    and `weaver-analysis-state-contract`. The run opens, the loop takes its
    seat, and its first act is the replay ask below, so the agent at this
-   moment is waiting on custody rather than idle.
+   moment is waiting on custody rather than idle. **This loop's entry is not
+   a turn's.** A serving loop runs when work arrives through Gate, and a
+   diagnostic binding has no Gate, so nothing arrives to start this one: it
+   runs from the run's opening. The mechanism is the loop entry
+   `weaver-harness-Spec` section 6.1 holds deferred, and this document
+   records the difference rather than inventing a lifecycle event for it,
+   a declared trigger nothing raises being the empty joint apex section 9
+   refuses.
 2. **Run the driver.** `weaver-analysis` parses the operator-held record
    outside the agent, dials the preload door as an operator principal,
    sends the election and the distillates, and seals. The election elects

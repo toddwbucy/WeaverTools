@@ -32,10 +32,13 @@ holding both roles, which put a rendering mechanism and a consumer under one
 name and would have had the harness linking a crate from outside its own
 boundary.
 
-**One crate at both ends, and that is deliberate.** The party that decides
-what a replay is made of is the party that judges what came back, and
-splitting those across two consumers would put the certification of section 4
-in the hands of something that did not choose the input.
+**One crate at both ends, and that is deliberate.** The party that decides what
+a replay is made of is the party that can say what its output means, because
+only it knows what it elected: which message kinds it preloaded, which turns it
+projected, and what it left out. A second consumer reading the record cold
+would be interpreting a run whose shape it did not choose. The certification is
+not the ground for this and cannot be, that comparison belonging to the loop
+inside the run per section 3.
 
 **It never sees weights.** The residual readout is SPU-internal and elected at
 the load, and what reaches this crate is what the record carried. Nothing here
@@ -94,14 +97,16 @@ and a divergence is a defect here, per G5. The reader rules of
 `weaver-analysis-state-contract`. What crosses is distillates and a seal, the
 seal being the fact the harness's replay ask answers at.
 
-**It reads the diagnostic-trace off the sink**, once the run has rendered it.
-The sink is admin's, opened for the binding under root and delivered by
-whatever discriminant the declaration named, per `weaver-admin-Spec` section
-5. **No contract governs that delivery and none is owed**, because a sink's
-reader is downstream of it rather than a party to it, which is the position
-every consumer of a serving trace already occupies, per `weaver-trace-PRD`
-section 1. What this crate holds afterward is a file the operator's storage
-holds.
+**It reads the diagnostic-trace off the sink.** The sink is admin's, opened for
+the binding under root by whatever discriminant the declaration named, per
+`weaver-admin-Spec` section 5, and **this charter assumes no discriminant**:
+the operator declares the shape, and whether this crate reads a finished file,
+drains a pipe, or holds a connection follows from that declaration rather than
+from anything here. Whether the reading trails the run or runs beside it
+follows the same way. **No contract governs the delivery and none is owed**,
+because a sink's reader is downstream of it rather than a party to it, which is
+the position every consumer of a serving trace already occupies, per
+`weaver-trace-PRD` section 1.
 
 **It reads nothing for meaning from a replay that did not certify**, per
 `weaver-diagnostic-PRD` section 4, which carries the criterion because it
@@ -149,7 +154,8 @@ a sink.
   6 having carried it while one crate held both roles.
 - **The licence boundary.** This crate is the piece that can be given away and
   it carries no cut-and-recompute, which is cleaner than expected. The
-  operator's.
+  intervention loop shares that mechanic with the calculator loop and is where
+  the boundary runs. The call is the operator's.
 - **This charter names no Rust item and elects no representation.** Its Spec
   is owed, and the driver's shape, the parser's, and the certification's
   mechanics land there rather than here.

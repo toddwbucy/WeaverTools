@@ -4,6 +4,16 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, seventh of this date, the third review's findings
+land. `weaver-analysis-PRD` loses two assumptions it inherited from the version
+that held both roles: section 1 grounded one-crate-at-both-ends on a
+certification section 3 had already given back to the loop, and section 3 read
+the sink as a finished file after the charter next door withdrew the right to
+name a discriminant at all. Both now rest on what is decided rather than on what
+was. `weaver-harness-PRD` says its G3 sentence holds by the diagnostic edge
+being undeclared rather than by the relation being absent, and the loop names
+its own entry as the run's opening rather than a turn's, the mechanism staying
+the deferred loop entry rather than a lifecycle event invented for it.
 **Revised:** 2026-08-24, sixth of this date, the second review's findings land.
 The `Parent:` header named the suite while the parent edge named the harness,
 which is the act's headline contradicted in its own header, and the header
