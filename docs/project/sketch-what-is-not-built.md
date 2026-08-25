@@ -184,7 +184,7 @@ down, not in what is built.
   the scope settling rather than someone writing the page. What follows below is
   therefore context and not an owed edit: the document that carried that name governs
   the weaver-agents domain, corrected 2026-08-23. Crates outside the agent boundary,
-  `weaver-web` and `weaver-diagnostic`, parent to the suite and refine nothing that
+  `weaver-web` and `weaver-analysis`, parent to the suite and refine nothing that
   is written. Naming the gap is the honest form until a second consumer makes the
   suite-level claims obvious enough to state from evidence.
 - **The apex counts two state holders and the tree has three.** `weaver-state` was

@@ -4,6 +4,18 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, fourth of this date, this crate composes inside. The
+operator's ruling of this date moved it from outside the agent boundary to the
+harness's third member, the mechanism the harness authors a diagnostic-trace
+through, standing to a replay as `weaver-trace` stands to a turn. The document
+moves to the harness container, the parent edge goes to `weaver-harness`, and
+the crate enters the apex roster by that document's inside rule. What was the
+consumer half is chartered separately as `weaver-analysis`, which takes the
+preload seam and its edge, the parser and its obligations, the certification's
+performance, the capture artifact, the instrument suite, and the licence
+boundary. The seam contract is renamed with its party. The three entries below
+describe a crate outside the boundary and stand unamended so the move is
+visible in the history rather than erased from it.
 **Revised:** 2026-08-24, third of this date, the input-format cell closes. It
 asked whether a version marker lands or the compatibility is stated some other
 way, and `weaver-trace-PRD` section 6 answers the second in the same act: the
@@ -54,31 +66,38 @@ Rules.
 
 ## 1. What this crate is
 
-`weaver-diagnostic` is **the diagnostic consumer**: a crate outside the agent
-boundary, standing in the structural position Weaver Web stands in, that
-consumes a finished trace and drives a replay of it against an agent loaded
-for exactly that purpose. It is chartered by the operator's ruling of
-2026-08-23, carried by the epic that tracked it, and it is the second half of
-the taxonomy promotion the operator split on 2026-08-24: the binding kinds
-landed in `weaver-agents-PRD` section 6 and the acts of that date, and the
-loop class lands here.
+`weaver-diagnostic` is **the harness's third member and the diagnostic-trace's
+mechanism**, standing to a replay exactly as `weaver-trace` stands to a turn.
+It is chartered by the operator's ruling of 2026-08-23, carried by the epic
+that tracked it, and it is the second half of the taxonomy promotion the
+operator split on 2026-08-24: the binding kinds landed in `weaver-agents-PRD`
+section 6 and the acts of that date, and the loop class lands here.
+
+**It does not produce the diagnostic-trace.** The harness authors. This crate
+is the mechanism the harness authors through, and the distinction is the whole
+of the charter, restated from `weaver-trace-PRD` section 1 because the two
+members stand in one relation to one author and a reader holding both should
+meet the same sentence twice. `weaver-trace` is the mechanism under a serving
+binding and this crate is the mechanism under a diagnostic one, the harness
+being the sole writer either way.
 
 **It never sees weights.** The tap is not part of it: the residual readout is
-SPU-internal, elected at the load, and puts vectors on the wire. Everything
-downstream of the wire is post-processing outside the boundary and belongs
-here - the fitting, the projection, the layer trajectory, the artifact store,
-and the reading.
+SPU-internal, elected at the load, and puts vectors on the wire. What this
+crate receives is what the wire carried, and it renders that into the record.
+The fitting, the projection, the layer trajectory, the artifact store, and the
+reading are downstream of the record and belong to `weaver-analysis`, outside
+the agent, per section 6.
 
-**It binds no listening port and the agent never grips it.** The agent has no
-channel to this crate, no knowledge of it, and no behavior conditioned on its
-presence. What the agent has is a binding kind, declared at the load, per
-`weaver-agents-PRD` section 6 as amended 2026-08-24.
+**It binds no listening port and holds no cognition**, which is the property it
+shares with `weaver-trace` and the reason neither is an organ. It governs no
+domain and holds no duplex channel with the harness. It is reached by being
+linked and called, one caller and no other, and its output leaves by the sink
+admin opened for the binding.
 
-**Its contract is with a binding rather than with an organ.** It requires an
-agent loaded diagnostically and checks that precondition at the seam. A
-diagnostic consumer pointed at a serving binding is refused, and the refusal
-is cheap because the binding declared what it is at the load and nothing
-transitions afterward.
+**Which member the harness authors through is the binding kind's to settle, and
+nothing else's.** A serving binding composes `weaver-trace` and a diagnostic
+binding composes this crate, decided at the load and never entered afterward,
+so no run holds both and no code chooses between them at a turn's grain.
 
 ```graph
 node: weaver-diagnostic
@@ -86,14 +105,23 @@ kind: crate
 
 edge: parent
 from: weaver-diagnostic
-to: WeaverTools
+to: weaver-harness
 ```
 
 ## 2. What it is not
 
 **Not an organ.** An organ governs a domain and holds a duplex channel with
 the harness, both properties and neither alone, and this crate has neither.
-It governs nothing inside the agent and the harness never speaks to it.
+It governs no domain, and the harness reaches it by linking rather than by a
+channel, which is `weaver-trace`'s position and for `weaver-trace`'s reason:
+a type definition does not travel over a socket and a rendering mechanism is
+not a peer.
+
+**Not the consumer.** An earlier form of this charter placed this crate
+outside the agent as the diagnostic consumer, and the operator's ruling of
+2026-08-24 corrected it. The consumer is `weaver-analysis`, chartered in the
+same act, which reads the record this crate renders. Nothing of the reading
+belongs here.
 
 **Not the intervention overlay.** Cut-and-recompute is a mechanic this crate
 does not carry, per the taxonomy's ruling: intervention composes with either
@@ -194,30 +222,28 @@ serve identically, and whether their readouts agree is a finding.
 
 ## 6. The seam, the custody, and what this charter leaves owed
 
-**The preload crosses a second seam on the state member, per the operator's
-ruling of 2026-08-24, and the papers stand**: `weaver-diagnostic-state-contract`,
-initiated by this crate, checked against the operator principal, on the
-precedent of the gate's two doors. The contract, `weaver-state-PRD`'s second
-door, and `weaver-state-Spec`'s mechanics landed together in the seam-papers
-act of the same date. The seam is declared here, from the initiating side,
-which is the pattern the harness-state seam set: the from side's charter
-carries the edge. An earlier form of this paragraph placed the declaration
-with state and the landing in the future, and both halves are corrected by
-the act that landed it.
+**This crate holds no seam.** It is linked and called, one caller and no
+other, which is `weaver-trace`'s position and for the same reason: a rendering
+mechanism is not a peer and nothing it makes travels except by the sink its
+author writes into.
 
-```graph
-edge: seam
-from: weaver-diagnostic
-to: weaver-state
-via: weaver-diagnostic-state-contract
-tag: socket
-```
+**The preload crosses a second seam on the state member, per the operator's
+ruling of 2026-08-24, and the papers stand**, but the near side of it is not
+this crate. `weaver-analysis-state-contract` is initiated by `weaver-analysis`
+from outside the agent, checked against the operator principal, on the
+precedent of the gate's two doors, and the edge is declared in
+`weaver-analysis-PRD` where the initiating side's charter carries it. An
+earlier form of this section declared that seam here, when this crate was
+chartered as the consumer, and the ruling that moved it inside moved the seam
+with the party rather than leaving an inside crate holding an operator's door.
 
 **Custody is unchanged and needs no exception.** The trace path is declared
-material, so the driver reads the operator-held stream as an operator
-principal, over the operator's own storage. The trace parser belongs to this
-crate, outside the agent. `weaver-state` never opens a trace file and
-`weaver-trace` keeps its write-only pin.
+material, so `weaver-analysis` reads the operator-held stream as an operator
+principal, over the operator's own storage, and preloads it through the door
+below. The trace parser belongs to that crate, outside the agent, on the same
+ground the reading does. `weaver-state` never opens a trace file and
+`weaver-trace` keeps its write-only pin. Nothing inside the agent opens the
+record the replay runs from.
 
 **The record runs one way only, and this crate owns the other product.** A
 diagnostic binding writes no trace, per `weaver-agents-PRD` section 6 as
@@ -252,16 +278,17 @@ would also make the derivation circular on its face, a shape defined in terms
 of a run over itself, when what happened is that one run was read and a
 second was performed against it.
 
-The custody differs on the same seam. A serving record is authored event by
+The making differs on the same author. Both records are authored event by
 event by the harness as the sole writer, inside the agent, into a sink admin
-opened under root, bracketed by a turn as it happens. This one is assembled
-outside the agent from what the replay returns, by a crate the boundary keeps
-out of that custody chain, over a run whose turns are read from a record
-rather than lived. Two writers with two custody stories cannot be one crate,
-and `weaver-trace`'s charter says so from its own side: it has one caller and
-no other crate submits an event to it. **So this crate carries
-the diagnostic counterpart** to it, the writer that makes a diagnostic-trace,
-standing to a replay as `weaver-trace` stands to a turn.
+opened for the binding. What differs is the run underneath: a serving record
+brackets a turn as it happens, and this one runs over turns read from a
+record rather than lived, carrying the residual readout that only a replay
+elects. Two provenances that far apart cannot share one mechanism without the
+mechanism losing the ability to say which it made, and `weaver-trace`'s
+charter closes the question from its own side: it has one caller and no other
+crate submits an event to it. **So this crate is the counterpart mechanism**,
+the one the harness authors a diagnostic-trace through, standing to a replay
+as `weaver-trace` stands to a turn.
 
 **The shared form has one authority and it is not this crate.** Canonical form
 is `weaver-trace-Spec` section 2's, one line of UTF-8 JSON per record with the
@@ -279,18 +306,26 @@ from: weaver-diagnostic
 to: diagnostic-trace
 ```
 
-**The harness relays and never assembles.** The measurement returns from the
-SPU by the same path the generation does, per apex section 3 step 6, so it
-reaches the harness whatever the binding's kind. On a serving binding the
-harness authors it into the record. On a diagnostic one there is no record to
-author into, so the harness passes it outward holding it opaque, on the
-precedent `weaver-trace` already sets for message payloads, whose shapes it
-neither knows nor versions. **The diagnostic-trace is assembled at the far
-end**, by this crate, from what the relay delivers, which is what keeps the
-dependency running the one way the boundary allows: this crate sits outside
-the agent, and a harness that named this crate's writer would depend outward.
-Holding the payload opaque is what makes the relay cost nothing structurally.
-The exit path and its directives are owed with the driver, below.
+**The harness authors through this crate and the record leaves by the sink.**
+The measurement returns from the SPU by the same path the generation does,
+per apex section 3 step 6, so it reaches the harness whatever the binding's
+kind. On a serving binding the harness authors it through `weaver-trace`. On
+a diagnostic one it authors it through this crate, into the diagnostic-trace,
+beside the replayed run the same record carries. The rendering leaves by the
+sink admin opened for the binding, which is a socket rather than a file
+because the consumer is a process rather than an archive, and
+`weaver-analysis` is what stands at the far end of it. **Admin's custody of
+the sink is unchanged**, the discriminant and the open site being section 5
+of `weaver-admin-Spec` whichever kind the binding declared, so this path adds
+a shape to what admin opens rather than a second way of opening.
+
+**Nothing here crosses the boundary outward.** The harness links a member of
+its own domain, which is the relation it already has with `weaver-trace` and
+`weaver-state`, and the one crate outside the agent reaches the record only
+after it has left by the sink. An earlier form of this section had the
+harness relaying to an outside assembler, which would have put an agent crate
+in reach of a consumer's shape, and the ruling of 2026-08-24 removed the
+question rather than answering it.
 
 **The refusal rests on the binding's declaration, and its form is the door's
 absence.** State learns the kind at its standing, from the party that stands
@@ -303,54 +338,23 @@ structural instead.
 
 Open cells, each named rather than implied:
 
-- **The licence boundary.** This crate is the piece that can be given away
-  and it carries no cut-and-recompute, which is cleaner than expected. The
-  intervention loop shares that mechanic with the calculator loop and is
-  where the boundary runs. The operator's.
-- **The capture artifact** - identity, custody, dataset shape, quota - is
-  owed its own act and this charter does not shape it.
-- **The instrument suite** this crate would eventually carry was named in
-  the chartering ruling as a sketch that does not exist in this tree. The
-  reference is recorded here so the ghost is a known gap rather than a
-  silent one.
-- **The driver and its Spec** are owed next, the seam papers having landed,
-  and the null replay of section 4 is owed behind the driver.
-- **The diagnostic-trace's own shape** is owed with the driver's Spec, which
-  is the document permitted to name it and the writer that makes it. This
-  section fixes what it is, whose it is, that it shares canonical form under
-  `weaver-trace-Spec`'s authority, and that the harness holds it opaque. What
-  it does not fix is how much of that crate's event vocabulary the diagnostic
-  writer reuses and how the residual readout sits beside it, which is the
-  Spec's election and the larger half of the work. **The route the
-  measurements take outward is owed in the same act**: they leave by admin,
-  per the operator's ruling of 2026-08-24, and no directive carries them
-  until that act writes one, a declared route with no far end being the
-  empty joint apex section 9 refuses. What travels that route is the relay's
-  material rather than the assembled diagnostic-trace, the assembly standing
-  at the far end by the paragraph above, and the act that writes the
-  directives is the act that fixes where the far end sits.
-- **The trace as an input format, settled 2026-08-24 and left here as the
-  obligation it puts on this crate.** This crate parses a record whose shape
-  is declared in `weaver-trace-Spec` section 3, and no code is shared between
-  the writer and this parser, which is the boundary working as intended and
-  is also two statements of one fact. The authority is `weaver-trace-Spec`
-  and a divergence is a defect in this crate, per G5. **The record carries no
-  version marker and needs none**, per `weaver-trace-PRD` section 6: the
-  schema extends and does not change, so every vintage is the one schema and
-  a reader keys on nothing. What that costs this crate is a rule its parser
-  owes rather than a question it was owed. **The parser skips a kind it does
-  not know and ignores a payload member it does not know, and lets neither
-  decide a grouping.** The replay's grouping runs on run and turn from the
-  envelope and on request-to-measurement pairing in landing order, none of
-  which an unrecognised record can move, so the rule is satisfiable here
-  rather than merely stated. **The other direction binds this parser harder**:
-  a record written before a member existed omits it, and the parser reads that
-  record without rejecting it and without deriving the missing member from the
-  members beside it, per the same section. This crate is the place that rule
-  costs something, the layer counts on the measurement payload being younger
-  than the traces this crate will be pointed at, and deriving a layer count
-  from a norm array is the arithmetic the counts were added to retire. A
-  replay over a record that predates them is a replay whose layer count is
-  unknown rather than one whose layer count is guessed. The same rules bind
-  the diagnostic-trace's own readers, that record being versionless on the
-  same terms and for the same reason.
+- **This crate's Spec** is owed, and the diagnostic-trace's shape lands there
+  because a Spec is the only document permitted to name it. This charter
+  fixes what the record is, whose it is, and that its canonical form is
+  `weaver-trace-Spec` section 2's under G5. What it does not fix is how much
+  of that crate's event vocabulary the diagnostic writer reuses and how the
+  residual readout sits beside it, which is the election and the larger half
+  of the work.
+- **The seam this crate presents to the harness** is owed with that Spec:
+  whether it mirrors `weaver-trace`'s receive and submit surface, so one call
+  site in the harness serves both mechanisms, or takes its own. Named as
+  owed in `weaver-harness-Spec` section 9 from the other side.
+- **The null replay** of section 4 is owed behind both, and it is the run
+  that certifies this mechanism rather than a property this charter can
+  assert.
+- **What this charter no longer carries.** The licence boundary, the capture
+  artifact, the instrument suite, and the parser's obligations moved to
+  `weaver-analysis-PRD` with the reading, on the operator's ruling of
+  2026-08-24 that split this leg in two. They are named here as departed
+  rather than dropped, because this document carried them for one day and a
+  reader of its history will meet them.

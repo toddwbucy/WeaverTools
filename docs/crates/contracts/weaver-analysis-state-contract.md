@@ -1,26 +1,40 @@
-# weaver-diagnostic / weaver-state - contract
+# weaver-analysis / weaver-state - contract
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-08-24, the seal ends the preload. Section 2 gains the
+**Revised:** 2026-08-24, second of this date, the sender is `weaver-analysis`.
+The operator's ruling of this date moved `weaver-diagnostic` inside the agent
+as the harness's third member, the mechanism the harness authors a
+diagnostic-trace through, which vacated the sending side of this seam: an
+inside crate cannot dial a door as an operator principal over the operator's
+own storage. `weaver-analysis`, chartered in the same act, takes the party and
+the document takes its name, a contract being named for its parties with the
+initiator first. Nothing of the mechanism moves - the door, the seal, the
+election, and the refusals are as they were, and the far side never knew which
+crate held the near one. The seam edge relocates to `weaver-analysis-PRD` with
+the party, the from side's charter carrying the edge.
+**Revised:** 2026-08-24, first of this date, the seal ends the preload. Section 2 gains
+the
 seal, one empty frame after the last distillate, because a close looks the
 same from a finished sender and a dying one and the replay ask of
 `weaver-harness-state-contract` answers at the seal, which must not happen
 over a prefix that looks whole. Section 5's dead-driver clause names the
 prefix unsealed. Landed with the replay loop's act, every party merging.
 **Date filed:** 2026-08-24
-**Document ID:** `weaver-diagnostic-state-contract`
+**Document ID:** `weaver-analysis-state-contract`
 **Editorial:** Per the Working Rules.
 
 ---
 
 ## Parties
 
-- **`weaver-diagnostic`, the driver and the only sender.** Parses the finished
+- **`weaver-analysis`, the driver and the only sender.** Parses the finished
   trace outside the agent, as an operator principal over the operator's own
   storage, and sends across this seam what the parse projects. Decides what to
   send from the record's content and the election it declares, and asks
-  nothing.
+  nothing. It is also what reads the diagnostic-trace the run produces, per
+  `weaver-analysis-PRD` section 1, so one crate stands at both ends of the
+  replay and neither end is inside the agent.
 - **`weaver-state`, the custodian.** The same member, the same charter, the
   same store, a second door. Receives the preload, holds it organized, and
   speaks at no time on this seam. What it holds here is answered on the other
@@ -41,15 +55,15 @@ refusal made structural: a driver pointed at a serving agent finds nothing to
 dial.
 
 ```graph
-node: weaver-diagnostic-state-contract
+node: weaver-analysis-state-contract
 kind: document
 
 edge: party
-from: weaver-diagnostic-state-contract
-to: weaver-diagnostic
+from: weaver-analysis-state-contract
+to: weaver-analysis
 
 edge: party
-from: weaver-diagnostic-state-contract
+from: weaver-analysis-state-contract
 to: weaver-state
 ```
 
@@ -84,15 +98,15 @@ and a term of its own would be a place for that claim to quietly fail.
 
 ```graph
 edge: draws
-from: weaver-diagnostic-state-contract
+from: weaver-analysis-state-contract
 to: election
 
 edge: draws
-from: weaver-diagnostic-state-contract
+from: weaver-analysis-state-contract
 to: distillate
 
 edge: draws
-from: weaver-diagnostic-state-contract
+from: weaver-analysis-state-contract
 to: canonical-event
 ```
 
@@ -101,7 +115,7 @@ to: canonical-event
 The second door on the state member: the preload traffic that flows when a
 diagnostic binding stands, the condition under which the door exists, what
 each party owes, how the seam fails, and what neither party may do. It is
-read alongside `weaver-diagnostic-PRD` and `weaver-state-PRD` section 3, and
+read alongside `weaver-analysis-PRD` and `weaver-state-PRD` section 3, and
 none of the three is complete without the others.
 
 ## 2. The traffic

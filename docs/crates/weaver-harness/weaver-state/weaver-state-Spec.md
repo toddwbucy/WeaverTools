@@ -11,7 +11,7 @@ query the recall's generalized past the four message kinds. One
 perturbation assertion lands.
 **Revised:** 2026-08-24, first of this date, the preload door takes its
 mechanics. Section 4
-gains the second door of `weaver-diagnostic-state-contract`: one landing
+gains the second door of `weaver-analysis-state-contract`: one landing
 path for both doors, which is the indistinguishability claim made
 structural, a kind-conditioned standing, and an inverted credential
 judgment. Two perturbation assertions land, the door's conditional standing

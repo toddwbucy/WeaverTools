@@ -5,6 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-24, third of this date, the diagnostic member composes
+inside. The entry below is reversed rather than amended and stands so the
+reversal is visible: `trace_sink` goes back to required under either kind,
+every binding declaring a sink and the kind selecting the mechanism the
+harness authors through rather than whether it authors, per
+`weaver-agents-PRD` section 6 as ruled this date. The optional count returns
+to three by that rule and one by the conditional one. `gate_instruction` is
+unaffected and stays conditional.
 **Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
 record. `trace_sink` becomes an option and joins `gate_instruction` under the
 same conditional rule, a serving binding requiring each and a diagnostic
@@ -404,7 +412,7 @@ pub struct AgentConfig {
     pub permission_mode: weaver_traits::PermissionMode,
     pub binding_kind: Option<BindingKind>,
     pub gate_instruction: Option<GateInstruction>,
-    pub trace_sink: Option<TraceSink>,
+    pub trace_sink: TraceSink,
     pub state_election: Option<StateElection>,
     pub loop_file: Option<PathBuf>,
 }
@@ -589,7 +597,7 @@ one struct's field list, and the refusal is against that surface rather than aga
 fixed type. The property below is unchanged by that and is why the rule exists.
 Charter section 5 rules that absence is never read as a default unless the charter
 says a field is optional and says what its absence means. Three fields are
-optional by exactly that rule's own terms, and two more are options at the
+optional by exactly that rule's own terms, and one more is an option at the
 parse for a different reason, named after them. `state_election` may be
 absent because `weaver-state-PRD` section 4 rules what absence means, the
 default election, the envelope of every kind and nothing more, so a deployment
@@ -615,19 +623,20 @@ section 2.1 rules what absence means, a serving binding, so a declaration
 written before the member existed still parses and still means what it meant,
 on the same footing as `loop_file` above. The enum is closed at two cases
 because `weaver-agents-PRD` section 6 names exactly two kinds, and a third
-kind is an apex act before it is a variant. `gate_instruction` and `trace_sink` are
-options for a reason the three above do not share: presence follows the
-resolved kind rather than standing alone, a serving binding requiring each and
-a diagnostic binding excluding each, per the contract's shape rule of
-2026-08-24 and `weaver-agents-PRD` section 6 as amended. A diagnostic binding
-declares no sink because it authors no event, which that section argues and
-this one represents. The parse cannot see a cross-field rule, checking each
-field alone, so the pair parses as options and the rule is admin's at
-inventory, before a process exists, per `weaver-admin-Spec` section 4. **An
-absent `trace-sink` is not a defaulted one**, and nothing here or downstream
-reads it as a path to invent: a serving binding whose declaration omits it is
-refused at inventory the way an omitted gate instruction is. Every other field
-is required.
+kind is an apex act before it is a variant. `gate_instruction` is an `Option`
+for a reason the three above do not share: presence follows the resolved kind
+rather than standing alone, a serving binding requiring it and a diagnostic
+binding excluding it, per the contract's shape rule of 2026-08-24. The parse
+cannot see a cross-field rule, checking each field alone, so it parses as an
+option and the rule is admin's at inventory, before a process exists, per
+`weaver-admin-Spec` section 4. **`trace_sink` is required under either kind**,
+and briefly was not: an act of 2026-08-24 made it conditional on the reading
+that a diagnostic binding authors nothing, and the operator's ruling of the
+same date replaced that reading with a composition, every binding authoring a
+record and the kind selecting the mechanism rather than the presence, per
+`weaver-agents-PRD` section 6. What the declaration names is a sink, and what
+the run writes into it follows the kind without the field moving. Every other
+field is required.
 The residual-readout election is what a builder will reach to default,
 to off, and it is exactly the one that must not: an operator who stated no readout
 has not thereby declined it, and admin refusing the load is how that operator

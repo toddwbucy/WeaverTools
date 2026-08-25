@@ -232,7 +232,7 @@ distillate's own shape, envelope and pairs, in landing order, no more
 replayable than it was distillable.
 
 **On a member standing with the preload door, a replay ask answers only at
-a seal.** The preload door of `weaver-diagnostic-state-contract` seals its
+a seal.** The preload door of `weaver-analysis-state-contract` seals its
 stream, and the ask parks until a seal has landed, whatever the door's
 transport is doing: not yet dialed, open mid-stream, or closed without the
 seal all park it alike. The last is the clause's point, because a dead

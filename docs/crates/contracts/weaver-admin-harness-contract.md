@@ -5,6 +5,12 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-24, third of this date, the diagnostic member composes
+inside. The entry below is reversed rather than amended and stands so the
+reversal is visible: the sink handle crosses the enter under either kind and
+its count is one, both kinds authoring a record, per `weaver-agents-PRD`
+section 6 as ruled this date. Admin's supply list and its sink guarantee lose
+the scoping with it.
 **Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
 record. The sink handle joins the gate instruction under the kind's scoping,
 section 3 carrying it where the kind declares a record and nowhere else, so the
@@ -230,7 +236,7 @@ Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run reference, the kind of the binding, the trace sink
-handle where the kind declares a record, the
+handle, the
 SPU instruction, the gate instruction where the kind declares a Gate, and the state
 election the tee applies. The
 instructions and the election are in the directive because the
@@ -296,16 +302,15 @@ closes when the organs that can raise a fault have charters naming what they rai
 and the first of those is `weaver-spu-PRD`. This document binds nothing of it, the
 shape now being the event kind's, per `weaver-trace-PRD` section 3.1.
 
-**The trace sink handle crosses once, in the enter exchange, and only where the
-kind declares a record.** It is not re-sent, not revoked, and not replaced. A
-serving harness that needs a handle it was not given has a failed load rather than
-a second request to make, because there is no exchange in which it asks for one.
-On a diagnostic binding no handle crosses at all, that kind authoring no event
-per `weaver-agents-PRD` section 6 as amended 2026-08-24, so the count of sink
-descriptors on an enter follows the kind: one for serving, none for diagnostic.
-**A handle arriving on a diagnostic enter is a defect in the sender**, refused
-the way any directive disagreeing with its own kind is, because a record nothing
-authors into is a sink held open for no writer.
+**The trace sink handle crosses once, in the enter exchange, under either
+kind.** It is not re-sent, not revoked, and not replaced. A harness that needs a
+handle it was not given has a failed load rather than a second request to make,
+because there is no exchange in which it asks for one. **The count is one and
+does not follow the kind**, both kinds authoring a record and the kind selecting
+the mechanism the harness authors through, per `weaver-agents-PRD` section 6 as
+ruled 2026-08-24. An act earlier that date had the handle crossing only for a
+serving binding, on a reading the ruling replaced, and this sentence is the
+correction rather than a second rule beside it.
 
 **No exchange carries a path.** Admin sends handles and the harness never learns a
 name, which is the handle discipline of `weaver-harness-PRD` section 5 stated as
@@ -343,16 +348,14 @@ this list.
 **Admin supplies** the session identity and the run reference for the run being
 entered, the kind of the binding, resolved to serving where the declaration is
 silent, the
-trace sink handle where the kind declares a record, the SPU instruction the
-fan-out admits,
+trace sink handle, the SPU instruction the fan-out admits,
 the gate instruction the fan-out starts where the kind declares a Gate, the
 state election the tee applies,
 resolved to the ruled default where the declaration is silent, and the intent
 to stop.
 
-**Admin guarantees** that a trace sink handle it passes refers to the sink the
-session's configuration declares, the guarantee reading vacuously on a kind that
-takes none, that the run reference distinguishes this run
+**Admin guarantees** that the trace sink handle it passes refers to the sink the
+session's configuration declares, that the run reference distinguishes this run
 from every other run of that session, distinctness being the guarantee rather
 than any particular rendering of it and the session possibly spanning agents,
 and

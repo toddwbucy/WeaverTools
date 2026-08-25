@@ -1,15 +1,15 @@
 # Diagnostic Replay Loop
 
-**Status:** MERGED v0.2, 2026-08-24. Revised the same date it was filed, the
-diagnostic binding writing no record: v0.1 had the run's record holding what
-diverged and had the loop's failures reaching the operator through an
-account, both of which assumed an authorship this kind of binding does not
-perform. The loop's outward voice is the answer it gives the driver, and the
-report's form is owed with the driver's Spec. The workflow document for the
-diagnostic replay loop, filed under the harness's `Loops/` container per the Document
-Format's container entry. It argues no edges of its own: the seams it walks
-are declared in the crate charters, and a graph block here would duplicate a
-record that already has a home.
+**Status:** MERGED v0.3, 2026-08-24. Third state on the day it was filed, and the middle
+one was wrong. v0.1 had the run's record holding what diverged. v0.2 removed the record
+on the reading that a diagnostic binding authors nothing. The operator's ruling of the
+same date restored the record as a different record: the run authors a diagnostic-trace
+through `weaver-diagnostic`, the harness's third member, and `weaver-analysis` is the
+crate outside that preloads the replay and reads what it produced. So v0.1's instinct
+was right and its record was the wrong one. The workflow document for the diagnostic
+replay loop, filed under the harness's `Loops/` container per the Document Format's
+container entry. It argues no edges of its own: the seams it walks are declared in the
+crate charters, and a graph block here would duplicate a record that already has a home.
 
 **Document ID:** `diagnostic-replay-loop`
 **Editorial:** Per the Working Rules.
@@ -18,7 +18,7 @@ record that already has a home.
 
 ## 1. What this loop is
 
-The diagnostic substrate's workflow, per `weaver-diagnostic-PRD` section 3:
+The diagnostic substrate's workflow, per `weaver-analysis-PRD` section 3:
 the loop that re-executes a finished session's forward passes under a
 diagnostic binding, with whatever passive readers the load elected observing.
 The null replay of that charter's section 4 is this loop run with no reader
@@ -44,10 +44,10 @@ The operator sequences three acts, and the loop is the third:
 
 1. **Load the diagnostic agent.** Admin stands the interior without Gate and
    the state member with its preload door, per `weaver-agents-PRD` section 6
-   and `weaver-diagnostic-state-contract`. The run opens, the loop takes its
+   and `weaver-analysis-state-contract`. The run opens, the loop takes its
    seat, and its first act is the replay ask below, so the agent at this
    moment is waiting on custody rather than idle.
-2. **Run the driver.** `weaver-diagnostic` parses the operator-held record
+2. **Run the driver.** `weaver-analysis` parses the operator-held record
    outside the agent, dials the preload door as an operator principal,
    sends the election and the distillates, and seals. The election elects
    what the replay needs: the message kinds, `model.request` for each
@@ -122,12 +122,13 @@ The charter's section 4 procedure, as this loop performs it:
    charter's section 4 scoping.
 
 **A failed certification refuses the readout and keeps the run.** What was
-attempted and where it diverged is the driver's to hold and report, not a
-record's: this run authors no events, per `weaver-agents-PRD` section 6 as
-amended 2026-08-24, so there is no bracket for a divergence to land in and
-the loop's whole outward voice is the answer it gives the driver. The form
-that report takes is owed with the driver's Spec, and the capture artifact
-act shapes what an artifact would have carried. An uncertified replay
+attempted and where it diverged lands in the run's own record, the
+diagnostic-trace this run authors through `weaver-diagnostic`, per
+`weaver-agents-PRD` section 6 as ruled 2026-08-24. `weaver-analysis` reads it
+off the sink and judges there. An earlier form of this paragraph had the run
+authoring nothing and the divergence reaching the driver as an answer, which
+the same date's ruling replaced. The capture artifact act shapes what an
+artifact would have carried. An uncertified replay
 producing no artifact is the no-second-instrument rule's floor case: not
 even the first instrument reads from a replay that did not certify.
 
@@ -140,16 +141,20 @@ even the first instrument reads from a replay that did not certify.
   by outcome: none is an empty replay. An empty session is a sealed answer
   carrying zero events and fails input identity in the ordinary way, where
   an absent answer is no answer at all, so the loop ends its run having
-  replayed nothing and answers the driver saying so, which is how the
-  operator learns it, before unloading and retrying. The account is the
-  driver's rather than a record's, this run authoring nothing. A dead
-  driver's prefix needs no cleanup, the next preload's opener retiring it.
+  replayed nothing and the account says so in the diagnostic-trace, which is
+  how the operator learns it, before unloading and retrying. A dead driver's
+  prefix needs no cleanup, the next preload's opener retiring it.
 - **The holdings fail input identity.** The loop refuses at certification
   step one, named above.
-- **The decode seam refuses mid-replay.** The loop ends the run and answers
-  the driver with where it stopped. The no-write guarantee is the third refusal's and
-  scopes to what outlives the run: no durable record, holding, or artifact
-  takes a byte from the partial work. The decode context the forwards
+- **The decode seam refuses mid-replay.** The loop ends the run with the
+  account of where in the record it authors. **The no-write guarantee is the
+  third refusal's and does not reach that record**, which is the point of
+  authoring one: a partial diagnostic-trace is the honest account of a replay
+  that stopped, bracketed and readable, and refusing to write it would leave
+  the operator with a silence to interpret. What the guarantee scopes to is
+  what a later reading would rest on: no holding and no artifact takes a byte
+  from the partial work, and `weaver-analysis` produces nothing downstream of
+  a replay that did not certify. The decode context the forwards
   mutated and whatever measurement work was in flight are transient, die
   with the run at the leave, and a retry is a fresh load meeting them
   never, which is the same freshness the certification's two-load split
@@ -158,9 +163,10 @@ even the first instrument reads from a replay that did not certify.
 ## 5. What this document does not carry
 
 The capture artifact - identity, custody, dataset shape, quota - is
-`weaver-diagnostic-PRD` section 6's owed act, and this loop writes no
+`weaver-analysis-PRD` section 4's owed act, and this loop writes no
 artifact until that act lands. The re-feed exchange is the decode seam's
 owed act, named in section 2. The driver's own shape is
-`weaver-diagnostic`'s Spec, owed. This document is the workflow that binds
+`weaver-analysis`'s Spec, owed, and the record's shape is
+`weaver-diagnostic`'s, owed beside it. This document is the workflow that binds
 them, and it moves when any of them lands, per the Working Rules on
 documents that cite owed acts.
