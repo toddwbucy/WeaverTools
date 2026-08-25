@@ -4,13 +4,17 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
-**Revised:** 2026-08-24, the record states its compatibility. Section 3
-represents charter section 6's guarantee as an absence, the envelope carrying
-no version member, and states what growth may do and may not do without an apex
-act first: a variant added beside the ones standing is extension, and a rename,
-a retirement, a member's type changed, or a member's meaning changed is the
-breaking change. The instrument is review rather than perturbation because no
-run of this crate can fail on it, the damage landing on a reader of an older
+**Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
+charter section 6's guarantee as an absence, the envelope carrying no version member,
+and represents the both-directions half as `Option` with `skip_serializing_if` on an
+added member, so a record written before the member existed and a run with nothing to
+report take one shape. The word rename is kept for the breaking change alone, a
+variant's wire spelling being what an addition carries, the two senses having stood one
+word apart in a first drafting of this entry's act, and states what growth may do and
+may not do without an apex act first: a variant added beside the ones standing is
+extension, and a rename, a retirement, a member's type changed, or a member's meaning
+changed is the breaking change. The instrument is review rather than perturbation
+because no run of this crate can fail on it, the damage landing on a reader of an older
 record, which is stated rather than left as a gap in the enforcement table.
 **Revised:** 2026-08-22, fourth of this date, the classify outcome loses its
 refusal. `ClassifyOutcome` becomes `ClassifyScored`, a struct rather than an
@@ -422,11 +426,24 @@ vintage of the record is the one schema met at a different moment and a reader
 needs nothing to key on, so a version member would be a field whose only reader
 is unbuilt. This section represents that as an absence in `Envelope` above,
 which is the whole of it on the writing side. Growth is a variant added with
-its own rename beside the ones standing, and the count above moves in the act
-that adds it. What this Spec may never do without an apex act first is rename a
-variant, retire one, change a payload member's type, or change what a member
-already there means, each of those being the breaking change apex section 3
-names rather than the extension section 9 permits.
+its own wire spelling beside the ones standing, and the count above moves in
+the act that adds it. The word rename is kept for the breaking change alone
+here, the attribute that carries a variant's wire spelling being called a
+rename two paragraphs above and the two senses being one word apart otherwise.
+What this Spec may never do without an apex act first is rename a variant,
+retire one, change a payload member's type, or change what a member already
+there means, each of those being the breaking change apex section 3 names
+rather than the extension section 9 permits.
+
+**A member added to a payload is optional at the read, and the act adding it
+says what its absence means**, per charter section 6's both-directions rule. On
+the writing side that is `Option` with `skip_serializing_if` where the member
+has nothing to report for a run, matching the treatment `payload` and the
+envelope's `turn` already take, so a record written before the member existed
+and a record whose run had nothing to report are the same shape on the wire and
+no reader has to tell them apart. What this Spec does not do is let a default
+stand in silently: an absent member reaches a reader as absent, and the charter
+forbids recovering it by deriving it from the members beside it.
 
 **The instrument is review rather than perturbation, and the reason is worth
 stating.** No run of this crate can fail because a later act reshaped a kind,

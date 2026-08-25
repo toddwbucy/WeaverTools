@@ -16,7 +16,10 @@ reader of this crate meets them rather than only in a section about a feature
 that does not exist. Three things it settles: a reader skips a kind it does not
 know and ignores a payload member it does not know and lets neither decide a
 grouping, adding a member to an existing payload is extension and not
-reshaping, which this corpus has already done, and no version member is carried
+reshaping, which this corpus has already done, and the guarantee runs both
+directions so an added member is optional at the read with its absence given a
+meaning by the act that adds it, never recovered by deriving it from the
+members beside it, and no version member is carried
 because one whose only reader is unbuilt is the reserved slot apex section 9
 forbids. The act that first breaks the schema is the act that adds the marker.
 This section is named authoritative for the claim, per G5. Raised by
@@ -1172,6 +1175,30 @@ figures already standing and displacing none. Reshaping is renaming a member,
 changing its type, removing it, or changing what one already there means. The
 line is drawn because adding a member feels smaller than adding a kind and is
 the same operation seen from a reader's side.
+
+**The guarantee runs both directions, and the second one is where the damage
+lands.** The paragraph above covers an old reader meeting a new record. The
+other case is a current reader meeting an old record, where the member it
+expects is **absent**, and the two are not symmetric: ignoring something extra
+costs a reader nothing, while a member it counted on and did not get is a hole
+it has to do something about. So an added member is **optional at the read, and
+the act that adds it says what its absence means**, on exactly the rule
+`weaver-types-Spec` section 2 already runs for the declaration: absence is
+never read as a default unless the document says a field may be absent and says
+what the absence signifies. A reader may not reject a record for a member added
+after it was written, that record being valid under the schema it was written
+under and the schema being one.
+
+**The absence must never be papered over by derivation**, which is the specific
+error this project has already made once. The layer-count defect had a reader
+recovering the layer count by dividing the norm array by the token count plus
+one, an arithmetic that held only while every forward tapped every layer, and
+the counts were added precisely so nothing had to infer it. A reader that meets
+a record without those counts has one honest move, which is to say it does not
+know, and one silent failure, which is to infer. **Deriving a missing member
+from the members around it is the reshaping this section forbids, performed by
+the reader instead of the writer**, and it turns an old record into a wrong
+answer rather than a partial one.
 
 **No version member is carried, and carrying one today would be the error apex
 section 9 names.** A version whose only reader is unbuilt is a reserved slot,
