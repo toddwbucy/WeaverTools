@@ -1,6 +1,12 @@
 # Diagnostic Replay Loop
 
-**Status:** MERGED v0.3, 2026-08-24. Third state on the day it was filed, and the middle
+**Status:** MERGED v0.4, 2026-08-25. Section 3's input identity gains the tee's
+election, per issue 347: it is the rule that decided what the original agent's state
+held, so a replay preloaded under a different one rebuilds a session that never ran, and
+a record written before that member existed fails input identity rather than replaying
+under a guess.
+
+**v0.3, 2026-08-24.** Third state on the day it was filed, and the middle
 one was wrong. v0.1 had the run's record holding what diverged. v0.2 removed the record
 on the reading that a diagnostic binding authors nothing. The operator's ruling of the
 same date restored the record as a different record: the run authors a diagnostic-trace
