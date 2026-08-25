@@ -4,10 +4,21 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, fifth of this date, the census catches up with the
+records. Section 10 read ten of thirty-one carrying eleven `grounds` edges,
+thirty-two records by tag, and twenty-one claims grounding in no invariant. The
+file holds thirty-four records, eleven of them carrying twelve edges, and
+twenty-three ungrounded, and the tag census runs fifteen review, fourteen
+perturbation, three manifest, two compile pin. **The arrears predate the act
+that found them** - the banner claimed a restatement to thirty-two that section
+10 never received - which is why the act adding a record is the act that owes the
+sweep. Measured from the file's own graph blocks rather than counted by hand.
+The new record also moves below the prose that argues it, per Document Format
+section 6, and the sentence its insertion had split is rejoined.
 **Revised:** 2026-08-25, fourth of this date, the assertion arrives with its
 clause. `admin-preload-name-follows-the-kind` was filed in the charter by the
 act of this date and belongs here, an assertion being a claim a Spec makes per
-the Document Format. It sits under section 6's naming clause with its
+the Document Format. It sits under section 6's vector clause with its
 instrument, and it is half of `state-preload-door-stands-only-diagnostic`, the
 member's side asserted in `weaver-state-Spec` section 4.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
@@ -971,7 +982,18 @@ door admits. **The fourth is present only where the resolved kind is
 diagnostic**, per `weaver-agents-PRD` section 6 as ruled 2026-08-24, and its
 absence is a serving load rather than a defect: the member binds the preload
 name only where this vector carries one, so a serving binding stands one door
-by the value not being there.
+by the value not being there. The kind is section 4's inventory's, resolved
+once and read here, which is the same single-resolution rule the enter
+payload's `EnterBinding` follows in section 7 - the verb and the load cannot
+resolve differently because only one site resolves.
+
+**The instrument is perturbation, and the claim is this site's half of a
+two-sided one.** A serving inventory driven through here puts three values on
+the vector and a diagnostic one puts four, confirmed by watching a serving load
+stand a door once the kind's read is removed. The other half is the member's:
+`state-preload-door-stands-only-diagnostic`, asserted in `weaver-state-Spec`
+section 4, holds that the member binds no name it is not given. Neither record
+stands for the other's behaviour, which is why both exist.
 
 ```graph
 node: admin-preload-name-follows-the-kind
@@ -982,16 +1004,6 @@ edge: asserts
 from: weaver-admin
 to: admin-preload-name-follows-the-kind
 ```
-
-The instrument is perturbation: a serving inventory driven through this site
-puts three values on the vector and a diagnostic one puts four, confirmed by
-watching a serving load stand a door once the kind's read is removed. It is
-half of `state-preload-door-stands-only-diagnostic`, which
-`weaver-state-Spec` section 4 asserts from the member's side, and neither
-record stands for the other's behaviour. The kind is section 4's inventory's, resolved
-once and read here, which is the same single-resolution rule the enter
-payload's `EnterBinding` follows in section 7 - the verb and the load cannot
-resolve differently because only one site resolves.
 
 **Both names stand beside the coordination socket, and the derivation is shared
 rather than told.** Each is the validated agent name's runtime directory with a
@@ -1546,12 +1558,12 @@ is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Ten of the
-thirty-one carry a `grounds` edge and those ten carry eleven edges, one
+**Which invariant each claim serves, and why most serve none.** Eleven of the
+thirty-four carry a `grounds` edge and those eleven carry twelve edges, one
 record grounding in two invariants. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
-and three to `axiom-harness-integrates-by-the-loop`.
+and four to `axiom-harness-integrates-by-the-loop`.
 **The test applied is whether the axiom is the reason the claim exists, or
 whether the claim is a precondition of the axiom's own stated reason,** per
 Document Format section 4. Remove the socket invariant and this crate has
@@ -1562,7 +1574,7 @@ nothing to bound, so those six ground in it. Remove it and the log is still
 NDJSON, the FIFO still opens nonblocking, the inventory still repairs nothing,
 and the identity is still built from the validated name, so those ground in
 nothing.
-**Twenty-one claims grounding in no invariant is the expected result and not a
+**Twenty-three claims grounding in no invariant is the expected result and not a
 gap**, per Document Format section 4: most of what this Spec elects is a
 rendering, a mode, an ordering, or a route, and representation is what the
 invariants are not about.
@@ -1633,8 +1645,8 @@ domains.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-two records in all,
-fifteen tagged for review, twelve for perturbation, three for the manifest,
+would sit apart from the prose that earns it. Thirty-four records in all,
+fifteen tagged for review, fourteen for perturbation, three for the manifest,
 and two for a compile pin. The residency record moved from review to
 perturbation on 2026-08-06, when the code act gave it a test. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec

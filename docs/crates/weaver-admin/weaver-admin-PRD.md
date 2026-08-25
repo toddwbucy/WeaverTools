@@ -282,7 +282,7 @@ a record of its own, so a perturbation of either side has something to fail
 against rather than one crate's test standing for two crates' behaviour. **The
 record is the Spec's**, per the Document Format's definition of an assertion as
 a claim a Spec makes, and it sits in `weaver-admin-Spec` section 6 under the
-clause that gives the name.
+vector clause, which is the clause the claim is about.
 
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its
