@@ -4,7 +4,7 @@
 
 **Revised:** 2026-08-24, the second door stands. Section 3 gains the preload
 door, per the operator's ruling of this date and the taxonomy promotion:
-`weaver-diagnostic-state-contract`, standing only under a diagnostic binding,
+`weaver-analysis-state-contract`, standing only under a diagnostic binding,
 admitting the operator principal and refusing the agent, carrying the first
 door's distillate shapes drawn rather than redefined. Section 5's
 who-else-may-ask cell is unchanged, the driver never asking. The opener
@@ -138,7 +138,7 @@ descriptor travels, and the credential's exact judgment are the contract's
 mechanics, deliberately absent here.
 
 **A second door stands on this member as of 2026-08-24, and only under a
-diagnostic binding.** `weaver-diagnostic-state-contract` names it, initiator
+diagnostic binding.** `weaver-analysis-state-contract` names it, initiator
 first: the diagnostic driver preloads the holdings from a finished trace it
 parsed outside the agent, and this member receives on a second socket what a
 live tee would have fed on the first, the same distillate shapes drawn from

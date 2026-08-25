@@ -73,8 +73,8 @@ harness turn out to need, never carried and pruned. `weaver-trace` is the except
 **designed** against what the memory leg will later read, because demand-derivation
 under-builds a deliverable.
 
-Out entirely: the memory leg in any form, `weaver-memory`, `weaver-analysis`,
-`weaver-train`, `weaver-frontend`, and `weaver-interface`. The composition root is
+Out entirely: the memory leg in any form, `weaver-memory`, `weaver-train`,
+`weaver-frontend`, and `weaver-interface`. The composition root is
 deliberately **new code** — it is where the session boundary gets enforced, and where quarry
 issue #350 (the agent worker implements no task executor) gets solved rather than
 migrated.

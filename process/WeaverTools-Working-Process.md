@@ -520,7 +520,13 @@ seven charters, seven Specs, the contract layer, and the assertion records under
 their instruments. **Two crates were chartered since**, `weaver-state` and
 `weaver-internal`, both on
 2026-08-18, both ratified under the per-charter rule, and **both joined the apex's
-enumeration on 2026-08-23 when it was corrected to nine.** Phase two ran
+enumeration on 2026-08-23 when it was corrected to nine.** **The roster reached
+ten on 2026-08-24**, when `weaver-diagnostic` was chartered as a consumer
+outside the boundary and the operator's later ruling of the same date moved it
+inside as the harness's third member, the mechanism the harness authors a
+diagnostic-trace through. `weaver-analysis` was chartered beside it in that act
+and does not enter the roster, holding the position outside that
+`weaver-diagnostic` vacated. Phase two ran
 on the HADES server per `HANDOFF-2026-08-04-hades-graph-build`, the graph stood up
 from the merged set, and the set-level mark rides the apex's system record.
 

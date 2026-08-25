@@ -13,6 +13,18 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-24, fifth of this date, the diagnostic member composes
+inside. The third entry below is reversed rather than amended and stands so
+the reversal is visible. The operator's ruling of this date placed
+`weaver-diagnostic` inside the agent as the harness's third member, the
+mechanism the harness authors a diagnostic-trace through, and chartered
+`weaver-analysis` outside as the consumer that preloads the replay and reads
+what it produced. Section 6 now says the kind selects a composition of members
+rather than a different program, `weaver-state` standing under both and the
+kind swapping the authoring mechanism, so a diagnostic binding writes a record
+rather than none and declares a sink like any other. Section 0's roster goes
+to ten with `weaver-diagnostic` entering by the inside rule, `weaver-analysis`
+staying out by the same rule, and the preload seam naming its new dialer.
 **Revised:** 2026-08-24, fourth of this date, the record states its
 compatibility. Section 3 promised a version every consumer keys on and nothing
 in the record carried one, which read as a mechanism where there was none. The
@@ -136,23 +148,34 @@ boundary refines none of them.** A consumer holds no organ, holds no two-initiat
 channel with the harness, and stands in no position the invariants describe. So the
 document governs a domain, and the name it carried claimed more.
 
-The domain it governs holds nine crate PRDs:
+The domain it governs holds ten crate PRDs:
 
 ```
 weaver-admin    weaver-harness   weaver-spu      weaver-gate
 weaver-trace    weaver-traits    weaver-types    weaver-state
-weaver-internal
+weaver-internal weaver-diagnostic
 ```
 
-**`weaver-state` and `weaver-internal` join the roster in this act.** Both were
+**`weaver-state` and `weaver-internal` joined the roster on 2026-08-23.** Both were
 chartered 2026-08-18 and both are ratified on their own, per the per-charter rule of
-2026-08-23. The enumeration lagged them and this closes that lag.
+2026-08-23. The enumeration lagged them and that act closed the lag.
+
+**`weaver-diagnostic` joins it 2026-08-24**, on the operator's ruling of that
+date, which moved it inside as the harness's third member, the mechanism the
+harness authors a diagnostic-trace through, so it enters this roster by the
+rule below rather than by an exception to it. Its charter was filed the same
+date, on a ruling of 2026-08-23 that chartered it as a consumer outside the
+boundary, so the ruling and the document are a day apart and neither is the
+other. `weaver-analysis` was chartered
+in the same act and does not enter, holding the position outside that
+`weaver-diagnostic` vacated.
 
 **Crates outside the agent boundary do not enter this roster and do not refine this
 document.** They parent to the suite. A serving binding is reached only across the two
 external contracts of 2026-08-01, and that boundary does not move. A diagnostic
-binding adds one seam, the preload of `weaver-diagnostic-state-contract`, per the
-operator's ruling of 2026-08-24: the ruled seam reaches the state member alone,
+binding adds one seam, the preload of `weaver-analysis-state-contract`, dialed by
+`weaver-analysis` from outside, per the operator's rulings of 2026-08-24: the
+ruled seam reaches the state member alone,
 checked against the operator principal, and exists only where the load declared the
 diagnostic kind, so the serving membrane is exactly what it was. What governs outside
 crates at the suite level is not yet written, and naming that gap is more honest than
@@ -164,10 +187,11 @@ kind: system
 tag: ratified
 ```
 
-**The graph does not yet carry the domain level this document now names, and that
-is stated rather than quietly deferred.** `WeaverTools` remains the one `system`
-node, the seven domain roots parent to it, and `weaver-trace` and `weaver-state`
-parent to `weaver-harness` as members. There is no `weaver-agents` node.
+**The graph does not yet carry the domain level this document now names, and that is
+stated rather than quietly deferred.** `WeaverTools` remains the one `system` node, the
+seven domain roots parent to it, and `weaver-trace`, `weaver-state`, and
+`weaver-diagnostic` parent to `weaver-harness` as members. There is no `weaver-agents`
+node.
 
 Inserting one needs a decision this document cannot take alone. Document Format
 section 3 declares exactly one `system` node, gives `crate` to "every crate,
@@ -736,33 +760,51 @@ structural reason statefulness is an extension rather than a re-architecture.
 `weaver-trace` is not a party to the transition. It is linked by the harness
 under a contract as a member of the harness's domain, per 5.1's link case, so it
 cannot be a socket peer that confirms anything. It is the mechanism the harness
-records through, during the load and for the whole of the agent's residency
-thereafter.
+records through **on a serving binding**, during the load and for the whole of
+the agent's residency thereafter. On a diagnostic binding that place is
+`weaver-diagnostic`'s, per the composition below, and the non-party argument
+above reads the same for either: a linked member confirms no transition.
 
 **An agent stands up under a binding, and the binding declares its kind.** The
 same weights serve more than one purpose, and which components a load brings up
 follows from the purpose rather than from the weights. A **serving** binding
 stands up the whole interior and takes work from outside. A **diagnostic**
-binding stands up the interior without Gate and without the record, for the
-replay of section 8, where a driver outside the agent drives the SPU over a
-record the operator holds. The
+binding stands up the interior without Gate, for the replay of section 8,
+where a driver outside the agent preloads a record the operator holds and the
+interior replays it. The
 kind is declared at the load and never entered afterward. Nothing puts a loaded
 agent into a kind, no verb moves between kinds, and an agent that is to serve
 and an agent that is to be replayed are two loads rather than two states of
 one. What that buys is that the wrong arrangement is unrepresentable rather
 than guarded against, there being no transition for a guard to sit on.
 
-**A diagnostic binding writes no record, because a replay performs no cognition
-of its own.** The trace is the record of what an agent did, authored by the
-harness as its sole writer and bracketed by the turn, and a replay does none of
-that: it re-executes a token path some record already holds, over prompts that
-arrive preloaded rather than raised. A replay that wrote a trace would leave the
-corpus holding two records of one turn, alike in kind and alike in shape, with
-nothing in either saying which was lived and which was re-executed. That is
-worse than an absence, because the second one reads as evidence. What the run
-produces in its place is the diagnostic-trace, a measurement of a turn rather
-than a record of one, which belongs to `weaver-diagnostic` and leaves by admin
-per `weaver-diagnostic-PRD` section 6.
+**The kind selects a composition of members rather than a different program**,
+and that is the property this project was built to have. The harness is the
+sole writer under either kind and `weaver-state` stands under either, composed
+differently: distilled into and asked of under a serving binding, preloaded and
+walked positionally under a diagnostic one. What the kind swaps is the
+mechanism the harness authors through. A serving binding composes
+`weaver-trace` and writes a trace, and a diagnostic binding composes
+`weaver-diagnostic` and writes a diagnostic-trace, each into the sink admin
+opened for it. Neither is an absence and neither is a special case in a turn's
+path, the choice being made once at the load and never entered afterward.
+
+**A diagnostic binding writes no trace, and the distinction is not a
+quibble.** A replay performs no cognition of its own: it re-executes a token
+path some record already holds, over prompts that arrive preloaded rather than
+raised. A replay that wrote a *trace* would leave the corpus holding two
+records of one turn, alike in kind and alike in shape, with nothing in either
+saying which was lived and which was re-executed, and that is worse than an
+absence because the second one reads as evidence. What it writes instead is a
+record that says what it is by being a different record, one whose every event
+came from a replay rather than from a turn. **The ground is provenance and not
+any member it carries.** The residual readout is a production instrument, per
+section 8, elected at the load under either kind, and a serving record carries
+it whenever a serving load elects it, per section 3 step 6. A diagnostic-trace
+is dense with it because a replay is run to be measured, and that is a fact
+about why the run happened rather than a member only one record may hold. **One
+begets the other**, per `weaver-diagnostic-PRD` section 6, so the two stand in
+a parent relation rather than side by side.
 
 **The rules below measure a load against the components its binding declared.**
 Measured against a fixed set they say a diagnostic binding cannot complete: a
@@ -789,9 +831,11 @@ Lifecycle rules:
 - A serving binding starts Gate last and stops Gate first, and a Gate process
   never outlives the worker interior it protects. A diagnostic binding declares
   no Gate, so it holds no such process and the ordering has nothing to order.
-- A serving binding declares a trace sink and the harness authors the run's
-  record into it. A diagnostic binding declares none, so no sink handle crosses
-  the enter and the run authors no event at all.
+- Every binding declares a sink and the harness authors the run's record into
+  it. Which record it is follows the kind: a serving binding authors a trace
+  through `weaver-trace`, and a diagnostic binding authors a diagnostic-trace
+  through `weaver-diagnostic`. The sink handle crosses the enter under either
+  kind, so its count is one and does not vary.
 - No lifecycle verb auto-chains another.
 - A GPU conflict is rejected at model admission, by the SPU, until the operator
   explicitly unloads the occupant. Admission refuses and never evicts, so no load,
@@ -803,15 +847,18 @@ Lifecycle rules:
   loaded-and-idle. It does not unload the agent.
 
 **What a diagnostic binding takes in place of work is settled by the
-operator's ruling of 2026-08-24, and the papers are owed.** The work-ingress
+operator's ruling of 2026-08-24, and the papers have landed.** The work-ingress
 rule above is untouched and stands as written. A replay does present prompts,
 and they cross a seam of their own rather than arriving as material declared
-at the load: the preload of `weaver-diagnostic-state-contract`, on the state
+at the load: the preload of `weaver-analysis-state-contract`, on the state
 member, checked against the operator principal, per section 0's boundary
 sentence as amended the same date. The contract and the state charter's
-second door are the drawing act, owed and named in
-`weaver-diagnostic-PRD` section 6, and until they land the seam is ruled
-rather than open. An earlier form of this paragraph held the question open
+second door landed in the seam-papers act of 2026-08-24 and the seam is open
+rather than ruled. Its near side is `weaver-analysis`, whose charter carries
+the edge from the initiating side. An earlier form of this sentence called
+the papers owed, which they were for part of one day, and pointed at
+`weaver-diagnostic-PRD` section 6 for a seam that section now disclaims
+holding. An earlier form of this paragraph held the question open
 on purpose, so that wording would not settle what the drawing has to decide,
 and the ruling is what closed it rather than a drafting choice.
 
@@ -892,14 +939,18 @@ never happened. A deployment claiming only re-analysis owes nothing beyond
 the record itself, because it claims nothing more.
 
 Custody places the replay driver outside the agent. The agent must not own or
-even read its own trace, so a tool that reads the operator-held stream and drives
-the SPU runs as an operator principal, over the operator's own storage. This is
-structural, not policy.
+even read its own trace, so the tool that reads the operator-held stream runs as
+an operator principal, over the operator's own storage. This is structural, not
+policy. **That tool reaches no device.** It preloads what it read across the one
+ruled seam and the interior replays it, per section 6 as ruled 2026-08-24 and
+`weaver-analysis-PRD` section 3. An earlier form of this paragraph had the tool
+driving the SPU, which would have given a crate outside the agent a path across
+a process line into an organ, the arrangement section 5.1 exists to forbid.
 
 **The load that carries this arrangement is the diagnostic binding of section
 6.** This section places the driver outside the agent and leaves the agent's
 own shape to the lifecycle, and the diagnostic binding is that shape: no Gate
-stands, so the record the driver feeds is the only source of prompts, by
+stands, so the record the driver preloaded is the only source of prompts, by
 construction rather than by nobody dialing a live ingress.
 
 ## 9. Out of scope, and how it returns

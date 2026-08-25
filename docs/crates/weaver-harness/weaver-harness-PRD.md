@@ -8,6 +8,22 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-24, the third member is named and its contract owed.
+`weaver-diagnostic` is the mechanism this crate authors a diagnostic-trace
+through, per `weaver-agents-PRD` section 6 as ruled this date, linked on the
+trace's own ground: apex section 5.1 forbids a behavior reached by path
+dependency across a process line, not a crate calling a crate inside one
+binary, and this call crosses no process line. Its seam record tagged `link`
+is not declared yet, `weaver-harness-diagnostic-contract` being owed and a
+`via` naming a document that does not exist being worse than the absence, so
+the dependency surface reads against three internal crates until the contract
+lands. The paragraph sits below the second member's so the ordinals read in
+order. **This entry was amended twice before it merged** and is one entry
+rather than three: an earlier drafting grounded the link on the mechanism not
+being asked to do anything, which unmakes the seam Document Format section 4
+defines, and a second entry describing that correction is folded in here. The
+accumulate rule keeps a reader from meeting a changed claim without notice,
+and no reader met either draft.
 **Revised:** 2026-08-22, the harness names the elision's span. The clause
 placing the flush decision here gains the elision beside it, per
 `weaver-spu-PRD` section 13.13: the same division of cognition from
@@ -421,9 +437,11 @@ operator's tooling keys on the fault fields and comes back by running a verb, pe
 `weaver-admin-operator-contract` section 6.
 
 The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and links
-`weaver-trace` as a member of its own domain under a contract. It links no other
-internal crate. The three are one dependency surface and two classifications, which is
-what the block below projects: two `floor-link` records and one `seam`. Calling all
+`weaver-trace` as a member of its own domain under a contract. **It links no other
+internal crate today**, the third member of the paragraph below joining that list in
+the act that writes its contract. The three are one dependency surface and two
+classifications, which is what the block below projects: two `floor-link` records
+and one `seam`. Calling all
 three floor vocabulary would use the word `weaver-agents-PRD` section 5.1 reserves for
 what every domain draws from and no domain contains. That is the whole
 dependency surface, and it is checkable against this list.
@@ -442,6 +460,25 @@ to: weaver-state
 via: weaver-harness-state-contract
 tag: socket
 ```
+
+**A third member joins the trace and is linked the same way, and its contract
+is owed.** `weaver-diagnostic` is the mechanism this crate authors a
+diagnostic-trace through, per `weaver-agents-PRD` section 6 as ruled
+2026-08-24, standing to a diagnostic binding as `weaver-trace` stands to a
+serving one. It is linked rather than dialed on the trace's own ground: apex
+section 5.1 forbids a behavior reached by path dependency **across a process
+line**, not a crate calling a crate inside one binary, and this call crosses no
+process line. The harness does ask this crate to record, which is what makes
+the record a `seam` rather than a `floor-link`, per Document Format section 4,
+whose own example is this pair's sibling. **Its `seam` record tagged
+`link` is not declared here yet**, because such a record carries a `via` and
+`weaver-harness-diagnostic-contract` is owed: the surface that contract
+would fix is the open election of `weaver-harness-Spec` section 9, held with
+the member's Spec. A `via` naming a document that does not exist is worse
+than the absence, so the edge lands in the act that writes the contract, and
+the dependency-surface claim above reads against three internal crates until
+it does, which is also what the manifest holds, so the graph and the build
+agree at three today and go to four in one act.
 
 ```graph
 edge: seam
@@ -467,7 +504,12 @@ declared here on any organ's behalf. The state seam is a member seam rather
 than an organ channel, the asking side declares, and its record stands in the
 dependency block above with `weaver-harness-state-contract` as its `via`. A
 seam without the contract that governs it fails G3 rather than passing
-incompletely, and none is in that state now: the boundary seam, named turn
+incompletely, and none is in that state now, **which is true by the diagnostic
+member's edge being undeclared rather than by the relation being absent**: that
+member is linked and asked to record, and its record waits on
+`weaver-harness-diagnostic-contract` per the paragraph above, so the day the
+contract lands the edge and its `via` land together and this sentence still
+holds. The seams that do stand: the boundary seam, named turn
 ingress until the egress ruling gave it a second direction, resolves through
 `weaver-harness-gate-contract` as of the gate pair's merge on 2026-08-01, and
 the decode seam through `weaver-harness-spu-contract`.

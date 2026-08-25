@@ -9,23 +9,22 @@ than waiting on the set. The set-wide act of 2026-08-04 established the pattern 
 conforms to.
 
 **Revised:** 2026-08-24, second of this date, the record states its
-compatibility. Section 6 gains the guarantee that makes the record readable
-across vintages and the argument for why it carries no version, landing apex
-section 3's breaking-change sentence and apex section 9's additive rule where a
-reader of this crate meets them rather than only in a section about a feature
-that does not exist. Three things it settles: a reader skips a kind it does not
-know and ignores a payload member it does not know and lets neither decide a
-grouping, adding a member to an existing payload is extension and not
-reshaping, which this corpus has already done, and the guarantee runs both
-directions so an added member is optional at the read with its absence given a
-meaning by the act that adds it, never recovered by deriving it from the
-members beside it, and no version member is carried
-because one whose only reader is unbuilt is the reserved slot apex section 9
-forbids. The act that first breaks the schema is the act that adds the marker.
-This section is named authoritative for the claim, per G5. Raised by
-`weaver-diagnostic-PRD` section 6's input-format cell, which closes in the same
-act. The entry below gains the ordinal the convention asks for, which it was
-filed without.
+compatibility. Section 6 gains the guarantee that makes the record readable across
+vintages and the argument for why it carries no version, landing apex section 3's
+breaking-change sentence and apex section 9's additive rule where a reader of this crate
+meets them rather than only in a section about a feature that does not exist. Three
+things it settles: a reader skips a kind it does not know and ignores a payload member
+it does not know and lets neither decide a grouping, adding a member to an existing
+payload is extension and not reshaping, which this corpus has already done, and the
+guarantee runs both directions so an added member is optional at the read with its
+absence given a meaning by the act that adds it, never recovered by deriving it from the
+members beside it, and no version member is carried because one whose only reader is
+unbuilt is the reserved slot apex section 9 forbids. The act that first breaks the
+schema is the act that adds the marker. This section is named authoritative for the
+claim, per G5. Raised by `weaver-diagnostic-PRD` section 6's input-format cell, which
+closes in the same act and moved to `weaver-analysis-PRD` section 4 later the same date,
+with the reading. The entry below gains the ordinal the convention asks for, which it
+was filed without.
 **Revised:** 2026-08-24, first of this date, the residual reductions arrive with their
 shape.
 The measurement's enumeration named the reductions and not the two counts
