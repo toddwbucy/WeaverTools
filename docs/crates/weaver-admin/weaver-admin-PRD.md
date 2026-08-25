@@ -5,6 +5,16 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
+**Revised:** 2026-08-25, the member's standing is admitted. Section 2 has never
+said this crate starts the state member, and the code has done it since the
+ingest act of 2026-08-18. The paragraph states why it falls here rather than
+anywhere else - this crate holds the operator's territory, the resolved
+identity, and the binding kind at the one moment before any process exists, and
+no other party holds any of them - and states what it does not create: no seam,
+this crate speaking to the member never. Which doors the member stands follows
+the kind, so it follows this crate, per `weaver-agents-PRD` section 6 as ruled
+2026-08-24.
+
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-24, the kind crosses the enter. Per `weaver-agents-PRD`
 section 6 as amended this date, the enter directive of section 4.1 carries the
@@ -193,6 +203,34 @@ state, the agent's state is the trace, and the old `agent-state-file` identifier
 pointed at the wrong artifact. The record above and `weaver-types-PRD` section
 2.1 moved in one act, which emptied section 11's register until the act of
 2026-08-05 filled it again. What that register holds now is section 11's to say.
+
+**Standing the state member, which this charter has never said and the code
+has done since the ingest act.** The custodian of `weaver-state-PRD` runs under
+its own account over its own subdirectory of the operator's territory, and the
+party that starts it has to hold three things before any process exists: the
+operator's territory, the agent's resolved identity, and the binding kind the
+inventory settled. This crate holds all three at that moment and no other party
+holds any of them, so the member is this crate's to start. **It is not the
+worker's unit and does not become one.** The worker is asked of the init system
+per section 4's sequencing, and the member is a direct child of this crate,
+which is what lets it hold a uid the agent's cannot reach.
+
+**No seam is created by starting it.** This crate speaks to the member never:
+it starts the process, waits for the member's name to appear so the worker's
+dial at enter finds a bound socket or none rather than a half-bound one, and
+proceeds without the leg where the name does not come. Section 6's seam list is
+unchanged by this paragraph, because starting a process is not a channel, and
+what the member serves it serves to the harness and to `weaver-analysis` under
+their own contracts.
+
+**Which doors the member stands is this crate's to say, because the kind is.**
+A diagnostic binding stands the preload door of
+`weaver-analysis-state-contract` and a serving binding stands none, per
+`weaver-agents-PRD` section 6 as ruled 2026-08-24. The member holds no opinion
+about the binding and learns which doors to stand from the party that starts
+it, per `weaver-state-Spec` section 4, which is the same division the rest of
+this charter runs on: this crate resolves what the declaration meant, once, and
+hands the resolution down decided.
 
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its

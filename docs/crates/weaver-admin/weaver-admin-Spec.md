@@ -4,6 +4,16 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, admin names the preload door. Section 6 gains the state
+member's start and its vector, which this Spec has never carried while the code
+has started that member since the ingest act: it is a direct child rather than a
+unit, its vector is the territory, its socket, and the agent's uid, and a fourth
+value carries the preload socket path where the resolved kind is diagnostic. The
+absence of that fourth value is a serving load rather than a defect, which is how
+a serving binding stands one door. The kind is section 4's, resolved once, on the
+same single-resolution rule section 7 already runs for `EnterBinding`. The wait
+after the start is for the name and not the process, and the preload door is not
+waited on at all.
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended and stands so the
 reversal is visible: section 5 runs for every binding again and reads no kind,
@@ -898,6 +908,44 @@ is that the vector reads the allow-listed name and the operator's files, the
 installed values and the validated declaration, and reads nothing else. An
 earlier form of this clause counted three values and named the name the one
 variable, written before any declaration member rode the vector.
+
+**The state member is started here too, and it is not a unit.** The custodian
+runs as a direct child of this crate rather than through the init system, per
+`weaver-admin-PRD` section 2: the worker is asked of the manager because the
+agent's identity and hardening are the unit template's, and the member holds a
+uid of its own over a subdirectory the agent's uid cannot enter, which the
+unit template does not describe. Nothing of section 6's manager interface
+above reaches it, and this crate holds no channel to it once it runs.
+
+**Its vector is the territory, its socket path, the agent's uid, and, under a
+diagnostic binding, the preload socket path.** The first three are what the
+member needs to open its store, bind its name, and judge the one peer the first
+door admits. **The fourth is present only where the resolved kind is
+diagnostic**, per `weaver-agents-PRD` section 6 as ruled 2026-08-24, and its
+absence is a serving load rather than a defect: the member binds the preload
+name only where this vector carries one, so a serving binding stands one door
+by the value not being there. The kind is section 4's inventory's, resolved
+once and read here, which is the same single-resolution rule the enter
+payload's `EnterBinding` follows in section 7 - the verb and the load cannot
+resolve differently because only one site resolves.
+
+**The path is composed here and reaches nothing else.** It is derived from the
+same validated agent name the coordination socket's is, in the same runtime
+directory, so it grants nothing the first socket's path did not and no value
+the invocation's input composes reaches it. **No exchange carries it**, which
+is why it rides the vector: the member holds no channel on which a path could
+arrive, and `weaver-analysis` learns the name from the operator rather than
+from this crate, having no seam with it.
+
+**The wait after the start is for the name and not for the process.** This
+crate waits for the member's socket to appear so the worker's dial at enter
+finds a bound name or none, never one mid-bind, and a member that exits before
+binding ends the wait at once rather than costing the load the full bound. A
+name that does not appear inside the bound is a member that failed to stand,
+and the load proceeds without the leg either way, per `weaver-state-PRD`
+section 4's rule that an absent member is the leg not standing and never a
+refused load. **The preload door is not waited on at all**, its far end being
+the operator's to dial whenever the operator dials it.
 
 **The unit declares no descriptor-bearing open, and the absence is the
 assertion.** Under the

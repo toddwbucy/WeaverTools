@@ -278,9 +278,11 @@ branch: the delete hangs on the preload opener alone. What is
 new is the door's standing and its judgment, and both are conditioned facts:
 the member binds the preload name only where the party that stands it names
 one, and that party names it only under a diagnostic binding, holding the
-resolved kind from the inventory per `weaver-admin-Spec` section 7. How the
-name reaches the member follows section 2's pattern and is elected in the
-code act that opens the door. The credential judgment inverts the first
+resolved kind from the inventory per `weaver-admin-Spec` section 4. **That
+party is `weaver-admin` and the name rides the vector**, per that Spec's
+section 6 as amended 2026-08-25, which is section 2's pattern: no exchange
+this member holds carries a path, so the vector is the only route a name
+has. The credential judgment inverts the first
 door's: the accept on the preload name refuses a peer bearing the agent's
 uid before any byte is read, and admits the operator principal.
 
