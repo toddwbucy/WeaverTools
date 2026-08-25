@@ -213,8 +213,20 @@ impl Link {
         let id = self.inner.next_ask.fetch_add(1, Ordering::Relaxed);
         let (reply_tx, reply_rx) = oneshot::channel();
         self.inner.pending.lock().unwrap().insert(id, (conn, reply_tx));
+        // The guard makes every exit from this frame remove the entry:
+        // an answered ask already removed it (the remove is then a
+        // no-op), and a timeout or a cancelled caller drops this future
+        // at an await point, where nothing else would clean up - a
+        // hung-but-connected box would otherwise grow one stranded
+        // entry per timed-out ask until its connection finally died.
+        struct Cleanup<'a>(&'a LinkInner, u64);
+        impl Drop for Cleanup<'_> {
+            fn drop(&mut self) {
+                self.0.pending.lock().unwrap().remove(&self.1);
+            }
+        }
+        let _cleanup = Cleanup(&self.inner, id);
         if sender.send(make(id)).await.is_err() {
-            self.inner.pending.lock().unwrap().remove(&id);
             return Err(());
         }
         // A dropped connection fails its own pending asks and no

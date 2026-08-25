@@ -246,6 +246,9 @@ def run_cell(cfg, cell, outdir):
                 return report
 
         order, runs = read_runs(cfg["trace"])
+        if not order:
+            report["verdict"] = "the trace holds no runs - wrong path or silent sink"
+            return report
         source_run = order[-1]
         source_turns = cut_turns(runs[source_run])
         if len(source_turns) != 2:
@@ -280,6 +283,12 @@ def run_cell(cfg, cell, outdir):
         replay_run = runs_seen.pop()
 
         order, runs = read_runs(cfg["trace"])
+        if replay_run not in runs:
+            report["verdict"] = (
+                f"the closes named run {replay_run} but the trace does not carry"
+                " it - sink lag or a different sink"
+            )
+            return report
         replay_all = cut_turns(runs[replay_run])
         replay_turns = {t["turn"]: t for t in replay_all}
         if len(replay_all) != len(source_turns):
