@@ -15,3 +15,4 @@ pub mod store;
 pub mod traceview;
 pub mod web;
 pub mod wire;
+pub mod repro;

@@ -2,6 +2,11 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, the confirm view, second revision of the day
+(PRD section 4.4). The link gains a sixth and seventh service, the
+record reads (section 16), and section 17 pins the view: the job's
+order, the compared fields, and the honest-failure rules.
+
 **Revised:** 2026-08-25, the two-process shape (PRD section 3). The
 crate becomes two binaries joined by one dialed link: the connector
 holds the box-bound reaches (sections 6, 11, and 12) and the server
@@ -78,7 +83,8 @@ src/
                              listener, router, axum
     weaver-web-connector.rs  connector startup: config, reaches, dial
   config.rs        TOML config for both processes (section 3)
-  wire.rs          the link: NDJSON frames, five services (section 16)
+  wire.rs          the link: NDJSON frames, seven services (section 16)
+  repro.rs         server. the confirm job (section 17)
   store.rs         server. Postgres pool, migrations, single writer
   registry.rs      server. participants: identity, adapters, policies
   channel.rs       server. channel log: append, read, projection types
@@ -491,7 +497,7 @@ by name. Socket and sink paths stay on the box, because the server has
 no use for them. The server reconciles its registry from the hello,
 creating agent participants and starting queues as the roster requires.
 
-**Five services**, named in each frame's `svc` member, ask and answer
+**Seven services**, named in each frame's `svc` member, ask and answer
 correlated by `id` where the shape is ask-answer:
 
 1. `turn` - the server asks with assembled context, the connector dials
@@ -505,6 +511,15 @@ correlated by `id` where the shape is ask-answer:
    observable per agent, the socket path's existence.
 5. `declaration` - the server asks, the connector answers one agent's
    declaration file as text, the admin surface's read-only view.
+6. `trace_runs` - the server asks, the connector scans one agent's sink
+   file and answers the run inventory: each run's label, turn count,
+   event count, and first wall clock. The authoritative read for the
+   confirm view (section 17), against the file rather than the bounded
+   ring.
+7. `trace_run` - the server asks with a run label, the connector
+   answers that run's events parsed from the sink file, capped (the
+   cap elected at 10,000 events) with the truncation stated in the
+   answer, never silent.
 
 **Link loss is marked, never smoothed.** A dropped link fails in-flight
 turns as delivery-lost (section 6's typing), shows agents unreachable
@@ -517,3 +532,37 @@ exactly the stream's.
 peer proof on loopback or on the v1 LAN, and the IAM act is where proof
 arrives for both. `link_listen` defaults to loopback, so any exposure
 is the operator's explicit widening.
+
+## 17. The confirm view
+
+PRD section 4.4 in representation. One job at a time, held in server
+memory (`repro.rs`), started from `/admin/repro/{agent}` behind the
+role gate, its progress and report rendered by the same page. Nothing
+of the job touches the channel store: a confirm is the operator asking
+the record a question, not conversation, so its turns land in no
+channel and its report is ephemeral until the operator runs another.
+
+The job's order, each step logged to the page as it runs:
+
+1. Fetch the source run over `trace_run` and cut it into turns: events
+   grouped by turn reference, each turn's request text taken as its
+   last `message.user` event (identity messages precede the request in
+   render order), each turn's request, output, and measurement payloads
+   held for comparison.
+2. `verb` unload, then `verb` load, then poll `status` until the gate
+   socket stands (bounded, the bound elected at 120 s). A load refusal
+   renders verbatim and ends the job.
+3. Reissue each turn's request text byte-exact over `turn`, in source
+   order. The first close names the replay run's label.
+4. Fetch the replay run over `trace_run` and compare per turn:
+   rendered prompt, derived generation seed, effective knobs, emission
+   bytes, finish kind and resident count, input token ids, and
+   per-token entropies float-exact - the lab report's field list,
+   mechanized.
+5. Render the verdict per turn beside both records' stats (whole-turn
+   wall time, tokens in and out), divergence shown as itself.
+
+Failure is a report, not an exception: an unloaded agent that will not
+load, a turn the gate refuses, a mid-confirm channel turn shifting the
+ordinals - each ends the job with the step's own answer on the page,
+per the PRD's honest-failure rules.

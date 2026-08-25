@@ -4,6 +4,15 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-25, the confirm view, second revision of the day.
+The admin surface gains a composed view at section 4.4: pull a run from
+the record, drive its turns back through the gate on a fresh load, and
+show the verdict beside the stats. It is not a fourth surface and adds
+no reach - the source is the record (4.3), the fresh load is the verbs
+(4.2), and the reissue is gate turns (4.1's own boundary). It stops at
+the serving path: anything past gate-shaped reissue is the diagnostic
+domain's, per the lab report of 2026-08-25.
+
 **Revised:** 2026-08-25, the two-process shape. The deployment section
 now states the architecture as two processes joined by one dialed link:
 the connector holds the box-bound reaches and the server holds the
@@ -262,6 +271,30 @@ The view interprets the durable event schema as published format. Where an
 event kind is unknown to the view, it renders as raw JSON rather than
 being hidden, so schema growth degrades the view gracefully instead of
 silently.
+
+### 4.4 Confirm
+
+A composed admin view, not a fourth surface: it asks one question of the
+two surfaces above it - does this record reproduce? The operator picks a
+run from the record. The view unloads and reloads the agent by the verbs,
+reissues each recorded turn's request text byte-exact through the gate in
+order, and compares the fresh record against the source field by field:
+rendered prompt, derived seed, knobs, emission, token ids, entropies.
+The verdict renders per turn beside the stats the record carries (whole
+turn latency, tokens in and out), and a divergence renders as itself,
+never smoothed.
+
+Three honesty rules, stated because the view drives a live agent:
+
+- The confirm is disruptive and says so: it unloads the agent it
+  confirms, and the operator is told before the verbs run.
+- Replay runs beside live traffic. A channel turn landing mid-confirm
+  shifts the turn ordinals and the confirm fails honestly rather than
+  serializing the world to protect itself.
+- The boundary is the serving path. The view reissues what the gate can
+  carry and reads what the record says, and nothing else: instrumented
+  replay, capture, and perturbation are the diagnostic domain's, and
+  this view is not their door.
 
 ## 5. Scope ruling: the channel is weaver-web's
 

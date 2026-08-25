@@ -27,6 +27,7 @@ pub fn routes() -> Router<AppState> {
         .route("/agents/{agent}/config", get(agent_config))
         .route("/trace/{agent}", get(trace_page))
         .route("/trace/{agent}/stream", get(trace_stream))
+        .route("/repro/{agent}", get(repro_page).post(repro_start))
 }
 
 /// The role gate. Ok(participant) for an admin; Err(response) is the
@@ -187,6 +188,149 @@ async fn agent_config(
         content,
     };
     Ok(Html(page.render()?).into_response())
+}
+
+// ---------- confirm (PRD 4.4, Spec section 17) ----------
+
+struct RunRow {
+    run: String,
+    turns: u32,
+    events: u32,
+    when: String,
+}
+
+struct TurnRow {
+    turn: String,
+    reproduced: bool,
+    failed: String,
+    source_ms: String,
+    replay_ms: String,
+    tokens_in: usize,
+    tokens_out: usize,
+    preview: String,
+}
+
+#[derive(Template)]
+#[template(path = "repro.html")]
+struct ReproPage {
+    nav_agents: Vec<String>,
+    who: String,
+    is_admin: bool,
+    agent: String,
+    runs: Vec<RunRow>,
+    link_note: String,
+    running: bool,
+    log: Vec<String>,
+    has_report: bool,
+    reproduced: bool,
+    source_run: String,
+    replay_run: String,
+    turns: Vec<TurnRow>,
+}
+
+async fn render_repro(state: &AppState, who: String, agent: String) -> AppResult<Response> {
+    let (runs, link_note) = match state.link.trace_runs(&agent).await {
+        Some(rs) => (
+            rs.into_iter()
+                .rev()
+                .map(|r| RunRow {
+                    when: r
+                        .first_wall_ms
+                        .and_then(chrono::DateTime::from_timestamp_millis)
+                        .map(|t| t.format("%Y-%m-%d %H:%M:%S UTC").to_string())
+                        .unwrap_or_default(),
+                    run: r.run,
+                    turns: r.turns,
+                    events: r.events,
+                })
+                .collect(),
+            String::new(),
+        ),
+        None => (Vec::new(), "the record read failed - link down or unresponsive".into()),
+    };
+    let snap = state.repro.snapshot();
+    let (has_report, reproduced, source_run, replay_run, turns) = match &snap.report {
+        Some(r) if r.agent == agent => (
+            true,
+            r.reproduced,
+            r.source_run.clone(),
+            r.replay_run.clone(),
+            r.turns
+                .iter()
+                .map(|t| TurnRow {
+                    turn: t.turn.clone(),
+                    reproduced: t.reproduced,
+                    failed: t
+                        .checks
+                        .iter()
+                        .filter(|(_, ok)| !ok)
+                        .map(|(n, _)| n.as_str())
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    source_ms: t.source_ms.map(|v| v.to_string()).unwrap_or_default(),
+                    replay_ms: t.replay_ms.map(|v| v.to_string()).unwrap_or_default(),
+                    tokens_in: t.tokens_in,
+                    tokens_out: t.tokens_out,
+                    preview: t.preview.clone(),
+                })
+                .collect(),
+        ),
+        _ => (false, false, String::new(), String::new(), Vec::new()),
+    };
+    let page = ReproPage {
+        nav_agents: nav_agents(state).await,
+        who,
+        is_admin: true,
+        agent,
+        runs,
+        link_note,
+        running: snap.running,
+        log: snap.log,
+        has_report,
+        reproduced,
+        source_run,
+        replay_run,
+        turns,
+    };
+    Ok(Html(page.render()?).into_response())
+}
+
+async fn repro_page(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(agent): Path<String>,
+) -> AppResult<Response> {
+    let me = match require_admin(&state, &headers).await? {
+        Ok(p) => p,
+        Err(refusal) => return Ok(refusal),
+    };
+    if !state.link.has_agent(&agent).await {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    }
+    render_repro(&state, me.name, agent).await
+}
+
+#[derive(serde::Deserialize)]
+struct ReproForm {
+    run: String,
+}
+
+async fn repro_start(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(agent): Path<String>,
+    axum::extract::Form(form): axum::extract::Form<ReproForm>,
+) -> AppResult<Response> {
+    if let Err(refusal) = require_admin(&state, &headers).await? {
+        return Ok(refusal);
+    }
+    if !state.link.has_agent(&agent).await {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    }
+    if let Err(e) = state.repro.start(state.link.clone(), agent.clone(), form.run) {
+        return Ok((StatusCode::CONFLICT, e).into_response());
+    }
+    Ok(axum::response::Redirect::to(&format!("/admin/repro/{agent}")).into_response())
 }
 
 // ---------- trace ----------

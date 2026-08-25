@@ -80,7 +80,14 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
-    let state = web::AppState { cfg: cfg.clone(), store, queues, traces, link };
+    let state = web::AppState {
+        cfg: cfg.clone(),
+        store,
+        queues,
+        traces,
+        link,
+        repro: Default::default(),
+    };
 
     let listener = tokio::net::TcpListener::bind(&cfg.listen).await?;
     tracing::info!("listening on {}", cfg.listen);

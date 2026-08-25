@@ -1,9 +1,9 @@
 //! The link (Spec section 16): NDJSON frames over one TCP connection
-//! the connector dials. Five services - turn, verb, trace, status,
-//! declaration - ask and answer correlated by id where the shape is
-//! ask-answer, the trace streaming unasked. Link loss is marked, never
-//! smoothed: pending asks fail typed, and the server inserts
-//! discontinuity marks into every trace view.
+//! the connector dials. Seven services - turn, verb, trace, status,
+//! declaration, trace_runs, trace_run - ask and answer correlated by
+//! id where the shape is ask-answer, the trace streaming unasked. Link
+//! loss is marked, never smoothed: pending asks fail typed, and the
+//! server inserts discontinuity marks into every trace view.
 
 use crate::adapters::gate::{GateAdapter, GateClose, GateError};
 use crate::config::ConnectorConfig;
@@ -26,6 +26,18 @@ pub enum ToConnector {
     Verb { id: u64, agent: String, verb: String },
     Status { id: u64 },
     Declaration { id: u64, agent: String },
+    TraceRuns { id: u64, agent: String },
+    TraceRun { id: u64, agent: String, run: String },
+}
+
+/// One run as the sink file carries it: the confirm view's inventory
+/// row (Spec section 16, service 6).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RunSummary {
+    pub run: String,
+    pub turns: u32,
+    pub events: u32,
+    pub first_wall_ms: Option<i64>,
 }
 
 /// The gate adapter's error, carried over the link with its typing
@@ -69,6 +81,14 @@ pub enum ToServer {
     },
     Status { id: u64, agents: HashMap<String, bool> },
     Declaration { id: u64, path: String, content: String },
+    TraceRuns { id: u64, runs: Vec<RunSummary> },
+    TraceRun {
+        id: u64,
+        events: Vec<serde_json::Value>,
+        /// True when the cap cut the answer short - stated, never
+        /// silent (Spec section 16).
+        truncated: bool,
+    },
     Trace { agent: String, event: TraceEvent },
 }
 
@@ -227,6 +247,42 @@ impl Link {
         }
     }
 
+    /// The run inventory from the agent's sink file (Spec section 16,
+    /// service 6) - the confirm view's authoritative read.
+    pub async fn trace_runs(&self, agent: &str) -> Option<Vec<RunSummary>> {
+        let agent = agent.to_owned();
+        let fut = self.ask(|id| ToConnector::TraceRuns { id, agent });
+        match tokio::time::timeout(
+            std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
+            fut,
+        )
+        .await
+        {
+            Ok(Ok(ToServer::TraceRuns { runs, .. })) => Some(runs),
+            _ => None,
+        }
+    }
+
+    /// One run's events from the sink file, capped with the truncation
+    /// stated (Spec section 16, service 7).
+    pub async fn trace_run(
+        &self,
+        agent: &str,
+        run: &str,
+    ) -> Option<(Vec<serde_json::Value>, bool)> {
+        let (agent, run) = (agent.to_owned(), run.to_owned());
+        let fut = self.ask(|id| ToConnector::TraceRun { id, agent, run });
+        match tokio::time::timeout(
+            std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
+            fut,
+        )
+        .await
+        {
+            Ok(Ok(ToServer::TraceRun { events, truncated, .. })) => Some((events, truncated)),
+            _ => None,
+        }
+    }
+
     fn fail_pending(&self) {
         // Dropping the senders fails every waiting ask.
         self.inner.pending.lock().unwrap().clear();
@@ -318,7 +374,9 @@ async fn serve_connection(link: &Link, stream: TcpStream, events: &mpsc::Sender<
             ToServer::Turn { id, .. }
             | ToServer::Verb { id, .. }
             | ToServer::Status { id, .. }
-            | ToServer::Declaration { id, .. } => {
+            | ToServer::Declaration { id, .. }
+            | ToServer::TraceRuns { id, .. }
+            | ToServer::TraceRun { id, .. } => {
                 if let Some(reply) = link.inner.pending.lock().unwrap().remove(&id) {
                     let _ = reply.send(frame);
                 }
@@ -403,6 +461,13 @@ async fn connector_connection(
         }));
     }
 
+    let trace_paths: Arc<HashMap<String, std::path::PathBuf>> = Arc::new(
+        cfg.agents
+            .iter()
+            .map(|a| (a.name.clone(), a.trace.clone()))
+            .collect(),
+    );
+
     let mut reader = BufReader::new(read_half).lines();
     while let Ok(Some(line)) = reader.next_line().await {
         let frame: ToConnector = match serde_json::from_str(&line) {
@@ -419,6 +484,7 @@ async fn connector_connection(
             (gates.clone(), cfg.agent_declarations.clone(), tx.clone());
         let (admin_bin, admin_config) =
             (cfg.admin_bin.clone(), cfg.admin_config.clone());
+        let trace_paths = trace_paths.clone();
         tasks.push(tokio::spawn(async move {
             let answer = match frame {
                 ToConnector::Turn { id, agent, text } => match gates.get(&agent) {
@@ -464,6 +530,77 @@ async fn connector_connection(
                         path: path.display().to_string(),
                         content,
                     }
+                }
+                ToConnector::TraceRuns { id, agent } => {
+                    let mut runs: Vec<RunSummary> = Vec::new();
+                    if let Some(path) = trace_paths.get(&agent) {
+                        if let Ok(content) = tokio::fs::read_to_string(path).await {
+                            let mut order: Vec<String> = Vec::new();
+                            let mut map: HashMap<String, RunSummary> = HashMap::new();
+                            for line in content.lines() {
+                                let Ok(v) =
+                                    serde_json::from_str::<serde_json::Value>(line)
+                                else {
+                                    continue;
+                                };
+                                let Some(run) = v.get("run").and_then(|r| r.as_str())
+                                else {
+                                    continue;
+                                };
+                                let entry =
+                                    map.entry(run.to_owned()).or_insert_with(|| {
+                                        order.push(run.to_owned());
+                                        RunSummary {
+                                            run: run.to_owned(),
+                                            turns: 0,
+                                            events: 0,
+                                            first_wall_ms: None,
+                                        }
+                                    });
+                                entry.events += 1;
+                                if entry.first_wall_ms.is_none() {
+                                    entry.first_wall_ms =
+                                        v.get("wall_ms").and_then(|w| w.as_i64());
+                                }
+                                if v.get("kind").and_then(|k| k.as_str())
+                                    == Some("turn.closed")
+                                {
+                                    entry.turns += 1;
+                                }
+                            }
+                            runs = order
+                                .into_iter()
+                                .filter_map(|r| map.remove(&r))
+                                .collect();
+                        }
+                    }
+                    ToServer::TraceRuns { id, runs }
+                }
+                ToConnector::TraceRun { id, agent, run } => {
+                    const RUN_CAP: usize = 10_000;
+                    let mut events = Vec::new();
+                    let mut truncated = false;
+                    if let Some(path) = trace_paths.get(&agent) {
+                        if let Ok(content) = tokio::fs::read_to_string(path).await {
+                            for line in content.lines() {
+                                let Ok(v) =
+                                    serde_json::from_str::<serde_json::Value>(line)
+                                else {
+                                    continue;
+                                };
+                                if v.get("run").and_then(|r| r.as_str())
+                                    == Some(run.as_str())
+                                {
+                                    if events.len() == RUN_CAP {
+                                        truncated = true;
+                                        break;
+                                    }
+                                    events.push(v);
+                                }
+                            }
+                        }
+                    }
+                    ToServer::TraceRun { id, events, truncated }
                 }
             };
             let _ = tx.send(answer).await;
