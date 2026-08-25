@@ -29,24 +29,26 @@ impl Participant {
 const COLUMNS: &str = "id, name, display, kind, adapter, respond, role";
 
 pub async fn by_name(store: &Store, name: &str) -> anyhow::Result<Option<Participant>> {
-    Ok(sqlx::query_as::<_, Participant>(&format!(
+    Ok(sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLUMNS} FROM participants WHERE name = $1"
-    ))
+    )))
     .bind(name)
     .fetch_optional(&store.pool)
     .await?)
 }
 
 pub async fn by_id(store: &Store, id: i64) -> anyhow::Result<Option<Participant>> {
-    Ok(sqlx::query_as::<_, Participant>(&format!(
+    Ok(sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLUMNS} FROM participants WHERE id = $1"
-    ))
+    )))
     .bind(id)
     .fetch_optional(&store.pool)
     .await?)
 }
 
 pub async fn channel_members(store: &Store, channel_id: i64) -> anyhow::Result<Vec<Participant>> {
+    // A static string needs no safety assertion - the one site of the
+    // seven that interpolated nothing now interpolates nothing visibly.
     Ok(sqlx::query_as::<_, Participant>(
         "SELECT p.id, p.name, p.display, p.kind, p.adapter, p.respond, p.role \
          FROM participants p JOIN members m ON m.participant_id = p.id \
@@ -58,9 +60,9 @@ pub async fn channel_members(store: &Store, channel_id: i64) -> anyhow::Result<V
 }
 
 pub async fn all(store: &Store) -> anyhow::Result<Vec<Participant>> {
-    Ok(sqlx::query_as::<_, Participant>(&format!(
+    Ok(sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
         "SELECT {COLUMNS} FROM participants ORDER BY kind, name"
-    ))
+    )))
     .fetch_all(&store.pool)
     .await?)
 }

@@ -1,13 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/weaver-traits", "crates/weaver-types", "crates/weaver-trace", "crates/weaver-harness", "crates/weaver-internal", "crates/weaver-admin", "crates/weaver-spu", "crates/weaver-gate", "crates/weaver-state"]
-# weaver-web resolves its own lockfile. It links no crate of this workspace,
-# and a shared lock is a real coupling the boundary forbids: its sqlx carries
-# an optional sqlite driver whose libsqlite3-sys cannot coexist in one
-# resolution graph with weaver-state's rusqlite (cargo `links` uniqueness
-# runs over the resolution graph, not the activated one). Discovered
-# 2026-08-25, first resolution of the crate in this tree.
-exclude = ["crates/weaver-web"]
+members = ["crates/weaver-traits", "crates/weaver-types", "crates/weaver-trace", "crates/weaver-harness", "crates/weaver-internal", "crates/weaver-admin", "crates/weaver-spu", "crates/weaver-gate", "crates/weaver-state", "crates/weaver-web"]
 
 [workspace.package]
 edition = "2024"

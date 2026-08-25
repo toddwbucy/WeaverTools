@@ -14,8 +14,10 @@ holds the rest, with section 16 pinning the link. New content lands at
 the end because code comments cite section numbers. The code act landed
 the same day: both binaries build clean, clippy-strict and tested, and
 the link protocol is exercised end to end against the built connector.
-The crate now resolves its own lockfile, excluded from the workspace
-members - section 2 carries why.
+The crate briefly resolved its own lockfile against the libsqlite3-sys
+collision; the olympus act of the same day dissolved the collision
+itself (sqlx 0.9, the sqlite driver absent from the built graph) and
+membership stands - section 2 carries the story.
 
 **Revised:** 2026-08-24, three elections recorded at section 15 as held
 rather than settled: the crate pins edition 2021 against the workspace's
@@ -69,12 +71,17 @@ section rather than left implicit.
 
 One crate, two binaries, per the deployment shape (PRD section 3).
 Modules, not a workspace - the project splits into crates only when a
-second consumer of some module exists. The crate resolves its own
-lockfile and stands excluded from the workspace members: it links no
-crate of this workspace, and a shared lock proved to be a real
-coupling - its sqlx and weaver-state's rusqlite cannot share one
-resolution graph (cargo's links uniqueness over libsqlite3-sys,
-discovered 2026-08-25 on the crate's first resolution in this tree).
+second consumer of some module exists. The crate is a workspace member
+and resolves in the workspace lock. That fact was fought for twice in
+one day: this crate's sqlx 0.8 and weaver-state's rusqlite could not
+share one resolution graph (cargo's links uniqueness over
+libsqlite3-sys, discovered 2026-08-25 on the crate's first resolution
+in this tree), this seat answered by excluding the crate to its own
+lockfile, and the olympus act of the same day answered better - on
+sqlx 0.9 the sqlite driver is optional and absent from the built
+graph, so membership stands with nothing of weaver-state moved. The
+second answer supersedes the first, and the manifest's sqlx comment
+carries the mechanism.
 
 ```
 src/
@@ -463,7 +470,7 @@ to close:
   carries 2024 and every other member inherits it. The migration is real
   work rather than a manifest line, the derive-heavy dependencies being
   where an edition move bites. The crate's tree resolved and built for
-  the first time 2026-08-25, from its own lockfile, so the alignment act
+  the first time 2026-08-25, in the workspace lock (the manifest carries the collision story), so the alignment act
   now has a build to stand behind it. The pin states the fact until that
   act runs, and aligning remains its own act.
 - **The licence.** This crate carries `Apache-2.0` and its own `LICENSE`

@@ -56,11 +56,11 @@ pub async fn events_after(
     after_id: i64,
     limit: i64,
 ) -> anyhow::Result<Vec<EventView>> {
-    Ok(sqlx::query_as::<_, EventView>(&format!(
+    Ok(sqlx::query_as::<_, EventView>(sqlx::AssertSqlSafe(format!(
         "SELECT {EVENT_VIEW_COLUMNS} FROM channel_events e \
          LEFT JOIN participants p ON p.id = e.participant_id \
          WHERE e.channel_id = $1 AND e.id > $2 ORDER BY e.id LIMIT $3"
-    ))
+    )))
     .bind(channel_id)
     .bind(after_id)
     .bind(limit)
@@ -69,11 +69,11 @@ pub async fn events_after(
 }
 
 pub async fn event_view(store: &Store, event_id: i64) -> anyhow::Result<Option<EventView>> {
-    Ok(sqlx::query_as::<_, EventView>(&format!(
+    Ok(sqlx::query_as::<_, EventView>(sqlx::AssertSqlSafe(format!(
         "SELECT {EVENT_VIEW_COLUMNS} FROM channel_events e \
          LEFT JOIN participants p ON p.id = e.participant_id \
          WHERE e.id = $1"
-    ))
+    )))
     .bind(event_id)
     .fetch_optional(&store.pool)
     .await?)
@@ -86,14 +86,14 @@ pub async fn messages_since_last_close(
     channel_id: i64,
     participant_id: i64,
 ) -> anyhow::Result<Vec<EventView>> {
-    Ok(sqlx::query_as::<_, EventView>(&format!(
+    Ok(sqlx::query_as::<_, EventView>(sqlx::AssertSqlSafe(format!(
         "SELECT {EVENT_VIEW_COLUMNS} FROM channel_events e \
          LEFT JOIN participants p ON p.id = e.participant_id \
          WHERE e.channel_id = $1 AND e.kind = 'message' AND e.id > COALESCE(( \
              SELECT max(id) FROM channel_events \
              WHERE channel_id = $1 AND participant_id = $2 AND kind = 'close'), 0) \
          ORDER BY e.id"
-    ))
+    )))
     .bind(channel_id)
     .bind(participant_id)
     .fetch_all(&store.pool)
