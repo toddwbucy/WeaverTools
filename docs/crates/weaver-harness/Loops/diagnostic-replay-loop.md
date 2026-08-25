@@ -1,12 +1,18 @@
 # Diagnostic Replay Loop
 
-**Status:** MERGED v0.4, 2026-08-25. Section 3's input identity gains the tee's
-election, per issue 347: it is the rule that decided what the original agent's state
-held, so a replay preloaded under a different one rebuilds a session that never ran, and
-a record written before that member existed fails input identity rather than replaying
-under a guess.
-
-**v0.3, 2026-08-24.** Third state on the day it was filed, and the middle
+**Status:** MERGED v0.4, 2026-08-25. The workflow document for the diagnostic
+replay loop, filed under the harness's `Loops/` container per the Document Format's
+container entry. It argues no edges of its own: the seams it walks are declared in the
+crate charters, and a graph block here would duplicate a record that already has a
+home.
+**Revised:** 2026-08-25, the input identity gains the tee's election. Section 3's
+step one takes it as a requirement, claim-relative like the rest: it is the rule
+that decided what the original agent's state held, so a replay preloaded under a
+different one rebuilds a session that never ran, and a record written before that
+member existed fails a claim about the state while its token path still stands.
+Per issue 347 and `weaver-trace-Spec` section 3.
+**Revised:** 2026-08-24, the record is a different record. Third state on the day
+it was filed, and the middle
 one was wrong. v0.1 had the run's record holding what diverged. v0.2 removed the record
 on the reading that a diagnostic binding authors nothing. The operator's ruling of the
 same date restored the record as a different record: the run authors a diagnostic-trace
@@ -127,14 +133,15 @@ The charter's section 4 procedure, as this loop performs it:
    binding the load declared, and the prompt-block partition. A record
    missing what its claim requires fails here, before any forward pass,
    which is the completeness-is-claim-relative rule doing its work.
-   **The tee's election is one of those requirements**, per
-   `weaver-trace-Spec` section 3: it is the rule that decided what the
-   original agent's state held, and a replay preloaded under a different one
-   rebuilds a session that never ran. A record written before that member
-   existed carries no such rule, so it **fails input identity rather than
-   replaying under a guess** - such a record is good for its token path and
-   not for its state, and the loop says which rather than producing a run
-   whose holdings nobody can vouch for.
+   **The tee's election is one of those requirements, and claim-relative
+   like the rest**, per `weaver-trace-Spec` section 3. It is the rule that
+   decided what the original agent's state held, so a replay preloaded under
+   a different one rebuilds a session that never ran. **A record written
+   before that member existed fails a claim about the state and not a claim
+   about the token path**: the null replay of step 2 rests on the recorded
+   identifiers alone and stands, and everything resting on the holdings does
+   not. The loop says which the record is good for rather than replaying
+   under a guess or refusing a run it could have made.
 2. **The null replay.** No reader elected. The recorded path re-feeds, the
    recomputed token identifiers match the recorded ones exactly, integers,
    or the certification fails naming the first divergent position.

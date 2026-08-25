@@ -13,6 +13,7 @@ written before this act, and means the rule is unrecoverable rather than
 defaulted, so such a record replays its token path and cannot be certified for
 state. The instrument is perturbation, the member watched to fail when dropped
 from the shape. Section 3 also names `weaver-types-Spec` section 2 authoritative
+for the declared shape and `weaver-harness-state-contract` for the seam's term,
 for what the election means, the two types differing on purpose because this
 crate links nothing.
 **Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
@@ -384,6 +385,18 @@ pub struct Elections {
     pub field: Option<u32>,
     pub surprisal: bool,
     pub tee: Election,
+}
+
+#[serde(rename_all = "kebab-case")]
+pub struct Election {
+    pub all_kinds: bool,
+    pub keys: Vec<ElectedKind>,
+}
+
+#[serde(rename_all = "kebab-case")]
+pub struct ElectedKind {
+    pub kind: String,
+    pub paths: Vec<String>,
 }
 
 pub struct ElisionSpan {
@@ -884,17 +897,30 @@ crate's own `Election`, which the tee already holds, so the record carries the
 rule in the shape the tee applied it in and no reader reconstructs it from a
 neighbour's spelling.
 
-**One fact, four representations, and this act names the authority.** The
-operator declares it as `weaver-types`' `StateElection`, admin resolves it into
-the enter payload, this crate holds it as `Election` for the tee, and the record
-now carries that third form. **The duplication between the two types is forced
-rather than sloppy**: this crate depends on nothing, not even the floor, so it
-cannot spell the floor's type, and that no-dependency property is load bearing
-for its own reasons. **`weaver-types-Spec` section 2 is authoritative for what
-the election means** and a divergence in this crate's shape is a defect against
-it, per G5. What this crate is authoritative for is the record's rendering of
-it, which is this section. Unifying the types is not owed and would cost the
-no-dependency property to buy a name.
+**The record spells it as the declaration spells it, which takes an explicit
+election.** `weaver-types-Spec` section 2 renames that type's fields to
+kebab-case for the operator's file, and a record rendering `all_kinds` beside a
+declaration reading `all-kinds` would put two spellings of one fact on disk,
+which is the one-name-two-nodes defect read on a wire. So this crate's `Election`
+carries the same rename. **It derives `Serialize` alone and that is not enough
+for what this member is for.** A replay reads the rule off the record, which is a
+deserialization, and this crate deserializes nothing - it writes. The reader is
+`weaver-analysis`, whose Spec is owed, and **the shape it parses is this
+section's** rather than a spelling it invents: the two crates answer to one
+rendering because they answer to one rename.
+
+**One fact, four representations, and this act names the authority.** The operator
+declares it as `weaver-types`' `StateElection`, admin resolves it into the enter
+payload, this crate holds it as `Election` for the tee, and the record now carries that
+third form. **The duplication between the two types is forced rather than sloppy**: this
+crate depends on nothing, not even the floor, so it cannot spell the floor's type, and
+that no-dependency property is load bearing for its own reasons. **Authority splits by
+what is being asked.** What the term means on the state seam is
+`weaver-harness-state-contract`'s, which defines it there as that seam's vocabulary.
+What its declared shape is, and how its fields are spelled, is `weaver-types-Spec`
+section 2's, and a divergence in this crate's shape is a defect against it, per G5. What
+this crate is authoritative for is the record's rendering of it, which is this section.
+Unifying the types is not owed and would cost the no-dependency property to buy a name.
 
 **It is not optional because every load has one.** A deployment that elects
 nothing still runs under the default, the envelope of every kind, per charter
@@ -903,13 +929,13 @@ could be absent would invite a reader to treat the default as unknown. **What is
 absent is the member itself, in every record written before this act**, and that
 absence means the tee's election is unrecoverable rather than defaulted. Such a
 record replays its token path and cannot be certified for state, per the
-compatibility rule of section 2: an added member is optional at the read and the
+compatibility rule of section 3: an added member is optional at the read and the
 act adding it says what its absence means.
 
 **What this member buys is that a reader stops guessing what the state held.**
 The tee selects which events cross and projects which payload paths ride, so a
 replay under a different rule preloads a different session and nothing marks it,
-which is the failure charter section 6 argues the whole `load` bracket exists to
+which is the failure charter section 3.1 argues the whole `load` bracket exists to
 prevent.
 
 **The instrument is perturbation.** The test renders a `load` payload under a
@@ -1478,8 +1504,8 @@ at the dependency clause with the rest of that election.
 assertion records are at the clauses that argue the claims, across sections 1
 through 9, rather than gathered here, per Document Format section 6: this section
 sorts by instrument and the arguments are elsewhere, so a block here would sit
-apart from the prose that earns it. Thirty-six sit there and three sit at the end of
-this section, being the claims argued only here. Seventeen of the thirty-nine come
+apart from the prose that earns it. Thirty-eight sit there and three sit at the end of
+this section, being the claims argued only here. Seventeen of the forty-one come
 from this section's own sorting and twenty-two from the elections outside it, the
 path-taking prohibition counting here rather than as an election because it was
 divided out of this section's own bullet and never elected, per Document Format
@@ -1495,7 +1521,7 @@ test of its own either, its instrument being the compile-fail set already
 recorded.
 
 **Which invariant each claim serves, and why most serve none.** Four of the
-thirty-nine carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
+forty-one carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
 and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
 nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
 none of it because this crate is not floor, so the vocabulary clause governs none
@@ -1508,8 +1534,8 @@ the join-key invariant and this crate has no reason to refuse to infer a turn an
 no reason to report pressure rather than author it, so those two ground in it.
 Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
-**Thirty-five claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: fourteen of the thirty-nine are section 3's
+**Thirty-seven claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: sixteen of the forty-one are section 3's
 event schema and twelve of those fourteen ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
@@ -1547,6 +1573,9 @@ the fact exists.
   vectors emits no member for them, confirmed by watching an empty array
   appear when the skip election is removed, since an empty array and an
   absent instrument are the two facts the charter separates.
+- The tee's election on the `load` event: a payload rendered under a
+  non-default election carries the rule back off the canonical form, watched to
+  fail when the member is dropped from the shape.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test

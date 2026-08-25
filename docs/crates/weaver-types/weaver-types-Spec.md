@@ -9,7 +9,7 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 `weaver-trace` holds a second `Election` of this shape because it links nothing,
 and from this date the record carries that form too, making four representations
 of one fact: this declaration, the enter payload, the tee's own, and the
-record's. Section 2 states that this document is authoritative for what the
+record's. Section 2 states that this document is authoritative for the
 election means and that divergence is a defect against it, per G5, and that
 unifying the types is not owed. Per issue 347.
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes
@@ -669,8 +669,11 @@ from: weaver-types
 to: types-no-default-derive
 ```
 
-**This Spec is authoritative for what the tee's election means, and a second
-shape of it exists on purpose.** `weaver-trace` holds its own `Election` of the
+**This Spec is authoritative for the tee's election's declared shape, and a
+second spelling of it exists on purpose.** What the term means on the state seam
+is `weaver-harness-state-contract`'s, which defines it there as that seam's
+vocabulary, so the two authorities answer different questions rather than one
+question twice. `weaver-trace` holds its own `Election` of the
 same shape because that crate depends on nothing, not even this floor, and
 cannot spell a type it does not link. From 2026-08-25 the record carries that
 second form on the `load` event, per `weaver-trace-Spec` section 3, which makes
