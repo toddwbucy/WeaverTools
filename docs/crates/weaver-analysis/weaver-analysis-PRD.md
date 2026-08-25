@@ -5,6 +5,18 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-08-25, third of this date, the gate names what it rests on.
+Section 3 claimed this crate reads the null replay's outcome from the record and
+gates downstream work on it, and a reader at the end of the bytes available to
+it cannot tell a certified run from a failed one, a partial one, or one still
+going. The claim now carries its condition, and the honest behaviour under the
+condition is to produce nothing rather than to read the end of available bytes
+as the end of a run. Section 4 gains the owed act with the four outcomes a
+marker has to separate, so the act has a criterion, and states why the rule is
+not written here: a terminal event belongs to the diagnostic-trace's vocabulary,
+which `weaver-diagnostic-PRD` section 6 owes to that crate's Spec, and a rule
+written per sink shape would put back the discriminant assumption section 3
+withdrew.
 **Revised:** 2026-08-25, second of this date, section 3 states what it sends and
 what governs the sink. The preload paragraph named distillates and a seal and
 left out the election, which `weaver-analysis-state-contract` section 2 makes
@@ -150,7 +162,19 @@ where it has to happen: the loop holds the recorded path in its holdings and
 the recomputed identifiers as they arrive, so it alone can refuse before the
 first forward pass and name the first divergent position rather than reporting
 after a whole replay has run. What this crate does is elect the null replay,
-read its outcome from the record, and gate everything downstream on it. An
+read its outcome from the record, and gate everything downstream on it.
+
+**That gate rests on telling a finished record from a truncated one, and
+nothing tells them apart today.** A reader that has consumed every byte
+available to it cannot yet say whether the replay certified and ended, failed
+its comparison and ended, died mid-replay leaving a partial record, or is still
+running. All four look alike to a reader at the end of what it has. **So the
+gate is conditional on a fact the record does not yet carry**, and this charter
+records that rather than resting on it: until a diagnostic-trace can say it
+ended and how, this crate holds a record it cannot safely interpret, and the
+honest behaviour is to produce nothing rather than to treat the end of available
+bytes as the end of a run. Where that marker lands is not this charter's to
+choose - see section 4. An
 earlier form of this paragraph had the comparison here on the ground that this
 crate holds both records, which is true and is not the reason the loop cannot,
 so it would have put a second implementation of one check on the other side of
@@ -190,6 +214,25 @@ a sink.
   it carries no cut-and-recompute, which is cleaner than expected. The
   intervention loop shares that mechanic with the calculator loop and is where
   the boundary runs. The call is the operator's.
+- **How a diagnostic-trace says it ended, and how it says what happened.** The
+  gating of section 3 depends on it and cannot be honoured without it. **It is
+  not settled here, and settling it here would reach past two things the corpus
+  holds open on purpose.** The first is the diagnostic-trace's event
+  vocabulary, which `weaver-diagnostic-PRD` section 6 owes to that crate's Spec
+  and which is where a terminal event would have to be declared, a serving
+  record's `unload` and `session.closed` being that vocabulary's answer rather
+  than a shape this crate may assume carries over. The second is the sink's
+  discriminant, which section 3 states this charter assumes nothing about, so a
+  rule written per shape - what a closed file, a drained pipe, or a dropped
+  connection each mean - would put back the assumption that section withdrew
+  and would make the consumer's reading depend on an operator's declaration.
+  **The outcomes a marker has to separate are nameable now and are named here
+  so the owed act has its criterion**: certified and ended, failed its
+  comparison and ended, ended without finishing, and not ended. The first three
+  are facts the run knows and can author. The fourth is the absence of the
+  other three, which is why it costs nothing to distinguish once any of them
+  exists. Owed with `weaver-diagnostic`'s Spec and named from this side because
+  this crate is the one that pays for its absence.
 - **This charter names no Rust item and elects no representation.** Its Spec
   is owed, and the driver's shape and the parser's land there rather than
   here. **The certification's mechanics do not**, that comparison belonging to
