@@ -1,33 +1,27 @@
 # weaver-web - PRD (crate charter)
 
-**Status:** MERGED into the set 2026-08-24, per the operator's ruling of
-2026-08-23 and issue #292. It was authored under this workshop's discipline
-in its own tree and joins by absorption rather than reauthoring. **It carried
-DRAFT and the set is RATIFIED, which is a mapping question rather than a
-status one**: phase two's mapping is what ratifies, so the set re-ratifies
-when the graph is rebuilt, and that rebuild joins one already owed and
-already two acts behind.
+**Status:** MERGED. In `main` and the source of truth. **Ratified on its own
+terms 2026-08-24**, per the operator's ruling of that date and the
+per-charter rule of 2026-08-23, conforming to the pattern the 2026-08-04 act
+established.
 
-**Revised:** 2026-08-24, the absorption. The crate lands at
+**Revised:** 2026-08-24, the crate takes its place. It lands at
 `crates/weaver-web/` and this document at `docs/crates/weaver-web/`,
 container coming from the directory so placement is the declaration. The
 seam is unchanged: this crate is contract-coupled across
 `weaver-gate-world-contract` and `weaver-admin-operator-contract` and links
-no crate of this tree. What changed is that both sides of the seam are now
-editable in one commit, which is what the absorption was for. Three
-collisions are surfaced and held rather than resolved: the edition, the
-licence, and the first database dependency in the workspace.
+no crate of this tree. Three collisions are surfaced and held rather than
+resolved: the edition, the licence, and the first database dependency in
+the workspace.
 
 **Revised:** 2026-08-19, the channel amendment. The chat surface becomes the
 multi-party channel surface on the operator's adoption of the front-end
-architecture exploration's three positions (in the report hub, outside this
-tree: `weaver-web/2026-08-19-frontend-architecture-buzz-prior-art.md`). The
-browser-as-display-engine rule hardens from stack preference to constraint,
-the IAM roadmap item gains its mechanism (passkeys, TLS bundled), and the
-authorship-responsibility ruling lands in section 6.
+architecture exploration's three positions. The browser-as-display-engine
+rule hardens from stack preference to constraint, the IAM roadmap item gains
+its mechanism (passkeys, TLS bundled), and the authorship-responsibility
+ruling lands in section 6.
 
 **Date filed:** 2026-08-19
-**Author:** Todd W. Bucy, with Claude (authoring session)
 **Document ID:** `weaver-web-PRD`
 **Parent:** the WeaverTools suite, whose governing document is deliberately
 not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
@@ -36,7 +30,7 @@ same thing. **This crate sits outside the agent boundary and does not enter
 the `weaver-agents` roster**, per that document's section 0: it reaches
 inward as a consumer of the two external contracts, and the agent never
 grips it.
-**Editorial:** Per the Working Rules, as of the absorption.
+**Editorial:** Per the Working Rules.
 
 ```graph
 node: weaver-web
@@ -371,8 +365,8 @@ and an ownership edge, mention-gated invocation with per-participant
 respond policies and self-invocation suppression (agent-to-agent routing
 opened 2026-08-20 for coordination), and per-channel single-flight
 queueing with batch-on-drain. The survey's full read and the
-falsification case against forking are in the report hub
-(`weaver-web/2026-08-19-frontend-architecture-buzz-prior-art.md`). Buzz's
+falsification case against forking were the exploration's own and are not
+reproduced here, this section carrying what it settled. Buzz's
 identity architecture - participant-held keys, client-side signing, the
 browser as protocol participant - is deliberately not adopted, per
 sections 3 and 6: its trust problem, verifiable authorship among mutually

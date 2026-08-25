@@ -173,9 +173,9 @@ about where the framework's requirements stop and your own practice begins.
 
 **Sixteen pages beside this one, and all of them are drafted as of
 2026-08-24.** The nine crate papers took their prose across that day, the last
-of the 54 owed sections landing with `weaver-internal`, and `weaver-web` joined
-the set when the crate was absorbed, in its own directory beside the agent
-domain's rather than among the instruments.
+of the 54 owed sections landing with `weaver-internal`, and `weaver-web` taking
+its own directory beside the agent domain's rather than a place among the
+instruments.
 
 **Drafted is not finished, and the difference is worth stating plainly.** Every
 page is a rough first pass read out of a merged document. What that buys is that

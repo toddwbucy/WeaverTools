@@ -22,8 +22,7 @@ One Rust binary serves three surfaces:
 
 Weaver-Web reaches the agent the way any outside consumer does: over
 Unix sockets and by running its binaries. It links no crate of this
-workspace. Its build surface is two contract documents, which since the
-absorption of 2026-08-24 live in this same tree under
+workspace. Its build surface is two contract documents, under
 `docs/crates/contracts/`:
 
 - **The gate contract** (`weaver-gate-world-contract.md`) — the client

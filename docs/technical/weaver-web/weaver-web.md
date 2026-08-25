@@ -41,10 +41,10 @@ business.
 
 That makes it the working proof of a claim the rest of this site makes
 repeatedly: that the boundary is real, that a consumer needs nothing but the
-contracts, and that both are true in practice rather than only on paper. It
-lives in the same repository as the agent it talks to, absorbed 2026-08-24, and
-**that changed nothing about the seam** - it is a fact about where the source
-sits, not about what crosses.
+contracts, and that both are true in practice rather than only on paper. **It
+lives in the same repository as the agent it talks to, and that says nothing
+about the seam** - sharing a source tree is not sharing a boundary, and every
+crossing here is one the contracts name.
 
 ## What it owns
 
