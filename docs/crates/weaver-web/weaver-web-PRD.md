@@ -20,8 +20,8 @@ licence, and the first database dependency in the workspace.
 
 **Revised:** 2026-08-19, the channel amendment. The chat surface becomes the
 multi-party channel surface on the operator's adoption of the front-end
-architecture exploration's three positions (report:
-`weaver-web/2026-08-19-frontend-architecture-buzz-prior-art.md`). The
+architecture exploration's three positions (in the report hub, outside this
+tree: `weaver-web/2026-08-19-frontend-architecture-buzz-prior-art.md`). The
 browser-as-display-engine rule hardens from stack preference to constraint,
 the IAM roadmap item gains its mechanism (passkeys, TLS bundled), and the
 authorship-responsibility ruling lands in section 6.
