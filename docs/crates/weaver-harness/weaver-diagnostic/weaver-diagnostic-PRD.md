@@ -4,6 +4,19 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, eighth of this date, the fourth review's findings land.
+Section 2 carried two sentences from the crate's one day outside: it said this
+crate reads records and writes analysis artifacts, which describes the consumer
+rather than the mechanism, and it pointed at section 6 for the licence boundary
+after that cell moved to `weaver-analysis-PRD` section 4. `weaver-analysis-PRD`
+section 1 kept the finished-file reading its section 3 had already dropped.
+`weaver-harness-Spec`'s enter walk cited the serving receive and the `load`
+event for both kinds, settling by citation the same election the `Run` field a
+screen above defers, and its fifth entry placed the sink count in section 8
+where it stands in section 3. The loop's citation for the deferred entry moves
+from 6.1, which charters the decode surface, to 6.2, and the loop names a gap
+6.2 opens on it: the seat is granted on work arriving owed an answer, which a
+Gateless binding never sees.
 **Revised:** 2026-08-24, seventh of this date, the third review's findings
 land. `weaver-analysis-PRD` loses two assumptions it inherited from the version
 that held both roles: section 1 grounded one-crate-at-both-ends on a
@@ -167,12 +180,16 @@ does not carry, per the taxonomy's ruling: intervention composes with either
 substrate and its product is a counterfactual token path, which is a
 different deliverable with a different custody story. The calculator loop
 holds that mechanic on the production side, and where the licence boundary
-runs through it is the operator's open item, named in section 6.
+runs through it is the operator's open item, named in `weaver-analysis-PRD`
+section 4, which took that cell with the reading. Section 6 records only that
+it departed.
 
-**Not a memory leg.** It reads records and writes analysis artifacts. Nothing
-it produces enters an agent's state, its prompt, or its working structure,
-and statefulness returns through `weaver-agents-PRD` section 9's door or not
-at all.
+**Not a memory leg.** It renders a record and reads none, `weaver-analysis`
+holding the reading. What it renders enters no agent's state, no prompt, and
+no working structure, and statefulness returns through `weaver-agents-PRD`
+section 9's door or not at all. The sentence this replaces had this crate
+reading records and writing analysis artifacts, which was true of the
+consumer it was chartered as for one day and is true of nothing it does now.
 
 **Not an evaluator.** The mechanic-motive line of section 5 is this crate's
 outer edge: it claims a faithful readout with replayability and claims

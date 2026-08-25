@@ -16,13 +16,14 @@ same thing.
 
 ## 1. What this crate is
 
-`weaver-analysis` is **the diagnostic consumer**, a crate outside the agent
-boundary standing in the structural position Weaver Web stands in. It holds
-both ends of a replay and the agent holds neither: it reads a finished record
-the operator holds, preloads it through the state member's second door, and
-reads the diagnostic-trace the run produces once that record has left by the
-sink admin opened. Everything downstream of the record is here - the fitting,
-the projection, the layer trajectory, the artifact store, and the reading.
+`weaver-analysis` is **the diagnostic consumer**, a crate outside the agent boundary
+standing in the structural position Weaver Web stands in. It holds both ends of a replay
+and the agent holds neither: it reads a finished record the operator holds, preloads it
+through the state member's second door, and reads the diagnostic-trace the run produces
+off the sink admin opened for the binding. Whether that reading trails the run or runs
+beside it follows the sink's declared shape and is not assumed here, per section 3.
+Everything downstream of the record is here - the fitting, the projection, the layer
+trajectory, the artifact store, and the reading.
 
 It is chartered by the operator's ruling of 2026-08-24, which split the
 diagnostic leg in two. `weaver-diagnostic` is the mechanism the harness

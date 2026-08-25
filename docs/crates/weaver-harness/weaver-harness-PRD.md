@@ -8,17 +8,7 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
-**Revised:** 2026-08-24, second of this date, the third member's ground is
-corrected. The first entry of this date grounded the link on the mechanism not
-being asked to do anything, which unmakes the seam: Document Format section 4
-defines a seam as one crate asking another to do something and uses this pair's
-sibling as its example, the harness linking `weaver-trace` and asking it to
-record. The ground is apex section 5.1's own criterion, the process line, which
-this call does not cross. The paragraph also moves below the second member's,
-so the ordinals read in order and the second's reference to the claim above it
-resolves to what it always meant.
-**Revised:** 2026-08-24, first of this date, the third member is named and its
-contract owed.
+**Revised:** 2026-08-24, the third member is named and its contract owed.
 `weaver-diagnostic` is the mechanism this crate authors a diagnostic-trace
 through, per `weaver-agents-PRD` section 6 as ruled this date, linked on the
 trace's own ground: apex section 5.1 forbids a behavior reached by path
@@ -27,7 +17,13 @@ binary, and this call crosses no process line. Its seam record tagged `link`
 is not declared yet, `weaver-harness-diagnostic-contract` being owed and a
 `via` naming a document that does not exist being worse than the absence, so
 the dependency surface reads against three internal crates until the contract
-lands.
+lands. The paragraph sits below the second member's so the ordinals read in
+order. **This entry was amended twice before it merged** and is one entry
+rather than three: an earlier drafting grounded the link on the mechanism not
+being asked to do anything, which unmakes the seam Document Format section 4
+defines, and a second entry describing that correction is folded in here. The
+accumulate rule keeps a reader from meeting a changed claim without notice,
+and no reader met either draft.
 **Revised:** 2026-08-22, the harness names the elision's span. The clause
 placing the flush decision here gains the elision beside it, per
 `weaver-spu-PRD` section 13.13: the same division of cognition from

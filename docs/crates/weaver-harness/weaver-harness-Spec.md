@@ -20,19 +20,19 @@ landing beside it. The graph and the manifest agree at three today and go to
 four in one act, which is what keeps the record checkable by the instrument
 that checks it.
 **Revised:** 2026-08-24, fifth of this date, the diagnostic member composes
-inside. The entry below is reversed rather than amended, and it stands so the
-reversal is visible: the operator's ruling of this date made
-`weaver-diagnostic` the harness's third member and the mechanism this crate
-authors a diagnostic-trace through, so a diagnostic run authors a record
-rather than none. Section 3's enter walk receives a descriptor and constructs
-a recorder under either kind, the kind selecting which mechanism, and the
-no-clauses paragraph goes back to excluding Gate alone. Section 8's sink count
-stands at one under either kind, which is the claim
-`harness-one-sink-descriptor` always named. `harness-diagnostic-authors-nothing`
-is retired rather than restated, its claim being false, and the retirement is
-named at the site so a census comparison finds the reason. Section 9's item
-becomes the diagnostic recorder's surface, an election owed with the member's
-Spec.
+inside. The entry below is reversed rather than amended, and it stands so the reversal
+is visible: the operator's ruling of this date made `weaver-diagnostic` the harness's
+third member and the mechanism this crate authors a diagnostic-trace through, so a
+diagnostic run authors a record rather than none. Section 3's enter walk receives a
+descriptor and constructs a recorder under either kind, the kind selecting which
+mechanism, and the no-clauses paragraph goes back to excluding Gate alone. Section 8's
+sink count stands at one under either kind, which is the claim
+`harness-one-sink-descriptor` always named, that count and its node standing in section
+3 rather than section 8, which two entries had said.
+`harness-diagnostic-authors-nothing` is retired rather than restated, its claim being
+false, and the retirement is named at the site so a census comparison finds the reason.
+Section 9's item becomes the diagnostic recorder's surface, an election owed with the
+member's Spec.
 **Revised:** 2026-08-24, fourth of this date, the diagnostic binding writes no record.
 Section 3's enter walk scopes the receive and the `Recorder` to a serving binding and
 states once that every later authorship site reads under one, a diagnostic run reaching
@@ -1220,9 +1220,15 @@ to: harness-decode-end-own-type
 Receive the sink descriptor from the directive's own message and construct the recorder,
 which stands the empty working structure up. The count is one, per the human's ruling of
 2026-08-02: the coordination contract's plural was residue of the retired live view,
-corrected to the singular in the same act as this sentence, and `weaver-trace-Spec`
-section 5's receive takes the one sink descriptor this Spec builds to. Author the `load`
-event, the run's opening and the origin of its monotonic clock.
+corrected to the singular in the same act as this sentence. **The receive and the
+opening event named here are the serving mechanism's**, `weaver-trace-Spec` section
+5's receive taking the one sink descriptor this Spec builds to and the `load` event
+opening the run and originating its monotonic clock. Whether the diagnostic
+mechanism presents the same receive and reuses that event kind is the same election
+the `Run` field above defers, held open by section 9 and by `weaver-diagnostic-PRD`
+section 6, so this paragraph cites the serving surface rather than settling the
+other by citation. What holds under either kind is the count, the descriptor, and
+that a run opens with an authored event.
 
 **Which recorder it is follows the kind, and nothing else in the walk does.**
 Both kinds receive a descriptor and author a record into it, per
