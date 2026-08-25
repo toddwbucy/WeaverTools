@@ -5,16 +5,24 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
-**Revised:** 2026-08-24, the kind crosses the enter. Per `weaver-agents-PRD`
-section 6 as amended this date, a binding declares its kind and the lifecycle
-measures a load against the components the kind declares. The enter carries
-the kind, resolved to serving where the declaration is silent, and the gate
-instruction crosses where the kind declares a Gate and is absent as shape
-where it does not. The enter's gate-last and the leave's gate-first scope to
-a Gate that stands, and the ready guarantee reads against the declared
-components. Section 8 draws `binding-kind` from `weaver-types-PRD` section
-2.1. Which refusal catches a directive whose members disagree with its kind
-is named as the Spec round's.
+**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
+record. The sink handle joins the gate instruction under the kind's scoping,
+section 3 carrying it where the kind declares a record and nowhere else, so the
+descriptor count on an enter follows the kind rather than standing at one. A
+handle arriving on a diagnostic enter is named a defect in the sender. Admin's
+supply list and its sink guarantee scope the same way, the guarantee reading
+vacuously on a kind that takes none. Per `weaver-agents-PRD` section 6 as
+amended this date, which carries the argument. The entry below gains the
+ordinal the convention asks for, which it was filed without.
+**Revised:** 2026-08-24, first of this date, the kind crosses the enter. Per
+`weaver-agents-PRD` section 6 as amended this date, a binding declares its kind and the
+lifecycle measures a load against the components the kind declares. The enter carries
+the kind, resolved to serving where the declaration is silent, and the gate instruction
+crosses where the kind declares a Gate and is absent as shape where it does not. The
+enter's gate-last and the leave's gate-first scope to a Gate that stands, and the ready
+guarantee reads against the declared components. Section 8 draws `binding-kind` from
+`weaver-types-PRD` section 2.1. Which refusal catches a directive whose members disagree
+with its kind is named as the Spec round's.
 
 **Revised:** 2026-08-22, the lifecycle refusal is clerked. An enter refused
 after its bracket stands reaches the record as a `refusal` carrying
@@ -222,7 +230,7 @@ Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run reference, the kind of the binding, the trace sink
-handle, the
+handle where the kind declares a record, the
 SPU instruction, the gate instruction where the kind declares a Gate, and the state
 election the tee applies. The
 instructions and the election are in the directive because the
@@ -288,10 +296,16 @@ closes when the organs that can raise a fault have charters naming what they rai
 and the first of those is `weaver-spu-PRD`. This document binds nothing of it, the
 shape now being the event kind's, per `weaver-trace-PRD` section 3.1.
 
-**The trace sink handle crosses once, in the enter exchange.** It is not re-sent, not
-revoked, and not replaced. A harness that needs a handle it was not given has a
-failed load rather than a second request to make, because there is no exchange in
-which it asks for one.
+**The trace sink handle crosses once, in the enter exchange, and only where the
+kind declares a record.** It is not re-sent, not revoked, and not replaced. A
+serving harness that needs a handle it was not given has a failed load rather than
+a second request to make, because there is no exchange in which it asks for one.
+On a diagnostic binding no handle crosses at all, that kind authoring no event
+per `weaver-agents-PRD` section 6 as amended 2026-08-24, so the count of sink
+descriptors on an enter follows the kind: one for serving, none for diagnostic.
+**A handle arriving on a diagnostic enter is a defect in the sender**, refused
+the way any directive disagreeing with its own kind is, because a record nothing
+authors into is a sink held open for no writer.
 
 **No exchange carries a path.** Admin sends handles and the harness never learns a
 name, which is the handle discipline of `weaver-harness-PRD` section 5 stated as
@@ -329,14 +343,16 @@ this list.
 **Admin supplies** the session identity and the run reference for the run being
 entered, the kind of the binding, resolved to serving where the declaration is
 silent, the
-trace sink handle, the SPU instruction the fan-out admits,
+trace sink handle where the kind declares a record, the SPU instruction the
+fan-out admits,
 the gate instruction the fan-out starts where the kind declares a Gate, the
 state election the tee applies,
 resolved to the ruled default where the declaration is silent, and the intent
 to stop.
 
-**Admin guarantees** that the trace sink handle it passes refers to the sink the
-session's configuration declares, that the run reference distinguishes this run
+**Admin guarantees** that a trace sink handle it passes refers to the sink the
+session's configuration declares, the guarantee reading vacuously on a kind that
+takes none, that the run reference distinguishes this run
 from every other run of that session, distinctness being the guarantee rather
 than any particular rendering of it and the session possibly spanning agents,
 and

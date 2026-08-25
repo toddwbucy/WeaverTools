@@ -4,20 +4,39 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
-**Revised:** 2026-08-24, the seam papers land. Section 6's seam paragraph
-records the landing and corrects its own account of the declaring side: the
-seam edge is declared here, from the initiating side, per the pattern the
-harness-state seam set, and not by state as the paragraph first said. The
-owed list narrows to the driver, its Spec, and the null replay. The
-serving-binding refusal is restated in the papers' terms, the door's absence
-rather than a refusal at a seam that does not stand.
-**Date filed:** 2026-08-24
-**Document ID:** `weaver-diagnostic-PRD`
-**Parent:** the WeaverTools suite, whose governing document is deliberately
-not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
-names the `WeaverTools` system node, and the header and the edge name the
-same thing.
-**Editorial:** Per the Working Rules.
+**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
+record and this crate names the other product. Section 6 records that
+`weaver-trace` has nothing to do in a replay at either end, not read because a
+reader is downstream of a file and not written because a replay performs no
+cognition to record, and names the **diagnostic-trace** as this crate's, a
+trace in form and separate for how it is made rather than for what it looks
+like: one begets the other, a diagnostic-trace being made from a trace in a
+second context, so the two stand in a parent relation and a single type would
+leave a file unable to say which of the two it is. What the section shares is
+the canonical serialization and nothing above it, reader compatibility being
+the driver Spec's to define once the vocabulary and the readout's placement
+are elected, and the input-format cell now runs both directions because the
+diagnostic-trace is versionless on the same terms. Canonical form stays
+`weaver-trace-Spec`'s under G5, and this crate
+carries the diagnostic counterpart to that crate, the writer standing to a
+replay as `weaver-trace` stands to a turn. The harness relays opaque and
+assembles nothing, which keeps the dependency from running outward across the
+boundary. The crate defines `diagnostic-trace` as a term in the same section.
+The owed list gains the diagnostic-trace's form and exit, both to the driver's
+Spec, and gains the trace-as-an-input-format cell, which is `weaver-trace`'s
+act and sits ahead of the driver. The entry below gains the ordinal the
+convention asks for, which it was filed without.
+**Revised:** 2026-08-24, first of this date, the seam papers land. Section 6's seam
+paragraph records the landing and corrects its own account of the declaring side: the
+seam edge is declared here, from the initiating side, per the pattern the harness-state
+seam set, and not by state as the paragraph first said. The owed list narrows to the
+driver, its Spec, and the null replay. The serving-binding refusal is restated in the
+papers' terms, the door's absence rather than a refusal at a seam that does not stand.
+**Date filed:** 2026-08-24 **Document ID:** `weaver-diagnostic-PRD` **Parent:** the
+WeaverTools suite, whose governing document is deliberately not yet written, per
+`weaver-agents-PRD` section 0. The graph parent edge names the `WeaverTools` system
+node, and the header and the edge name the same thing. **Editorial:** Per the Working
+Rules.
 
 ---
 
@@ -188,6 +207,79 @@ principal, over the operator's own storage. The trace parser belongs to this
 crate, outside the agent. `weaver-state` never opens a trace file and
 `weaver-trace` keeps its write-only pin.
 
+**The record runs one way only, and this crate owns the other product.** A
+diagnostic binding writes no trace, per `weaver-agents-PRD` section 6 as
+amended 2026-08-24, so `weaver-trace` has nothing to do in a replay at either
+end: it is not read, because a reader of a finished record is downstream of a
+file rather than a party to that crate, and it is not written, because a
+replay performs no cognition of its own to record. What a diagnostic run
+produces instead is the **diagnostic-trace**, this crate's own record of the
+replay, named here for the first time.
+
+**The diagnostic-trace is a trace, and the two are separate for how they are
+made rather than for what they look like.** It carries the run the way a
+serving record carries one and carries the residual readout beside it, which
+is the bulk of it and the reason it exists. **What is shared and settled here
+is the canonical serialization and nothing above it**, one line of UTF-8 JSON
+per record with the newline as the separator, per `weaver-trace-Spec` section
+2. Whether an instrument that reads a serving record reads this one is **not
+claimed**: that follows from the event vocabulary this writer reuses and from
+where the residual readout sits beside it, both of which are the driver
+Spec's election, so reader compatibility is that document's to define and to
+state the rules of. What differs is the making, and the making is the whole
+distinction.
+
+**One begets the other, in a different context.** A diagnostic-trace is made
+from a trace: the serving record is the replay's input, and the
+diagnostic-trace is what the replay returns, so the two stand in a parent
+relation rather than side by side. That is why they cannot be one type
+however alike they read. A single type would have a record and the record
+derived from it wearing one name, and the first question anyone asks of a
+file in hand, which of the two it is, would have no answer in the file. It
+would also make the derivation circular on its face, a shape defined in terms
+of a run over itself, when what happened is that one run was read and a
+second was performed against it.
+
+The custody differs on the same seam. A serving record is authored event by
+event by the harness as the sole writer, inside the agent, into a sink admin
+opened under root, bracketed by a turn as it happens. This one is assembled
+outside the agent from what the replay returns, by a crate the boundary keeps
+out of that custody chain, over a run whose turns are read from a record
+rather than lived. Two writers with two custody stories cannot be one crate,
+and `weaver-trace`'s charter says so from its own side: it has one caller and
+no other crate submits an event to it. **So this crate carries
+the diagnostic counterpart** to it, the writer that makes a diagnostic-trace,
+standing to a replay as `weaver-trace` stands to a turn.
+
+**The shared form has one authority and it is not this crate.** Canonical form
+is `weaver-trace-Spec` section 2's, one line of UTF-8 JSON per record with the
+newline as the separator, and where this crate's writer diverges from it the
+defect is this crate's, per G5. That is the same authority the parser side of
+section 6 answers to, so both directions of this crate's traffic in records
+read one document rather than two.
+
+```graph
+node: diagnostic-trace
+kind: term
+
+edge: defines
+from: weaver-diagnostic
+to: diagnostic-trace
+```
+
+**The harness relays and never assembles.** The measurement returns from the
+SPU by the same path the generation does, per apex section 3 step 6, so it
+reaches the harness whatever the binding's kind. On a serving binding the
+harness authors it into the record. On a diagnostic one there is no record to
+author into, so the harness passes it outward holding it opaque, on the
+precedent `weaver-trace` already sets for message payloads, whose shapes it
+neither knows nor versions. **The diagnostic-trace is assembled at the far
+end**, by this crate, from what the relay delivers, which is what keeps the
+dependency running the one way the boundary allows: this crate sits outside
+the agent, and a harness that named this crate's writer would depend outward.
+Holding the payload opaque is what makes the relay cost nothing structurally.
+The exit path and its directives are owed with the driver, below.
+
 **The refusal rests on the binding's declaration, and its form is the door's
 absence.** State learns the kind at its standing, from the party that stands
 it, which resolved the kind at inventory, and binds the preload name only
@@ -211,3 +303,34 @@ Open cells, each named rather than implied:
   silent one.
 - **The driver and its Spec** are owed next, the seam papers having landed,
   and the null replay of section 4 is owed behind the driver.
+- **The diagnostic-trace's own shape** is owed with the driver's Spec, which
+  is the document permitted to name it and the writer that makes it. This
+  section fixes what it is, whose it is, that it shares canonical form under
+  `weaver-trace-Spec`'s authority, and that the harness holds it opaque. What
+  it does not fix is how much of that crate's event vocabulary the diagnostic
+  writer reuses and how the residual readout sits beside it, which is the
+  Spec's election and the larger half of the work. **The route the
+  measurements take outward is owed in the same act**: they leave by admin,
+  per the operator's ruling of 2026-08-24, and no directive carries them
+  until that act writes one, a declared route with no far end being the
+  empty joint apex section 9 refuses. What travels that route is the relay's
+  material rather than the assembled diagnostic-trace, the assembly standing
+  at the far end by the paragraph above, and the act that writes the
+  directives is the act that fixes where the far end sits.
+- **The trace as an input format.** This crate parses a record whose shape is
+  declared in `weaver-trace-Spec` section 3, and no code is shared between
+  the writer and this parser, which is the boundary working as intended and
+  is also two statements of one fact. The authority is `weaver-trace-Spec`
+  and a divergence is a defect in this crate, per G5. **The record carries no
+  version marker**, and where a serving run only ever grew its vocabulary, a
+  replay reads that vocabulary as an input, so a parser written against one
+  set and pointed at a record written under another does not fail and instead
+  groups differently. Whether the marker lands on the record or the
+  compatibility is stated some other way is owed ahead of the driver, and it
+  is `weaver-trace`'s act rather than this crate's. **The cell runs both
+  directions.** The diagnostic-trace this crate writes is versionless on the
+  same terms, so its own readers meet the problem the paragraph above
+  describes, and the driver Spec settling the vocabulary settles only what
+  the shape is rather than how a reader learns which shape it holds. Neither
+  direction is closed by the shared serialization, that fixing the line and
+  not the vocabulary carried on it.

@@ -4,12 +4,19 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-24, the kind takes its shape. The inventory resolves the
-declaration's binding kind, absence meaning serving, and constructs the enter
-payload's `EnterBinding` from it, refusing a declaration whose gate
-instruction disagrees with its kind as `ConfigInvalid` before any unit
-starts. Per the contract act of this date, which named the refusal's
-placement as this round's.
+**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
+record. Section 5 scopes to a serving binding, no sink opening and no
+descriptor crossing for a diagnostic one, the kind being resolved at the
+inventory before the open site is reached. Section 7's cross-field rule runs
+over `gate-instruction` and `trace-sink` alike, and names the one field it
+refused on. Per `weaver-agents-PRD` section 6 as amended this date, which
+carries the argument this section represents. The entry below gains the
+ordinal the convention asks for, which it was filed without.
+**Revised:** 2026-08-24, first of this date, the kind takes its shape. The inventory
+resolves the declaration's binding kind, absence meaning serving, and constructs the
+enter payload's `EnterBinding` from it, refusing a declaration whose gate instruction
+disagrees with its kind as `ConfigInvalid` before any unit starts. Per the contract act
+of this date, which named the refusal's placement as this round's.
 
 **Revised:** 2026-08-20, the declared loop rides the vector. Per the
 operator's ruling on issue #243: the agent's declaration may name its
@@ -675,6 +682,13 @@ to: admin-identity-from-validated-name
 Opened by the discriminant the config carries, under root, the role's
 principal, every descriptor close-on-exec in the opening call itself.
 
+**Nothing in this section runs for a diagnostic binding.** That kind declares
+no sink and authors no event, per `weaver-agents-PRD` section 6 as amended
+2026-08-24, so there is no discriminant to open by and no descriptor to send.
+The resolved kind reaches this crate before the open site is reached, at the
+one inventory function of section 4, so the absence is decided rather than
+discovered here. The rest of this section reads under a serving binding.
+
 **`File { path, create }`.** Opened write-only with `O_APPEND`, `O_CLOEXEC`,
 and, when the flag is set, `O_CREAT` at mode 0640, owned by root, which is the
 custody of charter section 7.
@@ -1054,11 +1068,15 @@ per `weaver-types-Spec` section 2, and the one inventory function of section
 construction follows the resolved kind: a serving enter takes the
 declaration's gate instruction into `EnterBinding`'s serving case, and a
 diagnostic enter takes its absence. The cross-field rule lands here because
-only this crate sees the file whole: a serving declaration omitting the gate
-instruction and a diagnostic declaration carrying one are both refused at
-inventory as `ConfigInvalid` naming `gate-instruction`, before any unit
-starts, which is the taxonomy of `weaver-types-PRD` section 2.1 run over one
-more field. Past the inventory no disagreement exists to carry, the payload's
+only this crate sees the file whole, and it runs over two fields rather than
+one: `gate-instruction` and `trace-sink` alike are required by a serving
+declaration and excluded by a diagnostic one, per `weaver-types-Spec` section
+2. A declaration on the wrong side of either is refused at inventory as
+`ConfigInvalid` naming the field it failed on, before any unit starts, which
+is the taxonomy of `weaver-types-PRD` section 2.1 run over the pair. **The
+refusal names one field**, the first checked in declaration order, because a
+declaration wrong about both is wrong about its kind and the operator reads
+that from either name. Past the inventory no disagreement exists to carry, the payload's
 shape holding what was resolved, per `weaver-types-Spec` section 4.
 
 ```graph
