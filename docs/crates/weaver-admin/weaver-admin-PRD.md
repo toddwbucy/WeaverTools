@@ -6,6 +6,14 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-25, third of this date, the second review's findings land.
+Section 2's wait claimed a bound socket rather than a half-bound one, which a
+pathname cannot show: it observes a name and the worker's dial at step 6 is what
+establishes the leg. The start is placed between steps 5 and 6 and takes no step
+number, section 5's rollback discriminating by step and no step turning on the
+member. And nothing here reaps it, this crate being one invocation per verb, so
+the member is reparented and reaped by the init system, which is what lets it
+outlive the invocation at all.
 **Revised:** 2026-08-25, second of this date, the review's findings land. Section
 5 said a load failing at steps 1 through 4 leaves nothing to reap because no
 process exists, which this act's own section 2 made false: the member may exist
@@ -224,12 +232,31 @@ per section 4's sequencing, and the member is a direct child of this crate,
 which is what lets it hold a uid the agent's cannot reach.
 
 **No seam is created by starting it.** This crate speaks to the member never:
-it starts the process, waits for the member's name to appear so the worker's
-dial at enter finds a bound socket or none rather than a half-bound one, and
-proceeds without the leg where the name does not come. Section 6's seam list is
-unchanged by this paragraph, because starting a process is not a channel, and
-what the member serves it serves to the harness and to `weaver-analysis` under
-their own contracts.
+it starts the process, waits for the member's name to appear, and proceeds
+without the leg where the name does not come. Section 6's seam list is unchanged
+by this paragraph, because starting a process is not a channel, and what the
+member serves it serves to the harness and to `weaver-analysis` under their own
+contracts.
+
+**The wait observes a pathname and nothing more.** A name that has appeared is
+not a member that will answer, and this charter claims no more from the wait
+than that a load does not race ahead of a member that never started. **What
+establishes the leg is the worker's own dial at step 6**, bounded there, and an
+absent or unanswering name is the leg not standing rather than a refused load.
+
+**The start falls between steps 5 and 6 and takes no step number of its own.**
+The worker's unit is asked for at step 5 and the enter is directed at step 6, and
+the member is started between them, which is what puts the unit's runtime
+directory in place before the member binds inside it. It takes no number because
+section 5's rollback discriminates by step and no step of the load turns on the
+member: the leg either stands or does not, and section 4's sequencing is
+unchanged either way.
+
+**Nothing of this crate reaps the member, and nothing needs to.** This crate is
+one invocation per verb and exits when the verb answers, so the member is
+reparented to the init system and reaped there, which is also what lets it
+outlive the invocation that started it - a member that died with this process
+would serve no residency at all.
 
 **Which doors the member stands is this crate's to say, because the kind is.**
 A diagnostic binding stands the preload door of
