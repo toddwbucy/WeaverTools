@@ -301,11 +301,14 @@ Open cells, each named rather than implied:
   `weaver-trace-Spec`'s authority, and that the harness holds it opaque. What
   it does not fix is how much of that crate's event vocabulary the diagnostic
   writer reuses and how the residual readout sits beside it, which is the
-  Spec's election and the larger half of the work. **Its exit is owed in the
-  same act**: it leaves by admin, per the
-  operator's ruling of 2026-08-24, and no directive carries it until that act
-  writes one, a declared route with no far end being the empty joint apex
-  section 9 refuses.
+  Spec's election and the larger half of the work. **The route the
+  measurements take outward is owed in the same act**: they leave by admin,
+  per the operator's ruling of 2026-08-24, and no directive carries them
+  until that act writes one, a declared route with no far end being the
+  empty joint apex section 9 refuses. What travels that route is the relay's
+  material rather than the assembled diagnostic-trace, the assembly standing
+  at the far end by the paragraph above, and the act that writes the
+  directives is the act that fixes where the far end sits.
 - **The trace as an input format.** This crate parses a record whose shape is
   declared in `weaver-trace-Spec` section 3, and no code is shared between
   the writer and this parser, which is the boundary working as intended and
