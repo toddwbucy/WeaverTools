@@ -7,13 +7,13 @@
 pub mod admin;
 pub mod user;
 
-use crate::adapters::gate::GateAdapter;
 use crate::channel::EventView;
-use crate::config::Config;
+use crate::config::ServerConfig;
 use crate::queue::Queues;
 use crate::registry::{self, Participant};
 use crate::store::Store;
 use crate::traceview::TraceViews;
+use crate::wire::Link;
 use askama::Template;
 use axum::extract::Path;
 use axum::http::{header, HeaderMap, StatusCode};
@@ -25,11 +25,11 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub cfg: Arc<Config>,
+    pub cfg: Arc<ServerConfig>,
     pub store: Store,
     pub queues: Queues,
     pub traces: TraceViews,
-    pub gates: Arc<HashMap<String, GateAdapter>>,
+    pub link: Link,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -91,8 +91,11 @@ pub async fn session_participant(
 
 // ---------- shared view helpers ----------
 
-pub fn nav_agents(cfg: &Config) -> Vec<String> {
-    cfg.agents.iter().map(|a| a.name.clone()).collect()
+/// The agents the surfaces name: the link's latest roster, which
+/// survives a link drop so a known agent stays named rather than
+/// vanishing (Spec section 16).
+pub async fn nav_agents(state: &AppState) -> Vec<String> {
+    state.link.roster().await
 }
 
 pub fn valid_handle(name: &str) -> bool {

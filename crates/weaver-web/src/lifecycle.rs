@@ -1,7 +1,7 @@
 //! The verb invocation (Spec section 11): sudo weaver-admin, one JSON
 //! object on stdout, rendered verbatim; failure never swallowed.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 
 const ADMIN_BIN: &str = "/usr/local/libexec/weaver/weaver-admin";
@@ -13,7 +13,7 @@ pub const VERBS: [&str; 3] = ["validate", "load", "unload"];
 /// catches a hang, never a slow success.
 const VERB_TIMEOUT_SECS: u64 = 300;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerbOutcome {
     pub verb: String,
     pub agent: String,

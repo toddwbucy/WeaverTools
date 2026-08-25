@@ -67,22 +67,30 @@ struct LifecyclePage {
     outcome: String,
 }
 
-fn agent_rows(state: &AppState) -> Vec<AgentRow> {
-    state
-        .cfg
-        .agents
-        .iter()
-        .map(|a| {
-            let loaded = state
-                .gates
-                .get(&a.name)
-                .map(|g| g.socket_exists())
-                .unwrap_or(false);
-            AgentRow {
-                name: a.name.clone(),
-                state: if loaded { "loaded".into() } else { "unloaded".into() },
-                socket: if loaded { "present".into() } else { "absent".into() },
+/// The load-state rows: the connector's `status` answer over the
+/// link, still the socket-existence inference the UI labels
+/// (PRD 4.2). A down or unresponsive link renders as unreachable
+/// rather than unloaded - the absence of the observable is not the
+/// observable's absence.
+async fn agent_rows(state: &AppState) -> Vec<AgentRow> {
+    let roster = state.link.roster().await;
+    let status = state.link.status().await;
+    roster
+        .into_iter()
+        .map(|name| match &status {
+            Some(map) => {
+                let loaded = map.get(&name).copied().unwrap_or(false);
+                AgentRow {
+                    name,
+                    state: if loaded { "loaded".into() } else { "unloaded".into() },
+                    socket: if loaded { "present".into() } else { "absent".into() },
+                }
             }
+            None => AgentRow {
+                name,
+                state: "unreachable".into(),
+                socket: "link down".into(),
+            },
         })
         .collect()
 }
@@ -93,10 +101,10 @@ async fn lifecycle_page(State(state): State<AppState>, headers: HeaderMap) -> Ap
         Err(refusal) => return Ok(refusal),
     };
     let page = LifecyclePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
-        agents: agent_rows(&state),
+        agents: agent_rows(&state).await,
         outcome: String::new(),
     };
     Ok(Html(page.render()?).into_response())
@@ -111,16 +119,24 @@ async fn run_verb(
         Ok(p) => p,
         Err(refusal) => return Ok(refusal),
     };
-    if state.cfg.agent(&agent).is_none() {
+    if !state.link.has_agent(&agent).await {
         return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
     }
-    let outcome = lifecycle::run_verb(&verb, &agent).await?;
+    if !lifecycle::VERBS.contains(&verb.as_str()) {
+        return Ok((StatusCode::NOT_FOUND, "no such verb").into_response());
+    }
+    // The verb crosses the link; its outcome renders verbatim either
+    // way, and a link failure is reported as itself, never swallowed.
+    let outcome = match state.link.verb(&agent, &verb).await {
+        Ok(o) => serde_json::to_string_pretty(&o)?,
+        Err(e) => format!("verb not run: {e}"),
+    };
     let page = LifecyclePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
-        agents: agent_rows(&state),
-        outcome: serde_json::to_string_pretty(&outcome)?,
+        agents: agent_rows(&state).await,
+        outcome,
     };
     Ok(Html(page.render()?).into_response())
 }
@@ -147,20 +163,27 @@ async fn agent_config(
         Ok(p) => p,
         Err(refusal) => return Ok(refusal),
     };
-    if state.cfg.agent(&agent).is_none() {
+    if !state.link.has_agent(&agent).await {
         return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
     }
-    let path = state.cfg.agent_declarations.join(format!("{agent}.yaml"));
-    let content = match tokio::fs::read_to_string(&path).await {
-        Ok(c) => c,
-        Err(e) => format!("could not read the declaration: {e}"),
-    };
+    // The declaration lives on the agents' box; the connector reads
+    // it (Spec section 16) and a read failure arrives as its own text.
+    let (path, content) = state
+        .link
+        .declaration(&agent)
+        .await
+        .unwrap_or_else(|| {
+            (
+                String::new(),
+                "the link to the agents' box is down or unresponsive".into(),
+            )
+        });
     let page = AgentConfigPage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
         agent,
-        path: path.display().to_string(),
+        path,
         content,
     };
     Ok(Html(page.render()?).into_response())
@@ -273,7 +296,6 @@ struct TracePage {
     is_admin: bool,
     agent: String,
     events: Vec<String>,
-    cursor: u64,
     q: String,
     controls: Vec<FieldControl>,
     stream_url: String,
@@ -330,7 +352,7 @@ async fn trace_page(
     }
 
     let page = TracePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
         agent,
@@ -339,7 +361,6 @@ async fn trace_page(
             .filter(|e| event_matches(e, &q))
             .map(|e| render_trace_event(e, &hidden))
             .collect(),
-        cursor,
         q: q.unwrap_or_default(),
         controls,
         stream_url,

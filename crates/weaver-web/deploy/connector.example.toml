@@ -1,0 +1,23 @@
+# weaver-web-connector configuration (Spec section 3).
+# Default path: /etc/weaver-web/connector.toml, override with --config.
+# The connector runs on the agents' own box as the operator's uid and
+# holds every box-bound reach. Box facts live here: the agent roster
+# with its socket and sink paths is this file's declaration, announced
+# to the server in the link's hello.
+
+# The server's link address - the one line that changes when the
+# presentation stack moves to another box.
+server = "127.0.0.1:8081"
+
+# Agent declarations, served read-only to the admin surface.
+agent_declarations = "/etc/weaver/agents"
+
+[[agents]]
+name  = "alpha"
+gate  = "/run/weaver-alpha/gate.sock"
+trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
+
+[[agents]]
+name  = "bravo"
+gate  = "/run/weaver-bravo/gate.sock"
+trace = "/home/todd/.weaveragents/weaver-bravo/trace.out"

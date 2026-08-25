@@ -1,7 +1,7 @@
 //! The weaver agent adapter: dial the gate socket, send one request
 //! line, read one close line. Dial-per-turn, per Spec section 6.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::UnixStream;
@@ -53,7 +53,7 @@ impl std::error::Error for GateError {}
 /// one under that member; `raw` always holds the whole close for
 /// faithful rendering until the close's field list is verified against
 /// a live agent.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GateClose {
     pub kind: String,
     pub run: Option<String>,

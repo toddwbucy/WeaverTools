@@ -47,7 +47,7 @@ async fn index(State(state): State<AppState>, headers: HeaderMap) -> AppResult<R
         return Ok(Redirect::to("/channels").into_response());
     }
     let page = NamePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: "anonymous".into(),
         is_admin: false,
     };
@@ -106,7 +106,7 @@ async fn channels_page(State(state): State<AppState>, headers: HeaderMap) -> App
         return Ok(Redirect::to("/").into_response());
     };
     let page = ChannelsPage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         is_admin: me.is_admin(),
         who: me.name,
         channels: channel::list(&state.store).await?,
@@ -224,7 +224,7 @@ async fn channel_page(
         })
         .collect();
     let page = ChannelPage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         is_admin: me.is_admin(),
         who: me.name,
         channel_name: ch.name,

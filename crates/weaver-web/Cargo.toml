@@ -3,11 +3,13 @@ name = "weaver-web"
 version = "0.1.0"
 # **Pinned rather than inherited, and the alignment is owed.** The workspace
 # is edition 2024 and this crate pins 2021. The migration is real work - the
-# sqlx and askama derives are where an edition move bites - and no build has
-# yet resolved this crate's dependency tree, the machine this workshop runs
-# on having no network to do it. Pinning states the fact rather than
-# claiming a migration nobody compiled. Held at the Spec's section 15.
+# sqlx and askama derives are where an edition move bites. The tree first
+# resolved and built 2026-08-25 from this crate's own lockfile (the crate is
+# excluded from the workspace members - see the workspace Cargo.toml), so
+# the alignment act is unblocked and remains its own act. Held at the Spec's
+# section 15.
 edition = "2021"
+default-run = "weaver-web"
 # **Explicit rather than inherited, because the licences disagree.** The
 # workspace publishes nothing and carries UNLICENSED. This crate carries
 # Apache-2.0 with its LICENSE file beside it. The suite's licence boundary
