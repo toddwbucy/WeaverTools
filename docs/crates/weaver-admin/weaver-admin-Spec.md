@@ -4,7 +4,21 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-25, admin names the preload door. Section 6 gains the state
+**Revised:** 2026-08-25, second of this date, the review's findings land. The
+member's clause overclaimed three ways and each is withdrawn. It gave the member
+a uid of its own, which `weaver-state-PRD` asserts and the spawn does not
+implement, now recorded as a discrepancy owed to the act that gives the member
+an account. It read a pathname's appearance as liveness, where the dial's own
+bound is what proves the leg. And it cited a rule to `weaver-state-PRD` section
+4 that document does not carry, corrected to the contract that does. Three
+absences the clause opened are closed: the member retires itself and this crate
+takes no stop obligation, the stale name is cleared before the start and the
+worker's directory sweep does not reach a direct child, and the two derivations
+of the member's path are named with this section as their authority per G5. The
+runtime directory's lifetime coupling is stated rather than assumed, and named
+as unexamined for the preload door, whose peer is the operator's.
+**Revised:** 2026-08-25, first of this date, admin names the preload door. Section 6
+gains the state
 member's start and its vector, which this Spec has never carried while the code
 has started that member since the ingest act: it is a direct child rather than a
 unit, its vector is the territory, its socket, and the agent's uid, and a fourth
@@ -912,10 +926,21 @@ variable, written before any declaration member rode the vector.
 **The state member is started here too, and it is not a unit.** The custodian
 runs as a direct child of this crate rather than through the init system, per
 `weaver-admin-PRD` section 2: the worker is asked of the manager because the
-agent's identity and hardening are the unit template's, and the member holds a
-uid of its own over a subdirectory the agent's uid cannot enter, which the
-unit template does not describe. Nothing of section 6's manager interface
-above reaches it, and this crate holds no channel to it once it runs.
+agent's identity and hardening are the unit template's, and the member's
+custody is a territory this crate prepares rather than a sandbox the template
+declares. Nothing of section 6's manager interface above reaches it, and this
+crate holds no channel to it once it runs.
+
+**The member inherits this crate's identity and that is a discrepancy this act
+records rather than resolves.** `weaver-state-PRD` section 4 has the member
+holding "a uid of its own over one subdirectory the agent's uid cannot enter",
+and the spawn drops no privilege, so the process runs as this crate does and
+the territory is prepared by group rather than by owner. Both halves work
+today - the agent's uid cannot enter the territory either way - but the charter
+describes an arrangement the code does not implement, and a Spec that restated
+the charter's sentence here would have entrenched it. **Which is right is owed
+to the act that gives the member its own account**, and until then this section
+describes what runs.
 
 **Its vector is the territory, its socket path, the agent's uid, and, under a
 diagnostic binding, the preload socket path.** The first three are what the
@@ -929,23 +954,62 @@ once and read here, which is the same single-resolution rule the enter
 payload's `EnterBinding` follows in section 7 - the verb and the load cannot
 resolve differently because only one site resolves.
 
-**The path is composed here and reaches nothing else.** It is derived from the
-same validated agent name the coordination socket's is, in the same runtime
-directory, so it grants nothing the first socket's path did not and no value
-the invocation's input composes reaches it. **No exchange carries it**, which
-is why it rides the vector: the member holds no channel on which a path could
-arrive, and `weaver-analysis` learns the name from the operator rather than
-from this crate, having no seam with it.
+**Both names stand beside the coordination socket, and the derivation is shared
+rather than told.** Each is the validated agent name's runtime directory with a
+fixed leaf, so no value the invocation's input composes reaches either. **The
+harness derives the first door's name the same way rather than being handed
+it**, from its own coordination socket's directory, which is two derivations of
+one path and wants a named authority: **this section is it**, and a divergence
+on the far side is a defect against this clause per G5. That the two agree is
+what `weaver-admin-harness-contract`'s standing ground relies on when it says
+this crate holds no channel to the member.
 
-**The wait after the start is for the name and not for the process.** This
-crate waits for the member's socket to appear so the worker's dial at enter
-finds a bound name or none, never one mid-bind, and a member that exits before
-binding ends the wait at once rather than costing the load the full bound. A
-name that does not appear inside the bound is a member that failed to stand,
-and the load proceeds without the leg either way, per `weaver-state-PRD`
-section 4's rule that an absent member is the leg not standing and never a
-refused load. **The preload door is not waited on at all**, its far end being
-the operator's to dial whenever the operator dials it.
+**No exchange carries either name**, which is why they ride the vector: the
+member holds no channel on which a path could arrive. `weaver-analysis` learns
+the preload name from the operator rather than from this crate, having no seam
+with it, which is the same route the operator's own tooling learns any path by.
+
+**The directory is the worker unit's and the member is not the worker**, so the
+arrangement wants stating rather than assuming. This crate binds nothing itself:
+the member binds both names under the identity it inherited, which reaches that
+directory because this crate's identity does. The socket's mode is open and the
+credential check is the gate, per `weaver-harness-state-contract`, so the
+directory's ownership is not what keeps a stranger out. **What the shared
+directory does cost is a lifetime coupling** - the manager removes the runtime
+directory with the worker unit, taking both names with it - and that is correct
+for the first door, whose peer dies with the worker, and unexamined for the
+preload door, whose peer is the operator's. Named here as owed to the act that
+gives the member its own account.
+
+**The wait after the start is for the name, and what it buys is bounded.** This
+crate waits for the member's socket to appear so a load does not race ahead of a
+member that never started, and a member that exits before binding ends the wait
+at once rather than costing the load the full bound, which is the dividend of
+being its parent rather than the manager's client. **A pathname's appearance is
+not liveness**, and this clause claims none: what proves the leg is the worker's
+own dial at enter, bounded there. A name that does not appear inside this bound
+is a member that failed to stand, and the load proceeds without the leg either
+way, per `weaver-harness-state-contract`, where an absent name is the leg not
+standing and never a refused load. **The preload door is not waited on at all**,
+its far end being the operator's to dial whenever the operator dials it.
+
+**The stale name is cleared before the start, by this crate.** A name left by an
+earlier load would satisfy the wait above before the new member bound its own,
+so this crate unlinks it first. The member unlinks it too, and both are wanted:
+this side's removal is what keeps the existence check honest, and the member's
+is what keeps its own bind clean. **This is not the worker's arrangement**,
+where `weaver-admin-systemd-contract` section 2 makes the directory the unit's
+and its removal the answer, and a direct child gets no such sweep.
+
+**The member retires itself and no party reaps it.** `weaver-state-PRD` section
+4 has the process retiring with each unload while its holdings stand for the
+next, and the mechanism is the first door's closure: the worker's channel closes
+at unload and the member's serve loop ends with it. A load that fails before the
+worker ever dials leaves a member waiting on its accept, and that wait is
+bounded, so an abandoned member is a bounded cost rather than a resident one.
+**So this crate takes no stop obligation**, and section 3's rollback gains none:
+what would be reaped retires on its own, by the same closure that ends a
+successful run.
 
 **The unit declares no descriptor-bearing open, and the absence is the
 assertion.** Under the

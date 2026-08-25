@@ -5,7 +5,17 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
-**Revised:** 2026-08-25, the member's standing is admitted. Section 2 has never
+**Date filed:** 2026-07-29
+**Revised:** 2026-08-25, second of this date, the review's findings land. Section
+5 said a load failing at steps 1 through 4 leaves nothing to reap because no
+process exists, which this act's own section 2 made false: the member may exist
+by then. It still leaves nothing to reap, and now for a stated reason rather than
+by absence, the member retiring itself on an accept the worker never makes.
+Section 2 gains the assertion for the half of
+`state-preload-door-stands-only-diagnostic` that lives here, because the member
+binds no name it is not given and this crate is what gives one.
+**Revised:** 2026-08-25, first of this date, the member's standing is admitted. Section
+2 has never
 said this crate starts the state member, and the code has done it since the
 ingest act of 2026-08-18. The paragraph states why it falls here rather than
 anywhere else - this crate holds the operator's territory, the resolved
@@ -14,8 +24,6 @@ no other party holds any of them - and states what it does not create: no seam,
 this crate speaking to the member never. Which doors the member stands follows
 the kind, so it follows this crate, per `weaver-agents-PRD` section 6 as ruled
 2026-08-24.
-
-**Date filed:** 2026-07-29
 **Revised:** 2026-08-24, the kind crosses the enter. Per `weaver-agents-PRD`
 section 6 as amended this date, the enter directive of section 4.1 carries the
 kind of the binding, resolved to serving where the declaration is silent, and
@@ -231,6 +239,24 @@ about the binding and learns which doors to stand from the party that starts
 it, per `weaver-state-Spec` section 4, which is the same division the rest of
 this charter runs on: this crate resolves what the declaration meant, once, and
 hands the resolution down decided.
+
+**That makes a standing claim of the member's partly this crate's**, and the
+record follows the obligation. `state-preload-door-stands-only-diagnostic` is
+asserted by `weaver-state` and its mechanism is now two-sided: the member binds
+no name it is not given, and this crate gives one only under a diagnostic
+binding. The half that lives here is asserted here, so a perturbation of either
+side has a record to fail against rather than one crate's test standing for two
+crates' behaviour.
+
+```graph
+node: admin-preload-name-follows-the-kind
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-preload-name-follows-the-kind
+```
 
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its
@@ -606,8 +632,13 @@ smaller than it was. What a failed load can leave is a worker process, a connect
 sink, and a device the SPU took. Nothing that survives a crash needs a later verb to
 recognize and refuse it, because nothing durable of the program's was authored.
 
-A `load` that fails at steps 1 through 4 leaves nothing to reap. No process exists,
-and a sink opened at step 4 is closed, nothing having been written through it.
+A `load` that fails at steps 1 through 4 leaves nothing to reap, and the sentence
+that once read "no process exists" is narrowed rather than kept: **the state member
+may exist by then**, this crate having started it, per section 2. It still leaves
+nothing to reap, for a reason of its own rather than by absence - the member retires
+itself, waiting on an accept the worker never makes and ending that wait bounded,
+per `weaver-state-Spec` section 4. A sink opened at step 4 is closed, nothing having
+been written through it.
 
 A `load` that fails at step 5, or at step 6 before the `load` event is authored,
 leaves a worker that never entered a run. Admin stops the unit, and nothing entered
