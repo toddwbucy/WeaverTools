@@ -6,6 +6,13 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-08-25, fourth of this date, the assertion goes where
+assertions go. The act of this date put `admin-preload-name-follows-the-kind` in
+this charter, and the Document Format's own definition has an assertion as a
+claim a Spec makes. The argument stays here, where the obligation is argued, and
+the record moves to `weaver-admin-Spec` section 6 under the clause that gives
+the name, with the instrument it is perturbed by. Found by reading this
+charter's own graph blocks against that definition rather than by a review.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Section 2's wait claimed a bound socket rather than a half-bound one, which a
 pathname cannot show: it observes a name and the worker's dial at step 6 is what
@@ -267,23 +274,15 @@ it, per `weaver-state-Spec` section 4, which is the same division the rest of
 this charter runs on: this crate resolves what the declaration meant, once, and
 hands the resolution down decided.
 
-**That makes a standing claim of the member's partly this crate's**, and the
-record follows the obligation. `state-preload-door-stands-only-diagnostic` is
-asserted by `weaver-state` and its mechanism is now two-sided: the member binds
-no name it is not given, and this crate gives one only under a diagnostic
-binding. The half that lives here is asserted here, so a perturbation of either
-side has a record to fail against rather than one crate's test standing for two
-crates' behaviour.
-
-```graph
-node: admin-preload-name-follows-the-kind
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-admin
-to: admin-preload-name-follows-the-kind
-```
+**That makes a standing claim of the member's partly this crate's.**
+`state-preload-door-stands-only-diagnostic` is asserted by `weaver-state` and
+its mechanism is two-sided: the member binds no name it is not given, and this
+crate gives one only under a diagnostic binding. The half that lives here needs
+a record of its own, so a perturbation of either side has something to fail
+against rather than one crate's test standing for two crates' behaviour. **The
+record is the Spec's**, per the Document Format's definition of an assertion as
+a claim a Spec makes, and it sits in `weaver-admin-Spec` section 6 under the
+clause that gives the name.
 
 **Directing a transition, and receiving the aggregate result.** Admin directs the
 transition across its one seam and the harness sequences it, each organ performing its

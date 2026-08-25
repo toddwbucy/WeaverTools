@@ -4,6 +4,12 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, fourth of this date, the assertion arrives with its
+clause. `admin-preload-name-follows-the-kind` was filed in the charter by the
+act of this date and belongs here, an assertion being a claim a Spec makes per
+the Document Format. It sits under section 6's naming clause with its
+instrument, and it is half of `state-preload-door-stands-only-diagnostic`, the
+member's side asserted in `weaver-state-Spec` section 4.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Four sentences gain the fact that makes them true rather than asserted. The
 runtime directory exists before the member binds because step 5's unit ask runs
@@ -965,7 +971,24 @@ door admits. **The fourth is present only where the resolved kind is
 diagnostic**, per `weaver-agents-PRD` section 6 as ruled 2026-08-24, and its
 absence is a serving load rather than a defect: the member binds the preload
 name only where this vector carries one, so a serving binding stands one door
-by the value not being there. The kind is section 4's inventory's, resolved
+by the value not being there.
+
+```graph
+node: admin-preload-name-follows-the-kind
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-preload-name-follows-the-kind
+```
+
+The instrument is perturbation: a serving inventory driven through this site
+puts three values on the vector and a diagnostic one puts four, confirmed by
+watching a serving load stand a door once the kind's read is removed. It is
+half of `state-preload-door-stands-only-diagnostic`, which
+`weaver-state-Spec` section 4 asserts from the member's side, and neither
+record stands for the other's behaviour. The kind is section 4's inventory's, resolved
 once and read here, which is the same single-resolution rule the enter
 payload's `EnterBinding` follows in section 7 - the verb and the load cannot
 resolve differently because only one site resolves.
