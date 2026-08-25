@@ -44,13 +44,13 @@ async fn main() -> anyhow::Result<()> {
     let (ev_tx, mut ev_rx) = tokio::sync::mpsc::channel(1024);
     tokio::spawn(wire::serve(link.clone(), link_listener, ev_tx));
 
-    // The link event pump: hellos reconcile the registry and start
-    // queues and views (roster-by-hello, Spec section 16), trace
-    // frames feed the rings, and link loss marks every view.
+    // The link event pump: each box's hello reconciles the registry
+    // and starts queues and views for its agents (roster-by-hello,
+    // Spec section 16), trace frames feed the rings, and a box's
+    // link loss marks exactly its own agents' views.
     {
         let (store, queues, traces) = (store.clone(), queues.clone(), traces.clone());
         tokio::spawn(async move {
-            let mut had_connection = false;
             while let Some(ev) = ev_rx.recv().await {
                 match ev {
                     wire::LinkEvent::Hello(agents) => {
@@ -59,21 +59,22 @@ async fn main() -> anyhow::Result<()> {
                         }
                         for a in &agents {
                             queues.ensure_agent(a);
+                            // A view that already holds events is
+                            // getting a fresh backfill: bracket it.
+                            if traces.has_events(a) {
+                                traces.mark(a, "link reconnected: a fresh backfill follows");
+                            }
                             traces.ensure(a);
                         }
-                        if had_connection {
-                            traces.mark_all(
-                                "link reconnected: a fresh backfill follows",
-                            );
-                        }
-                        had_connection = true;
-                        tracing::info!("hello: roster of {} agent(s)", agents.len());
+                        tracing::info!("hello: {} agent(s) admitted", agents.len());
                     }
                     wire::LinkEvent::Trace { agent, event } => {
                         traces.ingest(&agent, event);
                     }
-                    wire::LinkEvent::Down => {
-                        traces.mark_all("link to the agents' box lost");
+                    wire::LinkEvent::Down(agents) => {
+                        for a in &agents {
+                            traces.mark(a, "link to this agent's box lost");
+                        }
                     }
                 }
             }

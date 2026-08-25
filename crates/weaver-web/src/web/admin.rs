@@ -78,15 +78,19 @@ async fn agent_rows(state: &AppState) -> Vec<AgentRow> {
     let status = state.link.status().await;
     roster
         .into_iter()
-        .map(|name| match &status {
-            Some(map) => {
-                let loaded = map.get(&name).copied().unwrap_or(false);
-                AgentRow {
-                    name,
-                    state: if loaded { "loaded".into() } else { "unloaded".into() },
-                    socket: if loaded { "present".into() } else { "absent".into() },
-                }
-            }
+        .map(|name| match status.as_ref().and_then(|m| m.get(&name)) {
+            Some(true) => AgentRow {
+                name,
+                state: "loaded".into(),
+                socket: "present".into(),
+            },
+            Some(false) => AgentRow {
+                name,
+                state: "unloaded".into(),
+                socket: "absent".into(),
+            },
+            // No box answered for this agent: its connection is down
+            // or unresponsive, which is not the same fact as unloaded.
             None => AgentRow {
                 name,
                 state: "unreachable".into(),

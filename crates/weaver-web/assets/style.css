@@ -5,16 +5,17 @@
    Identity colors follow the participant kind and nothing else. */
 
 :root {
-  /* surfaces */
-  --bg: #14161a;
-  --panel: #1a1d23;
-  --inset: #21252d;
-  --line: #2a2f38;
-  --line-soft: #232830;
+  /* surfaces: plum-dark */
+  --bg: #1a161d;
+  --side: #16121a;
+  --panel: #211c26;
+  --inset: #282230;
+  --line: #362e3f;
+  --line-soft: #2c2533;
   /* ink */
-  --fg: #d8dee6;
-  --dim: #8b94a3;
-  --faint: #5c6472;
+  --fg: #e6e1e9;
+  --dim: #9a8fa5;
+  --faint: #6b6175;
   /* identity: human, agent, model - validated trio (dark) */
   --human: #5f87e0;
   --agent: #74a44e;
@@ -23,36 +24,37 @@
   --ok: #4f9e7a;
   --warn: #d9a04b;
   --danger: #e0596e;
-  --accent: #5f87e0;
-  --accent-soft: #5f87e033;
+  --accent: #c9527e;
+  --accent-soft: #c9527e2e;
   --danger-soft: #e0596e1a;
   --warn-soft: #d9a04b1a;
   --ok-soft: #4f9e7a1a;
   /* type */
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  --radius: 6px;
-  --radius-sm: 4px;
+  --radius: 10px;
+  --radius-sm: 7px;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f7f8fa;
+    --bg: #faf9fb;
+    --side: #f3eff6;
     --panel: #ffffff;
-    --inset: #eef0f4;
-    --line: #d5d9e0;
-    --line-soft: #e4e7ec;
-    --fg: #23272e;
-    --dim: #5b6472;
-    --faint: #8b94a3;
+    --inset: #f0ecf4;
+    --line: #ddd5e3;
+    --line-soft: #e9e3ef;
+    --fg: #26212b;
+    --dim: #5f5669;
+    --faint: #90869b;
     --human: #3b62c4;
     --agent: #41762a;
     --model: #8a55c9;
     --ok: #1e7a52;
     --warn: #9a6a1c;
     --danger: #c23a50;
-    --accent: #3b62c4;
-    --accent-soft: #3b62c422;
+    --accent: #a63d68;
+    --accent-soft: #a63d6822;
     --danger-soft: #c23a5014;
     --warn-soft: #9a6a1c14;
     --ok-soft: #1e7a5214;
@@ -127,32 +129,66 @@ form { margin: 0; }
 .door form { display: flex; gap: .5rem; margin-top: 1rem; }
 .door input { flex: 1; }
 
-/* ---------- channels index ---------- */
-.channels { list-style: none; padding: 0; display: grid; gap: .35rem; }
-.channels a {
-  text-decoration: none; font-weight: 550;
+/* ---------- the app shell: sidebar and room ---------- */
+main.app {
+  max-width: none; padding: 0;
+  display: flex; align-items: stretch;
+  height: calc(100dvh - 3.05rem);
 }
-.channels li {
-  padding: .5rem .75rem; background: var(--panel);
-  border: 1px solid var(--line-soft); border-radius: var(--radius);
+.sidebar {
+  width: 14.5rem; flex-shrink: 0;
+  background: var(--side); border-right: 1px solid var(--line-soft);
+  padding: .9rem .6rem .8rem; overflow-y: auto;
+  display: flex; flex-direction: column;
 }
-.channels li:hover { border-color: var(--line); }
-.topic { color: var(--dim); margin-left: .6rem; font-size: .9rem; }
-.create-channel {
-  display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
-  margin-top: 1rem; padding: .75rem; background: var(--panel);
-  border: 1px solid var(--line-soft); border-radius: var(--radius);
+.sidebar h2 { margin: 0 .45rem .45rem; font-size: .72rem; }
+.chanlist { display: flex; flex-direction: column; gap: .1rem; }
+.chan {
+  display: block; padding: .32rem .65rem; border-radius: var(--radius-sm);
+  color: var(--dim); text-decoration: none; font-weight: 500;
+  font-size: .93rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.agentpick { color: var(--dim); font-size: .9rem; }
-.agentpick label { margin-right: .6rem; cursor: pointer; }
+.chan:hover { background: var(--panel); color: var(--fg); }
+.chan.sel { background: var(--accent-soft); color: var(--fg); font-weight: 620; }
+.hash { color: var(--faint); margin-right: .35em; font-weight: 500; }
+.chan.sel .hash { color: var(--accent); }
+.newchan {
+  margin-top: auto; padding-top: .8rem;
+  display: flex; flex-direction: column; gap: .45rem;
+  border-top: 1px solid var(--line-soft);
+}
+.newchan input { font-size: .88rem; }
+.newchan button { font-size: .85rem; }
+.topic { color: var(--dim); font-size: .9rem; }
+.agentpick { color: var(--dim); font-size: .82rem; }
+.agentpick label { margin-right: .6rem; cursor: pointer; white-space: nowrap; }
 .agentpick input[type="checkbox"] { accent-color: var(--agent); }
 
-/* ---------- the channel: the conversational register ---------- */
-.channel-layout { display: flex; gap: 1.1rem; align-items: flex-start; }
-.log { flex: 1; min-width: 0; }
-#events {
+.room {
+  flex: 1; min-width: 0;
   display: flex; flex-direction: column;
-  max-height: 68vh; overflow-y: auto;
+  padding: 0 1.1rem .9rem;
+}
+.room-head {
+  display: flex; gap: .7rem; align-items: baseline;
+  padding: .6rem .15rem .55rem; border-bottom: 1px solid var(--line-soft);
+}
+.room-head h1 { margin: 0; font-size: 1.02rem; }
+.empty { margin: auto; text-align: center; color: var(--faint); }
+.empty-mark { font-size: 3.2rem; margin: 0; color: var(--line); font-weight: 700; }
+
+/* ---------- the channel: the conversational register ---------- */
+.channel-layout {
+  flex: 1; min-height: 0;
+  display: flex; gap: 1.1rem; align-items: stretch;
+  padding-top: .65rem;
+}
+.log { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#events {
+  flex: 1;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
   padding-right: .4rem; scroll-behavior: smooth;
 }
 .event {
@@ -217,7 +253,8 @@ details.think pre {
 }
 
 .members {
-  width: 13.5rem; flex-shrink: 0; position: sticky; top: 3.4rem;
+  width: 13.5rem; flex-shrink: 0;
+  align-self: flex-start; max-height: 100%; overflow-y: auto;
   background: var(--panel); border: 1px solid var(--line-soft);
   border-radius: var(--radius); padding: .7rem .8rem;
   font-size: .9rem;
@@ -333,8 +370,17 @@ details.think pre {
 
 /* ---------- responsive ---------- */
 @media (max-width: 720px) {
+  main.app { flex-direction: column; height: auto; min-height: calc(100dvh - 3.05rem); }
+  .sidebar {
+    width: 100%; flex-direction: row; align-items: center;
+    gap: .3rem; overflow-x: auto; border-right: none;
+    border-bottom: 1px solid var(--line-soft); padding: .45rem .6rem;
+  }
+  .sidebar h2, .newchan { display: none; }
+  .chanlist { flex-direction: row; gap: .25rem; }
+  .chan { white-space: nowrap; }
   .channel-layout { flex-direction: column-reverse; }
-  .members { width: 100%; position: static; }
+  .members { width: 100%; max-height: none; align-self: stretch; }
   #events { max-height: 55vh; }
   nav { flex-wrap: wrap; row-gap: .2rem; }
   .event .ts { display: none; }

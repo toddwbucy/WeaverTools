@@ -483,9 +483,15 @@ is a fact about the source and not about the boundary.
 Landed 2026-08-25 with the two-process shape (PRD section 3), placed
 after section 15 so the section numbers code comments cite stay stable.
 The connector dials the server's `link_listen` address and holds one
-persistent connection, redialing with backoff when it drops. The server
-accepts one connector in v1, and the fleet shape is additive: a second
-box is a second connection carrying its own roster.
+persistent connection, redialing with backoff when it drops. **The
+server accepts any number of connectors, one per box, served
+concurrently** - the fleet shape, made real the same day on the
+operator's direction. Each hello homes its agents to its own
+connection, first hello winning a name (a collision from another live
+box is skipped and logged, never silently rehomed). Asks route to the
+agent's own connection, status merges every box's answer, and a box's
+drop tears down exactly its own agents, pending asks, and roster -
+the other boxes never notice.
 
 **Transport: TCP, NDJSON frames.** One JSON object per line, both
 directions. Elected over a local Unix socket so that colocated and

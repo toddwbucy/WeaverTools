@@ -99,6 +99,8 @@ struct ChannelsPage {
     who: String,
     is_admin: bool,
     channels: Vec<crate::channel::Channel>,
+    /// The sidebar's active-channel marker; empty on the index.
+    sel: String,
 }
 
 async fn channels_page(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Response> {
@@ -110,6 +112,7 @@ async fn channels_page(State(state): State<AppState>, headers: HeaderMap) -> App
         is_admin: me.is_admin(),
         who: me.name,
         channels: channel::list(&state.store).await?,
+        sel: String::new(),
     };
     Ok(Html(page.render()?).into_response())
 }
@@ -182,6 +185,9 @@ struct ChannelPage {
     who: String,
     is_admin: bool,
     channel_name: String,
+    topic: String,
+    channels: Vec<crate::channel::Channel>,
+    sel: String,
     events: Vec<String>,
     members: Vec<MemberRow>,
     addable: Vec<AddableRow>,
@@ -227,7 +233,10 @@ async fn channel_page(
         nav_agents: nav_agents(&state).await,
         is_admin: me.is_admin(),
         who: me.name,
+        sel: ch.name.clone(),
         channel_name: ch.name,
+        topic: ch.topic.unwrap_or_default(),
+        channels: channel::list(&state.store).await?,
         events: events.iter().map(render_event).collect(),
         members,
         addable,

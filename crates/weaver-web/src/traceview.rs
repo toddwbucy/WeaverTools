@@ -114,13 +114,12 @@ impl TraceViews {
         self.ingest(agent, ev);
     }
 
-    /// Mark every known view at once - the link dropped, so every
-    /// agent's live tail is interrupted.
-    pub fn mark_all(&self, reason: &str) {
-        let agents: Vec<String> = self.views.lock().unwrap().keys().cloned().collect();
-        for a in agents {
-            self.mark(&a, reason);
-        }
+    /// Whether a view exists and holds anything - the pump's test for
+    /// bracketing a reconnect's fresh backfill.
+    pub fn has_events(&self, agent: &str) -> bool {
+        self.view(agent)
+            .map(|v| !v.ring.lock().unwrap().is_empty())
+            .unwrap_or(false)
     }
 
     pub fn snapshot(&self, agent: &str) -> Option<Vec<TraceEvent>> {

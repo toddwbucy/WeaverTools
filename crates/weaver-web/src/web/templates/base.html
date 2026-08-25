@@ -20,7 +20,7 @@
     {% endif %}
     <span class="who">{{ who }}{% if is_admin %} (admin){% endif %}</span>
   </nav>
-  <main>
+  <main class="{% block mainclass %}{% endblock %}">
   {% block body %}{% endblock %}
   </main>
 </body>

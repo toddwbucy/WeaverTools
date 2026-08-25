@@ -119,14 +119,16 @@ box-bound: the channel store, the registry, the router and queues,
 rendering, and the SSE fan-out. It reaches the box only through the
 connector.
 
-They meet over one link the connector dials. The server listens for it
-on an address its config names, loopback by default, and the connector's
-config names the same address. Colocated, the link is loopback and the
-deployment is one box exactly as before. Offloading the presentation
-stack to another device on the LAN is deploying the server there and
-changing that one address - a deployment fact, never an architectural
-event. The agents' box opens no listening port for this in either shape,
-because the connector only dials out.
+They meet over links the connectors dial: one connection per box, any
+number of boxes, the server listening on one address its config names,
+loopback by default, each connector's config naming that same address.
+Colocated, the link is loopback and the deployment is one box exactly
+as before. Offloading the presentation stack to another device on the
+LAN is deploying the server there and changing that one address - a
+deployment fact, never an architectural event - and a second agents'
+box is a second connector dialing the same server with its own roster.
+No agents' box opens a listening port for this in any shape, because
+connectors only dial out.
 
 The trust posture does not move with the address. The verb surface is
 already network-reachable through the listener under the posture section

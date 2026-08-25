@@ -15,7 +15,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{mpsc, oneshot, RwLock};
+use tokio::sync::{mpsc, oneshot};
 
 /// Frames the server sends the connector: the ask half of the
 /// ask-answer services.
@@ -121,27 +121,35 @@ const SMALL_ASK_TIMEOUT_SECS: u64 = 10;
 /// Events the link surfaces to the composition root.
 #[derive(Debug, Clone)]
 pub enum LinkEvent {
-    /// A connector said hello: the roster, fresh on every connection.
+    /// A connector said hello: the agents this hello admitted (names
+    /// already homed to another live box are skipped, first wins).
     Hello(Vec<String>),
     /// A trace event or mark arrived for an agent.
     Trace { agent: String, event: TraceEvent },
-    /// The connection dropped. Pending asks have already failed.
-    Down,
+    /// A box's connection dropped: these agents are now unreachable.
+    /// Their pending asks have already failed.
+    Down(Vec<String>),
 }
+
+type ConnId = u64;
 
 struct LinkInner {
-    /// Write path to the live connection's writer task. None while
-    /// the link is down.
-    tx: Mutex<Option<mpsc::Sender<ToConnector>>>,
-    pending: Mutex<HashMap<u64, oneshot::Sender<ToServer>>>,
-    next_id: AtomicU64,
-    /// The latest hello's roster. Survives a link drop so the
-    /// surfaces keep naming the agents they knew, honestly marked
-    /// unreachable rather than vanished.
-    roster: RwLock<Vec<String>>,
+    /// Every live connection's write path, one per box.
+    connections: Mutex<HashMap<ConnId, mpsc::Sender<ToConnector>>>,
+    /// Which connection each agent answers on. First hello wins a
+    /// name; a collision from another box is skipped and logged.
+    homes: std::sync::RwLock<HashMap<String, ConnId>>,
+    /// Each connection's admitted roster, in announcement order, for
+    /// the union roster and for teardown.
+    rosters: Mutex<Vec<(ConnId, Vec<String>)>>,
+    pending: Mutex<HashMap<u64, (ConnId, oneshot::Sender<ToServer>)>>,
+    next_ask: AtomicU64,
+    next_conn: AtomicU64,
 }
 
-/// The server's handle on the link: asks, the roster, and liveness.
+/// The server's handle on the links: routed asks, the union roster,
+/// and liveness. One server, many boxes, each box's connector dialing
+/// in with its own roster - the fleet shape.
 #[derive(Clone)]
 pub struct Link {
     inner: Arc<LinkInner>,
@@ -151,55 +159,76 @@ impl Link {
     pub fn new() -> Self {
         Self {
             inner: Arc::new(LinkInner {
-                tx: Mutex::new(None),
+                connections: Mutex::new(HashMap::new()),
+                homes: std::sync::RwLock::new(HashMap::new()),
+                rosters: Mutex::new(Vec::new()),
                 pending: Mutex::new(HashMap::new()),
-                next_id: AtomicU64::new(1),
-                roster: RwLock::new(Vec::new()),
+                next_ask: AtomicU64::new(1),
+                next_conn: AtomicU64::new(1),
             }),
         }
     }
 
     pub fn is_up(&self) -> bool {
-        self.inner.tx.lock().unwrap().is_some()
+        !self.inner.connections.lock().unwrap().is_empty()
     }
 
+    /// The union roster, box by box in announcement order.
     pub async fn roster(&self) -> Vec<String> {
-        self.inner.roster.read().await.clone()
+        self.inner
+            .rosters
+            .lock()
+            .unwrap()
+            .iter()
+            .flat_map(|(_, r)| r.iter().cloned())
+            .collect()
     }
 
     pub async fn has_agent(&self, name: &str) -> bool {
-        self.inner.roster.read().await.iter().any(|a| a == name)
+        self.inner.homes.read().unwrap().contains_key(name)
     }
 
+    fn conn_for(&self, agent: &str) -> Option<(ConnId, mpsc::Sender<ToConnector>)> {
+        let conn = *self.inner.homes.read().unwrap().get(agent)?;
+        let tx = self.inner.connections.lock().unwrap().get(&conn)?.clone();
+        Some((conn, tx))
+    }
+
+    /// One ask, routed to the connection that homes the agent.
     async fn ask(
         &self,
+        agent: &str,
         make: impl FnOnce(u64) -> ToConnector,
     ) -> Result<ToServer, ()> {
-        let id = self.inner.next_id.fetch_add(1, Ordering::Relaxed);
+        let (conn, sender) = self.conn_for(agent).ok_or(())?;
+        self.ask_on(conn, sender, make).await
+    }
+
+    async fn ask_on(
+        &self,
+        conn: ConnId,
+        sender: mpsc::Sender<ToConnector>,
+        make: impl FnOnce(u64) -> ToConnector,
+    ) -> Result<ToServer, ()> {
+        let id = self.inner.next_ask.fetch_add(1, Ordering::Relaxed);
         let (reply_tx, reply_rx) = oneshot::channel();
-        let sender = {
-            let tx = self.inner.tx.lock().unwrap();
-            match tx.as_ref() {
-                Some(s) => s.clone(),
-                None => return Err(()),
-            }
-        };
-        self.inner.pending.lock().unwrap().insert(id, reply_tx);
+        self.inner.pending.lock().unwrap().insert(id, (conn, reply_tx));
         if sender.send(make(id)).await.is_err() {
             self.inner.pending.lock().unwrap().remove(&id);
             return Err(());
         }
-        // A dropped connection fails every pending ask (fail_pending),
-        // so this await ends when the answer or the disconnect does.
+        // A dropped connection fails its own pending asks and no
+        // other box's, so this await ends when the answer or that
+        // box's disconnect does.
         reply_rx.await.map_err(|_| ())
     }
 
-    /// One turn across the link: the connector dials the gate per
-    /// turn (Spec section 6) and answers with the close or the typed
-    /// error.
+    /// One turn across the link: the agent's own connector dials the
+    /// gate per turn (Spec section 6) and answers with the close or
+    /// the typed error.
     pub async fn turn(&self, agent: &str, text: &str) -> Result<GateClose, TurnError> {
-        let (agent, text) = (agent.to_owned(), text.to_owned());
-        match self.ask(|id| ToConnector::Turn { id, agent, text }).await {
+        let (a, text) = (agent.to_owned(), text.to_owned());
+        match self.ask(agent, |id| ToConnector::Turn { id, agent: a, text }).await {
             Ok(ToServer::Turn { close: Some(c), .. }) => Ok(c),
             Ok(ToServer::Turn { error: Some(e), .. }) => Err(TurnError::Gate(e)),
             _ => Err(TurnError::LinkDown),
@@ -208,41 +237,70 @@ impl Link {
 
     /// One verb invocation across the link (Spec section 11).
     pub async fn verb(&self, agent: &str, verb: &str) -> anyhow::Result<VerbOutcome> {
-        let (agent, verb) = (agent.to_owned(), verb.to_owned());
-        match self.ask(|id| ToConnector::Verb { id, agent, verb }).await {
+        let (a, verb) = (agent.to_owned(), verb.to_owned());
+        match self.ask(agent, |id| ToConnector::Verb { id, agent: a, verb }).await {
             Ok(ToServer::Verb { outcome: Some(o), .. }) => Ok(o),
             Ok(ToServer::Verb { error: Some(e), .. }) => anyhow::bail!("{e}"),
-            _ => anyhow::bail!("the link to the agents' box is down"),
+            _ => anyhow::bail!("the link to this agent's box is down"),
         }
     }
 
-    /// The load-state observable per agent: socket existence, the
-    /// inference the UI labels (PRD 4.2). None when the link is down
-    /// or unresponsive, which the caller renders as unreachable.
+    /// The load-state observable, merged across every box: each live
+    /// connection answers for its own agents. An agent absent from
+    /// the merge has an unresponsive box, which the caller renders as
+    /// unreachable. None when no box is connected at all.
     pub async fn status(&self) -> Option<HashMap<String, bool>> {
-        let fut = self.ask(|id| ToConnector::Status { id });
+        let conns: Vec<(ConnId, mpsc::Sender<ToConnector>)> = self
+            .inner
+            .connections
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|(k, v)| (*k, v.clone()))
+            .collect();
+        if conns.is_empty() {
+            return None;
+        }
+        let mut merged = HashMap::new();
+        for (conn, tx) in conns {
+            let fut = self.ask_on(conn, tx, |id| ToConnector::Status { id });
+            if let Ok(Ok(ToServer::Status { agents, .. })) = tokio::time::timeout(
+                std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
+                fut,
+            )
+            .await
+            {
+                merged.extend(agents);
+            }
+        }
+        Some(merged)
+    }
+
+    async fn small_ask(
+        &self,
+        agent: &str,
+        make: impl FnOnce(u64) -> ToConnector,
+    ) -> Option<ToServer> {
+        let fut = self.ask(agent, make);
         match tokio::time::timeout(
             std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
             fut,
         )
         .await
         {
-            Ok(Ok(ToServer::Status { agents, .. })) => Some(agents),
+            Ok(Ok(answer)) => Some(answer),
             _ => None,
         }
     }
 
-    /// The agent declaration, read on the box: (path, content).
+    /// The agent declaration, read on its own box: (path, content).
     pub async fn declaration(&self, agent: &str) -> Option<(String, String)> {
-        let agent = agent.to_owned();
-        let fut = self.ask(|id| ToConnector::Declaration { id, agent });
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
-            fut,
-        )
-        .await
+        let a = agent.to_owned();
+        match self
+            .small_ask(agent, |id| ToConnector::Declaration { id, agent: a })
+            .await
         {
-            Ok(Ok(ToServer::Declaration { path, content, .. })) => Some((path, content)),
+            Some(ToServer::Declaration { path, content, .. }) => Some((path, content)),
             _ => None,
         }
     }
@@ -250,15 +308,12 @@ impl Link {
     /// The run inventory from the agent's sink file (Spec section 16,
     /// service 6) - the confirm view's authoritative read.
     pub async fn trace_runs(&self, agent: &str) -> Option<Vec<RunSummary>> {
-        let agent = agent.to_owned();
-        let fut = self.ask(|id| ToConnector::TraceRuns { id, agent });
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
-            fut,
-        )
-        .await
+        let a = agent.to_owned();
+        match self
+            .small_ask(agent, |id| ToConnector::TraceRuns { id, agent: a })
+            .await
         {
-            Ok(Ok(ToServer::TraceRuns { runs, .. })) => Some(runs),
+            Some(ToServer::TraceRuns { runs, .. }) => Some(runs),
             _ => None,
         }
     }
@@ -270,22 +325,65 @@ impl Link {
         agent: &str,
         run: &str,
     ) -> Option<(Vec<serde_json::Value>, bool)> {
-        let (agent, run) = (agent.to_owned(), run.to_owned());
-        let fut = self.ask(|id| ToConnector::TraceRun { id, agent, run });
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
-            fut,
-        )
-        .await
+        let (a, run) = (agent.to_owned(), run.to_owned());
+        match self
+            .small_ask(agent, |id| ToConnector::TraceRun { id, agent: a, run })
+            .await
         {
-            Ok(Ok(ToServer::TraceRun { events, truncated, .. })) => Some((events, truncated)),
+            Some(ToServer::TraceRun { events, truncated, .. }) => Some((events, truncated)),
             _ => None,
         }
     }
 
-    fn fail_pending(&self) {
-        // Dropping the senders fails every waiting ask.
-        self.inner.pending.lock().unwrap().clear();
+    /// Drop one connection and everything homed to it. Returns the
+    /// agents that just became unreachable.
+    fn teardown(&self, conn: ConnId) -> Vec<String> {
+        self.inner.connections.lock().unwrap().remove(&conn);
+        self.inner
+            .pending
+            .lock()
+            .unwrap()
+            .retain(|_, (c, _)| *c != conn);
+        let mut lost = Vec::new();
+        self.inner.rosters.lock().unwrap().retain(|(c, r)| {
+            if *c == conn {
+                lost = r.clone();
+                false
+            } else {
+                true
+            }
+        });
+        let mut homes = self.inner.homes.write().unwrap();
+        for a in &lost {
+            homes.remove(a);
+        }
+        lost
+    }
+
+    /// Admit a hello's roster for a connection: first hello wins each
+    /// name, a collision from another live box is skipped and logged.
+    /// Returns the admitted names.
+    fn admit(&self, conn: ConnId, announced: Vec<String>) -> Vec<String> {
+        let mut homes = self.inner.homes.write().unwrap();
+        // A repeated hello on the same connection re-announces: clear
+        // this connection's prior homes first.
+        homes.retain(|_, c| *c != conn);
+        let mut admitted = Vec::new();
+        for a in announced {
+            if let Some(other) = homes.get(&a) {
+                tracing::warn!(
+                    "agent '{a}' already homed to connection {other}, skipping (first wins)"
+                );
+                continue;
+            }
+            homes.insert(a.clone(), conn);
+            admitted.push(a);
+        }
+        drop(homes);
+        let mut rosters = self.inner.rosters.lock().unwrap();
+        rosters.retain(|(c, _)| *c != conn);
+        rosters.push((conn, admitted.clone()));
+        admitted
     }
 }
 
@@ -295,9 +393,10 @@ impl Default for Link {
     }
 }
 
-/// The server's accept loop. One connector at a time in v1: a new
-/// connection replaces the old, which self-heals a half-open drop the
-/// server has not yet noticed.
+/// The server's accept loop: one connection per box, any number of
+/// boxes, each served concurrently. A box's drop tears down exactly
+/// its own agents, pending asks, and roster - the other boxes never
+/// notice.
 pub async fn serve(link: Link, listener: TcpListener, events: mpsc::Sender<LinkEvent>) {
     loop {
         let (stream, peer) = match listener.accept().await {
@@ -308,21 +407,26 @@ pub async fn serve(link: Link, listener: TcpListener, events: mpsc::Sender<LinkE
                 continue;
             }
         };
-        tracing::info!("link connected from {peer}");
-        // Tear down any prior connection's write path first.
-        if link.inner.tx.lock().unwrap().take().is_some() {
-            link.fail_pending();
-            let _ = events.send(LinkEvent::Down).await;
-        }
-        serve_connection(&link, stream, &events).await;
-        tracing::info!("link from {peer} closed");
-        *link.inner.tx.lock().unwrap() = None;
-        link.fail_pending();
-        let _ = events.send(LinkEvent::Down).await;
+        let conn = link.inner.next_conn.fetch_add(1, Ordering::Relaxed);
+        tracing::info!("link {conn} connected from {peer}");
+        let (link, events) = (link.clone(), events.clone());
+        tokio::spawn(async move {
+            serve_connection(&link, conn, stream, &events).await;
+            let lost = link.teardown(conn);
+            tracing::info!("link {conn} from {peer} closed, {} agent(s) lost", lost.len());
+            if !lost.is_empty() {
+                let _ = events.send(LinkEvent::Down(lost)).await;
+            }
+        });
     }
 }
 
-async fn serve_connection(link: &Link, stream: TcpStream, events: &mpsc::Sender<LinkEvent>) {
+async fn serve_connection(
+    link: &Link,
+    conn: ConnId,
+    stream: TcpStream,
+    events: &mpsc::Sender<LinkEvent>,
+) {
     let (read_half, mut write_half) = stream.into_split();
     let (tx, mut rx) = mpsc::channel::<ToConnector>(64);
     let writer = tokio::spawn(async move {
@@ -341,7 +445,7 @@ async fn serve_connection(link: &Link, stream: TcpStream, events: &mpsc::Sender<
         let frame: ToServer = match serde_json::from_str(&line) {
             Ok(f) => f,
             Err(e) => {
-                tracing::error!("link frame did not parse, closing: {e}");
+                tracing::error!("link {conn} frame did not parse, closing: {e}");
                 break;
             }
         };
@@ -351,22 +455,26 @@ async fn serve_connection(link: &Link, stream: TcpStream, events: &mpsc::Sender<
             match frame {
                 ToServer::Hello { agents } => {
                     said_hello = true;
-                    *link.inner.roster.write().await = agents.clone();
-                    *link.inner.tx.lock().unwrap() = Some(tx.clone());
-                    let _ = events.send(LinkEvent::Hello(agents)).await;
+                    link.inner
+                        .connections
+                        .lock()
+                        .unwrap()
+                        .insert(conn, tx.clone());
+                    let admitted = link.admit(conn, agents);
+                    let _ = events.send(LinkEvent::Hello(admitted)).await;
                     continue;
                 }
                 _ => {
-                    tracing::error!("link spoke before hello, closing");
+                    tracing::error!("link {conn} spoke before hello, closing");
                     break;
                 }
             }
         }
         match frame {
             ToServer::Hello { agents } => {
-                // A repeated hello refreshes the roster.
-                *link.inner.roster.write().await = agents.clone();
-                let _ = events.send(LinkEvent::Hello(agents)).await;
+                // A repeated hello re-announces this box's roster.
+                let admitted = link.admit(conn, agents);
+                let _ = events.send(LinkEvent::Hello(admitted)).await;
             }
             ToServer::Trace { agent, event } => {
                 let _ = events.send(LinkEvent::Trace { agent, event }).await;
@@ -377,7 +485,7 @@ async fn serve_connection(link: &Link, stream: TcpStream, events: &mpsc::Sender<
             | ToServer::Declaration { id, .. }
             | ToServer::TraceRuns { id, .. }
             | ToServer::TraceRun { id, .. } => {
-                if let Some(reply) = link.inner.pending.lock().unwrap().remove(&id) {
+                if let Some((_, reply)) = link.inner.pending.lock().unwrap().remove(&id) {
                     let _ = reply.send(frame);
                 }
             }
