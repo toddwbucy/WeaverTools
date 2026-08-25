@@ -12,10 +12,17 @@ members = ["crates/weaver-traits", "crates/weaver-types", "crates/weaver-trace",
 #
 # Excluding it restores the build for every other crate and settles nothing:
 # the absorption of 2026-08-24 said the deps were never resolved on the
-# machine that ran it, and this records the same fact one level up. What the
-# tree does about having two database stories is the operator's question, and
-# the choices are aligning the two on one libsqlite3-sys, moving one of them
-# off its driver, or leaving this crate built on its own.
+# machine that ran it, and this records the same fact one level up.
+#
+# **The way out is measured rather than guessed, and it is sqlx 0.9.** Probed
+# 2026-08-25: on 0.9 the graph carries one libsqlite3-sys rather than two, the
+# workspace resolves with this crate a member, and nothing of weaver-state
+# moves. What it costs is a seven-site migration in this crate, all one shape
+# - 0.9 added a bound that refuses a dynamic SQL string until someone has
+# audited it, and all seven are a `const` column list interpolated into
+# otherwise static SQL with every user value bound as a parameter, so the
+# audit passes on reading. That work belongs to this crate's seat rather than
+# to the act that found it, and this exclusion stands until it lands.
 exclude = ["crates/weaver-web"]
 
 [workspace.package]
