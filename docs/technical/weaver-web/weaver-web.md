@@ -43,8 +43,10 @@ That makes it the working proof of a claim the rest of this site makes
 repeatedly: that the boundary is real, that a consumer needs nothing but the
 contracts, and that both are true in practice rather than only on paper. **It
 lives in the same repository as the agent it talks to, and that says nothing
-about the seam** - sharing a source tree is not sharing a boundary, and every
-crossing here is one the contracts name.
+about the seam** - sharing a source tree is not sharing a boundary. Every
+crossing of the agent's boundary is one the contracts name, and the one reach
+past them, the verb invocation, is the deployment's and is stated above as
+the exception it is.
 
 ## What it owns
 
