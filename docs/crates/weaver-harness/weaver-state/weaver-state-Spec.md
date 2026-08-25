@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, third of this date, the pair stops claiming symmetry.
+Section 4 described the other half as holding the name given only under a
+diagnostic binding, which is one direction, and said a perturbation of either
+side fails against its own. `weaver-admin-Spec` section 6 holds the vector in
+both directions, and this record fails on neither: a member given a name binds
+it and a member given none binds none, which is this record holding whichever
+way the name was wrong. The two records divide the fact unevenly and now say so.
 **Revised:** 2026-08-25, second of this date, the record's name outlives its
 claim. `state-preload-door-stands-only-diagnostic` reads as the whole two-sided
 fact and this half asserts the narrower one, that the member binds no name it is

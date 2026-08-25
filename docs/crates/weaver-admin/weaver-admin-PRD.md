@@ -13,6 +13,13 @@ makes. The argument stays here, where the obligation is argued, and the record m
 `weaver-admin-Spec` section 6 under the vector clause, which is the clause the claim is
 about, with the instrument it is perturbed by. Found by reading this charter's own graph
 blocks against that definition rather than by a review.
+**Revised:** 2026-08-25, fourth of this date, the pair stops claiming symmetry.
+Section 2 said the member's claim is partly this crate's and that a perturbation
+of either side fails against its own, which `weaver-admin-Spec` section 6 denies:
+the member's record holds whether the name was wrongly given or wrongly withheld,
+so it fails on neither direction and the vector is entirely this crate's. The
+paragraph now says what it owes rather than what it shares, and its opening
+sentence goes with the symmetry it stated.
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Section 2's wait claimed a bound socket rather than a half-bound one, which a
 pathname cannot show: it observes a name and the worker's dial at step 6 is what
@@ -274,7 +281,7 @@ it, per `weaver-state-Spec` section 4, which is the same division the rest of
 this charter runs on: this crate resolves what the declaration meant, once, and
 hands the resolution down decided.
 
-**That makes a standing claim of the member's partly this crate's.**
+**That leaves the vector watched by nothing unless this crate watches it.**
 `state-preload-door-stands-only-diagnostic` is asserted by `weaver-state` and
 covers what the member does with what it is given. **What this crate owes is the
 vector in both directions**: a serving inventory carries no preload name and a

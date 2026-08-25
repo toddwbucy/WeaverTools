@@ -5,26 +5,26 @@ agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
 **Revised:** 2026-08-25, eleventh of this date, the watch stops degenerating and
-the pair stops claiming symmetry. Section 6's serving direction was watched by
-removing the kind's read, which degenerates to the serving default, so that half
-would have passed either way - the never-failing perturbation section 3 rejects
-by name. Both directions now act on the condition that appends the name, one made
-unconditional and one removed. **The two documents describing this pair carried
-the eighth act's superseded reading**, one direction for the vector and a
-perturbation of either side failing against its own, and both now say what
-section 6 says: the vector is entirely this crate's and the member's record holds
-whichever way the name was wrong. The exception count is two rather than three,
-`admin-dial-retries-within-a-bound` naming its removal in section 10's walk under
-its description rather than its identifier, which a search keyed on identifiers
-could not see. **Entries in this stack stop correcting each other**: two
-corrections pointed at text later commits had already edited away, and since
-nothing here has merged, the entry is amended rather than answered.
+the pair stops claiming symmetry. Section 6's serving direction was watched by removing
+the kind's read, which degenerates to the serving default, so that half would have
+passed either way - the never-failing perturbation this same section rejects and apex
+section 11 counts as worse than no test. Both directions now act on the condition that
+appends the name, one made unconditional and one removed. **The two documents describing
+this pair carried the reading the widening superseded**, one direction for the vector
+and a perturbation of either side failing against its own, and both now say what section
+6 says: the vector is entirely this crate's and the member's record holds whichever way
+the name was wrong. The exception count is two rather than three,
+`admin-dial-retries-within-a-bound` naming its removal in section 10's walk under its
+description rather than its identifier, which a search keyed on identifiers could not
+see. **Entries in this stack stop correcting each other**: two corrections pointed at
+text later commits had already edited away, and since nothing here has merged, the entry
+is amended rather than answered.
 **Revised:** 2026-08-25, tenth of this date, the reconciliation counts the move
 and the convention stops being called universal. The recut lead asserted twelve
 departures while the sentence reconciling it to the lists said ten, the lists
 naming ten retired and one moved, so the reconciliation now reads eleven and the
 inversion is the twelfth. **The claim that every other perturbation record names
-its removal is withdrawn as false**: three of the fourteen name none anywhere in
+its removal is withdrawn as false**: two of the fourteen name none anywhere in
 this document, and section 10 records which, because a perturbation tag without a
 named removal says a test exists and not what breaks it. Found while checking
 whether this file's convention was universal rather than assumed, which is the
@@ -1072,8 +1072,8 @@ unconditional and a serving load carries four. A diagnostic inventory puts four,
 watched to fail when that same arm is removed and a diagnostic load carries
 three. **Both removals act on the condition rather than on the kind's read**,
 because removing the read degenerates to the serving default and a serving watch
-would pass either way, which is the never-failing perturbation section 3 rejects
-by name.
+would pass either way, which is the never-failing perturbation this section
+rejects above and apex section 11 counts as worse than no test.
 
 **Both directions are this crate's alone and the member's record covers
 neither**, which is why the second watch is written rather than left to the
@@ -1792,9 +1792,8 @@ where the accept now happens. Added: the root check and the answer-and-status ag
 of section 2, the dial's bound of section 7, the residency read from the init system of
 section 3, the state ask that follows a failed dial, of section 6, and the unload's wait
 on a confirmed stop, of section 3. **The twelfth departure and the seventh arrival are
-one event**: `admin-unit-declares-one-open` became `admin-unit-declares-no-open`, which
-the lead above counts on both sides because the identifier moved and a graph counting
-nodes counts two movements there. **A rebuild reads this movement as the recut's delta
+the one event the lead above argues**, the unit's declared open inverting to a declared
+absence. **A rebuild reads this movement as the recut's delta
 and not as this Spec's**, three records having been added since by acts of their own, so
 a census taken against this paragraph alone lands three short of section 10's
 thirty-four.
