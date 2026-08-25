@@ -52,6 +52,9 @@ A crate that governs a domain and holds a two-initiator channel with the harness
   its own outbound verb
 - [weaver-admin](weaver-agents/weaver-admin.md) - lifecycle authorization, boundary
   verification, and custody of the sink
+- [Reproducibility, confirmed in the lab](weaver-agents/reproducibility.md) - a
+  recorded turn reissued from the trace alone reproduced bit-exact across full
+  reloads, with the method and the scope stated
 
 ## Under the harness's domain
 
