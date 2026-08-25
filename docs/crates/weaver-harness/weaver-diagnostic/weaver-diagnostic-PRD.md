@@ -4,6 +4,21 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, fifth of this date, the review's findings land. Five
+of eight fell in this document, in the sections the composing-inside act did
+not rewrite and did not reconcile against the ones it did. Section 3's preload
+bullet cited a seam section 6 now disclaims and called merged papers not yet
+drivable. Section 6 assigned the vocabulary election to the driver's Spec
+where the same section's cell assigns it here, and it called the diagnostic
+sink a socket, which this charter had no standing to decide and which carried
+an unargued consequence: admin's socket case has no creation flag and a
+refused connection refuses the load, so the claim would have made the
+consumer's readiness a precondition of the agent's load. The claim is
+withdrawn rather than narrowed. `weaver-harness-PRD` and `weaver-harness-Spec`
+gain the third member and name `weaver-harness-diagnostic-contract` as owed,
+the edge landing with it rather than dangling a `via`. The vision and the apex
+gain the corrections a line-based sweep could not see, the stale phrases
+having wrapped across lines.
 **Revised:** 2026-08-24, fourth of this date, this crate composes inside. The
 operator's ruling of this date moved it from outside the agent boundary to the
 harness's third member, the mechanism the harness authors a diagnostic-trace
@@ -149,9 +164,12 @@ substrate's grants:
   wrong arrangement is unrepresentable rather than guarded against.
 - **The working structure is preloaded from a finished trace** and read
   positionally as the source of prompts, rather than accumulating. Same
-  organ, opposite direction. The preload crosses the ruled seam of section
-  6, owed to the seam-papers act, and until that act lands this refusal is
-  chartered and not yet drivable.
+  organ, opposite direction. The preload crosses
+  `weaver-analysis-state-contract`, whose papers merged 2026-08-24 and whose
+  near side is `weaver-analysis` rather than this crate, per section 6. Two
+  earlier readings of this bullet are corrected together: it called the seam
+  section 6's when that section now disclaims holding one, and it called the
+  refusal not yet drivable when the papers had already landed.
 - **Nothing writes back**, so the substrate under examination is immutable
   for the loop's duration.
 
@@ -254,17 +272,18 @@ replay performs no cognition of its own to record. What a diagnostic run
 produces instead is the **diagnostic-trace**, this crate's own record of the
 replay, named here for the first time.
 
-**The diagnostic-trace is a trace, and the two are separate for how they are
-made rather than for what they look like.** It carries the run the way a
-serving record carries one and carries the residual readout beside it, which
-is the bulk of it and the reason it exists. **What is shared and settled here
-is the canonical serialization and nothing above it**, one line of UTF-8 JSON
-per record with the newline as the separator, per `weaver-trace-Spec` section
-2. Whether an instrument that reads a serving record reads this one is **not
-claimed**: that follows from the event vocabulary this writer reuses and from
-where the residual readout sits beside it, both of which are the driver
-Spec's election, so reader compatibility is that document's to define and to
-state the rules of. What differs is the making, and the making is the whole
+**The diagnostic-trace is a trace, and the two are separate for how they are made rather
+than for what they look like.** It carries the run the way a serving record carries one
+and carries the residual readout beside it, which is the bulk of it and the reason it
+exists. **What is shared and settled here is the canonical serialization and nothing
+above it**, one line of UTF-8 JSON per record with the newline as the separator, per
+`weaver-trace-Spec` section 2. Whether an instrument that reads a serving record reads
+this one is **not claimed**: that follows from the event vocabulary this writer reuses
+and from where the residual readout sits beside it, both of which are this crate's own
+Spec's election, so reader compatibility is that document's to define and to state the
+rules of. An earlier form of this sentence assigned the election to the driver's Spec,
+which was true while one crate held both roles and is not now: the writer's shape
+belongs to the writer. What differs is the making, and the making is the whole
 distinction.
 
 **One begets the other, in a different context.** A diagnostic-trace is made
@@ -312,12 +331,17 @@ per apex section 3 step 6, so it reaches the harness whatever the binding's
 kind. On a serving binding the harness authors it through `weaver-trace`. On
 a diagnostic one it authors it through this crate, into the diagnostic-trace,
 beside the replayed run the same record carries. The rendering leaves by the
-sink admin opened for the binding, which is a socket rather than a file
-because the consumer is a process rather than an archive, and
-`weaver-analysis` is what stands at the far end of it. **Admin's custody of
-the sink is unchanged**, the discriminant and the open site being section 5
-of `weaver-admin-Spec` whichever kind the binding declared, so this path adds
-a shape to what admin opens rather than a second way of opening.
+sink admin opened for the binding, and `weaver-analysis` reads it from there.
+**Admin's custody of the sink is unchanged and this charter fixes no
+discriminant**, the shape being the operator's to declare and section 5 of
+`weaver-admin-Spec` opening by it without reading the kind. An earlier form of
+this paragraph called the diagnostic sink a socket, which this charter had no
+standing to decide and which would have carried a consequence it did not
+argue: admin's socket case has no creation flag, something of the operator's
+must already be listening, and a connection refused refuses the load, so
+naming the shape here would have made the consumer's readiness a precondition
+of the agent's load. What stands at the far end of a sink is the operator's
+arrangement, exactly as it is for a serving trace.
 
 **Nothing here crosses the boundary outward.** The harness links a member of
 its own domain, which is the relation it already has with `weaver-trace` and

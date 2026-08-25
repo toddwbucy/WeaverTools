@@ -844,9 +844,12 @@ and they cross a seam of their own rather than arriving as material declared
 at the load: the preload of `weaver-analysis-state-contract`, on the state
 member, checked against the operator principal, per section 0's boundary
 sentence as amended the same date. The contract and the state charter's
-second door are the drawing act, owed and named in
-`weaver-diagnostic-PRD` section 6, and until they land the seam is ruled
-rather than open. An earlier form of this paragraph held the question open
+second door landed in the seam-papers act of 2026-08-24 and the seam is open
+rather than ruled. Its near side is `weaver-analysis`, whose charter carries
+the edge from the initiating side. An earlier form of this sentence called
+the papers owed, which they were for part of one day, and pointed at
+`weaver-diagnostic-PRD` section 6 for a seam that section now disclaims
+holding. An earlier form of this paragraph held the question open
 on purpose, so that wording would not settle what the drawing has to decide,
 and the ruling is what closed it rather than a drafting choice.
 

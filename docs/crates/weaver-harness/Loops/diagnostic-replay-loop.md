@@ -18,7 +18,7 @@ crate charters, and a graph block here would duplicate a record that already has
 
 ## 1. What this loop is
 
-The diagnostic substrate's workflow, per `weaver-analysis-PRD` section 3:
+The diagnostic substrate's workflow, per `weaver-diagnostic-PRD` section 3:
 the loop that re-executes a finished session's forward passes under a
 diagnostic binding, with whatever passive readers the load elected observing.
 The null replay of that charter's section 4 is this loop run with no reader
@@ -163,10 +163,9 @@ even the first instrument reads from a replay that did not certify.
 ## 5. What this document does not carry
 
 The capture artifact - identity, custody, dataset shape, quota - is
-`weaver-analysis-PRD` section 4's owed act, and this loop writes no
-artifact until that act lands. The re-feed exchange is the decode seam's
-owed act, named in section 2. The driver's own shape is
-`weaver-analysis`'s Spec, owed, and the record's shape is
-`weaver-diagnostic`'s, owed beside it. This document is the workflow that binds
-them, and it moves when any of them lands, per the Working Rules on
+`weaver-analysis-PRD` section 4's owed act, that crate holding the reading, and this
+loop writes no artifact until that act lands. The re-feed exchange is the decode seam's
+owed act, named in section 2. The driver's own shape is `weaver-analysis`'s Spec, owed,
+and the record's shape is `weaver-diagnostic`'s, owed beside it. This document is the
+workflow that binds them, and it moves when any of them lands, per the Working Rules on
 documents that cite owed acts.

@@ -445,7 +445,7 @@ what they meet is not a crate but a suite.
 The shape: **WeaverTools** is the suite, which is this repository. Inside it
 **weaver-agents** is a domain, the organism and its framework, holding the agent
 crates. Beside that domain and outside its boundary sit the consumers,
-**weaver-web**, the frontend for admin and gate, and **weaver-diagnostic**, which
+**weaver-web**, the frontend for admin and gate, and **weaver-analysis**, which
 consumes a trace and drives a replay. A shared semantic store and a post-training
 leg are directions rather than crates.
 
@@ -469,7 +469,7 @@ nothing today. weaver-web builds on the two external contracts the ruling of
 2026-08-01 wrote for exactly this party, `weaver-gate-world-contract` and
 `weaver-admin-operator-contract`, pages an outside consumer builds against
 and nothing else, on the consumer's own compute per the live-view ruling.
-weaver-diagnostic reaches the same way, consuming a trace an operator holds and
+weaver-analysis reaches the same way, consuming a trace an operator holds and
 never touching weights.
 
 **A post-training leg is a direction and not a consumer.** The clause that kept

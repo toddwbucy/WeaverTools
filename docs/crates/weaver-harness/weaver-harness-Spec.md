@@ -4,6 +4,15 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-24, sixth of this date, the third member reaches the
+manifest section. Section 2 named three internal crates and the floor plus one
+seam tagged `link`, which the composing-inside act left standing while making
+this crate author through a second mechanism. The section now names
+`weaver-diagnostic` as the recorder of a diagnostic binding, absent from the
+list because it is absent from the tree, with its contract owed and its edge
+landing beside it. The graph and the manifest agree at three today and go to
+four in one act, which is what keeps the record checkable by the instrument
+that checks it.
 **Revised:** 2026-08-24, fifth of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended, and it stands so the
 reversal is visible: the operator's ruling of this date made
@@ -397,37 +406,52 @@ to: harness-dev-boundary-in-the-filesystem
 feature used.
 
 **The dependency set is three internal crates and two external ones, and each is
-argued.** `weaver-traits` and `weaver-types` are the floor links the charter
-declares, the first for the message model the authoring path licenses, the
-second for the wire vocabulary of loop 0 and the identity types the envelope
-carries. `weaver-types` is taken **without its `config` feature**: this crate
-reads no field from the agent config's file, so it links no parser. The SPU
-instruction and the gate instruction are config sections this crate does
-consume, arriving over the coordination seam inside the enter directive,
-already validated, which is the file read staying admin's, and the readout
-election rides the first uninterpreted to the admit. The elections the file
-carries beyond them, the permission mode and the tool set, are consumed by no
-workflow chartered today, and section 9 holds the config read as the tool
-workflow's question. **The featureless link rests on a
-placement owed to `weaver-types-Spec`.** `SpuInstruction` and `GateInstruction`
-are config fields and wire types at once, that Spec defines them in the module
-its `config` feature gates while ruling the wire types unconditional, and this
-crate can construct a directive with the feature off only if the two types sit
-on the unconditional side. The owed edit is filed on the working list rather
-than made here, a correction to a merged document landing after this branch
-rather than beside it. `weaver-trace` is the seam tagged
-`link`, the recorder this crate authors through. `serde_json` encodes and
-decodes the loop 0 envelopes, whose JSON election is `weaver-types-Spec`
-section 4.3's. `nix` is the OS surface, elected in section 2.4 where the grounds
-and the record live. **The set and the feature are two records rather than one.**
-Gate H2 reads the internal edges against the graph and reads no feature list, and
-the featureless take is a `Cargo.toml` fact of its own, so a single record would
-hand one instrument's read to a claim it does not cover. **The set grounds in the
-socket invariant and the feature grounds in nothing.** Apex section 5.1 is the
-reason the two organs appear nowhere in this list: a crate this one asks to do
-something is reached over a socket, so the internal set is the floor plus the one
-seam tagged `link`. Which features a floor link is taken with is a build election
-that would read the same under any invariant.
+argued.** **It becomes four when `weaver-diagnostic` is built**, that crate being the
+mechanism this crate authors a diagnostic-trace through per the ruling of 2026-08-24,
+and a mechanism this crate authors through is linked rather than dialed, which is the
+ground `weaver-trace` already stands on. The count here is the manifest's and the
+manifest holds three today, so the record below reads against what `Cargo.toml` carries
+rather than against what the corpus has ruled. The two move together in the act that
+builds the member. `weaver-traits` and `weaver-types` are the floor links the charter
+declares, the first for the message model the authoring path licenses, the second for
+the wire vocabulary of loop 0 and the identity types the envelope carries.
+`weaver-types` is taken **without its `config` feature**: this crate reads no field from
+the agent config's file, so it links no parser. The SPU instruction and the gate
+instruction are config sections this crate does consume, arriving over the coordination
+seam inside the enter directive, already validated, which is the file read staying
+admin's, and the readout election rides the first uninterpreted to the admit. The
+elections the file carries beyond them, the permission mode and the tool set, are
+consumed by no workflow chartered today, and section 9 holds the config read as the tool
+workflow's question. **The featureless link rests on a placement owed to
+`weaver-types-Spec`.** `SpuInstruction` and `GateInstruction` are config fields and wire
+types at once, that Spec defines them in the module its `config` feature gates while
+ruling the wire types unconditional, and this crate can construct a directive with the
+feature off only if the two types sit on the unconditional side. The owed edit is filed
+on the working list rather than made here, a correction to a merged document landing
+after this branch rather than beside it. `weaver-trace` is the seam tagged `link`, the
+recorder this crate authors through under a serving binding, and `weaver-diagnostic`
+will be the recorder it authors through under a diagnostic one, per apex section 6 as
+ruled 2026-08-24, and is absent from the list above because it is absent from the tree.
+**Its contract is owed and its edge lands with it.** `weaver-trace`'s link is recorded
+as a seam tagged `link` via `weaver-harness-trace-contract`, and the diagnostic member
+has no such contract yet because the surface it presents is the open election of section
+9. No edge is declared in the meantime, a `via` naming a document that does not exist
+being worse than the absence it would fill, and the owed contract is named in
+`weaver-harness-PRD` beside the edge it will carry. **The graph and the manifest
+therefore agree at three** and go to four together, which is what keeps this section's
+record checkable by the instrument that checks it. `serde_json` encodes and decodes the
+loop 0 envelopes, whose JSON election is `weaver-types-Spec` section 4.3's. `nix` is the
+OS surface, elected in section 2.4 where the grounds and the record live. **The set and
+the feature are two records rather than one.** Gate H2 reads the internal edges against
+the graph and reads no feature list, and the featureless take is a `Cargo.toml` fact of
+its own, so a single record would hand one instrument's read to a claim it does not
+cover. **The set grounds in the socket invariant and the feature grounds in nothing.**
+Apex section 5.1 is the reason the two organs appear nowhere in this list: a crate this
+one asks to do something is reached over a socket, so the internal set is the floor plus
+the recorders this crate authors through, one today and two when the diagnostic member
+is built, each linked because a rendering mechanism is not asked to do anything and
+holds no domain. Which features a floor link is taken with is a build election that
+would read the same under any invariant.
 
 ```graph
 node: harness-internal-dependency-set

@@ -32,6 +32,15 @@ port per the Spec's section 6.
 socket seam to `weaver-state` under `weaver-harness-state-contract`, the
 harness declaring as the asking side, with the member reached over a wire
 rather than linked and the dependency surface unchanged.
+**Revised:** 2026-08-24, the third member is named and its contract owed.
+`weaver-diagnostic` is the mechanism this crate authors a diagnostic-trace
+through, per `weaver-agents-PRD` section 6 as ruled this date, linked on the
+trace's own ground because a rendering mechanism holds no domain. Its seam
+record tagged `link` is not declared yet, `weaver-harness-diagnostic-contract`
+being owed and a `via` naming a document that does not exist being worse than
+the absence, so the dependency surface reads against three internal crates
+until the contract lands.
+
 **Date filed:** 2026-07-28
 **Revised:** 2026-08-12, second of this date, the receipt retires. The report
 the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
@@ -427,6 +436,22 @@ what the block below projects: two `floor-link` records and one `seam`. Calling 
 three floor vocabulary would use the word `weaver-agents-PRD` section 5.1 reserves for
 what every domain draws from and no domain contains. That is the whole
 dependency surface, and it is checkable against this list.
+
+**A third member joins the trace and is linked the same way, and its contract
+is owed.** `weaver-diagnostic` is the mechanism this crate authors a
+diagnostic-trace through, per `weaver-agents-PRD` section 6 as ruled
+2026-08-24, standing to a diagnostic binding as `weaver-trace` stands to a
+serving one. It is linked rather than dialed on the trace's own ground: a
+rendering mechanism holds no domain and is not asked to do anything, so apex
+section 5.1's socket rule does not reach it. **Its `seam` record tagged
+`link` is not declared here yet**, because such a record carries a `via` and
+`weaver-harness-diagnostic-contract` is owed: the surface that contract
+would fix is the open election of `weaver-harness-Spec` section 9, held with
+the member's Spec. A `via` naming a document that does not exist is worse
+than the absence, so the edge lands in the act that writes the contract, and
+the dependency-surface claim above reads against three internal crates until
+it does, which is also what the manifest holds, so the graph and the build
+agree at three today and go to four in one act.
 
 **A second member stands beside the trace and is not a link.** `weaver-state`
 is a member of this domain reached over a socket, per apex section 9's
