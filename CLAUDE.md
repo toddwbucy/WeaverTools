@@ -73,8 +73,15 @@ harness turn out to need, never carried and pruned. `weaver-trace` is the except
 **designed** against what the memory leg will later read, because demand-derivation
 under-builds a deliverable.
 
-Out entirely: the memory leg in any form, `weaver-memory`, `weaver-analysis`,
-`weaver-train`, `weaver-frontend`, and `weaver-interface`. The composition root is
+Out entirely: the memory leg in any form, `weaver-memory`, the quarry's
+`weaver-analysis`, `weaver-train`, `weaver-frontend`, and `weaver-interface`.
+**That name was reused on 2026-08-24** and the two are unrelated: the
+exclusion above names the previous program's crate, and `weaver-analysis-PRD`
+charters a new one, the diagnostic consumer outside the agent boundary that
+preloads a replay and reads what it produced. Nothing of the quarry's crossed,
+and the reuse is recorded here rather than left for a reader to trip over,
+because one spelling of two things is the defect Document Format section 2
+names with the halves swapped. The composition root is
 deliberately **new code** — it is where the session boundary gets enforced, and where quarry
 issue #350 (the agent worker implements no task executor) gets solved rather than
 migrated.

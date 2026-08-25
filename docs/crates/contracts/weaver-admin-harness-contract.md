@@ -250,7 +250,10 @@ shape rather than omission, because the instruction names what the fan-out is
 to start and a diagnostic fan-out starts no Gate. Which refusal catches a
 directive whose members disagree with its kind is the Spec round's to place.
 The harness
-stands up an empty working structure, authors its `load` event, asks the SPU to
+stands up an empty working structure, authors its opening event, `load` on a
+serving binding and whatever the diagnostic mechanism's own vocabulary names,
+which `weaver-harness-Spec` section 9 and `weaver-diagnostic-PRD` section 6
+hold open, asks the SPU to
 admit against the instruction it was handed, and starts Gate last where the
 kind declares one. It answers ready
 only when
@@ -263,7 +266,8 @@ than as parties to this seam.
 
 **Leave the run.** Opened by admin. Admin directs the harness to leave. The harness
 stops Gate first where one stands, refuses while a turn is in flight, authors
-its `unload` event,
+its closing event, `unload` on a serving binding and the diagnostic
+mechanism's counterpart where that vocabulary is elected,
 drains the writer's queue to the stream, and releases the SPU. It answers left, or
 it refuses, and a refusal names where the sequence stopped. The stream ends where
 the run did, finalized by nothing, per the ruling of 2026-08-01. As with enter, the

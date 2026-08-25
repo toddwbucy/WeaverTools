@@ -25,14 +25,17 @@ The null replay of that charter's section 4 is this loop run with no reader
 elected, and every certified instrument after it is this loop with a reader
 on, which is what the charter means by the class being authored once.
 
-**It runs in the harness's seat, as the agent's declared loop.** The
-diagnostic declaration names this loop the way any declaration names its
-loop, riding `loop_file` per `weaver-harness-PRD` section 2, and it runs at
-the run's opening, on the precedent the context-injection loop set: a loop
-needs no arriving frame to act, and under a diagnostic binding no frame can
-arrive, there being no Gate. The loop composes what the seat grants and
-nothing else - the state port, the decode surface, the flush - and it mints
-no port, per `weaver-harness-Spec` section 6.
+**It runs in the harness's seat, as the agent's declared loop.** The diagnostic
+declaration names this loop the way any declaration names its loop, riding `loop_file`
+per `weaver-harness-PRD` section 2, and it runs at the run's opening rather than on an
+arriving frame, because under a diagnostic binding no frame can arrive, there being no
+Gate. **That entry is owed and section 2 says so**, `weaver-harness-Spec` section 6.2
+granting the seat on work that arrives owed an answer and on nothing else. An earlier
+form of this sentence rested it on the precedent the context-injection loop set, which
+does not carry it: that loop gained a port on a seat a turn had already granted, and a
+turn begins at the gate and nowhere else. The loop composes what the seat grants and
+nothing else - the state port, the decode surface, the flush - and it mints no port, per
+`weaver-harness-Spec` section 6.
 
 **What it refuses is the substrate's three refusals**, per the charter:
 nothing enters from outside, the working structure is preloaded and read

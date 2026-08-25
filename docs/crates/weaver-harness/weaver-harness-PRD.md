@@ -437,9 +437,11 @@ operator's tooling keys on the fault fields and comes back by running a verb, pe
 `weaver-admin-operator-contract` section 6.
 
 The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and links
-`weaver-trace` as a member of its own domain under a contract. It links no other
-internal crate. The three are one dependency surface and two classifications, which is
-what the block below projects: two `floor-link` records and one `seam`. Calling all
+`weaver-trace` as a member of its own domain under a contract. **It links no other
+internal crate today**, the third member of the paragraph below joining that list in
+the act that writes its contract. The three are one dependency surface and two
+classifications, which is what the block below projects: two `floor-link` records
+and one `seam`. Calling all
 three floor vocabulary would use the word `weaver-agents-PRD` section 5.1 reserves for
 what every domain draws from and no domain contains. That is the whole
 dependency surface, and it is checkable against this list.

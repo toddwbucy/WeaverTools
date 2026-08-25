@@ -4,6 +4,21 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, ninth of this date, the fifth review's findings land,
+and one of them was a claim about the world rather than a stale pointer. **The
+residual readout is not a diagnostic-only member.** Apex section 8 makes it a
+production instrument and section 3 step 6 lands a serving turn's reduction in
+the trace, so two sentences of this act saying a serving run would not have
+carried it were false, and worse, they grounded the two records' distinction on
+a payload member where the argument two paragraphs on grounds it on provenance.
+Both now say what the begetting paragraph already said. Section 6's two
+ownership clauses go, this crate defining the term rather than owning the
+record the harness authors through it, and its one-authority sentence stops
+claiming a parser side this crate no longer has. Section 3 names whose working
+structure a diagnostic run preloads as part of the deferred surface election.
+Section 2's precedent for the loop's entry is withdrawn in the loop document,
+which now rests on the gap section 9 records. The apex, the admin contract, the
+harness papers, the sketch, and `CLAUDE.md` follow.
 **Revised:** 2026-08-24, eighth of this date, the fourth review's findings land.
 Section 2 carried two sentences from the crate's one day outside: it said this
 crate reads records and writes analysis artifacts, which describes the consumer
@@ -205,7 +220,13 @@ substrate's grants:
   wrong arrangement is unrepresentable rather than guarded against.
 - **The working structure is preloaded from a finished trace** and read
   positionally as the source of prompts, rather than accumulating. Same
-  organ, opposite direction. The preload crosses
+  organ, opposite direction. **Whose structure it is follows the kind and is
+  not settled here.** `weaver-trace-PRD` section 1 has that crate holding the
+  rendering in RAM as the working structure, and a diagnostic binding does not
+  compose that crate, so whether this mechanism stands one up in the same
+  shape is part of the surface election `weaver-harness-Spec` section 9 holds
+  open. The term is the apex's, section 0's, and this bullet uses it in that
+  sense whichever mechanism holds it. The preload crosses
   `weaver-analysis-state-contract`, whose papers merged 2026-08-24 and whose
   near side is `weaver-analysis` rather than this crate, per section 6. Two
   earlier readings of this bullet are corrected together: it called the seam
@@ -308,14 +329,18 @@ ground the reading does. `weaver-state` never opens a trace file and
 `weaver-trace` keeps its write-only pin. Nothing inside the agent opens the
 record the replay runs from.
 
-**The record runs one way only, and this crate owns the other product.** A
+**The record runs one way only, and the other product is authored through this
+crate.** A
 diagnostic binding writes no trace, per `weaver-agents-PRD` section 6 as
 amended 2026-08-24, so `weaver-trace` has nothing to do in a replay at either
 end: it is not read, because a reader of a finished record is downstream of a
 file rather than a party to that crate, and it is not written, because a
 replay performs no cognition of its own to record. What a diagnostic run
-produces instead is the **diagnostic-trace**, this crate's own record of the
-replay, named here for the first time.
+produces instead is the **diagnostic-trace**, the record of the replay, named
+here for the first time and authored by the harness through this crate on
+section 1's terms. The graph block below carries the relation the charter
+means: this crate `defines` the term, which is counterpart status rather than
+ownership, and nobody calls a serving record `weaver-trace`'s own.
 
 **The diagnostic-trace is a trace, and the two are separate for how they are made rather
 than for what they look like.** It carries the run the way a serving record carries one
@@ -346,8 +371,9 @@ The making differs on the same author. Both records are authored event by
 event by the harness as the sole writer, inside the agent, into a sink admin
 opened for the binding. What differs is the run underneath: a serving record
 brackets a turn as it happens, and this one runs over turns read from a
-record rather than lived, carrying the residual readout that only a replay
-elects. Two provenances that far apart cannot share one mechanism without the
+record rather than lived, carrying the residual readout dense enough
+to be the point of the run, though a serving load may elect it too, per apex
+section 8. Two provenances that far apart cannot share one mechanism without the
 mechanism losing the ability to say which it made, and `weaver-trace`'s
 charter closes the question from its own side: it has one caller and no other
 crate submits an event to it. **So this crate is the counterpart mechanism**,
@@ -357,9 +383,13 @@ as `weaver-trace` stands to a turn.
 **The shared form has one authority and it is not this crate.** Canonical form
 is `weaver-trace-Spec` section 2's, one line of UTF-8 JSON per record with the
 newline as the separator, and where this crate's writer diverges from it the
-defect is this crate's, per G5. That is the same authority the parser side of
-section 6 answers to, so both directions of this crate's traffic in records
-read one document rather than two.
+defect is this crate's, per G5. **This crate's traffic in records runs one
+direction**, out, section 2 having it render a record and read none. The
+parser answers to `weaver-trace-Spec` section 3 instead, the event's shape
+rather than the line's, and it lives in `weaver-analysis` where the reading
+does. An earlier form of this sentence claimed one authority for both
+directions, which was true of the crate this one was chartered as and would
+send an implementer looking for a parser inside the agent.
 
 ```graph
 node: diagnostic-trace

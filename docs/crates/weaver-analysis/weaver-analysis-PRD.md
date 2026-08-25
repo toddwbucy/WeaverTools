@@ -158,5 +158,7 @@ a sink.
   intervention loop shares that mechanic with the calculator loop and is where
   the boundary runs. The call is the operator's.
 - **This charter names no Rust item and elects no representation.** Its Spec
-  is owed, and the driver's shape, the parser's, and the certification's
-  mechanics land there rather than here.
+  is owed, and the driver's shape and the parser's land there rather than
+  here. **The certification's mechanics do not**, that comparison belonging to
+  the loop inside the run per section 3, and what this crate's Spec settles
+  about it is only how it elects a null replay and reads the outcome.

@@ -161,10 +161,12 @@ chartered 2026-08-18 and both are ratified on their own, per the per-charter rul
 2026-08-23. The enumeration lagged them and that act closed the lag.
 
 **`weaver-diagnostic` joins it 2026-08-24**, on the operator's ruling of that
-date. It was chartered the day before as a consumer outside the boundary and
-the ruling moved it inside as the harness's third member, the mechanism the
+date, which moved it inside as the harness's third member, the mechanism the
 harness authors a diagnostic-trace through, so it enters this roster by the
-rule below rather than by an exception to it. `weaver-analysis` was chartered
+rule below rather than by an exception to it. Its charter was filed the same
+date, on a ruling of 2026-08-23 that chartered it as a consumer outside the
+boundary, so the ruling and the document are a day apart and neither is the
+other. `weaver-analysis` was chartered
 in the same act and does not enter, holding the position outside that
 `weaver-diagnostic` vacated.
 
@@ -794,9 +796,13 @@ raised. A replay that wrote a *trace* would leave the corpus holding two
 records of one turn, alike in kind and alike in shape, with nothing in either
 saying which was lived and which was re-executed, and that is worse than an
 absence because the second one reads as evidence. What it writes instead is a
-record that says what it is by being a different record: it carries the run the
-way a serving record carries one, and beside it the residual readout, which is
-the thing no serving run would have carried. **One
+record that says what it is by being a different record, one whose every event
+came from a replay rather than from a turn. **The ground is provenance and not
+any member it carries.** The residual readout is a production instrument, per
+section 8, elected at the load under either kind, and a serving record carries
+it whenever a serving load elects it, per section 3 step 6. A diagnostic-trace
+is dense with it because a replay is run to be measured, and that is a fact
+about why the run happened rather than a member only one record may hold. **One
 begets the other**, per `weaver-diagnostic-PRD` section 6, so the two stand in
 a parent relation rather than side by side.
 
@@ -933,14 +939,18 @@ never happened. A deployment claiming only re-analysis owes nothing beyond
 the record itself, because it claims nothing more.
 
 Custody places the replay driver outside the agent. The agent must not own or
-even read its own trace, so a tool that reads the operator-held stream and drives
-the SPU runs as an operator principal, over the operator's own storage. This is
-structural, not policy.
+even read its own trace, so the tool that reads the operator-held stream runs as
+an operator principal, over the operator's own storage. This is structural, not
+policy. **That tool reaches no device.** It preloads what it read across the one
+ruled seam and the interior replays it, per section 6 as ruled 2026-08-24 and
+`weaver-analysis-PRD` section 3. An earlier form of this paragraph had the tool
+driving the SPU, which would have given a crate outside the agent a path across
+a process line into an organ, the arrangement section 5.1 exists to forbid.
 
 **The load that carries this arrangement is the diagnostic binding of section
 6.** This section places the driver outside the agent and leaves the agent's
 own shape to the lifecycle, and the diagnostic binding is that shape: no Gate
-stands, so the record the driver feeds is the only source of prompts, by
+stands, so the record the driver preloaded is the only source of prompts, by
 construction rather than by nobody dialing a live ingress.
 
 ## 9. Out of scope, and how it returns

@@ -158,8 +158,8 @@ down, not in what is built.
   instrument-suite sketch went to `weaver-analysis-PRD` section 4 when the
   operator's later ruling of the same date split the leg, `weaver-diagnostic`
   composing inside the harness as a mechanism and `weaver-analysis` taking the
-  reading. What section 6 owes now is that crate's own Spec, the seam it
-  presents to the harness, and the null replay, which is the one item that
+  reading. What section 6 owes now is `weaver-diagnostic`'s own Spec, the seam
+  it presents to the harness, and the null replay, which is the one item that
   never moved. The two use cases remain at
   `sketch-the-two-use-cases`, a sketch that decides nothing, and where they land is
   the entry below: a statement of what the program is for belongs at a suite level

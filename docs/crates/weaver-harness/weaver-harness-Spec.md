@@ -4,6 +4,13 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-24, eighth of this date, the seat's criterion enters this
+Spec's own ledger. `diagnostic-replay-loop` section 2 named a gap section 6.2
+opens on a Gateless binding, the seat being granted on work that arrives owed an
+answer and a diagnostic binding seeing none, and only the creditor recorded it.
+Section 9 now carries the cell, the widening being this Spec's act and no other
+document's. The entry below misplaced the dependency set in section 2 where it
+stands in section 1.
 **Revised:** 2026-08-24, seventh of this date, the run state stops electing the
 recorder. Section 3's `Run` held `recorder: Recorder`, `weaver-trace`'s
 concrete type, which a diagnostic run cannot fill and which settled the surface
@@ -11,7 +18,7 @@ election section 9 holds open one screen away. The struct now says it is shown
 in its serving form and that what lets one field hold either mechanism is that
 election, the type moving in the act that writes the member's contract.
 **Revised:** 2026-08-24, sixth of this date, the third member reaches the
-manifest section. Section 2 named three internal crates and the floor plus one
+manifest section. Section 1 named three internal crates and the floor plus one
 seam tagged `link`, which the composing-inside act left standing while making
 this crate author through a second mechanism. The section now names
 `weaver-diagnostic` as the recorder of a diagnostic binding, absent from the
@@ -2564,6 +2571,12 @@ Each names what settles it, and none is this Spec's to settle alone.
   carried at `weaver-spu-PRD` section 13.5, with the family's turn terminator
   made resident before the answer returns. Recorded as closed rather than
   deleted, this list naming what settled each entry.
+- **The seat's criterion under a Gateless binding.** Section 6.2 grants the
+  seat on work that arrives owed an answer and on nothing else, which a
+  diagnostic binding never sees, having no Gate for work to arrive through.
+  Widening that criterion or writing a second one beside it is this Spec's
+  act, settled by no other document, and `diagnostic-replay-loop` section 2
+  is the creditor that named it, that loop being the first case to need it.
 - **The tee back-pressure election.** Blocking, shedding marked, or detaching
   marked, per `weaver-admin-operator-contract` section 3. A measurement
   against a real consumer at a real rate, taken with the queue's high-water
