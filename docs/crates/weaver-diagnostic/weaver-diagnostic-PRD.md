@@ -8,10 +8,16 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 record and this crate names the other product. Section 6 records that
 `weaver-trace` has nothing to do in a replay at either end, not read because a
 reader is downstream of a file and not written because a replay performs no
-cognition to record, and names the **diagnostic-trace** as this crate's, alike
-to a trace only in the word. The harness relays it opaque and names no shape,
-which is what keeps the dependency from running outward across the boundary.
-The crate defines `diagnostic-trace` as a term in the same section.
+cognition to record, and names the **diagnostic-trace** as this crate's, a
+trace in form and separate for how it is made rather than for what it looks
+like: one begets the other, a diagnostic-trace being made from a trace in a
+second context, so the two stand in a parent relation and a single type would
+leave a file unable to say which of the two it is. Canonical form stays
+`weaver-trace-Spec`'s under G5, and this crate
+carries the diagnostic counterpart to that crate, the writer standing to a
+replay as `weaver-trace` stands to a turn. The harness relays opaque and
+assembles nothing, which keeps the dependency from running outward across the
+boundary. The crate defines `diagnostic-trace` as a term in the same section.
 The owed list gains the diagnostic-trace's form and exit, both to the driver's
 Spec, and gains the trace-as-an-input-format cell, which is `weaver-trace`'s
 act and sits ahead of the driver. The entry below gains the ordinal the
@@ -203,11 +209,46 @@ amended 2026-08-24, so `weaver-trace` has nothing to do in a replay at either
 end: it is not read, because a reader of a finished record is downstream of a
 file rather than a party to that crate, and it is not written, because a
 replay performs no cognition of its own to record. What a diagnostic run
-produces instead is the **diagnostic-trace**, the measurement of the run,
-which is this crate's shape and named here for the first time. **It is not a
-trace and does not share that crate's canonical form**, the two being alike
-only in the word, and this charter names them apart at the moment it names
-the second so no later reader has to.
+produces instead is the **diagnostic-trace**, this crate's own record of the
+replay, named here for the first time.
+
+**The diagnostic-trace is a trace, and the two are separate for how they are
+made rather than for what they look like.** It carries the run the way a
+serving record carries one and carries the residual readout beside it, which
+is the bulk of it and the reason it exists. Sharing the form is the point: an
+instrument that already reads a record reads this one, and a reader that had
+to learn a second shape to see the same run twice would be paying for a
+distinction nothing needs. What differs is the making, and the making is
+the whole distinction.
+
+**One begets the other, in a different context.** A diagnostic-trace is made
+from a trace: the serving record is the replay's input, and the
+diagnostic-trace is what the replay returns, so the two stand in a parent
+relation rather than side by side. That is why they cannot be one type
+however alike they read. A single type would have a record and the record
+derived from it wearing one name, and the first question anyone asks of a
+file in hand, which of the two it is, would have no answer in the file. It
+would also make the derivation circular on its face, a shape defined in terms
+of a run over itself, when what happened is that one run was read and a
+second was performed against it.
+
+The custody differs on the same seam. A serving record is authored event by
+event by the harness as the sole writer, inside the agent, into a sink admin
+opened under root, bracketed by a turn as it happens. This one is assembled
+outside the agent from what the replay returns, by a crate the boundary keeps
+out of that custody chain, over a run whose turns are read from a record
+rather than lived. Two writers with two custody stories cannot be one crate,
+and `weaver-trace`'s charter says so from its own side: it has one caller and
+no other crate submits an event to it. **So this crate carries
+the diagnostic counterpart** to it, the writer that makes a diagnostic-trace,
+standing to a replay as `weaver-trace` stands to a turn.
+
+**The shared form has one authority and it is not this crate.** Canonical form
+is `weaver-trace-Spec` section 2's, one line of UTF-8 JSON per record with the
+newline as the separator, and where this crate's writer diverges from it the
+defect is this crate's, per G5. That is the same authority the parser side of
+section 6 answers to, so both directions of this crate's traffic in records
+read one document rather than two.
 
 ```graph
 node: diagnostic-trace
@@ -218,18 +259,18 @@ from: weaver-diagnostic
 to: diagnostic-trace
 ```
 
-**The harness relays the diagnostic-trace and never names it.** The
-measurement returns from the SPU by the same path the generation does, per
-apex section 3 step 6, so it reaches the harness whatever the binding's kind.
-On a serving binding the harness authors it into the record. On a diagnostic
-one there is no record to author into, so the harness passes it outward
-holding it opaque, on the precedent `weaver-trace` already sets for message
-payloads, whose shapes it neither knows nor versions. That keeps the
+**The harness relays and never assembles.** The measurement returns from the
+SPU by the same path the generation does, per apex section 3 step 6, so it
+reaches the harness whatever the binding's kind. On a serving binding the
+harness authors it into the record. On a diagnostic one there is no record to
+author into, so the harness passes it outward holding it opaque, on the
+precedent `weaver-trace` already sets for message payloads, whose shapes it
+neither knows nor versions. **The diagnostic-trace is assembled at the far
+end**, by this crate, from what the relay delivers, which is what keeps the
 dependency running the one way the boundary allows: this crate sits outside
-the agent, so a harness that named this crate's shape would depend outward,
-and holding the payload opaque is what makes the relay cost nothing
-structurally. The exit path and its directives are owed with the driver,
-below.
+the agent, and a harness that named this crate's writer would depend outward.
+Holding the payload opaque is what makes the relay cost nothing structurally.
+The exit path and its directives are owed with the driver, below.
 
 **The refusal rests on the binding's declaration, and its form is the door's
 absence.** State learns the kind at its standing, from the party that stands
@@ -255,9 +296,13 @@ Open cells, each named rather than implied:
 - **The driver and its Spec** are owed next, the seam papers having landed,
   and the null replay of section 4 is owed behind the driver.
 - **The diagnostic-trace's own shape** is owed with the driver's Spec, which
-  is the document permitted to name it. This section fixes what it is, whose
-  it is, and that the harness holds it opaque, and fixes nothing about its
-  form. **Its exit is owed in the same act**: it leaves by admin, per the
+  is the document permitted to name it and the writer that makes it. This
+  section fixes what it is, whose it is, that it shares canonical form under
+  `weaver-trace-Spec`'s authority, and that the harness holds it opaque. What
+  it does not fix is how much of that crate's event vocabulary the diagnostic
+  writer reuses and how the residual readout sits beside it, which is the
+  Spec's election and the larger half of the work. **Its exit is owed in the
+  same act**: it leaves by admin, per the
   operator's ruling of 2026-08-24, and no directive carries it until that act
   writes one, a declared route with no far end being the empty joint apex
   section 9 refuses.
