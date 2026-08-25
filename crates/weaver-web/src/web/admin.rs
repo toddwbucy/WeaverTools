@@ -253,6 +253,14 @@ async fn render_repro(state: &AppState, who: String, agent: String) -> AppResult
         None => (Vec::new(), "the record read failed - link down or unresponsive".into()),
     };
     let snap = state.repro.snapshot();
+    // The job log and running state belong to the agent the job runs
+    // on; another agent's page shows neither (the one-at-a-time rule
+    // still refuses a concurrent start with its own message).
+    let (running, log) = if snap.agent == agent {
+        (snap.running, snap.log.clone())
+    } else {
+        (false, Vec::new())
+    };
     let (has_report, reproduced, source_run, replay_run, turns) = match &snap.report {
         Some(r) if r.agent == agent => (
             true,
@@ -288,8 +296,8 @@ async fn render_repro(state: &AppState, who: String, agent: String) -> AppResult
         agent,
         runs,
         link_note,
-        running: snap.running,
-        log: snap.log,
+        running,
+        log,
         has_report,
         reproduced,
         source_run,

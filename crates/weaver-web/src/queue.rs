@@ -70,6 +70,10 @@ impl Queues {
     }
 
     pub fn enqueue(&self, inv: Invocation) -> anyhow::Result<()> {
+        // A restart with the agent's box down leaves a known,
+        // mentionable agent with no queue; stand one up so the
+        // refusal comes typed from the link rather than from here.
+        self.ensure_agent(&inv.agent_name);
         let agents = self.agents.lock().unwrap();
         let q = agents
             .get(&inv.agent_name)

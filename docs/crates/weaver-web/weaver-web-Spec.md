@@ -406,8 +406,11 @@ GET  /channels/{name}/stream          SSE: channel events from cursor
 
 GET  /admin/lifecycle                 lifecycle surface     [admin]
 POST /admin/lifecycle/{agent}/{verb}  run a verb            [admin]
+GET  /admin/agents/{agent}/config     declaration, read-only [admin]
 GET  /admin/trace/{agent}             trace surface         [admin]
 GET  /admin/trace/{agent}/stream      SSE: trace events     [admin]
+GET  /admin/repro/{agent}             confirm view (17)     [admin]
+POST /admin/repro/{agent}             start a confirm (17)  [admin]
 
 GET  /assets/*                        vendored static assets
 ```

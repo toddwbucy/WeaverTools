@@ -185,6 +185,12 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
     let mut identity: Option<(u64, u64)> = None;
 
     loop {
+        // The receiver's end is the stop signal even when a quiet or
+        // absent sink gives this poll nothing to send - without this
+        // check an idle tailer outlives every connection it served.
+        if out.is_closed() {
+            return;
+        }
         match File::open(&path).await {
             Ok(mut file) => {
                 let meta = file.metadata().await.ok();

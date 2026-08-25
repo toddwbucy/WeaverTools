@@ -253,8 +253,12 @@ async fn job(repro: &Repro, link: &Link, agent: &str, run: &str) -> Result<(), S
     }
     repro.log("agent reloaded, gate standing".to_owned());
 
-    // 3. Reissue each turn byte-exact, in order.
-    let mut replay_run: Option<String> = None;
+    // 3. Reissue each turn byte-exact, in order. Every close must be
+    // answered and every close must name the same fresh run - a
+    // refusal, a missing label, or a split across runs is the job
+    // ending with that fact, never a comparison against the wrong
+    // record.
+    let mut runs_seen: Vec<String> = Vec::new();
     for st in &source_turns {
         let close = link
             .turn(agent, &st.text)
@@ -266,11 +270,27 @@ async fn job(repro: &Repro, link: &Link, agent: &str, run: &str) -> Result<(), S
             close.kind,
             close.run.as_deref().unwrap_or("?")
         ));
-        if replay_run.is_none() {
-            replay_run = close.run.clone();
+        if close.kind != "answered" {
+            return Err(format!("reissue of {} closed {}", st.turn, close.kind));
+        }
+        match close.run {
+            Some(r) => {
+                if !runs_seen.contains(&r) {
+                    runs_seen.push(r);
+                }
+            }
+            None => return Err(format!("reissue of {} named no run", st.turn)),
         }
     }
-    let replay_run = replay_run.ok_or("no close named the replay run")?;
+    let replay_run = match runs_seen.as_slice() {
+        [one] if one != run => one.clone(),
+        [one] => {
+            return Err(format!("reissues landed in the source run {one} itself"))
+        }
+        many => {
+            return Err(format!("reissues split across runs: {}", many.join(", ")))
+        }
+    };
 
     // 4. The replay run, from the record, and the comparison.
     let (replay_events, _) = link
@@ -280,6 +300,17 @@ async fn job(repro: &Repro, link: &Link, agent: &str, run: &str) -> Result<(), S
     let replay_turns = cut_turns(&replay_events);
     let mut turns = Vec::new();
     let mut all = true;
+    // A replay run with turns the source never had is an interleave
+    // (a channel turn landing mid-confirm) and fails the verdict even
+    // when every source turn happens to match.
+    if replay_turns.len() != source_turns.len() {
+        repro.log(format!(
+            "turn count differs: source {} replay {} - interleaved traffic",
+            source_turns.len(),
+            replay_turns.len()
+        ));
+        all = false;
+    }
     for st in &source_turns {
         let rt = replay_turns.iter().find(|r| r.turn == st.turn);
         let (checks, replay_ms) = match rt {

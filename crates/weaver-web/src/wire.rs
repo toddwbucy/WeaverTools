@@ -261,15 +261,19 @@ impl Link {
         if conns.is_empty() {
             return None;
         }
-        let mut merged = HashMap::new();
-        for (conn, tx) in conns {
-            let fut = self.ask_on(conn, tx, |id| ToConnector::Status { id });
-            if let Ok(Ok(ToServer::Status { agents, .. })) = tokio::time::timeout(
+        // Every box is asked concurrently: the fleet shape makes N
+        // greater than one, and a page awaiting this must wait one
+        // timeout, not one per unresponsive box.
+        let asks = conns.into_iter().map(|(conn, tx)| async move {
+            tokio::time::timeout(
                 std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
-                fut,
+                self.ask_on(conn, tx, |id| ToConnector::Status { id }),
             )
             .await
-            {
+        });
+        let mut merged = HashMap::new();
+        for answer in futures::future::join_all(asks).await {
+            if let Ok(Ok(ToServer::Status { agents, .. })) = answer {
                 merged.extend(agents);
             }
         }
@@ -593,6 +597,9 @@ async fn connector_connection(
         let (admin_bin, admin_config) =
             (cfg.admin_bin.clone(), cfg.admin_config.clone());
         let trace_paths = trace_paths.clone();
+        // Answered asks' handles are dropped as new asks arrive, so a
+        // long-lived connection does not accumulate them.
+        tasks.retain(|t| !t.is_finished());
         tasks.push(tokio::spawn(async move {
             let answer = match frame {
                 ToConnector::Turn { id, agent, text } => match gates.get(&agent) {
@@ -639,15 +646,19 @@ async fn connector_connection(
                         content,
                     }
                 }
+                // Both record reads stream the sink line by line: the
+                // file grows for as long as the agent lives, and a
+                // whole-file read would hold it all at once.
                 ToConnector::TraceRuns { id, agent } => {
                     let mut runs: Vec<RunSummary> = Vec::new();
                     if let Some(path) = trace_paths.get(&agent) {
-                        if let Ok(content) = tokio::fs::read_to_string(path).await {
+                        if let Ok(file) = tokio::fs::File::open(path).await {
+                            let mut lines = BufReader::new(file).lines();
                             let mut order: Vec<String> = Vec::new();
                             let mut map: HashMap<String, RunSummary> = HashMap::new();
-                            for line in content.lines() {
+                            while let Ok(Some(line)) = lines.next_line().await {
                                 let Ok(v) =
-                                    serde_json::from_str::<serde_json::Value>(line)
+                                    serde_json::from_str::<serde_json::Value>(&line)
                                 else {
                                     continue;
                                 };
@@ -689,10 +700,11 @@ async fn connector_connection(
                     let mut events = Vec::new();
                     let mut truncated = false;
                     if let Some(path) = trace_paths.get(&agent) {
-                        if let Ok(content) = tokio::fs::read_to_string(path).await {
-                            for line in content.lines() {
+                        if let Ok(file) = tokio::fs::File::open(path).await {
+                            let mut lines = BufReader::new(file).lines();
+                            while let Ok(Some(line)) = lines.next_line().await {
                                 let Ok(v) =
-                                    serde_json::from_str::<serde_json::Value>(line)
+                                    serde_json::from_str::<serde_json::Value>(&line)
                                 else {
                                     continue;
                                 };
