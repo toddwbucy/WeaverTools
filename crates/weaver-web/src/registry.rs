@@ -1,7 +1,9 @@
-//! Participant reads, and startup reconciliation of configured
-//! agents and providers into the registry.
+//! Participant reads, and reconciliation of announced agents and
+//! configured providers into the registry. Agents arrive with the
+//! link's hello (roster-by-hello, Spec section 16), providers with
+//! the server's own config at startup.
 
-use crate::config::Config;
+use crate::config::ProviderConfig;
 use crate::store::Store;
 use serde::Serialize;
 
@@ -45,11 +47,13 @@ pub async fn by_id(store: &Store, id: i64) -> anyhow::Result<Option<Participant>
 }
 
 pub async fn channel_members(store: &Store, channel_id: i64) -> anyhow::Result<Vec<Participant>> {
-    Ok(sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
+    // A static string needs no safety assertion - the one site of the
+    // seven that interpolated nothing now interpolates nothing visibly.
+    Ok(sqlx::query_as::<_, Participant>(
         "SELECT p.id, p.name, p.display, p.kind, p.adapter, p.respond, p.role \
          FROM participants p JOIN members m ON m.participant_id = p.id \
-         WHERE m.channel_id = $1 ORDER BY p.name"
-    )))
+         WHERE m.channel_id = $1 ORDER BY p.name",
+    )
     .bind(channel_id)
     .fetch_all(&store.pool)
     .await?)
@@ -63,19 +67,26 @@ pub async fn all(store: &Store) -> anyhow::Result<Vec<Participant>> {
     .await?)
 }
 
-/// Ensure every configured agent and provider has a participant row.
+/// Ensure every agent a hello announced has a participant row.
 /// Humans are created on first visit, not here.
-pub async fn reconcile(store: &Store, cfg: &Config) -> anyhow::Result<()> {
-    for a in &cfg.agents {
+pub async fn reconcile_agents(store: &Store, names: &[String]) -> anyhow::Result<()> {
+    for name in names {
         store
-            .create_participant(&a.name, &a.name, "agent", Some(&a.name))
+            .create_participant(name, name, "agent", Some(name))
             .await?;
     }
-    for p in &cfg.providers {
+    Ok(())
+}
+
+/// Ensure every configured provider has a participant row.
+pub async fn reconcile_providers(
+    store: &Store,
+    providers: &[ProviderConfig],
+) -> anyhow::Result<()> {
+    for p in providers {
         store
             .create_participant(&p.name, &p.name, "model", Some(&p.name))
             .await?;
     }
-    store.reconcile_roles(cfg.admins.clone()).await?;
     Ok(())
 }

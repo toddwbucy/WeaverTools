@@ -1,8 +1,8 @@
 ---
 title: weaver-web
 summary: the first consumer: channel, lifecycle, and trace surfaces reaching an agent across the two external contracts
-version: v0.1
-date: 2026-08-24
+version: v0.2
+date: 2026-08-25
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -19,9 +19,16 @@ quarter of 2027.
 ## What it is
 
 **The suite's frontend, and the first thing to reach an agent from outside.**
-One binary serving three surfaces over a browser: a channel where humans and
+Two processes serving three surfaces over a browser: a channel where humans and
 agents converse, a lifecycle view where an operator drives the verbs, and a
-live view over an agent's record.
+live view over an agent's record. The **connector** runs on the agents' own box
+and holds every box-bound reach - the gate sockets, the verb invocation, the
+trace sinks. The **server** presents HTTP and holds everything else - the
+channel store, the routing, the rendering. They meet over one link the
+connector dials, loopback when both share a box, and moving the whole
+presentation stack to another device on the network is deploying the server
+there and changing that one address. What gets processed where is a deployment
+concern, and the architecture treats it as exactly that.
 
 **It is a consumer, and that word is structural here rather than descriptive.**
 It sits outside the agent boundary. It links no crate of the agent domain, holds
@@ -122,8 +129,9 @@ filed rather than done.
 ## How it works
 
 **One turn.** A mention in a channel enqueues an invocation for that agent. The
-worker assembles context from the channel log, dials the agent's gate socket,
-writes one JSON line, and waits for one line back. The close is appended to the
+worker assembles context from the channel log and asks across the link, where
+the connector dials the agent's gate socket, writes one JSON line, and waits
+for one line back. The close is appended to the
 channel with its kind and its labels, and the browser learns about it through a
 server-sent event rather than a page turn. One turn in flight per agent: a
 second mention waits, because the agent serves one turn at a time and queueing
@@ -141,9 +149,10 @@ generous ceiling, and whatever it answers is rendered as it came, parsed when it
 parses and shown raw when it does not. Nothing is swallowed and nothing is
 interpreted into a friendlier shape.
 
-**The record.** The trace view tails the file the agent's declaration names,
-read-only, and projects it. It never writes there and holds no descriptor that
-could.
+**The record.** The connector tails the file the agent's declaration names,
+read-only, and streams it over the link for the server to project. Neither
+side ever writes there, and a dropped link surfaces in the view as a
+discontinuity mark, exactly as a rotation does.
 
 ## What it refuses
 

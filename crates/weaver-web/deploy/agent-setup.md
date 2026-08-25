@@ -21,16 +21,19 @@ reasons until every step is done, so run it after each step if lost.
 5. **Operator group membership**: `gpasswd -a todd weaver-<name>`.
    The gate socket lands `srwxrwxr-x weaver-<name>:weaver-<name>`, so
    connecting needs group write. NOTE: group membership is evaluated
-   at login - weaver-web must be (re)started from a fresh login
-   context (`sudo -u todd ...`) after this, or it gets
+   at login - weaver-web-connector (the process that dials the
+   socket) must be (re)started from a fresh login context
+   (`sudo -u todd ...`) after this, or it gets
    "Permission denied (os error 13)" dialing the socket.
 6. **Validate, then load**:
    `sudo WEAVER_ADMIN_CONFIG=/etc/weaver/config \
     /usr/local/libexec/weaver/weaver-admin {validate|load} <name>`
-7. **weaver-web config**: add an `[[agents]]` block (name, gate socket
-   path, trace path) to `/etc/weaver-web/config.toml` and restart
-   weaver-web. The registry, queue worker, trace tailer, lifecycle
-   row, and channel-create checkbox all follow from config.
+7. **connector config**: add an `[[agents]]` block (name, gate socket
+   path, trace path) to `/etc/weaver-web/connector.toml` and restart
+   weaver-web-connector. The roster reaches the server in the
+   connector's hello, and the registry, queue worker, trace view,
+   lifecycle row, and channel-create checkbox all follow from it. The
+   server needs no change and no restart.
 
 GPU placement is the declaration's `devices` field. The SPU refuses a
 conflicted device at admission and never evicts.

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}confirm:{{ agent }} - weaver-web{% endblock %}
+{% block body %}
+{% if running %}<meta http-equiv="refresh" content="2">{% endif %}
+<h1>Confirm: {{ agent }}</h1>
+<p class="tracenote">Pull a run from the record, drive its turns back
+through the gate on a fresh load, and compare field by field. This
+unloads and reloads the agent, and a channel turn landing mid-confirm
+fails the confirm honestly. The reissue stays on the serving path -
+instrumented replay belongs to the diagnostic domain.</p>
+
+{% if !link_note.is_empty() %}<p class="mstatus">{{ link_note }}</p>{% endif %}
+
+<h2>Runs on the record</h2>
+<table class="agents">
+  <tr><th>started</th><th>run</th><th>turns</th><th>events</th><th></th></tr>
+  {% for r in runs %}
+  <tr>
+    <td>{{ r.when }}</td>
+    <td class="runlabel">{{ r.run }}</td>
+    <td>{{ r.turns }}</td>
+    <td>{{ r.events }}</td>
+    <td>
+      {% if r.turns > 0 && !running %}
+      <form method="post" action="/admin/repro/{{ agent }}">
+        <input type="hidden" name="run" value="{{ r.run }}">
+        <button>confirm</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% if !log.is_empty() %}
+<h2>{% if running %}Running{% else %}Last confirm{% endif %}</h2>
+<pre class="verb-outcome">{% for line in log %}{{ line }}
+{% endfor %}</pre>
+{% endif %}
+
+{% if has_report %}
+<h2>Verdict:
+  {% if reproduced %}<span class="state-loaded">REPRODUCED</span>
+  {% else %}<span class="state-unloaded">NOT REPRODUCED</span>{% endif %}
+</h2>
+<p class="tracenote">source {{ source_run }}<br>replay {{ replay_run }}</p>
+<table class="agents">
+  <tr><th>turn</th><th>verdict</th><th>in</th><th>out</th>
+      <th>source ms</th><th>replay ms</th><th>emission</th></tr>
+  {% for t in turns %}
+  <tr>
+    <td>{{ t.turn }}</td>
+    <td>{% if t.reproduced %}<span class="state-loaded">match</span>
+        {% else %}<span class="state-unloaded">differs: {{ t.failed }}</span>{% endif %}</td>
+    <td>{{ t.tokens_in }}</td>
+    <td>{{ t.tokens_out }}</td>
+    <td>{{ t.source_ms }}</td>
+    <td>{{ t.replay_ms }}</td>
+    <td class="preview">{{ t.preview }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}
