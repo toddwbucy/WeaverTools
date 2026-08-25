@@ -146,8 +146,8 @@ even the first instrument reads from a replay that did not certify.
   prefix needs no cleanup, the next preload's opener retiring it.
 - **The holdings fail input identity.** The loop refuses at certification
   step one, named above.
-- **The decode seam refuses mid-replay.** The loop ends the run with the
-  account of where in the record it authors. **The no-write guarantee is the
+- **The decode seam refuses mid-replay.** The loop ends the run and the record
+  it authors carries where the replay stopped. **The no-write guarantee is the
   third refusal's and does not reach that record**, which is the point of
   authoring one: a partial diagnostic-trace is the honest account of a replay
   that stopped, bracketed and readable, and refusing to write it would leave

@@ -758,8 +758,10 @@ structural reason statefulness is an extension rather than a re-architecture.
 `weaver-trace` is not a party to the transition. It is linked by the harness
 under a contract as a member of the harness's domain, per 5.1's link case, so it
 cannot be a socket peer that confirms anything. It is the mechanism the harness
-records through, during the load and for the whole of the agent's residency
-thereafter.
+records through **on a serving binding**, during the load and for the whole of
+the agent's residency thereafter. On a diagnostic binding that place is
+`weaver-diagnostic`'s, per the composition below, and the non-party argument
+above reads the same for either: a linked member confirms no transition.
 
 **An agent stands up under a binding, and the binding declares its kind.** The
 same weights serve more than one purpose, and which components a load brings up
@@ -792,8 +794,9 @@ raised. A replay that wrote a *trace* would leave the corpus holding two
 records of one turn, alike in kind and alike in shape, with nothing in either
 saying which was lived and which was re-executed, and that is worse than an
 absence because the second one reads as evidence. What it writes instead is a
-record that says what it is by being a different record, carrying the residual
-readout a replay elects and nothing a serving run would have carried. **One
+record that says what it is by being a different record: it carries the run the
+way a serving record carries one, and beside it the residual readout, which is
+the thing no serving run would have carried. **One
 begets the other**, per `weaver-diagnostic-PRD` section 6, so the two stand in
 a parent relation rather than side by side.
 
@@ -838,7 +841,7 @@ Lifecycle rules:
   loaded-and-idle. It does not unload the agent.
 
 **What a diagnostic binding takes in place of work is settled by the
-operator's ruling of 2026-08-24, and the papers are owed.** The work-ingress
+operator's ruling of 2026-08-24, and the papers have landed.** The work-ingress
 rule above is untouched and stands as written. A replay does present prompts,
 and they cross a seam of their own rather than arriving as material declared
 at the load: the preload of `weaver-analysis-state-contract`, on the state

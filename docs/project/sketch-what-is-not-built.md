@@ -153,9 +153,14 @@ down, not in what is built.
   `weaver-admin-harness-contract`, with the Spec and code acts landed the same date,
   and the loop class in `weaver-diagnostic-PRD` sections 3 through 5, the chartering
   act of 2026-08-24. What that charter leaves owed it names itself in its section
-  6: the seam papers, the capture artifact, the driver with its Spec, the null
-  replay, and the instrument-suite sketch the chartering ruling cites, which does
-  not exist in this tree. The two use cases remain at
+  6, and four of the five items this sentence once listed have moved: the seam
+  papers landed, and the capture artifact, the driver with its Spec, and the
+  instrument-suite sketch went to `weaver-analysis-PRD` section 4 when the
+  operator's later ruling of the same date split the leg, `weaver-diagnostic`
+  composing inside the harness as a mechanism and `weaver-analysis` taking the
+  reading. What section 6 owes now is that crate's own Spec, the seam it
+  presents to the harness, and the null replay, which is the one item that
+  never moved. The two use cases remain at
   `sketch-the-two-use-cases`, a sketch that decides nothing, and where they land is
   the entry below: a statement of what the program is for belongs at a suite level
   that has no document.

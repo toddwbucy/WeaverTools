@@ -22,9 +22,9 @@ members beside it, and no version member is carried because one whose only reade
 unbuilt is the reserved slot apex section 9 forbids. The act that first breaks the
 schema is the act that adds the marker. This section is named authoritative for the
 claim, per G5. Raised by `weaver-diagnostic-PRD` section 6's input-format cell, which
-closes in the same act and moved to `weaver-analysis-PRD` section 4 the day after, with
-the reading. The entry below gains the ordinal the convention asks for, which it was
-filed without.
+closes in the same act and moved to `weaver-analysis-PRD` section 4 later the same date,
+with the reading. The entry below gains the ordinal the convention asks for, which it
+was filed without.
 **Revised:** 2026-08-24, first of this date, the residual reductions arrive with their
 shape.
 The measurement's enumeration named the reductions and not the two counts

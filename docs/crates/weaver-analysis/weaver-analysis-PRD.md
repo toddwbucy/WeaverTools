@@ -103,10 +103,19 @@ every consumer of a serving trace already occupies, per `weaver-trace-PRD`
 section 1. What this crate holds afterward is a file the operator's storage
 holds.
 
-**It certifies before it reads for meaning**, per `weaver-diagnostic-PRD`
-section 4, which carries the criterion because it belongs with the mechanism
-being judged. This crate performs the comparison, holding both records, and
-nothing downstream of an uncertified replay is produced.
+**It reads nothing for meaning from a replay that did not certify**, per
+`weaver-diagnostic-PRD` section 4, which carries the criterion because it
+belongs with the mechanism being judged. **The comparison is not performed
+here.** `diagnostic-replay-loop` section 3 walks it inside the run, which is
+where it has to happen: the loop holds the recorded path in its holdings and
+the recomputed identifiers as they arrive, so it alone can refuse before the
+first forward pass and name the first divergent position rather than reporting
+after a whole replay has run. What this crate does is elect the null replay,
+read its outcome from the record, and gate everything downstream on it. An
+earlier form of this paragraph had the comparison here on the ground that this
+crate holds both records, which is true and is not the reason the loop cannot,
+so it would have put a second implementation of one check on the other side of
+a sink.
 
 ## 4. Open cells, each named rather than implied
 

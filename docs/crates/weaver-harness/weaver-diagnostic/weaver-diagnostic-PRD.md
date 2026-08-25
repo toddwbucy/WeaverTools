@@ -4,6 +4,21 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-24, sixth of this date, the second review's findings land.
+The `Parent:` header named the suite while the parent edge named the harness,
+which is the act's headline contradicted in its own header, and the header
+block had been collapsed onto flowing lines by a wrapping pass. Both are
+repaired, the header now reading `weaver-harness-PRD` as a member's does.
+Section 6's no-seam claim is narrowed to what is true, that this crate declares
+no seam and dials nothing while still being one end of the `link` the harness
+declares. `weaver-analysis-PRD` gives the certification's comparison back to
+the loop, which holds the recorded path in its holdings and can refuse before
+the first forward pass, a thing a reader of a finished sink cannot do. The apex
+qualifies `weaver-trace` as the serving mechanism, corrects a bolded lead that
+said the papers were owed above a body saying they landed, and reshapes a
+clause that read as excluding every serving-record member from the
+diagnostic-trace. The sketch's owed list and Working Process section 7's roster
+count follow the act into `process/`.
 **Revised:** 2026-08-24, fifth of this date, the review's findings land. Five
 of eight fell in this document, in the sections the composing-inside act did
 not rewrite and did not reconcile against the ones it did. Section 3's preload
@@ -71,11 +86,10 @@ seam edge is declared here, from the initiating side, per the pattern the harnes
 seam set, and not by state as the paragraph first said. The owed list narrows to the
 driver, its Spec, and the null replay. The serving-binding refusal is restated in the
 papers' terms, the door's absence rather than a refusal at a seam that does not stand.
-**Date filed:** 2026-08-24 **Document ID:** `weaver-diagnostic-PRD` **Parent:** the
-WeaverTools suite, whose governing document is deliberately not yet written, per
-`weaver-agents-PRD` section 0. The graph parent edge names the `WeaverTools` system
-node, and the header and the edge name the same thing. **Editorial:** Per the Working
-Rules.
+**Date filed:** 2026-08-24
+**Document ID:** `weaver-diagnostic-PRD`
+**Parent:** `weaver-harness-PRD`
+**Editorial:** Per the Working Rules.
 
 ---
 
@@ -240,10 +254,14 @@ serve identically, and whether their readouts agree is a finding.
 
 ## 6. The seam, the custody, and what this charter leaves owed
 
-**This crate holds no seam.** It is linked and called, one caller and no
-other, which is `weaver-trace`'s position and for the same reason: a rendering
-mechanism is not a peer and nothing it makes travels except by the sink its
-author writes into.
+**This crate declares no seam of its own and dials nothing.** It is linked and
+called, one caller and no other, which is `weaver-trace`'s position and for the
+same reason: a rendering mechanism is not a peer and nothing it makes travels
+except by the sink its author writes into. **It is still one end of a seam**,
+the `link` the harness declares from the asking side, and that record is owed
+with `weaver-harness-diagnostic-contract` per the cell below. The distinction is
+between declaring an edge and being named by one, and this crate does the
+second only.
 
 **The preload crosses a second seam on the state member, per the operator's
 ruling of 2026-08-24, and the papers stand**, but the near side of it is not

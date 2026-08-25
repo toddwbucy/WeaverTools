@@ -449,9 +449,10 @@ cover. **The set grounds in the socket invariant and the feature grounds in noth
 Apex section 5.1 is the reason the two organs appear nowhere in this list: a crate this
 one asks to do something is reached over a socket, so the internal set is the floor plus
 the recorders this crate authors through, one today and two when the diagnostic member
-is built, each linked because a rendering mechanism is not asked to do anything and
-holds no domain. Which features a floor link is taken with is a build election that
-would read the same under any invariant.
+is built, each linked because the call crosses no process line, which is what apex
+section 5.1's rule turns on. The harness does ask each to record, which is why the
+record is a `seam` tagged `link` rather than a `floor-link`. Which features a floor link
+is taken with is a build election that would read the same under any invariant.
 
 ```graph
 node: harness-internal-dependency-set
