@@ -8,6 +8,16 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-25, the tee's election joins the bracket. The `load`
+event named three elections and not the tee's, so the record said what the model
+did and not what the agent's state was built from, and a replay under a
+different projection rebuilds a session that never ran without failing. The
+clause's own argument reaches it unchanged, an election that took nothing and an
+election never asked being the same absence on disk. The rule is recorded and
+not the outcome, this charter having already weighed one member per event
+against one event per run, and the day that stops sufficing is named: a
+back-pressure election landing on shedding carries a per-event mark with it.
+Per issue 347.
 **Revised:** 2026-08-24, second of this date, the record states its
 compatibility. Section 6 gains the guarantee that makes the record readable across
 vintages and the argument for why it carries no version, landing apex section 3's
@@ -574,6 +584,30 @@ the declaration where a reader meets it before any event it governs, and
 costs one event per run rather than one member per event. What it names
 is each election individually and never a profile, for the drift reason
 section 3.1 states.
+
+**The tee's election is one of them and was left out.** The three the `load`
+event names are the readout, the field's depth, and the surprisal, each an
+election about what the model reports. The tee's is an election about what
+leaves the record for the state member, and the clause above reaches it
+unchanged: a tee that elected nothing and a tee that was never asked are the
+same absence on disk. **Without it the record says what the model did and not
+what the agent's state was built from**, which are different because the tee
+both selects which events cross and projects which payload paths ride with
+them, per `weaver-harness-state-contract` section 2.
+
+**A replay under the wrong projection does not fail.** It lands, the loop asks,
+an answer comes back, and what the run produces is a plausible replay of a
+session that never happened. That is the shape this charter's own section 3.1
+argues against, and it is why the tee's election belongs at the bracket's
+opening beside the other three rather than in the deployment's memory.
+
+**The record carries the rule and not the outcome.** Which events a rule took
+is derivable from it, and this charter has already weighed one member per event
+against one event per run and taken the second. **The day that stops being
+enough is named rather than left**: if the tee's back-pressure election lands on
+shedding, per `weaver-harness-Spec` section 9, then elected stops meaning
+arrived and only a per-event mark of what crossed is truthful. That act carries
+this one with it.
 
 The bracket is defined here beside the run field deliberately. A run label that
 could be stamped without the events existing to verify it against would be an

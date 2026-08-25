@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, the election is recorded as well as sent. Section 7's
+`election` term gains that the same rule is written to the `load` event, per
+`weaver-trace-Spec` section 3, so a reader of a finished record knows what this
+seam carried without being told. Nothing of the seam moves: the opener is
+unchanged and no party does anything differently. What changes is that a replay
+can preload under the rule the record names rather than one supplied from
+outside it. Per issue 347.
 **Revised:** 2026-08-24, the replay ask joins the vocabulary. The ask set
 gains `replay` by section 7's own door, elected against the diagnostic
 replay loop's real need per the loop act of this date: the session's
@@ -98,7 +105,12 @@ itself consumes, and what crosses here is consumed by state.
 **This seam's own.** Four terms. The `election`: the seam's opener, the
 session the load declared and the elected kinds with their payload key paths
 as the load declared them, sent whole at every standing of the channel and
-never per event. **The session rides the opener rather than the ask**, per
+never per event. **The same election is written into the record**, on the
+`load` event's payload per `weaver-trace-Spec` section 3, so a reader of a
+finished record knows the rule this seam carried without being told it. That
+matters to nobody standing this seam and to everyone replaying it: a replay
+preloads under the rule the record names or it preloads a different session
+under a rule of its own. **The session rides the opener rather than the ask**, per
 the operator's ruling of 2026-08-20 on the custody defect: it is a
 load-declared fact standing for the channel's life, the same shape as the
 election it sits beside, and a restarted member relearns it with its

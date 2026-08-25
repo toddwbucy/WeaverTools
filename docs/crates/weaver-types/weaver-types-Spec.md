@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-25, this Spec is named the election's authority.
+`weaver-trace` holds a second `Election` of this shape because it links nothing,
+and from this date the record carries that form too, making four representations
+of one fact: this declaration, the enter payload, the tee's own, and the
+record's. Section 2 states that this document is authoritative for what the
+election means and that divergence is a defect against it, per G5, and that
+unifying the types is not owed. Per issue 347.
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended and stands so the
 reversal is visible: `trace_sink` goes back to required under either kind,
@@ -661,6 +668,17 @@ edge: asserts
 from: weaver-types
 to: types-no-default-derive
 ```
+
+**This Spec is authoritative for what the tee's election means, and a second
+shape of it exists on purpose.** `weaver-trace` holds its own `Election` of the
+same shape because that crate depends on nothing, not even this floor, and
+cannot spell a type it does not link. From 2026-08-25 the record carries that
+second form on the `load` event, per `weaver-trace-Spec` section 3, which makes
+four representations of one fact: this declaration, the enter payload, the tee's
+own, and the record's. **A divergence among them is a defect against this
+section** rather than a choice a reader makes, per G5, and unifying the types is
+not owed: it would cost `weaver-trace` a no-dependency property that is load
+bearing for its own reasons in order to buy a name.
 
 **`trace-sink` names a sink and not only a path.** A file, a pipe, or a socket are
 all conforming sinks, per `weaver-admin-operator-contract` section 3, so the field

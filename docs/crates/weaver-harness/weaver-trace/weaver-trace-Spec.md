@@ -4,6 +4,17 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-25, the tee's election joins the load payload. Section 3's
+`Elections` gains `tee`, this crate's own `Election` written whole rather than as
+an option, every load having one and the default being an election. It is named
+`tee` because a member differing from its container `Elections` by one letter is
+a collision the Working Rules refuse. Absence is the member's own, in records
+written before this act, and means the rule is unrecoverable rather than
+defaulted, so such a record replays its token path and cannot be certified for
+state. The instrument is perturbation, the member watched to fail when dropped
+from the shape. Section 3 also names `weaver-types-Spec` section 2 authoritative
+for what the election means, the two types differing on purpose because this
+crate links nothing.
 **Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
 charter section 6's guarantee as an absence, the envelope carrying no version member,
 and represents the both-directions half as `Option` with `skip_serializing_if` on an
@@ -372,6 +383,7 @@ pub struct Elections {
     pub residual_readout: bool,
     pub field: Option<u32>,
     pub surprisal: bool,
+    pub tee: Election,
 }
 
 pub struct ElisionSpan {
@@ -863,6 +875,58 @@ election has to say. The surprisal's `false` is a fact worth writing: it
 distinguishes a record whose operator declined the vector from a record
 written before the election existed, where the member is absent altogether.
 **Absent, false, and true are three states and the shape keeps them three.**
+
+**The tee's election is written whole and is not an `Option`.** It is named
+`tee` rather than `election` because the payload is already `Elections` and a
+member differing from its container by one letter is the collision the Working
+Rules ask us to avoid, and because `tee` says whose rule it is. The type is this
+crate's own `Election`, which the tee already holds, so the record carries the
+rule in the shape the tee applied it in and no reader reconstructs it from a
+neighbour's spelling.
+
+**One fact, four representations, and this act names the authority.** The
+operator declares it as `weaver-types`' `StateElection`, admin resolves it into
+the enter payload, this crate holds it as `Election` for the tee, and the record
+now carries that third form. **The duplication between the two types is forced
+rather than sloppy**: this crate depends on nothing, not even the floor, so it
+cannot spell the floor's type, and that no-dependency property is load bearing
+for its own reasons. **`weaver-types-Spec` section 2 is authoritative for what
+the election means** and a divergence in this crate's shape is a defect against
+it, per G5. What this crate is authoritative for is the record's rendering of
+it, which is this section. Unifying the types is not owed and would cost the
+no-dependency property to buy a name.
+
+**It is not optional because every load has one.** A deployment that elects
+nothing still runs under the default, the envelope of every kind, per charter
+section 11, so there is no load whose tee election is absent and a member that
+could be absent would invite a reader to treat the default as unknown. **What is
+absent is the member itself, in every record written before this act**, and that
+absence means the tee's election is unrecoverable rather than defaulted. Such a
+record replays its token path and cannot be certified for state, per the
+compatibility rule of section 2: an added member is optional at the read and the
+act adding it says what its absence means.
+
+**What this member buys is that a reader stops guessing what the state held.**
+The tee selects which events cross and projects which payload paths ride, so a
+replay under a different rule preloads a different session and nothing marks it,
+which is the failure charter section 6 argues the whole `load` bracket exists to
+prevent.
+
+**The instrument is perturbation.** The test renders a `load` payload under a
+non-default election and reads the member back off the canonical form, watched
+to fail when the member is dropped from the shape, on the same ground the counts
+beside it are perturbed rather than reviewed: a member that serializes is easy
+to lose and losing it is silent.
+
+```graph
+node: trace-load-carries-the-tee-election
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-load-carries-the-tee-election
+```
 
 **The counts reaching the record is a perturbation, not a review read.** A
 member that serializes is easy to add and easy to lose, and losing it is

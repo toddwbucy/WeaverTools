@@ -121,6 +121,14 @@ The charter's section 4 procedure, as this loop performs it:
    binding the load declared, and the prompt-block partition. A record
    missing what its claim requires fails here, before any forward pass,
    which is the completeness-is-claim-relative rule doing its work.
+   **The tee's election is one of those requirements**, per
+   `weaver-trace-Spec` section 3: it is the rule that decided what the
+   original agent's state held, and a replay preloaded under a different one
+   rebuilds a session that never ran. A record written before that member
+   existed carries no such rule, so it **fails input identity rather than
+   replaying under a guess** - such a record is good for its token path and
+   not for its state, and the loop says which rather than producing a run
+   whose holdings nobody can vouch for.
 2. **The null replay.** No reader elected. The recorded path re-feeds, the
    recomputed token identifiers match the recorded ones exactly, integers,
    or the certification fails naming the first divergent position.
