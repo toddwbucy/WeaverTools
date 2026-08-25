@@ -14,11 +14,11 @@ this pair carried the reading the widening superseded**, one direction for the v
 and a perturbation of either side failing against its own, and both now say what section
 6 says: the vector is entirely this crate's and the member's record holds whichever way
 the name was wrong. The exception count is two rather than three,
-`admin-dial-retries-within-a-bound` naming its removal in section 10's walk under its
-description rather than its identifier, which a search keyed on identifiers could not
-see. **Entries in this stack stop correcting each other**: two corrections pointed at
-text later commits had already edited away, and since nothing here has merged, the entry
-is amended rather than answered.
+`admin-dial-retries-within-a-bound` naming its removal in the beyond-the-walks list
+under its description rather than its identifier, which a search keyed on identifiers
+could not see. **Entries in this stack stop correcting each other**: two corrections
+pointed at text later commits had already edited away, and since nothing here has
+merged, the entry is amended rather than answered.
 **Revised:** 2026-08-25, tenth of this date, the reconciliation counts the move
 and the convention stops being called universal. The recut lead asserted twelve
 departures while the sentence reconciling it to the lists said ten, the lists
@@ -1070,12 +1070,9 @@ directions, and each names its removal.** A serving inventory puts three values
 on it, watched to fail when the arm that appends the preload name is made
 unconditional and a serving load carries four. A diagnostic inventory puts four,
 watched to fail when that same arm is removed and a diagnostic load carries
-three. **Each removes a different thing and neither removes the kind's read**:
-the serving watch removes the arm's condition so it always runs, and the
-diagnostic watch removes the arm itself so it never does. Removing the read is
-the edit to avoid, because it degenerates to the serving default and a serving
-watch would pass either way, which is the never-failing perturbation this section
-rejects above and apex section 11 counts as worse than no test.
+three. **Two watches rather than one, because one would not fail on both
+directions**, and the pair is what apex section 11 asks of a perturbation
+record.
 
 **Both directions are this crate's alone and the member's record covers
 neither**, which is why the second watch is written rather than left to the

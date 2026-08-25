@@ -13,7 +13,7 @@ makes. The argument stays here, where the obligation is argued, and the record m
 `weaver-admin-Spec` section 6 under the vector clause, which is the clause the claim is
 about, with the instrument it is perturbed by. Found by reading this charter's own graph
 blocks against that definition rather than by a review.
-**Revised:** 2026-08-25, fourth of this date, the pair stops claiming symmetry.
+**Revised:** 2026-08-25, fifth of this date, the pair stops claiming symmetry.
 Section 2 said the member's claim is partly this crate's and that a perturbation
 of either side fails against its own, which `weaver-admin-Spec` section 6 denies:
 the member's record holds whether the name was wrongly given or wrongly withheld,
