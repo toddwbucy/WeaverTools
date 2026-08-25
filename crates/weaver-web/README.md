@@ -1,20 +1,20 @@
 # Weaver-Web
 
 The frontend of the WeaverTools suite: the user's and operator's surface
-over running weaver agents. It is the suite's first consumer application —
+over running weaver agents. It is the suite's first consumer application  - 
 built against the framework's public boundary, not inside it.
 
 One Rust binary serves three surfaces:
 
-- **Channel** — multi-party chat: humans and local weaver agents (and
+- **Channel** - multi-party chat: humans and local weaver agents (and
   eventually upstream models) in shared channels. Agents are first-class
   participants, invoked by `@mention`, answering whole turns with their
   run/turn labels linking each answer to the trace that produced it.
-- **Lifecycle** *(admin)* — the operator's verbs (`validate` / `load` /
+- **Lifecycle** *(admin)* - the operator's verbs (`validate` / `load` /
   `unload`) over declared agents, each answer rendered verbatim, load
   state shown from the gate socket's existence and labeled as the
   inference it is.
-- **Trace** *(admin)* — a live, turn-bracketed view over each agent's
+- **Trace** *(admin)* - a live, turn-bracketed view over each agent's
   NDJSON record, with field selection and search, fault events
   prominent, and discontinuities marked, never smoothed.
 
@@ -22,13 +22,12 @@ One Rust binary serves three surfaces:
 
 Weaver-Web reaches the agent the way any outside consumer does: over
 Unix sockets and by running its binaries. It links no crate of this
-workspace. Its build surface is two contract documents, which since the
-absorption of 2026-08-24 live in this same tree under
+workspace. Its build surface is two contract documents under
 `docs/crates/contracts/`:
 
-- **The gate contract** (`weaver-gate-world-contract.md`) — the client
+- **The gate contract** (`weaver-gate-world-contract.md`) - the client
   boundary. How work enters a loaded agent and how answers return.
-- **The operator contract** (`weaver-admin-operator-contract.md`) — the
+- **The operator contract** (`weaver-admin-operator-contract.md`) - the
   operator boundary. How the trace, the program's one output, leaves it.
 
 Nothing else is API. The frontend never links the framework's crates,
@@ -39,7 +38,7 @@ worked around.
 
 ## Architecture, in one paragraph
 
-The browser is a display engine — a hard constraint, not a preference.
+The browser is a display engine - a hard constraint, not a preference.
 Server-rendered HTML (askama) with htmx and SSE vendored into the binary;
 no SPA, no node toolchain, no client-side state beyond a session cookie
 and an SSE cursor. All processing is server-side Rust: a Postgres-backed
@@ -54,14 +53,14 @@ roles instead of rearchitecting.
 
 ## Documents
 
-- [`weaver-web-PRD.md`](../../docs/crates/weaver-web/weaver-web-PRD.md) —
+- [`weaver-web-PRD.md`](../../docs/crates/weaver-web/weaver-web-PRD.md)  - 
   what and why: the surfaces, the rulings (display-engine constraint,
   scope, identity and responsibility), the roadmap, and the asks filed
   upstream.
-- [`weaver-web-Spec.md`](../../docs/crates/weaver-web/weaver-web-Spec.md) —
+- [`weaver-web-Spec.md`](../../docs/crates/weaver-web/weaver-web-Spec.md)  - 
   how: every representation election, cited from the code that implements
   it.
-- [`deploy/`](deploy/) — the sudoers fragment, example config, and the
+- [`deploy/`](deploy/) - the sudoers fragment, example config, and the
   verified agent-setup runbook for this box.
 
 ## Running
@@ -80,7 +79,7 @@ loaded. See `deploy/agent-setup.md` for adding an agent to the box.
 
 v1 is built and live-proven: real turns against real local agents,
 including two agents answering one message concurrently from separate
-GPUs. v1 trusts its LAN — no authentication or TLS by deliberate,
+GPUs. v1 trusts its LAN - no authentication or TLS by deliberate,
 documented deferral (PRD section 6 and roadmap item 2: passkeys and TLS
 land together, triggered by the surfaces being stable in daily use).
 

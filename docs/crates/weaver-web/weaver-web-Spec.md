@@ -1,19 +1,16 @@
 # weaver-web - Spec
 
-**Status:** MERGED into the set 2026-08-24 with its charter, per issue #292.
-Authored under this workshop's discipline in its own tree and absorbed
-rather than reauthored.
+**Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-08-24, the absorption. The parent reference resolves
-inside this tree, and three elections the absorption surfaces are recorded
-at section 15 as held rather than settled: the crate pins edition 2021
-against the workspace's 2024, it carries Apache-2.0 against the workspace's
-UNLICENSED, and its store is the first database dependency in the tree.
+**Revised:** 2026-08-24, three elections recorded at section 15 as held
+rather than settled: the crate pins edition 2021 against the workspace's
+2024, it carries Apache-2.0 against the workspace's UNLICENSED, and its
+store is the first database dependency in the tree.
 
 **Date filed:** 2026-08-19
 **Document ID:** `weaver-web-Spec`
 **Parent:** `weaver-web-PRD`
-**Editorial:** Per the Working Rules, as of the absorption.
+**Editorial:** Per the Working Rules.
 
 This document pins representation: what the PRD's requirements become in
 code. Where the PRD states a constraint, this document cites it rather
@@ -394,30 +391,27 @@ itself does not move then - only the proof does.
 - **The JSON projection's shape** (section 13) is minimally specified on
   purpose, and it hardens when the carve-out triggers, not before.
 
-**Three elections the absorption of 2026-08-24 surfaces and holds**, per
-issue #292's rule that a collision between the two corpora is the operator's
-rather than the absorbing act's:
+**Three elections stand held rather than settled**, each one the operator's
+to close:
 
 - **The edition.** This crate pins `edition = "2021"` where the workspace
   carries 2024 and every other member inherits it. The migration is real
   work rather than a manifest line, the derive-heavy dependencies being
-  where an edition move bites, and it was not verifiable on the machine the
-  absorption ran on, which cannot resolve this crate's dependency tree. The
-  pin states the fact. Aligning is owed and is its own act, with a build
-  behind it.
+  where an edition move bites, and **no build has yet resolved this crate's
+  dependency tree** - the machine this workshop runs on cannot. The pin
+  states the fact. Aligning is owed and is its own act, with a build behind
+  it.
 - **The licence.** This crate carries `Apache-2.0` and its own `LICENSE`
   file where the workspace carries `UNLICENSED`. The suite's licence
-  boundary is an open operator question, so the absorption declined to
-  settle it by inheritance and declined equally to leave a second licence
-  in the tree unremarked. Both facts stand and neither is resolved.
+  boundary is an open operator question, so neither inheritance nor silence
+  settles it. Both facts stand.
 - **The store.** `sqlx` with `postgres` is the first database dependency in
   this workspace. A frontend holding its own store is ordinary and this one
   is this crate's alone. Whether the tree now has a database, or whether
-  this stays a property of one member, is the question the absorption
-  raises rather than answers.
+  this stays a property of one member, is open.
 
-**What the absorption did not change is the seam.** This crate links no
-crate of this tree and reaches the agent exactly as an outside consumer
-does: a socket dialed by path, a binary run by the operator's verb, and a
-record read where the operator keeps it. Both sides being editable in one
-commit is a fact about the repository and not about the boundary.
+**The seam is what it always was.** This crate links no crate of this
+workspace and reaches the agent exactly as an outside consumer does: a
+socket dialed by path, a binary run by the operator's verb, and a record
+read where the operator keeps it. Living in one repository with the agent
+is a fact about the source and not about the boundary.
