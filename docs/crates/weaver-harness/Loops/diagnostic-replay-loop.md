@@ -5,6 +5,12 @@ loop, filed under the harness's `Loops/` container per the Document Format's con
 entry. It argues no edges of its own: the seams it walks are declared in the crate
 charters, and a graph block here would duplicate a record that already has a home.
 
+**Revised:** 2026-08-26, the criterion's grounding moves to the charters. Step
+one's state clause cited `weaver-trace-Spec` section 3, a certification
+criterion grounded on a representation Spec, which G2 refuses. The criterion
+landed in `weaver-agents-PRD` section 8 and `weaver-diagnostic-PRD` section 4
+in this act, and the step cites them. Nothing of the step's substance moves.
+Per issue 352.
 **Revised:** 2026-08-25, the input identity gains the tee's election. Section 3's
 step one takes it as a requirement, claim-relative like the rest: it is the rule
 that decided what the original agent's state held, so a replay preloaded under a
@@ -132,11 +138,12 @@ The charter's section 4 procedure, as this loop performs it:
    partition. A record missing what its claim requires fails here, before any forward
    pass, which is the completeness-is-claim-relative rule doing its work. **A claim
    about the state rests on one fact beyond that list, and it is claim-relative the same
-   way**, per `weaver-trace-Spec` section 3: the tee's election. It is the rule that
-   decided what the original agent's state held, so a replay preloaded under a different
-   one rebuilds a session that never ran. **The loop reads it from the record's `load`
-   event and never from the holdings**, which is why the record carries it at all: the
-   holdings are what that rule produced, so recovering the rule from them would be
+   way**, per the charter's section 4 and `weaver-agents-PRD` section 8: the tee's
+   election. It is the rule that decided what the original agent's state held, so a
+   replay preloaded under a different one rebuilds a session that never ran. **The
+   loop reads it from the record's `load` event and never from the holdings**, which
+   is why the record carries it at all: the holdings are what that rule produced, so
+   recovering the rule from them would be
    reading a projection to learn what did the projecting, and a rule that dropped a kind
    entirely leaves nothing behind to read. **A record written before that member existed
    fails a claim about the state and not a claim about the token path**: the null replay
