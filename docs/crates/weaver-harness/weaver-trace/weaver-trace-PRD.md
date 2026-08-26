@@ -21,7 +21,9 @@ This act also corrects every citation of this charter's load-bracket clause from
 section 3.2 to 3.1, in this header's own 2026-08-21 entries and in
 `weaver-harness-Spec` and `weaver-harness-spu-decode-contract`. The clause has sat
 in 3.1 since it was filed, so the correction moves a citation and no argument.
-Per issue 347.
+Section 3.1's absence argument is scoped to records older than the member, this
+act being what ends it: from here the rule is written whole on every load and a
+deployment declaring none carries the default explicitly. Per issue 347.
 **Revised:** 2026-08-24, second of this date, the record states its
 compatibility. Section 6 gains the guarantee that makes the record readable across
 vintages and the argument for why it carries no version, landing apex section 3's
@@ -592,8 +594,12 @@ section 3.1 states.
 **The tee's election is one of them and was left out.** The three the `load` event named
 until 2026-08-25 were the readout, the field's depth, and the surprisal, each an
 election about what the model reports. The tee's is an election about what leaves the
-record for the state member, and the clause above reaches it unchanged: a tee that
-elected nothing and a tee that was never asked are the same absence on disk. **Without
+record for the state member, and the clause above reaches it unchanged: absent the
+member, a tee that elected nothing and a tee that was never asked are the same absence
+on disk. **From this act they are not**, the rule being written whole on every `load`
+this crate authors, the deployment that declared none carrying the default rule
+explicitly rather than carrying nothing. Absence means a record older than the member
+and is read as the rule being unrecoverable, never as the default. **Without
 it the record says what the model did and not what the agent's state was built from**,
 which are different because the tee both selects which events cross and projects which
 payload paths ride with them, per `weaver-harness-state-contract` section 2.

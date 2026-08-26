@@ -10,6 +10,8 @@ step one takes it as a requirement, claim-relative like the rest: it is the rule
 that decided what the original agent's state held, so a replay preloaded under a
 different one rebuilds a session that never ran, and a record written before that
 member existed fails a claim about the state while its token path still stands.
+The step also names where the loop reads the rule, the record's `load` event and
+never the holdings, the holdings being what that rule produced.
 Per issue 347 and `weaver-trace-Spec` section 3.
 **Revised:** 2026-08-24, the record is a different record. Third state on the day
 it was filed, and the middle one was wrong. v0.1 had the run's record holding what
@@ -132,7 +134,11 @@ The charter's section 4 procedure, as this loop performs it:
    about the state rests on one fact beyond that list, and it is claim-relative the same
    way**, per `weaver-trace-Spec` section 3: the tee's election. It is the rule that
    decided what the original agent's state held, so a replay preloaded under a different
-   one rebuilds a session that never ran. **A record written before that member existed
+   one rebuilds a session that never ran. **The loop reads it from the record's `load`
+   event and never from the holdings**, which is why the record carries it at all: the
+   holdings are what that rule produced, so recovering the rule from them would be
+   reading a projection to learn what did the projecting, and a rule that dropped a kind
+   entirely leaves nothing behind to read. **A record written before that member existed
    fails a claim about the state and not a claim about the token path**: the null replay
    of step 2 rests on the recorded identifiers alone and stands, and everything resting
    on the holdings does not. The loop says which the record is good for rather than
