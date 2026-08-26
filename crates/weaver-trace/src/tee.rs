@@ -1,3 +1,4 @@
+//! conforms: trace-tee-selects-never-computes
 //! conforms: trace-tee-envelope-not-electable
 //! conforms: trace-tee-projection-verbatim
 //! conforms: trace-tee-no-turn-backpressure
