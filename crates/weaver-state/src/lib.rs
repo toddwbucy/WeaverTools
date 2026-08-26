@@ -14,5 +14,5 @@ pub mod store;
 
 pub use store::{
     Ask, CustodyFault, Distillate, Election, RecalledEvent, RunShape, Store, is_shape_ask,
-    parse_ask, parse_distillate, render_recall_answer, render_shape_answer,
+    parse_ask, parse_distillate, render_recall_answer, render_replay_answer, render_shape_answer,
 };

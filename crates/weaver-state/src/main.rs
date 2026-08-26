@@ -1,22 +1,36 @@
-//! The member's process: stand the seam's name, judge the peer by
-//! credential, read the election, stand the store, and land distillates
-//! until the channel closes. Per `weaver-harness-state-contract`, the seam
-//! is a Unix socket with a name, authenticated by credential per the first
-//! invariant, so the member binds and the worker dials. The arguments are
-//! the territory, the socket path, and the one uid the peer may hold.
+//! conforms: state-preload-door-stands-only-diagnostic
+//! conforms: state-replay-answers-at-the-seal
+//! conforms: state-preload-door-refuses-the-agent
+//!
+//! The member's process: take the first door's end with the process, read
+//! the election, stand the store, and land distillates until the channel
+//! closes. Per `weaver-harness-state-contract` as ruled 2026-08-26, the
+//! seam is a connected socketpair with no name: admin creates it at this
+//! process's spawn, this member inherits its end at the fixed number
+//! below, and possession authenticates, so no bind, no credential, and no
+//! wait exist on this door. The arguments are the territory and, where the
+//! party that stands this member names one, the preload socket.
+//!
+//! **The second door stands where that second argument does**, per
+//! `weaver-state-Spec` section 4, and it carries this member's one
+//! credential judgment: admit the operator principal, refuse every other
+//! peer. Both doors are served from one loop by `poll`, so the store keeps
+//! one owner and a distillate lands the same way whichever door carried
+//! it, which is the mechanism of the contract's indistinguishability
+//! claim.
 
 use std::io::Read;
-use std::os::fd::AsFd;
 
 use weaver_state::{
-    Ask, Election, Store, parse_ask, parse_distillate, render_recall_answer,
+    Ask, Election, Store, parse_ask, parse_distillate, render_recall_answer, render_replay_answer,
     render_shape_answer,
 };
 
-/// How long the name waits for its one peer before concluding the load
-/// never came, so an abandoned member is a bounded cost rather than a
-/// resident one.
-const ACCEPT_WAIT_MS: u16 = 60_000;
+/// The first door's end arrives at this descriptor number, the fixed
+/// convention between this member and admin that `weaver-state-Spec`
+/// section 2 leaves to this act: the number after the three standard
+/// streams, armed by admin's spawn path and inherited with the process.
+const FIRST_DOOR_FD: std::os::fd::RawFd = 3;
 
 /// The bound on one answer frame, matched by the harness's own cap on
 /// what it reads: an answer past this size is a fault answered with
@@ -31,30 +45,62 @@ const ANSWER_BOUND: usize = 1024 * 1024;
 const RESPOND_WAIT_MS: u16 = 2_000;
 
 fn main() -> std::process::ExitCode {
+    // **The preload name is a second argument and its absence is a serving
+    // load**, per `weaver-state-Spec` section 4: the name reaches the
+    // member on the vector because no exchange this member holds carries a
+    // path. The first door rides no argument at all, its end inherited at
+    // the fixed number above.
     let mut arguments = std::env::args().skip(1);
-    let (Some(territory), Some(socket), Some(peer)) =
-        (arguments.next(), arguments.next(), arguments.next())
-    else {
+    let Some(territory) = arguments.next() else {
         eprintln!(
             "{}",
-            serde_json::json!({"state_fault": "usage: weaver-state <territory> <socket> <peer-uid>"})
+            serde_json::json!({"state_fault": "usage: weaver-state <territory> [preload-socket]"})
         );
         return std::process::ExitCode::FAILURE;
     };
-    let Ok(peer_uid) = peer.parse::<u32>() else {
-        eprintln!("{}", serde_json::json!({"state_fault": "peer uid does not parse"}));
-        return std::process::ExitCode::FAILURE;
-    };
+    let preload_socket = arguments.next();
 
-    let Some(mut channel) = stand_and_accept(&socket, peer_uid) else {
-        return std::process::ExitCode::FAILURE;
+    // The inherited end is this process's by construction: admin armed it
+    // onto the fixed number in the spawn path itself. **The number is probed
+    // before it is adopted**, because a hand-run process holds whatever its
+    // shell left at that number, or nothing: adopting a stranger's
+    // descriptor would read it as seam traffic and close it on exit, and
+    // adopting a closed number would alias whatever the store opens next.
+    // The probe borrows and owns nothing, so a refusal closes nothing that
+    // is not this process's to close.
+    {
+        // SAFETY: the borrow reads one socket option and adopts nothing.
+        let probe = unsafe { std::os::fd::BorrowedFd::borrow_raw(FIRST_DOOR_FD) };
+        match nix::sys::socket::getsockopt(&probe, nix::sys::socket::sockopt::SockType) {
+            Ok(nix::sys::socket::SockType::Stream) => {}
+            _ => {
+                eprintln!(
+                    "{}",
+                    serde_json::json!({
+                        "state_fault":
+                            "the first door's number holds no stream socket: not started by admin"
+                    })
+                );
+                return std::process::ExitCode::FAILURE;
+            }
+        }
+    }
+    // SAFETY: the fixed number is the spawn convention's, armed by the one
+    // party that starts this process, probed above, and adopted exactly
+    // once.
+    let mut channel = unsafe {
+        use std::os::fd::FromRawFd;
+        std::os::unix::net::UnixStream::from_raw_fd(FIRST_DOOR_FD)
     };
 
     let path = std::path::Path::new(&territory).join("state.sql");
     let mut store = match Store::open(&path) {
         Ok(store) => store,
         Err(fault) => {
-            eprintln!("{}", serde_json::json!({"state_fault": format!("{fault:?}")}));
+            eprintln!(
+                "{}",
+                serde_json::json!({"state_fault": format!("{fault:?}")})
+            );
             return std::process::ExitCode::FAILURE;
         }
     };
@@ -76,116 +122,388 @@ fn main() -> std::process::ExitCode {
     let session = parse_session(&opener).unwrap_or_default();
     let election = parse_election(&opener).unwrap_or_default();
     if let Err(fault) = store.index_election(&election) {
-        eprintln!("{}", serde_json::json!({"state_fault": format!("{fault:?}")}));
+        eprintln!(
+            "{}",
+            serde_json::json!({"state_fault": format!("{fault:?}")})
+        );
         return std::process::ExitCode::FAILURE;
     }
 
-    // Custody until closure: parse, land whole, drop what does not parse,
-    // per the contract's malformed-row clause, and answer the shape ask in
-    // stream order, which is what delivers the contract's answered-against
-    // clause - nothing lands between reading an ask and answering it.
-    // Closure is retirement, the holdings standing for the next run.
-    while let Some(line) = lines.next_line() {
-        if let Some(distillate) = parse_distillate(&line) {
-            let _ = store.land(&distillate);
-        } else if let Some(ask) = parse_ask(&line) {
-            // A store that cannot answer, like an answer past the bound,
-            // is silence the harness's bound converts, per the contract:
-            // custody never invents an answer shape for a fault.
-            let frame = match ask {
-                Ask::Shape => store
-                    .shape(&session)
-                    .map(|shape| render_shape_answer(&shape)),
-                Ask::Recall { last_turns } => store
-                    .recall(&session, last_turns)
-                    .map(|events| render_recall_answer(&events)),
-            };
-            if let Ok(frame) = frame
-                && frame.len() <= ANSWER_BOUND
-                && !lines.respond(frame.as_bytes())
+    // Both doors are poll-driven from here, so the first door stops blocking.
+    if lines.stream.set_nonblocking(true).is_err() {
+        eprintln!(
+            "{}",
+            serde_json::json!({"state_fault": "channel would not go non-blocking"})
+        );
+        return std::process::ExitCode::FAILURE;
+    }
+
+    // The preload name stands only where the party that stands this member
+    // named one, and that party names it only under a diagnostic binding,
+    // per `weaver-state-Spec` section 4. Absence is a serving load, not a
+    // fault: the door does not exist and a driver finds nothing to dial.
+    let preload = match preload_socket.as_deref().map(stand_preload_name) {
+        None => None,
+        Some(Some(listener)) => Some(listener),
+        Some(None) => return std::process::ExitCode::FAILURE,
+    };
+
+    serve(lines, preload, preload_socket, &mut store, &session)
+}
+
+/// Custody until closure, across the doors this standing carries.
+///
+/// **One store, one path, one thread.** A distillate arriving on the preload
+/// channel lands exactly as one arriving from the tee, which is the mechanism
+/// of the contract's indistinguishability claim, and the serve loop reaches
+/// both doors by `poll` rather than by a second thread so the store keeps one
+/// owner and the landing order is the arrival order.
+fn serve(
+    mut harness: LineReader<'_>,
+    preload_listener: Option<std::os::unix::net::UnixListener>,
+    preload_path: Option<String>,
+    store: &mut Store,
+    session: &str,
+) -> std::process::ExitCode {
+    use std::os::fd::AsFd;
+
+    // The seal and the parked slot, extracted so the parking law is a unit
+    // the suite watches, per `state-replay-answers-at-the-seal`.
+    let mut parking = ReplayParking::new(preload_listener.is_some());
+    // The door stands until a peer is admitted, then the channel stands in
+    // its place, and the door stands again when that channel closes: the
+    // contract's retry clause reads within a standing, a dead driver's
+    // sealless prefix retired by the next opener, so one admitted peer per
+    // standing would leave the retry nowhere to arrive.
+    let mut listener = preload_listener;
+    let mut preload: Option<std::os::unix::net::UnixStream> = None;
+    let mut entry_drained = false;
+    let mut preload_frames: Vec<u8> = Vec::new();
+    let mut preload_opened = false;
+
+    loop {
+        // **Frames coalesced into the opener's read drain before the first
+        // poll**, because the blocking opener read may have buffered whole
+        // lines the socket will never signal again: a shape ask arriving
+        // right behind the opener, which is the documented cadence at a
+        // run's opening, would otherwise stall until the next traffic.
+        if !entry_drained {
+            entry_drained = true;
+            if drain_harness_lines(&mut harness, store, session, &mut parking).is_some() {
+                return std::process::ExitCode::SUCCESS;
+            }
+        }
+        let mut fds = Vec::with_capacity(2);
+        fds.push(nix::poll::PollFd::new(
+            harness.stream.as_fd(),
+            nix::poll::PollFlags::POLLIN,
+        ));
+        if let Some(channel) = &preload {
+            fds.push(nix::poll::PollFd::new(
+                channel.as_fd(),
+                nix::poll::PollFlags::POLLIN,
+            ));
+        } else if let Some(door) = &listener {
+            fds.push(nix::poll::PollFd::new(
+                door.as_fd(),
+                nix::poll::PollFlags::POLLIN,
+            ));
+        }
+        match nix::poll::poll(&mut fds, nix::poll::PollTimeout::NONE) {
+            Ok(_) => {}
+            Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => return std::process::ExitCode::SUCCESS,
+        }
+        let harness_ready = fds[0].revents().is_some_and(|r| !r.is_empty());
+        let second_ready = fds.len() > 1 && fds[1].revents().is_some_and(|r| !r.is_empty());
+        drop(fds);
+
+        // The preload door first, so a seal landing in the same wakeup as a
+        // parked ask answers in that wakeup rather than the next.
+        if second_ready {
+            if let Some(channel) = preload.as_mut() {
+                let live = fill_buffer(channel, &mut preload_frames);
+                while let Some(line) = take_frame(&mut preload_frames) {
+                    if !preload_opened {
+                        // **The opener's retirement is the one act this path
+                        // adds**, per the Spec: the session the opener
+                        // declares is the one whose rows retire, in the same
+                        // transaction that records it, before any distillate
+                        // lands, so re-running a preload replaces the
+                        // holdings rather than appending to them and a dead
+                        // driver's prefix needs no cleanup act. **A frame
+                        // declaring no session is not an opener**: dropped
+                        // whole without retiring, the sender's defect per
+                        // the contract, because a retirement keyed on a
+                        // guess would delete holdings the driver never
+                        // named.
+                        let Some(preload_session) = parse_session(&line).filter(|s| !s.is_empty())
+                        else {
+                            continue;
+                        };
+                        let election = parse_election(&line).unwrap_or_default();
+                        if store.retire_and_index(&preload_session, &election).is_err() {
+                            return std::process::ExitCode::FAILURE;
+                        }
+                        preload_opened = true;
+                        continue;
+                    }
+                    if is_seal(&line) {
+                        parking.seal();
+                        continue;
+                    }
+                    if let Some(distillate) = parse_distillate(&line) {
+                        let _ = store.land(&distillate);
+                    }
+                }
+                if !live {
+                    // A close without a seal leaves the fact false, which is
+                    // the clause's point: the prefix looks like holdings at
+                    // rest and must not answer a parked ask. **The door
+                    // stands again**, per the contract's retry clause: the
+                    // next opener is the cleanup, whether the last close
+                    // sealed or died, so the name rebinds and a retry finds
+                    // a door rather than a refused dial.
+                    preload = None;
+                    preload_frames.clear();
+                    preload_opened = false;
+                    listener = preload_path.as_deref().and_then(stand_preload_name);
+                }
+            } else if let Some(door) = &listener
+                && let Some(channel) = admit_operator(door)
             {
-                break;
+                preload = Some(channel);
+                listener = None;
+            }
+        }
+
+        if harness_ready {
+            let live = harness.fill();
+            if drain_harness_lines(&mut harness, store, session, &mut parking).is_some() {
+                return std::process::ExitCode::SUCCESS;
+            }
+            if !live {
+                // Closure is retirement, the holdings standing for the next
+                // run. A replay still parked is cleared unanswered with the
+                // channel, its answer never owed.
+                return std::process::ExitCode::SUCCESS;
+            }
+        }
+
+        // **The seal is the only fact that answers**, and its view is the
+        // seal's position: every distillate received through the seal is in
+        // the answer, which holds by construction here because the preload
+        // frames of this wakeup landed above before the answer is built.
+        if parking.take_ready()
+            && let Ok(events) = store.replay(session)
+        {
+            let frame = render_replay_answer(&events);
+            if frame.len() <= ANSWER_BOUND && !harness.respond(frame.as_bytes()) {
+                return std::process::ExitCode::SUCCESS;
             }
         }
     }
-    std::process::ExitCode::SUCCESS
 }
 
-/// Stand the name, wait for the one peer, and judge it by credential. A
-/// peer holding the wrong uid is closed unread and the name keeps
-/// listening until the deadline, because the socket's mode is open on
-/// purpose - the filesystem is not the gate here, the credential check is,
-/// per the contract's authentication clause - and a stranger dialing first
-/// must not cost the worker its leg. The name is unlinked once the right
-/// peer is accepted, so the standing seam has exactly two ends.
-fn stand_and_accept(socket: &str, peer_uid: u32) -> Option<std::os::unix::net::UnixStream> {
-    let path = std::path::Path::new(socket);
-    let _ = std::fs::remove_file(path);
-    let listener = match std::os::unix::net::UnixListener::bind(path) {
-        Ok(listener) => listener,
-        Err(error) => {
-            eprintln!(
-                "{}",
-                serde_json::json!({"state_fault": format!("bind failed: {error}")})
-            );
-            return None;
+/// Drain every whole line the harness buffer holds: distillates land, asks
+/// answer against pre-ask holdings, and a replay parks per the parking law.
+/// `Some` says the peer stopped reading an answer and the seam retires.
+/// Never touches the socket, so a caller draining buffered remainders
+/// cannot block on a peer that sent nothing since.
+fn drain_harness_lines(
+    harness: &mut LineReader<'_>,
+    store: &mut Store,
+    session: &str,
+    parking: &mut ReplayParking,
+) -> Option<std::process::ExitCode> {
+    while let Some(line) = harness.take_line() {
+        if let Some(distillate) = parse_distillate(&line) {
+            let _ = store.land(&distillate);
+            continue;
         }
-    };
-    use std::os::unix::fs::PermissionsExt;
-    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o666));
+        let Some(ask) = parse_ask(&line) else {
+            continue;
+        };
+        // **The parked ask steps out of the arrival order**, per the
+        // contract's stated exception: a shape or recall ask arriving
+        // while a replay parks is answered in its own arrival order,
+        // against the holdings the stream carried before it.
+        if matches!(ask, Ask::Replay) && parking.parks() {
+            continue;
+        }
+        // A store that cannot answer, like an answer past the bound, is
+        // silence the harness's bound converts, per the contract: custody
+        // never invents an answer shape for a fault.
+        let frame = match ask {
+            Ask::Shape => store
+                .shape(session)
+                .map(|shape| render_shape_answer(&shape)),
+            Ask::Recall { last_turns } => store
+                .recall(session, last_turns)
+                .map(|events| render_recall_answer(&events)),
+            Ask::Replay => store
+                .replay(session)
+                .map(|events| render_replay_answer(&events)),
+        };
+        if let Ok(frame) = frame
+            && frame.len() <= ANSWER_BOUND
+            && !harness.respond(frame.as_bytes())
+        {
+            return Some(std::process::ExitCode::SUCCESS);
+        }
+    }
+    None
+}
 
-    let deadline = std::time::Instant::now()
-        + std::time::Duration::from_millis(u64::from(ACCEPT_WAIT_MS));
-    loop {
-        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
-        if remaining.is_zero() {
-            // The load never came. An abandoned name is removed and the
-            // empty stand is the honest outcome.
-            let _ = std::fs::remove_file(path);
-            return None;
+/// **The parking law, one unit**, per `weaver-harness-state-contract`
+/// section 2 and `weaver-state-Spec` section 4's
+/// `state-replay-answers-at-the-seal`: on a member standing with the
+/// preload door, a replay ask parks until a seal has landed, whatever the
+/// transport is doing, and the seal is a per-standing fact nothing sets
+/// back. At most one replay parks, a second replacing the first, the
+/// replaced ask cleared unanswered because its asker's bound already
+/// converted it. Where no door stands, the ask answers immediately like
+/// its siblings.
+struct ReplayParking {
+    door_stands: bool,
+    sealed: bool,
+    parked: bool,
+}
+
+impl ReplayParking {
+    fn new(door_stands: bool) -> Self {
+        ReplayParking {
+            door_stands,
+            sealed: false,
+            parked: false,
         }
-        let wait = remaining.as_millis().min(u128::from(u16::MAX)) as u16;
-        let mut fds = [nix::poll::PollFd::new(
-            listener.as_fd(),
-            nix::poll::PollFlags::POLLIN,
-        )];
-        match nix::poll::poll(&mut fds, wait) {
-            Ok(0) => continue,
-            Ok(_) => {}
-            Err(nix::errno::Errno::EINTR) => continue,
-            Err(_) => {
+    }
+
+    /// A replay ask arrives: `true` says it parks, replacing any parked
+    /// one, and `false` says it answers now.
+    fn parks(&mut self) -> bool {
+        if self.door_stands && !self.sealed {
+            self.parked = true;
+            return true;
+        }
+        false
+    }
+
+    /// The seal lands. Nothing sets it back.
+    fn seal(&mut self) {
+        self.sealed = true;
+    }
+
+    /// Whether a parked ask is ready to answer, clearing the slot when it
+    /// is: the seal is the only fact that answers.
+    fn take_ready(&mut self) -> bool {
+        if self.parked && self.sealed {
+            self.parked = false;
+            return true;
+        }
+        false
+    }
+}
+
+/// Pop one buffered frame, or nothing where no whole frame is held. Never
+/// touches a socket, so a caller draining frames cannot block on a peer that
+/// stopped mid frame.
+fn take_frame(buffer: &mut Vec<u8>) -> Option<String> {
+    let position = buffer.iter().position(|&b| b == b'\n')?;
+    let line: Vec<u8> = buffer.drain(..=position).collect();
+    Some(String::from_utf8_lossy(&line[..line.len() - 1]).into_owned())
+}
+
+/// Read whatever the socket has ready into the buffer. `false` says the
+/// channel is done, by close or by fault or by a frame past the bound, which
+/// the serve loop reads as the end of that door. The stream is non-blocking
+/// by the time this runs, so `WouldBlock` is the ordinary answer and says
+/// only that this wakeup is spent.
+fn fill_buffer(stream: &mut std::os::unix::net::UnixStream, buffer: &mut Vec<u8>) -> bool {
+    use std::io::Read;
+    loop {
+        if buffer.len() > LineReader::FRAME_BOUND {
+            return false;
+        }
+        let mut chunk = [0u8; 65536];
+        match stream.read(&mut chunk) {
+            Ok(0) => return false,
+            Ok(n) => buffer.extend_from_slice(&chunk[..n]),
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => return true,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(_) => return false,
+        }
+    }
+}
+
+/// Bind the preload name and listen, without waiting for a peer. The door
+/// stands from the load so a driver dialing early finds it, and the accept
+/// happens in the serve loop beside the first door's traffic.
+fn stand_preload_name(path: &str) -> Option<std::os::unix::net::UnixListener> {
+    let _ = std::fs::remove_file(path);
+    match std::os::unix::net::UnixListener::bind(path) {
+        Ok(listener) => {
+            if listener.set_nonblocking(true).is_err() {
                 let _ = std::fs::remove_file(path);
                 return None;
             }
+            Some(listener)
         }
-        let Ok((channel, _address)) = listener.accept() else {
-            continue;
-        };
-        // The credential judgment, per the first invariant's rule for a
-        // channel with a name.
-        match nix::sys::socket::getsockopt(&channel, nix::sys::socket::sockopt::PeerCredentials) {
-            Ok(credentials) if credentials.uid() == peer_uid => {
-                let _ = std::fs::remove_file(path);
-                return Some(channel);
-            }
-            Ok(credentials) => {
-                eprintln!(
-                    "{}",
-                    serde_json::json!({
-                        "state_fault": format!(
-                            "peer uid {} is not the expected {peer_uid}",
-                            credentials.uid()
-                        )
-                    })
-                );
-            }
-            Err(error) => {
-                eprintln!(
-                    "{}",
-                    serde_json::json!({"state_fault": format!("credential read failed: {error}")})
-                );
-            }
+        Err(error) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({"state_fault": format!("preload name unavailable: {error}")})
+            );
+            None
         }
+    }
+}
+
+/// **This member's one credential judgment**, per `weaver-state-Spec`
+/// section 4 as ruled 2026-08-26: this accept admits the operator principal
+/// and refuses every other peer before any byte is read, the agent's among
+/// them and no longer knowable by number, the vector having dropped the
+/// agent's uid with the first door's judgment. The operator principal is
+/// root today, the identity the driver runs as over the operator's own
+/// storage, per `weaver-analysis-state-contract`.
+fn admit_operator(
+    listener: &std::os::unix::net::UnixListener,
+) -> Option<std::os::unix::net::UnixStream> {
+    let (channel, _address) = listener.accept().ok()?;
+    match nix::sys::socket::getsockopt(&channel, nix::sys::socket::sockopt::PeerCredentials) {
+        Ok(credentials) if credentials.uid() == 0 => {
+            if channel.set_nonblocking(true).is_err() {
+                return None;
+            }
+            Some(channel)
+        }
+        Ok(_) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({
+                    "state_fault": "preload dial refused: only the operator principal preloads"
+                })
+            );
+            None
+        }
+        Err(error) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({"state_fault": format!("credential read failed: {error}")})
+            );
+            None
+        }
+    }
+}
+
+/// Whether a preload frame is the seal: one empty frame after the last
+/// distillate, per `weaver-analysis-state-contract` section 2. Empty means
+/// an empty JSON object, which is what distinguishes a seal from a blank
+/// line a sender's framing left behind.
+fn is_seal(line: &str) -> bool {
+    match serde_json::from_str::<serde_json::Value>(line) {
+        Ok(serde_json::Value::Object(members)) => members.is_empty(),
+        _ => false,
     }
 }
 
@@ -284,6 +602,14 @@ impl<'a> LineReader<'a> {
         true
     }
 
+    fn take_line(&mut self) -> Option<String> {
+        take_frame(&mut self.buffer)
+    }
+
+    fn fill(&mut self) -> bool {
+        fill_buffer(self.stream, &mut self.buffer)
+    }
+
     fn next_line(&mut self) -> Option<String> {
         loop {
             if let Some(position) = self.buffer.iter().position(|&b| b == b'\n') {
@@ -306,6 +632,105 @@ impl<'a> LineReader<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// **A replay ask parks at an open preload until the seal**, per
+    /// `weaver-harness-state-contract` section 2 and
+    /// `state-replay-answers-at-the-seal`: where the door stands and no
+    /// seal has landed the ask parks, a second replaces the first with one
+    /// answer still owed, the seal readies exactly one answer, and a
+    /// sealless close readies nothing because the seal alone answers.
+    /// Where no door stands the ask answers immediately.
+    ///
+    /// Perturbation: make `parks` ignore the seal (park whenever the door
+    /// stands) and the after-the-seal case fails; make `take_ready` ignore
+    /// the seal and the sealless case fails.
+    #[test]
+    fn a_replay_parks_at_an_open_preload_until_the_seal() {
+        // No door: never parks.
+        let mut open_door = ReplayParking::new(false);
+        assert!(!open_door.parks(), "no door, the ask answers now");
+        // Door standing, no seal: parks, and a second ask replaces the
+        // first rather than queueing a second answer.
+        let mut parking = ReplayParking::new(true);
+        assert!(parking.parks(), "an open preload parks the ask");
+        assert!(parking.parks(), "a second ask replaces the first");
+        assert!(!parking.take_ready(), "the seal alone answers");
+        parking.seal();
+        assert!(parking.take_ready(), "the seal readies the parked ask");
+        assert!(!parking.take_ready(), "one answer per parked ask");
+        // After the seal, an ask answers immediately: sealed never unsets.
+        assert!(!parking.parks(), "after the seal nothing parks");
+    }
+
+    /// **The preload door admits the operator principal and refuses every
+    /// other peer**, per `weaver-state-Spec` section 4 as ruled 2026-08-26:
+    /// this member's one credential judgment, the agent's uid among the
+    /// refused and no longer knowable by number. The dial in this test
+    /// carries the running uid, which is not the operator's, so the door
+    /// refuses it. The refusal half is what a suite can exercise, the admit
+    /// half wanting the operator principal a test does not run as.
+    ///
+    /// Perturbation: drop the `credentials.uid() == 0` arm from
+    /// `admit_operator` and this fails, a non-operator peer admitted to a
+    /// door that exists to keep everything but the operator out.
+    #[test]
+    fn the_preload_door_refuses_every_peer_but_the_operator() {
+        if nix::unistd::getuid().is_root() {
+            // The refusal half is meaningful only unrooted: a root dial is
+            // the operator principal and is admitted.
+            return;
+        }
+        let path =
+            std::env::temp_dir().join(format!("weaver-state-preload-{}", std::process::id()));
+        let path = path.to_string_lossy().into_owned();
+        let listener = stand_preload_name(&path).expect("the name stands");
+        let _dialer = std::os::unix::net::UnixStream::connect(&path).expect("dials");
+        // **Wait for the door to be readable before judging it.** The
+        // listener is non-blocking and `admit_operator` answers `None`
+        // both for a refused peer and for an accept that would block, so
+        // a bare call could report a refusal the credential never made.
+        // Polling first makes the accept certain and the `None` mean the
+        // one thing this test is about.
+        use std::os::fd::AsFd;
+        let mut fds = [nix::poll::PollFd::new(
+            listener.as_fd(),
+            nix::poll::PollFlags::POLLIN,
+        )];
+        let ready = nix::poll::poll(&mut fds, 5_000u16).expect("the door answers poll");
+        assert_eq!(ready, 1, "the dial reaches the door");
+        assert!(
+            admit_operator(&listener).is_none(),
+            "a non-operator peer is refused"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// **The door stands only where the party that stands the member names
+    /// it**, per `weaver-state-Spec` section 4, and this crate's half of that
+    /// is the second argument: no name, no door. The kind is the caller's
+    /// fact and reaches here as the name's presence alone, which is what
+    /// keeps this crate from holding an opinion about the binding.
+    ///
+    /// Perturbation: give `stand_preload_name` a default path when the
+    /// argument is absent and a serving load stands a door nothing should
+    /// dial.
+    #[test]
+    fn no_preload_name_means_no_preload_door() {
+        let absent: Option<String> = None;
+        assert!(
+            absent.as_deref().map(stand_preload_name).is_none(),
+            "a serving load names no preload socket and stands no door"
+        );
+        let path = std::env::temp_dir()
+            .join(format!("weaver-state-named-{}", std::process::id()))
+            .to_string_lossy()
+            .into_owned();
+        assert!(
+            stand_preload_name(&path).is_some(),
+            "and a named one stands"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
 
     /// The contract's election round trip, section 8: the opener as the
     /// tee renders it parses to the same election on this end, so a

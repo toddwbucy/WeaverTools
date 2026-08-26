@@ -122,17 +122,6 @@ impl CoordinationListener {
             .join("gate.sock")
     }
 
-    /// The state member's socket, beside the coordination socket by the same
-    /// derivation as the gate's, per `weaver-harness-state-contract`: a
-    /// channel with a name, stood by the party that spawns the member. The
-    /// worker dials it at enter, and an absent name is the leg not standing
-    /// rather than any kind of refusal.
-    pub fn state_socket(&self) -> std::path::PathBuf {
-        self.path
-            .parent()
-            .unwrap_or(std::path::Path::new("/"))
-            .join("state.sock")
-    }
 }
 
 /// Binds the coordination socket and listens, which is the worker's first act.
@@ -268,13 +257,17 @@ impl OrganChannel {
         serde_json::from_slice(&octets).map_err(|_| ChannelFault::Undecodable)
     }
 
-    /// The one receive site that takes a descriptor: the trace sink crosses
-    /// once, as ancillary data on the enter directive's own message, and this
-    /// call asks for `MSG_CMSG_CLOEXEC` in the receive itself. A descriptor
-    /// received without the flag arrives clear, which is the window
-    /// `weaver-organ-channel` section 2 describes and the reason the
-    /// obligation is the receiver's.
-    pub fn recv_with_descriptor(&self) -> Result<(OrganEnvelope, Option<OwnedFd>), ChannelFault> {
+    /// The one receive site that takes descriptors: the trace sink crosses
+    /// once as ancillary data on the enter directive's own message, and the
+    /// state channel's end rides beside it where the member stands, per the
+    /// ruling of 2026-08-26, the two told apart by position per the
+    /// contract's supply order. The call asks for `MSG_CMSG_CLOEXEC` in the
+    /// receive itself. A descriptor received without the flag arrives clear,
+    /// which is the window `weaver-organ-channel` section 2 describes and
+    /// the reason the obligation is the receiver's.
+    pub fn recv_with_descriptor(
+        &self,
+    ) -> Result<(OrganEnvelope, Option<OwnedFd>, Option<OwnedFd>), ChannelFault> {
         let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
         let mut control = [0u8; CONTROL_BYTES];
 
@@ -315,6 +308,7 @@ impl OrganChannel {
         // no organ channels. Adopting first makes every path drop what it
         // owns.
         let mut sink = None;
+        let mut state_end = None;
         let mut surplus = Vec::new();
         // SAFETY: the walk reads only headers the kernel wrote into this
         // frame's control buffer, bounded by the length it reported, and each
@@ -352,6 +346,8 @@ impl OrganChannel {
                         let owned = OwnedFd::from_raw_fd(fd);
                         if sink.is_none() {
                             sink = Some(owned);
+                        } else if state_end.is_none() {
+                            state_end = Some(owned);
                         } else {
                             surplus.push(owned);
                         }
@@ -378,7 +374,7 @@ impl OrganChannel {
         }
         let envelope =
             serde_json::from_slice(&buffer[..read]).map_err(|_| ChannelFault::Undecodable)?;
-        Ok((envelope, sink))
+        Ok((envelope, sink, state_end))
     }
 
     /// Sends one envelope carrying one descriptor as ancillary data, the
@@ -397,6 +393,37 @@ impl OrganChannel {
             });
         }
         let fds = [descriptor.as_raw_fd()];
+        let control = [ControlMessage::ScmRights(&fds)];
+        let slices = [IoSlice::new(&body)];
+        sendmsg::<()>(
+            self.end.as_raw_fd(),
+            &slices,
+            &control,
+            MsgFlags::empty(),
+            None,
+        )
+        .map_err(|_| ChannelFault::Closed)?;
+        Ok(())
+    }
+
+    /// Sends one envelope carrying two descriptors as ancillary data, the
+    /// sending side of an enter that stands the state leg: the sink first
+    /// and the state channel's end second, per the contract's supply order.
+    /// Used by the tests that stand a coordination peer up, and by any
+    /// composition root that speaks this seam.
+    pub fn send_with_descriptors(
+        &self,
+        envelope: &OrganEnvelope,
+        sink: BorrowedFd<'_>,
+        state_end: BorrowedFd<'_>,
+    ) -> Result<(), ChannelFault> {
+        let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Undecodable)?;
+        if body.len() > MAX_ENVELOPE_BYTES {
+            return Err(ChannelFault::Truncated {
+                bound: MAX_ENVELOPE_BYTES,
+            });
+        }
+        let fds = [sink.as_raw_fd(), state_end.as_raw_fd()];
         let control = [ControlMessage::ScmRights(&fds)];
         let slices = [IoSlice::new(&body)];
         sendmsg::<()>(

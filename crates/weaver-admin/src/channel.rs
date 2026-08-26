@@ -183,14 +183,17 @@ impl Coordination {
     }
 
     /// **The enter directive and its ancillary payload are one message.** The
-    /// envelope is rendered and sent with the sink's descriptor as
-    /// `SCM_RIGHTS` control data on the same `sendmsg`, which is what makes
-    /// the descriptor cross once, in the enter exchange, with no separate
-    /// delivery to order against anything.
+    /// envelope is rendered and sent with the sink's descriptor, and the
+    /// state channel's end where the member stands, as `SCM_RIGHTS` control
+    /// data on the same `sendmsg`, which is what makes each descriptor cross
+    /// once, in the enter exchange, with no separate delivery to order
+    /// against anything, the receiver telling the two apart by position per
+    /// the contract's supply order.
     pub fn send_with_sink(
         &self,
         envelope: &OrganEnvelope,
         sink: BorrowedFd<'_>,
+        state_end: Option<BorrowedFd<'_>>,
     ) -> Result<(), ChannelFault> {
         let body = serde_json::to_vec(envelope).map_err(|_| ChannelFault::Undecodable)?;
         if body.len() > MAX_ENVELOPE_BYTES {
@@ -198,7 +201,10 @@ impl Coordination {
                 bound: MAX_ENVELOPE_BYTES,
             });
         }
-        let fds = [sink.as_raw_fd()];
+        let mut fds = vec![sink.as_raw_fd()];
+        if let Some(end) = state_end {
+            fds.push(end.as_raw_fd());
+        }
         let control = [ControlMessage::ScmRights(&fds)];
         let slices = [std::io::IoSlice::new(&body)];
         sendmsg::<()>(
@@ -475,7 +481,7 @@ mod tests {
         let sink = std::fs::File::create(dir.join("sink")).expect("sink");
         let sink = OwnedFd::from(sink);
         admin
-            .send_with_sink(&directive(7, "alpha"), sink.as_fd())
+            .send_with_sink(&directive(7, "alpha"), sink.as_fd(), None)
             .expect("one message");
 
         // The worker reads one message and finds the descriptor on it.

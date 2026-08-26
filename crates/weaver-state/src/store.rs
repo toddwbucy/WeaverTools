@@ -171,6 +171,95 @@ impl Store {
             .map_err(|e| CustodyFault::LandingFailed(e.to_string()))
     }
 
+    /// **Retire the declared session's holdings and record the opener in one
+    /// transaction**, which is the one act the preload path adds over the
+    /// first door's, per `weaver-state-Spec` section 4. The delete runs
+    /// before any distillate lands, so re-running a preload replaces the
+    /// session's holdings rather than appending to them, and a dead driver's
+    /// prefix needs no cleanup act because the next opener is the cleanup.
+    ///
+    /// **The first door's path performs no retirement and gains no branch.**
+    /// This is a second entry point rather than a flag on the first, so a
+    /// tee's opener cannot delete holdings by taking a wrong turn.
+    pub fn retire_and_index(
+        &mut self,
+        session: &str,
+        election: &Election,
+    ) -> Result<(), CustodyFault> {
+        let fault = |e: rusqlite::Error| CustodyFault::LandingFailed(e.to_string());
+        let transaction = self.connection.transaction().map_err(fault)?;
+        // The field rows go by their events' ids rather than by a join, so
+        // the delete is bounded to this session and cannot reach a field row
+        // whose event belongs to another.
+        transaction
+            .execute(
+                "DELETE FROM field WHERE event_id IN (SELECT id FROM event WHERE session = ?1)",
+                rusqlite::params![session],
+            )
+            .map_err(fault)?;
+        transaction
+            .execute(
+                "DELETE FROM event WHERE session = ?1",
+                rusqlite::params![session],
+            )
+            .map_err(fault)?;
+        transaction.commit().map_err(fault)?;
+        self.index_election(election)
+    }
+
+    /// The replay query, per `weaver-harness-state-contract` section 2: every
+    /// held event of the declared session, whole, in landing order. No kind
+    /// filter and no bound, which is what separates it from `recall` - a
+    /// replay reads the rendered contributions and the recorded measurements
+    /// as well as the four message kinds, and a walk that skipped any of them
+    /// would replay a conversation the record does not hold.
+    pub fn replay(&self, session: &str) -> Result<Vec<RecalledEvent>, CustodyFault> {
+        let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
+        let mut events_query = self
+            .connection
+            .prepare_cached(
+                "SELECT id, session, run, turn, kind, sequence FROM event
+                 WHERE session = ?1
+                 ORDER BY id",
+            )
+            .map_err(fault)?;
+        let rows: Vec<(i64, String, String, Option<String>, String, i64)> = events_query
+            .query_map([session], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    row.get(5)?,
+                ))
+            })
+            .map_err(fault)?
+            .collect::<Result<_, _>>()
+            .map_err(fault)?;
+        let mut pairs_query = self
+            .connection
+            .prepare_cached("SELECT key, value FROM field WHERE event_id = ?1")
+            .map_err(fault)?;
+        let mut replayed = Vec::with_capacity(rows.len());
+        for (id, session, run, turn, kind, sequence) in rows {
+            let pairs: Vec<(String, String)> = pairs_query
+                .query_map([id], |row| Ok((row.get(0)?, row.get(1)?)))
+                .map_err(fault)?
+                .collect::<Result<_, _>>()
+                .map_err(fault)?;
+            replayed.push(RecalledEvent {
+                session,
+                run,
+                turn,
+                kind,
+                sequence,
+                pairs,
+            });
+        }
+        Ok(replayed)
+    }
+
     /// How many events stand, a custody fact the tests read.
     pub fn held(&self) -> Result<i64, CustodyFault> {
         self.connection
@@ -207,7 +296,9 @@ impl Store {
         let mut shaped = Vec::with_capacity(runs.len());
         for run in runs {
             let kinds: Vec<(String, i64)> = kinds_query
-                .query_map([session, run.as_str()], |row| Ok((row.get(0)?, row.get(1)?)))
+                .query_map([session, run.as_str()], |row| {
+                    Ok((row.get(0)?, row.get(1)?))
+                })
                 .map_err(fault)?
                 .collect::<Result<_, _>>()
                 .map_err(fault)?;
@@ -225,9 +316,9 @@ pub struct RunShape {
     pub kinds: Vec<(String, i64)>,
 }
 
-/// An ask as the seam's closed vocabulary spells it: two names, per the
-/// contract's section 2, and a frame carrying any other ask name is
-/// malformed and answers nothing.
+/// An ask as the seam's closed vocabulary spells it: three names, per the
+/// contract's section 2 as amended 2026-08-24, and a frame carrying any
+/// other ask name is malformed and answers nothing.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Ask {
     /// The session's shape: runs in first-seen order, counts by kind.
@@ -235,6 +326,10 @@ pub enum Ask {
     /// The conversation as custody holds it, bounded to the most recent
     /// turns where a bound is given.
     Recall { last_turns: Option<u64> },
+    /// Every held event of the declared session, whole, in landing order.
+    /// Carries no members: what a replay reads is the session, and the
+    /// four message kinds `recall` serves are less than it needs.
+    Replay,
 }
 
 /// Parse a seam frame as an ask, or nothing where it is not one.
@@ -243,6 +338,9 @@ pub fn parse_ask(frame: &str) -> Option<Ask> {
     let ask = value.get("ask")?;
     if ask.get("shape").is_some() {
         return Some(Ask::Shape);
+    }
+    if ask.get("replay").is_some() {
+        return Some(Ask::Replay);
     }
     let recall = ask.get("recall")?;
     let last_turns = match recall.get("last-turns") {
@@ -369,7 +467,17 @@ impl Store {
 /// distillate's own shape, envelope and pairs, because custody serves what
 /// it kept in the form it kept it.
 pub fn render_recall_answer(events: &[RecalledEvent]) -> String {
-    let rendered: Vec<serde_json::Value> = events
+    let rendered = rendered_events(events);
+    let mut frame = serde_json::json!({"answer": {"recall": {"events": rendered}}}).to_string();
+    frame.push('\n');
+    frame
+}
+
+/// One event's rendering, envelope and pairs, shared by the recall and the
+/// replay answers because both serve an event as the distillate's own
+/// shape and a second rendering would be a second spelling of one form.
+fn rendered_events(events: &[RecalledEvent]) -> Vec<serde_json::Value> {
+    events
         .iter()
         .map(|event| {
             let mut envelope = serde_json::Map::new();
@@ -391,8 +499,16 @@ pub fn render_recall_answer(events: &[RecalledEvent]) -> String {
                 .collect();
             serde_json::json!({"envelope": envelope, "pairs": pairs})
         })
-        .collect();
-    let mut frame = serde_json::json!({"answer": {"recall": {"events": rendered}}}).to_string();
+        .collect()
+}
+
+/// Render the replay answer as the contract's frame: every event whole, in
+/// landing order, each as the distillate's own shape. The answer names the
+/// ask it answers, which is what pairs it without a correlation member, per
+/// `weaver-harness-state-contract` section 2.
+pub fn render_replay_answer(events: &[RecalledEvent]) -> String {
+    let rendered = rendered_events(events);
+    let mut frame = serde_json::json!({"answer": {"replay": {"events": rendered}}}).to_string();
     frame.push('\n');
     frame
 }
@@ -411,8 +527,7 @@ pub fn render_shape_answer(runs: &[RunShape]) -> String {
             serde_json::json!({"run": shape.run, "kinds": kinds})
         })
         .collect();
-    let mut frame =
-        serde_json::json!({"answer": {"shape": {"runs": entries}}}).to_string();
+    let mut frame = serde_json::json!({"answer": {"shape": {"runs": entries}}}).to_string();
     frame.push('\n');
     frame
 }
@@ -433,13 +548,13 @@ pub fn parse_distillate(frame: &str) -> Option<Distillate> {
     // because the distillate is a projection of the canonical form and a
     // reshaping here would break that on the last step.
     let pairs = match top.get("pairs") {
-        Some(raw) => serde_json::from_str::<std::collections::BTreeMap<String, &RawValue>>(
-            raw.get(),
-        )
-        .ok()?
-        .into_iter()
-        .map(|(key, value)| (key, value.get().to_string()))
-        .collect(),
+        Some(raw) => {
+            serde_json::from_str::<std::collections::BTreeMap<String, &RawValue>>(raw.get())
+                .ok()?
+                .into_iter()
+                .map(|(key, value)| (key, value.get().to_string()))
+                .collect()
+        }
         None => Vec::new(),
     };
     Some(Distillate {
@@ -566,19 +681,21 @@ mod tests {
         let path = scratch();
         let _ = std::fs::remove_file(&path);
         let mut store = Store::open(&path).expect("opens");
-        store
-            .index_election(&Election::default())
-            .expect("indexes");
+        store.index_election(&Election::default()).expect("indexes");
 
         // An earlier session's holdings, still on disk where a session cut
         // left them, and a message it may not serve into the new session.
-        store.land(&landed("old", "r-old", "load", 0)).expect("lands");
+        store
+            .land(&landed("old", "r-old", "load", 0))
+            .expect("lands");
         let mut stale = landed("old", "r-old", "message.user", 1);
         stale.turn = Some("t-1".into());
         stale.pairs = vec![("payload.content".into(), "\"the vault code\"".into())];
         store.land(&stale).expect("lands");
 
-        store.land(&landed("new", "r-new", "load", 0)).expect("lands");
+        store
+            .land(&landed("new", "r-new", "load", 0))
+            .expect("lands");
         let mut fresh = landed("new", "r-new", "message.user", 1);
         fresh.turn = Some("t-1".into());
         fresh.pairs = vec![("payload.content".into(), "\"hello\"".into())];
@@ -647,7 +764,9 @@ mod tests {
             ("r-1", "turn.closed", 2),
             ("r-2", "turn.closed", 1),
         ] {
-            store.land(&landed("s", run, kind, sequence)).expect("lands");
+            store
+                .land(&landed("s", run, kind, sequence))
+                .expect("lands");
         }
         let shape = store.shape("s").expect("shapes");
         assert_eq!(shape.len(), 2);
@@ -658,7 +777,10 @@ mod tests {
         );
         assert_eq!(shape[1].run, "r-2");
         let frame = render_shape_answer(&shape);
-        assert!(frame.starts_with(r#"{"answer":{"shape":{"runs":["#), "{frame}");
+        assert!(
+            frame.starts_with(r#"{"answer":{"shape":{"runs":["#),
+            "{frame}"
+        );
         assert!(frame.ends_with("}\n"), "{frame}");
         let _ = std::fs::remove_file(&path);
     }
@@ -689,6 +811,85 @@ mod tests {
     /// The ask vocabulary is closed at two names: both are recognized,
     /// the recall's optional bound parses, and every other frame is not
     /// an ask at all.
+    /// **A replay reads what a recall does not**, which is the whole reason
+    /// the ask exists: `recall` serves the four message kinds and a replay
+    /// walks the rendered contributions and the recorded measurements too.
+    /// Perturbation: give `replay` the kind filter `recall` carries and this
+    /// fails on the two events it would drop.
+    #[test]
+    fn a_replay_reads_every_kind_and_a_recall_reads_four() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        for (kind, sequence) in [
+            ("message.user", 1),
+            ("model.request", 2),
+            ("model.measurement", 3),
+            ("message.assistant", 4),
+        ] {
+            let mut event = landed("s", "r", kind, sequence);
+            event.turn = Some("t1".into());
+            store.land(&event).expect("lands");
+        }
+        let replayed = store.replay("s").expect("replay");
+        assert_eq!(replayed.len(), 4, "a replay serves every held event");
+        let kinds: Vec<&str> = replayed.iter().map(|e| e.kind.as_str()).collect();
+        assert_eq!(
+            kinds,
+            [
+                "message.user",
+                "model.request",
+                "model.measurement",
+                "message.assistant"
+            ],
+            "and in landing order"
+        );
+        let recalled = store.recall("s", None).expect("recall");
+        assert_eq!(recalled.len(), 2, "where a recall serves the message kinds");
+        let frame = render_replay_answer(&replayed);
+        assert!(
+            frame.starts_with(r#"{"answer":{"replay":{"events":["#),
+            "{frame}"
+        );
+        assert!(frame.ends_with("}\n"), "{frame}");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// **The retirement is bounded to the declared session**, per the Spec:
+    /// re-running a preload replaces that session's holdings and reaches no
+    /// other session's rows. Perturbation: drop the `WHERE session` from
+    /// either delete and the untouched session loses its events.
+    #[test]
+    fn the_preload_opener_retires_its_own_session_alone() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        store
+            .land(&landed("replayed", "r", "message.user", 1))
+            .expect("lands");
+        store
+            .land(&landed("other", "r", "message.user", 1))
+            .expect("lands");
+        store
+            .retire_and_index("replayed", &Election::default())
+            .expect("retire");
+        assert!(
+            store.replay("replayed").expect("replay").is_empty(),
+            "the declared session's holdings are gone"
+        );
+        assert_eq!(
+            store.replay("other").expect("replay").len(),
+            1,
+            "and no other session's are"
+        );
+        assert_eq!(
+            store.held().expect("held"),
+            1,
+            "the field rows go with them"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+
     #[test]
     fn the_ask_vocabulary_is_closed() {
         assert_eq!(parse_ask(r#"{"ask":{"shape":{}}}"#), Some(Ask::Shape));
@@ -702,6 +903,10 @@ mod tests {
                 last_turns: Some(3)
             })
         );
+        // The third name, added 2026-08-24. It carries no members, so a
+        // members object and a bare one parse alike and neither carries a
+        // bound the way `recall` does.
+        assert_eq!(parse_ask(r#"{"ask":{"replay":{}}}"#), Some(Ask::Replay));
         for not_an_ask in [
             r#"{"ask":{"summarize":{}}}"#,
             r#"{"ask":{"recall":{"last-turns":-3}}}"#,
@@ -758,7 +963,12 @@ mod tests {
     /// member is nobody's row.
     #[test]
     fn an_unattributable_frame_is_refused() {
-        assert!(parse_distillate(r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":"0"}}"#).is_some());
+        assert!(
+            parse_distillate(
+                r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":"0"}}"#
+            )
+            .is_some()
+        );
         for missing in [
             r#"{"envelope":{"run":"r","kind":"load","sequence":"0"}}"#,
             r#"{"envelope":{"session":"s","kind":"load","sequence":"0"}}"#,

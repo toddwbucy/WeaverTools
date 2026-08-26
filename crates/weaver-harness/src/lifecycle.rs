@@ -461,7 +461,7 @@ impl Harness {
                 },
                 Ok(Wake::Connection) => {
                     let connection = pending.take().expect("the wake proved a connection");
-                    let (envelope, sink) = match connection.recv_with_descriptor() {
+                    let (envelope, sink, state_end) = match connection.recv_with_descriptor() {
                         Ok(received) => received,
                         // The verb answered and admin closed. Ordinary, and
                         // not an ending: the run is held across connections,
@@ -489,7 +489,7 @@ impl Harness {
                             return Err(ChannelFault::Undecodable);
                         }
                     };
-                    match self.dispatch_on(&connection, exchange, directive, sink) {
+                    match self.dispatch_on(&connection, exchange, directive, sink, state_end) {
                         Ok(Some(outcome)) => return Ok(outcome),
                         // The verb answered and the run stands: the same
                         // connection may carry another directive, so it
@@ -948,10 +948,11 @@ impl Harness {
         exchange: ExchangeId,
         directive: LifecycleDirective,
         sink: Option<OwnedFd>,
+        state_end: Option<OwnedFd>,
     ) -> Result<Option<Outcome>, ChannelFault> {
         match (&mut self.state, directive) {
             (ChannelState::BeforeEnter, LifecycleDirective::Enter { payload }) => {
-                match self.enter(payload, sink) {
+                match self.enter(payload, sink, state_end) {
                     Ok(run) => {
                         self.state = ChannelState::Entered(Box::new(run));
                         self.answer(connection, &exchange, LifecycleAnswer::Ready)?;
@@ -1050,9 +1051,13 @@ impl Harness {
         &mut self,
         payload: weaver_types::EnterPayload,
         sink: Option<OwnedFd>,
+        state_end: Option<OwnedFd>,
     ) -> Result<Run, EnterFailure> {
-        // One sink descriptor arrives on the directive's own message. Nothing
-        // is authored yet, so a refusal here leaves the stream clean.
+        // The sink descriptor arrives on the directive's own message, the
+        // state channel's end beside it where the member stands, per the
+        // ruling of 2026-08-26. The sink's absence refuses and the end's
+        // absence is the leg not standing, never a refusal. Nothing is
+        // authored yet, so a refusal here leaves the stream clean.
         let sink = sink.ok_or(EnterFailure::BeforeLoad(
             LifecycleRefusal::DescriptorsUnusable,
         ))?;
@@ -1064,10 +1069,10 @@ impl Harness {
         )
         .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?;
 
-        // The state seam, per `weaver-harness-state-contract`: the member's
-        // named socket stands beside the coordination socket when the
-        // deployment stood one, and its absence is the leg not standing,
-        // never a refused load. Attached before the load event is authored
+        // The state seam, per `weaver-harness-state-contract` as ruled
+        // 2026-08-26: a nameless pair whose harness end arrived on this
+        // enter when admin stood the member, and its absence is the leg not
+        // standing, never a refused load. Attached before the load event is authored
         // so the run's opening distills like everything after it. The
         // election is the declaration's, resolved by admin and carried in
         // the enter per the contract's sections 3 and 5, converted here at
@@ -1095,9 +1100,13 @@ impl Harness {
         // one that predates the member.
         let tee_election = election.clone();
         let mut state_seam = None;
-        if let Ok(channel) =
-            std::os::unix::net::UnixStream::connect(self.coordination.state_socket())
-        {
+        // The channel arrived in the enter directive as the harness half of
+        // the pair admin created at the member's spawn, per the ruling of
+        // 2026-08-26: dialed nowhere, derived from nothing, possession the
+        // authentication. No end means no member stood, the leg down and
+        // the load unrefused.
+        if let Some(end) = state_end {
+            let channel = std::os::unix::net::UnixStream::from(end);
             let ask_end = channel.try_clone();
             // The session rides the opener beside the election, both being
             // facts this enter declared, per the contract's amended term:
@@ -1824,14 +1833,15 @@ mod tests {
         let listener =
             crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
 
-        // The fake member: accept the worker's dial, hand back every line
-        // that arrives until the peer closes.
-        let member = std::os::unix::net::UnixListener::bind(dir.join("state.sock"))
-            .expect("member binds");
+        // The fake member: the far end of the pair the enter would carry,
+        // per the ruling of 2026-08-26 - no name, no dial, the end handed
+        // in. Hand back every line that arrives until the peer closes.
+        let (state_end, member_end) =
+            std::os::unix::net::UnixStream::pair().expect("the member's pair");
         let (send, receive) = std::sync::mpsc::channel::<String>();
         let reader = std::thread::spawn(move || {
             use std::io::Read;
-            let (mut channel, _) = member.accept().expect("the worker dials");
+            let mut channel = member_end;
             let mut held = String::new();
             let _ = channel.read_to_string(&mut held);
             for line in held.lines() {
@@ -1891,7 +1901,11 @@ mod tests {
         // stands on that failure, so the run is retained and left the way
         // the serving loop leaves it - dropping it unleft would orphan the
         // forked child unreaped and leave the bracket unclosed.
-        let mut run = match harness.enter(payload, Some(sink)) {
+        let mut run = match harness.enter(
+            payload,
+            Some(sink),
+            Some(std::os::fd::OwnedFd::from(state_end)),
+        ) {
             Err(EnterFailure::AfterLoad(run, _)) => run,
             Ok(_) => panic!("the bogus fan-out cannot succeed"),
             Err(EnterFailure::BeforeLoad(refusal)) => {
@@ -1998,7 +2012,7 @@ mod tests {
         // The fan-out fails after-load at the SPU exec, which is the arm
         // this test exists for: the bracket stands and the refusal is the
         // enter's own.
-        let (mut run, refusal) = match harness.enter(payload, Some(sink)) {
+        let (mut run, refusal) = match harness.enter(payload, Some(sink), None) {
             Err(EnterFailure::AfterLoad(run, refusal)) => (*run, refusal),
             Ok(_) => panic!("the bogus fan-out cannot succeed"),
             Err(EnterFailure::BeforeLoad(refusal)) => {
@@ -2124,7 +2138,7 @@ mod tests {
                 keys: Vec::new(),
             },
         };
-        let mut run = match harness.enter(payload, Some(sink)) {
+        let mut run = match harness.enter(payload, Some(sink), None) {
             Err(EnterFailure::AfterLoad(run, _)) => run,
             Ok(_) => panic!("the bogus fan-out cannot succeed"),
             Err(EnterFailure::BeforeLoad(refusal)) => {
@@ -2228,7 +2242,7 @@ mod tests {
                     }],
                 },
             };
-            let mut run = match harness.enter(payload, Some(sink)) {
+            let mut run = match harness.enter(payload, Some(sink), None) {
                 Err(EnterFailure::AfterLoad(run, _)) => run,
                 Ok(_) => panic!("the bogus fan-out cannot succeed"),
                 Err(EnterFailure::BeforeLoad(refusal)) => {
@@ -2355,7 +2369,7 @@ mod tests {
             state_election: weaver_types::StateElection::default(),
         };
 
-        let mut run = match harness.enter(payload, Some(sink)) {
+        let mut run = match harness.enter(payload, Some(sink), None) {
             Ok(run) => run,
             Err(EnterFailure::BeforeLoad(refusal)) => panic!("enter refused early: {refusal:?}"),
             Err(EnterFailure::AfterLoad(_, refusal)) => panic!("enter refused: {refusal:?}"),
@@ -2472,7 +2486,7 @@ mod tests {
 
         // The real fan-out: real forks, real admit against real weights,
         // the real session open, the real raise.
-        let mut run = match harness.enter(payload, Some(sink)) {
+        let mut run = match harness.enter(payload, Some(sink), None) {
             Ok(run) => run,
             Err(EnterFailure::BeforeLoad(refusal)) => panic!("enter refused early: {refusal:?}"),
             Err(EnterFailure::AfterLoad(_, refusal)) => panic!("enter refused: {refusal:?}"),
@@ -2622,6 +2636,7 @@ mod tests {
                 test_exchange(),
                 LifecycleDirective::Stop,
                 None,
+                None,
             )
             .expect("stop dispatches");
 
@@ -2761,6 +2776,7 @@ mod tests {
                 &harness_end,
                 test_exchange(),
                 LifecycleDirective::Stop,
+                None,
                 None,
             )
             .expect("stop");
