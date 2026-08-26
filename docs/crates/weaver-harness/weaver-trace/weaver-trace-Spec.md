@@ -4,6 +4,18 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-26, the tee takes its Spec section. `src/tee.rs` stood as a sixth
+module with no section, no declared type, and no header to carry, the weaver-state
+defect class again, per issue 351. Section 11 now declares `Election`, `ElectedKind`,
+and `Tee` with `opener` and `distill`, restating charter section 11 and the state
+contract rather than developing either, and carries three assertions: the envelope is
+not electable, tagged perturbation and grounded in the join-key invariant, the
+projection splices and never re-renders, tagged perturbation, and the tee never blocks
+the turn path, tagged review. Open elections moves to section 12 and every citation
+moves with it, section 1's layout gains the module, and section 10's counts move to
+forty-four with the two perturbations joining its list. Section 3's no-read rationale
+is corrected rather than kept: the claim held of `Payload` while its reason
+overclaimed, the tee reading canonical lines back as raw text through no payload type.
 **Revised:** 2026-08-25, the tee's election joins the load payload. Section 3's
 `Elections` gains `tee`, this crate's own `Election`, emitted on every `load` this crate
 writes and an `Option` at the read so a record predating the member parses whole. It is
@@ -171,7 +183,7 @@ part of this crate's set with nothing recording where it went.
 this crate, including one for the durability primitive, and the ruling of
 2026-08-01 keeps them out of the Spec pass. The charter's staged item asking how
 much of that implementation's weight survives is therefore answered from this
-crate's own obligations and from measurement, per section 11, rather than by
+crate's own obligations and from measurement, per section 12, rather than by
 reading what a different program built against different obligations.
 
 ## 1. The crate
@@ -184,6 +196,7 @@ reading what a different program built against different obligations.
     src/structure.rs  the working structure, section 4
     src/writer.rs     the stream writer and the commit boundary, section 6
     src/failure.rs    the failure vocabulary, section 9
+    src/tee.rs        the distillation surface, section 11
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -852,7 +865,7 @@ it here would make this crate depend on what it must not depend on and
 version what it does not own.
 
 **`StopReason` gains `Refused`**, per the charter's same-act edit. It is a
-satellite by section 11 and its variants are not enumerated here, but the
+satellite by section 12 and its variants are not enumerated here, but the
 addition is the charter's rather than a naming choice: a close that cannot
 say a refusal ended the turn says something else instead.
 
@@ -1002,9 +1015,11 @@ custody model forces rather than a property dropped.
 **Untagged with seven variants is a serialization device, and the deserializing
 consumer keys on `kind`.** Serde resolves an untagged enum by trying variants in
 order, which is unambiguous while writing and ambiguous while reading once more
-than one variant is struct-shaped. This crate never reads an event back: the
-working structure holds rendered lines, per section 4, and no resume path
-survived the cut of 2026-08-01. A consumer that decodes does so kind-first,
+than one variant is struct-shaped. This crate reads no event back through
+its types: the working structure holds rendered lines, per section 4, no resume
+path survived the cut of 2026-08-01, and the one reader it does hold, the tee of
+section 11, takes a canonical line as an envelope and raw payload text, through
+no `Payload`. A consumer that decodes does so kind-first,
 which the flatten election of this section already put at the top level of every
 line for exactly this reason, so the discriminant a reader needs is available
 before the payload is reached. **`Payload` therefore derives `Serialize` and not
@@ -1028,7 +1043,7 @@ to: trace-payload-serialize-only
 **`Deferred` holds the payloads whose shapes their own workflows settle**, which
 since the trace act of 2026-08-02 is the tool bracket's two alone, the fault and
 the three model kinds having landed at charter section 3.2. It is listed in
-section 11 with what settles it. The variant holds raw bytes in the interim
+section 12 with what settles it. The variant holds raw bytes in the interim
 rather than a
 placeholder struct, because a struct shaped against no chartered content would be
 the reserved slot apex section 9 forbids, and because a kind whose payload has no
@@ -1502,7 +1517,8 @@ to: trace-append-failed-no-recovery
   named half of the mutation-surface claim,** its signature half being the
   compiler bullet above, and the two are two records for the same reason the
   path-taking pair are.
-- No `Deserialize` on `Payload`, per section 3, this crate reading no event back.
+- No `Deserialize` on `Payload`, per section 3: the typed path reads no event
+  back, and the tee's read of section 11 is raw text through no `Payload`.
 
 **Enforced by the manifest.** No `weaver-*` dependency, read against the graph
 under gate H2. No async runtime and no socket crate in the resolved tree, by the
@@ -1513,11 +1529,11 @@ at the dependency clause with the rest of that election.
 
 **Where the records sit, and the two claims another document declares.** The
 assertion records are at the clauses that argue the claims, across sections 1
-through 9, rather than gathered here, per Document Format section 6: this section
-sorts by instrument and the arguments are elsewhere, so a block here would sit
-apart from the prose that earns it. Thirty-eight sit there and three sit at the end of
-this section, being the claims argued only here. Seventeen of the forty-one come
-from this section's own sorting and twenty-four from the elections outside it, the
+through 9 and section 11, rather than gathered here, per Document Format section 6:
+this section sorts by instrument and the arguments are elsewhere, so a block here
+would sit apart from the prose that earns it. Forty-one sit there and three sit at the
+end of this section, being the claims argued only here. Seventeen of the forty-four
+come from this section's own sorting and twenty-seven from the elections outside it, the
 path-taking prohibition counting here rather than as an election because it was
 divided out of this section's own bullet and never elected, per Document Format
 section 3.
@@ -1531,22 +1547,27 @@ section takes no node of its own, per Document Format section 5, and it names no
 test of its own either, its instrument being the compile-fail set already
 recorded.
 
-**Which invariant each claim serves, and why most serve none.** Four of the
-forty-one carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
+**Which invariant each claim serves, and why most serve none.** Five of the
+forty-four carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
 and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
 nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
 none of it because this crate is not floor, so the vocabulary clause governs none
 of its manifest, and its one seam does not cross a process line, so the socket
-clause governs none of its elections. `axiom-organ-and-submodule` reaches none of
-it because a submodule's channel with its own organ is that organ's business by
-the invariant's own words, which leaves this document nothing to claim under it.
+clause governs none of its elections. The tee writes on a seam that does cross
+one, and that crossing is the harness's under `weaver-harness-state-contract`,
+this crate supplying mechanism to a channel it neither opens nor names, so the
+clause binds that contract's parties and reaches no election here.
+`axiom-organ-and-submodule` reaches none of it because a submodule's channel
+with its own organ is that organ's business by the invariant's own words, which
+leaves this document nothing to claim under it.
 **The test applied is whether the axiom is the reason the claim exists.** Remove
-the join-key invariant and this crate has no reason to refuse to infer a turn and
-no reason to report pressure rather than author it, so those two ground in it.
+the join-key invariant and this crate has no reason to refuse to infer a turn, no
+reason to report pressure rather than author it, and no reason to hold the
+envelope out of the tee's election, so those three ground in it.
 Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
-**Thirty-seven claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: sixteen of the forty-one are section 3's
+**Thirty-nine claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: sixteen of the forty-four are section 3's
 event schema and fourteen of those sixteen ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
@@ -1587,6 +1608,12 @@ the fact exists.
 - The tee's election on the `load` event: a payload rendered under a
   non-default election carries the rule back off the canonical form, watched to
   fail when the member is dropped from the shape.
+- The envelope is not electable: a distillate carries the five as the canonical
+  form spelled them, confirmed by watching the read fail when an envelope member
+  is dropped from the frame's shape.
+- The projection splices and never re-renders: an elected value whose
+  re-rendering would differ from its spelling crosses byte-identical, confirmed
+  by watching the comparison fail when the walk re-renders the value.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test
@@ -1633,7 +1660,130 @@ from: weaver-trace
 to: trace-receive-shape-pinned-by-doctest
 ```
 
-## 11. Open elections
+## 11. The tee
+
+**The distillation surface is a sixth module, `src/tee.rs`, and this section
+authorizes it.** The mechanism is this crate's because what is tee'd is its own
+rendering, the harness applies it as the one party that writes, and the tee
+selects and never computes, per charter section 11, whose assertion
+`trace-tee-selects-never-computes` binds the module from the clause that argues
+it. What the charter and `weaver-harness-state-contract` settle, this section
+only represents: the types the rule is held in, the two functions that apply
+it, and the conduct the applied tee owes the seam.
+
+**The election is two types, and the rule is held in the shape it is applied
+in.**
+
+    pub struct Election {
+        pub all_kinds: bool,
+        pub keys: Vec<ElectedKind>,
+    }
+
+    pub struct ElectedKind {
+        pub kind: String,
+        pub paths: Vec<String>,
+    }
+
+`Election` is the rule fixed at load, as the contract defines the term. With
+`all_kinds` true every kind crosses with its envelope, with it false only the
+kinds named in `keys` cross at all, and each `ElectedKind` names one kind as
+the canonical form spells it beside the payload key paths elected for it, each
+path dotted from the payload root. An entry with no paths is a meaningful
+election, presence itself being state. `Default` is the charter's default
+election, `all_kinds` true and `keys` empty: the envelope of every kind and
+nothing more. The authority split of section 3 governs these fields, the
+declared shape being `weaver-types-Spec` section 2's and the term's meaning the
+contract's, and what this section owns is their spelling here, snake_case,
+because this type is the opener's wire form and the custodian parses it by
+these names.
+
+**`opener` renders the seam's first frame.** One function, over the session and
+the election, rendering an object holding both and the newline that terminates
+it. It is the first traffic on every standing of the channel, sent whole and
+never per event, per the contract's ingest clause: the custodian builds its
+indexes from the election before the first distillate, and the session rides
+beside the rule per the ruling of 2026-08-20, both being load-declared facts
+standing for the channel's life.
+
+**`distill` applies the rule to one canonical line, and it is selection only.**
+The function takes the line and the election and returns the distillate frame
+or `None`, and `None` means the election did not match, the event costing
+nothing and the trace remaining complete regardless, because the tee reads the
+stream and never thins it. The frame is the contract's distillate shape, the
+envelope whole and the elected pairs beside it. A line this crate rendered
+always parses, so a parse failure here is unreachable in custody and answered
+by not distilling, the guard standing against a caller outside custody rather
+than a case inside it. Two properties of the read carry assertions.
+
+**The envelope is not electable, and no election can produce an unattributable
+row.** Every distilled event carries session, run, turn, kind, and sequence as
+the canonical form spelled them, the turn absent exactly where the record held
+none, and the election ranges over payload key paths alone, per charter
+section 11. The instrument is perturbation: a distillate is read back for the
+five, watched to fail when an envelope member is dropped from the frame's
+shape.
+
+```graph
+node: trace-tee-envelope-not-electable
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-tee-envelope-not-electable
+
+edge: grounds
+from: trace-tee-envelope-not-electable
+to: axiom-join-key-travels-with-the-work
+```
+
+**What crosses is the canonical bytes, never a re-rendering.** The line is read
+with its payload held as raw text and each elected path walked by reparsing one
+object's keys at a time, so the value that crosses is byte-identical to the
+canonical form's spelling and a number the renderer spelled one way cannot
+come out another, which is section 2's decimal-string rule surviving the seam.
+A path the payload does not hold is absent from the pairs, a miss costing
+nothing. The instrument is perturbation: an elected value whose re-rendering
+would differ from its spelling crosses and is compared as bytes, watched to
+fail when the walk re-renders instead of splicing.
+
+```graph
+node: trace-tee-projection-verbatim
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-tee-projection-verbatim
+```
+
+**`Tee` is the applied rule: the session, the election, and the seam's end,
+held together from the harness's attach at load.** `open` takes the channel,
+the session, and the election, sends the opener as the channel's first
+traffic, and fails where the seam refuses it. `feed` takes one canonical line
+and answers `false` where the seam is broken and the tee is done.
+
+**The tee never blocks the turn path.** The channel is set nonblocking at
+`open`, a peer whose buffer is full is treated as the same breakage a closed
+peer is, and under either the distillate is lost and never the turn: no
+buffering, no retry, and no distilling until the next load, per the contract's
+dead-peer clause. A partial write followed by `false` is safe because the
+caller detaches the tee and the drop closes the channel, so the reader meets
+end-of-stream and discards the truncated tail as an unfinished line. The
+instrument is review, the claim prohibiting every form of waiting and a named
+test reaching only the forms it names.
+
+```graph
+node: trace-tee-no-turn-backpressure
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-tee-no-turn-backpressure
+```
+
+## 12. Open elections
 
 - **The in-RAM read cost.** Section 4 elects rendered lines plus an envelope index,
   which costs one parse per message per prompt assembly. Reopened by a measurement
@@ -1664,7 +1814,7 @@ to: trace-receive-shape-pinned-by-doctest
   section 3.2.
 - **The weight this crate carries at all.** The charter stages the question of how
   much durability machinery survives its obligations. This Spec's answer is the
-  five modules of section 1 and nothing further, and the entry condition is the
+  six modules of section 1 and nothing further, and the entry condition is the
   Spec pass, which is now, so the item closes here rather than being carried:
   canonical rendering, an append-only structure, a bounded queue with an
   interrogable boundary, and a typed failure set are what the obligations demand,
