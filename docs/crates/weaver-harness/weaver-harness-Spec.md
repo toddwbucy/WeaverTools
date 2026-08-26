@@ -3,9 +3,17 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-26, second of this date, the state channel arrives instead
+of being dialed.
+Per the operator's ruling of this date, section 6's state-port clause names
+the channel's origin: the harness half of the pair admin created at the
+member's spawn, received in the enter directive beside the sink, no name
+derived and no dial made. The seat, the ports, the tee's attach, and the
+dead-peer conversions are untouched.
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-26, a citation follows a renumbering. Section 9's tee
-back-pressure election takes the queue's high-water mark from `weaver-trace-Spec`
+**Revised:** 2026-08-26, first of this date, a citation follows a renumbering.
+Section 9's tee back-pressure election takes the queue's high-water mark from
+`weaver-trace-Spec`
 section 12, that Spec's open elections having moved from 11 when the tee took a
 section of its own there. Per issue 351.
 **Revised:** 2026-08-25, the load's elections arrive by two routes. Section 6.1 said
@@ -812,12 +820,16 @@ the rest of the crate cannot construct another way, which is the pinned shape
 `weaver-admin-harness-contract` section 5 names. This is the claim
 `weaver-trace-Spec` section 10 owes this document, its test standing as the
 first walk of section 8 and the owing discharged there. **It grounds in apex
-section 5.2 rather than in the socket invariant.** What crosses this receive is
-the sink handle and not a channel end, so possession authenticates nothing here.
-A tool subprocess holding it writes the record without being the harness, which
-is the sole-authorship half of 5.2 defeated by a descriptor, and a second writer
-does not merely add events, it adds events belonging to no turn the harness can
-attribute them to.
+section 5.2 rather than in the socket invariant.** The sink is a capability and
+not a channel end, so possession authenticates nothing about it. A tool
+subprocess holding it writes the record without being the harness, which is
+the sole-authorship half of 5.2 defeated by a descriptor, and a second writer
+does not merely add events, it adds events belonging to no turn the harness
+can attribute them to. The state channel's end crosses the same receive since
+the operator's ruling of 2026-08-26 and is the other kind of thing, a
+possession-authenticated end whose capture would seat a second peer on the
+member's seam, so the flag this walk asks for defends both facts at the one
+site, each grounded in its own clause.
 
 ```graph
 node: harness-trace-fd-cloexec-at-receive
@@ -1329,8 +1341,9 @@ unchanged, per `weaver-admin-harness-contract` section 6, and the scoped
 account holds: a refusal before the `load` event leaves the stream clean and
 the state at before-enter, and a refusal after it leaves the authored bracket
 standing and the run in place for the leave that unwinds it. **Three of this
-paragraph's four records are review's by election.** A test counting the
-ancillary descriptors on an enter directive reaches the sink's count, a test
+paragraph's four records are review's by election.** A test reading the
+ancillary descriptors on an enter directive for what each is for reaches the
+sink's count, per the discrimination the ruling of 2026-08-26 asks below, a test
 exec'ing a probe in the SPU's place reaches the decode pair's crossing of the
 same fork, and a test holding a double SPU's answer reaches the gate pair's wait
 on confirmed residency, and this suite buys none of the three. The scoped
@@ -1346,10 +1359,14 @@ orderings reconciled against each other, and neither can perform that reconcilia
 because neither can see the other's domain. The reverse unwind order the paragraph
 below opens with is the same fact read backwards and is argued here rather than
 there. The sink's count and the scoped account are a count and an ordering of this
-crate's interior, which no invariant is about. **The count is one under either
-kind**, both kinds receiving a descriptor and authoring into it, so the test
-that reaches it counts against a constant and the node below states the claim
-its name always stated. An act earlier on 2026-08-24 made the count follow the
+crate's interior, which no invariant is about. **The sink's count is one under
+either kind**, both kinds receiving a sink and authoring into it, and since
+the operator's ruling of 2026-08-26 the enter's ancillary payload is not that
+count alone: the state channel's end rides beside the sink where the member
+stands, so the test that reaches this claim discriminates by what a
+descriptor is for rather than counting the payload, one sink always and one
+state end where the leg stands, and the node below states the claim its name
+always stated, the sink's. An act earlier on 2026-08-24 made the count follow the
 kind, on a reading the ruling of the same date replaced.
 
 ```graph
@@ -1954,7 +1971,10 @@ this crate owns, granted with the seat and mintable nowhere, so the loop
 that holds a seat holds the ask and no narrower grant exists for the
 boundary to name. The seam's ask end lives in `src/state.rs`, a clone of
 the standing state channel held on the run beside the tee the enter
-attaches, the ask written and the answer awaited on the serving thread
+attaches, that channel arriving in the enter directive as the harness half
+of the pair admin created, per the operator's ruling of 2026-08-26, dialed
+nowhere and derived from nothing, the ask written and the answer awaited on
+the serving thread
 inside a bound this crate elects, generous against a member whose answer is
 one pass over its own holdings. Serialization on the shared channel is the
 serving thread itself: the tee's feed and the seat's ask both run on it, so
@@ -2350,11 +2370,13 @@ adversary is the agent's own tool surface, a subprocess this crate forks per
 call, running as the agent uid with `bash` as the reference case. The attack
 is inheritance: without close-on-exec every tool subprocess holds a writable
 handle to the trace and edits its own account through a descriptor requiring
-no path and passing no check. The mechanism is the one receive site of
-section 2.3 asking for `MSG_CMSG_CLOEXEC` in the receive itself. The test
-forks a child and confirms it holds no trace handle, watched to fail when the
-flag is removed from the receive, which is the test `weaver-trace-Spec`
-section 10 owed this document, landed.
+no path and passing no check, or an end of the member's channel and seats
+itself as a second peer on that seam, the second capability the receive has
+carried since the ruling of 2026-08-26. The mechanism is the one receive site
+of section 2.3 asking for `MSG_CMSG_CLOEXEC` in the receive itself. The test
+forks a child and confirms it holds no trace handle and no state end, watched
+to fail when the flag is removed from the receive, which is the test
+`weaver-trace-Spec` section 10 owed this document, landed and widened.
 
 **The second walk: the same tool inherits a channel end.** The attack is an
 inherited end handing the tool surface a capability that varies by which end

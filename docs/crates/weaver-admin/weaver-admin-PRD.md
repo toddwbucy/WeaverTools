@@ -5,6 +5,13 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
+**Revised:** 2026-08-26, the standing carries the transport. Per the operator's
+ruling of this date, section 2's standing clause gains what the start now
+makes: the socketpair the first door is, one end to the member with its
+process, the other to the harness inside the enter directive, this crate
+speaking on neither. The pathname wait retires with the pathname it watched,
+the leg established by the enter's first traffic instead, and no seam joins
+section 6's list because carrying a channel's ends is not holding one.
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-25, fifth of this date, the pair stops claiming symmetry.
 Section 2 said the member's claim is partly this crate's and that a perturbation
@@ -238,30 +245,38 @@ pointed at the wrong artifact. The record above and `weaver-types-PRD` section
 has done since the ingest act.** The custodian of `weaver-state-PRD` runs under
 its own account over its own subdirectory of the operator's territory, and the
 party that starts it has to hold three things before any process exists: the
-operator's territory, the agent's resolved identity, and the binding kind the
-inventory settled. This crate holds all three at that moment and no other party
-holds any of them, so the member is this crate's to start. **It is not the
+operator's territory, the binding kind the inventory settled, and the enter,
+the one exchange the harness's end of the pair can cross, which only this
+crate opens. This crate holds all three at
+that moment and no other party holds any of them, so the member is this
+crate's to start. The agent's resolved identity stood third on this list
+while the vector carried its uid, and left it with the ruling of 2026-08-26,
+both of that value's uses having died. **It is not the
 worker's unit and does not become one.** The worker is asked of the init system
 per section 4's sequencing, and the member is a direct child of this crate,
 which is what lets it hold a uid the agent's cannot reach.
 
-**No seam is created by starting it.** This crate speaks to the member never:
-it starts the process, waits for the member's name to appear, and proceeds
-without the leg where the name does not come. Section 6's seam list is unchanged
-by this paragraph, because starting a process is not a channel, and what the
-member serves it serves to the harness and to `weaver-analysis` under their own
-contracts.
+**No seam is created by starting it, and the transport this crate now makes is
+not one either.** Per the operator's ruling of 2026-08-26 this crate creates
+the socketpair the first door is, hands one end to the member with its process,
+carries the other to the harness inside the enter directive, and speaks on
+neither: a courier of ends rather than a party. Section 6's seam list is
+unchanged by this paragraph, because starting a process is not a channel and
+neither is carrying one's ends, and what the member serves it serves to the
+harness and to `weaver-analysis` under their own contracts.
 
-**The wait observes a pathname and nothing more.** A name that has appeared is
-not a member that will answer, and this charter claims no more from the wait
-than that a load does not race ahead of a member that never started. **What
-establishes the leg is the worker's own dial at step 6**, bounded there, and an
-absent or unanswering name is the leg not standing rather than a refused load.
+**Nothing is waited on, because there is no name to watch.** The ruling of
+2026-08-26 retires the pathname wait with the pathname: the pair exists before
+the member does, so a load cannot race a bind that no longer happens. **What
+establishes the leg is the enter's own first traffic**, bounded at the harness
+per the contract's dead-peer clause. A member whose spawn failed puts no end
+on the enter, and one that died after the spawn answers the first traffic as
+a closed pair, the leg not standing either way rather than a refused load.
 
 **The start falls between steps 5 and 6 and takes no step number of its own.**
 The worker's unit is asked for at step 5 and the enter is directed at step 6, and
-the member is started between them, which is what puts the unit's runtime
-directory in place before the member binds inside it. It takes no number because
+the member is started between them, the pair in hand before the enter that
+carries its harness end. It takes no number because
 section 5's rollback discriminates by step and no step of the load turns on the
 member: the leg either stands or does not, and section 4's sequencing is
 unchanged either way.
@@ -535,13 +550,16 @@ order is the substance.
    connects to the socket the worker bound, retrying within a stated bound because
    the bind is the worker's first act and the dial may arrive first, the bound
    being the Spec's to state. The directive carries the session identity, the run
-   ordinal, the kind of the binding, the trace descriptor, the model binding, and,
-   where the kind declares a Gate, the gate instruction, per
-   the contract. The descriptor rides inside the directive over the coordination
-   channel as `SCM_RIGHTS` ancillary payload, per `weaver-harness-PRD` section 5,
-   so the worker receives a handle and never a path and accepts it close-on-exec
-   at its one receive site. Everything after the directive and before the answer
-   is the harness's: it stands up an empty working structure, authors its `load`
+   ordinal, the kind of the binding, the trace descriptor, the state channel's
+   end where the member stands, the model binding, and, where the kind declares
+   a Gate, the gate instruction, per the contract. The descriptors ride inside
+   the directive over the coordination channel as `SCM_RIGHTS` ancillary
+   payload, per `weaver-harness-PRD` section 5, one for the sink and a second
+   for the state end where the leg stands, its absence the leg not standing
+   and never a refused load, so the worker receives handles and never a path
+   and accepts them close-on-exec at its one receive site. Everything after
+   the directive and before the answer is the harness's: it stands up an
+   empty working structure, authors its `load`
    event, which is the record of admin's contact and the origin of the run's
    monotonic clock, asks the SPU to admit the model, and starts Gate last where
    the kind declares one, so no

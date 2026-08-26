@@ -4,6 +4,14 @@
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 
+**Revised:** 2026-08-26, the enter carries a second handle. Per the operator's
+ruling of this date, the supply list gains the state channel's end, the
+harness half of the socketpair admin creates at the member's spawn: admin
+couriers what it never speaks on, the harness receives its member's channel
+the way it receives the sink, and no dial at a derived name remains anywhere
+in the load. The sink's count-is-one sentence scopes to the sink and the
+state end's own rule stands beside it, following the leg rather than the
+kind.
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended and stands so the
@@ -210,7 +218,8 @@ and cannot verify from outside the process, which is what a contract is for, so
 is the Spec's.**
 
 **On this seam the non-inheritance obligation of `weaver-organ-channel` section 2
-lands on the trace sink and on this channel's own end.** The property rides the handle
+lands on the trace sink, on the state channel's end the enter carries since the
+ruling of 2026-08-26, and on this channel's own end.** The property rides the handle
 rather than the thing it opens, so **a receiver that does not ask for it at the moment
 of receipt accepts a handle its children will inherit**, and every child process a tool
 call spawns from that point holds a writable
@@ -236,9 +245,16 @@ Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run reference, the kind of the binding, the trace sink
-handle, the
+handle, the state channel's end where the member stands, the
 SPU instruction, the gate instruction where the kind declares a Gate, and the state
-election the tee applies. The
+election the tee applies. The state channel's end is the harness half of the
+socketpair admin created at the member's spawn, per the operator's ruling of
+2026-08-26 carried at `weaver-harness-state-contract`: admin couriers it and
+speaks on it never. Its absence is the state leg not standing, never a
+refused load, and the two failure moments read differently on purpose: a
+member whose spawn failed puts no end on the enter, and one that died after
+the spawn is delivered and discovered as the closed pair the state
+contract's dead-peer clause already covers. The
 instructions and the election are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU, the gate,
 or the state member, so if admin's intent for any of them does not cross this
@@ -306,15 +322,20 @@ closes when the organs that can raise a fault have charters naming what they rai
 and the first of those is `weaver-spu-PRD`. This document binds nothing of it, the
 shape now being the event kind's, per `weaver-trace-PRD` section 3.1.
 
-**The trace sink handle crosses once, in the enter exchange, under either
-kind.** It is not re-sent, not revoked, and not replaced. A harness that needs a
-handle it was not given has a failed load rather than a second request to make,
-because there is no exchange in which it asks for one. **The count is one and
-does not follow the kind**, both kinds authoring a record and the kind selecting
-the mechanism the harness authors through, per `weaver-agents-PRD` section 6 as
+**Handles cross once, in the enter exchange, under either kind.** None is
+re-sent, revoked, or replaced. A harness that needs a handle it was not given
+has a failed load rather than a second request to make, because there is no
+exchange in which it asks for one. **The sink's count is one and does not
+follow the kind**, both kinds authoring a record and the kind selecting the
+mechanism the harness authors through, per `weaver-agents-PRD` section 6 as
 ruled 2026-08-24. An act earlier that date had the handle crossing only for a
 serving binding, on a reading the ruling replaced, and this sentence is the
-correction rather than a second rule beside it.
+correction rather than a second rule beside it. **The state channel's end
+follows the leg rather than the kind**, per the operator's ruling of
+2026-08-26: it crosses where admin stood the member and is absent where no
+member stands, either kind standing the member per `weaver-agents-PRD`
+section 6, and its absence reads as the leg not standing at the same site the
+dead-peer conversion already covers.
 
 **No exchange carries a path.** Admin sends handles and the harness never learns a
 name, which is the handle discipline of `weaver-harness-PRD` section 5 stated as
@@ -352,7 +373,8 @@ this list.
 **Admin supplies** the session identity and the run reference for the run being
 entered, the kind of the binding, resolved to serving where the declaration is
 silent, the
-trace sink handle, the SPU instruction the fan-out admits,
+trace sink handle, the state channel's end where the member stands, the SPU
+instruction the fan-out admits,
 the gate instruction the fan-out starts where the kind declares a Gate, the
 state election the tee applies,
 resolved to the ruled default where the declaration is silent, and the intent
@@ -405,7 +427,9 @@ ask, because admin answers nothing. The cases:
 
 - the dialing peer's credential is not root, and the connection is refused at the
   accept before any exchange opens
-- the handle is absent, unusable, or does not carry the required flags
+- the sink handle is absent, unusable, or does not carry the required flags,
+  the state channel's end being no refusal ground: its absence is the leg not
+  standing, per section 3
 - an organ the enter fans out to refused, and the refusal names which organ and
   carries its reason, so the aggregate answer is one refusal rather than a report to
   parse

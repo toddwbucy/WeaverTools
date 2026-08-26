@@ -8,6 +8,11 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-26, the state seam loses its name. Section 4's socket
+census recuts one row per the operator's ruling of this date: the state
+channel is a pair admin creates and this crate receives at the enter,
+possession-authenticated like the organ pairs, and no dial at a derived name
+remains. The census still counts four crossing a process line and one link.
 **Revised:** 2026-08-24, the third member is named and its contract owed.
 `weaver-diagnostic` is the mechanism this crate authors a diagnostic-trace
 through, per `weaver-agents-PRD` section 6 as ruled this date, linked on the
@@ -396,8 +401,10 @@ where it has none. The coordination seam is a named socket this crate binds and
 authenticates by credential, root or refused, per `weaver-admin-harness-contract`
 section 2 as of the inversion of 2026-08-05. Two are unnamed pairs this
 crate creates at its organ forks and authenticate by possession. The fourth
-socket is the state seam of the 2026-08-18 charter, credential-authenticated
-as a channel with a name.
+is the state seam of the 2026-08-18 charter, an unnamed pair since the
+operator's ruling of 2026-08-26: admin creates it at the member's spawn and
+this crate receives its end inside the enter directive, beside the sink, so
+it authenticates by possession like the pairs this crate makes itself.
 
 The fifth seam is the one to `weaver-trace`. It crosses no process line, so it is a
 library boundary tagged `link` rather than `socket`, and it authenticates nothing
