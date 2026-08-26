@@ -4,6 +4,10 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-26, a citation follows a renumbering. Section 9's tee
+back-pressure election takes the queue's high-water mark from `weaver-trace-Spec`
+section 12, that Spec's open elections having moved from 11 when the tee took a
+section of its own there. Per issue 351.
 **Revised:** 2026-08-25, the load's elections arrive by two routes. Section 6.1 said
 they arrive in the enter's SPU instruction, which is true of three of them and not
 of the tee's: that one is a sibling of the instruction on the enter payload, per
@@ -2589,7 +2593,7 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The tee back-pressure election.** Blocking, shedding marked, or detaching
   marked, per `weaver-admin-operator-contract` section 3. A measurement
   against a real consumer at a real rate, taken with the queue's high-water
-  mark of `weaver-trace-Spec` section 11, the two settling together.
+  mark of `weaver-trace-Spec` section 12, the two settling together.
 - **The fault payload's shape is closed.** The case set closed across all
   three organs on 2026-08-02 and the shape landed at `weaver-trace-PRD`
   section 3.2 as the floor's `fault-report`, so section 3's fault path is

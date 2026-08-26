@@ -1,10 +1,16 @@
-//! The tee, per `weaver-trace-PRD` section 11: the distillation surface over
-//! the canonical event stream. The mechanism is this crate's because what is
-//! tee'd is this crate's own rendering, and the harness applies it as the one
-//! party that writes. The tee selects and never computes, per the three-way
-//! division of `weaver-state-PRD` section 2: the envelope always rides, the
-//! election ranges over payload key paths alone, and an event the election
-//! does not match costs nothing.
+//! conforms: trace-tee-selects-never-computes
+//! conforms: trace-tee-envelope-not-electable
+//! conforms: trace-tee-projection-verbatim
+//! conforms: trace-tee-no-turn-backpressure
+//!
+//! The tee, per `weaver-trace-PRD` section 11 and its representation in
+//! `weaver-trace-Spec` section 11: the distillation surface over the canonical
+//! event stream. The mechanism is this crate's because what is tee'd is this
+//! crate's own rendering, and the harness applies it as the one party that
+//! writes. The tee selects and never computes, per the three-way division of
+//! `weaver-state-PRD` section 2: the envelope always rides, the election
+//! ranges over payload key paths alone, and an event the election does not
+//! match costs nothing.
 
 use std::collections::BTreeMap;
 use std::io::Write;
@@ -234,7 +240,7 @@ mod tests {
     const LINE: &str = concat!(
         r#"{"session":"alpha-1","run":"r-1","turn":"t-1","kind":"turn.closed","#,
         r#""sequence":"7","subsystem":"harness","wall_ms":1,"monotonic_ns":"2","#,
-        r#""payload":{"close":"clean","request":{"sampling":{"temperature":0.7}}}}"#
+        r#""payload":{"close":"clean","request":{"sampling":{"temperature":0.70}}}}"#
     );
 
     /// The default election: the envelope of every kind and nothing more.
@@ -255,7 +261,9 @@ mod tests {
 
     /// An elected payload key path crosses with the value the canonical
     /// JSON held at it, byte for byte, nesting included, and a path the
-    /// payload does not hold is simply absent.
+    /// payload does not hold is simply absent. The temperature is spelled
+    /// `0.70`, which a re-rendering would collapse to `0.7`, so the
+    /// byte-comparison below is what holds the projection to splicing.
     #[test]
     fn elected_paths_cross_verbatim_and_misses_cost_nothing() {
         let election = Election {
@@ -272,7 +280,7 @@ mod tests {
         let frame = distill(LINE, &election).expect("distills");
         assert!(frame.contains(r#""close":"clean""#), "{frame}");
         assert!(
-            frame.contains(r#""request.sampling":{"temperature":0.7}"#),
+            frame.contains(r#""request.sampling":{"temperature":0.70}"#),
             "{frame}"
         );
         assert!(!frame.contains("absent"), "{frame}");
