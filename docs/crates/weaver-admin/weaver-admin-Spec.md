@@ -997,9 +997,14 @@ from: weaver-admin
 to: admin-init-system-over-command-line
 ```
 
-**The subprocess inherits nothing, because every descriptor this crate holds
-is close-on-exec atomically at creation,** no descriptor existing for an
-instant between its creating call and its flag. This is the behavioural half
+**The subprocess inherits nothing it was not deliberately given, because every
+descriptor this crate holds is close-on-exec atomically at creation,** no
+descriptor existing for an instant between its creating call and its flag.
+The one deliberate gift is the member's own end of the first door's pair, per
+the operator's ruling of 2026-08-26: created atomically flagged like
+everything else and re-armed onto the member's fixed number in the spawn path
+itself, so the inheritance is an act at one site and never a default
+anywhere. This is the behavioural half
 of the custody section 1 opens, and section 10's third walk makes it a test,
 where section 1's half is the ownership the compiler holds. The two halves
 carry separate records because a test cannot demonstrate ownership and the
@@ -1182,7 +1187,9 @@ section 4 has the process retiring with each unload while its holdings stand for
 the next, and the mechanism is the first door's closure: the worker's channel
 closes at unload and the member's serve loop ends with it. A load that fails
 before the enter delivers the harness's end leaves that end with this crate,
-whose invocation exits, closing it: the member reads the closure as the
+whose invocation exits, closing it, and a load that fails after the delivery
+ends the same way, section 5's rollback stopping the worker and the stop
+closing the end the worker took: the member reads either closure as the
 first door's end and retires, so an abandoned member is a bounded cost
 rather than a resident one, on every path alike.
 
@@ -1599,8 +1606,9 @@ adversary is whatever the run tool execs becoming an unintended holder of
 the sink, a connection, or the log. The mechanism is atomic close-on-exec at
 every creating call in this crate, no descriptor existing between creation
 and flag. The test: spawn the subprocess, enumerate its descriptors, confirm
-none of admin's crossed, watched to fail when any single atomic flag is
-downgraded to a later `fcntl`.
+none of admin's crossed but the one the member's spawn deliberately arms,
+the member's own end per section 6's vector clause, watched to fail when any
+single atomic flag is downgraded to a later `fcntl`.
 
 **The fourth walk: a stranger speaks on the coordination channel.** The
 adversary is a process running as the agent's uid, or as any uid on the host

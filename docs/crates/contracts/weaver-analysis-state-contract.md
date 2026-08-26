@@ -200,9 +200,9 @@ direction still has exactly the two ends it had.
   is this contract's whole point and the charter's inversion made real: same
   organ, opposite direction.
 - **The refusal at the accept.** A peer bearing the agent's credential is
-  refused before any byte is read, the inversion of the first door's
-  judgment, and the door itself stands only where the binding declared the
-  diagnostic kind.
+  refused before any byte is read, this member's one credential judgment
+  since the first door authenticates by possession, and the door itself
+  stands only where the binding declared the diagnostic kind.
 - **Silence.** No traffic flows driver-ward, at any time, for any reason.
 
 ## 5. Failure vocabulary

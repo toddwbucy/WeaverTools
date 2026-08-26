@@ -2,6 +2,15 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-26, the first door loses its name. Section 3's seam clause
+recuts per the operator's ruling of this date: the harness channel is a
+socketpair admin creates at the member's spawn, one end inherited and one
+crossing at the enter, authenticated by possession per the first invariant's
+rule for a channel with no name. The preload door becomes the member's one
+named socket and its name moves into this member's own territory. The door's
+judgment clause stops describing an inversion of a judgment that no longer
+exists and states its own: the operator principal admitted, every other peer
+refused.
 **Revised:** 2026-08-24, the second door stands. Section 3 gains the preload
 door, per the operator's ruling of this date and the taxonomy promotion:
 `weaver-analysis-state-contract`, standing only under a diagnostic binding,
@@ -26,15 +35,6 @@ context-injection loop, the ask vocabulary landed in
 `weaver-state-Spec` section 4, and the loop's calling shape landed as the
 seat's state port at `weaver-harness-Spec` section 6. Section 1's
 build-order asymmetry is history and reads as such.
-**Revised:** 2026-08-26, the first door loses its name. Section 3's seam clause
-recuts per the operator's ruling of this date: the harness channel is a
-socketpair admin creates at the member's spawn, one end inherited and one
-crossing at the enter, authenticated by possession per the first invariant's
-rule for a channel with no name. The preload door becomes the member's one
-named socket and its name moves into this member's own territory. The door's
-judgment clause stops describing an inversion of a judgment that no longer
-exists and states its own: the operator principal admitted, every other peer
-refused.
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-PRD`
 **Parent:** `weaver-harness-PRD`
@@ -263,7 +263,7 @@ is the deployment's.
 **The store is reached through the seam and never as a file.** A database file
 opened from two processes would be a seam crossing a process line without a
 socket, which the first invariant forbids however convenient the driver makes
-it. The harness's speed rides the named socket, which this workshop has
+it. The harness's speed rides the seam's standing channel, which this workshop has
 measured well below any control loop's cadence, and a caller that someday
 needs faster than the seam is a ruling for that day rather than a shared file
 today.

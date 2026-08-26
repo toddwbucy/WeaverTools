@@ -1,6 +1,6 @@
 ---
 title: weaver-state
-summary: the session custodian: sqlite behind a credential-checked socket, ingest and serve
+summary: the session custodian: sqlite behind the member's own channel, ingest and serve
 version: v0.1
 date: 2026-08-24
 commit: unreleased
@@ -65,8 +65,9 @@ it.
 
 ## Seams
 
-**One, to the engine above**, on a socket that authenticates its peer by
-credential - see [the contracts page](../contracts.md). It is a member seam
+**One, to the engine above**, on a nameless socketpair that authenticates its
+peer by possession as of the ruling of 2026-08-26 - see
+[the contracts page](../contracts.md). It is a member seam
 rather than an organ channel: one party asks. Two kinds of traffic ride it and
 no third - the distillate flowing in, and served answers flowing back when the
 engine or a loop in its seat asks.

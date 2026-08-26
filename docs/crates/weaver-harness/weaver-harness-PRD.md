@@ -8,6 +8,11 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-26, the state seam loses its name. Section 4's socket
+census recuts one row per the operator's ruling of this date: the state
+channel is a pair admin creates and this crate receives at the enter,
+possession-authenticated like the organ pairs, and no dial at a derived name
+remains. The census still counts four crossing a process line and one link.
 **Revised:** 2026-08-24, the third member is named and its contract owed.
 `weaver-diagnostic` is the mechanism this crate authors a diagnostic-trace
 through, per `weaver-agents-PRD` section 6 as ruled this date, linked on the
@@ -48,11 +53,6 @@ port per the Spec's section 6.
 socket seam to `weaver-state` under `weaver-harness-state-contract`, the
 harness declaring as the asking side, with the member reached over a wire
 rather than linked and the dependency surface unchanged.
-**Revised:** 2026-08-26, the state seam loses its name. Section 4's socket
-census recuts one row per the operator's ruling of this date: the state
-channel is a pair admin creates and this crate receives at the enter,
-possession-authenticated like the organ pairs, and no dial at a derived name
-remains. The census still counts four crossing a process line and one link.
 **Date filed:** 2026-07-28
 **Revised:** 2026-08-12, second of this date, the receipt retires. The report
 the SPU emits is owed nothing back at all, so section 2's dispatch clerks it

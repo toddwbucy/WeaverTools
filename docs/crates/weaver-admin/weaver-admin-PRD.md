@@ -245,9 +245,12 @@ pointed at the wrong artifact. The record above and `weaver-types-PRD` section
 has done since the ingest act.** The custodian of `weaver-state-PRD` runs under
 its own account over its own subdirectory of the operator's territory, and the
 party that starts it has to hold three things before any process exists: the
-operator's territory, the agent's resolved identity, and the binding kind the
-inventory settled. This crate holds all three at that moment and no other party
-holds any of them, so the member is this crate's to start. **It is not the
+operator's territory, the binding kind the inventory settled, and the enter
+seam the harness's end of the pair must cross. This crate holds all three at
+that moment and no other party holds any of them, so the member is this
+crate's to start. The agent's resolved identity stood third on this list
+while the vector carried its uid, and left it with the ruling of 2026-08-26,
+both of that value's uses having died. **It is not the
 worker's unit and does not become one.** The worker is asked of the init system
 per section 4's sequencing, and the member is a direct child of this crate,
 which is what lets it hold a uid the agent's cannot reach.
@@ -265,14 +268,14 @@ harness and to `weaver-analysis` under their own contracts.
 2026-08-26 retires the pathname wait with the pathname: the pair exists before
 the member does, so a load cannot race a bind that no longer happens. **What
 establishes the leg is the enter's own first traffic**, bounded at the harness
-per the contract's dead-peer clause, and a member that never started answers
-that traffic as a closed pair, the leg not standing rather than a refused
-load.
+per the contract's dead-peer clause. A member whose spawn failed puts no end
+on the enter, and one that died after the spawn answers the first traffic as
+a closed pair, the leg not standing either way rather than a refused load.
 
 **The start falls between steps 5 and 6 and takes no step number of its own.**
 The worker's unit is asked for at step 5 and the enter is directed at step 6, and
-the member is started between them, which is what puts the unit's runtime
-directory in place before the member binds inside it. It takes no number because
+the member is started between them, the pair in hand before the enter that
+carries its harness end. It takes no number because
 section 5's rollback discriminates by step and no step of the load turns on the
 member: the leg either stands or does not, and section 4's sequencing is
 unchanged either way.

@@ -218,7 +218,8 @@ and cannot verify from outside the process, which is what a contract is for, so
 is the Spec's.**
 
 **On this seam the non-inheritance obligation of `weaver-organ-channel` section 2
-lands on the trace sink and on this channel's own end.** The property rides the handle
+lands on the trace sink, on the state channel's end the enter carries since the
+ruling of 2026-08-26, and on this channel's own end.** The property rides the handle
 rather than the thing it opens, so **a receiver that does not ask for it at the moment
 of receipt accepts a handle its children will inherit**, and every child process a tool
 call spawns from that point holds a writable
@@ -249,8 +250,11 @@ SPU instruction, the gate instruction where the kind declares a Gate, and the st
 election the tee applies. The state channel's end is the harness half of the
 socketpair admin created at the member's spawn, per the operator's ruling of
 2026-08-26 carried at `weaver-harness-state-contract`: admin couriers it and
-speaks on it never, and its absence is the state leg not standing, never a
-refused load. The
+speaks on it never. Its absence is the state leg not standing, never a
+refused load, and the two failure moments read differently on purpose: a
+member whose spawn failed puts no end on the enter, and one that died after
+the spawn is delivered and discovered as the closed pair the state
+contract's dead-peer clause already covers. The
 instructions and the election are in the directive because the
 ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU, the gate,
 or the state member, so if admin's intent for any of them does not cross this
@@ -369,7 +373,8 @@ this list.
 **Admin supplies** the session identity and the run reference for the run being
 entered, the kind of the binding, resolved to serving where the declaration is
 silent, the
-trace sink handle, the SPU instruction the fan-out admits,
+trace sink handle, the state channel's end where the member stands, the SPU
+instruction the fan-out admits,
 the gate instruction the fan-out starts where the kind declares a Gate, the
 state election the tee applies,
 resolved to the ruled default where the declaration is silent, and the intent
@@ -422,7 +427,9 @@ ask, because admin answers nothing. The cases:
 
 - the dialing peer's credential is not root, and the connection is refused at the
   accept before any exchange opens
-- the handle is absent, unusable, or does not carry the required flags
+- the sink handle is absent, unusable, or does not carry the required flags,
+  the state channel's end being no refusal ground: its absence is the leg not
+  standing, per section 3
 - an organ the enter fans out to refused, and the refusal names which organ and
   carries its reason, so the aggregate answer is one refusal rather than a report to
   parse

@@ -2,6 +2,15 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-26, the first door's end arrives with the process. Per the
+operator's ruling of this date: section 2 stops judging a credential on the
+first door, the end being an inherited half of a pair admin creates at the
+spawn and possession being the authentication for a channel with no name.
+Section 4's preload judgment stops describing an inversion and states its own,
+admit the operator principal and refuse the rest, which frees the vector of
+the agent's uid, both of that value's uses having died with the ruling. The
+preload name binds under this member's own territory rather than the worker's
+runtime directory.
 **Revised:** 2026-08-25, third of this date, the pair stops claiming symmetry.
 Section 4 described the other half as holding the name given only under a
 diagnostic binding, which is one direction, and said a perturbation of either
@@ -68,15 +77,6 @@ passes its stated trigger and stands with the reasoning recorded, and
 section 6 closes the serve surface election, the transformation vocabulary
 gaining its first member. Arrives with the context-injection loop's act,
 per the contract's change protocol.
-**Revised:** 2026-08-26, the first door's end arrives with the process. Per the
-operator's ruling of this date: section 2 stops judging a credential on the
-first door, the end being an inherited half of a pair admin creates at the
-spawn and possession being the authentication for a channel with no name.
-Section 4's preload judgment stops describing an inversion and states its own,
-admit the operator principal and refuse the rest, which frees the vector of
-the agent's uid, both of that value's uses having died with the ruling. The
-preload name binds under this member's own territory rather than the worker's
-runtime directory.
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`
@@ -137,9 +137,12 @@ The first door's end arrives with the process, per the operator's ruling of
 2026-08-26: admin creates the pair at the spawn and this member inherits its
 end, so the peer is authenticated by possession and no credential is judged
 on this door, the one party that can hold the other end being the one the
-enter handed it to. The end's number on the vector is the code act's to
-elect, per the choreography election below, narrowed once already by section
-4 and now again by the ruling: what remains that act's is the number alone.
+enter handed it to. The end's number is the code act's to elect, a fixed
+convention between this crate and admin rather than a value the vector
+carries, so the vector's counts are the territory's and the preload path's
+alone, per `weaver-admin-Spec` section 6. The choreography election below is
+narrowed once already by section 4 and now again by the ruling: what remains
+that act's is the number alone.
 The preload door's name arrives on the vector under a diagnostic binding and
 binds under this member's own territory, the credential judgment of section
 4 unchanged on it.
@@ -322,7 +325,7 @@ descriptor. The credential judgment is this member's one, the first door
 authenticating by possession per the operator's ruling of 2026-08-26: the
 accept on the preload name admits the operator principal and refuses every
 other peer before any byte is read, the agent's among them and no longer
-knowable by name, the vector having dropped the agent's uid with the first
+knowable by number, the vector having dropped the agent's uid with the first
 door's judgment.
 
 **The seal is a per-standing fact, held apart from the transport, and the

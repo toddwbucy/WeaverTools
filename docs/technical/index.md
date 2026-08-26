@@ -60,8 +60,8 @@ A crate that governs a domain and holds a two-initiator channel with the harness
 
 - [weaver-trace](weaver-agents/weaver-trace.md) - the recorder, and the working
   structure the loop reasons over
-- [weaver-state](weaver-agents/weaver-state.md) - the session custodian, sqlite behind a
-  credential-checked socket
+- [weaver-state](weaver-agents/weaver-state.md) - the session custodian, sqlite behind
+  the member's own channel
 
 ## Neither
 

@@ -44,11 +44,12 @@ comes up as the provisioned identity, binds the coordination socket inside its
 own sandbox, and sits there being one sealed agent. The organ pairs are
 created during the enter fan-out, in the order the binding declares - the
 decoder's residency confirms before the gate exists at all, and Gate stands
-last. **One inbound listener, and one other name.** The coordination socket is
+last. **One inbound listener, and no other name.** The coordination socket is
 the harness's one listener, dialable by construction with the credential check
-refusing. The state seam rides a second named socket, stood at load and
-credential-checked the same way. The organ pairs have no names at all, and
-possession is their authentication.
+refusing. The state seam rides a nameless pair since the ruling of
+2026-08-26, admin creating it at the member's spawn and the harness receiving
+its end at the enter. The organ pairs have no names at all, and possession is
+the authentication of every pair alike.
 
 **The machinery loop 1 composes against.** The seat, granted on work that
 arrives owed an answer and on nothing else. A turn begins at the gate and
@@ -101,8 +102,9 @@ line and is tagged link rather than socket. Contracts for each are on
 [the contracts page](../contracts.md).
 
 Authentication follows the channel's nature: by credential where a socket has
-a name - coordination, state - and by possession where it has none, the organ
-pairs existing only as descriptors the right processes hold.
+a name - coordination, and the member's preload door - and by possession
+where it has none, the state pair and the organ pairs existing only as
+descriptors the right processes hold.
 
 **The charter's own count is five and is short by two** - the classify seam
 was declared on the SPU's side after that count was taken, and residency and
