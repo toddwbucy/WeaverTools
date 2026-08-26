@@ -12,7 +12,7 @@ of one fact: this declaration, the enter payload, the tee's own, and the
 record's. Section 2 states that this document is authoritative for the election's
 declared shape, that what the term means on the state seam is
 `weaver-harness-state-contract`'s, and that a divergence of shape is a defect
-against this document, per G5. **Field spellings are each renderer's**: this
+against that section, per G5. **Field spellings are each renderer's**: this
 declaration renames for the operator's file and `weaver-trace` renders for a seam
 that already parses it, so the record's `all_kinds` is not a divergence. Unifying
 the types is not owed. Per issue 347.
@@ -684,8 +684,9 @@ second form on the `load` event, per `weaver-trace-Spec` section 3, which makes
 four representations of one fact: this declaration, the enter payload, the tee's
 own, and the record's. **Field spellings are each renderer's and are not shape**:
 this declaration renames for the operator's file and the record renders
-`all_kinds`, per `weaver-trace-Spec` section 3, which argues why moving either
-would move a live seam. **A divergence of shape among them is a defect against
+`all_kinds`, which `weaver-trace-Spec` section 3 argues cannot be renamed
+without moving a live seam. This side renames for a file rather than a seam,
+per section 2 above. **A divergence of shape among them is a defect against
 this section** rather than a choice a reader makes, per G5, and unifying the types is
 not owed: it would cost `weaver-trace` a no-dependency property that is load
 bearing for its own reasons in order to buy a name.

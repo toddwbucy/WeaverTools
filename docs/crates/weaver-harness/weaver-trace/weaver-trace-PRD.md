@@ -585,15 +585,14 @@ costs one event per run rather than one member per event. What it names
 is each election individually and never a profile, for the drift reason
 section 3.1 states.
 
-**The tee's election is one of them and was left out.** The three the `load`
-event names are the readout, the field's depth, and the surprisal, each an
-election about what the model reports. The tee's is an election about what
-leaves the record for the state member, and the clause above reaches it
-unchanged: a tee that elected nothing and a tee that was never asked are the
-same absence on disk. **Without it the record says what the model did and not
-what the agent's state was built from**, which are different because the tee
-both selects which events cross and projects which payload paths ride with
-them, per `weaver-harness-state-contract` section 2.
+**The tee's election is one of them and was left out.** The three the `load` event named
+until 2026-08-25 were the readout, the field's depth, and the surprisal, each an
+election about what the model reports. The tee's is an election about what leaves the
+record for the state member, and the clause above reaches it unchanged: a tee that
+elected nothing and a tee that was never asked are the same absence on disk. **Without
+it the record says what the model did and not what the agent's state was built from**,
+which are different because the tee both selects which events cross and projects which
+payload paths ride with them, per `weaver-harness-state-contract` section 2.
 
 **A replay under the wrong projection does not fail.** It lands, the loop asks,
 an answer comes back, and what the run produces is a plausible replay of a
@@ -1147,9 +1146,12 @@ to no arrangement and is an election rather than a default, per the operator
 of 2026-08-21, with a per-generation perplexity kept in navigation so a cold
 record stays rankable without carrying a reading per position. **The
 election landed in the act of this date that added it**, `weaver-spu-PRD`
-section 13.12, which is where it had to land: an election is a member of the
+section 13.12, which is where it had to land: that election is a member of the
 SPU instruction and reaches this crate across two contracts, so every party
-merged together rather than this charter ruling ahead of them.
+merged together rather than this charter ruling ahead of them. **The route is
+per election rather than general**: the three the model reports ride the
+instruction, and the tee's is a sibling of it on the enter payload, per
+`weaver-types-Spec` section 4.
 
 **The load's elections are four and the tier is the reason they are named
 one by one.** A record whose posture is recoverable from itself is what

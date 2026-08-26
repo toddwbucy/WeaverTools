@@ -281,7 +281,7 @@ its position and is paired by that.
 than crossing empty, so a consumer counts what was produced instead of
 filtering what was not. A party that receives no field message learns
 nothing about why from the seam, the election's record being the load
-event's per `weaver-trace-PRD` section 3.2 and not this seam's to carry.
+event's per `weaver-trace-PRD` section 3.1 and not this seam's to carry.
 
 **The stream changes the seam's rhythm
 and not the record's

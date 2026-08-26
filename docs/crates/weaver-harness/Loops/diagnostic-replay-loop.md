@@ -1,10 +1,10 @@
 # Diagnostic Replay Loop
 
-**Status:** MERGED v0.4, 2026-08-25. The workflow document for the diagnostic
-replay loop, filed under the harness's `Loops/` container per the Document Format's
-container entry. It argues no edges of its own: the seams it walks are declared in the
-crate charters, and a graph block here would duplicate a record that already has a
-home.
+**Status:** MERGED v0.4, 2026-08-25. The workflow document for the diagnostic replay
+loop, filed under the harness's `Loops/` container per the Document Format's container
+entry. It argues no edges of its own: the seams it walks are declared in the crate
+charters, and a graph block here would duplicate a record that already has a home.
+
 **Revised:** 2026-08-25, the input identity gains the tee's election. Section 3's
 step one takes it as a requirement, claim-relative like the rest: it is the rule
 that decided what the original agent's state held, so a replay preloaded under a
@@ -17,11 +17,8 @@ diverged. v0.2 removed the record on the reading that a diagnostic binding autho
 nothing. The operator's ruling of the same date restored the record as a different
 record: the run authors a diagnostic-trace through `weaver-diagnostic`, the harness's
 third member, and `weaver-analysis` is the crate outside that preloads the replay and
-reads what it produced. So v0.1's instinct was right and its record was the wrong one.
-The workflow document for the diagnostic replay loop, filed under the harness's `Loops/`
-container per the Document Format's container entry. It argues no edges of its own: the
-seams it walks are declared in the crate charters, and a graph block here would
-duplicate a record that already has a home.
+reads what it produced. So v0.1's instinct was right and its record was the wrong
+one.
 
 **Document ID:** `diagnostic-replay-loop`
 **Editorial:** Per the Working Rules.

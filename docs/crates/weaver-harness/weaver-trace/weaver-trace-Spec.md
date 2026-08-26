@@ -655,9 +655,12 @@ to: trace-payload-untagged-kind-discriminant
 ```
 
 **A bracket kind carries no payload member at all, rather than a null one.** The
-run and session brackets and the turn's opening are identified entirely by their
+closing brackets and the turn's opening are identified entirely by their
 envelope, so `payload` is `Option<Payload>` and those kinds carry `None` with
-`skip_serializing_if`, emitting `{"kind":"load"}`. Verified against serde_json
+`skip_serializing_if`, emitting `{"kind":"unload"}`. **`load` is not among
+them**, carrying `Elections` since the elections joined the bracket, which this
+clause's example named until 2026-08-25 and the kind table below has said
+throughout. Verified against serde_json
 1.x: a unit variant inside an untagged enum renders `"payload":null` instead,
 which is a member whose only content is the statement that there is no content,
 and a consumer keying on member presence would see two stream shapes for one
