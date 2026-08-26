@@ -1369,12 +1369,14 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The enter directive and its ancillary payload are one message.** The
-envelope is rendered to JSON and sent with the sink's descriptor as
-`SCM_RIGHTS` control data on the same `sendmsg`, which is what makes the
-descriptor cross once, in the enter exchange, with no separate delivery to
-order against anything. The exchange identity is the floor's
-`ExchangeId { opener: Admin, ordinal }`, ordinals assigned serially by this
-crate, per `weaver-organ-channel` section 1.
+envelope is rendered to JSON and sent with the sink's descriptor, and the
+state channel's end where the member stands, as `SCM_RIGHTS` control data on
+the same `sendmsg`, which is what makes each descriptor cross once, in the
+enter exchange, with no separate delivery to order against anything, the
+receiver telling the two apart by position per the contract's supply order.
+The exchange identity is the floor's `ExchangeId { opener: Admin, ordinal }`,
+ordinals assigned serially by this crate, per `weaver-organ-channel`
+section 1.
 
 **The kind is resolved at the inventory and the payload carries it decided.** The
 declaration's `binding_kind` is an option whose absence means serving, per

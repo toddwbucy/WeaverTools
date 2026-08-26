@@ -550,13 +550,16 @@ order is the substance.
    connects to the socket the worker bound, retrying within a stated bound because
    the bind is the worker's first act and the dial may arrive first, the bound
    being the Spec's to state. The directive carries the session identity, the run
-   ordinal, the kind of the binding, the trace descriptor, the model binding, and,
-   where the kind declares a Gate, the gate instruction, per
-   the contract. The descriptor rides inside the directive over the coordination
-   channel as `SCM_RIGHTS` ancillary payload, per `weaver-harness-PRD` section 5,
-   so the worker receives a handle and never a path and accepts it close-on-exec
-   at its one receive site. Everything after the directive and before the answer
-   is the harness's: it stands up an empty working structure, authors its `load`
+   ordinal, the kind of the binding, the trace descriptor, the state channel's
+   end where the member stands, the model binding, and, where the kind declares
+   a Gate, the gate instruction, per the contract. The descriptors ride inside
+   the directive over the coordination channel as `SCM_RIGHTS` ancillary
+   payload, per `weaver-harness-PRD` section 5, one for the sink and a second
+   for the state end where the leg stands, its absence the leg not standing
+   and never a refused load, so the worker receives handles and never a path
+   and accepts them close-on-exec at its one receive site. Everything after
+   the directive and before the answer is the harness's: it stands up an
+   empty working structure, authors its `load`
    event, which is the record of admin's contact and the origin of the run's
    monotonic clock, asks the SPU to admit the model, and starts Gate last where
    the kind declares one, so no
