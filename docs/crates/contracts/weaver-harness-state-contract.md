@@ -2,7 +2,8 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-08-25, the election is recorded as well as sent. Section 7's
+**Revised:** 2026-08-25, the election is recorded as well as sent. The Vocabulary
+section's
 `election` term gains that the same rule is written to the `load` event, per
 `weaver-trace-Spec` section 3, so a reader of a finished record knows what this
 seam carried without being told. Nothing of the seam moves: the opener is

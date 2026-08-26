@@ -384,16 +384,15 @@ pub struct Elections {
     pub residual_readout: bool,
     pub field: Option<u32>,
     pub surprisal: bool,
-    pub tee: Election,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tee: Option<Election>,
 }
 
-#[serde(rename_all = "kebab-case")]
 pub struct Election {
     pub all_kinds: bool,
     pub keys: Vec<ElectedKind>,
 }
 
-#[serde(rename_all = "kebab-case")]
 pub struct ElectedKind {
     pub kind: String,
     pub paths: Vec<String>,
@@ -897,19 +896,24 @@ crate's own `Election`, which the tee already holds, so the record carries the
 rule in the shape the tee applied it in and no reader reconstructs it from a
 neighbour's spelling.
 
-**The record spells it as the declaration spells it, which takes an explicit
-election.** `weaver-types-Spec` section 2 renames that type's fields to
-kebab-case for the operator's file, and a record rendering `all_kinds` beside a
-declaration reading `all-kinds` would put two spellings of one fact on disk,
-which is the one-name-two-nodes defect read on a wire. So this crate's `Election`
-carries the same rename. **It derives `Serialize` alone and that is not enough
-for what this member is for.** A replay reads the rule off the record, which is a
-deserialization, and this crate deserializes nothing - it writes. The reader is
-`weaver-analysis`, whose Spec is owed, and **the shape it parses is this
-section's** rather than a spelling it invents: the two crates answer to one
-rendering because they answer to one rename.
+**The record spells it as the seam spells it, and that is not the declaration's
+spelling.** `weaver-types-Spec` section 2 renames the declared type's fields to
+kebab-case for the operator's file, so the declaration reads `all-kinds` and this
+member renders `all_kinds`. **The difference stands rather than being reconciled,
+because this type is the state seam's opener wire format** and not only the
+record's: `opener` renders it and the custodian parses it by those names. A
+rename here would move a live seam to spell a record more prettily, and the
+custodian's parse would fall back to the default election with nothing reported.
+**Two spellings of one fact is a cost this section names rather than pays to
+avoid**, and the reader that meets both is told which is which here.
 
-**One fact, four representations, and this act names the authority.** The operator
+**A replay reads the rule off the record, which is a deserialization, and this
+crate performs none of that read.** The reader is `weaver-analysis`, whose Spec
+is owed, and **the shape it parses is this section's** rather than a spelling it
+invents.
+
+**One fact, four representations, and their authorities were named before this
+act.** The operator
 declares it as `weaver-types`' `StateElection`, admin resolves it into the enter
 payload, this crate holds it as `Election` for the tee, and the record now carries that
 third form. **The duplication between the two types is forced rather than sloppy**: this
@@ -922,15 +926,16 @@ section 2's, and a divergence in this crate's shape is a defect against it, per 
 this crate is authoritative for is the record's rendering of it, which is this section.
 Unifying the types is not owed and would cost the no-dependency property to buy a name.
 
-**It is not optional because every load has one.** A deployment that elects
-nothing still runs under the default, the envelope of every kind, per charter
-section 11, so there is no load whose tee election is absent and a member that
-could be absent would invite a reader to treat the default as unknown. **What is
-absent is the member itself, in every record written before this act**, and that
-absence means the tee's election is unrecoverable rather than defaulted. Such a
-record replays its token path and cannot be certified for state, per the
-compatibility rule of section 3: an added member is optional at the read and the
-act adding it says what its absence means.
+**It is an `Option` at the read and never absent from a record this crate
+writes.** Every load has an election, a deployment that elects nothing still
+running under the default per charter section 11, so this crate emits the member
+on every `load` event from this act forward. The `Option` is for the reader, and
+it is what section 3's compatibility rule requires of any added member: **absence
+means the record predates the member**, never that the election was the default.
+A record carrying no `tee` parses whole and replays its token path, and cannot be
+certified for state because the rule that built the state is unrecoverable from
+it. Reading absence as the default would be the silent-wrong this member exists
+to prevent, arriving by the other door.
 
 **What this member buys is that a reader stops guessing what the state held.**
 The tee selects which events cross and projects which payload paths ride, so a
@@ -1506,7 +1511,7 @@ through 9, rather than gathered here, per Document Format section 6: this sectio
 sorts by instrument and the arguments are elsewhere, so a block here would sit
 apart from the prose that earns it. Thirty-eight sit there and three sit at the end of
 this section, being the claims argued only here. Seventeen of the forty-one come
-from this section's own sorting and twenty-two from the elections outside it, the
+from this section's own sorting and twenty-four from the elections outside it, the
 path-taking prohibition counting here rather than as an election because it was
 divided out of this section's own bullet and never elected, per Document Format
 section 3.
@@ -1536,7 +1541,7 @@ Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
 **Thirty-seven claims grounding in no invariant is the expected result and not a
 gap**, per Document Format section 4: sixteen of the forty-one are section 3's
-event schema and twelve of those fourteen ground in nothing, a schema being
+event schema and fourteen of those sixteen ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
 **Two calls are worth stating rather than leaving to be read.** The two contract

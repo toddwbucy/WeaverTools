@@ -4,6 +4,13 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, the load's elections arrive by two routes. Section 4 said
+they arrive in the enter's SPU instruction, which is true of three of them and not
+of the tee's: that one is a sibling of the instruction on the enter payload, per
+`weaver-types-Spec` section 4. The clause names both routes, and names the tee's
+election as joining the `load` declaration this date, per `weaver-trace-Spec`
+section 3. Its citation of `weaver-trace-PRD` moves from 3.2 to 3.1, where the
+clause it cites has always sat. Per issue 347.
 **Revised:** 2026-08-24, eighth of this date, the seat's criterion enters this
 Spec's own ledger. `diagnostic-replay-loop` section 2 named a gap section 6.2
 opens on a Gateless binding, the seat being granted on work that arrives owed an

@@ -5,13 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
-**Revised:** 2026-08-25, this Spec is named the election's authority.
+**Revised:** 2026-08-25, this Spec is named the election's shape authority.
 `weaver-trace` holds a second `Election` of this shape because it links nothing,
 and from this date the record carries that form too, making four representations
 of one fact: this declaration, the enter payload, the tee's own, and the
-record's. Section 2 states that this document is authoritative for the
-election means and that divergence is a defect against it, per G5, and that
-unifying the types is not owed. Per issue 347.
+record's. Section 2 states that this document is authoritative for the election's
+declared shape and its field spellings, that what the term means on the state seam
+is `weaver-harness-state-contract`'s, and that a divergence in shape is a defect
+against this document, per G5. Unifying the types is not owed. Per issue 347.
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended and stands so the
 reversal is visible: `trace_sink` goes back to required under either kind,
