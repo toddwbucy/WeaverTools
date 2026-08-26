@@ -38,6 +38,18 @@ async fn main() -> anyhow::Result<()> {
         cfg.agents.len(),
         cfg.server
     );
+    if cfg.admin_env {
+        // The recommended sudoers fragment permits only the wrapper,
+        // which this pairing does not invoke - and the mismatch
+        // surfaces as a verb refusal, not here, unless it is named
+        // here (review of #350).
+        tracing::warn!(
+            "admin_env = true: verbs pass WEAVER_ADMIN_CONFIG through sudo, which the \
+             recommended wrapper-shape sudoers fragment denies. If verbs refuse, install \
+             deploy/weaver-admin-verb and set admin_bin to it with admin_env = false, or \
+             use the fragment's direct-binary alternative."
+        );
+    }
 
     tokio::select! {
         _ = wire::connector_run(cfg) => {}

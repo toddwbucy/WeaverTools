@@ -68,6 +68,10 @@ async fn route(
         None => return Ok(()),
     };
     let members = registry::channel_members(store, event.channel_id).await?;
+    // One refused target never silences the rest of the fan-out: the
+    // failures collect and surface as one app-error in the channel,
+    // beside the answers that did dispatch.
+    let mut failures: Vec<String> = Vec::new();
     for target in mentioned(text, &members) {
         if target.kind == "human" || target.respond != "mention" {
             continue;
@@ -76,15 +80,37 @@ async fn route(
             continue;
         }
         if target.kind == "agent" {
-            queues.enqueue(Invocation {
+            if let Err(e) = queues.enqueue(Invocation {
                 channel_id: event.channel_id,
                 agent_participant_id: target.id,
                 agent_name: target.name.clone(),
-            })?;
+            }) {
+                failures.push(format!("@{}: {e}", target.name));
+            }
         }
         // kind == "model": the upstream adapter is not yet implemented
         // (Spec section 10); a mention of a model participant is
         // ignored until it is, rather than half-answered.
+    }
+    if !failures.is_empty() {
+        // Best effort: invocations are already dispatched, and a
+        // failure here propagating out would surface as a retryable
+        // error to the poster - whose retry would re-enqueue mentions
+        // that already ran (review of #350, round three).
+        if let Err(e) = store
+            .append(crate::store::NewEvent {
+                channel_id: event.channel_id,
+                participant_id: None,
+                kind: "app-error".into(),
+                body: Some(format!("mention fan-out incomplete - {}", failures.join(", "))),
+                run_label: None,
+                turn_label: None,
+                close_kind: None,
+            })
+            .await
+        {
+            tracing::error!("fan-out failures not recorded in the channel: {e}");
+        }
     }
     Ok(())
 }

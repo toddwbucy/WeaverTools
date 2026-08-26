@@ -37,3 +37,30 @@ reasons until every step is done, so run it after each step if lost.
 
 GPU placement is the declaration's `devices` field. The SPU refuses a
 conflicted device at admission and never evicts.
+
+## The posture before IAM, named where a deployer meets it
+
+The sudoers rule is the one privilege widening this application asks of
+the box, and the path to it is shorter than the notes above imply: v1
+sessions are anonymous, so anyone who can reach the listener and types
+a name from the config's `admins` list holds the admin role, and the
+admin role drives these verbs. The trust boundary is the LAN and the
+box until the IAM act lands (weaver-web-PRD section 8, item 2), and a
+deployer widening `listen` beyond a trusted LAN before that act is
+undoing the deployment's one safety assumption.
+
+Two shapes for the rule itself, the wrapper being the exact one:
+
+- **Wrapper (recommended):** install `deploy/weaver-admin-verb`
+  root-owned at a root-owned path, edit its two box-fact lines, point
+  the sudoers rule at the wrapper with no SETENV, and set the
+  connector's `admin_bin` to the wrapper with `admin_env = false`. The
+  widening is then exactly three verbs on validated agent names with a
+  fixed config.
+- **Direct binary:** the rule names the admin binary with wildcarded
+  arguments and permits the config variable through a
+  command-specific `env_keep` (the shipped fragment's commented
+  alternative shows the shape - never a blanket SETENV, which would
+  permit every variable), and it is still wider than "narrow"
+  suggests. It works, and the wrapper is what makes the description
+  exact.

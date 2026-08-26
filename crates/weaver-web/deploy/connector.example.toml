@@ -12,10 +12,15 @@ server = "127.0.0.1:8081"
 # Agent declarations, served read-only to the admin surface.
 agent_declarations = "/etc/weaver/agents"
 
-# Where this box installed the admin binary and its config - deployment
-# facts that differ per box (defaults shown).
-#admin_bin    = "/usr/local/libexec/weaver/weaver-admin"
-#admin_config = "/etc/weaver/config"
+# The verb invocation, paired with the shipped sudoers fragment: the
+# root-owned wrapper from deploy/weaver-admin-verb, which validates
+# its verb and agent and fixes the admin config itself. These two
+# lines and the fragment agree out of the box (review of #350). For a
+# direct-binary deployment instead, set admin_bin to the admin binary,
+# admin_env = true, admin_config to its config location, and use the
+# fragment's commented alternative.
+admin_bin = "/usr/local/libexec/weaver-web/weaver-admin-verb"
+admin_env = false
 
 [[agents]]
 name  = "alpha"

@@ -1,0 +1,25 @@
+#!/bin/sh
+# Root-owned wrapper making the sudoers widening exact (issue #337):
+# one verb from the closed set, one bare agent name, the admin config
+# fixed here rather than caller-supplied. Install root:root 0755 at a
+# root-owned path (for example /usr/local/libexec/weaver-web/), point
+# the sudoers fragment at it with no SETENV, and set the connector's
+# admin_bin to this path with admin_env = false.
+#
+# Two lines below are box facts - set them at install:
+ADMIN_BIN=/usr/local/libexec/weaver/weaver-admin
+ADMIN_CONFIG=/etc/weaver/config
+
+set -eu
+verb="${1:?usage: weaver-admin-verb <verb> <agent>}"
+agent="${2:?usage: weaver-admin-verb <verb> <agent>}"
+case "$verb" in
+  validate|load|unload) ;;
+  *) printf '{"kind":"refused_by_wrapper","reason":"no such verb"}\n'; exit 64 ;;
+esac
+case "$agent" in
+  *[!a-zA-Z0-9_-]*|"")
+    printf '{"kind":"refused_by_wrapper","reason":"malformed agent name"}\n'; exit 64 ;;
+esac
+WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" export WEAVER_ADMIN_CONFIG
+exec "$ADMIN_BIN" "$verb" "$agent"

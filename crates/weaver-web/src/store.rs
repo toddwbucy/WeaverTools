@@ -80,6 +80,25 @@ enum WriteCmd {
     },
 }
 
+/// The typed refusal for a participant name held by another kind, so
+/// a caller can skip exactly this conflict and propagate everything
+/// else - a transport failure must not ride the same swallow (review
+/// of #350).
+#[derive(Debug)]
+pub struct KindConflict(pub String);
+
+impl std::fmt::Display for KindConflict {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "participant name '{}' is held by a different kind and was not touched",
+            self.0
+        )
+    }
+}
+
+impl std::error::Error for KindConflict {}
+
 #[derive(Clone)]
 pub struct Store {
     pub pool: PgPool,
@@ -143,10 +162,17 @@ impl Store {
         kind: &str,
         adapter: Option<&str>,
     ) -> anyhow::Result<i64> {
+        let conflict_name = name.to_owned();
         let (name, display, kind) = (name.to_owned(), display.to_owned(), kind.to_owned());
         let adapter = adapter.map(|s| s.to_owned());
         self.send(|reply| WriteCmd::CreateParticipant { name, display, kind, adapter, reply })
             .await
+            .map_err(|e| match e.downcast_ref::<sqlx::Error>() {
+                Some(sqlx::Error::RowNotFound) => {
+                    anyhow::Error::new(KindConflict(conflict_name))
+                }
+                _ => e,
+            })
     }
 
     pub async fn create_channel(&self, name: &str, topic: Option<&str>) -> anyhow::Result<i64> {
@@ -202,18 +228,30 @@ async fn writer_task(
                 let _ = reply.send(res);
             }
             WriteCmd::CreateParticipant { name, display, kind, adapter, reply } => {
+                // The upsert refreshes display and adapter only when
+                // the kind agrees: a name returning as a different
+                // kind is a conflict to refuse, never a half-update
+                // that keeps kind and adapter stale under a new
+                // display. No row returned means the kind disagreed.
                 let res = sqlx::query_scalar::<_, i64>(
                     "INSERT INTO participants (name, display, kind, adapter) \
                      VALUES ($1, $2, $3, $4) \
-                     ON CONFLICT (name) DO UPDATE SET display = EXCLUDED.display \
+                     ON CONFLICT (name) DO UPDATE \
+                     SET display = EXCLUDED.display, adapter = EXCLUDED.adapter \
+                     WHERE participants.kind = EXCLUDED.kind \
                      RETURNING id",
                 )
                 .bind(&name)
                 .bind(&display)
                 .bind(&kind)
                 .bind(&adapter)
-                .fetch_one(&pool)
+                .fetch_optional(&pool)
                 .await;
+                let res = match res {
+                    Ok(Some(id)) => Ok(id),
+                    Ok(None) => Err(sqlx::Error::RowNotFound),
+                    Err(e) => Err(e),
+                };
                 let _ = reply.send(res);
             }
             WriteCmd::CreateChannel { name, topic, reply } => {

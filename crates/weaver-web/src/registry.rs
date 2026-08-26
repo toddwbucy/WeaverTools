@@ -67,26 +67,43 @@ pub async fn all(store: &Store) -> anyhow::Result<Vec<Participant>> {
     .await?)
 }
 
+/// Skip exactly the kind conflict, warned, and propagate everything
+/// else (review of #350): a squatting name must not block its
+/// neighbors, and a transport failure must not ride the same swallow
+/// into a hello that claims agents it never wrote.
+async fn reconcile_one(
+    store: &Store,
+    name: &str,
+    kind: &str,
+) -> anyhow::Result<()> {
+    match store.create_participant(name, name, kind, Some(name)).await {
+        Ok(_) => Ok(()),
+        Err(e) if e.downcast_ref::<crate::store::KindConflict>().is_some() => {
+            tracing::warn!("{kind} '{name}' not reconciled: {e}");
+            Ok(())
+        }
+        Err(e) => Err(e),
+    }
+}
+
 /// Ensure every agent a hello announced has a participant row.
 /// Humans are created on first visit, not here.
 pub async fn reconcile_agents(store: &Store, names: &[String]) -> anyhow::Result<()> {
     for name in names {
-        store
-            .create_participant(name, name, "agent", Some(name))
-            .await?;
+        reconcile_one(store, name, "agent").await?;
     }
     Ok(())
 }
 
-/// Ensure every configured provider has a participant row.
+/// Ensure every configured provider has a participant row, with the
+/// same conflict tolerance as the agents' - a squatting name surfacing
+/// only at the next restart would otherwise refuse the whole boot.
 pub async fn reconcile_providers(
     store: &Store,
     providers: &[ProviderConfig],
 ) -> anyhow::Result<()> {
     for p in providers {
-        store
-            .create_participant(&p.name, &p.name, "model", Some(&p.name))
-            .await?;
+        reconcile_one(store, &p.name, "model").await?;
     }
     Ok(())
 }

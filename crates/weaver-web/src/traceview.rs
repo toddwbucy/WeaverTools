@@ -193,9 +193,19 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
         }
         match File::open(&path).await {
             Ok(mut file) => {
-                let meta = file.metadata().await.ok();
-                let len = meta.as_ref().map(|m| m.len()).unwrap_or(0);
-                let ident = meta.as_ref().map(|m| (m.dev(), m.ino()));
+                // A failed stat is a fact about this poll, not a
+                // zero-length file: substituting zero fired a false
+                // truncation mark. Skip the poll and ask again.
+                let meta = match file.metadata().await {
+                    Ok(m) => m,
+                    Err(_) => {
+                        tokio::time::sleep(std::time::Duration::from_millis(POLL_MS))
+                            .await;
+                        continue;
+                    }
+                };
+                let len = meta.len();
+                let ident = Some((meta.dev(), meta.ino()));
                 if !opened {
                     // Backfill window on first open.
                     pos = len.saturating_sub(BACKFILL_BYTES);
@@ -239,13 +249,18 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
                 }
                 if len > pos && file.seek(SeekFrom::Start(pos)).await.is_ok() {
                     let mut reader = BufReader::new(file);
-                    let mut line = String::new();
+                    // Bytes to the delimiter, decoded lossily: a
+                    // non-UTF-8 record surfaces as a mark (the JSON
+                    // parse refuses the replacement characters) where
+                    // read_line would stall on it forever, re-reading
+                    // the same offset every poll.
+                    let mut buf: Vec<u8> = Vec::new();
                     loop {
-                        line.clear();
-                        match reader.read_line(&mut line).await {
+                        buf.clear();
+                        match reader.read_until(b'\n', &mut buf).await {
                             Ok(0) => break,
                             Ok(n) => {
-                                if !line.ends_with('\n') {
+                                if buf.last() != Some(&b'\n') {
                                     // Incomplete tail: leave it for
                                     // the next poll, do not advance.
                                     break;
@@ -258,12 +273,43 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
                                     skip_partial_first = false;
                                     continue;
                                 }
-                                let trimmed = line.trim_end();
-                                if !trimmed.is_empty() {
-                                    seq += 1;
-                                    if out.send(parse_line(seq, trimmed)).await.is_err() {
-                                        return;
+                                // Validated, not lossily decoded, before
+                                // any parse: replacement characters
+                                // inside a JSON string still parse as
+                                // valid JSON, which would smooth a
+                                // corrupt record into a clean-looking
+                                // event instead of a mark (review of
+                                // #350, round three). Lossy decoding is
+                                // for the mark's display only.
+                                let ev = match std::str::from_utf8(&buf) {
+                                    Ok(s) => {
+                                        let trimmed = s.trim_end();
+                                        if trimmed.is_empty() {
+                                            continue;
+                                        }
+                                        seq += 1;
+                                        parse_line(seq, trimmed)
                                     }
+                                    Err(e) => {
+                                        seq += 1;
+                                        TraceEvent {
+                                            seq,
+                                            mark: Some(format!(
+                                                "record is not UTF-8: {e}"
+                                            )),
+                                            run: None,
+                                            turn: None,
+                                            kind: None,
+                                            raw: serde_json::Value::String(
+                                                String::from_utf8_lossy(&buf)
+                                                    .trim_end()
+                                                    .to_owned(),
+                                            ),
+                                        }
+                                    }
+                                };
+                                if out.send(ev).await.is_err() {
+                                    return;
                                 }
                             }
                             Err(_) => break,

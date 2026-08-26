@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, the robustness findings land (issue #337),
+third revision of the day. The prompt window carries other
+participants' closes (section 7), the line bound is measured
+serialized with a marked single-message truncation (section 7), the
+turn-deadline election is re-asked and reaffirmed (section 6), and
+the wrapper makes the sudoers widening exact (sections 3 and 11).
+
 **Revised:** 2026-08-25, the confirm view, second revision of the day
 (PRD section 4.4). The link gains a sixth and seventh service, the
 record reads (section 16), and section 17 pins the view: the job's
@@ -150,7 +157,11 @@ trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
 The admin binary's install path and its config location are deployment
 facts that differ per box, so they ride the connector's config with the
 original deployment's paths as defaults (the second box taught this:
-its admin lives under `/opt/weaver`).
+its admin lives under `/opt/weaver`). `admin_env` (default true) says
+whether the invocation passes the config location through sudo's
+environment: false pairs with the root-owned wrapper from `deploy/`,
+which validates its verb and agent and fixes the config itself - the
+shape that makes the sudoers widening exact (section 11, issue #337).
 
 Agents and providers declared here are *available*, and whether one
 participates in a given channel is registry state, not config. Upstream
@@ -276,6 +287,12 @@ serving the link's `turn` asks (section 16).
   another client's long turn into a false failure. A socket-level error
   or EOF mid-turn is reported as delivery lost, with the trace view as
   the recovery path (the contract: the record holds the close).
+  Re-asked and reaffirmed by the operator 2026-08-25 (issue #337): in a
+  one-consumer deployment the only waiter a wedged turn blocks is the
+  operator, who holds the release - the unload verb frees the slot
+  through this same typing - and the gate is a passthrough, so a
+  deadline here would be the frontend holding an opinion about
+  generation time, which is the class of opinion the PRD refuses.
 
 ## 7. Prompt serialization
 
@@ -289,9 +306,23 @@ claude: <text>
 todd: @alpha <text>
 ```
 
-- Window: messages since the agent's last `close` in this channel,
-  newest-last, truncated oldest-first to fit the line bound with the
-  final mention always included.
+- Window: what was said since the agent's last `close` in this channel -
+  messages and other participants' closes alike, an agent's answer
+  being conversation the next speaker must see (revised 2026-08-25,
+  issue #337: selecting only messages made agents blind to each other
+  in a shared room). The read is capped at the newest 500 rows, more
+  than the line bound can carry at any plausible line size, so a
+  long-idle agent never drags a channel's whole history through the
+  trim. Newest-last, trimmed oldest-first to fit the line bound, with
+  two rules the widened window made explicit (review of #350): a
+  window holding no `message` does not invoke - another agent's close
+  is context, never a justification - and the newest message is
+  pinned, so no close that landed after it can displace the mention
+  that justified the turn. The bound is measured on the serialized
+  line, escaping included, computed once per row rather than per drop,
+  and the pinned message exceeding the bound alone truncates on a
+  character boundary with a marker counted inside the bound - trimmed
+  and marked serves where refused drops.
 - Speaker labels are participant `name` values. The format is a v1
   election, deliberately plain text: structured attribution is the
   named future ask (PRD 5) and is not smuggled in as ad hoc syntax.
@@ -354,13 +385,15 @@ sudo WEAVER_ADMIN_CONFIG=/etc/weaver/config \
 
 stdout parsed as one JSON object, rendered verbatim and formatted,
 non-zero exit with unparseable stdout rendered as the raw bytes and the
-exit code, never swallowed. The sudoers fragment shipped in `deploy/`:
-
-```
-todd ALL=(root) NOPASSWD: /usr/local/libexec/weaver/weaver-admin validate *, \
-  /usr/local/libexec/weaver/weaver-admin load *, \
-  /usr/local/libexec/weaver/weaver-admin unload *
-```
+exit code, never swallowed. The environment line rides only when
+`admin_env` is true (section 3): the recommended shape is the
+root-owned wrapper `deploy/weaver-admin-verb`, which validates its
+verb against the closed set and its agent name's characters, fixes the
+config itself, and makes the sudoers rule exactly one command wide
+(issue #337 - the direct-binary rule needed wildcarded arguments and
+the config through sudo's environment, which "narrow" overstated).
+Both fragment shapes ship in `deploy/weaver-web.sudoers`, the wrapper
+uncommented.
 
 Load state: the gate socket path's existence, answered by the
 connector's `status` service (section 16), polled by the server on a

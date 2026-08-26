@@ -51,6 +51,13 @@ pub struct ConnectorConfig {
     pub admin_bin: PathBuf,
     #[serde(default = "default_admin_config")]
     pub admin_config: PathBuf,
+    /// Whether the invocation passes WEAVER_ADMIN_CONFIG through sudo.
+    /// True for a direct binary under a SETENV sudoers rule. False
+    /// when admin_bin names the root-owned wrapper from deploy/, which
+    /// fixes the config itself - the shape that makes the sudoers
+    /// widening exact.
+    #[serde(default = "default_admin_env")]
+    pub admin_env: bool,
     #[serde(default)]
     pub agents: Vec<AgentConfig>,
 }
@@ -114,4 +121,8 @@ fn default_admin_bin() -> PathBuf {
 
 fn default_admin_config() -> PathBuf {
     PathBuf::from("/etc/weaver/config")
+}
+
+fn default_admin_env() -> bool {
+    true
 }

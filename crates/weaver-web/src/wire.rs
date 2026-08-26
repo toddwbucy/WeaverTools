@@ -606,8 +606,8 @@ async fn connector_connection(
         // through the writer's channel.
         let (gates, cfg_decl, tx) =
             (gates.clone(), cfg.agent_declarations.clone(), tx.clone());
-        let (admin_bin, admin_config) =
-            (cfg.admin_bin.clone(), cfg.admin_config.clone());
+        let (admin_bin, admin_config, admin_env) =
+            (cfg.admin_bin.clone(), cfg.admin_config.clone(), cfg.admin_env);
         let trace_paths = trace_paths.clone();
         // Answered asks' handles are dropped as new asks arrive, so a
         // long-lived connection does not accumulate them.
@@ -633,7 +633,8 @@ async fn connector_connection(
                     },
                 },
                 ToConnector::Verb { id, agent, verb } => {
-                    match lifecycle::run_verb(&verb, &agent, &admin_bin, &admin_config).await
+                    match lifecycle::run_verb(&verb, &agent, &admin_bin, &admin_config, admin_env)
+                        .await
                     {
                         Ok(outcome) => ToServer::Verb { id, outcome: Some(outcome), error: None },
                         Err(e) => ToServer::Verb { id, outcome: None, error: Some(e.to_string()) },

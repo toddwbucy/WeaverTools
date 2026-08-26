@@ -224,37 +224,84 @@ async fn build_context(
 ) -> anyhow::Result<Option<String>> {
     let msgs =
         channel::messages_since_last_close(store, channel_id, agent_participant_id).await?;
-    // **An empty window does not invoke.** Batching and in-flight turns
-    // race: a mention enqueues the agent, the agent's current turn closes
-    // after that mention landed, and the queued invocation's window is
-    // then empty - its justification already consumed. A turn on an empty
-    // prompt is a model improvising into a void (the 2026-08-20 traces
-    // show 31K-character thinking sprees answering nothing), so a stale
-    // invocation is dropped rather than served.
-    if msgs.is_empty() {
+    // **A window without a message does not invoke.** Batching and
+    // in-flight turns race: a mention enqueues the agent, the agent's
+    // current turn closes after that mention landed, and the queued
+    // invocation's justification is already consumed. The window now
+    // carries closes, and another agent's close is not a justification
+    // (review of #350) - a turn on a prompt with no message is a model
+    // improvising into a void (the 2026-08-20 traces show
+    // 31K-character thinking sprees answering nothing). The newest
+    // message is also the pin: the row the trim may never drop.
+    let Some(pin) = msgs.iter().rposition(|m| m.kind == "message") else {
         return Ok(None);
-    }
+    };
     let header = format!(
         "Turn context. You are {agent_name}. Messages since your last turn:\n"
     );
-    let mut lines: Vec<String> = msgs
+    #[derive(serde::Serialize)]
+    struct Request<'a> {
+        text: &'a str,
+    }
+    // The bound the gate enforces is the serialized line's, escaping
+    // included, so the measure is exact - and computed once per row,
+    // subtracted as rows drop, never re-serialized per drop (review of
+    // #350: the per-drop reserialization was quadratic over the
+    // window). serde escapes per character, so the whole line's cost
+    // is the sum of its parts: the 11-byte envelope, the header's
+    // escaped bytes, each row's escaped bytes, and 2 bytes per joining
+    // newline.
+    let escaped = |s: &str| {
+        serde_json::to_string(s).map(|j| j.len() - 2).unwrap_or(usize::MAX)
+    };
+    struct Row {
+        line: String,
+        cost: usize,
+        pin: bool,
+    }
+    let mut rows: Vec<Row> = msgs
         .iter()
-        .map(|m| {
-            format!(
+        .enumerate()
+        .map(|(i, m)| {
+            let line = format!(
                 "{}: {}",
                 m.author_name.as_deref().unwrap_or("unknown"),
                 m.body.as_deref().unwrap_or("")
-            )
+            );
+            Row { cost: escaped(&line), line, pin: i == pin }
         })
         .collect();
-
-    // Budget: the bound minus the JSON envelope's overhead for this
-    // exact header. Serialize-and-check is authoritative in the
-    // adapter; this trim just gets us under it with margin.
-    const BUDGET: usize = crate::adapters::gate::LINE_BOUND - 1024;
-    let total = |ls: &[String]| header.len() + ls.iter().map(|l| l.len() + 1).sum::<usize>();
-    while lines.len() > 1 && total(&lines) > BUDGET {
-        lines.remove(0);
+    const BOUND: usize = crate::adapters::gate::LINE_BOUND;
+    let overhead = 11 + escaped(&header);
+    let mut total =
+        overhead + rows.iter().map(|r| r.cost).sum::<usize>() + 2 * (rows.len() - 1);
+    // Oldest first, the pinned mention never dropped: a close newer
+    // than the mention that justified the turn must not displace it
+    // (review of #350).
+    while total > BOUND && rows.len() > 1 {
+        let idx = rows.iter().position(|r| !r.pin).unwrap_or(0);
+        total -= rows.remove(idx).cost + 2;
     }
-    Ok(Some(format!("{header}{}", lines.join("\n"))))
+    // The pin alone can exceed the bound. It truncates on a char
+    // boundary with the marker counted inside the bound, so the
+    // mention still arrives, marked rather than refused (Spec 7).
+    const MARKER: &str = " ...[truncated to the line bound]";
+    if total > BOUND {
+        let mut only = rows.pop().map(|r| r.line).unwrap_or_default();
+        loop {
+            let text = format!("{header}{only}{MARKER}");
+            let len = serde_json::to_string(&Request { text: &text })
+                .map(|s| s.len())
+                .unwrap_or(usize::MAX);
+            if len <= BOUND || only.is_empty() {
+                only = format!("{only}{MARKER}");
+                break;
+            }
+            let keep = only.chars().count().saturating_sub((len - BOUND).max(1));
+            only = only.chars().take(keep).collect();
+        }
+        rows.push(Row { cost: 0, line: only, pin: true });
+    }
+    let joined: Vec<&str> = rows.iter().map(|r| r.line.as_str()).collect();
+    Ok(Some(format!("{header}{}", joined.join("\n"))))
 }
