@@ -2,6 +2,15 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, the election is recorded as well as sent. The Vocabulary
+section's `election` term gains that the same rule is written to the `load` event, per
+`weaver-trace-Spec` section 3, so a reader of a finished record knows what this seam
+carried without being told. Nothing of the seam moves: the opener is unchanged and no
+party does anything differently. What changes is that a replay can preload under the
+rule the record names rather than one supplied from outside it. The term also
+names the third fact it had left implicit, whether every kind crosses or only the
+named ones, and states that it is a term of this seam rather than a shorthand for
+the list of kinds. Per issue 347.
 **Revised:** 2026-08-24, the replay ask joins the vocabulary. The ask set
 gains `replay` by section 7's own door, elected against the diagnostic
 replay loop's real need per the loop act of this date: the session's
@@ -95,25 +104,33 @@ vocabulary, defined below, and the floor carries no member for it, per the
 custody rule of apex section 5.2: the floor carries only what the harness
 itself consumes, and what crosses here is consumed by state.
 
-**This seam's own.** Four terms. The `election`: the seam's opener, the
-session the load declared and the elected kinds with their payload key paths
-as the load declared them, sent whole at every standing of the channel and
-never per event. **The session rides the opener rather than the ask**, per
-the operator's ruling of 2026-08-20 on the custody defect: it is a
-load-declared fact standing for the channel's life, the same shape as the
-election it sits beside, and a restarted member relearns it with its
-reopened channel exactly as it relearns the election. An asker naming its
-own session on every question would put the fact on the wire per ask and
-would make the asking loop state something it has no reason to know. What
-the member does with it is its own, per section 2: the holdings answer
-within the declared session and not across it, which is
-`weaver-state-PRD` section 4's boundary made reachable rather than assumed. The
-`distillate`: one distilled event, carrying the envelope whole and the
-elected payload pairs beside it, each pair a payload key path and the value
-the canonical JSON held at it. The `ask`: one question the harness puts to
-the holdings on the standing channel, carrying a name from the closed
-vocabulary section 2 enumerates. The `answer`: the custodian's one reply to
-one well-formed ask, sent only when asked and at no other time.
+**This seam's own.** Four terms. The `election`: the seam's opener, the session the load
+declared and, beside it, three facts the load declared about what crosses. Whether every
+kind crosses carrying its envelope or only the kinds named do, which kinds are named,
+and the payload key paths elected for each. It is sent whole at every standing of the
+channel and never per event. **The same three facts are written into the record**, on
+the `load` event's payload per `weaver-trace-Spec` section 3, so a reader of a finished
+record knows the rule this seam carried without being told it. **The first of the three
+is a term of this seam and not a shorthand for the other two**: a deployment electing
+every kind and no paths is saying something a list of kinds cannot say, and the record
+that flattened it into a list would be recording a different rule. The record carries
+the rule and not the session, which rides the opener by the clause below and reaches a
+reader from the envelope of every event. That matters to nobody standing this seam and
+to everyone replaying it: a replay preloads under the rule the record names or it
+preloads a different session under a rule of its own. **The session rides the opener
+rather than the ask**, per the operator's ruling of 2026-08-20 on the custody defect: it
+is a load-declared fact standing for the channel's life, the same shape as the election
+it sits beside, and a restarted member relearns it with its reopened channel exactly as
+it relearns the election. An asker naming its own session on every question would put
+the fact on the wire per ask and would make the asking loop state something it has no
+reason to know. What the member does with it is its own, per section 2: the holdings
+answer within the declared session and not across it, which is `weaver-state-PRD`
+section 4's boundary made reachable rather than assumed. The `distillate`: one distilled
+event, carrying the envelope whole and the elected payload pairs beside it, each pair a
+payload key path and the value the canonical JSON held at it. The `ask`: one question
+the harness puts to the holdings on the standing channel, carrying a name from the
+closed vocabulary section 2 enumerates. The `answer`: the custodian's one reply to one
+well-formed ask, sent only when asked and at no other time.
 
 ```graph
 edge: draws

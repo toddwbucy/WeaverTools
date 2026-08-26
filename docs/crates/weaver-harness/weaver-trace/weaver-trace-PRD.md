@@ -8,6 +8,22 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-25, the tee's election joins the bracket. The `load`
+event named three elections and not the tee's, so the record said what the model
+did and not what the agent's state was built from, and a replay under a
+different projection rebuilds a session that never ran without failing. The
+clause's own argument reaches it unchanged, an election that took nothing and an
+election never asked being the same absence on disk. The rule is recorded and
+not the outcome, this charter having already weighed one member per event
+against one event per run, and the day that stops sufficing is named: a
+back-pressure election landing on shedding carries a per-event mark with it.
+This act also corrects every citation of this charter's load-bracket clause from
+section 3.2 to 3.1, in this header's own 2026-08-21 entries and in
+`weaver-harness-Spec` and `weaver-harness-spu-decode-contract`. The clause has sat
+in 3.1 since it was filed, so the correction moves a citation and no argument.
+Section 3.1's absence argument is scoped to records older than the member, this
+act being what ends it: from here the rule is written whole on every load and a
+deployment declaring none carries the default explicitly. Per issue 347.
 **Revised:** 2026-08-24, second of this date, the record states its
 compatibility. Section 6 gains the guarantee that makes the record readable across
 vintages and the argument for why it carries no version, landing apex section 3's
@@ -56,7 +72,7 @@ rather than accumulating contributions naively.
 **Revised:** 2026-08-21, third of this date, the surprisal's election
 lands. The ruling section 5 carried as owed on this date is landed by the
 act that adds the election, `weaver-spu-PRD` section 13.12, and section
-3.2's `load` gains the third election beside the readout's and the field's.
+3.1's `load` gains the third election beside the readout's and the field's.
 The per-generation perplexity stays in the navigation tier, so a cold
 record is still rankable where the vector is not carried.
 **Revised:** 2026-08-21, the field enters the record and the load
@@ -64,7 +80,7 @@ declares its posture. Section 3.1's kind set gains `model.field`,
 nineteenth, on `weaver-spu-PRD` section 13.11's election: one decode
 position's ranked candidates, the first kind recorded per position rather
 than per turn, and the first recorded only while an election stands. The
-volume is what buys both exceptions. Section 3.2's `load` event gains the
+volume is what buys both exceptions. Section 3.1's `load` event gains the
 diagnostic elections of its load, each named individually and never
 bundled under a profile, so a record holding no field is distinguishable
 from one whose election stood and produced nothing.
@@ -428,7 +444,7 @@ is what the election exists to buy: the volume is an order of magnitude
 past everything else the record carries, so a kind always present would
 make the record unaffordable rather than complete.
 
-**The record declares the posture it was written in.** Section 3.2's `load`
+**The record declares the posture it was written in.** Section 3.1's `load`
 event carries every diagnostic election of the load by name, because
 without it a record holding no field is indistinguishable from a record
 whose election stood and produced nothing - a configuration and a fault
@@ -574,6 +590,33 @@ the declaration where a reader meets it before any event it governs, and
 costs one event per run rather than one member per event. What it names
 is each election individually and never a profile, for the drift reason
 section 3.1 states.
+
+**The tee's election is one of them and was left out.** The three the `load` event named
+until 2026-08-25 were the readout, the field's depth, and the surprisal, each an
+election about what the model reports. The tee's is an election about what leaves the
+record for the state member, and the clause above reaches it unchanged: absent the
+member, a tee that elected nothing and a tee that was never asked are the same absence
+on disk. **From this act they are not**, the rule being written whole on every `load`
+this crate authors, the deployment that declared none carrying the default rule
+explicitly rather than carrying nothing. Absence means a record older than the member
+and is read as the rule being unrecoverable, never as the default. **Without
+it the record says what the model did and not what the agent's state was built from**,
+which are different because the tee both selects which events cross and projects which
+payload paths ride with them, per `weaver-harness-state-contract` section 2.
+
+**A replay under the wrong projection does not fail.** It lands, the loop asks,
+an answer comes back, and what the run produces is a plausible replay of a
+session that never happened. That is the shape this charter's own section 3.1
+argues against, and it is why the tee's election belongs at the bracket's
+opening beside the other three rather than in the deployment's memory.
+
+**The record carries the rule and not the outcome.** Which events a rule took
+is derivable from it, and this charter has already weighed one member per event
+against one event per run and taken the second. **The day that stops being
+enough is named rather than left**: if the tee's back-pressure election lands on
+shedding, per `weaver-harness-Spec` section 9, then elected stops meaning
+arrived and only a per-event mark of what crossed is truthful. That act carries
+this one with it.
 
 The bracket is defined here beside the run field deliberately. A run label that
 could be stamped without the events existing to verify it against would be an
@@ -1092,7 +1135,7 @@ first link. **The member's name is owed a correction** in the crate that
 renders it, which is where the name is declared.
 
 **The surprisal's election joins the load's declaration**, per section
-3.2's rule that each is named individually and none bundled. The reading it
+3.1's rule that each is named individually and none bundled. The reading it
 governs is the SPU's to produce, so what this crate holds is the flag and
 what the SPU holds is the consequence, which is the same division the field
 and the readout already run on.
@@ -1113,15 +1156,19 @@ to no arrangement and is an election rather than a default, per the operator
 of 2026-08-21, with a per-generation perplexity kept in navigation so a cold
 record stays rankable without carrying a reading per position. **The
 election landed in the act of this date that added it**, `weaver-spu-PRD`
-section 13.12, which is where it had to land: an election is a member of the
+section 13.12, which is where it had to land: that election is a member of the
 SPU instruction and reaches this crate across two contracts, so every party
-merged together rather than this charter ruling ahead of them.
+merged together rather than this charter ruling ahead of them. **The route is
+per election rather than general**: the three the model reports ride the
+instruction, and the tee's is a sibling of it on the enter payload, per
+`weaver-types-Spec` section 4.
 
-**The load's elections are three and the tier is the reason they are named
+**The load's elections are four and the tier is the reason they are named
 one by one.** A record whose posture is recoverable from itself is what
-section 3.2's refusal of a profile name buys, and the third election is the
-first that can be absent while its reading is present, in every record
-written before this act. A consumer therefore reads the absence of the flag
+section 3.1's refusal of a profile name buys, and two of the four can be
+absent while their subject is present: the surprisal, in every record written
+before its election existed, and the tee's, in every record written before
+2026-08-25. A consumer therefore reads the absence of the flag
 as a record predating the election rather than as an election declined,
 which is a distinction the flag's presence makes and its absence cannot.
 

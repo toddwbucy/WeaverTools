@@ -4,6 +4,18 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-25, the tee's election joins the load payload. Section 3's
+`Elections` gains `tee`, this crate's own `Election`, emitted on every `load` this crate
+writes and an `Option` at the read so a record predating the member parses whole. It is
+named `tee` because a member differing from its container `Elections` by one letter is a
+collision the Working Rules refuse. Absence is the member's own, in records written
+before this act, and means the rule is unrecoverable rather than defaulted, so such a
+record replays its token path and cannot be certified for state. The instrument is
+perturbation, the member watched to fail when dropped from the shape. Section 3 also
+names `weaver-types-Spec` section 2 authoritative for the declared shape and
+`weaver-harness-state-contract` for what the term means on the seam, the two types
+differing on purpose because this crate links nothing. Section 10's counts move
+with the assertion the act adds, and gain the perturbation naming its removal.
 **Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
 charter section 6's guarantee as an absence, the envelope carrying no version member,
 and represents the both-directions half as `Option` with `skip_serializing_if` on an
@@ -372,6 +384,17 @@ pub struct Elections {
     pub residual_readout: bool,
     pub field: Option<u32>,
     pub surprisal: bool,
+    pub tee: Option<Election>,
+}
+
+pub struct Election {
+    pub all_kinds: bool,
+    pub keys: Vec<ElectedKind>,
+}
+
+pub struct ElectedKind {
+    pub kind: String,
+    pub paths: Vec<String>,
 }
 
 pub struct ElisionSpan {
@@ -632,10 +655,15 @@ from: weaver-trace
 to: trace-payload-untagged-kind-discriminant
 ```
 
-**A bracket kind carries no payload member at all, rather than a null one.** The
-run and session brackets and the turn's opening are identified entirely by their
-envelope, so `payload` is `Option<Payload>` and those kinds carry `None` with
-`skip_serializing_if`, emitting `{"kind":"load"}`. Verified against serde_json
+**A bracket kind carries no payload member at all, rather than a null one.**
+`unload`, `session.closed`, and `turn.started` are identified entirely by their
+envelope, so `payload` is `Option<Payload>` and those three kinds carry `None`
+with `skip_serializing_if`, emitting `{"kind":"unload"}`. **They are the whole of
+the payload-free set**, per the kind table below. Neither bracket that opens a
+scope nor the turn's closing one is among them: `load` carries `Elections` and
+`turn.closed` carries `TurnClosed`. This clause named `load` as its example until
+2026-08-25, which was wrong from the act of 2026-08-21 that gave the load its
+elections. Verified against serde_json
 1.x: a unit variant inside an untagged enum renders `"payload":null` instead,
 which is a member whose only content is the statement that there is no content,
 and a consumer keying on member presence would see two stream shapes for one
@@ -863,6 +891,79 @@ election has to say. The surprisal's `false` is a fact worth writing: it
 distinguishes a record whose operator declined the vector from a record
 written before the election existed, where the member is absent altogether.
 **Absent, false, and true are three states and the shape keeps them three.**
+
+**The tee's election is written whole and read as an `Option`.** It is named
+`tee` rather than `election` because the payload is already `Elections` and a
+member differing from its container by one letter is the collision the Working
+Rules ask us to avoid, and because `tee` says whose rule it is. The type is this
+crate's own `Election`, which the tee already holds, so the record carries the
+rule in the shape the tee applied it in and no reader reconstructs it from a
+neighbour's spelling.
+
+**The record spells it as the seam spells it, and that is not the declaration's
+spelling.** `weaver-types-Spec` section 2 renames the declared type's fields to
+kebab-case for the operator's file, so the declaration reads `all-kinds` and this
+member renders `all_kinds`. **The difference stands rather than being reconciled,
+because this type is the state seam's opener wire format** and not only the
+record's: `opener` renders it and the custodian parses it by those names. A
+rename here would move a live seam to spell a record more prettily, and the
+custodian's parse would fall back to the default election with nothing reported.
+**Two spellings of one fact is a cost this section names rather than pays to
+avoid**, and the reader that meets both is told which is which here.
+
+**A replay reads the rule off the record, which is a deserialization, and this
+crate performs none of that read.** The reader is `weaver-analysis`, whose Spec
+is owed, and **the shape it parses is this section's** rather than a spelling it
+invents.
+
+**One fact, four representations, and this act is what names their authorities.** The
+operator declares it as `weaver-types`' `StateElection`, admin resolves it into the
+enter payload, this crate holds it as `Election` for the tee, and the record now carries
+that same form, the tee's. **The duplication between the two types is forced rather than
+sloppy**: this crate depends on nothing, not even the floor, so it cannot spell the
+floor's type, and that no-dependency property is load bearing for its own reasons.
+**Authority splits by what is being asked.** What the term means on the state seam is
+`weaver-harness-state-contract`'s, which defines it there as that seam's vocabulary.
+What its declared shape is, which fields it has and what they mean, is
+`weaver-types-Spec` section 2's, and a divergence in this crate's fields is a defect
+against it, per G5. **Field spellings are not in that authority's reach**, the
+declaration renaming for the operator's file and this crate rendering for a seam that
+already parses it, per the paragraph above. What this crate is authoritative for is the
+record's rendering of it, which is this section. Unifying the types is not owed and
+would cost the no-dependency property to buy a name.
+
+**It is an `Option` at the read and never absent from a record this crate
+writes.** Every load has an election, a deployment that elects nothing still
+running under the default per charter section 11, so this crate emits the member
+on every `load` event from this act forward. The `Option` is for the reader, and
+it is what section 3's compatibility rule requires of any added member: **absence
+means the record predates the member**, never that the election was the default.
+A record carrying no `tee` parses whole and replays its token path, and cannot be
+certified for state because the rule that built the state is unrecoverable from
+it. Reading absence as the default would be the silent-wrong this member exists
+to prevent, arriving by the other door.
+
+**What this member buys is that a reader stops guessing what the state held.**
+The tee selects which events cross and projects which payload paths ride, so a
+replay under a different rule preloads a different session and nothing marks it,
+which is the failure charter section 3.1 argues the whole `load` bracket exists to
+prevent.
+
+**The instrument is perturbation.** The test renders a `load` payload under a
+non-default election and reads the member back off the canonical form, watched
+to fail when the member is dropped from the shape, on the same ground the counts
+beside it are perturbed rather than reviewed: a member that serializes is easy
+to lose and losing it is silent.
+
+```graph
+node: trace-load-carries-the-tee-election
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-load-carries-the-tee-election
+```
 
 **The counts reaching the record is a perturbation, not a review read.** A
 member that serializes is easy to add and easy to lose, and losing it is
@@ -1414,9 +1515,9 @@ at the dependency clause with the rest of that election.
 assertion records are at the clauses that argue the claims, across sections 1
 through 9, rather than gathered here, per Document Format section 6: this section
 sorts by instrument and the arguments are elsewhere, so a block here would sit
-apart from the prose that earns it. Thirty-six sit there and three sit at the end of
-this section, being the claims argued only here. Seventeen of the thirty-nine come
-from this section's own sorting and twenty-two from the elections outside it, the
+apart from the prose that earns it. Thirty-eight sit there and three sit at the end of
+this section, being the claims argued only here. Seventeen of the forty-one come
+from this section's own sorting and twenty-four from the elections outside it, the
 path-taking prohibition counting here rather than as an election because it was
 divided out of this section's own bullet and never elected, per Document Format
 section 3.
@@ -1431,7 +1532,7 @@ test of its own either, its instrument being the compile-fail set already
 recorded.
 
 **Which invariant each claim serves, and why most serve none.** Four of the
-thirty-nine carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
+forty-one carry a `grounds` edge, two to `axiom-join-key-travels-with-the-work`
 and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
 nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
 none of it because this crate is not floor, so the vocabulary clause governs none
@@ -1444,9 +1545,9 @@ the join-key invariant and this crate has no reason to refuse to infer a turn an
 no reason to report pressure rather than author it, so those two ground in it.
 Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
-**Thirty-five claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: fourteen of the thirty-nine are section 3's
-event schema and twelve of those fourteen ground in nothing, a schema being
+**Thirty-seven claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: sixteen of the forty-one are section 3's
+event schema and fourteen of those sixteen ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
 **Two calls are worth stating rather than leaving to be read.** The two contract
@@ -1483,6 +1584,9 @@ the fact exists.
   vectors emits no member for them, confirmed by watching an empty array
   appear when the skip election is removed, since an empty array and an
   absent instrument are the two facts the charter separates.
+- The tee's election on the `load` event: a payload rendered under a
+  non-default election carries the rule back off the canonical form, watched to
+  fail when the member is dropped from the shape.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test

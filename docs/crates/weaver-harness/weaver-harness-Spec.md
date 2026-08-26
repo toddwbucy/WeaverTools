@@ -4,6 +4,13 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, the load's elections arrive by two routes. Section 6.1 said
+they arrive in the enter's SPU instruction, which is true of three of them and not
+of the tee's: that one is a sibling of the instruction on the enter payload, per
+`weaver-types-Spec` section 4. The clause names both routes, and names the tee's
+election as joining the `load` declaration this date, per `weaver-trace-Spec`
+section 3. Its citation of `weaver-trace-PRD` moves from 3.2 to 3.1, where the
+clause it cites has always sat. Per issue 347.
 **Revised:** 2026-08-24, eighth of this date, the seat's criterion enters this
 Spec's own ledger. `diagnostic-replay-loop` section 2 named a gap section 6.2
 opens on a Gateless binding, the seat being granted on work that arrives owed an
@@ -2044,23 +2051,25 @@ a close that has other work. It is shaped rather than spliced, per
 `weaver-trace-Spec` section 3, its members being plain values this crate
 holds typed on the way through.
 
-**The load event carries the elections the enter declared**, each named
-individually, per `weaver-trace-PRD` section 3.2. The harness is the
-party that knows them: they arrive in the enter's SPU instruction and
-the harness authors the bracket, so the record's declaration of its own
-posture costs one read of what it already holds. The rendered contribution and the
-measurement
-splice into their own boxes, one member per box per the streaming ruling, and the
-harness checks each spliced member's conformance to its event's accepting shape at
-the author call, the price the splice's opacity is paid at.
+**The load event carries the elections the enter declared**, each named individually,
+per `weaver-trace-PRD` section 3.1. The harness is the party that knows them, and they
+arrive by two routes rather than one: the readout, the field, and the surprisal ride the
+SPU instruction, and **the tee's election arrives beside it on the enter payload**, a
+sibling of the instruction rather than a member of it, per `weaver-types-Spec` section
+4. The harness authors the bracket from both, so the record's declaration of its own
+posture still costs one read of what it already holds. **The tee's election joined that
+declaration 2026-08-25**, per `weaver-trace-Spec` section 3, and this clause named three
+elections and one route until then. The rendered contribution and the measurement splice
+into their own boxes, one member per box per the streaming ruling, and the harness
+checks each spliced member's conformance to its event's accepting shape at the author
+call, the price the splice's opacity is paid at.
 
-**The seated identity prefix is authored beside the load, one
-`message.system` per message**, per `weaver-trace-PRD` section 5. The
-harness is again the party that holds it, arriving in the same enter's SPU
-instruction beside the elections, so the write is one read of what is in
-hand. The events carry no turn, a prefix preceding every turn of the run,
-and they are authored after the load event so the run's bracket stands over
-them.
+**The seated identity prefix is authored beside the load, one `message.system` per
+message**, per `weaver-trace-PRD` section 5. The harness is again the party that holds
+it, arriving in the same enter's SPU instruction beside the three elections it carries,
+so the write is one read of what is in hand. The events carry no turn, a prefix
+preceding every turn of the run, and they are authored after the load event so the run's
+bracket stands over them.
 
 **The door is `author_identity` and not `author_message`.** The message
 door takes a turn key and applies the licensing rule to it, so admitting a
