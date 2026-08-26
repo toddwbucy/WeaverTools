@@ -2222,7 +2222,10 @@ mod tests {
                 },
                 state_election: weaver_types::StateElection {
                     all_kinds: false,
-                    keys: Vec::new(),
+                    keys: vec![weaver_types::ElectedKindConfig {
+                        kind: "turn.closed".to_string(),
+                        paths: vec!["close".to_string()],
+                    }],
                 },
             };
             let mut run = match harness.enter(payload, Some(sink)) {
@@ -2253,8 +2256,12 @@ mod tests {
             );
             assert_eq!(
                 load["payload"]["tee"],
-                serde_json::json!({"all_kinds": false, "keys": []}),
-                "the tee's rule is the enter's declared election, not a default"
+                serde_json::json!({
+                    "all_kinds": false,
+                    "keys": [{"kind": "turn.closed", "paths": ["close"]}]
+                }),
+                "the tee's rule is the enter's declared election, keys and \
+                 all, not a default"
             );
             if elected {
                 assert_eq!(
