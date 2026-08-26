@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-26, the state channel arrives instead of being dialed.
+Per the operator's ruling of this date, section 6's state-port clause names
+the channel's origin: the harness half of the pair admin created at the
+member's spawn, received in the enter directive beside the sink, no name
+derived and no dial made. The seat, the ports, the tee's attach, and the
+dead-peer conversions are untouched.
 **Date filed:** 2026-08-02
 **Revised:** 2026-08-26, a citation follows a renumbering. Section 9's tee
 back-pressure election takes the queue's high-water mark from `weaver-trace-Spec`
@@ -1954,7 +1960,10 @@ this crate owns, granted with the seat and mintable nowhere, so the loop
 that holds a seat holds the ask and no narrower grant exists for the
 boundary to name. The seam's ask end lives in `src/state.rs`, a clone of
 the standing state channel held on the run beside the tee the enter
-attaches, the ask written and the answer awaited on the serving thread
+attaches, that channel arriving in the enter directive as the harness half
+of the pair admin created, per the operator's ruling of 2026-08-26, dialed
+nowhere and derived from nothing, the ask written and the answer awaited on
+the serving thread
 inside a bound this crate elects, generous against a member whose answer is
 one pass over its own holdings. Serialization on the shared channel is the
 serving thread itself: the tee's feed and the seat's ask both run on it, so

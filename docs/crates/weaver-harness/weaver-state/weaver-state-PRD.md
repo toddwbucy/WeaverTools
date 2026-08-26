@@ -26,6 +26,15 @@ context-injection loop, the ask vocabulary landed in
 `weaver-state-Spec` section 4, and the loop's calling shape landed as the
 seat's state port at `weaver-harness-Spec` section 6. Section 1's
 build-order asymmetry is history and reads as such.
+**Revised:** 2026-08-26, the first door loses its name. Section 3's seam clause
+recuts per the operator's ruling of this date: the harness channel is a
+socketpair admin creates at the member's spawn, one end inherited and one
+crossing at the enter, authenticated by possession per the first invariant's
+rule for a channel with no name. The preload door becomes the member's one
+named socket and its name moves into this member's own territory. The door's
+judgment clause stops describing an inversion of a judgment that no longer
+exists and states its own: the operator principal admitted, every other peer
+refused.
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-PRD`
 **Parent:** `weaver-harness-PRD`
@@ -128,23 +137,30 @@ flowing back when the harness or a control loop in its seat asks. Both ride the
 one seam, because both are the harness talking to its member and a second
 channel would be a topology fact no need has produced.
 
-**The socket is the seam's own and reuses nothing.** Apex section 9 says a new
+**The channel is the seam's own and reuses nothing.** Apex section 9 says a new
 socket and this charter reads it literally: the coordination seam keeps its
-one kind of traffic, and state's seam is a second, distinct channel with a
-name of its own. It stands at load under the same coordination that stands
-every organ channel, and it authenticates its peer by credential, per the
-first invariant's rule for a channel with a name. Which end binds, how the
-descriptor travels, and the credential's exact judgment are the contract's
-mechanics, deliberately absent here.
+one kind of traffic, and state's seam is a second, distinct channel. **It has
+no name, per the operator's ruling of 2026-08-26.** Admin creates a socketpair
+at the member's spawn, this member inherits one end, the harness receives the
+other at the enter, and the channel authenticates its peer by descriptor
+possession, per the first invariant's rule for a channel with no name. A name
+would have to stand where a dialer can reach, and the one directory the worker
+could reach is the one place a name can be replaced before it is dialed, so
+the channel that needs no name carries none. How the ends travel is the
+contract's mechanics, deliberately absent here.
 
 **A second door stands on this member as of 2026-08-24, and only under a
 diagnostic binding.** `weaver-analysis-state-contract` names it, initiator
 first: the diagnostic driver preloads the holdings from a finished trace it
 parsed outside the agent, and this member receives on a second socket what a
 live tee would have fed on the first, the same distillate shapes drawn from
-the first door's contract rather than redefined. The door's judgment inverts
-the first's, admitting the operator principal and refusing the agent's
-credential, and the door itself does not exist under a serving binding, so
+the first door's contract rather than redefined. The door's judgment is a
+credential's, this member's one such judgment since the first door
+authenticates by possession: it admits the operator principal and refuses
+every other peer, the agent's among them. Its name
+stands in this member's own territory, per the operator's ruling of
+2026-08-26, where the agent's identity holds nothing. The door itself does
+not exist under a serving binding, so
 the serving membrane of `weaver-agents-PRD` section 0 is untouched. No ask
 crosses it, ever: the driver is a sender and never an asker, so section 5's
 who-else-may-ask cell keeps its answer, the serve direction having exactly

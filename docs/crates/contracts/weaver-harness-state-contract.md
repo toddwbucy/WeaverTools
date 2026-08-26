@@ -2,6 +2,16 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-26, the channel loses its name. The wire clause held a named
+Unix socket authenticated by credential, and the operator's ruling of this date
+recuts it: admin creates a socketpair at the member's spawn, the member inherits
+one end, the harness receives the other inside the enter directive beside the
+trace sink, and authentication is descriptor possession per the first
+invariant's rule for a channel with no name. Nothing of the traffic moves: the
+opener, the distillate, the asks, the answers, and the dead-peer clause read on
+the pair as they read on the dialed socket, a standing of the channel now being
+a load's pair. The squat the runtime directory's name invited retires with the
+name.
 **Revised:** 2026-08-25, the election is recorded as well as sent. The Vocabulary
 section's `election` term gains that the same rule is written to the `load` event, per
 `weaver-trace-Spec` section 3, so a reader of a finished record knows what this seam
@@ -70,9 +80,15 @@ No third party reaches this seam. The model has no path to it, per
 `weaver-state-PRD` section 2, and no other crate holds an end.
 
 **This seam is a wire.** State crosses a process line, per apex section 9's
-re-entry door, so this contract governs a protocol on a transport: a Unix
-socket, stood at load, authenticated by credential per the first invariant's
-rule for a channel with a name.
+re-entry door, so this contract governs a protocol on a transport: a connected
+Unix socketpair, stood at load, authenticated by descriptor possession per the
+first invariant's rule for a channel with no name, per the operator's ruling of
+2026-08-26. Admin creates the pair at the member's spawn and speaks on neither
+end: the member inherits its end with its process, the harness receives the
+other inside the enter directive beside the trace sink that already crosses
+there, and no name exists for any third party to find, replace, or dial. A
+standing of the channel is a load's pair, and a reopened channel is the next
+load's new pair.
 
 ```graph
 node: weaver-harness-state-contract

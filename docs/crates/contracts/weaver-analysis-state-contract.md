@@ -2,6 +2,14 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-26, the name moves behind the wall. The operator's ruling of
+this date recuts the wire clause: the first door loses its name, making this
+door the member's one named socket, and this door's name moves from the worker's
+runtime directory into the member's own territory on the operator's side, where
+the agent's identity holds nothing and the driver, an operator principal,
+traverses. The election, the seal, the refusals, and every ask are untouched.
+`weaver-analysis` still learns the name from the operator, no exchange carrying
+a path.
 **Revised:** 2026-08-24, second of this date, the sender is `weaver-analysis`.
 The operator's ruling of this date moved `weaver-diagnostic` inside the agent
 as the harness's third member, the mechanism the harness authors a
@@ -47,12 +55,16 @@ that is not the two external contracts of 2026-08-01, per `weaver-agents-PRD`
 section 0 as amended 2026-08-24, and it exists only where the load declared
 the diagnostic kind.
 
-**This seam is a wire.** A second Unix socket on the state member, its own
-name beside the first door's, stood only under a diagnostic binding and
-authenticated by credential per the first invariant's rule for a channel with
-a name. The door's absence under a serving binding is the charter's cheap
-refusal made structural: a driver pointed at a serving agent finds nothing to
-dial.
+**This seam is a wire.** A named Unix socket on the state member, the member's
+one named door since the first lost its name to the operator's ruling of
+2026-08-26, stood only under a diagnostic binding and authenticated by
+credential per the first invariant's rule for a channel with a name. Its name
+stands in the member's own territory on the operator's side, per the same
+ruling: the driver is an operator principal and traverses, the worker's
+identity holds nothing there, and the squat an agent-writable directory
+invited is unrepresentable rather than defended. The door's absence under a
+serving binding is the charter's cheap refusal made structural: a driver
+pointed at a serving agent finds nothing to dial.
 
 ```graph
 node: weaver-analysis-state-contract

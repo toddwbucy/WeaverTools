@@ -5,6 +5,13 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
+**Revised:** 2026-08-26, the standing carries the transport. Per the operator's
+ruling of this date, section 2's standing clause gains what the start now
+makes: the socketpair the first door is, one end to the member with its
+process, the other to the harness inside the enter directive, this crate
+speaking on neither. The pathname wait retires with the pathname it watched,
+the leg established by the enter's first traffic instead, and no seam joins
+section 6's list because carrying a channel's ends is not holding one.
 **Date filed:** 2026-07-29
 **Revised:** 2026-08-25, fifth of this date, the pair stops claiming symmetry.
 Section 2 said the member's claim is partly this crate's and that a perturbation
@@ -245,18 +252,22 @@ worker's unit and does not become one.** The worker is asked of the init system
 per section 4's sequencing, and the member is a direct child of this crate,
 which is what lets it hold a uid the agent's cannot reach.
 
-**No seam is created by starting it.** This crate speaks to the member never:
-it starts the process, waits for the member's name to appear, and proceeds
-without the leg where the name does not come. Section 6's seam list is unchanged
-by this paragraph, because starting a process is not a channel, and what the
-member serves it serves to the harness and to `weaver-analysis` under their own
-contracts.
+**No seam is created by starting it, and the transport this crate now makes is
+not one either.** Per the operator's ruling of 2026-08-26 this crate creates
+the socketpair the first door is, hands one end to the member with its process,
+carries the other to the harness inside the enter directive, and speaks on
+neither: a courier of ends rather than a party. Section 6's seam list is
+unchanged by this paragraph, because starting a process is not a channel and
+neither is carrying one's ends, and what the member serves it serves to the
+harness and to `weaver-analysis` under their own contracts.
 
-**The wait observes a pathname and nothing more.** A name that has appeared is
-not a member that will answer, and this charter claims no more from the wait
-than that a load does not race ahead of a member that never started. **What
-establishes the leg is the worker's own dial at step 6**, bounded there, and an
-absent or unanswering name is the leg not standing rather than a refused load.
+**Nothing is waited on, because there is no name to watch.** The ruling of
+2026-08-26 retires the pathname wait with the pathname: the pair exists before
+the member does, so a load cannot race a bind that no longer happens. **What
+establishes the leg is the enter's own first traffic**, bounded at the harness
+per the contract's dead-peer clause, and a member that never started answers
+that traffic as a closed pair, the leg not standing rather than a refused
+load.
 
 **The start falls between steps 5 and 6 and takes no step number of its own.**
 The worker's unit is asked for at step 5 and the enter is directed at step 6, and
