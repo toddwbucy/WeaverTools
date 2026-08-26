@@ -5,17 +5,18 @@ build order. Code is written against it under the gates of Working Process secti
 
 **Date filed:** 2026-08-01
 **Revised:** 2026-08-25, the tee's election joins the load payload. Section 3's
-`Elections` gains `tee`, this crate's own `Election` written whole rather than as
-an option, every load having one and the default being an election. It is named
+`Elections` gains `tee`, this crate's own `Election`, emitted on every `load` this
+crate writes and an `Option` at the read so a record predating the member parses
+whole. It is named
 `tee` because a member differing from its container `Elections` by one letter is
 a collision the Working Rules refuse. Absence is the member's own, in records
 written before this act, and means the rule is unrecoverable rather than
 defaulted, so such a record replays its token path and cannot be certified for
 state. The instrument is perturbation, the member watched to fail when dropped
 from the shape. Section 3 also names `weaver-types-Spec` section 2 authoritative
-for the declared shape and `weaver-harness-state-contract` for the seam's term,
-for what the election means, the two types differing on purpose because this
-crate links nothing.
+for the declared shape and `weaver-harness-state-contract` for what the term
+means on the seam, the two types differing on purpose because this crate links
+nothing.
 **Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
 charter section 6's guarantee as an absence, the envelope carrying no version member,
 and represents the both-directions half as `Option` with `skip_serializing_if` on an
@@ -384,7 +385,6 @@ pub struct Elections {
     pub residual_readout: bool,
     pub field: Option<u32>,
     pub surprisal: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub tee: Option<Election>,
 }
 
@@ -888,7 +888,7 @@ distinguishes a record whose operator declined the vector from a record
 written before the election existed, where the member is absent altogether.
 **Absent, false, and true are three states and the shape keeps them three.**
 
-**The tee's election is written whole and is not an `Option`.** It is named
+**The tee's election is written whole and read as an `Option`.** It is named
 `tee` rather than `election` because the payload is already `Elections` and a
 member differing from its container by one letter is the collision the Working
 Rules ask us to avoid, and because `tee` says whose rule it is. The type is this
@@ -912,19 +912,21 @@ crate performs none of that read.** The reader is `weaver-analysis`, whose Spec
 is owed, and **the shape it parses is this section's** rather than a spelling it
 invents.
 
-**One fact, four representations, and their authorities were named before this
-act.** The operator
-declares it as `weaver-types`' `StateElection`, admin resolves it into the enter
-payload, this crate holds it as `Election` for the tee, and the record now carries that
-third form. **The duplication between the two types is forced rather than sloppy**: this
-crate depends on nothing, not even the floor, so it cannot spell the floor's type, and
-that no-dependency property is load bearing for its own reasons. **Authority splits by
-what is being asked.** What the term means on the state seam is
+**One fact, four representations, and their authorities were named before this act.**
+The operator declares it as `weaver-types`' `StateElection`, admin resolves it into the
+enter payload, this crate holds it as `Election` for the tee, and the record now carries
+that third form. **The duplication between the two types is forced rather than sloppy**:
+this crate depends on nothing, not even the floor, so it cannot spell the floor's type,
+and that no-dependency property is load bearing for its own reasons. **Authority splits
+by what is being asked.** What the term means on the state seam is
 `weaver-harness-state-contract`'s, which defines it there as that seam's vocabulary.
-What its declared shape is, and how its fields are spelled, is `weaver-types-Spec`
-section 2's, and a divergence in this crate's shape is a defect against it, per G5. What
-this crate is authoritative for is the record's rendering of it, which is this section.
-Unifying the types is not owed and would cost the no-dependency property to buy a name.
+What its declared shape is, which fields it has and what they mean, is
+`weaver-types-Spec` section 2's, and a divergence in this crate's fields is a defect
+against it, per G5. **Field spellings are not in that authority's reach**, the
+declaration renaming for the operator's file and this crate rendering for a seam that
+already parses it, per the paragraph above. What this crate is authoritative for is the
+record's rendering of it, which is this section. Unifying the types is not owed and
+would cost the no-dependency property to buy a name.
 
 **It is an `Option` at the read and never absent from a record this crate
 writes.** Every load has an election, a deployment that elects nothing still

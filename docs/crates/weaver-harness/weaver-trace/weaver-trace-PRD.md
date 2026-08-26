@@ -66,7 +66,7 @@ rather than accumulating contributions naively.
 **Revised:** 2026-08-21, third of this date, the surprisal's election
 lands. The ruling section 5 carried as owed on this date is landed by the
 act that adds the election, `weaver-spu-PRD` section 13.12, and section
-3.2's `load` gains the third election beside the readout's and the field's.
+3.1's `load` gains the third election beside the readout's and the field's.
 The per-generation perplexity stays in the navigation tier, so a cold
 record is still rankable where the vector is not carried.
 **Revised:** 2026-08-21, the field enters the record and the load
@@ -74,7 +74,7 @@ declares its posture. Section 3.1's kind set gains `model.field`,
 nineteenth, on `weaver-spu-PRD` section 13.11's election: one decode
 position's ranked candidates, the first kind recorded per position rather
 than per turn, and the first recorded only while an election stands. The
-volume is what buys both exceptions. Section 3.2's `load` event gains the
+volume is what buys both exceptions. Section 3.1's `load` event gains the
 diagnostic elections of its load, each named individually and never
 bundled under a profile, so a record holding no field is distinguishable
 from one whose election stood and produced nothing.
@@ -1126,7 +1126,7 @@ first link. **The member's name is owed a correction** in the crate that
 renders it, which is where the name is declared.
 
 **The surprisal's election joins the load's declaration**, per section
-3.2's rule that each is named individually and none bundled. The reading it
+3.1's rule that each is named individually and none bundled. The reading it
 governs is the SPU's to produce, so what this crate holds is the flag and
 what the SPU holds is the consequence, which is the same division the field
 and the readout already run on.
@@ -1151,11 +1151,12 @@ section 13.12, which is where it had to land: an election is a member of the
 SPU instruction and reaches this crate across two contracts, so every party
 merged together rather than this charter ruling ahead of them.
 
-**The load's elections are three and the tier is the reason they are named
+**The load's elections are four and the tier is the reason they are named
 one by one.** A record whose posture is recoverable from itself is what
-section 3.2's refusal of a profile name buys, and the third election is the
-first that can be absent while its reading is present, in every record
-written before this act. A consumer therefore reads the absence of the flag
+section 3.1's refusal of a profile name buys, and two of the four can be
+absent while their subject is present: the surprisal, in every record written
+before its election existed, and the tee's, in every record written before
+2026-08-25. A consumer therefore reads the absence of the flag
 as a record predating the election rather than as an election declined,
 which is a distinction the flag's presence makes and its absence cannot.
 

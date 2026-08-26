@@ -12,16 +12,16 @@ different one rebuilds a session that never ran, and a record written before tha
 member existed fails a claim about the state while its token path still stands.
 Per issue 347 and `weaver-trace-Spec` section 3.
 **Revised:** 2026-08-24, the record is a different record. Third state on the day
-it was filed, and the middle
-one was wrong. v0.1 had the run's record holding what diverged. v0.2 removed the record
-on the reading that a diagnostic binding authors nothing. The operator's ruling of the
-same date restored the record as a different record: the run authors a diagnostic-trace
-through `weaver-diagnostic`, the harness's third member, and `weaver-analysis` is the
-crate outside that preloads the replay and reads what it produced. So v0.1's instinct
-was right and its record was the wrong one. The workflow document for the diagnostic
-replay loop, filed under the harness's `Loops/` container per the Document Format's
-container entry. It argues no edges of its own: the seams it walks are declared in the
-crate charters, and a graph block here would duplicate a record that already has a home.
+it was filed, and the middle one was wrong. v0.1 had the run's record holding what
+diverged. v0.2 removed the record on the reading that a diagnostic binding authors
+nothing. The operator's ruling of the same date restored the record as a different
+record: the run authors a diagnostic-trace through `weaver-diagnostic`, the harness's
+third member, and `weaver-analysis` is the crate outside that preloads the replay and
+reads what it produced. So v0.1's instinct was right and its record was the wrong one.
+The workflow document for the diagnostic replay loop, filed under the harness's `Loops/`
+container per the Document Format's container entry. It argues no edges of its own: the
+seams it walks are declared in the crate charters, and a graph block here would
+duplicate a record that already has a home.
 
 **Document ID:** `diagnostic-replay-loop`
 **Editorial:** Per the Working Rules.
@@ -127,22 +127,19 @@ written against it as owed. Nothing else in this walk waits on it.
 The charter's section 4 procedure, as this loop performs it:
 
 1. **Input identity first.** The loop establishes, from the answered
-   holdings alone, that what it is about to feed is what the record says
-   was fed: the rendered contributions, their template identities, the
-   sampling parameters, the model identity and weights hash against the
-   binding the load declared, and the prompt-block partition. A record
-   missing what its claim requires fails here, before any forward pass,
-   which is the completeness-is-claim-relative rule doing its work.
-   **A claim about the state rests on one fact beyond that list, and it is
-   claim-relative the same way**, per `weaver-trace-Spec` section 3: the
-   tee's election. It is the rule that
-   decided what the original agent's state held, so a replay preloaded under
-   a different one rebuilds a session that never ran. **A record written
-   before that member existed fails a claim about the state and not a claim
-   about the token path**: the null replay of step 2 rests on the recorded
-   identifiers alone and stands, and everything resting on the holdings does
-   not. The loop says which the record is good for rather than replaying
-   under a guess or refusing a run it could have made.
+   holdings alone, that what it is about to feed is what the record says was fed: the
+   rendered contributions, their template identities, the sampling parameters, the model
+   identity and weights hash against the binding the load declared, and the prompt-block
+   partition. A record missing what its claim requires fails here, before any forward
+   pass, which is the completeness-is-claim-relative rule doing its work. **A claim
+   about the state rests on one fact beyond that list, and it is claim-relative the same
+   way**, per `weaver-trace-Spec` section 3: the tee's election. It is the rule that
+   decided what the original agent's state held, so a replay preloaded under a different
+   one rebuilds a session that never ran. **A record written before that member existed
+   fails a claim about the state and not a claim about the token path**: the null replay
+   of step 2 rests on the recorded identifiers alone and stands, and everything resting
+   on the holdings does not. The loop says which the record is good for rather than
+   replaying under a guess or refusing a run it could have made.
 2. **The null replay.** No reader elected. The recorded path re-feeds, the
    recomputed token identifiers match the recorded ones exactly, integers,
    or the certification fails naming the first divergent position.

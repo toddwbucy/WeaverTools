@@ -3,13 +3,11 @@
 **Status:** MERGED. In `main` and the source of truth.
 
 **Revised:** 2026-08-25, the election is recorded as well as sent. The Vocabulary
-section's
-`election` term gains that the same rule is written to the `load` event, per
-`weaver-trace-Spec` section 3, so a reader of a finished record knows what this
-seam carried without being told. Nothing of the seam moves: the opener is
-unchanged and no party does anything differently. What changes is that a replay
-can preload under the rule the record names rather than one supplied from
-outside it. Per issue 347.
+section's `election` term gains that the same rule is written to the `load` event, per
+`weaver-trace-Spec` section 3, so a reader of a finished record knows what this seam
+carried without being told. Nothing of the seam moves: the opener is unchanged and no
+party does anything differently. What changes is that a replay can preload under the
+rule the record names rather than one supplied from outside it. Per issue 347.
 **Revised:** 2026-08-24, the replay ask joins the vocabulary. The ask set
 gains `replay` by section 7's own door, elected against the diagnostic
 replay loop's real need per the loop act of this date: the session's
