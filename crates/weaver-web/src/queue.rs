@@ -248,13 +248,42 @@ async fn build_context(
         })
         .collect();
 
-    // Budget: the bound minus the JSON envelope's overhead for this
-    // exact header. Serialize-and-check is authoritative in the
-    // adapter; this trim just gets us under it with margin.
-    const BUDGET: usize = crate::adapters::gate::LINE_BOUND - 1024;
-    let total = |ls: &[String]| header.len() + ls.iter().map(|l| l.len() + 1).sum::<usize>();
-    while lines.len() > 1 && total(&lines) > BUDGET {
+    // The bound the gate enforces is the serialized line's, JSON
+    // escaping included, so the trim measures exactly what the
+    // adapter will send rather than estimating around it - a refused
+    // over-bound line is a dropped turn where a trimmed one serves.
+    const BOUND: usize = crate::adapters::gate::LINE_BOUND;
+    let serialized_len = |ls: &[String]| -> usize {
+        #[derive(serde::Serialize)]
+        struct Request<'a> {
+            text: &'a str,
+        }
+        let text = format!("{header}{}", ls.join("\n"));
+        serde_json::to_string(&Request { text: &text })
+            .map(|s| s.len())
+            .unwrap_or(usize::MAX)
+    };
+    while lines.len() > 1 && serialized_len(&lines) > BOUND {
         lines.remove(0);
+    }
+    // One message can exceed the bound alone. It truncates on a char
+    // boundary with the marker counted inside the bound, so the
+    // mention that justified the turn still arrives, marked rather
+    // than refused (Spec section 7).
+    const MARKER: &str = " ...[truncated to the line bound]";
+    if serialized_len(&lines) > BOUND {
+        let mut only = lines.pop().unwrap_or_default();
+        loop {
+            let candidate = format!("{only}{MARKER}");
+            let len = serialized_len(std::slice::from_ref(&candidate));
+            if len <= BOUND || only.is_empty() {
+                only = candidate;
+                break;
+            }
+            let keep = only.chars().count().saturating_sub((len - BOUND).max(1));
+            only = only.chars().take(keep).collect();
+        }
+        lines.push(only);
     }
     Ok(Some(format!("{header}{}", lines.join("\n"))))
 }

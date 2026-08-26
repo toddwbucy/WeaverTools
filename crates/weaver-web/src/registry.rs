@@ -68,12 +68,17 @@ pub async fn all(store: &Store) -> anyhow::Result<Vec<Participant>> {
 }
 
 /// Ensure every agent a hello announced has a participant row.
-/// Humans are created on first visit, not here.
+/// Humans are created on first visit, not here. One refused name (a
+/// squatting participant of another kind) is warned and skipped so it
+/// never blocks the box's other agents.
 pub async fn reconcile_agents(store: &Store, names: &[String]) -> anyhow::Result<()> {
     for name in names {
-        store
+        if let Err(e) = store
             .create_participant(name, name, "agent", Some(name))
-            .await?;
+            .await
+        {
+            tracing::warn!("agent '{name}' not reconciled: {e}");
+        }
     }
     Ok(())
 }

@@ -79,8 +79,11 @@ pub async fn event_view(store: &Store, event_id: i64) -> anyhow::Result<Option<E
     .await?)
 }
 
-/// Messages since a participant's last close in a channel - the prompt
-/// window of Spec section 7.
+/// The prompt window of Spec section 7: what was said since this
+/// participant's last close - messages and closes alike, because an
+/// agent's answer is conversation the next speaker must see. Selecting
+/// only messages made agents blind to each other in a shared room. The
+/// window's start already excludes this participant's own closes.
 pub async fn messages_since_last_close(
     store: &Store,
     channel_id: i64,
@@ -89,7 +92,8 @@ pub async fn messages_since_last_close(
     Ok(sqlx::query_as::<_, EventView>(sqlx::AssertSqlSafe(format!(
         "SELECT {EVENT_VIEW_COLUMNS} FROM channel_events e \
          LEFT JOIN participants p ON p.id = e.participant_id \
-         WHERE e.channel_id = $1 AND e.kind = 'message' AND e.id > COALESCE(( \
+         WHERE e.channel_id = $1 AND e.kind IN ('message', 'close') \
+         AND e.id > COALESCE(( \
              SELECT max(id) FROM channel_events \
              WHERE channel_id = $1 AND participant_id = $2 AND kind = 'close'), 0) \
          ORDER BY e.id"

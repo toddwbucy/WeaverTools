@@ -27,12 +27,15 @@ pub struct VerbOutcome {
 }
 
 /// Where the box installed the admin binary and its config - box
-/// facts, from the connector's config (Spec section 3).
+/// facts, from the connector's config (Spec section 3). `admin_env`
+/// false means `admin_bin` is the root-owned wrapper that fixes the
+/// config itself, so no environment crosses sudo at all.
 pub async fn run_verb(
     verb: &str,
     agent: &str,
     admin_bin: &Path,
     admin_config: &Path,
+    admin_env: bool,
 ) -> anyhow::Result<VerbOutcome> {
     if !VERBS.contains(&verb) {
         anyhow::bail!("'{verb}' is not a lifecycle verb");
@@ -43,9 +46,12 @@ pub async fn run_verb(
         anyhow::bail!("'{agent}' is not a well-formed agent name");
     }
 
-    let fut = Command::new("sudo")
-        .arg("-n")
-        .arg(format!("WEAVER_ADMIN_CONFIG={}", admin_config.display()))
+    let mut cmd = Command::new("sudo");
+    cmd.arg("-n");
+    if admin_env {
+        cmd.arg(format!("WEAVER_ADMIN_CONFIG={}", admin_config.display()));
+    }
+    let fut = cmd
         .arg(admin_bin)
         .arg(verb)
         .arg(agent)

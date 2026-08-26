@@ -26,3 +26,7 @@ trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
 name  = "bravo"
 gate  = "/run/weaver-bravo/gate.sock"
 trace = "/home/todd/.weaveragents/weaver-bravo/trace.out"
+
+# With the wrapper from deploy/weaver-admin-verb installed (recommended):
+#admin_bin    = "/usr/local/libexec/weaver-web/weaver-admin-verb"
+#admin_env    = false
