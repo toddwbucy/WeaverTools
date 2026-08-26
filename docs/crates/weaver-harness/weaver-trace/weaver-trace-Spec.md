@@ -1015,11 +1015,11 @@ custody model forces rather than a property dropped.
 **Untagged with seven variants is a serialization device, and the deserializing
 consumer keys on `kind`.** Serde resolves an untagged enum by trying variants in
 order, which is unambiguous while writing and ambiguous while reading once more
-than one variant is struct-shaped. This crate reads no event back through
-its types: the working structure holds rendered lines, per section 4, no resume
-path survived the cut of 2026-08-01, and the one reader it does hold, the tee of
-section 11, takes a canonical line as an envelope and raw payload text, through
-no `Payload`. A consumer that decodes does so kind-first,
+than one variant is struct-shaped. No payload is ever read back through
+this crate's types: the working structure holds rendered lines, per section 4,
+no resume path survived the cut of 2026-08-01, and the one reader it does hold,
+the tee of section 11, takes a canonical line's envelope by name and its payload
+as raw text, through no `Payload`. A consumer that decodes does so kind-first,
 which the flatten election of this section already put at the top level of every
 line for exactly this reason, so the discriminant a reader needs is available
 before the payload is reached. **`Payload` therefore derives `Serialize` and not
@@ -1517,8 +1517,9 @@ to: trace-append-failed-no-recovery
   named half of the mutation-surface claim,** its signature half being the
   compiler bullet above, and the two are two records for the same reason the
   path-taking pair are.
-- No `Deserialize` on `Payload`, per section 3: the typed path reads no event
-  back, and the tee's read of section 11 is raw text through no `Payload`.
+- No `Deserialize` on `Payload`, per section 3: no payload is read back through
+  this crate's types, the tee of section 11 taking the envelope by name and the
+  payload as raw text.
 
 **Enforced by the manifest.** No `weaver-*` dependency, read against the graph
 under gate H2. No async runtime and no socket crate in the resolved tree, by the
@@ -1542,7 +1543,11 @@ section 8 carries it as the first of its threat walks and has discharged the
 owing, because an assertion belongs where its test lives. **The tagging test
 section 3 applies is declared by `weaver-types-Spec` section 4.3,** node and both
 edges, as the test the two floor Specs share, and what this document records is
-the election that test yields for `TurnClose`. The threat walk closing this
+the election that test yields for `TurnClose`. The charter's
+`trace-tee-selects-never-computes` binds this crate's tee module from outside
+this document as well, per section 11, and is not counted with that pair: those
+two are tests this Spec would otherwise owe, while the charter's claim sits with
+its own argument and owes this document nothing. The threat walk closing this
 section takes no node of its own, per Document Format section 5, and it names no
 test of its own either, its instrument being the compile-fail set already
 recorded.
@@ -1761,7 +1766,10 @@ to: trace-tee-projection-verbatim
 held together from the harness's attach at load.** `open` takes the channel,
 the session, and the election, sends the opener as the channel's first
 traffic, and fails where the seam refuses it. `feed` takes one canonical line
-and answers `false` where the seam is broken and the tee is done.
+and answers `false` where the seam is broken and the tee is done. The holder is
+the recorder: section 6's writer carries the applied tee beside the stream,
+feeds it each admitted line at the fan-out, and detaches it on `false`, so the
+conduct this section binds is the writer module's as much as this one's.
 
 **The tee never blocks the turn path.** The channel is set nonblocking at
 `open`, a peer whose buffer is full is treated as the same breakage a closed
