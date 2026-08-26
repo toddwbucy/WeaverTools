@@ -310,10 +310,17 @@ todd: @alpha <text>
   messages and other participants' closes alike, an agent's answer
   being conversation the next speaker must see (revised 2026-08-25,
   issue #337: selecting only messages made agents blind to each other
-  in a shared room). Newest-last, truncated oldest-first to fit the
-  line bound with the final mention always included. The bound is
-  measured on the serialized line, escaping included, never estimated,
-  and a single message exceeding the bound alone truncates on a
+  in a shared room). The read is capped at the newest 500 rows, more
+  than the line bound can carry at any plausible line size, so a
+  long-idle agent never drags a channel's whole history through the
+  trim. Newest-last, trimmed oldest-first to fit the line bound, with
+  two rules the widened window made explicit (review of #350): a
+  window holding no `message` does not invoke - another agent's close
+  is context, never a justification - and the newest message is
+  pinned, so no close that landed after it can displace the mention
+  that justified the turn. The bound is measured on the serialized
+  line, escaping included, computed once per row rather than per drop,
+  and the pinned message exceeding the bound alone truncates on a
   character boundary with a marker counted inside the bound - trimmed
   and marked serves where refused drops.
 - Speaker labels are participant `name` values. The format is a v1
