@@ -104,9 +104,11 @@ itself consumes, and what crosses here is consumed by state.
 **This seam's own.** Four terms. The `election`: the seam's opener, the
 session the load declared and the elected kinds with their payload key paths
 as the load declared them, sent whole at every standing of the channel and
-never per event. **The same election is written into the record**, on the
-`load` event's payload per `weaver-trace-Spec` section 3, so a reader of a
-finished record knows the rule this seam carried without being told it. That
+never per event. **The same elected kinds and paths are written into the
+record**, on the `load` event's payload per `weaver-trace-Spec` section 3, so a
+reader of a finished record knows the rule this seam carried without being told
+it. The record carries the rule and not the session, which rides the opener by
+the clause below and reaches a reader from the envelope of every event. That
 matters to nobody standing this seam and to everyone replaying it: a replay
 preloads under the rule the record names or it preloads a different session
 under a rule of its own. **The session rides the opener rather than the ask**, per

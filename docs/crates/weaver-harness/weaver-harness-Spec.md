@@ -4,7 +4,7 @@
 floor. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-08-25, the load's elections arrive by two routes. Section 4 said
+**Revised:** 2026-08-25, the load's elections arrive by two routes. Section 6.1 said
 they arrive in the enter's SPU instruction, which is true of three of them and not
 of the tee's: that one is a sibling of the instruction on the enter payload, per
 `weaver-types-Spec` section 4. The clause names both routes, and names the tee's
@@ -2064,13 +2064,12 @@ into their own boxes, one member per box per the streaming ruling, and the harne
 checks each spliced member's conformance to its event's accepting shape at the author
 call, the price the splice's opacity is paid at.
 
-**The seated identity prefix is authored beside the load, one
-`message.system` per message**, per `weaver-trace-PRD` section 5. The
-harness is again the party that holds it, arriving in the same enter's SPU
-instruction beside the elections, so the write is one read of what is in
-hand. The events carry no turn, a prefix preceding every turn of the run,
-and they are authored after the load event so the run's bracket stands over
-them.
+**The seated identity prefix is authored beside the load, one `message.system` per
+message**, per `weaver-trace-PRD` section 5. The harness is again the party that holds
+it, arriving in the same enter's SPU instruction beside the three elections it carries,
+so the write is one read of what is in hand. The events carry no turn, a prefix
+preceding every turn of the run, and they are authored after the load event so the run's
+bracket stands over them.
 
 **The door is `author_identity` and not `author_message`.** The message
 door takes a turn key and applies the licensing rule to it, so admitting a

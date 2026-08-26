@@ -10,9 +10,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 and from this date the record carries that form too, making four representations
 of one fact: this declaration, the enter payload, the tee's own, and the
 record's. Section 2 states that this document is authoritative for the election's
-declared shape and its field spellings, that what the term means on the state seam
-is `weaver-harness-state-contract`'s, and that a divergence in shape is a defect
-against this document, per G5. Unifying the types is not owed. Per issue 347.
+declared shape, that what the term means on the state seam is
+`weaver-harness-state-contract`'s, and that a divergence of shape is a defect
+against this document, per G5. **Field spellings are each renderer's**: this
+declaration renames for the operator's file and `weaver-trace` renders for a seam
+that already parses it, so the record's `all_kinds` is not a divergence. Unifying
+the types is not owed. Per issue 347.
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended and stands so the
 reversal is visible: `trace_sink` goes back to required under either kind,
@@ -679,8 +682,11 @@ same shape because that crate depends on nothing, not even this floor, and
 cannot spell a type it does not link. From 2026-08-25 the record carries that
 second form on the `load` event, per `weaver-trace-Spec` section 3, which makes
 four representations of one fact: this declaration, the enter payload, the tee's
-own, and the record's. **A divergence among them is a defect against this
-section** rather than a choice a reader makes, per G5, and unifying the types is
+own, and the record's. **Field spellings are each renderer's and are not shape**:
+this declaration renames for the operator's file and the record renders
+`all_kinds`, per `weaver-trace-Spec` section 3, which argues why moving either
+would move a live seam. **A divergence of shape among them is a defect against
+this section** rather than a choice a reader makes, per G5, and unifying the types is
 not owed: it would cost `weaver-trace` a no-dependency property that is load
 bearing for its own reasons in order to buy a name.
 

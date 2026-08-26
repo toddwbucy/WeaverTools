@@ -5,18 +5,16 @@ build order. Code is written against it under the gates of Working Process secti
 
 **Date filed:** 2026-08-01
 **Revised:** 2026-08-25, the tee's election joins the load payload. Section 3's
-`Elections` gains `tee`, this crate's own `Election`, emitted on every `load` this
-crate writes and an `Option` at the read so a record predating the member parses
-whole. It is named
-`tee` because a member differing from its container `Elections` by one letter is
-a collision the Working Rules refuse. Absence is the member's own, in records
-written before this act, and means the rule is unrecoverable rather than
-defaulted, so such a record replays its token path and cannot be certified for
-state. The instrument is perturbation, the member watched to fail when dropped
-from the shape. Section 3 also names `weaver-types-Spec` section 2 authoritative
-for the declared shape and `weaver-harness-state-contract` for what the term
-means on the seam, the two types differing on purpose because this crate links
-nothing.
+`Elections` gains `tee`, this crate's own `Election`, emitted on every `load` this crate
+writes and an `Option` at the read so a record predating the member parses whole. It is
+named `tee` because a member differing from its container `Elections` by one letter is a
+collision the Working Rules refuse. Absence is the member's own, in records written
+before this act, and means the rule is unrecoverable rather than defaulted, so such a
+record replays its token path and cannot be certified for state. The instrument is
+perturbation, the member watched to fail when dropped from the shape. Section 3 also
+names `weaver-types-Spec` section 2 authoritative for the declared shape and
+`weaver-harness-state-contract` for what the term means on the seam, the two types
+differing on purpose because this crate links nothing.
 **Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
 charter section 6's guarantee as an absence, the envelope carrying no version member,
 and represents the both-directions half as `Option` with `skip_serializing_if` on an
