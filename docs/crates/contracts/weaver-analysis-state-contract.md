@@ -2,7 +2,8 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-08-26, the name moves behind the wall. The operator's ruling of
+**Revised:** 2026-08-26, first of this date, the name moves behind the wall.
+The operator's ruling of
 this date recuts the wire clause: the first door loses its name, making this
 door the member's one named socket, and this door's name moves from the worker's
 runtime directory into the member's own territory on the operator's side, where
@@ -28,6 +29,13 @@ same from a finished sender and a dying one and the replay ask of
 `weaver-harness-state-contract` answers at the seal, which must not happen
 over a prefix that looks whole. Section 5's dead-driver clause names the
 prefix unsealed. Landed with the replay loop's act, every party merging.
+**Revised:** 2026-08-26, second of this date, the seam states its mechanics.
+Two facts the code act of this date elected are pinned where the seam's
+parties read them, per the audit of the same date: the seal's spelling is
+the empty JSON object on its own line, a bare line being framing residue
+and not a seal, and the preload door re-stands after any close of its
+channel, which is what carries the dead-driver retry and scopes the
+at-most-one-preload owing to a live driver. Nothing of the traffic moves.
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-analysis-state-contract`
 **Editorial:** Per the Working Rules.
@@ -145,12 +153,23 @@ error, the same on this door as on the first.
 
 **The seal ends the preload, and the close alone does not.** After the last
 distillate the driver sends the seal, one frame carrying nothing, and then
-closes. A close without the seal is a dead driver, per section 5, and the
+closes. **Carrying nothing is spelled**: the empty JSON object, one line
+reading `{}`, every frame on this seam being a JSON object on its own line.
+A bare empty line is a sender's framing residue and not a seal, so a driver
+that sealed with a blank line has not sealed and its close reads as a dying
+sender's. A close without the seal is a dead driver, per section 5, and the
 distinction is the whole of the seal's job: a channel's close looks the same
 from a finished sender and a dying one, and the party waiting on the
 preload, the replay ask of `weaver-harness-state-contract` section 2, must
 not answer over a prefix that looks whole. One standing, one preload, one
 seal, and the driver owes at most one preload per standing of the member.
+**The owing is a live driver's, and the door outlives any one driver**: the
+member stands the name again after any close of the preload channel, sealed
+or sealless, for its own standing's life, which is the mechanism the
+dead-driver retry of section 5 rides - a retry is a new standing of the
+driver against the same standing of the member, its opener retiring the
+dead prefix, and a driver that preloads twice on one of its own standings
+has broken its owing whether or not the member's door would admit it.
 
 **The opener retires the declared session's prior holdings, in the same
 transaction that records it.** A preload therefore lands against empty and
