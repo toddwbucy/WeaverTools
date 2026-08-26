@@ -7,6 +7,7 @@
 //! conforms: admin-answer-and-exit-status-agree
 //! conforms: admin-residency-is-not-lifecycle-state
 //! conforms: admin-preload-name-follows-the-kind
+//! conforms: admin-cloexec-atomic-at-creation
 //! conforms: admin-publishes-only-on-ready
 //! conforms: admin-validate-starts-no-process
 //! conforms: admin-inventory-one-function
@@ -220,22 +221,38 @@ fn stand_state_member(
     } else {
         member.stderr(std::process::Stdio::null());
     }
-    // The member's end arrives at the fixed number `weaver-state` adopts,
-    // `dup2` clearing close-on-exec on the new descriptor alone, so the
-    // arming is an act at this one site and the atomic flag stands
-    // everywhere else.
+    // The member's end arrives at the fixed number `weaver-state` adopts.
+    // Relocated first where it sits at or below the arming target, because
+    // the spawn places the standard streams onto 0 through 2 before any
+    // pre-exec closure runs, and the arming itself carries the
+    // equal-number corner `weaver-harness-Spec` section 2.2 records,
+    // repaired inside `arm_member_end`.
+    let member_end = {
+        use std::os::fd::AsRawFd;
+        if member_end.as_raw_fd() <= 3 {
+            match nix::fcntl::fcntl(&member_end, nix::fcntl::FcntlArg::F_DUPFD_CLOEXEC(4)) {
+                Ok(raw) => {
+                    // SAFETY: F_DUPFD_CLOEXEC answered a fresh descriptor
+                    // this process owns, adopted exactly once, and the low
+                    // original drops here.
+                    unsafe {
+                        use std::os::fd::FromRawFd;
+                        std::os::fd::OwnedFd::from_raw_fd(raw)
+                    }
+                }
+                Err(_) => return None,
+            }
+        } else {
+            member_end
+        }
+    };
     let raw_member_end = {
         use std::os::fd::AsRawFd;
         member_end.as_raw_fd()
     };
     unsafe {
         use std::os::unix::process::CommandExt;
-        member.pre_exec(move || {
-            if nix::libc::dup2(raw_member_end, 3) < 0 {
-                return Err(std::io::Error::last_os_error());
-            }
-            Ok(())
-        });
+        member.pre_exec(move || arm_member_end(raw_member_end));
     }
     let spawned = member.spawn().is_ok();
     // This side's copy of the member's end closes either way: the member
@@ -246,6 +263,27 @@ fn stand_state_member(
         return None;
     }
     Some(harness_end)
+}
+
+/// **The arming, the one deliberate gift**, per `weaver-admin-Spec` section
+/// 6: `dup2` onto the member's fixed number, then an unconditional
+/// close-on-exec clear, because `dup2` onto the same number is a no-op that
+/// leaves the flag standing - the corner `weaver-harness-Spec` section 2.2
+/// records - and a cleared flag on the armed number alone is what makes the
+/// inheritance an act at one site while the atomic flag stands everywhere
+/// else. Async-signal-safe throughout, per the pre-exec contract.
+fn arm_member_end(raw_member_end: std::os::fd::RawFd) -> std::io::Result<()> {
+    if raw_member_end != 3 && unsafe { nix::libc::dup2(raw_member_end, 3) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let flags = unsafe { nix::libc::fcntl(3, nix::libc::F_GETFD) };
+    if flags < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    if unsafe { nix::libc::fcntl(3, nix::libc::F_SETFD, flags & !nix::libc::FD_CLOEXEC) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
 }
 
 /// **The member's vector, both directions this crate's alone**, per
@@ -715,6 +753,142 @@ fn load_service_config() -> Result<ServiceConfig, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Spawn `readlink` over the named child descriptors with the given
+    /// pre-exec arming, and return what each resolved to - the socket's
+    /// inode identity, or an empty string where the number held nothing.
+    /// Identity rather than existence, because a child's own bookkeeping
+    /// can land a descriptor on a number this test is watching.
+    fn probe_child_fds<F>(arming: F, numbers: &[i32]) -> Vec<String>
+    where
+        F: FnMut() -> std::io::Result<()> + Send + Sync + 'static,
+    {
+        let mut probe = std::process::Command::new("/usr/bin/readlink");
+        for number in numbers {
+            probe.arg(format!("/proc/self/fd/{number}"));
+        }
+        probe
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null());
+        unsafe {
+            use std::os::unix::process::CommandExt;
+            probe.pre_exec(arming);
+        }
+        let held = probe.output().expect("the probe runs");
+        std::str::from_utf8(&held.stdout)
+            .expect("fd targets are ascii")
+            .lines()
+            .map(str::to_string)
+            .collect()
+    }
+
+    /// This process's own reading of a descriptor's identity, the string
+    /// the child's probe must match for the same open file description.
+    fn own_fd_identity(raw: i32) -> String {
+        std::fs::read_link(format!("/proc/self/fd/{raw}"))
+            .expect("own descriptor resolves")
+            .to_string_lossy()
+            .into_owned()
+    }
+
+    /// **The third walk's enumerate half, on the real arming path**, per
+    /// `weaver-admin-Spec` section 10 as amended 2026-08-26: spawn a
+    /// subprocess with the member's spawn arming, enumerate its descriptors,
+    /// and confirm none of this process's crossed but the one the spawn
+    /// deliberately arms. Two layouts, because the arming has two paths:
+    /// the ordinary one, the end above the target and `dup2` moving it, and
+    /// the equal-number corner, the end already at three with close-on-exec
+    /// set, where `dup2` is a no-op and the unconditional flag clear is the
+    /// whole repair, per `weaver-harness-Spec` section 2.2.
+    ///
+    /// Perturbation: remove the flag clear from `arm_member_end` and the
+    /// corner layout fails, the armed number closing at exec. Remove the
+    /// `dup2` and the ordinary layout fails.
+    #[test]
+    fn the_spawn_arms_the_gift_and_nothing_else_crosses() {
+        // Layout one, ordinary: the end relocated above the child's own
+        // low numbers, so the listing below cannot alias it.
+        let (harness_end, member_end) = nix::sys::socket::socketpair(
+            nix::sys::socket::AddressFamily::Unix,
+            nix::sys::socket::SockType::Stream,
+            None,
+            nix::sys::socket::SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("the pair");
+        let relocate = |end: std::os::fd::OwnedFd| -> std::os::fd::OwnedFd {
+            let raw = nix::fcntl::fcntl(&end, nix::fcntl::FcntlArg::F_DUPFD_CLOEXEC(16))
+                .expect("relocates");
+            // SAFETY: a fresh descriptor this process owns, adopted once,
+            // the low original dropping with `end`.
+            unsafe {
+                use std::os::fd::FromRawFd;
+                std::os::fd::OwnedFd::from_raw_fd(raw)
+            }
+        };
+        let harness_end = relocate(harness_end);
+        let member_end = relocate(member_end);
+        let harness_raw = {
+            use std::os::fd::AsRawFd;
+            harness_end.as_raw_fd()
+        };
+        let member_raw = {
+            use std::os::fd::AsRawFd;
+            member_end.as_raw_fd()
+        };
+        let member_identity = own_fd_identity(member_raw);
+        let listed = probe_child_fds(move || arm_member_end(member_raw), &[3, harness_raw]);
+        assert_eq!(
+            listed.first().map(String::as_str),
+            Some(member_identity.as_str()),
+            "the gift stands at the fixed number as the member's own end: {listed:?}"
+        );
+        assert_eq!(
+            listed.len(),
+            1,
+            "this process's other end did not cross: {listed:?}"
+        );
+        drop(harness_end);
+        drop(member_end);
+
+        // Layout two, the corner: the end seated at the target with the
+        // flag set before the arming runs, so `dup2` is a no-op and only
+        // the unconditional clear keeps the gift alive across exec.
+        let (own_end, corner_end) = nix::sys::socket::socketpair(
+            nix::sys::socket::AddressFamily::Unix,
+            nix::sys::socket::SockType::Stream,
+            None,
+            nix::sys::socket::SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("the corner pair");
+        let corner_raw = {
+            use std::os::fd::AsRawFd;
+            corner_end.as_raw_fd()
+        };
+        let corner_identity = own_fd_identity(corner_raw);
+        let listed = probe_child_fds(
+            move || {
+                // Seat the end at three with close-on-exec set, which is
+                // the layout an unlucky descriptor table hands the real
+                // spawn.
+                if unsafe { nix::libc::dup2(corner_raw, 3) } < 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                if unsafe { nix::libc::fcntl(3, nix::libc::F_SETFD, nix::libc::FD_CLOEXEC) } < 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                arm_member_end(3)
+            },
+            &[3],
+        );
+        assert_eq!(
+            listed.first().map(String::as_str),
+            Some(corner_identity.as_str()),
+            "the corner's gift survives exec on the flag clear alone: {listed:?}"
+        );
+        drop(own_end);
+        drop(corner_end);
+    }
 
     /// **The vector this crate composes, in both directions**, per
     /// `weaver-admin-Spec` section 6 as ruled 2026-08-26: a serving

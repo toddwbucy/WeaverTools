@@ -296,7 +296,9 @@ impl Store {
         let mut shaped = Vec::with_capacity(runs.len());
         for run in runs {
             let kinds: Vec<(String, i64)> = kinds_query
-                .query_map([session, run.as_str()], |row| Ok((row.get(0)?, row.get(1)?)))
+                .query_map([session, run.as_str()], |row| {
+                    Ok((row.get(0)?, row.get(1)?))
+                })
                 .map_err(fault)?
                 .collect::<Result<_, _>>()
                 .map_err(fault)?;
@@ -525,8 +527,7 @@ pub fn render_shape_answer(runs: &[RunShape]) -> String {
             serde_json::json!({"run": shape.run, "kinds": kinds})
         })
         .collect();
-    let mut frame =
-        serde_json::json!({"answer": {"shape": {"runs": entries}}}).to_string();
+    let mut frame = serde_json::json!({"answer": {"shape": {"runs": entries}}}).to_string();
     frame.push('\n');
     frame
 }
@@ -547,13 +548,13 @@ pub fn parse_distillate(frame: &str) -> Option<Distillate> {
     // because the distillate is a projection of the canonical form and a
     // reshaping here would break that on the last step.
     let pairs = match top.get("pairs") {
-        Some(raw) => serde_json::from_str::<std::collections::BTreeMap<String, &RawValue>>(
-            raw.get(),
-        )
-        .ok()?
-        .into_iter()
-        .map(|(key, value)| (key, value.get().to_string()))
-        .collect(),
+        Some(raw) => {
+            serde_json::from_str::<std::collections::BTreeMap<String, &RawValue>>(raw.get())
+                .ok()?
+                .into_iter()
+                .map(|(key, value)| (key, value.get().to_string()))
+                .collect()
+        }
         None => Vec::new(),
     };
     Some(Distillate {
@@ -680,19 +681,21 @@ mod tests {
         let path = scratch();
         let _ = std::fs::remove_file(&path);
         let mut store = Store::open(&path).expect("opens");
-        store
-            .index_election(&Election::default())
-            .expect("indexes");
+        store.index_election(&Election::default()).expect("indexes");
 
         // An earlier session's holdings, still on disk where a session cut
         // left them, and a message it may not serve into the new session.
-        store.land(&landed("old", "r-old", "load", 0)).expect("lands");
+        store
+            .land(&landed("old", "r-old", "load", 0))
+            .expect("lands");
         let mut stale = landed("old", "r-old", "message.user", 1);
         stale.turn = Some("t-1".into());
         stale.pairs = vec![("payload.content".into(), "\"the vault code\"".into())];
         store.land(&stale).expect("lands");
 
-        store.land(&landed("new", "r-new", "load", 0)).expect("lands");
+        store
+            .land(&landed("new", "r-new", "load", 0))
+            .expect("lands");
         let mut fresh = landed("new", "r-new", "message.user", 1);
         fresh.turn = Some("t-1".into());
         fresh.pairs = vec![("payload.content".into(), "\"hello\"".into())];
@@ -761,7 +764,9 @@ mod tests {
             ("r-1", "turn.closed", 2),
             ("r-2", "turn.closed", 1),
         ] {
-            store.land(&landed("s", run, kind, sequence)).expect("lands");
+            store
+                .land(&landed("s", run, kind, sequence))
+                .expect("lands");
         }
         let shape = store.shape("s").expect("shapes");
         assert_eq!(shape.len(), 2);
@@ -772,7 +777,10 @@ mod tests {
         );
         assert_eq!(shape[1].run, "r-2");
         let frame = render_shape_answer(&shape);
-        assert!(frame.starts_with(r#"{"answer":{"shape":{"runs":["#), "{frame}");
+        assert!(
+            frame.starts_with(r#"{"answer":{"shape":{"runs":["#),
+            "{frame}"
+        );
         assert!(frame.ends_with("}\n"), "{frame}");
         let _ = std::fs::remove_file(&path);
     }
@@ -828,13 +836,21 @@ mod tests {
         let kinds: Vec<&str> = replayed.iter().map(|e| e.kind.as_str()).collect();
         assert_eq!(
             kinds,
-            ["message.user", "model.request", "model.measurement", "message.assistant"],
+            [
+                "message.user",
+                "model.request",
+                "model.measurement",
+                "message.assistant"
+            ],
             "and in landing order"
         );
         let recalled = store.recall("s", None).expect("recall");
         assert_eq!(recalled.len(), 2, "where a recall serves the message kinds");
         let frame = render_replay_answer(&replayed);
-        assert!(frame.starts_with(r#"{"answer":{"replay":{"events":["#), "{frame}");
+        assert!(
+            frame.starts_with(r#"{"answer":{"replay":{"events":["#),
+            "{frame}"
+        );
         assert!(frame.ends_with("}\n"), "{frame}");
         let _ = std::fs::remove_file(&path);
     }
@@ -866,7 +882,11 @@ mod tests {
             1,
             "and no other session's are"
         );
-        assert_eq!(store.held().expect("held"), 1, "the field rows go with them");
+        assert_eq!(
+            store.held().expect("held"),
+            1,
+            "the field rows go with them"
+        );
         let _ = std::fs::remove_file(&path);
     }
 
@@ -943,7 +963,12 @@ mod tests {
     /// member is nobody's row.
     #[test]
     fn an_unattributable_frame_is_refused() {
-        assert!(parse_distillate(r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":"0"}}"#).is_some());
+        assert!(
+            parse_distillate(
+                r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":"0"}}"#
+            )
+            .is_some()
+        );
         for missing in [
             r#"{"envelope":{"run":"r","kind":"load","sequence":"0"}}"#,
             r#"{"envelope":{"session":"s","kind":"load","sequence":"0"}}"#,

@@ -1069,10 +1069,10 @@ impl Harness {
         )
         .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?;
 
-        // The state seam, per `weaver-harness-state-contract`: the member's
-        // named socket stands beside the coordination socket when the
-        // deployment stood one, and its absence is the leg not standing,
-        // never a refused load. Attached before the load event is authored
+        // The state seam, per `weaver-harness-state-contract` as ruled
+        // 2026-08-26: a nameless pair whose harness end arrived on this
+        // enter when admin stood the member, and its absence is the leg not
+        // standing, never a refused load. Attached before the load event is authored
         // so the run's opening distills like everything after it. The
         // election is the declaration's, resolved by admin and carried in
         // the enter per the contract's sections 3 and 5, converted here at
