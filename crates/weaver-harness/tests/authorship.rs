@@ -58,6 +58,7 @@ fn unlicensed_message_is_refused_before_submit() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
         .expect("load");
@@ -194,6 +195,7 @@ fn timestamps_are_stamped_at_authoring() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
         .expect("load");
@@ -252,6 +254,7 @@ fn assembly_sees_only_message_kinds() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
         .unwrap();
@@ -356,6 +359,7 @@ fn assembly_is_deterministic() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
         .unwrap();
@@ -419,6 +423,7 @@ fn prompt_part_order_is_fixed() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
         .unwrap();
@@ -470,6 +475,7 @@ fn fault_payload_is_carried_unchanged() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
         .unwrap();
@@ -522,6 +528,7 @@ fn undecodable_message_records_are_counted() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
         .unwrap();
@@ -588,6 +595,7 @@ fn an_undecodable_record_refuses_the_seat_and_authors_a_fault() {
                 residual_readout: false,
                 field: None,
                 surprisal: false,
+                tee: Some(weaver_trace::Election::default()),
             })),
         )
             .unwrap();

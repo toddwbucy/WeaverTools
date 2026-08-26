@@ -1088,6 +1088,12 @@ impl Harness {
                 })
                 .collect(),
         };
+        // The record carries the same rule the tee applies, cloned before
+        // the seam consumes it and written whether or not the seam stands,
+        // per `weaver-trace-Spec` section 3: the rule is the load's fact
+        // and not the channel's, and absence on a record is reserved for
+        // one that predates the member.
+        let tee_election = election.clone();
         let mut state_seam = None;
         if let Ok(channel) =
             std::os::unix::net::UnixStream::connect(self.coordination.state_socket())
@@ -1107,12 +1113,16 @@ impl Harness {
         // clock, so the author is constructed at this moment.
         let author = Author::new(&session, &payload.run);
         // **The load declares the posture it was written in**, per
-        // `weaver-trace-PRD` section 3.2: each diagnostic election of this
+        // `weaver-trace-PRD` section 3.1: each diagnostic election of this
         // enter, named individually and none bundled. This crate is the
-        // party that holds them already - they arrive in the enter's SPU
-        // instruction - so the declaration costs one read of what is in
-        // hand. Without it a record holding no field and a record whose
-        // election stood and produced nothing are one absence on disk.
+        // party that holds them already, and they arrive by two routes per
+        // `weaver-harness-Spec` section 6.1: the readout, the field, and
+        // the surprisal ride the SPU instruction, and the tee's rule is a
+        // sibling of the instruction on the enter payload, converted above
+        // for the seam and cloned for the record. The declaration still
+        // costs one read of what is in hand. Without it a record holding
+        // no field and a record whose election stood and produced nothing
+        // are one absence on disk.
         let elections = weaver_trace::Elections {
             residual_readout: payload.spu_instruction.decoder.residual_readout_election,
             field: payload
@@ -1122,6 +1132,7 @@ impl Harness {
                 .as_ref()
                 .map(|election| election.depth),
             surprisal: payload.spu_instruction.decoder.surprisal_election,
+            tee: Some(tee_election),
         };
         author
             .author(
@@ -1743,6 +1754,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");

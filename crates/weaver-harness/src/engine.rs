@@ -1576,6 +1576,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");
@@ -1692,6 +1693,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");
@@ -1804,6 +1806,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");
@@ -1942,6 +1945,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");
@@ -2120,6 +2124,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");
@@ -2317,6 +2322,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");
@@ -2489,6 +2495,7 @@ mod tests {
                     residual_readout: false,
                     field: Some(2),
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");
@@ -2714,6 +2721,7 @@ mod tests {
                     residual_readout: false,
                     field: None,
                     surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
                 })),
             )
             .expect("load");

@@ -1,4 +1,5 @@
 //! conforms: trace-identity-newtypes-harness-converts
+//! conforms: trace-load-carries-the-tee-election
 //! conforms: trace-kind-explicit-renames
 //! conforms: trace-subsystem-case-set
 //! conforms: trace-kind-enum-exhaustive
@@ -403,6 +404,15 @@ pub struct Elections {
     /// election existed, where the member is absent altogether: absent,
     /// false, and true are three states and the shape keeps them three.
     pub surprisal: bool,
+    /// The tee's rule, this crate's own `Election`, written whole on every
+    /// `load` the harness authors: every load has an election, a deployment
+    /// that elects nothing running under the default, per
+    /// `weaver-trace-Spec` section 3. The `Option` is the reader's, per the
+    /// compatibility rule: absence means the record predates the member and
+    /// the rule that built the state is unrecoverable, never that the
+    /// election was the default, so such a record replays its token path
+    /// and cannot be certified for state.
+    pub tee: Option<crate::tee::Election>,
 }
 
 /// How the generation ended, per the charter: completed or stopped.
