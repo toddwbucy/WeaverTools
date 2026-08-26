@@ -950,8 +950,8 @@ the record itself, because it claims nothing more.
 claim-relative the same way: the tee's election**, the rule that decided which
 events crossed into the agent's working state and which payload paths rode
 with them. A replay that preloads under a different rule rebuilds a session
-that never ran, and nothing in either record marks it, so the record carries
-the rule itself, a requirement on `weaver-trace-PRD` landed at its load
+that never ran, and nothing in either record would mark it, so the record
+carries the rule itself, a requirement on `weaver-trace-PRD` landed at its load
 bracket, its representation `weaver-trace-Spec` section 3's. A record written
 before that member existed fails a claim about the state and not a claim
 about the token path: the recorded identifiers stand and everything resting
