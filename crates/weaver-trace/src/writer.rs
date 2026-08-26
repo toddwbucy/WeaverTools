@@ -37,7 +37,7 @@ use crate::tee::Tee;
 pub const QUEUE_DEPTH: usize = 1024;
 
 /// The depth at which pressure is reported rather than the depth of the queue
-/// itself. An open election per section 11, settled by a measurement against a
+/// itself. An open election per section 12, settled by a measurement against a
 /// real sink at a real rate; the interim value keeps the report ahead of the
 /// queue filling.
 pub const HIGH_WATER_MARK: usize = 768;

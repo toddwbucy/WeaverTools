@@ -269,7 +269,7 @@ pub enum TurnClose {
 }
 
 /// Why a stopped turn stopped. A satellite election per `weaver-trace-Spec`
-/// section 11: the stop directive is today's one clean interrupt and a fault
+/// section 12: the stop directive is today's one clean interrupt and a fault
 /// is the other way a turn ends early.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
