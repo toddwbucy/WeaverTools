@@ -120,9 +120,9 @@ links would be dependencies nothing here consumes.
 **Dependencies, external.** `rusqlite` with its bundled engine, so the store's
 version is the build's fact rather than the host's, pinned by the lock file
 like every dependency. `serde_json` for the canonical event JSON the ingest
-reads. `nix` for the credential check and descriptor handling the seam
-requires. Nothing else: no async runtime, no logging crate, no HTTP, per the
-corpus's standing refusals.
+reads. `nix` for the preload door's credential check and for the descriptor
+handling both doors require. Nothing else: no async runtime, no logging
+crate, no HTTP, per the corpus's standing refusals.
 
 ## 2. The process and its territory
 

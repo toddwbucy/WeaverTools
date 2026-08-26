@@ -245,8 +245,9 @@ pointed at the wrong artifact. The record above and `weaver-types-PRD` section
 has done since the ingest act.** The custodian of `weaver-state-PRD` runs under
 its own account over its own subdirectory of the operator's territory, and the
 party that starts it has to hold three things before any process exists: the
-operator's territory, the binding kind the inventory settled, and the enter
-seam the harness's end of the pair must cross. This crate holds all three at
+operator's territory, the binding kind the inventory settled, and the enter,
+the one exchange the harness's end of the pair can cross, which only this
+crate opens. This crate holds all three at
 that moment and no other party holds any of them, so the member is this
 crate's to start. The agent's resolved identity stood third on this list
 while the vector carried its uid, and left it with the ruling of 2026-08-26,

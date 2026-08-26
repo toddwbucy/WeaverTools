@@ -1,6 +1,6 @@
 ---
 title: weaver-state
-summary: the session custodian: sqlite behind the member's own channel, ingest and serve
+summary: the session custodian, sqlite behind its own channel, ingest and serve
 version: v0.1
 date: 2026-08-24
 commit: unreleased

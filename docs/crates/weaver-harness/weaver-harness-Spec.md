@@ -1341,8 +1341,9 @@ unchanged, per `weaver-admin-harness-contract` section 6, and the scoped
 account holds: a refusal before the `load` event leaves the stream clean and
 the state at before-enter, and a refusal after it leaves the authored bracket
 standing and the run in place for the leave that unwinds it. **Three of this
-paragraph's four records are review's by election.** A test counting the
-ancillary descriptors on an enter directive reaches the sink's count, a test
+paragraph's four records are review's by election.** A test reading the
+ancillary descriptors on an enter directive for what each is for reaches the
+sink's count, per the discrimination the ruling of 2026-08-26 asks below, a test
 exec'ing a probe in the SPU's place reaches the decode pair's crossing of the
 same fork, and a test holding a double SPU's answer reaches the gate pair's wait
 on confirmed residency, and this suite buys none of the three. The scoped
