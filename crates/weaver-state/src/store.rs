@@ -100,30 +100,7 @@ impl Store {
     /// Spec: one partial index per elected key path, so extension within a
     /// session is rows accumulating under standing indexes.
     pub fn index_election(&mut self, election: &Election) -> Result<(), CustodyFault> {
-        for (_kind, keys) in &election.keys {
-            for key in keys {
-                // The index name is the key path itself, hex-encoded, so a
-                // name can only ever stand for one predicate: a positional
-                // name would let a later load's differing election fall
-                // silently under `IF NOT EXISTS` on an earlier load's name.
-                // The key is a bound-in literal within the WHERE, quoted
-                // through sqlite's own quoting to keep a hostile key path
-                // from becoming SQL.
-                use std::fmt::Write;
-                let mut name = String::with_capacity(key.len() * 2);
-                for byte in key.bytes() {
-                    let _ = write!(name, "{byte:02x}");
-                }
-                let statement = format!(
-                    "CREATE INDEX IF NOT EXISTS field_elected_{name} ON field (key, value) WHERE key = {}",
-                    quoted(key)
-                );
-                self.connection
-                    .execute(&statement, [])
-                    .map_err(|e| CustodyFault::StoreUnavailable(e.to_string()))?;
-            }
-        }
-        Ok(())
+        build_indexes(&self.connection, election)
     }
 
     /// Land one distillate, whole or not at all, per the Spec: the event
@@ -203,8 +180,14 @@ impl Store {
                 rusqlite::params![session],
             )
             .map_err(fault)?;
+        // **The index build joins the delete's transaction**, per the
+        // contract's same-transaction claim as the audit of 2026-08-26 read
+        // it: the retirement and the opener's recording commit together or
+        // not at all, so a death between them cannot leave a retired
+        // session with the old election's indexes standing over it.
+        build_indexes(&transaction, election)?;
         transaction.commit().map_err(fault)?;
-        self.index_election(election)
+        Ok(())
     }
 
     /// The replay query, per `weaver-harness-state-contract` section 2: every
@@ -533,6 +516,38 @@ pub fn render_shape_answer(runs: &[RunShape]) -> String {
 }
 
 /// A string as a single-quoted SQL literal, sqlite's own doubling rule.
+/// Build the election's partial indexes on whatever holds the connection,
+/// the store itself or an open transaction, so the preload path can run the
+/// build inside the retirement's transaction while the first door's opener
+/// runs it bare. The index name is the key path itself, hex-encoded, so a
+/// name can only ever stand for one predicate: a positional name would let
+/// a later load's differing election fall silently under `IF NOT EXISTS` on
+/// an earlier load's name. The key is a bound-in literal within the WHERE,
+/// quoted through sqlite's own quoting to keep a hostile key path from
+/// becoming SQL.
+fn build_indexes(
+    connection: &rusqlite::Connection,
+    election: &Election,
+) -> Result<(), CustodyFault> {
+    for (_kind, keys) in &election.keys {
+        for key in keys {
+            use std::fmt::Write;
+            let mut name = String::with_capacity(key.len() * 2);
+            for byte in key.bytes() {
+                let _ = write!(name, "{byte:02x}");
+            }
+            let statement = format!(
+                "CREATE INDEX IF NOT EXISTS field_elected_{name} ON field (key, value) WHERE key = {}",
+                quoted(key)
+            );
+            connection
+                .execute(&statement, [])
+                .map_err(|e| CustodyFault::StoreUnavailable(e.to_string()))?;
+        }
+    }
+    Ok(())
+}
+
 fn quoted(text: &str) -> String {
     format!("'{}'", text.replace('\'', "''"))
 }
