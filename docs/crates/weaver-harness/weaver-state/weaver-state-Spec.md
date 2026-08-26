@@ -2,6 +2,15 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-26, second of this date, the seam states its mechanics.
+The code act's elections of this date are declared, per the audit of the
+same date: section 2 carries the adoption's probe beside the number,
+section 4 carries the door's re-stand on any preload close with the seal
+apart and monotonic, and section 4 names the three protocol bounds the
+member enforces - the answer ceiling, the inbound frame cap, and the answer
+write deadline - each with what its breach means. The retirement's
+same-transaction claim is made true in code rather than narrowed here, the
+index build joining the delete's transaction in the stacked code act.
 **Revised:** 2026-08-26, first of this date, the first door's end arrives
 with the process. Per the
 operator's ruling of this date: section 2 stops judging a credential on the
@@ -78,15 +87,6 @@ passes its stated trigger and stands with the reasoning recorded, and
 section 6 closes the serve surface election, the transformation vocabulary
 gaining its first member. Arrives with the context-injection loop's act,
 per the contract's change protocol.
-**Revised:** 2026-08-26, second of this date, the seam states its mechanics.
-The code act's elections of this date are declared, per the audit of the
-same date: section 2 carries the adoption's probe beside the number,
-section 4 carries the door's re-stand on any preload close with the seal
-apart and monotonic, and section 4 names the three protocol bounds the
-member enforces - the answer ceiling, the inbound frame cap, and the answer
-write deadline - each with what its breach means. The retirement's
-same-transaction claim is made true in code rather than narrowed here, the
-index build joining the delete's transaction in the stacked code act.
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`
@@ -371,7 +371,11 @@ door itself survives the channel too**: on any close of the preload
 channel the member unlinks and rebinds the name and the per-channel opener
 state resets, per the contract's retry mechanism, while the seal fact
 stands apart and is never reset, so a retry's opener retires the dead
-prefix and a parked ask still answers only at a seal. The
+prefix and a parked ask still answers only at a seal. A re-stand whose bind
+fails logs the fault and the member serves on doorless, the derivative
+degrading rather than the standing ending, where the same failure at the
+initial stand is fatal because nothing has been served yet that a death
+would interrupt. The
 parking is the serve
 loop's and blocks nothing else: distillates land and the other asks answer
 while a replay ask waits, one parked slot per channel sufficing because a
