@@ -8,6 +8,7 @@
 //! conforms: trace-receive-site-takes-no-flag
 //! conforms: trace-holds-no-recording-level
 //! conforms: trace-receive-shape-pinned-by-doctest
+//! conforms: trace-tee-no-turn-backpressure
 //!
 //! The emit path, the writer, and the commit boundary, per `weaver-trace-Spec`
 //! sections 5 through 8. The recorder is the crate's principal type and owns
