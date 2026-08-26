@@ -36,14 +36,14 @@ pub enum SubmitRefusal {
 }
 
 /// The name of the field a refusal names. A satellite newtype per
-/// `weaver-trace-Spec` section 11, this crate's own rather than the floor's,
+/// `weaver-trace-Spec` section 12, this crate's own rather than the floor's,
 /// per the no-internal-dependency rule.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FieldName(pub String);
 
 /// What went wrong at the sink, carried as a value a caller can hold and
 /// compare: the OS error code where one exists, and the rendered description.
-/// A satellite shape per section 11.
+/// A satellite shape per section 12.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WriteError {
     pub os_error: Option<i32>,
