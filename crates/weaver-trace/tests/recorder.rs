@@ -732,18 +732,6 @@ fn the_system_kind_is_turn_optional_and_its_siblings_are_not() {
     assert!(out.contains("\"message.system\""), "the dotted spelling");
 }
 
-/// **The surprisal's election is written even when declined.** Charter
-/// section 3.2 names each election individually so a record's posture is
-/// recoverable from the record, and this one is the first that can be
-/// absent while the reading it governs is present: every record written
-/// before 2026-08-21 carries the surprisal vector and no flag beside it.
-/// Absent, false, and true are therefore three states, and only an
-/// explicit `false` separates a declined election from a record older than
-/// the election.
-///
-/// Perturbation: give `surprisal` a `skip_serializing_if` that drops the
-/// false, and the declined case becomes indistinguishable from the old
-/// record. Watched under exactly that.
 /// **The `load` event carries the tee's election, written whole**, per
 /// `weaver-trace-Spec` section 3
 /// (`trace-load-carries-the-tee-election`): a payload rendered under a
@@ -784,6 +772,18 @@ fn the_load_carries_the_tee_election() {
     );
 }
 
+/// **The surprisal's election is written even when declined.** Charter
+/// section 3.1 names each election individually so a record's posture is
+/// recoverable from the record, and this one is the first that can be
+/// absent while the reading it governs is present: every record written
+/// before 2026-08-21 carries the surprisal vector and no flag beside it.
+/// Absent, false, and true are therefore three states, and only an
+/// explicit `false` separates a declined election from a record older than
+/// the election.
+///
+/// Perturbation: give `surprisal` a `skip_serializing_if` that drops the
+/// false, and the declined case becomes indistinguishable from the old
+/// record. Watched under exactly that.
 #[test]
 fn a_declined_surprisal_election_is_written_down() {
     let (mut r, path) = recorder();

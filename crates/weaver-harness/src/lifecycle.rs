@@ -2251,6 +2251,11 @@ mod tests {
                 serde_json::json!(elected),
                 "and so is the surprisal's, written down either way"
             );
+            assert_eq!(
+                load["payload"]["tee"],
+                serde_json::json!({"all_kinds": false, "keys": []}),
+                "the tee's rule is the enter's declared election, not a default"
+            );
             if elected {
                 assert_eq!(
                     load["payload"]["field"],
