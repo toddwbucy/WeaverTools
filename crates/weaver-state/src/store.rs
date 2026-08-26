@@ -515,7 +515,6 @@ pub fn render_shape_answer(runs: &[RunShape]) -> String {
     frame
 }
 
-/// A string as a single-quoted SQL literal, sqlite's own doubling rule.
 /// Build the election's partial indexes on whatever holds the connection,
 /// the store itself or an open transaction, so the preload path can run the
 /// build inside the retirement's transaction while the first door's opener
@@ -548,6 +547,7 @@ fn build_indexes(
     Ok(())
 }
 
+/// A string as a single-quoted SQL literal, sqlite's own doubling rule.
 fn quoted(text: &str) -> String {
     format!("'{}'", text.replace('\'', "''"))
 }
@@ -867,6 +867,70 @@ mod tests {
             "{frame}"
         );
         assert!(frame.ends_with("}\n"), "{frame}");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// **The retirement and the opener's indexes commit together**, per the
+    /// contract's same-transaction claim as the audit of 2026-08-26 read
+    /// it: a retire under a non-empty election leaves the election's index
+    /// standing over the replaced holdings, and a retire whose index build
+    /// fails leaves the holdings exactly as they stood, the delete rolled
+    /// back with it. The failing build is bought with an election key
+    /// carrying an interior NUL, which sqlite refuses as a statement.
+    ///
+    /// Perturbation: commit the delete before the build runs and the
+    /// atomicity half fails, the holdings gone under a build that never
+    /// happened.
+    #[test]
+    fn the_retirement_and_its_index_commit_together() {
+        let path = scratch();
+        let _ = std::fs::remove_file(&path);
+        let mut store = Store::open(&path).expect("opens");
+        store
+            .land(&landed("replayed", "r", "message.user", 1))
+            .expect("lands");
+
+        // The index half: a non-empty election's index stands after the
+        // retire that carried it.
+        let election = Election {
+            all_kinds: true,
+            keys: vec![("message.user".into(), vec!["content".into()])],
+        };
+        store
+            .retire_and_index("replayed", &election)
+            .expect("retires and indexes");
+        let indexed: i64 = store
+            .connection
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index'                  AND name LIKE 'field_elected_%'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("counts indexes");
+        assert!(indexed >= 1, "the election's index stands");
+
+        // The atomicity half: a build sqlite refuses rolls the delete back
+        // with it.
+        store
+            .land(&landed("replayed", "r", "message.user", 2))
+            .expect("lands again");
+        let poisoned = Election {
+            all_kinds: true,
+            keys: vec![("message.user".into(), vec!["a\u{0}b".into()])],
+        };
+        assert!(
+            store.retire_and_index("replayed", &poisoned).is_err(),
+            "the poisoned build fails"
+        );
+        let held: i64 = store
+            .connection
+            .query_row(
+                "SELECT COUNT(*) FROM event WHERE session = 'replayed'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("counts holdings");
+        assert_eq!(held, 1, "the holdings survive the failed build whole");
         let _ = std::fs::remove_file(&path);
     }
 
