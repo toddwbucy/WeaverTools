@@ -4,6 +4,12 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-26, the state claim's criterion joins section 4's list.
+The input-identity clause now carries the tee's election beside the five it
+checks, per `weaver-agents-PRD` section 8, which is where the criterion
+landed in this act: the apex states it, this charter restates it beside the
+list the loop walks, and `diagnostic-replay-loop` section 3 cites the
+charters rather than the representation Spec it grounded on. Per issue 352.
 **Revised:** 2026-08-24, ninth of this date, the fifth review's findings land,
 and one of them was a claim about the world rather than a stale pointer. **The
 residual readout is not a diagnostic-only member.** Apex section 8 makes it a
@@ -273,7 +279,13 @@ parameters, and the prompt-block partition, per `weaver-agents-PRD` section
 8, with the template's identity traveling with them so a replay re-feeds
 rather than re-renders. The same conversation rendered under a later
 template is a different prompt, and a replay that re-rendered would compare
-two different runs and find them different.
+two different runs and find them different. **A claim about the state rests
+on one fact beyond that list, claim-relative the same way: the tee's
+election**, per `weaver-agents-PRD` section 8. It is the rule that decided
+what the original agent's state held, so a replay preloaded under a
+different one rebuilds a session that never ran, and a record written before
+the member existed fails a state claim while its token path still stands.
+Input identity checks it with the rest, before any forward pass.
 
 **No second instrument lands before the first replay is certified**, because
 a second tap sharing an uncertified replay inherits the uncertainty rather

@@ -13,6 +13,14 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-26, the state claim's criterion lands where criteria live.
+Section 8's claim-relative rule gains its state clause: a claim about the
+state requires the tee's election beyond the re-feed list, the rule that
+decided what the agent's working state held. The substance stood settled in
+`diagnostic-replay-loop` section 3 grounded on a representation Spec, which
+G2 refuses: a certification criterion is the charter's to state, so it lands
+here, `weaver-diagnostic-PRD` section 4 restates it beside the list it joins,
+and the loop cites the charters rather than the Spec. Per issue 352.
 **Revised:** 2026-08-24, fifth of this date, the diagnostic member composes
 inside. The third entry below is reversed rather than amended and stands so
 the reversal is visible. The operator's ruling of this date placed
@@ -937,6 +945,18 @@ claiming a replay arrangement carries everything that arrangement requires,
 and a replay missing an input its claim requires observes a forward pass that
 never happened. A deployment claiming only re-analysis owes nothing beyond
 the record itself, because it claims nothing more.
+
+**A claim about the state rests on one fact beyond that list, and it is
+claim-relative the same way: the tee's election**, the rule that decided which
+events crossed into the agent's working state and which payload paths rode
+with them. A replay that preloads under a different rule rebuilds a session
+that never ran, and nothing in either record marks it, so the record carries
+the rule itself, a requirement on `weaver-trace-PRD` landed at its load
+bracket, its representation `weaver-trace-Spec` section 3's. A record written
+before that member existed fails a claim about the state and not a claim
+about the token path: the recorded identifiers stand and everything resting
+on the holdings does not, which is the claim-relative rule saying which claim
+such a record is good for rather than failing both.
 
 Custody places the replay driver outside the agent. The agent must not own or
 even read its own trace, so the tool that reads the operator-held stream runs as
