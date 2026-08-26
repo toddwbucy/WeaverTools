@@ -58,6 +58,9 @@ Two shapes for the rule itself, the wrapper being the exact one:
   widening is then exactly three verbs on validated agent names with a
   fixed config.
 - **Direct binary:** the rule names the admin binary with wildcarded
-  arguments and needs SETENV for the config variable, which is wider
-  than the description "narrow" suggests. It works, and the wrapper is
-  what makes the description exact.
+  arguments and permits the config variable through a
+  command-specific `env_keep` (the shipped fragment's commented
+  alternative shows the shape - never a blanket SETENV, which would
+  permit every variable), and it is still wider than "narrow"
+  suggests. It works, and the wrapper is what makes the description
+  exact.

@@ -97,15 +97,30 @@ pub async fn messages_since_last_close(
     channel_id: i64,
     participant_id: i64,
 ) -> anyhow::Result<Vec<EventView>> {
+    // Two arms unioned so the cap can never evict the newest message
+    // (review of #350, round three): a message followed by more than
+    // a cap's worth of closes would otherwise fall out of the window,
+    // and the no-message guard would then drop a justified turn as
+    // stale. The first arm holds that message, the second the newest
+    // rows of any kind, and UNION folds the overlap.
+    let rest = WINDOW_CAP - 1;
     Ok(sqlx::query_as::<_, EventView>(sqlx::AssertSqlSafe(format!(
         "SELECT * FROM ( \
-           SELECT {EVENT_VIEW_COLUMNS} FROM channel_events e \
-           LEFT JOIN participants p ON p.id = e.participant_id \
-           WHERE e.channel_id = $1 AND e.kind IN ('message', 'close') \
-           AND e.id > COALESCE(( \
-               SELECT max(id) FROM channel_events \
-               WHERE channel_id = $1 AND participant_id = $2 AND kind = 'close'), 0) \
-           ORDER BY e.id DESC LIMIT {WINDOW_CAP} \
+           (SELECT {EVENT_VIEW_COLUMNS} FROM channel_events e \
+            LEFT JOIN participants p ON p.id = e.participant_id \
+            WHERE e.channel_id = $1 AND e.kind = 'message' \
+            AND e.id > COALESCE(( \
+                SELECT max(id) FROM channel_events \
+                WHERE channel_id = $1 AND participant_id = $2 AND kind = 'close'), 0) \
+            ORDER BY e.id DESC LIMIT 1) \
+           UNION \
+           (SELECT {EVENT_VIEW_COLUMNS} FROM channel_events e \
+            LEFT JOIN participants p ON p.id = e.participant_id \
+            WHERE e.channel_id = $1 AND e.kind IN ('message', 'close') \
+            AND e.id > COALESCE(( \
+                SELECT max(id) FROM channel_events \
+                WHERE channel_id = $1 AND participant_id = $2 AND kind = 'close'), 0) \
+            ORDER BY e.id DESC LIMIT {rest}) \
          ) newest ORDER BY id"
     )))
     .bind(channel_id)

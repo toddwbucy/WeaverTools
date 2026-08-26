@@ -273,13 +273,43 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
                                     skip_partial_first = false;
                                     continue;
                                 }
-                                let line = String::from_utf8_lossy(&buf);
-                                let trimmed = line.trim_end();
-                                if !trimmed.is_empty() {
-                                    seq += 1;
-                                    if out.send(parse_line(seq, trimmed)).await.is_err() {
-                                        return;
+                                // Validated, not lossily decoded, before
+                                // any parse: replacement characters
+                                // inside a JSON string still parse as
+                                // valid JSON, which would smooth a
+                                // corrupt record into a clean-looking
+                                // event instead of a mark (review of
+                                // #350, round three). Lossy decoding is
+                                // for the mark's display only.
+                                let ev = match std::str::from_utf8(&buf) {
+                                    Ok(s) => {
+                                        let trimmed = s.trim_end();
+                                        if trimmed.is_empty() {
+                                            continue;
+                                        }
+                                        seq += 1;
+                                        parse_line(seq, trimmed)
                                     }
+                                    Err(e) => {
+                                        seq += 1;
+                                        TraceEvent {
+                                            seq,
+                                            mark: Some(format!(
+                                                "record is not UTF-8: {e}"
+                                            )),
+                                            run: None,
+                                            turn: None,
+                                            kind: None,
+                                            raw: serde_json::Value::String(
+                                                String::from_utf8_lossy(&buf)
+                                                    .trim_end()
+                                                    .to_owned(),
+                                            ),
+                                        }
+                                    }
+                                };
+                                if out.send(ev).await.is_err() {
+                                    return;
                                 }
                             }
                             Err(_) => break,

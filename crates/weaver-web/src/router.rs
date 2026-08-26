@@ -93,7 +93,11 @@ async fn route(
         // ignored until it is, rather than half-answered.
     }
     if !failures.is_empty() {
-        store
+        // Best effort: invocations are already dispatched, and a
+        // failure here propagating out would surface as a retryable
+        // error to the poster - whose retry would re-enqueue mentions
+        // that already ran (review of #350, round three).
+        if let Err(e) = store
             .append(crate::store::NewEvent {
                 channel_id: event.channel_id,
                 participant_id: None,
@@ -103,7 +107,10 @@ async fn route(
                 turn_label: None,
                 close_kind: None,
             })
-            .await?;
+            .await
+        {
+            tracing::error!("fan-out failures not recorded in the channel: {e}");
+        }
     }
     Ok(())
 }
