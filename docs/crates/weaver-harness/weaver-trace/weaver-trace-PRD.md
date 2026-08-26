@@ -438,7 +438,7 @@ is what the election exists to buy: the volume is an order of magnitude
 past everything else the record carries, so a kind always present would
 make the record unaffordable rather than complete.
 
-**The record declares the posture it was written in.** Section 3.2's `load`
+**The record declares the posture it was written in.** Section 3.1's `load`
 event carries every diagnostic election of the load by name, because
 without it a record holding no field is indistinguishable from a record
 whose election stood and produced nothing - a configuration and a fault

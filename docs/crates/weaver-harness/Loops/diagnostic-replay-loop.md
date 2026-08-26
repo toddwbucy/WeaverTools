@@ -133,8 +133,9 @@ The charter's section 4 procedure, as this loop performs it:
    binding the load declared, and the prompt-block partition. A record
    missing what its claim requires fails here, before any forward pass,
    which is the completeness-is-claim-relative rule doing its work.
-   **The tee's election is one of those requirements, and claim-relative
-   like the rest**, per `weaver-trace-Spec` section 3. It is the rule that
+   **A claim about the state rests on one fact beyond that list, and it is
+   claim-relative the same way**, per `weaver-trace-Spec` section 3: the
+   tee's election. It is the rule that
    decided what the original agent's state held, so a replay preloaded under
    a different one rebuilds a session that never ran. **A record written
    before that member existed fails a claim about the state and not a claim
