@@ -6,6 +6,7 @@
 //! conforms: admin-runs-as-root-or-performs-nothing
 //! conforms: admin-answer-and-exit-status-agree
 //! conforms: admin-residency-is-not-lifecycle-state
+//! conforms: admin-preload-name-follows-the-kind
 //! conforms: admin-publishes-only-on-ready
 //! conforms: admin-validate-starts-no-process
 //! conforms: admin-inventory-one-function
@@ -151,19 +152,25 @@ fn admissible(config: &ServiceConfig, agent: &AgentName) -> Result<(), Lifecycle
 /// The one inventory, called by both `validate` and `load`, so the two cannot
 /// drift.
 /// Stands the state member for this load, per `weaver-harness-state-contract`
-/// and `weaver-state-Spec` section 2: the custodian's territory sits on the
-/// operator's side of the wall the worker's identity cannot cross, so the
-/// party that opens the trace sink is the party that stands the member. The
-/// binary is discovered beside the worker's own, so a deployment without it
-/// simply has no leg. Every failure here is absorbed: the leg is optional by
-/// presence and a load is never refused over its derivative.
-fn stand_state_member(config: &ServiceConfig, agent: &AgentName, inventory: &inventory::Inventory) {
-    let Some(binary_directory) = config.unit.worker.parent() else {
-        return;
-    };
+/// as ruled 2026-08-26 and `weaver-state-Spec` section 2: the custodian's
+/// territory sits on the operator's side of the wall the worker's identity
+/// cannot cross, so the party that opens the trace sink is the party that
+/// stands the member, and that party now creates the first door's transport
+/// too. This crate makes the socketpair, arms the member's end onto the fixed
+/// number in the spawn path itself, and returns the harness's end for the
+/// enter directive to courier, speaking on neither, per `weaver-admin-PRD`
+/// section 2. The binary is discovered beside the worker's own, so a
+/// deployment without it simply has no leg. Every failure here is absorbed:
+/// the leg is optional by presence, a load is never refused over its
+/// derivative, and a `None` return is the leg not standing.
+fn stand_state_member(
+    config: &ServiceConfig,
+    inventory: &inventory::Inventory,
+) -> Option<std::os::fd::OwnedFd> {
+    let binary_directory = config.unit.worker.parent()?;
     let binary = binary_directory.join("weaver-state");
     if !binary.exists() {
-        return;
+        return None;
     }
     let territory_root = inventory::sink_directory(&inventory.config.trace_sink);
     let territory = territory_root.join("state");
@@ -180,35 +187,32 @@ fn stand_state_member(config: &ServiceConfig, agent: &AgentName, inventory: &inv
         .is_err()
         && !territory.is_dir()
     {
-        return;
+        return None;
     }
     let _ = std::fs::set_permissions(&territory, std::fs::Permissions::from_mode(0o750));
     if let Ok(parent) = std::fs::metadata(territory_root) {
         let _ = std::os::unix::fs::chown(&territory, None, Some(parent.gid()));
     }
-    let Ok(worker_identity) = nix::unistd::User::from_name(&inventory.identity) else {
-        return;
-    };
-    let Some(worker_identity) = worker_identity else {
-        return;
-    };
-    let socket = config
-        .coordination_root
-        .join(unit::runtime_directory_name(&agent.0))
-        .join("state.sock");
-    // A stale name from an earlier load must not satisfy the wait below
-    // before the new member binds its own: the member removes it too, but
-    // this side's removal is what keeps the existence check honest.
-    let _ = std::fs::remove_file(&socket);
+    // **The first door is a socketpair this crate creates and speaks on
+    // never**, per the operator's ruling of 2026-08-26: both ends
+    // close-on-exec atomically at creation like every descriptor this crate
+    // holds, and the member's end is re-armed onto the fixed number in the
+    // spawn path itself, the one deliberate gift the third walk of
+    // `weaver-admin-Spec` section 10 names.
+    let (harness_end, member_end) = nix::sys::socket::socketpair(
+        nix::sys::socket::AddressFamily::Unix,
+        nix::sys::socket::SockType::Stream,
+        None,
+        nix::sys::socket::SockFlag::SOCK_CLOEXEC,
+    )
+    .ok()?;
     let log = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(territory.join("state.log"));
     let mut member = std::process::Command::new(&binary);
     member
-        .arg(&territory)
-        .arg(&socket)
-        .arg(worker_identity.uid.as_raw().to_string())
+        .args(member_vector(&territory, &inventory.binding))
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null());
     if let Ok(log) = log {
@@ -216,24 +220,49 @@ fn stand_state_member(config: &ServiceConfig, agent: &AgentName, inventory: &inv
     } else {
         member.stderr(std::process::Stdio::null());
     }
-    let mut member = match member.spawn() {
-        Ok(member) => member,
-        Err(_) => return,
+    // The member's end arrives at the fixed number `weaver-state` adopts,
+    // `dup2` clearing close-on-exec on the new descriptor alone, so the
+    // arming is an act at this one site and the atomic flag stands
+    // everywhere else.
+    let raw_member_end = {
+        use std::os::fd::AsRawFd;
+        member_end.as_raw_fd()
     };
-    // Wait for the name to stand so the worker's dial at enter finds it or
-    // does not, never mid-bind. A member that exits before binding ends the
-    // wait at once rather than costing the load the full bound, and a name
-    // that does not appear inside the bound is a member that failed to
-    // stand: either way the load proceeds leg-less.
-    for _ in 0..100 {
-        if socket.exists() {
-            return;
-        }
-        if matches!(member.try_wait(), Ok(Some(_))) {
-            return;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(20));
+    unsafe {
+        use std::os::unix::process::CommandExt;
+        member.pre_exec(move || {
+            if nix::libc::dup2(raw_member_end, 3) < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
     }
+    let spawned = member.spawn().is_ok();
+    // This side's copy of the member's end closes either way: the member
+    // holds the armed number, and a spawn that failed leaves no holder, the
+    // harness end below then reading as the closed pair it is.
+    drop(member_end);
+    if !spawned {
+        return None;
+    }
+    Some(harness_end)
+}
+
+/// **The member's vector, both directions this crate's alone**, per
+/// `weaver-admin-Spec` section 6 as ruled 2026-08-26: the territory, and the
+/// preload socket path exactly where the resolved kind is diagnostic, derived
+/// as the territory with a fixed leaf so no invocation input composes it. One
+/// value on a serving load and two on a diagnostic one, the first door riding
+/// no argument at all, its end inherited at the fixed number the spawn arms.
+fn member_vector(
+    territory: &std::path::Path,
+    binding: &weaver_types::EnterBinding,
+) -> Vec<std::ffi::OsString> {
+    let mut vector = vec![territory.as_os_str().to_owned()];
+    if matches!(binding, weaver_types::EnterBinding::Diagnostic) {
+        vector.push(territory.join("preload.sock").into_os_string());
+    }
+    vector
 }
 
 fn take_inventory(
@@ -364,11 +393,12 @@ fn run_load(
     };
 
     // The state member stands after the worker's bind and before the enter,
-    // so the name the worker dials at enter is either present or absent by
-    // the time it looks, never racing it. Best-effort whole, per the
-    // contract's dead-peer clause: an absent binary, a failed spawn, or a
-    // name that never appears leaves the leg down and the load unrefused.
-    stand_state_member(config, agent, &inventory);
+    // and nothing is waited on: the pair exists before the member does, per
+    // the ruling of 2026-08-26. Best-effort whole, per the contract's
+    // dead-peer clause - an absent binary or a failed spawn leaves the leg
+    // down and the load unrefused, the harness's end below then absent from
+    // the enter and the directive carrying the sink alone.
+    let state_end = stand_state_member(config, &inventory);
 
     let ordinal = coordination.next_ordinal();
     // **The session is read and the run is minted**, per Spec section 7. The
@@ -403,7 +433,7 @@ fn run_load(
     };
     use std::os::fd::AsFd;
     coordination
-        .send_with_sink(&envelope, sink.as_fd())
+        .send_with_sink(&envelope, sink.as_fd(), state_end.as_ref().map(|end| end.as_fd()))
         .map_err(|_| LifecycleRefusal::DescriptorsUnusable)?;
     standing.entered = true;
 
@@ -685,6 +715,42 @@ fn load_service_config() -> Result<ServiceConfig, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// **The vector this crate composes, in both directions**, per
+    /// `weaver-admin-Spec` section 6 as ruled 2026-08-26: a serving
+    /// inventory puts one value on it and a diagnostic inventory puts two,
+    /// the preload path the territory with a fixed leaf. Two watches rather
+    /// than one, because one would not fail on both directions.
+    ///
+    /// Perturbation: make the arm that appends the preload path
+    /// unconditional and the serving half fails on a load carrying two.
+    /// Remove the arm and the diagnostic half fails on a load carrying one.
+    #[test]
+    fn the_vector_follows_the_kind_in_both_directions() {
+        let territory = std::path::Path::new("/dbpool/agents/alpha/state");
+        let serving = member_vector(
+            territory,
+            &weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
+                },
+            },
+        );
+        assert_eq!(serving.len(), 1, "a serving load carries the territory alone");
+        assert_eq!(serving[0], territory.as_os_str());
+        let diagnostic = member_vector(territory, &weaver_types::EnterBinding::Diagnostic);
+        assert_eq!(diagnostic.len(), 2, "a diagnostic load carries the preload path");
+        assert_eq!(diagnostic[0], territory.as_os_str());
+        assert_eq!(
+            diagnostic[1],
+            territory.join("preload.sock").into_os_string(),
+            "the territory with the fixed leaf, no invocation input composing it"
+        );
+    }
 
     /// A configuration whose values are never read by the arm under test.
     /// `dispatch`'s observation arm touches no field, which is what lets this

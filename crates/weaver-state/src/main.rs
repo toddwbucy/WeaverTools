@@ -1,34 +1,35 @@
 //! conforms: state-preload-door-stands-only-diagnostic
 //! conforms: state-preload-door-refuses-the-agent
 //!
-//! The member's process: stand the seam's name, judge the peer by
-//! credential, read the election, stand the store, and land distillates
-//! until the channel closes. Per `weaver-harness-state-contract`, the seam
-//! is a Unix socket with a name, authenticated by credential per the first
-//! invariant, so the member binds and the worker dials. The arguments are
-//! the territory, the socket path, the one uid the first door's peer may
-//! hold, and, where the party that stands this member names one, the
-//! preload socket.
+//! The member's process: take the first door's end with the process, read
+//! the election, stand the store, and land distillates until the channel
+//! closes. Per `weaver-harness-state-contract` as ruled 2026-08-26, the
+//! seam is a connected socketpair with no name: admin creates it at this
+//! process's spawn, this member inherits its end at the fixed number
+//! below, and possession authenticates, so no bind, no credential, and no
+//! wait exist on this door. The arguments are the territory and, where the
+//! party that stands this member names one, the preload socket.
 //!
-//! **The second door stands where that fourth argument does**, per
-//! `weaver-state-Spec` section 4, and its judgment inverts the first
-//! door's: it refuses the agent's uid and admits the operator principal.
-//! Both doors are served from one loop by `poll`, so the store keeps one
-//! owner and a distillate lands the same way whichever door carried it,
-//! which is the mechanism of the contract's indistinguishability claim.
+//! **The second door stands where that second argument does**, per
+//! `weaver-state-Spec` section 4, and it carries this member's one
+//! credential judgment: admit the operator principal, refuse every other
+//! peer. Both doors are served from one loop by `poll`, so the store keeps
+//! one owner and a distillate lands the same way whichever door carried
+//! it, which is the mechanism of the contract's indistinguishability
+//! claim.
 
 use std::io::Read;
-use std::os::fd::AsFd;
 
 use weaver_state::{
     Ask, Election, Store, parse_ask, parse_distillate, render_recall_answer,
     render_replay_answer, render_shape_answer,
 };
 
-/// How long the name waits for its one peer before concluding the load
-/// never came, so an abandoned member is a bounded cost rather than a
-/// resident one.
-const ACCEPT_WAIT_MS: u16 = 60_000;
+/// The first door's end arrives at this descriptor number, the fixed
+/// convention between this member and admin that `weaver-state-Spec`
+/// section 2 leaves to this act: the number after the three standard
+/// streams, armed by admin's spawn path and inherited with the process.
+const FIRST_DOOR_FD: std::os::fd::RawFd = 3;
 
 /// The bound on one answer frame, matched by the harness's own cap on
 /// what it reads: an answer past this size is a fault answered with
@@ -43,29 +44,31 @@ const ANSWER_BOUND: usize = 1024 * 1024;
 const RESPOND_WAIT_MS: u16 = 2_000;
 
 fn main() -> std::process::ExitCode {
-    // **The preload name is a fourth argument and its absence is a serving
-    // load**, per `weaver-state-Spec` section 2's pattern, which leaves the
-    // descriptor choreography to this act: the name reaches the member the
-    // way the territory and the first socket do, on the vector, because no
-    // exchange this member holds carries a path.
+    // **The preload name is a second argument and its absence is a serving
+    // load**, per `weaver-state-Spec` section 4: the name reaches the
+    // member on the vector because no exchange this member holds carries a
+    // path. The first door rides no argument at all, its end inherited at
+    // the fixed number above.
     let mut arguments = std::env::args().skip(1);
-    let (Some(territory), Some(socket), Some(peer)) =
-        (arguments.next(), arguments.next(), arguments.next())
-    else {
+    let Some(territory) = arguments.next() else {
         eprintln!(
             "{}",
-            serde_json::json!({"state_fault": "usage: weaver-state <territory> <socket> <peer-uid> [preload-socket]"})
+            serde_json::json!({"state_fault": "usage: weaver-state <territory> [preload-socket]"})
         );
         return std::process::ExitCode::FAILURE;
     };
     let preload_socket = arguments.next();
-    let Ok(peer_uid) = peer.parse::<u32>() else {
-        eprintln!("{}", serde_json::json!({"state_fault": "peer uid does not parse"}));
-        return std::process::ExitCode::FAILURE;
-    };
 
-    let Some(mut channel) = stand_and_accept(&socket, peer_uid) else {
-        return std::process::ExitCode::FAILURE;
+    // The inherited end is this process's by construction: admin armed it
+    // onto the fixed number in the spawn path itself, so adopting it here
+    // takes ownership of a descriptor exactly one process holds. A number
+    // that was never armed yields a dead channel, which the opener read
+    // below converts into the empty stand it is.
+    // SAFETY: the fixed number is the spawn convention's, armed by the one
+    // party that starts this process, and adopted exactly once.
+    let mut channel = unsafe {
+        use std::os::fd::FromRawFd;
+        std::os::unix::net::UnixStream::from_raw_fd(FIRST_DOOR_FD)
     };
 
     let path = std::path::Path::new(&territory).join("state.sql");
@@ -114,7 +117,7 @@ fn main() -> std::process::ExitCode {
         Some(None) => return std::process::ExitCode::FAILURE,
     };
 
-    serve(lines, preload, &mut store, &session, peer_uid)
+    serve(lines, preload, &mut store, &session)
 }
 
 /// Custody until closure, across the doors this standing carries.
@@ -129,7 +132,6 @@ fn serve(
     preload_listener: Option<std::os::unix::net::UnixListener>,
     store: &mut Store,
     session: &str,
-    agent_uid: u32,
 ) -> std::process::ExitCode {
     use std::os::fd::AsFd;
 
@@ -212,11 +214,11 @@ fn serve(
                     // rest and must not answer a parked ask.
                     preload = None;
                 }
-            } else if let Some(door) = &listener {
-                if let Some(channel) = admit_operator(door, agent_uid) {
-                    preload = Some(channel);
-                    listener = None;
-                }
+            } else if let Some(door) = &listener
+                && let Some(channel) = admit_operator(door)
+            {
+                preload = Some(channel);
+                listener = None;
             }
         }
 
@@ -333,32 +335,32 @@ fn stand_preload_name(path: &str) -> Option<std::os::unix::net::UnixListener> {
     }
 }
 
-/// **The credential judgment inverts the first door's**, per
-/// `weaver-state-Spec` section 4: this accept refuses a peer bearing the
-/// agent's uid before any byte is read, and admits the operator principal.
-/// The first door admits exactly one uid and this one refuses exactly one,
-/// which is what keeps the agent from reaching a door that exists to carry
-/// the operator's own record into custody.
+/// **This member's one credential judgment**, per `weaver-state-Spec`
+/// section 4 as ruled 2026-08-26: this accept admits the operator principal
+/// and refuses every other peer before any byte is read, the agent's among
+/// them and no longer knowable by number, the vector having dropped the
+/// agent's uid with the first door's judgment. The operator principal is
+/// root today, the identity the driver runs as over the operator's own
+/// storage, per `weaver-analysis-state-contract`.
 fn admit_operator(
     listener: &std::os::unix::net::UnixListener,
-    agent_uid: u32,
 ) -> Option<std::os::unix::net::UnixStream> {
     let (channel, _address) = listener.accept().ok()?;
     match nix::sys::socket::getsockopt(&channel, nix::sys::socket::sockopt::PeerCredentials) {
-        Ok(credentials) if credentials.uid() == agent_uid => {
-            eprintln!(
-                "{}",
-                serde_json::json!({
-                    "state_fault": "preload dial refused: the agent's own uid may not preload"
-                })
-            );
-            None
-        }
-        Ok(_) => {
+        Ok(credentials) if credentials.uid() == 0 => {
             if channel.set_nonblocking(true).is_err() {
                 return None;
             }
             Some(channel)
+        }
+        Ok(_) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({
+                    "state_fault": "preload dial refused: only the operator principal preloads"
+                })
+            );
+            None
         }
         Err(error) => {
             eprintln!(
@@ -378,84 +380,6 @@ fn is_seal(line: &str) -> bool {
     match serde_json::from_str::<serde_json::Value>(line) {
         Ok(serde_json::Value::Object(members)) => members.is_empty(),
         _ => false,
-    }
-}
-
-/// Stand the name, wait for the one peer, and judge it by credential. A
-/// peer holding the wrong uid is closed unread and the name keeps
-/// listening until the deadline, because the socket's mode is open on
-/// purpose - the filesystem is not the gate here, the credential check is,
-/// per the contract's authentication clause - and a stranger dialing first
-/// must not cost the worker its leg. The name is unlinked once the right
-/// peer is accepted, so the standing seam has exactly two ends.
-fn stand_and_accept(socket: &str, peer_uid: u32) -> Option<std::os::unix::net::UnixStream> {
-    let path = std::path::Path::new(socket);
-    let _ = std::fs::remove_file(path);
-    let listener = match std::os::unix::net::UnixListener::bind(path) {
-        Ok(listener) => listener,
-        Err(error) => {
-            eprintln!(
-                "{}",
-                serde_json::json!({"state_fault": format!("bind failed: {error}")})
-            );
-            return None;
-        }
-    };
-    use std::os::unix::fs::PermissionsExt;
-    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o666));
-
-    let deadline = std::time::Instant::now()
-        + std::time::Duration::from_millis(u64::from(ACCEPT_WAIT_MS));
-    loop {
-        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
-        if remaining.is_zero() {
-            // The load never came. An abandoned name is removed and the
-            // empty stand is the honest outcome.
-            let _ = std::fs::remove_file(path);
-            return None;
-        }
-        let wait = remaining.as_millis().min(u128::from(u16::MAX)) as u16;
-        let mut fds = [nix::poll::PollFd::new(
-            listener.as_fd(),
-            nix::poll::PollFlags::POLLIN,
-        )];
-        match nix::poll::poll(&mut fds, wait) {
-            Ok(0) => continue,
-            Ok(_) => {}
-            Err(nix::errno::Errno::EINTR) => continue,
-            Err(_) => {
-                let _ = std::fs::remove_file(path);
-                return None;
-            }
-        }
-        let Ok((channel, _address)) = listener.accept() else {
-            continue;
-        };
-        // The credential judgment, per the first invariant's rule for a
-        // channel with a name.
-        match nix::sys::socket::getsockopt(&channel, nix::sys::socket::sockopt::PeerCredentials) {
-            Ok(credentials) if credentials.uid() == peer_uid => {
-                let _ = std::fs::remove_file(path);
-                return Some(channel);
-            }
-            Ok(credentials) => {
-                eprintln!(
-                    "{}",
-                    serde_json::json!({
-                        "state_fault": format!(
-                            "peer uid {} is not the expected {peer_uid}",
-                            credentials.uid()
-                        )
-                    })
-                );
-            }
-            Err(error) => {
-                eprintln!(
-                    "{}",
-                    serde_json::json!({"state_fault": format!("credential read failed: {error}")})
-                );
-            }
-        }
     }
 }
 
@@ -585,49 +509,49 @@ impl<'a> LineReader<'a> {
 mod tests {
     use super::*;
 
-    /// **The preload door refuses the agent's own uid**, per
-    /// `weaver-state-Spec` section 4: the credential judgment inverts the
-    /// first door's, so a peer bearing the uid the first door admits is the
-    /// one peer this door turns away, before any byte is read. The dial in
-    /// this test carries the running uid, so naming that uid the agent's
-    /// makes it the refused peer and naming any other makes it admitted.
+    /// **The preload door admits the operator principal and refuses every
+    /// other peer**, per `weaver-state-Spec` section 4 as ruled 2026-08-26:
+    /// this member's one credential judgment, the agent's uid among the
+    /// refused and no longer knowable by number. The dial in this test
+    /// carries the running uid, which is not the operator's, so the door
+    /// refuses it. The refusal half is what a suite can exercise, the admit
+    /// half wanting the operator principal a test does not run as.
     ///
-    /// Perturbation: drop the `credentials.uid() == agent_uid` arm from
-    /// `admit_operator` and the refusal half fails, the agent admitted to a
-    /// door that exists to keep the operator's record out of its reach.
+    /// Perturbation: drop the `credentials.uid() == 0` arm from
+    /// `admit_operator` and this fails, a non-operator peer admitted to a
+    /// door that exists to keep everything but the operator out.
     #[test]
-    fn the_preload_door_refuses_the_agent_and_admits_the_operator() {
-        let running = nix::unistd::getuid().as_raw();
-        for (agent_uid, admitted) in [(running, false), (running.wrapping_add(1), true)] {
-            let path = std::env::temp_dir().join(format!(
-                "weaver-state-preload-{}-{agent_uid}",
-                std::process::id()
-            ));
-            let path = path.to_string_lossy().into_owned();
-            let listener = stand_preload_name(&path).expect("the name stands");
-            let _dialer = std::os::unix::net::UnixStream::connect(&path).expect("dials");
-            // **Wait for the door to be readable before judging it.** The
-            // listener is non-blocking and `admit_operator` answers `None`
-            // both for a refused peer and for an accept that would block, so
-            // a bare call could report a refusal the credential never made.
-            // Polling first makes the accept certain and the `None` mean the
-            // one thing this test is about.
-            use std::os::fd::AsFd;
-            let mut fds = [nix::poll::PollFd::new(
-                listener.as_fd(),
-                nix::poll::PollFlags::POLLIN,
-            )];
-            let ready = nix::poll::poll(&mut fds, 5_000u16).expect("the door answers poll");
-            assert_eq!(ready, 1, "the dial reaches the door");
-            drop(fds);
-            let outcome = admit_operator(&listener, agent_uid);
-            assert_eq!(
-                outcome.is_some(),
-                admitted,
-                "agent uid {agent_uid} against a running uid of {running}"
-            );
-            let _ = std::fs::remove_file(&path);
-        }
+    fn the_preload_door_refuses_every_peer_but_the_operator() {
+        assert_ne!(
+            nix::unistd::getuid().as_raw(),
+            0,
+            "this test's refusal half is meaningful only unrooted"
+        );
+        let path = std::env::temp_dir().join(format!(
+            "weaver-state-preload-{}",
+            std::process::id()
+        ));
+        let path = path.to_string_lossy().into_owned();
+        let listener = stand_preload_name(&path).expect("the name stands");
+        let _dialer = std::os::unix::net::UnixStream::connect(&path).expect("dials");
+        // **Wait for the door to be readable before judging it.** The
+        // listener is non-blocking and `admit_operator` answers `None`
+        // both for a refused peer and for an accept that would block, so
+        // a bare call could report a refusal the credential never made.
+        // Polling first makes the accept certain and the `None` mean the
+        // one thing this test is about.
+        use std::os::fd::AsFd;
+        let mut fds = [nix::poll::PollFd::new(
+            listener.as_fd(),
+            nix::poll::PollFlags::POLLIN,
+        )];
+        let ready = nix::poll::poll(&mut fds, 5_000u16).expect("the door answers poll");
+        assert_eq!(ready, 1, "the dial reaches the door");
+        assert!(
+            admit_operator(&listener).is_none(),
+            "a non-operator peer is refused"
+        );
+        let _ = std::fs::remove_file(&path);
     }
 
     /// **The door stands only where the party that stands the member names

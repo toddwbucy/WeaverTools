@@ -162,22 +162,33 @@ fn truncation_is_a_fault() {
 /// no tool subprocess inherits a writable handle to the record.
 ///
 /// Perturbation: drop `MSG_CMSG_CLOEXEC` from the receive and the received
-/// descriptor arrives clear, which this assertion catches directly.
+/// descriptor arrives clear, which this assertion catches directly. The
+/// state channel's end rides beside the sink since the ruling of
+/// 2026-08-26 and is the second capability the walk names, so both are
+/// received here and both must carry the flag.
 #[test]
-fn received_trace_descriptor_is_close_on_exec() {
+fn received_descriptors_are_close_on_exec() {
     let (near, far) = OrganChannel::pair().expect("pair");
     let peer = far.into_channel();
     let sink =
         std::fs::File::create(std::env::temp_dir().join("weaver-harness-walk-one")).expect("sink");
     let sink = OwnedFd::from(sink);
-    peer.send_with_descriptor(&directive(7, "alpha"), sink.as_fd())
-        .expect("send with descriptor");
-    let (envelope, received) = near.recv_with_descriptor().expect("receive");
+    let (state_end, _member_end) =
+        std::os::unix::net::UnixStream::pair().expect("the member's pair");
+    let state_end = OwnedFd::from(state_end);
+    peer.send_with_descriptors(&directive(7, "alpha"), sink.as_fd(), state_end.as_fd())
+        .expect("send with descriptors");
+    let (envelope, received_sink, received_end) = near.recv_with_descriptor().expect("receive");
     assert_eq!(envelope.exchange.ordinal, 7);
-    let received = received.expect("the sink crossed");
+    let received_sink = received_sink.expect("the sink crossed first");
+    let received_end = received_end.expect("the state end crossed second");
     assert!(
-        cloexec_set(received.as_fd()),
+        cloexec_set(received_sink.as_fd()),
         "the sink arrives close-on-exec, so no tool fork inherits the record"
+    );
+    assert!(
+        cloexec_set(received_end.as_fd()),
+        "the state end arrives close-on-exec, so no tool fork seats itself on the member's seam"
     );
 }
 
