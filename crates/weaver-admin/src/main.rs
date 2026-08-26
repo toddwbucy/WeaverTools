@@ -471,7 +471,11 @@ fn run_load(
     };
     use std::os::fd::AsFd;
     coordination
-        .send_with_sink(&envelope, sink.as_fd(), state_end.as_ref().map(|end| end.as_fd()))
+        .send_with_sink(
+            &envelope,
+            sink.as_fd(),
+            state_end.as_ref().map(|end| end.as_fd()),
+        )
         .map_err(|_| LifecycleRefusal::DescriptorsUnusable)?;
     standing.entered = true;
 
@@ -914,7 +918,11 @@ mod tests {
                 },
             },
         );
-        assert_eq!(serving.len(), 1, "a serving load carries the territory alone");
+        assert_eq!(
+            serving.len(),
+            1,
+            "a serving load carries the territory alone"
+        );
         assert_eq!(serving[0], territory.as_os_str());
         let diagnostic = member_vector(territory, &weaver_types::EnterBinding::Diagnostic);
         assert_eq!(diagnostic.len(), 2, "a diagnostic load carries the preload path");

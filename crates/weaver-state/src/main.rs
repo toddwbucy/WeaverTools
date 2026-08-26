@@ -177,10 +177,22 @@ fn serve(
     // standing would leave the retry nowhere to arrive.
     let mut listener = preload_listener;
     let mut preload: Option<std::os::unix::net::UnixStream> = None;
+    let mut entry_drained = false;
     let mut preload_frames: Vec<u8> = Vec::new();
     let mut preload_opened = false;
 
     loop {
+        // **Frames coalesced into the opener's read drain before the first
+        // poll**, because the blocking opener read may have buffered whole
+        // lines the socket will never signal again: a shape ask arriving
+        // right behind the opener, which is the documented cadence at a
+        // run's opening, would otherwise stall until the next traffic.
+        if !entry_drained {
+            entry_drained = true;
+            if drain_harness_lines(&mut harness, store, session, &mut parking).is_some() {
+                return std::process::ExitCode::SUCCESS;
+            }
+        }
         let mut fds = Vec::with_capacity(2);
         fds.push(nix::poll::PollFd::new(
             harness.stream.as_fd(),
@@ -267,41 +279,8 @@ fn serve(
 
         if harness_ready {
             let live = harness.fill();
-            while let Some(line) = harness.take_line() {
-                if let Some(distillate) = parse_distillate(&line) {
-                    let _ = store.land(&distillate);
-                    continue;
-                }
-                let Some(ask) = parse_ask(&line) else {
-                    continue;
-                };
-                // **The parked ask steps out of the arrival order**, per the
-                // contract's stated exception: a shape or recall ask arriving
-                // while a replay parks is answered in its own arrival order,
-                // against the holdings the stream carried before it.
-                if matches!(ask, Ask::Replay) && parking.parks() {
-                    continue;
-                }
-                // A store that cannot answer, like an answer past the bound,
-                // is silence the harness's bound converts, per the contract:
-                // custody never invents an answer shape for a fault.
-                let frame = match ask {
-                    Ask::Shape => store
-                        .shape(session)
-                        .map(|shape| render_shape_answer(&shape)),
-                    Ask::Recall { last_turns } => store
-                        .recall(session, last_turns)
-                        .map(|events| render_recall_answer(&events)),
-                    Ask::Replay => store
-                        .replay(session)
-                        .map(|events| render_replay_answer(&events)),
-                };
-                if let Ok(frame) = frame
-                    && frame.len() <= ANSWER_BOUND
-                    && !harness.respond(frame.as_bytes())
-                {
-                    return std::process::ExitCode::SUCCESS;
-                }
+            if drain_harness_lines(&mut harness, store, session, &mut parking).is_some() {
+                return std::process::ExitCode::SUCCESS;
             }
             if !live {
                 // Closure is retirement, the holdings standing for the next
@@ -324,6 +303,56 @@ fn serve(
             }
         }
     }
+}
+
+/// Drain every whole line the harness buffer holds: distillates land, asks
+/// answer against pre-ask holdings, and a replay parks per the parking law.
+/// `Some` says the peer stopped reading an answer and the seam retires.
+/// Never touches the socket, so a caller draining buffered remainders
+/// cannot block on a peer that sent nothing since.
+fn drain_harness_lines(
+    harness: &mut LineReader<'_>,
+    store: &mut Store,
+    session: &str,
+    parking: &mut ReplayParking,
+) -> Option<std::process::ExitCode> {
+    while let Some(line) = harness.take_line() {
+        if let Some(distillate) = parse_distillate(&line) {
+            let _ = store.land(&distillate);
+            continue;
+        }
+        let Some(ask) = parse_ask(&line) else {
+            continue;
+        };
+        // **The parked ask steps out of the arrival order**, per the
+        // contract's stated exception: a shape or recall ask arriving
+        // while a replay parks is answered in its own arrival order,
+        // against the holdings the stream carried before it.
+        if matches!(ask, Ask::Replay) && parking.parks() {
+            continue;
+        }
+        // A store that cannot answer, like an answer past the bound, is
+        // silence the harness's bound converts, per the contract: custody
+        // never invents an answer shape for a fault.
+        let frame = match ask {
+            Ask::Shape => store
+                .shape(session)
+                .map(|shape| render_shape_answer(&shape)),
+            Ask::Recall { last_turns } => store
+                .recall(session, last_turns)
+                .map(|events| render_recall_answer(&events)),
+            Ask::Replay => store
+                .replay(session)
+                .map(|events| render_replay_answer(&events)),
+        };
+        if let Ok(frame) = frame
+            && frame.len() <= ANSWER_BOUND
+            && !harness.respond(frame.as_bytes())
+        {
+            return Some(std::process::ExitCode::SUCCESS);
+        }
+    }
+    None
 }
 
 /// **The parking law, one unit**, per `weaver-harness-state-contract`
