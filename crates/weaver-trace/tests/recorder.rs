@@ -1,4 +1,5 @@
 //! conforms: trace-one-line-per-event
+//! conforms: trace-load-carries-the-tee-election
 //! conforms: trace-large-integers-as-decimal-strings
 //! conforms: trace-admission-precedes-fan-out
 //! conforms: trace-one-rendering-two-holders
@@ -66,6 +67,7 @@ fn elections() -> Payload {
         residual_readout: false,
         field: None,
         surprisal: false,
+        tee: Some(weaver_trace::Election::default()),
     })
 }
 
@@ -730,8 +732,48 @@ fn the_system_kind_is_turn_optional_and_its_siblings_are_not() {
     assert!(out.contains("\"message.system\""), "the dotted spelling");
 }
 
+/// **The `load` event carries the tee's election, written whole**, per
+/// `weaver-trace-Spec` section 3
+/// (`trace-load-carries-the-tee-election`): a payload rendered under a
+/// non-default election carries the rule back off the canonical form, in
+/// the shape the tee applied it in, so a replay stops guessing which
+/// projection built the state. Perturbation: drop the member from the
+/// shape and this fails.
+#[test]
+fn the_load_carries_the_tee_election() {
+    let (mut r, path) = recorder();
+    r.submit(event(
+        Kind::Load,
+        None,
+        Some(Payload::Elections(weaver_trace::Elections {
+            residual_readout: false,
+            field: None,
+            surprisal: false,
+            tee: Some(weaver_trace::Election {
+                all_kinds: false,
+                keys: vec![weaver_trace::ElectedKind {
+                    kind: "turn.closed".into(),
+                    paths: vec!["close".into()],
+                }],
+            }),
+        })),
+    ))
+    .unwrap();
+    r.drain().unwrap();
+
+    let mut out = String::new();
+    File::open(&path).unwrap().read_to_string(&mut out).unwrap();
+    assert!(
+        out.contains(concat!(
+            "\"tee\":{\"all_kinds\":false,",
+            "\"keys\":[{\"kind\":\"turn.closed\",\"paths\":[\"close\"]}]}"
+        )),
+        "{out}"
+    );
+}
+
 /// **The surprisal's election is written even when declined.** Charter
-/// section 3.2 names each election individually so a record's posture is
+/// section 3.1 names each election individually so a record's posture is
 /// recoverable from the record, and this one is the first that can be
 /// absent while the reading it governs is present: every record written
 /// before 2026-08-21 carries the surprisal vector and no flag beside it.
@@ -753,6 +795,7 @@ fn a_declined_surprisal_election_is_written_down() {
             residual_readout: false,
             field: None,
             surprisal: true,
+            tee: Some(weaver_trace::Election::default()),
         })),
     ))
     .unwrap();
