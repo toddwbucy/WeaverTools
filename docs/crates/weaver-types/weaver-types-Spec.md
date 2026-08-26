@@ -6,16 +6,15 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 
 **Date filed:** 2026-08-01
 **Revised:** 2026-08-25, this Spec is named the election's shape authority.
-`weaver-trace` holds a second `Election` of this shape because it links nothing,
-and from this date the record carries that form too, making four representations
-of one fact: this declaration, the enter payload, the tee's own, and the
-record's. Section 2 states that this document is authoritative for the election's
-declared shape, that what the term means on the state seam is
-`weaver-harness-state-contract`'s, and that a divergence of shape is a defect
-against that section, per G5. **Field spellings are each renderer's**: this
-declaration renames for the operator's file and `weaver-trace` renders for a seam
-that already parses it, so the record's `all_kinds` is not a divergence. Unifying
-the types is not owed. Per issue 347.
+`weaver-trace` holds a second `Election` of this shape because it links nothing, and
+from this date the record carries that form too, making four representations of one
+fact: this declaration, the enter payload, the tee's own, and the record's. Section 2
+states that this document is authoritative for the election's declared shape, that what
+the term means on the state seam is `weaver-harness-state-contract`'s, and that a
+divergence of shape is a defect against section 2 of this document, per G5. **Field
+spellings are each renderer's**: this declaration renames for the operator's file and
+`weaver-trace` renders for a seam that already parses it, so the record's `all_kinds` is
+not a divergence. Unifying the types is not owed. Per issue 347.
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended and stands so the
 reversal is visible: `trace_sink` goes back to required under either kind,
@@ -673,23 +672,22 @@ from: weaver-types
 to: types-no-default-derive
 ```
 
-**This Spec is authoritative for the tee's election's declared shape, and a
-second spelling of it exists on purpose.** What the term means on the state seam
-is `weaver-harness-state-contract`'s, which defines it there as that seam's
-vocabulary, so the two authorities answer different questions rather than one
-question twice. `weaver-trace` holds its own `Election` of the
-same shape because that crate depends on nothing, not even this floor, and
-cannot spell a type it does not link. From 2026-08-25 the record carries that
-second form on the `load` event, per `weaver-trace-Spec` section 3, which makes
-four representations of one fact: this declaration, the enter payload, the tee's
-own, and the record's. **Field spellings are each renderer's and are not shape**:
-this declaration renames for the operator's file and the record renders
-`all_kinds`, which `weaver-trace-Spec` section 3 argues cannot be renamed
-without moving a live seam. This side renames for a file rather than a seam,
-per section 2 above. **A divergence of shape among them is a defect against
-this section** rather than a choice a reader makes, per G5, and unifying the types is
-not owed: it would cost `weaver-trace` a no-dependency property that is load
-bearing for its own reasons in order to buy a name.
+**This Spec is authoritative for the tee's election's declared shape, and a second
+spelling of it exists on purpose.** What the term means on the state seam is
+`weaver-harness-state-contract`'s, which defines it there as that seam's vocabulary, so
+the two authorities answer different questions rather than one question twice.
+`weaver-trace` holds its own `Election` of the same shape because that crate depends on
+nothing, not even this floor, and cannot spell a type it does not link. From 2026-08-25
+the record carries that second form on the `load` event, per `weaver-trace-Spec` section
+3, which makes four representations of one fact: this declaration, the enter payload,
+the tee's own, and the record's. **Field spellings are each renderer's and are not
+shape**: this declaration renames for the operator's file and the record renders
+`all_kinds`, which `weaver-trace-Spec` section 3 argues cannot be renamed without moving
+a live seam. This side renames for a file rather than a seam, per the kebab-case
+election above. **A divergence of shape among them is a defect against this section**
+rather than a choice a reader makes, per G5, and unifying the types is not owed: it
+would cost `weaver-trace` a no-dependency property that is load bearing for its own
+reasons in order to buy a name.
 
 **`trace-sink` names a sink and not only a path.** A file, a pipe, or a socket are
 all conforming sinks, per `weaver-admin-operator-contract` section 3, so the field

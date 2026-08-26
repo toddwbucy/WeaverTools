@@ -14,7 +14,8 @@ record replays its token path and cannot be certified for state. The instrument 
 perturbation, the member watched to fail when dropped from the shape. Section 3 also
 names `weaver-types-Spec` section 2 authoritative for the declared shape and
 `weaver-harness-state-contract` for what the term means on the seam, the two types
-differing on purpose because this crate links nothing.
+differing on purpose because this crate links nothing. Section 10's counts move
+with the assertion the act adds, and gain the perturbation naming its removal.
 **Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
 charter section 6's guarantee as an absence, the envelope carrying no version member,
 and represents the both-directions half as `Option` with `skip_serializing_if` on an
@@ -654,13 +655,15 @@ from: weaver-trace
 to: trace-payload-untagged-kind-discriminant
 ```
 
-**A bracket kind carries no payload member at all, rather than a null one.** The
-closing brackets and the turn's opening are identified entirely by their
-envelope, so `payload` is `Option<Payload>` and those kinds carry `None` with
-`skip_serializing_if`, emitting `{"kind":"unload"}`. **`load` is not among
-them**, carrying `Elections` since the elections joined the bracket, which this
-clause's example named until 2026-08-25 and the kind table below has said
-throughout. Verified against serde_json
+**A bracket kind carries no payload member at all, rather than a null one.**
+`unload`, `session.closed`, and `turn.started` are identified entirely by their
+envelope, so `payload` is `Option<Payload>` and those three kinds carry `None`
+with `skip_serializing_if`, emitting `{"kind":"unload"}`. **They are the whole of
+the payload-free set**, per the kind table below. Neither bracket that opens a
+scope nor the turn's closing one is among them: `load` carries `Elections` and
+`turn.closed` carries `TurnClosed`. This clause named `load` as its example until
+2026-08-25, which was wrong from the act of 2026-08-21 that gave the load its
+elections. Verified against serde_json
 1.x: a unit variant inside an untagged enum renders `"payload":null` instead,
 which is a member whose only content is the statement that there is no content,
 and a consumer keying on member presence would see two stream shapes for one
@@ -913,13 +916,13 @@ crate performs none of that read.** The reader is `weaver-analysis`, whose Spec
 is owed, and **the shape it parses is this section's** rather than a spelling it
 invents.
 
-**One fact, four representations, and their authorities were named before this act.**
-The operator declares it as `weaver-types`' `StateElection`, admin resolves it into the
+**One fact, four representations, and this act is what names their authorities.** The
+operator declares it as `weaver-types`' `StateElection`, admin resolves it into the
 enter payload, this crate holds it as `Election` for the tee, and the record now carries
-that third form. **The duplication between the two types is forced rather than sloppy**:
-this crate depends on nothing, not even the floor, so it cannot spell the floor's type,
-and that no-dependency property is load bearing for its own reasons. **Authority splits
-by what is being asked.** What the term means on the state seam is
+that same form, the tee's. **The duplication between the two types is forced rather than
+sloppy**: this crate depends on nothing, not even the floor, so it cannot spell the
+floor's type, and that no-dependency property is load bearing for its own reasons.
+**Authority splits by what is being asked.** What the term means on the state seam is
 `weaver-harness-state-contract`'s, which defines it there as that seam's vocabulary.
 What its declared shape is, which fields it has and what they mean, is
 `weaver-types-Spec` section 2's, and a divergence in this crate's fields is a defect

@@ -17,6 +17,10 @@ election never asked being the same absence on disk. The rule is recorded and
 not the outcome, this charter having already weighed one member per event
 against one event per run, and the day that stops sufficing is named: a
 back-pressure election landing on shedding carries a per-event mark with it.
+This act also corrects every citation of this charter's load-bracket clause from
+section 3.2 to 3.1, in this header's own 2026-08-21 entries and in
+`weaver-harness-Spec` and `weaver-harness-spu-decode-contract`. The clause has sat
+in 3.1 since it was filed, so the correction moves a citation and no argument.
 Per issue 347.
 **Revised:** 2026-08-24, second of this date, the record states its
 compatibility. Section 6 gains the guarantee that makes the record readable across

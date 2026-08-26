@@ -8,6 +8,10 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-25, a citation is corrected and nothing else. Section 5's
+pointer at the record's load bracket moves from `weaver-trace-PRD` section 3.2 to
+3.1, where that clause has sat since it was filed. No clause of this seam changes.
+Per issue 347.
 **Revised:** 2026-08-22, second of this date, the refusal is clerked.
 Section 5 states that every refusal on this seam reaches the record, the
 harness authoring the `refusal` event from the ask it sent and the case the
