@@ -47,7 +47,7 @@ async fn index(State(state): State<AppState>, headers: HeaderMap) -> AppResult<R
         return Ok(Redirect::to("/channels").into_response());
     }
     let page = NamePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: "anonymous".into(),
         is_admin: false,
     };
@@ -99,6 +99,8 @@ struct ChannelsPage {
     who: String,
     is_admin: bool,
     channels: Vec<crate::channel::Channel>,
+    /// The sidebar's active-channel marker; empty on the index.
+    sel: String,
 }
 
 async fn channels_page(State(state): State<AppState>, headers: HeaderMap) -> AppResult<Response> {
@@ -106,10 +108,11 @@ async fn channels_page(State(state): State<AppState>, headers: HeaderMap) -> App
         return Ok(Redirect::to("/").into_response());
     };
     let page = ChannelsPage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         is_admin: me.is_admin(),
         who: me.name,
         channels: channel::list(&state.store).await?,
+        sel: String::new(),
     };
     Ok(Html(page.render()?).into_response())
 }
@@ -182,6 +185,9 @@ struct ChannelPage {
     who: String,
     is_admin: bool,
     channel_name: String,
+    topic: String,
+    channels: Vec<crate::channel::Channel>,
+    sel: String,
     events: Vec<String>,
     members: Vec<MemberRow>,
     addable: Vec<AddableRow>,
@@ -224,10 +230,13 @@ async fn channel_page(
         })
         .collect();
     let page = ChannelPage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         is_admin: me.is_admin(),
         who: me.name,
+        sel: ch.name.clone(),
         channel_name: ch.name,
+        topic: ch.topic.unwrap_or_default(),
+        channels: channel::list(&state.store).await?,
         events: events.iter().map(render_event).collect(),
         members,
         addable,
@@ -336,13 +345,41 @@ async fn channel_stream(
                     if ev.channel_id != channel_id || ev.id <= cursor {
                         continue;
                     }
-                    cursor = ev.id;
-                    let view = match channel::event_view(&store, ev.id).await {
-                        Ok(Some(v)) => v,
-                        _ => continue,
-                    };
-                    if tx.send(make_channel_sse(&view, want_json)).await.is_err() {
-                        return;
+                    match channel::event_view(&store, ev.id).await {
+                        Ok(Some(view)) => {
+                            cursor = ev.id;
+                            if tx.send(make_channel_sse(&view, want_json)).await.is_err() {
+                                return;
+                            }
+                        }
+                        // A vanished row cannot recur; step past it.
+                        Ok(None) => cursor = ev.id,
+                        // The cursor must not outrun a failed fetch:
+                        // the durable log is the recovery path, read
+                        // from the last delivered position.
+                        Err(e) => {
+                            tracing::warn!("view fetch failed, catching up from the log: {e}");
+                            match channel::events_after(&store, channel_id, cursor, 10_000)
+                                .await
+                            {
+                                Ok(missed) => {
+                                    for ev in missed {
+                                        cursor = ev.id;
+                                        if tx
+                                            .send(make_channel_sse(&ev, want_json))
+                                            .await
+                                            .is_err()
+                                        {
+                                            return;
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    tracing::error!("SSE log recovery failed: {e}");
+                                    return;
+                                }
+                            }
+                        }
                     }
                 }
                 Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {

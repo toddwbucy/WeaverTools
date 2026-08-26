@@ -1,11 +1,14 @@
 //! Per-agent queue: single-flight, batch-on-drain (Spec section 8).
 //! One worker per agent is the single-flight rule made structural.
+//! Workers reach the agent through the link's turn service, and
+//! agents register dynamically as hellos announce them (Spec
+//! section 16).
 
-use crate::adapters::gate::GateAdapter;
 use crate::channel;
 use crate::store::{NewEvent, Store};
+use crate::wire::Link;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 
 /// Bound on pending invocations per agent. Batch-on-drain empties the
@@ -36,38 +39,43 @@ struct AgentQueue {
 
 #[derive(Clone)]
 pub struct Queues {
-    agents: Arc<HashMap<String, AgentQueue>>,
+    agents: Arc<Mutex<HashMap<String, AgentQueue>>>,
+    store: Store,
+    link: Link,
+    hop_budget: u32,
 }
 
 impl Queues {
-    pub fn start(store: Store, adapters: Vec<(String, GateAdapter)>, hop_budget: u32) -> Self {
-        // The workers need the assembled handle to route agent-authored
-        // mentions (the coordination ruling of 2026-08-20), and the handle
-        // needs the workers: a OnceLock breaks the cycle, set exactly once
-        // below, read by every worker after its first message.
-        let handle: Arc<OnceLock<Queues>> = Arc::new(OnceLock::new());
-        let mut agents = HashMap::new();
-        for (name, adapter) in adapters {
-            let (tx, rx) = mpsc::channel(QUEUE_CAP);
-            let state = Arc::new(Mutex::new(AgentState::default()));
-            tokio::spawn(worker(
-                store.clone(),
-                adapter,
-                rx,
-                state.clone(),
-                handle.clone(),
-                hop_budget,
-            ));
-            agents.insert(name, AgentQueue { tx, state });
+    pub fn new(store: Store, link: Link, hop_budget: u32) -> Self {
+        Self {
+            agents: Arc::new(Mutex::new(HashMap::new())),
+            store,
+            link,
+            hop_budget,
         }
-        let queues = Self { agents: Arc::new(agents) };
-        let _ = handle.set(queues.clone());
-        queues
+    }
+
+    /// Start a worker for an agent the roster announced. Idempotent,
+    /// and workers are never torn down: a queue over a departed agent
+    /// answers with the link's typed refusal rather than vanishing.
+    pub fn ensure_agent(&self, name: &str) {
+        let mut agents = self.agents.lock().unwrap();
+        if agents.contains_key(name) {
+            return;
+        }
+        let (tx, rx) = mpsc::channel(QUEUE_CAP);
+        let state = Arc::new(Mutex::new(AgentState::default()));
+        tokio::spawn(worker(self.clone(), rx, state.clone()));
+        agents.insert(name.to_owned(), AgentQueue { tx, state });
     }
 
     pub fn enqueue(&self, inv: Invocation) -> anyhow::Result<()> {
-        let q = self
-            .agents
+        // A restart with the agent's box down leaves a known,
+        // mentionable agent with no queue; stand one up so the
+        // refusal comes typed from the link rather than from here.
+        self.ensure_agent(&inv.agent_name);
+        let agents = self.agents.lock().unwrap();
+        let q = agents
             .get(&inv.agent_name)
             .ok_or_else(|| anyhow::anyhow!("no queue for agent '{}'", inv.agent_name))?;
         q.tx.try_send(inv).map_err(|e| match e {
@@ -83,18 +91,17 @@ impl Queues {
 
     pub fn state(&self, agent_name: &str) -> Option<AgentState> {
         self.agents
+            .lock()
+            .unwrap()
             .get(agent_name)
             .map(|q| q.state.lock().unwrap().clone())
     }
 }
 
 async fn worker(
-    store: Store,
-    adapter: GateAdapter,
+    queues: Queues,
     mut rx: mpsc::Receiver<Invocation>,
     state: Arc<Mutex<AgentState>>,
-    queues: Arc<OnceLock<Queues>>,
-    hop_budget: u32,
 ) {
     while let Some(first) = rx.recv().await {
         // Batch-on-drain: collect everything pending. Invocations for
@@ -114,11 +121,12 @@ async fn worker(
         }
         for (channel_id, inv) in by_channel {
             state.lock().unwrap().in_flight = Some(channel_id);
-            if let Err(e) = run_turn(&store, &adapter, &inv, &queues, hop_budget).await {
+            if let Err(e) = run_turn(&queues, &inv).await {
                 tracing::error!(agent = %inv.agent_name, "turn handling failed: {e}");
                 // Best-effort terminating event so an opened turn is
                 // never left dangling in the log.
-                let _ = store
+                let _ = queues
+                    .store
                     .append(NewEvent {
                         channel_id,
                         participant_id: Some(inv.agent_participant_id),
@@ -135,13 +143,8 @@ async fn worker(
     }
 }
 
-async fn run_turn(
-    store: &Store,
-    adapter: &GateAdapter,
-    inv: &Invocation,
-    queues: &OnceLock<Queues>,
-    hop_budget: u32,
-) -> anyhow::Result<()> {
+async fn run_turn(queues: &Queues, inv: &Invocation) -> anyhow::Result<()> {
+    let store = &queues.store;
     let Some(context) =
         build_context(store, inv.channel_id, inv.agent_participant_id, &inv.agent_name).await?
     else {
@@ -160,7 +163,7 @@ async fn run_turn(
         })
         .await?;
 
-    match adapter.turn(&context).await {
+    match queues.link.turn(&inv.agent_name, &context).await {
         Ok(close) => {
             let body = close
                 .text
@@ -181,20 +184,19 @@ async fn run_turn(
             // agents coordinate by mentioning each other, per the
             // coordination ruling, and a volley ends when a message
             // carries no mention.
-            if let Some(queues) = queues.get() {
-                crate::router::on_agent_message(
-                    store,
-                    queues,
-                    &event,
-                    inv.agent_participant_id,
-                    hop_budget,
-                )
-                .await?;
-            }
+            crate::router::on_agent_message(
+                store,
+                queues,
+                &event,
+                inv.agent_participant_id,
+                queues.hop_budget,
+            )
+            .await?;
         }
         Err(e) => {
             // Every gate failure lands as a typed app-error; the
-            // variants carry their distinction in the message.
+            // variants carry their distinction in the message, link
+            // loss included (Spec section 16).
             store
                 .append(NewEvent {
                     channel_id: inv.channel_id,
@@ -222,37 +224,84 @@ async fn build_context(
 ) -> anyhow::Result<Option<String>> {
     let msgs =
         channel::messages_since_last_close(store, channel_id, agent_participant_id).await?;
-    // **An empty window does not invoke.** Batching and in-flight turns
-    // race: a mention enqueues the agent, the agent's current turn closes
-    // after that mention landed, and the queued invocation's window is
-    // then empty - its justification already consumed. A turn on an empty
-    // prompt is a model improvising into a void (the 2026-08-20 traces
-    // show 31K-character thinking sprees answering nothing), so a stale
-    // invocation is dropped rather than served.
-    if msgs.is_empty() {
+    // **A window without a message does not invoke.** Batching and
+    // in-flight turns race: a mention enqueues the agent, the agent's
+    // current turn closes after that mention landed, and the queued
+    // invocation's justification is already consumed. The window now
+    // carries closes, and another agent's close is not a justification
+    // (review of #350) - a turn on a prompt with no message is a model
+    // improvising into a void (the 2026-08-20 traces show
+    // 31K-character thinking sprees answering nothing). The newest
+    // message is also the pin: the row the trim may never drop.
+    let Some(pin) = msgs.iter().rposition(|m| m.kind == "message") else {
         return Ok(None);
-    }
+    };
     let header = format!(
         "Turn context. You are {agent_name}. Messages since your last turn:\n"
     );
-    let mut lines: Vec<String> = msgs
+    #[derive(serde::Serialize)]
+    struct Request<'a> {
+        text: &'a str,
+    }
+    // The bound the gate enforces is the serialized line's, escaping
+    // included, so the measure is exact - and computed once per row,
+    // subtracted as rows drop, never re-serialized per drop (review of
+    // #350: the per-drop reserialization was quadratic over the
+    // window). serde escapes per character, so the whole line's cost
+    // is the sum of its parts: the 11-byte envelope, the header's
+    // escaped bytes, each row's escaped bytes, and 2 bytes per joining
+    // newline.
+    let escaped = |s: &str| {
+        serde_json::to_string(s).map(|j| j.len() - 2).unwrap_or(usize::MAX)
+    };
+    struct Row {
+        line: String,
+        cost: usize,
+        pin: bool,
+    }
+    let mut rows: Vec<Row> = msgs
         .iter()
-        .map(|m| {
-            format!(
+        .enumerate()
+        .map(|(i, m)| {
+            let line = format!(
                 "{}: {}",
                 m.author_name.as_deref().unwrap_or("unknown"),
                 m.body.as_deref().unwrap_or("")
-            )
+            );
+            Row { cost: escaped(&line), line, pin: i == pin }
         })
         .collect();
-
-    // Budget: the bound minus the JSON envelope's overhead for this
-    // exact header. Serialize-and-check is authoritative in the
-    // adapter; this trim just gets us under it with margin.
-    const BUDGET: usize = crate::adapters::gate::LINE_BOUND - 1024;
-    let total = |ls: &[String]| header.len() + ls.iter().map(|l| l.len() + 1).sum::<usize>();
-    while lines.len() > 1 && total(&lines) > BUDGET {
-        lines.remove(0);
+    const BOUND: usize = crate::adapters::gate::LINE_BOUND;
+    let overhead = 11 + escaped(&header);
+    let mut total =
+        overhead + rows.iter().map(|r| r.cost).sum::<usize>() + 2 * (rows.len() - 1);
+    // Oldest first, the pinned mention never dropped: a close newer
+    // than the mention that justified the turn must not displace it
+    // (review of #350).
+    while total > BOUND && rows.len() > 1 {
+        let idx = rows.iter().position(|r| !r.pin).unwrap_or(0);
+        total -= rows.remove(idx).cost + 2;
     }
-    Ok(Some(format!("{header}{}", lines.join("\n"))))
+    // The pin alone can exceed the bound. It truncates on a char
+    // boundary with the marker counted inside the bound, so the
+    // mention still arrives, marked rather than refused (Spec 7).
+    const MARKER: &str = " ...[truncated to the line bound]";
+    if total > BOUND {
+        let mut only = rows.pop().map(|r| r.line).unwrap_or_default();
+        loop {
+            let text = format!("{header}{only}{MARKER}");
+            let len = serde_json::to_string(&Request { text: &text })
+                .map(|s| s.len())
+                .unwrap_or(usize::MAX);
+            if len <= BOUND || only.is_empty() {
+                only = format!("{only}{MARKER}");
+                break;
+            }
+            let keep = only.chars().count().saturating_sub((len - BOUND).max(1));
+            only = only.chars().take(keep).collect();
+        }
+        rows.push(Row { cost: 0, line: only, pin: true });
+    }
+    let joined: Vec<&str> = rows.iter().map(|r| r.line.as_str()).collect();
+    Ok(Some(format!("{header}{}", joined.join("\n"))))
 }

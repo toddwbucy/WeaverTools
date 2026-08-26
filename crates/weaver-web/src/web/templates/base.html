@@ -9,17 +9,18 @@
   <script src="/assets/sse.js"></script>
 </head>
 <body>
-  <nav>
+  <nav class="masthead">
     <span class="brand">weaver-web</span>
     <a href="/channels">channels</a>
     {% if is_admin %}
     <span class="navsep">admin:</span>
     <a href="/admin/lifecycle">lifecycle</a>
     {% for agent in nav_agents %}<a href="/admin/trace/{{ agent }}">trace:{{ agent }}</a>{% endfor %}
+    {% for agent in nav_agents %}<a href="/admin/repro/{{ agent }}">confirm:{{ agent }}</a>{% endfor %}
     {% endif %}
     <span class="who">{{ who }}{% if is_admin %} (admin){% endif %}</span>
   </nav>
-  <main>
+  <main class="{% block mainclass %}{% endblock %}">
   {% block body %}{% endblock %}
   </main>
 </body>

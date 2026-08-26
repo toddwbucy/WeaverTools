@@ -2,6 +2,30 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-25, the robustness findings land (issue #337),
+third revision of the day. The prompt window carries other
+participants' closes (section 7), the line bound is measured
+serialized with a marked single-message truncation (section 7), the
+turn-deadline election is re-asked and reaffirmed (section 6), and
+the wrapper makes the sudoers widening exact (sections 3 and 11).
+
+**Revised:** 2026-08-25, the confirm view, second revision of the day
+(PRD section 4.4). The link gains a sixth and seventh service, the
+record reads (section 16), and section 17 pins the view: the job's
+order, the compared fields, and the honest-failure rules.
+
+**Revised:** 2026-08-25, the two-process shape (PRD section 3). The
+crate becomes two binaries joined by one dialed link: the connector
+holds the box-bound reaches (sections 6, 11, and 12) and the server
+holds the rest, with section 16 pinning the link. New content lands at
+the end because code comments cite section numbers. The code act landed
+the same day: both binaries build clean, clippy-strict and tested, and
+the link protocol is exercised end to end against the built connector.
+The crate briefly resolved its own lockfile against the libsqlite3-sys
+collision; the olympus act of the same day dissolved the collision
+itself (sqlx 0.9, the sqlite driver absent from the built graph) and
+membership stands - section 2 carries the story.
+
 **Revised:** 2026-08-24, three elections recorded at section 15 as held
 rather than settled: the crate pins edition 2021 against the workspace's
 2024, it carries Apache-2.0 against the workspace's UNLICENSED, and its
@@ -25,7 +49,8 @@ section rather than left implicit.
   harness refuses tokio, but that is the framework's editorial rule for
   its own crates. weaver-web is an outside consumer and elects its own
   runtime. axum is tokio-native and the choice follows from that.
-- **HTTP server:** **axum**, one process, one listener.
+- **HTTP server:** **axum**, in the server binary, one listener for
+  browsers. The link's listener (section 16) is plain TCP, not HTTP.
 - **Templating:** **askama** - compile-time checked HTML templates, so a
   template referencing a field that no longer exists is a build failure
   rather than a blank region at runtime.
@@ -46,49 +71,67 @@ section rather than left implicit.
   binary** (`include_bytes!`), no CDN and no node toolchain. The box is
   LAN-only, a CDN reference being both a privacy leak and a broken page.
 - **Serialization:** serde + serde_json everywhere a JSON boundary
-  exists (gate lines, verb answers, trace events, config is TOML).
+  exists (gate lines, link frames, verb answers, trace events, config
+  is TOML).
 
 ## 2. Crate layout
 
-One binary crate, `weaver-web`, per the one-binary discipline. Modules,
-not a workspace - the project splits into crates only when a second
-consumer of some module exists:
+One crate, two binaries, per the deployment shape (PRD section 3).
+Modules, not a workspace - the project splits into crates only when a
+second consumer of some module exists. The crate is a workspace member
+and resolves in the workspace lock. That fact was fought for twice in
+one day: this crate's sqlx 0.8 and weaver-state's rusqlite could not
+share one resolution graph (cargo's links uniqueness over
+libsqlite3-sys, discovered 2026-08-25 on the crate's first resolution
+in this tree), this seat answered by excluding the crate to its own
+lockfile, and the olympus act of the same day answered better - on
+sqlx 0.9 the sqlite driver is optional and absent from the built
+graph, so membership stands with nothing of weaver-state moved. The
+second answer supersedes the first, and the manifest's sqlx comment
+carries the mechanism.
 
 ```
 src/
-  main.rs          startup: config, store open, adapters, router, axum
-  config.rs        TOML config: agents, providers, listen, store path
-  store.rs         Postgres pool, migrations, the single writer task
-  registry.rs      participants: identity, adapter binding, policies
-  channel.rs       channel log: append, read, projection types
-  router.rs        invocation policy, mention parsing, dispatch
-  queue.rs         per-agent queue: single-flight, batch-on-drain
+  bin/
+    weaver-web.rs            server startup: config, store open, link
+                             listener, router, axum
+    weaver-web-connector.rs  connector startup: config, reaches, dial
+  config.rs        TOML config for both processes (section 3)
+  wire.rs          the link: NDJSON frames, seven services (section 16)
+  repro.rs         server. the confirm job (section 17)
+  store.rs         server. Postgres pool, migrations, single writer
+  registry.rs      server. participants: identity, adapters, policies
+  channel.rs       server. channel log: append, read, projection types
+  router.rs        server. invocation policy, mention parsing, dispatch
+  queue.rs         server. per-agent queue: single-flight, batch-on-drain
   adapters/
-    gate.rs        weaver agent adapter: dial, frame, close
-    upstream.rs    upstream model adapter: HTTP providers
-  lifecycle.rs     verb invocation via sudo, JSON answer capture
-  traceview.rs     NDJSON tailers, run/turn grouping, ring buffer
+    gate.rs        connector. weaver agent adapter: dial, frame, close
+    upstream.rs    server. upstream model adapter: HTTP providers
+  lifecycle.rs     connector. verb invocation via sudo, JSON answer
+  traceview.rs     connector tails and streams, server rings and renders
   web/
-    mod.rs         shared plumbing: state, sessions, errors, assets
-    user.rs        the user surface: gate-boundary routes (channels)
-    admin.rs       the admin surface: operator-boundary routes
+    mod.rs         server. shared plumbing: state, sessions, errors
+    user.rs        server. the user surface: gate-boundary routes
+    admin.rs       server. the admin surface: operator-boundary routes
                    (lifecycle, trace), behind the role gate
     templates/     askama templates: shell, channel, lifecycle, trace
 ```
 
 ## 3. Configuration
 
-TOML, path given by `--config`, default `/etc/weaver-web/config.toml`:
+TOML, path given by `--config`, one file per process. Box facts live in
+the box's config: the agent roster with its socket and sink paths is
+the connector's declaration, announced to the server in the link's
+hello (section 16), so an agent exists to the server because the box
+that runs it said so, never by double entry.
+
+The server's, default `/etc/weaver-web/config.toml`:
 
 ```
-listen   = "0.0.0.0:8080"
-database = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth
-admins   = ["todd"]   # participant names holding the admin role
-
-[[agents]]
-name  = "alpha"
-gate  = "/run/weaver-alpha/gate.sock"
-trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
+listen      = "0.0.0.0:8080"     # browsers
+link_listen = "127.0.0.1:8081"   # the connector's dial target
+database    = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth
+admins      = ["todd"]   # participant names holding the admin role
 
 [[providers]]
 name    = "claude"
@@ -97,14 +140,40 @@ model   = "claude-fable-5"
 key_env = "ANTHROPIC_API_KEY"
 ```
 
+The connector's, default `/etc/weaver-web/connector.toml`:
+
+```
+server             = "127.0.0.1:8081"      # the link's dial target
+agent_declarations = "/etc/weaver/agents"  # the admin surface's read
+admin_bin          = "/usr/local/libexec/weaver/weaver-admin"
+admin_config       = "/etc/weaver/config"
+
+[[agents]]
+name  = "alpha"
+gate  = "/run/weaver-alpha/gate.sock"
+trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
+```
+
+The admin binary's install path and its config location are deployment
+facts that differ per box, so they ride the connector's config with the
+original deployment's paths as defaults (the second box taught this:
+its admin lives under `/opt/weaver`). `admin_env` (default true) says
+whether the invocation passes the config location through sudo's
+environment: false pairs with the root-owned wrapper from `deploy/`,
+which validates its verb and agent and fixes the config itself - the
+shape that makes the sudoers widening exact (section 11, issue #337).
+
 Agents and providers declared here are *available*, and whether one
 participates in a given channel is registry state, not config. Upstream
 credentials enter by environment variable only, named by `key_env`, never
-stored in the config file or the database.
+stored in the config file or the database. Providers and their
+credentials are the server's business alone, so nothing upstream-facing
+touches the agents' box.
 
 ## 4. Store schema
 
-Postgres, four tables, in the `weaver_web` database. Migrations are sqlx
+Postgres, five tables, in the `weaver_web` database. Four are laid out
+here and the fifth, `sessions`, is section 14's. Migrations are sqlx
 migration files in `migrations/`, applied at startup.
 
 ```
@@ -180,20 +249,21 @@ interprets them beyond equality, which is all the trace link needs.
 One tokio task owns all writes. Every mutation - message posted, close
 landed, member change - is a command on an mpsc channel to that task,
 which appends through its own connection, then broadcasts the appended
-event (with its assigned `id`) on a `tokio::sync::broadcast` per
-process. SSE handlers and page renders read through an sqlx pool, and late
+event (with its assigned `id`) on a `tokio::sync::broadcast` in the
+server process. SSE handlers and page renders read through an sqlx pool, and late
 joiners read the table up to the broadcast's current position, then
 follow. This gives the log its single ordering (the writer's) with no
 write contention anywhere, and is the trace custody model restated in
 code (PRD 3). Postgres LISTEN/NOTIFY is deliberately not used in v1 -
-the process is its own fan-out - but it is the named seam if an
+the server is its own fan-out - but it is the named seam if an
 out-of-process follower of the log ever becomes legitimate, and such a
 follower enters by a declared interface on weaver-web, never by SQL
 grants on the tables (section 1's engine-not-schema rule).
 
 ## 6. The gate adapter
 
-One adapter instance per configured agent.
+One adapter instance per declared agent, living in the connector and
+serving the link's `turn` asks (section 16).
 
 - **Dial per turn.** The adapter connects to the gate socket when it has
   a turn to send and drops the connection after the close. Elected over a
@@ -217,6 +287,12 @@ One adapter instance per configured agent.
   another client's long turn into a false failure. A socket-level error
   or EOF mid-turn is reported as delivery lost, with the trace view as
   the recovery path (the contract: the record holds the close).
+  Re-asked and reaffirmed by the operator 2026-08-25 (issue #337): in a
+  one-consumer deployment the only waiter a wedged turn blocks is the
+  operator, who holds the release - the unload verb frees the slot
+  through this same typing - and the gate is a passthrough, so a
+  deadline here would be the frontend holding an opinion about
+  generation time, which is the class of opinion the PRD refuses.
 
 ## 7. Prompt serialization
 
@@ -230,9 +306,23 @@ claude: <text>
 todd: @alpha <text>
 ```
 
-- Window: messages since the agent's last `close` in this channel,
-  newest-last, truncated oldest-first to fit the line bound with the
-  final mention always included.
+- Window: what was said since the agent's last `close` in this channel -
+  messages and other participants' closes alike, an agent's answer
+  being conversation the next speaker must see (revised 2026-08-25,
+  issue #337: selecting only messages made agents blind to each other
+  in a shared room). The read is capped at the newest 500 rows, more
+  than the line bound can carry at any plausible line size, so a
+  long-idle agent never drags a channel's whole history through the
+  trim. Newest-last, trimmed oldest-first to fit the line bound, with
+  two rules the widened window made explicit (review of #350): a
+  window holding no `message` does not invoke - another agent's close
+  is context, never a justification - and the newest message is
+  pinned, so no close that landed after it can displace the mention
+  that justified the turn. The bound is measured on the serialized
+  line, escaping included, computed once per row rather than per drop,
+  and the pinned message exceeding the bound alone truncates on a
+  character boundary with a marker counted inside the bound - trimmed
+  and marked serves where refused drops.
 - Speaker labels are participant `name` values. The format is a v1
   election, deliberately plain text: structured attribution is the
   named future ask (PRD 5) and is not smuggled in as ad hoc syntax.
@@ -285,6 +375,7 @@ as `message` events with no run or turn labels (they have no trace).
 
 ## 11. Lifecycle runner
 
+In the connector, on the link's `verb` ask (section 16), via
 `tokio::process::Command`:
 
 ```
@@ -294,27 +385,34 @@ sudo WEAVER_ADMIN_CONFIG=/etc/weaver/config \
 
 stdout parsed as one JSON object, rendered verbatim and formatted,
 non-zero exit with unparseable stdout rendered as the raw bytes and the
-exit code, never swallowed. The sudoers fragment shipped in `deploy/`:
+exit code, never swallowed. The environment line rides only when
+`admin_env` is true (section 3): the recommended shape is the
+root-owned wrapper `deploy/weaver-admin-verb`, which validates its
+verb against the closed set and its agent name's characters, fixes the
+config itself, and makes the sudoers rule exactly one command wide
+(issue #337 - the direct-binary rule needed wildcarded arguments and
+the config through sudo's environment, which "narrow" overstated).
+Both fragment shapes ship in `deploy/weaver-web.sudoers`, the wrapper
+uncommented.
 
-```
-todd ALL=(root) NOPASSWD: /usr/local/libexec/weaver/weaver-admin validate *, \
-  /usr/local/libexec/weaver/weaver-admin load *, \
-  /usr/local/libexec/weaver/weaver-admin unload *
-```
-
-Load state: the gate socket path's existence, polled on a short interval
-and on demand before render, labeled as an inference in the UI (PRD 4.2).
+Load state: the gate socket path's existence, answered by the
+connector's `status` service (section 16), polled by the server on a
+short interval and on demand before render, labeled as an inference in
+the UI (PRD 4.2).
 
 ## 12. Trace view
 
-Per agent, a tailer task: open the NDJSON file, seek to a bounded
-backfill window (last N bytes, N elected at 1 MiB), read forward, then
-follow appends (inotify via `notify`, falling back to polling). Each
+Per agent, a tailer task in the connector: open the NDJSON file, seek
+to a bounded backfill window (last N bytes, N elected at 1 MiB), read
+forward, then follow appends (inotify via `notify`, falling back to
+polling). Every event and mark crosses the link's `trace` stream
+(section 16). Each
 line parses as JSON into a tolerant shape: known envelope fields typed,
 everything else retained raw. Unknown event kinds render as raw JSON
 (PRD 4.3). Events group by run then turn in a bounded in-memory ring per
-agent (elected: 10,000 events), because the trace surface is a live view, not a
-query engine, per the PRD's retention non-goal. Loss marks render as
+agent, held by the server (elected: 10,000 events), because the trace
+surface is a live view, not a query engine, per the PRD's retention
+non-goal. Loss marks render as
 first-class objects.
 
 The view carries two operator filters, both applied server-side per the
@@ -325,7 +423,8 @@ and a substring search over the full raw event, so a hidden field
 still matches. Discontinuity marks ignore both filters - a gap in the
 record is never filterable out of sight. A file rotation or truncation
 (detected by inode or shrink) is surfaced in the view as a discontinuity
-mark, mirroring the stream's own honesty rule.
+mark, mirroring the stream's own honesty rule, and a link drop or
+reconnect is surfaced the same way (section 16).
 
 ## 13. HTTP surface
 
@@ -347,8 +446,11 @@ GET  /channels/{name}/stream          SSE: channel events from cursor
 
 GET  /admin/lifecycle                 lifecycle surface     [admin]
 POST /admin/lifecycle/{agent}/{verb}  run a verb            [admin]
+GET  /admin/agents/{agent}/config     declaration, read-only [admin]
 GET  /admin/trace/{agent}             trace surface         [admin]
 GET  /admin/trace/{agent}/stream      SSE: trace events     [admin]
+GET  /admin/repro/{agent}             confirm view (17)     [admin]
+POST /admin/repro/{agent}             start a confirm (17)  [admin]
 
 GET  /assets/*                        vendored static assets
 ```
@@ -390,6 +492,9 @@ itself does not move then - only the proof does.
   further providers are additive elections.
 - **The JSON projection's shape** (section 13) is minimally specified on
   purpose, and it hardens when the carve-out triggers, not before.
+- **The link's peer proof:** none in v1, per section 16's trust clause.
+  The mechanism is the IAM act's election, arriving there for the
+  listener and the link together.
 
 **Three elections stand held rather than settled**, each one the operator's
 to close:
@@ -397,10 +502,10 @@ to close:
 - **The edition.** This crate pins `edition = "2021"` where the workspace
   carries 2024 and every other member inherits it. The migration is real
   work rather than a manifest line, the derive-heavy dependencies being
-  where an edition move bites, and **no build has yet resolved this crate's
-  dependency tree** - the machine this workshop runs on cannot. The pin
-  states the fact. Aligning is owed and is its own act, with a build behind
-  it.
+  where an edition move bites. The crate's tree resolved and built for
+  the first time 2026-08-25, in the workspace lock (the manifest carries the collision story), so the alignment act
+  now has a build to stand behind it. The pin states the fact until that
+  act runs, and aligning remains its own act.
 - **The licence.** This crate carries `Apache-2.0` and its own `LICENSE`
   file where the workspace carries `UNLICENSED`. The suite's licence
   boundary is an open operator question, so neither inheritance nor silence
@@ -415,3 +520,98 @@ workspace and reaches the agent exactly as an outside consumer does: a
 socket dialed by path, a binary run by the operator's verb, and a record
 read where the operator keeps it. Living in one repository with the agent
 is a fact about the source and not about the boundary.
+
+## 16. The link
+
+Landed 2026-08-25 with the two-process shape (PRD section 3), placed
+after section 15 so the section numbers code comments cite stay stable.
+The connector dials the server's `link_listen` address and holds one
+persistent connection, redialing with backoff when it drops. **The
+server accepts any number of connectors, one per box, served
+concurrently** - the fleet shape, made real the same day on the
+operator's direction. Each hello homes its agents to its own
+connection, first hello winning a name (a collision from another live
+box is skipped and logged, never silently rehomed). Asks route to the
+agent's own connection, status merges every box's answer, and a box's
+drop tears down exactly its own agents, pending asks, and roster -
+the other boxes never notice.
+
+**Transport: TCP, NDJSON frames.** One JSON object per line, both
+directions. Elected over a local Unix socket so that colocated and
+offloaded differ by an address and nothing else. The link carries whole
+turns and a trace tail, nothing that earns a second transport.
+
+**Hello.** The connector's first frame announces the box's agent roster
+by name. Socket and sink paths stay on the box, because the server has
+no use for them. The server reconciles its registry from the hello,
+creating agent participants and starting queues as the roster requires.
+
+**Seven services**, named in each frame's `svc` member, ask and answer
+correlated by `id` where the shape is ask-answer:
+
+1. `turn` - the server asks with assembled context, the connector dials
+   the gate per turn (section 6), and one answer frame carries the
+   close or the typed error, section 6's variants verbatim in kind.
+2. `verb` - the server asks, the connector runs the invocation
+   (section 11), and one answer frame carries the outcome object.
+3. `trace` - the connector streams, unasked, every trace event and
+   discontinuity mark its tailers emit (section 12), tagged by agent.
+4. `status` - the server asks, the connector answers the load-state
+   observable per agent, the socket path's existence.
+5. `declaration` - the server asks, the connector answers one agent's
+   declaration file as text, the admin surface's read-only view.
+6. `trace_runs` - the server asks, the connector scans one agent's sink
+   file and answers the run inventory: each run's label, turn count,
+   event count, and first wall clock. The authoritative read for the
+   confirm view (section 17), against the file rather than the bounded
+   ring.
+7. `trace_run` - the server asks with a run label, the connector
+   answers that run's events parsed from the sink file, capped (the
+   cap elected at 10,000 events) with the truncation stated in the
+   answer, never silent.
+
+**Link loss is marked, never smoothed.** A dropped link fails in-flight
+turns as delivery-lost (section 6's typing), shows agents unreachable
+on the lifecycle view, and lands a discontinuity mark in every trace
+view. Reconnection re-runs the hello and a fresh trace backfill, and
+the reconnect is itself a mark, so a viewer's completeness claim stays
+exactly the stream's.
+
+**Trust.** The link's posture is the listener's (PRD section 3): no
+peer proof on loopback or on the v1 LAN, and the IAM act is where proof
+arrives for both. `link_listen` defaults to loopback, so any exposure
+is the operator's explicit widening.
+
+## 17. The confirm view
+
+PRD section 4.4 in representation. One job at a time, held in server
+memory (`repro.rs`), started from `/admin/repro/{agent}` behind the
+role gate, its progress and report rendered by the same page. Nothing
+of the job touches the channel store: a confirm is the operator asking
+the record a question, not conversation, so its turns land in no
+channel and its report is ephemeral until the operator runs another.
+
+The job's order, each step logged to the page as it runs:
+
+1. Fetch the source run over `trace_run` and cut it into turns: events
+   grouped by turn reference, each turn's request text taken as its
+   last `message.user` event (identity messages precede the request in
+   render order), each turn's request, output, and measurement payloads
+   held for comparison.
+2. `verb` unload, then `verb` load, then poll `status` until the gate
+   socket stands (bounded, the bound elected at 120 s). A load refusal
+   renders verbatim and ends the job.
+3. Reissue each turn's request text byte-exact over `turn`, in source
+   order. The first close names the replay run's label.
+4. Fetch the replay run over `trace_run` and compare per turn:
+   rendered prompt, derived generation seed, effective knobs, emission
+   bytes, finish kind and resident count, input token ids, and
+   per-token entropies float-exact - the lab report's field list,
+   mechanized.
+5. Render the verdict per turn beside both records' stats (whole-turn
+   wall time, tokens in and out), divergence shown as itself.
+
+Failure is a report, not an exception: an unloaded agent that will not
+load, a turn the gate refuses, a mid-confirm channel turn shifting the
+ordinals - each ends the job with the step's own answer on the page,
+per the PRD's honest-failure rules.

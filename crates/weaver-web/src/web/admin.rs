@@ -27,6 +27,7 @@ pub fn routes() -> Router<AppState> {
         .route("/agents/{agent}/config", get(agent_config))
         .route("/trace/{agent}", get(trace_page))
         .route("/trace/{agent}/stream", get(trace_stream))
+        .route("/repro/{agent}", get(repro_page).post(repro_start))
 }
 
 /// The role gate. Ok(participant) for an admin; Err(response) is the
@@ -67,22 +68,34 @@ struct LifecyclePage {
     outcome: String,
 }
 
-fn agent_rows(state: &AppState) -> Vec<AgentRow> {
-    state
-        .cfg
-        .agents
-        .iter()
-        .map(|a| {
-            let loaded = state
-                .gates
-                .get(&a.name)
-                .map(|g| g.socket_exists())
-                .unwrap_or(false);
-            AgentRow {
-                name: a.name.clone(),
-                state: if loaded { "loaded".into() } else { "unloaded".into() },
-                socket: if loaded { "present".into() } else { "absent".into() },
-            }
+/// The load-state rows: the connector's `status` answer over the
+/// link, still the socket-existence inference the UI labels
+/// (PRD 4.2). A down or unresponsive link renders as unreachable
+/// rather than unloaded - the absence of the observable is not the
+/// observable's absence.
+async fn agent_rows(state: &AppState) -> Vec<AgentRow> {
+    let roster = state.link.roster().await;
+    let status = state.link.status().await;
+    roster
+        .into_iter()
+        .map(|name| match status.as_ref().and_then(|m| m.get(&name)) {
+            Some(true) => AgentRow {
+                name,
+                state: "loaded".into(),
+                socket: "present".into(),
+            },
+            Some(false) => AgentRow {
+                name,
+                state: "unloaded".into(),
+                socket: "absent".into(),
+            },
+            // No box answered for this agent: its connection is down
+            // or unresponsive, which is not the same fact as unloaded.
+            None => AgentRow {
+                name,
+                state: "unreachable".into(),
+                socket: "link down".into(),
+            },
         })
         .collect()
 }
@@ -93,10 +106,10 @@ async fn lifecycle_page(State(state): State<AppState>, headers: HeaderMap) -> Ap
         Err(refusal) => return Ok(refusal),
     };
     let page = LifecyclePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
-        agents: agent_rows(&state),
+        agents: agent_rows(&state).await,
         outcome: String::new(),
     };
     Ok(Html(page.render()?).into_response())
@@ -111,16 +124,24 @@ async fn run_verb(
         Ok(p) => p,
         Err(refusal) => return Ok(refusal),
     };
-    if state.cfg.agent(&agent).is_none() {
+    if !state.link.has_agent(&agent).await {
         return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
     }
-    let outcome = lifecycle::run_verb(&verb, &agent).await?;
+    if !lifecycle::VERBS.contains(&verb.as_str()) {
+        return Ok((StatusCode::NOT_FOUND, "no such verb").into_response());
+    }
+    // The verb crosses the link; its outcome renders verbatim either
+    // way, and a link failure is reported as itself, never swallowed.
+    let outcome = match state.link.verb(&agent, &verb).await {
+        Ok(o) => serde_json::to_string_pretty(&o)?,
+        Err(e) => format!("verb not run: {e}"),
+    };
     let page = LifecyclePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
-        agents: agent_rows(&state),
-        outcome: serde_json::to_string_pretty(&outcome)?,
+        agents: agent_rows(&state).await,
+        outcome,
     };
     Ok(Html(page.render()?).into_response())
 }
@@ -147,23 +168,181 @@ async fn agent_config(
         Ok(p) => p,
         Err(refusal) => return Ok(refusal),
     };
-    if state.cfg.agent(&agent).is_none() {
+    if !state.link.has_agent(&agent).await {
         return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
     }
-    let path = state.cfg.agent_declarations.join(format!("{agent}.yaml"));
-    let content = match tokio::fs::read_to_string(&path).await {
-        Ok(c) => c,
-        Err(e) => format!("could not read the declaration: {e}"),
-    };
+    // The declaration lives on the agents' box; the connector reads
+    // it (Spec section 16) and a read failure arrives as its own text.
+    let (path, content) = state
+        .link
+        .declaration(&agent)
+        .await
+        .unwrap_or_else(|| {
+            (
+                String::new(),
+                "the link to the agents' box is down or unresponsive".into(),
+            )
+        });
     let page = AgentConfigPage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
         agent,
-        path: path.display().to_string(),
+        path,
         content,
     };
     Ok(Html(page.render()?).into_response())
+}
+
+// ---------- confirm (PRD 4.4, Spec section 17) ----------
+
+struct RunRow {
+    run: String,
+    turns: u32,
+    events: u32,
+    when: String,
+}
+
+struct TurnRow {
+    turn: String,
+    reproduced: bool,
+    failed: String,
+    source_ms: String,
+    replay_ms: String,
+    tokens_in: usize,
+    tokens_out: usize,
+    preview: String,
+}
+
+#[derive(Template)]
+#[template(path = "repro.html")]
+struct ReproPage {
+    nav_agents: Vec<String>,
+    who: String,
+    is_admin: bool,
+    agent: String,
+    runs: Vec<RunRow>,
+    link_note: String,
+    running: bool,
+    log: Vec<String>,
+    has_report: bool,
+    reproduced: bool,
+    source_run: String,
+    replay_run: String,
+    turns: Vec<TurnRow>,
+}
+
+async fn render_repro(state: &AppState, who: String, agent: String) -> AppResult<Response> {
+    let (runs, link_note) = match state.link.trace_runs(&agent).await {
+        Some(rs) => (
+            rs.into_iter()
+                .rev()
+                .map(|r| RunRow {
+                    when: r
+                        .first_wall_ms
+                        .and_then(chrono::DateTime::from_timestamp_millis)
+                        .map(|t| t.format("%Y-%m-%d %H:%M:%S UTC").to_string())
+                        .unwrap_or_default(),
+                    run: r.run,
+                    turns: r.turns,
+                    events: r.events,
+                })
+                .collect(),
+            String::new(),
+        ),
+        None => (Vec::new(), "the record read failed - link down or unresponsive".into()),
+    };
+    let snap = state.repro.snapshot();
+    // The job log and running state belong to the agent the job runs
+    // on; another agent's page shows neither (the one-at-a-time rule
+    // still refuses a concurrent start with its own message).
+    let (running, log) = if snap.agent == agent {
+        (snap.running, snap.log.clone())
+    } else {
+        (false, Vec::new())
+    };
+    let (has_report, reproduced, source_run, replay_run, turns) = match &snap.report {
+        Some(r) if r.agent == agent => (
+            true,
+            r.reproduced,
+            r.source_run.clone(),
+            r.replay_run.clone(),
+            r.turns
+                .iter()
+                .map(|t| TurnRow {
+                    turn: t.turn.clone(),
+                    reproduced: t.reproduced,
+                    failed: t
+                        .checks
+                        .iter()
+                        .filter(|(_, ok)| !ok)
+                        .map(|(n, _)| n.as_str())
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    source_ms: t.source_ms.map(|v| v.to_string()).unwrap_or_default(),
+                    replay_ms: t.replay_ms.map(|v| v.to_string()).unwrap_or_default(),
+                    tokens_in: t.tokens_in,
+                    tokens_out: t.tokens_out,
+                    preview: t.preview.clone(),
+                })
+                .collect(),
+        ),
+        _ => (false, false, String::new(), String::new(), Vec::new()),
+    };
+    let page = ReproPage {
+        nav_agents: nav_agents(state).await,
+        who,
+        is_admin: true,
+        agent,
+        runs,
+        link_note,
+        running,
+        log,
+        has_report,
+        reproduced,
+        source_run,
+        replay_run,
+        turns,
+    };
+    Ok(Html(page.render()?).into_response())
+}
+
+async fn repro_page(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(agent): Path<String>,
+) -> AppResult<Response> {
+    let me = match require_admin(&state, &headers).await? {
+        Ok(p) => p,
+        Err(refusal) => return Ok(refusal),
+    };
+    if !state.link.has_agent(&agent).await {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    }
+    render_repro(&state, me.name, agent).await
+}
+
+#[derive(serde::Deserialize)]
+struct ReproForm {
+    run: String,
+}
+
+async fn repro_start(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(agent): Path<String>,
+    axum::extract::Form(form): axum::extract::Form<ReproForm>,
+) -> AppResult<Response> {
+    if let Err(refusal) = require_admin(&state, &headers).await? {
+        return Ok(refusal);
+    }
+    if !state.link.has_agent(&agent).await {
+        return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
+    }
+    if let Err(e) = state.repro.start(state.link.clone(), agent.clone(), form.run) {
+        return Ok((StatusCode::CONFLICT, e).into_response());
+    }
+    Ok(axum::response::Redirect::to(&format!("/admin/repro/{agent}")).into_response())
 }
 
 // ---------- trace ----------
@@ -273,7 +452,6 @@ struct TracePage {
     is_admin: bool,
     agent: String,
     events: Vec<String>,
-    cursor: u64,
     q: String,
     controls: Vec<FieldControl>,
     stream_url: String,
@@ -330,7 +508,7 @@ async fn trace_page(
     }
 
     let page = TracePage {
-        nav_agents: nav_agents(&state.cfg),
+        nav_agents: nav_agents(&state).await,
         who: me.name,
         is_admin: true,
         agent,
@@ -339,7 +517,6 @@ async fn trace_page(
             .filter(|e| event_matches(e, &q))
             .map(|e| render_trace_event(e, &hidden))
             .collect(),
-        cursor,
         q: q.unwrap_or_default(),
         controls,
         stream_url,

@@ -1,23 +1,12 @@
 {% extends "base.html" %}
 {% block title %}channels - weaver-web{% endblock %}
+{% block mainclass %}app{% endblock %}
 {% block body %}
-<h1>Channels</h1>
-<ul class="channels">
-  {% for c in channels %}
-  <li><a href="/channels/{{ c.name }}">#{{ c.name }}</a>
-      {% if let Some(topic) = c.topic %}<span class="topic">{{ topic }}</span>{% endif %}</li>
-  {% endfor %}
-</ul>
-<form method="post" action="/channels" class="create-channel">
-  <input name="name" pattern="[a-z0-9][a-z0-9_-]*" required placeholder="new-channel-name">
-  <input name="topic" placeholder="topic (optional)">
-  {% if !nav_agents.is_empty() %}
-  <span class="agentpick">with:
-    {% for agent in nav_agents %}
-    <label><input type="checkbox" name="agent_{{ agent }}" value="on"> @{{ agent }}</label>
-    {% endfor %}
-  </span>
-  {% endif %}
-  <button type="submit">Create</button>
-</form>
+{% include "sidebar.html" %}
+<section class="room">
+  <div class="empty">
+    <p class="empty-mark">#</p>
+    <p>Pick a channel, or make one.</p>
+  </div>
+</section>
 {% endblock %}

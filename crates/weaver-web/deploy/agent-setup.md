@@ -21,16 +21,46 @@ reasons until every step is done, so run it after each step if lost.
 5. **Operator group membership**: `gpasswd -a todd weaver-<name>`.
    The gate socket lands `srwxrwxr-x weaver-<name>:weaver-<name>`, so
    connecting needs group write. NOTE: group membership is evaluated
-   at login - weaver-web must be (re)started from a fresh login
-   context (`sudo -u todd ...`) after this, or it gets
+   at login - weaver-web-connector (the process that dials the
+   socket) must be (re)started from a fresh login context
+   (`sudo -u todd ...`) after this, or it gets
    "Permission denied (os error 13)" dialing the socket.
 6. **Validate, then load**:
    `sudo WEAVER_ADMIN_CONFIG=/etc/weaver/config \
     /usr/local/libexec/weaver/weaver-admin {validate|load} <name>`
-7. **weaver-web config**: add an `[[agents]]` block (name, gate socket
-   path, trace path) to `/etc/weaver-web/config.toml` and restart
-   weaver-web. The registry, queue worker, trace tailer, lifecycle
-   row, and channel-create checkbox all follow from config.
+7. **connector config**: add an `[[agents]]` block (name, gate socket
+   path, trace path) to `/etc/weaver-web/connector.toml` and restart
+   weaver-web-connector. The roster reaches the server in the
+   connector's hello, and the registry, queue worker, trace view,
+   lifecycle row, and channel-create checkbox all follow from it. The
+   server needs no change and no restart.
 
 GPU placement is the declaration's `devices` field. The SPU refuses a
 conflicted device at admission and never evicts.
+
+## The posture before IAM, named where a deployer meets it
+
+The sudoers rule is the one privilege widening this application asks of
+the box, and the path to it is shorter than the notes above imply: v1
+sessions are anonymous, so anyone who can reach the listener and types
+a name from the config's `admins` list holds the admin role, and the
+admin role drives these verbs. The trust boundary is the LAN and the
+box until the IAM act lands (weaver-web-PRD section 8, item 2), and a
+deployer widening `listen` beyond a trusted LAN before that act is
+undoing the deployment's one safety assumption.
+
+Two shapes for the rule itself, the wrapper being the exact one:
+
+- **Wrapper (recommended):** install `deploy/weaver-admin-verb`
+  root-owned at a root-owned path, edit its two box-fact lines, point
+  the sudoers rule at the wrapper with no SETENV, and set the
+  connector's `admin_bin` to the wrapper with `admin_env = false`. The
+  widening is then exactly three verbs on validated agent names with a
+  fixed config.
+- **Direct binary:** the rule names the admin binary with wildcarded
+  arguments and permits the config variable through a
+  command-specific `env_keep` (the shipped fragment's commented
+  alternative shows the shape - never a blanket SETENV, which would
+  permit every variable), and it is still wider than "narrow"
+  suggests. It works, and the wrapper is what makes the description
+  exact.

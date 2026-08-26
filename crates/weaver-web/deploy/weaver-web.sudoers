@@ -1,7 +1,15 @@
 # weaver-web lifecycle verbs (Spec section 11). Install as
 # /etc/sudoers.d/weaver-web (mode 0440, visudo -c to verify).
-# The one privilege widening the application asks of the box: the three
-# lifecycle verbs on the admin binary, nothing else.
-todd ALL=(root) NOPASSWD: /usr/local/libexec/weaver/weaver-admin validate *, /usr/local/libexec/weaver/weaver-admin load *, /usr/local/libexec/weaver/weaver-admin unload *
-# The verb runner passes the config location through sudo's environment.
-Defaults!/usr/local/libexec/weaver/weaver-admin env_keep += "WEAVER_ADMIN_CONFIG"
+# The one privilege widening the application asks of the box.
+#
+# Wrapper shape (recommended, issue #337): the widening is exactly one
+# root-owned script that validates its verb and agent and fixes the
+# config itself. Pair with admin_bin = the wrapper and
+# admin_env = false in connector.toml.
+todd ALL=(root) NOPASSWD: /usr/local/libexec/weaver-web/weaver-admin-verb *
+
+# Direct-binary shape (wider: arbitrary trailing arguments and the
+# config through sudo's environment - what "narrow" overstated until
+# the wrapper existed). Uncomment only if not using the wrapper.
+#todd ALL=(root) NOPASSWD: /usr/local/libexec/weaver/weaver-admin validate *, /usr/local/libexec/weaver/weaver-admin load *, /usr/local/libexec/weaver/weaver-admin unload *
+#Defaults!/usr/local/libexec/weaver/weaver-admin env_keep += "WEAVER_ADMIN_CONFIG"

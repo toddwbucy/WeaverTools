@@ -240,6 +240,24 @@ Every real defect found in the quarry's final week came from items 2–4, while
 code defects while accumulating 53 dangling edges of its own. A clean automated gate is
 evidence the gate did not fire, not evidence of correctness.
 
+## The pull request path
+
+All pull requests open as drafts. A draft PR goes to the code review seat, a sub-agent
+invoked under the review skill. The sub-agent posts its review to the pull request
+before the coding session acts on it, and hands the same report to the coding session.
+Posting first is required, so the record carries the finding as it stood, whether it
+was fixed or argued down.
+
+The coding session answers each finding with a commit. More than four review rounds
+with the seat means the diff is not the problem. The pull request is pulled and the
+work re-enters authoring.
+
+A pull request leaves draft only when the code review seat passes it. Leaving draft is
+what invokes CodeRabbit, which is the final pass and is expected to confirm rather
+than to find work. Two exchanges with CodeRabbit is the ceiling. A third means the
+draft phase did not finish, so the pull request returns to draft and the seat works it
+again before it comes back out.
+
 ## Conventions carried from the quarry
 
 - **Editorial: ASCII only, no em-dashes** (use ` - `) in docs and handoffs.

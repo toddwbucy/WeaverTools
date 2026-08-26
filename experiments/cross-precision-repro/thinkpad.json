@@ -1,0 +1,15 @@
+{
+  "box": "thinkpad",
+  "agent": "karl",
+  "declaration": "/home/todd/.weaveragents/karl.yaml",
+  "gate_socket": "/run/weaver-karl/gate.sock",
+  "trace": "/home/todd/.weaveragents/karl/trace.ndjson",
+  "admin_bin": "/opt/weaver/bin/weaver-admin",
+  "admin_config": "/etc/weaver/admin",
+  "repo": "/home/todd/Projects/WeaverTools_Project/WeaverTools",
+  "build_flags": "cargo build --release --workspace --features weaver-spu/cuda (nightly-2026-02-13, CUDA 13.3 at /opt/cuda)",
+  "cells": [
+    {"name": "q8",   "precision": "q8_0", "artifact": "/opt/weaver/models/qwen2.5-0.5b-instruct-q8_0.gguf"},
+    {"name": "bf16", "precision": "bf16", "artifact": "/opt/weaver/models/qwen2.5-0.5b-instruct-bf16.gguf"}
+  ]
+}

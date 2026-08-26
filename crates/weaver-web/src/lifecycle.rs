@@ -1,11 +1,10 @@
 //! The verb invocation (Spec section 11): sudo weaver-admin, one JSON
 //! object on stdout, rendered verbatim; failure never swallowed.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::path::Path;
 use tokio::process::Command;
 
-const ADMIN_BIN: &str = "/usr/local/libexec/weaver/weaver-admin";
-const ADMIN_CONFIG: &str = "/etc/weaver/config";
 pub const VERBS: [&str; 3] = ["validate", "load", "unload"];
 
 /// Generous ceiling on a verb invocation: load blocks until the
@@ -13,7 +12,7 @@ pub const VERBS: [&str; 3] = ["validate", "load", "unload"];
 /// catches a hang, never a slow success.
 const VERB_TIMEOUT_SECS: u64 = 300;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerbOutcome {
     pub verb: String,
     pub agent: String,
@@ -27,7 +26,17 @@ pub struct VerbOutcome {
     pub timed_out: bool,
 }
 
-pub async fn run_verb(verb: &str, agent: &str) -> anyhow::Result<VerbOutcome> {
+/// Where the box installed the admin binary and its config - box
+/// facts, from the connector's config (Spec section 3). `admin_env`
+/// false means `admin_bin` is the root-owned wrapper that fixes the
+/// config itself, so no environment crosses sudo at all.
+pub async fn run_verb(
+    verb: &str,
+    agent: &str,
+    admin_bin: &Path,
+    admin_config: &Path,
+    admin_env: bool,
+) -> anyhow::Result<VerbOutcome> {
     if !VERBS.contains(&verb) {
         anyhow::bail!("'{verb}' is not a lifecycle verb");
     }
@@ -37,10 +46,13 @@ pub async fn run_verb(verb: &str, agent: &str) -> anyhow::Result<VerbOutcome> {
         anyhow::bail!("'{agent}' is not a well-formed agent name");
     }
 
-    let fut = Command::new("sudo")
-        .arg("-n")
-        .arg(format!("WEAVER_ADMIN_CONFIG={ADMIN_CONFIG}"))
-        .arg(ADMIN_BIN)
+    let mut cmd = Command::new("sudo");
+    cmd.arg("-n");
+    if admin_env {
+        cmd.arg(format!("WEAVER_ADMIN_CONFIG={}", admin_config.display()));
+    }
+    let fut = cmd
+        .arg(admin_bin)
         .arg(verb)
         .arg(agent)
         .kill_on_drop(true)

@@ -1,8 +1,18 @@
-# weaver-web configuration (Spec section 3).
+# weaver-web server configuration (Spec section 3).
 # Default path: /etc/weaver-web/config.toml, override with --config.
+# The server holds everything that is not box-bound; agents are not
+# declared here. They arrive with the connector's hello (Spec
+# section 16), so the roster lives in connector.toml on the box that
+# runs them.
 
-listen   = "0.0.0.0:8080"
+listen   = "0.0.0.0:8080"                                  # browsers
 database = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth
+
+# Where the server listens for the connector's dial. Loopback by
+# default: colocated needs nothing, and offloading the presentation
+# stack to another box means binding this on the LAN there and
+# pointing the connector's `server` line at it.
+link_listen = "127.0.0.1:8081"
 
 # Participant names holding the admin role (the operator surface:
 # lifecycle verbs and trace views). v1 role assignment is this
@@ -10,18 +20,9 @@ database = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer 
 # boundary hygiene, not access control, until then.
 admins = ["todd"]
 
-[[agents]]
-name  = "alpha"
-gate  = "/run/weaver-alpha/gate.sock"
-trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
-
-[[agents]]
-name  = "bravo"
-gate  = "/run/weaver-bravo/gate.sock"
-trace = "/home/todd/.weaveragents/weaver-bravo/trace.out"
-
 # Upstream model participants (adapter not yet implemented; a mention
-# of a model participant is ignored until it is).
+# of a model participant is ignored until it is). Providers and their
+# credentials are the server's business alone.
 #[[providers]]
 #name    = "claude"
 #api     = "anthropic"

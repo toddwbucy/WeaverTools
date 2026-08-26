@@ -4,6 +4,24 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-25, the confirm view, second revision of the day.
+The admin surface gains a composed view at section 4.4: pull a run from
+the record, drive its turns back through the gate on a fresh load, and
+show the verdict beside the stats. It is not a fourth surface and adds
+no reach - the source is the record (4.3), the fresh load is the verbs
+(4.2), and the reissue is gate turns (4.1's own boundary). It stops at
+the serving path: anything past gate-shaped reissue is the diagnostic
+domain's, per the lab report of 2026-08-25.
+
+**Revised:** 2026-08-25, the two-process shape. The deployment section
+now states the architecture as two processes joined by one dialed link:
+the connector holds the box-bound reaches and the server holds the
+presentation stack, colocated by default and separated by changing one
+address. The operator's direction of 2026-08-25 makes this the shape
+from the beginning rather than a later mode. The Spec's section 16 pins
+the link, and the refactor of the built one-binary v1 into the shape is
+owed as its own code act.
+
 **Revised:** 2026-08-24, the crate takes its place. It lands at
 `crates/weaver-web/` and this document at `docs/crates/weaver-web/`,
 container coming from the directory so placement is the declaration. The
@@ -90,23 +108,53 @@ short.
 
 ## 3. Deployment shape
 
-One Rust binary, running on the agents' own box as the operator's uid (the
-principal the gate's predicate admits), presenting HTTP on the LAN. It
-holds four kinds of state and connection:
+Two processes, one crate, split by what each must touch. The
+**connector** (`weaver-web-connector`) runs on the agents' own box as
+the operator's uid (the principal the gate's predicate admits) and holds
+every box-bound reach: the gate sockets, the verb invocation, the trace
+sinks, the load-state observable, and the read of the agent
+declarations. It renders nothing and stores nothing. The **server**
+(`weaver-web`) presents HTTP on the LAN and holds everything that is not
+box-bound: the channel store, the registry, the router and queues,
+rendering, and the SSE fan-out. It reaches the box only through the
+connector.
 
-1. The **gate sockets** (`/run/weaver-<agent>/gate.sock`), one client
-   connection per participating agent, for turns.
-2. The **verb invocation**, via a sudoers rule scoped to exactly the three
-   lifecycle verbs on the admin binary, `NOPASSWD`, for the operator's uid.
-   This is the one privilege widening the application asks of the box, and
-   it is narrow, auditable, and declared in the deployment notes.
+They meet over links the connectors dial: one connection per box, any
+number of boxes, the server listening on one address its config names,
+loopback by default, each connector's config naming that same address.
+Colocated, the link is loopback and the deployment is one box exactly
+as before. Offloading the presentation stack to another device on the
+LAN is deploying the server there and changing that one address - a
+deployment fact, never an architectural event - and a second agents'
+box is a second connector dialing the same server with its own roster.
+No agents' box opens a listening port for this in any shape, because
+connectors only dial out.
+
+The trust posture does not move with the address. The verb surface is
+already network-reachable through the listener under the posture section
+6 states, and a link whose remote peer is one server is a narrower
+admission than that listener. The IAM act is where peer proof arrives,
+for the listener and the link alike. The custody invariant survives the
+split intact: the thing that speaks on the network is the thing that
+holds the socket, and the connector is that thing, exactly as the one
+process was.
+
+State and connection, by owner:
+
+1. The **gate sockets** (`/run/weaver-<agent>/gate.sock`) - the
+   connector's, one client connection per turn, for turns.
+2. The **verb invocation**, via a sudoers rule scoped to exactly the
+   three lifecycle verbs on the admin binary, `NOPASSWD`, for the
+   operator's uid - the connector's. This is the one privilege widening
+   the application asks of the box, and it is narrow, auditable, and
+   declared in the deployment notes.
 3. The **trace sinks** (the NDJSON files the agents' configurations
-   declare), tailed read-only.
-4. The **channel store**: weaver-web's own record of channel logs and the
-   participant registry, on weaver-web's own disk. It is not the trace,
-   never touches the trace, and links to traces by run and turn label
-   only. Custody follows the trace's philosophy: one trusted writer, the
-   server, and no other.
+   declare), tailed read-only - the connector's.
+4. The **channel store**: weaver-web's own record of channel logs and
+   the participant registry, on the server's own disk - the server's. It
+   is not the trace, never touches the trace, and links to traces by run
+   and turn label only. Custody follows the trace's philosophy: one
+   trusted writer, the server, and no other.
 
 **The browser is a display engine. This is a constraint, not a
 preference.** The browser receives a rendered projection and submits
@@ -226,6 +274,30 @@ event kind is unknown to the view, it renders as raw JSON rather than
 being hidden, so schema growth degrades the view gracefully instead of
 silently.
 
+### 4.4 Confirm
+
+A composed admin view, not a fourth surface: it asks one question of the
+two surfaces above it - does this record reproduce? The operator picks a
+run from the record. The view unloads and reloads the agent by the verbs,
+reissues each recorded turn's request text byte-exact through the gate in
+order, and compares the fresh record against the source field by field:
+rendered prompt, derived seed, knobs, emission, token ids, entropies.
+The verdict renders per turn beside the stats the record carries (whole
+turn latency, tokens in and out), and a divergence renders as itself,
+never smoothed.
+
+Three honesty rules, stated because the view drives a live agent:
+
+- The confirm is disruptive and says so: it unloads the agent it
+  confirms, and the operator is told before the verbs run.
+- Replay runs beside live traffic. A channel turn landing mid-confirm
+  shifts the turn ordinals and the confirm fails honestly rather than
+  serializing the world to protect itself.
+- The boundary is the serving path. The view reissues what the gate can
+  carry and reads what the record says, and nothing else: instrumented
+  replay, capture, and perturbation are the diagnostic domain's, and
+  this view is not their door.
+
 ## 5. Scope ruling: the channel is weaver-web's
 
 Adopted 2026-08-19 on the exploration's third position. The multi-party
@@ -330,6 +402,8 @@ Held in order, each with its trigger:
    editing, or virtualized history, whichever is demanded first, per
    section 3.
 5. **Fleet view** - when a second agent is declared and the need is real.
+   The link makes the shape additive: a second box is a second connector
+   dialing the same server, carrying its own roster (Spec section 16).
 
 ## 9. Asks upstream
 
@@ -342,7 +416,8 @@ by its own change protocol, routed through the human between seats:
    token workflow as the door.
 2. **A status verb on admin.** The lifecycle view infers load state from
    socket existence, where a `status` ask would let it report the program's own
-   word.
+   word. The split sharpens the ask: load state now crosses the link as
+   a relayed inference, one hop further from that word.
 3. **An operator read on agent state.** Session state exists within the
    agent, so the operator has no window on it. Deferred need, filed when the
    concrete read is known.
