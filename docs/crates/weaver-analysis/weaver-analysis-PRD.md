@@ -170,17 +170,19 @@ first forward pass and name the first divergent position rather than reporting
 after a whole replay has run. What this crate does is elect the null replay,
 read its outcome from the record, and gate everything downstream on it.
 
-**That gate rests on telling a finished record from a truncated one, and
-nothing tells them apart today.** A reader that has consumed every byte
-available to it cannot yet say whether the replay certified and ended, failed
-its comparison and ended, died mid-replay leaving a partial record, or is still
-running. All four look alike to a reader at the end of what it has. **So the
-gate is conditional on a fact the record does not yet carry**, and this charter
-records that rather than resting on it: until a diagnostic-trace can say it
-ended and how, this crate holds a record it cannot safely interpret, and the
-honest behaviour is to produce nothing rather than to treat the end of available
-bytes as the end of a run. Where that marker lands is not this charter's to
-choose - see section 4. An
+**That gate rests on telling a finished record from a truncated one, and the
+record carries the fact as of 2026-08-27.** A reader that has consumed every byte
+available to it once could not say whether the replay certified and ended, failed
+its comparison and ended, died mid-replay leaving a partial record, or was still
+running, and all four looked alike at the end of what it had. **`replay.closed`
+separates them**, per `weaver-diagnostic-Spec` section 3.3: its `ReplayOutcome`
+names the first three, and the fourth is that event's absence in an opened
+bracket, which costs nothing to read. So this crate gates on the outcome the
+record states rather than on the end of available bytes, produces its reading
+where a bracket closed certified, produces the divergence where one closed
+diverged, produces neither where one closed abandoned, and produces nothing at
+all for a bracket still open. Where that marker landed is section 4's cell, now
+settled. An
 earlier form of this paragraph had the comparison here on the ground that this
 crate holds both records, which is true and is not the reason the loop cannot,
 so it would have put a second implementation of one check on the other side of

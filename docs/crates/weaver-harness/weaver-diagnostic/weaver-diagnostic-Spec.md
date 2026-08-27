@@ -115,8 +115,12 @@ to: diagnostic-canonical-form-follows-trace
 ### 3.1 The envelope
 
 The envelope is the serving envelope's, field for field: `session`, `run`, `turn`,
-`kind`, `sequence`, `subsystem`, and both timestamps, flattened into the event so
-`kind` sits at the top level of every line where a consumer keys on it. The shapes
+`kind`, `sequence`, `subsystem`, `causal_parent`, and both timestamps, flattened
+into the event so `kind` sits at the top level of every line where a consumer keys
+on it. **The turn and the causal parent are optional and nothing else is**, per
+`weaver-trace-Spec` section 3, and a replay fills neither to satisfy a shape: an
+event belonging to no turn carries none, and an event the pass cannot attribute to
+a cause carries no parent. The shapes
 are `weaver-trace-Spec` section 3's and a divergence is a defect against it, per G5.
 
 **The session is the diagnostic run's own and never the replayed one**, per the
@@ -505,10 +509,12 @@ to: diagnostic-failure-enum-exhaustive
 
 ## 7. What is enforced, and by which instrument
 
-**Enforced by the compiler.** The kind enum is exhaustive, so a fourteenth kind
-breaks every consumer's match. The failure enum is exhaustive, so a new case reaches
-every caller. The receive shape is read by a doctest, so an argument added to the
-one constructor stops the build loudly.
+**Enforced by the compiler.** The kind enum is exhaustive, so a kind added beyond
+the set section 3.2 declares breaks every consumer's match. The count is not
+restated here, a second copy of it being one more place for it to go stale. The
+failure enum is exhaustive, so a new case reaches every caller. The receive shape
+is read by a doctest, so an argument added to the one constructor stops the build
+loudly.
 
 **Enforced by compile-fail tests, because the property is an absence.** No
 path-taking constructor, three named shapes. No accessor yielding a held event.

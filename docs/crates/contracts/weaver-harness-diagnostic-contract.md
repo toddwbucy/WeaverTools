@@ -145,9 +145,13 @@ One authored event moves through four steps, in this order, always.
 4. **Write.** That one rendering is handed to the sink, and the assigned
    sequence returns to the harness.
 
-**The order is the guarantee.** Admission precedes the write, so no refused
-event reaches the sink and no admitted event fails to, and the sequence the
-harness holds names the same event the record carries.
+**The order is the guarantee, and it is one-directional.** Admission precedes
+the write, so no refused event reaches the sink, and the sequence the harness
+holds names the same event the record carries. **It does not guarantee that
+every admitted event reaches the sink**: a write can fail after an admission,
+which section 5 names as terminal for the record, so what admission buys is
+that the sink holds nothing the recorder refused and never that it holds
+everything the recorder took.
 
 **There is no working structure on this seam, and its absence is the
 difference that matters.** `weaver-trace` holds the run's events in RAM
@@ -176,8 +180,9 @@ rendering in one place and the acknowledgment is the sequence.
   replayed one, because a derived record
   that wore its source's name would answer the first question a reader asks
   of a file with the wrong answer.
-- **Envelope completeness.** Every event carries all five envelope fields,
-  the turn present exactly where the event belongs to one.
+- **Envelope completeness.** Every event carries the envelope whole, with the
+  turn and the causal parent present exactly where the event has one and absent
+  where it does not, neither ever filled to satisfy a shape.
 - **Its own judgment kept to itself.** What a reading means is the reader's
   business, per `weaver-diagnostic-PRD` section 1, and no interpretation
   crosses this seam.
@@ -249,11 +254,12 @@ per `weaver-diagnostic-PRD` section 6, and this seam follows it.
 
 The seam is exercised by a replay that runs: a bracket opened, events
 admitted in order, an outcome named at the close, and the rendering read back
-off the sink in the canonical form section 4 names. The refusal path is exercised by
-submitting an event whose payload does not match its kind and confirming the
-sink is untouched. The death path is exercised by ending a pass without its
-closing event and confirming the record carries an unclosed bracket rather
-than a manufactured outcome.
+off the sink in the canonical form `weaver-trace-Spec` section 2 fixes,
+which section 4 of this document names as the recorder's owing. The refusal
+path is exercised by submitting an event whose payload does not match its kind
+and confirming the sink is untouched. The death path is exercised by ending a
+pass without its closing event and confirming the record carries an unclosed
+bracket rather than a manufactured outcome.
 
 **The null replay of `weaver-diagnostic-PRD` section 4 is what certifies the
 mechanism**, and it is owed behind this contract's own Spec rather than

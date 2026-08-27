@@ -481,8 +481,8 @@ via: weaver-harness-state-contract
 tag: socket
 ```
 
-**A third member joins the trace and is linked the same way, and its contract
-is owed.** `weaver-diagnostic` is the mechanism this crate authors a
+**A third member joins the trace and is linked the same way, its contract landed
+2026-08-27.** `weaver-diagnostic` is the mechanism this crate authors a
 diagnostic-trace through, per `weaver-agents-PRD` section 6 as ruled
 2026-08-24, standing to a diagnostic binding as `weaver-trace` stands to a
 serving one. It is linked rather than dialed on the trace's own ground: apex
