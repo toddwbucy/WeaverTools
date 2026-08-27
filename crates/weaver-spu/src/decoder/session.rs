@@ -1267,67 +1267,89 @@ mod tests {
     /// **The elision removes exactly its span and resequences nothing**,
     /// which is the decode contract's guarantee: what remains is the
     /// sequence it was, shorter, with every surviving position in the order
-    /// it held.
+    /// it held. Driven under both flush mechanisms, because the elision
+    /// ignores the declaration on purpose: the interior outcome is reached
+    /// through the re-establish path for every family and never through a
+    /// truncate, per Spec section 4.5, and the log asserts both halves.
     ///
     /// Perturbation: build the kept vector from `[to..]` alone, or reverse
     /// the tail, and the counts still agree while the membership or the
     /// order does not. The counts cannot catch either, which is why this
-    /// asserts the tokens themselves.
+    /// asserts the tokens themselves. A regression consulting the declared
+    /// mechanism and truncating fails the log's two counters under the
+    /// truncating family.
     ///
     /// conforms: spu-elision-removes-its-span-in-order
     #[test]
     fn the_elision_removes_its_span_and_keeps_the_rest_in_order() {
-        let (mut session, _log) = with_mechanism(
-            vec![
-                TokenId(5),
-                TokenId(0),
-                TokenId(6),
-                TokenId(0),
-                TokenId(7),
-                TokenId(0),
-            ],
-            64,
+        for mechanism in [
+            FlushMechanism::TruncateToPosition,
             FlushMechanism::ReestablishAndReprefill,
-        );
-        for token in [TokenId(3), TokenId(4), TokenId(8)] {
-            session
-                .append_and_generate(
-                    &[token],
-                    &StopCondition {
-                        stop_tokens: vec![TokenId(9)],
-                        terminator: TokenId(0),
-                        max_tokens: 8,
-                    },
-                    &mut NeverCancels,
-                    &mut |_| {},
-                    None,
-                    &mut |_, _, _| {},
-                    11,
-                    64,
-                )
-                .expect("the generation runs");
+        ] {
+            let (mut session, log) = with_mechanism(
+                vec![
+                    TokenId(5),
+                    TokenId(0),
+                    TokenId(6),
+                    TokenId(0),
+                    TokenId(7),
+                    TokenId(0),
+                ],
+                64,
+                mechanism,
+            );
+            for token in [TokenId(3), TokenId(4), TokenId(8)] {
+                session
+                    .append_and_generate(
+                        &[token],
+                        &StopCondition {
+                            stop_tokens: vec![TokenId(9)],
+                            terminator: TokenId(0),
+                            max_tokens: 8,
+                        },
+                        &mut NeverCancels,
+                        &mut |_| {},
+                        None,
+                        &mut |_, _, _| {},
+                        11,
+                        64,
+                    )
+                    .expect("the generation runs");
+            }
+
+            let before_tokens = session.resident_tokens().to_vec();
+            let resident = before_tokens.len();
+            // An interior span: past the prefix and short of the end, so what
+            // survives is a head and a tail rather than a prefix.
+            let (from, to) = (3, 5);
+            assert!(to < resident, "the fixture leaves a tail to preserve");
+            let expected: Vec<TokenId> = before_tokens[..from]
+                .iter()
+                .chain(before_tokens[to..].iter())
+                .copied()
+                .collect();
+            let truncates_before = log.borrow().truncated.len();
+            let reestablished_before = log.borrow().reestablished;
+
+            let (was, now) = session.elide(from, to).expect("the span is removable");
+            assert_eq!(was, resident, "the before count is what stood");
+            assert_eq!(now, resident - (to - from), "and exactly the span went");
+            assert_eq!(
+                session.resident_tokens(),
+                expected.as_slice(),
+                "the survivors keep their order and their membership"
+            );
+            assert_eq!(
+                log.borrow().truncated.len(),
+                truncates_before,
+                "the elision issued no truncate under {mechanism:?}"
+            );
+            assert_eq!(
+                log.borrow().reestablished,
+                reestablished_before + 1,
+                "and re-established exactly once under {mechanism:?}"
+            );
         }
-
-        let before_tokens = session.resident_tokens().to_vec();
-        let resident = before_tokens.len();
-        // An interior span: past the prefix and short of the end, so what
-        // survives is a head and a tail rather than a prefix.
-        let (from, to) = (3, 5);
-        assert!(to < resident, "the fixture leaves a tail to preserve");
-        let expected: Vec<TokenId> = before_tokens[..from]
-            .iter()
-            .chain(before_tokens[to..].iter())
-            .copied()
-            .collect();
-
-        let (was, now) = session.elide(from, to).expect("the span is removable");
-        assert_eq!(was, resident, "the before count is what stood");
-        assert_eq!(now, resident - (to - from), "and exactly the span went");
-        assert_eq!(
-            session.resident_tokens(),
-            expected.as_slice(),
-            "the survivors keep their order and their membership"
-        );
     }
 
     #[test]
