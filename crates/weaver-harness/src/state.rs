@@ -24,6 +24,18 @@ const ANSWER_BOUND_MS: u16 = 2_000;
 /// path's memory on a peer's behavior.
 const ANSWER_BOUND_BYTES: usize = 1024 * 1024;
 
+/// What one `poll` can be armed for, the system call taking milliseconds in
+/// a `u16`. **It bounds one poll and never the wait**: a bound past it is
+/// served by re-arming against what remains, the deadline check being the
+/// only thing that ends the wait, so the replay ask's generous bound is
+/// waited out rather than answered `None` at the ceiling by an arithmetic
+/// the caller never asked for. Named rather than inlined so a test can
+/// lower it and watch the re-arm in milliseconds instead of minutes.
+#[cfg(not(test))]
+const POLL_CEILING_MS: u16 = u16::MAX;
+#[cfg(test)]
+const POLL_CEILING_MS: u16 = 50;
+
 /// The session's shape as the member answered it, per
 /// `weaver-harness-state-contract` section 2: the runs in the order custody
 /// first saw them, each with its held event counts by kind. The counts are
@@ -178,6 +190,12 @@ impl StateSeam {
         true
     }
 
+    /// One poll's timeout out of what remains of the wait, clamped to what
+    /// the system call can be armed for, per `POLL_CEILING_MS`.
+    fn poll_slice(remaining: std::time::Duration) -> u16 {
+        remaining.as_millis().min(u128::from(POLL_CEILING_MS)) as u16
+    }
+
     /// Await one line inside the bound. The channel shares the tee's
     /// nonblocking flag, so the wait is a poll deadline rather than a read
     /// timeout.
@@ -195,7 +213,7 @@ impl StateSeam {
             if remaining.is_zero() {
                 return None;
             }
-            let wait = poll_slice(remaining);
+            let wait = Self::poll_slice(remaining);
             let mut fds = [nix::poll::PollFd::new(
                 self.channel.as_fd(),
                 nix::poll::PollFlags::POLLIN,
@@ -236,20 +254,6 @@ fn parse_shape_answer(line: &str) -> Option<SessionShape> {
         shaped.push(RunShape { run, kinds });
     }
     Some(SessionShape { runs: shaped })
-}
-
-/// Parse the recall answer, per the contract:
-/// `{"answer":{"recall":{"events":[{"envelope":{...},"pairs":{...}}]}}}`.
-/// A frame that does not carry the whole shape answers nothing.
-/// One poll's timeout out of what remains of the wait. **The clamp bounds
-/// one poll and never the wait**: `poll` takes milliseconds in a `u16`, so
-/// a bound past that ceiling is served by re-arming against what remains
-/// rather than by waiting once and giving up, the deadline check being the
-/// only thing that ends the wait. A caller passing the replay ask's
-/// generous bound would otherwise be answered `None` at sixty-five seconds
-/// by an arithmetic it never asked for.
-fn poll_slice(remaining: std::time::Duration) -> u16 {
-    remaining.as_millis().min(u128::from(u16::MAX)) as u16
 }
 
 /// Parse the replay answer, per the contract:
@@ -413,25 +417,46 @@ mod tests {
         responder.join().expect("responder");
     }
 
-    /// **A bound past the poll's ceiling is a slice and not the whole
-    /// wait**, per the replay port's clause: `poll` takes a `u16` of
-    /// milliseconds, and a wait that ended at that ceiling would answer
-    /// `None` at sixty-five seconds to a caller who asked for longer -
-    /// on precisely the ask whose clause exists so the loop may wait as
-    /// long as a preload is worth.
+    /// **A bound past the poll's ceiling is waited out, not answered at
+    /// the ceiling**, per the replay port's clause: `poll` takes a `u16` of
+    /// milliseconds, and a wait that ended when one poll expired would
+    /// answer `None` early to a caller who asked for longer - on precisely
+    /// the ask whose clause exists so the loop may wait as long as a
+    /// preload is worth. Both halves are watched here, the arithmetic and
+    /// the re-arm, the ceiling being lowered under `cfg(test)` so the
+    /// behavioural half costs milliseconds rather than the minute the
+    /// production ceiling would.
     ///
-    /// This pins the arithmetic half. The behavioural half, that a
-    /// clamped poll's expiry re-arms rather than ending the wait, costs
-    /// sixty-five seconds of wall clock to watch and is not bought here;
-    /// it was measured live against this code at the review seat, an
-    /// `ask_replay(120_000)` answering `None` at 65.551 seconds before
-    /// the re-arm landed.
+    /// Perturbation: read a clamped poll's expiry as the deadline and the
+    /// silent-peer half fails, returning near the ceiling instead of near
+    /// the bound. The defect this watch exists for was measured live at
+    /// the review seat before the re-arm landed, an `ask_replay(120_000)`
+    /// answering `None` at 65.551 seconds.
     #[test]
-    fn a_bound_past_the_ceiling_is_a_slice() {
+    fn a_bound_past_the_ceiling_is_waited_out() {
         use std::time::Duration;
-        assert_eq!(poll_slice(Duration::from_millis(120_000)), u16::MAX);
-        assert_eq!(poll_slice(Duration::from_millis(500)), 500);
-        assert_eq!(poll_slice(Duration::from_millis(0)), 0);
+        // The arithmetic: one poll is a slice of what remains.
+        assert_eq!(
+            StateSeam::poll_slice(Duration::from_millis(120_000)),
+            POLL_CEILING_MS
+        );
+        assert_eq!(StateSeam::poll_slice(Duration::from_millis(10)), 10);
+        assert_eq!(StateSeam::poll_slice(Duration::from_millis(0)), 0);
+
+        // The re-arm: a silent peer and a bound many ceilings long is
+        // waited out to the bound, the deadline ending the wait and not
+        // the poll.
+        let bound_ms = u64::from(POLL_CEILING_MS) * 8;
+        let (ours, _theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let started = std::time::Instant::now();
+        assert!(seam.ask_replay(bound_ms).is_none(), "the silence costs it");
+        let waited = started.elapsed();
+        assert!(
+            waited >= Duration::from_millis(bound_ms),
+            "the wait reaches the caller's bound, not the ceiling: {waited:?}"
+        );
     }
 
     /// **The recall answer parses under its own name**, the sibling of the
@@ -444,13 +469,20 @@ mod tests {
     fn the_recall_answer_parses_under_its_own_name() {
         let events = parse_recall_answer(concat!(
             r#"{"answer":{"recall":{"events":[{"envelope":{"session":"s","run":"r-2","#,
-            r#""turn":"t-9","kind":"message.user","sequence":"11"},"pairs":{}}]}}}"#
+            r#""turn":"t-9","kind":"message.user","sequence":"11"},"#,
+            r#""pairs":{"content":[{"type":"text","text":"the plan"}]}}]}}}"#
         ))
         .expect("parses");
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].run, "r-2");
         assert_eq!(events[0].turn.as_deref(), Some("t-9"));
         assert_eq!(events[0].kind, "message.user");
+        assert_eq!(events[0].pairs.len(), 1);
+        assert_eq!(events[0].pairs[0].0, "content");
+        assert!(
+            events[0].pairs[0].1.contains("the plan"),
+            "the pairs cross as custody kept them"
+        );
         assert!(
             parse_recall_answer(r#"{"answer":{"replay":{"events":[]}}}"#).is_none(),
             "the two answers stay apart by name"
