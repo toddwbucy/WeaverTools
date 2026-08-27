@@ -2,6 +2,7 @@
 //! conforms: harness-extension-seam-at-loaded-and-idle
 //! conforms: harness-turn-authors-the-model-events
 //! conforms: harness-stop-polled-during-the-stream
+//! conforms: harness-elision-authors-from-the-ask
 //!
 //! Loop 1's seat and the decode surface it composes, per `weaver-harness-Spec`
 //! sections 6 and 6.1. The loop itself is the builder's, written at the worker
@@ -1757,8 +1758,8 @@ mod tests {
     /// where one did.
     ///
     /// The scripted peer answers counts that are deliberately unroundable
-    /// and a span the harness never sent, so a member arrived at by
-    /// accident or by echo fails here.
+    /// and no span at all, the `Elided` variant having none to carry, so a
+    /// member arrived at by accident or by default fails here.
     ///
     /// conforms: harness-elision-authors-from-the-ask
     #[test]

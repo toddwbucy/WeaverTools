@@ -3,6 +3,20 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-26, the elision enters this document. Chartered at
+`weaver-spu-PRD` section 13.13 and coded on 2026-08-22, it reached the
+charter, the decode contract, the floor Spec, and the harness Spec and
+never this one, the audit of 2026-08-26 finding the crate's own conformance
+citations dangling. Section 4 gains 4.5 with both assertion records, and
+the mechanism is fixed narrower than the charter permits: re-establish and
+re-decode the survivors whole for both families, an interior outcome being
+a prefix of nothing. Section 4.2's prefix clause, section 9's ordering
+prose, and section 10's scoped-clear and never-rewinds bullets stop
+treating the flush as the one reducer, the elision being a second and both
+recorded. Section 10's census counts predate this act by fifteen records
+and are deferred whole to the counting pass the operator chartered
+2026-08-26, one pass per document rather than piecemeal.
+
 **Revised:** 2026-08-24, second of this date, the reduction renders its own
 shape. Section 6 has the measurement carry the layer count and the forward
 count beside the figures, because a flat array left a reader dividing by the
@@ -1053,10 +1067,11 @@ the recurrent state stays, and the failure surfaces later as a position error
 far from its cause. **This crate calls no scoped-clear on a resident range,**
 which is the discipline stated as an absence, and the absence is what section
 10 pins. **The behaviour and the surface are two records with two instruments,**
-the monotonic resident length being section 10's perturbation test and the
-missing method being its compile-fail pin, and neither claims the other's half:
-a pin says a rewind cannot be written and says nothing about a turn that
-re-prefills through the append path instead.
+the resident length moving only by appends and the two recorded reducers being
+section 10's perturbation test and the missing method being its compile-fail
+pin, and neither claims the other's half: a pin says a rewind cannot be
+written and says nothing about a turn that re-prefills through the append
+path instead.
 
 ```graph
 node: spu-session-never-rewinds
@@ -1078,8 +1093,12 @@ to: spu-no-scoped-clear-surface
 
 **The prefix is established at open and is permanent.** The open renders the
 identity prefix through the family library, decodes it once, and records the
-resident length it produced. No operation short of the flush reduces that
-length, per charter section 13.3.
+resident length it produced. Over a session that keeps serving, no operation
+reduces the resident length below that figure - the flush bounds there as
+arithmetic and the elision refuses a span that reaches into the prefix - and
+no operation short of those two reduces it at all, the close over a backend
+fault clearing the account with the session, per charter sections 13.3 and
+13.13.
 
 **The session's capacity carries a `Disposition` and is elected like a knob.**
 It is frozen with its value compiled in, or operator-tunable and supplied in
@@ -1245,6 +1264,84 @@ edge: asserts
 from: weaver-spu
 to: spu-flush-mechanism-from-declaration
 ```
+
+### 4.5 The elision
+
+**The outcome is the concatenation and the mechanism is one, narrower than
+the charter permits.** After an elision the resident sequence is what
+preceded the span followed by what followed it, every surviving position in
+the order it held, per charter section 13.13: the harness names a half-open
+span of resident positions, this crate makes it absent, and the
+confirmation carries the resident counts either side, taken around the
+call. The charter permits a rollback to the span's start where a family's
+state allows one - `resident[..from]` is a prefix of what stood, so a family
+declaring truncation could truncate to the span's start and re-decode the
+tail alone, a primitive the backend seam already supplies - and this Spec
+elects the one path anyway: **the session re-establishes and decodes the
+kept sequence whole whatever the family's flush mechanism declares.** One
+path, one instrument, and no per-family divergence to keep honest, which is
+the divergence the recurrent-family failure the survey records punishes.
+The cost is therefore a full re-decode of every survivor, and it is stated
+as the ceiling it is: the unelected rollback path would bound the refill by
+what follows the span for the families that can roll back, per section 12,
+and until that election the figure a loop's elision policy prices against
+is a prefill of what remains, so a loop consolidates its spans rather than
+eliding per turn. The discipline of section 4.2 holds here unweakened - the
+interior outcome is reached through the re-establish path and never through
+a scoped clear on the backend.
+
+**The bounds refuse rather than clamp, which is the flush's rule reversed
+and deliberately.** Four spans describe no removable region, per the decode
+contract as amended 2026-08-22: overlapping the identity prefix, running
+past the resident count, ending before it starts, and empty. Each answers
+the typed refusal and the session stands as the ask found it, where the
+flush's over-large `keep` bounds as arithmetic, because a `keep` past the
+resident count has a smaller true version and an unremovable span has
+none. **The empty span is the case worth asserting hardest**: eliding
+nothing succeeds trivially and would confirm a state change that did not
+happen. Watched under the guard narrowed to `to < from`, the empty span
+then passing it and answering with equal counts, an elision authored over
+nothing. A full drop of the bound fails earlier, on the inverted span, and
+never reaches this case.
+
+```graph
+node: spu-elision-refuses-an-unremovable-span
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-elision-refuses-an-unremovable-span
+```
+
+**The removal is exact and resequences nothing.** What remains is the
+sequence it was, shorter, membership and order asserted on the tokens
+themselves, because the confirmation's counts cannot catch a lost survivor
+or a reversed tail - a kept vector built from the tail alone answers the
+same arithmetic. Watched under both removals.
+
+```graph
+node: spu-elision-removes-its-span-in-order
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-elision-removes-its-span-in-order
+```
+
+**A failure partway poisons the session, on the flush's rule and for its
+reason.** A re-establish that succeeded before a re-prefill that failed is
+an empty backend under a long resident account, the
+position-error-far-from-cause failure the append-only discipline exists to
+prevent, so the session closes rather than carrying the disagreement. The
+confirmation arrives only after the shortened state holds, per the decode
+contract's ordering. **The span is state and never the record**: what the
+span removes is the resident sequence, and no operation in this program
+removes anything from a trace. The record keeps the elided material and
+gains the `elision` event, which carries the bounds the loop named beside
+the resident counts the seam returned, authored by the harness from its own
+ask.
 
 ## 5. The family libraries
 
@@ -2362,10 +2459,13 @@ serves is confirmed, so an open before residency answers `OutOfOrder`. One
 generation is in flight at a time, so a second append-and-generate while one is
 outstanding answers the same, one turn behind one intent. Flush is valid only
 between turns, so a flush arriving mid-generation answers the same, the cancel of
-section 4.3 being what that case has instead. **Cancel is the one directive whose
-window is the session rather than the generation,** and a cancel at rest answers
-at rest rather than refusing, which is the contract's own reading and not a
-fourth position this document adds.
+section 4.3 being what that case has instead. The elision is valid on the flush's
+ground and for its reason, per the decode contract's ordering: a span named
+against a sequence still growing names positions that will have moved by the
+time it lands. **Cancel is the one directive whose window is the session
+rather than the generation,** and a cancel at rest answers at rest rather
+than refusing, which is the contract's own reading and not a fourth position
+this document adds.
 
 **Each seam carries its own refusal type and neither carries a twin of the
 other's,** per the split above: the residency seam answers a `lifecycle-refusal`
@@ -2499,9 +2599,12 @@ across the change.
   whole, which is the overclaim this corpus refuses in prose and has no reason
   to admit in a graph.
 - No scoped-clear over a resident range: the session type exposes no method
-  that reduces `resident_len` except the flush, so a rewind is unrepresentable
-  rather than forbidden, which is the append-only discipline made structural.
-  Its record sits at the section 4.2 clause that argues the absence, beside the
+  that reduces `resident_len` except the flush and the elision, and the elision
+  reaches its interior outcome by re-establishing and re-decoding the survivors
+  rather than by the range-clear the pin forbids, per section 4.5. Both
+  reducers are recorded, so a rewind stays unrepresentable rather than
+  forbidden, which is the append-only discipline made structural. Its record
+  sits at the section 4.2 clause that argues the absence, beside the
   behavioural record the perturbation bullet below carries, the two being two
   claims about one property rather than one claim twice.
 
@@ -2547,6 +2650,13 @@ than a code fact.
   the one worth having,** its perturbation corrupting a session rather than
   answering wrong, which the next turn's framing reports and the flush's own
   answer does not.
+- The elision's two watches, both at section 4.5's records: an unremovable
+  span refuses and the session stands as the ask found it, watched under the
+  guard narrowed to `to < from`, where eliding nothing answers with equal
+  counts, an elision authored over nothing. The second: the removal is exact and
+  ordered, asserted on the tokens themselves and watched under a kept vector
+  built from the tail alone, because the confirmation's counts cannot catch a
+  lost survivor or a reversed tail.
 - The cheap refusals precede the device judgment: against a fixture family
   declaring the widths one and two, with a binding naming three devices, a
   binding whose artifact resolves to nothing answers the resolution refusal
@@ -2556,11 +2666,15 @@ than a code fact.
   judgment. **The three-device set is what makes the watch a watch,** since it
   fixes what the reordered path would answer, so the two arms differ by the
   ordering alone and neither reaches a device under either arrangement.
-- The session never rewinds: a multi-turn session's resident length is
-  monotonic and each turn's prompt tokens are the delta's alone, confirmed by
-  watching the count return to the full history when the append path is
-  replaced by a re-prefill. This is the archived tree's own session test
-  carried over, and it is the one that proved the recurrent-family failure.
+- The session never rewinds: a multi-turn session's resident length moves only
+  by appends and by the two recorded reducers, the flush and the elision, and
+  each turn's prompt tokens are the delta's alone, confirmed by watching the
+  count return to the full history when the append path is replaced by a
+  re-prefill. This is the archived tree's own session test carried over, and
+  it is the one that proved the recurrent-family failure. The elision's own
+  re-decode runs through the re-establish path the flush already takes and is
+  not the rewind this bullet forbids, being recorded and being a return to no
+  state that ever stood.
 - The terminator lands on both paths: a cancelled turn leaves a session that
   accepts the next delta cleanly, confirmed by watching the next turn's framing
   break when the terminator step is skipped on the cancelled path.
@@ -2878,6 +2992,14 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The executor.** Deferred with `weaver-traits-Spec` section 6's
   measurement, and this crate is where the latency it would buy or cost is
   measurable.
+- **The elision's rollback-assisted path.** Section 4.5 elects the
+  re-establish-whole mechanism for both families and prices the elision at a
+  prefill of the survivors. For a family declaring truncation the primitive
+  for a cheaper path exists, truncate to the span's start and re-decode the
+  tail alone. What settles it is a deployment whose elision spans sit late in
+  long sessions, where the tail refill is the difference that matters, and
+  the election is priced against the second instrument the per-family
+  divergence would then need.
 - **The satellite types.** `Disposition<T>`'s companion accessor shape,
   `ChannelFault`'s spelling against the two identical enums in the harness and
   gate Specs, the family surface's trait name, and the backend seam's. Choices

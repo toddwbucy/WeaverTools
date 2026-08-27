@@ -5,6 +5,8 @@
 //! conforms: spu-cancel-bounded-by-one-token
 //! conforms: spu-cancel-polled-not-signalled
 //! conforms: spu-flush-mechanism-from-declaration
+//! conforms: spu-elision-refuses-an-unremovable-span
+//! conforms: spu-elision-removes-its-span-in-order
 //! conforms: spu-signals-pre-sampler
 //!
 //! The resident session and its append path, per `weaver-spu-Spec` sections 4.2
@@ -33,10 +35,10 @@
 //! ```
 //!
 //! The behaviour and the surface are two records with two instruments: the
-//! monotonic resident length is a perturbation test and the missing method is
-//! this compile-fail pin. Neither claims the other's half, because a pin says a
-//! rewind cannot be written and says nothing about a turn that re-prefills
-//! through the append path instead.
+//! resident length moving only by appends and the recorded reducers is a
+//! perturbation test and the missing method is this compile-fail pin. Neither
+//! claims the other's half, because a pin says a rewind cannot be written and
+//! says nothing about a turn that re-prefills through the append path instead.
 
 use crate::decoder::backend::{Backend, DecodeFault, FlushMechanism, TokenId};
 use crate::measurement;
@@ -128,12 +130,14 @@ impl CancelPoll for NeverCancels {
 
 /// The resident session.
 ///
-/// **The resident sequence is monotonic except across a flush.** It is
-/// private, and the paths that reduce it are [`Session::flush`], to the cut's
-/// kept length and never below the prefix, and the close over a backend
-/// fault, which clears it alongside `opened` because a closed session accounts
-/// for nothing. Nothing writes it downward over a session that keeps serving,
-/// which is the discipline the perturbation test watches from outside.
+/// **The resident sequence moves only by appends and by the recorded
+/// reducers.** It is private, and the paths that reduce it are
+/// [`Session::flush`], to the cut's kept length and never below the prefix,
+/// [`Session::elide`], by exactly its span and never into the prefix, and the
+/// close over a backend fault, which clears it alongside `opened` because a
+/// closed session accounts for nothing. Nothing else writes it downward over a
+/// session that keeps serving, which is the discipline the perturbation test
+/// watches from outside.
 pub struct Session<'a> {
     /// **The backend borrows the residency it decodes against**, so a session
     /// cannot outlive the model it was opened over. The lifetime is what says
@@ -197,8 +201,10 @@ impl<'a> Session<'a> {
     }
 
     /// Where the identity prefix ends. **The prefix is established at open and
-    /// is permanent:** no operation short of the flush reduces the length below
-    /// this.
+    /// is permanent:** over a session that keeps serving, no operation reduces
+    /// the length below this - the flush bounds here, the elision refuses a
+    /// span that reaches in, and the close over a backend fault clears the
+    /// account with the session.
     pub fn prefix_len(&self) -> usize {
         self.prefix_len
     }
@@ -468,9 +474,9 @@ impl<'a> Session<'a> {
         if let Err(fault) = outcome {
             return Err(self.poison(fault));
         }
-        // The one place in this type that reduces the resident sequence, and
-        // it reduces it to the bounded cut rather than to an arbitrary
-        // position.
+        // One of the type's two reducers - the elision at `elide` is the
+        // other - and this one reduces to the bounded cut rather than to an
+        // arbitrary position.
         self.resident.truncate(kept);
         Ok(())
     }
@@ -490,6 +496,7 @@ impl<'a> Session<'a> {
     /// describes no removable region and has no smaller true version.
     ///
     /// conforms: spu-elision-refuses-an-unremovable-span
+    /// conforms: spu-elision-removes-its-span-in-order
     pub fn elide(&mut self, from: usize, to: usize) -> Result<(usize, usize), DecodeFault> {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
@@ -912,8 +919,8 @@ mod tests {
         );
     }
 
-    /// The resident length is monotonic across turns, which is the behavioural
-    /// half beside the position check above.
+    /// The resident length never falls across turns that ask no reducer, which
+    /// is the behavioural half beside the position check above.
     #[test]
     fn the_resident_length_never_rewinds_across_turns() {
         let (mut session, _log) = opened(vec![TokenId(99), TokenId(99)], 128);
@@ -1208,9 +1215,11 @@ mod tests {
     /// because eliding nothing succeeds trivially and would report a state
     /// change that did not happen.
     ///
-    /// Perturbation: drop `to <= from` from the guard and the empty span
+    /// Perturbation: narrow the guard to `to < from` and the empty span
     /// answers `Ok` with equal counts, an elision authored over nothing.
-    /// Watched under exactly that removal.
+    /// Watched under exactly that narrowing. A full drop of the bound fails
+    /// earlier and differently, on the inverted span's underflow, and never
+    /// reaches the empty case.
     ///
     /// conforms: spu-elision-refuses-an-unremovable-span
     #[test]
@@ -1261,65 +1270,89 @@ mod tests {
     /// **The elision removes exactly its span and resequences nothing**,
     /// which is the decode contract's guarantee: what remains is the
     /// sequence it was, shorter, with every surviving position in the order
-    /// it held.
+    /// it held. Driven under both flush mechanisms, because the elision
+    /// ignores the declaration on purpose: the interior outcome is reached
+    /// through the re-establish path for every family and never through a
+    /// truncate, per Spec section 4.5, and the log asserts both halves.
     ///
     /// Perturbation: build the kept vector from `[to..]` alone, or reverse
     /// the tail, and the counts still agree while the membership or the
     /// order does not. The counts cannot catch either, which is why this
-    /// asserts the tokens themselves.
+    /// asserts the tokens themselves. A regression consulting the declared
+    /// mechanism and truncating fails the log's two counters under the
+    /// truncating family.
+    ///
+    /// conforms: spu-elision-removes-its-span-in-order
     #[test]
     fn the_elision_removes_its_span_and_keeps_the_rest_in_order() {
-        let (mut session, _log) = with_mechanism(
-            vec![
-                TokenId(5),
-                TokenId(0),
-                TokenId(6),
-                TokenId(0),
-                TokenId(7),
-                TokenId(0),
-            ],
-            64,
+        for mechanism in [
+            FlushMechanism::TruncateToPosition,
             FlushMechanism::ReestablishAndReprefill,
-        );
-        for token in [TokenId(3), TokenId(4), TokenId(8)] {
-            session
-                .append_and_generate(
-                    &[token],
-                    &StopCondition {
-                        stop_tokens: vec![TokenId(9)],
-                        terminator: TokenId(0),
-                        max_tokens: 8,
-                    },
-                    &mut NeverCancels,
-                    &mut |_| {},
-                    None,
-                    &mut |_, _, _| {},
-                    11,
-                    64,
-                )
-                .expect("the generation runs");
+        ] {
+            let (mut session, log) = with_mechanism(
+                vec![
+                    TokenId(5),
+                    TokenId(0),
+                    TokenId(6),
+                    TokenId(0),
+                    TokenId(7),
+                    TokenId(0),
+                ],
+                64,
+                mechanism,
+            );
+            for token in [TokenId(3), TokenId(4), TokenId(8)] {
+                session
+                    .append_and_generate(
+                        &[token],
+                        &StopCondition {
+                            stop_tokens: vec![TokenId(9)],
+                            terminator: TokenId(0),
+                            max_tokens: 8,
+                        },
+                        &mut NeverCancels,
+                        &mut |_| {},
+                        None,
+                        &mut |_, _, _| {},
+                        11,
+                        64,
+                    )
+                    .expect("the generation runs");
+            }
+
+            let before_tokens = session.resident_tokens().to_vec();
+            let resident = before_tokens.len();
+            // An interior span: past the prefix and short of the end, so what
+            // survives is a head and a tail rather than a prefix.
+            let (from, to) = (3, 5);
+            assert!(to < resident, "the fixture leaves a tail to preserve");
+            let expected: Vec<TokenId> = before_tokens[..from]
+                .iter()
+                .chain(before_tokens[to..].iter())
+                .copied()
+                .collect();
+            let truncates_before = log.borrow().truncated.len();
+            let reestablished_before = log.borrow().reestablished;
+
+            let (was, now) = session.elide(from, to).expect("the span is removable");
+            assert_eq!(was, resident, "the before count is what stood");
+            assert_eq!(now, resident - (to - from), "and exactly the span went");
+            assert_eq!(
+                session.resident_tokens(),
+                expected.as_slice(),
+                "the survivors keep their order and their membership"
+            );
+            assert_eq!(
+                log.borrow().truncated.len(),
+                truncates_before,
+                "the elision issued no truncate under {mechanism:?}"
+            );
+            assert_eq!(
+                log.borrow().reestablished,
+                reestablished_before + 1,
+                "and re-established exactly once under {mechanism:?}"
+            );
         }
-
-        let before_tokens = session.resident_tokens().to_vec();
-        let resident = before_tokens.len();
-        // An interior span: past the prefix and short of the end, so what
-        // survives is a head and a tail rather than a prefix.
-        let (from, to) = (3, 5);
-        assert!(to < resident, "the fixture leaves a tail to preserve");
-        let expected: Vec<TokenId> = before_tokens[..from]
-            .iter()
-            .chain(before_tokens[to..].iter())
-            .copied()
-            .collect();
-
-        let (was, now) = session.elide(from, to).expect("the span is removable");
-        assert_eq!(was, resident, "the before count is what stood");
-        assert_eq!(now, resident - (to - from), "and exactly the span went");
-        assert_eq!(
-            session.resident_tokens(),
-            expected.as_slice(),
-            "the survivors keep their order and their membership"
-        );
     }
 
     #[test]

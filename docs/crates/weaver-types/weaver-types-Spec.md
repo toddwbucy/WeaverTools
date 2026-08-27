@@ -5,6 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-26, the refusal block catches up to its fifth case.
+`TokenRefusal` gained `UnremovableSpan` with the wire on 2026-08-22,
+carrying the span it refused beside the bounds it was judged against so the
+loop learns which edge it crossed, and this section's prose has argued the
+case since that date while the block held four - the ruling reaching the
+banner and the prose and never the enumeration beside them, the drift the
+audit of 2026-08-26 names as the corpus's dominant failure, caught here.
+
 **Revised:** 2026-08-25, this Spec is named the election's shape authority.
 `weaver-trace` holds a second `Election` of this shape because it links nothing, and
 from this date the record carries that form too, making four representations of one
@@ -1567,6 +1575,7 @@ pub enum TokenRefusal {
     OutOfOrder,
     Overflow { resident: u64, requested: u64, capacity: u64 },
     MalformedDelta,
+    UnremovableSpan { from: u64, to: u64, prefix: u64, resident: u64 },
 }
 ```
 
@@ -1774,16 +1783,18 @@ kind-to-payload pairing is already enforced by admission rather than by serde. T
 election buys thinness in the floor and pays for it there, and naming where it is
 paid is what keeps the payment from going missing.
 
-**The four refusal cases are the contract's section 5 and this document adds
+**The five refusal cases are the contract's section 5 and this document adds
 none.** The session is not open or residency is not confirmed for the ask. The
 directive is out of order for the seam's state, a second generation or a
 mid-flight flush above all. The session cannot take the next delta, and the
 overflow carries the session's own account of itself because the harness decides
 what a full context means and cannot decide it without the numbers. The delta is
-malformed for the family. **`OutOfOrder` is the same word loop 0's refusal
-carries and is not the same case**, because the states it is judged against are
-the decode seam's, which is why the trio carries its own rather than drawing
-loop 0's.
+malformed for the family. The elision's span describes no removable region, and
+the refusal carries the span beside the bounds it was judged against so the
+loop learns which of the four edges it crossed. **`OutOfOrder` is the same word
+loop 0's refusal carries and is not the same case**, because the states it is
+judged against are the decode seam's, which is why the trio carries its own
+rather than drawing loop 0's.
 
 **A cancel with nothing in flight answers `AtRest` rather than refusing**, per
 the contract's section 2, an answer because it is not a failure of the ask.
