@@ -218,7 +218,8 @@ loop writes no artifact until that act lands. The re-feed exchange is the decode
 owed act, named in section 2. The driver's own shape is `weaver-analysis`'s Spec,
 still owed.
 **The record's shape landed 2026-08-27** in `weaver-diagnostic-Spec`, which carries
-the fifteen kinds this loop's acts author, the flush among them because section 1's
-grant names it, and the outcome the certification reaches. This document is the
+the sixteen kinds this loop's acts author, the flush among them because section 1's
+grant names it and the refusal because that grant and section 4's third failure both
+produce one, and the outcome the certification reaches. This document is the
 workflow that binds them, and it moves when any of them lands, per the Working Rules
 on documents that cite owed acts, which is what this entry records.

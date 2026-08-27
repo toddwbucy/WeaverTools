@@ -527,8 +527,10 @@ under gate H2. No async runtime and no socket crate in the resolved tree.
 - The record identifies itself at the open: every bracket's first event is
   `replay.opened`, watched to fail when a pass authors any other kind first.
 - No identity is invented: a pass whose replay answer never arrived authors no
-  `replay.identity`, watched to fail when the absent answer yields one filled from
-  defaults.
+  `replay.identity`, and neither does one whose step one read the holdings and
+  refused them, watched to fail when either yields an event filled from defaults.
+  The second is the case that bites, an absent answer having nothing to build from
+  while a refused reading has everything and must still author nothing.
 - No outcome is manufactured: a pass ended without its closing event leaves an
   unclosed bracket, watched to fail when a death path authors a `replay.closed`.
 - Admission precedes the write: a refused submission leaves the sink untouched and
