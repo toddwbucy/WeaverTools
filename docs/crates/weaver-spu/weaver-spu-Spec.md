@@ -1093,11 +1093,12 @@ to: spu-no-scoped-clear-surface
 
 **The prefix is established at open and is permanent.** The open renders the
 identity prefix through the family library, decodes it once, and records the
-resident length it produced. No operation reduces the resident length below
-that figure - the flush bounds there as arithmetic and the elision refuses a
-span that reaches into the prefix - and over a session that keeps serving no
-operation short of those two reduces it at all, the close over a backend fault
-clearing the account with the session, per charter sections 13.3 and 13.13.
+resident length it produced. Over a session that keeps serving, no operation
+reduces the resident length below that figure - the flush bounds there as
+arithmetic and the elision refuses a span that reaches into the prefix - and
+no operation short of those two reduces it at all, the close over a backend
+fault clearing the account with the session, per charter sections 13.3 and
+13.13.
 
 **The session's capacity carries a `Disposition` and is elected like a knob.**
 It is frozen with its value compiled in, or operator-tunable and supplied in

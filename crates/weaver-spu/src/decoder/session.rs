@@ -202,8 +202,10 @@ impl<'a> Session<'a> {
     }
 
     /// Where the identity prefix ends. **The prefix is established at open and
-    /// is permanent:** no operation reduces the length below this - the flush
-    /// bounds here and the elision refuses a span that reaches in.
+    /// is permanent:** over a session that keeps serving, no operation reduces
+    /// the length below this - the flush bounds here, the elision refuses a
+    /// span that reaches in, and the close over a backend fault clears the
+    /// account with the session.
     pub fn prefix_len(&self) -> usize {
         self.prefix_len
     }
