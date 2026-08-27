@@ -1757,8 +1757,8 @@ mod tests {
     /// where one did.
     ///
     /// The scripted peer answers counts that are deliberately unroundable
-    /// and a span the harness never sent, so a member arrived at by
-    /// accident or by echo fails here.
+    /// and no span at all, the `Elided` variant having none to carry, so a
+    /// member arrived at by accident or by default fails here.
     ///
     /// conforms: harness-elision-authors-from-the-ask
     #[test]

@@ -1965,9 +1965,10 @@ contract. A context that shrank without a record would break the same
 accumulation the flush's event exists to protect, and an interior removal
 breaks it harder: a flush leaves a suffix a reader could infer from the
 counts, and an elision leaves a sequence no count describes.
-Perturbation-verified: the scripted seam answers counts deliberately
-unroundable and a span the harness never sent, so an event read from the
-answer or arrived at by default fails on both members.
+Perturbation-verified: the scripted seam's answer carries counts deliberately
+unroundable and no span at all, the confirmation variant having none to carry,
+so a site reading the span from the answer has nothing to read and one
+defaulting it fails on the span the loop named.
 
 ```graph
 node: harness-elision-authors-from-the-ask
