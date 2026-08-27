@@ -334,6 +334,7 @@ mod tests {
     fn the_reentry_composes_from_recall() {
         let event = |kind: &str, text: &str| Recalled {
             kind: kind.to_string(),
+            run: "r-1".into(),
             turn: Some("t-1".into()),
             sequence: "1".into(),
             pairs: vec![(
@@ -365,6 +366,7 @@ mod tests {
     fn the_quote_budget_spans_the_whole_recall() {
         let event = |text: &str| Recalled {
             kind: "message.user".to_string(),
+            run: "r-1".into(),
             turn: Some("t-1".into()),
             sequence: "1".into(),
             pairs: vec![(

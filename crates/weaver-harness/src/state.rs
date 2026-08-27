@@ -24,6 +24,18 @@ const ANSWER_BOUND_MS: u16 = 2_000;
 /// path's memory on a peer's behavior.
 const ANSWER_BOUND_BYTES: usize = 1024 * 1024;
 
+/// What one `poll` can be armed for, the system call taking milliseconds in
+/// a `u16`. **It bounds one poll and never the wait**: a bound past it is
+/// served by re-arming against what remains, the deadline check being the
+/// only thing that ends the wait, so the replay ask's generous bound is
+/// waited out rather than answered `None` at the ceiling by an arithmetic
+/// the caller never asked for. Named rather than inlined so a test can
+/// lower it and watch the re-arm in milliseconds instead of minutes.
+#[cfg(not(test))]
+const POLL_CEILING_MS: u16 = u16::MAX;
+#[cfg(test)]
+const POLL_CEILING_MS: u16 = 50;
+
 /// The session's shape as the member answered it, per
 /// `weaver-harness-state-contract` section 2: the runs in the order custody
 /// first saw them, each with its held event counts by kind. The counts are
@@ -42,12 +54,21 @@ pub struct RunShape {
     pub kinds: Vec<(String, u64)>,
 }
 
-/// One recalled event, per the contract's recall answer: the envelope's
-/// facts the loop composes with, and the elected pairs as custody kept
-/// them - the distillate's own shape served back.
+/// One event off either serving answer, per the contract: the envelope's
+/// facts the asking loop composes with, and the elected pairs as custody
+/// kept them - the distillate's own shape served back.
+///
+/// **The run travels beside the turn**, per `diagnostic-replay-loop`
+/// section 3, whose walk groups the answer's events by run and turn from
+/// their envelopes: two events carrying one turn label in different runs
+/// are different events, and a shape that dropped the run would pair them
+/// into a generation that never ran. The session does not travel, being
+/// constant across any answer by the contract's session-bounded clause and
+/// already held by the asker that declared it.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Recalled {
     pub kind: String,
+    pub run: String,
     pub turn: Option<String>,
     pub sequence: String,
     pub pairs: Vec<(String, String)>,
@@ -95,7 +116,7 @@ impl StateSeam {
         if !self.send(b"{\"ask\":{\"shape\":{}}}\n") {
             return None;
         }
-        let line = self.await_line()?;
+        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
         parse_shape_answer(&line)
     }
 
@@ -114,6 +135,34 @@ impl StateSeam {
         answered
     }
 
+    /// The replay ask, per the contract and `weaver-harness-Spec` section
+    /// 6's 2026-08-24 clause: the session's elected events whole, in
+    /// landing order, as the member answered them. **The bound is the
+    /// caller's to pass**, because the replay ask is the one whose answer
+    /// lawfully waits, parked at an open preload until the seal, and only
+    /// the asking loop knows how long a preload is worth waiting on. The
+    /// same one-strike economics as the other asks: a bound that expires
+    /// retires the serve direction, a late answer otherwise reading as the
+    /// next ask's.
+    pub(crate) fn ask_replay(&mut self, bound_ms: u64) -> Option<Vec<Recalled>> {
+        if self.dead {
+            return None;
+        }
+        let answered = self.replay_exchange(bound_ms);
+        if answered.is_none() {
+            self.dead = true;
+        }
+        answered
+    }
+
+    fn replay_exchange(&mut self, bound_ms: u64) -> Option<Vec<Recalled>> {
+        if !self.send(b"{\"ask\":{\"replay\":{}}}\n") {
+            return None;
+        }
+        let line = self.await_line(bound_ms)?;
+        parse_replay_answer(&line)
+    }
+
     fn recall_exchange(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
         let ask = match last_turns {
             Some(bound) => format!("{{\"ask\":{{\"recall\":{{\"last-turns\":{bound}}}}}}}\n"),
@@ -122,7 +171,7 @@ impl StateSeam {
         if !self.send(ask.as_bytes()) {
             return None;
         }
-        let line = self.await_line()?;
+        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
         parse_recall_answer(&line)
     }
 
@@ -141,12 +190,17 @@ impl StateSeam {
         true
     }
 
+    /// One poll's timeout out of what remains of the wait, clamped to what
+    /// the system call can be armed for, per `POLL_CEILING_MS`.
+    fn poll_slice(remaining: std::time::Duration) -> u16 {
+        remaining.as_millis().min(u128::from(POLL_CEILING_MS)) as u16
+    }
+
     /// Await one line inside the bound. The channel shares the tee's
     /// nonblocking flag, so the wait is a poll deadline rather than a read
     /// timeout.
-    fn await_line(&mut self) -> Option<String> {
-        let deadline = std::time::Instant::now()
-            + std::time::Duration::from_millis(u64::from(ANSWER_BOUND_MS));
+    fn await_line(&mut self, bound_ms: u64) -> Option<String> {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
         let mut buffer: Vec<u8> = Vec::new();
         loop {
             if let Some(position) = buffer.iter().position(|&b| b == b'\n') {
@@ -159,13 +213,13 @@ impl StateSeam {
             if remaining.is_zero() {
                 return None;
             }
-            let wait = remaining.as_millis().min(u128::from(u16::MAX)) as u16;
+            let wait = Self::poll_slice(remaining);
             let mut fds = [nix::poll::PollFd::new(
                 self.channel.as_fd(),
                 nix::poll::PollFlags::POLLIN,
             )];
             match nix::poll::poll(&mut fds, wait) {
-                Ok(0) => return None,
+                Ok(0) => continue,
                 Ok(_) => {}
                 Err(nix::errno::Errno::EINTR) => continue,
                 Err(_) => return None,
@@ -202,6 +256,20 @@ fn parse_shape_answer(line: &str) -> Option<SessionShape> {
     Some(SessionShape { runs: shaped })
 }
 
+/// Parse the replay answer, per the contract:
+/// `{"answer":{"replay":{"events":[{"envelope":{...},"pairs":{...}}]}}}`.
+/// The recall's shape under the replay's name, and a frame that does not
+/// carry the whole shape answers nothing.
+fn parse_replay_answer(line: &str) -> Option<Vec<Recalled>> {
+    let value: serde_json::Value = serde_json::from_str(line).ok()?;
+    let events = value
+        .get("answer")?
+        .get("replay")?
+        .get("events")?
+        .as_array()?;
+    parse_recalled_events(events)
+}
+
 /// Parse the recall answer, per the contract:
 /// `{"answer":{"recall":{"events":[{"envelope":{...},"pairs":{...}}]}}}`.
 /// A frame that does not carry the whole shape answers nothing.
@@ -212,6 +280,12 @@ fn parse_recall_answer(line: &str) -> Option<Vec<Recalled>> {
         .get("recall")?
         .get("events")?
         .as_array()?;
+    parse_recalled_events(events)
+}
+
+/// One event list off either serving answer, the distillate's shape read
+/// back: envelope fields by name, pairs as raw text.
+fn parse_recalled_events(events: &[serde_json::Value]) -> Option<Vec<Recalled>> {
     let mut recalled = Vec::with_capacity(events.len());
     for event in events {
         let envelope = event.get("envelope")?;
@@ -227,6 +301,7 @@ fn parse_recall_answer(line: &str) -> Option<Vec<Recalled>> {
             .unwrap_or_default();
         recalled.push(Recalled {
             kind: envelope.get("kind")?.as_str()?.to_string(),
+            run: envelope.get("run")?.as_str()?.to_string(),
             turn: envelope
                 .get("turn")
                 .and_then(|t| t.as_str())
@@ -340,5 +415,123 @@ mod tests {
         let shape = seam.ask_shape().expect("answered");
         assert_eq!(shape.runs[0].run, "r-1");
         responder.join().expect("responder");
+    }
+
+    /// **A bound past the poll's ceiling is waited out, not answered at
+    /// the ceiling**, per the replay port's clause: `poll` takes a `u16` of
+    /// milliseconds, and a wait that ended when one poll expired would
+    /// answer `None` early to a caller who asked for longer - on precisely
+    /// the ask whose clause exists so the loop may wait as long as a
+    /// preload is worth. Both halves are watched here, the arithmetic and
+    /// the re-arm, the ceiling being lowered under `cfg(test)` so the
+    /// behavioural half costs milliseconds rather than the minute the
+    /// production ceiling would.
+    ///
+    /// Perturbation: read a clamped poll's expiry as the deadline and the
+    /// silent-peer half fails, returning near the ceiling instead of near
+    /// the bound. The defect this watch exists for was measured live at
+    /// the review seat before the re-arm landed, an `ask_replay(120_000)`
+    /// answering `None` at 65.551 seconds.
+    #[test]
+    fn a_bound_past_the_ceiling_is_waited_out() {
+        use std::time::Duration;
+        // The arithmetic: one poll is a slice of what remains.
+        assert_eq!(
+            StateSeam::poll_slice(Duration::from_millis(120_000)),
+            POLL_CEILING_MS
+        );
+        assert_eq!(StateSeam::poll_slice(Duration::from_millis(10)), 10);
+        assert_eq!(StateSeam::poll_slice(Duration::from_millis(0)), 0);
+
+        // The re-arm: a silent peer and a bound many ceilings long is
+        // waited out to the bound, the deadline ending the wait and not
+        // the poll.
+        let bound_ms = u64::from(POLL_CEILING_MS) * 8;
+        let (ours, _theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let started = std::time::Instant::now();
+        assert!(seam.ask_replay(bound_ms).is_none(), "the silence costs it");
+        let waited = started.elapsed();
+        assert!(
+            waited >= Duration::from_millis(bound_ms),
+            "the wait reaches the caller's bound, not the ceiling: {waited:?}"
+        );
+    }
+
+    /// **The recall answer parses under its own name**, the sibling of the
+    /// replay parse and the other caller of the shared event read: the
+    /// envelope's facts including the run, the pairs as custody kept them,
+    /// and a frame under the replay's name is not a recall answer. Nothing
+    /// watched this path before the audit of 2026-08-26 found the shared
+    /// refactor unwatched on the recall side.
+    #[test]
+    fn the_recall_answer_parses_under_its_own_name() {
+        let events = parse_recall_answer(concat!(
+            r#"{"answer":{"recall":{"events":[{"envelope":{"session":"s","run":"r-2","#,
+            r#""turn":"t-9","kind":"message.user","sequence":"11"},"#,
+            r#""pairs":{"content":[{"type":"text","text":"the plan"}]}}]}}}"#
+        ))
+        .expect("parses");
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].run, "r-2");
+        assert_eq!(events[0].turn.as_deref(), Some("t-9"));
+        assert_eq!(events[0].kind, "message.user");
+        assert_eq!(events[0].pairs.len(), 1);
+        assert_eq!(events[0].pairs[0].0, "content");
+        assert!(
+            events[0].pairs[0].1.contains("the plan"),
+            "the pairs cross as custody kept them"
+        );
+        assert!(
+            parse_recall_answer(r#"{"answer":{"replay":{"events":[]}}}"#).is_none(),
+            "the two answers stay apart by name"
+        );
+        assert!(
+            parse_recall_answer(concat!(
+                r#"{"answer":{"recall":{"events":[{"envelope":{"session":"s",""#,
+                r#"turn":"t-9","kind":"message.user","sequence":"11"},"pairs":{}}]}}}"#
+            ))
+            .is_none(),
+            "an envelope missing the run fails the parse whole"
+        );
+    }
+
+    /// **The replay ask crosses under its own name and reads the answer's
+    /// shape back**, per `weaver-harness-Spec` section 6's 2026-08-24
+    /// clause: the wire ask is the contract's, the caller's bound is the
+    /// wait, and the answer parses as the distillate's shape served back,
+    /// envelope and pairs, whole or not at all. A frame under the recall's
+    /// name is not a replay answer, which is what pins the two parses
+    /// apart.
+    #[test]
+    fn the_replay_ask_crosses_and_its_answer_parses() {
+        let (ours, theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let responder = std::thread::spawn(move || {
+            let mut peer = theirs;
+            let mut taken = [0u8; 256];
+            let count = peer.read(&mut taken).expect("reads the ask");
+            assert_eq!(&taken[..count], b"{\"ask\":{\"replay\":{}}}\n");
+            peer.write_all(
+                b"{\"answer\":{\"replay\":{\"events\":[{\"envelope\":{\"session\":\"s\",\
+                \"run\":\"r-1\",\"kind\":\"model.output\",\"sequence\":\"4\"},\
+                \"pairs\":{}}]}}}\n",
+            )
+            .expect("answers");
+        });
+        let events = seam.ask_replay(2_000).expect("answered");
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].kind, "model.output");
+        assert_eq!(events[0].run, "r-1");
+        assert_eq!(events[0].sequence, "4");
+        responder.join().expect("responder");
+
+        // The recall's name does not parse as a replay answer.
+        assert!(
+            parse_replay_answer("{\"answer\":{\"recall\":{\"events\":[]}}}").is_none(),
+            "the two answers stay apart by name"
+        );
     }
 }

@@ -452,12 +452,25 @@ impl<'a> Ports<'a> {
         Some(counts)
     }
 
-    /// The recall ask, per `weaver-harness-state-contract` section 2: the
+    /// The recall ask, per `weaver-harness-state-contract` section 2 and
+    /// `weaver-harness-Spec` section 6's recall-port clause: the
     /// conversation as custody holds it, in landing order, bounded to the
     /// most recent turns where a bound is given. `None` is the dead peer at
     /// the seat, the same absence a missing leg serves.
     pub fn recall(&mut self, last_turns: Option<u64>) -> Option<Vec<crate::state::Recalled>> {
         self.state.as_mut()?.ask_recall(last_turns)
+    }
+
+    /// The replay port, per `weaver-harness-Spec` section 6's clause of
+    /// 2026-08-24: the session's elected events whole, in landing order, as
+    /// the member answered them, or `None` where the leg is down, the
+    /// answer malformed, or the bound expired - the same dead-peer
+    /// conversion the shape port performs. **The bound is this caller's to
+    /// pass**, the replay ask being the one whose answer lawfully waits,
+    /// parked at an open preload until the seal, and only the asking loop
+    /// knowing how long a preload is worth waiting on.
+    pub fn replay(&mut self, bound_ms: u64) -> Option<Vec<crate::state::Recalled>> {
+        self.state.as_mut()?.ask_replay(bound_ms)
     }
 
     /// The state port, per `weaver-harness-Spec` section 6: the shape ask
