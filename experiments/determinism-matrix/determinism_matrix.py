@@ -144,7 +144,7 @@ def run_session(cfg, probe, depth, iteration):
             rec["verdict"] = "the source turns did not share one run"
             return rec
         source_run = source_runs.pop()
-        source_turns = base.await_turns(cfg["trace"], depth, source_run)
+        source_turns, _ = base.await_turns(cfg["trace"], depth, source_run)
         if len(source_turns) != depth:
             rec["verdict"] = f"expected {depth} source turns, found {len(source_turns)}"
             return rec
@@ -171,7 +171,8 @@ def run_session(cfg, probe, depth, iteration):
             return rec
         replay_run = runs_seen.pop()
 
-        replay_all = base.await_turns(cfg["trace"], len(source_turns), replay_run)
+        replay_all, _ = base.await_turns(
+            cfg["trace"], len(source_turns), replay_run)
         if not replay_all:
             rec["verdict"] = f"the closes named run {replay_run}, absent from the trace"
             return rec

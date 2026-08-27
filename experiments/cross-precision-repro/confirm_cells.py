@@ -202,33 +202,36 @@ def await_turns(trace_path, want, run_id, keep=4, timeout=None):
     **The sink writes after the close answers**, so a read taken the instant
     a turn closes can miss the events that turn produced. This was invisible
     while `read_runs` scanned the whole trace, because the scan itself took
-    seconds and the sink caught up inside it; the tail read of 2026-08-27
+    seconds and the sink caught up inside it. The tail read of 2026-08-27
     removed that accidental delay and the race surfaced as a run one turn
     short, every time, the missing turn always the last. Waiting for the
     record is what the harness meant to do, and an accidental sleep is not a
     way to do it.
 
-    Answers `(run, turns)` with whatever stands when the count is reached or
-    the timeout expires, and the caller reports the shortfall - a wait that
-    raised would turn a slow sink into a failed cell.
+    Answers `(turns, events)` with whatever stands when the count is reached
+    or the timeout expires, and the caller reports the shortfall - a wait
+    that raised would turn a slow sink into a failed cell. **The events come
+    back beside the turns** so a caller depositing the run needs no second
+    read and holds no `runs` dict of its own.
     """
     # **The bound follows the work.** A deep session flushes many times the
     # events of a shallow one behind a sink that has just spent a minute
     # generating, so a fixed bound is generous for one and tight for the
     # other.
     if timeout is None:
-        timeout = 10.0 + 0.5 * want
+        timeout = 30.0 + 0.5 * want
     end = time.time() + timeout
-    turns = []
+    turns, events = [], []
     delay = 0.02
     while True:
         _, runs = read_runs(trace_path, keep=keep)
         if run_id in runs:
-            turns = cut_turns(runs[run_id])
+            events = runs[run_id]
+            turns = cut_turns(events)
             if len(turns) >= want:
-                return turns
+                return turns, events
         if time.time() >= end:
-            return turns
+            return turns, events
         time.sleep(delay)
         # Backing off rather than polling flat: the scan has a one mebibyte
         # floor, so a wait that runs to its bound reads on the order of a
@@ -365,11 +368,12 @@ def run_cell(cfg, cell, outdir):
         # whichever is newest, per the seat's finding of 2026-08-27.
         if len(source_runs) != 1 or None in source_runs:
             report["verdict"] = (
-                f"the source turns did not share one run: {sorted(map(str, source_runs))}"
+                "the source turns did not share one run: "
+                f"{sorted(map(str, source_runs))}"
             )
             return report
         source_run = source_runs.pop()
-        source_turns = await_turns(cfg["trace"], 2, source_run)
+        source_turns, source_events = await_turns(cfg["trace"], 2, source_run)
         if len(source_turns) != 2:
             report["verdict"] = f"expected 2 source turns, found {len(source_turns)}"
             return report
@@ -401,7 +405,8 @@ def run_cell(cfg, cell, outdir):
             return report
         replay_run = runs_seen.pop()
 
-        replay_all = await_turns(cfg["trace"], len(source_turns), replay_run)
+        replay_all, replay_events = await_turns(
+            cfg["trace"], len(source_turns), replay_run)
         if not replay_all:
             report["verdict"] = (
                 f"the closes named run {replay_run} but the trace does not carry"
@@ -446,9 +451,10 @@ def run_cell(cfg, cell, outdir):
         report["verdict"] = "REPRODUCED" if all_match else "NOT REPRODUCED"
 
         # Deposit the two runs' events beside the report.
-        for label, run in (("source", source_run), ("replay", replay_run)):
+        for label, run_events in (("source", source_events),
+                                  ("replay", replay_events)):
             with open(os.path.join(outdir, f"cell-{name}-{label}.ndjson"), "w") as f:
-                for e in runs[run]:
+                for e in run_events:
                     f.write(json.dumps(e) + "\n")
         return report
     finally:
