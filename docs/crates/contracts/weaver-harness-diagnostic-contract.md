@@ -249,7 +249,7 @@ per `weaver-diagnostic-PRD` section 6, and this seam follows it.
 
 The seam is exercised by a replay that runs: a bracket opened, events
 admitted in order, an outcome named at the close, and the rendering read back
-off the sink as one line per record. The refusal path is exercised by
+off the sink in the canonical form section 4 names. The refusal path is exercised by
 submitting an event whose payload does not match its kind and confirming the
 sink is untouched. The death path is exercised by ending a pass without its
 closing event and confirming the record carries an unclosed bracket rather

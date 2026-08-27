@@ -138,7 +138,7 @@ to: diagnostic-session-is-the-replays-own
 
 ### 3.2 The kind set
 
-**Fifteen kinds, exhaustive, and the set is this crate's own.**
+**Sixteen kinds, exhaustive, and the set is this crate's own.**
 
     replay.opened          the pass's bracket opens, and the record identifies itself
     replay.identity        the input identity the pass established
@@ -154,9 +154,10 @@ to: diagnostic-session-is-the-replays-own
     model.measurement      the reading, the residual readout riding it
     model.field            the elected field, where the pass elected one
     flush                  a cut the loop drove, as the record carries one
+    refusal                a typed refusal answering an ask the pass sent
     fault                  a death, named
 
-**Twelve spellings are the serving vocabulary's and mean there what they mean
+**Thirteen spellings are the serving vocabulary's and mean there what they mean
 here.** A kind that names the same fact carries the same spelling and the same
 payload shape, which is what makes reader compatibility a rule rather than a
 coincidence, per section 4. **Three are this record's own**, the `replay.` trio,
@@ -169,11 +170,22 @@ harness author a `flush` event on the flush's confirmation. A record that could 
 carry it would drop an act its own loop is chartered to perform, which is the
 accumulation reading broken exactly where the serving record protects it.
 
-**The serving kinds this set does not carry are absent by construction rather than
-by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
-`tool.call.started`, `tool.call.completed`, `refusal`, and the classify pair have
-nothing to author them, and a variant standing for a case nothing produces is the
-reserved slot apex section 9 forbids. `load`, `unload`, and `session.closed` are
+**`refusal` is carried because the same section authors every typed refusal, and a
+replay produces two.** `weaver-harness-Spec` section 6's ruling of 2026-08-22 has a
+refusal answering an ask this harness sent become a `refusal` event naming the ask
+and carrying the seam's own case. A replay sends asks that can be refused: **the
+flush it was just granted**, whose `keep` that section says nothing else records,
+and **the decode ask mid-replay**, which is `diagnostic-replay-loop` section 4's
+third named failure and which that document requires the record to carry, the
+partial account being the point of authoring one. Routing either to `fault` would
+collapse a refusal into a death, which is the collapse this section refuses twice
+elsewhere.
+
+**The eight serving kinds this set does not carry are absent by construction rather
+than by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
+`tool.call.started`, `tool.call.completed`, and the classify pair have nothing to
+author them, and a variant standing for a case nothing produces is the reserved slot
+apex section 9 forbids. `load`, `unload`, and `session.closed` are
 absent for a different reason: they bracket a serving load and this record's bracket
 is the pass, which the `replay.` trio carries. **`elision` is absent on the
 narrower ground the flush's presence leaves standing**: the loop's grant names the
@@ -192,8 +204,8 @@ to: diagnostic-kind-set-exhaustive
 
 ### 3.3 The payload shapes
 
-**The mapping is total: fifteen kinds, and every kind's accepting shape is
-named.** Twelve take the serving payload of the same name, spliced or shaped as
+**The mapping is total: sixteen kinds, and every kind's accepting shape is
+named.** Thirteen take the serving payload of the same name, spliced or shaped as
 `weaver-trace-Spec` section 3 shapes it, that document being authoritative and a
 divergence a defect against it. Three are declared here.
 
@@ -235,10 +247,14 @@ name the replayed record, the driver's invocation does, per `weaver-analysis-PRD
 section 4's placement of the path. **`replay.identity` carries the input identity
 once step one of `diagnostic-replay-loop` section 3 has established it**, which is
 the first moment the replayed session, the model, its weights hash, and the
-template are known from the answered holdings. **What `reader_elected` separates
-is the null replay from the pass beside it**, per that loop's section 3 step 3,
-each pass running as its own run under its own reference, so the flag rather than
-the reference is what a reader keys on.
+template are known from the answered holdings. **Established means read and
+checked, not merely read**: a step one that read the holdings and refused them has
+established nothing, so the pass authors no identity event and closes
+`Abandoned`, which is the distinction this kind exists to keep.
+
+**What `reader_elected` separates is the null replay from the pass beside it**, per
+that loop's section 3 step 3, each pass running as its own run under its own
+reference, so the flag rather than the reference is what a reader keys on.
 
 ```graph
 node: diagnostic-identity-absent-not-invented
@@ -545,10 +561,11 @@ about.
 - **The diagnostic-trace's own instrument set**, beyond what a certification reads.
   `weaver-analysis-PRD` section 4 names the suite as a sketch that does not exist in
   this tree, and nothing here is built against it.
-- **Whether a replay that manages its own context gains `flush` and `elision`.**
-  Section 3.2 excludes them because a replay re-feeds rather than composes, and a
-  loop that later trims a replayed context reopens the question with its own
-  argument rather than finding the variants waiting.
+- **Whether a replay that elides gains `elision`.** Section 3.2 carries `flush`,
+  the loop's grant naming it, and excludes `elision` because that same grant does
+  not. A loop later granted the elision port reopens the question with its own
+  argument rather than finding the variant waiting, and the refusal that would
+  answer such an ask is already carried.
 - **The satellite types.** `Sequence`, `Subsystem`'s spelling here, `FieldName`,
   `WriteError`, `AbandonReason`'s case set, and `RunRef`, `SessionRef`, and
   `TurnRef` as this crate's own newtypes over owned strings, on the same

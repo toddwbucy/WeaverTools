@@ -499,9 +499,9 @@ structural instead.
 Open cells, each named rather than implied:
 
 - **This crate's Spec landed 2026-08-27** and both elections this cell held are
-  settled there. The writer's vocabulary is its own closed set of thirteen kinds,
-  eleven spelled as the serving vocabulary spells them and meaning there what they
-  mean here, two of the record's own that no serving record carries. The residual
+  settled there. The writer's vocabulary is its own closed set of sixteen kinds,
+  thirteen spelled as the serving vocabulary spells them and meaning there what
+  they mean here, three of the record's own that no serving record carries. The residual
   readout rides `model.measurement` exactly where a serving record puts it, density
   rather than shape being what a diagnostic run changes. Reader compatibility
   follows as a stated rule rather than a hope, per that document's section 4, which

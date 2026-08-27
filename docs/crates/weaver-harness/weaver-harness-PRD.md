@@ -12,7 +12,8 @@ conforms to.
 the `link` seam to `weaver-diagnostic` with its contract as the `via`, the record
 that section held as owed until the contract existed to name. The seam count moves
 to six, the two record mechanisms being the two links, and the dependency surface
-moves to four internal crates as that section said it would in one act. The socket
+reads four crates the corpus links against three the tree compiles, the graph
+moving with this act and the manifest with the act that builds the member. The socket
 table is unchanged, both new members of the count crossing no process line.
 **Revised:** 2026-08-26, the state seam loses its name. Section 4's socket
 census recuts one row per the operator's ruling of this date: the state
