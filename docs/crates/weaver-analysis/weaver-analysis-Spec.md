@@ -92,8 +92,9 @@ what makes that true rather than merely asserted: a driver that listened would b
 reachable, and a consumer the agent cannot reach is the structural claim this
 crate's position rests on.
 
-**The instrument is the manifest and not a compile-fail pin**, on the reason its
-sibling gives: a compile-fail doctest buys an absence from a crate's own surface,
+**The instrument is review, and what the manifest reaches is named beside it so
+the two are not confused**, on the reason its sibling's compile-fail set gives: a
+compile-fail doctest buys an absence from a crate's own surface,
 naming a call that crate does not offer, and binding a listener is `std`'s call
 rather than this crate's, so no doctest can refuse it. What the manifest reads is
 that no socket crate stands in the resolved tree, which is the same assertion above
@@ -168,18 +169,20 @@ to: analysis-derives-no-absent-member
 
 **The election this crate declares is composed from what the replay reads, not
 declared by an operator.** A serving load's election is the operator's, per
-`weaver-harness-state-contract`, because the operator is paying for what the tee
-keeps. A preload's is this crate's, because this crate knows what the loop it is
-feeding will ask for: `diagnostic-replay-loop` section 3 walks by run and turn from
-the envelope, pairs request to measurement in landing order, and establishes input
-identity before any forward pass. **So the election names the kinds those steps read
-and the payload key paths they read out of them, and nothing further.**
+`weaver-harness-state-contract`, that contract's `election` term making it a
+load-declared fact the operator states. A preload's is this crate's, because this
+crate knows what the loop it is feeding will ask for: `diagnostic-replay-loop`
+walks by run and turn from the envelope, pairs request to measurement in landing
+order, and establishes input identity before any forward pass. **So the election
+names the kinds those steps read and the payload key paths they read out of them,
+and nothing further.**
 
 **The ceiling is the loop's reading and not this crate's judgment of size.** What
-bounds the election from above is that a kind no step of section 3 reads is a kind
-whose holdings nothing would ask for, so the rule is checkable against that
-document rather than against a preference of this one, and a step added there
-widens this election in the act that adds it.
+bounds the election from above is that a kind `diagnostic-replay-loop` never reads,
+in its walk of section 2 or its certification of section 3, is a kind whose
+holdings nothing would ask for. So the rule is checkable against that document
+rather than against a preference of this one, and a step added there widens this
+election in the act that adds it.
 
 **`load` is elected, and naming it matters because the identity does not come from
 the holdings alone.** Step one establishes the five re-feed items and the template
@@ -389,8 +392,10 @@ on how an operator declared a sink.
 ## 6. What is enforced, and by which instrument
 
 **Enforced by compile-fail tests, because the property is an absence.** No write
-surface toward either record, and no listener: doctests attempting to construct a
-trace writer and to bind a listening socket each fail to compile.
+surface toward either record: a doctest constructing a trace writer fails to
+compile, and **the buyable half is the sender's shape**, which takes distillates
+and never events, the no-writer half being bought already by the absent dependency
+below. No second opener on one channel, the sender consumed by the seal.
 
 **Enforced by the manifest.** No `weaver-*` dependency at all, read against the
 graph under gate H2, this crate declaring one `seam` tagged `socket` and no
@@ -420,15 +425,18 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
   certified null pass stands in the record, watched to fail when the ordering is
   removed.
 
-**Enforced by review, one claim.** That this crate dials as an operator principal
+**Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
 per section 4: what a suite can confirm is that this crate mints no identity and
 opens the socket under the one it was invoked with, and the credential's rightness
-is judged at the far end by the door.
+is judged at the far end by the door. That this crate's own code binds no listener
+is the residue section 1 names: the manifest reaches the dependency and no
+instrument here reaches the absence of a call `std` offers every crate, so the
+claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twelve sit there and none sits here.
+section 6. Fourteen sit there and none sits here.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate links no internal

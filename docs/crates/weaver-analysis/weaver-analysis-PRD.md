@@ -5,6 +5,14 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-08-27, third of this date, the null replay's verb is corrected.
+Section 3 said this crate elects the null replay and section 4's cell said the same,
+which read as a control over the load this crate does not hold: the reader's
+election rides the declaration per apex section 8. Both now say what
+`weaver-analysis-Spec` section 5 settled, that this crate requires a certified null
+pass before anything downstream and elects the order it consumes outcomes in. The
+Spec had settled against this charter and the charter was open in the same act, so
+landing it here rather than leaving the two documents disagreeing.
 **Revised:** 2026-08-27, second of this date, the driver takes its shape.
 `weaver-analysis-Spec` landed, closing section 4's last cell: the parser, the
 election, the projection, the preload's three frames, and the reading's gate.
@@ -176,8 +184,14 @@ here.** `diagnostic-replay-loop` section 3 walks it inside the run, which is
 where it has to happen: the loop holds the recorded path in its holdings and
 the recomputed identifiers as they arrive, so it alone can refuse before the
 first forward pass and name the first divergent position rather than reporting
-after a whole replay has run. What this crate does is elect the null replay,
-read its outcome from the record, and gate everything downstream on it.
+after a whole replay has run. What this crate does is **require a null replay
+before anything downstream**, read its outcome from the record, and gate every
+later reading on it. **The reader's election is not this crate's to make**, riding
+the declaration at the load per apex section 8, so what this crate elects is the
+order it consumes outcomes in and never which pass the agent runs. An earlier form
+of this sentence said this crate elects the null replay, which read as a control
+over the load it does not hold, and `weaver-analysis-Spec` section 5 settled the
+distinction this clause now carries.
 
 **That gate rests on telling a finished record from a truncated one, and the
 record carries the fact as of 2026-08-27.** A reader that has consumed every byte
@@ -274,4 +288,5 @@ a sink.
   charter's section 3 now rests on. **The certification's mechanics do not**,
   that comparison belonging to
   the loop inside the run per section 3, and what this crate's Spec settles
-  about it is only how it elects a null replay and reads the outcome.
+  about it is only the order it consumes outcomes in, requiring a certified
+  null pass before any reading downstream.

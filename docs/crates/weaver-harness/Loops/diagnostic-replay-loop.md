@@ -94,11 +94,15 @@ The operator sequences three acts, and the loop is the third:
    because this loop is the first case to need it.
 2. **Run the driver.** `weaver-analysis` parses the operator-held record
    outside the agent, dials the preload door as an operator principal,
-   sends the election and the distillates, and seals. The election elects
-   what the replay needs: the message kinds, `model.request` for each
-   turn's rendered contribution and template identity, and
-   `model.measurement` for the recorded token path the certification
-   compares against.
+   sends the election and the distillates, and seals. **What the election
+   holds is `weaver-analysis-Spec` section 3's**, composed from what this
+   loop reads, and what follows sketches its shape rather than fixing the
+   set: the message kinds, `model.request` for each turn's rendered
+   contribution and template identity, `model.measurement` for the recorded
+   token path the certification compares against, and **`load`, without
+   which step one of section 3 cannot read the tee's election and no claim
+   about the state can stand**. A divergence between this sketch and that
+   section is a defect against that section.
 3. **The loop replays.** Its replay ask answers at the seal, per
    `weaver-harness-state-contract` section 2, returning the session's
    elected events in landing order. The loop walks the turns positionally
@@ -222,8 +226,8 @@ even the first instrument reads from a replay that did not certify.
 The capture artifact - identity, custody, dataset shape, quota - is
 `weaver-analysis-PRD` section 4's owed act, that crate holding the reading, and this
 loop writes no artifact until that act lands. The re-feed exchange is the decode seam's
-owed act, named in section 2. The driver's own shape is `weaver-analysis`'s Spec,
-still owed.
+owed act, named in section 2. The driver's own shape is `weaver-analysis-Spec`,
+landed 2026-08-27.
 **The record's shape landed 2026-08-27** in `weaver-diagnostic-Spec`, which carries
 the sixteen kinds this loop's acts author, the flush among them because section 1's
 grant names it and the refusal because that grant and section 4's third failure both
