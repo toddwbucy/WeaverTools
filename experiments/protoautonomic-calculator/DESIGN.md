@@ -17,11 +17,17 @@ framework architect's question instead: **does the mechanic hold, provably.**
 `weaver-agents-PRD` section 4 item 6 requires the deliverable to fire at
 least one protoautonomic tool call, "where the harness injects a
 deterministic result into the stream in place of a stochastic one, with the
-calculator as the reference case." Section 9 states what a record owes:
+calculator as the reference case." Section 8 states what a record owes:
 deterministic re-feed requires, exactly, the input token ids, the output
 token ids, model identity and weights hash, the sampling parameters, and the
-prompt-block partition, and a claim about the state rests on the tee's
-election beyond that list.
+prompt-block partition, **with tokenization reproducible from what is
+recorded**, and a claim about the state rests on the tee's election beyond
+that list.
+
+**The tokenization clause is not incidental here.** The calculator answers a
+string, and a string reaches the resident sequence only by being tokenized,
+so the requirement injection touches most directly is the one about
+tokenization being reproducible from the record.
 
 The theorem this experiment exists to settle:
 
@@ -38,7 +44,7 @@ entropy 0.149 to 7.411, and every one replayed bit-exact: 43,620 turns,
 This experiment asks whether the property survives the two operations that
 edit context, and the baseline is what a result here is compared against.
 
-**The loop is not claimed to reproduce.** Apex section 9 is explicit that
+**The loop is not claimed to reproduce.** Apex section 8 is explicit that
 the loop is stochastic and this program makes no run-again claim. The claim
 is about the record, and the record's sufficiency is the whole question.
 
@@ -90,6 +96,17 @@ record rather than the injection mechanic. Arm INWARD is the path under
 test. Running both over identical problems is what separates a fault in the
 new mechanic from a fault in the apparatus around it.
 
+**The arms differ in resident length by construction**, since one returns
+the result as a message and the other injects it, and that shape has bitten
+this corpus before: `weaver-spu-PRD` section 13.8 records a defect that
+"would have eaten a paired comparison silently, the two arms differing in
+resident length by construction, crossing the flush threshold at different
+turns, and one reseeding where the other did not". **The coupling that
+defect rested on was closed by the sampler ruling of 2026-08-19**, and this
+experiment elects no flush, so the hazard is named and answered rather than
+left for a reader to raise. Section 6's comparison is within an arm in any
+case, source against replay, and never across arms.
+
 ## 4. The fixture loop is scripted, and that is the design
 
 A loop that decides intelligently when to elide and when to elect the
@@ -119,18 +136,23 @@ nothing. The record is written, the run ends, and only then is it read for
 comparison. An experiment whose subject can consult its own history is
 testing something else.
 
-The loop surface offers nine ports and the fixture uses two. The exclusions
-are listed because each is a confound this experiment is built to avoid:
+**The seat is eight calls**, per `docs/technical/weaver-agents/loop.md`, and
+the fixture uses two. That page also records a live discrepancy worth
+knowing, the loop file's own header saying seven where the connector exposes
+eight, rechecked 2026-08-24. The exclusions are listed because each is a
+confound this experiment is built to avoid, and the list is complete against
+the eight so that no port is silently neither used nor refused:
 
 | Port | In the fixture | Why |
 |---|---|---|
 | `turn` | yes | the thing under test |
+| `assembled_empty` | yes | the first-turn test a scripted chain reads, carrying no history |
 | `elide` | yes | the context edit under test, its span scripted |
 | `fullness` | recorded only | a count carried by the last generation, never a decision input |
 | `recall` | no | custody's query, and a subject that can query its history is a second variable |
 | `session_shape` | no | a state query, for the same reason |
 | `classify` | no | a second organ, whose behaviour would ride the result uncredited |
-| `flush` | no | a second context edit; two edits in one session make a divergence unattributable to either |
+| `flush` | no | a second context edit, and two edits in one session make a divergence unattributable to either |
 
 **The flush exclusion is this document's own and not inherited.** The flush
 and the elision are both context edits and both are chartered, so a fixture
@@ -145,7 +167,7 @@ contract already defines for a leg that is down. The fixture therefore
 cannot reach custody even by mistake, which is a stronger guarantee than a
 rule the fixture follows.
 
-**One consequence to record before it is forgotten.** Apex section 9 rests a
+**One consequence to record before it is forgotten.** Apex section 8 rests a
 claim about the state on the tee's election, and the elision edits state. A
 record produced with no state leg and one produced with a leg support
 different claims, so this experiment's result covers the arrangement it ran
@@ -172,10 +194,13 @@ does not appear in the trace charter. The record has no member that
 distinguishes a token the harness supplied from a token the model sampled.
 Two consequences, and the second is the serious one:
 
-1. A reader of the record cannot tell which tokens the model produced. Apex
-   section 4 rests the elected-or-initiated fact on the trace recording who
-   moved first, and for the injected span that fact is currently
-   unrecoverable.
+1. A reader of the record cannot tell which tokens the harness supplied.
+   **The election itself is recoverable** and this document earlier said
+   otherwise: `weaver-trace-PRD` section 3.1 carries the tool bracket and
+   `weaver-types`' `Generation.content` carries every recovered call as a
+   `ToolCall` block in emission order, so who moved first is recorded as
+   apex section 4 requires. What is unrecoverable is the provenance of the
+   **result span**, which is the narrower and still blocking claim.
 2. **A claim about the token path may be silently wrong.** Re-feed feeds
    recorded output token ids back through the forward pass and re-samples
    nothing, so an injected token re-feeds like any other and the arrangement
@@ -185,10 +210,16 @@ Two consequences, and the second is the serious one:
    happened.
 
 **So the trace act precedes the code act.** The record must gain a way to
-say that a span was supplied rather than drawn, and what supplied it. Whether
-that is a member on the measurement, a payload on the tool bracket, or a
-kind of its own is the trace seat's to settle; this document asserts only
-that the property in section 1 cannot be claimed until it exists.
+say that a span was supplied rather than drawn, and what supplied it.
+Whether that is a member on the measurement, a payload on the tool bracket,
+or a kind of its own is the trace seat's to settle. This document asserts
+only that the property in section 1 cannot be claimed until it exists.
+
+**The tool bracket's payloads are deferred rather than absent**, per
+`weaver-trace-PRD` section 3.2: "The tool bracket's two are the remaining
+pair and stay deferred with the tool workflow." That matters to whoever
+takes the act, because it makes this a deferral coming due rather than an
+omission to be argued for from nothing.
 
 A second, smaller gap is named here because the experiment will want it:
 **the record carries no first-token timestamp.** Every post-request event of
