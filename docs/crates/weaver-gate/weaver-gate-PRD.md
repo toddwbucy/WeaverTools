@@ -6,6 +6,10 @@ lifecycle half of this crate, the hook the enter and leave directives raise and
 lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-27, the closure claim's arithmetic is swept. The
+harness's enumeration is five rather than three, a count this document carried
+stale through the fourth case and now the fifth, per issue #369.
+
 **Revised:** 2026-08-17, second of that date, the tool workflow opens and the
 mechanism election lands: **this crate executes the internal tool, forked and
 supervised per call, answering on the harness seam's execution exchange.** The
@@ -663,7 +667,7 @@ section does not enumerate, because the seam's contract does not exist and a cas
 written against a guess is the thing this section refuses elsewhere. **The closure claim
 is therefore scoped and the gap is named**, so the trace act electing a payload shape
 against a closed set knows which set closed. The `fault` event's cases are the SPU's at
-`weaver-spu-PRD` section 13.10, this crate's here, and the harness's own three at
+`weaver-spu-PRD` section 13.10, this crate's here, and the harness's own five at
 `weaver-harness-PRD` section 5, that last enumeration landing in this same act on the
 review seat's finding, and it cannot be derived from the other two because an organ
 death is reported by the party that survives rather than the one that died. The

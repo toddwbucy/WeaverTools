@@ -886,14 +886,16 @@ impl PartialEq for FaultReport {
     }
 }
 
-/// The three charters' closed ten, per `weaver-types-Spec` section 4.2: three
-/// of `weaver-spu-PRD` section 13.10, three of `weaver-gate-PRD` section 13.4,
-/// four of `weaver-harness-PRD` section 5. **An eleventh case is a charter
-/// act before it is a code change**, and the tenth was exactly that: the act
-/// typing these found the harness authoring an assembly fault no case
-/// covered, and the charter widened before this enum did. The harness's four
-/// ride the same shape although they cross no socket, one shape serving the
-/// wire and the `fault` event's payload.
+/// The three charters' closed eleven, per `weaver-types-Spec` section 4.2:
+/// three of `weaver-spu-PRD` section 13.10, three of `weaver-gate-PRD`
+/// section 13.4, five of `weaver-harness-PRD` section 5. **A twelfth case is
+/// a charter act before it is a code change**, and the tenth and eleventh
+/// were both exactly that: the act typing these found the harness authoring
+/// an assembly fault no case covered, and the act answering #369 found it
+/// dropping the identity door's refusal on the floor. The charter widened
+/// before this enum did, both times. The harness's five ride the same shape
+/// although they cross no socket, one shape serving the wire and the `fault`
+/// event's payload.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FaultCase {
@@ -907,4 +909,9 @@ pub enum FaultCase {
     StreamWriteFailed,
     OrganDeathObserved,
     MessageRecordUndecodable,
+    /// A declaration's seated identity carries a role the identity door does
+    /// not write, per `weaver-harness-PRD` section 5. The prefix is seated at
+    /// the session's open regardless, so this case is what keeps the record
+    /// from reading as an agent that seated nothing.
+    IdentityRoleUnlicensed,
 }

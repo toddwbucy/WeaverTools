@@ -5,6 +5,10 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-27, the fault case set widens to eleven. Section 4.2's
+arithmetic follows `weaver-harness-PRD` section 5 from four harness cases to
+five, the eleventh being the identity door's refused role, per issue #369.
+
 **Revised:** 2026-08-26, the refusal block catches up to its fifth case.
 `TokenRefusal` gained `UnremovableSpan` with the wire on 2026-08-22,
 carrying the span it refused beside the bounds it was judged against so the
@@ -1238,14 +1242,14 @@ direction as the generation measurement.
 
 **The case set is the three charters' closed enumeration and no case is this
 document's.** Three from `weaver-spu-PRD` section 13.10, three from
-`weaver-gate-PRD` section 13.4, four from `weaver-harness-PRD` section 5,
+`weaver-gate-PRD` section 13.4, five from `weaver-harness-PRD` section 5,
 which closed the corpus-wide set across all three organs for the seams that
-exist. An eleventh case is a charter act before it is a code change, and the
+exist. A twelfth case is a charter act before it is a code change, and the
 code act that typed these found the charter one short of its own crate's
-standing practice, the assembly fault, which is the eleventh-case rule
+standing practice, the assembly fault, which is the further-case rule
 exercised in the act that stated it rather than a rule waiting for its first
 test. And the
-harness's own three ride the same shape although they cross no socket, because
+harness's own five ride the same shape although they cross no socket, because
 the same shape serves the wire and the `fault` event's payload and electing it
 twice would be two shapes for one fact.
 
