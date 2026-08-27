@@ -1273,15 +1273,19 @@ the order it held, per charter section 13.13: the harness names a half-open
 span of resident positions, this crate makes it absent, and the
 confirmation carries the resident counts either side, taken around the
 call. The charter permits a rollback to the span's start where a family's
-state allows one, and this Spec fixes the narrower answer for both
-families: **an interior removal has no truncation mechanism**, because a
-flush's outcome is a prefix of what stood and an elision's outcome is a
-prefix of nothing the backend holds, so the session re-establishes and
-decodes the kept sequence whole whatever the family's flush mechanism
-declares. That is a full re-decode of every survivor, expensive and correct
-where a cheap path does not exist, and it is the figure a loop's elision
-policy prices against: an elision costs a prefill of what remains, so a
-loop consolidates its spans rather than eliding per turn. The discipline of
+state allows one - `resident[..from]` is a prefix of what stood, so a family
+declaring truncation could truncate to the span's start and re-decode the
+tail alone, a primitive the backend seam already supplies - and this Spec
+elects the one path anyway: **the session re-establishes and decodes the
+kept sequence whole whatever the family's flush mechanism declares.** One
+path, one instrument, and no per-family divergence to keep honest, which is
+the divergence the recurrent-family failure the survey records punishes.
+The cost is therefore a full re-decode of every survivor, and it is stated
+as the ceiling it is: the unelected rollback path would bound the refill by
+what follows the span for the families that can roll back, per section 12,
+and until that election the figure a loop's elision policy prices against
+is a prefill of what remains, so a loop consolidates its spans rather than
+eliding per turn. The discipline of
 section 4.2 holds here unweakened - the interior outcome is reached through
 the re-establish path and never through a scoped clear on the backend.
 
@@ -2982,6 +2986,14 @@ Each names what settles it, and none is this Spec's to settle alone.
 - **The executor.** Deferred with `weaver-traits-Spec` section 6's
   measurement, and this crate is where the latency it would buy or cost is
   measurable.
+- **The elision's rollback-assisted path.** Section 4.5 elects the
+  re-establish-whole mechanism for both families and prices the elision at a
+  prefill of the survivors. For a family declaring truncation the primitive
+  for a cheaper path exists, truncate to the span's start and re-decode the
+  tail alone. What settles it is a deployment whose elision spans sit late in
+  long sessions, where the tail refill is the difference that matters, and
+  the election is priced against the second instrument the per-family
+  divergence would then need.
 - **The satellite types.** `Disposition<T>`'s companion accessor shape,
   `ChannelFault`'s spelling against the two identical enums in the harness and
   gate Specs, the family surface's trait name, and the backend seam's. Choices
