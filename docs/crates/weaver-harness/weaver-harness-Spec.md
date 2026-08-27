@@ -3,6 +3,16 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-26, fourth of this date, the recall port takes its
+clause. Section 6's port enumeration chartered the shape, replay, and
+classify ports and never the recall port the same acts built, which the
+audit of this date found: a capability called by the shipped loop since
+2026-08-19 with no sentence granting it. The clause lands dated to the act
+that built the port rather than to this one, the enumeration being complete
+as of that date once the sentence exists. The census counts are deferred to
+the counting pass per the operator's ruling of this date, one pass per
+document rather than piecemeal.
+
 **Revised:** 2026-08-26, third of this date, the elision's claim takes its
 record. Section 6 has argued since 2026-08-22 that the `elision` event is
 authored from the ask and not the answer, and the code cites
@@ -2004,6 +2014,19 @@ serving thread itself: the tee's feed and the seat's ask both run on it, so
 no ask can interleave a distillate's octets, and the member's answers are
 the only traffic that ever flows toward this crate, so whatever the wait
 reads is the answer or is malformed, with no third case to disambiguate.
+
+**The seat carries the recall port, 2026-08-19, its clause landed by the
+audit of 2026-08-26.** The port was built with the context-management
+loop's act and the shipped loop has called it since, and this enumeration
+never carried its sentence - the audit's finding, chartered here with the
+date the capability entered rather than the date the sentence did. `Ports`
+grows one call, the recall ask of `weaver-harness-state-contract`
+section 2: the conversation as custody holds it, in landing order, bounded
+to the most recent turns where the caller passes a bound, or nothing where
+the leg is down, the answer malformed, or the bound expired, the same
+dead-peer conversion the shape port performs. Every judgment about what to
+keep, summarize, or drop in a rebuilt context is the calling loop's, per
+the three-way division of `weaver-state-PRD` section 2.
 
 **The seat carries the replay port, 2026-08-24, through the same front
 door.** The diagnostic replay loop needed the session's elected events
