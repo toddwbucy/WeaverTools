@@ -33,8 +33,8 @@
 //! ```
 //!
 //! The behaviour and the surface are two records with two instruments: the
-//! monotonic resident length is a perturbation test and the missing method is
-//! this compile-fail pin. Neither claims the other's half, because a pin says a
+//! resident length moving only by appends and the recorded reducers is a
+//! perturbation test and the missing method is this compile-fail pin. Neither claims the other's half, because a pin says a
 //! rewind cannot be written and says nothing about a turn that re-prefills
 //! through the append path instead.
 
@@ -128,12 +128,14 @@ impl CancelPoll for NeverCancels {
 
 /// The resident session.
 ///
-/// **The resident sequence is monotonic except across a flush.** It is
-/// private, and the paths that reduce it are [`Session::flush`], to the cut's
-/// kept length and never below the prefix, and the close over a backend
-/// fault, which clears it alongside `opened` because a closed session accounts
-/// for nothing. Nothing writes it downward over a session that keeps serving,
-/// which is the discipline the perturbation test watches from outside.
+/// **The resident sequence moves only by appends and by the recorded
+/// reducers.** It is private, and the paths that reduce it are
+/// [`Session::flush`], to the cut's kept length and never below the prefix,
+/// [`Session::elide`], by exactly its span and never into the prefix, and the
+/// close over a backend fault, which clears it alongside `opened` because a
+/// closed session accounts for nothing. Nothing else writes it downward over a
+/// session that keeps serving, which is the discipline the perturbation test
+/// watches from outside.
 pub struct Session<'a> {
     /// **The backend borrows the residency it decodes against**, so a session
     /// cannot outlive the model it was opened over. The lifetime is what says
@@ -913,8 +915,8 @@ mod tests {
         );
     }
 
-    /// The resident length is monotonic across turns, which is the behavioural
-    /// half beside the position check above.
+    /// The resident length never falls across turns that ask no reducer, which
+    /// is the behavioural half beside the position check above.
     #[test]
     fn the_resident_length_never_rewinds_across_turns() {
         let (mut session, _log) = opened(vec![TokenId(99), TokenId(99)], 128);
