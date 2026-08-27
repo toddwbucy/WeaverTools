@@ -5,6 +5,8 @@
 //! conforms: spu-cancel-bounded-by-one-token
 //! conforms: spu-cancel-polled-not-signalled
 //! conforms: spu-flush-mechanism-from-declaration
+//! conforms: spu-elision-refuses-an-unremovable-span
+//! conforms: spu-elision-removes-its-span-in-order
 //! conforms: spu-signals-pre-sampler
 //!
 //! The resident session and its append path, per `weaver-spu-Spec` sections 4.2
