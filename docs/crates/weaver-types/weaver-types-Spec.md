@@ -1783,13 +1783,15 @@ kind-to-payload pairing is already enforced by admission rather than by serde. T
 election buys thinness in the floor and pays for it there, and naming where it is
 paid is what keeps the payment from going missing.
 
-**The four refusal cases are the contract's section 5 and this document adds
+**The five refusal cases are the contract's section 5 and this document adds
 none.** The session is not open or residency is not confirmed for the ask. The
 directive is out of order for the seam's state, a second generation or a
 mid-flight flush above all. The session cannot take the next delta, and the
 overflow carries the session's own account of itself because the harness decides
 what a full context means and cannot decide it without the numbers. The delta is
-malformed for the family. **`OutOfOrder` is the same word loop 0's refusal
+malformed for the family. The elision's span describes no removable region, and
+the refusal carries the span beside the bounds it was judged against so the
+loop learns which of the four edges it crossed. **`OutOfOrder` is the same word loop 0's refusal
 carries and is not the same case**, because the states it is judged against are
 the decode seam's, which is why the trio carries its own rather than drawing
 loop 0's.
