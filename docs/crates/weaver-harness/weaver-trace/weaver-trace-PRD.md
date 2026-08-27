@@ -8,6 +8,13 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-26, the table catches up to its banners. The kind set
+grew to twenty-one on 2026-08-22 and section 3.1's table still ended at
+`model.field` with the count word at nineteen - the rulings reached the
+banners and the arguing prose and never the enumeration beside them, the
+drift the audit of 2026-08-26 names as the corpus's dominant failure. Two
+rows and the count word land, and nothing else changes.
+
 **Revised:** 2026-08-25, the tee's election joins the bracket. The `load`
 event named three elections and not the tee's, so the record said what the model
 did and not what the agent's state was built from, and a replay under a
@@ -430,8 +437,10 @@ its closure.
 | `classify.request` | the label seam, request side: the content the loop sent for classification |
 | `classify.output` | the label seam, response side: every label of the artifact's head scored |
 | `model.field` | one decode position's ranked candidates with their probabilities and the rank the draw landed on, when the field election stands |
+| `elision` | an interior span of the decode context made absent, the loop's election, the span it named beside the resident counts either side |
+| `refusal` | a typed refusal clerked to the record, one kind for every seam, the organ's case carried opaque as `fault` does |
 
-Nineteen kinds. Adding one is an edit to this charter and to every contract whose
+Twenty-one kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
 **`model.field` is the nineteenth**, added 2026-08-21 on `weaver-spu-PRD`
 section 13.11's election. It is the first kind recorded per decode position
@@ -443,6 +452,10 @@ stands**, which is the first kind of which that is true, and the exception
 is what the election exists to buy: the volume is an order of magnitude
 past everything else the record carries, so a kind always present would
 make the record unaffordable rather than complete.
+
+**`elision` is the twentieth and `refusal` the twenty-first**, both of
+2026-08-22 and both argued at their own clauses below; the table and the
+count word above caught up to them on 2026-08-26.
 
 **The record declares the posture it was written in.** Section 3.1's `load`
 event carries every diagnostic election of the load by name, because

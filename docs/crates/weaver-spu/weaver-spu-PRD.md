@@ -7,6 +7,13 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-26, the prefix clause names its second neighbour.
+Section 13.3's permanence sentence enumerated the flush as the one
+operation defined against the prefix and predates the elision; 13.13
+bounds the elision by the same prefix, so the sentence names both. A
+cross-reference catch-up from the audit of 2026-08-26, and no ruling
+changes.
+
 **Revised:** 2026-08-22, fifth of this date, the readout owes what the field
 owed. Section 13.7 gains the observational bar 13.11 has carried since the
 field was chartered: an elected readout changes no token, shown before a tap
@@ -910,8 +917,9 @@ rule.
 **The identity prefix is established at open and permanent for the session's
 life.** `weaver-harness-PRD` section 2 rests the prefix's permanence on this
 seam as an invariant the SPU honors, and this is where it is honored: no
-operation of this seam removes or alters the prefix short of the flush of
-13.9, whose outcome is defined against it.
+operation of this seam removes or alters the prefix - the flush of 13.9 is
+defined against it, and the elision of 13.13 refuses a span that reaches
+into it.
 
 **A session that cannot take the next delta refuses, typed, and sheds
 nothing.** There is no eviction and no compaction inside this crate, because

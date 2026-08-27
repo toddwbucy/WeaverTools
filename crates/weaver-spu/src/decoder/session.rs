@@ -197,8 +197,8 @@ impl<'a> Session<'a> {
     }
 
     /// Where the identity prefix ends. **The prefix is established at open and
-    /// is permanent:** no operation short of the flush reduces the length below
-    /// this.
+    /// is permanent:** no operation reduces the length below this - the flush
+    /// bounds here and the elision refuses a span that reaches in.
     pub fn prefix_len(&self) -> usize {
         self.prefix_len
     }
@@ -468,9 +468,9 @@ impl<'a> Session<'a> {
         if let Err(fault) = outcome {
             return Err(self.poison(fault));
         }
-        // The one place in this type that reduces the resident sequence, and
-        // it reduces it to the bounded cut rather than to an arbitrary
-        // position.
+        // One of the type's two reducers - the elision at `elide` is the
+        // other - and this one reduces to the bounded cut rather than to an
+        // arbitrary position.
         self.resident.truncate(kept);
         Ok(())
     }
@@ -490,6 +490,7 @@ impl<'a> Session<'a> {
     /// describes no removable region and has no smaller true version.
     ///
     /// conforms: spu-elision-refuses-an-unremovable-span
+    /// conforms: spu-elision-removes-its-span-in-order
     pub fn elide(&mut self, from: usize, to: usize) -> Result<(usize, usize), DecodeFault> {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
@@ -1267,6 +1268,8 @@ mod tests {
     /// the tail, and the counts still agree while the membership or the
     /// order does not. The counts cannot catch either, which is why this
     /// asserts the tokens themselves.
+    ///
+    /// conforms: spu-elision-removes-its-span-in-order
     #[test]
     fn the_elision_removes_its_span_and_keeps_the_rest_in_order() {
         let (mut session, _log) = with_mechanism(

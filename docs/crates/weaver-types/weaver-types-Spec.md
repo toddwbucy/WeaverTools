@@ -5,6 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-26, the refusal block catches up to its fifth case.
+`TokenRefusal` gained `UnremovableSpan` with the wire on 2026-08-22,
+carrying the span it refused beside the bounds it was judged against so the
+loop learns which edge it crossed, and this section's prose has argued the
+case since that date while the block held four - the ruling reaching the
+banner and the prose and never the enumeration beside them, the drift the
+audit of 2026-08-26 names as the corpus's dominant failure, caught here.
+
 **Revised:** 2026-08-25, this Spec is named the election's shape authority.
 `weaver-trace` holds a second `Election` of this shape because it links nothing, and
 from this date the record carries that form too, making four representations of one
@@ -1567,6 +1575,7 @@ pub enum TokenRefusal {
     OutOfOrder,
     Overflow { resident: u64, requested: u64, capacity: u64 },
     MalformedDelta,
+    UnremovableSpan { from: u64, to: u64, prefix: u64, resident: u64 },
 }
 ```
 

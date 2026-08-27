@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-26, third of this date, the elision's claim takes its
+record. Section 6 has argued since 2026-08-22 that the `elision` event is
+authored from the ask and not the answer, and the code cites
+`harness-elision-authors-from-the-ask` at the site and at its watch, but no
+record declared the node - the audit of 2026-08-26 found the edge dangling.
+The record lands at the arguing clause, tagged for the scripted-seam watch.
+The census counts are deferred to the counting pass per the operator's
+ruling of 2026-08-26, one pass per document rather than piecemeal.
+
 **Revised:** 2026-08-26, second of this date, the state channel arrives instead
 of being dialed.
 Per the operator's ruling of this date, section 6's state-port clause names
@@ -1956,6 +1965,19 @@ contract. A context that shrank without a record would break the same
 accumulation the flush's event exists to protect, and an interior removal
 breaks it harder: a flush leaves a suffix a reader could infer from the
 counts, and an elision leaves a sequence no count describes.
+Perturbation-verified: the scripted seam answers counts deliberately
+unroundable and a span the harness never sent, so an event read from the
+answer or arrived at by default fails on both members.
+
+```graph
+node: harness-elision-authors-from-the-ask
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-elision-authors-from-the-ask
+```
 
 **The seat carries the state port, 2026-08-19, through the front door this
 section names.** The context-injection loop needed a port the granted
