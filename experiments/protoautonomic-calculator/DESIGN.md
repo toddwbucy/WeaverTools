@@ -138,8 +138,8 @@ testing something else.
 
 **The seat is eight calls**, per `docs/technical/weaver-agents/loop.md`.
 That page also records a live discrepancy worth knowing, the loop file's own
-header saying seven where the connector exposes
-eight, rechecked 2026-08-24. **The fixture uses three of the eight.** The
+header saying seven where the connector exposes eight, rechecked
+2026-08-24. **The fixture uses three of the eight.** The
 exclusions are listed because each is a confound this experiment is built to
 avoid, and the list is complete against the eight so that no port is
 silently neither used nor refused:

@@ -184,7 +184,7 @@ def run_session(cfg, probe, depth, iteration):
         if len(replay_all) < len(source_turns):
             rec["verdict"] = (
                 f"replay read short: expected {len(source_turns)} turns,"
-                f" found {len(replay_all)} - sink lag rather than divergence"
+                f" found {len(replay_all)} - the record is incomplete"
             )
             return rec
         replay_by = {t["turn"]: t for t in replay_all}

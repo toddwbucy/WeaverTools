@@ -424,7 +424,7 @@ def run_cell(cfg, cell, outdir):
         if len(replay_all) < len(source_turns):
             report["verdict"] = (
                 f"replay read short: expected {len(source_turns)} turns,"
-                f" found {len(replay_all)} - sink lag rather than divergence"
+                f" found {len(replay_all)} - the record is incomplete"
             )
             return report
         all_match = len(replay_all) == len(source_turns)
@@ -450,9 +450,16 @@ def run_cell(cfg, cell, outdir):
         report["replay_run"] = replay_run
         report["verdict"] = "REPRODUCED" if all_match else "NOT REPRODUCED"
 
-        # Deposit the two runs' events beside the report.
-        for label, run_events in (("source", source_events),
-                                  ("replay", replay_events)):
+        # **Deposited from a fresh read rather than from the snapshots the
+        # comparison used.** Those were taken the moment `cut_turns` was
+        # satisfied, which on the source side is before its unload, so a
+        # deposit made from them holds a run with no closing event and a
+        # consumer cannot tell from the file that the run ended cleanly. The
+        # comparison is unaffected either way and this costs one read a cell.
+        _, whole = read_runs(cfg["trace"], keep=6)
+        for label, run in (("source", source_run), ("replay", replay_run)):
+            run_events = whole.get(run) or (
+                source_events if label == "source" else replay_events)
             with open(os.path.join(outdir, f"cell-{name}-{label}.ndjson"), "w") as f:
                 for e in run_events:
                     f.write(json.dumps(e) + "\n")
