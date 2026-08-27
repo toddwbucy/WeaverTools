@@ -2,7 +2,17 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-08-26, the first door's end arrives with the process. Per the
+**Revised:** 2026-08-26, second of this date, the seam states its mechanics.
+The code act's elections of this date are declared, per the audit of the
+same date: section 2 carries the adoption's probe beside the number,
+section 4 carries the door's re-stand on any preload close with the seal
+apart and monotonic, and section 4 names the three protocol bounds the
+member enforces - the answer ceiling, the inbound frame cap, and the answer
+write deadline - each with what its breach means. The retirement's
+same-transaction claim is made true in code rather than narrowed here, the
+index build joining the delete's transaction in the stacked code act.
+**Revised:** 2026-08-26, first of this date, the first door's end arrives
+with the process. Per the
 operator's ruling of this date: section 2 stops judging a credential on the
 first door, the end being an inherited half of a pair admin creates at the
 spawn and possession being the authentication for a channel with no name.
@@ -140,9 +150,14 @@ on this door, the one party that can hold the other end being the one the
 enter handed it to. The end's number is the code act's to elect, a fixed
 convention between this crate and admin rather than a value the vector
 carries, so the vector's counts are the territory's and the preload path's
-alone, per `weaver-admin-Spec` section 6. The choreography election below is
-narrowed once already by section 4 and now again by the ruling: what remains
-that act's is the number alone.
+alone, per `weaver-admin-Spec` section 6. **The number is probed before it
+is adopted**: the member reads the number's socket type and refuses, with a
+named fault, a number holding no stream socket, because a hand-run process
+holds whatever its shell left there and an adoption would read it as seam
+traffic and close it on exit. The probe borrows and owns nothing, so the
+refusal closes nothing that is not this process's own. The choreography
+election below is narrowed once already by section 4 and now again by the
+ruling: what remains that act's is the number and the probe's mechanics.
 The preload door's name arrives on the vector under a diagnostic binding and
 binds under this member's own territory, the credential judgment of section
 4 unchanged on it.
@@ -298,6 +313,22 @@ serves what it kept in the form it kept it. A malformed ask is dropped whole the
 way a malformed distillate is, and the resulting silence is the harness's
 bound to convert into a missing answer.
 
+**Three protocol bounds are this crate's elections, each named with what its
+breach means, per the audit of 2026-08-26.** The answer ceiling is one
+mebibyte: an answer past it is not sent at all, silence the asking side's
+bound converts into the missing answer per `weaver-harness-state-contract`
+section 3, because custody never invents an answer shape for a fault - and
+the ceiling is reachable on an ordinary session through `replay`, which
+serves every held event, so a loop reading a missing answer there is told
+the truth about the seam and nothing about the holdings. The inbound frame
+cap is eight mebibytes: one frame larger is not the seam's traffic and the
+door that carried it ends as closure, the peer holding a credential and not
+a license to exhaust this process. The answer write deadline is two
+seconds: a peer that takes nothing for that long has stopped reading, and a
+custodian wedged on its behalf would cost the session its custody, so the
+seam retires with the holdings standing. The values are this act's and a
+measurement may move them, the meanings being the elections.
+
 **The preload door lands its distillates through the same path the first
 door does, and that is the mechanism of the contract's indistinguishability
 claim.** A distillate arriving on the preload channel parses, transacts, and
@@ -335,7 +366,16 @@ is not the preload channel's openness: it is false before any dial, false
 mid-stream, false after a sealless close, and true from the seal frame on.
 Where the member stands with the preload door, a `replay` ask parks until
 the fact is true, surviving the preload channel's close, answered at the
-seal against the sealed holdings in one frame stream like any answer. The
+seal against the sealed holdings in one frame stream like any answer. **The
+door itself survives the channel too**: on any close of the preload
+channel the member unlinks and rebinds the name and the per-channel opener
+state resets, per the contract's retry mechanism, while the seal fact
+stands apart and is never reset, so a retry's opener retires the dead
+prefix and a parked ask still answers only at a seal. A re-stand whose bind
+fails logs the fault and the member serves on doorless, the derivative
+degrading rather than the standing ending, where the same failure at the
+initial stand is fatal because nothing has been served yet that a death
+would interrupt. The
 parking is the serve
 loop's and blocks nothing else: distillates land and the other asks answer
 while a replay ask waits, one parked slot per channel sufficing because a
