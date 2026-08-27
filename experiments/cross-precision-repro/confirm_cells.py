@@ -103,23 +103,106 @@ def gate_turn(cfg, text, timeout=600):
     return json.loads(line)
 
 
-def read_runs(trace_path):
+def read_runs(trace_path, keep=None):
+    """Run -> its events, in first-appearance order.
+
+    **`keep` reads the tail rather than the file**, and a caller wanting the
+    most recent runs should pass it. The trace is append-only and grows
+    without bound, so a full parse costs the whole history to answer a
+    question about its end: measured 2026-08-27 against a 251 MiB trace, the
+    full scan took 4.0 s and ran twice per cell, which is the harness
+    charging a run for every run before it. With `keep` the cost follows the
+    tail instead.
+
+    The scan walks backward in chunks and stops one run past the `keep`th,
+    so the runs it returns are whole rather than cut at a chunk edge. A
+    partial line at a chunk boundary is held for the next block for the same
+    reason. `keep=None` reads everything, which is the original behaviour.
+    """
+    lines = open(trace_path) if keep is None else _tail_lines(trace_path, keep)
     runs = {}
     order = []
-    with open(trace_path) as f:
-        for line in f:
-            try:
-                e = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            r = e.get("run")
-            if r is None:
-                continue
-            if r not in runs:
-                runs[r] = []
-                order.append(r)
-            runs[r].append(e)
+    for line in lines:
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        r = e.get("run")
+        if r is None:
+            continue
+        if r not in runs:
+            runs[r] = []
+            order.append(r)
+        runs[r].append(e)
     return order, runs
+
+
+def _tail_lines(trace_path, keep, chunk=1 << 20):
+    """The trailing lines covering the last `keep` runs, in file order."""
+    with open(trace_path, "rb") as f:
+        f.seek(0, os.SEEK_END)
+        pos = f.tell()
+        held = b""
+        out = []
+        seen = []
+        done = False
+        while pos > 0 and not done:
+            step = min(chunk, pos)
+            pos -= step
+            f.seek(pos)
+            block = f.read(step) + held
+            parts = block.split(b"\n")
+            # The first element may be the tail of a line beginning further
+            # back, so it is held for the next block rather than parsed here.
+            held = parts[0]
+            for raw in reversed(parts[1:]):
+                if not raw.strip():
+                    continue
+                out.append(raw)
+                try:
+                    r = json.loads(raw).get("run")
+                except json.JSONDecodeError:
+                    continue
+                if r is not None and r not in seen:
+                    seen.append(r)
+                    # One past `keep`: the `keep`th run is whole only once a
+                    # newer boundary has been crossed.
+                    if len(seen) > keep:
+                        done = True
+                        break
+        if not done and held.strip():
+            out.append(held)
+    return [raw.decode("utf-8", "replace") for raw in reversed(out)]
+
+
+def await_turns(trace_path, want, keep=4, timeout=30.0):
+    """The newest run once it carries `want` turns, or once time runs out.
+
+    **The sink writes after the close answers**, so a read taken the instant
+    a turn closes can miss the events that turn produced. This was invisible
+    while `read_runs` scanned the whole trace, because the scan itself took
+    seconds and the sink caught up inside it; the tail read of 2026-08-27
+    removed that accidental delay and the race surfaced as a run one turn
+    short, every time, the missing turn always the last. Waiting for the
+    record is what the harness meant to do, and an accidental sleep is not a
+    way to do it.
+
+    Answers `(run, turns)` with whatever stands when the count is reached or
+    the timeout expires, and the caller reports the shortfall - a wait that
+    raised would turn a slow sink into a failed cell.
+    """
+    end = time.time() + timeout
+    run, turns = None, []
+    while True:
+        order, runs = read_runs(trace_path, keep=keep)
+        if order:
+            run = order[-1]
+            turns = cut_turns(runs[run])
+            if len(turns) >= want:
+                return run, turns
+        if time.time() >= end:
+            return run, turns
+        time.sleep(0.05)
 
 
 def cut_turns(events):
@@ -245,12 +328,10 @@ def run_cell(cfg, cell, outdir):
                 report["verdict"] = f"source turn not answered: {close}"
                 return report
 
-        order, runs = read_runs(cfg["trace"])
-        if not order:
+        source_run, source_turns = await_turns(cfg["trace"], 2)
+        if source_run is None:
             report["verdict"] = "the trace holds no runs - wrong path or silent sink"
             return report
-        source_run = order[-1]
-        source_turns = cut_turns(runs[source_run])
         if len(source_turns) != 2:
             report["verdict"] = f"expected 2 source turns, found {len(source_turns)}"
             return report
@@ -282,7 +363,8 @@ def run_cell(cfg, cell, outdir):
             return report
         replay_run = runs_seen.pop()
 
-        order, runs = read_runs(cfg["trace"])
+        _, replay_probe = await_turns(cfg["trace"], len(source_turns))
+        order, runs = read_runs(cfg["trace"], keep=4)
         if replay_run not in runs:
             report["verdict"] = (
                 f"the closes named run {replay_run} but the trace does not carry"
