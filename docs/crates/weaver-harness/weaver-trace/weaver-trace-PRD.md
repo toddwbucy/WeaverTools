@@ -13,7 +13,8 @@ grew to twenty-one on 2026-08-22 and section 3.1's table still ended at
 `model.field` with the count word at nineteen - the rulings reached the
 banners and the arguing prose and never the enumeration beside them, the
 drift the audit of 2026-08-26 names as the corpus's dominant failure. Two
-rows and the count word land, and nothing else changes.
+rows, the count word, and the paragraph naming the two kinds land, and
+nothing else changes.
 
 **Revised:** 2026-08-25, the tee's election joins the bracket. The `load`
 event named three elections and not the tee's, so the record said what the model
