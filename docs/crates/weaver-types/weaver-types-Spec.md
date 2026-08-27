@@ -1791,8 +1791,9 @@ overflow carries the session's own account of itself because the harness decides
 what a full context means and cannot decide it without the numbers. The delta is
 malformed for the family. The elision's span describes no removable region, and
 the refusal carries the span beside the bounds it was judged against so the
-loop learns which of the four edges it crossed. **`OutOfOrder` is the same word loop 0's refusal
-carries and is not the same case**, because the states it is judged against are
+loop learns which of the four edges it crossed. **`OutOfOrder` is the same word
+loop 0's refusal carries and is not the same case**, because the states it is
+judged against are
 the decode seam's, which is why the trio carries its own rather than drawing
 loop 0's.
 
