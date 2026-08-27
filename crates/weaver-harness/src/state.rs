@@ -95,7 +95,7 @@ impl StateSeam {
         if !self.send(b"{\"ask\":{\"shape\":{}}}\n") {
             return None;
         }
-        let line = self.await_line()?;
+        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
         parse_shape_answer(&line)
     }
 
@@ -114,6 +114,34 @@ impl StateSeam {
         answered
     }
 
+    /// The replay ask, per the contract and `weaver-harness-Spec` section
+    /// 6's 2026-08-24 clause: the session's elected events whole, in
+    /// landing order, as the member answered them. **The bound is the
+    /// caller's to pass**, because the replay ask is the one whose answer
+    /// lawfully waits, parked at an open preload until the seal, and only
+    /// the asking loop knows how long a preload is worth waiting on. The
+    /// same one-strike economics as the other asks: a bound that expires
+    /// retires the serve direction, a late answer otherwise reading as the
+    /// next ask's.
+    pub(crate) fn ask_replay(&mut self, bound_ms: u64) -> Option<Vec<Recalled>> {
+        if self.dead {
+            return None;
+        }
+        let answered = self.replay_exchange(bound_ms);
+        if answered.is_none() {
+            self.dead = true;
+        }
+        answered
+    }
+
+    fn replay_exchange(&mut self, bound_ms: u64) -> Option<Vec<Recalled>> {
+        if !self.send(b"{\"ask\":{\"replay\":{}}}\n") {
+            return None;
+        }
+        let line = self.await_line(bound_ms)?;
+        parse_replay_answer(&line)
+    }
+
     fn recall_exchange(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
         let ask = match last_turns {
             Some(bound) => format!("{{\"ask\":{{\"recall\":{{\"last-turns\":{bound}}}}}}}\n"),
@@ -122,7 +150,7 @@ impl StateSeam {
         if !self.send(ask.as_bytes()) {
             return None;
         }
-        let line = self.await_line()?;
+        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
         parse_recall_answer(&line)
     }
 
@@ -144,9 +172,8 @@ impl StateSeam {
     /// Await one line inside the bound. The channel shares the tee's
     /// nonblocking flag, so the wait is a poll deadline rather than a read
     /// timeout.
-    fn await_line(&mut self) -> Option<String> {
-        let deadline = std::time::Instant::now()
-            + std::time::Duration::from_millis(u64::from(ANSWER_BOUND_MS));
+    fn await_line(&mut self, bound_ms: u64) -> Option<String> {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
         let mut buffer: Vec<u8> = Vec::new();
         loop {
             if let Some(position) = buffer.iter().position(|&b| b == b'\n') {
@@ -205,6 +232,19 @@ fn parse_shape_answer(line: &str) -> Option<SessionShape> {
 /// Parse the recall answer, per the contract:
 /// `{"answer":{"recall":{"events":[{"envelope":{...},"pairs":{...}}]}}}`.
 /// A frame that does not carry the whole shape answers nothing.
+/// The replay answer's parse, the recall's shape under the replay's name:
+/// the distillate's own shape served back, envelope and pairs, in landing
+/// order.
+fn parse_replay_answer(line: &str) -> Option<Vec<Recalled>> {
+    let value: serde_json::Value = serde_json::from_str(line).ok()?;
+    let events = value
+        .get("answer")?
+        .get("replay")?
+        .get("events")?
+        .as_array()?;
+    parse_recalled_events(events)
+}
+
 fn parse_recall_answer(line: &str) -> Option<Vec<Recalled>> {
     let value: serde_json::Value = serde_json::from_str(line).ok()?;
     let events = value
@@ -212,6 +252,12 @@ fn parse_recall_answer(line: &str) -> Option<Vec<Recalled>> {
         .get("recall")?
         .get("events")?
         .as_array()?;
+    parse_recalled_events(events)
+}
+
+/// One event list off either serving answer, the distillate's shape read
+/// back: envelope fields by name, pairs as raw text.
+fn parse_recalled_events(events: &[serde_json::Value]) -> Option<Vec<Recalled>> {
     let mut recalled = Vec::with_capacity(events.len());
     for event in events {
         let envelope = event.get("envelope")?;
@@ -340,5 +386,42 @@ mod tests {
         let shape = seam.ask_shape().expect("answered");
         assert_eq!(shape.runs[0].run, "r-1");
         responder.join().expect("responder");
+    }
+
+    /// **The replay ask crosses under its own name and reads the answer's
+    /// shape back**, per `weaver-harness-Spec` section 6's 2026-08-24
+    /// clause: the wire ask is the contract's, the caller's bound is the
+    /// wait, and the answer parses as the distillate's shape served back,
+    /// envelope and pairs, whole or not at all. A frame under the recall's
+    /// name is not a replay answer, which is what pins the two parses
+    /// apart.
+    #[test]
+    fn the_replay_ask_crosses_and_its_answer_parses() {
+        let (ours, theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let responder = std::thread::spawn(move || {
+            let mut peer = theirs;
+            let mut taken = [0u8; 256];
+            let count = peer.read(&mut taken).expect("reads the ask");
+            assert_eq!(&taken[..count], b"{\"ask\":{\"replay\":{}}}\n");
+            peer.write_all(
+                b"{\"answer\":{\"replay\":{\"events\":[{\"envelope\":{\"session\":\"s\",\
+                \"run\":\"r-1\",\"kind\":\"model.output\",\"sequence\":\"4\"},\
+                \"pairs\":{}}]}}}\n",
+            )
+            .expect("answers");
+        });
+        let events = seam.ask_replay(2_000).expect("answered");
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].kind, "model.output");
+        assert_eq!(events[0].sequence, "4");
+        responder.join().expect("responder");
+
+        // The recall's name does not parse as a replay answer.
+        assert!(
+            parse_replay_answer("{\"answer\":{\"recall\":{\"events\":[]}}}").is_none(),
+            "the two answers stay apart by name"
+        );
     }
 }
