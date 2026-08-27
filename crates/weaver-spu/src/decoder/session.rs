@@ -37,9 +37,8 @@
 //! The behaviour and the surface are two records with two instruments: the
 //! resident length moving only by appends and the recorded reducers is a
 //! perturbation test and the missing method is this compile-fail pin. Neither
-//! claims the other's half, because a pin says a
-//! rewind cannot be written and says nothing about a turn that re-prefills
-//! through the append path instead.
+//! claims the other's half, because a pin says a rewind cannot be written and
+//! says nothing about a turn that re-prefills through the append path instead.
 
 use crate::decoder::backend::{Backend, DecodeFault, FlushMechanism, TokenId};
 use crate::measurement;

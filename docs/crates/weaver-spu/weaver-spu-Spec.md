@@ -1069,9 +1069,9 @@ which is the discipline stated as an absence, and the absence is what section
 10 pins. **The behaviour and the surface are two records with two instruments,**
 the resident length moving only by appends and the two recorded reducers being
 section 10's perturbation test and the missing method being its compile-fail
-pin, and neither claims the other's half:
-a pin says a rewind cannot be written and says nothing about a turn that
-re-prefills through the append path instead.
+pin, and neither claims the other's half: a pin says a rewind cannot be
+written and says nothing about a turn that re-prefills through the append
+path instead.
 
 ```graph
 node: spu-session-never-rewinds
@@ -2459,10 +2459,10 @@ between turns, so a flush arriving mid-generation answers the same, the cancel o
 section 4.3 being what that case has instead. The elision is valid on the flush's
 ground and for its reason, per the decode contract's ordering: a span named
 against a sequence still growing names positions that will have moved by the
-time it lands. **Cancel is the one directive whose
-window is the session rather than the generation,** and a cancel at rest answers
-at rest rather than refusing, which is the contract's own reading and not a
-fourth position this document adds.
+time it lands. **Cancel is the one directive whose window is the session
+rather than the generation,** and a cancel at rest answers at rest rather
+than refusing, which is the contract's own reading and not a fourth position
+this document adds.
 
 **Each seam carries its own refusal type and neither carries a twin of the
 other's,** per the split above: the residency seam answers a `lifecycle-refusal`
