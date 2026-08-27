@@ -1067,8 +1067,9 @@ the recurrent state stays, and the failure surfaces later as a position error
 far from its cause. **This crate calls no scoped-clear on a resident range,**
 which is the discipline stated as an absence, and the absence is what section
 10 pins. **The behaviour and the surface are two records with two instruments,**
-the monotonic resident length being section 10's perturbation test and the
-missing method being its compile-fail pin, and neither claims the other's half:
+the resident length moving only by appends and the two recorded reducers being
+section 10's perturbation test and the missing method being its compile-fail
+pin, and neither claims the other's half:
 a pin says a rewind cannot be written and says nothing about a turn that
 re-prefills through the append path instead.
 
