@@ -1286,9 +1286,9 @@ as the ceiling it is: the unelected rollback path would bound the refill by
 what follows the span for the families that can roll back, per section 12,
 and until that election the figure a loop's elision policy prices against
 is a prefill of what remains, so a loop consolidates its spans rather than
-eliding per turn. The discipline of
-section 4.2 holds here unweakened - the interior outcome is reached through
-the re-establish path and never through a scoped clear on the backend.
+eliding per turn. The discipline of section 4.2 holds here unweakened - the
+interior outcome is reached through the re-establish path and never through
+a scoped clear on the backend.
 
 **The bounds refuse rather than clamp, which is the flush's rule reversed
 and deliberately.** Four spans describe no removable region, per the decode
