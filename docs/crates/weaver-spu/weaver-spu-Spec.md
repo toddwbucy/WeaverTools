@@ -1336,9 +1336,12 @@ an empty backend under a long resident account, the
 position-error-far-from-cause failure the append-only discipline exists to
 prevent, so the session closes rather than carrying the disagreement. The
 confirmation arrives only after the shortened state holds, per the decode
-contract's ordering, and the span is state and never the record: the record
-keeps the elided material and gains the `elision` event, authored by the
-harness from its own ask.
+contract's ordering. **The span is state and never the record**: what the
+span removes is the resident sequence, and no operation in this program
+removes anything from a trace. The record keeps the elided material and
+gains the `elision` event, which carries the bounds the loop named beside
+the resident counts the seam returned, authored by the harness from its own
+ask.
 
 ## 5. The family libraries
 
