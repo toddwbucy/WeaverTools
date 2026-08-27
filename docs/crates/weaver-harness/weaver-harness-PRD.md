@@ -8,6 +8,12 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-27, the diagnostic seam takes its paper. Section 4 declares
+the `link` seam to `weaver-diagnostic` with its contract as the `via`, the record
+that section held as owed until the contract existed to name. The seam count moves
+to six, the two record mechanisms being the two links, and the dependency surface
+moves to four internal crates as that section said it would in one act. The socket
+table is unchanged, both new members of the count crossing no process line.
 **Revised:** 2026-08-26, the state seam loses its name. Section 4's socket
 census recuts one row per the operator's ruling of this date: the state
 channel is a pair admin creates and this crate receives at the enter,
@@ -53,12 +59,6 @@ port per the Spec's section 6.
 socket seam to `weaver-state` under `weaver-harness-state-contract`, the
 harness declaring as the asking side, with the member reached over a wire
 rather than linked and the dependency surface unchanged.
-**Revised:** 2026-08-27, the diagnostic seam takes its paper. Section 4 declares
-the `link` seam to `weaver-diagnostic` with its contract as the `via`, the record
-that section held as owed until the contract existed to name. The seam count moves
-to six, the two record mechanisms being the two links, and the dependency surface
-moves to four internal crates as that section said it would in one act. The socket
-table is unchanged, both new members of the count crossing no process line.
 **Date filed:** 2026-07-28
 **Revised:** 2026-08-12, second of this date, the receipt retires. The report
 the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
@@ -400,8 +400,12 @@ own contract, per apex 5.1, and this crate gains a seam rather than a dependency
 
 ## 4. The seams
 
-The harness is party to six seams, and every one of them is governed by a named
-contract, per apex 5.1. Four cross a process line and are Unix sockets that
+The harness is party to six seams by this section's own enumeration, and every one
+of them is governed by a named contract, per apex 5.1. **The enumeration predates
+the classify seam and does not carry it**, which is a gap in this list rather than
+in the count taken from it, named here so a reader comparing this figure against
+the graph finds the reason rather than a discrepancy, and owed to the act that
+brings that seam into this charter. Four cross a process line and are Unix sockets that
 authenticate their peer, by credential where the channel has a name and by possession
 where it has none. The coordination seam is a named socket this crate binds and
 authenticates by credential, root or refused, per `weaver-admin-harness-contract`
@@ -489,9 +493,12 @@ whose own example is this pair's sibling. **Its `seam` record tagged `link` is
 declared below as of 2026-08-27**, the act that wrote
 `weaver-harness-diagnostic-contract` and the member's Spec landing the `via` this
 record needs and the surface `weaver-harness-Spec` section 9 held open.
-The dependency-surface claim above read against three internal crates until it did,
-which is what the manifest held, and both go to four in this one act, so the graph
-and the build agree.
+**The graph and the manifest part here on purpose.** The edge is declared by this
+document and the dependency by a manifest, so the graph goes to four with this act
+and the manifest goes to four with the act that builds the member. The
+dependency-surface claim above therefore reads four crates the corpus links and
+three the tree compiles, and `weaver-harness-Spec` section 1 states the same split
+from the side that reads against the manifest.
 
 ```graph
 edge: seam

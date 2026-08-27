@@ -63,12 +63,13 @@ direction only.
 because `weaver-types-PRD` section 5 asks for it even when it is empty: the
 recorder receives events and never reads the operator's declaration.
 
-**From `weaver-trace`.** The canonical form of `weaver-trace-Spec` section 2,
-one line of UTF-8 JSON per record with the newline as the separator, which
-`weaver-diagnostic-PRD` section 6 fixes as this record's form and names
-authoritative under G5. **The name crosses as a rule rather than as a
-type**: no crate on this seam links `weaver-trace`, and where this seam's
-rendering diverges from that section the defect is this seam's.
+**From `weaver-trace`.** Nothing drawn. The canonical form this record renders
+in is `weaver-trace-Spec` section 2's, which `weaver-diagnostic-PRD` section 6
+fixes as this record's and names authoritative under G5, **and that is a rule this
+seam follows rather than a definition it draws**: no crate here links that one, no
+name crosses, and a divergence from it is a defect against that section rather than
+a breach of this contract. The clause is present with that answer because a group
+is stated even when empty.
 
 **From `weaver-diagnostic`.** The `diagnostic-trace` itself, the closed
 diagnostic event-kind vocabulary and its per-kind payload shapes, the
@@ -84,10 +85,6 @@ crates and touches no third.
 edge: draws
 from: weaver-harness-diagnostic-contract
 to: message-model
-
-edge: draws
-from: weaver-harness-diagnostic-contract
-to: canonical-form
 
 edge: draws
 from: weaver-harness-diagnostic-contract
@@ -170,10 +167,13 @@ rendering in one place and the acknowledgment is the sequence.
 - **One outcome, stated once.** The closing event names which outcome the
   pass reached, from the closed set `weaver-diagnostic-Spec` declares, and
   names it from what the pass observed rather than from what it expected.
-- **The record it replays, named at the open.** The opening event names the
-  session the replay read from and the elections the pass ran under, so a
-  reader holds the provenance without inference. **The envelope's own session
-  is the diagnostic run's**, not the replayed one, because a derived record
+- **The record it replays, named once it is known.** The opening event names
+  the elections the pass ran under, which the load declares, and the identity
+  of the record being replayed crosses on its own kind once the pass has
+  established it, that fact not being in the harness's hands when the bracket
+  opens. A pass that never establishes it authors no such event and invents
+  none. **The envelope's own session is the diagnostic run's**, not the
+  replayed one, because a derived record
   that wore its source's name would answer the first question a reader asks
   of a file with the wrong answer.
 - **Envelope completeness.** Every event carries all five envelope fields,
@@ -185,9 +185,11 @@ rendering in one place and the acknowledgment is the sequence.
 ## 4. What the recorder owes
 
 - **Ordering and canonical form.** A gapless run-scoped sequence over the
-  run's whole admitted traffic, and one line of UTF-8 JSON per record with
-  the newline as the separator, per `weaver-trace-Spec` section 2 as this
-  record's authority.
+  run's whole admitted traffic, and every event rendered in the canonical
+  form `weaver-trace-Spec` section 2 fixes, that section being this record's
+  authority per `weaver-diagnostic-PRD` section 6. What that form is stays
+  there rather than being restated here, a contract naming the obligation
+  and the representation naming the shape.
 - **Admission before the write, always**, so a refusal touches the sink at
   no point.
 - **One rendering.** The bytes the sink receives are rendered once, so two

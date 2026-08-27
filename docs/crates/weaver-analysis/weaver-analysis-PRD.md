@@ -5,6 +5,12 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-08-27, the terminal marker this charter waited on landed.
+Section 4's cell on how a diagnostic-trace says it ended settles in
+`weaver-diagnostic-Spec`, the document this cell named as owed it, and the cell
+records the shape rather than restating its argument. Section 3's gate is
+therefore honourable, and what this crate still owes is its own Spec. Per epic 293
+row 12.
 **Revised:** 2026-08-25, third of this date, the gate names what it rests on.
 Section 3 claimed this crate reads the null replay's outcome from the record and
 gates downstream work on it, and a reader at the end of the bytes available to
@@ -231,8 +237,14 @@ a sink.
   comparison and ended, ended without finishing, and not ended. The first three
   are facts the run knows and can author. The fourth is the absence of the
   other three, which is why it costs nothing to distinguish once any of them
-  exists. Owed with `weaver-diagnostic`'s Spec and named from this side because
-  this crate is the one that pays for its absence.
+  exists. **Settled 2026-08-27 in `weaver-diagnostic-Spec`**, which was owed it
+  and which lands the marker as this cell's criterion asked: the first three
+  outcomes ride `replay.closed`'s `ReplayOutcome`, the second splitting by which
+  of certification's two comparisons diverged, and the fourth is that event's
+  absence and costs nothing, exactly as this cell read it forward. The identity a
+  claim rests on rides its own kind for a reason this cell did not foresee: a pass
+  whose replay answer never arrived can open a bracket and author no identity,
+  which is how the account this crate reads says that nothing was replayed.
 - **This charter names no Rust item and elects no representation.** Its Spec
   is owed, and the driver's shape and the parser's land there rather than
   here. **The certification's mechanics do not**, that comparison belonging to

@@ -489,14 +489,17 @@ after this branch rather than beside it. `weaver-trace` is the seam tagged `link
 recorder this crate authors through under a serving binding, and `weaver-diagnostic`
 will be the recorder it authors through under a diagnostic one, per apex section 6 as
 ruled 2026-08-24, and is absent from the list above because it is absent from the tree.
-**Its contract is owed and its edge lands with it.** `weaver-trace`'s link is recorded
-as a seam tagged `link` via `weaver-harness-trace-contract`, and the diagnostic member
-has no such contract yet because the surface it presents is the open election of section
-9. No edge is declared in the meantime, a `via` naming a document that does not exist
-being worse than the absence it would fill, and the owed contract is named in
-`weaver-harness-PRD` beside the edge it will carry. **The graph and the manifest
-therefore agree at three** and go to four together, which is what keeps this section's
-record checkable by the instrument that checks it. `serde_json` encodes and decodes the
+**Its contract landed 2026-08-27 and its edge with it.** `weaver-trace`'s link is
+recorded as a seam tagged `link` via `weaver-harness-trace-contract`, and the
+diagnostic member's is recorded the same way via
+`weaver-harness-diagnostic-contract`, declared in `weaver-harness-PRD` section 4
+where the asking side carries it. **The graph is therefore at four and the manifest
+at three**, and they part on purpose until the member is built: an edge is declared
+by a document and a dependency by a manifest, so the act that wrote the papers moved
+the first and the act that writes the crate moves the second. **This section's list
+reads against the manifest**, which is the instrument that checks it, so the crate's
+absence from the list above is the list being right rather than behind.
+`serde_json` encodes and decodes the
 loop 0 envelopes, whose JSON election is `weaver-types-Spec` section 4.3's. `nix` is the
 OS surface, elected in section 2.4 where the grounds and the record live. **The set and
 the feature are two records rather than one.** Gate H2 reads the internal edges against
@@ -1192,16 +1195,16 @@ to: axiom-contract-is-a-complete-interface
 **The run state is the fan-out's progress held as data, which is what makes the
 unwind total.**
 
-**The `recorder` field below is the serving shape and the diagnostic one is not
-elected here.** `Recorder` is `weaver-trace`'s concrete type, per
-`weaver-trace-Spec` section 5, and a diagnostic run authors through
-`weaver-diagnostic` instead, per apex section 6 as ruled 2026-08-24. What lets
-one field hold either - a shared trait, an enum over the two, or a generic
-parameter on `Run` - is exactly the election section 9 holds open with the
-member's Spec, and naming a type here would settle it one screen from where it
-is declared unsettled. The struct is shown in its current form, which is the
-form a serving binding builds, and the field's type moves in the act that
-writes the member's contract.
+**The `recorder` field below is the serving shape, and what holds either is settled
+while the field still waits on the member existing.** `Recorder` is
+`weaver-trace`'s concrete type, per `weaver-trace-Spec` section 5, and a diagnostic
+run authors through `weaver-diagnostic` instead, per apex section 6 as ruled
+2026-08-24. **A shared trait is refused** by `weaver-diagnostic-Spec` section 5,
+which mirrors the serving surface and shares no type with it precisely so neither
+crate depends on the other, so what holds either field is an enum over the two
+concrete recorders. The struct is shown in its current form, which is the form a
+serving binding builds, and **the field's type moves in the act that builds the
+member**, there being no second type to name until the crate exists.
 
 ```rust
 struct Run {
@@ -1278,12 +1281,14 @@ which stands the empty working structure up. The count is one, per the human's r
 corrected to the singular in the same act as this sentence. **The receive and the
 opening event named here are the serving mechanism's**, `weaver-trace-Spec` section
 5's receive taking the one sink descriptor this Spec builds to and the `load` event
-opening the run and originating its monotonic clock. Whether the diagnostic
-mechanism presents the same receive and reuses that event kind is the same election
-the `Run` field above defers, held open by section 9 and by `weaver-diagnostic-PRD`
-section 6, so this paragraph cites the serving surface rather than settling the
-other by citation. What holds under either kind is the count, the descriptor, and
-that a run opens with an authored event.
+opening the run and originating its monotonic clock. **The diagnostic mechanism
+presents the same receive and does not reuse that event kind**, per
+`weaver-diagnostic-Spec` sections 5 and 3.2 as of 2026-08-27: the surface
+mirrors, so the descriptor arrives the same way, and the kind set carries no
+`load`, a replay's bracket being its own pair and its clock originating at the
+opening event that pair names. So this paragraph's citation of the serving surface
+reaches the receive under either kind and the event kind under one. What holds under
+either is the count, the descriptor, and that a run opens with an authored event.
 
 **Which recorder it is follows the kind, and nothing else in the walk does.**
 Both kinds receive a descriptor and author a record into it, per

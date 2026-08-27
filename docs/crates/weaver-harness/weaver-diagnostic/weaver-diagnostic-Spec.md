@@ -4,6 +4,8 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Document ID:** `weaver-diagnostic-Spec`
+**Parent:** `weaver-diagnostic-PRD`
 **Editorial:** Per the Working Rules.
 
 ---
@@ -76,6 +78,10 @@ tag: manifest
 edge: asserts
 from: weaver-diagnostic
 to: diagnostic-no-runtime-no-socket-crate
+
+edge: grounds
+from: diagnostic-no-runtime-no-socket-crate
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 ## 2. Canonical form
@@ -132,9 +138,10 @@ to: diagnostic-session-is-the-replays-own
 
 ### 3.2 The kind set
 
-**Thirteen kinds, exhaustive, and the set is this crate's own.**
+**Fifteen kinds, exhaustive, and the set is this crate's own.**
 
     replay.opened          the pass's bracket opens, and the record identifies itself
+    replay.identity        the input identity the pass established
     replay.closed          the pass's bracket closes, carrying its outcome
     turn.started           a replayed turn opens
     turn.closed            a replayed turn closes
@@ -146,13 +153,21 @@ to: diagnostic-session-is-the-replays-own
     model.output           what the forward pass produced
     model.measurement      the reading, the residual readout riding it
     model.field            the elected field, where the pass elected one
+    flush                  a cut the loop drove, as the record carries one
     fault                  a death, named
 
-**Eleven spellings are the serving vocabulary's and mean there what they mean
+**Twelve spellings are the serving vocabulary's and mean there what they mean
 here.** A kind that names the same fact carries the same spelling and the same
 payload shape, which is what makes reader compatibility a rule rather than a
-coincidence, per section 4. **Two are this record's own**, `replay.opened` and
-`replay.closed`, and no serving record carries either.
+coincidence, per section 4. **Three are this record's own**, the `replay.` trio,
+and no serving record carries any of them.
+
+**`flush` is carried because the loop is granted the flush by name.**
+`diagnostic-replay-loop` section 1 enumerates what the seat grants it, the state
+port, the decode surface, and the flush, and `weaver-harness-Spec` section 6 has the
+harness author a `flush` event on the flush's confirmation. A record that could not
+carry it would drop an act its own loop is chartered to perform, which is the
+accumulation reading broken exactly where the serving record protects it.
 
 **The serving kinds this set does not carry are absent by construction rather than
 by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
@@ -160,10 +175,10 @@ by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
 nothing to author them, and a variant standing for a case nothing produces is the
 reserved slot apex section 9 forbids. `load`, `unload`, and `session.closed` are
 absent for a different reason: they bracket a serving load and this record's bracket
-is the pass, which `replay.opened` and `replay.closed` carry. `flush` and `elision`
-are absent because a replay re-feeds a recorded path rather than managing a context
-it is composing, and a replay that later manages one is an act that adds them with
-their argument.
+is the pass, which the `replay.` trio carries. **`elision` is absent on the
+narrower ground the flush's presence leaves standing**: the loop's grant names the
+flush and not the elision, and a later act that grants one adds the kind with its
+own argument rather than finding a variant seated for it.
 
 ```graph
 node: diagnostic-kind-set-exhaustive
@@ -177,18 +192,17 @@ to: diagnostic-kind-set-exhaustive
 
 ### 3.3 The payload shapes
 
-**The mapping is total: thirteen kinds, and every kind's accepting shape is
-named.** Eleven take the serving payload of the same name, spliced or shaped as
+**The mapping is total: fifteen kinds, and every kind's accepting shape is
+named.** Twelve take the serving payload of the same name, spliced or shaped as
 `weaver-trace-Spec` section 3 shapes it, that document being authoritative and a
-divergence a defect against it. Two are declared here.
+divergence a defect against it. Three are declared here.
 
     pub struct ReplayOpened {
-        pub replayed_session: String,
-        pub source: SourceRecord,
         pub reader_elected: bool,
     }
 
-    pub struct SourceRecord {
+    pub struct ReplayIdentity {
+        pub replayed_session: String,
         pub model: ModelId,
         pub weights_hash: WeightsHash,
         pub template: TemplateId,
@@ -200,20 +214,56 @@ divergence a defect against it. Two are declared here.
 
     pub enum ReplayOutcome {
         Certified,
-        Diverged {
+        Diverged { divergence: Divergence },
+        Abandoned { reason: AbandonReason },
+    }
+
+    pub enum Divergence {
+        TokenPath {
             position: u64,
             recorded: TokenId,
             recomputed: TokenId,
         },
-        Abandoned { reason: AbandonReason },
+        Readout { position: u64, layer: u32 },
     }
 
-**`ReplayOpened` carries the provenance a reader would otherwise infer.** The
-replayed session by its own name, the source record's identity as input identity
-established it, and whether this pass ran with the reader elected, which is what
-separates the null replay from the pass beside it, per `diagnostic-replay-loop`
-section 3. The two passes of one certification are two runs under two references in
-one record, so the flag rather than the run reference is what a reader keys on.
+**`ReplayOpened` carries only what the load declared, and the provenance rides its
+own kind.** The pass's bracket opens when the run opens, which is before the replay
+ask has been answered, so what the harness holds at that moment is the pass's own
+election and nothing about the record it is about to read: the declaration does not
+name the replayed record, the driver's invocation does, per `weaver-analysis-PRD`
+section 4's placement of the path. **`replay.identity` carries the input identity
+once step one of `diagnostic-replay-loop` section 3 has established it**, which is
+the first moment the replayed session, the model, its weights hash, and the
+template are known from the answered holdings. **What `reader_elected` separates
+is the null replay from the pass beside it**, per that loop's section 3 step 3,
+each pass running as its own run under its own reference, so the flag rather than
+the reference is what a reader keys on.
+
+```graph
+node: diagnostic-identity-absent-not-invented
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-diagnostic
+to: diagnostic-identity-absent-not-invented
+```
+
+**Splitting them is what lets the record carry the loop's first named failure.**
+That loop's section 4 opens with the replay answer being absent, where the run
+"ends its run having replayed nothing and the account says so in the
+diagnostic-trace, which is how the operator learns it." A bracket whose opening
+event required the provenance could not open at all in that case, so either no
+bracket would exist and the operator would learn nothing, or one would open
+carrying members filled from nothing. **A bracket with no `replay.identity` is a
+pass that never established one**, which is the same absence-means-something
+discipline the outcome below runs on.
+
+**The monotonic clock originates at `replay.opened`.** A serving record originates
+it at `load`, per `weaver-harness-trace-contract` section 3, and this set carries no
+`load`, so the pass's own opening event is the origin and every reading in the
+bracket is relative to it.
 
 **`ReplayOutcome` is the terminal marker, and it names three of four outcomes.**
 `weaver-analysis-PRD` section 4 names the four a reader must separate: certified and
@@ -223,17 +273,21 @@ first three are facts the pass knows and authors. **The fourth is the absence of
 observation read forward: a reader that finds a bracket opened and never closed
 holds a pass that did not end, and no event has to say so.
 
-**`Diverged` carries the position and both identifiers rather than a verdict.** The
-loop names the first divergent position, per its section 3 step 2, and a reader that
-holds what was recorded beside what was recomputed can say how the two differ
-without rerunning anything, where a bare failure flag would send it back to the
-source record to learn what a comparison already knew.
+**`Divergence` separates the two comparisons certification performs**, per
+`weaver-diagnostic-PRD` section 4: the token path matches exactly or it does not,
+which is integers, and the reader's vectors compare within the GPU float tolerance
+the apex names. A single shape typed to the token path would have had a vector
+divergence routed to `Abandoned`, which collapses the second outcome into the third
+exactly as manufacturing a close would collapse the fourth. Each carries the first
+divergent position, per the loop's section 3 step 2, and the token path's carries
+both identifiers so a reader can say how the two differ without rerunning anything.
 
 **No outcome is authored for a pass that died.** The contract's section 5 forbids
 manufacturing one, and the reason is the fourth outcome: a closing event written at
 a death would collapse unended into abandoned and tell a reader a pass ended when it
-stopped. `Abandoned` is for a pass that reached its own end and declined to
-certify, which the pass authors while it is alive to author it.
+stopped. **`Abandoned` is for a pass that reached its own end without certifying**,
+whatever stopped it, the loop's likeliest being a refusal at input identity before
+any forward pass ran. What `AbandonReason` enumerates is section 8's.
 
 ```graph
 node: diagnostic-outcome-absent-not-manufactured
@@ -452,32 +506,39 @@ under gate H2. No async runtime and no socket crate in the resolved tree.
   compared byte for byte against the same event's serving line, watched to fail
   when either renderer's field order or number spelling moves.
 - The session is the replay's own: a pass over a record of session `alpha` renders
-  its envelope under the diagnostic run's session and names `alpha` in the opening
+  its envelope under the diagnostic run's session and names `alpha` in the identity
   payload alone, watched to fail when the two are crossed.
 - The record identifies itself at the open: every bracket's first event is
   `replay.opened`, watched to fail when a pass authors any other kind first.
+- No identity is invented: a pass whose replay answer never arrived authors no
+  `replay.identity`, watched to fail when the absent answer yields one filled from
+  defaults.
 - No outcome is manufactured: a pass ended without its closing event leaves an
   unclosed bracket, watched to fail when a death path authors a `replay.closed`.
 - Admission precedes the write: a refused submission leaves the sink untouched and
   consumes no sequence, watched to fail when the refusal is moved after the write.
 
+**Enforced by review, one claim.** That the readout rides the measurement where a
+serving record puts it is a claim about where a shape sits rather than a behavior a
+run can falsify, and no instrument here reaches it: a test could confirm this
+writer's placement and could not confirm it still matches the other's. The
+byte-comparison above is the nearest thing and watches the line rather than the
+member. **Review means the instrument was not bought and never that none exists**,
+and what would buy it is a shared fixture the two writers render, which wants the
+sibling crate's participation and is not this document's to elect.
+
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 6, rather than gathered here, per Document Format
-section 6. Thirteen sit there and none sits here.
+section 6. Fourteen sit there and none sits here.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate's manifest holds no
 socket crate: a seam that crosses no process line has no socket to hold, and a
 mechanism that acquired one would be claiming a boundary it does not have. The other
-four axioms reach none of these claims. **Twelve claims grounding in no invariant is
-the expected result and not a gap**, per Document Format section 4: most of this
-document is representation, and representation is what the invariants are not about.
-
-```graph
-edge: grounds
-from: diagnostic-no-runtime-no-socket-crate
-to: axiom-floor-is-vocabulary-behavior-is-socket
-```
+four axioms reach none of these claims. **Thirteen claims grounding in no invariant
+is the expected result and not a gap**, per Document Format section 4: most of this
+document is representation, and representation is what the invariants are not
+about.
 
 ## 8. Open elections
 

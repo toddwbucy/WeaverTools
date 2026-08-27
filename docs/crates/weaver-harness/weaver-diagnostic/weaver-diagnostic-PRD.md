@@ -422,10 +422,12 @@ to: diagnostic-trace
 
 **The names this crate's seam depends on are defined here and represented in the
 Spec**, per the rule that a charter is the source of a crate's definitions and a
-Spec restates none. `weaver-harness-diagnostic-contract` draws all four: the
-**diagnostic event-kind set**, the closed vocabulary of what a replay authors, the
-**diagnostic payload shapes**, one accepting shape per kind, the **replay outcome**
-the closing kind carries, and this seam's **failure vocabulary**. What each holds is
+Spec restates none. `weaver-harness-diagnostic-contract` draws these four beside
+`diagnostic-trace` above, five of this crate's definitions in all: the
+**diagnostic event-kind set**,
+the closed vocabulary of what a replay authors, the **diagnostic payload shapes**,
+one accepting shape per kind, the **replay outcome** the closing kind carries, and
+this seam's **failure vocabulary**. What each holds is
 the Spec's to represent, per its sections 3 and 6, and what they are is this
 charter's to name.
 

@@ -5,6 +5,11 @@ loop, filed under the harness's `Loops/` container per the Document Format's con
 entry. It argues no edges of its own: the seams it walks are declared in the crate
 charters, and a graph block here would duplicate a record that already has a home.
 
+**Revised:** 2026-08-27, the record this loop authors has a shape. Section 5's owed
+list moves: `weaver-diagnostic-Spec` landed and carries the kind set this loop's
+steps author, so the acts named in sections 3 and 4 have a record to land in. The
+loop's own steps are unchanged, and what remains owed of the three is the driver's
+Spec. Per epic 293 row 13.
 **Revised:** 2026-08-26, the criterion's grounding moves to the charters. Step
 one's state clause cited `weaver-trace-Spec` section 3, a certification
 criterion grounded on a representation Spec, which G2 refuses. The criterion
@@ -210,7 +215,10 @@ even the first instrument reads from a replay that did not certify.
 The capture artifact - identity, custody, dataset shape, quota - is
 `weaver-analysis-PRD` section 4's owed act, that crate holding the reading, and this
 loop writes no artifact until that act lands. The re-feed exchange is the decode seam's
-owed act, named in section 2. The driver's own shape is `weaver-analysis`'s Spec, owed,
-and the record's shape is `weaver-diagnostic`'s, owed beside it. This document is the
-workflow that binds them, and it moves when any of them lands, per the Working Rules on
-documents that cite owed acts.
+owed act, named in section 2. The driver's own shape is `weaver-analysis`'s Spec,
+still owed.
+**The record's shape landed 2026-08-27** in `weaver-diagnostic-Spec`, which carries
+the fifteen kinds this loop's acts author, the flush among them because section 1's
+grant names it, and the outcome the certification reaches. This document is the
+workflow that binds them, and it moves when any of them lands, per the Working Rules
+on documents that cite owed acts, which is what this entry records.
