@@ -16,7 +16,7 @@ landing it here rather than leaving the two documents disagreeing.
 **Revised:** 2026-08-27, second of this date, the driver takes its shape.
 `weaver-analysis-Spec` landed, closing section 4's last cell: the parser, the
 election, the projection, the preload's three frames, and the reading's gate.
-Twelve assertion records, one grounding in the floor invariant read from
+Fourteen assertion records, one grounding in the floor invariant read from
 outside the agent, where a linked dependency would make a consumer a
 compile-time dependent of the interior. Section 4's other cells stand as they
 were, the instrument suite and the capture artifact being their own acts. Per
