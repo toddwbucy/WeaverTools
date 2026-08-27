@@ -1214,9 +1214,11 @@ mod tests {
     /// because eliding nothing succeeds trivially and would report a state
     /// change that did not happen.
     ///
-    /// Perturbation: drop `to <= from` from the guard and the empty span
+    /// Perturbation: narrow the guard to `to < from` and the empty span
     /// answers `Ok` with equal counts, an elision authored over nothing.
-    /// Watched under exactly that removal.
+    /// Watched under exactly that narrowing. A full drop of the bound fails
+    /// earlier and differently, on the inverted span's underflow, and never
+    /// reaches the empty case.
     ///
     /// conforms: spu-elision-refuses-an-unremovable-span
     #[test]

@@ -1298,8 +1298,10 @@ flush's over-large `keep` bounds as arithmetic, because a `keep` past the
 resident count has a smaller true version and an unremovable span has
 none. **The empty span is the case worth asserting hardest**: eliding
 nothing succeeds trivially and would confirm a state change that did not
-happen. Watched under exactly that guard's removal, an empty span then
-answering with equal counts, an elision authored over nothing.
+happen. Watched under the guard narrowed to `to < from`, the empty span
+then passing it and answering with equal counts, an elision authored over
+nothing. A full drop of the bound fails earlier, on the inverted span, and
+never reaches this case.
 
 ```graph
 node: spu-elision-refuses-an-unremovable-span
@@ -2646,8 +2648,8 @@ than a code fact.
   answer does not.
 - The elision's two watches, both at section 4.5's records: an unremovable
   span refuses and the session stands as the ask found it, watched under the
-  empty-span guard's removal, where eliding nothing answers with equal counts,
-  an elision authored over nothing. The second: the removal is exact and
+  guard narrowed to `to < from`, where eliding nothing answers with equal
+  counts, an elision authored over nothing. The second: the removal is exact and
   ordered, asserted on the tokens themselves and watched under a kept vector
   built from the tail alone, because the confirmation's counts cannot catch a
   lost survivor or a reversed tail.
