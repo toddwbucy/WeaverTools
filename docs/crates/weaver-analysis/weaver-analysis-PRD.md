@@ -5,6 +5,12 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-08-27, the terminal marker this charter waited on landed.
+Section 4's cell on how a diagnostic-trace says it ended settles in
+`weaver-diagnostic-Spec`, the document this cell named as owed it, and the cell
+records the shape rather than restating its argument. Section 3's gate is
+therefore honourable, and what this crate still owes is its own Spec. Per epic 293
+row 12.
 **Revised:** 2026-08-25, third of this date, the gate names what it rests on.
 Section 3 claimed this crate reads the null replay's outcome from the record and
 gates downstream work on it, and a reader at the end of the bytes available to
@@ -164,17 +170,28 @@ first forward pass and name the first divergent position rather than reporting
 after a whole replay has run. What this crate does is elect the null replay,
 read its outcome from the record, and gate everything downstream on it.
 
-**That gate rests on telling a finished record from a truncated one, and
-nothing tells them apart today.** A reader that has consumed every byte
-available to it cannot yet say whether the replay certified and ended, failed
-its comparison and ended, died mid-replay leaving a partial record, or is still
-running. All four look alike to a reader at the end of what it has. **So the
-gate is conditional on a fact the record does not yet carry**, and this charter
-records that rather than resting on it: until a diagnostic-trace can say it
-ended and how, this crate holds a record it cannot safely interpret, and the
-honest behaviour is to produce nothing rather than to treat the end of available
-bytes as the end of a run. Where that marker lands is not this charter's to
-choose - see section 4. An
+**That gate rests on telling a finished record from a truncated one, and the
+record carries the fact as of 2026-08-27.** A reader that has consumed every byte
+available to it once could not say whether the replay certified and ended, failed
+its comparison and ended, ended without finishing, died mid-replay leaving a
+partial record, or was still running, and all of them looked alike at the end of
+what it had. **`replay.closed` separates the three a pass can state from the two
+it cannot**, per `weaver-diagnostic-Spec` section 3.3: its `ReplayOutcome` names
+certified, diverged, and abandoned, each authored by a pass that reached its own
+end, and **a pass that died authors no close at all**, which is that Spec's own
+refusal to manufacture one.
+
+**So the absence is one answer and not two.** A bracket with no `replay.closed`
+is a pass that did not end, and whether it died or is still running is not a
+distinction this record makes or this crate needs: both leave the same absence,
+both may yet be followed by nothing, and reading either as an ending would be
+treating the end of available bytes as the end of a run, which is what this
+paragraph refused before the marker existed and still refuses. So this crate
+gates on the outcome the record states: it produces its reading where a bracket
+closed certified, produces the divergence where one closed diverged, produces
+neither where one closed abandoned, and **produces nothing for any unclosed
+bracket, on the same terms whichever way it came to be unclosed**. Where that
+marker landed is section 4's cell, now settled. An
 earlier form of this paragraph had the comparison here on the ground that this
 crate holds both records, which is true and is not the reason the loop cannot,
 so it would have put a second implementation of one check on the other side of
@@ -231,8 +248,14 @@ a sink.
   comparison and ended, ended without finishing, and not ended. The first three
   are facts the run knows and can author. The fourth is the absence of the
   other three, which is why it costs nothing to distinguish once any of them
-  exists. Owed with `weaver-diagnostic`'s Spec and named from this side because
-  this crate is the one that pays for its absence.
+  exists. **Settled 2026-08-27 in `weaver-diagnostic-Spec`**, which was owed it
+  and which lands the marker as this cell's criterion asked: the first three
+  outcomes ride `replay.closed`'s `ReplayOutcome`, the second splitting by which
+  of certification's two comparisons diverged, and the fourth is that event's
+  absence and costs nothing, exactly as this cell read it forward. The identity a
+  claim rests on rides its own kind for a reason this cell did not foresee: a pass
+  whose replay answer never arrived can open a bracket and author no identity,
+  which is how the account this crate reads says that nothing was replayed.
 - **This charter names no Rust item and elects no representation.** Its Spec
   is owed, and the driver's shape and the parser's land there rather than
   here. **The certification's mechanics do not**, that comparison belonging to

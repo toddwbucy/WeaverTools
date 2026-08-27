@@ -4,6 +4,13 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-08-27, the record takes its shape and the seam its paper. This
+crate's Spec landed, settling the two elections section 6 held as the larger half of
+the work, and `weaver-harness-diagnostic-contract` landed with it, which lets the
+harness declare the `link` seam this crate is named by and never declares. Section 6
+gains the four vocabulary names that contract draws, defined here because a charter
+is the source of a crate's definitions, and its cells close. Per the audit of
+2026-08-26 and epic 293 row 13.
 **Revised:** 2026-08-26, the state claim's criterion joins section 4's list.
 The input-identity clause now carries the tee's election beside the five it
 checks, per `weaver-agents-PRD` section 8, which is where the criterion
@@ -318,8 +325,9 @@ serve identically, and whether their readouts agree is a finding.
 called, one caller and no other, which is `weaver-trace`'s position and for the
 same reason: a rendering mechanism is not a peer and nothing it makes travels
 except by the sink its author writes into. **It is still one end of a seam**,
-the `link` the harness declares from the asking side, and that record is owed
-with `weaver-harness-diagnostic-contract` per the cell below. The distinction is
+the `link` the harness declares from the asking side, and that record landed
+2026-08-27 with `weaver-harness-diagnostic-contract` in the act that wrote this
+crate's Spec. The distinction is
 between declaring an edge and being named by one, and this crate does the
 second only.
 
@@ -412,6 +420,47 @@ from: weaver-diagnostic
 to: diagnostic-trace
 ```
 
+**The names this crate's seam depends on are defined here and represented in the
+Spec**, per the rule that a charter is the source of a crate's definitions and a
+Spec restates none. `weaver-harness-diagnostic-contract` draws these four beside
+`diagnostic-trace` above, five of this crate's definitions in all: the
+**diagnostic event-kind set**,
+the closed vocabulary of what a replay authors, the **diagnostic payload shapes**,
+one accepting shape per kind, the **replay outcome** the closing kind carries, and
+this seam's **failure vocabulary**. What each holds is
+the Spec's to represent, per its sections 3 and 6, and what they are is this
+charter's to name.
+
+```graph
+node: diagnostic-event-kind-set
+kind: vocabulary
+
+edge: defines
+from: weaver-diagnostic
+to: diagnostic-event-kind-set
+
+node: diagnostic-payload-shapes
+kind: vocabulary
+
+edge: defines
+from: weaver-diagnostic
+to: diagnostic-payload-shapes
+
+node: replay-outcome
+kind: vocabulary
+
+edge: defines
+from: weaver-diagnostic
+to: replay-outcome
+
+node: diagnostic-failure-vocabulary
+kind: vocabulary
+
+edge: defines
+from: weaver-diagnostic
+to: diagnostic-failure-vocabulary
+```
+
 **The harness authors through this crate and the record leaves by the sink.**
 The measurement returns from the SPU by the same path the generation does,
 per apex section 3 step 6, so it reaches the harness whatever the binding's
@@ -449,17 +498,18 @@ structural instead.
 
 Open cells, each named rather than implied:
 
-- **This crate's Spec** is owed, and the diagnostic-trace's shape lands there
-  because a Spec is the only document permitted to name it. This charter
-  fixes what the record is, whose it is, and that its canonical form is
-  `weaver-trace-Spec` section 2's under G5. What it does not fix is how much
-  of that crate's event vocabulary the diagnostic writer reuses and how the
-  residual readout sits beside it, which is the election and the larger half
-  of the work.
-- **The seam this crate presents to the harness** is owed with that Spec:
-  whether it mirrors `weaver-trace`'s receive and submit surface, so one call
-  site in the harness serves both mechanisms, or takes its own. Named as
-  owed in `weaver-harness-Spec` section 9 from the other side.
+- **This crate's Spec landed 2026-08-27** and both elections this cell held are
+  settled there. The writer's vocabulary is its own closed set of sixteen kinds,
+  thirteen spelled as the serving vocabulary spells them and meaning there what
+  they mean here, three of the record's own that no serving record carries. The residual
+  readout rides `model.measurement` exactly where a serving record puts it, density
+  rather than shape being what a diagnostic run changes. Reader compatibility
+  follows as a stated rule rather than a hope, per that document's section 4, which
+  is the claim this charter declined to make and assigned there.
+- **The seam this crate presents to the harness** is settled with it: it mirrors
+  `weaver-trace`'s receive and submit surface and shares no type with it, so one
+  call site in the harness serves both mechanisms and neither crate depends on the
+  other. `weaver-harness-Spec` section 9's item closes in the same act.
 - **The null replay** of section 4 is owed behind both, and it is the run
   that certifies this mechanism rather than a property this charter can
   assert.
