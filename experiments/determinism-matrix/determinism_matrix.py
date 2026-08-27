@@ -26,7 +26,7 @@ allocator and nothing else. Three axes vary instead:
 Each session serves its turns, unloads fully, reloads, reissues every
 turn byte-exact from the record, and compares field by field. The
 entropy of each turn is carried into the report beside its verdict, so a
-failure can be read against how near-tie the turn actually was rather
+failure can be read against how near a tie the turn's draw was rather
 than guessed at.
 
 Run:
@@ -45,8 +45,11 @@ import statistics
 import sys
 import time
 
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cross-precision-repro"))
+sys.path.insert(
+    0,
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "cross-precision-repro"),
+)
 import confirm_cells as base
 
 # **The prompt set spans the draw's confidence, which is the axis that
@@ -102,7 +105,7 @@ def entropies_of(turn):
     }
 
 
-def run_session(cfg, probe, depth, iteration, log):
+def run_session(cfg, probe, depth, iteration):
     """One matrix cell: serve, unload, reload, reissue, compare.
 
     The agent is left unloaded whichever path this takes, so a cell that
@@ -125,16 +128,23 @@ def run_session(cfg, probe, depth, iteration, log):
             rec["verdict"] = "gate socket never stood"
             return rec
 
+        source_runs = set()
         for t in texts:
             close = base.gate_turn(cfg, t)
             if close.get("kind") != "answered":
                 rec["verdict"] = f"source turn not answered: {close.get('kind')}"
                 return rec
+            source_runs.add(close.get("run"))
 
-        source_run, source_turns = base.await_turns(cfg["trace"], depth)
-        if source_run is None:
-            rec["verdict"] = "the trace holds no runs"
+        # The closes name the run, so the wait is on that run rather than on
+        # whichever is newest: a wait on the newest is satisfied by the
+        # previous cell's run, which carries the same turn count at this
+        # depth, and the reissue would compare against a stale record.
+        if len(source_runs) != 1 or None in source_runs:
+            rec["verdict"] = "the source turns did not share one run"
             return rec
+        source_run = source_runs.pop()
+        source_turns = base.await_turns(cfg["trace"], depth, source_run)
         if len(source_turns) != depth:
             rec["verdict"] = f"expected {depth} source turns, found {len(source_turns)}"
             return rec
@@ -161,12 +171,21 @@ def run_session(cfg, probe, depth, iteration, log):
             return rec
         replay_run = runs_seen.pop()
 
-        base.await_turns(cfg["trace"], len(source_turns))
-        order, runs = base.read_runs(cfg["trace"], keep=4)
-        if replay_run not in runs:
+        replay_all = base.await_turns(cfg["trace"], len(source_turns), replay_run)
+        if not replay_all:
             rec["verdict"] = f"the closes named run {replay_run}, absent from the trace"
             return rec
-        replay_all = base.cut_turns(runs[replay_run])
+        # **A short replay read is the sink, not the model.** It reaches its
+        # own verdict rather than DIVERGED, which is the strongest negative
+        # this harness emits and means the model did not reproduce. The two
+        # must not share a word in an unattended run, and a sink one turn
+        # behind is exactly the shape this harness was fixed for.
+        if len(replay_all) < len(source_turns):
+            rec["verdict"] = (
+                f"replay read short: expected {len(source_turns)} turns,"
+                f" found {len(replay_all)} - sink lag rather than divergence"
+            )
+            return rec
         replay_by = {t["turn"]: t for t in replay_all}
 
         # A replay carrying surplus turns is interleaved traffic and is
@@ -247,7 +266,7 @@ def main():
                     if time.time() >= deadline:
                         break
                     started = time.time()
-                    rec = run_session(cfg, probe, depth, iteration, log)
+                    rec = run_session(cfg, probe, depth, iteration)
                     rec["seconds"] = round(time.time() - started, 1)
                     results.append(rec)
                     ent = ""
@@ -261,8 +280,12 @@ def main():
     except KeyboardInterrupt:
         log("interrupted")
     finally:
-        with open(cfg["declaration"], "w") as fh:
-            fh.write(original)
+        # Restored only where this run swapped it: rewriting unconditionally
+        # would turn an unrelated edit made during the run into a silent
+        # revert of the operator's own declaration.
+        if args.artifact:
+            with open(cfg["declaration"], "w") as fh:
+                fh.write(original)
         base.admin(cfg, "unload")
 
     total = len(results)

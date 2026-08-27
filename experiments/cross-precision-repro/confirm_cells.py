@@ -114,10 +114,23 @@ def read_runs(trace_path, keep=None):
     charging a run for every run before it. With `keep` the cost follows the
     tail instead.
 
-    The scan walks backward in chunks and stops one run past the `keep`th,
-    so the runs it returns are whole rather than cut at a chunk edge. A
+    The scan walks backward in chunks and stops one run past the `keep`th, so
+    the `keep` newest runs are whole rather than cut at a chunk edge. A
     partial line at a chunk boundary is held for the next block for the same
     reason. `keep=None` reads everything, which is the original behaviour.
+
+    **The oldest run returned is a boundary fragment and carries one event.**
+    The stop fires on the first line of the `keep`-plus-first run met going
+    backward, so `keep=k` answers k+1 runs and `order[0]` is a stub. Every
+    caller here takes `order[-1]` or indexes by a run it already names, so
+    the stub is inert, and it is described rather than trimmed because a
+    caller that iterated `runs` would otherwise meet it unwarned.
+
+    **A run's events are assumed contiguous**, which holds by construction:
+    a run is one load-to-unload cycle against a sequentially served agent, so
+    no second run interleaves it. Were they interleaved the backward stop
+    could fall inside a run and truncate it, and the interleaving checks
+    elsewhere in this harness guard the reissue rather than this scan.
     """
     lines = open(trace_path) if keep is None else _tail_lines(trace_path, keep)
     runs = {}
@@ -175,8 +188,16 @@ def _tail_lines(trace_path, keep, chunk=1 << 20):
     return [raw.decode("utf-8", "replace") for raw in reversed(out)]
 
 
-def await_turns(trace_path, want, keep=4, timeout=30.0):
-    """The newest run once it carries `want` turns, or once time runs out.
+def await_turns(trace_path, want, run_id, keep=4, timeout=None):
+    """`run_id` once it carries `want` turns, or once time runs out.
+
+    **The run is named by the caller rather than taken as the newest**, per
+    the seat's finding of 2026-08-27. A wait on whichever run is newest is
+    satisfied by the wrong run when the sink is dead rather than slow: the
+    cell before this one left a run of the same length, `want` is met on the
+    first read, and the caller reissues against a stale record and reports a
+    match that never happened. The close already carries the run it opened,
+    so the identity is in hand and is passed.
 
     **The sink writes after the close answers**, so a read taken the instant
     a turn closes can miss the events that turn produced. This was invisible
@@ -191,18 +212,28 @@ def await_turns(trace_path, want, keep=4, timeout=30.0):
     the timeout expires, and the caller reports the shortfall - a wait that
     raised would turn a slow sink into a failed cell.
     """
+    # **The bound follows the work.** A deep session flushes many times the
+    # events of a shallow one behind a sink that has just spent a minute
+    # generating, so a fixed bound is generous for one and tight for the
+    # other.
+    if timeout is None:
+        timeout = 10.0 + 0.5 * want
     end = time.time() + timeout
-    run, turns = None, []
+    turns = []
+    delay = 0.02
     while True:
-        order, runs = read_runs(trace_path, keep=keep)
-        if order:
-            run = order[-1]
-            turns = cut_turns(runs[run])
+        _, runs = read_runs(trace_path, keep=keep)
+        if run_id in runs:
+            turns = cut_turns(runs[run_id])
             if len(turns) >= want:
-                return run, turns
+                return turns
         if time.time() >= end:
-            return run, turns
-        time.sleep(0.05)
+            return turns
+        time.sleep(delay)
+        # Backing off rather than polling flat: the scan has a one mebibyte
+        # floor, so a wait that runs to its bound reads on the order of a
+        # gigabyte to learn nothing.
+        delay = min(delay * 1.5, 1.0)
 
 
 def cut_turns(events):
@@ -321,17 +352,24 @@ def run_cell(cfg, cell, outdir):
             return report
 
         log("serving the source turns")
+        source_runs = set()
         for text in (SHORT_TEXT, LONG_TEXT):
             close = gate_turn(cfg, text)
             log(f"close {close.get('kind')} turn {close.get('turn')}")
             if close.get("kind") != "answered":
                 report["verdict"] = f"source turn not answered: {close}"
                 return report
+            source_runs.add(close.get("run"))
 
-        source_run, source_turns = await_turns(cfg["trace"], 2)
-        if source_run is None:
-            report["verdict"] = "the trace holds no runs - wrong path or silent sink"
+        # The closes name the run, so the wait is on that run and not on
+        # whichever is newest, per the seat's finding of 2026-08-27.
+        if len(source_runs) != 1 or None in source_runs:
+            report["verdict"] = (
+                f"the source turns did not share one run: {sorted(map(str, source_runs))}"
+            )
             return report
+        source_run = source_runs.pop()
+        source_turns = await_turns(cfg["trace"], 2, source_run)
         if len(source_turns) != 2:
             report["verdict"] = f"expected 2 source turns, found {len(source_turns)}"
             return report
@@ -363,21 +401,27 @@ def run_cell(cfg, cell, outdir):
             return report
         replay_run = runs_seen.pop()
 
-        _, replay_probe = await_turns(cfg["trace"], len(source_turns))
-        order, runs = read_runs(cfg["trace"], keep=4)
-        if replay_run not in runs:
+        replay_all = await_turns(cfg["trace"], len(source_turns), replay_run)
+        if not replay_all:
             report["verdict"] = (
                 f"the closes named run {replay_run} but the trace does not carry"
                 " it - sink lag or a different sink"
             )
             return report
-        replay_all = cut_turns(runs[replay_run])
         replay_turns = {t["turn"]: t for t in replay_all}
         if len(replay_all) != len(source_turns):
             log(f"turn count differs: source {len(source_turns)} replay {len(replay_all)}")
 
         # A replay with surplus turns is interleaved traffic and is
         # never a match, even when every source turn agrees.
+        # A short replay read is the sink rather than the model, and it
+        # reaches its own verdict rather than being folded into a mismatch.
+        if len(replay_all) < len(source_turns):
+            report["verdict"] = (
+                f"replay read short: expected {len(source_turns)} turns,"
+                f" found {len(replay_all)} - sink lag rather than divergence"
+            )
+            return report
         all_match = len(replay_all) == len(source_turns)
         for st in source_turns:
             rt = replay_turns.get(st["turn"])
