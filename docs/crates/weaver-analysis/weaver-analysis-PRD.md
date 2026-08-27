@@ -173,16 +173,25 @@ read its outcome from the record, and gate everything downstream on it.
 **That gate rests on telling a finished record from a truncated one, and the
 record carries the fact as of 2026-08-27.** A reader that has consumed every byte
 available to it once could not say whether the replay certified and ended, failed
-its comparison and ended, died mid-replay leaving a partial record, or was still
-running, and all four looked alike at the end of what it had. **`replay.closed`
-separates them**, per `weaver-diagnostic-Spec` section 3.3: its `ReplayOutcome`
-names the first three, and the fourth is that event's absence in an opened
-bracket, which costs nothing to read. So this crate gates on the outcome the
-record states rather than on the end of available bytes, produces its reading
-where a bracket closed certified, produces the divergence where one closed
-diverged, produces neither where one closed abandoned, and produces nothing at
-all for a bracket still open. Where that marker landed is section 4's cell, now
-settled. An
+its comparison and ended, ended without finishing, died mid-replay leaving a
+partial record, or was still running, and all of them looked alike at the end of
+what it had. **`replay.closed` separates the three a pass can state from the two
+it cannot**, per `weaver-diagnostic-Spec` section 3.3: its `ReplayOutcome` names
+certified, diverged, and abandoned, each authored by a pass that reached its own
+end, and **a pass that died authors no close at all**, which is that Spec's own
+refusal to manufacture one.
+
+**So the absence is one answer and not two.** A bracket with no `replay.closed`
+is a pass that did not end, and whether it died or is still running is not a
+distinction this record makes or this crate needs: both leave the same absence,
+both may yet be followed by nothing, and reading either as an ending would be
+treating the end of available bytes as the end of a run, which is what this
+paragraph refused before the marker existed and still refuses. So this crate
+gates on the outcome the record states: it produces its reading where a bracket
+closed certified, produces the divergence where one closed diverged, produces
+neither where one closed abandoned, and **produces nothing for any unclosed
+bracket, on the same terms whichever way it came to be unclosed**. Where that
+marker landed is section 4's cell, now settled. An
 earlier form of this paragraph had the comparison here on the ground that this
 crate holds both records, which is true and is not the reason the loop cannot,
 so it would have put a second implementation of one check on the other side of
