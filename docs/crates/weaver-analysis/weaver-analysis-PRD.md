@@ -5,7 +5,16 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
-**Revised:** 2026-08-27, the terminal marker this charter waited on landed.
+**Revised:** 2026-08-27, second of this date, the driver takes its shape.
+`weaver-analysis-Spec` landed, closing section 4's last cell: the parser, the
+election, the projection, the preload's three frames, and the reading's gate.
+Twelve assertion records, one grounding in the floor invariant read from
+outside the agent, where a linked dependency would make a consumer a
+compile-time dependent of the interior. Section 4's other cells stand as they
+were, the instrument suite and the capture artifact being their own acts. Per
+epic 293 row 12.
+**Revised:** 2026-08-27, first of this date, the terminal marker this charter
+waited on landed.
 Section 4's cell on how a diagnostic-trace says it ended settles in
 `weaver-diagnostic-Spec`, the document this cell named as owed it, and the cell
 records the shape rather than restating its argument. Section 3's gate is
@@ -256,8 +265,13 @@ a sink.
   claim rests on rides its own kind for a reason this cell did not foresee: a pass
   whose replay answer never arrived can open a bracket and author no identity,
   which is how the account this crate reads says that nothing was replayed.
-- **This charter names no Rust item and elects no representation.** Its Spec
-  is owed, and the driver's shape and the parser's land there rather than
-  here. **The certification's mechanics do not**, that comparison belonging to
+- **This charter names no Rust item and elects no representation.** **Its Spec
+  landed 2026-08-27** and the driver's shape and the parser's are there: the
+  parse's own read types answering to `weaver-trace-Spec` section 3 under G5,
+  the election composed from what the replay reads rather than declared by an
+  operator, the projection splicing raw payload text so a holding cannot say by
+  its own bytes which side landed it, and the gate on the outcome this
+  charter's section 3 now rests on. **The certification's mechanics do not**,
+  that comparison belonging to
   the loop inside the run per section 3, and what this crate's Spec settles
   about it is only how it elects a null replay and reads the outcome.
