@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-27, the diagnostic recorder's surface is elected. Section 9's
+item closes on `weaver-diagnostic-Spec` section 5's election, the member mirroring
+this crate's other recorder's surface and sharing no type with it, so one call site
+serves both and the kind selects the arm. The election is the member's and this
+entry records that it landed rather than restating its argument. Per epic 293
+row 13.
 **Revised:** 2026-08-26, fourth of this date, the recall port takes its
 clause. Section 6's port enumeration chartered the shape, replay, and
 classify ports and never the recall port the same acts built, which the
@@ -2666,16 +2672,17 @@ Each names what settles it, and none is this Spec's to settle alone.
   three organs on 2026-08-02 and the shape landed at `weaver-trace-PRD`
   section 3.2 as the floor's `fault-report`, so section 3's fault path is
   shaped and ungated.
-- **The diagnostic recorder's surface.** A diagnostic run authors a
-  diagnostic-trace through `weaver-diagnostic`, this crate being the sole
-  writer under either kind and the kind selecting the mechanism, per apex
-  section 6 as ruled 2026-08-24. What this Spec has not elected is the shape
-  of the seam between this crate and that member: whether it mirrors
-  `weaver-trace`'s receive and submit surface, which would let one call site
-  serve both, or takes its own. The member's Spec is owed and this election
-  belongs with it rather than ahead of it. An earlier form of this item had
-  the measurement relayed outward to an assembler outside the agent, which
-  the ruling replaced with the member composed inside.
+- **The diagnostic recorder's surface, settled 2026-08-27 and recorded here as
+  closed.** A diagnostic run authors a diagnostic-trace through
+  `weaver-diagnostic`, this crate being the sole writer under either kind and the
+  kind selecting the mechanism, per apex section 6 as ruled 2026-08-24. The shape
+  this item held open is elected in `weaver-diagnostic-Spec` section 5: the member
+  mirrors `weaver-trace`'s receive and submit surface and shares no type with it, so
+  one call site here serves both mechanisms and the binding's kind selects the arm.
+  What this Spec owes against that election is the arm itself, which the code act
+  carries, this section holding the election rather than the implementation. An
+  earlier form of this item had the measurement relayed outward to an assembler
+  outside the agent, which the ruling replaced with the member composed inside.
 - **The config read, and the sink field's custody question.** The charter's
   `reads` edge to `agent-config` is exercised by no chartered workflow, so
   the read arrives with the tool workflow, which consumes the tool set and

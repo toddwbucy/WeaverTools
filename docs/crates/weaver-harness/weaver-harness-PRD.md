@@ -53,6 +53,12 @@ port per the Spec's section 6.
 socket seam to `weaver-state` under `weaver-harness-state-contract`, the
 harness declaring as the asking side, with the member reached over a wire
 rather than linked and the dependency surface unchanged.
+**Revised:** 2026-08-27, the diagnostic seam takes its paper. Section 4 declares
+the `link` seam to `weaver-diagnostic` with its contract as the `via`, the record
+that section held as owed until the contract existed to name. The seam count moves
+to six, the two record mechanisms being the two links, and the dependency surface
+moves to four internal crates as that section said it would in one act. The socket
+table is unchanged, both new members of the count crossing no process line.
 **Date filed:** 2026-07-28
 **Revised:** 2026-08-12, second of this date, the receipt retires. The report
 the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
@@ -394,7 +400,7 @@ own contract, per apex 5.1, and this crate gains a seam rather than a dependency
 
 ## 4. The seams
 
-The harness is party to five seams, and every one of them is governed by a named
+The harness is party to six seams, and every one of them is governed by a named
 contract, per apex 5.1. Four cross a process line and are Unix sockets that
 authenticate their peer, by credential where the channel has a name and by possession
 where it has none. The coordination seam is a named socket this crate binds and
@@ -406,10 +412,12 @@ operator's ruling of 2026-08-26: admin creates it at the member's spawn and
 this crate receives its end inside the enter directive, beside the sink, so
 it authenticates by possession like the pairs this crate makes itself.
 
-The fifth seam is the one to `weaver-trace`. It crosses no process line, so it is a
-library boundary tagged `link` rather than `socket`, and it authenticates nothing
-because there is no second process to identify. It is a seam under a contract all the
-same, which is why the count here is five and the table below is four.
+The fifth and sixth seams are the ones to `weaver-trace` and to
+`weaver-diagnostic`, the two record mechanisms this crate authors through. Neither
+crosses a process line, so both are library boundaries tagged `link` rather than
+`socket`, and neither authenticates anything because there is no second process to
+identify. They are seams under contracts all the same, which is why the count here
+is six and the table below is four.
 
 **The egress ruling of 2026-08-07 adds no seam here, and the socket count above it is a
 claim worth checking rather than an omission.** Apex section 3 step 7 has the harness
@@ -444,12 +452,12 @@ operator's tooling keys on the fault fields and comes back by running a verb, pe
 `weaver-admin-operator-contract` section 6.
 
 The harness links `weaver-traits` and `weaver-types` as floor vocabulary, and links
-`weaver-trace` as a member of its own domain under a contract. **It links no other
-internal crate today**, the third member of the paragraph below joining that list in
-the act that writes its contract. The three are one dependency surface and two
-classifications, which is what the block below projects: two `floor-link` records
-and one `seam`. Calling all
-three floor vocabulary would use the word `weaver-agents-PRD` section 5.1 reserves for
+`weaver-trace` and `weaver-diagnostic` as members of its own domain under
+contracts. **It links no other internal crate**, the second record mechanism having
+joined that list 2026-08-27 with the act that wrote its contract. The four are one
+dependency surface and two classifications, which is what the blocks below project:
+two `floor-link` records and two `seam` records tagged `link`. Calling all four
+floor vocabulary would use the word `weaver-agents-PRD` section 5.1 reserves for
 what every domain draws from and no domain contains. That is the whole
 dependency surface, and it is checkable against this list.
 
@@ -477,15 +485,21 @@ section 5.1 forbids a behavior reached by path dependency **across a process
 line**, not a crate calling a crate inside one binary, and this call crosses no
 process line. The harness does ask this crate to record, which is what makes
 the record a `seam` rather than a `floor-link`, per Document Format section 4,
-whose own example is this pair's sibling. **Its `seam` record tagged
-`link` is not declared here yet**, because such a record carries a `via` and
-`weaver-harness-diagnostic-contract` is owed: the surface that contract
-would fix is the open election of `weaver-harness-Spec` section 9, held with
-the member's Spec. A `via` naming a document that does not exist is worse
-than the absence, so the edge lands in the act that writes the contract, and
-the dependency-surface claim above reads against three internal crates until
-it does, which is also what the manifest holds, so the graph and the build
-agree at three today and go to four in one act.
+whose own example is this pair's sibling. **Its `seam` record tagged `link` is
+declared below as of 2026-08-27**, the act that wrote
+`weaver-harness-diagnostic-contract` and the member's Spec landing the `via` this
+record needs and the surface `weaver-harness-Spec` section 9 held open.
+The dependency-surface claim above read against three internal crates until it did,
+which is what the manifest held, and both go to four in this one act, so the graph
+and the build agree.
+
+```graph
+edge: seam
+from: weaver-harness
+to: weaver-diagnostic
+via: weaver-harness-diagnostic-contract
+tag: link
+```
 
 ```graph
 edge: seam
