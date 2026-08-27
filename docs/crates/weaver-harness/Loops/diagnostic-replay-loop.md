@@ -5,11 +5,18 @@ loop, filed under the harness's `Loops/` container per the Document Format's con
 entry. It argues no edges of its own: the seams it walks are declared in the crate
 charters, and a graph block here would duplicate a record that already has a home.
 
-**Revised:** 2026-08-27, the record this loop authors has a shape. Section 5's owed
+**Revised:** 2026-08-27, second of this date, the driver's Spec is authoritative
+for the election. Section 2's step 2 sketched what the driver elects and now says
+so, naming `weaver-analysis-Spec` section 3 as the authority per G5 and gaining
+`load`, without which step one below cannot read the tee's election and no claim
+about the state can stand. Section 5's owed list closes with the driver's Spec
+landing. Per epic 293 row 12.
+**Revised:** 2026-08-27, first of this date, the record this loop authors has a
+shape. Section 5's owed
 list moves: `weaver-diagnostic-Spec` landed and carries the kind set this loop's
 steps author, so the acts named in sections 3 and 4 have a record to land in. The
-loop's own steps are unchanged, and what remains owed of the three is the driver's
-Spec. Per epic 293 row 13.
+loop's own steps are unchanged, and what remained owed of the three, the driver's
+Spec, landed the same date. Per epic 293 rows 12 and 13.
 **Revised:** 2026-08-26, the criterion's grounding moves to the charters. Step
 one's state clause cited `weaver-trace-Spec` section 3, a certification
 criterion grounded on a representation Spec, which G2 refuses. The criterion

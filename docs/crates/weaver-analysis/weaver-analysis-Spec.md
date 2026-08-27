@@ -1,8 +1,7 @@
 # weaver-analysis - Spec
 
-**Status:** MERGED. Cut 2026-08-27, the second Spec of the diagnostic leg and the
-first of a crate outside the agent. Code is written against it under the gates of
-Working Process section 6.
+**Status:** MERGED. Cut 2026-08-27, the second Spec of the diagnostic leg. Code is
+written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
 **Document ID:** `weaver-analysis-Spec`
@@ -76,16 +75,35 @@ build-time `cargo tree` assertion read here for a different reason: this crate
 dials one Unix socket and binds none, so the standard library's own client is the
 whole of what it needs.
 
-**It binds no listening port and holds no server.** Apex section 9's port test does
-not reach a crate the agent never grips, per epic 293's chartering, and the reason
-it still gets a record here is that the absence is what makes that true: a driver
-that listened would be reachable, and a consumer the agent cannot reach is the
-structural claim this crate's position rests on.
+```graph
+node: analysis-no-runtime-no-socket-crate
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-analysis
+to: analysis-no-runtime-no-socket-crate
+```
+
+**It binds no listening port and holds no server.** The charter's section 2 has
+this crate governing nothing inside the agent, with the harness holding no channel
+to it and no behavior conditioned on its presence, and the absence of a listener is
+what makes that true rather than merely asserted: a driver that listened would be
+reachable, and a consumer the agent cannot reach is the structural claim this
+crate's position rests on.
+
+**The instrument is the manifest and not a compile-fail pin**, on the reason its
+sibling gives: a compile-fail doctest buys an absence from a crate's own surface,
+naming a call that crate does not offer, and binding a listener is `std`'s call
+rather than this crate's, so no doctest can refuse it. What the manifest reads is
+that no socket crate stands in the resolved tree, which is the same assertion above
+read for this claim's sake, and the residue - that this crate's own code calls
+`bind` nowhere - is review's, named here rather than claimed as bought.
 
 ```graph
 node: analysis-binds-no-port
 kind: assertion
-tag: compile-fail
+tag: review
 
 edge: asserts
 from: weaver-analysis
@@ -154,10 +172,29 @@ declared by an operator.** A serving load's election is the operator's, per
 keeps. A preload's is this crate's, because this crate knows what the loop it is
 feeding will ask for: `diagnostic-replay-loop` section 3 walks by run and turn from
 the envelope, pairs request to measurement in landing order, and establishes input
-identity from the holdings before any forward pass. **So the election names the
-kinds those steps read and the payload key paths they read out of them, and nothing
-further.** A holding no step reads is a holding this crate did not preload, which
-keeps the member's store the size of the replay rather than the size of the record.
+identity before any forward pass. **So the election names the kinds those steps read
+and the payload key paths they read out of them, and nothing further.**
+
+**The ceiling is the loop's reading and not this crate's judgment of size.** What
+bounds the election from above is that a kind no step of section 3 reads is a kind
+whose holdings nothing would ask for, so the rule is checkable against that
+document rather than against a preference of this one, and a step added there
+widens this election in the act that adds it.
+
+**`load` is elected, and naming it matters because the identity does not come from
+the holdings alone.** Step one establishes the five re-feed items and the template
+from the events it walks, and takes **the tee's election from the record's `load`
+event**, which that step says outright it reads there and never from the holdings:
+the holdings are what that rule produced, so recovering it from them would be
+reading a projection to learn what did the projecting. Since this crate's election
+decides what reaches the holdings at all, an election omitting `load` would land a
+session whose certification cannot check the rule that built it, which is the
+failure `weaver-agents-PRD` section 8 added the criterion to prevent.
+
+**This document is authoritative for the election's content**, per G5, and
+`diagnostic-replay-loop` section 2's step 2 sketches it for a reader walking the
+three acts rather than fixing it. A divergence there is a defect against this
+section.
 
 **The declared session is the replayed session's own name**, per the contract's
 section 2, because the loop's asks on the other door bind to the opener's session
@@ -256,7 +293,19 @@ crate meets it by structure: a run of this crate opens one channel, sends one
 preload, seals, and closes, so a second preload is a second run. **The member's
 door outliving this driver is not this crate's concern**, per the contract's same
 clause, and a retry is a new run of this crate rather than a second preload inside
-one.
+one. The instrument is a compile-fail pin on the shape that would break it: no call
+sends a second opener on a channel that carried one, the sender being consumed by
+the seal.
+
+```graph
+node: analysis-one-preload-per-run
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-analysis
+to: analysis-one-preload-per-run
+```
 
 ## 5. The reading, and the gate
 
@@ -386,7 +435,7 @@ section 6. Twelve sit there and none sits here.
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Eleven claims grounding in no
+The other four axioms reach none of these claims. **Thirteen claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 
