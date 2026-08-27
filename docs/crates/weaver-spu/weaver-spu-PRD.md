@@ -9,8 +9,8 @@ later releasing it.
 
 **Revised:** 2026-08-26, the prefix clause names its second neighbour.
 Section 13.3's permanence sentence enumerated the flush as the one
-operation defined against the prefix and predates the elision; 13.13
-bounds the elision by the same prefix, so the sentence names both. A
+operation defined against the prefix and predates the elision. Section
+13.13 bounds the elision by the same prefix, so the sentence names both. A
 cross-reference catch-up from the audit of 2026-08-26, and no ruling
 changes.
 

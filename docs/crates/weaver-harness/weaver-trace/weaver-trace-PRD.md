@@ -454,7 +454,7 @@ past everything else the record carries, so a kind always present would
 make the record unaffordable rather than complete.
 
 **`elision` is the twentieth and `refusal` the twenty-first**, both of
-2026-08-22 and both argued at their own clauses below; the table and the
+2026-08-22 and both argued at their own clauses below - the table and the
 count word above caught up to them on 2026-08-26.
 
 **The record declares the posture it was written in.** Section 3.1's `load`

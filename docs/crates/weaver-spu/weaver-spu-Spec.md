@@ -2642,10 +2642,10 @@ than a code fact.
 - The elision's two watches, both at section 4.5's records: an unremovable
   span refuses and the session stands as the ask found it, watched under the
   empty-span guard's removal, where eliding nothing answers with equal counts,
-  an elision authored over nothing; and the removal is exact and ordered,
-  asserted on the tokens themselves and watched under a kept vector built from
-  the tail alone, because the confirmation's counts cannot catch a lost
-  survivor or a reversed tail.
+  an elision authored over nothing. The second: the removal is exact and
+  ordered, asserted on the tokens themselves and watched under a kept vector
+  built from the tail alone, because the confirmation's counts cannot catch a
+  lost survivor or a reversed tail.
 - The cheap refusals precede the device judgment: against a fixture family
   declaring the widths one and two, with a binding naming three devices, a
   binding whose artifact resolves to nothing answers the resolution refusal
