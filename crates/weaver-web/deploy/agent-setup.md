@@ -19,8 +19,20 @@ reasons until every step is done, so run it after each step if lost.
    root or admin owns it (custody). Wrong ownership or mode:
    `{"kind":"boundary_unverified"}`.
 5. **Operator group membership**: `gpasswd -a todd weaver-<name>`.
-   The gate socket lands `srwxrwxr-x weaver-<name>:weaver-<name>`, so
-   connecting needs group write. NOTE: group membership is evaluated
+   The gate socket lands `srwxrwx--- weaver-<name>:weaver-<name>` and its
+   runtime directory `/run/weaver-<name>` lands `0750`, so reaching the
+   socket needs group execute on the directory and connecting needs group
+   write on the socket. Both are the agent's group, so this step is what
+   grants them.
+
+   **This is no longer only a convenience.** Since 2026-08-28 the mode is
+   the boundary's own election rather than whatever umask the process
+   inherited, and `weaver-admin validate` refuses a declaration whose
+   `allowed-uids` name a uid outside this group - naming the field, before
+   any unit starts. So a missed membership shows up as a typed refusal at
+   load rather than as `Permission denied` at the dial.
+
+   NOTE: group membership is evaluated
    at login - weaver-web-connector (the process that dials the
    socket) must be (re)started from a fresh login context
    (`sudo -u todd ...`) after this, or it gets

@@ -125,6 +125,30 @@ pub fn take_inventory(
         }
     };
 
+    // **The access rule is checked against the mode that will carry it**, per
+    // `weaver-admin-Spec` section 4 and the operator's ruling of 2026-08-28.
+    //
+    // The gate's socket is `0770` owned by the agent's group, per
+    // `weaver-gate-Spec` section 3, so reaching it takes membership in that
+    // group. A rule admitting a uid outside it names a peer the filesystem
+    // turns away at `connect(2)` before the credential check ever runs: the
+    // dialer sees `Permission denied`, the driver reports the socket never
+    // stood, and the gate logs nothing because the peer never reached
+    // `accept`. That diagnosis cost two runs on 2026-08-27 while it was an
+    // unprovisioned box, and the mode makes it the designed behaviour unless
+    // the two are made to agree.
+    //
+    // **The two locks may narrow the same set and may not contradict.** So a
+    // rule the mode would silently defeat refuses here, named, before any
+    // unit starts, rather than at a `connect` no layer reports.
+    if let EnterBinding::Serving { gate_instruction } = &binding
+        && let Some(unreachable) = unreachable_peer(&identity, &gate_instruction.access_rule)
+    {
+        return Err(LifecycleRefusal::ConfigInvalid {
+            field: Some(FieldName(unreachable)),
+        });
+    }
+
     // The model artifact resolves to something readable. Nothing is repaired.
     if !artifact_readable(&config.spu_instruction.decoder.model_binding.artifact.0) {
         return Err(LifecycleRefusal::ArtifactUnresolvable);
@@ -165,6 +189,52 @@ pub fn take_inventory(
         identity,
         binding,
     })
+}
+
+/// The first peer an access rule admits that the socket's mode will turn
+/// away, named by its field, or `None` where the two agree.
+///
+/// **The mode and the rule are two locks on one door and may not
+/// contradict.** The gate binds at `0770` owned by the agent's group, so a
+/// peer reaches `accept` only through that group. A rule admitting a uid
+/// outside it is a rule that does nothing, and does nothing invisibly: the
+/// refusal lands at `connect(2)` where the gate cannot see it and no layer
+/// above reports it as what it is.
+///
+/// A gid the agent's group is not, and which is not the agent's own, is the
+/// same case: membership of that gid does not carry membership of the
+/// agent's.
+///
+/// **Unresolvable is not the same as unreachable.** Where this cannot read
+/// the group at all it answers `None` rather than refusing a declaration on
+/// a fact it could not establish, the load then failing later and loudly
+/// rather than here and wrongly.
+///
+/// conforms: admin-access-rule-reaches-the-socket
+fn unreachable_peer(identity: &str, rule: &weaver_types::AccessRule) -> Option<String> {
+    let group = match nix::unistd::Group::from_name(identity) {
+        Ok(Some(group)) => group,
+        _ => return None,
+    };
+    let members: std::collections::BTreeSet<String> = group.mem.iter().cloned().collect();
+
+    for uid in &rule.allowed_uids {
+        let user = match nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(*uid)) {
+            Ok(Some(user)) => user,
+            _ => continue,
+        };
+        // The agent's own group reached either as a primary or a secondary.
+        if user.gid == group.gid || members.contains(&user.name) {
+            continue;
+        }
+        return Some(format!("gate-instruction.access-rule.allowed-uids.{uid}"));
+    }
+    for gid in &rule.allowed_gids {
+        if *gid != group.gid.as_raw() {
+            return Some(format!("gate-instruction.access-rule.allowed-gids.{gid}"));
+        }
+    }
+    None
 }
 
 fn artifact_readable(artifact: &str) -> bool {
@@ -254,6 +324,131 @@ mod tests {
     //! no library surface.
 
     use super::*;
+
+    /// **A rule admitting a peer the socket's mode turns away refuses here.**
+    ///
+    /// The gate binds at `0770` owned by the agent's group, so a uid outside
+    /// that group is refused at `connect(2)` - before `accept`, so the
+    /// credential check never runs and the gate records nothing. The dialer
+    /// sees `Permission denied` and the driver reports the socket never
+    /// stood. Two locks on one door may narrow the same set and may not
+    /// contradict, so the contradiction is named at validate instead.
+    ///
+    /// The `root` group is used because it exists on every box and this
+    /// process is not in it. Skipped when run as root, where it would be.
+    ///
+    /// Perturbation: return `None` unconditionally from `unreachable_peer`
+    /// and this fails. **The wiring is watched separately**, by
+    /// `a_rule_the_mode_would_defeat_refuses_at_the_inventory` below - this
+    /// test exercises the helper and would go on passing if the call were
+    /// dropped from `take_inventory`, which is a distinction worth keeping
+    /// rather than one sentence covering both.
+    ///
+    /// conforms: admin-access-rule-reaches-the-socket
+    #[test]
+    fn a_rule_the_mode_would_defeat_is_named_rather_than_left_to_connect() {
+        let me = nix::unistd::Uid::current().as_raw();
+        if me == 0 {
+            return; // root is in the root group, so the case does not arise
+        }
+        let rule = weaver_types::AccessRule {
+            allowed_uids: [me].into_iter().collect(),
+            allowed_gids: Default::default(),
+            denied_uids: Default::default(),
+        };
+
+        assert_eq!(
+            unreachable_peer("root", &rule).as_deref(),
+            Some(format!("gate-instruction.access-rule.allowed-uids.{me}").as_str()),
+            "a uid outside the agent's group is named by its field"
+        );
+
+        // And the agreeing case passes: this process's own primary group
+        // reaches it, so the rule and the mode admit the same peer.
+        let mine = nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(me))
+            .expect("this uid resolves")
+            .expect("this uid has a passwd entry");
+        let group = nix::unistd::Group::from_gid(mine.gid)
+            .expect("the primary group resolves")
+            .expect("the primary group has an entry");
+        assert_eq!(
+            unreachable_peer(&group.name, &rule),
+            None,
+            "a uid in the agent's group is reachable and passes"
+        );
+    }
+
+    /// **And the check is wired into the inventory**, not merely present.
+    ///
+    /// The helper's own test above would pass with the call dropped from
+    /// `take_inventory`, so a declaration naming an unreachable uid would
+    /// load and fail at the dial with nothing saying why. This drives the
+    /// inventory and asserts the field.
+    ///
+    /// **It needs a provisioned agent group**, the identity being
+    /// `weaver-<name>` and derived rather than passed, so it finds one on the
+    /// box and skips where there is none. Both deployment boxes provision
+    /// agents; a bare checkout does not, and a skipped test says so rather
+    /// than asserting against a group it invented.
+    ///
+    /// Perturbation: remove the `unreachable_peer` call from
+    /// `take_inventory` and this fails. Watched under exactly that removal.
+    ///
+    /// conforms: admin-access-rule-reaches-the-socket
+    #[test]
+    fn a_rule_the_mode_would_defeat_refuses_at_the_inventory() {
+        let me = nix::unistd::Uid::current().as_raw();
+        // An agent group this process is not a member of, which is the
+        // condition the check exists to name.
+        let Some(agent) = provisioned_agent_excluding(me) else {
+            return;
+        };
+        let root = scratch("reach");
+        let allow = AllowList::new([agent.clone()]);
+        let name = AgentName(agent);
+        let bound = boundary(&root.join("absent-home"), 65533);
+
+        // The fixture's rule admits uid 1000, which that group excludes.
+        let refused = take_inventory(&name, &config_source(&root), &allow, &bound);
+        assert!(
+            matches!(
+                refused,
+                Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) })
+                    if f.0.starts_with("gate-instruction.access-rule.allowed-uids.")
+            ),
+            "the unreachable uid refuses naming its field: {refused:?}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// The bare name of a provisioned agent whose group excludes `uid`, or
+    /// `None` where the box provisions none.
+    fn provisioned_agent_excluding(uid: u32) -> Option<String> {
+        let user = nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(uid)).ok()??;
+        for candidate in ["karl", "acorn", "alpha", "bravo", "charlie"] {
+            let identity = format!("weaver-{candidate}");
+            let Ok(Some(group)) = nix::unistd::Group::from_name(&identity) else {
+                continue;
+            };
+            if group.gid != user.gid && !group.mem.contains(&user.name) {
+                return Some(candidate.to_string());
+            }
+        }
+        None
+    }
+
+    /// A group this cannot read is not a contradiction it may assert, so the
+    /// check answers `None` rather than refusing on a fact it never
+    /// established. The load then fails later and loudly.
+    #[test]
+    fn an_unreadable_group_is_not_read_as_a_contradiction() {
+        let rule = weaver_types::AccessRule {
+            allowed_uids: [1000].into_iter().collect(),
+            allowed_gids: Default::default(),
+            denied_uids: Default::default(),
+        };
+        assert_eq!(unreachable_peer("weaver-no-such-agent-here", &rule), None);
+    }
     use std::os::unix::fs::PermissionsExt;
 
     fn scratch(tag: &str) -> std::path::PathBuf {

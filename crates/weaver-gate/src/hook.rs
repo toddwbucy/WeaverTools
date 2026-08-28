@@ -82,6 +82,16 @@ struct Umask {
 /// The one process umask, and therefore one lock.
 static UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+/// The umask lock, for a test that loosens the umask around a raise.
+///
+/// **Exposed because the resource is the process's and not this module's.**
+/// A test guarding only itself with RAII still races this crate's own guard,
+/// and the loosened window is visible to every other file this process
+/// creates. Anything mutating the umask takes this.
+pub fn umask_lock() -> &'static std::sync::Mutex<()> {
+    &UMASK
+}
+
 impl Umask {
     /// Deny every bit to others, so a socket created under it lands at `0770`.
     ///

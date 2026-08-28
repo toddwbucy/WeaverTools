@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, second of this date, the access rule is checked
+against the mode that carries it. Section 4 states that a declaration whose
+`allowed-uids` name a peer the gate's `0770` socket turns away refuses at the
+inventory with the field named, two locks on one door being permitted to
+narrow one set and not to contradict. Section 6 names `Group={identity}`
+beside `User=`, the mode having rested on a group the invocation never set.
+
 **Revised:** 2026-08-28, the runtime directory's mode is declared. Section 6
 carries `RuntimeDirectoryMode=0750` on the unit invocation, systemd's default
 `0755` having left every uid on the box able to traverse to the agent's
@@ -927,12 +934,52 @@ one this boundary wants.** systemd creates a `RuntimeDirectory=` at `0755`
 absent an instruction, so every uid on the box may traverse to the agent's
 sockets and the gate's own mode is left as the only thing between a stranger
 and the front door. The invocation therefore carries
-`RuntimeDirectoryMode=0750`: the agent owns the directory through `User=`,
-the operator reaches it through membership in the agent's group, which is
-provisioning this program already requires, and no one else reaches it. The
+`RuntimeDirectoryMode=0750` **and `Group={identity}` beside `User={identity}`**:
+the agent owns the directory, the operator reaches it through membership in the
+agent's group, and no one else reaches it.
+
+**The group is named rather than inherited, and the mode rests on that.**
+Without it the init system takes whatever primary group the agent user was
+provisioned with, so where that is shared - `users`, or `nogroup` - `0750`
+grants traversal to every member of it and the sentence above is false. Naming
+it also fixes the group the access rule is checked against at section 4's
+inventory, so the two locks narrow one set rather than two.
+
+**It carries a provisioning requirement**: an agent user created without a
+group of its own makes the invocation fail to determine its credentials, and
+the unit does not start. Section 4's reachability check reads the same group,
+so a box that has not provisioned it refuses at validate with the field named
+rather than at the start with none. The
 figure is stated here rather than inherited for the same reason the gate
 states its socket's, per `weaver-gate-Spec` section 3 - a boundary whose
 permissions come from an ambient default is a boundary nobody elected.
+
+**The access rule is checked against the mode that will carry it.** The gate
+binds its socket `0770` owned by the agent's group, per `weaver-gate-Spec`
+section 3, so a peer reaches `accept` only through that group. A rule
+admitting a uid outside it names a peer the filesystem turns away at
+`connect(2)`, before the credential check runs: the dialer sees a permission
+refusal, the driver reports the socket never stood, and the gate records
+nothing because the peer never arrived. That diagnosis cost two runs on
+2026-08-27 while it was an unprovisioned box, and the mode makes it the
+designed behaviour unless the two are made to agree.
+
+**Two locks on one door may narrow the same set and may not contradict.** So
+the inventory refuses a declaration whose `allowed-uids` name a uid outside
+the agent's group, or whose `allowed-gids` name a gid that is not it, with the
+field named, before any unit starts. **Unresolvable is not unreachable**:
+where the group cannot be read this asserts nothing and the load fails later
+and loudly, rather than refusing on a fact it never established.
+
+```graph
+node: admin-access-rule-reaches-the-socket
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-access-rule-reaches-the-socket
+```
 
 ```graph
 node: admin-runtime-directory-mode-is-stated
@@ -1695,7 +1742,7 @@ no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Eleven of the
-thirty-five carry a `grounds` edge and those eleven carry twelve edges, one
+thirty-six carry a `grounds` edge and those eleven carry twelve edges, one
 record grounding in two invariants. The thirty-fifth is section 6's runtime
 directory mode, which grounds in none: the figure is an election about a
 boundary this crate provisions rather than a claim any invariant reaches. Six run to

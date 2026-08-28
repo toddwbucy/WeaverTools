@@ -492,6 +492,8 @@ fn stand_preload_name(path: &str) -> Option<std::os::unix::net::UnixListener> {
     // reason the gate states: a mode set after `bind` leaves the name live at
     // the inherited mode in between, races a path an unprivileged process may
     // be able to swap, and on failure leaves a file behind.
+    //
+    // conforms: state-preload-door-states-its-mode
     let listener = {
         let _mask = PreloadUmask::deny_all_but_owner();
         std::os::unix::net::UnixListener::bind(path)
@@ -711,9 +713,22 @@ mod tests {
             std::thread::current().id()
         ));
         let path = path.to_str().expect("a utf-8 scratch path");
-        let loosened = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+        // **The ambient umask is read rather than loosened**, and the read
+        // takes the lock `PreloadUmask` serializes on. A bare
+        // `umask(empty())` here left the process world-writable for two
+        // lines while sibling tests on parallel threads called
+        // `stand_preload_name`, and a panic between them leaked it to every
+        // later test - the gate half of this act uses RAII for exactly that
+        // and this half did not.
+        let ambient = {
+            let _serialized = PRELOAD_UMASK
+                .lock()
+                .unwrap_or_else(|held| held.into_inner());
+            let seen = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+            nix::sys::stat::umask(seen);
+            seen.bits()
+        };
         let listener = stand_preload_name(path);
-        nix::sys::stat::umask(loosened);
         assert!(listener.is_some(), "the preload name stands");
 
         let mode = std::fs::metadata(path)
@@ -724,6 +739,14 @@ mod tests {
         assert_eq!(
             mode, 0o700,
             "the door states its mode rather than inheriting one, got {mode:04o}"
+        );
+        // And the check is not vacuous: a runner whose own umask produces
+        // `0700` could not tell an elected mode from an inherited one.
+        assert_ne!(
+            0o777 & !ambient,
+            0o700,
+            "the ambient umask {ambient:04o} produces 0700 by itself, so this \
+             run cannot tell an elected mode from an inherited one"
         );
         drop(listener);
         let _ = std::fs::remove_file(path);

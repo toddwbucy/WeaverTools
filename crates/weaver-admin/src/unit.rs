@@ -340,6 +340,19 @@ mod tests {
                 .any(|a| a == "--property=RuntimeDirectoryMode=0750"),
             "the runtime directory's mode is the unit's election: {rendered:?}"
         );
+        // **And the group the mode rests on.** `0750` puts the operator's
+        // reach on membership in the agent's group, and without `Group=`
+        // systemd takes whatever primary group the agent user was
+        // provisioned with - where that is shared, the mode grants traversal
+        // to every member of it and the boundary is not the one section 6
+        // describes. Unwatched, a later tidy dropping this line leaves the
+        // suite green while the mode silently reverts to that.
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=Group=weaver-alpha"),
+            "the runtime directory's group is named rather than inherited: {rendered:?}"
+        );
     }
 
     /// The one interpolated value is the validated agent name, so a name

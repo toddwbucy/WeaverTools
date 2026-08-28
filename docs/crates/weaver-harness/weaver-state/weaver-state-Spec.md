@@ -2,6 +2,12 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-08-28, the preload name's mode is elected rather than
+inherited. Section 4 states that the bind happens under a umask denying every
+bit outside the owner, so the name lands at `0700` rather than at whatever
+this process inherited - `0777` on one box and `0775` on another from one
+build. Only root is admitted at the accept, so no group reaches this door.
+
 **Revised:** 2026-08-26, second of this date, the seam states its mechanics.
 The code act's elections of this date are declared, per the audit of the
 same date: section 2 carries the adoption's probe beside the number,
@@ -396,6 +402,35 @@ tag: perturbation
 edge: asserts
 from: weaver-state
 to: state-replay-answers-at-the-seal
+```
+
+**The preload name's mode is this member's election.**
+`UnixListener::bind` sets none, so the name would land at `0777 & ~umask` and
+the door's permissions would be whatever umask this process inherited. The
+bind happens under a umask denying every bit outside the owner, so the name
+lands at `0700`.
+
+**`0700` here where the gate's door is `0770`**, per `weaver-gate-Spec`
+section 3. The accept below admits `uid() == 0` and no other, so no group
+reaches this door and a mode granting one would describe access it does not
+offer. The credential check is the lock that decides and this is the lock that
+keeps a stranger from arriving at it, which is the two-locks reasoning
+`weaver-harness-PRD` section 5 applies to the trace descriptor.
+
+**Elected in the creating call and not on the path afterwards**, for the
+reason the gate states: a mode set after the bind leaves the name live at the
+inherited mode in between, races a path an unprivileged process may be able to
+swap, and on failure leaves a file behind. The umask is process-global, so the
+guard serializes on it.
+
+```graph
+node: state-preload-door-states-its-mode
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-state
+to: state-preload-door-states-its-mode
 ```
 
 **`state-preload-door-stands-only-diagnostic`, below, is one half of a

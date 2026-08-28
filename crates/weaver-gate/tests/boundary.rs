@@ -46,13 +46,13 @@ fn scratch(name: &str) -> std::path::PathBuf {
 fn the_socket_denies_every_uid_outside_the_group() {
     use std::os::unix::fs::PermissionsExt;
     let path = scratch("socket-mode");
-    // **A guard, because umask is process-global and cargo runs these tests
-    // on parallel threads.** Set bare, a panic between the set and the
-    // restore would leave every later file in this binary world-writable,
-    // including the scratch paths the sibling tests create.
-    let permissive = UmaskForTest::set(0o000);
+    // **The ambient umask is read rather than loosened.** An earlier form set
+    // it to `0o000` across the raise so the test could not pass by accident
+    // of the runner's mask, which meant holding the process-global umask
+    // loose while a sibling thread might create a file under it. The last
+    // assertion does that work instead, without the window.
+    let ambient = ambient_umask();
     let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
-    drop(permissive);
 
     let mode = std::fs::metadata(&path)
         .expect("the socket is on disk")
@@ -68,31 +68,53 @@ fn the_socket_denies_every_uid_outside_the_group() {
         0,
         "no bit outside owner and group, and write is what connecting needs"
     );
+    // **And the check is not vacuous.** Where the runner's own umask would
+    // produce `0770` anyway, a bind electing nothing passes this test, so
+    // that case fails loudly rather than reporting a property it did not
+    // observe.
+    assert_ne!(
+        0o777 & !ambient,
+        0o770,
+        "the ambient umask {ambient:04o} produces 0770 by itself, so this run \
+         cannot tell an elected mode from an inherited one"
+    );
     drop(hook);
 }
 
-/// A process umask set for the length of a test and restored when the value
-/// is dropped, so a panic cannot leave it loosened for the tests that follow.
-struct UmaskForTest(nix::sys::stat::Mode);
-
-impl UmaskForTest {
-    fn set(mask: u32) -> Self {
-        UmaskForTest(nix::sys::stat::umask(
-            nix::sys::stat::Mode::from_bits_truncate(mask),
-        ))
-    }
-}
-
-impl Drop for UmaskForTest {
-    fn drop(&mut self) {
-        nix::sys::stat::umask(self.0);
-    }
+/// The ambient umask, read without holding it across anything.
+///
+/// **Reading it means setting it**, `umask(2)` returning the old value, so
+/// even a read takes the lock `Hook::raise` serializes on: a bare read leaves
+/// the process at `0o000` for however long it takes to put back, and a
+/// sibling test's `create_dir_all` in `/tmp` landing there is world writable
+/// with no sticky bit.
+///
+/// **The lock is released before the raise.** Holding it across would
+/// deadlock, `Hook::raise` taking the same non-reentrant mutex, which is what
+/// a first form of this did.
+fn ambient_umask() -> u32 {
+    let _serialized = weaver_gate::hook::umask_lock()
+        .lock()
+        .unwrap_or_else(|held| held.into_inner());
+    let seen = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+    nix::sys::stat::umask(seen);
+    seen.bits()
 }
 
 /// **The agent uid is denied by construction, not by configuration.**
 ///
 /// The instruction here explicitly *permits* this process's own uid, which is
 /// the operator mistake the design exists to survive. The raise adds this uid
+/// to the deny set unconditionally, and denial wins over permission, so the
+/// dial is refused anyway.
+///
+/// The test dials as this very process, which runs as the same uid the gate
+/// does. That is exactly the reference walk's adversary: the agent's own tool
+/// surface reaching the agent's own mouth.
+///
+/// Perturbation: remove the `rule.denied_uids.insert(getuid())` line from
+/// `Hook::raise` and this test fails, because the operator's permissive rule
+/// then admits the dial. Watched under exactly that removal.
 #[test]
 fn the_agent_uid_is_refused_even_when_the_rule_permits_it() {
     let path = scratch("agent-uid");

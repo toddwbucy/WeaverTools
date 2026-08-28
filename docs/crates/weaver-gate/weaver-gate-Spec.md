@@ -13,10 +13,13 @@ tool could win, and the post-bind failure that would have left a file behind
 and retired `gate-refused-raise-holds-nothing`.
 
 **Revised:** 2026-08-28, the socket's mode becomes the boundary's election.
-Section 3 states that the raise sets `0o770` on the bound path rather than
-leaving it to the process umask, which had produced `0777` on one box and
-`0775` on another from one build. The credential check is unchanged and the
-two are named as two locks against different adversaries.
+Section 3 states that the raise elects `0o770` rather than leaving it to the
+process umask, which had produced `0777` on one box and `0775` on another
+from one build. The credential check is unchanged and the two are named as
+two locks against different adversaries. **An earlier form of this entry said
+the raise sets the mode on the bound path**, which described a draft that
+never reached `main`: the mechanism is the umask around the bind, per the
+entry above.
 
 **Revised:** 2026-08-18, the tool boundary ruling lands section 8: the shell
 execution, the one tool this crate holds as its own outbound verb, with the
@@ -852,8 +855,9 @@ against the graph's floor links under gate H2. No async runtime, no logging crat
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
-**Which invariant each claim serves, and why seven serve none.** Seventeen `grounds`
-edges run from sixteen of the twenty-three, nine to
+**Which invariant each claim serves, and why seventeen serve none.** Seventeen
+`grounds`
+edges run from sixteen of the thirty-three, nine to
 `axiom-floor-is-vocabulary-behavior-is-socket`, five to
 `axiom-contract-is-a-complete-interface`, and three to
 `axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two
@@ -959,8 +963,8 @@ sections 1 through 5, rather than gathered here, per Document Format section
 block here would sit apart from the prose that earns it. One record is the
 exception and sits at the end of this section, the doctest pinning of the two
 bind-site shapes, whose argument is nowhere else and whose general
-prohibition is section 3's. Twenty-three records in all, seventeen from this
-section's sorting with the walks counted in and six from the elections
+prohibition is section 3's. Thirty-three records in all, seventeen from this
+section's sorting with the walks counted in and the rest from the elections
 outside it, a split's two halves both counting as this section's because
 neither was elected and one was divided out, per Document Format section 3.
 **Two of the bullets above are claims another crate argues,** and carry no
