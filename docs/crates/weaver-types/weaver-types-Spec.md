@@ -5,6 +5,12 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-28, second of this date, the identity prefix's role is
+judged where declarations are judged. Section 2 states that every identity
+message carries `role: system` and names the parse as the place the rule
+binds; section 5 records that the instrument is owed rather than in force,
+and why it waits on issue #346. Item 2 of issue #369, docs half.
+
 **Revised:** 2026-08-28, the eleventh case is renamed to the condition it
 reports. `identity_prefix_unrecorded` rather than a role-specific name, the
 role being one of four ways the record fails to account for a seated prefix.
@@ -596,6 +602,37 @@ legitimate agent, where an absent field is a file unfinished. The messages
 are `weaver-traits`' `Message`, drawn rather than restated, and the field is
 representation interior to the section the way the gate instruction's access
 rule is, no vocabulary node moving.
+
+**Every message of the identity carries `role: system`, and this clause states
+the rule ahead of the instrument that will hold it.** The identity door of
+`weaver-harness-Spec` section 6 writes `message.system` and refuses every
+other role, per `harness-identity-door-writes-system-only`, so a declaration
+carrying any other role seats a prefix into the decode context that the record
+cannot show - the condition `weaver-harness-PRD` section 5's fifth case exists
+to report, found in the field and filed as issue #369. **The rule belongs
+here rather than at the door.** The door refuses what the declaration should
+never have contained, which makes it the last place the condition can be
+caught rather than the first, and a rule enforced only at the last place is a
+rule the operator meets as a fault in a running agent instead of as a refusal
+to load. Where declarations are judged is the parse, and the judgment is this
+crate's.
+
+**The check is owed and is not in force, which is stated rather than left to
+be discovered.** The instrument is the shape `model-binding`'s empty device
+list already takes at section 2's parse: a `ConfigErrorKind::BadValue` naming
+`identity`, so a declaration that would seat an unwritable prefix does not
+parse and never reaches a door. It is not written yet, and the reason is
+dated rather than editorial. **Changing a declaration's identity role changes
+the prompt** - a system role renders `<|im_start|>system` where a user role
+renders `<|im_start|>user` - so the tokens differ and every run made under the
+old role stops being a baseline. The cross-precision deposit of 2026-08-25 and
+the determinism matrix of 2026-08-27 were both produced under `role: user`,
+and the cross-architecture arms of issue #346 compare against that deposit and
+have not run. A refusal landing before they do would not delay that experiment
+but void it, the comparison arm diverging by construction rather than by
+silicon. So the check lands after #346's arms are deposited, and until then
+this clause is a rule the corpus has written and not yet bought - which is the
+one thing about it a reader must not have to infer.
 
 **Field names are kebab-case on disk and snake_case in Rust, which takes an
 explicit election rather than a convention.** `#[serde(rename_all = "kebab-case",
@@ -1981,6 +2018,21 @@ apex's enforcement section exists to prevent.
 **Enforced by the manifest.** No socket crate, no runtime, no I/O in the
 dependency tree, checked as `weaver-traits-Spec` section 7 checks its own, by a
 build-time assertion over the resolved external tree rather than by H2.
+
+**Enforced by nothing today, and said so with its date.** Section 2's rule
+that every identity message carries `role: system` has no instrument in this
+crate. The instrument is known and is not exotic - a `BadValue` naming
+`identity` at the parse, beside the empty-device-list check - and it is
+withheld on an experimental ground rather than a technical one: the arms of
+issue #346 compare against deposits made under `role: user`, and a refusal
+landing first would void that comparison rather than delay it. **This entry
+carries no assertion record, deliberately.** A record names the instrument
+that holds a claim, so filing one against a claim nothing holds would say the
+corpus checks something it does not, and the record lands in the act that
+lands the check. It is listed here rather than left out because an unenforced
+rule that no section admits is indistinguishable from an enforced one, which
+is the same overclaim the review entry above was corrected for, arriving from
+the other direction.
 
 **Which invariant each claim serves, and why most serve none.** Seven of the
 seventeen carry a `grounds` edge, five to
