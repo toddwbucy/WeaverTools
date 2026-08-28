@@ -110,6 +110,21 @@ at inventory rather than by the parse.
 program's (inside the unit's runtime directory, `/run/weaver-<agent>/`), and
 only who may pass is the operator's.
 
+**A uid named here must also be in the agent's group.** The socket lands
+`0770` owned by `weaver-<agent>`, so connecting takes group membership before
+the credential check is ever reached - and `weaver-admin validate` refuses a
+declaration naming a uid outside it, so the two locks cannot contradict. The
+refusal is `boundary_unverified` rather than `config_invalid`, because the
+declaration is right and the box's provisioning is not: the answer is
+`gpasswd -a <user> weaver-<agent>`, **not** deleting the uid from this list.
+Deleting it makes validate pass and breaks the connector for good, the
+credential check then denying it with nothing saying why.
+
+`allowed-gids` is not checked that way. A gid names no particular peer, and
+whether one holding it reaches the socket turns on that peer's own
+memberships, so that half rests on the credential check alone. Uid 0 is never
+refused here: root reaches the socket whatever group it holds.
+
 **`trace-sink`** - where the record leaves the program. Three kinds. `file`
 opens append-only, creating when `create` is true. `pipe` creates the FIFO
 when asked, then opens nonblocking so a reader-less pipe refuses the load

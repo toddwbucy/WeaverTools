@@ -144,6 +144,41 @@ impl CoordinationListener {
 /// inherited from a previous run and there is nothing to clear. **A bind that
 /// finds its name occupied is a fault and never a thing to remove**, because
 /// the only ways a name is occupied are that a live worker holds it, where
+/// A process umask held for one bind and restored on every path out.
+///
+/// The gate and the state member carry the same type for the same reason, per
+/// `weaver-gate-Spec` section 3: a Unix socket's mode comes from the umask at
+/// creation, and setting it afterwards leaves the name live at whatever was
+/// inherited for the window between. Serialized on the one process umask, so
+/// two binds cannot interleave their save and restore.
+struct CoordinationUmask {
+    previous: nix::sys::stat::Mode,
+    _serialized: std::sync::MutexGuard<'static, ()>,
+}
+
+static COORDINATION_UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+impl CoordinationUmask {
+    /// Deny every bit to group and other, so the name lands at `0700`.
+    fn deny_all_but_owner() -> Self {
+        let serialized = COORDINATION_UMASK
+            .lock()
+            .unwrap_or_else(|held| held.into_inner());
+        CoordinationUmask {
+            previous: nix::sys::stat::umask(
+                nix::sys::stat::Mode::S_IRWXG | nix::sys::stat::Mode::S_IRWXO,
+            ),
+            _serialized: serialized,
+        }
+    }
+}
+
+impl Drop for CoordinationUmask {
+    fn drop(&mut self) {
+        nix::sys::stat::umask(self.previous);
+    }
+}
+
 /// unlinking would strand the running agent's supervisor, or that the manager
 /// did not honor the directory, where this crate's assumption is wrong and it
 /// should say so rather than repair.
@@ -162,8 +197,25 @@ pub fn bind_coordination(
     // report one thing as another.
     let address = UnixAddr::new(socket_path)
         .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
-    bind(fd.as_raw_fd(), &address)
-        .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
+    // **The mode is elected in the creating call**, the reasoning of
+    // `weaver-gate-Spec` section 3 applied to the third named socket in the
+    // agent's runtime directory. `bind` sets none, so this name would land at
+    // `0777 & ~umask` and the door's permissions would be whatever umask this
+    // process inherited.
+    //
+    // **`0700` here rather than the gate's `0770`.** `accept_root` admits
+    // `uid() == 0` and no other, so no group reaches this door and a mode
+    // granting one would describe access it does not offer. The credential
+    // check is the lock that decides; this is the lock that keeps a stranger
+    // from arriving at it, and the directory's `0750` narrows who may
+    // traverse rather than who may connect.
+    //
+    // conforms: harness-coordination-door-states-its-mode
+    let bound = {
+        let _mask = CoordinationUmask::deny_all_but_owner();
+        bind(fd.as_raw_fd(), &address)
+    };
+    bound.map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
     listen(&fd, nix::sys::socket::Backlog::new(1).unwrap())
         .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
     Ok(CoordinationListener {
@@ -872,5 +924,68 @@ mod series_tests {
         let through =
             reassemble_if_series(b"{\"kind\":\"not_open\"}".to_vec(), || panic!()).expect("passes");
         assert_eq!(through, b"{\"kind\":\"not_open\"}");
+    }
+}
+
+#[cfg(test)]
+mod door_mode_tests {
+    use super::*;
+
+    /// **The coordination door denies every uid but its owner.**
+    ///
+    /// `bind` sets no mode, so this name would land at `0777 & ~umask` and
+    /// the door's permissions would be whatever umask the process inherited -
+    /// `0777` on one box and `0775` on another from one build, on
+    /// 2026-08-28. Only `uid() == 0` is admitted at `accept_root`, so no
+    /// group reaches this door and `0700` is the access it offers.
+    ///
+    /// Where the runner's own umask produces `0700` this run cannot tell an
+    /// elected mode from an inherited one, so it says so and skips rather
+    /// than asserting against a run that cannot show the property.
+    ///
+    /// Perturbation: drop the `CoordinationUmask::deny_all_but_owner()` guard
+    /// from `bind_coordination` and this reports the runner's own mode.
+    /// Watched under exactly that removal.
+    ///
+    /// conforms: harness-coordination-door-states-its-mode
+    #[test]
+    fn the_coordination_door_denies_every_uid_but_its_owner() {
+        use std::os::unix::fs::PermissionsExt;
+        let ambient = {
+            let _serialized = COORDINATION_UMASK
+                .lock()
+                .unwrap_or_else(|held| held.into_inner());
+            let seen = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+            nix::sys::stat::umask(seen);
+            seen.bits()
+        };
+        if 0o777 & !ambient == 0o700 {
+            eprintln!(
+                "SKIP the_coordination_door_denies_every_uid_but_its_owner: the \
+                 ambient umask {ambient:04o} produces 0700 by itself"
+            );
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-coordination-mode-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("scratch");
+        let path = dir.join("coordination.sock");
+
+        let listener = bind_coordination(&path).expect("the name binds");
+        let mode = std::fs::metadata(&path)
+            .expect("the socket is on disk")
+            .permissions()
+            .mode()
+            & 0o777;
+        assert_eq!(
+            mode, 0o700,
+            "the door states its mode rather than inheriting one, got {mode:04o}"
+        );
+        drop(listener);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

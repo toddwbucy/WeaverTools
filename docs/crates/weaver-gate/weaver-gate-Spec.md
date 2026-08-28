@@ -5,6 +5,12 @@ its charter is chartered to: the lifecycle half, with the traffic arriving via t
 workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-28, third of this date, the election's direction is
+stated plainly. Section 3 records that `0770` narrows against the two boxes
+measured and widens the group's reach against the common umasks, the boundary
+resting entirely on the unit naming `Group={identity}` rather than on the
+figure alone.
+
 **Revised:** 2026-08-28, second of this date, the mode is elected in the
 creating call. Section 3 states that the raise holds a umask across the bind
 rather than setting the mode on the path afterwards, which closes the window
@@ -436,6 +442,27 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 the access control of the agent's front door is decided by whatever umask
 the process inherited. The raise holds a umask denying every bit to others
 across the bind, so the figure is this crate's and travels with it.
+
+**The election is not a tightening in every direction, and saying so plainly
+matters more than the story it replaces.** Against the two boxes measured on
+2026-08-28 it narrows - `0777` and `0775` both become `0770`. Against the
+common umasks it widens the group's reach:
+
+| umask | before | after |
+|---|---|---|
+| `0022`, the usual default | `0755` | `0770` |
+| `0002` | `0775` | `0770` |
+| `0077`, a hardened default | `0700` | `0770` |
+
+Connecting needs the write bit, so at `0022` the group could not connect and
+now can, and at `0077` the socket was the owner's alone. **That is the
+intent and it is conditional.** The operator reaches the socket by membership
+in the agent's group, which is what `0770` is for, and the whole boundary
+therefore rests on `Group={identity}` making that group exactly one agent -
+per `weaver-admin-Spec` section 6, which sets it on the unit and refuses a
+template that would take it back. Where the unit's group were a shared one,
+`users` or `nogroup`, this mode would hand connect rights to everyone in it.
+A dev run outside systemd has no such guarantee and no such boundary.
 
 **The election is made in the creating call and not on the path
 afterwards.** A `chmod` after the bind would answer the same question and

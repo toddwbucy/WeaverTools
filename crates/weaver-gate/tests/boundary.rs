@@ -86,10 +86,15 @@ fn the_socket_denies_every_uid_outside_the_group() {
 /// The ambient umask, read without holding it across anything.
 ///
 /// **Reading it means setting it**, `umask(2)` returning the old value, so
-/// even a read takes the lock `Hook::raise` serializes on: a bare read leaves
-/// the process at `0o000` for however long it takes to put back, and a
-/// sibling test's `create_dir_all` in `/tmp` landing there is world writable
-/// with no sticky bit.
+/// even a read takes the lock this crate's own guard serializes on.
+///
+/// **That lock does not reach a sibling test calling `common::scratch`**,
+/// which takes no lock at all, so the window is narrowed rather than closed:
+/// the read sets and restores across two adjacent calls and nothing else.
+/// Closing it properly would mean every path that creates a file in this
+/// binary taking the same lock, which is a larger act than this one and is
+/// filed rather than half-done here. The exposure is a test-only directory
+/// in `/tmp` for the length of two syscalls.
 ///
 /// **The hold is scoped and ends before the raise.** Holding it across would
 /// deadlock, `Hook::raise` taking the same non-reentrant mutex, which is what

@@ -974,7 +974,23 @@ designed behaviour unless the two are made to agree.
 
 **Two locks on one door may narrow the same set and may not contradict.** So
 the inventory refuses a declaration whose `allowed-uids` name a uid outside
-the agent's group, with the field named, before any unit starts.
+the agent's group, before any unit starts.
+
+**It refuses as `BoundaryUnverified` and not as `ConfigInvalid`.** The
+declaration is well formed and the fault is the box's: the operator wrote a
+uid that ought to reach the socket and the provisioning has not put it in the
+agent's group. `ConfigInvalid` names the YAML, and a deployer reading it that
+way deletes the uid - which makes validate pass and breaks the connector for
+good, the credential check then denying it at `accept` with nothing saying
+why. This is the same fault an unprovisioned home or sink is, and it answers
+as they do, naming the group on the way out.
+
+**A user without its group is named too.** `Group={identity}` is a hard
+start-time requirement, so a box that provisioned the agent user and not its
+group fails the unit start with an opaque credential error. That state is
+checkable and is checked. A box carrying neither has provisioned no agent and
+is not refused on a fact about an agent it does not have, which is what lets a
+bare checkout and CI run this at all.
 
 **`allowed-gids` is not judged and uid 0 is skipped.** A gid names no
 particular peer, and whether one holding it reaches the socket turns on that
@@ -984,6 +1000,15 @@ group, and an arm refusing every gid but the agent's own refused it. Root is
 skipped for a different reason: `CAP_DAC_OVERRIDE` reaches a `0770` socket
 whatever group it holds. Both halves rest on the credential check, which is
 where they were always decided.
+
+**The template may not take the boundary back.** `systemd-run` honours the
+last assignment, so an installed hardening template naming `Group=` or
+`RuntimeDirectoryMode=` would revert the boundary with no diagnostic - and
+this check's premise, that the socket's group is `weaver-<agent>`, would go
+with it, so admin would validate a rule against a group the socket does not
+carry. A template naming either key has that property dropped rather than
+emitted, an override this crate cannot honour being a configuration it says no
+to rather than one it silently wins.
 
 **The check runs last of the inventory's walks**, so it preempts none of them:
 an unreadable artifact or an unverified boundary is the older and narrower

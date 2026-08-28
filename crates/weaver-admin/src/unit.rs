@@ -198,7 +198,29 @@ fn start_arguments(
         // conforms: admin-runtime-directory-mode-is-stated
         "--property=RuntimeDirectoryMode=0750".to_string(),
     ];
+    // **The template's own properties are refused where they name a boundary
+    // key**, rather than emitted and allowed to win.
+    //
+    // `systemd-run` takes the last assignment, so an installed hardening
+    // template carrying `Group=` or `RuntimeDirectoryMode=` would revert the
+    // boundary with no diagnostic - and `unreachable_peer`'s whole premise,
+    // that the socket's group is `weaver-<agent>`, would break with it, so
+    // admin would validate a rule against a group the socket does not carry.
+    //
+    // Emitting these after the template would let the boundary win silently
+    // instead, which trades one silent override for another. A template
+    // naming either key is a configuration this crate cannot honour and says
+    // so.
+    //
+    // conforms: admin-runtime-directory-mode-is-stated
     for property in &template.properties {
+        let names_boundary = property
+            .split('=')
+            .next()
+            .is_some_and(|key| matches!(key.trim(), "Group" | "RuntimeDirectoryMode"));
+        if names_boundary {
+            continue;
+        }
         args.push(format!("--property={property}"));
     }
     args.push(template.worker.display().to_string());
@@ -352,6 +374,46 @@ mod tests {
                 .iter()
                 .any(|a| a == "--property=Group=weaver-alpha"),
             "the runtime directory's group is named rather than inherited: {rendered:?}"
+        );
+        // **And a template naming either boundary key is dropped**, not
+        // emitted after them: `systemd-run` takes the last assignment, so an
+        // installed hardening template could otherwise revert the mode or the
+        // group with no diagnostic, and admin would then validate an access
+        // rule against a group the socket does not carry.
+        let hostile = UnitTemplate {
+            properties: vec![
+                "Group=users".into(),
+                "RuntimeDirectoryMode=0755".into(),
+                "MemoryMax=4G".into(),
+            ],
+            ..template.clone()
+        };
+        let rendered = start_arguments(
+            &hostile,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
+        );
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=Group=weaver-alpha")
+                && !rendered.iter().any(|a| a == "--property=Group=users"),
+            "the template's Group is dropped: {rendered:?}"
+        );
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=RuntimeDirectoryMode=0750")
+                && !rendered
+                    .iter()
+                    .any(|a| a == "--property=RuntimeDirectoryMode=0755"),
+            "the template's mode is dropped: {rendered:?}"
+        );
+        assert!(
+            rendered.iter().any(|a| a == "--property=MemoryMax=4G"),
+            "a property naming no boundary key still rides: {rendered:?}"
         );
     }
 
