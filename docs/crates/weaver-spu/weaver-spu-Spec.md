@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, the seated prefix folds where the template names no
+system turn. Section 5 states that gemma and mistral render a leading `System`
+message into their first user turn rather than refusing the role, per the
+operator's ruling of this date: the role is the floor's vocabulary and the
+shape is the family's. Without it the parse's new rule left those two families
+no usable identity prefix at all.
+
 **Revised:** 2026-08-26, the elision enters this document. Chartered at
 `weaver-spu-PRD` section 13.13 and coded on 2026-08-22, it reached the
 charter, the decode contract, the floor Spec, and the harness Spec and
@@ -1353,6 +1360,35 @@ lives outside its module, and the kernels beneath are shared, which is the
 archived tree's share-kernels-own-orchestration rule promoted to structure.
 Review's by non-purchase, the placement of a family's code being as readable to
 a module-boundary test as to a reader and neither being bought here.
+
+**A seated `System` prefix folds where the family's template names no system
+turn.** The canonical role of an identity prefix is `System`, per
+`weaver-types-Spec` section 2, and the parse refuses any other. Two families
+in the registry publish templates with no system turn - gemma and mistral -
+and both refused the role at `render_identity`, which after that parse rule
+left them no usable prefix at all: `user` refused above, `system` refused
+here. **The role is the floor's vocabulary and the shape is the family's**, so
+those families render the role rather than refusing it, folding a leading
+`System` message into the first user turn.
+
+**That is the template authority followed and not a shape invented**, which is
+the distinction `mistral3` already drew when it declined to mint a system
+wrapper. Both families' published templates carry system content into the
+first user turn, so folding is what those authorities name; a `[SYSTEM]`
+block of this program's own devising would be the invention. A `System`
+message with no user turn after it becomes a user turn of its own, a prefix
+that rendered as nothing being a prefix the record cannot account for, and a
+prefix carrying no `System` role renders exactly as before.
+
+```graph
+node: spu-system-folds-where-the-template-has-no-system-turn
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-system-folds-where-the-template-has-no-system-turn
+```
 
 ```graph
 node: spu-share-kernels-own-orchestration

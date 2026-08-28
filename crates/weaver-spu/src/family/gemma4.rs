@@ -169,8 +169,20 @@ impl Gemma4 {
 impl Family for Gemma4 {
     /// The prefix opens with [`BOS`], once, and the turns never repeat it.
     fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal> {
+        // **A seated `System` prefix folds into the first user turn**, per
+        // `weaver-spu-Spec` section 8. This template names no system turn,
+        // which is a fact about the template and not about the floor's
+        // vocabulary: the canonical role of an identity prefix is `System`
+        // per `weaver-types-Spec` section 2, and refusing it here would
+        // leave this family with no usable prefix at all once the parse
+        // began requiring the role. Folding is what this family's published
+        // template does with system content, so it follows the template
+        // authority rather than minting a turn the template never had.
+        //
+        // conforms: spu-system-folds-where-the-template-has-no-system-turn
+        let folded = super::fold_system_into_first_user(messages);
         let mut rendered = String::from(BOS);
-        rendered.push_str(&super::render_each(self, messages)?);
+        rendered.push_str(&super::render_each(self, &folded)?);
         Ok(rendered)
     }
 

@@ -35,7 +35,7 @@ spu-instruction:
       devices: [0]
     residual-readout-election: false
     identity:
-      - role: user
+      - role: system
         content:
           - type: text
             text: |-
@@ -78,6 +78,15 @@ prefix renders from. Configuration rather than history: an empty list is a
 declaration the operator made, where an absent field is a file unfinished.
 Worth writing with care - an identity that advertises tools the `tool-set`
 does not grant is a lie told to the model every turn.
+
+**Every message here carries `role: system`, and any other role refuses the
+load** with `bad value: identity.<n>.role`. The identity door writes
+`message.system` and refuses the rest, so a prefix under another role would
+be seated into the model and left out of the record. Declarations written
+before 2026-08-28 carry `role: user` and need the one-word change. A family
+whose own template names no system turn, gemma and mistral among them, folds
+the prefix into its first user turn when rendering, so the role is what the
+operator writes everywhere and the shape is the family's.
 
 **`spu-instruction.decoder.tunable-values`** - the knob map, its own section
 below.

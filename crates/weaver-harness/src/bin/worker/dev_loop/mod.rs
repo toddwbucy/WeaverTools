@@ -245,8 +245,15 @@ fn contribution(
         });
     }
     if let Some(reentry) = reentry {
+        // **The re-entry is the loop's voice and carries the loop's role.**
+        // It opens with `SYSTEM_PROMPT`, the flush having retired the
+        // resident copy, so under `Role::User` the whole prompt plus the
+        // restored transcript came back quoted as the operator's words - and
+        // a later recall would return it from the record as `message.user`,
+        // compounding it. The opening and the re-entry are one voice framing
+        // the field and they carry one role.
         delta.push(Message {
-            role: Role::User,
+            role: Role::System,
             content: vec![ContentBlock::Text {
                 text: reentry.to_string(),
             }],

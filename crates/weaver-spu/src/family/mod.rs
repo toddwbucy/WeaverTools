@@ -137,6 +137,85 @@ pub fn text_content(message: &Message) -> Result<String, RenderRefusal> {
 /// identity prefix opens with something the turns do not repeat adds it around
 /// this call rather than inside it - see [`gemma4::Gemma4::render_identity`],
 /// where the once-per-prefix `<bos>` lives.
+/// Folds a leading `System` message into the `User` turn that follows, for
+/// the families whose template names no system turn.
+///
+/// **The canonical role is the floor's and the rendering is the family's.**
+/// `weaver-traits`' `Role` is the vocabulary the whole program speaks, and a
+/// seated identity prefix is `System` in it, per `weaver-types-Spec` section
+/// 2. A family whose template has no system turn is saying something about
+/// its template, not about the vocabulary, so it renders that role rather
+/// than refusing it - and the rendering these templates document is the
+/// prefix opening the first user turn.
+///
+/// **This is the template authority followed rather than a shape invented**,
+/// which is the distinction `mistral3::Mistral3::render_delta` draws. Gemma
+/// and Mistral both publish templates that carry system content into the
+/// first user turn, so folding is what those authorities name; inventing
+/// would be minting a `<start_of_turn>system` the template never had.
+///
+/// A `System` message with no `User` after it becomes a user turn of its own,
+/// there being nothing to fold into and a prefix that renders as nothing
+/// being a prefix the record cannot account for. Roles other than a leading
+/// `System` pass through untouched, so a declaration that never used one is
+/// rendered exactly as before.
+///
+/// conforms: spu-system-folds-where-the-template-has-no-system-turn
+pub fn fold_system_into_first_user(messages: &[Message]) -> Vec<Message> {
+    let mut out: Vec<Message> = Vec::with_capacity(messages.len());
+    let mut carried: Option<String> = None;
+    for message in messages {
+        match (&message.role, carried.take()) {
+            (Role::System, carried_before) => {
+                // Several system messages in a row accumulate rather than
+                // the last winning, an operator who wrote two having meant
+                // both.
+                let mut text = carried_before.unwrap_or_default();
+                if !text.is_empty() {
+                    text.push_str("\n\n");
+                }
+                for block in &message.content {
+                    if let ContentBlock::Text { text: piece } = block {
+                        text.push_str(piece);
+                    }
+                }
+                carried = Some(text);
+            }
+            (Role::User, Some(prefix)) => {
+                let mut text = prefix;
+                for block in &message.content {
+                    if let ContentBlock::Text { text: piece } = block {
+                        text.push_str("\n\n");
+                        text.push_str(piece);
+                    }
+                }
+                out.push(Message {
+                    role: Role::User,
+                    content: vec![ContentBlock::Text { text }],
+                });
+            }
+            (_, prefix) => {
+                // The carried prefix has nothing of its own role to join, so
+                // it stands as a user turn ahead of whatever this is.
+                if let Some(text) = prefix {
+                    out.push(Message {
+                        role: Role::User,
+                        content: vec![ContentBlock::Text { text }],
+                    });
+                }
+                out.push(message.clone());
+            }
+        }
+    }
+    if let Some(text) = carried {
+        out.push(Message {
+            role: Role::User,
+            content: vec![ContentBlock::Text { text }],
+        });
+    }
+    out
+}
+
 pub fn render_each(family: &dyn Family, messages: &[Message]) -> Result<String, RenderRefusal> {
     let mut rendered = String::new();
     for message in messages {
@@ -1561,6 +1640,104 @@ mod tests {
                 text: text.to_string(),
             }],
         }
+    }
+
+    /// **The fold carries a seated prefix into a template that names no
+    /// system turn**, per the operator's ruling of 2026-08-28. Before it,
+    /// `role: system` refused at `render_identity` on gemma4 and mistral3
+    /// while `role: user` refused at the parse, which left those families no
+    /// usable identity prefix at all.
+    ///
+    /// Perturbation: drop the `fold_system_into_first_user` call from either
+    /// family's `render_identity` and the two family tests below fail with
+    /// `MalformedForFamily`. Watched under exactly that removal.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn a_leading_system_message_folds_into_the_first_user_turn() {
+        let folded = fold_system_into_first_user(&[
+            said(Role::System, "You are Karl."),
+            said(Role::User, "hello"),
+        ]);
+        assert_eq!(folded.len(), 1, "two messages became one user turn");
+        assert_eq!(folded[0].role, Role::User);
+        assert_eq!(
+            text_content(&folded[0]).expect("text"),
+            "You are Karl.\n\nhello"
+        );
+    }
+
+    /// **The two families that name no system turn now carry a seated
+    /// prefix**, which is the case that broke: `role: user` refuses at the
+    /// parse per `weaver-types-Spec` section 2, and `role: system` refused
+    /// here, so a gemma or mistral agent had no usable prefix at all.
+    ///
+    /// The assertion is that the prefix reaches the rendering rather than
+    /// that it takes a particular shape, the shape being each template's.
+    ///
+    /// Perturbation: drop the `fold_system_into_first_user` call from either
+    /// `render_identity` and this fails with `MalformedForFamily`. Watched
+    /// under exactly that removal.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn the_no_system_turn_families_render_a_seated_prefix() {
+        let prefix = [
+            said(Role::System, "You are Karl."),
+            said(Role::User, "hello"),
+        ];
+        for (name, family) in [
+            ("gemma4", &crate::family::gemma4::Gemma4 as &dyn Family),
+            (
+                "mistral3",
+                &crate::family::mistral3::Mistral3 as &dyn Family,
+            ),
+        ] {
+            let rendered = family
+                .render_identity(&prefix)
+                .unwrap_or_else(|e| panic!("{name} refused a seated prefix: {e:?}"));
+            assert!(
+                rendered.contains("You are Karl."),
+                "{name} dropped the prefix: {rendered}"
+            );
+            assert!(
+                rendered.contains("hello"),
+                "{name} dropped the request: {rendered}"
+            );
+        }
+    }
+
+    /// A prefix with no user turn after it still reaches the model, there
+    /// being nothing to fold into and a prefix rendering as nothing being a
+    /// prefix the record cannot account for.
+    #[test]
+    fn a_system_message_alone_becomes_its_own_user_turn() {
+        let folded = fold_system_into_first_user(&[said(Role::System, "You are Karl.")]);
+        assert_eq!(folded.len(), 1);
+        assert_eq!(folded[0].role, Role::User);
+        assert_eq!(text_content(&folded[0]).expect("text"), "You are Karl.");
+    }
+
+    /// Several system messages accumulate rather than the last winning, an
+    /// operator who wrote two having meant both.
+    #[test]
+    fn consecutive_system_messages_accumulate() {
+        let folded = fold_system_into_first_user(&[
+            said(Role::System, "one"),
+            said(Role::System, "two"),
+            said(Role::User, "ask"),
+        ]);
+        assert_eq!(folded.len(), 1);
+        assert_eq!(text_content(&folded[0]).expect("text"), "one\n\ntwo\n\nask");
+    }
+
+    /// **A declaration that never used a system role renders as before**, so
+    /// the fold is reachable only by the case it was added for.
+    #[test]
+    fn a_prefix_without_a_system_role_passes_through_untouched() {
+        let original = vec![said(Role::User, "hello"), said(Role::Assistant, "hi")];
+        let folded = fold_system_into_first_user(&original);
+        assert_eq!(folded, original);
     }
 
     /// **A family's wire role is the family's own, and gemma4's differs.**

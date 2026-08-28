@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-28, fourth of this date, the review seat's findings land.
+The parse's rule stands and the two families that name no system turn fold it
+rather than refusing, per the operator's ruling. Section 5's test joins the
+perturbation enumeration its peers sit in, and that section's claim counts are
+corrected from seventeen and ten to twenty and thirteen, two thirds of the
+drift predating this act.
+
 **Revised:** 2026-08-28, third of this date, the identity role's check lands
 and the rule stops being owed. Section 2 states the refusal at the parse with
 its field name, section 5 moves the entry from enforced-by-nothing to a
@@ -2057,7 +2064,7 @@ from an enforced one, and the corpus is better served by a reader being able
 to see that the gap was known and named while it stood.
 
 **Which invariant each claim serves, and why most serve none.** Seven of the
-seventeen carry a `grounds` edge, five to
+twenty carry a `grounds` edge, five to
 `axiom-floor-is-vocabulary-behavior-is-socket` and two to
 `axiom-contract-is-a-complete-interface`. The other three axioms take nothing from this
 crate. The floor states no claim about a turn key, it is not an organ, and it is not
@@ -2069,7 +2076,7 @@ the reason the claim exists.** Remove the socket invariant and this crate has no
 to elect a socket type, no reason to bound an envelope, and no reason to withhold a
 deserializer from a credential, so those three ground in it. Remove it and the config
 format is still YAML, the names are still kebab-case, and the parse is still total, so
-those three ground in nothing. **Ten claims grounding in no invariant is the expected
+those three ground in nothing. **Thirteen claims grounding in no invariant is the expected
 result and not a gap**, per Document Format section 4: a floor crate is mostly
 representation, and representation is what the invariants are not about.
 
@@ -2104,6 +2111,15 @@ already discharged.
 - In this crate: a misspelled key refuses, confirmed by watching a mistyped
   `permission-mode` vanish when `deny_unknown_fields` is removed. The watch is the
   derive's removal while the surface is one type's, and it moves with the surface.
+- In this crate: a non-system identity role refuses the parse, naming
+  `identity.<n>.role`, confirmed by watching all three refused roles parse when
+  `check_identity_roles` is removed from `parse` - which is the state that
+  produced the cross-precision deposit of 2026-08-25, a run whose prefix named
+  the agent and whose record never said so. **This entry read "enforced by
+  nothing today" from 2026-08-26 to 2026-08-28**, carrying its date and the
+  experimental reason the instrument was withheld. It is recorded rather than
+  quietly overwritten: an unenforced rule that no section admits is
+  indistinguishable from an enforced one.
 - In each organ's crate: a directive case belonging to another seam is refused as
   `OutOfOrder` rather than acted on, confirmed per seam by watching a wildcard arm
   swallow it.
