@@ -193,10 +193,17 @@ impl Family for Gemma4 {
         // authority rather than minting a turn the template never had.
         //
         // conforms: spu-system-folds-where-the-template-has-no-system-turn
-        let folded = super::fold_system_into_first_user(messages)?;
         let mut rendered = String::from(BOS);
-        rendered.push_str(&super::render_each(self, &folded)?);
+        rendered.push_str(&super::render_each(self, messages)?);
         Ok(rendered)
+    }
+
+    /// This template names no system turn, so a `System` message folds into
+    /// the user turn that follows, per `weaver-spu-Spec` section 5.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    fn fold_for_template(&self, messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
+        super::fold_system_into_first_user(messages)
     }
 
     fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal> {

@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, fourth of this date, the fold moves onto the family
+and the whole delta is folded. Section 5 states that the preparation is the
+family's own election, applied at the one rendering funnel rather than at each
+prefix site: wired into the prefix alone it left the control loop's delta
+rendering as two adjacent user turns, a shape both templates avoid by merging
+and one mistral's own raises on. The clause also settles that every `System`
+folds and not only a leading one, the code having said so while the prose did
+not.
+
 **Revised:** 2026-08-28, third of this date, the fold's watch follows the
 property it names. The delta path's `System` arm made an unfolded prefix
 render as two turns rather than refusing, so section 10's perturbation is the
@@ -18,7 +27,7 @@ enumeration gains the watch, which no workspace build could have supplied,
 `weaver-harness` depending on this crate not at all.
 
 **Revised:** 2026-08-28, the seated prefix folds where the template names no
-system turn. Section 5 states that gemma and mistral render a leading `System`
+system turn. Section 5 states that gemma and mistral render a `System`
 message into their first user turn rather than refusing the role, per the
 operator's ruling of this date: the role is the floor's vocabulary and the
 shape is the family's. Without it the parse's new rule left those two families
@@ -1382,13 +1391,20 @@ in the registry publish templates with no system turn - gemma and mistral -
 and both refused the role at `render_identity`, which after that parse rule
 left them no usable prefix at all: `user` refused above, `system` refused
 here. **The role is the floor's vocabulary and the shape is the family's**, so
-those families render the role rather than refusing it, folding a leading
-`System` message into the first user turn.
+those families render the role rather than refusing it, folding **every**
+`System` message into the user turn that follows it.
+
+**Every position and not only the first**, which is a decision rather than a
+detail. A family that renders system content as user content has no position
+at which the role stops being renderable, so refusing a mid-prefix `System`
+while folding a leading one would be a distinction with nothing behind it. An
+earlier form of this clause said "leading" while the code folded all of them,
+which is the disagreement that settles here in the code's favour.
 
 **That is the template authority followed and not a shape invented**, which is
 the distinction `mistral3` already drew when it declined to mint a system
 wrapper. Both families' published templates carry system content into the
-first user turn, so folding is what those authorities name; a `[SYSTEM]`
+first user turn, so folding is what those authorities name. A `[SYSTEM]`
 block of this program's own devising would be the invention. A `System`
 message with no user turn after it becomes a user turn of its own, a prefix
 that rendered as nothing being a prefix the record cannot account for, and a

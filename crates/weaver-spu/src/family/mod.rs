@@ -138,8 +138,13 @@ pub fn text_content(message: &Message) -> Result<String, RenderRefusal> {
 /// this call rather than inside it - see [`gemma4::Gemma4::render_identity`],
 /// where the once-per-prefix `<bos>` lives.
 pub fn render_each(family: &dyn Family, messages: &[Message]) -> Result<String, RenderRefusal> {
+    // **The family's own preparation runs first, here and not at each call
+    // site.** Every prefix rendering and the decode seam's delta rendering
+    // both funnel through this function, so a family that folds is folded for
+    // on both paths without either remembering to ask.
+    let prepared = family.fold_for_template(messages)?;
     let mut rendered = String::new();
-    for message in messages {
+    for message in &prepared {
         rendered.push_str(&family.render_delta(message)?);
     }
     Ok(rendered)
@@ -202,7 +207,12 @@ pub fn fold_system_into_first_user(messages: &[Message]) -> Result<Vec<Message>,
             }
             (Role::User, Some(prefix)) => {
                 let mut text = prefix;
-                text.push_str("\n\n");
+                // Guarded as the accumulate arm above guards it. An identity
+                // message with empty content parses today, so an unguarded
+                // separator opens the turn with a blank line.
+                if !text.is_empty() {
+                    text.push_str("\n\n");
+                }
                 text.push_str(&text_content(message)?);
                 out.push(Message {
                     role: Role::User,
@@ -326,6 +336,25 @@ pub trait Family {
 
     /// Render a turn's delta.
     fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal>;
+
+    /// **What this family must do to a message sequence before rendering it**,
+    /// defaulting to nothing.
+    ///
+    /// A family whose template names a system turn renders one and overrides
+    /// nothing here. A family whose template names none folds `System` into
+    /// the user turn that follows, per Spec section 5, and says so by
+    /// overriding this.
+    ///
+    /// **It hangs off the trait rather than off each `render_identity`
+    /// because the prefix is not the only path.** The control loop's opening
+    /// and its re-entry are `System` and travel as a delta, so a fold wired
+    /// into `render_identity` alone left them to render as two adjacent user
+    /// turns - a shape both published templates avoid by merging, and one
+    /// mistral's own template raises on. Placed here, [`render_each`] applies
+    /// it and every caller is covered by construction.
+    fn fold_for_template(&self, messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
+        Ok(messages.to_vec())
+    }
 
     /// Parse an emission into canonical content, this family's markers
     /// recognised.
@@ -1652,16 +1681,24 @@ mod tests {
     /// module by different artifact names, and labelled by the first row that
     /// reaches each. The classifier needs no exclusion: `modernbert` renders
     /// no conversation and is in no registry row.
-    fn conversational_families() -> Vec<(&'static str, &'static dyn Family)> {
+    fn conversational_families() -> Vec<(String, &'static dyn Family)> {
         let mut seen: Vec<usize> = Vec::new();
-        let mut out: Vec<(&'static str, &'static dyn Family)> = Vec::new();
-        for row in REGISTRY {
+        let mut out: Vec<(String, &'static dyn Family)> = Vec::new();
+        for (at, row) in REGISTRY.iter().enumerate() {
             let renderer = row.renderer as usize;
             if seen.contains(&renderer) {
                 continue;
             }
             seen.push(renderer);
-            out.push((row.family, (row.renderer)()));
+            // **Labelled with the row and not the family name alone**, two
+            // rows declaring `llama` while reaching different renderers:
+            // mistral artifacts carry `general.architecture = llama` and are
+            // told apart by their markers. A failure reading `llama` against
+            // a `[INST]` rendering sends a reader to the wrong module.
+            out.push((
+                format!("{} (registry row {at})", row.family),
+                (row.renderer)(),
+            ));
         }
         out
     }
@@ -1802,6 +1839,43 @@ mod tests {
             family
                 .render_identity(&[said(Role::System, "framing"), said(Role::User, "ask")])
                 .unwrap_or_else(|e| panic!("{name} refused a seated prefix: {e:?}"));
+        }
+    }
+
+    /// **The loop's delta renders as one turn and never as two adjacent user
+    /// turns.** This is the watch whose absence let a silent malformation
+    /// through: `every_conversational_family_renders_the_roles_a_loop_emits`
+    /// renders each role in isolation and so cannot see what a *sequence*
+    /// becomes.
+    ///
+    /// `dev_loop::contribution` emits `[System(framing), User(request)]` on a
+    /// first turn and after every flush. With the fold wired into
+    /// `render_identity` only, that reached the decode seam unfolded and
+    /// rendered as two user turns back to back - a shape both published
+    /// templates avoid by merging, and one mistral's own template raises on.
+    /// The previous round had made it worse rather than better: before the
+    /// delta path carried `System` at all, this sequence refused loudly.
+    ///
+    /// Perturbation: drop the `fold_for_template` call from `render_each` and
+    /// this fails on both folding families. Watched under exactly that
+    /// removal.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn the_loops_delta_renders_as_one_turn_on_the_folding_families() {
+        let delta = [said(Role::System, "FRAMING"), said(Role::User, "REQUEST")];
+        for (name, family) in conversational_families() {
+            let rendered = render_each(family, &delta)
+                .unwrap_or_else(|e| panic!("{name} refused the loop's delta: {e:?}"));
+            if family.fold_for_template(&delta).expect("folds") == delta.to_vec() {
+                // A family that names a system turn renders one, and two
+                // turns is the right answer there.
+                continue;
+            }
+            assert!(
+                rendered.contains("FRAMING\n\nREQUEST"),
+                "{name} rendered the loop's delta as separate turns: {rendered:?}"
+            );
         }
     }
 
