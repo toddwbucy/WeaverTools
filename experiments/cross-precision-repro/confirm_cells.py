@@ -103,23 +103,140 @@ def gate_turn(cfg, text, timeout=600):
     return json.loads(line)
 
 
-def read_runs(trace_path):
+def read_runs(trace_path, keep=None):
+    """Run -> its events, in first-appearance order.
+
+    **`keep` reads the tail rather than the file**, and a caller wanting the
+    most recent runs should pass it. The trace is append-only and grows
+    without bound, so a full parse costs the whole history to answer a
+    question about its end: measured 2026-08-27 against a 251 MiB trace, the
+    full scan took 4.0 s and ran twice per cell, which is the harness
+    charging a run for every run before it. With `keep` the cost follows the
+    tail instead.
+
+    The scan walks backward in chunks and stops one run past the `keep`th, so
+    the `keep` newest runs are whole rather than cut at a chunk edge. A
+    partial line at a chunk boundary is held for the next block for the same
+    reason. `keep=None` reads everything, which is the original behaviour.
+
+    **The oldest run returned is a boundary fragment and carries one event.**
+    The stop fires on the first line of the `keep`-plus-first run met going
+    backward, so `keep=k` answers k+1 runs and `order[0]` is a stub. Every
+    caller here takes `order[-1]` or indexes by a run it already names, so
+    the stub is inert, and it is described rather than trimmed because a
+    caller that iterated `runs` would otherwise meet it unwarned.
+
+    **A run's events are assumed contiguous**, which holds by construction:
+    a run is one load-to-unload cycle against a sequentially served agent, so
+    no second run interleaves it. Were they interleaved the backward stop
+    could fall inside a run and truncate it, and the interleaving checks
+    elsewhere in this harness guard the reissue rather than this scan.
+    """
+    lines = open(trace_path) if keep is None else _tail_lines(trace_path, keep)
     runs = {}
     order = []
-    with open(trace_path) as f:
-        for line in f:
-            try:
-                e = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            r = e.get("run")
-            if r is None:
-                continue
-            if r not in runs:
-                runs[r] = []
-                order.append(r)
-            runs[r].append(e)
+    for line in lines:
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        r = e.get("run")
+        if r is None:
+            continue
+        if r not in runs:
+            runs[r] = []
+            order.append(r)
+        runs[r].append(e)
     return order, runs
+
+
+def _tail_lines(trace_path, keep, chunk=1 << 20):
+    """The trailing lines covering the last `keep` runs, in file order."""
+    with open(trace_path, "rb") as f:
+        f.seek(0, os.SEEK_END)
+        pos = f.tell()
+        held = b""
+        out = []
+        seen = []
+        done = False
+        while pos > 0 and not done:
+            step = min(chunk, pos)
+            pos -= step
+            f.seek(pos)
+            block = f.read(step) + held
+            parts = block.split(b"\n")
+            # The first element may be the tail of a line beginning further
+            # back, so it is held for the next block rather than parsed here.
+            held = parts[0]
+            for raw in reversed(parts[1:]):
+                if not raw.strip():
+                    continue
+                out.append(raw)
+                try:
+                    r = json.loads(raw).get("run")
+                except json.JSONDecodeError:
+                    continue
+                if r is not None and r not in seen:
+                    seen.append(r)
+                    # One past `keep`: the `keep`th run is whole only once a
+                    # newer boundary has been crossed.
+                    if len(seen) > keep:
+                        done = True
+                        break
+        if not done and held.strip():
+            out.append(held)
+    return [raw.decode("utf-8", "replace") for raw in reversed(out)]
+
+
+def await_turns(trace_path, want, run_id, keep=4, timeout=None):
+    """`run_id` once it carries `want` turns, or once time runs out.
+
+    **The run is named by the caller rather than taken as the newest**, per
+    the seat's finding of 2026-08-27. A wait on whichever run is newest is
+    satisfied by the wrong run when the sink is dead rather than slow: the
+    cell before this one left a run of the same length, `want` is met on the
+    first read, and the caller reissues against a stale record and reports a
+    match that never happened. The close already carries the run it opened,
+    so the identity is in hand and is passed.
+
+    **The sink writes after the close answers**, so a read taken the instant
+    a turn closes can miss the events that turn produced. This was invisible
+    while `read_runs` scanned the whole trace, because the scan itself took
+    seconds and the sink caught up inside it. The tail read of 2026-08-27
+    removed that accidental delay and the race surfaced as a run one turn
+    short, every time, the missing turn always the last. Waiting for the
+    record is what the harness meant to do, and an accidental sleep is not a
+    way to do it.
+
+    Answers `(turns, events)` with whatever stands when the count is reached
+    or the timeout expires, and the caller reports the shortfall - a wait
+    that raised would turn a slow sink into a failed cell. **The events come
+    back beside the turns** so a caller depositing the run needs no second
+    read and holds no `runs` dict of its own.
+    """
+    # **The bound follows the work.** A deep session flushes many times the
+    # events of a shallow one behind a sink that has just spent a minute
+    # generating, so a fixed bound is generous for one and tight for the
+    # other.
+    if timeout is None:
+        timeout = 30.0 + 0.5 * want
+    end = time.time() + timeout
+    turns, events = [], []
+    delay = 0.02
+    while True:
+        _, runs = read_runs(trace_path, keep=keep)
+        if run_id in runs:
+            events = runs[run_id]
+            turns = cut_turns(events)
+            if len(turns) >= want:
+                return turns, events
+        if time.time() >= end:
+            return turns, events
+        time.sleep(delay)
+        # Backing off rather than polling flat: the scan has a one mebibyte
+        # floor, so a wait that runs to its bound reads on the order of a
+        # gigabyte to learn nothing.
+        delay = min(delay * 1.5, 1.0)
 
 
 def cut_turns(events):
@@ -238,19 +355,25 @@ def run_cell(cfg, cell, outdir):
             return report
 
         log("serving the source turns")
+        source_runs = set()
         for text in (SHORT_TEXT, LONG_TEXT):
             close = gate_turn(cfg, text)
             log(f"close {close.get('kind')} turn {close.get('turn')}")
             if close.get("kind") != "answered":
                 report["verdict"] = f"source turn not answered: {close}"
                 return report
+            source_runs.add(close.get("run"))
 
-        order, runs = read_runs(cfg["trace"])
-        if not order:
-            report["verdict"] = "the trace holds no runs - wrong path or silent sink"
+        # The closes name the run, so the wait is on that run and not on
+        # whichever is newest, per the seat's finding of 2026-08-27.
+        if len(source_runs) != 1 or None in source_runs:
+            report["verdict"] = (
+                "the source turns did not share one run: "
+                f"{sorted(map(str, source_runs))}"
+            )
             return report
-        source_run = order[-1]
-        source_turns = cut_turns(runs[source_run])
+        source_run = source_runs.pop()
+        source_turns, source_events = await_turns(cfg["trace"], 2, source_run)
         if len(source_turns) != 2:
             report["verdict"] = f"expected 2 source turns, found {len(source_turns)}"
             return report
@@ -282,20 +405,28 @@ def run_cell(cfg, cell, outdir):
             return report
         replay_run = runs_seen.pop()
 
-        order, runs = read_runs(cfg["trace"])
-        if replay_run not in runs:
+        replay_all, replay_events = await_turns(
+            cfg["trace"], len(source_turns), replay_run)
+        if not replay_all:
             report["verdict"] = (
                 f"the closes named run {replay_run} but the trace does not carry"
                 " it - sink lag or a different sink"
             )
             return report
-        replay_all = cut_turns(runs[replay_run])
         replay_turns = {t["turn"]: t for t in replay_all}
         if len(replay_all) != len(source_turns):
             log(f"turn count differs: source {len(source_turns)} replay {len(replay_all)}")
 
         # A replay with surplus turns is interleaved traffic and is
         # never a match, even when every source turn agrees.
+        # A short replay read is the sink rather than the model, and it
+        # reaches its own verdict rather than being folded into a mismatch.
+        if len(replay_all) < len(source_turns):
+            report["verdict"] = (
+                f"replay read short: expected {len(source_turns)} turns,"
+                f" found {len(replay_all)} - the record is incomplete"
+            )
+            return report
         all_match = len(replay_all) == len(source_turns)
         for st in source_turns:
             rt = replay_turns.get(st["turn"])
@@ -319,10 +450,18 @@ def run_cell(cfg, cell, outdir):
         report["replay_run"] = replay_run
         report["verdict"] = "REPRODUCED" if all_match else "NOT REPRODUCED"
 
-        # Deposit the two runs' events beside the report.
+        # **Deposited from a fresh read rather than from the snapshots the
+        # comparison used.** Those were taken the moment `cut_turns` was
+        # satisfied, which on the source side is before its unload, so a
+        # deposit made from them holds a run with no closing event and a
+        # consumer cannot tell from the file that the run ended cleanly. The
+        # comparison is unaffected either way and this costs one read a cell.
+        _, whole = read_runs(cfg["trace"], keep=6)
         for label, run in (("source", source_run), ("replay", replay_run)):
+            run_events = whole.get(run) or (
+                source_events if label == "source" else replay_events)
             with open(os.path.join(outdir, f"cell-{name}-{label}.ndjson"), "w") as f:
-                for e in runs[run]:
+                for e in run_events:
                     f.write(json.dumps(e) + "\n")
         return report
     finally:
