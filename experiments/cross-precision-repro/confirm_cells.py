@@ -65,7 +65,27 @@ CHECKS = [
 
 
 def sh(args, **kw):
-    return subprocess.run(args, capture_output=True, text=True, **kw)
+    """Run a command and always come back with a result.
+
+    **A metadata reader must not be the reason a run does not happen.**
+    `subprocess.run` raises when the binary is absent or `cwd` does not
+    exist, and the provenance readers below call it for `rustup`, `ldd`, and
+    `git` - none of which a box is obliged to carry. Raising there aborts a
+    seven-hour matrix before its first session, or dies in the confirm
+    driver ahead of the `try` that restores the declaration, leaving a
+    `.pre-cells` backup behind. That is the rule `device_bindings` and
+    `engine_libraries` already state, applied to the primitive they share:
+    these facts exist to make a deposit worth trusting, so none may be the
+    reason there is no deposit.
+
+    An absent command comes back as exit 127 with the reason on stderr, the
+    shell's own convention, so a caller reads a failure rather than catching
+    one and the account still says which failure it was.
+    """
+    try:
+        return subprocess.run(args, capture_output=True, text=True, **kw)
+    except OSError as error:
+        return subprocess.CompletedProcess(args, 127, "", str(error))
 
 
 DEVICE_LINE = re.compile(
@@ -194,24 +214,246 @@ def spu_binary(cfg):
     overrides it, and the sibling guess is the last resort rather than the
     first.
     """
+    return _resolve_spu(cfg)[0]
+
+
+def _resolve_spu(cfg):
+    """The SPU path and how it was arrived at.
+
+    **The source travels because the last resort is a guess.** With the admin
+    config unreadable the other two binaries record `unreadable` naming the
+    config, while this one falls back beside `admin_bin` - and a stale binary
+    from an older deploy sitting there would be hashed confidently under the
+    field whose whole purpose is to say whether two boxes run one build.
+    """
     if cfg.get("spu_bin"):
-        return cfg["spu_bin"]
-    stated = os.path.join(cfg.get("admin_config", ""), "spu-binary")
-    try:
-        with open(stated) as f:
-            named = f.read().strip()
-        if named:
-            return named
-    except OSError:
-        pass
-    return os.path.join(os.path.dirname(cfg["admin_bin"]), "weaver-spu")
+        return cfg["spu_bin"], "config spu_bin"
+    # **Skipped rather than joined against nothing.** `os.path.join("", name)`
+    # is a bare relative name read against the launch directory, so a file
+    # called `spu-binary` sitting there would be taken for the admin config
+    # and reported as an authoritative reading - a cwd artifact wearing the
+    # source that the `resolved_by` marker suppresses.
+    directory = cfg.get("admin_config")
+    if directory:
+        stated = os.path.join(directory, "spu-binary")
+        try:
+            with open(stated) as f:
+                named = f.read().strip()
+            if named:
+                return named, "admin config spu-binary"
+        except OSError:
+            pass
+    admin_bin = cfg.get("admin_bin")
+    if not admin_bin:
+        # `.get`, as `toolchain` uses beside it: a config omitting this raised
+        # `KeyError` here, and this reader runs before the `try` that restores
+        # the operator's declaration.
+        return None, "the config names neither spu_bin, admin_config, nor admin_bin"
+    return (
+        os.path.join(os.path.dirname(admin_bin), "weaver-spu"),
+        "guessed beside admin_bin, the admin config naming none",
+    )
 
 
-def engine_libraries(cfg):
+def _why(error):
+    """An exception's reason, or its name where it carries none.
+
+    `str(KeyboardInterrupt())` is empty, so a record templated straight over
+    it reads `engine_libraries: ` - a failure naming no failure, which is the
+    absence this file keeps removing.
+    """
+    said = str(error).strip()
+    return said if said else type(error).__name__
+
+
+def is_reading(value):
+    """True where a reader came back with a reading rather than a note.
+
+    **These readers report failure by returning, not by raising**, so a
+    caller that only guards against exceptions has not guarded at all. A
+    closing re-read that failed would otherwise compare unequal to a good
+    opening read and be recorded as `varied` - a positive claim that the
+    build changed mid-run, made out of a transient failure to look.
+
+    `weaver_binaries` and `engine_libraries` report per entry rather than as a
+    whole, so any unreadable entry makes the set unsafe to compare: two sides
+    differing only in which entry could not be read say nothing about the
+    build.
+
+    **Every reader in this file marks failure with `unreadable` and with no
+    other key**, which is what makes this test total rather than a list of
+    the failure shapes its author knew. An earlier form knew one of three -
+    `engine_libraries` also wrote `unresolved` and `error` - so a library that
+    resolved and failed to hash passed as a reading and was then reported as
+    a changed build. A test that enumerates failure keys falls behind the next
+    reader; one failure key cannot.
+    """
+    if not isinstance(value, dict) or not value or "unreadable" in value:
+        return False
+    return not any(
+        isinstance(entry, dict) and "unreadable" in entry
+        for entry in value.values()
+    )
+
+
+def _said_or_unreadable(result, what):
+    """A command's output, or a note saying why there is none.
+
+    The readers below all carry their reason rather than a bare empty value,
+    and the fields that predate them must too now that `sh` answers instead
+    of raising.
+    """
+    if result.returncode != 0:
+        # A command can fail silently, and `exit 1: ` names no failure - the
+        # absence this file keeps removing, one call site at a time.
+        said = result.stderr.strip()[:200] or "no stderr"
+        return {"unreadable": f"{what} exit {result.returncode}: {said}"}
+    said = result.stdout.strip()
+    return said if said else {"unreadable": f"{what} said nothing"}
+
+
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def weaver_binaries(cfg, spu=None):
+    """sha256 of the organ binaries this box will run.
+
+    **The field that answers "are the two boxes on the same build".** A
+    commit is not that answer: Rust and CUDA embed absolute paths and build
+    state, so two boxes compiling one commit produce different bytes, and
+    `commit` alone cannot distinguish a shared build from two local ones.
+    The hashes can, and they are what a build-once-and-distribute
+    arrangement is verified by.
+
+    Olympus carried these in a hand-written `binary-shas.txt` beside its
+    2026-08-27 deposit, which is the same sidecar the serving device and the
+    engine libraries were carried in before issue #370's third ask. Read
+    from the admin config, which already names all three, so the report
+    names what the runtime is configured to launch rather than what
+    a config file for this script believed.
+    """
+    out = {}
+    for key in ("worker-binary", "spu-binary", "gate-binary"):
+        # **The SPU goes through its own resolver**, which honours the
+        # documented `spu_bin` override and falls back beside `admin_bin`.
+        # Reading it straight from the config here would let one report hash
+        # a real SPU under `engine_libraries` while recording `unreadable`
+        # for the same binary under this key - two fields disagreeing about
+        # which build was measured, on exactly the boxes whose provisioning
+        # differs, which is what this field exists to compare.
+        source = None
+        if key == "spu-binary":
+            path, source = spu if spu is not None else _resolve_spu(cfg)
+            if path is None:
+                out[key] = {"path": None, "sha256": None, "unreadable": source}
+                continue
+        else:
+            directory = cfg.get("admin_config")
+            if not directory:
+                # Not a bare relative name read against this process's cwd:
+                # `_resolve_spu` and `toolchain` both refuse rather than
+                # guessing when their directory is unnamed, and three readers
+                # in one file may not disagree about that.
+                out[key] = {"path": None, "sha256": None,
+                            "unreadable": "the config names no admin_config"}
+                continue
+            stated = os.path.join(directory, key)
+            try:
+                with open(stated) as f:
+                    path = f.read().strip()
+            except OSError as e:
+                out[key] = {"path": None, "sha256": None,
+                            "unreadable": f"{stated}: {e}"}
+                continue
+            # An empty config file is an unset value, not a binary at the
+            # empty path, and `_sha256("")` would report it as a missing file.
+            if not path:
+                out[key] = {"path": None, "sha256": None,
+                            "unreadable": f"{stated}: names no path"}
+                continue
+        try:
+            out[key] = {"path": path, "sha256": _sha256(path)}
+        except OSError as e:
+            out[key] = {"path": path, "sha256": None, "unreadable": str(e)}
+        # Recorded only where it is not the plain reading, so a report says
+        # "guessed" exactly when it guessed.
+        if source and not source.startswith("admin config"):
+            out[key]["resolved_by"] = source
+    return out
+
+
+def toolchain(cfg):
+    """The Rust toolchain in force at the repository, not the ambient one.
+
+    **`rustc --version` answers differently depending on where it is run.**
+    `rust-toolchain.toml` overrides per directory, so a driver launched
+    outside the repository reports the box's default compiler while the
+    binaries were built with the pin. That is not hypothetical: of the three
+    olympus arms of 2026-08-27, all running one installed binary set at
+    `experiment-a9634c0`, two recorded `1.95.0-nightly` and the Ada arm
+    recorded `1.97.1`. One build, two claimed compilers, the difference
+    being the launch directory.
+
+    Read with `cwd` at the repository so the pin applies, and the active
+    toolchain recorded beside it so an override is visible rather than
+    silent.
+    """
+    repo = cfg.get("repo")
+    if not repo:
+        # **Not `.`, which is the defect this reader exists to end.** The
+        # matrix driver reads only `trace` and `declaration` from its config,
+        # so a config omitting `repo` is valid today and a fallback to the
+        # launch directory would read the ambient compiler again with nothing
+        # saying the pin was not applied.
+        return {"unreadable": "the config names no repo, so the pin's"
+                              " directory is unknown"}
+    version = sh(["rustc", "--version"], cwd=repo)
+    if version.returncode != 0:
+        return {"unreadable": f"rustc exit {version.returncode} at {repo}: "
+                              f"{version.stderr.strip()[:200]}"}
+    active = sh(["rustup", "show", "active-toolchain"], cwd=repo)
+    out = {"rustc": version.stdout.strip()}
+    # The toolchain marker is the part that distinguishes a pin in force from
+    # a box default, so its absence is named rather than left as a bare null.
+    #
+    # **The note rides the entry rather than a key beside it.** An earlier
+    # form wrote `active_toolchain_unreadable` at the top level, which
+    # `is_reading` does not look at - so a half-failed toolchain passed as a
+    # reading and broke the one-failure-key invariant that test rests on. It
+    # was latent only because this reader is not read twice; the moment it is,
+    # a `rustup` that fails once and succeeds once reports the toolchain as
+    # having changed mid-run.
+    if active.returncode == 0 and active.stdout.strip():
+        out["active_toolchain"] = active.stdout.strip().splitlines()[0]
+    else:
+        # Named for the condition rather than templated over it: a clean exit
+        # with nothing on either stream would read as `rustup exit 0:`, a
+        # failure record naming no failure, which is the silent absence the
+        # rest of this act removes.
+        if active.returncode == 0:
+            reason = "rustup exited cleanly and said nothing"
+        else:
+            said = active.stderr.strip()[:200]
+            reason = f"rustup exit {active.returncode}" + (f": {said}" if said else "")
+        out["active_toolchain"] = {"unreadable": reason}
+    return out
+
+
+def engine_libraries(cfg, spu=None):
     """sha256 of the libraries the serving binary actually links.
 
     Read through `ldd` rather than from a configured list, so the answer is
-    what the loader resolves rather than what an operator believed. The
+    what the loader resolves rather than what an operator believed. **The SPU
+    is resolved once by the caller and passed**, both collectors having
+    resolved it independently until 2026-08-28: a config read blipping between
+    the two calls put a guessed path under one field and a stated path under
+    the other, two fields in one report disagreeing about which binary they
+    measured. The
     decode math lives in `libggml-cuda` and `libllama`, and issue #370
     established that a Blackwell figure cannot be attributed while these
     are unrecorded: a cross-box divergence is silicon, libraries, or both,
@@ -221,7 +463,9 @@ def engine_libraries(cfg):
     read as "recorded, nothing to record", which is the same silent absence
     the `device` retirement exists to end.
     """
-    spu = spu_binary(cfg)
+    spu = (spu[0] if spu is not None else spu_binary(cfg))
+    if spu is None:
+        return {"unreadable": "the config names no route to the SPU binary"}
     if not os.path.exists(spu):
         return {"unreadable": f"no SPU binary at {spu}"}
     r = sh(["ldd", spu])
@@ -238,7 +482,8 @@ def engine_libraries(cfg):
         # second field is the bare word `not`. Recorded as unresolved
         # rather than hashed as a path.
         if not path.startswith("/"):
-            out[name] = {"path": None, "sha256": None, "unresolved": True}
+            out[name] = {"path": None, "sha256": None,
+                         "unreadable": "ldd reports it not found"}
             continue
         try:
             h = hashlib.sha256()
@@ -247,7 +492,7 @@ def engine_libraries(cfg):
                     h.update(chunk)
             out[name] = {"path": path, "sha256": h.hexdigest()}
         except OSError as e:
-            out[name] = {"path": path, "sha256": None, "error": str(e)}
+            out[name] = {"path": path, "sha256": None, "unreadable": _why(e)}
     if not out:
         return {"unreadable": f"{spu} links no ggml or llama library"}
     return out
@@ -482,20 +727,41 @@ def whole_ms(t):
     return (b - a) if a is not None and b is not None else None
 
 
-def cell_metadata(cfg, cell, libraries):
-    h = hashlib.sha256()
-    with open(cell["artifact"], "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    gpu = sh(["nvidia-smi", "--query-gpu=name,driver_version",
-              "--format=csv,noheader"]).stdout.strip()
-    commit = sh(["git", "-C", cfg["repo"], "rev-parse", "HEAD"]).stdout.strip()
-    rustc = sh(["rustc", "--version"]).stdout.strip()
+def cell_metadata(cfg, cell, libraries, binaries, tools):
+    # **The artifact's hash degrades rather than raising.** A missing or
+    # unreadable artifact would otherwise abort `run_cell` before its report
+    # exists and take every remaining cell with it, which is the class of
+    # defect the rest of this act removes: a metadata read is not a reason a
+    # run does not happen.
+    try:
+        artifact_sha = _sha256(cell["artifact"])
+    except OSError as error:
+        artifact_sha = {"unreadable": _why(error)}
+    # **Both read the returncode, because `sh` no longer raises.** Softening
+    # `sh` to answer 127 rather than throw fixed the readers that could abort
+    # a run and broke these two, which took `.stdout` blind: on a box without
+    # `nvidia-smi` or `git` on PATH the driver used to die loudly and would
+    # now deposit `""` and report REPRODUCED. An empty string that does not
+    # say it is empty is the absence the `device` retirement exists to end.
+    gpu = _said_or_unreadable(
+        sh(["nvidia-smi", "--query-gpu=name,driver_version",
+            "--format=csv,noheader"]),
+        "nvidia-smi",
+    )
+    # `.get`, as `toolchain` and `_resolve_spu` both use: a config naming no
+    # repository is a config error rather than a crash, and `git -C` against
+    # `None` would not survive the call anyway.
+    repo = cfg.get("repo")
+    commit = (
+        _said_or_unreadable(sh(["git", "-C", repo, "rev-parse", "HEAD"]), "git rev-parse")
+        if repo
+        else {"unreadable": "the config names no repo"}
+    )
     return {
         "box": cfg["box"],
         "precision": cell["precision"],
         "artifact": cell["artifact"],
-        "artifact_sha256": h.hexdigest(),
+        "artifact_sha256": artifact_sha,
         # **`device` is retired rather than redefined**, per issue #370. It
         # held this whole-machine listing, so every GPU present appeared in
         # every report and the one that answered appeared nowhere. Reusing
@@ -512,18 +778,29 @@ def cell_metadata(cfg, cell, libraries):
         # Hoisted: the libraries cannot change during a run and
         # `libggml-cuda` built for four architectures is 142 MiB to hash.
         "engine_libraries": libraries,
+        # **What a reader compares to answer "same build".** The commit
+        # cannot answer it: two boxes compiling one commit produce different
+        # bytes, so `commit` distinguishes source, and these distinguish
+        # builds.
+        "weaver_binaries": binaries,
         "build_flags": cfg["build_flags"],
-        "rustc": rustc,
+        # `rustc` reports the toolchain in force at the repository rather
+        # than on the ambient PATH, and `active_toolchain` makes an override
+        # visible. The olympus arms of 2026-08-27 recorded two compilers for
+        # one binary set because the old field followed the launch
+        # directory.
+        "toolchain": tools,
         "commit": commit,
         "short_text": SHORT_TEXT,
         "long_text": LONG_TEXT,
     }
 
 
-def run_cell(cfg, cell, outdir, libraries):
+def run_cell(cfg, cell, outdir, libraries, binaries, tools):
     name = cell["name"]
     log = lambda m: print(f"[{name}] {m}", flush=True)
-    report = {"cell": name, "metadata": cell_metadata(cfg, cell, libraries),
+    report = {"cell": name,
+              "metadata": cell_metadata(cfg, cell, libraries, binaries, tools),
               "steps": [], "turns": [], "verdict": None}
 
     # The declaration with this cell's artifact, everything else as
@@ -744,12 +1021,54 @@ def main():
     shutil.copy2(cfg["declaration"], backup)
     # Read once for the run: the libraries cannot change under it, and
     # `libggml-cuda` built for four architectures is 142 MiB to hash.
-    libraries = engine_libraries(cfg)
-    print(f"engine libraries: {json.dumps(libraries)}", flush=True)
     reports = []
     try:
+        # **Inside the scope that restores the declaration.** The backup is
+        # already taken by this point, and a reader raising above the `try`
+        # leaves a `.pre-cells` file beside the operator's own. `sh` no longer
+        # raises, but it was never the only raiser in the window and this act
+        # added two more readers into it.
+        # One resolution for both collectors, so the two fields cannot
+        # disagree about which SPU they measured.
+        spu = _resolve_spu(cfg)
+        libraries = engine_libraries(cfg, spu)
+        binaries = weaver_binaries(cfg, spu)
+        tools = toolchain(cfg)
+        print(f"engine libraries: {json.dumps(libraries)}", flush=True)
+        print(f"weaver binaries: {json.dumps(binaries)}", flush=True)
+        print(f"toolchain: {json.dumps(tools)}", flush=True)
         for cell in cfg["cells"]:
-            reports.append(run_cell(cfg, cell, args.outdir, libraries))
+            reports.append(
+                run_cell(cfg, cell, args.outdir, libraries, binaries, tools))
+
+        # **The provenance is read again after the cells have run**, the way
+        # the matrix reads it at its close. A run unloads and reloads the
+        # agent several times and can span an operator installing over it, so
+        # a build swapped mid-run would otherwise be recorded nowhere and the
+        # opening read asserted across the whole window.
+        closing_spu = _resolve_spu(cfg)
+        at_close = {
+            "engine_libraries": engine_libraries(cfg, closing_spu),
+            "weaver_binaries": weaver_binaries(cfg, closing_spu),
+            "toolchain": toolchain(cfg),
+        }
+        opening = {
+            "engine_libraries": libraries,
+            "weaver_binaries": binaries,
+            "toolchain": tools,
+        }
+        moved = {
+            name: {"at_start": opening[name], "at_close": reading}
+            for name, reading in at_close.items()
+            if reading != opening[name]
+        }
+        # Carried on every cell rather than beside them, the reports being a
+        # list of cells and a reader of any one of them needing to know the
+        # window did not hold.
+        for report in reports:
+            report["metadata"]["provenance_at_close"] = moved or "unchanged"
+        if moved:
+            print(f"PROVENANCE MOVED DURING THE RUN: {json.dumps(moved)}", flush=True)
     finally:
         shutil.copy2(backup, cfg["declaration"])
         os.unlink(backup)

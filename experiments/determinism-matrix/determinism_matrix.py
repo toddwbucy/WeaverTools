@@ -259,6 +259,11 @@ def main():
     # why it is empty rather than reading as "nothing to record", per the
     # same rule the reader itself follows.
     libraries = {"unreadable": "the run ended before the libraries were read"}
+    binaries = {"unreadable": "the run ended before the binaries were read"}
+    tools = {"unreadable": "the run ended before the toolchain was read"}
+    # The placeholders above are not readings, which is what `base.is_reading`
+    # tests at the close: an interrupted at-start read and a failed one leave
+    # the same shape, and neither may be compared against a good closing read.
     logpath = os.path.join(args.outdir, "matrix.log")
 
     def log(msg):
@@ -275,8 +280,13 @@ def main():
         # missing raises, hashing 142 MiB can be interrupted, and either
         # one outside the `try` would leave the operator's declaration
         # holding this run's artifact.
-        libraries = base.engine_libraries(cfg)
+        opening_spu = base._resolve_spu(cfg)
+        libraries = base.engine_libraries(cfg, opening_spu)
+        binaries = base.weaver_binaries(cfg, opening_spu)
+        tools = base.toolchain(cfg)
         log(f"engine libraries: {json.dumps(libraries)}")
+        log(f"weaver binaries: {json.dumps(binaries)}")
+        log(f"toolchain: {json.dumps(tools)}")
 
         # Sweeps rather than repeats: every combination is seen once
         # before any is seen twice, so a run cut short by the clock still
@@ -340,14 +350,129 @@ def main():
     # worth trusting, so they must never be the reason there is no deposit.
     # A box without `journalctl` on PATH raises here, and losing a
     # seven-hour matrix over a missing box fact would be the wrong trade.
+    # **The binaries are read twice and compared**, per finding 7 of the
+    # olympus seat. `--hours` lets a run reach seven and `run_session` loads
+    # and unloads per session, so a build swapped mid-matrix would be
+    # recorded nowhere and one hash asserted over the whole window - the
+    # shape #370 falsified and the one this summary already rejects for
+    # device bindings. One extra hash makes the claim checkable rather than
+    # assumed. The libraries carry the same exposure and are read with them.
+    # Guarded like the device read below, and for the same reason: a closing
+    # read that raised would lose the run it was added to describe.
+    # **`KeyboardInterrupt` is caught by name**, because it is not an
+    # `Exception` and `except Exception` let it past. The main loop has
+    # already absorbed one Ctrl-C by this point and these reads hash 142 MiB,
+    # so a second one landed in the window would have killed `main` before
+    # `summary.json` was written - losing every session, which is the loss
+    # the placeholders above exist to prevent.
+    #
+    # **The two reads are wrapped apart.** Together, a library failure
+    # discarded a good binary reading and was then recorded under the binary
+    # field, so the summary said the binaries could not be re-read when they
+    # could, and the library failure was recorded nowhere.
+    caught = (Exception, KeyboardInterrupt)
+    # **`varied` is claimed only where both sides are readings.** These
+    # readers report failure by returning a note rather than by raising, so
+    # the `except` below catches almost nothing and a failed closing read
+    # would otherwise fall into the `!=` branch - asserting the build changed
+    # mid-run out of a transient failure to look. `base.is_reading` is the
+    # test, and a flag recording whether the read ran was not it: a read
+    # that ran and failed leaves the same shape as one that never ran.
+    def hashes(reading):
+        """The sha256 of each entry, which is what a build comparison is
+        about. `path` and `resolved_by` can differ while the bytes agree."""
+        return {
+            name: entry.get("sha256")
+            for name, entry in reading.items()
+            if isinstance(entry, dict)
+        }
+
+    def whole(reading):
+        """The reading itself, for a reader whose values are not hashes.
+
+        `hashes` would answer `{}` for the toolchain, every value there being
+        a string, so two different toolchains would compare equal and the
+        double read would report nothing. What counts as a change differs by
+        reader, so the comparison is the caller's to name.
+        """
+        return reading
+
+    def resolution(reading):
+        """Which files a reading looked at, as against what it found in them."""
+        return {
+            name: (entry.get("path"), entry.get("resolved_by"))
+            for name, entry in reading.items()
+            if isinstance(entry, dict)
+        }
+
+    def close(reader, at_start, what, essence=hashes):
+        """Read again at the close and say how the two readings relate.
+
+        **One envelope on every branch.** `status` says which case it is and
+        the readings sit in named fields beside it, so a consumer reads the
+        status rather than testing which keys are present. An earlier form
+        returned the bare reading on the unchanged path and a differently
+        shaped dict on each other, which made every consumer a type test.
+
+        **Resolution is compared before content.** Two readings that looked at
+        different files say nothing about whether a build moved: the SPU's
+        path falls back to the guess beside `admin_bin` when a config read
+        blips, so a resolution switch with differing hashes is two different
+        binaries measured, not one binary changed. `varied` is claimed only
+        where both readings looked at the same places.
+        """
+        try:
+            at_close = reader(cfg)
+        except caught as e:  # noqa: BLE001 - any failure degrades to a note
+            # `base._why` rather than the exception directly: a
+            # `KeyboardInterrupt` renders empty and would leave this naming
+            # no failure.
+            at_close = {"unreadable": f"{what}: {base._why(e)}"}
+        if not base.is_reading(at_close):
+            return {"status": "at_close_unreadable",
+                    "at_start": at_start, "note": at_close}
+        if not base.is_reading(at_start):
+            return {"status": "at_start_unreadable",
+                    "at_close": at_close, "note": at_start}
+        if resolution(at_close) != resolution(at_start):
+            return {"status": "resolved_differently",
+                    "at_start": at_start, "at_close": at_close}
+        if essence(at_close) != essence(at_start):
+            return {"status": "varied",
+                    "at_start": at_start, "at_close": at_close}
+        return {"status": "unchanged", "reading": at_start}
+
+    # **One resolution for both collectors at each end**, so the two fields
+    # cannot disagree about which SPU they measured - the same sharing the
+    # confirm driver does at its own two reads.
+    closing_spu = base._resolve_spu(cfg)
+    binaries_at_close = close(
+        lambda c: base.weaver_binaries(c, closing_spu), binaries, "weaver_binaries"
+    )
+    libraries = close(
+        lambda c: base.engine_libraries(c, closing_spu), libraries, "engine_libraries"
+    )
+    # **Read twice like the other two.** It was the one reader left on a
+    # single read, which is what made the invariant break in `toolchain`
+    # latent rather than visible. Compared whole rather than by hash, its
+    # values being strings, and a difference here is a difference in what
+    # built the binaries rather than in the binaries - the hashes above are
+    # what would catch a swap, and this catches the pin moving under a run.
+    tools = close(base.toolchain, tools, "toolchain", essence=whole)
+
     try:
         bindings = base.device_bindings(cfg, run_started)
-    except Exception as e:  # noqa: BLE001 - any failure degrades to a note
-        bindings = [{"unreadable": f"the device read failed: {e}"}]
+    except caught as e:  # noqa: BLE001 - any failure degrades to a note
+        # `_why` here too: widening this catch to include `KeyboardInterrupt`
+        # opened the empty-reason path, `journalctl` over a seven-hour window
+        # being a call a Ctrl-C can land in.
+        bindings = [{"unreadable": f"the device read failed: {base._why(e)}"}]
     summary = {
         "serving_device": (bindings[0] if len(bindings) == 1
                            else {"varied": bindings}),
         "engine_libraries": libraries,
+        "weaver_binaries": binaries_at_close,
+        "toolchain": tools,
         "sessions": total,
         "reproduced": good,
         "diverged": len(diverged),
