@@ -5,6 +5,13 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-28, sixth of this date, the identity's refusals are
+enumerated and a fourth is added. Sections 2 and 5 state that a message
+carries at least one `Text` block and that each carries text: an empty string
+in a licensed block passed both prior checks and seated the same nothing an
+empty list would have. Section 5's entry names each refusal with its own
+watch rather than describing two and citing one.
+
 **Revised:** 2026-08-28, fifth of this date, the parse judges the block
 beside the role. Sections 2 and 5 state that an identity message carries
 `Text` and nothing else, the door refusing both and the role alone having left
@@ -630,9 +637,10 @@ other role, per `harness-identity-door-writes-system-only`, so a declaration
 carrying any other role seats a prefix into the decode context that the record
 cannot show - the condition `weaver-harness-PRD` section 5's fifth case exists
 to report, found in the field and filed as issue #369. Every message carries
-`Text` blocks and nothing else, per `weaver-traits-Spec` section 3, and the
-parse judges that beside the role: the door refuses both, and judging one here
-would leave the other to be met as a fault in a running agent. **The rule belongs
+at least one `Text` block, each with text in it and nothing else, per
+`weaver-traits-Spec` section 3, and the parse judges that beside the role: the
+door refuses both, and judging one here would leave the other to be met as a
+fault in a running agent. **The rule belongs
 here rather than at the door.** The door refuses what the declaration should
 never have contained, which makes it the last place the condition can be
 caught rather than the first, and a rule enforced only at the last place is a
@@ -2120,17 +2128,29 @@ already discharged.
 - In this crate: a misspelled key refuses, confirmed by watching a mistyped
   `permission-mode` vanish when `deny_unknown_fields` is removed. The watch is the
   derive's removal while the surface is one type's, and it moves with the surface.
-- In this crate: an identity message that is not a `System` message carrying
-  `Text` blocks refuses the parse, naming `identity.<n>.role` or
-  `identity.<n>.content.<m>`. **The door refuses the role and the block both**,
-  so judging only the role left half of it at runtime: a `role: system`
-  declaration carrying a `tool_call` parsed clean, authored a fault without
-  aborting the load, and was refused at the SPU's open. Confirmed by watching
-  all three refused roles parse when `check_identity_roles` is removed from
-  `parse`, and the unlicensed block parse when its loop is removed - the first
-  of which is the state that produced the cross-precision deposit of
-  2026-08-25, a run whose prefix named the agent and whose record never said
-  so. **This entry read "enforced by
+- In this crate: an identity message refuses the parse unless it is a
+  `System` message carrying at least one `Text` block and every block carries
+  text. **Four ways of seating nothing or seating the unwritable, and each is
+  watched:**
+    - a role the door does not write, naming `identity.<n>.role`, confirmed by
+      watching all three refused roles parse when `check_identity_roles` is
+      removed from `parse` - the state that produced the cross-precision
+      deposit of 2026-08-25, a run whose prefix named the agent and whose
+      record never said so
+    - an empty content list, naming `identity.<n>.content`, confirmed by
+      watching it parse when its check is removed
+    - a block the licensing rule does not admit, naming
+      `identity.<n>.content.<m>`, confirmed by watching a `tool_call` parse
+      when the block loop is removed
+    - a `Text` block carrying no text, naming
+      `identity.<n>.content.<m>.text`, confirmed by watching it parse when
+      that arm is removed
+
+  **The door refuses the role and the block both**, so judging only the role
+  left half of it at runtime: a `role: system` declaration carrying a
+  `tool_call` parsed clean, authored a fault without aborting the load, and
+  was refused at the SPU's open. An empty `identity` list stays lawful, that
+  being an agent with no prefix. **This entry read "enforced by
   nothing today" from 2026-08-26 to 2026-08-28**, carrying its date and the
   experimental reason the instrument was withheld. It is recorded rather than
   quietly overwritten: an unenforced rule that no section admits is

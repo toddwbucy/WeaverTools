@@ -1790,9 +1790,12 @@ mod tests {
     /// texts contiguous, which no unfolded rendering produces because the
     /// template's own turn markers sit between them.
     ///
-    /// Perturbation: replace the fold call with `messages.to_vec()` in either
-    /// `render_identity` and this fails on the merged text. Watched under
-    /// exactly that replacement.
+    /// Perturbation: replace `render_each`'s `fold_for_template` call with the
+    /// messages unchanged and this fails on the merged text. Watched under
+    /// exactly that replacement. **The fold is no longer called from either
+    /// `render_identity`**, having moved onto the trait so the delta path is
+    /// covered too, so a perturbation naming that site would now change
+    /// nothing.
     ///
     /// conforms: spu-system-folds-where-the-template-has-no-system-turn
     #[test]
@@ -1843,14 +1846,29 @@ mod tests {
         // re-entry are System, the request is User, and the model answers.
         let emitted = [Role::System, Role::User, Role::Assistant];
         let families = conversational_families();
-        // **A derivation that returned nothing would pass this test
-        // vacuously**, a `for` over an empty list asserting nothing at all.
-        // The count is not pinned, since a new family must not have to edit
-        // a number here, but the list must reach the registry.
+        // **Every registry row reaches this watch**, which is the property
+        // the derivation exists to hold and is stronger than either a
+        // vacuous-empty guard or a pinned count.
+        //
+        // `len() >= 2` passed a dedupe that silently dropped one of seven,
+        // which is the failure deriving from `REGISTRY` was meant to prevent.
+        // A pinned seven would catch that and make a new family edit a number
+        // here, so the count would drift into the thing being asserted. This
+        // asks the question directly: for each row, is the renderer it cites
+        // present in the list.
+        for row in REGISTRY {
+            let cited: *const dyn Family = (row.renderer)();
+            assert!(
+                families
+                    .iter()
+                    .any(|(_, held)| std::ptr::eq(*held as *const dyn Family, cited)),
+                "registry row {} cites a renderer no family in the watch holds",
+                row.family
+            );
+        }
         assert!(
-            families.len() >= 2,
-            "the family list derives from REGISTRY and came back with {}",
-            families.len()
+            !families.is_empty(),
+            "the family list derives from REGISTRY and came back empty"
         );
         for (name, family) in families {
             for role in &emitted {

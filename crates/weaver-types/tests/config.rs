@@ -146,6 +146,31 @@ fn an_identity_message_carrying_nothing_refuses() {
     );
 }
 
+/// **A text block carrying no text refuses**, the empty turn arriving by a
+/// second route.
+///
+/// The content list is non-empty and the block is licensed, so the two checks
+/// beside this one both pass while what reaches the model is the same seated
+/// nothing an empty list would have given it.
+///
+/// Perturbation: drop the `text.is_empty()` arm and this parses. Watched
+/// under exactly that removal.
+///
+/// conforms: types-identity-role-is-system
+#[test]
+fn an_identity_text_block_carrying_no_text_refuses() {
+    let source = full_config().replace(
+        "            text: You answer briefly.\n",
+        "            text: \"\"\n",
+    );
+    let err = parse(&source).expect_err("refuses");
+    assert_eq!(err.kind, ConfigErrorKind::BadValue);
+    assert_eq!(
+        err.field.as_ref().map(|f| f.0.as_str()),
+        Some("identity.0.content.0.text")
+    );
+}
+
 /// An empty identity is a declaration the operator made, per
 /// `weaver-types-Spec` section 2: an agent with no prefix is a legitimate
 /// agent, so the role rule judges the messages present and does not require

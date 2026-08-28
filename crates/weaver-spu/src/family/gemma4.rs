@@ -155,12 +155,20 @@ impl Gemma4 {
     /// rather than a substitution. A loop driving a gemma agent frames the
     /// field in its user turns, which is what this arm now does for it.
     ///
-    /// **This arm is what carries the control loop's voice.** The loop's
-    /// opening and its re-entry are `System` and travel as a delta rather
-    /// than in the open, so they reach here and never reach
-    /// `render_identity`'s fold. With this arm refusing, every turn of a
-    /// dev-loop run against this family failed while the declaration's
-    /// prefix rendered perfectly.
+    /// **This arm is what a caller reaching `render_delta` directly gets.**
+    /// The ordinary path is `render_each`, which applies `fold_for_template`
+    /// first, so a `System` message arriving with a user turn after it is
+    /// merged before it ever reaches here and this arm sees only what stands
+    /// alone. The arm still has to render that: a lone `System`, and any
+    /// caller that renders one message at a time.
+    ///
+    /// It was added because the control loop's opening and its re-entry are
+    /// `System` and travel as a delta rather than in the open. With the fold
+    /// wired into `render_identity` alone they reached this arm unmerged, and
+    /// with the arm refusing, every turn of a dev-loop run against this
+    /// family failed while the declaration's prefix rendered perfectly. The
+    /// fold has since moved onto the trait, so both halves are answered: the
+    /// merge at `render_each` and the lone message here.
     ///
     /// `Role::ToolResult` refuses rather than rendering as a turn. This family
     /// has no tool turn: its template carries tool results as standalone

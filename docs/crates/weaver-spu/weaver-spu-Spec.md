@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, sixth of this date, the two claims about `System`
+are given two watches. Section 10's entry described the rendering and the
+folding together while naming one outcome for both, and once the role renders
+an unfolded message no longer refuses - it renders as its own turn, so the
+fold's watch is the merged text and not a refusal. Section 5 also states that
+the fold runs within the `render_each` call a message arrives in.
+
 **Revised:** 2026-08-28, fifth of this date, the fold's claim narrows to the
 call it holds within. Section 5 states that the merge does not span the prefix
 and the delta, those being two render calls, so the two turns they produce sit
@@ -1399,7 +1406,10 @@ and both refused the role at `render_identity`, which after that parse rule
 left them no usable prefix at all: `user` refused above, `system` refused
 here. **The role is the floor's vocabulary and the shape is the family's**, so
 those families render the role rather than refusing it, folding **every**
-`System` message into the user turn that follows it.
+`System` message into the user turn that follows it, within the `render_each`
+call the message arrives in. A `System` message with no user turn after it in
+that call becomes a user turn of its own, a prefix that rendered as nothing
+being a prefix the record cannot account for.
 
 **The merge is within one render call and does not span the prefix and the
 delta**, which are two: the prefix renders at the open and the delta at the
@@ -2704,16 +2714,26 @@ than a code fact.
 
 **Requiring a perturbation-verified test.**
 
-- A seated `System` prefix renders on every family that serves a
-  conversation, folded into the user turn where the template names no system
-  turn. Confirmed by watching gemma or mistral answer `MalformedForFamily`
-  when the role is removed from the delta path, which is the state that broke
-  every turn of a dev-loop run against those families while the declaration's
-  prefix rendered perfectly. **The watch covers the delta path and not only
-  the prefix**, the control loop's own voice travelling as a delta and never
-  reaching the fold, and `weaver-harness` taking no dependency on this crate,
-  so no workspace build compiles the loop's roles against the families that
-  must render them.
+- A `System` message renders on every family that serves a conversation, and
+  folds into the user turn that follows it where the template names no system
+  turn. **These are two claims with two watches, and an earlier form of this
+  entry named one outcome for both.**
+
+  The rendering is confirmed by watching gemma or mistral answer
+  `MalformedForFamily` when the role is removed from a delta path, which is
+  the state that broke every turn of a dev-loop run against those families
+  while the declaration's prefix rendered perfectly.
+
+  The folding is confirmed differently, because once the role renders, an
+  unfolded message no longer refuses - it renders as its own turn. So the
+  watch is the merged text: replace `render_each`'s `fold_for_template` call
+  with the messages unchanged and the two texts arrive in separate turn
+  wrappers rather than one.
+
+  **Both watches cover the delta path and not only the prefix**, the control
+  loop's own voice travelling as a delta, and `weaver-harness` taking no
+  dependency on this crate, so no workspace build compiles the loop's roles
+  against the families that must render them.
 - Truncation is a fault: an envelope over the 64 kibibyte bound on the lifecycle
   channel produces `Truncated` and no directive, confirmed by watching a silently
   shortened directive decode when the `MSG_TRUNC` check is removed. This is the

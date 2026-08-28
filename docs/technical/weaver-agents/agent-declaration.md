@@ -88,8 +88,14 @@ block names `identity.<n>.content.<m>` and an empty one names
 be seated into the model and left out of the record. Declarations written
 before 2026-08-28 carry `role: user` and need the one-word change. A family
 whose own template names no system turn, gemma and mistral among them, folds
-the prefix into its first user turn when rendering, so the role is what the
-operator writes everywhere and the shape is the family's.
+a system message into the user turn that follows it when rendering, so the
+role is what the operator writes everywhere and the shape is the family's.
+
+**That folding is within one rendering and not across them.** The prefix is
+rendered and seated when the agent loads, and each later turn is rendered
+separately, so on those families a seated prefix becomes one user turn and the
+first turn's own framing becomes another after it. The declaration is written
+the same way regardless: `role: system`, and the family decides the shape.
 
 **`spu-instruction.decoder.tunable-values`** - the knob map, its own section
 below.

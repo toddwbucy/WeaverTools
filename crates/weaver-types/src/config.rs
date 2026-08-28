@@ -417,11 +417,24 @@ fn check_identity_roles(identity: &[weaver_traits::Message]) -> Result<(), Confi
         // refused at the SPU's `Open` - leaving the operator to meet in a
         // running agent what this check exists to answer at the load.
         for (block_at, block) in message.content.iter().enumerate() {
-            if !matches!(block, weaver_traits::ContentBlock::Text { .. }) {
-                return Err(ConfigError {
-                    field: Some(FieldName(format!("identity.{at}.content.{block_at}"))),
-                    kind: ConfigErrorKind::BadValue,
-                });
+            match block {
+                // **A block carrying no text is an empty turn by another
+                // route.** The list is non-empty and the block is licensed,
+                // so both checks above pass, and what reaches the model is
+                // the same seated nothing an empty list would have given it.
+                weaver_traits::ContentBlock::Text { text } if text.is_empty() => {
+                    return Err(ConfigError {
+                        field: Some(FieldName(format!("identity.{at}.content.{block_at}.text"))),
+                        kind: ConfigErrorKind::BadValue,
+                    });
+                }
+                weaver_traits::ContentBlock::Text { .. } => {}
+                _ => {
+                    return Err(ConfigError {
+                        field: Some(FieldName(format!("identity.{at}.content.{block_at}"))),
+                        kind: ConfigErrorKind::BadValue,
+                    });
+                }
             }
         }
     }
