@@ -242,6 +242,27 @@ def _resolve_spu(cfg):
     )
 
 
+def is_reading(value):
+    """True where a reader came back with a reading rather than a note.
+
+    **These readers report failure by returning, not by raising**, so a
+    caller that only guards against exceptions has not guarded at all. A
+    closing re-read that failed would otherwise compare unequal to a good
+    opening read and be recorded as `varied` - a positive claim that the
+    build changed mid-run, made out of a transient failure to look.
+
+    `weaver_binaries` reports per entry rather than as a whole, so any
+    unreadable entry makes the set unsafe to compare: two sides differing
+    only in which entry could not be read say nothing about the build.
+    """
+    if not isinstance(value, dict) or not value or "unreadable" in value:
+        return False
+    return not any(
+        isinstance(entry, dict) and "unreadable" in entry
+        for entry in value.values()
+    )
+
+
 def _said_or_unreadable(result, what):
     """A command's output, or a note saying why there is none.
 
@@ -278,7 +299,7 @@ def weaver_binaries(cfg):
     2026-08-27 deposit, which is the same sidecar the serving device and the
     engine libraries were carried in before issue #370's third ask. Read
     from the admin config, which already names all three, so the report
-    names what the runtime is actually configured to launch rather than what
+    names what the runtime is configured to launch rather than what
     a config file for this script believed.
     """
     out = {}
@@ -294,7 +315,16 @@ def weaver_binaries(cfg):
         if key == "spu-binary":
             path, source = _resolve_spu(cfg)
         else:
-            stated = os.path.join(cfg.get("admin_config", ""), key)
+            directory = cfg.get("admin_config")
+            if not directory:
+                # Not a bare relative name read against this process's cwd:
+                # `_resolve_spu` and `toolchain` both refuse rather than
+                # guessing when their directory is unnamed, and three readers
+                # in one file may not disagree about that.
+                out[key] = {"path": None, "sha256": None,
+                            "unreadable": "the config names no admin_config"}
+                continue
+            stated = os.path.join(directory, key)
             try:
                 with open(stated) as f:
                     path = f.read().strip()
@@ -320,7 +350,7 @@ def weaver_binaries(cfg):
 
 
 def toolchain(cfg):
-    """The Rust toolchain actually in force, not the one on the ambient PATH.
+    """The Rust toolchain in force at the repository, not the ambient one.
 
     **`rustc --version` answers differently depending on where it is run.**
     `rust-toolchain.toml` overrides per directory, so a driver launched
@@ -356,9 +386,16 @@ def toolchain(cfg):
         out["active_toolchain"] = active.stdout.strip().splitlines()[0]
     else:
         out["active_toolchain"] = None
-        out["active_toolchain_unreadable"] = (
-            f"rustup exit {active.returncode}: {active.stderr.strip()[:200]}"
-        )
+        # Named for the condition rather than templated over it: a clean exit
+        # with nothing on either stream would read as `rustup exit 0:`, a
+        # failure record naming no failure, which is the silent absence the
+        # rest of this act removes.
+        if active.returncode == 0:
+            reason = "rustup exited cleanly and said nothing"
+        else:
+            said = active.stderr.strip()[:200]
+            reason = f"rustup exit {active.returncode}" + (f": {said}" if said else "")
+        out["active_toolchain_unreadable"] = reason
     return out
 
 

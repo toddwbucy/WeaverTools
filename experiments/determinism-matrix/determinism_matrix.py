@@ -261,12 +261,9 @@ def main():
     libraries = {"unreadable": "the run ended before the libraries were read"}
     binaries = {"unreadable": "the run ended before the binaries were read"}
     tools = {"unreadable": "the run ended before the toolchain was read"}
-    # **Whether the at-start read happened at all**, which the placeholders
-    # cannot say for themselves: a failed read and an interrupted one both
-    # leave an `unreadable` dict, and comparing a placeholder against a good
-    # closing read would report the build as having changed mid-run when the
-    # at-start reading never happened.
-    read_at_start = False
+    # The placeholders above are not readings, which is what `base.is_reading`
+    # tests at the close: an interrupted at-start read and a failed one leave
+    # the same shape, and neither may be compared against a good closing read.
     logpath = os.path.join(args.outdir, "matrix.log")
 
     def log(msg):
@@ -286,7 +283,6 @@ def main():
         libraries = base.engine_libraries(cfg)
         binaries = base.weaver_binaries(cfg)
         tools = base.toolchain(cfg)
-        read_at_start = True
         log(f"engine libraries: {json.dumps(libraries)}")
         log(f"weaver binaries: {json.dumps(binaries)}")
         log(f"toolchain: {json.dumps(tools)}")
@@ -374,29 +370,30 @@ def main():
     # field, so the summary said the binaries could not be re-read when they
     # could, and the library failure was recorded nowhere.
     caught = (Exception, KeyboardInterrupt)
-    binaries_at_close = binaries
-    try:
-        closing = base.weaver_binaries(cfg)
-        if not read_at_start:
-            # Nothing to compare against, so the closing read is simply the
+    # **`varied` is claimed only where both sides are readings.** These
+    # readers report failure by returning a note rather than by raising, so
+    # the `except` below catches almost nothing and a failed closing read
+    # would otherwise fall into the `!=` branch - asserting the build changed
+    # mid-run out of a transient failure to look. `base.is_reading` is the
+    # test, and a flag recording whether the read ran was not it: a read
+    # that ran and failed leaves the same shape as one that never ran.
+    def close(reader, at_start, what):
+        try:
+            at_close = reader(cfg)
+        except caught as e:  # noqa: BLE001 - any failure degrades to a note
+            return {"at_start": at_start, "at_close_unreadable": f"{what}: {e}"}
+        if not base.is_reading(at_close):
+            return {"at_start": at_start, "at_close_unreadable": at_close}
+        if not base.is_reading(at_start):
+            # Nothing sound to compare against, so the closing read is the
             # only reading there is.
-            binaries_at_close = closing
-        elif closing != binaries:
-            binaries_at_close = {"varied": {"at_start": binaries,
-                                            "at_close": closing}}
-    except caught as e:  # noqa: BLE001 - any failure degrades to a note
-        binaries_at_close = {"at_start": binaries,
-                             "at_close_unreadable": f"weaver_binaries: {e}"}
-    try:
-        libraries_at_close = base.engine_libraries(cfg)
-        if not read_at_start:
-            libraries = libraries_at_close
-        elif libraries_at_close != libraries:
-            libraries = {"varied": {"at_start": libraries,
-                                    "at_close": libraries_at_close}}
-    except caught as e:  # noqa: BLE001 - any failure degrades to a note
-        libraries = {"at_start": libraries,
-                     "at_close_unreadable": f"engine_libraries: {e}"}
+            return at_close
+        if at_close != at_start:
+            return {"varied": {"at_start": at_start, "at_close": at_close}}
+        return at_start
+
+    binaries_at_close = close(base.weaver_binaries, binaries, "weaver_binaries")
+    libraries = close(base.engine_libraries, libraries, "engine_libraries")
 
     try:
         bindings = base.device_bindings(cfg, run_started)
