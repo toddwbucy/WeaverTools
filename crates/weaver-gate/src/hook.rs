@@ -53,6 +53,7 @@
 //! ```
 
 use std::os::fd::AsFd;
+use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
 
@@ -120,6 +121,35 @@ impl Hook {
         let listener = UnixListener::bind(socket).map_err(|error| RaiseRefusal::BindFailed {
             detail: format!("{}: {error}", socket.display()),
         })?;
+
+        // **The boundary states its own mode**, per `weaver-gate-Spec`
+        // section 3. `bind` sets none, so the file lands at `0777 & ~umask`
+        // and the access control of the agent's front door is decided by
+        // whatever umask this process inherited. That is not a hypothetical
+        // drift: on 2026-08-28 the same build bound `0777` on one box and
+        // `0775` on another, the two having different ambient umasks, and
+        // neither figure was anyone's election.
+        //
+        // **Connecting to a Unix socket requires write permission**, so
+        // `0o770` is what denies every uid outside the owner and the group.
+        // The read and execute bits others would hold under a laxer mode buy
+        // them nothing on a socket, which is why the group is the boundary
+        // rather than the world.
+        //
+        // This is the outer of two locks and not the only one: `accept`
+        // reads `SO_PEERCRED` and judges the peer against the rule below, so
+        // a uid that reaches the socket is still refused. They answer
+        // different adversaries. The mode stops a stranger from reaching the
+        // door at all; the credential stops one who does. A boundary that
+        // rested on the credential alone would still let any local uid spend
+        // this process's accept loop.
+        //
+        // conforms: gate-socket-mode-is-the-boundarys-election
+        std::fs::set_permissions(socket, std::fs::Permissions::from_mode(0o770)).map_err(
+            |error| RaiseRefusal::BindFailed {
+                detail: format!("{}: mode: {error}", socket.display()),
+            },
+        )?;
 
         // **The agent uid is denied by construction, not by configuration.**
         // This process runs as the agent uid, so it knows the one uid the

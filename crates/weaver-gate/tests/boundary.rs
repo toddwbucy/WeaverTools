@@ -27,6 +27,50 @@ fn scratch(name: &str) -> std::path::PathBuf {
 ///
 /// The instruction here explicitly *permits* this process's own uid, which is
 /// the operator mistake the design exists to survive. The raise adds this uid
+/// **The socket's mode is the boundary's election and not the umask's.**
+/// `UnixListener::bind` sets no mode, so the file would land at
+/// `0777 & ~umask` and the access control of the agent's front door would be
+/// decided by whatever umask the process inherited. On 2026-08-28 the same
+/// build bound `0777` on one box and `0775` on another for exactly that
+/// reason, and neither figure was anyone's election.
+///
+/// Connecting to a Unix socket requires write permission, so the assertion is
+/// that no bit outside owner and group is set. The test sets a permissive
+/// umask first, which is the condition under which the old code produced
+/// `0777`, so it fails against a bind that leaves the mode to the
+/// environment rather than passing by accident of the runner's umask.
+///
+/// Perturbation: remove the `set_permissions` call from `Hook::raise` and
+/// this fails with `0777`. Watched under exactly that removal.
+///
+/// conforms: gate-socket-mode-is-the-boundarys-election
+#[test]
+fn the_socket_denies_every_uid_outside_the_group() {
+    use std::os::unix::fs::PermissionsExt;
+    let path = scratch("socket-mode");
+    // The umask the old code would have inherited to produce 0777, so this
+    // test cannot pass by the runner happening to hold a strict one.
+    let previous = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+    let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
+    nix::sys::stat::umask(previous);
+
+    let mode = std::fs::metadata(&path)
+        .expect("the socket is on disk")
+        .permissions()
+        .mode()
+        & 0o777;
+    assert_eq!(
+        mode, 0o770,
+        "the socket states its mode rather than inheriting one, got {mode:04o}"
+    );
+    assert_eq!(
+        mode & 0o007,
+        0,
+        "no bit outside owner and group, and write is what connecting needs"
+    );
+    drop(hook);
+}
+
 /// to the deny set unconditionally, and denial wins over permission, so the
 /// dial is refused anyway.
 ///

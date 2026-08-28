@@ -5,6 +5,12 @@ its charter is chartered to: the lifecycle half, with the traffic arriving via t
 workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-28, the socket's mode becomes the boundary's election.
+Section 3 states that the raise sets `0o770` on the bound path rather than
+leaving it to the process umask, which had produced `0777` on one box and
+`0775` on another from one build. The credential check is unchanged and the
+two are named as two locks against different adversaries.
+
 **Revised:** 2026-08-18, the tool boundary ruling lands section 8: the shell
 execution, the one tool this crate holds as its own outbound verb, with the
 one-clock rule, the four answer contents, and the group-kill containment as
@@ -413,6 +419,39 @@ to: gate-one-bind-site
 edge: grounds
 from: gate-one-bind-site
 to: axiom-floor-is-vocabulary-behavior-is-socket
+```
+
+**The socket's mode is the boundary's election, not the umask's.**
+`UnixListener::bind` sets no mode, so the file lands at `0777 & ~umask` and
+the access control of the agent's front door is decided by whatever umask
+the process inherited. The raise sets `0o770` on the bound path and refuses
+where it cannot, so the figure is this crate's and travels with it. **This
+is not a hypothetical drift**: on 2026-08-28 one build bound `0777` on one
+box and `0775` on another, the two holding different ambient umasks, and
+neither figure was anyone's election.
+
+Connecting to a Unix socket requires write permission, so denying the write
+bit outside owner and group is what excludes a uid; the read and execute
+bits others would hold under a laxer mode buy them nothing on a socket. The
+operator reaches the socket through membership in the agent's group, which
+is the provisioning already owed, and no one else reaches it at all.
+
+**Two locks, answering different adversaries.** The mode stops a stranger
+from reaching the door; the credential check below stops one who does. A
+boundary resting on the credential alone would still let any local uid
+spend this process's accept loop, and one resting on the mode alone would
+trust the filesystem with a judgment the rule owns. Neither is redundant,
+which is the reasoning `weaver-harness-PRD` section 5 applies to the trace
+descriptor's two locks.
+
+```graph
+node: gate-socket-mode-is-the-boundarys-election
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-socket-mode-is-the-boundarys-election
 ```
 
 **Every connection is authenticated at accept, before any byte is read.**

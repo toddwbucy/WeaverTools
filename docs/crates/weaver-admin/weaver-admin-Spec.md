@@ -3,6 +3,11 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, the runtime directory's mode is declared. Section 6
+carries `RuntimeDirectoryMode=0750` on the unit invocation, systemd's default
+`0755` having left every uid on the box able to traverse to the agent's
+sockets.
+
 **Revised:** 2026-08-26, the vector loses a path and a number. Per the
 operator's ruling of this date: the first door is a socketpair this crate
 creates at the spawn, the member's end inherited and the harness's carried in
@@ -916,6 +921,28 @@ declaration the coordination socket is bound inside, per
 stop verb, and the same interface answers the state query of section 3. The
 alternative is a bus library, and it loses on the tree, for a handful of
 invocations per lifecycle that are neither hot nor latency-bound.
+
+**The runtime directory's mode is declared, because the default is not the
+one this boundary wants.** systemd creates a `RuntimeDirectory=` at `0755`
+absent an instruction, so every uid on the box may traverse to the agent's
+sockets and the gate's own mode is left as the only thing between a stranger
+and the front door. The invocation therefore carries
+`RuntimeDirectoryMode=0750`: the agent owns the directory through `User=`,
+the operator reaches it through membership in the agent's group, which is
+provisioning this program already requires, and no one else reaches it. The
+figure is stated here rather than inherited for the same reason the gate
+states its socket's, per `weaver-gate-Spec` section 3 - a boundary whose
+permissions come from an ambient default is a boundary nobody elected.
+
+```graph
+node: admin-runtime-directory-mode-is-stated
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-runtime-directory-mode-is-stated
+```
 
 **No descriptor is declared on the invocation, and the negative is the point.**
 The trace's sink is opened by this crate under root and crosses inside the enter

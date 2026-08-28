@@ -180,6 +180,16 @@ fn start_arguments(
             "--property=RuntimeDirectory={}",
             runtime_directory_name(agent)
         ),
+        // **The runtime directory states its mode**, per `weaver-admin-Spec`
+        // section 4. systemd's default is `0755`, so without this every uid
+        // on the box may traverse to the agent's sockets, and the gate's own
+        // mode is then the only thing between a stranger and the front door.
+        // `0750` puts the group there too: the operator reaches the socket by
+        // membership in the agent's group, which is the provisioning already
+        // documented, and no one else reaches it at all.
+        //
+        // conforms: admin-runtime-directory-mode-is-stated
+        "--property=RuntimeDirectoryMode=0750".to_string(),
     ];
     for property in &template.properties {
         args.push(format!("--property={property}"));
@@ -306,6 +316,22 @@ mod tests {
         assert!(
             rendered.iter().any(|a| a.contains("RuntimeDirectory=")),
             "the runtime directory is asked for: {rendered:?}"
+        );
+        // **And its mode is stated rather than left to systemd's 0755**, per
+        // section 4. At the default every uid on the box may traverse to the
+        // agent's sockets, leaving the gate's own mode as the only thing
+        // between a stranger and the front door.
+        //
+        // Perturbation: drop the `RuntimeDirectoryMode` property and this
+        // fails, the directory then arriving world-traversable. Watched
+        // under exactly that removal.
+        //
+        // conforms: admin-runtime-directory-mode-is-stated
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=RuntimeDirectoryMode=0750"),
+            "the runtime directory's mode is the unit's election: {rendered:?}"
         );
     }
 
