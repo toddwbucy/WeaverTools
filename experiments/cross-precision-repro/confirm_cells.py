@@ -243,8 +243,14 @@ def _resolve_spu(cfg):
                 return named, "admin config spu-binary"
         except OSError:
             pass
+    admin_bin = cfg.get("admin_bin")
+    if not admin_bin:
+        # `.get`, as `toolchain` uses beside it: a config omitting this raised
+        # `KeyError` here, and this reader runs before the `try` that restores
+        # the operator's declaration.
+        return None, "the config names neither spu_bin, admin_config, nor admin_bin"
     return (
-        os.path.join(os.path.dirname(cfg["admin_bin"]), "weaver-spu"),
+        os.path.join(os.path.dirname(admin_bin), "weaver-spu"),
         "guessed beside admin_bin, the admin config naming none",
     )
 
@@ -341,6 +347,9 @@ def weaver_binaries(cfg):
         source = None
         if key == "spu-binary":
             path, source = _resolve_spu(cfg)
+            if path is None:
+                out[key] = {"path": None, "sha256": None, "unreadable": source}
+                continue
         else:
             directory = cfg.get("admin_config")
             if not directory:
@@ -409,10 +418,17 @@ def toolchain(cfg):
     out = {"rustc": version.stdout.strip()}
     # The toolchain marker is the part that distinguishes a pin in force from
     # a box default, so its absence is named rather than left as a bare null.
+    #
+    # **The note rides the entry rather than a key beside it.** An earlier
+    # form wrote `active_toolchain_unreadable` at the top level, which
+    # `is_reading` does not look at - so a half-failed toolchain passed as a
+    # reading and broke the one-failure-key invariant that test rests on. It
+    # was latent only because this reader is not read twice; the moment it is,
+    # a `rustup` that fails once and succeeds once reports the toolchain as
+    # having changed mid-run.
     if active.returncode == 0 and active.stdout.strip():
         out["active_toolchain"] = active.stdout.strip().splitlines()[0]
     else:
-        out["active_toolchain"] = None
         # Named for the condition rather than templated over it: a clean exit
         # with nothing on either stream would read as `rustup exit 0:`, a
         # failure record naming no failure, which is the silent absence the
@@ -422,7 +438,7 @@ def toolchain(cfg):
         else:
             said = active.stderr.strip()[:200]
             reason = f"rustup exit {active.returncode}" + (f": {said}" if said else "")
-        out["active_toolchain_unreadable"] = reason
+        out["active_toolchain"] = {"unreadable": reason}
     return out
 
 
@@ -441,6 +457,8 @@ def engine_libraries(cfg):
     the `device` retirement exists to end.
     """
     spu = spu_binary(cfg)
+    if spu is None:
+        return {"unreadable": "the config names no route to the SPU binary"}
     if not os.path.exists(spu):
         return {"unreadable": f"no SPU binary at {spu}"}
     r = sh(["ldd", spu])
@@ -982,14 +1000,19 @@ def main():
     shutil.copy2(cfg["declaration"], backup)
     # Read once for the run: the libraries cannot change under it, and
     # `libggml-cuda` built for four architectures is 142 MiB to hash.
-    libraries = engine_libraries(cfg)
-    binaries = weaver_binaries(cfg)
-    tools = toolchain(cfg)
-    print(f"engine libraries: {json.dumps(libraries)}", flush=True)
-    print(f"weaver binaries: {json.dumps(binaries)}", flush=True)
-    print(f"toolchain: {json.dumps(tools)}", flush=True)
     reports = []
     try:
+        # **Inside the scope that restores the declaration.** The backup is
+        # already taken by this point, and a reader raising above the `try`
+        # leaves a `.pre-cells` file beside the operator's own. `sh` no longer
+        # raises, but it was never the only raiser in the window and this act
+        # added two more readers into it.
+        libraries = engine_libraries(cfg)
+        binaries = weaver_binaries(cfg)
+        tools = toolchain(cfg)
+        print(f"engine libraries: {json.dumps(libraries)}", flush=True)
+        print(f"weaver binaries: {json.dumps(binaries)}", flush=True)
+        print(f"toolchain: {json.dumps(tools)}", flush=True)
         for cell in cfg["cells"]:
             reports.append(
                 run_cell(cfg, cell, args.outdir, libraries, binaries, tools))

@@ -377,23 +377,48 @@ def main():
     # mid-run out of a transient failure to look. `base.is_reading` is the
     # test, and a flag recording whether the read ran was not it: a read
     # that ran and failed leaves the same shape as one that never ran.
+    def hashes(reading):
+        """The sha256 of each entry, which is what a build comparison is
+        about. `path` and `resolved_by` can differ while the bytes agree."""
+        return {
+            name: entry.get("sha256")
+            for name, entry in reading.items()
+            if isinstance(entry, dict)
+        }
+
     def close(reader, at_start, what):
+        """Read again at the close and say how the two readings relate.
+
+        **Every branch returns one shape**: a dict whose `at_close_unreadable`
+        is always a note and never a formatted string on one path and a failed
+        reading on another, so a consumer never type-tests the field.
+        """
         try:
             at_close = reader(cfg)
         except caught as e:  # noqa: BLE001 - any failure degrades to a note
             # `base._why` rather than the exception directly: a
             # `KeyboardInterrupt` renders empty and would leave this naming
             # no failure.
-            return {"at_start": at_start,
-                    "at_close_unreadable": f"{what}: {base._why(e)}"}
+            at_close = {"unreadable": f"{what}: {base._why(e)}"}
         if not base.is_reading(at_close):
             return {"at_start": at_start, "at_close_unreadable": at_close}
         if not base.is_reading(at_start):
-            # Nothing sound to compare against, so the closing read is the
-            # only reading there is.
-            return at_close
-        if at_close != at_start:
+            # **The opening note is kept beside the closing reading.**
+            # Returning the reading alone left the summary looking like an
+            # ordinary single read, with nothing saying the opening one failed
+            # or never ran - the assertion the double read exists to stop
+            # making.
+            return {"at_close": at_close, "at_start_unreadable": at_start}
+        if hashes(at_close) != hashes(at_start):
             return {"varied": {"at_start": at_start, "at_close": at_close}}
+        if at_close != at_start:
+            # **A resolution change is not a build change.** The SPU's path
+            # can fall back to the guess beside `admin_bin` when a config read
+            # blips, and that sibling plausibly hashes on the documented
+            # layout - two readings differing in `path` and `resolved_by`
+            # while the bytes agree. Reported as its own note rather than
+            # folded into `varied`, which would claim the build moved.
+            return {"at_start": at_start, "resolved_differently": at_close}
         return at_start
 
     binaries_at_close = close(base.weaver_binaries, binaries, "weaver_binaries")
@@ -402,7 +427,10 @@ def main():
     try:
         bindings = base.device_bindings(cfg, run_started)
     except caught as e:  # noqa: BLE001 - any failure degrades to a note
-        bindings = [{"unreadable": f"the device read failed: {e}"}]
+        # `_why` here too: widening this catch to include `KeyboardInterrupt`
+        # opened the empty-reason path, `journalctl` over a seven-hour window
+        # being a call a Ctrl-C can land in.
+        bindings = [{"unreadable": f"the device read failed: {base._why(e)}"}]
     summary = {
         "serving_device": (bindings[0] if len(bindings) == 1
                            else {"varied": bindings}),
