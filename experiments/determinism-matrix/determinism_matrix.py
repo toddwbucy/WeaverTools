@@ -381,7 +381,11 @@ def main():
         try:
             at_close = reader(cfg)
         except caught as e:  # noqa: BLE001 - any failure degrades to a note
-            return {"at_start": at_start, "at_close_unreadable": f"{what}: {e}"}
+            # `base._why` rather than the exception directly: a
+            # `KeyboardInterrupt` renders empty and would leave this naming
+            # no failure.
+            return {"at_start": at_start,
+                    "at_close_unreadable": f"{what}: {base._why(e)}"}
         if not base.is_reading(at_close):
             return {"at_start": at_start, "at_close_unreadable": at_close}
         if not base.is_reading(at_start):

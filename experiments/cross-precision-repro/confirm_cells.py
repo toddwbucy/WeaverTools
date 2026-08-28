@@ -228,18 +228,36 @@ def _resolve_spu(cfg):
     """
     if cfg.get("spu_bin"):
         return cfg["spu_bin"], "config spu_bin"
-    stated = os.path.join(cfg.get("admin_config", ""), "spu-binary")
-    try:
-        with open(stated) as f:
-            named = f.read().strip()
-        if named:
-            return named, "admin config spu-binary"
-    except OSError:
-        pass
+    # **Skipped rather than joined against nothing.** `os.path.join("", name)`
+    # is a bare relative name read against the launch directory, so a file
+    # called `spu-binary` sitting there would be taken for the admin config
+    # and reported as an authoritative reading - a cwd artifact wearing the
+    # source that the `resolved_by` marker suppresses.
+    directory = cfg.get("admin_config")
+    if directory:
+        stated = os.path.join(directory, "spu-binary")
+        try:
+            with open(stated) as f:
+                named = f.read().strip()
+            if named:
+                return named, "admin config spu-binary"
+        except OSError:
+            pass
     return (
         os.path.join(os.path.dirname(cfg["admin_bin"]), "weaver-spu"),
         "guessed beside admin_bin, the admin config naming none",
     )
+
+
+def _why(error):
+    """An exception's reason, or its name where it carries none.
+
+    `str(KeyboardInterrupt())` is empty, so a record templated straight over
+    it reads `engine_libraries: ` - a failure naming no failure, which is the
+    absence this file keeps removing.
+    """
+    said = str(error).strip()
+    return said if said else type(error).__name__
 
 
 def is_reading(value):
@@ -251,9 +269,18 @@ def is_reading(value):
     opening read and be recorded as `varied` - a positive claim that the
     build changed mid-run, made out of a transient failure to look.
 
-    `weaver_binaries` reports per entry rather than as a whole, so any
-    unreadable entry makes the set unsafe to compare: two sides differing
-    only in which entry could not be read say nothing about the build.
+    `weaver_binaries` and `engine_libraries` report per entry rather than as a
+    whole, so any unreadable entry makes the set unsafe to compare: two sides
+    differing only in which entry could not be read say nothing about the
+    build.
+
+    **Every reader in this file marks failure with `unreadable` and with no
+    other key**, which is what makes this test total rather than a list of
+    the failure shapes its author knew. An earlier form knew one of three -
+    `engine_libraries` also wrote `unresolved` and `error` - so a library that
+    resolved and failed to hash passed as a reading and was then reported as
+    a changed build. A test that enumerates failure keys falls behind the next
+    reader; one failure key cannot.
     """
     if not isinstance(value, dict) or not value or "unreadable" in value:
         return False
@@ -430,7 +457,8 @@ def engine_libraries(cfg):
         # second field is the bare word `not`. Recorded as unresolved
         # rather than hashed as a path.
         if not path.startswith("/"):
-            out[name] = {"path": None, "sha256": None, "unresolved": True}
+            out[name] = {"path": None, "sha256": None,
+                         "unreadable": "ldd reports it not found"}
             continue
         try:
             h = hashlib.sha256()
@@ -439,7 +467,7 @@ def engine_libraries(cfg):
                     h.update(chunk)
             out[name] = {"path": path, "sha256": h.hexdigest()}
         except OSError as e:
-            out[name] = {"path": path, "sha256": None, "error": str(e)}
+            out[name] = {"path": path, "sha256": None, "unreadable": _why(e)}
     if not out:
         return {"unreadable": f"{spu} links no ggml or llama library"}
     return out
