@@ -250,6 +250,15 @@ def main():
     run_started = time.strftime(
         "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
     results, iteration = [], 0
+    # **Bound before the try, because the interrupt is caught rather than
+    # fatal.** `except KeyboardInterrupt` below swallows the interrupt so a
+    # run cut short still deposits its summary, which means the summary path
+    # runs even when the library read never finished. Left unbound, a Ctrl-C
+    # during the 142 MiB hash would reach the summary as a `NameError` and
+    # lose every session the run had already recorded. The placeholder says
+    # why it is empty rather than reading as "nothing to record", per the
+    # same rule the reader itself follows.
+    libraries = {"unreadable": "the run ended before the libraries were read"}
     logpath = os.path.join(args.outdir, "matrix.log")
 
     def log(msg):
@@ -327,7 +336,14 @@ def main():
     # session binding differently would be recorded nowhere. The summary
     # says what was seen and says plainly when it was not one thing, which
     # is what a reader needs to know before trusting a rate over the run.
-    bindings = base.device_bindings(cfg, run_started)
+    # Guarded for the same reason: these facts exist to make the deposit
+    # worth trusting, so they must never be the reason there is no deposit.
+    # A box without `journalctl` on PATH raises here, and losing a
+    # seven-hour matrix over a missing box fact would be the wrong trade.
+    try:
+        bindings = base.device_bindings(cfg, run_started)
+    except Exception as e:  # noqa: BLE001 - any failure degrades to a note
+        bindings = [{"unreadable": f"the device read failed: {e}"}]
     summary = {
         "serving_device": (bindings[0] if len(bindings) == 1
                            else {"varied": bindings}),
