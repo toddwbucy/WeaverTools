@@ -65,7 +65,27 @@ CHECKS = [
 
 
 def sh(args, **kw):
-    return subprocess.run(args, capture_output=True, text=True, **kw)
+    """Run a command and always come back with a result.
+
+    **A metadata reader must not be the reason a run does not happen.**
+    `subprocess.run` raises when the binary is absent or `cwd` does not
+    exist, and the provenance readers below call it for `rustup`, `ldd`, and
+    `git` - none of which a box is obliged to carry. Raising there aborts a
+    seven-hour matrix before its first session, or dies in the confirm
+    driver ahead of the `try` that restores the declaration, leaving a
+    `.pre-cells` backup behind. That is the rule `device_bindings` and
+    `engine_libraries` already state, applied to the primitive they share:
+    these facts exist to make a deposit worth trusting, so none may be the
+    reason there is no deposit.
+
+    An absent command comes back as exit 127 with the reason on stderr, the
+    shell's own convention, so a caller reads a failure rather than catching
+    one and the account still says which failure it was.
+    """
+    try:
+        return subprocess.run(args, capture_output=True, text=True, **kw)
+    except OSError as error:
+        return subprocess.CompletedProcess(args, 127, "", str(error))
 
 
 DEVICE_LINE = re.compile(
@@ -234,14 +254,30 @@ def weaver_binaries(cfg):
     """
     out = {}
     for key in ("worker-binary", "spu-binary", "gate-binary"):
-        stated = os.path.join(cfg.get("admin_config", ""), key)
-        try:
-            with open(stated) as f:
-                path = f.read().strip()
-        except OSError as e:
-            out[key] = {"path": None, "sha256": None,
-                        "unreadable": f"{stated}: {e}"}
-            continue
+        # **The SPU goes through its own resolver**, which honours the
+        # documented `spu_bin` override and falls back beside `admin_bin`.
+        # Reading it straight from the config here would let one report hash
+        # a real SPU under `engine_libraries` while recording `unreadable`
+        # for the same binary under this key - two fields disagreeing about
+        # which build was measured, on exactly the boxes whose provisioning
+        # differs, which is what this field exists to compare.
+        if key == "spu-binary":
+            path = spu_binary(cfg)
+        else:
+            stated = os.path.join(cfg.get("admin_config", ""), key)
+            try:
+                with open(stated) as f:
+                    path = f.read().strip()
+            except OSError as e:
+                out[key] = {"path": None, "sha256": None,
+                            "unreadable": f"{stated}: {e}"}
+                continue
+            # An empty config file is an unset value, not a binary at the
+            # empty path, and `_sha256("")` would report it as a missing file.
+            if not path:
+                out[key] = {"path": None, "sha256": None,
+                            "unreadable": f"{stated}: names no path"}
+                continue
         try:
             out[key] = {"path": path, "sha256": _sha256(path)}
         except OSError as e:
@@ -265,14 +301,31 @@ def toolchain(cfg):
     toolchain recorded beside it so an override is visible rather than
     silent.
     """
-    repo = cfg.get("repo") or "."
-    version = sh(["rustc", "--version"], cwd=repo).stdout.strip()
+    repo = cfg.get("repo")
+    if not repo:
+        # **Not `.`, which is the defect this reader exists to end.** The
+        # matrix driver reads only `trace` and `declaration` from its config,
+        # so a config omitting `repo` is valid today and a fallback to the
+        # launch directory would read the ambient compiler again with nothing
+        # saying the pin was not applied.
+        return {"unreadable": "the config names no repo, so the pin's"
+                              " directory is unknown"}
+    version = sh(["rustc", "--version"], cwd=repo)
+    if version.returncode != 0:
+        return {"unreadable": f"rustc exit {version.returncode} at {repo}: "
+                              f"{version.stderr.strip()[:200]}"}
     active = sh(["rustup", "show", "active-toolchain"], cwd=repo)
-    return {
-        "rustc": version or None,
-        "active_toolchain": (active.stdout.strip().splitlines() or [None])[0]
-        if active.returncode == 0 else None,
-    }
+    out = {"rustc": version.stdout.strip()}
+    # The toolchain marker is the part that distinguishes a pin in force from
+    # a box default, so its absence is named rather than left as a bare null.
+    if active.returncode == 0 and active.stdout.strip():
+        out["active_toolchain"] = active.stdout.strip().splitlines()[0]
+    else:
+        out["active_toolchain"] = None
+        out["active_toolchain_unreadable"] = (
+            f"rustup exit {active.returncode}: {active.stderr.strip()[:200]}"
+        )
+    return out
 
 
 def engine_libraries(cfg):

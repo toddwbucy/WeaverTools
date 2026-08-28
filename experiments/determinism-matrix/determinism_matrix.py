@@ -346,6 +346,29 @@ def main():
     # worth trusting, so they must never be the reason there is no deposit.
     # A box without `journalctl` on PATH raises here, and losing a
     # seven-hour matrix over a missing box fact would be the wrong trade.
+    # **The binaries are read twice and compared**, per finding 7 of the
+    # olympus seat. `--hours` lets a run reach seven and `run_session` loads
+    # and unloads per session, so a build swapped mid-matrix would be
+    # recorded nowhere and one hash asserted over the whole window - the
+    # shape #370 falsified and the one this summary already rejects for
+    # device bindings. One extra hash makes the claim checkable rather than
+    # assumed. The libraries carry the same exposure and are read with them.
+    # Guarded like the device read below, and for the same reason: a closing
+    # read that raised would lose the run it was added to describe.
+    binaries_at_close = binaries
+    try:
+        closing = base.weaver_binaries(cfg)
+        libraries_at_close = base.engine_libraries(cfg)
+        if closing != binaries:
+            binaries_at_close = {"varied": {"at_start": binaries,
+                                            "at_close": closing}}
+        if libraries_at_close != libraries:
+            libraries = {"varied": {"at_start": libraries,
+                                    "at_close": libraries_at_close}}
+    except Exception as e:  # noqa: BLE001 - any failure degrades to a note
+        binaries_at_close = {"at_start": binaries,
+                             "at_close_unreadable": str(e)}
+
     try:
         bindings = base.device_bindings(cfg, run_started)
     except Exception as e:  # noqa: BLE001 - any failure degrades to a note
@@ -354,7 +377,7 @@ def main():
         "serving_device": (bindings[0] if len(bindings) == 1
                            else {"varied": bindings}),
         "engine_libraries": libraries,
-        "weaver_binaries": binaries,
+        "weaver_binaries": binaries_at_close,
         "toolchain": tools,
         "sessions": total,
         "reproduced": good,
