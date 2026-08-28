@@ -261,6 +261,12 @@ def main():
     libraries = {"unreadable": "the run ended before the libraries were read"}
     binaries = {"unreadable": "the run ended before the binaries were read"}
     tools = {"unreadable": "the run ended before the toolchain was read"}
+    # **Whether the at-start read happened at all**, which the placeholders
+    # cannot say for themselves: a failed read and an interrupted one both
+    # leave an `unreadable` dict, and comparing a placeholder against a good
+    # closing read would report the build as having changed mid-run when the
+    # at-start reading never happened.
+    read_at_start = False
     logpath = os.path.join(args.outdir, "matrix.log")
 
     def log(msg):
@@ -280,6 +286,7 @@ def main():
         libraries = base.engine_libraries(cfg)
         binaries = base.weaver_binaries(cfg)
         tools = base.toolchain(cfg)
+        read_at_start = True
         log(f"engine libraries: {json.dumps(libraries)}")
         log(f"weaver binaries: {json.dumps(binaries)}")
         log(f"toolchain: {json.dumps(tools)}")
@@ -355,23 +362,45 @@ def main():
     # assumed. The libraries carry the same exposure and are read with them.
     # Guarded like the device read below, and for the same reason: a closing
     # read that raised would lose the run it was added to describe.
+    # **`KeyboardInterrupt` is caught by name**, because it is not an
+    # `Exception` and `except Exception` let it past. The main loop has
+    # already absorbed one Ctrl-C by this point and these reads hash 142 MiB,
+    # so a second one landed in the window would have killed `main` before
+    # `summary.json` was written - losing every session, which is the loss
+    # the placeholders above exist to prevent.
+    #
+    # **The two reads are wrapped apart.** Together, a library failure
+    # discarded a good binary reading and was then recorded under the binary
+    # field, so the summary said the binaries could not be re-read when they
+    # could, and the library failure was recorded nowhere.
+    caught = (Exception, KeyboardInterrupt)
     binaries_at_close = binaries
     try:
         closing = base.weaver_binaries(cfg)
-        libraries_at_close = base.engine_libraries(cfg)
-        if closing != binaries:
+        if not read_at_start:
+            # Nothing to compare against, so the closing read is simply the
+            # only reading there is.
+            binaries_at_close = closing
+        elif closing != binaries:
             binaries_at_close = {"varied": {"at_start": binaries,
                                             "at_close": closing}}
-        if libraries_at_close != libraries:
+    except caught as e:  # noqa: BLE001 - any failure degrades to a note
+        binaries_at_close = {"at_start": binaries,
+                             "at_close_unreadable": f"weaver_binaries: {e}"}
+    try:
+        libraries_at_close = base.engine_libraries(cfg)
+        if not read_at_start:
+            libraries = libraries_at_close
+        elif libraries_at_close != libraries:
             libraries = {"varied": {"at_start": libraries,
                                     "at_close": libraries_at_close}}
-    except Exception as e:  # noqa: BLE001 - any failure degrades to a note
-        binaries_at_close = {"at_start": binaries,
-                             "at_close_unreadable": str(e)}
+    except caught as e:  # noqa: BLE001 - any failure degrades to a note
+        libraries = {"at_start": libraries,
+                     "at_close_unreadable": f"engine_libraries: {e}"}
 
     try:
         bindings = base.device_bindings(cfg, run_started)
-    except Exception as e:  # noqa: BLE001 - any failure degrades to a note
+    except caught as e:  # noqa: BLE001 - any failure degrades to a note
         bindings = [{"unreadable": f"the device read failed: {e}"}]
     summary = {
         "serving_device": (bindings[0] if len(bindings) == 1

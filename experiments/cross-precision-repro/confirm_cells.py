@@ -214,17 +214,46 @@ def spu_binary(cfg):
     overrides it, and the sibling guess is the last resort rather than the
     first.
     """
+    return _resolve_spu(cfg)[0]
+
+
+def _resolve_spu(cfg):
+    """The SPU path and how it was arrived at.
+
+    **The source travels because the last resort is a guess.** With the admin
+    config unreadable the other two binaries record `unreadable` naming the
+    config, while this one falls back beside `admin_bin` - and a stale binary
+    from an older deploy sitting there would be hashed confidently under the
+    field whose whole purpose is to say whether two boxes run one build.
+    """
     if cfg.get("spu_bin"):
-        return cfg["spu_bin"]
+        return cfg["spu_bin"], "config spu_bin"
     stated = os.path.join(cfg.get("admin_config", ""), "spu-binary")
     try:
         with open(stated) as f:
             named = f.read().strip()
         if named:
-            return named
+            return named, "admin config spu-binary"
     except OSError:
         pass
-    return os.path.join(os.path.dirname(cfg["admin_bin"]), "weaver-spu")
+    return (
+        os.path.join(os.path.dirname(cfg["admin_bin"]), "weaver-spu"),
+        "guessed beside admin_bin, the admin config naming none",
+    )
+
+
+def _said_or_unreadable(result, what):
+    """A command's output, or a note saying why there is none.
+
+    The readers below all carry their reason rather than a bare empty value,
+    and the fields that predate them must too now that `sh` answers instead
+    of raising.
+    """
+    if result.returncode != 0:
+        return {"unreadable": f"{what} exit {result.returncode}: "
+                              f"{result.stderr.strip()[:200]}"}
+    said = result.stdout.strip()
+    return said if said else {"unreadable": f"{what} said nothing"}
 
 
 def _sha256(path):
@@ -261,8 +290,9 @@ def weaver_binaries(cfg):
         # for the same binary under this key - two fields disagreeing about
         # which build was measured, on exactly the boxes whose provisioning
         # differs, which is what this field exists to compare.
+        source = None
         if key == "spu-binary":
-            path = spu_binary(cfg)
+            path, source = _resolve_spu(cfg)
         else:
             stated = os.path.join(cfg.get("admin_config", ""), key)
             try:
@@ -282,6 +312,10 @@ def weaver_binaries(cfg):
             out[key] = {"path": path, "sha256": _sha256(path)}
         except OSError as e:
             out[key] = {"path": path, "sha256": None, "unreadable": str(e)}
+        # Recorded only where it is not the plain reading, so a report says
+        # "guessed" exactly when it guessed.
+        if source and not source.startswith("admin config"):
+            out[key]["resolved_by"] = source
     return out
 
 
@@ -605,9 +639,20 @@ def whole_ms(t):
 
 def cell_metadata(cfg, cell, libraries, binaries, tools):
     artifact_sha = _sha256(cell["artifact"])
-    gpu = sh(["nvidia-smi", "--query-gpu=name,driver_version",
-              "--format=csv,noheader"]).stdout.strip()
-    commit = sh(["git", "-C", cfg["repo"], "rev-parse", "HEAD"]).stdout.strip()
+    # **Both read the returncode, because `sh` no longer raises.** Softening
+    # `sh` to answer 127 rather than throw fixed the readers that could abort
+    # a run and broke these two, which took `.stdout` blind: on a box without
+    # `nvidia-smi` or `git` on PATH the driver used to die loudly and would
+    # now deposit `""` and report REPRODUCED. An empty string that does not
+    # say it is empty is the absence the `device` retirement exists to end.
+    gpu = _said_or_unreadable(
+        sh(["nvidia-smi", "--query-gpu=name,driver_version",
+            "--format=csv,noheader"]),
+        "nvidia-smi",
+    )
+    commit = _said_or_unreadable(
+        sh(["git", "-C", cfg["repo"], "rev-parse", "HEAD"]), "git rev-parse"
+    )
     return {
         "box": cfg["box"],
         "precision": cell["precision"],
