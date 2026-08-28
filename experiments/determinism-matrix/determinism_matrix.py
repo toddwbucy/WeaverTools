@@ -245,7 +245,20 @@ def main():
             fh.write(swapped)
 
     deadline = time.time() + args.hours * 3600.0
+    # Opened before the first load so the journal read at the summary
+    # cannot reach back past this run.
+    run_started = time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
     results, iteration = [], 0
+    # **Bound before the try, because the interrupt is caught rather than
+    # fatal.** `except KeyboardInterrupt` below swallows the interrupt so a
+    # run cut short still deposits its summary, which means the summary path
+    # runs even when the library read never finished. Left unbound, a Ctrl-C
+    # during the 142 MiB hash would reach the summary as a `NameError` and
+    # lose every session the run had already recorded. The placeholder says
+    # why it is empty rather than reading as "nothing to record", per the
+    # same rule the reader itself follows.
+    libraries = {"unreadable": "the run ended before the libraries were read"}
     logpath = os.path.join(args.outdir, "matrix.log")
 
     def log(msg):
@@ -257,6 +270,14 @@ def main():
     log(f"matrix start, deadline in {args.hours}h, "
         f"{len(PROMPTS)} prompts x {len(DEPTHS)} depths")
     try:
+        # **Inside the cleanup scope**, because the declaration has already
+        # been swapped by this point where `--artifact` was given: `ldd`
+        # missing raises, hashing 142 MiB can be interrupted, and either
+        # one outside the `try` would leave the operator's declaration
+        # holding this run's artifact.
+        libraries = base.engine_libraries(cfg)
+        log(f"engine libraries: {json.dumps(libraries)}")
+
         # Sweeps rather than repeats: every combination is seen once
         # before any is seen twice, so a run cut short by the clock still
         # covers the matrix rather than the front of it.
@@ -300,7 +321,33 @@ def main():
         b["n"] += 1
         b["ok"] += 1 if r["verdict"] == "REPRODUCED" else 0
 
+    # **The box facts ride the summary rather than a sidecar**, per issue
+    # #370's third ask. The olympus deposit of 2026-08-27 carried its
+    # serving device and engine libraries in a hand-written `box-facts.txt`
+    # beside this file, which works exactly once and only if whoever runs
+    # the matrix next remembers. The readers are the confirm driver's, so
+    # the two instruments answer this question the same way or not at all.
+    #
+    # **Every binding in the window is checked rather than the last one**,
+    # per finding 6 of the olympus seat. An earlier draft recorded the last
+    # load on the reasoning that every session binds the same device, which
+    # is the assumption #370 falsified: `run_session` loads and unloads per
+    # session, a seven-hour window holds hundreds of loads, and a mid-run
+    # session binding differently would be recorded nowhere. The summary
+    # says what was seen and says plainly when it was not one thing, which
+    # is what a reader needs to know before trusting a rate over the run.
+    # Guarded for the same reason: these facts exist to make the deposit
+    # worth trusting, so they must never be the reason there is no deposit.
+    # A box without `journalctl` on PATH raises here, and losing a
+    # seven-hour matrix over a missing box fact would be the wrong trade.
+    try:
+        bindings = base.device_bindings(cfg, run_started)
+    except Exception as e:  # noqa: BLE001 - any failure degrades to a note
+        bindings = [{"unreadable": f"the device read failed: {e}"}]
     summary = {
+        "serving_device": (bindings[0] if len(bindings) == 1
+                           else {"varied": bindings}),
+        "engine_libraries": libraries,
         "sessions": total,
         "reproduced": good,
         "diverged": len(diverged),

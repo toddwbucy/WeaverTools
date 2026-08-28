@@ -25,6 +25,7 @@ Config (JSON):
   "admin_bin":    "/opt/weaver/bin/weaver-admin",
   "admin_config": "/etc/weaver/admin",
   "repo":         "/home/todd/Projects/WeaverTools_Project/WeaverTools",
+  "spu_bin":      "optional; overrides the spu-binary named in admin_config",
   "build_flags":  "cargo build --release --workspace --features weaver-spu/cuda",
   "cells": [
     {"name": "q8",   "precision": "q8_0", "artifact": "/opt/weaver/models/qwen2.5-0.5b-instruct-q8_0.gguf"},
@@ -65,6 +66,191 @@ CHECKS = [
 
 def sh(args, **kw):
     return subprocess.run(args, capture_output=True, text=True, **kw)
+
+
+DEVICE_LINE = re.compile(
+    r"using device CUDA(\d+) \(([^)]*)\) \(([0-9a-fA-F:.]+)\)")
+# One per load, printed ahead of the device block, so it marks the boundary
+# that grepping the journal would otherwise destroy.
+LOAD_BOUNDARY = re.compile(r"ggml_cuda_init: found \d+ CUDA device")
+
+
+def serving_device(cfg, since):
+    """The devices that actually answered, read from the worker's own load.
+
+    `nvidia-smi` reports the machine, not the run. On a box holding more
+    than one card its output names every device and the one that served
+    appears nowhere, which is how the first olympus Ada arm ran to
+    completion on an A6000 and reported REPRODUCED - the error was caught
+    by reading the journal and by nothing in the record.
+
+    **The engine logs one line per device it bound, not one per load.** At
+    the pinned rev `ecce255`, `llama.cpp:1081` is
+    `for (const auto & dev : model->devices)` around the `using device`
+    line, and `ResidentModel::load` sets `LlamaSplitMode::Layer` with
+    `with_devices` whenever admission binds more than one GPU. So a paired
+    binding emits two lines in one load and a single scalar answer would
+    name a device that never served alone. Every line of the most recent
+    load is kept, and the most recent load is the last contiguous run of
+    them: the engine emits the block from one loop with nothing
+    interleaved.
+
+    **An unreadable journal is not an absent device.** `journalctl` exits 0
+    with empty output when the invoking user is in neither `systemd-journal`
+    nor `adm`, and this script runs it unprivileged while running admin
+    under `sudo -n`. Reporting that as "no CUDA device" would hide the
+    wrong-device defect this reader exists to catch, on exactly the boxes
+    whose provisioning is least careful. The unit logged copiously during a
+    load that succeeded, so zero lines of any kind means the read failed,
+    and that is recorded as its own answer.
+    """
+    groups = _device_groups(cfg, since)
+    if "unreadable" in groups:
+        return groups
+    found = groups["groups"]
+    if found:
+        return {"devices": found[-1]}
+    return {"devices": [], "note": "the load named no CUDA device"}
+
+
+def device_bindings(cfg, since):
+    """Every distinct binding seen in the window, in first-seen order.
+
+    `serving_device` answers for one load. A run that loads repeatedly needs
+    to know whether the answer held, which is the assumption issue #370
+    falsified, so this reports the set rather than a representative.
+    """
+    groups = _device_groups(cfg, since)
+    if "unreadable" in groups:
+        return [groups]
+    seen = []
+    for g in groups["groups"]:
+        if g not in seen:
+            seen.append(g)
+    return seen
+
+
+def _device_groups(cfg, since):
+    """The window's `using device` blocks, one list of devices per load.
+
+    **The load boundary is read explicitly and not inferred from adjacency.**
+    An earlier draft grouped on contiguity, which is correct against the raw
+    journal and wrong the moment the read is grepped: `-g` drops every
+    non-matching line, so four single-device loads arrive as four adjacent
+    lines and read as one four-device binding. The engine prints
+    `ggml_cuda_init: found N CUDA devices` once per load ahead of the block,
+    so that line is matched too and starts a new group.
+
+    **Exit 1 is "no matches" and not a failure.** `journalctl -g` exits 1
+    when its pattern matches nothing, which is the ordinary answer for a
+    window holding no load.
+    """
+    unit = f"weaver-worker@{cfg['agent']}.service"
+    base = ["journalctl", "-u", unit, "--since", since, "--no-pager", "-o", "cat"]
+    # Grepped in the journal rather than in this process: an unfiltered read
+    # spans every load in the window and llama.cpp is verbose.
+    r = sh(base + ["-g", "ggml_cuda_init: found|using device CUDA"])
+    if r.returncode not in (0, 1):
+        return {"unreadable": f"journalctl exit {r.returncode}: "
+                              f"{r.stderr.strip()[:200]}"}
+    groups, current = [], None
+    for line in r.stdout.splitlines():
+        if LOAD_BOUNDARY.search(line):
+            if current is not None:
+                groups.append(current)
+            current = []
+            continue
+        m = DEVICE_LINE.search(line)
+        if m and current is not None:
+            current.append({"ordinal": int(m.group(1)),
+                            "name": m.group(2),
+                            "pci_bus_id": m.group(3)})
+    if current is not None:
+        groups.append(current)
+    groups = [g for g in groups if g]
+    if groups:
+        return {"groups": groups}
+    # No match. Distinguish a journal this user cannot read from a load that
+    # genuinely bound no CUDA device, by asking whether the unit logged
+    # anything at all. Paid only in the empty case.
+    probe = sh(base + ["-n", "1"])
+    if probe.returncode != 0 or not probe.stdout.strip():
+        return {"unreadable": "the unit's journal read back empty; this user "
+                              "is likely in neither systemd-journal nor adm"}
+    return {"groups": []}
+
+
+def spu_binary(cfg):
+    """The SPU binary path, from the authority that already holds it.
+
+    `weaver-admin` reads `spu-binary` from its config directory, required
+    rather than defaulted, on the stated ground that a missing one refuses
+    and names itself rather than being searched for
+    (`weaver-admin/src/main.rs`, per Spec section 9). Guessing it beside
+    `admin_bin` would re-introduce the search that rule exists to forbid,
+    and the crate's own default is `/usr/libexec/weaver-spu` while the
+    deploy material uses `/usr/local/libexec/weaver/`, so the two are not
+    reliably co-located. The config is read first, an explicit `spu_bin`
+    overrides it, and the sibling guess is the last resort rather than the
+    first.
+    """
+    if cfg.get("spu_bin"):
+        return cfg["spu_bin"]
+    stated = os.path.join(cfg.get("admin_config", ""), "spu-binary")
+    try:
+        with open(stated) as f:
+            named = f.read().strip()
+        if named:
+            return named
+    except OSError:
+        pass
+    return os.path.join(os.path.dirname(cfg["admin_bin"]), "weaver-spu")
+
+
+def engine_libraries(cfg):
+    """sha256 of the libraries the serving binary actually links.
+
+    Read through `ldd` rather than from a configured list, so the answer is
+    what the loader resolves rather than what an operator believed. The
+    decode math lives in `libggml-cuda` and `libllama`, and issue #370
+    established that a Blackwell figure cannot be attributed while these
+    are unrecorded: a cross-box divergence is silicon, libraries, or both,
+    and a report that omits them cannot say which.
+
+    **Every failure says which failure it was.** A bare empty result would
+    read as "recorded, nothing to record", which is the same silent absence
+    the `device` retirement exists to end.
+    """
+    spu = spu_binary(cfg)
+    if not os.path.exists(spu):
+        return {"unreadable": f"no SPU binary at {spu}"}
+    r = sh(["ldd", spu])
+    if r.returncode != 0:
+        return {"unreadable": f"ldd exit {r.returncode} on {spu}: "
+                              f"{r.stderr.strip()[:200]}"}
+    out = {}
+    for line in r.stdout.splitlines():
+        m = re.search(r"(lib(?:ggml[\w-]*|llama)\.so[\w.]*)\s+=>\s+(\S+)", line)
+        if not m:
+            continue
+        name, path = m.group(1), m.group(2)
+        # `ldd` prints `=> not found` for an unresolved library, whose
+        # second field is the bare word `not`. Recorded as unresolved
+        # rather than hashed as a path.
+        if not path.startswith("/"):
+            out[name] = {"path": None, "sha256": None, "unresolved": True}
+            continue
+        try:
+            h = hashlib.sha256()
+            with open(path, "rb") as f:
+                for chunk in iter(lambda: f.read(1 << 20), b""):
+                    h.update(chunk)
+            out[name] = {"path": path, "sha256": h.hexdigest()}
+        except OSError as e:
+            out[name] = {"path": path, "sha256": None, "error": str(e)}
+    if not out:
+        return {"unreadable": f"{spu} links no ggml or llama library"}
+    return out
 
 
 def admin(cfg, verb):
@@ -296,7 +482,7 @@ def whole_ms(t):
     return (b - a) if a is not None and b is not None else None
 
 
-def cell_metadata(cfg, cell):
+def cell_metadata(cfg, cell, libraries):
     h = hashlib.sha256()
     with open(cell["artifact"], "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
@@ -310,7 +496,22 @@ def cell_metadata(cfg, cell):
         "precision": cell["precision"],
         "artifact": cell["artifact"],
         "artifact_sha256": h.hexdigest(),
-        "device": gpu,
+        # **`device` is retired rather than redefined**, per issue #370. It
+        # held this whole-machine listing, so every GPU present appeared in
+        # every report and the one that answered appeared nowhere. Reusing
+        # the key for the serving device would leave old and new reports
+        # disagreeing in meaning under one name, which is worse than either
+        # meaning: the reader cannot tell which they hold. The listing keeps
+        # a name that says what it is, and `serving_device` is filled in
+        # after the load by the party that knows.
+        "machine_gpus": gpu,
+        # Filled in after each load by the party that knows. `source` and
+        # `replay` are recorded apart because they are two loads and may
+        # not bind the same devices, per finding 3 of the olympus seat.
+        "serving_device": {"source": None, "replay": None},
+        # Hoisted: the libraries cannot change during a run and
+        # `libggml-cuda` built for four architectures is 142 MiB to hash.
+        "engine_libraries": libraries,
         "build_flags": cfg["build_flags"],
         "rustc": rustc,
         "commit": commit,
@@ -319,10 +520,10 @@ def cell_metadata(cfg, cell):
     }
 
 
-def run_cell(cfg, cell, outdir):
+def run_cell(cfg, cell, outdir, libraries):
     name = cell["name"]
     log = lambda m: print(f"[{name}] {m}", flush=True)
-    report = {"cell": name, "metadata": cell_metadata(cfg, cell),
+    report = {"cell": name, "metadata": cell_metadata(cfg, cell, libraries),
               "steps": [], "turns": [], "verdict": None}
 
     # The declaration with this cell's artifact, everything else as
@@ -347,12 +548,26 @@ def run_cell(cfg, cell, outdir):
     # holding the device, whichever return path it takes.
     try:
         step("unload")  # whatever held the device before this cell
+        # The window opens before the load so the journal read below cannot
+        # reach back to a previous cell's load, and a second of slack
+        # absorbs the clock skew between this process and the journal's
+        # own timestamps.
+        since = time.strftime(
+            "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
         if step("load").get("kind") != "state":
             report["verdict"] = "load refused"
             return report
         if not wait_socket(cfg):
             report["verdict"] = "gate socket never stood"
             return report
+
+        # **What served is read from the worker and not from the machine**,
+        # per issue #370's third ask. Read after the socket stands, so the
+        # load has reached the point of binding a device rather than merely
+        # having been asked to.
+        report["metadata"]["serving_device"]["source"] = serving_device(cfg, since)
+        log(f"source devices: "
+            f"{json.dumps(report['metadata']['serving_device']['source'])}")
 
         log("serving the source turns")
         source_runs = set()
@@ -379,11 +594,56 @@ def run_cell(cfg, cell, outdir):
             return report
 
         step("unload")
+        replay_since = time.strftime(
+            "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
         if step("load").get("kind") != "state":
             report["verdict"] = "reload refused"
             return report
         if not wait_socket(cfg):
             report["verdict"] = "gate socket never stood after reload"
+            return report
+
+        # **The reissue half binds its own devices and they are read too.**
+        # A cell that compared a source on one card against a replay on
+        # another and called it REPRODUCED would be the olympus A6000 error
+        # relocated to the second half, per finding 3 of the olympus seat.
+        # A disagreement fails the cell rather than being recorded and
+        # passed over: the comparison the cell exists to make is not
+        # between these two runs.
+        report["metadata"]["serving_device"]["replay"] = serving_device(
+            cfg, replay_since)
+        src = report["metadata"]["serving_device"]["source"]
+        rep = report["metadata"]["serving_device"]["replay"]
+        log(f"replay devices: {json.dumps(rep)}")
+        # **Equality is not enough, because absence is equal to itself.** An
+        # earlier draft compared the two and passed when they matched, so a
+        # box whose journal this user cannot read produced `unreadable`
+        # twice, compared equal, and sailed through the gate - the
+        # wrong-device defect invisible again on exactly the boxes the gate
+        # was added for. The gate asks for positive evidence from both
+        # halves first and compares only then.
+        #
+        # A cell that names no device is failed rather than recorded. This
+        # driver exists to compare runs across silicon, and per issue #370 a
+        # run record omitting the device cannot support that comparison, so
+        # a CPU-only box gets a plain refusal here rather than a deposit
+        # that looks complete and answers nothing.
+        for half, seen in (("source", src), ("replay", rep)):
+            if not isinstance(seen, dict) or "unreadable" in seen:
+                report["verdict"] = (
+                    f"the {half} load's serving device could not be read: "
+                    f"{json.dumps(seen)}")
+                return report
+            if not seen.get("devices"):
+                report["verdict"] = (
+                    f"the {half} load named no CUDA device, so this cell "
+                    "cannot support a cross-silicon comparison: "
+                    f"{json.dumps(seen)}")
+                return report
+        if src != rep:
+            report["verdict"] = (
+                "source and replay did not bind the same devices: "
+                f"{json.dumps(src)} against {json.dumps(rep)}")
             return report
 
         # Reissue byte-exact, from the record rather than from this
@@ -482,10 +742,14 @@ def main():
 
     backup = cfg["declaration"] + ".pre-cells"
     shutil.copy2(cfg["declaration"], backup)
+    # Read once for the run: the libraries cannot change under it, and
+    # `libggml-cuda` built for four architectures is 142 MiB to hash.
+    libraries = engine_libraries(cfg)
+    print(f"engine libraries: {json.dumps(libraries)}", flush=True)
     reports = []
     try:
         for cell in cfg["cells"]:
-            reports.append(run_cell(cfg, cell, args.outdir))
+            reports.append(run_cell(cfg, cell, args.outdir, libraries))
     finally:
         shutil.copy2(backup, cfg["declaration"])
         os.unlink(backup)
