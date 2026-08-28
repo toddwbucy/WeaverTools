@@ -249,6 +249,7 @@ def main():
     # cannot reach back past this run.
     run_started = time.strftime(
         "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
+    libraries = base.engine_libraries(cfg)
     results, iteration = [], 0
     logpath = os.path.join(args.outdir, "matrix.log")
 
@@ -310,11 +311,20 @@ def main():
     # beside this file, which works exactly once and only if whoever runs
     # the matrix next remembers. The readers are the confirm driver's, so
     # the two instruments answer this question the same way or not at all.
-    # A window covering the whole run is right here: every session binds
-    # the same device, so the last load is as good as the first.
+    #
+    # **Every binding in the window is checked rather than the last one**,
+    # per finding 6 of the olympus seat. An earlier draft recorded the last
+    # load on the reasoning that every session binds the same device, which
+    # is the assumption #370 falsified: `run_session` loads and unloads per
+    # session, a seven-hour window holds hundreds of loads, and a mid-run
+    # session binding differently would be recorded nowhere. The summary
+    # says what was seen and says plainly when it was not one thing, which
+    # is what a reader needs to know before trusting a rate over the run.
+    bindings = base.device_bindings(cfg, run_started)
     summary = {
-        "serving_device": base.serving_device(cfg, run_started),
-        "engine_libraries": base.engine_libraries(cfg),
+        "serving_device": (bindings[0] if len(bindings) == 1
+                           else {"varied": bindings}),
+        "engine_libraries": libraries,
         "sessions": total,
         "reproduced": good,
         "diverged": len(diverged),
