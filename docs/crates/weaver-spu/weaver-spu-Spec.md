@@ -3,6 +3,56 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, seventh of this date, the record catches up to the
+code. Section 5's and section 10's clauses stop describing the round-three
+design in which the loop's deltas bypassed the fold, that arm being
+unreachable in production since the fold moved onto the family, and section
+15's total is corrected from sixty to seventy-eight with the sorting split
+named as owed rather than guessed.
+
+**Revised:** 2026-08-28, sixth of this date, the two claims about `System`
+are given two watches. Section 10's entry described the rendering and the
+folding together while naming one outcome for both, and once the role renders
+an unfolded message no longer refuses - it renders as its own turn, so the
+fold's watch is the merged text and not a refusal. Section 5 also states that
+the fold runs within the `render_each` call a message arrives in.
+
+**Revised:** 2026-08-28, fifth of this date, the fold's claim narrows to the
+call it holds within. Section 5 states that the merge does not span the prefix
+and the delta, those being two render calls, so the two turns they produce sit
+adjacent - a limit the seated prefix makes structural rather than a defect,
+and one a test now records.
+
+**Revised:** 2026-08-28, fourth of this date, the fold moves onto the family
+and the whole delta is folded. Section 5 states that the preparation is the
+family's own election, applied at the one rendering funnel rather than at each
+prefix site: wired into the prefix alone it left the control loop's delta
+rendering as two adjacent user turns, a shape both templates avoid by merging
+and one mistral's own raises on. The clause also settles that every `System`
+folds and not only a leading one, the code having said so while the prose did
+not.
+
+**Revised:** 2026-08-28, third of this date, the fold's watch follows the
+property it names. The delta path's `System` arm made an unfolded prefix
+render as two turns rather than refusing, so section 10's perturbation is the
+merged text and no longer the refusal, and the family list the watch runs over
+derives from `REGISTRY` rather than being written out.
+
+**Revised:** 2026-08-28, second of this date, the fold reaches the delta path.
+Section 5 states that `System` renders as the user turn on these families
+everywhere and not only in the prefix: the control loop's opening and re-entry
+travel as deltas and never reach `render_identity`, so a fold wired only there
+left every dev-loop turn on gemma and mistral failing. Section 10's
+enumeration gains the watch, which no workspace build could have supplied,
+`weaver-harness` depending on this crate not at all.
+
+**Revised:** 2026-08-28, the seated prefix folds where the template names no
+system turn. Section 5 states that gemma and mistral render a `System`
+message into their first user turn rather than refusing the role, per the
+operator's ruling of this date: the role is the floor's vocabulary and the
+shape is the family's. Without it the parse's new rule left those two families
+no usable identity prefix at all.
+
 **Revised:** 2026-08-26, the elision enters this document. Chartered at
 `weaver-spu-PRD` section 13.13 and coded on 2026-08-22, it reached the
 charter, the decode contract, the floor Spec, and the harness Spec and
@@ -1354,6 +1404,57 @@ archived tree's share-kernels-own-orchestration rule promoted to structure.
 Review's by non-purchase, the placement of a family's code being as readable to
 a module-boundary test as to a reader and neither being bought here.
 
+**A seated `System` prefix folds where the family's template names no system
+turn, within the render call it arrives in.** The canonical role of an
+identity prefix is `System`, per
+`weaver-types-Spec` section 2, and the parse refuses any other. Two families
+in the registry publish templates with no system turn - gemma and mistral -
+and both refused the role at `render_identity`, which after that parse rule
+left them no usable prefix at all: `user` refused above, `system` refused
+here. **The role is the floor's vocabulary and the shape is the family's**, so
+those families render the role rather than refusing it, folding **every**
+`System` message into the user turn that follows it, within the `render_each`
+call the message arrives in. A `System` message with no user turn after it in
+that call becomes a user turn of its own, a prefix that rendered as nothing
+being a prefix the record cannot account for.
+
+**The merge is within one render call and does not span the prefix and the
+delta**, which are two: the prefix renders at the open and the delta at the
+append. A seated identity therefore folds to one user turn and the first delta
+folds to a second immediately after it, adjacent with no assistant between.
+That adjacency is not something the fold can close - the prefix is tokenized
+and resident before any delta exists, and seating it later would retire the
+ruling of 2026-08-20 that the prefix is processed at load as the functionality
+test. What the fold removes is the adjacency within each call, which on a
+`role: user` declaration was three turns rather than two. The limit is stated
+here and asserted by a test rather than left for a reader to discover.
+
+**Every position and not only the first**, which is a decision rather than a
+detail. A family that renders system content as user content has no position
+at which the role stops being renderable, so refusing a mid-prefix `System`
+while folding a leading one would be a distinction with nothing behind it. An
+earlier form of this clause said "leading" while the code folded all of them,
+which is the disagreement that settles here in the code's favour.
+
+**That is the template authority followed and not a shape invented**, which is
+the distinction `mistral3` already drew when it declined to mint a system
+wrapper. Both families' published templates carry system content into the
+first user turn, so folding is what those authorities name. A `[SYSTEM]`
+block of this program's own devising would be the invention. A `System`
+message with no user turn after it becomes a user turn of its own, a prefix
+that rendered as nothing being a prefix the record cannot account for, and a
+prefix carrying no `System` role renders exactly as before.
+
+```graph
+node: spu-system-folds-where-the-template-has-no-system-turn
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-system-folds-where-the-template-has-no-system-turn
+```
+
 ```graph
 node: spu-share-kernels-own-orchestration
 kind: assertion
@@ -2620,6 +2721,26 @@ than a code fact.
 
 **Requiring a perturbation-verified test.**
 
+- A `System` message renders on every family that serves a conversation, and
+  folds into the user turn that follows it where the template names no system
+  turn. **These are two claims with two watches, and an earlier form of this
+  entry named one outcome for both.**
+
+  The rendering is confirmed by watching gemma or mistral answer
+  `MalformedForFamily` when the role is removed from a delta path, which is
+  the state that broke every turn of a dev-loop run against those families
+  while the declaration's prefix rendered perfectly.
+
+  The folding is confirmed differently, because once the role renders, an
+  unfolded message no longer refuses - it renders as its own turn. So the
+  watch is the merged text: replace `render_each`'s `fold_for_template` call
+  with the messages unchanged and the two texts arrive in separate turn
+  wrappers rather than one.
+
+  **Both watches cover the delta path and not only the prefix**, the control
+  loop's own voice travelling as a delta, and `weaver-harness` taking no
+  dependency on this crate, so no workspace build compiles the loop's roles
+  against the families that must render them.
 - Truncation is a fault: an envelope over the 64 kibibyte bound on the lifecycle
   channel produces `Truncated` and no directive, confirmed by watching a silently
   shortened directive decode when the `MSG_TRUNC` check is removed. This is the
@@ -2785,13 +2906,18 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Sixty records in all,
-thirty-one from this section's sorting with the walks and the kernels counted
-in, and twenty-nine from the elections outside it, the elections taking nodes
-because gate H1 would otherwise leave the largest decisions in this Spec
-untraceable. A divided claim's two halves both count with the sorting, per
+general prohibition, and the kernels' comparisons. Seventy-eight records in all, the
+elections taking nodes because gate H1 would otherwise leave the largest
+decisions in this Spec untraceable. **The split between this section's sorting
+and the elections outside it is owed and is not restated here**: it read
+thirty-one and twenty-nine against a total of sixty, and the eighteen records
+since are not divided by any count this act can take mechanically. The total
+and the tag census below are verifiable and are corrected. The split wants the
+reading that produced it, and is flagged rather than guessed.
+
+A divided claim's two halves both count with the sorting, per
 Document Format section 3, which is where the absence and width divisions of
-the operator's 2026-08-04 election count. Three of the thirty-one are tagged
+the operator's 2026-08-04 election count. Three of that section's are tagged
 for review and every other one of them carries a mechanical instrument: the
 loader's general prohibition, which is the review half of a split, the pairing
 half of section 6's absence claim, divided likewise, and the kernels'

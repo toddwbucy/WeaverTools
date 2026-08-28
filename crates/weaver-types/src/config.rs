@@ -358,8 +358,87 @@ pub fn parse(source: &str) -> Result<AgentConfig, ConfigError> {
         });
     }
     check_tunable_values(&config.spu_instruction.decoder.tunable_values)?;
+    check_identity_roles(&config.spu_instruction.decoder.identity)?;
     check_trace_sink_surface(source, &config.trace_sink)?;
     Ok(config)
+}
+
+/// **The identity prefix is `system` and the parse is where that binds**, per
+/// `weaver-types-Spec` section 2 and the door of `weaver-harness-Spec`
+/// section 6.
+///
+/// The door writes `message.system` and refuses every other role, per
+/// `harness-identity-door-writes-system-only`, so a declaration carrying one
+/// seats a prefix into the decode context that the record cannot show - the
+/// condition `weaver-harness-PRD` section 5's fifth case reports and issue
+/// #369 found in the field. **The door is the last place that can be caught
+/// rather than the first**: a rule enforced only there is one the operator
+/// meets as a fault in a running agent instead of as a refusal to load, so
+/// the judgment belongs where declarations are judged.
+///
+/// **The role and the block are both judged**, the identity door refusing
+/// both: `weaver-traits-Spec` section 3 licenses a `System` message to carry
+/// `Text` blocks only. Judging the role alone left half the door's refusal at
+/// runtime, which is the condition this check exists to prevent rather than
+/// to halve.
+///
+/// The index rides the field name, an operator with several messages needing
+/// to know which one, the way `tunable-values.<name>` already names its own.
+///
+/// conforms: types-identity-role-is-system
+#[cfg(feature = "config")]
+fn check_identity_roles(identity: &[weaver_traits::Message]) -> Result<(), ConfigError> {
+    for (at, message) in identity.iter().enumerate() {
+        if !matches!(message.role, weaver_traits::Role::System) {
+            return Err(ConfigError {
+                field: Some(FieldName(format!("identity.{at}.role"))),
+                kind: ConfigErrorKind::BadValue,
+            });
+        }
+        // **An identity message carries something.** An empty content list
+        // parses as a message and renders as an empty turn - `[INST][/INST]`
+        // on mistral, a bare user turn on gemma - seated into every session
+        // for the life of the agent. The argument for judging here rather
+        // than at the door is that the operator meets it as a refusal to load
+        // instead of as a fault in a running agent, and this case belongs to
+        // that argument as much as the role does. An empty `identity` list is
+        // a different thing and stays lawful: an agent with no prefix.
+        if message.content.is_empty() {
+            return Err(ConfigError {
+                field: Some(FieldName(format!("identity.{at}.content"))),
+                kind: ConfigErrorKind::BadValue,
+            });
+        }
+        // **The block is judged beside the role**, the door refusing both.
+        // `weaver-traits-Spec` section 3 licenses a `System` message to carry
+        // `Text` and nothing else, so a declaration naming the right role with
+        // a `tool_call` in it parsed cleanly, authored an
+        // `IdentityPrefixUnrecorded` fault without aborting the load, and was
+        // refused at the SPU's `Open` - leaving the operator to meet in a
+        // running agent what this check exists to answer at the load.
+        for (block_at, block) in message.content.iter().enumerate() {
+            match block {
+                // **A block carrying no text is an empty turn by another
+                // route.** The list is non-empty and the block is licensed,
+                // so both checks above pass, and what reaches the model is
+                // the same seated nothing an empty list would have given it.
+                weaver_traits::ContentBlock::Text { text } if text.is_empty() => {
+                    return Err(ConfigError {
+                        field: Some(FieldName(format!("identity.{at}.content.{block_at}.text"))),
+                        kind: ConfigErrorKind::BadValue,
+                    });
+                }
+                weaver_traits::ContentBlock::Text { .. } => {}
+                _ => {
+                    return Err(ConfigError {
+                        field: Some(FieldName(format!("identity.{at}.content.{block_at}"))),
+                        kind: ConfigErrorKind::BadValue,
+                    });
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// **Finiteness is the whole of what this crate can judge about a tunable

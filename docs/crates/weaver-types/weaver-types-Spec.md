@@ -5,6 +5,33 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-28, sixth of this date, the identity's refusals are
+enumerated and a fourth is added. Sections 2 and 5 state that a message
+carries at least one `Text` block and that each carries text: an empty string
+in a licensed block passed both prior checks and seated the same nothing an
+empty list would have. Section 5's entry names each refusal with its own
+watch rather than describing two and citing one.
+
+**Revised:** 2026-08-28, fifth of this date, the parse judges the block
+beside the role. Sections 2 and 5 state that an identity message carries
+`Text` and nothing else, the door refusing both and the role alone having left
+half the refusal at runtime.
+
+**Revised:** 2026-08-28, fourth of this date, the review seat's findings land.
+The parse's rule stands and the two families that name no system turn fold it
+rather than refusing, per the operator's ruling. Section 5's test joins the
+perturbation enumeration its peers sit in, and that section's claim counts are
+corrected from seventeen and ten to twenty and thirteen, two thirds of the
+drift predating this act.
+
+**Revised:** 2026-08-28, third of this date, the identity role's check lands
+and the rule stops being owed. Section 2 states the refusal at the parse with
+its field name, section 5 moves the entry from enforced-by-nothing to a
+perturbation-verified test, and the assertion record withheld two days ago
+lands with the instrument it names. The gate dissolved when the operator
+ruled a re-baseline on one frozen build, retiring the deposits the old role
+was held for. Item 2 of issue #369, code half.
+
 **Revised:** 2026-08-28, second of this date, the identity prefix's role is
 judged where declarations are judged. Section 2 states that every identity
 message carries `role: system` and names the parse as the place the rule
@@ -609,7 +636,11 @@ the rule ahead of the instrument that will hold it.** The identity door of
 other role, per `harness-identity-door-writes-system-only`, so a declaration
 carrying any other role seats a prefix into the decode context that the record
 cannot show - the condition `weaver-harness-PRD` section 5's fifth case exists
-to report, found in the field and filed as issue #369. **The rule belongs
+to report, found in the field and filed as issue #369. Every message carries
+at least one `Text` block, each with text in it and nothing else, per
+`weaver-traits-Spec` section 3, and the parse judges that beside the role: the
+door refuses both, and judging one here would leave the other to be met as a
+fault in a running agent. **The rule belongs
 here rather than at the door.** The door refuses what the declaration should
 never have contained, which makes it the last place the condition can be
 caught rather than the first, and a rule enforced only at the last place is a
@@ -617,22 +648,36 @@ rule the operator meets as a fault in a running agent instead of as a refusal
 to load. Where declarations are judged is the parse, and the judgment is this
 crate's.
 
-**The check is owed and is not in force, which is stated rather than left to
-be discovered.** The instrument is the shape `model-binding`'s empty device
-list already takes at section 2's parse: a `ConfigErrorKind::BadValue` naming
-`identity`, so a declaration that would seat an unwritable prefix does not
-parse and never reaches a door. It is not written yet, and the reason is
-dated rather than editorial. **Changing a declaration's identity role changes
-the prompt** - a system role renders `<|im_start|>system` where a user role
-renders `<|im_start|>user` - so the tokens differ and every run made under the
-old role stops being a baseline. The cross-precision deposit of 2026-08-25 and
-the determinism matrix of 2026-08-27 were both produced under `role: user`,
-and the cross-architecture arms of issue #346 compare against that deposit and
-have not run. A refusal landing before they do would not delay that experiment
-but void it, the comparison arm diverging by construction rather than by
-silicon. So the check lands after #346's arms are deposited, and until then
-this clause is a rule the corpus has written and not yet bought - which is the
-one thing about it a reader must not have to infer.
+**The check is the parse's, and it is in force.** The instrument is the shape
+`model-binding`'s empty device list already takes: a `ConfigErrorKind::BadValue`
+naming `identity.<n>.role`, so a declaration that would seat an unwritable
+prefix does not parse and never reaches a door. The index rides the name
+because an operator with several messages needs to know which one, as
+`tunable-values.<name>` already does.
+
+**It was written as owed for two days and the reason is worth keeping.**
+Changing a declaration's identity role changes the prompt - a system role
+renders `<|im_start|>system` where a user role renders `<|im_start|>user` - so
+the tokens differ and every run made under the old role stops being a
+baseline. The cross-precision deposit of 2026-08-25 and the determinism matrix
+of 2026-08-27 were both produced under `role: user`, and a refusal landing
+before issue #346's cross-architecture arms ran would have voided that
+comparison rather than delayed it. Those arms deposited 2026-08-27 and
+2026-08-28, and the operator's ruling of 2026-08-28 retires those deposits as
+a comparison basis in favour of a re-baseline on one frozen build, which is
+what dissolved the gate. **An empty identity still parses**, an agent with no
+prefix being a legitimate agent: the rule judges the messages present and does
+not require one to be.
+
+```graph
+node: types-identity-role-is-system
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-types
+to: types-identity-role-is-system
+```
 
 **Field names are kebab-case on disk and snake_case in Rust, which takes an
 explicit election rather than a convention.** `#[serde(rename_all = "kebab-case",
@@ -2019,23 +2064,23 @@ apex's enforcement section exists to prevent.
 dependency tree, checked as `weaver-traits-Spec` section 7 checks its own, by a
 build-time assertion over the resolved external tree rather than by H2.
 
-**Enforced by nothing today, and said so with its date.** Section 2's rule
-that every identity message carries `role: system` has no instrument in this
-crate. The instrument is known and is not exotic - a `BadValue` naming
-`identity` at the parse, beside the empty-device-list check - and it is
-withheld on an experimental ground rather than a technical one: the arms of
-issue #346 compare against deposits made under `role: user`, and a refusal
-landing first would void that comparison rather than delay it. **This entry
-carries no assertion record, deliberately.** A record names the instrument
-that holds a claim, so filing one against a claim nothing holds would say the
-corpus checks something it does not, and the record lands in the act that
-lands the check. It is listed here rather than left out because an unenforced
-rule that no section admits is indistinguishable from an enforced one, which
-is the same overclaim the review entry above was corrected for, arriving from
-the other direction.
+**Enforced by a perturbation-verified test at the parse.** Section 2's rule
+that every identity message carries `role: system` is a `BadValue` naming
+`identity.<n>.role`, beside the empty-device-list check. The test declares
+each of the three refused roles in turn and watches the parse refuse, and it
+is watched to fail when the call is removed from `parse` - which is not a
+hypothetical state but the one that produced the cross-precision deposit of
+2026-08-25, a run whose prefix named the agent and whose record never said so.
+
+**This entry read "enforced by nothing today" for two days**, carrying its
+date and its reason, because the instrument was withheld on an experimental
+ground rather than a technical one. It is recorded here rather than quietly
+overwritten: an unenforced rule that no section admits is indistinguishable
+from an enforced one, and the corpus is better served by a reader being able
+to see that the gap was known and named while it stood.
 
 **Which invariant each claim serves, and why most serve none.** Seven of the
-seventeen carry a `grounds` edge, five to
+twenty carry a `grounds` edge, five to
 `axiom-floor-is-vocabulary-behavior-is-socket` and two to
 `axiom-contract-is-a-complete-interface`. The other three axioms take nothing from this
 crate. The floor states no claim about a turn key, it is not an organ, and it is not
@@ -2047,9 +2092,10 @@ the reason the claim exists.** Remove the socket invariant and this crate has no
 to elect a socket type, no reason to bound an envelope, and no reason to withhold a
 deserializer from a credential, so those three ground in it. Remove it and the config
 format is still YAML, the names are still kebab-case, and the parse is still total, so
-those three ground in nothing. **Ten claims grounding in no invariant is the expected
-result and not a gap**, per Document Format section 4: a floor crate is mostly
-representation, and representation is what the invariants are not about.
+those three ground in nothing. **Thirteen claims grounding in no invariant is
+the expected result and not a gap**, per Document Format section 4: a floor
+crate is mostly representation, and representation is what the invariants are
+not about.
 
 The two edges to the contract invariant are the ones worth stating rather than
 leaving to be read. The wire enums are exhaustive so that every case a contract
@@ -2082,6 +2128,33 @@ already discharged.
 - In this crate: a misspelled key refuses, confirmed by watching a mistyped
   `permission-mode` vanish when `deny_unknown_fields` is removed. The watch is the
   derive's removal while the surface is one type's, and it moves with the surface.
+- In this crate: an identity message refuses the parse unless it is a
+  `System` message carrying at least one `Text` block and every block carries
+  text. **Four ways of seating nothing or seating the unwritable, and each is
+  watched:**
+    - a role the door does not write, naming `identity.<n>.role`, confirmed by
+      watching all three refused roles parse when `check_identity_roles` is
+      removed from `parse` - the state that produced the cross-precision
+      deposit of 2026-08-25, a run whose prefix named the agent and whose
+      record never said so
+    - an empty content list, naming `identity.<n>.content`, confirmed by
+      watching it parse when its check is removed
+    - a block the licensing rule does not admit, naming
+      `identity.<n>.content.<m>`, confirmed by watching a `tool_call` parse
+      when the block loop is removed
+    - a `Text` block carrying no text, naming
+      `identity.<n>.content.<m>.text`, confirmed by watching it parse when
+      that arm is removed
+
+  **The door refuses the role and the block both**, so judging only the role
+  left half of it at runtime: a `role: system` declaration carrying a
+  `tool_call` parsed clean, authored a fault without aborting the load, and
+  was refused at the SPU's open. An empty `identity` list stays lawful, that
+  being an agent with no prefix. **This entry read "enforced by
+  nothing today" from 2026-08-26 to 2026-08-28**, carrying its date and the
+  experimental reason the instrument was withheld. It is recorded rather than
+  quietly overwritten: an unenforced rule that no section admits is
+  indistinguishable from an enforced one.
 - In each organ's crate: a directive case belonging to another seam is refused as
   `OutOfOrder` rather than acted on, confirmed per seam by watching a wildcard arm
   swallow it.

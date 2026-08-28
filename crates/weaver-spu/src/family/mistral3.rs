@@ -151,18 +151,59 @@ impl Mistral3 {
 impl Family for Mistral3 {
     /// The prefix opens with [`BOS`], once, and the turns never repeat it.
     fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal> {
+        // **A seated `System` prefix folds into the first user turn**, per
+        // `weaver-spu-Spec` section 5. This template names no system turn,
+        // which is a fact about the template and not about the floor's
+        // vocabulary: the canonical role of an identity prefix is `System`
+        // per `weaver-types-Spec` section 2, and refusing it here would
+        // leave this family with no usable prefix at all once the parse
+        // began requiring the role. Folding is what this family's published
+        // template does with system content, so it follows the template
+        // authority rather than minting a turn the template never had.
+        //
+        // conforms: spu-system-folds-where-the-template-has-no-system-turn
         let mut rendered = String::from(BOS);
         rendered.push_str(&super::render_each(self, messages)?);
         Ok(rendered)
     }
 
+    /// This template names no system turn, so a `System` message folds into
+    /// the user turn that follows, per `weaver-spu-Spec` section 5.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    fn fold_for_template(&self, messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
+        super::fold_system_into_first_user(messages)
+    }
+
     /// **The role decides the wrapper rather than filling a placeholder.**
     ///
-    /// `Role::System` refuses rather than rendering, and `render_delta` is
-    /// the refusal point: this family's template names no system turn in
-    /// the material the module was built from, so the role's arm answers
-    /// `RenderRefusal::MalformedForFamily` rather than inventing a shape.
-    /// It renders when the template authority names one, and not before.
+    /// **`Role::System` renders as this template's user turn**, per the
+    /// operator's ruling of 2026-08-28. This family's template names no
+    /// system turn in the material the module was built from, and that is a
+    /// fact about the template rather than about the floor's vocabulary: the
+    /// canonical role of a seated identity is `System`, so the role is
+    /// carried here rather than refused.
+    ///
+    /// That is not the invention an earlier form of this clause was written
+    /// against. Folding system content into the user turn is what this
+    /// family's published template does, so it is the template authority
+    /// followed, where a `[SYSTEM]` wrapper of our own devising would be the
+    /// shape invented.
+    ///
+    /// **This arm is what a caller reaching `render_delta` directly gets.**
+    /// The production path is `render_each`, which applies
+    /// `fold_for_template` first, so a `System` message with a user turn
+    /// after it is merged before it arrives and this arm sees only what
+    /// stands alone.
+    ///
+    /// It was added because the control loop's opening and its re-entry are
+    /// `System` and travel as deltas. With the fold wired into
+    /// `render_identity` alone they reached this arm unmerged and an arm
+    /// refusing them failed every turn of a dev-loop run while the
+    /// declaration's prefix rendered perfectly. The fold has since moved onto
+    /// the trait, so that is no longer the path they take - **and this arm
+    /// still may not refuse**, a lone `System` and any caller rendering one
+    /// message at a time both landing here.
     ///
     /// `Role::ToolResult` refuses rather than rendering. Mistral carries tool
     /// results in their own `[TOOL_RESULTS]` block rather than as a turn, and
@@ -172,7 +213,7 @@ impl Family for Mistral3 {
     fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal> {
         let content = super::text_content(message)?;
         Ok(match message.role {
-            Role::User => format!("{TURN_OPEN}{content}{TURN_CLOSE}"),
+            Role::System | Role::User => format!("{TURN_OPEN}{content}{TURN_CLOSE}"),
             Role::Assistant => format!("{content}{TURN_END}"),
             _ => return Err(RenderRefusal::MalformedForFamily),
         })

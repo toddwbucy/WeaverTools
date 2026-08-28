@@ -138,11 +138,113 @@ pub fn text_content(message: &Message) -> Result<String, RenderRefusal> {
 /// this call rather than inside it - see [`gemma4::Gemma4::render_identity`],
 /// where the once-per-prefix `<bos>` lives.
 pub fn render_each(family: &dyn Family, messages: &[Message]) -> Result<String, RenderRefusal> {
+    // **The family's own preparation runs first, here and not at each call
+    // site.** Every prefix rendering and the decode seam's delta rendering
+    // both funnel through this function, so a family that folds is folded for
+    // on both paths without either remembering to ask.
+    let prepared = family.fold_for_template(messages)?;
     let mut rendered = String::new();
-    for message in messages {
+    for message in &prepared {
         rendered.push_str(&family.render_delta(message)?);
     }
     Ok(rendered)
+}
+
+/// Renders a `System` message as user content, for the families whose
+/// template names no system turn, merging it into the `User` turn that
+/// follows where there is one.
+///
+/// **The canonical role is the floor's and the shape is the family's.**
+/// `weaver-traits`' `Role` is the vocabulary the whole program speaks, and a
+/// seated identity prefix is `System` in it, per `weaver-types-Spec` section
+/// 2. A family whose template has no system turn is saying something about
+/// its template, not about the vocabulary, so it renders that role rather
+/// than refusing it.
+///
+/// **This is the template authority followed rather than a shape invented**,
+/// which is the distinction `mistral3::Mistral3::render_delta` draws. Gemma
+/// and Mistral both publish templates that carry system content into the
+/// first user turn, so folding is what those authorities name; inventing
+/// would be minting the `system` role into a template whose own marker set
+/// has no such turn - `<|turn|>system` for gemma, a `[SYSTEM]` block for
+/// mistral, neither of which either template names.
+///
+/// **Every `System` message folds, not only a leading one.** An earlier form
+/// of this doc said otherwise while the code folded all of them, and the
+/// code is the one that decides: a family that renders system content as
+/// user content has no position at which the role becomes unrenderable, and
+/// a mid-prefix system message refused while a leading one folded would be a
+/// distinction with nothing behind it. `render_delta` renders a lone
+/// `System` the same way for the same reason, which is what carries the
+/// loop's own voice as well as the declaration's prefix.
+///
+/// A `System` message with no `User` after it becomes a user turn of its
+/// own, there being nothing to fold into and a prefix that renders as
+/// nothing being a prefix the record cannot account for. A prefix carrying
+/// no `System` role is returned untouched.
+///
+/// **A block the family cannot render refuses rather than being dropped.**
+/// The content is read through [`text_content`], so a `ToolCall` inside a
+/// seated identity is `MalformedForFamily` as it was before this fold
+/// existed. Copying only the text blocks would have opened the session on a
+/// silently truncated prefix, which is an absence that reads as a
+/// configuration.
+///
+/// conforms: spu-system-folds-where-the-template-has-no-system-turn
+pub fn fold_system_into_first_user(messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
+    let mut out: Vec<Message> = Vec::with_capacity(messages.len());
+    let mut carried: Option<String> = None;
+    for message in messages {
+        match (&message.role, carried.take()) {
+            (Role::System, carried_before) => {
+                // Several system messages in a row accumulate rather than
+                // the last winning, an operator who wrote two having meant
+                // both.
+                let mut text = carried_before.unwrap_or_default();
+                let piece = text_content(message)?;
+                // Both sides are tested, not the buffer alone: an
+                // empty-content `System` between two others would otherwise
+                // contribute a separator and nothing to separate, giving
+                // `one\n\n\n\nask`.
+                if !text.is_empty() && !piece.is_empty() {
+                    text.push_str("\n\n");
+                }
+                text.push_str(&piece);
+                carried = Some(text);
+            }
+            (Role::User, Some(prefix)) => {
+                let mut text = prefix;
+                let piece = text_content(message)?;
+                // Both sides, as the accumulate arm above.
+                if !text.is_empty() && !piece.is_empty() {
+                    text.push_str("\n\n");
+                }
+                text.push_str(&piece);
+                out.push(Message {
+                    role: Role::User,
+                    content: vec![ContentBlock::Text { text }],
+                });
+            }
+            (_, prefix) => {
+                // The carried prefix has nothing of its own role to join, so
+                // it stands as a user turn ahead of whatever this is.
+                if let Some(text) = prefix {
+                    out.push(Message {
+                        role: Role::User,
+                        content: vec![ContentBlock::Text { text }],
+                    });
+                }
+                out.push(message.clone());
+            }
+        }
+    }
+    if let Some(text) = carried {
+        out.push(Message {
+            role: Role::User,
+            content: vec![ContentBlock::Text { text }],
+        });
+    }
+    Ok(out)
 }
 
 /// One piece of an emission, recovered.
@@ -240,6 +342,36 @@ pub trait Family {
 
     /// Render a turn's delta.
     fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal>;
+
+    /// **What this family must do to a message sequence before rendering it**,
+    /// defaulting to nothing.
+    ///
+    /// A family whose template names a system turn renders one and overrides
+    /// nothing here. A family whose template names none folds `System` into
+    /// the user turn that follows, per Spec section 5, and says so by
+    /// overriding this.
+    ///
+    /// **It hangs off the trait rather than off each `render_identity`
+    /// because the prefix is not the only path.** The control loop's opening
+    /// and its re-entry are `System` and travel as a delta, so a fold wired
+    /// into `render_identity` alone left them to render as two adjacent user
+    /// turns - a shape both published templates avoid by merging, and one
+    /// mistral's own template raises on. Placed here, [`render_each`] applies
+    /// it and every caller is covered.
+    ///
+    /// **The merge is within one render call and does not span the prefix and
+    /// the delta**, which are two: the prefix renders at `Open` and the delta
+    /// at `AppendAndGenerate`. So a seated identity folds to one user turn and
+    /// the first delta folds to a second immediately after it, adjacent with
+    /// no assistant between. That adjacency stands and is not something this
+    /// fold can close, the prefix being tokenized and resident before any
+    /// delta exists - seating it later would retire the ruling of 2026-08-20
+    /// that the prefix is processed at load as the functionality test. What
+    /// the fold removes is the adjacency *within* each call, which on the old
+    /// `role: user` declarations was three turns rather than two.
+    fn fold_for_template(&self, messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
+        Ok(messages.to_vec())
+    }
 
     /// Parse an emission into canonical content, this family's markers
     /// recognised.
@@ -1553,6 +1685,48 @@ mod tests {
         );
     }
 
+    /// The families that serve a conversation, **derived from `REGISTRY`
+    /// rather than listed here**.
+    ///
+    /// A hand-written list makes the loop-roles test below assert only what
+    /// its author remembered: a new registry row pointing at a module with no
+    /// `System` arm would compile, pass, and fail on the operator's box, which
+    /// is the failure that test exists to prevent. Deriving it means the row
+    /// carries the family into the test by existing.
+    ///
+    /// Deduped on the renderer's function pointer, several rows selecting one
+    /// module by different artifact names, and labelled by the first row that
+    /// reaches each. The classifier needs no exclusion: `modernbert` renders
+    /// no conversation and is in no registry row.
+    fn conversational_families() -> Vec<(String, &'static dyn Family)> {
+        let mut seen: Vec<*const dyn Family> = Vec::new();
+        let mut out: Vec<(String, &'static dyn Family)> = Vec::new();
+        for (at, row) in REGISTRY.iter().enumerate() {
+            // **Identity is the trait object, not the function pointer.**
+            // Identical-code folding can merge two `renderer()` bodies that
+            // compile to the same instructions, which would silently drop a
+            // family from this watch - the failure deriving from `REGISTRY`
+            // exists to prevent, and one the length guard below cannot see.
+            // `ptr::eq` on a wide pointer compares the data address and the
+            // vtable both, so it is exact.
+            let renderer: *const dyn Family = (row.renderer)();
+            if seen.iter().any(|seen| std::ptr::eq(*seen, renderer)) {
+                continue;
+            }
+            seen.push(renderer);
+            // **Labelled with the row and not the family name alone**, two
+            // rows declaring `llama` while reaching different renderers:
+            // mistral artifacts carry `general.architecture = llama` and are
+            // told apart by their markers. A failure reading `llama` against
+            // a `[INST]` rendering sends a reader to the wrong module.
+            out.push((
+                format!("{} (registry row {at})", row.family),
+                (row.renderer)(),
+            ));
+        }
+        out
+    }
+
     /// One text message, for the rendering tests below.
     fn said(role: Role, text: &str) -> Message {
         Message {
@@ -1561,6 +1735,291 @@ mod tests {
                 text: text.to_string(),
             }],
         }
+    }
+
+    /// **The fold carries a seated prefix into a template that names no
+    /// system turn**, per the operator's ruling of 2026-08-28. Before it,
+    /// `role: system` refused at `render_identity` on gemma4 and mistral3
+    /// while `role: user` refused at the parse, which left those families no
+    /// usable identity prefix at all.
+    ///
+    /// **The perturbation is the merge and no longer the refusal.** Until the
+    /// delta path gained its `System` arm, dropping the fold made
+    /// `render_each` answer `MalformedForFamily` and that was the watch. The
+    /// arm made a bare `System` renderable, so the fold stopped being what
+    /// prevents a refusal and became only what merges: one turn carrying both
+    /// texts against two turns carrying one each. The old sentence stood
+    /// while the property it named had moved, which is why a perturbation
+    /// wants re-watching whenever an act makes a refusing path succeed.
+    ///
+    /// Perturbation: make the `(Role::User, Some(prefix))` arm push the two
+    /// messages separately rather than joining them, and this fails on the
+    /// merged text. Watched under exactly that change.
+    ///
+    /// **This test's watch is the helper's own and not the wiring's**, since
+    /// it calls the fold directly and no `render_identity` sits in its path.
+    /// The family test below is where replacing the call is watched. Writing
+    /// one sentence for both was the same error this round corrected: a
+    /// perturbation naming a path the test does not take.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn a_leading_system_message_folds_into_the_first_user_turn() {
+        let folded = fold_system_into_first_user(&[
+            said(Role::System, "You are Karl."),
+            said(Role::User, "hello"),
+        ])
+        .expect("renderable");
+        assert_eq!(folded.len(), 1, "two messages became one user turn");
+        assert_eq!(folded[0].role, Role::User);
+        assert_eq!(
+            text_content(&folded[0]).expect("text"),
+            "You are Karl.\n\nhello"
+        );
+    }
+
+    /// **The two families that name no system turn now carry a seated
+    /// prefix**, which is the case that broke: `role: user` refuses at the
+    /// parse per `weaver-types-Spec` section 2, and `role: system` refused
+    /// here, so a gemma or mistral agent had no usable prefix at all.
+    ///
+    /// **The assertion is the merged text and not merely a successful
+    /// render**, the delta path's `System` arm having made an unfolded prefix
+    /// render perfectly well as two turns. What the fold decides is whether
+    /// the model reads one turn or two, so that is what is pinned: the two
+    /// texts contiguous, which no unfolded rendering produces because the
+    /// template's own turn markers sit between them.
+    ///
+    /// Perturbation: replace `render_each`'s `fold_for_template` call with the
+    /// messages unchanged and this fails on the merged text. Watched under
+    /// exactly that replacement. **The fold is no longer called from either
+    /// `render_identity`**, having moved onto the trait so the delta path is
+    /// covered too, so a perturbation naming that site would now change
+    /// nothing.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn the_no_system_turn_families_render_a_seated_prefix() {
+        let prefix = [
+            said(Role::System, "You are Karl."),
+            said(Role::User, "hello"),
+        ];
+        for (name, family) in [
+            ("gemma4", &crate::family::gemma4::Gemma4 as &dyn Family),
+            (
+                "mistral3",
+                &crate::family::mistral3::Mistral3 as &dyn Family,
+            ),
+        ] {
+            let rendered = family
+                .render_identity(&prefix)
+                .unwrap_or_else(|e| panic!("{name} refused a seated prefix: {e:?}"));
+            assert!(
+                rendered.contains("You are Karl.\n\nhello"),
+                "{name} rendered the prefix as separate turns rather than one: \
+                 {rendered:?}"
+            );
+        }
+    }
+
+    /// **Every role the control loop emits renders on every family that
+    /// serves a conversation.** This is the test whose absence let a live
+    /// regression through: the loop's opening and re-entry are `System` and
+    /// travel as *deltas*, so they reach `render_delta` and never reach
+    /// `render_identity`'s fold. The fold covered the declaration's prefix,
+    /// `render_delta` still refused, and every dev-loop turn on gemma and
+    /// mistral failed while the prefix rendered perfectly.
+    ///
+    /// `cargo test --workspace` could not have caught it: `weaver-harness`
+    /// does not depend on `weaver-spu`, so nothing compiles the loop's roles
+    /// against the families that must render them. This test is that
+    /// dependency written down from the SPU's side.
+    ///
+    /// Perturbation: return `MalformedForFamily` for `Role::System` in
+    /// either family's delta path and this fails. Watched under exactly that
+    /// change.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn every_conversational_family_renders_the_roles_a_loop_emits() {
+        // What `dev_loop::contribution` puts in a delta: the opening and the
+        // re-entry are System, the request is User, and the model answers.
+        let emitted = [Role::System, Role::User, Role::Assistant];
+        let families = conversational_families();
+        // **Every registry row reaches this watch**, which is the property
+        // the derivation exists to hold and is stronger than either a
+        // vacuous-empty guard or a pinned count.
+        //
+        // `len() >= 2` passed a dedupe that silently dropped one of seven,
+        // which is the failure deriving from `REGISTRY` was meant to prevent.
+        // A pinned seven would catch that and make a new family edit a number
+        // here, so the count would drift into the thing being asserted. This
+        // asks the question directly: for each row, is the renderer it cites
+        // present in the list.
+        for row in REGISTRY {
+            let cited: *const dyn Family = (row.renderer)();
+            assert!(
+                families
+                    .iter()
+                    .any(|(_, held)| std::ptr::eq(*held as *const dyn Family, cited)),
+                "registry row {} cites a renderer no family in the watch holds",
+                row.family
+            );
+        }
+        assert!(
+            !families.is_empty(),
+            "the family list derives from REGISTRY and came back empty"
+        );
+        for (name, family) in families {
+            for role in &emitted {
+                let message = said(role.clone(), "x");
+                family
+                    .render_delta(&message)
+                    .unwrap_or_else(|e| panic!("{name} refused {role:?} as a delta: {e:?}"));
+            }
+            // And the same roles as a seated prefix, which takes the fold.
+            family
+                .render_identity(&[said(Role::System, "framing"), said(Role::User, "ask")])
+                .unwrap_or_else(|e| panic!("{name} refused a seated prefix: {e:?}"));
+        }
+    }
+
+    /// **The loop's delta renders as one turn and never as two adjacent user
+    /// turns.** This is the watch whose absence let a silent malformation
+    /// through: `every_conversational_family_renders_the_roles_a_loop_emits`
+    /// renders each role in isolation and so cannot see what a *sequence*
+    /// becomes.
+    ///
+    /// `dev_loop::contribution` emits `[System(framing), User(request)]` on a
+    /// first turn and after every flush. With the fold wired into
+    /// `render_identity` only, that reached the decode seam unfolded and
+    /// rendered as two user turns back to back - a shape both published
+    /// templates avoid by merging, and one mistral's own template raises on.
+    /// The previous round had made it worse rather than better: before the
+    /// delta path carried `System` at all, this sequence refused loudly.
+    ///
+    /// Perturbation: drop the `fold_for_template` call from `render_each` and
+    /// this fails on both folding families. Watched under exactly that
+    /// removal.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn the_loops_delta_renders_as_one_turn_on_the_folding_families() {
+        let delta = [said(Role::System, "FRAMING"), said(Role::User, "REQUEST")];
+        for (name, family) in conversational_families() {
+            let rendered = render_each(family, &delta)
+                .unwrap_or_else(|e| panic!("{name} refused the loop's delta: {e:?}"));
+            if family.fold_for_template(&delta).expect("folds") == delta.to_vec() {
+                // A family that names a system turn renders one, and two
+                // turns is the right answer there.
+                continue;
+            }
+            assert!(
+                rendered.contains("FRAMING\n\nREQUEST"),
+                "{name} rendered the loop's delta as separate turns: {rendered:?}"
+            );
+        }
+    }
+
+    /// **What the fold does not close: the prefix and the delta are two
+    /// render calls, and the turns they produce sit adjacent.**
+    ///
+    /// The seated identity renders at `Open` and the first delta at
+    /// `AppendAndGenerate`, so each folds within itself and neither can reach
+    /// the other. On the folding families that leaves two user turns back to
+    /// back with no assistant between. This test asserts that rather than
+    /// wishing it away, because an earlier form of the doc claimed the funnel
+    /// covered "both paths, by construction" - true within a call and not
+    /// across the boundary.
+    ///
+    /// **It is not something the fold can close.** The prefix is tokenized
+    /// and resident before any delta exists, and seating it later would
+    /// retire the ruling of 2026-08-20 that the prefix is processed at load
+    /// as the functionality test. What the fold removed is the adjacency
+    /// within each call: on the old `role: user` declarations this same
+    /// exchange rendered three turns rather than two.
+    #[test]
+    fn the_prefix_and_the_delta_remain_two_turns_and_the_test_says_so() {
+        let prefix = [said(Role::System, "ID")];
+        let delta = [said(Role::System, "FRAMING"), said(Role::User, "REQUEST")];
+        for (name, family) in conversational_families() {
+            if family.fold_for_template(&delta).expect("folds") == delta.to_vec() {
+                continue; // a family that names a system turn renders one
+            }
+            let whole = format!(
+                "{}{}",
+                family.render_identity(&prefix).expect("prefix renders"),
+                render_each(family, &delta).expect("delta renders"),
+            );
+            // Each call folded within itself.
+            assert!(
+                whole.contains("FRAMING\n\nREQUEST"),
+                "{name} did not fold the delta: {whole:?}"
+            );
+            // And the identity did not reach across into it, which is the
+            // limit this test exists to record.
+            assert!(
+                !whole.contains("ID\n\nFRAMING"),
+                "{name} folded across the prefix boundary, which would mean \
+                 the prefix is no longer seated at open: {whole:?}"
+            );
+        }
+    }
+
+    /// **An unrenderable block refuses rather than being dropped.** The fold
+    /// reads content through `text_content`, so a `ToolCall` inside a seated
+    /// identity is `MalformedForFamily` as it was before the fold existed.
+    /// Copying only the text blocks would open the session on a silently
+    /// truncated prefix, the harness authoring a fault for the bad message
+    /// but not aborting the load.
+    #[test]
+    fn a_block_the_family_cannot_render_refuses_rather_than_vanishing() {
+        let bad = Message {
+            role: Role::System,
+            content: vec![ContentBlock::ToolCall(weaver_traits::ToolCall {
+                name: "calculator".into(),
+                arguments: "{}".into(),
+            })],
+        };
+        assert!(
+            fold_system_into_first_user(&[bad]).is_err(),
+            "a block this family cannot render is refused, not skipped"
+        );
+    }
+
+    /// A prefix with no user turn after it still reaches the model, there
+    /// being nothing to fold into and a prefix rendering as nothing being a
+    /// prefix the record cannot account for.
+    #[test]
+    fn a_system_message_alone_becomes_its_own_user_turn() {
+        let folded = fold_system_into_first_user(&[said(Role::System, "You are Karl.")])
+            .expect("renderable");
+        assert_eq!(folded.len(), 1);
+        assert_eq!(folded[0].role, Role::User);
+        assert_eq!(text_content(&folded[0]).expect("text"), "You are Karl.");
+    }
+
+    /// Several system messages accumulate rather than the last winning, an
+    /// operator who wrote two having meant both.
+    #[test]
+    fn consecutive_system_messages_accumulate() {
+        let folded = fold_system_into_first_user(&[
+            said(Role::System, "one"),
+            said(Role::System, "two"),
+            said(Role::User, "ask"),
+        ])
+        .expect("renderable");
+        assert_eq!(folded.len(), 1);
+        assert_eq!(text_content(&folded[0]).expect("text"), "one\n\ntwo\n\nask");
+    }
+
+    /// **A declaration that never used a system role renders as before**, so
+    /// the fold is reachable only by the case it was added for.
+    #[test]
+    fn a_prefix_without_a_system_role_passes_through_untouched() {
+        let original = vec![said(Role::User, "hello"), said(Role::Assistant, "hi")];
+        let folded = fold_system_into_first_user(&original).expect("renderable");
+        assert_eq!(folded, original);
     }
 
     /// **A family's wire role is the family's own, and gemma4's differs.**

@@ -22,11 +22,20 @@ use weaver_traits::{ContentBlock, Message, Role};
 /// received. In the field vocabulary it is the first narrowing, applied
 /// once per decode session.
 ///
-/// **Edit this constant to shape your agent.** It rides as a user-role
-/// message because the floor's `Role` carries no system variant today,
-/// which is the standing practice of every declaration-carried identity so
-/// far, relocated. The true system slot arrives with the `Role::System`
-/// floor act and this constant moves roles without moving homes.
+/// **Edit this constant to shape your agent.** It rides as a system-role
+/// message. It rode as `User` until 2026-08-28 because the floor carried no
+/// system variant when this loop was written, and the clause here promised
+/// the constant would move roles without moving homes once the
+/// `Role::System` floor act landed. That act landed 2026-08-19 and this
+/// clause went stale for nine days, which is the second half of what issue
+/// #369 found: the declarations and the loop both kept a role the floor had
+/// already retired.
+///
+/// **Moving it changes the prompt**, `<|im_start|>system` rendering where
+/// `<|im_start|>user` did, so every run made under the old role stops being
+/// a baseline. It moves here rather than later because the operator's
+/// ruling of 2026-08-28 re-baselines both boxes on one frozen build, which
+/// is the moment such a change costs nothing.
 const SYSTEM_PROMPT: &str = "\
 You are a careful assistant. Answer from what you know, say plainly when \
 you do not know, and keep answers as short as the question allows.";
@@ -231,13 +240,20 @@ fn contribution(
             None => SYSTEM_PROMPT.to_string(),
         };
         delta.push(Message {
-            role: Role::User,
+            role: Role::System,
             content: vec![ContentBlock::Text { text: opening }],
         });
     }
     if let Some(reentry) = reentry {
+        // **The re-entry is the loop's voice and carries the loop's role.**
+        // It opens with `SYSTEM_PROMPT`, the flush having retired the
+        // resident copy, so under `Role::User` the whole prompt plus the
+        // restored transcript came back quoted as the operator's words - and
+        // a later recall would return it from the record as `message.user`,
+        // compounding it. The opening and the re-entry are one voice framing
+        // the field and they carry one role.
         delta.push(Message {
-            role: Role::User,
+            role: Role::System,
             content: vec![ContentBlock::Text {
                 text: reentry.to_string(),
             }],
@@ -270,14 +286,26 @@ mod tests {
 
     /// The one-time injection contract: a first turn leads with the prompt,
     /// in order, and every later turn contributes the request alone.
+    ///
+    /// **The roles are asserted apart rather than together.** This read
+    /// `all(|m| m.role == Role::User)` until 2026-08-28, which passed
+    /// because the prompt rode the role the request did, and would have gone
+    /// on passing had the prompt moved to `Assistant`. The opening is the
+    /// loop's framing of the field and the request is the operator's, so
+    /// they are two roles and the test names both.
     #[test]
     fn the_prompt_leads_the_first_turn_and_no_other() {
         let first = contribution(true, None, None, "hello");
         assert_eq!(texts(&first), vec![SYSTEM_PROMPT, "hello"]);
-        assert!(first.iter().all(|m| m.role == Role::User));
+        assert_eq!(
+            first.iter().map(|m| m.role.clone()).collect::<Vec<_>>(),
+            vec![Role::System, Role::User],
+            "the prompt is the field's framing and the request is not"
+        );
 
         let later = contribution(false, None, None, "and again");
         assert_eq!(texts(&later), vec!["and again"]);
+        assert!(later.iter().all(|m| m.role == Role::User));
     }
 
     /// The continuity line rides beneath the prompt in the same opening

@@ -144,12 +144,31 @@ impl Gemma4 {
     /// **This family's role map, which is why it does not call
     /// [`super::common_role_name`].**
     ///
-    /// `Role::System` refuses rather than rendering, and this function is
-    /// the refusal point: this family's template carries no system turn, so
-    /// `role_name` answers `RenderRefusal::MalformedForFamily` rather than
-    /// inventing `<|turn>system`, the silent substitution this crate
-    /// refuses everywhere. A loop driving a gemma agent frames the field in
-    /// its user turns, as every loop did before the slot existed.
+    /// **`Role::System` renders as this template's user turn**, per the
+    /// operator's ruling of 2026-08-28. It refused here until that date, on
+    /// the ground that this family's template carries no system turn and
+    /// that inventing `<|turn>system` would be the silent substitution this
+    /// crate refuses everywhere. The template fact is unchanged and the
+    /// conclusion drawn from it was wrong: the template names what shape
+    /// system content takes, and the floor names what role it carries, so
+    /// rendering the role into the user turn is that template's own answer
+    /// rather than a substitution. A loop driving a gemma agent frames the
+    /// field in its user turns, which is what this arm now does for it.
+    ///
+    /// **This arm is what a caller reaching `render_delta` directly gets.**
+    /// The ordinary path is `render_each`, which applies `fold_for_template`
+    /// first, so a `System` message arriving with a user turn after it is
+    /// merged before it ever reaches here and this arm sees only what stands
+    /// alone. The arm still has to render that: a lone `System`, and any
+    /// caller that renders one message at a time.
+    ///
+    /// It was added because the control loop's opening and its re-entry are
+    /// `System` and travel as a delta rather than in the open. With the fold
+    /// wired into `render_identity` alone they reached this arm unmerged, and
+    /// with the arm refusing, every turn of a dev-loop run against this
+    /// family failed while the declaration's prefix rendered perfectly. The
+    /// fold has since moved onto the trait, so both halves are answered: the
+    /// merge at `render_each` and the lone message here.
     ///
     /// `Role::ToolResult` refuses rather than rendering as a turn. This family
     /// has no tool turn: its template carries tool results as standalone
@@ -157,9 +176,11 @@ impl Gemma4 {
     /// `<|turn>tool` would be the silent substitution the registry refuses one
     /// level up. It renders when the tool workflow lands and names the block
     /// shape, and not before.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
     fn role_name(role: &Role) -> Result<&'static str, RenderRefusal> {
         Ok(match role {
-            Role::User => "user",
+            Role::System | Role::User => "user",
             Role::Assistant => ASSISTANT_ROLE,
             _ => return Err(RenderRefusal::MalformedForFamily),
         })
@@ -169,9 +190,28 @@ impl Gemma4 {
 impl Family for Gemma4 {
     /// The prefix opens with [`BOS`], once, and the turns never repeat it.
     fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal> {
+        // **A seated `System` prefix folds into the first user turn**, per
+        // `weaver-spu-Spec` section 5. This template names no system turn,
+        // which is a fact about the template and not about the floor's
+        // vocabulary: the canonical role of an identity prefix is `System`
+        // per `weaver-types-Spec` section 2, and refusing it here would
+        // leave this family with no usable prefix at all once the parse
+        // began requiring the role. Folding is what this family's published
+        // template does with system content, so it follows the template
+        // authority rather than minting a turn the template never had.
+        //
+        // conforms: spu-system-folds-where-the-template-has-no-system-turn
         let mut rendered = String::from(BOS);
         rendered.push_str(&super::render_each(self, messages)?);
         Ok(rendered)
+    }
+
+    /// This template names no system turn, so a `System` message folds into
+    /// the user turn that follows, per `weaver-spu-Spec` section 5.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    fn fold_for_template(&self, messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
+        super::fold_system_into_first_user(messages)
     }
 
     fn render_delta(&self, message: &Message) -> Result<String, RenderRefusal> {
