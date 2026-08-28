@@ -67,6 +67,78 @@ def sh(args, **kw):
     return subprocess.run(args, capture_output=True, text=True, **kw)
 
 
+def serving_device(cfg, since):
+    """The device that actually answered, read from the worker's own load.
+
+    `nvidia-smi` reports the machine, not the run. On a box holding more
+    than one card its output names every device and the one that served
+    appears nowhere, which is how the first olympus Ada arm ran to
+    completion on an A6000 and reported REPRODUCED - the error was caught
+    by reading the journal and by nothing in the record. The worker states
+    what it bound at load, so that is what is read.
+
+    Scoped to `since` rather than to the whole journal: a cell loads more
+    than once and an unscoped read would return whichever load systemd
+    happened to keep, including one from a previous cell or a previous day.
+
+    Returns None where the line is absent, which is a fact for the report
+    to carry rather than a reason to fail a cell - the ggml build may not
+    be CUDA, and a run on the CPU has no serving device to name.
+    """
+    unit = f"weaver-worker@{cfg['agent']}.service"
+    r = sh(["journalctl", "-u", unit, "--since", since,
+            "--no-pager", "-o", "cat"])
+    seen = None
+    for line in r.stdout.splitlines():
+        m = re.search(
+            r"using device CUDA(\d+) \(([^)]*)\) \(([0-9a-fA-F:.]+)\)", line)
+        if m:
+            # The last match, not the first: a cell loads more than once
+            # within its window and the most recent load is the one whose
+            # turns are being compared.
+            seen = {"ordinal": int(m.group(1)),
+                    "name": m.group(2),
+                    "pci_bus_id": m.group(3)}
+    return seen
+
+
+def engine_libraries(cfg):
+    """sha256 of the libraries the serving binary actually links.
+
+    Read through `ldd` rather than from a configured list, so the answer
+    is what the loader resolves rather than what an operator believed. The
+    decode math lives in `libggml-cuda` and `libllama`, and issue #370
+    established that a Blackwell figure cannot be attributed while these
+    are unrecorded: a cross-box divergence is silicon, libraries, or both,
+    and a report that omits them cannot say which.
+    """
+    # Derived beside the admin binary rather than required in the config,
+    # the way admin discovers the worker, so a config written before this
+    # act keeps working and a box that installs elsewhere can still say so.
+    spu = cfg.get("spu_bin") or os.path.join(
+        os.path.dirname(cfg["admin_bin"]), "weaver-spu")
+    out = {}
+    if not os.path.exists(spu):
+        return out
+    r = sh(["ldd", spu])
+    if r.returncode != 0:
+        return out
+    for line in r.stdout.splitlines():
+        m = re.search(r"(lib(?:ggml[\w-]*|llama)\.so[\w.]*)\s+=>\s+(\S+)", line)
+        if not m:
+            continue
+        path = m.group(2)
+        try:
+            h = hashlib.sha256()
+            with open(path, "rb") as f:
+                for chunk in iter(lambda: f.read(1 << 20), b""):
+                    h.update(chunk)
+            out[m.group(1)] = {"path": path, "sha256": h.hexdigest()}
+        except OSError:
+            out[m.group(1)] = {"path": path, "sha256": None}
+    return out
+
+
 def admin(cfg, verb):
     r = sh(["sudo", "-n", f"WEAVER_ADMIN_CONFIG={cfg['admin_config']}",
             cfg["admin_bin"], verb, cfg["agent"]])
@@ -310,7 +382,17 @@ def cell_metadata(cfg, cell):
         "precision": cell["precision"],
         "artifact": cell["artifact"],
         "artifact_sha256": h.hexdigest(),
-        "device": gpu,
+        # **`device` is retired rather than redefined**, per issue #370. It
+        # held this whole-machine listing, so every GPU present appeared in
+        # every report and the one that answered appeared nowhere. Reusing
+        # the key for the serving device would leave old and new reports
+        # disagreeing in meaning under one name, which is worse than either
+        # meaning: the reader cannot tell which they hold. The listing keeps
+        # a name that says what it is, and `serving_device` is filled in
+        # after the load by the party that knows.
+        "machine_gpus": gpu,
+        "serving_device": None,
+        "engine_libraries": engine_libraries(cfg),
         "build_flags": cfg["build_flags"],
         "rustc": rustc,
         "commit": commit,
@@ -347,12 +429,25 @@ def run_cell(cfg, cell, outdir):
     # holding the device, whichever return path it takes.
     try:
         step("unload")  # whatever held the device before this cell
+        # The window opens before the load so the journal read below cannot
+        # reach back to a previous cell's load, and a second of slack
+        # absorbs the clock skew between this process and the journal's
+        # own timestamps.
+        since = time.strftime(
+            "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
         if step("load").get("kind") != "state":
             report["verdict"] = "load refused"
             return report
         if not wait_socket(cfg):
             report["verdict"] = "gate socket never stood"
             return report
+
+        # **What served is read from the worker and not from the machine**,
+        # per issue #370's third ask. Read after the socket stands, so the
+        # load has reached the point of binding a device rather than merely
+        # having been asked to.
+        report["metadata"]["serving_device"] = serving_device(cfg, since)
+        log(f"serving device: {json.dumps(report['metadata']['serving_device'])}")
 
         log("serving the source turns")
         source_runs = set()

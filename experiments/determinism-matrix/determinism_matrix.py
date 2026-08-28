@@ -245,6 +245,10 @@ def main():
             fh.write(swapped)
 
     deadline = time.time() + args.hours * 3600.0
+    # Opened before the first load so the journal read at the summary
+    # cannot reach back past this run.
+    run_started = time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
     results, iteration = [], 0
     logpath = os.path.join(args.outdir, "matrix.log")
 
@@ -300,7 +304,17 @@ def main():
         b["n"] += 1
         b["ok"] += 1 if r["verdict"] == "REPRODUCED" else 0
 
+    # **The box facts ride the summary rather than a sidecar**, per issue
+    # #370's third ask. The olympus deposit of 2026-08-27 carried its
+    # serving device and engine libraries in a hand-written `box-facts.txt`
+    # beside this file, which works exactly once and only if whoever runs
+    # the matrix next remembers. The readers are the confirm driver's, so
+    # the two instruments answer this question the same way or not at all.
+    # A window covering the whole run is right here: every session binds
+    # the same device, so the last load is as good as the first.
     summary = {
+        "serving_device": base.serving_device(cfg, run_started),
+        "engine_libraries": base.engine_libraries(cfg),
         "sessions": total,
         "reproduced": good,
         "diverged": len(diverged),
