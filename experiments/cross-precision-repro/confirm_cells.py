@@ -615,6 +615,31 @@ def run_cell(cfg, cell, outdir, libraries):
         src = report["metadata"]["serving_device"]["source"]
         rep = report["metadata"]["serving_device"]["replay"]
         log(f"replay devices: {json.dumps(rep)}")
+        # **Equality is not enough, because absence is equal to itself.** An
+        # earlier draft compared the two and passed when they matched, so a
+        # box whose journal this user cannot read produced `unreadable`
+        # twice, compared equal, and sailed through the gate - the
+        # wrong-device defect invisible again on exactly the boxes the gate
+        # was added for. The gate asks for positive evidence from both
+        # halves first and compares only then.
+        #
+        # A cell that names no device is failed rather than recorded. This
+        # driver exists to compare runs across silicon, and per issue #370 a
+        # run record omitting the device cannot support that comparison, so
+        # a CPU-only box gets a plain refusal here rather than a deposit
+        # that looks complete and answers nothing.
+        for half, seen in (("source", src), ("replay", rep)):
+            if not isinstance(seen, dict) or "unreadable" in seen:
+                report["verdict"] = (
+                    f"the {half} load's serving device could not be read: "
+                    f"{json.dumps(seen)}")
+                return report
+            if not seen.get("devices"):
+                report["verdict"] = (
+                    f"the {half} load named no CUDA device, so this cell "
+                    "cannot support a cross-silicon comparison: "
+                    f"{json.dumps(seen)}")
+                return report
         if src != rep:
             report["verdict"] = (
                 "source and replay did not bind the same devices: "

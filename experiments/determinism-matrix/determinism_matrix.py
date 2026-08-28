@@ -249,7 +249,6 @@ def main():
     # cannot reach back past this run.
     run_started = time.strftime(
         "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
-    libraries = base.engine_libraries(cfg)
     results, iteration = [], 0
     logpath = os.path.join(args.outdir, "matrix.log")
 
@@ -262,6 +261,14 @@ def main():
     log(f"matrix start, deadline in {args.hours}h, "
         f"{len(PROMPTS)} prompts x {len(DEPTHS)} depths")
     try:
+        # **Inside the cleanup scope**, because the declaration has already
+        # been swapped by this point where `--artifact` was given: `ldd`
+        # missing raises, hashing 142 MiB can be interrupted, and either
+        # one outside the `try` would leave the operator's declaration
+        # holding this run's artifact.
+        libraries = base.engine_libraries(cfg)
+        log(f"engine libraries: {json.dumps(libraries)}")
+
         # Sweeps rather than repeats: every combination is seen once
         # before any is seen twice, so a run cut short by the clock still
         # covers the matrix rather than the front of it.
