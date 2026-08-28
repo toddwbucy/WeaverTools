@@ -176,12 +176,19 @@ fn start_arguments(
         "--unit".to_string(),
         format!("weaver-worker@{agent}"),
         format!("--property=User={identity}"),
+        // **The group is named beside the user.** `0750` on the runtime
+        // directory puts the operator's reach on membership in the agent's
+        // group, and without this systemd takes whatever primary group the
+        // operator happened to provision the agent user with. Where that is
+        // shared - `users`, or `nogroup` - the mode grants traversal to every
+        // member of it and the boundary is not the one section 6 describes.
+        format!("--property=Group={identity}"),
         format!(
             "--property=RuntimeDirectory={}",
             runtime_directory_name(agent)
         ),
         // **The runtime directory states its mode**, per `weaver-admin-Spec`
-        // section 4. systemd's default is `0755`, so without this every uid
+        // section 6. systemd's default is `0755`, so without this every uid
         // on the box may traverse to the agent's sockets, and the gate's own
         // mode is then the only thing between a stranger and the front door.
         // `0750` puts the group there too: the operator reaches the socket by
@@ -318,7 +325,7 @@ mod tests {
             "the runtime directory is asked for: {rendered:?}"
         );
         // **And its mode is stated rather than left to systemd's 0755**, per
-        // section 4. At the default every uid on the box may traverse to the
+        // section 6. At the default every uid on the box may traverse to the
         // agent's sockets, leaving the gate's own mode as the only thing
         // between a stranger and the front door.
         //

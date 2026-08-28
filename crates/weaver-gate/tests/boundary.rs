@@ -23,10 +23,6 @@ fn scratch(name: &str) -> std::path::PathBuf {
     scratch_path("boundary", name)
 }
 
-/// **The agent uid is denied by construction, not by configuration.**
-///
-/// The instruction here explicitly *permits* this process's own uid, which is
-/// the operator mistake the design exists to survive. The raise adds this uid
 /// **The socket's mode is the boundary's election and not the umask's.**
 /// `UnixListener::bind` sets no mode, so the file would land at
 /// `0777 & ~umask` and the access control of the agent's front door would be
@@ -37,22 +33,26 @@ fn scratch(name: &str) -> std::path::PathBuf {
 /// Connecting to a Unix socket requires write permission, so the assertion is
 /// that no bit outside owner and group is set. The test sets a permissive
 /// umask first, which is the condition under which the old code produced
-/// `0777`, so it fails against a bind that leaves the mode to the
-/// environment rather than passing by accident of the runner's umask.
+/// `0777`, so it fails against a bind that leaves the mode to the environment
+/// rather than passing by accident of the runner's umask.
 ///
-/// Perturbation: remove the `set_permissions` call from `Hook::raise` and
-/// this fails with `0777`. Watched under exactly that removal.
+/// **The election is made through the umask around the bind**, so the
+/// perturbation is the removal of that, not of a chmod: drop the
+/// `Umask::deny_others()` guard from `Hook::raise` and this fails with
+/// `0777`. Watched under exactly that removal.
 ///
 /// conforms: gate-socket-mode-is-the-boundarys-election
 #[test]
 fn the_socket_denies_every_uid_outside_the_group() {
     use std::os::unix::fs::PermissionsExt;
     let path = scratch("socket-mode");
-    // The umask the old code would have inherited to produce 0777, so this
-    // test cannot pass by the runner happening to hold a strict one.
-    let previous = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+    // **A guard, because umask is process-global and cargo runs these tests
+    // on parallel threads.** Set bare, a panic between the set and the
+    // restore would leave every later file in this binary world-writable,
+    // including the scratch paths the sibling tests create.
+    let permissive = UmaskForTest::set(0o000);
     let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
-    nix::sys::stat::umask(previous);
+    drop(permissive);
 
     let mode = std::fs::metadata(&path)
         .expect("the socket is on disk")
@@ -71,16 +71,28 @@ fn the_socket_denies_every_uid_outside_the_group() {
     drop(hook);
 }
 
-/// to the deny set unconditionally, and denial wins over permission, so the
-/// dial is refused anyway.
+/// A process umask set for the length of a test and restored when the value
+/// is dropped, so a panic cannot leave it loosened for the tests that follow.
+struct UmaskForTest(nix::sys::stat::Mode);
+
+impl UmaskForTest {
+    fn set(mask: u32) -> Self {
+        UmaskForTest(nix::sys::stat::umask(
+            nix::sys::stat::Mode::from_bits_truncate(mask),
+        ))
+    }
+}
+
+impl Drop for UmaskForTest {
+    fn drop(&mut self) {
+        nix::sys::stat::umask(self.0);
+    }
+}
+
+/// **The agent uid is denied by construction, not by configuration.**
 ///
-/// The test dials as this very process, which runs as the same uid the gate
-/// does. That is exactly the reference walk's adversary: the agent's own tool
-/// surface reaching the agent's own mouth.
-///
-/// Perturbation: remove the `rule.denied_uids.insert(getuid())` line from
-/// `Hook::raise` and this test fails, because the operator's permissive rule
-/// then admits the dial. Watched under exactly that removal.
+/// The instruction here explicitly *permits* this process's own uid, which is
+/// the operator mistake the design exists to survive. The raise adds this uid
 #[test]
 fn the_agent_uid_is_refused_even_when_the_rule_permits_it() {
     let path = scratch("agent-uid");

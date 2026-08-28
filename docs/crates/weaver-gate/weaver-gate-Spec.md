@@ -5,6 +5,13 @@ its charter is chartered to: the lifecycle half, with the traffic arriving via t
 workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-28, second of this date, the mode is elected in the
+creating call. Section 3 states that the raise holds a umask across the bind
+rather than setting the mode on the path afterwards, which closes the window
+in which the socket listened at the inherited mode, the path race an agent-uid
+tool could win, and the post-bind failure that would have left a file behind
+and retired `gate-refused-raise-holds-nothing`.
+
 **Revised:** 2026-08-28, the socket's mode becomes the boundary's election.
 Section 3 states that the raise sets `0o770` on the bound path rather than
 leaving it to the process umask, which had produced `0777` on one box and
@@ -424,20 +431,46 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 **The socket's mode is the boundary's election, not the umask's.**
 `UnixListener::bind` sets no mode, so the file lands at `0777 & ~umask` and
 the access control of the agent's front door is decided by whatever umask
-the process inherited. The raise sets `0o770` on the bound path and refuses
-where it cannot, so the figure is this crate's and travels with it. **This
+the process inherited. The raise holds a umask denying every bit to others
+across the bind, so the figure is this crate's and travels with it.
+
+**The election is made in the creating call and not on the path
+afterwards.** A `chmod` after the bind would answer the same question and
+open three others. `bind` also listens, so between the two calls the socket
+is live at the inherited mode and connections queued there are served. The
+`chmod` would go by path, and the adversary this crate's reference walk
+names is a tool running as the agent uid, which owns the runtime directory:
+in that window it can unlink the socket and point the name elsewhere, so
+the `chmod` lands on a decoy while the real socket keeps the umask's mode
+and the raise reports an election it did not make. And a `chmod` that
+failed would return after the pathname exists, leaving a file this crate
+unlinks nowhere - so `gate-refused-raise-holds-nothing` would stop holding
+and every later raise on that path would answer `Address already in use`
+for the life of the runtime directory.
+
+**The umask is process-global, so the guard serializes on it.** Two raises
+on one process would otherwise interleave their save and restore and the
+socket would land at whatever the loser inherited, which is the same defect
+one level up. A gate organ raises once and meets no contention, and the lock
+costs nothing while removing the case.
+
+**The watch is the removal of the umask guard**, not of a mode call: with it
+gone the socket binds at the runner's own umask and the test reports `0777`.
+Naming the removal matters because a property and its failure path are not
+the same thing, and this act's first form was watched on a call that no
+longer exists. **This
 is not a hypothetical drift**: on 2026-08-28 one build bound `0777` on one
 box and `0775` on another, the two holding different ambient umasks, and
 neither figure was anyone's election.
 
 Connecting to a Unix socket requires write permission, so denying the write
-bit outside owner and group is what excludes a uid; the read and execute
+bit outside owner and group is what excludes a uid. The read and execute
 bits others would hold under a laxer mode buy them nothing on a socket. The
 operator reaches the socket through membership in the agent's group, which
 is the provisioning already owed, and no one else reaches it at all.
 
 **Two locks, answering different adversaries.** The mode stops a stranger
-from reaching the door; the credential check below stops one who does. A
+from reaching the door, and the credential check below stops one who does. A
 boundary resting on the credential alone would still let any local uid
 spend this process's accept loop, and one resting on the mode alone would
 trust the filesystem with a judgment the rule owns. Neither is redundant,

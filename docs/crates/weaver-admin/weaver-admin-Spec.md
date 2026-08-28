@@ -1695,8 +1695,10 @@ no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Eleven of the
-thirty-four carry a `grounds` edge and those eleven carry twelve edges, one
-record grounding in two invariants. Six run to
+thirty-five carry a `grounds` edge and those eleven carry twelve edges, one
+record grounding in two invariants. The thirty-fifth is section 6's runtime
+directory mode, which grounds in none: the figure is an election about a
+boundary this crate provisions rather than a claim any invariant reaches. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
 and four to `axiom-harness-integrates-by-the-loop`.
