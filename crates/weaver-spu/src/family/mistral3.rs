@@ -190,12 +190,20 @@ impl Family for Mistral3 {
     /// followed, where a `[SYSTEM]` wrapper of our own devising would be the
     /// shape invented.
     ///
-    /// **The clause said the refusal stood for a system message arriving
-    /// anywhere but the prefix, and it no longer does.** `render_identity`
-    /// folds, and this arm carries what reaches it alone - the control
-    /// loop's opening and its re-entry travel as deltas and land here, so an
-    /// arm refusing them failed every turn of a dev-loop run while the
-    /// declaration's prefix rendered perfectly.
+    /// **This arm is what a caller reaching `render_delta` directly gets.**
+    /// The production path is `render_each`, which applies
+    /// `fold_for_template` first, so a `System` message with a user turn
+    /// after it is merged before it arrives and this arm sees only what
+    /// stands alone.
+    ///
+    /// It was added because the control loop's opening and its re-entry are
+    /// `System` and travel as deltas. With the fold wired into
+    /// `render_identity` alone they reached this arm unmerged and an arm
+    /// refusing them failed every turn of a dev-loop run while the
+    /// declaration's prefix rendered perfectly. The fold has since moved onto
+    /// the trait, so that is no longer the path they take - **and this arm
+    /// still may not refuse**, a lone `System` and any caller rendering one
+    /// message at a time both landing here.
     ///
     /// `Role::ToolResult` refuses rather than rendering. Mistral carries tool
     /// results in their own `[TOOL_RESULTS]` block rather than as a turn, and

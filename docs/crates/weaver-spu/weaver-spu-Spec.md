@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, seventh of this date, the record catches up to the
+code. Section 5's and section 10's clauses stop describing the round-three
+design in which the loop's deltas bypassed the fold, that arm being
+unreachable in production since the fold moved onto the family, and section
+15's total is corrected from sixty to seventy-eight with the sorting split
+named as owed rather than guessed.
+
 **Revised:** 2026-08-28, sixth of this date, the two claims about `System`
 are given two watches. Section 10's entry described the rendering and the
 folding together while naming one outcome for both, and once the role renders
@@ -2899,13 +2906,18 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Sixty records in all,
-thirty-one from this section's sorting with the walks and the kernels counted
-in, and twenty-nine from the elections outside it, the elections taking nodes
-because gate H1 would otherwise leave the largest decisions in this Spec
-untraceable. A divided claim's two halves both count with the sorting, per
+general prohibition, and the kernels' comparisons. Seventy-eight records in all, the
+elections taking nodes because gate H1 would otherwise leave the largest
+decisions in this Spec untraceable. **The split between this section's sorting
+and the elections outside it is owed and is not restated here**: it read
+thirty-one and twenty-nine against a total of sixty, and the eighteen records
+since are not divided by any count this act can take mechanically. The total
+and the tag census below are verifiable and are corrected. The split wants the
+reading that produced it, and is flagged rather than guessed.
+
+A divided claim's two halves both count with the sorting, per
 Document Format section 3, which is where the absence and width divisions of
-the operator's 2026-08-04 election count. Three of the thirty-one are tagged
+the operator's 2026-08-04 election count. Three of that section's are tagged
 for review and every other one of them carries a mechanical instrument: the
 loader's general prohibition, which is the review half of a split, the pairing
 half of section 6's absence claim, divided likewise, and the kernels'
