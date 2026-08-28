@@ -376,6 +376,12 @@ pub fn parse(source: &str) -> Result<AgentConfig, ConfigError> {
 /// meets as a fault in a running agent instead of as a refusal to load, so
 /// the judgment belongs where declarations are judged.
 ///
+/// **The role and the block are both judged**, the identity door refusing
+/// both: `weaver-traits-Spec` section 3 licenses a `System` message to carry
+/// `Text` blocks only. Judging the role alone left half the door's refusal at
+/// runtime, which is the condition this check exists to prevent rather than
+/// to halve.
+///
 /// The index rides the field name, an operator with several messages needing
 /// to know which one, the way `tunable-values.<name>` already names its own.
 ///
@@ -388,6 +394,21 @@ fn check_identity_roles(identity: &[weaver_traits::Message]) -> Result<(), Confi
                 field: Some(FieldName(format!("identity.{at}.role"))),
                 kind: ConfigErrorKind::BadValue,
             });
+        }
+        // **The block is judged beside the role**, the door refusing both.
+        // `weaver-traits-Spec` section 3 licenses a `System` message to carry
+        // `Text` and nothing else, so a declaration naming the right role with
+        // a `tool_call` in it parsed cleanly, authored an
+        // `IdentityPrefixUnrecorded` fault without aborting the load, and was
+        // refused at the SPU's `Open` - leaving the operator to meet in a
+        // running agent what this check exists to answer at the load.
+        for (block_at, block) in message.content.iter().enumerate() {
+            if !matches!(block, weaver_traits::ContentBlock::Text { .. }) {
+                return Err(ConfigError {
+                    field: Some(FieldName(format!("identity.{at}.content.{block_at}"))),
+                    kind: ConfigErrorKind::BadValue,
+                });
+            }
         }
     }
     Ok(())

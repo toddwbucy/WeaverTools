@@ -144,12 +144,23 @@ impl Gemma4 {
     /// **This family's role map, which is why it does not call
     /// [`super::common_role_name`].**
     ///
-    /// `Role::System` refuses rather than rendering, and this function is
-    /// the refusal point: this family's template carries no system turn, so
-    /// `role_name` answers `RenderRefusal::MalformedForFamily` rather than
-    /// inventing `<|turn>system`, the silent substitution this crate
-    /// refuses everywhere. A loop driving a gemma agent frames the field in
-    /// its user turns, as every loop did before the slot existed.
+    /// **`Role::System` renders as this template's user turn**, per the
+    /// operator's ruling of 2026-08-28. It refused here until that date, on
+    /// the ground that this family's template carries no system turn and
+    /// that inventing `<|turn>system` would be the silent substitution this
+    /// crate refuses everywhere. The template fact is unchanged and the
+    /// conclusion drawn from it was wrong: the template names what shape
+    /// system content takes, and the floor names what role it carries, so
+    /// rendering the role into the user turn is that template's own answer
+    /// rather than a substitution. A loop driving a gemma agent frames the
+    /// field in its user turns, which is what this arm now does for it.
+    ///
+    /// **This arm is what carries the control loop's voice.** The loop's
+    /// opening and its re-entry are `System` and travel as a delta rather
+    /// than in the open, so they reach here and never reach
+    /// `render_identity`'s fold. With this arm refusing, every turn of a
+    /// dev-loop run against this family failed while the declaration's
+    /// prefix rendered perfectly.
     ///
     /// `Role::ToolResult` refuses rather than rendering as a turn. This family
     /// has no tool turn: its template carries tool results as standalone
@@ -157,17 +168,6 @@ impl Gemma4 {
     /// `<|turn>tool` would be the silent substitution the registry refuses one
     /// level up. It renders when the tool workflow lands and names the block
     /// shape, and not before.
-    /// **`System` renders as this template's user turn.** The template names
-    /// no system turn, which is a fact about the template and not about the
-    /// floor's vocabulary, so the role is carried rather than refused - the
-    /// same answer `render_identity`'s fold gives, applied where a message
-    /// arrives alone.
-    ///
-    /// **This arm is what carries the control loop's voice.** The loop's
-    /// opening and its re-entry are `System` and travel as a delta rather
-    /// than in the open, so they reach here and never reach the fold. With
-    /// this arm refusing, every turn of a dev-loop run against this family
-    /// failed while the declaration's prefix rendered perfectly.
     ///
     /// conforms: spu-system-folds-where-the-template-has-no-system-turn
     fn role_name(role: &Role) -> Result<&'static str, RenderRefusal> {

@@ -1639,22 +1639,34 @@ mod tests {
         );
     }
 
-    /// One text message, for the rendering tests below.
-    /// The families that serve a conversation, which is every registered one
-    /// but the classifier. A family added here without a `System` arm fails
-    /// the loop-roles test above rather than at runtime on someone's box.
+    /// The families that serve a conversation, **derived from `REGISTRY`
+    /// rather than listed here**.
+    ///
+    /// A hand-written list makes the loop-roles test below assert only what
+    /// its author remembered: a new registry row pointing at a module with no
+    /// `System` arm would compile, pass, and fail on the operator's box, which
+    /// is the failure that test exists to prevent. Deriving it means the row
+    /// carries the family into the test by existing.
+    ///
+    /// Deduped on the renderer's function pointer, several rows selecting one
+    /// module by different artifact names, and labelled by the first row that
+    /// reaches each. The classifier needs no exclusion: `modernbert` renders
+    /// no conversation and is in no registry row.
     fn conversational_families() -> Vec<(&'static str, &'static dyn Family)> {
-        vec![
-            ("gemma4", &crate::family::gemma4::Gemma4),
-            ("mistral3", &crate::family::mistral3::Mistral3),
-            ("qwen2", &crate::family::qwen2::Qwen2),
-            ("llama", &crate::family::llama::Llama),
-            ("phi-tag", &crate::family::phi::PhiTag),
-            ("phi-sep", &crate::family::phi::PhiSep),
-            ("gpt_oss", &crate::family::gpt_oss::GptOss),
-        ]
+        let mut seen: Vec<usize> = Vec::new();
+        let mut out: Vec<(&'static str, &'static dyn Family)> = Vec::new();
+        for row in REGISTRY {
+            let renderer = row.renderer as usize;
+            if seen.contains(&renderer) {
+                continue;
+            }
+            seen.push(renderer);
+            out.push((row.family, (row.renderer)()));
+        }
+        out
     }
 
+    /// One text message, for the rendering tests below.
     fn said(role: Role, text: &str) -> Message {
         Message {
             role,
@@ -1670,9 +1682,24 @@ mod tests {
     /// while `role: user` refused at the parse, which left those families no
     /// usable identity prefix at all.
     ///
-    /// Perturbation: drop the `fold_system_into_first_user` call from either
-    /// family's `render_identity` and the two family tests below fail with
-    /// `MalformedForFamily`. Watched under exactly that removal.
+    /// **The perturbation is the merge and no longer the refusal.** Until the
+    /// delta path gained its `System` arm, dropping the fold made
+    /// `render_each` answer `MalformedForFamily` and that was the watch. The
+    /// arm made a bare `System` renderable, so the fold stopped being what
+    /// prevents a refusal and became only what merges: one turn carrying both
+    /// texts against two turns carrying one each. The old sentence stood
+    /// while the property it named had moved, which is why a perturbation
+    /// wants re-watching whenever an act makes a refusing path succeed.
+    ///
+    /// Perturbation: make the `(Role::User, Some(prefix))` arm push the two
+    /// messages separately rather than joining them, and this fails on the
+    /// merged text. Watched under exactly that change.
+    ///
+    /// **This test's watch is the helper's own and not the wiring's**, since
+    /// it calls the fold directly and no `render_identity` sits in its path.
+    /// The family test below is where replacing the call is watched. Writing
+    /// one sentence for both was the same error this round corrected: a
+    /// perturbation naming a path the test does not take.
     ///
     /// conforms: spu-system-folds-where-the-template-has-no-system-turn
     #[test]
@@ -1695,12 +1722,16 @@ mod tests {
     /// parse per `weaver-types-Spec` section 2, and `role: system` refused
     /// here, so a gemma or mistral agent had no usable prefix at all.
     ///
-    /// The assertion is that the prefix reaches the rendering rather than
-    /// that it takes a particular shape, the shape being each template's.
+    /// **The assertion is the merged text and not merely a successful
+    /// render**, the delta path's `System` arm having made an unfolded prefix
+    /// render perfectly well as two turns. What the fold decides is whether
+    /// the model reads one turn or two, so that is what is pinned: the two
+    /// texts contiguous, which no unfolded rendering produces because the
+    /// template's own turn markers sit between them.
     ///
-    /// Perturbation: drop the `fold_system_into_first_user` call from either
-    /// `render_identity` and this fails with `MalformedForFamily`. Watched
-    /// under exactly that removal.
+    /// Perturbation: replace the fold call with `messages.to_vec()` in either
+    /// `render_identity` and this fails on the merged text. Watched under
+    /// exactly that replacement.
     ///
     /// conforms: spu-system-folds-where-the-template-has-no-system-turn
     #[test]
@@ -1720,12 +1751,9 @@ mod tests {
                 .render_identity(&prefix)
                 .unwrap_or_else(|e| panic!("{name} refused a seated prefix: {e:?}"));
             assert!(
-                rendered.contains("You are Karl."),
-                "{name} dropped the prefix: {rendered}"
-            );
-            assert!(
-                rendered.contains("hello"),
-                "{name} dropped the request: {rendered}"
+                rendered.contains("You are Karl.\n\nhello"),
+                "{name} rendered the prefix as separate turns rather than one: \
+                 {rendered:?}"
             );
         }
     }
@@ -1753,7 +1781,17 @@ mod tests {
         // What `dev_loop::contribution` puts in a delta: the opening and the
         // re-entry are System, the request is User, and the model answers.
         let emitted = [Role::System, Role::User, Role::Assistant];
-        for (name, family) in conversational_families() {
+        let families = conversational_families();
+        // **A derivation that returned nothing would pass this test
+        // vacuously**, a `for` over an empty list asserting nothing at all.
+        // The count is not pinned, since a new family must not have to edit
+        // a number here, but the list must reach the registry.
+        assert!(
+            families.len() >= 2,
+            "the family list derives from REGISTRY and came back with {}",
+            families.len()
+        );
+        for (name, family) in families {
             for role in &emitted {
                 let message = said(role.clone(), "x");
                 family

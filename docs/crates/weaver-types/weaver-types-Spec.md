@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-28, fifth of this date, the parse judges the block
+beside the role. Sections 2 and 5 state that an identity message carries
+`Text` and nothing else, the door refusing both and the role alone having left
+half the refusal at runtime.
+
 **Revised:** 2026-08-28, fourth of this date, the review seat's findings land.
 The parse's rule stands and the two families that name no system turn fold it
 rather than refusing, per the operator's ruling. Section 5's test joins the
@@ -624,7 +629,10 @@ the rule ahead of the instrument that will hold it.** The identity door of
 other role, per `harness-identity-door-writes-system-only`, so a declaration
 carrying any other role seats a prefix into the decode context that the record
 cannot show - the condition `weaver-harness-PRD` section 5's fifth case exists
-to report, found in the field and filed as issue #369. **The rule belongs
+to report, found in the field and filed as issue #369. Every message carries
+`Text` blocks and nothing else, per `weaver-traits-Spec` section 3, and the
+parse judges that beside the role: the door refuses both, and judging one here
+would leave the other to be met as a fault in a running agent. **The rule belongs
 here rather than at the door.** The door refuses what the declaration should
 never have contained, which makes it the last place the condition can be
 caught rather than the first, and a rule enforced only at the last place is a
@@ -2076,9 +2084,10 @@ the reason the claim exists.** Remove the socket invariant and this crate has no
 to elect a socket type, no reason to bound an envelope, and no reason to withhold a
 deserializer from a credential, so those three ground in it. Remove it and the config
 format is still YAML, the names are still kebab-case, and the parse is still total, so
-those three ground in nothing. **Thirteen claims grounding in no invariant is the expected
-result and not a gap**, per Document Format section 4: a floor crate is mostly
-representation, and representation is what the invariants are not about.
+those three ground in nothing. **Thirteen claims grounding in no invariant is
+the expected result and not a gap**, per Document Format section 4: a floor
+crate is mostly representation, and representation is what the invariants are
+not about.
 
 The two edges to the contract invariant are the ones worth stating rather than
 leaving to be read. The wire enums are exhaustive so that every case a contract
@@ -2111,11 +2120,17 @@ already discharged.
 - In this crate: a misspelled key refuses, confirmed by watching a mistyped
   `permission-mode` vanish when `deny_unknown_fields` is removed. The watch is the
   derive's removal while the surface is one type's, and it moves with the surface.
-- In this crate: a non-system identity role refuses the parse, naming
-  `identity.<n>.role`, confirmed by watching all three refused roles parse when
-  `check_identity_roles` is removed from `parse` - which is the state that
-  produced the cross-precision deposit of 2026-08-25, a run whose prefix named
-  the agent and whose record never said so. **This entry read "enforced by
+- In this crate: an identity message that is not a `System` message carrying
+  `Text` blocks refuses the parse, naming `identity.<n>.role` or
+  `identity.<n>.content.<m>`. **The door refuses the role and the block both**,
+  so judging only the role left half of it at runtime: a `role: system`
+  declaration carrying a `tool_call` parsed clean, authored a fault without
+  aborting the load, and was refused at the SPU's open. Confirmed by watching
+  all three refused roles parse when `check_identity_roles` is removed from
+  `parse`, and the unlicensed block parse when its loop is removed - the first
+  of which is the state that produced the cross-precision deposit of
+  2026-08-25, a run whose prefix named the agent and whose record never said
+  so. **This entry read "enforced by
   nothing today" from 2026-08-26 to 2026-08-28**, carrying its date and the
   experimental reason the instrument was withheld. It is recorded rather than
   quietly overwritten: an unenforced rule that no section admits is

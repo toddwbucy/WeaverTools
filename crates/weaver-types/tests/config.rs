@@ -92,6 +92,34 @@ fn a_non_system_identity_role_refuses() {
     }
 }
 
+/// **A `System` identity message carrying a block it may not carry refuses
+/// the parse**, per `weaver-traits-Spec` section 3, which licenses `Text`
+/// and nothing else there.
+///
+/// The identity door refuses the role and the block both. Judging only the
+/// role left the other half at runtime: such a declaration parsed cleanly,
+/// authored an `IdentityPrefixUnrecorded` fault without aborting the load,
+/// and was refused at the SPU's open, so the operator met in a running agent
+/// what the parse exists to answer at the load.
+///
+/// Perturbation: remove the block loop from `check_identity_roles` and this
+/// parses. Watched under exactly that removal.
+///
+/// conforms: types-identity-role-is-system
+#[test]
+fn an_unlicensed_identity_block_refuses() {
+    let source = full_config().replace(
+        "        content:\n          - type: text\n            text: You answer briefly.\n",
+        "        content:\n          - type: tool_call\n            name: calculator\n            arguments: \"{}\"\n",
+    );
+    let err = parse(&source).expect_err("refuses");
+    assert_eq!(err.kind, ConfigErrorKind::BadValue);
+    assert_eq!(
+        err.field.as_ref().map(|f| f.0.as_str()),
+        Some("identity.0.content.0")
+    );
+}
+
 /// An empty identity is a declaration the operator made, per
 /// `weaver-types-Spec` section 2: an agent with no prefix is a legitimate
 /// agent, so the role rule judges the messages present and does not require

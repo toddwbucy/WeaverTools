@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, third of this date, the fold's watch follows the
+property it names. The delta path's `System` arm made an unfolded prefix
+render as two turns rather than refusing, so section 10's perturbation is the
+merged text and no longer the refusal, and the family list the watch runs over
+derives from `REGISTRY` rather than being written out.
+
 **Revised:** 2026-08-28, second of this date, the fold reaches the delta path.
 Section 5 states that `System` renders as the user turn on these families
 everywhere and not only in the prefix: the control loop's opening and re-entry

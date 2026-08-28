@@ -190,9 +190,6 @@ impl Family for Mistral3 {
     /// arm refusing them failed every turn of a dev-loop run while the
     /// declaration's prefix rendered perfectly.
     ///
-    /// `Role::ToolResult` still refuses, that turn being one this template
-    /// genuinely cannot name.
-    ///
     /// `Role::ToolResult` refuses rather than rendering. Mistral carries tool
     /// results in their own `[TOOL_RESULTS]` block rather than as a turn, and
     /// inventing a shape for it would be the silent substitution the registry
