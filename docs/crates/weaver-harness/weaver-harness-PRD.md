@@ -698,9 +698,9 @@ commit pressure while the sink stays writable, a stream write failing against
 a live process, an organ's death observed as channel closure after the
 enter aggregate was answered, and a message-kind record of its own working
 structure that does not decode at assembly, the hole authored as the fault it
-is rather than handed to the model as context, and a declaration whose seated
-identity carries a role the identity door does not write. The third is why this
-enumeration cannot be derived from the organs' own: a dead party is exactly
+is rather than handed to the model as context, and a seated identity prefix
+the record cannot account for. The third is why this enumeration cannot be
+derived from the organs' own: a dead party is exactly
 the one that cannot report, so the SPU's cases at `weaver-spu-PRD` section
 13.10 and the gate's at `weaver-gate-PRD` section 13.4 are silent about their
 own deaths by construction, and the harness's observation is the only account

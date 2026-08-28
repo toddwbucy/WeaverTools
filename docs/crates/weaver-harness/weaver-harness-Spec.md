@@ -11,8 +11,8 @@ account does. Per the review seat on PR 371.
 **Revised:** 2026-08-27, second of this date, the identity refusal is
 authored. Section 6 gains the clause and the assertion holding that the door's
 refusal reaches the record as a `fault` rather than being dropped by its
-caller, the prefix being seated at the session's open either way, per issue
-#369.
+caller, the prefix being seated at the session's open either way, per
+issue `#369`.
 
 **Revised:** 2026-08-27, the diagnostic recorder's surface is elected. Section 9's
 item closes on `weaver-diagnostic-Spec` section 5's election, the member mirroring
