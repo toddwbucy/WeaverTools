@@ -207,6 +207,74 @@ def spu_binary(cfg):
     return os.path.join(os.path.dirname(cfg["admin_bin"]), "weaver-spu")
 
 
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def weaver_binaries(cfg):
+    """sha256 of the organ binaries this box will run.
+
+    **The field that answers "are the two boxes on the same build".** A
+    commit is not that answer: Rust and CUDA embed absolute paths and build
+    state, so two boxes compiling one commit produce different bytes, and
+    `commit` alone cannot distinguish a shared build from two local ones.
+    The hashes can, and they are what a build-once-and-distribute
+    arrangement is verified by.
+
+    Olympus carried these in a hand-written `binary-shas.txt` beside its
+    2026-08-27 deposit, which is the same sidecar the serving device and the
+    engine libraries were carried in before issue #370's third ask. Read
+    from the admin config, which already names all three, so the report
+    names what the runtime is actually configured to launch rather than what
+    a config file for this script believed.
+    """
+    out = {}
+    for key in ("worker-binary", "spu-binary", "gate-binary"):
+        stated = os.path.join(cfg.get("admin_config", ""), key)
+        try:
+            with open(stated) as f:
+                path = f.read().strip()
+        except OSError as e:
+            out[key] = {"path": None, "sha256": None,
+                        "unreadable": f"{stated}: {e}"}
+            continue
+        try:
+            out[key] = {"path": path, "sha256": _sha256(path)}
+        except OSError as e:
+            out[key] = {"path": path, "sha256": None, "unreadable": str(e)}
+    return out
+
+
+def toolchain(cfg):
+    """The Rust toolchain actually in force, not the one on the ambient PATH.
+
+    **`rustc --version` answers differently depending on where it is run.**
+    `rust-toolchain.toml` overrides per directory, so a driver launched
+    outside the repository reports the box's default compiler while the
+    binaries were built with the pin. That is not hypothetical: of the three
+    olympus arms of 2026-08-27, all running one installed binary set at
+    `experiment-a9634c0`, two recorded `1.95.0-nightly` and the Ada arm
+    recorded `1.97.1`. One build, two claimed compilers, the difference
+    being the launch directory.
+
+    Read with `cwd` at the repository so the pin applies, and the active
+    toolchain recorded beside it so an override is visible rather than
+    silent.
+    """
+    repo = cfg.get("repo") or "."
+    version = sh(["rustc", "--version"], cwd=repo).stdout.strip()
+    active = sh(["rustup", "show", "active-toolchain"], cwd=repo)
+    return {
+        "rustc": version or None,
+        "active_toolchain": (active.stdout.strip().splitlines() or [None])[0]
+        if active.returncode == 0 else None,
+    }
+
+
 def engine_libraries(cfg):
     """sha256 of the libraries the serving binary actually links.
 
@@ -482,20 +550,16 @@ def whole_ms(t):
     return (b - a) if a is not None and b is not None else None
 
 
-def cell_metadata(cfg, cell, libraries):
-    h = hashlib.sha256()
-    with open(cell["artifact"], "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
+def cell_metadata(cfg, cell, libraries, binaries, tools):
+    artifact_sha = _sha256(cell["artifact"])
     gpu = sh(["nvidia-smi", "--query-gpu=name,driver_version",
               "--format=csv,noheader"]).stdout.strip()
     commit = sh(["git", "-C", cfg["repo"], "rev-parse", "HEAD"]).stdout.strip()
-    rustc = sh(["rustc", "--version"]).stdout.strip()
     return {
         "box": cfg["box"],
         "precision": cell["precision"],
         "artifact": cell["artifact"],
-        "artifact_sha256": h.hexdigest(),
+        "artifact_sha256": artifact_sha,
         # **`device` is retired rather than redefined**, per issue #370. It
         # held this whole-machine listing, so every GPU present appeared in
         # every report and the one that answered appeared nowhere. Reusing
@@ -512,18 +576,29 @@ def cell_metadata(cfg, cell, libraries):
         # Hoisted: the libraries cannot change during a run and
         # `libggml-cuda` built for four architectures is 142 MiB to hash.
         "engine_libraries": libraries,
+        # **What a reader compares to answer "same build".** The commit
+        # cannot answer it: two boxes compiling one commit produce different
+        # bytes, so `commit` distinguishes source, and these distinguish
+        # builds.
+        "weaver_binaries": binaries,
         "build_flags": cfg["build_flags"],
-        "rustc": rustc,
+        # `rustc` reports the toolchain in force at the repository rather
+        # than on the ambient PATH, and `active_toolchain` makes an override
+        # visible. The olympus arms of 2026-08-27 recorded two compilers for
+        # one binary set because the old field followed the launch
+        # directory.
+        "toolchain": tools,
         "commit": commit,
         "short_text": SHORT_TEXT,
         "long_text": LONG_TEXT,
     }
 
 
-def run_cell(cfg, cell, outdir, libraries):
+def run_cell(cfg, cell, outdir, libraries, binaries, tools):
     name = cell["name"]
     log = lambda m: print(f"[{name}] {m}", flush=True)
-    report = {"cell": name, "metadata": cell_metadata(cfg, cell, libraries),
+    report = {"cell": name,
+              "metadata": cell_metadata(cfg, cell, libraries, binaries, tools),
               "steps": [], "turns": [], "verdict": None}
 
     # The declaration with this cell's artifact, everything else as
@@ -745,11 +820,16 @@ def main():
     # Read once for the run: the libraries cannot change under it, and
     # `libggml-cuda` built for four architectures is 142 MiB to hash.
     libraries = engine_libraries(cfg)
+    binaries = weaver_binaries(cfg)
+    tools = toolchain(cfg)
     print(f"engine libraries: {json.dumps(libraries)}", flush=True)
+    print(f"weaver binaries: {json.dumps(binaries)}", flush=True)
+    print(f"toolchain: {json.dumps(tools)}", flush=True)
     reports = []
     try:
         for cell in cfg["cells"]:
-            reports.append(run_cell(cfg, cell, args.outdir, libraries))
+            reports.append(
+                run_cell(cfg, cell, args.outdir, libraries, binaries, tools))
     finally:
         shutil.copy2(backup, cfg["declaration"])
         os.unlink(backup)

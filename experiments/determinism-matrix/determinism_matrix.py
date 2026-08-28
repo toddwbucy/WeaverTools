@@ -259,6 +259,8 @@ def main():
     # why it is empty rather than reading as "nothing to record", per the
     # same rule the reader itself follows.
     libraries = {"unreadable": "the run ended before the libraries were read"}
+    binaries = {"unreadable": "the run ended before the binaries were read"}
+    tools = {"unreadable": "the run ended before the toolchain was read"}
     logpath = os.path.join(args.outdir, "matrix.log")
 
     def log(msg):
@@ -276,7 +278,11 @@ def main():
         # one outside the `try` would leave the operator's declaration
         # holding this run's artifact.
         libraries = base.engine_libraries(cfg)
+        binaries = base.weaver_binaries(cfg)
+        tools = base.toolchain(cfg)
         log(f"engine libraries: {json.dumps(libraries)}")
+        log(f"weaver binaries: {json.dumps(binaries)}")
+        log(f"toolchain: {json.dumps(tools)}")
 
         # Sweeps rather than repeats: every combination is seen once
         # before any is seen twice, so a run cut short by the clock still
@@ -348,6 +354,8 @@ def main():
         "serving_device": (bindings[0] if len(bindings) == 1
                            else {"varied": bindings}),
         "engine_libraries": libraries,
+        "weaver_binaries": binaries,
+        "toolchain": tools,
         "sessions": total,
         "reproduced": good,
         "diverged": len(diverged),
