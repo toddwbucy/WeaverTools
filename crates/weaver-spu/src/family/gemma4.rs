@@ -157,9 +157,22 @@ impl Gemma4 {
     /// `<|turn>tool` would be the silent substitution the registry refuses one
     /// level up. It renders when the tool workflow lands and names the block
     /// shape, and not before.
+    /// **`System` renders as this template's user turn.** The template names
+    /// no system turn, which is a fact about the template and not about the
+    /// floor's vocabulary, so the role is carried rather than refused - the
+    /// same answer `render_identity`'s fold gives, applied where a message
+    /// arrives alone.
+    ///
+    /// **This arm is what carries the control loop's voice.** The loop's
+    /// opening and its re-entry are `System` and travel as a delta rather
+    /// than in the open, so they reach here and never reach the fold. With
+    /// this arm refusing, every turn of a dev-loop run against this family
+    /// failed while the declaration's prefix rendered perfectly.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
     fn role_name(role: &Role) -> Result<&'static str, RenderRefusal> {
         Ok(match role {
-            Role::User => "user",
+            Role::System | Role::User => "user",
             Role::Assistant => ASSISTANT_ROLE,
             _ => return Err(RenderRefusal::MalformedForFamily),
         })
@@ -170,7 +183,7 @@ impl Family for Gemma4 {
     /// The prefix opens with [`BOS`], once, and the turns never repeat it.
     fn render_identity(&self, messages: &[Message]) -> Result<String, RenderRefusal> {
         // **A seated `System` prefix folds into the first user turn**, per
-        // `weaver-spu-Spec` section 8. This template names no system turn,
+        // `weaver-spu-Spec` section 5. This template names no system turn,
         // which is a fact about the template and not about the floor's
         // vocabulary: the canonical role of an identity prefix is `System`
         // per `weaver-types-Spec` section 2, and refusing it here would
@@ -180,7 +193,7 @@ impl Family for Gemma4 {
         // authority rather than minting a turn the template never had.
         //
         // conforms: spu-system-folds-where-the-template-has-no-system-turn
-        let folded = super::fold_system_into_first_user(messages);
+        let folded = super::fold_system_into_first_user(messages)?;
         let mut rendered = String::from(BOS);
         rendered.push_str(&super::render_each(self, &folded)?);
         Ok(rendered)

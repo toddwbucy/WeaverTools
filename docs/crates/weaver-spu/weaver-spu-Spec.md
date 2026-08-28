@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, second of this date, the fold reaches the delta path.
+Section 5 states that `System` renders as the user turn on these families
+everywhere and not only in the prefix: the control loop's opening and re-entry
+travel as deltas and never reach `render_identity`, so a fold wired only there
+left every dev-loop turn on gemma and mistral failing. Section 10's
+enumeration gains the watch, which no workspace build could have supplied,
+`weaver-harness` depending on this crate not at all.
+
 **Revised:** 2026-08-28, the seated prefix folds where the template names no
 system turn. Section 5 states that gemma and mistral render a leading `System`
 message into their first user turn rather than refusing the role, per the
@@ -2656,6 +2664,16 @@ than a code fact.
 
 **Requiring a perturbation-verified test.**
 
+- A seated `System` prefix renders on every family that serves a
+  conversation, folded into the user turn where the template names no system
+  turn. Confirmed by watching gemma or mistral answer `MalformedForFamily`
+  when the role is removed from the delta path, which is the state that broke
+  every turn of a dev-loop run against those families while the declaration's
+  prefix rendered perfectly. **The watch covers the delta path and not only
+  the prefix**, the control loop's own voice travelling as a delta and never
+  reaching the fold, and `weaver-harness` taking no dependency on this crate,
+  so no workspace build compiles the loop's roles against the families that
+  must render them.
 - Truncation is a fault: an envelope over the 64 kibibyte bound on the lifecycle
   channel produces `Truncated` and no directive, confirmed by watching a silently
   shortened directive decode when the `MSG_TRUNC` check is removed. This is the

@@ -137,16 +137,24 @@ pub fn text_content(message: &Message) -> Result<String, RenderRefusal> {
 /// identity prefix opens with something the turns do not repeat adds it around
 /// this call rather than inside it - see [`gemma4::Gemma4::render_identity`],
 /// where the once-per-prefix `<bos>` lives.
-/// Folds a leading `System` message into the `User` turn that follows, for
-/// the families whose template names no system turn.
+pub fn render_each(family: &dyn Family, messages: &[Message]) -> Result<String, RenderRefusal> {
+    let mut rendered = String::new();
+    for message in messages {
+        rendered.push_str(&family.render_delta(message)?);
+    }
+    Ok(rendered)
+}
+
+/// Renders a `System` message as user content, for the families whose
+/// template names no system turn, merging it into the `User` turn that
+/// follows where there is one.
 ///
-/// **The canonical role is the floor's and the rendering is the family's.**
+/// **The canonical role is the floor's and the shape is the family's.**
 /// `weaver-traits`' `Role` is the vocabulary the whole program speaks, and a
 /// seated identity prefix is `System` in it, per `weaver-types-Spec` section
 /// 2. A family whose template has no system turn is saying something about
 /// its template, not about the vocabulary, so it renders that role rather
-/// than refusing it - and the rendering these templates document is the
-/// prefix opening the first user turn.
+/// than refusing it.
 ///
 /// **This is the template authority followed rather than a shape invented**,
 /// which is the distinction `mistral3::Mistral3::render_delta` draws. Gemma
@@ -154,14 +162,29 @@ pub fn text_content(message: &Message) -> Result<String, RenderRefusal> {
 /// first user turn, so folding is what those authorities name; inventing
 /// would be minting a `<start_of_turn>system` the template never had.
 ///
-/// A `System` message with no `User` after it becomes a user turn of its own,
-/// there being nothing to fold into and a prefix that renders as nothing
-/// being a prefix the record cannot account for. Roles other than a leading
-/// `System` pass through untouched, so a declaration that never used one is
-/// rendered exactly as before.
+/// **Every `System` message folds, not only a leading one.** An earlier form
+/// of this doc said otherwise while the code folded all of them, and the
+/// code is the one that decides: a family that renders system content as
+/// user content has no position at which the role becomes unrenderable, and
+/// a mid-prefix system message refused while a leading one folded would be a
+/// distinction with nothing behind it. `render_delta` renders a lone
+/// `System` the same way for the same reason, which is what carries the
+/// loop's own voice as well as the declaration's prefix.
+///
+/// A `System` message with no `User` after it becomes a user turn of its
+/// own, there being nothing to fold into and a prefix that renders as
+/// nothing being a prefix the record cannot account for. A prefix carrying
+/// no `System` role is returned untouched.
+///
+/// **A block the family cannot render refuses rather than being dropped.**
+/// The content is read through [`text_content`], so a `ToolCall` inside a
+/// seated identity is `MalformedForFamily` as it was before this fold
+/// existed. Copying only the text blocks would have opened the session on a
+/// silently truncated prefix, which is an absence that reads as a
+/// configuration.
 ///
 /// conforms: spu-system-folds-where-the-template-has-no-system-turn
-pub fn fold_system_into_first_user(messages: &[Message]) -> Vec<Message> {
+pub fn fold_system_into_first_user(messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
     let mut out: Vec<Message> = Vec::with_capacity(messages.len());
     let mut carried: Option<String> = None;
     for message in messages {
@@ -174,21 +197,13 @@ pub fn fold_system_into_first_user(messages: &[Message]) -> Vec<Message> {
                 if !text.is_empty() {
                     text.push_str("\n\n");
                 }
-                for block in &message.content {
-                    if let ContentBlock::Text { text: piece } = block {
-                        text.push_str(piece);
-                    }
-                }
+                text.push_str(&text_content(message)?);
                 carried = Some(text);
             }
             (Role::User, Some(prefix)) => {
                 let mut text = prefix;
-                for block in &message.content {
-                    if let ContentBlock::Text { text: piece } = block {
-                        text.push_str("\n\n");
-                        text.push_str(piece);
-                    }
-                }
+                text.push_str("\n\n");
+                text.push_str(&text_content(message)?);
                 out.push(Message {
                     role: Role::User,
                     content: vec![ContentBlock::Text { text }],
@@ -213,15 +228,7 @@ pub fn fold_system_into_first_user(messages: &[Message]) -> Vec<Message> {
             content: vec![ContentBlock::Text { text }],
         });
     }
-    out
-}
-
-pub fn render_each(family: &dyn Family, messages: &[Message]) -> Result<String, RenderRefusal> {
-    let mut rendered = String::new();
-    for message in messages {
-        rendered.push_str(&family.render_delta(message)?);
-    }
-    Ok(rendered)
+    Ok(out)
 }
 
 /// One piece of an emission, recovered.
@@ -1633,6 +1640,21 @@ mod tests {
     }
 
     /// One text message, for the rendering tests below.
+    /// The families that serve a conversation, which is every registered one
+    /// but the classifier. A family added here without a `System` arm fails
+    /// the loop-roles test above rather than at runtime on someone's box.
+    fn conversational_families() -> Vec<(&'static str, &'static dyn Family)> {
+        vec![
+            ("gemma4", &crate::family::gemma4::Gemma4),
+            ("mistral3", &crate::family::mistral3::Mistral3),
+            ("qwen2", &crate::family::qwen2::Qwen2),
+            ("llama", &crate::family::llama::Llama),
+            ("phi-tag", &crate::family::phi::PhiTag),
+            ("phi-sep", &crate::family::phi::PhiSep),
+            ("gpt_oss", &crate::family::gpt_oss::GptOss),
+        ]
+    }
+
     fn said(role: Role, text: &str) -> Message {
         Message {
             role,
@@ -1658,7 +1680,8 @@ mod tests {
         let folded = fold_system_into_first_user(&[
             said(Role::System, "You are Karl."),
             said(Role::User, "hello"),
-        ]);
+        ])
+        .expect("renderable");
         assert_eq!(folded.len(), 1, "two messages became one user turn");
         assert_eq!(folded[0].role, Role::User);
         assert_eq!(
@@ -1707,12 +1730,71 @@ mod tests {
         }
     }
 
+    /// **Every role the control loop emits renders on every family that
+    /// serves a conversation.** This is the test whose absence let a live
+    /// regression through: the loop's opening and re-entry are `System` and
+    /// travel as *deltas*, so they reach `render_delta` and never reach
+    /// `render_identity`'s fold. The fold covered the declaration's prefix,
+    /// `render_delta` still refused, and every dev-loop turn on gemma and
+    /// mistral failed while the prefix rendered perfectly.
+    ///
+    /// `cargo test --workspace` could not have caught it: `weaver-harness`
+    /// does not depend on `weaver-spu`, so nothing compiles the loop's roles
+    /// against the families that must render them. This test is that
+    /// dependency written down from the SPU's side.
+    ///
+    /// Perturbation: return `MalformedForFamily` for `Role::System` in
+    /// either family's delta path and this fails. Watched under exactly that
+    /// change.
+    ///
+    /// conforms: spu-system-folds-where-the-template-has-no-system-turn
+    #[test]
+    fn every_conversational_family_renders_the_roles_a_loop_emits() {
+        // What `dev_loop::contribution` puts in a delta: the opening and the
+        // re-entry are System, the request is User, and the model answers.
+        let emitted = [Role::System, Role::User, Role::Assistant];
+        for (name, family) in conversational_families() {
+            for role in &emitted {
+                let message = said(role.clone(), "x");
+                family
+                    .render_delta(&message)
+                    .unwrap_or_else(|e| panic!("{name} refused {role:?} as a delta: {e:?}"));
+            }
+            // And the same roles as a seated prefix, which takes the fold.
+            family
+                .render_identity(&[said(Role::System, "framing"), said(Role::User, "ask")])
+                .unwrap_or_else(|e| panic!("{name} refused a seated prefix: {e:?}"));
+        }
+    }
+
+    /// **An unrenderable block refuses rather than being dropped.** The fold
+    /// reads content through `text_content`, so a `ToolCall` inside a seated
+    /// identity is `MalformedForFamily` as it was before the fold existed.
+    /// Copying only the text blocks would open the session on a silently
+    /// truncated prefix, the harness authoring a fault for the bad message
+    /// but not aborting the load.
+    #[test]
+    fn a_block_the_family_cannot_render_refuses_rather_than_vanishing() {
+        let bad = Message {
+            role: Role::System,
+            content: vec![ContentBlock::ToolCall(weaver_traits::ToolCall {
+                name: "calculator".into(),
+                arguments: "{}".into(),
+            })],
+        };
+        assert!(
+            fold_system_into_first_user(&[bad]).is_err(),
+            "a block this family cannot render is refused, not skipped"
+        );
+    }
+
     /// A prefix with no user turn after it still reaches the model, there
     /// being nothing to fold into and a prefix rendering as nothing being a
     /// prefix the record cannot account for.
     #[test]
     fn a_system_message_alone_becomes_its_own_user_turn() {
-        let folded = fold_system_into_first_user(&[said(Role::System, "You are Karl.")]);
+        let folded = fold_system_into_first_user(&[said(Role::System, "You are Karl.")])
+            .expect("renderable");
         assert_eq!(folded.len(), 1);
         assert_eq!(folded[0].role, Role::User);
         assert_eq!(text_content(&folded[0]).expect("text"), "You are Karl.");
@@ -1726,7 +1808,8 @@ mod tests {
             said(Role::System, "one"),
             said(Role::System, "two"),
             said(Role::User, "ask"),
-        ]);
+        ])
+        .expect("renderable");
         assert_eq!(folded.len(), 1);
         assert_eq!(text_content(&folded[0]).expect("text"), "one\n\ntwo\n\nask");
     }
@@ -1736,7 +1819,7 @@ mod tests {
     #[test]
     fn a_prefix_without_a_system_role_passes_through_untouched() {
         let original = vec![said(Role::User, "hello"), said(Role::Assistant, "hi")];
-        let folded = fold_system_into_first_user(&original);
+        let folded = fold_system_into_first_user(&original).expect("renderable");
         assert_eq!(folded, original);
     }
 
