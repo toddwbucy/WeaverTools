@@ -7,6 +7,10 @@ v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise a
 the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+**Revised:** 2026-08-27, the closure claim's arithmetic is swept. The
+harness's enumeration is five rather than three, a count this act's own
+closing paragraph carried stale, per issue #369.
+
 **Revised:** 2026-08-22, the refusal on this seam is clerked. The organ's
 refusal travels as it did and the harness authors the record's `refusal`
 carrying `lifecycle-refusal`, per `weaver-trace-PRD` section 3.1's
@@ -500,6 +504,6 @@ register under G5.
 **What this act closes.** The fault cases a running hook raises are named at
 `weaver-gate-PRD` section 13.4, and with them the corpus-wide case set behind
 the `fault` event closes across all three organs: the SPU's at its section
-13.10, the gate's at its 13.4, and the harness's three at
+13.10, the gate's at its 13.4, and the harness's five at
 `weaver-harness-PRD` section 5, landed in this same act. The payload's shape
 lands with the trace act against the closed set.

@@ -1162,13 +1162,24 @@ impl Harness {
         // what is in hand: the same instruction the elections came from.
         //
         // A refusal here is a defect in the declaration rather than a reason
-        // to abandon the load, and it is dropped rather than raised: the door
-        // refuses a role that is not system, the enter's own validation is
-        // what judges a declaration, and a load that has already bracketed
-        // does not fail on a record it could not write.
-        for message in &payload.spu_instruction.decoder.identity {
-            let _ = author.author_identity(&mut recorder, message);
-        }
+        // to abandon the load, per `weaver-harness-PRD` section 5's fifth
+        // case: the door refuses a role that is not system and a load that
+        // has already bracketed does not fail on a record it could not
+        // write, so what is owed is the account rather than the abort. **The
+        // refusal is authored rather than dropped**, because the prefix is
+        // seated at the session's open regardless and a dropped refusal
+        // launders the declaration by omission - the reader cannot tell an
+        // agent that seated no prefix from one that seated an unrecorded
+        // one, which is the door's stated purpose defeated by its caller.
+        // Where the rule that judges a declaration lands is `weaver-types`'
+        // to say, and until it does this is the record's only account.
+        //
+        // conforms: harness-identity-refusal-authored-not-dropped
+        seat_identity_prefix(
+            &author,
+            &mut recorder,
+            &payload.spu_instruction.decoder.identity,
+        );
 
         // **Past this line the bracket stands**, so every refusal below
         // carries the partial run back rather than dropping it: the leave that
@@ -1709,6 +1720,78 @@ fn clear_dumpable() -> Result<(), AdoptionFault> {
     Ok(())
 }
 
+/// Authors the seated identity prefix beside the load, one `message.system`
+/// per declared message, and authors the door's refusal as a `fault` where a
+/// message carries a role the door does not write.
+///
+/// **The miss is authored and not dropped**, per `weaver-harness-PRD`
+/// section 5's fifth case and `weaver-harness-Spec` section 6. The prefix is
+/// seated at the session's open whether this door wrote it or not, so a miss
+/// that goes nowhere leaves the record reading as an agent that seated no
+/// prefix when it seated one no reader can see - laundering by omission
+/// rather than by a wrong record.
+///
+/// **Both arms of the door's answer are read, because both leave the same
+/// hole.** The outer arm is the door's refusal, itself three conditions: a
+/// role the door does not write, a system message carrying a block the
+/// licensing rule does not admit, and a message that will not render. The
+/// inner arm is the recorder declining the write. All four seat a prefix the
+/// record cannot show, so all four are accounted for, and which one happened
+/// travels in the account rather than in the case, per the custody rule of
+/// `weaver-types-Spec` section 4.2.
+///
+/// **The load is not refused on any of them.** The seated prefix is the
+/// operator's declaration, and a run that has already bracketed does not die
+/// on a record it could not write, so what is owed is the account rather than
+/// the abort. The fault is best-effort for the same reason it is owed: where
+/// the recorder is the thing that failed, the account may fail with it, and a
+/// miss nobody could write down is still not a miss worth aborting a run
+/// over. Where the rule that judges a declaration lands is `weaver-types`' to
+/// say.
+///
+/// conforms: harness-identity-refusal-authored-not-dropped
+fn seat_identity_prefix(
+    author: &crate::authorship::Author,
+    recorder: &mut Recorder,
+    identity: &[weaver_traits::Message],
+) {
+    for message in identity {
+        let account = match author.author_identity(recorder, message) {
+            // The prefix reached the record, which is the whole of what this
+            // loop is for.
+            Ok(Ok(_)) => continue,
+            // The door refused. `role` and `block` together name which of the
+            // three conditions it was: the role where the block reads
+            // `identity-door-system-only`, the licensing rule where it names
+            // a block, and the rendering where it reads `unrenderable`.
+            Err(unlicensed) => serde_json::json!({
+                "organ": "harness",
+                "miss": "identity-door-refused",
+                "role": unlicensed.role,
+                "block": unlicensed.block,
+            }),
+            // The door passed it and the recorder would not take it. Named
+            // apart because the declaration is not at fault here, and a
+            // reader sent after a bad declaration would be chasing the wrong
+            // thing.
+            Ok(Err(failure)) => serde_json::json!({
+                "organ": "harness",
+                "miss": "recorder-declined",
+                "failure": format!("{failure:?}"),
+            }),
+        };
+        let _ = author.author_fault(
+            recorder,
+            Subsystem::Harness,
+            None,
+            &crate::authorship::harness_report(
+                weaver_types::FaultCase::IdentityPrefixUnrecorded,
+                &account.to_string(),
+            ),
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     //! The announce-after-record test of section 8, run from inside the crate
@@ -1732,6 +1815,107 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         let _ = std::fs::create_dir_all(&dir);
         crate::channel::bind_coordination(&dir.join("c.sock")).expect("bind")
+    }
+
+    /// **The identity door's refusal reaches the record as a `fault`**, per
+    /// `weaver-harness-PRD` section 5's fifth case. A declaration carrying a
+    /// non-system identity role is seated at the session's open regardless,
+    /// so a dropped refusal would leave the record reading as an agent that
+    /// seated no prefix - the shape the 2026-08-25 cross-precision deposit
+    /// carries, and the one a certification reads as a divergence it then
+    /// blames on the model.
+    ///
+    /// The system-role message is authored and the user-role message is not,
+    /// so the record carries exactly one `message.system` and one `fault`,
+    /// which is what distinguishes authoring the refusal from authoring
+    /// everything.
+    ///
+    /// Perturbation: restore `let _ = author.author_identity(..)` in
+    /// `seat_identity_prefix` and the `fault` is absent, the record carrying
+    /// the prefix that was written and no account of the one that was not.
+    /// Watched under exactly that restoration.
+    ///
+    /// conforms: harness-identity-refusal-authored-not-dropped
+    #[test]
+    fn the_identity_refusal_is_authored_not_dropped() {
+        let path = std::env::temp_dir().join(format!(
+            "weaver-harness-identity-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let sink = OwnedFd::from(File::create(&path).expect("sink"));
+        let session = SessionId("s-1".to_string());
+        let mut recorder =
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder");
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+
+        let said = |role| weaver_traits::Message {
+            role,
+            content: vec![weaver_traits::ContentBlock::Text {
+                text: "You are Karl, a small local agent.".into(),
+            }],
+        };
+        // A system message carrying a block the licensing rule does not admit
+        // is the door's second refusal condition, and it is not a role fault.
+        let bad_block = weaver_traits::Message {
+            role: weaver_traits::Role::System,
+            content: vec![weaver_traits::ContentBlock::ToolCall(
+                weaver_traits::ToolCall {
+                    name: "calculator".into(),
+                    arguments: "{}".into(),
+                },
+            )],
+        };
+        seat_identity_prefix(
+            &author,
+            &mut recorder,
+            &[
+                said(weaver_traits::Role::System),
+                said(weaver_traits::Role::User),
+                bad_block,
+            ],
+        );
+
+        let kinds: Vec<Kind> = recorder.structure().iter().map(|r| r.kind).collect();
+        assert_eq!(
+            kinds,
+            vec![Kind::MessageSystem, Kind::Fault, Kind::Fault],
+            "the licensed prefix records and both misses are accounted for"
+        );
+
+        let faults: Vec<&str> = recorder
+            .structure()
+            .iter()
+            .filter(|r| r.kind == Kind::Fault)
+            // The line is read rather than a typed payload, the record
+            // holding the canonical rendering the stream carries and nothing
+            // beside it.
+            .map(|r| &*r.line)
+            .collect();
+        for line in &faults {
+            assert!(
+                line.contains(r#""case":"identity_prefix_unrecorded""#),
+                "every miss files under the one case, got {line}"
+            );
+        }
+        assert!(
+            faults[0].contains(r#""role":"user""#)
+                && faults[0].contains(r#""block":"identity-door-system-only""#),
+            "the role refusal names the role and the role block, got {}",
+            faults[0]
+        );
+        // **The account separates the causes the case deliberately does
+        // not.** A system message refused on its content is not a role
+        // fault, and a reader sent after a bad role here would be chasing
+        // the wrong thing.
+        assert!(
+            faults[1].contains(r#""role":"system""#)
+                && faults[1].contains(r#""block":"tool_call""#),
+            "the content refusal names the block rather than a bad role, got {}",
+            faults[1]
+        );
+        let _ = std::fs::remove_file(&path);
     }
 
     fn test_exchange() -> ExchangeId {

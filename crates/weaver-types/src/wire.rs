@@ -886,14 +886,16 @@ impl PartialEq for FaultReport {
     }
 }
 
-/// The three charters' closed ten, per `weaver-types-Spec` section 4.2: three
-/// of `weaver-spu-PRD` section 13.10, three of `weaver-gate-PRD` section 13.4,
-/// four of `weaver-harness-PRD` section 5. **An eleventh case is a charter
-/// act before it is a code change**, and the tenth was exactly that: the act
-/// typing these found the harness authoring an assembly fault no case
-/// covered, and the charter widened before this enum did. The harness's four
-/// ride the same shape although they cross no socket, one shape serving the
-/// wire and the `fault` event's payload.
+/// The three charters' closed eleven, per `weaver-types-Spec` section 4.2:
+/// three of `weaver-spu-PRD` section 13.10, three of `weaver-gate-PRD`
+/// section 13.4, five of `weaver-harness-PRD` section 5. **A twelfth case is
+/// a charter act before it is a code change**, and the tenth and eleventh
+/// were both exactly that: the act typing these found the harness authoring
+/// an assembly fault no case covered, and the act answering #369 found it
+/// leaving a seated prefix unaccounted for. The charter widened
+/// before this enum did, both times. The harness's five ride the same shape
+/// although they cross no socket, one shape serving the wire and the `fault`
+/// event's payload.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FaultCase {
@@ -907,4 +909,17 @@ pub enum FaultCase {
     StreamWriteFailed,
     OrganDeathObserved,
     MessageRecordUndecodable,
+    /// The record cannot account for a seated identity prefix, per
+    /// `weaver-harness-PRD` section 5. The prefix is seated at the session's
+    /// open whether the identity door wrote it or not, so without this case
+    /// the record reads as an agent that seated nothing.
+    ///
+    /// **One case rather than one per cause**, on the custody rule's own
+    /// criterion: the case is what the harness consumes, and a refused role,
+    /// an unlicensed content block, an unrenderable message, and a recorder
+    /// that would not take the write all mean the same thing for the turn and
+    /// the residency - nothing, the load standing either way. Which of them
+    /// happened is the account's to carry, that being the reporting organ's
+    /// own rendering by construction.
+    IdentityPrefixUnrecorded,
 }

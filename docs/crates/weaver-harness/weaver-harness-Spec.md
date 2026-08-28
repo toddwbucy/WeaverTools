@@ -3,6 +3,17 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, both arms of the identity door's answer are read.
+Section 6 states that the recorder declining the write leaves the same hole a
+refusal does, and that the case does not distinguish the four causes while the
+account does. Per the review seat on PR 371.
+
+**Revised:** 2026-08-27, second of this date, the identity refusal is
+authored. Section 6 gains the clause and the assertion holding that the door's
+refusal reaches the record as a `fault` rather than being dropped by its
+caller, the prefix being seated at the session's open either way, per
+issue `#369`.
+
 **Revised:** 2026-08-27, the diagnostic recorder's surface is elected. Section 9's
 item closes on `weaver-diagnostic-Spec` section 5's election, the member mirroring
 this crate's other recorder's surface and sharing no type with it, so one call site
@@ -2172,6 +2183,44 @@ tag: perturbation
 edge: asserts
 from: weaver-harness
 to: harness-identity-door-writes-system-only
+```
+
+**The miss is authored and not dropped**, per `weaver-harness-PRD` section
+5's fifth case. The door's refusal is this crate's own observation with
+nowhere else to go: the declaration already crossed admin's parse, and the
+prefix is seated at the session's open whether the door wrote it or not, so a
+refusal that goes nowhere leaves the record saying an agent seated no prefix
+when it seated one the reader cannot see. That is the door's stated purpose
+defeated by its caller - laundering by omission rather than by a wrong record
+- and it is the shape a certification then reads as a divergence, blaming the
+model for a prefix the record never carried. So the enter authors a `fault`
+of `identity_prefix_unrecorded`, one per declared message the record does not
+end up carrying.
+
+**Both arms of the door's answer are read**, because both leave that same
+hole. The outer arm is the refusal and is itself three conditions: a role the
+door does not write, a system message carrying a block the licensing rule
+does not admit, and a message that will not render. The inner arm is the
+recorder declining the write on a message the door passed. The case does not
+distinguish them, per the charter's reasoning that the case carries what the
+harness consumes and all four mean the same thing for the turn and the
+residency; the account does, naming the refused role and block on the first
+arm and the recorder's own failure on the second. **The load is not refused
+on any of them**, the seated prefix being the operator's declaration and a
+run that has already bracketed not dying on a record it could not write, and
+the account is best-effort because where the recorder is what failed the
+account may fail with it. Where the rule that judges a declaration lands is
+`weaver-types`' to say and not this section's, and until it does this fault is
+the record's only account of the condition.
+
+```graph
+node: harness-identity-refusal-authored-not-dropped
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-identity-refusal-authored-not-dropped
 ```
 
 **The stop is heard mid-stream by `poll`, which is why it joined the surface.**

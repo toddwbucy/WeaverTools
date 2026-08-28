@@ -8,6 +8,19 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-28, the fifth case is the hole rather than its cause.
+Section 5's fifth case covers every way a seated prefix goes unrecorded - the
+door's three refusal conditions and the recorder declining the write - on the
+custody rule's own criterion that all four mean the same thing for the turn
+and the residency. One case, the account carrying which. Per the review seat
+on PR 371.
+
+**Revised:** 2026-08-27, second of this date, the identity door's refusal
+gains its case. Section 5's enumeration of what this crate itself raises moves
+from four to five: a declaration whose seated identity carries a role the door
+does not write, dropped on the floor until now and so seated but unrecorded,
+per issue #369. The corpus-wide set closes at eleven.
+
 **Revised:** 2026-08-27, the diagnostic seam takes its paper. Section 4 declares
 the `link` seam to `weaver-diagnostic` with its contract as the `via`, the record
 that section held as owed until the contract existed to name. The seam count moves
@@ -685,8 +698,9 @@ commit pressure while the sink stays writable, a stream write failing against
 a live process, an organ's death observed as channel closure after the
 enter aggregate was answered, and a message-kind record of its own working
 structure that does not decode at assembly, the hole authored as the fault it
-is rather than handed to the model as context. The third is why this
-enumeration cannot be derived from the organs' own: a dead party is exactly
+is rather than handed to the model as context, and a seated identity prefix
+the record cannot account for. The third is why this enumeration cannot be
+derived from the organs' own: a dead party is exactly
 the one that cannot report, so the SPU's cases at `weaver-spu-PRD` section
 13.10 and the gate's at `weaver-gate-PRD` section 13.4 are silent about their
 own deaths by construction, and the harness's observation is the only account
@@ -695,7 +709,43 @@ here, which is the enumeration read against standing practice and found one
 short: the assembly fault predates the case set's typing and no case of the
 three covered it, so the charter records the condition its crate already
 raises rather than leaving the record's one unclassified fault standing.
-With these four named the corpus-wide case set closes across all three
+
+**The fifth is the enumeration read against the seated prefix, and it is
+named for the same reason the fourth was.** The identity door writes
+`message.system` and refuses every other role, per `weaver-harness-Spec`
+section 6, because a door that writes what it was not built for launders a bad
+declaration into a record that looks well formed. That refusal is this crate's
+own observation and it has nowhere to go: the declaration crossed admin's
+parse, the prefix is seated at the session's open regardless, and the organ
+that would report is the operator's file rather than a party on a seam. So a
+dropped refusal leaves the record with no account of a prefix the model
+received - which launders the declaration by omission, the door's stated
+purpose defeated by the caller rather than by the door. A reader cannot
+distinguish an agent that seated no prefix from one that seated an unrecorded
+one, and a replay seats nothing and reports a divergence against the model for
+a prefix the record never held.
+
+**The case is the hole and not its cause**, which is why it is one case rather
+than a family. The door refuses on three conditions - a role it does not
+write, a system message carrying a block the licensing rule does not admit,
+and a message that will not render - and past the door the recorder may
+decline the write outright. All four end the same way, a prefix seated into
+the decode context and a record that cannot show it, and all four mean the
+same thing for the turn and the residency, which is nothing: the load stands.
+The custody rule of apex section 5.2 puts exactly that judgment in the case
+and leaves the rest to the account, so which of the four happened is the
+account's to carry, and splitting the case would move an organ's descriptive
+vocabulary into the floor.
+
+**The load is not refused on any of them.** The seated prefix is the
+operator's declaration and a run that has already bracketed does not die on a
+record it could not write, so what is owed is the account rather than the
+abort. The account is best-effort for the same reason it is owed: where the
+recorder is what failed the account may fail with it, and a miss nobody could
+write down is still not a miss worth aborting a run over. Where the rule that
+judges a declaration lands is `weaver-types`' to say and not this section's.
+
+With these five named the corpus-wide case set closes across all three
 organs, and the payload's shape is the trace act's to elect against it.
 
 **The harness reads, the model does not.** The harness reads the trace continuously,
