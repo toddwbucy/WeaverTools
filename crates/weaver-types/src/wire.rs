@@ -892,7 +892,7 @@ impl PartialEq for FaultReport {
 /// a charter act before it is a code change**, and the tenth and eleventh
 /// were both exactly that: the act typing these found the harness authoring
 /// an assembly fault no case covered, and the act answering #369 found it
-/// dropping the identity door's refusal on the floor. The charter widened
+/// leaving a seated prefix unaccounted for. The charter widened
 /// before this enum did, both times. The harness's five ride the same shape
 /// although they cross no socket, one shape serving the wire and the `fault`
 /// event's payload.
@@ -909,9 +909,17 @@ pub enum FaultCase {
     StreamWriteFailed,
     OrganDeathObserved,
     MessageRecordUndecodable,
-    /// A declaration's seated identity carries a role the identity door does
-    /// not write, per `weaver-harness-PRD` section 5. The prefix is seated at
-    /// the session's open regardless, so this case is what keeps the record
-    /// from reading as an agent that seated nothing.
-    IdentityRoleUnlicensed,
+    /// The record cannot account for a seated identity prefix, per
+    /// `weaver-harness-PRD` section 5. The prefix is seated at the session's
+    /// open whether the identity door wrote it or not, so without this case
+    /// the record reads as an agent that seated nothing.
+    ///
+    /// **One case rather than one per cause**, on the custody rule's own
+    /// criterion: the case is what the harness consumes, and a refused role,
+    /// an unlicensed content block, an unrenderable message, and a recorder
+    /// that would not take the write all mean the same thing for the turn and
+    /// the residency - nothing, the load standing either way. Which of them
+    /// happened is the account's to carry, that being the reporting organ's
+    /// own rendering by construction.
+    IdentityPrefixUnrecorded,
 }

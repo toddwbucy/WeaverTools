@@ -8,6 +8,13 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-08-28, the fifth case is the hole rather than its cause.
+Section 5's fifth case covers every way a seated prefix goes unrecorded - the
+door's three refusal conditions and the recorder declining the write - on the
+custody rule's own criterion that all four mean the same thing for the turn
+and the residency. One case, the account carrying which. Per the review seat
+on PR 371.
+
 **Revised:** 2026-08-27, second of this date, the identity door's refusal
 gains its case. Section 5's enumeration of what this crate itself raises moves
 from four to five: a declaration whose seated identity carries a role the door
@@ -710,17 +717,33 @@ section 6, because a door that writes what it was not built for launders a bad
 declaration into a record that looks well formed. That refusal is this crate's
 own observation and it has nowhere to go: the declaration crossed admin's
 parse, the prefix is seated at the session's open regardless, and the organ
-that would report is the operator's file rather than a party on a seam. So the
-refusal is dropped and the record carries no account of a prefix the model
+that would report is the operator's file rather than a party on a seam. So a
+dropped refusal leaves the record with no account of a prefix the model
 received - which launders the declaration by omission, the door's stated
 purpose defeated by the caller rather than by the door. A reader cannot
 distinguish an agent that seated no prefix from one that seated an unrecorded
 one, and a replay seats nothing and reports a divergence against the model for
-a prefix the record never held. **The load is not refused on it.** The seated
-prefix is the operator's declaration and a run that has already bracketed does
-not die on a record it could not write, so what is owed is the account rather
-than the abort, and where the rule that judges a declaration lands is
-`weaver-types`' to say and not this section's.
+a prefix the record never held.
+
+**The case is the hole and not its cause**, which is why it is one case rather
+than a family. The door refuses on three conditions - a role it does not
+write, a system message carrying a block the licensing rule does not admit,
+and a message that will not render - and past the door the recorder may
+decline the write outright. All four end the same way, a prefix seated into
+the decode context and a record that cannot show it, and all four mean the
+same thing for the turn and the residency, which is nothing: the load stands.
+The custody rule of apex section 5.2 puts exactly that judgment in the case
+and leaves the rest to the account, so which of the four happened is the
+account's to carry, and splitting the case would move an organ's descriptive
+vocabulary into the floor.
+
+**The load is not refused on any of them.** The seated prefix is the
+operator's declaration and a run that has already bracketed does not die on a
+record it could not write, so what is owed is the account rather than the
+abort. The account is best-effort for the same reason it is owed: where the
+recorder is what failed the account may fail with it, and a miss nobody could
+write down is still not a miss worth aborting a run over. Where the rule that
+judges a declaration lands is `weaver-types`' to say and not this section's.
 
 With these five named the corpus-wide case set closes across all three
 organs, and the payload's shape is the trace act's to elect against it.

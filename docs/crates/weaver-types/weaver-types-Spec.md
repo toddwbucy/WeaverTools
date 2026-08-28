@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-28, the eleventh case is renamed to the condition it
+reports. `identity_prefix_unrecorded` rather than a role-specific name, the
+role being one of four ways the record fails to account for a seated prefix.
+Per the review seat on PR 371.
+
 **Revised:** 2026-08-27, the fault case set widens to eleven. Section 4.2's
 arithmetic follows `weaver-harness-PRD` section 5 from four harness cases to
 five, the eleventh being the identity door's refused role, per issue #369.
