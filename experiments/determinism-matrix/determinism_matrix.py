@@ -280,8 +280,9 @@ def main():
         # missing raises, hashing 142 MiB can be interrupted, and either
         # one outside the `try` would leave the operator's declaration
         # holding this run's artifact.
-        libraries = base.engine_libraries(cfg)
-        binaries = base.weaver_binaries(cfg)
+        opening_spu = base._resolve_spu(cfg)
+        libraries = base.engine_libraries(cfg, opening_spu)
+        binaries = base.weaver_binaries(cfg, opening_spu)
         tools = base.toolchain(cfg)
         log(f"engine libraries: {json.dumps(libraries)}")
         log(f"weaver binaries: {json.dumps(binaries)}")
@@ -396,12 +397,29 @@ def main():
         """
         return reading
 
+    def resolution(reading):
+        """Which files a reading looked at, as against what it found in them."""
+        return {
+            name: (entry.get("path"), entry.get("resolved_by"))
+            for name, entry in reading.items()
+            if isinstance(entry, dict)
+        }
+
     def close(reader, at_start, what, essence=hashes):
         """Read again at the close and say how the two readings relate.
 
-        **Every branch returns one shape**: a dict whose `at_close_unreadable`
-        is always a note and never a formatted string on one path and a failed
-        reading on another, so a consumer never type-tests the field.
+        **One envelope on every branch.** `status` says which case it is and
+        the readings sit in named fields beside it, so a consumer reads the
+        status rather than testing which keys are present. An earlier form
+        returned the bare reading on the unchanged path and a differently
+        shaped dict on each other, which made every consumer a type test.
+
+        **Resolution is compared before content.** Two readings that looked at
+        different files say nothing about whether a build moved: the SPU's
+        path falls back to the guess beside `admin_bin` when a config read
+        blips, so a resolution switch with differing hashes is two different
+        binaries measured, not one binary changed. `varied` is claimed only
+        where both readings looked at the same places.
         """
         try:
             at_close = reader(cfg)
@@ -411,28 +429,29 @@ def main():
             # no failure.
             at_close = {"unreadable": f"{what}: {base._why(e)}"}
         if not base.is_reading(at_close):
-            return {"at_start": at_start, "at_close_unreadable": at_close}
+            return {"status": "at_close_unreadable",
+                    "at_start": at_start, "note": at_close}
         if not base.is_reading(at_start):
-            # **The opening note is kept beside the closing reading.**
-            # Returning the reading alone left the summary looking like an
-            # ordinary single read, with nothing saying the opening one failed
-            # or never ran - the assertion the double read exists to stop
-            # making.
-            return {"at_close": at_close, "at_start_unreadable": at_start}
+            return {"status": "at_start_unreadable",
+                    "at_close": at_close, "note": at_start}
+        if resolution(at_close) != resolution(at_start):
+            return {"status": "resolved_differently",
+                    "at_start": at_start, "at_close": at_close}
         if essence(at_close) != essence(at_start):
-            return {"varied": {"at_start": at_start, "at_close": at_close}}
-        if at_close != at_start:
-            # **A resolution change is not a build change.** The SPU's path
-            # can fall back to the guess beside `admin_bin` when a config read
-            # blips, and that sibling plausibly hashes on the documented
-            # layout - two readings differing in `path` and `resolved_by`
-            # while the bytes agree. Reported as its own note rather than
-            # folded into `varied`, which would claim the build moved.
-            return {"at_start": at_start, "resolved_differently": at_close}
-        return at_start
+            return {"status": "varied",
+                    "at_start": at_start, "at_close": at_close}
+        return {"status": "unchanged", "reading": at_start}
 
-    binaries_at_close = close(base.weaver_binaries, binaries, "weaver_binaries")
-    libraries = close(base.engine_libraries, libraries, "engine_libraries")
+    # **One resolution for both collectors at each end**, so the two fields
+    # cannot disagree about which SPU they measured - the same sharing the
+    # confirm driver does at its own two reads.
+    closing_spu = base._resolve_spu(cfg)
+    binaries_at_close = close(
+        lambda c: base.weaver_binaries(c, closing_spu), binaries, "weaver_binaries"
+    )
+    libraries = close(
+        lambda c: base.engine_libraries(c, closing_spu), libraries, "engine_libraries"
+    )
     # **Read twice like the other two.** It was the one reader left on a
     # single read, which is what made the invariant break in `toolchain`
     # latent rather than visible. Compared whole rather than by hash, its

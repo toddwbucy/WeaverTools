@@ -304,8 +304,10 @@ def _said_or_unreadable(result, what):
     of raising.
     """
     if result.returncode != 0:
-        return {"unreadable": f"{what} exit {result.returncode}: "
-                              f"{result.stderr.strip()[:200]}"}
+        # A command can fail silently, and `exit 1: ` names no failure - the
+        # absence this file keeps removing, one call site at a time.
+        said = result.stderr.strip()[:200] or "no stderr"
+        return {"unreadable": f"{what} exit {result.returncode}: {said}"}
     said = result.stdout.strip()
     return said if said else {"unreadable": f"{what} said nothing"}
 
@@ -318,7 +320,7 @@ def _sha256(path):
     return h.hexdigest()
 
 
-def weaver_binaries(cfg):
+def weaver_binaries(cfg, spu=None):
     """sha256 of the organ binaries this box will run.
 
     **The field that answers "are the two boxes on the same build".** A
@@ -346,7 +348,7 @@ def weaver_binaries(cfg):
         # differs, which is what this field exists to compare.
         source = None
         if key == "spu-binary":
-            path, source = _resolve_spu(cfg)
+            path, source = spu if spu is not None else _resolve_spu(cfg)
             if path is None:
                 out[key] = {"path": None, "sha256": None, "unreadable": source}
                 continue
@@ -442,11 +444,16 @@ def toolchain(cfg):
     return out
 
 
-def engine_libraries(cfg):
+def engine_libraries(cfg, spu=None):
     """sha256 of the libraries the serving binary actually links.
 
     Read through `ldd` rather than from a configured list, so the answer is
-    what the loader resolves rather than what an operator believed. The
+    what the loader resolves rather than what an operator believed. **The SPU
+    is resolved once by the caller and passed**, both collectors having
+    resolved it independently until 2026-08-28: a config read blipping between
+    the two calls put a guessed path under one field and a stated path under
+    the other, two fields in one report disagreeing about which binary they
+    measured. The
     decode math lives in `libggml-cuda` and `libllama`, and issue #370
     established that a Blackwell figure cannot be attributed while these
     are unrecorded: a cross-box divergence is silicon, libraries, or both,
@@ -456,7 +463,7 @@ def engine_libraries(cfg):
     read as "recorded, nothing to record", which is the same silent absence
     the `device` retirement exists to end.
     """
-    spu = spu_binary(cfg)
+    spu = (spu[0] if spu is not None else spu_binary(cfg))
     if spu is None:
         return {"unreadable": "the config names no route to the SPU binary"}
     if not os.path.exists(spu):
@@ -1021,8 +1028,11 @@ def main():
         # leaves a `.pre-cells` file beside the operator's own. `sh` no longer
         # raises, but it was never the only raiser in the window and this act
         # added two more readers into it.
-        libraries = engine_libraries(cfg)
-        binaries = weaver_binaries(cfg)
+        # One resolution for both collectors, so the two fields cannot
+        # disagree about which SPU they measured.
+        spu = _resolve_spu(cfg)
+        libraries = engine_libraries(cfg, spu)
+        binaries = weaver_binaries(cfg, spu)
         tools = toolchain(cfg)
         print(f"engine libraries: {json.dumps(libraries)}", flush=True)
         print(f"weaver binaries: {json.dumps(binaries)}", flush=True)
@@ -1030,6 +1040,35 @@ def main():
         for cell in cfg["cells"]:
             reports.append(
                 run_cell(cfg, cell, args.outdir, libraries, binaries, tools))
+
+        # **The provenance is read again after the cells have run**, the way
+        # the matrix reads it at its close. A run unloads and reloads the
+        # agent several times and can span an operator installing over it, so
+        # a build swapped mid-run would otherwise be recorded nowhere and the
+        # opening read asserted across the whole window.
+        closing_spu = _resolve_spu(cfg)
+        at_close = {
+            "engine_libraries": engine_libraries(cfg, closing_spu),
+            "weaver_binaries": weaver_binaries(cfg, closing_spu),
+            "toolchain": toolchain(cfg),
+        }
+        opening = {
+            "engine_libraries": libraries,
+            "weaver_binaries": binaries,
+            "toolchain": tools,
+        }
+        moved = {
+            name: {"at_start": opening[name], "at_close": reading}
+            for name, reading in at_close.items()
+            if reading != opening[name]
+        }
+        # Carried on every cell rather than beside them, the reports being a
+        # list of cells and a reader of any one of them needing to know the
+        # window did not hold.
+        for report in reports:
+            report["metadata"]["provenance_at_close"] = moved or "unchanged"
+        if moved:
+            print(f"PROVENANCE MOVED DURING THE RUN: {json.dumps(moved)}", flush=True)
     finally:
         shutil.copy2(backup, cfg["declaration"])
         os.unlink(backup)
