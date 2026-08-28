@@ -358,8 +358,39 @@ pub fn parse(source: &str) -> Result<AgentConfig, ConfigError> {
         });
     }
     check_tunable_values(&config.spu_instruction.decoder.tunable_values)?;
+    check_identity_roles(&config.spu_instruction.decoder.identity)?;
     check_trace_sink_surface(source, &config.trace_sink)?;
     Ok(config)
+}
+
+/// **The identity prefix is `system` and the parse is where that binds**, per
+/// `weaver-types-Spec` section 2 and the door of `weaver-harness-Spec`
+/// section 6.
+///
+/// The door writes `message.system` and refuses every other role, per
+/// `harness-identity-door-writes-system-only`, so a declaration carrying one
+/// seats a prefix into the decode context that the record cannot show - the
+/// condition `weaver-harness-PRD` section 5's fifth case reports and issue
+/// #369 found in the field. **The door is the last place that can be caught
+/// rather than the first**: a rule enforced only there is one the operator
+/// meets as a fault in a running agent instead of as a refusal to load, so
+/// the judgment belongs where declarations are judged.
+///
+/// The index rides the field name, an operator with several messages needing
+/// to know which one, the way `tunable-values.<name>` already names its own.
+///
+/// conforms: types-identity-role-is-system
+#[cfg(feature = "config")]
+fn check_identity_roles(identity: &[weaver_traits::Message]) -> Result<(), ConfigError> {
+    for (at, message) in identity.iter().enumerate() {
+        if !matches!(message.role, weaver_traits::Role::System) {
+            return Err(ConfigError {
+                field: Some(FieldName(format!("identity.{at}.role"))),
+                kind: ConfigErrorKind::BadValue,
+            });
+        }
+    }
+    Ok(())
 }
 
 /// **Finiteness is the whole of what this crate can judge about a tunable

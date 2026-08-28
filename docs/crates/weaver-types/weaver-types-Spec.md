@@ -5,6 +5,14 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-28, third of this date, the identity role's check lands
+and the rule stops being owed. Section 2 states the refusal at the parse with
+its field name, section 5 moves the entry from enforced-by-nothing to a
+perturbation-verified test, and the assertion record withheld two days ago
+lands with the instrument it names. The gate dissolved when the operator
+ruled a re-baseline on one frozen build, retiring the deposits the old role
+was held for. Item 2 of issue #369, code half.
+
 **Revised:** 2026-08-28, second of this date, the identity prefix's role is
 judged where declarations are judged. Section 2 states that every identity
 message carries `role: system` and names the parse as the place the rule
@@ -617,22 +625,36 @@ rule the operator meets as a fault in a running agent instead of as a refusal
 to load. Where declarations are judged is the parse, and the judgment is this
 crate's.
 
-**The check is owed and is not in force, which is stated rather than left to
-be discovered.** The instrument is the shape `model-binding`'s empty device
-list already takes at section 2's parse: a `ConfigErrorKind::BadValue` naming
-`identity`, so a declaration that would seat an unwritable prefix does not
-parse and never reaches a door. It is not written yet, and the reason is
-dated rather than editorial. **Changing a declaration's identity role changes
-the prompt** - a system role renders `<|im_start|>system` where a user role
-renders `<|im_start|>user` - so the tokens differ and every run made under the
-old role stops being a baseline. The cross-precision deposit of 2026-08-25 and
-the determinism matrix of 2026-08-27 were both produced under `role: user`,
-and the cross-architecture arms of issue #346 compare against that deposit and
-have not run. A refusal landing before they do would not delay that experiment
-but void it, the comparison arm diverging by construction rather than by
-silicon. So the check lands after #346's arms are deposited, and until then
-this clause is a rule the corpus has written and not yet bought - which is the
-one thing about it a reader must not have to infer.
+**The check is the parse's, and it is in force.** The instrument is the shape
+`model-binding`'s empty device list already takes: a `ConfigErrorKind::BadValue`
+naming `identity.<n>.role`, so a declaration that would seat an unwritable
+prefix does not parse and never reaches a door. The index rides the name
+because an operator with several messages needs to know which one, as
+`tunable-values.<name>` already does.
+
+**It was written as owed for two days and the reason is worth keeping.**
+Changing a declaration's identity role changes the prompt - a system role
+renders `<|im_start|>system` where a user role renders `<|im_start|>user` - so
+the tokens differ and every run made under the old role stops being a
+baseline. The cross-precision deposit of 2026-08-25 and the determinism matrix
+of 2026-08-27 were both produced under `role: user`, and a refusal landing
+before issue #346's cross-architecture arms ran would have voided that
+comparison rather than delayed it. Those arms deposited 2026-08-27 and
+2026-08-28, and the operator's ruling of 2026-08-28 retires those deposits as
+a comparison basis in favour of a re-baseline on one frozen build, which is
+what dissolved the gate. **An empty identity still parses**, an agent with no
+prefix being a legitimate agent: the rule judges the messages present and does
+not require one to be.
+
+```graph
+node: types-identity-role-is-system
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-types
+to: types-identity-role-is-system
+```
 
 **Field names are kebab-case on disk and snake_case in Rust, which takes an
 explicit election rather than a convention.** `#[serde(rename_all = "kebab-case",
@@ -2019,20 +2041,20 @@ apex's enforcement section exists to prevent.
 dependency tree, checked as `weaver-traits-Spec` section 7 checks its own, by a
 build-time assertion over the resolved external tree rather than by H2.
 
-**Enforced by nothing today, and said so with its date.** Section 2's rule
-that every identity message carries `role: system` has no instrument in this
-crate. The instrument is known and is not exotic - a `BadValue` naming
-`identity` at the parse, beside the empty-device-list check - and it is
-withheld on an experimental ground rather than a technical one: the arms of
-issue #346 compare against deposits made under `role: user`, and a refusal
-landing first would void that comparison rather than delay it. **This entry
-carries no assertion record, deliberately.** A record names the instrument
-that holds a claim, so filing one against a claim nothing holds would say the
-corpus checks something it does not, and the record lands in the act that
-lands the check. It is listed here rather than left out because an unenforced
-rule that no section admits is indistinguishable from an enforced one, which
-is the same overclaim the review entry above was corrected for, arriving from
-the other direction.
+**Enforced by a perturbation-verified test at the parse.** Section 2's rule
+that every identity message carries `role: system` is a `BadValue` naming
+`identity.<n>.role`, beside the empty-device-list check. The test declares
+each of the three refused roles in turn and watches the parse refuse, and it
+is watched to fail when the call is removed from `parse` - which is not a
+hypothetical state but the one that produced the cross-precision deposit of
+2026-08-25, a run whose prefix named the agent and whose record never said so.
+
+**This entry read "enforced by nothing today" for two days**, carrying its
+date and its reason, because the instrument was withheld on an experimental
+ground rather than a technical one. It is recorded here rather than quietly
+overwritten: an unenforced rule that no section admits is indistinguishable
+from an enforced one, and the corpus is better served by a reader being able
+to see that the gap was known and named while it stood.
 
 **Which invariant each claim serves, and why most serve none.** Seven of the
 seventeen carry a `grounds` edge, five to

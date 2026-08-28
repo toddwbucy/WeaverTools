@@ -18,7 +18,7 @@ fn full_config() -> String {
         "      devices: [0]\n",
         "    residual-readout-election: false\n",
         "    identity:\n",
-        "      - role: user\n",
+        "      - role: system\n",
         "        content:\n",
         "          - type: text\n",
         "            text: You answer briefly.\n",
@@ -46,14 +46,68 @@ fn a_complete_config_parses() {
     assert_eq!(decoder.model_binding.devices.len(), 1);
     assert_eq!(config.permission_mode, weaver_traits::PermissionMode::Ask);
     assert!(!decoder.residual_readout_election);
-    // The identity material parses to its canonical messages: one user
-    // message with a single text block, per the full_config fixture.
+    // The identity material parses to its canonical messages: one system
+    // message with a single text block, per the full_config fixture. The
+    // fixture said `user` until 2026-08-28 and this assertion pinned it,
+    // so the corpus held the role the identity door refuses as the role a
+    // complete config carries, per issue #369 item 2.
     assert_eq!(decoder.identity.len(), 1);
-    assert_eq!(decoder.identity[0].role, weaver_traits::Role::User);
+    assert_eq!(decoder.identity[0].role, weaver_traits::Role::System);
     assert!(matches!(
         decoder.identity[0].content.as_slice(),
         [weaver_traits::ContentBlock::Text { text }] if text == "You answer briefly."
     ));
+}
+
+/// **A declaration whose identity is not `system` refuses the parse**, per
+/// `weaver-types-Spec` section 2. The identity door writes `message.system`
+/// and refuses every other role, so such a declaration seats a prefix into
+/// the decode context that the record cannot show - the condition of issue
+/// #369, which reached the field because nothing judged the declaration.
+///
+/// The door is the last place this can be caught rather than the first. A
+/// rule enforced only there is one the operator meets as a fault in an
+/// already-running agent instead of as a refusal to load.
+///
+/// Perturbation: remove the `check_identity_roles` call from `parse` and this
+/// declaration parses, which is the state that produced the cross-precision
+/// deposit of 2026-08-25 - a run whose prefix named the agent and whose
+/// record never said so. Watched under exactly that removal.
+///
+/// conforms: types-identity-role-is-system
+#[test]
+fn a_non_system_identity_role_refuses() {
+    for role in ["user", "assistant", "tool_result"] {
+        let source =
+            full_config().replace("      - role: system\n", &format!("      - role: {role}\n"));
+        let err = parse(&source).expect_err("refuses");
+        assert_eq!(err.kind, ConfigErrorKind::BadValue, "role {role}");
+        // The index rides the name, an operator with several messages
+        // needing to know which one is at fault.
+        assert_eq!(
+            err.field.as_ref().map(|f| f.0.as_str()),
+            Some("identity.0.role"),
+            "role {role}"
+        );
+    }
+}
+
+/// An empty identity is a declaration the operator made, per
+/// `weaver-types-Spec` section 2: an agent with no prefix is a legitimate
+/// agent, so the role rule judges the messages present and does not require
+/// one to be.
+#[test]
+fn an_empty_identity_still_parses() {
+    let source = full_config()
+        .replace(
+            "    identity:\n      - role: system\n",
+            "    identity: []\n",
+        )
+        .replace("        content:\n", "")
+        .replace("          - type: text\n", "")
+        .replace("            text: You answer briefly.\n", "");
+    let config = parse(&source).expect("an empty identity parses");
+    assert!(config.spu_instruction.decoder.identity.is_empty());
 }
 
 /// A missing required field refuses the parse, run separately for the
