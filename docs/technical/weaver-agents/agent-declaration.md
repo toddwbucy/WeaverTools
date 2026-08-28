@@ -80,7 +80,10 @@ Worth writing with care - an identity that advertises tools the `tool-set`
 does not grant is a lie told to the model every turn.
 
 **Every message here carries `role: system`, and any other role refuses the
-load** with `bad value: identity.<n>.role`. The identity door writes
+load** with a `config_invalid` refusal naming the field, `identity.<n>.role`.
+The message carries `Text` blocks and at least one of them, so an unlicensed
+block names `identity.<n>.content.<m>` and an empty one names
+`identity.<n>.content`. The identity door writes
 `message.system` and refuses the rest, so a prefix under another role would
 be seated into the model and left out of the record. Declarations written
 before 2026-08-28 carry `role: user` and need the one-word change. A family

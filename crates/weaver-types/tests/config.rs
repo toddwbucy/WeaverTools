@@ -120,6 +120,32 @@ fn an_unlicensed_identity_block_refuses() {
     );
 }
 
+/// **An identity message carrying nothing refuses**, though an empty
+/// identity list does not.
+///
+/// A message with `content: []` parses as a message and renders as an empty
+/// turn seated into every session for the life of the agent. An empty list is
+/// a different thing: an agent with no prefix, which the Spec calls a
+/// legitimate agent.
+///
+/// Perturbation: remove the `content.is_empty()` check and the first parse
+/// below succeeds. Watched under exactly that removal.
+///
+/// conforms: types-identity-role-is-system
+#[test]
+fn an_identity_message_carrying_nothing_refuses() {
+    let source = full_config().replace(
+        "        content:\n          - type: text\n            text: You answer briefly.\n",
+        "        content: []\n",
+    );
+    let err = parse(&source).expect_err("refuses");
+    assert_eq!(err.kind, ConfigErrorKind::BadValue);
+    assert_eq!(
+        err.field.as_ref().map(|f| f.0.as_str()),
+        Some("identity.0.content")
+    );
+}
+
 /// An empty identity is a declaration the operator made, per
 /// `weaver-types-Spec` section 2: an agent with no prefix is a legitimate
 /// agent, so the role rule judges the messages present and does not require

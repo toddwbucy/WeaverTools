@@ -165,7 +165,9 @@ pub fn render_each(family: &dyn Family, messages: &[Message]) -> Result<String, 
 /// which is the distinction `mistral3::Mistral3::render_delta` draws. Gemma
 /// and Mistral both publish templates that carry system content into the
 /// first user turn, so folding is what those authorities name; inventing
-/// would be minting a `<start_of_turn>system` the template never had.
+/// would be minting the `system` role into a template whose own marker set
+/// has no such turn - `<|turn|>system` for gemma, a `[SYSTEM]` block for
+/// mistral, neither of which either template names.
 ///
 /// **Every `System` message folds, not only a leading one.** An earlier form
 /// of this doc said otherwise while the code folded all of them, and the
@@ -199,21 +201,25 @@ pub fn fold_system_into_first_user(messages: &[Message]) -> Result<Vec<Message>,
                 // the last winning, an operator who wrote two having meant
                 // both.
                 let mut text = carried_before.unwrap_or_default();
-                if !text.is_empty() {
+                let piece = text_content(message)?;
+                // Both sides are tested, not the buffer alone: an
+                // empty-content `System` between two others would otherwise
+                // contribute a separator and nothing to separate, giving
+                // `one\n\n\n\nask`.
+                if !text.is_empty() && !piece.is_empty() {
                     text.push_str("\n\n");
                 }
-                text.push_str(&text_content(message)?);
+                text.push_str(&piece);
                 carried = Some(text);
             }
             (Role::User, Some(prefix)) => {
                 let mut text = prefix;
-                // Guarded as the accumulate arm above guards it. An identity
-                // message with empty content parses today, so an unguarded
-                // separator opens the turn with a blank line.
-                if !text.is_empty() {
+                let piece = text_content(message)?;
+                // Both sides, as the accumulate arm above.
+                if !text.is_empty() && !piece.is_empty() {
                     text.push_str("\n\n");
                 }
-                text.push_str(&text_content(message)?);
+                text.push_str(&piece);
                 out.push(Message {
                     role: Role::User,
                     content: vec![ContentBlock::Text { text }],
@@ -351,7 +357,18 @@ pub trait Family {
     /// into `render_identity` alone left them to render as two adjacent user
     /// turns - a shape both published templates avoid by merging, and one
     /// mistral's own template raises on. Placed here, [`render_each`] applies
-    /// it and every caller is covered by construction.
+    /// it and every caller is covered.
+    ///
+    /// **The merge is within one render call and does not span the prefix and
+    /// the delta**, which are two: the prefix renders at `Open` and the delta
+    /// at `AppendAndGenerate`. So a seated identity folds to one user turn and
+    /// the first delta folds to a second immediately after it, adjacent with
+    /// no assistant between. That adjacency stands and is not something this
+    /// fold can close, the prefix being tokenized and resident before any
+    /// delta exists - seating it later would retire the ruling of 2026-08-20
+    /// that the prefix is processed at load as the functionality test. What
+    /// the fold removes is the adjacency *within* each call, which on the old
+    /// `role: user` declarations was three turns rather than two.
     fn fold_for_template(&self, messages: &[Message]) -> Result<Vec<Message>, RenderRefusal> {
         Ok(messages.to_vec())
     }
@@ -1682,11 +1699,18 @@ mod tests {
     /// reaches each. The classifier needs no exclusion: `modernbert` renders
     /// no conversation and is in no registry row.
     fn conversational_families() -> Vec<(String, &'static dyn Family)> {
-        let mut seen: Vec<usize> = Vec::new();
+        let mut seen: Vec<*const dyn Family> = Vec::new();
         let mut out: Vec<(String, &'static dyn Family)> = Vec::new();
         for (at, row) in REGISTRY.iter().enumerate() {
-            let renderer = row.renderer as usize;
-            if seen.contains(&renderer) {
+            // **Identity is the trait object, not the function pointer.**
+            // Identical-code folding can merge two `renderer()` bodies that
+            // compile to the same instructions, which would silently drop a
+            // family from this watch - the failure deriving from `REGISTRY`
+            // exists to prevent, and one the length guard below cannot see.
+            // `ptr::eq` on a wide pointer compares the data address and the
+            // vtable both, so it is exact.
+            let renderer: *const dyn Family = (row.renderer)();
+            if seen.iter().any(|seen| std::ptr::eq(*seen, renderer)) {
                 continue;
             }
             seen.push(renderer);
@@ -1875,6 +1899,51 @@ mod tests {
             assert!(
                 rendered.contains("FRAMING\n\nREQUEST"),
                 "{name} rendered the loop's delta as separate turns: {rendered:?}"
+            );
+        }
+    }
+
+    /// **What the fold does not close: the prefix and the delta are two
+    /// render calls, and the turns they produce sit adjacent.**
+    ///
+    /// The seated identity renders at `Open` and the first delta at
+    /// `AppendAndGenerate`, so each folds within itself and neither can reach
+    /// the other. On the folding families that leaves two user turns back to
+    /// back with no assistant between. This test asserts that rather than
+    /// wishing it away, because an earlier form of the doc claimed the funnel
+    /// covered "both paths, by construction" - true within a call and not
+    /// across the boundary.
+    ///
+    /// **It is not something the fold can close.** The prefix is tokenized
+    /// and resident before any delta exists, and seating it later would
+    /// retire the ruling of 2026-08-20 that the prefix is processed at load
+    /// as the functionality test. What the fold removed is the adjacency
+    /// within each call: on the old `role: user` declarations this same
+    /// exchange rendered three turns rather than two.
+    #[test]
+    fn the_prefix_and_the_delta_remain_two_turns_and_the_test_says_so() {
+        let prefix = [said(Role::System, "ID")];
+        let delta = [said(Role::System, "FRAMING"), said(Role::User, "REQUEST")];
+        for (name, family) in conversational_families() {
+            if family.fold_for_template(&delta).expect("folds") == delta.to_vec() {
+                continue; // a family that names a system turn renders one
+            }
+            let whole = format!(
+                "{}{}",
+                family.render_identity(&prefix).expect("prefix renders"),
+                render_each(family, &delta).expect("delta renders"),
+            );
+            // Each call folded within itself.
+            assert!(
+                whole.contains("FRAMING\n\nREQUEST"),
+                "{name} did not fold the delta: {whole:?}"
+            );
+            // And the identity did not reach across into it, which is the
+            // limit this test exists to record.
+            assert!(
+                !whole.contains("ID\n\nFRAMING"),
+                "{name} folded across the prefix boundary, which would mean \
+                 the prefix is no longer seated at open: {whole:?}"
             );
         }
     }

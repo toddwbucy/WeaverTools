@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, fifth of this date, the fold's claim narrows to the
+call it holds within. Section 5 states that the merge does not span the prefix
+and the delta, those being two render calls, so the two turns they produce sit
+adjacent - a limit the seated prefix makes structural rather than a defect,
+and one a test now records.
+
 **Revised:** 2026-08-28, fourth of this date, the fold moves onto the family
 and the whole delta is folded. Section 5 states that the preparation is the
 family's own election, applied at the one rendering funnel rather than at each
@@ -1385,7 +1391,8 @@ Review's by non-purchase, the placement of a family's code being as readable to
 a module-boundary test as to a reader and neither being bought here.
 
 **A seated `System` prefix folds where the family's template names no system
-turn.** The canonical role of an identity prefix is `System`, per
+turn, within the render call it arrives in.** The canonical role of an
+identity prefix is `System`, per
 `weaver-types-Spec` section 2, and the parse refuses any other. Two families
 in the registry publish templates with no system turn - gemma and mistral -
 and both refused the role at `render_identity`, which after that parse rule
@@ -1393,6 +1400,17 @@ left them no usable prefix at all: `user` refused above, `system` refused
 here. **The role is the floor's vocabulary and the shape is the family's**, so
 those families render the role rather than refusing it, folding **every**
 `System` message into the user turn that follows it.
+
+**The merge is within one render call and does not span the prefix and the
+delta**, which are two: the prefix renders at the open and the delta at the
+append. A seated identity therefore folds to one user turn and the first delta
+folds to a second immediately after it, adjacent with no assistant between.
+That adjacency is not something the fold can close - the prefix is tokenized
+and resident before any delta exists, and seating it later would retire the
+ruling of 2026-08-20 that the prefix is processed at load as the functionality
+test. What the fold removes is the adjacency within each call, which on a
+`role: user` declaration was three turns rather than two. The limit is stated
+here and asserted by a test rather than left for a reader to discover.
 
 **Every position and not only the first**, which is a decision rather than a
 detail. A family that renders system content as user content has no position

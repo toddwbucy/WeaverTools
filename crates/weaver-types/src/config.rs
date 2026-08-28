@@ -395,6 +395,20 @@ fn check_identity_roles(identity: &[weaver_traits::Message]) -> Result<(), Confi
                 kind: ConfigErrorKind::BadValue,
             });
         }
+        // **An identity message carries something.** An empty content list
+        // parses as a message and renders as an empty turn - `[INST][/INST]`
+        // on mistral, a bare user turn on gemma - seated into every session
+        // for the life of the agent. The argument for judging here rather
+        // than at the door is that the operator meets it as a refusal to load
+        // instead of as a fault in a running agent, and this case belongs to
+        // that argument as much as the role does. An empty `identity` list is
+        // a different thing and stays lawful: an agent with no prefix.
+        if message.content.is_empty() {
+            return Err(ConfigError {
+                field: Some(FieldName(format!("identity.{at}.content"))),
+                kind: ConfigErrorKind::BadValue,
+            });
+        }
         // **The block is judged beside the role**, the door refusing both.
         // `weaver-traits-Spec` section 3 licenses a `System` message to carry
         // `Text` and nothing else, so a declaration naming the right role with
