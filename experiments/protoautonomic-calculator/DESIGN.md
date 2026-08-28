@@ -52,10 +52,20 @@ is about the record, and the record's sufficiency is the whole question.
 
 `weaver-internal::calculator::evaluate` answers the same string for the same
 expression forever. That is the entire reason it is the instrument. **A
-divergence under a deterministic tool is attributable to the technique**,
-because nothing else in the arrangement could have caused it. Under a tool
-that reads a clock, a filesystem, or a network, a divergence is
-unattributable and the experiment answers nothing.
+deterministic tool takes tool-side randomness out of the arrangement**, which
+is what makes a divergence worth attributing at all. Under a tool that reads a
+clock, a filesystem, or a network, a divergence is unattributable and the
+experiment answers nothing.
+
+**That is not the same as making every divergence the technique's**, and the
+stronger reading is a claim this design does not hold. Expression selection,
+dispatch, message encoding, trace ordering, the replay's own reconstruction,
+and formatting are all still live, and any of them can move a byte without
+injection having done anything. So a divergence is attributed to the tool or
+the replay path first, and reaches injection only when those are excluded: by
+Arm OUTWARD, which runs the same expressions with no injection at all, and by
+the payload comparisons of section 6. **The determinism buys the attribution
+its ground rather than its conclusion.**
 
 Arithmetic also supplies a correctness axis that most agent work lacks:
 `17 * 23` has one right answer, so an arm that is fast and wrong is visibly
@@ -238,9 +248,17 @@ Stated first, so the result is read against a written bar:
   comparison is the eight-field set the cross-precision harness already
   applies: rendered prompt, derived generation seed, effective sampling
   knobs, emission bytes, finish kind, resident count, input token ids, and
-  per-token entropies.
+  per-token entropies. **The eight are necessary and not sufficient here**,
+  because not one of them is about injection: the supplied result and the
+  positions its span occupies must compare equal too, and a record carrying
+  the right result at the wrong position passes all eight. Those two can be
+  compared only once the trace act of section 5 puts them in the record,
+  which is the dependency the bullet below states as a present falsifier.
 - A consumer replaying the record's edits reconstructs a resident sequence
-  that disagrees with the counts the SPU reported at any turn.
+  that disagrees with the source at any turn. **The comparison is token ids
+  and not counts.** A sequence of the right length holding the wrong tokens
+  satisfies a count check, so the count is the weaker claim and the ids are
+  the one the edit mechanic actually needs answered.
 - The record cannot say which positions were supplied rather than drawn.
   This falsifies the claim today, per section 5, and is what the trace act
   must clear.

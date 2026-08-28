@@ -14,7 +14,7 @@ allocator and nothing else, which is why this varies instead.
 
 Run:
 
-```
+```shell
 python3 determinism_matrix.py --config ../cross-precision-repro/thinkpad.json \
     --outdir <deposit> --hours 7
 ```
