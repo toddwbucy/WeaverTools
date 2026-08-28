@@ -721,7 +721,15 @@ def whole_ms(t):
 
 
 def cell_metadata(cfg, cell, libraries, binaries, tools):
-    artifact_sha = _sha256(cell["artifact"])
+    # **The artifact's hash degrades rather than raising.** A missing or
+    # unreadable artifact would otherwise abort `run_cell` before its report
+    # exists and take every remaining cell with it, which is the class of
+    # defect the rest of this act removes: a metadata read is not a reason a
+    # run does not happen.
+    try:
+        artifact_sha = _sha256(cell["artifact"])
+    except OSError as error:
+        artifact_sha = {"unreadable": _why(error)}
     # **Both read the returncode, because `sh` no longer raises.** Softening
     # `sh` to answer 127 rather than throw fixed the readers that could abort
     # a run and broke these two, which took `.stdout` blind: on a box without
@@ -733,8 +741,14 @@ def cell_metadata(cfg, cell, libraries, binaries, tools):
             "--format=csv,noheader"]),
         "nvidia-smi",
     )
-    commit = _said_or_unreadable(
-        sh(["git", "-C", cfg["repo"], "rev-parse", "HEAD"]), "git rev-parse"
+    # `.get`, as `toolchain` and `_resolve_spu` both use: a config naming no
+    # repository is a config error rather than a crash, and `git -C` against
+    # `None` would not survive the call anyway.
+    repo = cfg.get("repo")
+    commit = (
+        _said_or_unreadable(sh(["git", "-C", repo, "rev-parse", "HEAD"]), "git rev-parse")
+        if repo
+        else {"unreadable": "the config names no repo"}
     )
     return {
         "box": cfg["box"],

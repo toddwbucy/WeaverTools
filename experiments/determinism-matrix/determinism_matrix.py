@@ -386,7 +386,17 @@ def main():
             if isinstance(entry, dict)
         }
 
-    def close(reader, at_start, what):
+    def whole(reading):
+        """The reading itself, for a reader whose values are not hashes.
+
+        `hashes` would answer `{}` for the toolchain, every value there being
+        a string, so two different toolchains would compare equal and the
+        double read would report nothing. What counts as a change differs by
+        reader, so the comparison is the caller's to name.
+        """
+        return reading
+
+    def close(reader, at_start, what, essence=hashes):
         """Read again at the close and say how the two readings relate.
 
         **Every branch returns one shape**: a dict whose `at_close_unreadable`
@@ -409,7 +419,7 @@ def main():
             # or never ran - the assertion the double read exists to stop
             # making.
             return {"at_close": at_close, "at_start_unreadable": at_start}
-        if hashes(at_close) != hashes(at_start):
+        if essence(at_close) != essence(at_start):
             return {"varied": {"at_start": at_start, "at_close": at_close}}
         if at_close != at_start:
             # **A resolution change is not a build change.** The SPU's path
@@ -423,6 +433,13 @@ def main():
 
     binaries_at_close = close(base.weaver_binaries, binaries, "weaver_binaries")
     libraries = close(base.engine_libraries, libraries, "engine_libraries")
+    # **Read twice like the other two.** It was the one reader left on a
+    # single read, which is what made the invariant break in `toolchain`
+    # latent rather than visible. Compared whole rather than by hash, its
+    # values being strings, and a difference here is a difference in what
+    # built the binaries rather than in the binaries - the hashes above are
+    # what would catch a swap, and this catches the pin moving under a run.
+    tools = close(base.toolchain, tools, "toolchain", essence=whole)
 
     try:
         bindings = base.device_bindings(cfg, run_started)
