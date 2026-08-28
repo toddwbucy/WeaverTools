@@ -82,14 +82,22 @@ struct Umask {
 /// The one process umask, and therefore one lock.
 static UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-/// The umask lock, for a test that loosens the umask around a raise.
+/// Runs `work` with the process umask held, for a caller that must read or
+/// set it around this crate's own use.
 ///
-/// **Exposed because the resource is the process's and not this module's.**
-/// A test guarding only itself with RAII still races this crate's own guard,
-/// and the loosened window is visible to every other file this process
-/// creates. Anything mutating the umask takes this.
-pub fn umask_lock() -> &'static std::sync::Mutex<()> {
-    &UMASK
+/// **Exposed because the resource is the process's and not this module's.** A
+/// caller guarding only itself with RAII still races this crate's guard, and
+/// a loosened window is visible to every other file the process creates.
+///
+/// **Scoped rather than handing back the guard, because the lock is not
+/// reentrant.** A caller holding it across `Hook::raise` deadlocks the gate
+/// process, `raise` taking the same mutex unconditionally - which is not
+/// hypothetical, a first form of this crate's own test doing exactly that and
+/// hanging the suite. A closure cannot be held open across a later call by
+/// accident, so the shape prevents what a returned guard invited.
+pub fn with_umask_held<T>(work: impl FnOnce() -> T) -> T {
+    let _serialized = UMASK.lock().unwrap_or_else(|held| held.into_inner());
+    work()
 }
 
 impl Umask {

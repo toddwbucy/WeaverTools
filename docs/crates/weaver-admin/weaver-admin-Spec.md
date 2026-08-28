@@ -4,7 +4,7 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Revised:** 2026-08-28, second of this date, the access rule is checked
-against the mode that carries it. Section 4 states that a declaration whose
+against the mode that carries it. Section 6 states that a declaration whose
 `allowed-uids` name a peer the gate's `0770` socket turns away refuses at the
 inventory with the field named, two locks on one door being permitted to
 narrow one set and not to contradict. Section 6 names `Group={identity}`
@@ -947,16 +947,24 @@ inventory, so the two locks narrow one set rather than two.
 
 **It carries a provisioning requirement**: an agent user created without a
 group of its own makes the invocation fail to determine its credentials, and
-the unit does not start. Section 4's reachability check reads the same group,
-so a box that has not provisioned it refuses at validate with the field named
-rather than at the start with none. The
+the unit does not start.
+
+**Validate does not catch that, and this sentence used to say it did.** The
+reachability check below reads the same group and answers nothing where it
+cannot resolve one, on the ground that unresolvable is not unreachable - a
+declaration may not be refused on a fact never established, and a bare
+checkout carries no agent group at all. So a box missing the group passes
+validate and fails at the start with an opaque credential error. Naming that
+here rather than claiming a refusal that does not happen: the provisioning is
+owed and nothing checks it. The
 figure is stated here rather than inherited for the same reason the gate
 states its socket's, per `weaver-gate-Spec` section 3 - a boundary whose
 permissions come from an ambient default is a boundary nobody elected.
 
-**The access rule is checked against the mode that will carry it.** The gate
-binds its socket `0770` owned by the agent's group, per `weaver-gate-Spec`
-section 3, so a peer reaches `accept` only through that group. A rule
+**The access rule is checked against the mode that will carry it**, and the
+check is this section's. The gate binds its socket `0770` owned by the agent's
+group, per `weaver-gate-Spec` section 3, so a peer reaches `accept` only
+through that group. A rule
 admitting a uid outside it names a peer the filesystem turns away at
 `connect(2)`, before the credential check runs: the dialer sees a permission
 refusal, the driver reports the socket never stood, and the gate records
@@ -966,8 +974,21 @@ designed behaviour unless the two are made to agree.
 
 **Two locks on one door may narrow the same set and may not contradict.** So
 the inventory refuses a declaration whose `allowed-uids` name a uid outside
-the agent's group, or whose `allowed-gids` name a gid that is not it, with the
-field named, before any unit starts. **Unresolvable is not unreachable**:
+the agent's group, with the field named, before any unit starts.
+
+**`allowed-gids` is not judged and uid 0 is skipped.** A gid names no
+particular peer, and whether one holding it reaches the socket turns on that
+peer's own memberships rather than on the gid - a rule admitting an operator's
+primary gid works where that operator is a supplementary member of the agent's
+group, and an arm refusing every gid but the agent's own refused it. Root is
+skipped for a different reason: `CAP_DAC_OVERRIDE` reaches a `0770` socket
+whatever group it holds. Both halves rest on the credential check, which is
+where they were always decided.
+
+**The check runs last of the inventory's walks**, so it preempts none of them:
+an unreadable artifact or an unverified boundary is the older and narrower
+fact, and a check running ahead of those made three inventory tests depend on
+whether the box carried the agent's group. **Unresolvable is not unreachable**:
 where the group cannot be read this asserts nothing and the load fails later
 and loudly, rather than refusing on a fact it never established.
 
@@ -1743,9 +1764,13 @@ no bus crate, and no logging crate in the resolved tree, by the build-time
 
 **Which invariant each claim serves, and why most serve none.** Eleven of the
 thirty-six carry a `grounds` edge and those eleven carry twelve edges, one
-record grounding in two invariants. The thirty-fifth is section 6's runtime
-directory mode, which grounds in none: the figure is an election about a
-boundary this crate provisions rather than a claim any invariant reaches. Six run to
+record grounding in two invariants. **Both records this act adds ground in
+none**, and the paragraph accounts for each rather than one. Section 6's
+runtime directory mode is an election about a boundary this crate provisions,
+and its access
+rule reachability is a consistency rule between two locks - neither is a claim
+an invariant reaches. Named rather than numbered, an ordinal in document order
+being the thing that goes stale next. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
 and four to `axiom-harness-integrates-by-the-loop`.

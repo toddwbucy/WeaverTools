@@ -31,10 +31,10 @@ fn scratch(name: &str) -> std::path::PathBuf {
 /// reason, and neither figure was anyone's election.
 ///
 /// Connecting to a Unix socket requires write permission, so the assertion is
-/// that no bit outside owner and group is set. The test sets a permissive
-/// umask first, which is the condition under which the old code produced
-/// `0777`, so it fails against a bind that leaves the mode to the environment
-/// rather than passing by accident of the runner's umask.
+/// that no bit outside owner and group is set. **The ambient umask is read
+/// and left alone**, and where it would produce `0770` by itself the test
+/// says so and skips - an earlier form loosened it across the raise, which
+/// held the process-global umask open while sibling threads created files.
 ///
 /// **The election is made through the umask around the bind**, so the
 /// perturbation is the removal of that, not of a chmod: drop the
@@ -51,7 +51,19 @@ fn the_socket_denies_every_uid_outside_the_group() {
     // of the runner's mask, which meant holding the process-global umask
     // loose while a sibling thread might create a file under it. The last
     // assertion does that work instead, without the window.
+    // **Where the runner's own umask would produce `0770`, this run cannot
+    // tell an elected mode from an inherited one, so it reports that and
+    // stops.** An earlier form asserted the distinguishability instead,
+    // which turned a correct build red under a umask of `0007` - a vacuity
+    // guard failing the build is the one thing a vacuity guard must not do.
     let ambient = ambient_umask();
+    if 0o777 & !ambient == 0o770 {
+        eprintln!(
+            "SKIP the_socket_denies_every_uid_outside_the_group: the ambient \
+             umask {ambient:04o} produces 0770 by itself"
+        );
+        return;
+    }
     let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
 
     let mode = std::fs::metadata(&path)
@@ -68,16 +80,6 @@ fn the_socket_denies_every_uid_outside_the_group() {
         0,
         "no bit outside owner and group, and write is what connecting needs"
     );
-    // **And the check is not vacuous.** Where the runner's own umask would
-    // produce `0770` anyway, a bind electing nothing passes this test, so
-    // that case fails loudly rather than reporting a property it did not
-    // observe.
-    assert_ne!(
-        0o777 & !ambient,
-        0o770,
-        "the ambient umask {ambient:04o} produces 0770 by itself, so this run \
-         cannot tell an elected mode from an inherited one"
-    );
     drop(hook);
 }
 
@@ -89,16 +91,16 @@ fn the_socket_denies_every_uid_outside_the_group() {
 /// sibling test's `create_dir_all` in `/tmp` landing there is world writable
 /// with no sticky bit.
 ///
-/// **The lock is released before the raise.** Holding it across would
+/// **The hold is scoped and ends before the raise.** Holding it across would
 /// deadlock, `Hook::raise` taking the same non-reentrant mutex, which is what
-/// a first form of this did.
+/// a first form of this did - `with_umask_held` is shaped so that cannot be
+/// written by accident.
 fn ambient_umask() -> u32 {
-    let _serialized = weaver_gate::hook::umask_lock()
-        .lock()
-        .unwrap_or_else(|held| held.into_inner());
-    let seen = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
-    nix::sys::stat::umask(seen);
-    seen.bits()
+    weaver_gate::hook::with_umask_held(|| {
+        let seen = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+        nix::sys::stat::umask(seen);
+        seen.bits()
+    })
 }
 
 /// **The agent uid is denied by construction, not by configuration.**

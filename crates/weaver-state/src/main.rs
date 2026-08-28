@@ -697,9 +697,9 @@ mod tests {
     /// inherited. Only `uid() == 0` is admitted at the accept, so there is no
     /// group to reach the door, and `0700` is the access it offers.
     ///
-    /// The permissive umask is set first, which is the condition under which
-    /// an unelected bind produces `0777`, so this cannot pass by accident of
-    /// the runner's own umask.
+    /// **The ambient umask is read and left alone**, and where it would
+    /// produce `0700` by itself the test says so and skips rather than
+    /// asserting against a run that cannot distinguish.
     ///
     /// Perturbation: drop the `PreloadUmask::deny_all_but_owner()` guard from
     /// `stand_preload_name` and this reports `0777`. Watched under exactly
@@ -728,6 +728,17 @@ mod tests {
             nix::sys::stat::umask(seen);
             seen.bits()
         };
+        // Where the runner's own umask produces `0700` this run cannot tell
+        // an elected mode from an inherited one, so it says so and stops.
+        // `0077` is a common hardened default and produces exactly that, so
+        // asserting the distinguishability turned a correct build red.
+        if 0o777 & !ambient == 0o700 {
+            eprintln!(
+                "SKIP the_preload_door_denies_every_uid_but_its_owner: the \
+                 ambient umask {ambient:04o} produces 0700 by itself"
+            );
+            return;
+        }
         let listener = stand_preload_name(path);
         assert!(listener.is_some(), "the preload name stands");
 
@@ -739,14 +750,6 @@ mod tests {
         assert_eq!(
             mode, 0o700,
             "the door states its mode rather than inheriting one, got {mode:04o}"
-        );
-        // And the check is not vacuous: a runner whose own umask produces
-        // `0700` could not tell an elected mode from an inherited one.
-        assert_ne!(
-            0o777 & !ambient,
-            0o700,
-            "the ambient umask {ambient:04o} produces 0700 by itself, so this \
-             run cannot tell an elected mode from an inherited one"
         );
         drop(listener);
         let _ = std::fs::remove_file(path);

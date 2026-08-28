@@ -125,30 +125,6 @@ pub fn take_inventory(
         }
     };
 
-    // **The access rule is checked against the mode that will carry it**, per
-    // `weaver-admin-Spec` section 4 and the operator's ruling of 2026-08-28.
-    //
-    // The gate's socket is `0770` owned by the agent's group, per
-    // `weaver-gate-Spec` section 3, so reaching it takes membership in that
-    // group. A rule admitting a uid outside it names a peer the filesystem
-    // turns away at `connect(2)` before the credential check ever runs: the
-    // dialer sees `Permission denied`, the driver reports the socket never
-    // stood, and the gate logs nothing because the peer never reached
-    // `accept`. That diagnosis cost two runs on 2026-08-27 while it was an
-    // unprovisioned box, and the mode makes it the designed behaviour unless
-    // the two are made to agree.
-    //
-    // **The two locks may narrow the same set and may not contradict.** So a
-    // rule the mode would silently defeat refuses here, named, before any
-    // unit starts, rather than at a `connect` no layer reports.
-    if let EnterBinding::Serving { gate_instruction } = &binding
-        && let Some(unreachable) = unreachable_peer(&identity, &gate_instruction.access_rule)
-    {
-        return Err(LifecycleRefusal::ConfigInvalid {
-            field: Some(FieldName(unreachable)),
-        });
-    }
-
     // The model artifact resolves to something readable. Nothing is repaired.
     if !artifact_readable(&config.spu_instruction.decoder.model_binding.artifact.0) {
         return Err(LifecycleRefusal::ArtifactUnresolvable);
@@ -184,6 +160,35 @@ pub fn take_inventory(
         return Err(LifecycleRefusal::BoundaryUnverified);
     }
 
+    // **The access rule is checked against the mode that will carry it**, per
+    // `weaver-admin-Spec` section 6 and the operator's ruling of 2026-08-28.
+    //
+    // **Last of the walks**, so it preempts none of them: an artifact or a
+    // boundary that refuses is the older and narrower fact, and a check
+    // running ahead of them made three inventory tests depend on whether the
+    // box happened to carry the agent's group.
+    //
+    // The gate's socket is `0770` owned by the agent's group, per
+    // `weaver-gate-Spec` section 3, so reaching it takes membership in that
+    // group. A rule admitting a uid outside it names a peer the filesystem
+    // turns away at `connect(2)` before the credential check ever runs: the
+    // dialer sees `Permission denied`, the driver reports the socket never
+    // stood, and the gate logs nothing because the peer never reached
+    // `accept`. That diagnosis cost two runs on 2026-08-27 while it was an
+    // unprovisioned box, and the mode makes it the designed behaviour unless
+    // the two are made to agree.
+    //
+    // **The two locks may narrow the same set and may not contradict.** So a
+    // rule the mode would silently defeat refuses here, named, before any
+    // unit starts, rather than at a `connect` no layer reports.
+    if let EnterBinding::Serving { gate_instruction } = &binding
+        && let Some(unreachable) = unreachable_peer(&identity, &gate_instruction.access_rule)
+    {
+        return Err(LifecycleRefusal::ConfigInvalid {
+            field: Some(FieldName(unreachable)),
+        });
+    }
+
     Ok(Inventory {
         config,
         identity,
@@ -201,9 +206,11 @@ pub fn take_inventory(
 /// refusal lands at `connect(2)` where the gate cannot see it and no layer
 /// above reports it as what it is.
 ///
-/// A gid the agent's group is not, and which is not the agent's own, is the
-/// same case: membership of that gid does not carry membership of the
-/// agent's.
+/// **Only `allowed_uids` is judged.** A gid names no particular peer, and
+/// whether one holding it reaches the socket turns on that peer's own
+/// memberships rather than on the gid, so a rule admitting a gid is left to
+/// the credential check. Uid 0 is skipped for a different reason: root
+/// reaches a `0770` socket whatever group it holds.
 ///
 /// **Unresolvable is not the same as unreachable.** Where this cannot read
 /// the group at all it answers `None` rather than refusing a declaration on
@@ -219,6 +226,13 @@ fn unreachable_peer(identity: &str, rule: &weaver_types::AccessRule) -> Option<S
     let members: std::collections::BTreeSet<String> = group.mem.iter().cloned().collect();
 
     for uid in &rule.allowed_uids {
+        // **Root is not bound by the mode.** `CAP_DAC_OVERRIDE` reaches a
+        // `0770` socket whatever group it holds, so refusing `allowed-uids:
+        // [0]` would refuse a rule that works, on a premise false for that
+        // one uid.
+        if *uid == 0 {
+            continue;
+        }
         let user = match nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(*uid)) {
             Ok(Some(user)) => user,
             _ => continue,
@@ -229,11 +243,15 @@ fn unreachable_peer(identity: &str, rule: &weaver_types::AccessRule) -> Option<S
         }
         return Some(format!("gate-instruction.access-rule.allowed-uids.{uid}"));
     }
-    for gid in &rule.allowed_gids {
-        if *gid != group.gid.as_raw() {
-            return Some(format!("gate-instruction.access-rule.allowed-gids.{gid}"));
-        }
-    }
+    // **`allowed_gids` is not judged here, and the omission is the finding.**
+    // A gid names no particular peer, and whether a peer holding it reaches
+    // the socket turns on that peer's own memberships: a rule admitting gid
+    // 1000 works where the operator holding it is a supplementary member of
+    // the agent's group, which is the shape one of these boxes has. An arm
+    // refusing every gid but the agent's own refused that working
+    // declaration. Deciding it properly means enumerating who holds the gid,
+    // which this crate has no reason to do, so the rule's gid half rests on
+    // the credential check alone and this says so rather than guessing.
     None
 }
 
@@ -382,14 +400,15 @@ mod tests {
     ///
     /// The helper's own test above would pass with the call dropped from
     /// `take_inventory`, so a declaration naming an unreachable uid would
-    /// load and fail at the dial with nothing saying why. This drives the
-    /// inventory and asserts the field.
+    /// load and fail at the dial with nothing saying why.
     ///
-    /// **It needs a provisioned agent group**, the identity being
-    /// `weaver-<name>` and derived rather than passed, so it finds one on the
-    /// box and skips where there is none. Both deployment boxes provision
-    /// agents; a bare checkout does not, and a skipped test says so rather
-    /// than asserting against a group it invented.
+    /// **The boundary is built to pass**, the check running last of the walks
+    /// so that a broken one would refuse first and this would prove nothing.
+    /// And the agent it names must exclude **uid 1000**, which is what the
+    /// fixture's rule admits - an earlier form excluded the *running* uid, so
+    /// under `sudo cargo test` it picked a group excluding root while uid
+    /// 1000 was a member, the check answered `None`, and the test failed on
+    /// correct code.
     ///
     /// Perturbation: remove the `unreachable_peer` call from
     /// `take_inventory` and this fails. Watched under exactly that removal.
@@ -397,19 +416,21 @@ mod tests {
     /// conforms: admin-access-rule-reaches-the-socket
     #[test]
     fn a_rule_the_mode_would_defeat_refuses_at_the_inventory() {
-        let me = nix::unistd::Uid::current().as_raw();
-        // An agent group this process is not a member of, which is the
-        // condition the check exists to name.
-        let Some(agent) = provisioned_agent_excluding(me) else {
+        // The uid the fixture's rule admits, not whoever is running the test.
+        let Some(agent) = provisioned_agent_excluding(1000) else {
             return;
         };
         let root = scratch("reach");
+        let sink_dir = root.join("sink");
+        std::fs::create_dir_all(&sink_dir).expect("sink dir");
+        let home = root.join("home");
+        std::fs::create_dir_all(&home).expect("home");
+        std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o700)).expect("mode");
         let allow = AllowList::new([agent.clone()]);
         let name = AgentName(agent);
-        let bound = boundary(&root.join("absent-home"), 65533);
+        let bound = boundary(&home, 65533);
 
-        // The fixture's rule admits uid 1000, which that group excludes.
-        let refused = take_inventory(&name, &config_source(&root), &allow, &bound);
+        let refused = take_inventory(&name, &config_source(&sink_dir), &allow, &bound);
         assert!(
             matches!(
                 refused,
