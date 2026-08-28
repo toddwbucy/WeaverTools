@@ -258,7 +258,7 @@ Stated first, so the result is read against a written bar:
   that disagrees with the source at any turn. **The comparison is token ids
   and not counts.** A sequence of the right length holding the wrong tokens
   satisfies a count check, so the count is the weaker claim and the ids are
-  the one the edit mechanic actually needs answered.
+  the claim the edit mechanic must answer.
 - The record cannot say which positions were supplied rather than drawn.
   This falsifies the claim today, per section 5, and is what the trace act
   must clear.
