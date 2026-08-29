@@ -1028,13 +1028,28 @@ whatever group it holds. Both halves rest on the credential check, which is
 where they were always decided.
 
 **The template may not take the boundary back.** `systemd-run` honours the
-last assignment, so an installed hardening template naming `Group=` or
-`RuntimeDirectoryMode=` would revert the boundary with no diagnostic - and
-this check's premise, that the socket's group is `weaver-<agent>`, would go
-with it, so admin would validate a rule against a group the socket does not
-carry. A template naming either key has that property dropped rather than
-emitted, an override this crate cannot honour being a configuration it says no
-to rather than one it silently wins.
+last assignment, so an installed hardening template naming a key this crate
+elects would revert the boundary with no diagnostic - and this check's
+premise, that the socket's group is `weaver-<agent>` and the worker runs as
+the agent, would go with it, so admin would validate a rule against an
+identity the worker does not hold. A template naming one has that property
+dropped rather than emitted **and the drop announced on stderr**, an override
+this crate cannot honour being a configuration it says no to rather than one
+it silently wins, and a silent drop being the same failure in the other
+direction.
+
+**The set of keys is the closure of what the boundary rests on, not the keys
+this crate writes**, and two of its members do their damage without looking
+like an override. `SupplementaryGroups=` is **additive**: it grants gids
+without displacing anything, so `User=` and `Group=` still read correctly
+while the worker holds a gid the denial walk never computed - which reopens
+the sink traversal along a second route once the first is closed. An empty
+`RuntimeDirectory=` **resets the list rather than setting it**, so systemd
+creates no runtime directory and the coordination socket has nowhere to bind,
+which is a start failure rather than a boundary one and no less this crate's
+to refuse. So the set is `User`, `Group`, `SupplementaryGroups`,
+`DynamicUser`, `RuntimeDirectory`, and `RuntimeDirectoryMode`, derived from
+what would have to hold rather than enumerated from what is set.
 
 **The check runs last of the inventory's walks**, so it preempts none of them:
 an unreadable artifact or an unverified boundary is the older and narrower
@@ -1825,8 +1840,9 @@ walk this crate already performs, and the walk it corrects grounds in no
 axiom either. A `grounds` edge to that walk was drafted and removed - the
 notation runs from an assertion to an **axiom**, per Document Format section
 on edges, and an assertion-to-assertion edge would have been a new relation
-smuggled in under an existing name. Named rather than numbered, an ordinal
-in document order
+smuggled in under an existing name.
+
+**The twelve are named rather than numbered**, an ordinal in document order
 being the thing that goes stale next. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,

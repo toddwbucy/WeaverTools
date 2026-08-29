@@ -165,29 +165,35 @@ pub fn start(
 /// nothing else. A builder who let any of these be composed from the
 /// invocation's own input would widen the delegated authority by the route
 /// the name check closes.
-/// Every unit key that can move the worker's identity, and therefore every
-/// key an installed template may not set.
+/// Every unit key this crate elects, and therefore every key an installed
+/// template may not set.
 ///
-/// **The list is the closure of what `unreachable_peer` depends on, not the
-/// two keys one round happened to find.** That check's premise is that the
+/// **The list is the closure of what the boundary rests on, not the keys one
+/// round happened to find.** `unreachable_peer`'s premise is that the
 /// socket's group is `weaver-<agent>` and the worker runs as the agent, and
 /// `agent_gids` computes the credential set from exactly these. A template
 /// moving any of them breaks the premise, and admin then validates a rule
 /// against an identity the worker does not hold.
 ///
-/// `SupplementaryGroups` is the sharp one because **it is additive**: it
-/// grants gids without displacing anything, so it leaves `User=` and
-/// `Group=` reading correctly while handing the worker a gid the denial walk
-/// never computed - which reopens the sink traversal along a second route
-/// after the first was closed. `DynamicUser` is here because it discards the
-/// provisioned identity outright.
+/// **Two of them do their damage without looking like an override**, which
+/// is why the list is derived rather than enumerated from the keys this
+/// crate happens to write. `SupplementaryGroups=` is additive: it grants
+/// gids without displacing anything, so `User=` and `Group=` still read
+/// correctly while the worker holds a gid the denial walk never computed.
+/// And **an empty `RuntimeDirectory=` resets the list rather than setting
+/// it**, so a template carrying one leaves systemd creating no runtime
+/// directory at all, and the coordination socket has nowhere to bind - a
+/// start failure rather than a boundary one, and no less this crate's to
+/// refuse. `DynamicUser` is here because it discards the provisioned
+/// identity outright.
 ///
 /// conforms: admin-runtime-directory-mode-is-stated
-const IDENTITY_KEYS: &[&str] = &[
+const ELECTED_KEYS: &[&str] = &[
     "User",
     "Group",
     "SupplementaryGroups",
     "DynamicUser",
+    "RuntimeDirectory",
     "RuntimeDirectoryMode",
 ];
 
@@ -224,17 +230,18 @@ fn start_arguments(
         // conforms: admin-runtime-directory-mode-is-stated
         "--property=RuntimeDirectoryMode=0750".to_string(),
     ];
-    // **The template's own properties are refused where they name a key that
-    // moves the worker's identity**, rather than emitted and allowed to win.
+    // **The template's own properties are refused where they name a key this
+    // crate elects**, rather than emitted and allowed to win.
     //
     // `systemd-run` takes the last assignment, so an installed hardening
-    // template carrying one of [`IDENTITY_KEYS`] would revert the boundary
+    // template carrying one of [`ELECTED_KEYS`] would revert the boundary
     // with no diagnostic - and `unreachable_peer`'s whole premise, that the
     // socket's group is `weaver-<agent>` and the worker runs as the agent,
     // would break with it, so admin would validate a rule against an identity
     // the worker does not hold. `SupplementaryGroups=` does it without
-    // displacing anything, which is why the list is the closure of what the
-    // denial walk reads rather than the keys this crate sets.
+    // displacing anything and an empty `RuntimeDirectory=` resets rather than
+    // sets, which is why the list is the closure of what the boundary rests
+    // on rather than the keys this crate writes.
     //
     // Emitting these after the template would let the boundary win silently
     // instead, which trades one silent override for another. A template
@@ -255,7 +262,7 @@ fn start_arguments(
         let names_boundary = property
             .split('=')
             .next()
-            .is_some_and(|key| IDENTITY_KEYS.contains(&key.trim()));
+            .is_some_and(|key| ELECTED_KEYS.contains(&key.trim()));
         if names_boundary {
             eprintln!(
                 "template property dropped: {property}: this crate sets \
@@ -548,7 +555,7 @@ mod tests {
         );
     }
 
-    /// **No template property moves the worker's identity**, per
+    /// **No template property moves what this crate elects**, per
     /// `weaver-admin-Spec` section 6.
     ///
     /// `systemd-run` takes the last assignment, so every one of these would
@@ -558,9 +565,15 @@ mod tests {
     /// additive, so it leaves `User=` and `Group=` reading correctly while
     /// handing the worker a gid `agent_gids` never computes, which reopens
     /// the sink traversal along a second route after the first was closed.
+    /// **An empty `RuntimeDirectory=` is the other**: it resets the list
+    /// rather than setting it, so systemd creates no runtime directory and
+    /// the coordination socket has nowhere to bind. Both are covered here in
+    /// the shape that bites rather than in the shape that looks like an
+    /// override.
     ///
-    /// Perturbation: dropping any key from [`IDENTITY_KEYS`] fails this.
-    /// Watched failing 2026-08-29 with `SupplementaryGroups` removed.
+    /// Perturbation: dropping any key from [`ELECTED_KEYS`] fails this.
+    /// Watched failing 2026-08-29 with `SupplementaryGroups` removed and
+    /// again with `RuntimeDirectory` removed.
     ///
     /// conforms: admin-runtime-directory-mode-is-stated
     #[test]
@@ -574,6 +587,9 @@ mod tests {
                 "SupplementaryGroups=wheel docker".into(),
                 "DynamicUser=yes".into(),
                 "RuntimeDirectoryMode=0777".into(),
+                // **Empty resets rather than sets**, which is the shape that
+                // costs the runtime directory and with it the socket.
+                "RuntimeDirectory=".into(),
                 // Whitespace around the key is the same key.
                 " Group =nogroup".into(),
                 // And a hardening property that moves nothing rides through.
@@ -597,10 +613,16 @@ mod tests {
             "SupplementaryGroups=wheel docker",
             "DynamicUser=yes",
             "RuntimeDirectoryMode=0777",
+            "RuntimeDirectory=",
             "Group =nogroup",
         ] {
+            // **Matched whole rather than by substring**: this crate's own
+            // `RuntimeDirectory=weaver-alpha` contains the reset form
+            // `RuntimeDirectory=`, so a `contains` check here would report
+            // the election as the template's leftover.
+            let emitted = format!("--property={dropped}");
             assert!(
-                !rendered.iter().any(|arg| arg.contains(dropped)),
+                !rendered.contains(&emitted),
                 "the template may not set {dropped}: {rendered:?}"
             );
         }
@@ -608,11 +630,15 @@ mod tests {
             rendered.contains(&"--property=PrivateTmp=yes".to_string()),
             "a property that moves no identity rides through: {rendered:?}"
         );
-        // And what this crate sets is still what the vector carries.
+        // And what this crate sets is still what the vector carries - the
+        // runtime directory included, an empty reset having been the way to
+        // lose it.
         assert!(
             rendered.contains(&"--property=User=weaver-alpha".to_string())
-                && rendered.contains(&"--property=Group=weaver-alpha".to_string()),
-            "the crate's own identity survives the filter: {rendered:?}"
+                && rendered.contains(&"--property=Group=weaver-alpha".to_string())
+                && rendered.contains(&"--property=RuntimeDirectory=weaver-alpha".to_string())
+                && rendered.contains(&"--property=RuntimeDirectoryMode=0750".to_string()),
+            "the crate's own election survives the filter: {rendered:?}"
         );
     }
 
