@@ -326,12 +326,107 @@ fn take_inventory(
         // Custody is held by whoever opens the sink, and that is this
         // invocation under root, the role's principal.
         admin_uid: nix::unistd::getuid().as_raw(),
-        // From the user already resolved above rather than a second lookup of
-        // the same identity.
-        agent_gids: vec![user.gid.as_raw()],
+        // **Every gid the worker will actually hold, not the passwd primary
+        // alone.** The unit sets `Group={identity}`, so the running egid is
+        // `weaver-<agent>` whatever passwd says - and where the operator
+        // provisioned a shared primary group, which is the case the mode's
+        // own justification cites, the two disagree. A denial walk reading
+        // only passwd would pass a sink at `root:weaver-<agent>` mode `0710`
+        // that the worker can traverse into and rewrite the record admin
+        // holds custody of.
+        //
+        // Over-approximated on purpose: this asks what the agent could reach,
+        // so a gid too many refuses a boundary that might have held, and a
+        // gid too few admits one that does not.
+        agent_gids: agent_gids(&user),
         home: user.dir.clone(),
     };
     inventory::take_inventory(agent, &source, &config.allow_list, &boundary)
+}
+
+/// Every gid the worker may run under: the group the unit sets, the passwd
+/// primary, and the supplementary memberships the user holds.
+///
+/// `unreachable_peer` reads `Group::from_name(identity)` for the same
+/// boundary, and the denial walk follows it rather than reading passwd alone.
+///
+/// conforms: admin-boundary-reads-every-gid-the-worker-holds
+fn agent_gids(user: &nix::unistd::User) -> Vec<u32> {
+    // The gid `--property=Group={identity}` gives the unit, which is what the
+    // worker's egid actually is.
+    let named = match nix::unistd::Group::from_name(&user.name) {
+        Ok(Some(group)) => Some(group.gid.as_raw()),
+        // A lookup that failed leaves the primary and the supplementary set,
+        // which is the narrower answer and so the one that refuses more.
+        _ => None,
+    };
+    // And whatever else the user is a member of, a supplementary group being
+    // reachable by the running process too.
+    let supplementary: Vec<u32> = std::ffi::CString::new(user.name.as_str())
+        .ok()
+        .and_then(|name| nix::unistd::getgrouplist(&name, user.gid).ok())
+        .map(|groups| groups.into_iter().map(|gid| gid.as_raw()).collect())
+        .unwrap_or_default();
+    merge_gids(user.gid.as_raw(), named, &supplementary)
+}
+
+/// The three sources joined, deduped, with the passwd primary first.
+///
+/// **Separate from the host lookups so the join is watched.** The failure the
+/// denial walk cannot survive is a gid dropped on the floor, and that is a
+/// property of this merge rather than of `getgrnam_r`. Reading the host
+/// inside the same function would have made any watch on it vacuous wherever
+/// no agent is provisioned, which is this box and CI both.
+fn merge_gids(primary: u32, named: Option<u32>, supplementary: &[u32]) -> Vec<u32> {
+    let mut gids = vec![primary];
+    for gid in named.into_iter().chain(supplementary.iter().copied()) {
+        if !gids.contains(&gid) {
+            gids.push(gid);
+        }
+    }
+    gids
+}
+
+#[cfg(test)]
+mod gid_tests {
+    use super::merge_gids;
+
+    /// **The group the unit sets is in the set, and the passwd primary alone
+    /// is not the set.**
+    ///
+    /// This is the custody hole olympus found on 2026-08-29: the unit forces
+    /// `Group={identity}` so the worker's egid is `weaver-<agent>`, while the
+    /// denial walk read the passwd primary. Where the operator provisioned a
+    /// shared primary - `users`, `nogroup` - the two disagree, and a sink at
+    /// `root:weaver-karl` mode `0710` passes a walk the running worker can
+    /// then traverse to rewrite the trace admin holds custody of.
+    ///
+    /// Perturbation: returning `vec![primary]` fails this. Watched failing
+    /// 2026-08-29.
+    ///
+    /// conforms: admin-boundary-reads-every-gid-the-worker-holds
+    #[test]
+    fn the_walk_reads_the_group_the_unit_sets_and_not_passwd_alone() {
+        // The shared-primary case the mode's own justification cites.
+        let gids = merge_gids(100, Some(2001), &[100]);
+        assert!(
+            gids.contains(&2001),
+            "the egid the unit sets is walked: {gids:?}"
+        );
+        assert!(gids.contains(&100), "and the passwd primary too: {gids:?}");
+
+        // Supplementary memberships reach the sink as well.
+        let gids = merge_gids(100, Some(2001), &[100, 27, 998]);
+        assert!(
+            [100, 2001, 27, 998].iter().all(|gid| gids.contains(gid)),
+            "every gid the worker holds is walked: {gids:?}"
+        );
+
+        // Deduped, and the primary stays first: the walk asks `contains`, so
+        // a repeat is only noise, but a set that grows per call is a leak.
+        assert_eq!(merge_gids(100, Some(100), &[100, 100]), vec![100]);
+        assert_eq!(merge_gids(100, None, &[7]), vec![100, 7]);
+    }
 }
 
 /// `load` runs the charter's seven steps in order, and answers only on a ready
@@ -925,7 +1020,11 @@ mod tests {
         );
         assert_eq!(serving[0], territory.as_os_str());
         let diagnostic = member_vector(territory, &weaver_types::EnterBinding::Diagnostic);
-        assert_eq!(diagnostic.len(), 2, "a diagnostic load carries the preload path");
+        assert_eq!(
+            diagnostic.len(),
+            2,
+            "a diagnostic load carries the preload path"
+        );
         assert_eq!(diagnostic[0], territory.as_os_str());
         assert_eq!(
             diagnostic[1],
@@ -949,7 +1048,7 @@ mod tests {
                 worker: PathBuf::from("/bin/false"),
                 spu: PathBuf::from("/bin/false"),
                 gate: PathBuf::from("/bin/false"),
-            headroom_bytes: None,
+                headroom_bytes: None,
             },
             allow_list: inventory::AllowList::new(["alpha".to_string()]),
         }

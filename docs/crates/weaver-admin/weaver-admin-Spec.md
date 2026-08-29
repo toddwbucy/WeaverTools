@@ -783,6 +783,34 @@ from: weaver-admin
 to: admin-boundary-denies-agent-traversal
 ```
 
+**"Through any membership" is the whole of the requirement, and the gid set
+the walk reads is where it is met.** The unit carries `Group={identity}` per
+section 6, so the worker's runtime egid is the agent's own group whatever
+primary group passwd records. A walk reading the passwd gid alone therefore
+asks about a credential the worker does not run under, and where the operator
+provisioned a shared primary - which is the case section 6's own argument for
+naming the group cites - the two disagree: a sink directory at
+`root:weaver-<agent>` mode `0710` passes a walk that sees only `users`, and
+the running worker traverses it. So the walk reads the group the unit sets,
+the passwd primary, and the user's supplementary memberships, and it
+**over-approximates on purpose** - the question is what the agent could
+reach, so a gid too many refuses a boundary that might have held and a gid
+too few admits one that does not.
+
+```graph
+node: admin-boundary-reads-every-gid-the-worker-holds
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-boundary-reads-every-gid-the-worker-holds
+
+edge: grounds
+from: admin-boundary-reads-every-gid-the-worker-holds
+to: admin-boundary-denies-agent-traversal
+```
+
 **The devices the binding assigns are not checked here, and the absence is
 stated rather than left to be inferred.** The parse has already answered that
 the assignment is present and well-formed, per `weaver-types-Spec` section 2,
@@ -949,23 +977,25 @@ inventory, so the two locks narrow one set rather than two.
 group of its own makes the invocation fail to determine its credentials, and
 the unit does not start.
 
-**Validate does not catch that, and this sentence used to say it did.** The
-reachability check below reads the same group and answers nothing where it
-cannot resolve one, on the ground that unresolvable is not unreachable - a
-declaration may not be refused on a fact never established, and a bare
-checkout carries no agent group at all. So a box missing the group passes
-validate and fails at the start with an opaque credential error. Naming that
-here rather than claiming a refusal that does not happen: the provisioning is
-owed and nothing checks it. The
-figure is stated here rather than inherited for the same reason the gate
-states its socket's, per `weaver-gate-Spec` section 3 - a boundary whose
+**Validate catches that, and the reachability check below is where.** A box
+carrying the agent user and not its group is refused there by name, the
+missing group being a fact about a provisioned agent rather than a fact never
+established. **A box carrying neither is not refused**, on the ground that
+unresolvable is not unreachable: a declaration may not be refused on a fact
+never established, and a bare checkout carries no agent group at all. The two
+are different absences and the check answers them differently. Section 4
+states the refusal in full and this sentence records only that the
+requirement is enforced rather than owed.
+
+The mode figure is stated here rather than inherited for the same reason the
+gate states its socket's, per `weaver-gate-Spec` section 3 - a boundary whose
 permissions come from an ambient default is a boundary nobody elected.
 
 **The access rule is checked against the mode that will carry it**, and the
 check is this section's. The gate binds its socket `0770` owned by the agent's
 group, per `weaver-gate-Spec` section 3, so a peer reaches `accept` only
-through that group. A rule
-admitting a uid outside it names a peer the filesystem turns away at
+through that group. A rule admitting a uid outside it names a peer the
+filesystem turns away at
 `connect(2)`, before the credential check runs: the dialer sees a permission
 refusal, the driver reports the socket never stood, and the gate records
 nothing because the peer never arrived. That diagnosis cost two runs on
@@ -1787,14 +1817,17 @@ is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Eleven of the
-thirty-six carry a `grounds` edge and those eleven carry twelve edges, one
-record grounding in two invariants. **Both records this act adds ground in
-none**, and the paragraph accounts for each rather than one. Section 6's
-runtime directory mode is an election about a boundary this crate provisions,
-and its access
-rule reachability is a consistency rule between two locks - neither is a claim
-an invariant reaches. Named rather than numbered, an ordinal in document order
+**Which invariant each claim serves, and why most serve none.** Twelve of the
+thirty-seven carry a `grounds` edge and those twelve carry thirteen edges, one
+record grounding in two invariants. **Two of the three records this act adds
+ground in none**, and the paragraph accounts for each rather than one. Section
+6's runtime directory mode is an election about a boundary this crate
+provisions, and its access rule reachability is a consistency rule between two
+locks - neither is a claim an invariant reaches. The third,
+`admin-boundary-reads-every-gid-the-worker-holds`, grounds in
+`admin-boundary-denies-agent-traversal` rather than in an axiom: it is the
+same denial stated with the credential set corrected, so the invariant it
+serves is the walk's own. Named rather than numbered, an ordinal in document order
 being the thing that goes stale next. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,

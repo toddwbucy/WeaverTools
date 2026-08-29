@@ -76,11 +76,54 @@ use weaver_types::{AccessRule, GateInstruction, PeerIdentity, authorized};
 /// the span the umask is.
 struct Umask {
     previous: nix::sys::stat::Mode,
-    _serialized: std::sync::MutexGuard<'static, ()>,
+    _serialized: Serialized,
 }
 
 /// The one process umask, and therefore one lock.
 static UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+thread_local! {
+    /// Whether this thread already holds `UMASK`.
+    ///
+    /// **The mutex is not reentrant and the scoped shape does not make it
+    /// so.** `with_umask_held` closed the case of a caller holding the lock
+    /// across `Hook::raise`, and left the case of a caller calling
+    /// `with_umask_held` from inside `with_umask_held` - or raising a hook
+    /// from inside it - which self-deadlocks a single thread against itself
+    /// with no second party involved. The serialization the lock buys is
+    /// between threads, and a thread cannot interleave with itself, so a
+    /// nested acquire on the holding thread is a no-op rather than a wait.
+    static HELD: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The umask lock, held for a scope, reentrant within one thread.
+///
+/// `None` inside means this thread already held it and the outer holder is
+/// the one that will release: the umask itself still nests correctly, each
+/// guard saving what it found and restoring it on drop in LIFO order.
+struct Serialized(Option<std::sync::MutexGuard<'static, ()>>);
+
+impl Serialized {
+    fn acquire() -> Self {
+        if HELD.with(std::cell::Cell::get) {
+            return Serialized(None);
+        }
+        // A poisoned lock still hands back the guard: the umask is restored
+        // on every path out including a panic, so the value behind it is
+        // sound whatever happened to the thread that held it last.
+        let guard = UMASK.lock().unwrap_or_else(|held| held.into_inner());
+        HELD.with(|held| held.set(true));
+        Serialized(Some(guard))
+    }
+}
+
+impl Drop for Serialized {
+    fn drop(&mut self) {
+        if self.0.is_some() {
+            HELD.with(|held| held.set(false));
+        }
+    }
+}
 
 /// Runs `work` with the process umask held, for a caller that must read or
 /// set it around this crate's own use.
@@ -89,14 +132,18 @@ static UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 /// caller guarding only itself with RAII still races this crate's guard, and
 /// a loosened window is visible to every other file the process creates.
 ///
-/// **Scoped rather than handing back the guard, because the lock is not
-/// reentrant.** A caller holding it across `Hook::raise` deadlocks the gate
-/// process, `raise` taking the same mutex unconditionally - which is not
-/// hypothetical, a first form of this crate's own test doing exactly that and
-/// hanging the suite. A closure cannot be held open across a later call by
-/// accident, so the shape prevents what a returned guard invited.
+/// **Scoped rather than handing back the guard**, so it cannot be held open
+/// across a later call by accident - the shape a returned guard invited, and
+/// the way a first form of this crate's own test hung the suite by holding it
+/// across `Hook::raise`.
+///
+/// **Reentrant within a thread**, because scoping alone does not make nesting
+/// safe: `with_umask_held(|| with_umask_held(..))`, or a raise from inside
+/// one, would take the same non-reentrant mutex twice on one thread and
+/// deadlock it against itself. The lock serializes threads, and a thread does
+/// not interleave with itself, so the inner acquire is a no-op.
 pub fn with_umask_held<T>(work: impl FnOnce() -> T) -> T {
-    let _serialized = UMASK.lock().unwrap_or_else(|held| held.into_inner());
+    let _serialized = Serialized::acquire();
     work()
 }
 
@@ -108,10 +155,7 @@ impl Umask {
     /// execute bits a laxer mask would leave others buy them nothing on a
     /// socket, which is why the group is the boundary rather than the world.
     fn deny_others() -> Self {
-        // A poisoned lock still hands back the guard: the umask is restored
-        // on every path out including a panic, so the value behind it is
-        // sound whatever happened to the thread that held it last.
-        let serialized = UMASK.lock().unwrap_or_else(|held| held.into_inner());
+        let serialized = Serialized::acquire();
         Umask {
             previous: nix::sys::stat::umask(nix::sys::stat::Mode::S_IRWXO),
             _serialized: serialized,

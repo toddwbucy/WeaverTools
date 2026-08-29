@@ -248,3 +248,37 @@ fn an_occupied_path_refuses_and_the_occupant_survives() {
     first.lower();
     std::fs::remove_file(&path).ok();
 }
+
+/// **A raise from inside `with_umask_held` completes rather than hanging.**
+///
+/// `with_umask_held` is public and `Hook::raise` takes the same mutex, so the
+/// natural call an external caller writes - hold the umask, bind under it -
+/// took a non-reentrant lock twice on one thread. The scoped shape prevents
+/// holding the guard across a later call and does nothing about nesting the
+/// call inside, which is a thread deadlocking against itself with no second
+/// party.
+///
+/// Perturbation: dropping the per-thread `HELD` check from
+/// `Serialized::acquire` hangs this test rather than failing it, so it is
+/// watched on a timer - the whole binary is killed by the harness on a hang,
+/// and a watch whose failure mode is an infinite wait is not one this suite
+/// can report on. Watched hanging 2026-08-29.
+///
+/// conforms: gate-socket-mode-is-elected-at-bind
+#[test]
+fn a_raise_nested_inside_the_umask_lock_completes() {
+    let path = scratch("nested");
+    let (done, waited) = std::sync::mpsc::channel();
+    // On its own thread, so a deadlock is a timeout here rather than a hung
+    // test binary the harness kills with no report.
+    std::thread::spawn(move || {
+        let raised = weaver_gate::hook::with_umask_held(|| {
+            weaver_gate::hook::with_umask_held(|| Hook::raise(&permissive_instruction(), &path))
+        });
+        let _ = done.send(raised.is_ok());
+    });
+    match waited.recv_timeout(std::time::Duration::from_secs(10)) {
+        Ok(raised) => assert!(raised, "the nested raise binds"),
+        Err(_) => panic!("a raise nested inside with_umask_held deadlocked the thread"),
+    }
+}

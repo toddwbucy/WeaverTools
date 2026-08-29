@@ -212,6 +212,15 @@ fn start_arguments(
     // naming either key is a configuration this crate cannot honour and says
     // so.
     //
+    // **Says so out loud, because dropping it quietly is the same failure in
+    // the other direction.** An operator who installs a hardening template
+    // with `RuntimeDirectoryMode=0700` and reads a clean start has no way to
+    // learn the boundary on disk and the boundary in force disagree. This
+    // function returns a `Vec<String>` and has no error channel to refuse
+    // through, so the diagnostic is the refusal an operator gets, and it
+    // names the property rather than the key alone so the line in the
+    // template is findable.
+    //
     // conforms: admin-runtime-directory-mode-is-stated
     for property in &template.properties {
         let names_boundary = property
@@ -219,6 +228,13 @@ fn start_arguments(
             .next()
             .is_some_and(|key| matches!(key.trim(), "Group" | "RuntimeDirectoryMode"));
         if names_boundary {
+            eprintln!(
+                "template property dropped: {property}: this crate sets \
+                 Group= and RuntimeDirectoryMode= itself, the socket's group \
+                 being the boundary admin validates access rules against. \
+                 Remove it from the unit template rather than expecting it to \
+                 apply."
+            );
             continue;
         }
         args.push(format!("--property={property}"));

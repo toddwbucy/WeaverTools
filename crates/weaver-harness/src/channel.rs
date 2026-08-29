@@ -121,29 +121,8 @@ impl CoordinationListener {
             .unwrap_or(std::path::Path::new("/"))
             .join("gate.sock")
     }
-
 }
 
-/// Binds the coordination socket and listens, which is the worker's first act.
-///
-/// **The name is the caller's, and `gate.sock` is the one to avoid.**
-/// [`CoordinationListener::gate_socket`] derives the gate's name as a sibling
-/// with that fixed leaf, so a coordination socket carrying it would be the
-/// path the gate is later told to bind. Nothing here refuses it, and that
-/// function carries why.
-///
-/// **Any socket connecting to the harness is an internal connection**, per
-/// `weaver-admin-harness-contract` section 2, so this crate creates and binds
-/// it rather than adopting a handed end. The socket carries close-on-exec from
-/// its creating call, so no window exists between creation and flag.
-///
-/// **The bind never unlinks.** A Unix socket's pathname outlives the process
-/// that bound it, and the directory this socket lives in is created by the init
-/// system at the unit's start and removed with the unit, per
-/// `weaver-admin-systemd-contract` sections 2 and 5, so the name cannot be
-/// inherited from a previous run and there is nothing to clear. **A bind that
-/// finds its name occupied is a fault and never a thing to remove**, because
-/// the only ways a name is occupied are that a live worker holds it, where
 /// A process umask held for one bind and restored on every path out.
 ///
 /// The gate and the state member carry the same type for the same reason, per
@@ -179,6 +158,26 @@ impl Drop for CoordinationUmask {
     }
 }
 
+/// Binds the coordination socket and listens, which is the worker's first act.
+///
+/// **The name is the caller's, and `gate.sock` is the one to avoid.**
+/// [`CoordinationListener::gate_socket`] derives the gate's name as a sibling
+/// with that fixed leaf, so a coordination socket carrying it would be the
+/// path the gate is later told to bind. Nothing here refuses it, and that
+/// function carries why.
+///
+/// **Any socket connecting to the harness is an internal connection**, per
+/// `weaver-admin-harness-contract` section 2, so this crate creates and binds
+/// it rather than adopting a handed end. The socket carries close-on-exec from
+/// its creating call, so no window exists between creation and flag.
+///
+/// **The bind never unlinks.** A Unix socket's pathname outlives the process
+/// that bound it, and the directory this socket lives in is created by the init
+/// system at the unit's start and removed with the unit, per
+/// `weaver-admin-systemd-contract` sections 2 and 5, so the name cannot be
+/// inherited from a previous run and there is nothing to clear. **A bind that
+/// finds its name occupied is a fault and never a thing to remove**, because
+/// the only ways a name is occupied are that a live worker holds it, where
 /// unlinking would strand the running agent's supervisor, or that the manager
 /// did not honor the directory, where this crate's assumption is wrong and it
 /// should say so rather than repair.
@@ -630,8 +629,7 @@ impl ClassifyChannel {
     /// so a hung peer costs the bound once rather than the serving thread
     /// forever, and the expiry is a channel fault the caller converts.
     pub fn recv_reply_within(&self, bound_ms: u64) -> Result<ClassifyReply, ChannelFault> {
-        let deadline =
-            std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
         loop {
             let remaining = deadline.saturating_duration_since(std::time::Instant::now());
             if remaining.is_zero() {
@@ -893,7 +891,10 @@ mod series_tests {
             piece: "x".repeat(100_000),
         };
         let body = serde_json::to_vec(&answer).expect("renders");
-        assert!(body.len() > weaver_types::MAX_ENVELOPE_BYTES, "the fixture is oversized");
+        assert!(
+            body.len() > weaver_types::MAX_ENVELOPE_BYTES,
+            "the fixture is oversized"
+        );
         let preamble = format!(
             "{{\"segments\":{},\"bytes\":{}}}",
             body.len().div_ceil(weaver_types::MAX_ENVELOPE_BYTES),

@@ -93,6 +93,29 @@ pub fn take_inventory(
     allow_list: &AllowList,
     boundary: &Boundary,
 ) -> Result<Inventory, LifecycleRefusal> {
+    take_inventory_against(name, source, allow_list, boundary, None)
+}
+
+/// The whole of `take_inventory` with the host's answer about the agent's
+/// group supplied rather than read.
+///
+/// **The seam exists so the reachability call site is watched.** The judgment
+/// `unreachable_peer_against` makes was already testable this way and the
+/// wiring, whether `take_inventory` calls it and refuses on what it says, was
+/// not: its only watch first searched the box for a provisioned agent group
+/// excluding the caller, found none on a developer box and none on CI, and
+/// returned early - so it skipped in both environments the suite runs in
+/// while its record claimed a perturbation. A watch that runs nowhere is the
+/// thing this program calls representation.
+///
+/// `None` reads the host, which is every caller outside the tests.
+fn take_inventory_against(
+    name: &AgentName,
+    source: &str,
+    allow_list: &AllowList,
+    boundary: &Boundary,
+    group: Option<&ResolvedGroup>,
+) -> Result<Inventory, LifecycleRefusal> {
     if !allow_list.admits(name) {
         return Err(LifecycleRefusal::NoSuchAgent);
     }
@@ -116,7 +139,9 @@ pub fn take_inventory(
         config.binding_kind.clone().unwrap_or(BindingKind::Serving),
         config.gate_instruction.clone(),
     ) {
-        (BindingKind::Serving, Some(gate_instruction)) => EnterBinding::Serving { gate_instruction },
+        (BindingKind::Serving, Some(gate_instruction)) => {
+            EnterBinding::Serving { gate_instruction }
+        }
         (BindingKind::Diagnostic, None) => EnterBinding::Diagnostic,
         _ => {
             return Err(LifecycleRefusal::ConfigInvalid {
@@ -182,7 +207,12 @@ pub fn take_inventory(
     // rule the mode would silently defeat refuses here, named, before any
     // unit starts, rather than at a `connect` no layer reports.
     if let EnterBinding::Serving { gate_instruction } = &binding
-        && let Some(unreachable) = unreachable_peer(&identity, &gate_instruction.access_rule)
+        && let Some(unreachable) = match group {
+            Some(known) => {
+                unreachable_peer_against(&identity, &gate_instruction.access_rule, known)
+            }
+            None => unreachable_peer(&identity, &gate_instruction.access_rule),
+        }
     {
         // **`BoundaryUnverified` and not `ConfigInvalid`.** The declaration is
         // well formed and the fault is the box's: the operator wrote a uid
@@ -193,10 +223,15 @@ pub fn take_inventory(
         // for good, the credential check then denying it at `accept` with
         // nothing saying why. This is the same fault an unprovisioned home or
         // sink is, and it answers as they do.
+        //
+        // **The remedy comes from the case and not from this call site.** The
+        // two refusals want different instructions, and a single sentence
+        // here told a deployer whose group was missing to run `gpasswd`,
+        // which is the command that fails on exactly that box.
         eprintln!(
-            "boundary unverified: {unreachable} names a peer outside the \
-             {identity} group, which the gate's socket mode admits by; run \
-             `gpasswd -a <user> {identity}` rather than editing the rule"
+            "boundary unverified: {}: {}",
+            unreachable.field(&identity),
+            unreachable.remedy(&identity)
         );
         return Err(LifecycleRefusal::BoundaryUnverified);
     }
@@ -230,8 +265,56 @@ pub fn take_inventory(
 /// rather than here and wrongly.
 ///
 /// conforms: admin-access-rule-reaches-the-socket
-fn unreachable_peer(identity: &str, rule: &weaver_types::AccessRule) -> Option<String> {
+fn unreachable_peer(identity: &str, rule: &weaver_types::AccessRule) -> Option<Unreachable> {
     unreachable_peer_against(identity, rule, &resolved_group(identity))
+}
+
+/// Why a declaration's rule cannot be met by the socket it will meet.
+///
+/// **Two cases and not one string.** The field a refusal names and the
+/// instruction an operator needs differ between them, and an earlier form
+/// returned one sentence for both - which `take_inventory` then spliced into
+/// a field-path slot, telling a deployer to run `gpasswd` for a missing
+/// group, where `gpasswd` is what fails when the group is what is absent.
+#[derive(Debug, PartialEq, Eq)]
+enum Unreachable {
+    /// The rule admits a uid outside the agent's group, so it is turned away
+    /// at `connect` before the credential check.
+    UidOutsideGroup(u32),
+    /// The agent user exists and its group does not, so the unit's `Group=`
+    /// cannot resolve and the start fails opaquely.
+    GroupMissing,
+}
+
+impl Unreachable {
+    /// The field a refusal names, where one applies.
+    fn field(&self, identity: &str) -> String {
+        match self {
+            Unreachable::UidOutsideGroup(uid) => {
+                format!("gate-instruction.access-rule.allowed-uids.{uid}")
+            }
+            Unreachable::GroupMissing => format!("the {identity} group"),
+        }
+    }
+
+    /// What the operator does about it. The two remedies are different and
+    /// naming the wrong one costs a deployer the diagnosis.
+    fn remedy(&self, identity: &str) -> String {
+        match self {
+            Unreachable::UidOutsideGroup(uid) => format!(
+                "uid {uid} is outside the {identity} group, which the gate's \
+                 socket mode admits by. Run `gpasswd -a <user> {identity}` \
+                 rather than deleting the uid from the rule, which would make \
+                 validate pass and leave the credential check denying it."
+            ),
+            Unreachable::GroupMissing => format!(
+                "the {identity} user exists and the {identity} group does \
+                 not, so the unit's Group= cannot resolve and the start \
+                 fails. Run `groupadd {identity} && usermod -g {identity} \
+                 {identity}`."
+            ),
+        }
+    }
 }
 
 /// What the host says about an agent's group: its gid and members, or which
@@ -243,6 +326,8 @@ enum ResolvedGroup {
     NoAgent,
     /// The user exists and the group does not, which fails the unit start.
     UserWithoutGroup,
+    /// The lookup itself failed, so nothing about the group is known.
+    Unresolvable,
 }
 
 fn resolved_group(identity: &str) -> ResolvedGroup {
@@ -251,7 +336,12 @@ fn resolved_group(identity: &str) -> ResolvedGroup {
             gid: group.gid.as_raw(),
             members: group.mem,
         },
-        _ => {
+        // **A lookup that failed is not a group that is absent.** A transient
+        // `getgrnam_r` error would otherwise read as `UserWithoutGroup` on a
+        // box where the user resolves, and refuse a load on a fact never
+        // established - which is the rule the rest of this function follows.
+        Err(_) => ResolvedGroup::Unresolvable,
+        Ok(None) => {
             // **A missing group is a fault only where the agent user
             // exists.** `Group={identity}` is a hard start-time requirement,
             // so a box that provisioned the user and not the group fails the
@@ -277,19 +367,14 @@ fn resolved_group(identity: &str) -> ResolvedGroup {
 ///
 /// conforms: admin-access-rule-reaches-the-socket
 fn unreachable_peer_against(
-    identity: &str,
+    _identity: &str,
     rule: &weaver_types::AccessRule,
     group: &ResolvedGroup,
-) -> Option<String> {
+) -> Option<Unreachable> {
     let (gid, members) = match group {
         ResolvedGroup::Present { gid, members } => (*gid, members),
-        ResolvedGroup::NoAgent => return None,
-        ResolvedGroup::UserWithoutGroup => {
-            return Some(format!(
-                "the {identity} user exists and its group does not, so the \
-                 unit's Group= cannot resolve"
-            ));
-        }
+        ResolvedGroup::NoAgent | ResolvedGroup::Unresolvable => return None,
+        ResolvedGroup::UserWithoutGroup => return Some(Unreachable::GroupMissing),
     };
     let members: std::collections::BTreeSet<&String> = members.iter().collect();
 
@@ -309,7 +394,7 @@ fn unreachable_peer_against(
         if user.gid.as_raw() == gid || members.contains(&user.name) {
             continue;
         }
-        return Some(format!("gate-instruction.access-rule.allowed-uids.{uid}"));
+        return Some(Unreachable::UidOutsideGroup(*uid));
     }
     // **`allowed_gids` is not judged here, and the omission is the finding.**
     // A gid names no particular peer, and whether a peer holding it reaches
@@ -452,8 +537,8 @@ mod tests {
         };
         if me != 0 {
             assert_eq!(
-                unreachable_peer_against("weaver-x", &mine, &excludes).as_deref(),
-                Some(format!("gate-instruction.access-rule.allowed-uids.{me}").as_str()),
+                unreachable_peer_against("weaver-x", &mine, &excludes),
+                Some(Unreachable::UidOutsideGroup(me)),
                 "a uid outside the group is named by its field"
             );
         }
@@ -505,10 +590,29 @@ mod tests {
             allowed_gids: Default::default(),
             denied_uids: Default::default(),
         };
+        assert_eq!(
+            unreachable_peer_against("weaver-x", &rule, &ResolvedGroup::UserWithoutGroup),
+            Some(Unreachable::GroupMissing),
+            "the missing group is its own case and not a uid's"
+        );
+        // **The remedy is the one that works on that box.** A single sentence
+        // covering both cases told this operator to run `gpasswd`, which is
+        // what fails when the group is what is absent.
+        let remedy = Unreachable::GroupMissing.remedy("weaver-x");
         assert!(
-            unreachable_peer_against("weaver-x", &rule, &ResolvedGroup::UserWithoutGroup)
-                .is_some_and(|named| named.contains("Group=")),
-            "the unit's Group= is named as what cannot resolve"
+            remedy.contains("groupadd") && !remedy.contains("gpasswd"),
+            "the missing-group remedy creates the group: {remedy}"
+        );
+        assert!(
+            Unreachable::UidOutsideGroup(7)
+                .remedy("weaver-x")
+                .contains("gpasswd"),
+            "the outside-uid remedy adds the member"
+        );
+        // And the field slot carries a field rather than a sentence.
+        assert_eq!(
+            Unreachable::UidOutsideGroup(7).field("weaver-x"),
+            "gate-instruction.access-rule.allowed-uids.7"
         );
         assert_eq!(
             unreachable_peer_against("weaver-x", &rule, &ResolvedGroup::NoAgent),
@@ -529,25 +633,21 @@ mod tests {
         assert_eq!(unreachable_peer("weaver-no-such-agent-here", &rule), None);
     }
 
-    /// **And the check is wired into the inventory**, not merely present.
+    /// The wiring: `take_inventory` calls the reachability check and refuses
+    /// on what it says.
     ///
-    /// The judgment's own test above would pass with the call dropped from
-    /// `take_inventory`, so a declaration naming an unreachable uid would
-    /// load and fail at the dial with nothing saying why.
+    /// **Runs everywhere, which the form it replaced did not.** That form
+    /// searched the box for a provisioned agent group, so it skipped on a
+    /// developer box with no `weaver-*` group and skipped on CI for the same
+    /// reason, while its own record claimed a perturbation was watched. The
+    /// group is supplied here instead of found, so the only host fact left is
+    /// the caller's uid.
     ///
-    /// **It writes its own rule rather than drawing the shared fixture's**,
-    /// which names uid 0 so no other test depends on the host's group table.
-    /// This one needs a uid the check can judge, so it takes the running
-    /// process's - and where that uid is a member of every provisioned agent
-    /// group the case cannot be built, so it says so and skips rather than
-    /// asserting against a run that cannot show the property.
+    /// Perturbation: dropping the `unreachable_peer` block from
+    /// `take_inventory_against` leaves this returning `Ok`, watched failing
+    /// 2026-08-29 - and now on this box rather than on a hypothetical one.
     ///
-    /// The boundary is built to pass, the check running last of the walks.
-    ///
-    /// Perturbation: remove the `unreachable_peer` call from
-    /// `take_inventory` and this fails. Watched under exactly that removal.
-    ///
-    /// conforms: admin-access-rule-reaches-the-socket
+    /// conforms: admin-access-rule-checked-against-socket-mode
     #[test]
     fn a_rule_the_mode_would_defeat_refuses_at_the_inventory() {
         let me = nix::unistd::Uid::current().as_raw();
@@ -555,50 +655,52 @@ mod tests {
             eprintln!("SKIP: the check skips root by design");
             return;
         }
-        let Some(agent) = provisioned_agent_excluding(me) else {
-            eprintln!(
-                "SKIP a_rule_the_mode_would_defeat_refuses_at_the_inventory: no \
-                 provisioned agent group excludes uid {me}"
-            );
-            return;
-        };
         let root = scratch("reach");
         let sink_dir = root.join("sink");
         std::fs::create_dir_all(&sink_dir).expect("sink dir");
         let home = root.join("home");
         std::fs::create_dir_all(&home).expect("home");
         std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o700)).expect("mode");
-        let allow = AllowList::new([agent.clone()]);
-        let name = AgentName(agent);
+        let allow = AllowList::new(["karl".to_string()]);
+        let name = AgentName("karl".into());
         let bound = boundary(&home, 65533);
 
+        // A group this caller is not in and cannot be: no members, and a gid
+        // no real group carries. The rule then admits a uid the socket's
+        // `0770` turns away at `connect`, which is the contradiction.
+        let group = ResolvedGroup::Present {
+            gid: u32::MAX - 1,
+            members: Vec::new(),
+        };
         let source = config_source(&sink_dir).replace(
             "    allowed-uids: [0]\n",
             &format!("    allowed-uids: [{me}]\n"),
         );
-        let refused = take_inventory(&name, &source, &allow, &bound);
+        let refused = take_inventory_against(&name, &source, &allow, &bound, Some(&group));
         assert!(
             matches!(refused, Err(LifecycleRefusal::BoundaryUnverified)),
             "the unreachable uid refuses as a boundary fault: {refused:?}"
         );
+
+        // And the same walk admits the rule the group does reach, so the
+        // refusal is the contradiction and not the walk running at all.
+        let reachable = ResolvedGroup::Present {
+            gid: u32::MAX - 1,
+            members: vec![
+                nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(me))
+                    .ok()
+                    .flatten()
+                    .map(|user| user.name)
+                    .unwrap_or_default(),
+            ],
+        };
+        assert!(
+            take_inventory_against(&name, &source, &allow, &bound, Some(&reachable)).is_ok(),
+            "a uid inside the group passes the same walk"
+        );
         let _ = std::fs::remove_dir_all(&root);
     }
 
-    /// The bare name of a provisioned agent whose group excludes `uid`, or
-    /// `None` where the box provisions none that do.
-    fn provisioned_agent_excluding(uid: u32) -> Option<String> {
-        let user = nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(uid)).ok()??;
-        for candidate in ["karl", "acorn", "alpha", "bravo", "charlie"] {
-            let identity = format!("weaver-{candidate}");
-            let Ok(Some(group)) = nix::unistd::Group::from_name(&identity) else {
-                continue;
-            };
-            if group.gid != user.gid && !group.mem.contains(&user.name) {
-                return Some(candidate.to_string());
-            }
-        }
-        None
-    }
     use std::os::unix::fs::PermissionsExt;
 
     fn scratch(tag: &str) -> std::path::PathBuf {
