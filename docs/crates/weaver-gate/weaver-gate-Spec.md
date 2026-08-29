@@ -484,6 +484,28 @@ socket would land at whatever the loser inherited, which is the same defect
 one level up. A gate organ raises once and meets no contention, and the lock
 costs nothing while removing the case.
 
+**The lock is reentrant within a thread, and that is a property of the
+mechanism rather than a convenience.** It serializes threads, and a thread
+cannot interleave with itself, so a nested acquire on the holding thread is a
+no-op. Without that, a caller holding the umask and raising inside - the
+natural shape, since the scoped accessor is offered for exactly the callers
+that must set the umask around this crate's use - takes one non-reentrant
+mutex twice on one thread and waits on itself forever. **The failure is a
+hang and not a refusal**, so no socket stands, nothing is recorded, and the
+test harness reports a killed binary rather than a defect. A watch on it
+therefore runs the nested raise on its own thread against a timeout, a
+deadlock being the one failure a test cannot observe from inside.
+
+```graph
+node: gate-umask-lock-is-reentrant-within-a-thread
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-umask-lock-is-reentrant-within-a-thread
+```
+
 **The watch is the removal of the umask guard**, not of a mode call: with it
 gone the socket binds at the runner's own umask and the test reports `0777`.
 Naming the removal matters because a property and its failure path are not
@@ -882,9 +904,8 @@ against the graph's floor links under gate H2. No async runtime, no logging crat
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
-**Which invariant each claim serves, and why seventeen serve none.** Seventeen
-`grounds`
-edges run from sixteen of the thirty-three, nine to
+**Which invariant each claim serves, and why eighteen serve none.** Seventeen
+`grounds` edges run from sixteen of the thirty-four, nine to
 `axiom-floor-is-vocabulary-behavior-is-socket`, five to
 `axiom-contract-is-a-complete-interface`, and three to
 `axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two

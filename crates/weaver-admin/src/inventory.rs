@@ -206,14 +206,27 @@ fn take_inventory_against(
     // **The two locks may narrow the same set and may not contradict.** So a
     // rule the mode would silently defeat refuses here, named, before any
     // unit starts, rather than at a `connect` no layer reports.
-    if let EnterBinding::Serving { gate_instruction } = &binding
-        && let Some(unreachable) = match group {
-            Some(known) => {
-                unreachable_peer_against(&identity, &gate_instruction.access_rule, known)
-            }
-            None => unreachable_peer(&identity, &gate_instruction.access_rule),
-        }
-    {
+    //
+    // **The rule half is the serving binding's and the group half is every
+    // binding's.** `start_arguments` emits `--property=Group={identity}` for
+    // every unit, so a box carrying the agent user and not its group fails
+    // `systemd-run` with the opaque credential error whatever the binding is,
+    // and gating the whole check on `Serving` let a diagnostic declaration
+    // pass validate clean and fail at load. A diagnostic binding is asked
+    // with an empty rule, which reaches the group arm and names no peer.
+    let empty_rule = weaver_types::AccessRule {
+        allowed_uids: Default::default(),
+        allowed_gids: Default::default(),
+        denied_uids: Default::default(),
+    };
+    let rule = match &binding {
+        EnterBinding::Serving { gate_instruction } => &gate_instruction.access_rule,
+        _ => &empty_rule,
+    };
+    if let Some(unreachable) = match group {
+        Some(known) => unreachable_peer_against(&identity, rule, known),
+        None => unreachable_peer(&identity, rule),
+    } {
         // **`BoundaryUnverified` and not `ConfigInvalid`.** The declaration is
         // well formed and the fault is the box's: the operator wrote a uid
         // that ought to reach the socket and the provisioning has not put it
@@ -386,9 +399,28 @@ fn unreachable_peer_against(
         if *uid == 0 {
             continue;
         }
+        // **A uid the rule denies is not a peer this asks about.**
+        // `weaver_types::authorized` gives `denied_uids` precedence over
+        // `allowed_uids`, so a uid in both is refused at `accept` whatever
+        // the mode does, and naming it unreachable would refuse a
+        // declaration over a peer that was never going to be admitted.
+        if rule.denied_uids.contains(uid) {
+            continue;
+        }
         let user = match nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(*uid)) {
             Ok(Some(user)) => user,
-            _ => continue,
+            // **A uid with no passwd entry is unreachable and not exempt.**
+            // Group membership is recorded by name, so a uid carrying no
+            // name is in no group and cannot hold the agent's: it reaches a
+            // `0770` socket it does not own by no route. Continuing here was
+            // an undeclared third exemption beside `allowed-gids` and uid 0,
+            // and it passed exactly the declaration this check exists to
+            // catch - the dialer turned away at `connect(2)` while the
+            // driver reports the socket never stood.
+            Ok(None) => return Some(Unreachable::UidOutsideGroup(*uid)),
+            // A lookup that failed establishes nothing, which is the rule
+            // the group resolution follows too.
+            Err(_) => continue,
         };
         // The agent's own group reached either as a primary or a secondary.
         if user.gid.as_raw() == gid || members.contains(&user.name) {
@@ -526,8 +558,8 @@ mod tests {
             gid: 6000,
             members: vec!["someone-else".to_string()],
         };
-        // A uid with no passwd entry cannot be judged and is skipped, so the
-        // case needs one the host resolves: this process's own, which is in
+        // A uid the host does resolve, so this case is about the group and
+        // not about the passwd entry: this process's own, which is in
         // neither the gid nor the member list above.
         let me = nix::unistd::Uid::current().as_raw();
         let mine = weaver_types::AccessRule {
@@ -563,8 +595,16 @@ mod tests {
             None
         );
 
-        // A uid the host cannot resolve is skipped rather than refused.
-        assert_eq!(unreachable_peer_against("weaver-x", &rule, &excludes), None);
+        // **A uid the host cannot resolve is named rather than skipped**, and
+        // this assertion said the opposite until 2026-08-29. Skipping it was
+        // an undeclared third exemption beside `allowed-gids` and uid 0: a
+        // uid with no passwd entry is in no group, membership being recorded
+        // by name, so it reaches a `0770` socket it does not own by no route.
+        assert_eq!(
+            unreachable_peer_against("weaver-x", &rule, &excludes),
+            Some(Unreachable::UidOutsideGroup(4242)),
+            "a uid with no passwd entry is unreachable, not exempt"
+        );
 
         // Membership by the group's own gid, and by the member list.
         let includes = ResolvedGroup::Present {
@@ -618,6 +658,52 @@ mod tests {
             unreachable_peer_against("weaver-x", &rule, &ResolvedGroup::NoAgent),
             None
         );
+
+        // A group this caller is not in, so the walk actually runs.
+        let outside = ResolvedGroup::Present {
+            gid: u32::MAX - 1,
+            members: Vec::new(),
+        };
+
+        // **A uid with no passwd entry is unreachable, not exempt.** Group
+        // membership is recorded by name, so a uid carrying no name holds no
+        // group and reaches a `0770` socket it does not own by no route.
+        // Continuing past it was an undeclared third exemption beside
+        // `allowed-gids` and uid 0, and it passed exactly the declaration
+        // this check exists to catch.
+        let nameless = 4242;
+        assert!(
+            nix::unistd::User::from_uid(nix::unistd::Uid::from_raw(nameless))
+                .ok()
+                .flatten()
+                .is_none(),
+            "the fixture uid must carry no passwd entry on this box"
+        );
+        let orphan = weaver_types::AccessRule {
+            allowed_uids: [nameless].into_iter().collect(),
+            allowed_gids: Default::default(),
+            denied_uids: Default::default(),
+        };
+        assert_eq!(
+            unreachable_peer_against("weaver-x", &orphan, &outside),
+            Some(Unreachable::UidOutsideGroup(nameless)),
+            "a uid with no passwd entry is named rather than skipped"
+        );
+
+        // **And a uid the rule itself denies is not asked about.**
+        // `weaver_types::authorized` gives `denied_uids` precedence, so a uid
+        // in both sets never reaches `accept` whatever the mode does, and
+        // naming it would refuse a declaration over a peer already refused.
+        let both = weaver_types::AccessRule {
+            allowed_uids: [nameless].into_iter().collect(),
+            allowed_gids: Default::default(),
+            denied_uids: [nameless].into_iter().collect(),
+        };
+        assert_eq!(
+            unreachable_peer_against("weaver-x", &both, &outside),
+            None,
+            "a denied uid is not a peer the mode is asked about"
+        );
     }
 
     /// A group this cannot read is not a contradiction it may assert, so the
@@ -631,6 +717,79 @@ mod tests {
             denied_uids: Default::default(),
         };
         assert_eq!(unreachable_peer("weaver-no-such-agent-here", &rule), None);
+    }
+
+    /// **The group half of the check covers every binding, not the serving
+    /// one.**
+    ///
+    /// `start_arguments` emits `--property=Group={identity}` for every unit,
+    /// so a box carrying the agent user and not its group fails
+    /// `systemd-run` with an opaque credential error whatever the binding is.
+    /// Gating the whole check on `EnterBinding::Serving` let a diagnostic
+    /// declaration pass validate clean and fail at load, which is exactly the
+    /// failure the `GroupMissing` arm exists to preempt.
+    ///
+    /// The other half of the rule still holds: a box carrying **neither** the
+    /// user nor the group has provisioned no agent and is refused on nothing,
+    /// which is what lets a bare checkout and CI run this at all.
+    ///
+    /// Perturbation: returning the group check to inside the `Serving` arm
+    /// leaves the diagnostic half `Ok`. Watched failing 2026-08-29.
+    ///
+    /// conforms: admin-access-rule-reaches-the-socket
+    #[test]
+    fn a_diagnostic_declaration_meets_the_group_check_too() {
+        let root = scratch("diagnostic-group");
+        let sink_dir = root.join("sink");
+        std::fs::create_dir_all(&sink_dir).expect("sink dir");
+        let home = root.join("home");
+        std::fs::create_dir_all(&home).expect("home");
+        std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o700)).expect("mode");
+        let allow = AllowList::new(["karl".to_string()]);
+        let name = AgentName("karl".into());
+        let bound = boundary(&home, 65533);
+
+        // Diagnostic: the kind its binding requires, with the gate
+        // instruction its kind excludes removed. No access rule is present,
+        // so nothing but the group can refuse it.
+        let source = format!(
+            "{}binding-kind: diagnostic\n",
+            config_source(&sink_dir).replace(
+                concat!(
+                    "gate-instruction:\n",
+                    "  access-rule:\n",
+                    "    allowed-uids: [0]\n",
+                    "    allowed-gids: []\n",
+                    "    denied-uids: [1701]\n"
+                ),
+                ""
+            )
+        );
+
+        let refused = take_inventory_against(
+            &name,
+            &source,
+            &allow,
+            &bound,
+            Some(&ResolvedGroup::UserWithoutGroup),
+        );
+        assert!(
+            matches!(refused, Err(LifecycleRefusal::BoundaryUnverified)),
+            "a diagnostic declaration meets the missing group: {refused:?}"
+        );
+
+        // And a box that provisioned no agent at all is refused on nothing.
+        assert!(
+            take_inventory_against(
+                &name,
+                &source,
+                &allow,
+                &bound,
+                Some(&ResolvedGroup::NoAgent)
+            )
+            .is_ok(),
+            "an unprovisioned box is refused on no fact about an agent"
+        );
     }
 
     /// The wiring: `take_inventory` calls the reachability check and refuses
@@ -647,7 +806,7 @@ mod tests {
     /// `take_inventory_against` leaves this returning `Ok`, watched failing
     /// 2026-08-29 - and now on this box rather than on a hypothetical one.
     ///
-    /// conforms: admin-access-rule-checked-against-socket-mode
+    /// conforms: admin-access-rule-reaches-the-socket
     #[test]
     fn a_rule_the_mode_would_defeat_refuses_at_the_inventory() {
         let me = nix::unistd::Uid::current().as_raw();

@@ -165,6 +165,32 @@ pub fn start(
 /// nothing else. A builder who let any of these be composed from the
 /// invocation's own input would widen the delegated authority by the route
 /// the name check closes.
+/// Every unit key that can move the worker's identity, and therefore every
+/// key an installed template may not set.
+///
+/// **The list is the closure of what `unreachable_peer` depends on, not the
+/// two keys one round happened to find.** That check's premise is that the
+/// socket's group is `weaver-<agent>` and the worker runs as the agent, and
+/// `agent_gids` computes the credential set from exactly these. A template
+/// moving any of them breaks the premise, and admin then validates a rule
+/// against an identity the worker does not hold.
+///
+/// `SupplementaryGroups` is the sharp one because **it is additive**: it
+/// grants gids without displacing anything, so it leaves `User=` and
+/// `Group=` reading correctly while handing the worker a gid the denial walk
+/// never computed - which reopens the sink traversal along a second route
+/// after the first was closed. `DynamicUser` is here because it discards the
+/// provisioned identity outright.
+///
+/// conforms: admin-runtime-directory-mode-is-stated
+const IDENTITY_KEYS: &[&str] = &[
+    "User",
+    "Group",
+    "SupplementaryGroups",
+    "DynamicUser",
+    "RuntimeDirectoryMode",
+];
+
 fn start_arguments(
     template: &UnitTemplate,
     identity: &str,
@@ -198,14 +224,17 @@ fn start_arguments(
         // conforms: admin-runtime-directory-mode-is-stated
         "--property=RuntimeDirectoryMode=0750".to_string(),
     ];
-    // **The template's own properties are refused where they name a boundary
-    // key**, rather than emitted and allowed to win.
+    // **The template's own properties are refused where they name a key that
+    // moves the worker's identity**, rather than emitted and allowed to win.
     //
     // `systemd-run` takes the last assignment, so an installed hardening
-    // template carrying `Group=` or `RuntimeDirectoryMode=` would revert the
-    // boundary with no diagnostic - and `unreachable_peer`'s whole premise,
-    // that the socket's group is `weaver-<agent>`, would break with it, so
-    // admin would validate a rule against a group the socket does not carry.
+    // template carrying one of [`IDENTITY_KEYS`] would revert the boundary
+    // with no diagnostic - and `unreachable_peer`'s whole premise, that the
+    // socket's group is `weaver-<agent>` and the worker runs as the agent,
+    // would break with it, so admin would validate a rule against an identity
+    // the worker does not hold. `SupplementaryGroups=` does it without
+    // displacing anything, which is why the list is the closure of what the
+    // denial walk reads rather than the keys this crate sets.
     //
     // Emitting these after the template would let the boundary win silently
     // instead, which trades one silent override for another. A template
@@ -226,7 +255,7 @@ fn start_arguments(
         let names_boundary = property
             .split('=')
             .next()
-            .is_some_and(|key| matches!(key.trim(), "Group" | "RuntimeDirectoryMode"));
+            .is_some_and(|key| IDENTITY_KEYS.contains(&key.trim()));
         if names_boundary {
             eprintln!(
                 "template property dropped: {property}: this crate sets \
@@ -516,6 +545,74 @@ mod tests {
                 "/usr/libexec/weaver-gate".to_string(),
             ],
             "the binary and its three arguments close the vector: {rendered:?}"
+        );
+    }
+
+    /// **No template property moves the worker's identity**, per
+    /// `weaver-admin-Spec` section 6.
+    ///
+    /// `systemd-run` takes the last assignment, so every one of these would
+    /// otherwise win over what this crate sets, and `unreachable_peer` would
+    /// then validate an access rule against an identity the worker does not
+    /// hold. **`SupplementaryGroups=` is the one worth naming**: it is
+    /// additive, so it leaves `User=` and `Group=` reading correctly while
+    /// handing the worker a gid `agent_gids` never computes, which reopens
+    /// the sink traversal along a second route after the first was closed.
+    ///
+    /// Perturbation: dropping any key from [`IDENTITY_KEYS`] fails this.
+    /// Watched failing 2026-08-29 with `SupplementaryGroups` removed.
+    ///
+    /// conforms: admin-runtime-directory-mode-is-stated
+    #[test]
+    fn no_template_property_moves_the_workers_identity() {
+        let template = UnitTemplate {
+            control_tool: "/bin/true".into(),
+            run_tool: "/bin/true".into(),
+            properties: vec![
+                "User=root".into(),
+                "Group=users".into(),
+                "SupplementaryGroups=wheel docker".into(),
+                "DynamicUser=yes".into(),
+                "RuntimeDirectoryMode=0777".into(),
+                // Whitespace around the key is the same key.
+                " Group =nogroup".into(),
+                // And a hardening property that moves nothing rides through.
+                "PrivateTmp=yes".into(),
+            ],
+            worker: "/usr/libexec/weaver-worker".into(),
+            spu: "/usr/libexec/weaver-spu".into(),
+            gate: "/usr/libexec/weaver-gate".into(),
+            headroom_bytes: None,
+        };
+        let rendered = start_arguments(
+            &template,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
+        );
+        for dropped in [
+            "User=root",
+            "Group=users",
+            "SupplementaryGroups=wheel docker",
+            "DynamicUser=yes",
+            "RuntimeDirectoryMode=0777",
+            "Group =nogroup",
+        ] {
+            assert!(
+                !rendered.iter().any(|arg| arg.contains(dropped)),
+                "the template may not set {dropped}: {rendered:?}"
+            );
+        }
+        assert!(
+            rendered.contains(&"--property=PrivateTmp=yes".to_string()),
+            "a property that moves no identity rides through: {rendered:?}"
+        );
+        // And what this crate sets is still what the vector carries.
+        assert!(
+            rendered.contains(&"--property=User=weaver-alpha".to_string())
+                && rendered.contains(&"--property=Group=weaver-alpha".to_string()),
+            "the crate's own identity survives the filter: {rendered:?}"
         );
     }
 

@@ -805,10 +805,6 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-boundary-reads-every-gid-the-worker-holds
-
-edge: grounds
-from: admin-boundary-reads-every-gid-the-worker-holds
-to: admin-boundary-denies-agent-traversal
 ```
 
 **The devices the binding assigns are not checked here, and the absence is
@@ -1817,17 +1813,20 @@ is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Twelve of the
-thirty-seven carry a `grounds` edge and those twelve carry thirteen edges, one
-record grounding in two invariants. **Two of the three records this act adds
+**Which invariant each claim serves, and why most serve none.** Eleven of the
+thirty-seven carry a `grounds` edge and those eleven carry twelve edges, one
+record grounding in two invariants. **All three records this act adds
 ground in none**, and the paragraph accounts for each rather than one. Section
 6's runtime directory mode is an election about a boundary this crate
 provisions, and its access rule reachability is a consistency rule between two
-locks - neither is a claim an invariant reaches. The third,
-`admin-boundary-reads-every-gid-the-worker-holds`, grounds in
-`admin-boundary-denies-agent-traversal` rather than in an axiom: it is the
-same denial stated with the credential set corrected, so the invariant it
-serves is the walk's own. Named rather than numbered, an ordinal in document order
+locks - neither is a claim an invariant reaches. The third, the gid set the
+denial walk reads, is the same shape: it corrects the credential set of a
+walk this crate already performs, and the walk it corrects grounds in no
+axiom either. A `grounds` edge to that walk was drafted and removed - the
+notation runs from an assertion to an **axiom**, per Document Format section
+on edges, and an assertion-to-assertion edge would have been a new relation
+smuggled in under an existing name. Named rather than numbered, an ordinal
+in document order
 being the thing that goes stale next. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,

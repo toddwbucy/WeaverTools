@@ -264,7 +264,7 @@ fn an_occupied_path_refuses_and_the_occupant_survives() {
 /// and a watch whose failure mode is an infinite wait is not one this suite
 /// can report on. Watched hanging 2026-08-29.
 ///
-/// conforms: gate-socket-mode-is-elected-at-bind
+/// conforms: gate-umask-lock-is-reentrant-within-a-thread
 #[test]
 fn a_raise_nested_inside_the_umask_lock_completes() {
     let path = scratch("nested");
