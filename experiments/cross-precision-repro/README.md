@@ -42,11 +42,25 @@ builds in good faith:
   has held the path and sha256 since #375, in every deposit from 08-27.
   So this wants comparing rather than writing down, and the gap that cost
   a week was that nothing compared the two records.
-- **The cccl version, and the kernel it selects.** `argsort.cu` and
-  `top-k.cu` guard on `CCCL_MINOR_VERSION`, so the host's cccl decides
-  CUB against fallback kernels. Record the versioned namespace read from
-  `argsort.cu.o`, which carries the CCCL version and the architecture
-  list in one string.
+- **The cccl version, the kernel it selects, and the architecture list -
+  three fields, not one string.** `argsort.cu` and `top-k.cu` guard on
+  `CCCL_MINOR_VERSION`, so the host's cccl decides CUB against fallback
+  kernels. All three are readable from the versioned namespace in
+  `argsort.cu.o`, for example
+  `cub::_V_300304_SM_750_800_860_890_1200_1210`, **and they must be
+  compared under different rules**, so recording them joined is a record
+  a comparator cannot use:
+
+  | field | example | rule |
+  |---|---|---|
+  | cccl version | `300304` | **must match** across boxes |
+  | kernel selection | CUB argsort, CUB top-k | **must match** across boxes |
+  | architecture list | `750 800 860 890 1200 1210` | **may differ**, and does |
+
+  The architecture list is the only one of the three a cross-box
+  comparison may see differ. Joining it to the other two produces a
+  string that differs whenever the hardware does, which reads as a cccl
+  mismatch and is not one.
 - **`NVCC_CCBIN`.** The host compiler moves the emitted symbol set,
   measured here as nine symbols between GCC 15.3.0 and 16.2.1.
 - **Which directory the engine libraries were installed from.**
