@@ -121,7 +121,95 @@ impl CoordinationListener {
             .unwrap_or(std::path::Path::new("/"))
             .join("gate.sock")
     }
+}
 
+/// A process umask held for one bind and restored on every path out.
+///
+/// The gate and the state member carry the same type for the same reason, per
+/// `weaver-gate-Spec` section 3: a Unix socket's mode comes from the umask at
+/// creation, and setting it afterwards leaves the name live at whatever was
+/// inherited for the window between. Serialized on the one process umask, so
+/// two binds cannot interleave their save and restore.
+struct CoordinationUmask {
+    previous: nix::sys::stat::Mode,
+    _serialized: CoordinationSerialized,
+}
+
+static COORDINATION_UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+thread_local! {
+    /// Whether this thread already holds [`COORDINATION_UMASK`].
+    ///
+    /// **The mutex is not reentrant, and the guard alone does not make it
+    /// so.** A caller that holds it and then does anything taking it again
+    /// waits on itself, with no second party involved and no deadlock
+    /// detector to say so. The lock serializes threads, and a thread cannot
+    /// interleave with itself, so a nested acquire on the holding thread is
+    /// a no-op. `weaver-gate-Spec` section 3 argues the same shape for the
+    /// gate's guard.
+    static COORDINATION_HELD: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The umask lock, held for a scope, reentrant within one thread.
+///
+/// `None` inside means the outer holder on this thread releases it. The
+/// umask nests correctly regardless, each guard restoring what it found in
+/// LIFO order.
+struct CoordinationSerialized(Option<std::sync::MutexGuard<'static, ()>>);
+
+impl CoordinationSerialized {
+    fn acquire() -> Self {
+        if COORDINATION_HELD.with(std::cell::Cell::get) {
+            return CoordinationSerialized(None);
+        }
+        // A poisoned lock still hands back the guard: the umask is restored
+        // on every path out including a panic, so the value behind it is
+        // sound whatever happened to the thread that held it last.
+        let guard = COORDINATION_UMASK
+            .lock()
+            .unwrap_or_else(|held| held.into_inner());
+        COORDINATION_HELD.with(|held| held.set(true));
+        CoordinationSerialized(Some(guard))
+    }
+}
+
+impl Drop for CoordinationSerialized {
+    fn drop(&mut self) {
+        if self.0.is_some() {
+            COORDINATION_HELD.with(|held| held.set(false));
+        }
+    }
+}
+
+/// Runs `work` with the process umask held, for a caller that must read or
+/// set it around this module's own use.
+///
+/// **Exposed to this crate's tests because the resource is the process's.** A
+/// test reading the ambient umask, or electing a known one so a mode
+/// assertion is not vacuous, races the bind's own guard otherwise.
+#[cfg(test)]
+fn with_umask_held<T>(work: impl FnOnce() -> T) -> T {
+    let _serialized = CoordinationSerialized::acquire();
+    work()
+}
+
+impl CoordinationUmask {
+    /// Deny every bit to group and other, so the name lands at `0700`.
+    fn deny_all_but_owner() -> Self {
+        let serialized = CoordinationSerialized::acquire();
+        CoordinationUmask {
+            previous: nix::sys::stat::umask(
+                nix::sys::stat::Mode::S_IRWXG | nix::sys::stat::Mode::S_IRWXO,
+            ),
+            _serialized: serialized,
+        }
+    }
+}
+
+impl Drop for CoordinationUmask {
+    fn drop(&mut self) {
+        nix::sys::stat::umask(self.previous);
+    }
 }
 
 /// Binds the coordination socket and listens, which is the worker's first act.
@@ -162,8 +250,25 @@ pub fn bind_coordination(
     // report one thing as another.
     let address = UnixAddr::new(socket_path)
         .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
-    bind(fd.as_raw_fd(), &address)
-        .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
+    // **The mode is elected in the creating call**, the reasoning of
+    // `weaver-gate-Spec` section 3 applied to the third named socket in the
+    // agent's runtime directory. `bind` sets none, so this name would land at
+    // `0777 & ~umask` and the door's permissions would be whatever umask this
+    // process inherited.
+    //
+    // **`0700` here rather than the gate's `0770`.** `accept_root` admits
+    // `uid() == 0` and no other, so no group reaches this door and a mode
+    // granting one would describe access it does not offer. The credential
+    // check is the lock that decides; this is the lock that keeps a stranger
+    // from arriving at it, and the directory's `0750` narrows who may
+    // traverse rather than who may connect.
+    //
+    // conforms: harness-coordination-door-states-its-mode
+    let bound = {
+        let _mask = CoordinationUmask::deny_all_but_owner();
+        bind(fd.as_raw_fd(), &address)
+    };
+    bound.map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
     listen(&fd, nix::sys::socket::Backlog::new(1).unwrap())
         .map_err(|e| ChannelFault::SocketPathUnusable { errno: e as i32 })?;
     Ok(CoordinationListener {
@@ -578,8 +683,7 @@ impl ClassifyChannel {
     /// so a hung peer costs the bound once rather than the serving thread
     /// forever, and the expiry is a channel fault the caller converts.
     pub fn recv_reply_within(&self, bound_ms: u64) -> Result<ClassifyReply, ChannelFault> {
-        let deadline =
-            std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(bound_ms);
         loop {
             let remaining = deadline.saturating_duration_since(std::time::Instant::now());
             if remaining.is_zero() {
@@ -841,7 +945,10 @@ mod series_tests {
             piece: "x".repeat(100_000),
         };
         let body = serde_json::to_vec(&answer).expect("renders");
-        assert!(body.len() > weaver_types::MAX_ENVELOPE_BYTES, "the fixture is oversized");
+        assert!(
+            body.len() > weaver_types::MAX_ENVELOPE_BYTES,
+            "the fixture is oversized"
+        );
         let preamble = format!(
             "{{\"segments\":{},\"bytes\":{}}}",
             body.len().div_ceil(weaver_types::MAX_ENVELOPE_BYTES),
@@ -872,5 +979,68 @@ mod series_tests {
         let through =
             reassemble_if_series(b"{\"kind\":\"not_open\"}".to_vec(), || panic!()).expect("passes");
         assert_eq!(through, b"{\"kind\":\"not_open\"}");
+    }
+}
+
+#[cfg(test)]
+mod door_mode_tests {
+    use super::*;
+
+    /// **The coordination door denies every uid but its owner.**
+    ///
+    /// `bind` sets no mode, so this name would land at `0777 & ~umask` and
+    /// the door's permissions would be whatever umask the process inherited -
+    /// `0777` on one box and `0775` on another from one build, on
+    /// 2026-08-28. Only `uid() == 0` is admitted at `accept_root`, so no
+    /// group reaches this door and `0700` is the access it offers.
+    ///
+    /// Where the runner's own umask produces `0700` this run cannot tell an
+    /// elected mode from an inherited one, so it says so and skips rather
+    /// than asserting against a run that cannot show the property.
+    ///
+    /// Perturbation: drop the `CoordinationUmask::deny_all_but_owner()` guard
+    /// from `bind_coordination` and this reports the runner's own mode.
+    /// Watched under exactly that removal, and watched **here** - the form
+    /// this replaced skipped wherever the ambient umask already produced
+    /// `0700`, which `0077` does, so on a hardened image it ran nowhere while
+    /// its record said otherwise.
+    ///
+    /// conforms: harness-coordination-door-states-its-mode
+    #[test]
+    fn the_coordination_door_denies_every_uid_but_its_owner() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-coordination-mode-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("scratch");
+        let path = dir.join("coordination.sock");
+
+        // **The umask is elected rather than read, so this runs everywhere.**
+        // An earlier form read the ambient value and skipped where it already
+        // produced `0700`, which `0077` does - a common hardened default, so
+        // the watch skipped on a hardened image and a later removal of the
+        // guard would have shipped green. `0o000` cannot produce `0700` by
+        // itself, so under it the mode on disk is the election or nothing.
+        //
+        // The lock is held across the window and is reentrant, so
+        // `bind_coordination` taking it again inside is a no-op.
+        let (listener, seen) = with_umask_held(|| {
+            let previous = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+            let bound = bind_coordination(&path);
+            let seen = std::fs::metadata(&path).map(|meta| meta.permissions().mode() & 0o777);
+            nix::sys::stat::umask(previous);
+            (bound, seen)
+        });
+        let listener = listener.expect("the name binds");
+        let mode = seen.expect("the socket is on disk");
+        assert_eq!(
+            mode, 0o700,
+            "the door states its mode rather than inheriting one, got {mode:04o}"
+        );
+        drop(listener);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

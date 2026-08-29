@@ -44,7 +44,15 @@ pub fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
 pub fn scratch(suite: &str, name: &str) -> PathBuf {
     let dir =
         std::env::temp_dir().join(format!("weaver-gate-{suite}-{}-{name}", std::process::id()));
-    std::fs::create_dir_all(&dir).expect("a scratch dir");
+    // **Created under the umask lock, because the umask is the process's.**
+    // A sibling test inside `Umask::deny_others` has every other-bit masked
+    // off, and a `create_dir_all` interleaving with it lands a directory at a
+    // mode nobody elected - the same race the guard exists to close, reaching
+    // a file the guard was never about. The lock is reentrant per thread, so
+    // a caller already holding it may call this.
+    weaver_gate::hook::with_umask_held(|| {
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+    });
     let path = dir.join("gate.sock");
     std::fs::remove_file(&path).ok();
     path

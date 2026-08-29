@@ -165,6 +165,38 @@ pub fn start(
 /// nothing else. A builder who let any of these be composed from the
 /// invocation's own input would widen the delegated authority by the route
 /// the name check closes.
+/// Every unit key this crate elects, and therefore every key an installed
+/// template may not set.
+///
+/// **The list is the closure of what the boundary rests on, not the keys one
+/// round happened to find.** `unreachable_peer`'s premise is that the
+/// socket's group is `weaver-<agent>` and the worker runs as the agent, and
+/// `agent_gids` computes the credential set from exactly these. A template
+/// moving any of them breaks the premise, and admin then validates a rule
+/// against an identity the worker does not hold.
+///
+/// **Two of them do their damage without looking like an override**, which
+/// is why the list is derived rather than enumerated from the keys this
+/// crate happens to write. `SupplementaryGroups=` is additive: it grants
+/// gids without displacing anything, so `User=` and `Group=` still read
+/// correctly while the worker holds a gid the denial walk never computed.
+/// And **an empty `RuntimeDirectory=` resets the list rather than setting
+/// it**, so a template carrying one leaves systemd creating no runtime
+/// directory at all, and the coordination socket has nowhere to bind - a
+/// start failure rather than a boundary one, and no less this crate's to
+/// refuse. `DynamicUser` is here because it discards the provisioned
+/// identity outright.
+///
+/// conforms: admin-runtime-directory-mode-is-stated
+const ELECTED_KEYS: &[&str] = &[
+    "User",
+    "Group",
+    "SupplementaryGroups",
+    "DynamicUser",
+    "RuntimeDirectory",
+    "RuntimeDirectoryMode",
+];
+
 fn start_arguments(
     template: &UnitTemplate,
     identity: &str,
@@ -176,12 +208,71 @@ fn start_arguments(
         "--unit".to_string(),
         format!("weaver-worker@{agent}"),
         format!("--property=User={identity}"),
+        // **The group is named beside the user.** `0750` on the runtime
+        // directory puts the operator's reach on membership in the agent's
+        // group, and without this systemd takes whatever primary group the
+        // operator happened to provision the agent user with. Where that is
+        // shared - `users`, or `nogroup` - the mode grants traversal to every
+        // member of it and the boundary is not the one section 6 describes.
+        format!("--property=Group={identity}"),
         format!(
             "--property=RuntimeDirectory={}",
             runtime_directory_name(agent)
         ),
+        // **The runtime directory states its mode**, per `weaver-admin-Spec`
+        // section 6. systemd's default is `0755`, so without this every uid
+        // on the box may traverse to the agent's sockets, and the gate's own
+        // mode is then the only thing between a stranger and the front door.
+        // `0750` puts the group there too: the operator reaches the socket by
+        // membership in the agent's group, which is the provisioning already
+        // documented, and no one else reaches it at all.
+        //
+        // conforms: admin-runtime-directory-mode-is-stated
+        "--property=RuntimeDirectoryMode=0750".to_string(),
     ];
+    // **The template's own properties are refused where they name a key this
+    // crate elects**, rather than emitted and allowed to win.
+    //
+    // `systemd-run` takes the last assignment, so an installed hardening
+    // template carrying one of [`ELECTED_KEYS`] would revert the boundary
+    // with no diagnostic - and `unreachable_peer`'s whole premise, that the
+    // socket's group is `weaver-<agent>` and the worker runs as the agent,
+    // would break with it, so admin would validate a rule against an identity
+    // the worker does not hold. `SupplementaryGroups=` does it without
+    // displacing anything and an empty `RuntimeDirectory=` resets rather than
+    // sets, which is why the list is the closure of what the boundary rests
+    // on rather than the keys this crate writes.
+    //
+    // Emitting these after the template would let the boundary win silently
+    // instead, which trades one silent override for another. A template
+    // naming either key is a configuration this crate cannot honour and says
+    // so.
+    //
+    // **Says so out loud, because dropping it quietly is the same failure in
+    // the other direction.** An operator who installs a hardening template
+    // with `RuntimeDirectoryMode=0700` and reads a clean start has no way to
+    // learn the boundary on disk and the boundary in force disagree. This
+    // function returns a `Vec<String>` and has no error channel to refuse
+    // through, so the diagnostic is the refusal an operator gets, and it
+    // names the property rather than the key alone so the line in the
+    // template is findable.
+    //
+    // conforms: admin-runtime-directory-mode-is-stated
     for property in &template.properties {
+        let names_boundary = property
+            .split('=')
+            .next()
+            .is_some_and(|key| ELECTED_KEYS.contains(&key.trim()));
+        if names_boundary {
+            eprintln!(
+                "template property dropped: {property}: this crate sets \
+                 Group= and RuntimeDirectoryMode= itself, the socket's group \
+                 being the boundary admin validates access rules against. \
+                 Remove it from the unit template rather than expecting it to \
+                 apply."
+            );
+            continue;
+        }
         args.push(format!("--property={property}"));
     }
     args.push(template.worker.display().to_string());
@@ -307,6 +398,75 @@ mod tests {
             rendered.iter().any(|a| a.contains("RuntimeDirectory=")),
             "the runtime directory is asked for: {rendered:?}"
         );
+        // **And its mode is stated rather than left to systemd's 0755**, per
+        // section 6. At the default every uid on the box may traverse to the
+        // agent's sockets, leaving the gate's own mode as the only thing
+        // between a stranger and the front door.
+        //
+        // Perturbation: drop the `RuntimeDirectoryMode` property and this
+        // fails, the directory then arriving world-traversable. Watched
+        // under exactly that removal.
+        //
+        // conforms: admin-runtime-directory-mode-is-stated
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=RuntimeDirectoryMode=0750"),
+            "the runtime directory's mode is the unit's election: {rendered:?}"
+        );
+        // **And the group the mode rests on.** `0750` puts the operator's
+        // reach on membership in the agent's group, and without `Group=`
+        // systemd takes whatever primary group the agent user was
+        // provisioned with - where that is shared, the mode grants traversal
+        // to every member of it and the boundary is not the one section 6
+        // describes. Unwatched, a later tidy dropping this line leaves the
+        // suite green while the mode silently reverts to that.
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=Group=weaver-alpha"),
+            "the runtime directory's group is named rather than inherited: {rendered:?}"
+        );
+        // **And a template naming either boundary key is dropped**, not
+        // emitted after them: `systemd-run` takes the last assignment, so an
+        // installed hardening template could otherwise revert the mode or the
+        // group with no diagnostic, and admin would then validate an access
+        // rule against a group the socket does not carry.
+        let hostile = UnitTemplate {
+            properties: vec![
+                "Group=users".into(),
+                "RuntimeDirectoryMode=0755".into(),
+                "MemoryMax=4G".into(),
+            ],
+            ..template.clone()
+        };
+        let rendered = start_arguments(
+            &hostile,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
+        );
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=Group=weaver-alpha")
+                && !rendered.iter().any(|a| a == "--property=Group=users"),
+            "the template's Group is dropped: {rendered:?}"
+        );
+        assert!(
+            rendered
+                .iter()
+                .any(|a| a == "--property=RuntimeDirectoryMode=0750")
+                && !rendered
+                    .iter()
+                    .any(|a| a == "--property=RuntimeDirectoryMode=0755"),
+            "the template's mode is dropped: {rendered:?}"
+        );
+        assert!(
+            rendered.iter().any(|a| a == "--property=MemoryMax=4G"),
+            "a property naming no boundary key still rides: {rendered:?}"
+        );
     }
 
     /// The one interpolated value is the validated agent name, so a name
@@ -392,6 +552,93 @@ mod tests {
                 "/usr/libexec/weaver-gate".to_string(),
             ],
             "the binary and its three arguments close the vector: {rendered:?}"
+        );
+    }
+
+    /// **No template property moves what this crate elects**, per
+    /// `weaver-admin-Spec` section 6.
+    ///
+    /// `systemd-run` takes the last assignment, so every one of these would
+    /// otherwise win over what this crate sets, and `unreachable_peer` would
+    /// then validate an access rule against an identity the worker does not
+    /// hold. **`SupplementaryGroups=` is the one worth naming**: it is
+    /// additive, so it leaves `User=` and `Group=` reading correctly while
+    /// handing the worker a gid `agent_gids` never computes, which reopens
+    /// the sink traversal along a second route after the first was closed.
+    /// **An empty `RuntimeDirectory=` is the other**: it resets the list
+    /// rather than setting it, so systemd creates no runtime directory and
+    /// the coordination socket has nowhere to bind. Both are covered here in
+    /// the shape that bites rather than in the shape that looks like an
+    /// override.
+    ///
+    /// Perturbation: dropping any key from [`ELECTED_KEYS`] fails this.
+    /// Watched failing 2026-08-29 with `SupplementaryGroups` removed and
+    /// again with `RuntimeDirectory` removed.
+    ///
+    /// conforms: admin-runtime-directory-mode-is-stated
+    #[test]
+    fn no_template_property_moves_the_workers_identity() {
+        let template = UnitTemplate {
+            control_tool: "/bin/true".into(),
+            run_tool: "/bin/true".into(),
+            properties: vec![
+                "User=root".into(),
+                "Group=users".into(),
+                "SupplementaryGroups=wheel docker".into(),
+                "DynamicUser=yes".into(),
+                "RuntimeDirectoryMode=0777".into(),
+                // **Empty resets rather than sets**, which is the shape that
+                // costs the runtime directory and with it the socket.
+                "RuntimeDirectory=".into(),
+                // Whitespace around the key is the same key.
+                " Group =nogroup".into(),
+                // And a hardening property that moves nothing rides through.
+                "PrivateTmp=yes".into(),
+            ],
+            worker: "/usr/libexec/weaver-worker".into(),
+            spu: "/usr/libexec/weaver-spu".into(),
+            gate: "/usr/libexec/weaver-gate".into(),
+            headroom_bytes: None,
+        };
+        let rendered = start_arguments(
+            &template,
+            "weaver-alpha",
+            "alpha",
+            std::path::Path::new("/run/weaver-alpha/coordination.sock"),
+            None,
+        );
+        for dropped in [
+            "User=root",
+            "Group=users",
+            "SupplementaryGroups=wheel docker",
+            "DynamicUser=yes",
+            "RuntimeDirectoryMode=0777",
+            "RuntimeDirectory=",
+            "Group =nogroup",
+        ] {
+            // **Matched whole rather than by substring**: this crate's own
+            // `RuntimeDirectory=weaver-alpha` contains the reset form
+            // `RuntimeDirectory=`, so a `contains` check here would report
+            // the election as the template's leftover.
+            let emitted = format!("--property={dropped}");
+            assert!(
+                !rendered.contains(&emitted),
+                "the template may not set {dropped}: {rendered:?}"
+            );
+        }
+        assert!(
+            rendered.contains(&"--property=PrivateTmp=yes".to_string()),
+            "a property that moves no identity rides through: {rendered:?}"
+        );
+        // And what this crate sets is still what the vector carries - the
+        // runtime directory included, an empty reset having been the way to
+        // lose it.
+        assert!(
+            rendered.contains(&"--property=User=weaver-alpha".to_string())
+                && rendered.contains(&"--property=Group=weaver-alpha".to_string())
+                && rendered.contains(&"--property=RuntimeDirectory=weaver-alpha".to_string())
+                && rendered.contains(&"--property=RuntimeDirectoryMode=0750".to_string()),
+            "the crate's own election survives the filter: {rendered:?}"
         );
     }
 

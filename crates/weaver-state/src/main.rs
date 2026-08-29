@@ -436,12 +436,123 @@ fn fill_buffer(stream: &mut std::os::unix::net::UnixStream, buffer: &mut Vec<u8>
     }
 }
 
+/// A process umask held for one bind and restored on every path out.
+///
+/// The gate carries the same type for the same reason, per
+/// `weaver-gate-Spec` section 3: a Unix socket's mode comes from the umask at
+/// creation, and setting it afterwards leaves the name live at whatever was
+/// inherited. Serialized on the one process umask, so two binds cannot
+/// interleave their save and restore.
+struct PreloadUmask {
+    previous: nix::sys::stat::Mode,
+    _serialized: PreloadSerialized,
+}
+
+static PRELOAD_UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+thread_local! {
+    /// Whether this thread already holds [`PRELOAD_UMASK`].
+    ///
+    /// **The mutex is not reentrant, and the guard alone does not make it
+    /// so.** A caller that holds it and then does anything taking it again
+    /// waits on itself, with no second party involved and no deadlock
+    /// detector to say so. The lock serializes threads, and a thread cannot
+    /// interleave with itself, so a nested acquire on the holding thread is
+    /// a no-op. `weaver-gate-Spec` section 3 argues the same shape for the
+    /// gate's guard.
+    static PRELOAD_HELD: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The umask lock, held for a scope, reentrant within one thread.
+///
+/// `None` inside means the outer holder on this thread releases it. The
+/// umask nests correctly regardless, each guard restoring what it found in
+/// LIFO order.
+struct PreloadSerialized(Option<std::sync::MutexGuard<'static, ()>>);
+
+impl PreloadSerialized {
+    fn acquire() -> Self {
+        if PRELOAD_HELD.with(std::cell::Cell::get) {
+            return PreloadSerialized(None);
+        }
+        // A poisoned lock still hands back the guard: the umask is restored
+        // on every path out including a panic, so the value behind it is
+        // sound whatever happened to the thread that held it last.
+        let guard = PRELOAD_UMASK
+            .lock()
+            .unwrap_or_else(|held| held.into_inner());
+        PRELOAD_HELD.with(|held| held.set(true));
+        PreloadSerialized(Some(guard))
+    }
+}
+
+impl Drop for PreloadSerialized {
+    fn drop(&mut self) {
+        if self.0.is_some() {
+            PRELOAD_HELD.with(|held| held.set(false));
+        }
+    }
+}
+
+/// Runs `work` with the process umask held, for a caller that must read or
+/// set it around this module's own use.
+///
+/// **Exposed to this crate's tests because the resource is the process's.** A
+/// test reading the ambient umask, or electing a known one so a mode
+/// assertion is not vacuous, races the bind's own guard otherwise.
+#[cfg(test)]
+fn with_umask_held<T>(work: impl FnOnce() -> T) -> T {
+    let _serialized = PreloadSerialized::acquire();
+    work()
+}
+
+impl PreloadUmask {
+    /// Deny every bit to group and other, so the name lands at `0700`.
+    fn deny_all_but_owner() -> Self {
+        let serialized = PreloadSerialized::acquire();
+        PreloadUmask {
+            previous: nix::sys::stat::umask(
+                nix::sys::stat::Mode::S_IRWXG | nix::sys::stat::Mode::S_IRWXO,
+            ),
+            _serialized: serialized,
+        }
+    }
+}
+
+impl Drop for PreloadUmask {
+    fn drop(&mut self) {
+        nix::sys::stat::umask(self.previous);
+    }
+}
+
 /// Bind the preload name and listen, without waiting for a peer. The door
 /// stands from the load so a driver dialing early finds it, and the accept
 /// happens in the serve loop beside the first door's traffic.
 fn stand_preload_name(path: &str) -> Option<std::os::unix::net::UnixListener> {
     let _ = std::fs::remove_file(path);
-    match std::os::unix::net::UnixListener::bind(path) {
+    // **The mode is elected in the creating call**, the reasoning of
+    // `weaver-gate-Spec` section 3 applied to this door. `bind` sets none, so
+    // the name would land at `0777 & ~umask` and the boundary's permissions
+    // would be whatever umask this process inherited - `0777` on one box and
+    // `0775` on another from one build, on 2026-08-28.
+    //
+    // **`0700` here rather than the gate's `0770`**, because the accept below
+    // admits `uid() == 0` and no one else, so there is no group to reach the
+    // door and a mode granting one would describe an access this door does
+    // not offer. The credential check is the lock that decides; this is the
+    // one that stops a stranger arriving at it.
+    //
+    // Held across the bind rather than set on the path afterwards, for the
+    // reason the gate states: a mode set after `bind` leaves the name live at
+    // the inherited mode in between, races a path an unprivileged process may
+    // be able to swap, and on failure leaves a file behind.
+    //
+    // conforms: state-preload-door-states-its-mode
+    let listener = {
+        let _mask = PreloadUmask::deny_all_but_owner();
+        std::os::unix::net::UnixListener::bind(path)
+    };
+    match listener {
         Ok(listener) => {
             if listener.set_nonblocking(true).is_err() {
                 let _ = std::fs::remove_file(path);
@@ -632,6 +743,61 @@ impl<'a> LineReader<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// **The preload door denies every uid but its owner.**
+    ///
+    /// `bind` sets no mode, so this name would land at `0777 & ~umask` and
+    /// the boundary's permissions would be whatever umask the process
+    /// inherited. Only `uid() == 0` is admitted at the accept, so there is no
+    /// group to reach the door, and `0700` is the access it offers.
+    ///
+    /// **The ambient umask is read and left alone**, and where it would
+    /// produce `0700` by itself the test says so and skips rather than
+    /// asserting against a run that cannot distinguish.
+    ///
+    /// Perturbation: drop the `PreloadUmask::deny_all_but_owner()` guard from
+    /// `stand_preload_name` and this reports `0777`. Watched under exactly
+    /// that removal, and watched **here** - the form this replaced skipped
+    /// wherever the ambient umask already produced `0700`, which `0077` does,
+    /// so on a hardened image it ran nowhere while its record said otherwise.
+    #[test]
+    fn the_preload_door_denies_every_uid_but_its_owner() {
+        use std::os::unix::fs::PermissionsExt;
+        let path = std::env::temp_dir().join(format!(
+            "weaver-state-preload-mode-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let path = path.to_str().expect("a utf-8 scratch path");
+        // **The ambient umask is elected rather than read, so this runs
+        // everywhere.** An earlier form read it and skipped where it already
+        // produced `0700`, which `0077` does - a common hardened default, so
+        // the watch skipped on a hardened CI image and a later removal of
+        // the guard would have shipped green. Reading avoided a false red at
+        // the cost of the watch running nowhere, which is the trade this
+        // program does not take.
+        //
+        // `0o000` cannot produce `0700` by itself, so under it the mode on
+        // disk is the election or nothing. The lock is held across the whole
+        // window, and it is reentrant, so `stand_preload_name` taking it
+        // again inside is a no-op rather than a wait.
+        let elected = with_umask_held(|| {
+            let previous = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+            let stood = stand_preload_name(path);
+            let seen = std::fs::metadata(path).map(|meta| meta.permissions().mode() & 0o777);
+            nix::sys::stat::umask(previous);
+            (stood, seen)
+        });
+        let (listener, seen) = elected;
+        assert!(listener.is_some(), "the preload name stands");
+        let mode = seen.expect("the socket is on disk");
+        assert_eq!(
+            mode, 0o700,
+            "the door states its mode rather than inheriting one, got {mode:04o}"
+        );
+        drop(listener);
+        let _ = std::fs::remove_file(path);
+    }
 
     /// **A replay ask parks at an open preload until the seal**, per
     /// `weaver-harness-state-contract` section 2 and

@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, third of this date, the coordination name elects its
+mode. Section 2.2 states that the bind happens under a umask denying every bit
+outside the owner, so the name lands at `0700` rather than at whatever the
+worker inherited - the third named socket in the agent's runtime directory and
+the last one left taking its permissions from the environment.
+
 **Revised:** 2026-08-28, both arms of the identity door's answer are read.
 Section 6 states that the recorder declining the write leaves the same hole a
 refusal does, and that the case does not distinguish the four causes while the
@@ -688,6 +694,36 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 ### 2.2 Creation, and the atomic flag
+
+**The coordination name's mode is elected in the creating call.** `bind` sets
+none, so the socket would land at `0777 & ~umask` and this door's permissions
+would be whatever umask the worker inherited - `0777` on one box and `0775` on
+another from one build, on 2026-08-28. The bind happens under a umask denying
+every bit outside the owner, so the name lands at `0700`.
+
+**`0700` here where the gate's door is `0770`**, per `weaver-gate-Spec` section
+3. `accept_root` admits `uid() == 0` and no other, so no group reaches this
+door and a mode granting one would describe access it does not offer. The
+runtime directory's `0750` narrows who may traverse to the name, and this
+narrows who may connect to it. The credential check is the lock that decides and this
+is the lock that keeps a stranger from arriving at it, which is the two-locks
+reasoning `weaver-harness-PRD` section 5 applies to the trace descriptor.
+
+**Elected rather than set on the path afterwards**, for the reason the gate
+states: a mode set after the bind leaves the name live at the inherited mode
+in between, races a path an unprivileged process may swap, and on failure
+leaves a file behind. The umask is process-global, so the guard serializes on
+it.
+
+```graph
+node: harness-coordination-door-states-its-mode
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-coordination-door-states-its-mode
+```
 
 **Both ends of every created pair carry close-on-exec from the creating act,
 by `SOCK_CLOEXEC` in the `socketpair` call rather than by a later `fcntl`.**

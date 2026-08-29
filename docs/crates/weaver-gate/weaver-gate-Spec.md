@@ -5,6 +5,28 @@ its charter is chartered to: the lifecycle half, with the traffic arriving via t
 workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-28, third of this date, the election's direction is
+stated plainly. Section 3 records that `0770` narrows against the two boxes
+measured and widens the group's reach against the common umasks, the boundary
+resting entirely on the unit naming `Group={identity}` rather than on the
+figure alone.
+
+**Revised:** 2026-08-28, second of this date, the mode is elected in the
+creating call. Section 3 states that the raise holds a umask across the bind
+rather than setting the mode on the path afterwards, which closes the window
+in which the socket listened at the inherited mode, the path race an agent-uid
+tool could win, and the post-bind failure that would have left a file behind
+and retired `gate-refused-raise-holds-nothing`.
+
+**Revised:** 2026-08-28, the socket's mode becomes the boundary's election.
+Section 3 states that the raise elects `0o770` rather than leaving it to the
+process umask, which had produced `0777` on one box and `0775` on another
+from one build. The credential check is unchanged and the two are named as
+two locks against different adversaries. **An earlier form of this entry said
+the raise sets the mode on the bound path**, which described a draft that
+never reached `main`: the mechanism is the umask around the bind, per the
+entry above.
+
 **Revised:** 2026-08-18, the tool boundary ruling lands section 8: the shell
 execution, the one tool this crate holds as its own outbound verb, with the
 one-clock rule, the four answer contents, and the group-kill containment as
@@ -415,6 +437,108 @@ from: gate-one-bind-site
 to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
+**The socket's mode is the boundary's election, not the umask's.**
+`UnixListener::bind` sets no mode, so the file lands at `0777 & ~umask` and
+the access control of the agent's front door is decided by whatever umask
+the process inherited. The raise holds a umask denying every bit to others
+across the bind, so the figure is this crate's and travels with it.
+
+**The election is not a tightening in every direction, and saying so plainly
+matters more than the story it replaces.** Against the two boxes measured on
+2026-08-28 it narrows - `0777` and `0775` both become `0770`. Against the
+common umasks it widens the group's reach:
+
+| umask | before | after |
+|---|---|---|
+| `0022`, the usual default | `0755` | `0770` |
+| `0002` | `0775` | `0770` |
+| `0077`, a hardened default | `0700` | `0770` |
+
+Connecting needs the write bit, so at `0022` the group could not connect and
+now can, and at `0077` the socket was the owner's alone. **That is the
+intent and it is conditional.** The operator reaches the socket by membership
+in the agent's group, which is what `0770` is for, and the whole boundary
+therefore rests on `Group={identity}` making that group exactly one agent -
+per `weaver-admin-Spec` section 6, which sets it on the unit and refuses a
+template that would take it back. Where the unit's group were a shared one,
+`users` or `nogroup`, this mode would hand connect rights to everyone in it.
+A dev run outside systemd has no such guarantee and no such boundary.
+
+**The election is made in the creating call and not on the path
+afterwards.** A `chmod` after the bind would answer the same question and
+open three others. `bind` also listens, so between the two calls the socket
+is live at the inherited mode and connections queued there are served. The
+`chmod` would go by path, and the adversary this crate's reference walk
+names is a tool running as the agent uid, which owns the runtime directory:
+in that window it can unlink the socket and point the name elsewhere, so
+the `chmod` lands on a decoy while the real socket keeps the umask's mode
+and the raise reports an election it did not make. And a `chmod` that
+failed would return after the pathname exists, leaving a file this crate
+unlinks nowhere - so `gate-refused-raise-holds-nothing` would stop holding
+and every later raise on that path would answer `Address already in use`
+for the life of the runtime directory.
+
+**The umask is process-global, so the guard serializes on it.** Two raises
+on one process would otherwise interleave their save and restore and the
+socket would land at whatever the loser inherited, which is the same defect
+one level up. A gate organ raises once and meets no contention, and the lock
+costs nothing while removing the case.
+
+**The lock is reentrant within a thread, and that is a property of the
+mechanism rather than a convenience.** It serializes threads, and a thread
+cannot interleave with itself, so a nested acquire on the holding thread is a
+no-op. Without that, a caller holding the umask and raising inside - the
+natural shape, since the scoped accessor is offered for exactly the callers
+that must set the umask around this crate's use - takes one non-reentrant
+mutex twice on one thread and waits on itself forever. **The failure is a
+hang and not a refusal**, so no socket stands, nothing is recorded, and the
+test harness reports a killed binary rather than a defect. A watch on it
+therefore runs the nested raise on its own thread against a timeout, a
+deadlock being the one failure a test cannot observe from inside.
+
+```graph
+node: gate-umask-lock-is-reentrant-within-a-thread
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-umask-lock-is-reentrant-within-a-thread
+```
+
+**The watch is the removal of the umask guard**, not of a mode call: with it
+gone the socket binds at the runner's own umask and the test reports `0777`.
+Naming the removal matters because a property and its failure path are not
+the same thing, and this act's first form was watched on a call that no
+longer exists. **This
+is not a hypothetical drift**: on 2026-08-28 one build bound `0777` on one
+box and `0775` on another, the two holding different ambient umasks, and
+neither figure was anyone's election.
+
+Connecting to a Unix socket requires write permission, so denying the write
+bit outside owner and group is what excludes a uid. The read and execute
+bits others would hold under a laxer mode buy them nothing on a socket. The
+operator reaches the socket through membership in the agent's group, which
+is the provisioning already owed, and no one else reaches it at all.
+
+**Two locks, answering different adversaries.** The mode stops a stranger
+from reaching the door, and the credential check below stops one who does. A
+boundary resting on the credential alone would still let any local uid
+spend this process's accept loop, and one resting on the mode alone would
+trust the filesystem with a judgment the rule owns. Neither is redundant,
+which is the reasoning `weaver-harness-PRD` section 5 applies to the trace
+descriptor's two locks.
+
+```graph
+node: gate-socket-mode-is-the-boundarys-election
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-socket-mode-is-the-boundarys-election
+```
+
 **Every connection is authenticated at accept, before any byte is read.**
 The accepting call sets close-on-exec on the connection, the peer's
 credential is read with `SO_PEERCRED`, and the identity is judged by the
@@ -780,8 +904,8 @@ against the graph's floor links under gate H2. No async runtime, no logging crat
 implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
-**Which invariant each claim serves, and why seven serve none.** Seventeen `grounds`
-edges run from sixteen of the twenty-three, nine to
+**Which invariant each claim serves, and why eighteen serve none.** Seventeen
+`grounds` edges run from sixteen of the thirty-four, nine to
 `axiom-floor-is-vocabulary-behavior-is-socket`, five to
 `axiom-contract-is-a-complete-interface`, and three to
 `axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two
@@ -887,8 +1011,8 @@ sections 1 through 5, rather than gathered here, per Document Format section
 block here would sit apart from the prose that earns it. One record is the
 exception and sits at the end of this section, the doctest pinning of the two
 bind-site shapes, whose argument is nowhere else and whose general
-prohibition is section 3's. Twenty-three records in all, seventeen from this
-section's sorting with the walks counted in and six from the elections
+prohibition is section 3's. Thirty-three records in all, seventeen from this
+section's sorting with the walks counted in and the rest from the elections
 outside it, a split's two halves both counting as this section's because
 neither was elected and one was divided out, per Document Format section 3.
 **Two of the bullets above are claims another crate argues,** and carry no

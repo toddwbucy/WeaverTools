@@ -23,6 +23,91 @@ fn scratch(name: &str) -> std::path::PathBuf {
     scratch_path("boundary", name)
 }
 
+/// **The socket's mode is the boundary's election and not the umask's.**
+/// `UnixListener::bind` sets no mode, so the file would land at
+/// `0777 & ~umask` and the access control of the agent's front door would be
+/// decided by whatever umask the process inherited. On 2026-08-28 the same
+/// build bound `0777` on one box and `0775` on another for exactly that
+/// reason, and neither figure was anyone's election.
+///
+/// Connecting to a Unix socket requires write permission, so the assertion is
+/// that no bit outside owner and group is set. **The ambient umask is read
+/// and left alone**, and where it would produce `0770` by itself the test
+/// says so and skips - an earlier form loosened it across the raise, which
+/// held the process-global umask open while sibling threads created files.
+///
+/// **The election is made through the umask around the bind**, so the
+/// perturbation is the removal of that, not of a chmod: drop the
+/// `Umask::deny_others()` guard from `Hook::raise` and this fails with
+/// `0777`. Watched under exactly that removal.
+///
+/// conforms: gate-socket-mode-is-the-boundarys-election
+#[test]
+fn the_socket_denies_every_uid_outside_the_group() {
+    use std::os::unix::fs::PermissionsExt;
+    let path = scratch("socket-mode");
+    // **The ambient umask is read rather than loosened.** An earlier form set
+    // it to `0o000` across the raise so the test could not pass by accident
+    // of the runner's mask, which meant holding the process-global umask
+    // loose while a sibling thread might create a file under it. The last
+    // assertion does that work instead, without the window.
+    // **Where the runner's own umask would produce `0770`, this run cannot
+    // tell an elected mode from an inherited one, so it reports that and
+    // stops.** An earlier form asserted the distinguishability instead,
+    // which turned a correct build red under a umask of `0007` - a vacuity
+    // guard failing the build is the one thing a vacuity guard must not do.
+    let ambient = ambient_umask();
+    if 0o777 & !ambient == 0o770 {
+        eprintln!(
+            "SKIP the_socket_denies_every_uid_outside_the_group: the ambient \
+             umask {ambient:04o} produces 0770 by itself"
+        );
+        return;
+    }
+    let hook = Hook::raise(&permissive_instruction(), &path).expect("the raise binds");
+
+    let mode = std::fs::metadata(&path)
+        .expect("the socket is on disk")
+        .permissions()
+        .mode()
+        & 0o777;
+    assert_eq!(
+        mode, 0o770,
+        "the socket states its mode rather than inheriting one, got {mode:04o}"
+    );
+    assert_eq!(
+        mode & 0o007,
+        0,
+        "no bit outside owner and group, and write is what connecting needs"
+    );
+    drop(hook);
+}
+
+/// The ambient umask, read without holding it across anything.
+///
+/// **Reading it means setting it**, `umask(2)` returning the old value, so
+/// even a read takes the lock this crate's own guard serializes on.
+///
+/// **That lock does not reach a sibling test calling `common::scratch`**,
+/// which takes no lock at all, so the window is narrowed rather than closed:
+/// the read sets and restores across two adjacent calls and nothing else.
+/// Closing it properly would mean every path that creates a file in this
+/// binary taking the same lock, which is a larger act than this one and is
+/// filed rather than half-done here. The exposure is a test-only directory
+/// in `/tmp` for the length of two syscalls.
+///
+/// **The hold is scoped and ends before the raise.** Holding it across would
+/// deadlock, `Hook::raise` taking the same non-reentrant mutex, which is what
+/// a first form of this did - `with_umask_held` is shaped so that cannot be
+/// written by accident.
+fn ambient_umask() -> u32 {
+    weaver_gate::hook::with_umask_held(|| {
+        let seen = nix::sys::stat::umask(nix::sys::stat::Mode::empty());
+        nix::sys::stat::umask(seen);
+        seen.bits()
+    })
+}
+
 /// **The agent uid is denied by construction, not by configuration.**
 ///
 /// The instruction here explicitly *permits* this process's own uid, which is
@@ -162,4 +247,38 @@ fn an_occupied_path_refuses_and_the_occupant_survives() {
 
     first.lower();
     std::fs::remove_file(&path).ok();
+}
+
+/// **A raise from inside `with_umask_held` completes rather than hanging.**
+///
+/// `with_umask_held` is public and `Hook::raise` takes the same mutex, so the
+/// natural call an external caller writes - hold the umask, bind under it -
+/// took a non-reentrant lock twice on one thread. The scoped shape prevents
+/// holding the guard across a later call and does nothing about nesting the
+/// call inside, which is a thread deadlocking against itself with no second
+/// party.
+///
+/// Perturbation: dropping the per-thread `HELD` check from
+/// `Serialized::acquire` hangs this test rather than failing it, so it is
+/// watched on a timer - the whole binary is killed by the harness on a hang,
+/// and a watch whose failure mode is an infinite wait is not one this suite
+/// can report on. Watched hanging 2026-08-29.
+///
+/// conforms: gate-umask-lock-is-reentrant-within-a-thread
+#[test]
+fn a_raise_nested_inside_the_umask_lock_completes() {
+    let path = scratch("nested");
+    let (done, waited) = std::sync::mpsc::channel();
+    // On its own thread, so a deadlock is a timeout here rather than a hung
+    // test binary the harness kills with no report.
+    std::thread::spawn(move || {
+        let raised = weaver_gate::hook::with_umask_held(|| {
+            weaver_gate::hook::with_umask_held(|| Hook::raise(&permissive_instruction(), &path))
+        });
+        let _ = done.send(raised.is_ok());
+    });
+    match waited.recv_timeout(std::time::Duration::from_secs(10)) {
+        Ok(raised) => assert!(raised, "the nested raise binds"),
+        Err(_) => panic!("a raise nested inside with_umask_held deadlocked the thread"),
+    }
 }

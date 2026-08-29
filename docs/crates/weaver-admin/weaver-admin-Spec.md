@@ -3,6 +3,18 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-28, second of this date, the access rule is checked
+against the mode that carries it. Section 6 states that a declaration whose
+`allowed-uids` name a peer the gate's `0770` socket turns away refuses at the
+inventory with the field named, two locks on one door being permitted to
+narrow one set and not to contradict. Section 6 names `Group={identity}`
+beside `User=`, the mode having rested on a group the invocation never set.
+
+**Revised:** 2026-08-28, the runtime directory's mode is declared. Section 6
+carries `RuntimeDirectoryMode=0750` on the unit invocation, systemd's default
+`0755` having left every uid on the box able to traverse to the agent's
+sockets.
+
 **Revised:** 2026-08-26, the vector loses a path and a number. Per the
 operator's ruling of this date: the first door is a socketpair this crate
 creates at the spawn, the member's end inherited and the harness's carried in
@@ -771,6 +783,30 @@ from: weaver-admin
 to: admin-boundary-denies-agent-traversal
 ```
 
+**"Through any membership" is the whole of the requirement, and the gid set
+the walk reads is where it is met.** The unit carries `Group={identity}` per
+section 6, so the worker's runtime egid is the agent's own group whatever
+primary group passwd records. A walk reading the passwd gid alone therefore
+asks about a credential the worker does not run under, and where the operator
+provisioned a shared primary - which is the case section 6's own argument for
+naming the group cites - the two disagree: a sink directory at
+`root:weaver-<agent>` mode `0710` passes a walk that sees only `users`, and
+the running worker traverses it. So the walk reads the group the unit sets,
+the passwd primary, and the user's supplementary memberships, and it
+**over-approximates on purpose** - the question is what the agent could
+reach, so a gid too many refuses a boundary that might have held and a gid
+too few admits one that does not.
+
+```graph
+node: admin-boundary-reads-every-gid-the-worker-holds
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-boundary-reads-every-gid-the-worker-holds
+```
+
 **The devices the binding assigns are not checked here, and the absence is
 stated rather than left to be inferred.** The parse has already answered that
 the assignment is present and well-formed, per `weaver-types-Spec` section 2,
@@ -916,6 +952,131 @@ declaration the coordination socket is bound inside, per
 stop verb, and the same interface answers the state query of section 3. The
 alternative is a bus library, and it loses on the tree, for a handful of
 invocations per lifecycle that are neither hot nor latency-bound.
+
+**The runtime directory's mode is declared, because the default is not the
+one this boundary wants.** systemd creates a `RuntimeDirectory=` at `0755`
+absent an instruction, so every uid on the box may traverse to the agent's
+sockets and the gate's own mode is left as the only thing between a stranger
+and the front door. The invocation therefore carries
+`RuntimeDirectoryMode=0750` **and `Group={identity}` beside `User={identity}`**:
+the agent owns the directory, the operator reaches it through membership in the
+agent's group, and no one else reaches it.
+
+**The group is named rather than inherited, and the mode rests on that.**
+Without it the init system takes whatever primary group the agent user was
+provisioned with, so where that is shared - `users`, or `nogroup` - `0750`
+grants traversal to every member of it and the sentence above is false. Naming
+it also fixes the group the access rule is checked against at section 4's
+inventory, so the two locks narrow one set rather than two.
+
+**It carries a provisioning requirement**: an agent user created without a
+group of its own makes the invocation fail to determine its credentials, and
+the unit does not start.
+
+**Validate catches that, and the reachability check below is where.** A box
+carrying the agent user and not its group is refused there by name, the
+missing group being a fact about a provisioned agent rather than a fact never
+established. **A box carrying neither is not refused**, on the ground that
+unresolvable is not unreachable: a declaration may not be refused on a fact
+never established, and a bare checkout carries no agent group at all. The two
+are different absences and the check answers them differently. Section 4
+states the refusal in full and this sentence records only that the
+requirement is enforced rather than owed.
+
+The mode figure is stated here rather than inherited for the same reason the
+gate states its socket's, per `weaver-gate-Spec` section 3 - a boundary whose
+permissions come from an ambient default is a boundary nobody elected.
+
+**The access rule is checked against the mode that will carry it**, and the
+check is this section's. The gate binds its socket `0770` owned by the agent's
+group, per `weaver-gate-Spec` section 3, so a peer reaches `accept` only
+through that group. A rule admitting a uid outside it names a peer the
+filesystem turns away at
+`connect(2)`, before the credential check runs: the dialer sees a permission
+refusal, the driver reports the socket never stood, and the gate records
+nothing because the peer never arrived. That diagnosis cost two runs on
+2026-08-27 while it was an unprovisioned box, and the mode makes it the
+designed behaviour unless the two are made to agree.
+
+**Two locks on one door may narrow the same set and may not contradict.** So
+the inventory refuses a declaration whose `allowed-uids` name a uid outside
+the agent's group, before any unit starts.
+
+**It refuses as `BoundaryUnverified` and not as `ConfigInvalid`.** The
+declaration is well formed and the fault is the box's: the operator wrote a
+uid that ought to reach the socket and the provisioning has not put it in the
+agent's group. `ConfigInvalid` names the YAML, and a deployer reading it that
+way deletes the uid - which makes validate pass and breaks the connector for
+good, the credential check then denying it at `accept` with nothing saying
+why. This is the same fault an unprovisioned home or sink is, and it answers
+as they do, naming the group on the way out.
+
+**A user without its group is named too.** `Group={identity}` is a hard
+start-time requirement, so a box that provisioned the agent user and not its
+group fails the unit start with an opaque credential error. That state is
+checkable and is checked. A box carrying neither has provisioned no agent and
+is not refused on a fact about an agent it does not have, which is what lets a
+bare checkout and CI run this at all.
+
+**`allowed-gids` is not judged and uid 0 is skipped.** A gid names no
+particular peer, and whether one holding it reaches the socket turns on that
+peer's own memberships rather than on the gid - a rule admitting an operator's
+primary gid works where that operator is a supplementary member of the agent's
+group, and an arm refusing every gid but the agent's own refused it. Root is
+skipped for a different reason: `CAP_DAC_OVERRIDE` reaches a `0770` socket
+whatever group it holds. Both halves rest on the credential check, which is
+where they were always decided.
+
+**The template may not take the boundary back.** `systemd-run` honours the
+last assignment, so an installed hardening template naming a key this crate
+elects would revert the boundary with no diagnostic - and this check's
+premise, that the socket's group is `weaver-<agent>` and the worker runs as
+the agent, would go with it, so admin would validate a rule against an
+identity the worker does not hold. A template naming one has that property
+dropped rather than emitted **and the drop announced on stderr**, an override
+this crate cannot honour being a configuration it says no to rather than one
+it silently wins, and a silent drop being the same failure in the other
+direction.
+
+**The set of keys is the closure of what the boundary rests on, not the keys
+this crate writes**, and two of its members do their damage without looking
+like an override. `SupplementaryGroups=` is **additive**: it grants gids
+without displacing anything, so `User=` and `Group=` still read correctly
+while the worker holds a gid the denial walk never computed - which reopens
+the sink traversal along a second route once the first is closed. An empty
+`RuntimeDirectory=` **resets the list rather than setting it**, so systemd
+creates no runtime directory and the coordination socket has nowhere to bind,
+which is a start failure rather than a boundary one and no less this crate's
+to refuse. So the set is `User`, `Group`, `SupplementaryGroups`,
+`DynamicUser`, `RuntimeDirectory`, and `RuntimeDirectoryMode`, derived from
+what would have to hold rather than enumerated from what is set.
+
+**The check runs last of the inventory's walks**, so it preempts none of them:
+an unreadable artifact or an unverified boundary is the older and narrower
+fact, and a check running ahead of those made three inventory tests depend on
+whether the box carried the agent's group. **Unresolvable is not unreachable**:
+where the group cannot be read this asserts nothing and the load fails later
+and loudly, rather than refusing on a fact it never established.
+
+```graph
+node: admin-access-rule-reaches-the-socket
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-access-rule-reaches-the-socket
+```
+
+```graph
+node: admin-runtime-directory-mode-is-stated
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-runtime-directory-mode-is-stated
+```
 
 **No descriptor is declared on the invocation, and the negative is the point.**
 The trace's sink is opened by this crate under root and crosses inside the enter
@@ -1668,8 +1829,21 @@ no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Eleven of the
-thirty-four carry a `grounds` edge and those eleven carry twelve edges, one
-record grounding in two invariants. Six run to
+thirty-seven carry a `grounds` edge and those eleven carry twelve edges, one
+record grounding in two invariants. **All three records this act adds
+ground in none**, and the paragraph accounts for each rather than one. Section
+6's runtime directory mode is an election about a boundary this crate
+provisions, and its access rule reachability is a consistency rule between two
+locks - neither is a claim an invariant reaches. The third, the gid set the
+denial walk reads, is the same shape: it corrects the credential set of a
+walk this crate already performs, and the walk it corrects grounds in no
+axiom either. A `grounds` edge to that walk was drafted and removed - the
+notation runs from an assertion to an **axiom**, per Document Format section
+on edges, and an assertion-to-assertion edge would have been a new relation
+smuggled in under an existing name.
+
+**The twelve are named rather than numbered**, an ordinal in document order
+being the thing that goes stale next. Six run to
 `axiom-floor-is-vocabulary-behavior-is-socket`, one to
 `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
 and four to `axiom-harness-integrates-by-the-loop`.

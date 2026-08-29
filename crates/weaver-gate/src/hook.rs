@@ -58,6 +58,117 @@ use std::path::{Path, PathBuf};
 
 use weaver_types::{AccessRule, GateInstruction, PeerIdentity, authorized};
 
+/// A process umask held for one call and restored on every path out,
+/// including a panic.
+///
+/// **The umask is how a Unix socket's mode is elected.** `bind` takes none,
+/// so the file lands at `0777 & ~umask`, and setting the mode afterwards
+/// leaves a window in which the socket is already listening at whatever the
+/// process inherited.
+///
+/// **It is process-global, so the guard serializes.** Two threads each saving
+/// the umask, setting it, and restoring what they saved will interleave into
+/// one restoring the other's value mid-bind, and the socket lands at whatever
+/// the loser inherited. A gate organ raises once on its own process and
+/// meets no contention, but a caller that raises from several threads would
+/// otherwise get a mode nobody elected - which is the defect this type
+/// exists to close, reappearing one level up. The lock is held for exactly
+/// the span the umask is.
+struct Umask {
+    previous: nix::sys::stat::Mode,
+    _serialized: Serialized,
+}
+
+/// The one process umask, and therefore one lock.
+static UMASK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+thread_local! {
+    /// Whether this thread already holds `UMASK`.
+    ///
+    /// **The mutex is not reentrant and the scoped shape does not make it
+    /// so.** `with_umask_held` closed the case of a caller holding the lock
+    /// across `Hook::raise`, and left the case of a caller calling
+    /// `with_umask_held` from inside `with_umask_held` - or raising a hook
+    /// from inside it - which self-deadlocks a single thread against itself
+    /// with no second party involved. The serialization the lock buys is
+    /// between threads, and a thread cannot interleave with itself, so a
+    /// nested acquire on the holding thread is a no-op rather than a wait.
+    static HELD: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The umask lock, held for a scope, reentrant within one thread.
+///
+/// `None` inside means this thread already held it and the outer holder is
+/// the one that will release: the umask itself still nests correctly, each
+/// guard saving what it found and restoring it on drop in LIFO order.
+struct Serialized(Option<std::sync::MutexGuard<'static, ()>>);
+
+impl Serialized {
+    fn acquire() -> Self {
+        if HELD.with(std::cell::Cell::get) {
+            return Serialized(None);
+        }
+        // A poisoned lock still hands back the guard: the umask is restored
+        // on every path out including a panic, so the value behind it is
+        // sound whatever happened to the thread that held it last.
+        let guard = UMASK.lock().unwrap_or_else(|held| held.into_inner());
+        HELD.with(|held| held.set(true));
+        Serialized(Some(guard))
+    }
+}
+
+impl Drop for Serialized {
+    fn drop(&mut self) {
+        if self.0.is_some() {
+            HELD.with(|held| held.set(false));
+        }
+    }
+}
+
+/// Runs `work` with the process umask held, for a caller that must read or
+/// set it around this crate's own use.
+///
+/// **Exposed because the resource is the process's and not this module's.** A
+/// caller guarding only itself with RAII still races this crate's guard, and
+/// a loosened window is visible to every other file the process creates.
+///
+/// **Scoped rather than handing back the guard**, so it cannot be held open
+/// across a later call by accident - the shape a returned guard invited, and
+/// the way a first form of this crate's own test hung the suite by holding it
+/// across `Hook::raise`.
+///
+/// **Reentrant within a thread**, because scoping alone does not make nesting
+/// safe: `with_umask_held(|| with_umask_held(..))`, or a raise from inside
+/// one, would take the same non-reentrant mutex twice on one thread and
+/// deadlock it against itself. The lock serializes threads, and a thread does
+/// not interleave with itself, so the inner acquire is a no-op.
+pub fn with_umask_held<T>(work: impl FnOnce() -> T) -> T {
+    let _serialized = Serialized::acquire();
+    work()
+}
+
+impl Umask {
+    /// Deny every bit to others, so a socket created under it lands at `0770`.
+    ///
+    /// Connecting to a Unix socket needs write permission, so this is what
+    /// excludes every uid outside the owner and the group. The read and
+    /// execute bits a laxer mask would leave others buy them nothing on a
+    /// socket, which is why the group is the boundary rather than the world.
+    fn deny_others() -> Self {
+        let serialized = Serialized::acquire();
+        Umask {
+            previous: nix::sys::stat::umask(nix::sys::stat::Mode::S_IRWXO),
+            _serialized: serialized,
+        }
+    }
+}
+
+impl Drop for Umask {
+    fn drop(&mut self) {
+        nix::sys::stat::umask(self.previous);
+    }
+}
+
 /// A standing hook: the bound listener and the rule every peer is judged
 /// against.
 ///
@@ -117,9 +228,38 @@ impl Hook {
         // `UnixListener::bind` creates, binds, and listens, and Rust sets
         // close-on-exec in the creating call. Ready is answered only after this
         // returns, which is what makes ready a fact about the listener.
-        let listener = UnixListener::bind(socket).map_err(|error| RaiseRefusal::BindFailed {
-            detail: format!("{}: {error}", socket.display()),
-        })?;
+        //
+        // **The mode is elected through the umask around the bind rather than
+        // set on the path afterwards**, per `weaver-gate-Spec` section 3.
+        // `bind` sets no mode, so the file lands at `0777 & ~umask` and the
+        // access control of the agent's front door is decided by whatever
+        // umask this process inherited - `0777` on one box and `0775` on
+        // another from one build, on 2026-08-28.
+        //
+        // A `set_permissions` after the bind would answer that and open three
+        // things this does not. `bind` also listens, so between the two calls
+        // the socket is live at the inherited mode and connections queued
+        // there are accepted afterwards. The chmod would go by path, and the
+        // adversary this crate's reference walk names is a tool running as the
+        // agent uid, which owns the runtime directory: in that window it can
+        // unlink the socket and point the name elsewhere, so the chmod
+        // succeeds against a decoy while the real socket keeps the umask's
+        // mode and the raise reports success. And a chmod that failed would
+        // return after the pathname exists, leaving a file this crate unlinks
+        // nowhere - so every later raise on that path would answer `Address
+        // already in use` for the life of the runtime directory, and
+        // `gate-refused-raise-holds-nothing` would stop holding.
+        //
+        // The umask makes the mode part of the creating call: no window, no
+        // path to race, and no post-bind failure to leave a file behind.
+        //
+        // conforms: gate-socket-mode-is-the-boundarys-election
+        let listener = {
+            let _mask = Umask::deny_others();
+            UnixListener::bind(socket).map_err(|error| RaiseRefusal::BindFailed {
+                detail: format!("{}: {error}", socket.display()),
+            })?
+        };
 
         // **The agent uid is denied by construction, not by configuration.**
         // This process runs as the agent uid, so it knows the one uid the
