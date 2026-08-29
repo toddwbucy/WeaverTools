@@ -7,7 +7,7 @@
   "admin_bin": "/opt/weaver/bin/weaver-admin",
   "admin_config": "/etc/weaver/admin",
   "repo": "/home/todd/Projects/WeaverTools_Project/WeaverTools",
-  "build_flags": "cargo build --release --workspace --features weaver-spu/cuda,weaver-harness/pyworker; worker-binary is pyworker (py_loop), matching olympus; commit 616d0d4; rustc nightly-2026-02-13 (47611e160); CUDA 13.3.73 at /opt/cuda; cccl 3.3.4-1 (pinned, IgnorePkg) - CUB argsort + CUB top-k, cub::_V_300304_SM_750_800_860_890_1200_1210; NVCC_CCBIN=/usr/bin/g++-15 (GCC 15.3.0); driver 610.57.04; engine libs installed from llama-cpp-sys-2 out/lib (no build-dir RUNPATH); state leg absent (no weaver-state beside worker-binary)",
+  "build_flags": "cargo build --release --workspace --features weaver-spu/cuda,weaver-harness/pyworker (the feature ships both pyworker and worker - the loop is selected by the worker-binary key, recorded per run in weaver_binaries); commit 616d0d4; rustc nightly-2026-02-13 (47611e160); CUDA 13.3.73 at /opt/cuda; cccl 3.3.4-1 (pinned, IgnorePkg) - CUB argsort + CUB top-k, cub::_V_300304_SM_750_800_860_890_1200_1210; NVCC_CCBIN=/usr/bin/g++-15 (GCC 15.3.0); driver 610.57.04; engine libs installed from llama-cpp-sys-2 out/lib (no build-dir RUNPATH)",
   "cells": [
     {
       "name": "q8",

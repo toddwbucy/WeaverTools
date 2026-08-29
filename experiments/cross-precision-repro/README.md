@@ -24,10 +24,24 @@ not determine a runtime, and every field below was found the hard way -
 each one silently decided a result while both boxes recorded their
 builds in good faith:
 
-- **The harness feature set, not only the SPU's.** `weaver-harness/pyworker`
-  selects `pyworker` and `py_loop`, where its absence selects `worker`
-  and `dev_loop`, which seats a compiled system prompt the other does not.
+- **The `worker-binary` value, which is what selects the loop.** Its
+  basename is `pyworker` or `worker`, and that chooses `py_loop` against
+  `dev_loop`, which seats a compiled system prompt the other does not.
   Two boxes at one commit ran different prompts for a week on this.
+
+  **The cargo feature is not the selector and recording it is not enough.**
+  `weaver-harness/pyworker` gates whether `pyworker` compiles, and a
+  feature-on build ships **both** binaries. Which one an agent reaches is
+  the operator's provisioning through the `worker-binary` key, read at
+  `weaver-admin/src/main.rs:838` and stated at `pyworker/main.rs:5`. A box
+  that builds with the feature, records it, and leaves `worker-binary`
+  naming `worker` runs `dev_loop` while its deposit reads as a pyworker
+  box, which is this defect reached by way of its own fix.
+
+  **The report already carries it.** `weaver_binaries["worker-binary"]`
+  has held the path and sha256 since #375, in every deposit from 08-27.
+  So this wants comparing rather than writing down, and the gap that cost
+  a week was that nothing compared the two records.
 - **The cccl version, and the kernel it selects.** `argsort.cu` and
   `top-k.cu` guard on `CCCL_MINOR_VERSION`, so the host's cccl decides
   CUB against fallback kernels. Record the versioned namespace read from
