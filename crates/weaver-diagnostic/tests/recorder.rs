@@ -194,3 +194,32 @@ fn a_mismatched_pairing_refuses() {
     );
     assert_eq!(contents(&mut read_back), "", "the refusal touched the sink");
 }
+
+/// A spliced body that is the JSON literal `null` refuses as malformed
+/// before the sink: the envelope emits no payload member rather than a null
+/// one, so a null splice is an absent payload wearing a member. The check is
+/// framing, not interpretation - the interior of a real payload stays the
+/// harness's, per the bounded-admission rule.
+///
+/// Perturbation: remove the null check from `admit` and the line lands as
+/// `"payload":null`, a shape no record carries. Watched failing under
+/// exactly that removal.
+#[test]
+fn a_null_splice_refuses_as_malformed() {
+    let (mut recorder, mut read_back) = stand("s-diag-1", "r-diag-1");
+    let null = RawValue::from_string("null".into()).expect("valid JSON");
+    let refused = recorder.submit(Event {
+        envelope: envelope(Kind::ModelOutput, Some("t-1"), 1, 1),
+        payload: Some(Payload::Spliced(null)),
+    });
+    assert!(
+        matches!(
+            refused,
+            Err(weaver_diagnostic::Failure::SubmitRefused {
+                refusal: SubmitRefusal::PayloadMalformed
+            })
+        ),
+        "expected a malformed refusal, got {refused:?}"
+    );
+    assert_eq!(contents(&mut read_back), "", "the refusal touched the sink");
+}

@@ -94,6 +94,18 @@ impl Recorder {
 /// would have taken a judgment the charter denies it.
 fn admit(event: &Event) -> Result<(), Failure> {
     let refuse = |refusal| Err(Failure::SubmitRefused { refusal });
+    // **A spliced body that is the JSON literal `null` refuses as
+    // malformed, and the check is framing rather than interpretation.** The
+    // envelope's rule is that a kind carrying no payload emits no member at
+    // all rather than a null one, and a `null` splice would render
+    // `"payload":null` - a line no record carries. Judging that the whole
+    // body is the absent-payload literal reads no member and takes no
+    // judgment the charter denies: the interior stays the harness's.
+    if let Some(Payload::Spliced(raw)) = &event.payload
+        && raw.get() == "null"
+    {
+        return refuse(SubmitRefusal::PayloadMalformed);
+    }
     match (&event.envelope.kind, &event.payload) {
         (Kind::ReplayOpened, Some(Payload::ReplayOpened(_)))
         | (Kind::ReplayIdentity, Some(Payload::ReplayIdentity(_)))
