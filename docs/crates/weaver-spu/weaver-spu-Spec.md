@@ -2128,11 +2128,17 @@ from the binding's kind by admin per 13.7, so this crate still never learns
 the kind itself. `column_ask` crosses once, at session open, per the same
 clause's cadence election. An open carrying the ask against an instruction
 carrying no permission, or against a family whose declaration holds no
-column, refuses typed at the open. An asked column that does not arrive at a
-sampled position is charter 13.10's fault, owned there since this act. The
-efficient framing of the column message joins section 12's open token-seam
-encoding election, the provisional form being `weaver-types-Spec` section
-4.4's bare JSON like every crossing.
+column, refuses typed at the open. **The no-column arm fires at the open
+rather than at admit on purpose**: admission cannot know an ask will come,
+the ask being the open's member, and a diagnostic replay that elects the
+readout for norms alone against a family whose tap holds no column is a
+working configuration - the native tap's own shape - that an admit-time
+refusal would refuse. The open is the cheapest moment that knows the ask,
+which is 13.7's rule pointed at the right fact. An asked column that does
+not arrive at a sampled position is charter 13.10's fault, owned there
+since this act. The efficient framing of the column message joins section
+12's open token-seam encoding election, the provisional form being
+`weaver-types-Spec` section 4.4's bare JSON like every crossing.
 
 ```graph
 node: spu-no-vector-unasked
