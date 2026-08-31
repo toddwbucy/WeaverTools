@@ -8,6 +8,13 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-31, fifth of this date, one word stops meaning two
+things. The no-path prohibition read "no exchange carries a path" beside a
+new exchange carrying a recorded token path, one word across two meanings
+in one document. The prohibition now names what it prohibits, a filesystem
+path, the handle discipline unchanged, and states that the token path is
+data of the exchange and no exception, the word being the only thing the
+two share.
 **Revised:** 2026-08-31, fourth of this date, the re-feed drive lands.
 `diagnostic-replay-loop` section 2 named this seam's missing exchange as the
 one act standing between the diagnostic papers and a running null replay,
@@ -452,9 +459,15 @@ The SPU forgets the fault at the send, produced, reported, gone, and a
 send that fails is the channel dead, which is section 5's account of a
 death.
 
-**No exchange carries a path, and no exchange carries lifecycle.** Admit
-and release live on the residency seam and never here, the two seams
-carrying two kinds of traffic being the decoder-cut ruling's whole point.
+**No exchange carries a filesystem path, and no exchange carries
+lifecycle.** Neither party learns a trace path, a record name, or any name
+the filesystem resolves from the other, the handle discipline of
+`weaver-harness-PRD` section 5 holding on this seam as on every seam. The
+re-feed's recorded token path is not that kind of path and is no exception
+to this clause: it is a sequence of token identifiers, data of the
+exchange, and the word is the only thing the two share. Admit and release
+live on the residency seam and never here, the two seams carrying two
+kinds of traffic being the decoder-cut ruling's whole point.
 
 ## 3. Ordering
 
