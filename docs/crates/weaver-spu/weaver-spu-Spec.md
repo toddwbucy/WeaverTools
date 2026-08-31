@@ -2116,10 +2116,11 @@ native path `fold_norm` is the stronger in-place reading, one scalar crossing
 and no column held, so whether a family's tap holds a column to answer is a
 member of its declaration per charter section 14, and the GGUF column is the
 first answer shown. **The answer covers every sampled position**: each decode
-forward, and the prefill's final position, where a turn's first token is
-drawn. Nothing else of the prompt crosses, and the bound's ground is the
-tap's one-column copy per 13.7, not the engine's gather, which at every layer
-but the last sees every prompt position.
+forward, and each turn's prefill final position, where that turn's first
+token is drawn, every append prefilling its own delta. Nothing else of the
+prompt crosses, and the bound's ground is the tap's one-column copy per 13.7,
+not the engine's gather, which at every layer but the last sees every prompt
+position.
 
 **The permission is admin's, the ask is the harness's, and this crate judges
 the pair.** `column_permission` arrives at admit inside the instruction, set

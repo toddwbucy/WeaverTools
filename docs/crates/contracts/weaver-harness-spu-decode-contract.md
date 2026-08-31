@@ -305,8 +305,9 @@ event's per `weaver-trace-PRD` section 3.1 and not this seam's to carry.
 the enforcement, and the position bound are that clause's, cited here rather
 than fixed here. It carries one sampled position's residual columns, the
 tap's own copy per layer at the width the artifact sets, one message per
-sampled position - each decode forward and the prefill's final position,
-where a turn's first token is drawn, nothing else of the prompt - paired by
+sampled position - each decode forward, and each turn's prefill final
+position, where that turn's first token is drawn, nothing else of the
+prompt - paired by
 the position it names like the field's, and like both intermediates it
 closes nothing. **The ask crosses once, at session open, and its permission
 crosses at admit**: admin sets the permission from the binding's kind inside

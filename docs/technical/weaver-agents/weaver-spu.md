@@ -113,7 +113,10 @@ for at session open and answered per sampled position, per the ruling of
 being that binding's alone since that act. Not elected, no
 tap runs and no affordance idles. Both engines tap, by two different mechanisms,
 and a tap's neutrality is a property of the built path - shown per tap, on the
-engine that would serve it, never once for the election.
+engine that would serve it, never once for the election. Whether a tap holds a
+column to answer the diagnostic ask is a second capability the family declares
+beside it, per `weaver-spu-PRD` section 14, and an ask a declaration cannot
+honor refuses at the open.
 
 **Context edits.** The loop above elects a flush - the decode context returns to
 its prefix - or an elision, a named span of the resident sequence made absent.

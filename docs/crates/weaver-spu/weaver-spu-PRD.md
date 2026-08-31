@@ -1098,8 +1098,9 @@ at its most expensive one.
 **What the tap can answer bounds what may be asked, and the bound's ground
 is the tap's own copy rather than the engine's gather.** Third election: the
 answer covers **every position at which a token was sampled** - each decode
-forward, and the prefill's final position, which is where the first token of
-a turn is drawn - and nothing else of the prompt. The ground is stated
+forward, and each turn's prefill final position, which is where that turn's
+first token is drawn, the append prefilling its delta turn by turn - and
+nothing else of the prompt. The ground is stated
 as it is: at every layer but the last the callback sees every prompt
 position, and what narrows the answer to one column per layer per forward is
 the tap's one-column copy, a design choice this charter keeps because it is

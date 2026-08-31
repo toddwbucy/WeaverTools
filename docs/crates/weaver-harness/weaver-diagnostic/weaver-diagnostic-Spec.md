@@ -208,8 +208,11 @@ own argument rather than finding a variant seated for it.
 **`residual.column` is carried because the diagnostic binding may ask past the
 fold**, per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7
 as amended, and the decode contract's third intermediate. One event per
-sampled position - each decode forward and the prefill's final position,
-nothing else of the prompt, per that clause's bound - authored by the harness
+sampled position - each decode forward, and each turn's prefill final
+position, every reissued append prefilling its own delta, nothing else of
+the prompt, per that clause's bound, and no tool-round prefill existing
+here because a replay calls no tool, per the absent-kinds paragraph above -
+authored by the harness
 from the intermediate the seam delivered, carrying the position it names, the
 layer count, and the tap's width, the values crossing in the provisional bare
 JSON the floor states and the efficient encoding being section 8's open
