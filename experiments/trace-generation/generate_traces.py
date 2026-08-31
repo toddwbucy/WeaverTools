@@ -224,6 +224,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True)
     ap.add_argument("--outdir", required=True)
+    ap.add_argument("--sessions", default=None,
+                    help="comma list to run a subset, e.g. A-short - for "
+                         "setup smoke only, never for the night, and the "
+                         "deposit says which it was")
     args = ap.parse_args()
     with open(args.config) as f:
         cfg = json.load(f)
@@ -278,6 +282,16 @@ def main():
         ("B-b", [LONG_ASK]),
         ("C", run_c_texts),
     ]
+    if args.sessions:
+        wanted = set(args.sessions.split(","))
+        unknown = wanted - {sid for sid, _ in sessions}
+        if unknown:
+            raise SystemExit(f"unknown sessions: {sorted(unknown)}")
+        sessions = [(sid, t) for sid, t in sessions if sid in wanted]
+        # A subset is a smoke and its deposit must not read as the night:
+        # one sweep, and the report names the subset it ran.
+        sweeps = 1
+        provenance["session_subset"] = sorted(wanted)
 
     try:
         for sweep in range(1, sweeps + 1):
@@ -303,23 +317,36 @@ def main():
             return emissions_of(os.path.join(
                 args.outdir, f"cell-{name}-source.ndjson")).get(turn, "")
 
+        # A pair analysis only exists where both emissions do - a smoke
+        # subset must not deposit first_divergence("", "") reading as
+        # IDENTICAL for sessions that never ran.
         for sweep in range(1, sweeps + 1):
-            report["analysis"][f"A-divergence-s{sweep}"] = first_divergence(
-                em(f"A-long-s{sweep}"), em(f"A-short-s{sweep}"))
-            report["analysis"][f"B-identity-s{sweep}"] = first_divergence(
-                em(f"B-a-s{sweep}"), em(f"B-b-s{sweep}"))
+            a_long, a_short = em(f"A-long-s{sweep}"), em(f"A-short-s{sweep}")
+            if a_long and a_short:
+                report["analysis"][f"A-divergence-s{sweep}"] = \
+                    first_divergence(a_long, a_short)
+            b_a, b_b = em(f"B-a-s{sweep}"), em(f"B-b-s{sweep}")
+            if b_a and b_b:
+                report["analysis"][f"B-identity-s{sweep}"] = \
+                    first_divergence(b_a, b_b)
         deposit_report()
 
         verdicts = [s.get("verdict") for s in report["sessions"]]
         good = sum(v == "REPRODUCED" for v in verdicts)
         print(f"\nsessions: {good}/{len(verdicts)} REPRODUCED", flush=True)
         for sweep in range(1, sweeps + 1):
-            a = report["analysis"].get(f"A-divergence-s{sweep}")
-            b = report["analysis"].get(f"B-identity-s{sweep}")
-            a_note = f"byte {a['byte']}" if a else "NONE - identical despite the ask"
-            b_note = "IDENTICAL" if b is None else f"DIVERGED at byte {b['byte']}"
-            print(f"sweep {sweep}: A first divergence {a_note}, B {b_note}",
-                  flush=True)
+            notes = []
+            if f"A-divergence-s{sweep}" in report["analysis"]:
+                a = report["analysis"][f"A-divergence-s{sweep}"]
+                notes.append("A first divergence " + (
+                    f"byte {a['byte']}" if a
+                    else "NONE - identical despite the ask"))
+            if f"B-identity-s{sweep}" in report["analysis"]:
+                b = report["analysis"][f"B-identity-s{sweep}"]
+                notes.append("B " + ("IDENTICAL" if b is None
+                                     else f"DIVERGED at byte {b['byte']}"))
+            if notes:
+                print(f"sweep {sweep}: " + ", ".join(notes), flush=True)
     finally:
         with open(backup) as f:
             restore = f.read()
