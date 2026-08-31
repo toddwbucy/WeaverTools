@@ -817,19 +817,21 @@ def run_cell(cfg, cell, outdir, libraries, binaries, tools,
     is source material, per the 8B sketch's parameter section, so the cell
     fails loudly instead of depositing a truncation that reads as an answer.
     """
-    # **The sentinel survives for the metadata.** The normalized list serves
-    # the turns, and `cell_metadata` receives the caller's own value - with
-    # the default path this keeps the short_text/long_text schema the
-    # existing deposits carry, which normalizing first would silently
-    # convert to `turn_texts` for every confirm cell.
-    texts_supplied = texts
-    texts = (SHORT_TEXT, LONG_TEXT) if texts is None else list(texts)
+    # **Materialized once, sentinel preserved.** The caller's value is
+    # listed exactly one time, so an iterator cannot be consumed by the
+    # serving loop and then re-listed empty into the metadata - the
+    # misstating-provenance defect this parameter exists to close, reachable
+    # by input shape. `None` still selects the short_text/long_text schema
+    # the existing confirm deposits carry.
+    texts = None if texts is None else list(texts)
     name = cell["name"]
     log = lambda m: print(f"[{name}] {m}", flush=True)
     report = {"cell": name,
               "metadata": cell_metadata(cfg, cell, libraries, binaries, tools,
-                                        texts=texts_supplied),
+                                        texts=texts),
               "steps": [], "turns": [], "verdict": None}
+    if texts is None:
+        texts = [SHORT_TEXT, LONG_TEXT]
 
     # The declaration with this cell's artifact, everything else as
     # the operator wrote it.
