@@ -1416,7 +1416,9 @@ gains the `elision` event, which carries the bounds the loop named beside
 the resident counts the seam returned, authored by the harness from its own
 ask.
 
-**The re-feed drive, represented on the paths the generation already
+### 4.6 The re-feed drive
+
+**Represented on the paths the generation already
 walks**, per charter section 13.14 and the decode contract's sixth
 exchange, added 2026-08-31. The drive is the append's machinery with the
 draw's destination changed: the delta appends as an append appends, the

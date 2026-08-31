@@ -740,6 +740,20 @@ How each check is implemented is Spec work. What must be checkable:
   delta cleanly, watched to fail when the terminator step is removed.
 - The stop lands within a token boundary of the cancel's arrival.
 - The measurement is positionally paired and absent-not-zeroed.
+- A re-feed's resident outcome is the recorded path exactly, whatever the
+  draws said: a position whose recomputed draw diverges appends the
+  recorded token like every other, watched to fail when the append is made
+  to follow the draw.
+- A re-feed streams nothing of its own: no token intermediate crosses it,
+  while the field and the column cross where their elections stand, on the
+  sites a generation crosses them.
+- A re-feed's answer arrives under its own arm and never a generation's,
+  so a reader of the seam can never mistake a supplied path for a sampled
+  one.
+- A re-feed against either arm of `weaver-spu-PRD` section 13.14's registry
+  refuses typed before any device work - no admitted permission, or an
+  empty recorded path - and the seam's session and ordering refusals cover
+  it as they cover every ask.
 - Readout reductions appear exactly when the residency was admitted with
   the election, and a tap failure while elected is a fault, never a
   silent absence.

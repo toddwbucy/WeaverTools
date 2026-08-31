@@ -2320,7 +2320,13 @@ to: harness-stop-polled-during-the-stream
 
 **This subsection charters how loop 1 comes to run, per the operator's ruling
 of 2026-08-12 and the charter's criterion: the seat is granted on work that
-arrives owed an answer, and on nothing else.**
+arrives owed an answer, and on nothing else.** The dataflow ground is the
+decode contract's section 2 rule, nothing originating in the SPU arrives owed
+work, and the composition ground is the charter's section 2, restating the
+reasoning-loop boundary: the loop calls through the gate rather than
+sequencing it, so the agent's outer wait is loop 0's clerking and never the
+loop's reasoning.
+
 **A second criterion stands beside it since 2026-08-31, and it is the
 Gateless binding's**: under a diagnostic binding the seat is granted once,
 at the run's opening, on the run itself as the work - the operator's sealed
@@ -2332,12 +2338,7 @@ seat runs from the opening and takes no frame ever. The loop entry's
 concrete signature is the frameless form of the serving entry, listed with
 section 9's satellites, and the entered-state wait under this binding spans
 the coordination listener and the decode channel alone, the gate channel
-having no end to poll. The dataflow ground is the
-decode contract's section 2 rule, nothing originating in the SPU arrives owed
-work, and the composition ground is the charter's section 2, restating the
-reasoning-loop boundary: the loop calls through the gate rather than
-sequencing it, so the agent's outer wait is loop 0's clerking and never the
-loop's reasoning.
+having no end to poll.
 
 **The entered-state wait spans three descriptors, by `poll`, serial as ever.**
 Between enter and leave, loop 0 waits against the coordination listener, the
