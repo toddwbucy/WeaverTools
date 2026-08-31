@@ -8,6 +8,12 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-31, third of this date, the append's cardinality is the
+generation's. The exchange read one per turn, which section 13.8's seed
+derivation already contradicted - a turn runs as many generations as its
+tool rounds - and the column gloss made sharp. It now reads one per
+generation with the tool round's re-feed named, so the exchange, the seed,
+and the column stream count the same events.
 **Revised:** 2026-08-31, second of this date, the refusal list cites the
 registry. The first entry of this date described the open's refusal in two
 arms and the registry is three, held whole at `weaver-spu-PRD` section 13.7
@@ -257,9 +263,13 @@ the operator with this act. The SPU renders through the family library,
 establishes the resident session with the prefix resident, and answers
 opened, or refuses, typed.
 
-**Append and generate.** Opened by the harness, one per turn, carrying the
-turn's context per apex section 5.2 and the turn's delta as canonical
-messages under the same framing ruling. **It carries no sampling values.**
+**Append and generate.** Opened by the harness, one per generation - a
+turn running as many generations as its tool rounds, per `weaver-spu-PRD`
+section 13.8's derivation, so a tool round's result re-feeds as its own
+append - carrying the turn's context per apex section 5.2 and that
+generation's delta as canonical messages under the same framing ruling.
+An earlier wording said one per turn, which 13.8 already contradicted and
+the column gloss below made sharp. **It carries no sampling values.**
 The operator-tunable remainder reaches the SPU in the declaration at
 admit, per `weaver-spu-Spec` section 8, because the engine builds its
 sampler once at session open and a value arriving with a token directive
