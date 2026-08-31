@@ -133,15 +133,15 @@ identity is verified against the recorded token identifiers of
 claim exercised rather than assumed, and a mismatch is a failed
 certification and not a lesser reading.
 
-**The re-feed exchange on the decode seam is owed and named here rather
-than assumed.** The serving seam's append-and-generate samples, and a
-replay samples nothing: what the null replay needs is a drive that appends
-the recorded path, runs the forward passes, emits the measurements, and
-draws no token of its own. That drive does not exist on
-`weaver-harness-spu-decode-contract` today. It is the one act standing
-between these papers and a running null replay, it lands on the decode
-seam with the SPU and the harness merging, and this document's walk is
-written against it as owed. Nothing else in this walk waits on it.
+**The re-feed exchange landed 2026-08-31 and this walk runs against it.**
+The serving seam's append-and-generate samples, and a replay samples
+nothing: the drive is the decode contract's sixth exchange under
+`weaver-spu-PRD` section 13.14, appending the recorded path, running the
+forward passes, computing each draw as a generation would and appending
+the recorded token whatever the draw said, answering in its own type with
+the recomputed draws in the measurement. An earlier form of this paragraph
+named the drive as the one act standing between these papers and a running
+null replay, and that act is the one that cleared it.
 
 ## 3. Certification, walked
 

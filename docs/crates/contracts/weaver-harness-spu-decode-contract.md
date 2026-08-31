@@ -8,6 +8,16 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-31, fourth of this date, the re-feed drive lands.
+`diagnostic-replay-loop` section 2 named this seam's missing exchange as the
+one act standing between the diagnostic papers and a running null replay,
+and it lands here: a sixth exchange, one per recorded generation, appending
+the recorded delta, computing every position's draw as the append would,
+appending the recorded token whatever the draw said, and answering in its
+own type so a supplied path can never wear a sampled path's clothes.
+Section 3's ordering, section 4's supply lines, and section 5's refusal
+list take it, the permission and the registry being `weaver-spu-PRD`
+section 13.14's, cited rather than fixed.
 **Revised:** 2026-08-31, third of this date, the append's cardinality is the
 generation's. The exchange read one per turn, which section 13.8's seed
 derivation already contradicted - a turn runs as many generations as its
@@ -236,7 +246,7 @@ never its success, and what a death means is section 5's.
 
 ## 2. The exchanges
 
-Five exchanges and one emission. The exchanges are opened by the harness.
+Six exchanges and one emission. The exchanges are opened by the harness.
 The emission is the SPU's fault report, the origination the residency
 contract deferred, arriving here because the faults it carries are
 decode-domain traffic, and it is an emission rather than a fifth exchange
@@ -344,6 +354,32 @@ consumer that ignores every intermediate message reads the exchange
 exactly as the batch seam read. The answer closes the exchange and the
 turn's context returns with it.
 
+**Re-feed.** Opened by the harness, one per recorded generation, added
+2026-08-31 per `diagnostic-replay-loop` section 2's owed act and
+`weaver-spu-PRD` section 13.14, which carries the criterion and the
+permission this exchange cites rather than fixes. It carries the turn's
+context, the recorded generation's delta as the record rendered it, and the
+recorded token path. The SPU appends the delta, runs the forward passes
+along the recorded path, computes each position's draw exactly as
+append-and-generate would - the derived seed, the effective knobs, the
+sampler consuming the distribution - **and appends the recorded token
+whatever the draw said**, so a divergent position stays comparable instead
+of cascading. **It draws no token of its own**: no token intermediate
+crosses, there being no piece drawn to stream, while the field and the
+column intermediates cross where their elections stand, which is what makes
+this exchange the reader pass's substrate. The answer carries the
+measurement with the recomputed draw identifiers in the slots the sampled
+identifiers would fill, **and it is its own answer and never a
+generation's**: a re-feed answering in the generation's shape would put a
+supplied path in a sampled path's clothes, which is the collapse the
+protoautonomic design names as the defect class, made unrepresentable here
+by the answer's own type. The ask refuses, typed, where the instruction
+carries no admitted re-feed permission - admin's, set from the binding's
+kind like the column's and named individually beside it per the no-bundle
+rule - where the session is not open, where the ask is out of order, or
+where the recorded path is empty, an empty path being a replay of nothing
+wearing an exchange.
+
 **Cancel.** Opened by the harness while a generation is in flight,
 carrying the turn's context and nothing else. The generation stops at the
 next token boundary, the session is left well-framed with the family's
@@ -440,7 +476,9 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   while an exchange is outstanding is that exchange's typed answer, per
   section 5, so a report never interleaves a stream.
 - Messages within one exchange are ordered, and the intermediate messages
-  of append-and-generate, token, field, and column alike, all precede its answer.
+  of append-and-generate, token, field, and column alike, all precede its
+answer, and a re-feed's intermediates precede its answer the same way,
+token intermediates never among them.
 - A retained token's field message precedes the token message its piece
   eventually lands in, because the field is read before the sampler draws
   and a piece exists only after. **The two streams are not joinable on
@@ -467,7 +505,9 @@ list.
 
 **The harness supplies** the session's identity material at open, the
 column ask where and only where its binding is diagnostic, each
-turn's context and delta, the cancel, the flush, and the elision's span.
+turn's context and delta, the re-feed's recorded delta and path where and
+only where its binding is diagnostic, the cancel, the flush, and the
+elision's span.
 The sampling values are not among them and reach the SPU in the
 declaration instead.
 
@@ -485,7 +525,8 @@ the operator's end-to-end requirement.
 **The SPU supplies** the opened confirmation, the token stream as each is
 drawn, the field stream where its election stands, the column stream where
 the ask stood at open, one message per sampled position, each generation
-with its measurement and elected reductions, the stopped partials, the
+with its measurement and elected reductions, each re-feed's typed answer
+with the recomputed draws in its measurement, the stopped partials, the
 flush confirmation, the elision confirmation with its resident counts
 either side, the typed refusals, and the fault reports.
 
@@ -532,6 +573,10 @@ Refusals are typed and enumerable. The cases:
   election, no column in the family's declaration - refused at the open
   rather than answered thin at the first sampled position, the registry
   being that clause's and this list citing it
+- the re-feed arrives against any arm of `weaver-spu-PRD` section 13.14's
+  registry - no admitted re-feed permission, or an empty recorded path -
+  the registry being that clause's and this list citing it, the session and
+  ordering arms above covering the re-feed as they cover every ask
 
 **Every refusal on this seam is clerked, and the harness is the party that
 clerks it.** Per the operator's ruling of 2026-08-22. The SPU answers the

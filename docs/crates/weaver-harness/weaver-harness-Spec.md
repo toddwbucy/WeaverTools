@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-31, the Gateless seat's criterion is written. Section
+6.2 gains the second criterion beside the frame's: under a diagnostic
+binding the seat is granted once at the run's opening, on the run itself as
+the work, the sealed preload having arrived owed its certification, no
+frame ever granting it and the entered wait spanning coordination and
+decode alone. Section 9's cell closes on it, `diagnostic-replay-loop`
+section 2 having been the creditor, and the entry's concrete signature
+joins the satellites.
 **Revised:** 2026-08-28, third of this date, the coordination name elects its
 mode. Section 2.2 states that the bind happens under a umask denying every bit
 outside the owner, so the name lands at `0700` rather than at whatever the
@@ -2312,7 +2320,19 @@ to: harness-stop-polled-during-the-stream
 
 **This subsection charters how loop 1 comes to run, per the operator's ruling
 of 2026-08-12 and the charter's criterion: the seat is granted on work that
-arrives owed an answer, and on nothing else.** The dataflow ground is the
+arrives owed an answer, and on nothing else.**
+**A second criterion stands beside it since 2026-08-31, and it is the
+Gateless binding's**: under a diagnostic binding the seat is granted once,
+at the run's opening, on the run itself as the work - the operator's sealed
+preload is what arrived owed an answer, the certification is the answer it
+is owed, and no frame ever grants this seat because no Gate exists to carry
+one. The two criteria partition by binding and neither widens the other: a
+serving seat still waits on the frame and nothing else, and a diagnostic
+seat runs from the opening and takes no frame ever. The loop entry's
+concrete signature is the frameless form of the serving entry, listed with
+section 9's satellites, and the entered-state wait under this binding spans
+the coordination listener and the decode channel alone, the gate channel
+having no end to poll. The dataflow ground is the
 decode contract's section 2 rule, nothing originating in the SPU arrives owed
 work, and the composition ground is the charter's section 2, restating the
 reasoning-loop boundary: the loop calls through the gate rather than
@@ -2748,12 +2768,12 @@ Each names what settles it, and none is this Spec's to settle alone.
   carried at `weaver-spu-PRD` section 13.5, with the family's turn terminator
   made resident before the answer returns. Recorded as closed rather than
   deleted, this list naming what settled each entry.
-- **The seat's criterion under a Gateless binding.** Section 6.2 grants the
-  seat on work that arrives owed an answer and on nothing else, which a
-  diagnostic binding never sees, having no Gate for work to arrive through.
-  Widening that criterion or writing a second one beside it is this Spec's
-  act, settled by no other document, and `diagnostic-replay-loop` section 2
-  is the creditor that named it, that loop being the first case to need it.
+- **The seat's criterion under a Gateless binding, closed 2026-08-31.**
+  Section 6.2 carries the second criterion: the seat granted once at the
+  run's opening, on the run itself as the work, the sealed preload having
+  arrived owed its certification. The two criteria partition by binding and
+  neither widens the other. `diagnostic-replay-loop` section 2 was the
+  creditor and its entry clears with this act.
 - **The tee back-pressure election.** Blocking, shedding marked, or detaching
   marked, per `weaver-admin-operator-contract` section 3. A measurement
   against a real consumer at a real rate, taken with the queue's high-water
