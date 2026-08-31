@@ -7,6 +7,17 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-30, the diagnostic binding may ask for what the tap
+reduced. Section 13.7 carried one answer, the reduction, and a lens transports
+a vector and cannot read a norm. The operator's ruling of this date permits the
+activations under the diagnostic binding and refuses them under the serving
+one, on the ground that a diagnostic binding raises no gate and so has no work
+ingress at all: the permission and the isolation are one election. Apex section
+3 step 6's clause is thereby a property of the serving binding rather than of
+this seam in general. The section also now bounds what may be asked by what the
+tap can answer, generated positions and not prompt positions, the gather that
+makes prefill cheap being the same gather that discards them.
+
 **Revised:** 2026-08-26, the prefix clause names its second neighbour.
 Section 13.3's permanence sentence enumerated the flush as the one
 operation defined against the prefix and predates the elision. Section
@@ -1046,6 +1057,37 @@ absence.
 mechanisms, so a demonstration on one says nothing about the other, and a
 tap's neutrality is a property of the built path rather than of the
 election that asks for it.
+
+**The reduction is the serving answer, and the diagnostic binding may ask for
+what it reduced.** A lens transports a residual vector and cannot read a norm,
+so an instrument of that class needs the activations the tap already holds
+rather than the figure folded from them. **This crate answers them under
+the diagnostic binding and refuses them under the serving one,** per the
+operator's ruling of 2026-08-30.
+
+**The permission and the isolation are one election rather than two.** A
+diagnostic binding raises no gate, so the agent has no work ingress at all: it
+is fed from a record the operator already holds, through the state member's
+second door, and what leaves reaches a consumer standing outside the boundary.
+The clause apex section 3 step 6 states holds of every agent a client can
+reach, which is what it was protecting, and it is a property of the serving
+binding rather than of this seam in general.
+
+**A serving agent must be unable to ask.** This crate never learns the
+binding's kind, and nothing here may come to depend on learning it: the party
+that knows the binding is the harness, and the ask reaches this crate from
+there or not at all. Whether the serving case is refused where it would be
+written or cannot be written at all is the Spec's election. The bar is 13.7's
+unchanged, that a load granting what it must not answer fails at its cheapest
+moment or lies at its most expensive one, and the cheapest moment for a
+contradiction that cannot be represented is never.
+
+**What the tap can answer bounds what may be asked.** The copy is one column
+per layer per forward, so a decode step answers the position it generated and
+a prefill ubatch answers its last position alone. An election is honoured over
+generated positions and this charter promises nothing over prompt positions,
+because the gather that makes prefill cheap is the same gather that discards
+them.
 
 ### 13.8 Sampling, and the dispositions
 

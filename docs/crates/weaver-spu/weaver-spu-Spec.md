@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-31, the diagnostic binding asks past the fold. Section
+7's in-place clause is scoped to the serving binding per the operator's ruling
+of 2026-08-30 and charter 13.7 as amended, and two paragraphs land beside it:
+the GGUF tap's column continuing instead of dropping under the diagnostic
+binding, generated positions only, the harness the one party that asks because
+this crate never learns the binding, with `spu-no-vector-unasked` declared
+under review and the ask's framing joining section 12's open token-seam
+encoding election.
+
 **Revised:** 2026-08-28, seventh of this date, the record catches up to the
 code. Section 5's and section 10's clauses stop describing the round-three
 design in which the loop's deltas bypassed the fold, that arm being
@@ -2075,10 +2084,13 @@ from: weaver-spu
 to: spu-two-taps-one-shape
 ```
 
-**The reduction happens in place, at the tap, before anything leaves the
-device.** Apex section 3 step 6 has the activations reduced in place and the
-reduction returning by the same path as the generation, so no per-layer tensor
-crosses the seam and the volume the seam carries is the reduction's. Review's
+**The reduction happens in place, at the tap, and under the serving binding
+nothing else leaves the device.** Apex section 3 step 6 has the activations
+reduced in place and the reduction returning by the same path as the
+generation, so no per-layer tensor crosses the seam and the volume the seam
+carries is the reduction's. **The clause is the serving binding's**, per the
+operator's ruling of 2026-08-30 and charter section 13.7, and the two
+paragraphs below carry what the diagnostic binding may ask instead. Review's
 by non-purchase, a capture of the decode seam under an elected readout being
 the watch and section 12's open encoding being what it waits on.
 
@@ -2091,6 +2103,47 @@ edge: asserts
 from: weaver-spu
 to: spu-reduction-in-place-at-the-tap
 ```
+
+**The diagnostic binding asks past the fold, and the column is already in
+hand.** Charter section 13.7 permits the activations out under the diagnostic
+binding and refuses them under the serving one. Representation follows the two
+fold paths this section already distinguishes. On the GGUF path the fold's
+input is a host-side copy of one layer's final column, `n_embd` values
+contiguous at `f32`, about eight kibibytes a layer, taken per layer per
+forward and dropped once its norm is folded: the diagnostic answer is that
+column continuing instead of dropping, and no second capture exists. On the
+native path `fold_norm` is the stronger in-place reading, one scalar crossing
+and no column held, so what a family's tap can answer is declared per tap the
+way the readout itself is, and the GGUF column is the first answer shown.
+**The answer covers generated positions and promises nothing over prompt
+positions**: a decode forward holds the position it generates, a prefill
+ubatch gathers to its final position alone, and the gather that makes prefill
+cheap is the same gather that discards the rest.
+
+**The harness asks, and this crate never learns the binding.** The party
+holding the binding's kind is the harness, so the ask crosses per decode on
+the token seam from there or not at all, and a serving harness never writes
+it. An answer to an ask that never came is the defect below, and an asked
+column that does not arrive is a fault rather than an absence, the clause
+`spu-tap-failure-is-a-fault` already states reaching it unchanged: an elected
+observability that silently stopped observing reads as a run without one. The
+framing of the ask and of the answer joins section 12's open token-seam
+encoding election rather than being settled here blind.
+
+```graph
+node: spu-no-vector-unasked
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-spu
+to: spu-no-vector-unasked
+```
+
+Review's by non-purchase: the watch is a decode ask carrying no activations
+request whose answer carries a per-layer vector, and it waits on the same
+open encoding the capture watch above waits on, nothing of this seam being
+built until that election lands.
 
 **One forward per prompt when readout is elected, never a batch.** Batching
 prompts changes what the attention sees, so residuals taken from a batched
@@ -2849,8 +2902,9 @@ was left behind, a test being unable to detect its own absence. Whether the
 comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
 
-**Which invariant each claim serves, and why most serve none.** Twelve `grounds` edges
-run from nine of the sixty: four to `axiom-contract-is-a-complete-interface`, four
+**Which invariant each claim serves, and why most serve none.** Twelve `grounds`
+edges run from nine of the seventy-nine: four to
+`axiom-contract-is-a-complete-interface`, four
 to `axiom-floor-is-vocabulary-behavior-is-socket`, three to
 `axiom-harness-integrates-by-the-loop`, and one to
 `axiom-organ-and-submodule`, the two out-of-order refusals carrying two edges each
@@ -2906,11 +2960,11 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Seventy-eight records in all, the
+general prohibition, and the kernels' comparisons. Seventy-nine records in all, the
 elections taking nodes because gate H1 would otherwise leave the largest
 decisions in this Spec untraceable. **The split between this section's sorting
 and the elections outside it is owed and is not restated here**: it read
-thirty-one and twenty-nine against a total of sixty, and the eighteen records
+thirty-one and twenty-nine against a total of sixty, and the nineteen records
 since are not divided by any count this act can take mechanically. The total
 and the tag census below are verifiable and are corrected. The split wants the
 reading that produced it, and is flagged rather than guessed.
@@ -2929,8 +2983,8 @@ use them and listed in section 0, and the shape behind all nine is that this
 crate holds neither the floor's definitions nor the fork that creates its
 channels.
 
-**Thirty records carry `review`, five fewer than the assertion pass left, and
-what moved is what needed neither hardware nor seam work.** The five are the
+**Thirty-one records carry `review`, and what has moved off the tag is what
+needed neither hardware nor seam work.** The five are the
 cheap refusals of section 3, the registry's refusal and the width refusal of
 section 5, the truncation fault of section 2, and the outbound parse of section
 5, all of them reachable with a fixture and none of them touching a device. What
@@ -3086,6 +3140,12 @@ Each names what settles it, and none is this Spec's to settle alone.
 
 - **The token seam's encoding.** The hot-path measurement the charter and both
   floor documents defer to, per `weaver-types-Spec` section 4's boundary rule.
+- **The diagnostic answer's framing.** Section 7 permits the tap's column out
+  under the diagnostic binding and settles nothing about how the ask or the
+  answer is framed on the wire. It is settled by the same act that settles the
+  token seam's encoding above, measured against the consumer draining it
+  rather than elected blind, per `weaver-analysis-PRD` section 3's rule that
+  the sink's reader is downstream of the shape the operator declares.
   Taken against real decode traffic, which this crate's own first
   demonstration produces.
 - **The headroom figure.** Charter section 9's staged item, a construction
