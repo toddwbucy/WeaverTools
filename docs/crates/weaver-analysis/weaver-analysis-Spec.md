@@ -4,6 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, second of this date, the gate takes both members.
+Section 5's drain paragraph gates the reproducibility claim on the charter's
+whole licence by citation - the device model and the code identity, at the
+precisions that clause states - where the entry below records a single-member
+gate the body no longer has.
+
 **Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the
 pipe-shaped sink's discipline per the charter's section 3 as amended: read
 once, keep the report and its evidence, retain nothing drained, and gate the
