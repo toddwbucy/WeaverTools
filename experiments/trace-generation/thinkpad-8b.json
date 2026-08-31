@@ -15,5 +15,6 @@
   "artifact": "/opt/weaver/models/Qwen3-8B-BF16.gguf",
   "schedule": "fit-16k",
   "context_capacity": 16384,
-  "sweeps": 3
+  "sweeps": 3,
+  "precision": "bf16"
 }

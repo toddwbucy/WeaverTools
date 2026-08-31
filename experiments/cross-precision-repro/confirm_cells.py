@@ -727,7 +727,7 @@ def whole_ms(t):
     return (b - a) if a is not None and b is not None else None
 
 
-def cell_metadata(cfg, cell, libraries, binaries, tools):
+def cell_metadata(cfg, cell, libraries, binaries, tools, texts=None):
     # **The artifact's hash degrades rather than raising.** A missing or
     # unreadable artifact would otherwise abort `run_cell` before its report
     # exists and take every remaining cell with it, which is the class of
@@ -791,8 +791,14 @@ def cell_metadata(cfg, cell, libraries, binaries, tools):
         # directory.
         "toolchain": tools,
         "commit": commit,
-        "short_text": SHORT_TEXT,
-        "long_text": LONG_TEXT,
+        # **The texts recorded are the texts served.** With `texts` supplied
+        # the pinned pair below is wrong by construction - a caller passing
+        # its own turn list would deposit metadata naming prompts the record
+        # does not carry, which is the misstating-provenance defect this
+        # repository keeps paying for. The two constant keys stay for the
+        # default so existing deposits keep their schema.
+        **({"short_text": SHORT_TEXT, "long_text": LONG_TEXT}
+           if texts is None else {"turn_texts": list(texts)}),
     }
 
 
@@ -815,7 +821,8 @@ def run_cell(cfg, cell, outdir, libraries, binaries, tools,
     name = cell["name"]
     log = lambda m: print(f"[{name}] {m}", flush=True)
     report = {"cell": name,
-              "metadata": cell_metadata(cfg, cell, libraries, binaries, tools),
+              "metadata": cell_metadata(cfg, cell, libraries, binaries, tools,
+                                        texts=texts),
               "steps": [], "turns": [], "verdict": None}
 
     # The declaration with this cell's artifact, everything else as

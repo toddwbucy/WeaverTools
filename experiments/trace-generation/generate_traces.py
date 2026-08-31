@@ -118,14 +118,6 @@ MAX_TOKENS_PER_TURN = 6144
 TURN_TIMEOUT = 900
 
 
-def sha256_file(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 22), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
 def cccl_provenance():
     """The cccl version read from the header the build includes,
     and the kernel guards evaluated against it.
@@ -180,32 +172,55 @@ def first_divergence(a, b):
     None means byte-identical. The position is the finding for Run A
     (where does the length instruction start to matter) and the assertion
     for Run B (there must not be one).
+
+    **Measured on the UTF-8 bytes, not on code points.** `len()` over `str`
+    counts characters, so a multi-byte character ahead of the divergence
+    would shift a code-point index away from the byte the record carries.
+    The contexts are decoded with `replace` because the window may open
+    mid-character.
     """
-    if a == b:
+    ab, bb = a.encode("utf-8"), b.encode("utf-8")
+    if ab == bb:
         return None
-    n = min(len(a), len(b))
-    at = next((i for i in range(n) if a[i] != b[i]), n)
+    n = min(len(ab), len(bb))
+    at = next((i for i in range(n) if ab[i] != bb[i]), n)
+    window = lambda raw: raw[max(0, at - 40):at + 40].decode(
+        "utf-8", errors="replace")
     return {
         "byte": at,
-        "a_context": a[max(0, at - 40):at + 40],
-        "b_context": b[max(0, at - 40):at + 40],
-        "a_len": len(a),
-        "b_len": len(b),
+        "a_context": window(ab),
+        "b_context": window(bb),
+        "a_len": len(ab),
+        "b_len": len(bb),
     }
 
 
-def patch_declaration(cfg):
-    """Artifact, capacity and cap into the declaration, original preserved.
+def read_declaration(cfg):
+    """The original and its backup, refusing a backup that already exists.
 
-    Three count-asserted substitutions: a declaration a regex does not
-    match refuses here, before any load, rather than running the night on
-    half a patch.
+    **An existing backup means a previous run died patched**, and writing
+    over it would replace the operator's real declaration with the patched
+    one - every later restore then restores the patch and the true values
+    are gone. The refusal names the file and leaves the recovery to the
+    operator, who alone knows which of the two is the original.
     """
+    backup = cfg["declaration"] + ".pre-tracegen"
+    if os.path.exists(backup):
+        raise SystemExit(
+            f"{backup} already exists - a previous run left the declaration "
+            "patched. Restore or remove the backup by hand before running, "
+            "because overwriting it would destroy the only true original.")
     with open(cfg["declaration"]) as f:
         original = f.read()
-    backup = cfg["declaration"] + ".pre-tracegen"
     with open(backup, "w") as f:
         f.write(original)
+    return original, backup
+
+
+def patched_declaration(original, cfg):
+    """The patched text, count-asserted so a declaration a regex does not
+    match refuses before any load rather than running the night on half a
+    patch. The caller writes it inside its restoration scope."""
     patched = original
     for pattern, value in (
         (r"(artifact:\s*).*", cfg["artifact"]),
@@ -215,9 +230,7 @@ def patch_declaration(cfg):
         patched, n = re.subn(pattern, r"\g<1>" + value, patched, count=1)
         if n != 1:
             raise SystemExit(f"declaration line not found: {pattern}")
-    with open(cfg["declaration"], "w") as f:
-        f.write(patched)
-    return original, patched, backup
+    return patched
 
 
 def main():
@@ -238,17 +251,42 @@ def main():
     run_c_texts = [q.format(f"{w:,}")
                    for q, w in zip(RUN_C_QUESTIONS, schedule["words"])]
 
-    # The provenance tuple, read rather than assumed, per the defect family
-    # of #380 and #382. The artifact hash is the file the agent will load.
-    libraries = base.engine_libraries(cfg)
-    binaries = base.weaver_binaries(cfg)
+    sessions = [
+        ("A-long", [LONG_ASK]),
+        ("A-short", [SHORT_ASK]),
+        ("B-a", [LONG_ASK]),
+        ("B-b", [LONG_ASK]),
+        ("C", run_c_texts),
+    ]
+    # **Validated before anything on the box is touched.** A typo in
+    # --sessions raising after the declaration was patched left the 8B
+    # artifact and the raised cap live in karl.yaml with nothing restoring
+    # them - the review's finding 2, answered by ordering.
+    session_subset = None
+    if args.sessions:
+        wanted = set(args.sessions.split(","))
+        unknown = wanted - {sid for sid, _ in sessions}
+        if unknown:
+            raise SystemExit(f"unknown sessions: {sorted(unknown)}")
+        sessions = [(sid, t) for sid, t in sessions if sid in wanted]
+        # A subset is a smoke and its deposit must not read as the night.
+        sweeps = 1
+        session_subset = sorted(wanted)
+
+    # **The SPU is resolved once and both collectors share it**, per the
+    # 2026-08-28 act the shared driver documents: two independent
+    # resolutions blipping apart put two builds under one report with
+    # nothing marking the disagreement.
+    spu = base._resolve_spu(cfg)
+    libraries = base.engine_libraries(cfg, spu)
+    binaries = base.weaver_binaries(cfg, spu)
     tools = base.toolchain(cfg)
     print(f"engine libraries: {json.dumps(libraries)}", flush=True)
     print(f"weaver binaries: {json.dumps(binaries)}", flush=True)
-    artifact_sha = sha256_file(cfg["artifact"])
+    artifact_sha = base._sha256(cfg["artifact"])
     print(f"artifact sha256: {artifact_sha}", flush=True)
 
-    original, patched, backup = patch_declaration(cfg)
+    original, backup = read_declaration(cfg)
     provenance = {
         "sketch": "8B trace generation, v0.1 2026-08-31",
         "schedule": cfg["schedule"],
@@ -259,10 +297,10 @@ def main():
         "artifact_sha256": artifact_sha,
         "declaration_sha256_original": hashlib.sha256(
             original.encode()).hexdigest(),
-        "declaration_sha256_as_run": hashlib.sha256(
-            patched.encode()).hexdigest(),
         "cccl": cccl_provenance(),
     }
+    if session_subset:
+        provenance["session_subset"] = session_subset
 
     report = {"box": cfg["box"], "provenance": provenance, "sessions": [],
               "analysis": {}}
@@ -274,26 +312,18 @@ def main():
         with open(report_path, "w") as f:
             json.dump(report, f, indent=1)
 
-    cell = {"name": "tracegen", "artifact": cfg["artifact"]}
-    sessions = [
-        ("A-long", [LONG_ASK]),
-        ("A-short", [SHORT_ASK]),
-        ("B-a", [LONG_ASK]),
-        ("B-b", [LONG_ASK]),
-        ("C", run_c_texts),
-    ]
-    if args.sessions:
-        wanted = set(args.sessions.split(","))
-        unknown = wanted - {sid for sid, _ in sessions}
-        if unknown:
-            raise SystemExit(f"unknown sessions: {sorted(unknown)}")
-        sessions = [(sid, t) for sid, t in sessions if sid in wanted]
-        # A subset is a smoke and its deposit must not read as the night:
-        # one sweep, and the report names the subset it ran.
-        sweeps = 1
-        provenance["session_subset"] = sorted(wanted)
-
+    cell = {"name": "tracegen", "artifact": cfg["artifact"],
+            "precision": cfg.get("precision", "bf16")}
+    all_reproduced = True
     try:
+        # The live declaration is written only inside the restoration scope,
+        # so every exit path from here runs the restore below.
+        patched = patched_declaration(original, cfg)
+        with open(cfg["declaration"], "w") as f:
+            f.write(patched)
+        provenance["declaration_sha256_as_run"] = hashlib.sha256(
+            patched.encode()).hexdigest()
+
         for sweep in range(1, sweeps + 1):
             for sid, texts in sessions:
                 name = f"{sid}-s{sweep}"
@@ -307,9 +337,37 @@ def main():
                 r["sweep"] = sweep
                 r["seconds"] = round(time.time() - started, 1)
                 report["sessions"].append(r)
+                all_reproduced &= r.get("verdict") == "REPRODUCED"
                 deposit_report()
                 print(f"[{name}] {r.get('verdict')} in {r['seconds']}s",
                       flush=True)
+
+        # **Provenance is read again at close.** One opening block stamped
+        # into a ninety-minute thirty-load night attributes every trace
+        # after a mid-night install to the pre-install hashes. Guarded per
+        # the matrix's close rather than the raw comparison #379 documents:
+        # a failed closing read deposits as unreadable, never as movement.
+        closing_spu = base._resolve_spu(cfg)
+        at_close = {
+            "engine_libraries": base.engine_libraries(cfg, closing_spu),
+            "weaver_binaries": base.weaver_binaries(cfg, closing_spu),
+            "toolchain": base.toolchain(cfg),
+        }
+        opening = {"engine_libraries": libraries,
+                   "weaver_binaries": binaries, "toolchain": tools}
+        moved = {}
+        for field, closing in at_close.items():
+            if not base.is_reading(closing):
+                moved[field] = {"at_close_unreadable": closing}
+            elif not base.is_reading(opening[field]):
+                moved[field] = {"at_open_unreadable": opening[field]}
+            elif closing != opening[field]:
+                moved[field] = {"at_open": opening[field],
+                                "at_close": closing}
+        provenance["provenance_at_close"] = moved or "unchanged"
+        if moved:
+            print(f"PROVENANCE MOVED OR UNREADABLE: {sorted(moved)}",
+                  flush=True)
 
         # The cross-session findings, from the deposits rather than from
         # memory of the loop above.
@@ -331,7 +389,7 @@ def main():
                     first_divergence(b_a, b_b)
         deposit_report()
 
-        verdicts = [s.get("verdict") for s in report["sessions"]]
+        verdicts = [x.get("verdict") for x in report["sessions"]]
         good = sum(v == "REPRODUCED" for v in verdicts)
         print(f"\nsessions: {good}/{len(verdicts)} REPRODUCED", flush=True)
         for sweep in range(1, sweeps + 1):
@@ -348,12 +406,27 @@ def main():
             if notes:
                 print(f"sweep {sweep}: " + ", ".join(notes), flush=True)
     finally:
-        with open(backup) as f:
-            restore = f.read()
-        with open(cfg["declaration"], "w") as f:
-            f.write(restore)
-        base.admin(cfg, "unload")
-        print("declaration restored", flush=True)
+        # **Restored from the string in hand, never from the disk.** A
+        # re-read of the backup inside a finally can raise, masking the real
+        # exception and skipping the unload with the agent still holding the
+        # device. The backup is removed only after the original is back, and
+        # the unload runs whatever the restore did.
+        try:
+            with open(cfg["declaration"], "w") as f:
+                f.write(original)
+            try:
+                os.unlink(backup)
+            except OSError:
+                pass
+            print("declaration restored", flush=True)
+        finally:
+            base.admin(cfg, "unload")
+
+    # **A night that did not reproduce says so in its exit code**, the same
+    # gate the confirm driver holds: a wrapper of the shape `... && publish`
+    # must not ship defective specimens because the failure was only prose.
+    if not report["sessions"] or not all_reproduced:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
