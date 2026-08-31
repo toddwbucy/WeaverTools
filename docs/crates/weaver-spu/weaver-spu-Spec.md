@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-31, the diagnostic binding asks past the fold. Section
+7's in-place clause is scoped to the serving binding per the operator's ruling
+of 2026-08-30 and charter 13.7 as amended, and two paragraphs land beside it:
+the GGUF tap's column continuing instead of dropping under the diagnostic
+binding, generated positions only, the harness the one party that asks because
+this crate never learns the binding, with `spu-no-vector-unasked` declared
+under review and the ask's framing joining section 12's open token-seam
+encoding election.
+
 **Revised:** 2026-08-28, seventh of this date, the record catches up to the
 code. Section 5's and section 10's clauses stop describing the round-three
 design in which the loop's deltas bypassed the fold, that arm being
@@ -827,7 +836,7 @@ to: spu-service-serial-one-loop
 
 The two exchanges of `weaver-harness-spu-contract`, in the charter's order.
 
-**Six of this section's nine records are review's, and the ground is
+**Six of this section's ten records are review's, and the ground is
 non-purchase rather than reach.** Section 10's perturbation list was written
 before the device-assignment ruling of 2026-08-03 reshaped this section and was
 revisited in the act that closed issue 37, which bought what needs no hardware
@@ -2003,9 +2012,9 @@ is the others' and the second is not**, which is the reverse of what a
 reader told only that the shape differs would look for. The gather keeps the
 batch order of the positions it retains, so the final column carries the
 last position in both shapes and one rule reads both. And the copy is that
-column alone, contiguous at `f32` and about eight kibibytes a layer, where
-copying whole tensors at a full batch would move gigabytes per prefill and
-is not viable.
+column alone, `n_embd` values contiguous at `f32` - the figure the artifact's
+own width sets, kibibytes a layer against the gigabytes per prefill that
+copying whole tensors at a full batch would move.
 
 **The refusal narrows to the flag.** `readout::judge` refused an elected
 GGUF load on the container, because the tap did not exist. With the tap
@@ -2075,10 +2084,13 @@ from: weaver-spu
 to: spu-two-taps-one-shape
 ```
 
-**The reduction happens in place, at the tap, before anything leaves the
-device.** Apex section 3 step 6 has the activations reduced in place and the
-reduction returning by the same path as the generation, so no per-layer tensor
-crosses the seam and the volume the seam carries is the reduction's. Review's
+**The reduction happens in place, at the tap, and under the serving binding
+nothing else leaves the device.** Apex section 3 step 6 has the activations
+reduced in place and the reduction returning by the same path as the
+generation, so no per-layer tensor crosses the seam and the volume the seam
+carries is the reduction's. **The clause is the serving binding's**, per the
+operator's ruling of 2026-08-30 and charter section 13.7, and the two
+paragraphs below carry what the diagnostic binding may ask instead. Review's
 by non-purchase, a capture of the decode seam under an elected readout being
 the watch and section 12's open encoding being what it waits on.
 
@@ -2091,6 +2103,57 @@ edge: asserts
 from: weaver-spu
 to: spu-reduction-in-place-at-the-tap
 ```
+
+**The diagnostic binding asks past the fold, and the column is already in
+hand.** Charter section 13.7 as amended holds the three elections and this
+section represents them. Representation follows the two fold paths this
+section already distinguishes. On the GGUF path the fold's input is a
+host-side copy of one layer's final column, `n_embd` values contiguous at
+`f32` - the figure the artifact's own width sets - taken per layer per
+forward and dropped once its norm is folded: the diagnostic answer is that
+column continuing instead of dropping, and no second capture exists. On the
+native path `fold_norm` is the stronger in-place reading, one scalar crossing
+and no column held, so whether a family's tap holds a column to answer is a
+member of its declaration per charter section 14, and the GGUF column is the
+first answer shown. **The answer covers every sampled position**: each decode
+forward, and each turn's prefill final position, where that turn's first
+token is drawn, every append prefilling its own delta. Nothing else of the
+prompt crosses, and the bound's ground is the tap's one-column copy per 13.7,
+not the engine's gather, which at every layer but the last sees every prompt
+position.
+
+**The permission is admin's, the ask is the harness's, and this crate judges
+the pair.** `column_permission` arrives at admit inside the instruction, set
+from the binding's kind by admin per 13.7, so this crate still never learns
+the kind itself. `column_ask` crosses once, at session open, per the same
+clause's cadence election. An open carrying the ask against an instruction
+carrying no permission, or against a family whose declaration holds no
+column, refuses typed at the open. **The no-column arm fires at the open
+rather than at admit on purpose**: admission cannot know an ask will come,
+the ask being the open's member, and a diagnostic replay that elects the
+readout for norms alone against a family whose tap holds no column is a
+working configuration - the native tap's own shape - that an admit-time
+refusal would refuse. The open is the cheapest moment that knows the ask,
+which is 13.7's rule pointed at the right fact. An asked column that does
+not arrive at a sampled position is charter 13.10's fault, owned there
+since this act. The efficient framing of the column message joins section
+12's open token-seam encoding election, the provisional form being
+`weaver-types-Spec` section 4.4's bare JSON like every crossing.
+
+```graph
+node: spu-no-vector-unasked
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-spu
+to: spu-no-vector-unasked
+```
+
+Review's by non-purchase: the watch is an open carrying no ask whose session
+answers any `Column` message, buyable with a fixture against the built seam,
+and unbought because the seam is unbuilt - the code act that builds it buys
+this watch in the same motion or the tag stands as the lie 13.7 refuses.
 
 **One forward per prompt when readout is elected, never a batch.** Batching
 prompts changes what the attention sees, so residuals taken from a batched
@@ -2849,8 +2912,9 @@ was left behind, a test being unable to detect its own absence. Whether the
 comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
 
-**Which invariant each claim serves, and why most serve none.** Twelve `grounds` edges
-run from nine of the sixty: four to `axiom-contract-is-a-complete-interface`, four
+**Which invariant each claim serves, and why most serve none.** Twelve `grounds`
+edges run from nine of the seventy-nine: four to
+`axiom-contract-is-a-complete-interface`, four
 to `axiom-floor-is-vocabulary-behavior-is-socket`, three to
 `axiom-harness-integrates-by-the-loop`, and one to
 `axiom-organ-and-submodule`, the two out-of-order refusals carrying two edges each
@@ -2887,7 +2951,7 @@ count exists for the first walk above, a writable handle to the agent's own reco
 sitting inside the agent's model server, and the discipline it checks is the
 harness's at the fork rather than the loop's at a seam.
 
-**Fifty-one claims grounding in no invariant is the expected result and not a gap**,
+**Seventy claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4, and the ratio is low here for a structural reason
 rather than an unfinished one. The bulk of this document is decode mechanics,
 sampling, family libraries, kernels, device judgment, residency bookkeeping, and
@@ -2906,11 +2970,11 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Seventy-eight records in all, the
+general prohibition, and the kernels' comparisons. Seventy-nine records in all, the
 elections taking nodes because gate H1 would otherwise leave the largest
 decisions in this Spec untraceable. **The split between this section's sorting
 and the elections outside it is owed and is not restated here**: it read
-thirty-one and twenty-nine against a total of sixty, and the eighteen records
+thirty-one and twenty-nine against a total of sixty, and the nineteen records
 since are not divided by any count this act can take mechanically. The total
 and the tag census below are verifiable and are corrected. The split wants the
 reading that produced it, and is flagged rather than guessed.
@@ -2929,20 +2993,24 @@ use them and listed in section 0, and the shape behind all nine is that this
 crate holds neither the floor's definitions nor the fork that creates its
 channels.
 
-**Thirty records carry `review`, five fewer than the assertion pass left, and
-what moved is what needed neither hardware nor seam work.** The five are the
-cheap refusals of section 3, the registry's refusal and the width refusal of
-section 5, the truncation fault of section 2, and the outbound parse of section
-5, all of them reachable with a fixture and none of them touching a device. What
+**Thirty-one records carry `review`, five fewer than the assertion pass of
+2026-08-16 left plus the one this act declares, and what has moved off the
+tag is what needed neither hardware nor seam work.** The five that moved are
+the cheap refusals of section 3, the registry's refusal and the width refusal
+of section 5, the truncation fault of section 2, and the outbound parse of
+section 5, all of them reachable with a fixture and none of them touching a
+device. What
 remains on prose in the residency half is what reads a driver: the room and reach
 conditions of the admission judgment and the release's free-before-answer
 ordering. Those reach the driver through a seam a suite could double and this
 Spec does not introduce, so they are unbought for the seam rather than for the
 watch, and introducing that seam is a larger act than this one. Every `review`
-tag in this document states its ground at its own clause, and outside two cases
-the ground is that no instrument was bought rather than that none exists. The two
-exceptions say so where they sit, the absence of anything laid in for an
-operation type that does not exist and the kernels' comparisons above.
+tag in this document states its ground at its own clause, and outside three
+cases the ground is that no instrument was bought rather than that none exists.
+The three exceptions say so where they sit: the absence of anything laid in for
+an operation type that does not exist, the kernels' comparisons above, and
+section 7's unasked-vector watch, whose instrument cannot exist before the seam
+it watches is built and whose ground obliges the building act to buy it.
 
 **The out-of-order refusal is stated and bought on both seams, per section 9,
 and this crate's side of the owing is discharged.** `weaver-types-Spec` section
@@ -3088,6 +3156,13 @@ Each names what settles it, and none is this Spec's to settle alone.
   floor documents defer to, per `weaver-types-Spec` section 4's boundary rule.
   Taken against real decode traffic, which this crate's own first
   demonstration produces.
+- **The diagnostic answer's efficient framing.** Section 7 puts the column
+  message on the wire in `weaver-types-Spec` section 4.4's provisional bare
+  JSON, and what stays open is the framing worth shipping at the column's
+  volume. It is settled by the same act that settles the token seam's
+  encoding above, measured against the consumer draining it rather than
+  elected blind - the reader being downstream of the sink rather than a party
+  to any delivery contract, per `weaver-analysis-PRD` section 3.
 - **The headroom figure.** Charter section 9's staged item, a construction
   parameter until a measurement on a real artifact against a real device
   replaces it.

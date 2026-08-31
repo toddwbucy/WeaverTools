@@ -228,9 +228,13 @@ The capture artifact - identity, custody, dataset shape, quota - is
 loop writes no artifact until that act lands. The re-feed exchange is the decode seam's
 owed act, named in section 2. The driver's own shape is `weaver-analysis-Spec`,
 landed 2026-08-27.
-**The record's shape landed 2026-08-27** in `weaver-diagnostic-Spec`, which carries
-the sixteen kinds this loop's acts author, the flush among them because section 1's
-grant names it and the refusal because that grant and section 4's third failure both
-produce one, and the outcome the certification reaches. This document is the
+**The record's shape landed 2026-08-27** in `weaver-diagnostic-Spec`, which
+carries the seventeen kinds of the record since 2026-08-31, the flush among
+them because section 1's grant names it and the refusal because that grant and
+section 4's third failure both produce one, and the outcome the certification
+reaches. The seventeenth, `residual.column`, is the harness's authoring from
+the seam's column stream rather than an act of this loop, so this loop's own
+authored set is unchanged by it: the loop drives the replay and the columns
+ride the pass where the ask stood, per that Spec's section 3.2. This document is the
 workflow that binds them, and it moves when any of them lands, per the Working Rules
 on documents that cite owed acts, which is what this entry records.

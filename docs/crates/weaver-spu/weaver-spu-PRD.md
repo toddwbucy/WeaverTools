@@ -7,6 +7,17 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-31, the diagnostic binding may ask for what the tap
+reduced. Section 13.7 carried one answer, the reduction, and a lens transports
+a vector and cannot read a norm. The operator's ruling of this date permits the
+activations under the diagnostic binding and refuses them under the serving
+one, on the ground that a diagnostic binding raises no gate and so has no work
+ingress at all: the permission and the isolation are one election. Apex section
+3 step 6's clause is thereby a property of the serving binding rather than of
+this seam in general. The section also now bounds what may be asked by what the
+tap can answer, every sampled position and nothing else of the prompt, on the
+honest ground of the tap's one-column copy rather than the engine's gather.
+
 **Revised:** 2026-08-26, the prefix clause names its second neighbour.
 Section 13.3's permanence sentence enumerated the flush as the one
 operation defined against the prefix and predates the elision. Section
@@ -809,6 +820,10 @@ register. Nothing below is applied by this document.
 An entry leaves this register when the edit lands, because a ruling recorded and not
 landed reads as settled and an entry landed and not cleared reads as outstanding.
 
+- **The harness's never-asks assertion**, owed by 13.7 as amended 2026-08-31:
+  the discipline that a serving harness never writes the column ask is
+  watched on the harness, and its assertion lands with the code act that
+  builds the ask.
 - `open-items.md`, the note owed to this crate's stub: discharged by section 2 of this
   charter carrying its substance directly, so the item leaves the list rather than
   moving into the stub it was owed to. Named by substance because that list renumbers.
@@ -1007,7 +1022,9 @@ happens.** The agent's configuration elects the readout per load, per apex
 section 4's definition of done, and the election reaches this crate at
 admit beside the binding, the two crossing as one instruction. Elected, the
 per-layer activations are reduced in place at the tap and the reductions
-return on the same path as the generation, per apex section 3 step 6. Not
+return on the same path as the generation, per apex section 3 step 6 - a
+clause the paragraphs below scope to the serving binding, the diagnostic
+binding's wider answer being theirs. Not
 elected, no tap runs and no
 affordance idles. **An instruction that elects readout against a family
 that declares no tap refuses at admit,** because a load that grants an
@@ -1046,6 +1063,50 @@ absence.
 mechanisms, so a demonstration on one says nothing about the other, and a
 tap's neutrality is a property of the built path rather than of the
 election that asks for it.
+
+**The reduction is the serving answer, and the diagnostic binding may ask for
+what it reduced.** A lens transports a residual vector and cannot read a norm,
+so an instrument of that class needs the activations the tap already holds
+rather than the figure folded from them. **This crate answers them under
+the diagnostic binding and refuses them under the serving one,** per the
+operator's ruling of 2026-08-30.
+
+**The permission and the isolation are one election rather than two.** A
+diagnostic binding raises no gate, so the agent has no work ingress at all: it
+is fed from a record the operator already holds, through the state member's
+second door, and what leaves reaches a consumer standing outside the boundary.
+The clause apex section 3 step 6 states holds of every agent a client can
+reach, which is what it was protecting, and it is a property of the serving
+binding rather than of this seam in general.
+
+**Three elections are this clause's, made here so that one authority holds
+them and every citing document points rather than deciding a share.** First,
+the cadence: **the ask crosses once, at session open**, the once-crossing
+discipline of the instruction reaching the one ask whose answer runs for the
+residency. Second, the enforcement: **the permission crosses at admit, inside
+the instruction, set from the binding by admin** - the party that holds the
+binding and already derives the member vector from it - so an open carrying
+the ask against an instruction carrying no permission refuses, typed, at the
+open. This crate still never learns the binding's kind: it learns one
+admitted permission that admin vouches for, which is the same shape every
+other admitted election takes. The harness's own discipline, that a serving
+harness never writes the ask, is watched on the harness and its assertion
+lands with the code act, named here as owed. The bar is 13.7's unchanged:
+a load granting what it must not answer fails at its cheapest moment or lies
+at its most expensive one.
+
+**What the tap can answer bounds what may be asked, and the bound's ground
+is the tap's own copy rather than the engine's gather.** Third election: the
+answer covers **every position at which a token was sampled** - each decode
+forward, and each turn's prefill final position, which is where that turn's
+first token is drawn, the append prefilling its delta turn by turn - and
+nothing else of the prompt. The ground is stated
+as it is: at every layer but the last the callback sees every prompt
+position, and what narrows the answer to one column per layer per forward is
+the tap's one-column copy, a design choice this charter keeps because it is
+what makes the tap cheap enough to elect. A later act that widens the copy
+widens the bound with it, against this clause rather than against a
+mechanism claim.
 
 ### 13.8 Sampling, and the dispositions
 
@@ -1201,6 +1262,13 @@ survives, reported to the harness and authored by it as the `fault` event:
   stand or fail beside it, and a standing scalar corroborates what the
   record already says rather than being what makes the failure reportable,
   the election alone being the thing that was promised and not kept.
+
+**An asked column that does not arrive is the same fault**, added 2026-08-31
+with the diagnostic answer: where the ask stood at open, a sampled position
+whose column message never crosses is an elected observation that silently
+stopped observing, owned here so that three restatements downstream cite one
+clause rather than each asserting a share. The record's expression of it is
+the diagnostic-Spec's and lands with the code act, named there as owed.
 
 An overflow is a typed refusal on the exchange rather than a fault, and a
 death is observed through closure rather than reported, both per the
@@ -1407,8 +1475,9 @@ destinations live rather than here.
 
 **A family declares its capabilities and the declaration is consulted at
 admit.** What operations a family's models serve, what template identity
-it renders, whether its engine can tap for readout, and **how many devices its
-backend can shard a model across** are facts the
+it renders, whether its engine can tap for readout, **whether its tap holds a
+column to answer the diagnostic ask** per 13.7 as amended, and **how many
+devices its backend can shard a model across** are facts the
 family module states, and admission judges a binding against them, which
 is how 13.7's refusal knows to fire and how section 4.1 step 3 knows whether an
 assigned set is servable. The declaration's shape is the Spec's.

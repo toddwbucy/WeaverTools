@@ -463,8 +463,10 @@ to: diagnostic-failure-vocabulary
 
 **The harness authors through this crate and the record leaves by the sink.**
 The measurement returns from the SPU by the same path the generation does,
-per apex section 3 step 6, so it reaches the harness whatever the binding's
-kind. On a serving binding the harness authors it through `weaver-trace`. On
+per the decode contract's answer shape, so it reaches the harness whatever
+the binding's kind - the contract rather than apex step 6 cited here since
+2026-08-31, that step now describing the serving turn alone. On a serving
+binding the harness authors it through `weaver-trace`. On
 a diagnostic one it authors it through this crate, into the diagnostic-trace,
 beside the replayed run the same record carries. The rendering leaves by the
 sink admin opened for the binding, and `weaver-analysis` reads it from there.
@@ -499,9 +501,11 @@ structural instead.
 Open cells, each named rather than implied:
 
 - **This crate's Spec landed 2026-08-27** and both elections this cell held are
-  settled there. The writer's vocabulary is its own closed set of sixteen kinds,
-  thirteen spelled as the serving vocabulary spells them and meaning there what
-  they mean here, three of the record's own that no serving record carries. The residual
+  settled there. The writer's vocabulary is its own closed set of seventeen
+  kinds since the act of 2026-08-31, thirteen spelled as the serving vocabulary
+  spells them and meaning there what they mean here, four of the record's own
+  that no serving record carries, `residual.column` the fourth per section
+  13.7 of the SPU's charter as amended. The residual
   readout rides `model.measurement` exactly where a serving record puts it, density
   rather than shape being what a diagnostic run changes. Reader compatibility
   follows as a stated rule rather than a hope, per that document's section 4, which

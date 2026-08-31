@@ -3,6 +3,13 @@
 **Status:** MERGED. In `main` and the source of truth.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, the drawn kind set moves to seventeen. Per section
+7's own protocol, merged with the act that adds `residual.column` to
+`weaver-diagnostic-Spec` section 3.2: the vocabulary this contract draws
+gains the kind, the exchange is unchanged - the harness authors it from the
+decode seam's column stream and the writer admits it like any kind - and no
+clause of this seam moves. The payload's provisional form is the floor's
+bare JSON, its efficient encoding the Spec's open election.
 **Document ID:** `weaver-harness-diagnostic-contract`
 **Editorial:** Per the Working Rules.
 

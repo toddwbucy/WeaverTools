@@ -13,6 +13,14 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
+**Revised:** 2026-08-31, step 6's in-place clause is scoped to the turn it
+describes. The clause read as a property of the SPU seam in general, and
+section 3 describes one serving turn, gate to gate. The operator's ruling of
+2026-08-30 permits the activations out under the diagnostic binding, which
+raises no gate and has no work ingress, and `weaver-spu-PRD` section 13.7
+carries the criterion. The clause holds unchanged for every agent a client can
+reach.
+
 **Revised:** 2026-08-26, the state claim's criterion lands where criteria live.
 Section 8's claim-relative rule gains its state clause: a claim about the
 state requires the tee's election beyond the re-feed list, the rule that
@@ -314,7 +322,14 @@ states how it serves this path.
    harness writes `model.request`, `model.output`, and `model.measurement` into
    the trace. If residual readout is enabled in this agent's config file, the
    eval callback reduces per-layer activations in place and the reduction
-   returns by the same path.
+   returns by the same path. **The in-place clause is the serving
+   binding's**, whose only turn shape this section describes: every step
+   here runs gate to gate, and what it protects is the agent a client can
+   reach. A diagnostic binding raises no gate and takes no step 1, and under
+   it the SPU may answer the activations the tap holds rather than the
+   reduction alone, per the operator's ruling of 2026-08-30 and
+   `weaver-spu-PRD` section 13.7, which carries the criterion and its
+   bounds.
 7. If the generation contains a tool call, **the harness addresses it to a
    registered tool through the gate's agent-opened socket**, per the egress
    ruling of 2026-08-07. The tool is a standing application the operator
@@ -889,7 +904,9 @@ it might be needed, not that the prior tree had it.
 The named set, closed:
 
 - **Residual-stream readout.** Per-layer activations from the running decoder,
-  reduced in place, enabled or disabled per agent by its config file. See
+  reduced in place under the serving binding, enabled or disabled per agent by
+  its config file, and under the diagnostic binding answerable as the tap's
+  columns per the ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7. See
   section 8.
 - **Measurement payloads.** Token identifiers and token entropies, emitted into
   the stream at production time. These are what make replay under

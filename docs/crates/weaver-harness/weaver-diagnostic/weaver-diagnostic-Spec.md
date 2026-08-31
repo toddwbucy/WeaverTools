@@ -4,6 +4,14 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, the seventeenth kind. `residual.column` joins section
+3.2 per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7 as
+amended, and the decode contract's third intermediate: one event per sampled
+position where the ask stood, a sampled position without one being charter
+13.10's fault, its identity members fixed, its values in the floor's
+provisional bare JSON, the efficient encoding held open in section 8 beside
+the seam's framing election with the fault's enum case owed there to the
+building act. The kind set's count and the mapping's total move with it.
 **Document ID:** `weaver-diagnostic-Spec`
 **Parent:** `weaver-diagnostic-PRD`
 **Editorial:** Per the Working Rules.
@@ -142,11 +150,12 @@ to: diagnostic-session-is-the-replays-own
 
 ### 3.2 The kind set
 
-**Sixteen kinds, exhaustive, and the set is this crate's own.**
+**Seventeen kinds, exhaustive, and the set is this crate's own.**
 
     replay.opened          the pass's bracket opens, and the record identifies itself
     replay.identity        the input identity the pass established
     replay.closed          the pass's bracket closes, carrying its outcome
+    residual.column        one generated position's residual columns, where asked
     turn.started           a replayed turn opens
     turn.closed            a replayed turn closes
     message.system         the seated prefix, as the record carried it
@@ -164,8 +173,8 @@ to: diagnostic-session-is-the-replays-own
 **Thirteen spellings are the serving vocabulary's and mean there what they mean
 here.** A kind that names the same fact carries the same spelling and the same
 payload shape, which is what makes reader compatibility a rule rather than a
-coincidence, per section 4. **Three are this record's own**, the `replay.` trio,
-and no serving record carries any of them.
+coincidence, per section 4. **Four are this record's own**, the `replay.` trio
+and `residual.column`, and no serving record carries any of them.
 
 **`flush` is carried because the loop is granted the flush by name.**
 `diagnostic-replay-loop` section 1 enumerates what the seat grants it, the state
@@ -196,6 +205,27 @@ narrower ground the flush's presence leaves standing**: the loop's grant names t
 flush and not the elision, and a later act that grants one adds the kind with its
 own argument rather than finding a variant seated for it.
 
+**`residual.column` is carried because the diagnostic binding may ask past the
+fold**, per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7
+as amended, and the decode contract's third intermediate. One event per
+sampled position - each decode forward, and each turn's prefill final
+position, every reissued append prefilling its own delta, nothing else of
+the prompt, per that clause's bound, and no tool-round prefill existing
+here because a replay calls no tool, per the absent-kinds paragraph above -
+authored by the harness
+from the intermediate the seam delivered, carrying the position it names, the
+layer count, and the tap's width, the values crossing in the provisional bare
+JSON the floor states and the efficient encoding being section 8's open
+election beside the seam's own at `weaver-spu-Spec` section 12. **Authored
+only where the ask stood, and under a standing ask a sampled position without
+one is charter 13.10's fault**, owned there since this act and cited rather
+than restated: an elected observation that silently stopped observing. This
+record's `Failure` enum cannot yet express it, and the case lands with the
+code act that builds the seam, named in section 8 as owed. The record's
+identity is its provenance and never a member, per section 4's discriminant
+and the parent charter's 2026-08-24 correction, so nothing here reads the
+kind's presence as identifying anything.
+
 ```graph
 node: diagnostic-kind-set-exhaustive
 kind: assertion
@@ -208,10 +238,14 @@ to: diagnostic-kind-set-exhaustive
 
 ### 3.3 The payload shapes
 
-**The mapping is total: sixteen kinds, and every kind's accepting shape is
-named.** Thirteen take the serving payload of the same name, spliced or shaped as
-`weaver-trace-Spec` section 3 shapes it, that document being authoritative and a
-divergence a defect against it. Three are declared here.
+**The mapping is total: seventeen kinds, sixteen shapes named whole and the
+seventeenth named to its members.** Thirteen take the serving payload of the
+same name, spliced or shaped as `weaver-trace-Spec` section 3 shapes it, that
+document being authoritative and a divergence a defect against it. Three are
+declared here. `residual.column`'s identity members are fixed in section 3.2
+and its values cross in the floor's provisional bare JSON, so the kind is
+buildable today, and what section 8 holds open is the efficient encoding, not
+the shape.
 
     pub struct ReplayOpened {
         pub reader_elected: bool,
@@ -569,6 +603,17 @@ about.
 - **The diagnostic-trace's own instrument set**, beyond what a certification reads.
   `weaver-analysis-PRD` section 4 names the suite as a sketch that does not exist in
   this tree, and nothing here is built against it.
+- **`residual.column`'s efficient encoding.** The kind crosses and records in
+  the floor's provisional bare JSON today, and what stays open is the framing
+  worth shipping at the column's volume. The record's encoding and the seam's
+  framing are one question answered twice if settled apart: `weaver-spu-Spec`
+  section 12 holds the seam's half, and both land in the act that measures
+  the consumer draining them, per the same rule stated there.
+- **The column fault's case.** Charter 13.10 owns the fault of a sampled
+  position without its asked column, and this record's `Failure` enum cannot
+  yet express it. The case lands with the code act that builds the seam,
+  owed rather than seated now, a variant standing for what nothing yet
+  produces being the reserved slot this Spec refuses elsewhere.
 - **Whether a replay that elides gains `elision`.** Section 3.2 carries `flush`,
   the loop's grant naming it, and excludes `elision` because that same grant does
   not. A loop later granted the elision port reopens the question with its own

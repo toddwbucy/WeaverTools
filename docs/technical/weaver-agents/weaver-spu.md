@@ -103,13 +103,20 @@ canonical form, with parse failures carried as their own facts rather than
 collapsed into clean turns.
 
 **The readout, when elected.** The election arrives at admit beside the binding.
-Elected, per-layer activations are reduced in place at the tap and the
-reductions return on the same path as the generation, carrying both counts that
-describe their shape - the boundary declared rather than inferred, so a reader
-never recovers the layer count by arithmetic no document states. Not elected, no
+Elected under a serving binding, per-layer activations are reduced in place at
+the tap and the reductions return on the same path as the generation, carrying
+both counts that describe their shape - the boundary declared rather than
+inferred, so a reader never recovers the layer count by arithmetic no document
+states. Under a diagnostic binding the tap's columns themselves may be asked
+for at session open and answered per sampled position, per the ruling of
+2026-08-30 and `weaver-spu-PRD` section 13.7, the serving in-place clause
+being that binding's alone since that act. Not elected, no
 tap runs and no affordance idles. Both engines tap, by two different mechanisms,
 and a tap's neutrality is a property of the built path - shown per tap, on the
-engine that would serve it, never once for the election.
+engine that would serve it, never once for the election. Whether a tap holds a
+column to answer the diagnostic ask is a second capability the family declares
+beside it, per `weaver-spu-PRD` section 14, and an ask a declaration cannot
+honor refuses at the open.
 
 **Context edits.** The loop above elects a flush - the decode context returns to
 its prefix - or an elision, a named span of the resident sequence made absent.

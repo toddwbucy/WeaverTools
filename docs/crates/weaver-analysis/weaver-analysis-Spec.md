@@ -4,6 +4,13 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the
+pipe-shaped sink's discipline per the charter's section 3 as amended: read
+once, keep the report and its evidence, retain nothing drained, and gate the
+reproducibility claim rather than the drain on naming the device model or
+stating it cannot be established. The kind-set count follows
+`weaver-diagnostic-Spec` to seventeen, and section 7 adds the lens artifacts
+as an open election beside the capture artifact.
 **Document ID:** `weaver-analysis-Spec`
 **Parent:** `weaver-analysis-PRD`
 **Editorial:** Per the Working Rules.
@@ -316,7 +323,7 @@ to: analysis-one-preload-per-run
 different authority.** The line is the same line and the envelope the same
 envelope, per `weaver-diagnostic-Spec` sections 2 and 3.1, so section 2's rules
 above bind here unchanged: skip the unknown, derive nothing absent, hold payloads
-raw. **What differs is the kind set**, sixteen rather than twenty-one, and
+raw. **What differs is the kind set**, seventeen rather than twenty-one, and
 `weaver-diagnostic-Spec` section 3.2 is authoritative for it, a divergence being a
 defect against that document rather than this one.
 
@@ -344,6 +351,18 @@ edge: asserts
 from: weaver-analysis
 to: analysis-gates-on-the-stated-outcome
 ```
+
+**Where the sink is a pipe the reading drains it and keeps nothing but the
+report**, per the charter's section 3 as amended on the operator's ruling of
+2026-08-30. The stream is read once in landing order, the report carries the
+evidence it rests on, and no member of this crate retains the drained bytes:
+retention was the sink shape's to give and it did not, and the charter
+carries the licence, the certification's exactness per payload, and the
+bound. **What the device model gates is the claim and never the drain**: the
+report names the device model the evidence came from, read from the deposit
+the operator holds until the record event the charter names as owed lands,
+and a report that cannot establish it says so and carries no reproducibility
+claim, the absent member otherwise reading as one.
 
 **The null replay is elected by this crate's own procedure and not by its control
 over the load.** The reader's election rides the declaration and is the operator's,
@@ -454,6 +473,10 @@ most of this document is representation.
   tree, and nothing here is built against it.
 - **The capture artifact** - identity, custody, dataset shape, quota - is owed its
   own act and lands here when it lands, per the same section.
+- **The lens artifacts.** The charter names the fitting as this crate's, and the
+  fitted per-layer matrices are artifacts with identity, versioning against the
+  weights hash they were fitted to, and custody, none of which is settled here.
+  They land with the suite's act beside the capture artifact above.
 - **What the reading is, as an artifact.** This document settles when a reading is
   produced and refuses to settle what it looks like, that being the suite's
   question rather than the gate's.
