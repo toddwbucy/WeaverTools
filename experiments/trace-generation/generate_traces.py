@@ -286,7 +286,49 @@ def main():
     artifact_sha = base._sha256(cfg["artifact"])
     print(f"artifact sha256: {artifact_sha}", flush=True)
 
-    original, backup = read_declaration(cfg)
+    # **The backup is created inside the restoration scope**, so an
+    # interruption between its creation and the patch cannot strand a
+    # `.pre-tracegen` that falsely locks the next run out. `backup` starts
+    # unset and the finally acts only on what was reached.
+    original = backup = None
+    try:
+        original, backup = read_declaration(cfg)
+        provenance = build_provenance(cfg, schedule, artifact_sha, original,
+                                      session_subset)
+        report = {"box": cfg["box"], "provenance": provenance,
+                  "sessions": [], "analysis": {}}
+        report_path = os.path.join(
+            args.outdir, f"report-{cfg['box']}-tracegen.json")
+        run_the_night(cfg, args, sessions, sweeps, schedule, provenance,
+                      report, report_path, original,
+                      libraries, binaries, tools, spu)
+    finally:
+        if backup is not None:
+            # **Restored from the string in hand, never from the disk.** A
+            # re-read inside a finally can raise, masking the real exception
+            # and skipping the unload with the agent still holding the
+            # device. The backup is removed only after the original is back,
+            # and the unload runs whatever the restore did.
+            try:
+                with open(cfg["declaration"], "w") as f:
+                    f.write(original)
+                try:
+                    os.unlink(backup)
+                except OSError:
+                    pass
+                print("declaration restored", flush=True)
+            finally:
+                base.admin(cfg, "unload")
+
+    # **A night that did not reproduce says so in its exit code**, the same
+    # gate the confirm driver holds: a wrapper of the shape `... && publish`
+    # must not ship defective specimens because the failure was only prose.
+    verdicts = [x.get("verdict") for x in report["sessions"]]
+    if not verdicts or any(v != "REPRODUCED" for v in verdicts):
+        sys.exit(1)
+
+
+def build_provenance(cfg, schedule, artifact_sha, original, session_subset):
     provenance = {
         "sketch": "8B trace generation, v0.1 2026-08-31",
         "schedule": cfg["schedule"],
@@ -301,132 +343,109 @@ def main():
     }
     if session_subset:
         provenance["session_subset"] = session_subset
+    return provenance
 
-    report = {"box": cfg["box"], "provenance": provenance, "sessions": [],
-              "analysis": {}}
-    report_path = os.path.join(args.outdir, f"report-{cfg['box']}-tracegen.json")
 
+def run_the_night(cfg, args, sessions, sweeps, schedule, provenance,
+                  report, report_path, original,
+                  libraries, binaries, tools, spu):
+    """The patch, the sweeps, the close re-read and the analyses.
+
+    Runs entirely inside the caller's restoration scope: the live
+    declaration is first written here, so every exit path from any point
+    below reaches the caller's finally with the original in hand.
+    """
     def deposit_report():
         # Written after every session, so a raise mid-night costs the tail
         # and never the record - defect 2 of #379, answered structurally.
         with open(report_path, "w") as f:
             json.dump(report, f, indent=1)
 
+    patched = patched_declaration(original, cfg)
+    with open(cfg["declaration"], "w") as f:
+        f.write(patched)
+    provenance["declaration_sha256_as_run"] = hashlib.sha256(
+        patched.encode()).hexdigest()
+
     cell = {"name": "tracegen", "artifact": cfg["artifact"],
             "precision": cfg.get("precision", "bf16")}
-    all_reproduced = True
-    try:
-        # The live declaration is written only inside the restoration scope,
-        # so every exit path from here runs the restore below.
-        patched = patched_declaration(original, cfg)
-        with open(cfg["declaration"], "w") as f:
-            f.write(patched)
-        provenance["declaration_sha256_as_run"] = hashlib.sha256(
-            patched.encode()).hexdigest()
-
-        for sweep in range(1, sweeps + 1):
-            for sid, texts in sessions:
-                name = f"{sid}-s{sweep}"
-                started = time.time()
-                r = base.run_cell(
-                    cfg, dict(cell, name=name), args.outdir,
-                    libraries, binaries, tools,
-                    texts=texts, require_completed=True,
-                    turn_timeout=TURN_TIMEOUT)
-                r["session"] = name
-                r["sweep"] = sweep
-                r["seconds"] = round(time.time() - started, 1)
-                report["sessions"].append(r)
-                all_reproduced &= r.get("verdict") == "REPRODUCED"
-                deposit_report()
-                print(f"[{name}] {r.get('verdict')} in {r['seconds']}s",
-                      flush=True)
-
-        # **Provenance is read again at close.** One opening block stamped
-        # into a ninety-minute thirty-load night attributes every trace
-        # after a mid-night install to the pre-install hashes. Guarded per
-        # the matrix's close rather than the raw comparison #379 documents:
-        # a failed closing read deposits as unreadable, never as movement.
-        closing_spu = base._resolve_spu(cfg)
-        at_close = {
-            "engine_libraries": base.engine_libraries(cfg, closing_spu),
-            "weaver_binaries": base.weaver_binaries(cfg, closing_spu),
-            "toolchain": base.toolchain(cfg),
-        }
-        opening = {"engine_libraries": libraries,
-                   "weaver_binaries": binaries, "toolchain": tools}
-        moved = {}
-        for field, closing in at_close.items():
-            if not base.is_reading(closing):
-                moved[field] = {"at_close_unreadable": closing}
-            elif not base.is_reading(opening[field]):
-                moved[field] = {"at_open_unreadable": opening[field]}
-            elif closing != opening[field]:
-                moved[field] = {"at_open": opening[field],
-                                "at_close": closing}
-        provenance["provenance_at_close"] = moved or "unchanged"
-        if moved:
-            print(f"PROVENANCE MOVED OR UNREADABLE: {sorted(moved)}",
+    for sweep in range(1, sweeps + 1):
+        for sid, texts in sessions:
+            name = f"{sid}-s{sweep}"
+            started = time.time()
+            r = base.run_cell(
+                cfg, dict(cell, name=name), args.outdir,
+                libraries, binaries, tools,
+                texts=texts, require_completed=True,
+                turn_timeout=TURN_TIMEOUT)
+            r["session"] = name
+            r["sweep"] = sweep
+            r["seconds"] = round(time.time() - started, 1)
+            report["sessions"].append(r)
+            deposit_report()
+            print(f"[{name}] {r.get('verdict')} in {r['seconds']}s",
                   flush=True)
 
-        # The cross-session findings, from the deposits rather than from
-        # memory of the loop above.
-        def em(name, turn="t-1"):
-            return emissions_of(os.path.join(
-                args.outdir, f"cell-{name}-source.ndjson")).get(turn, "")
+    # **Provenance is read again at close.** One opening block stamped into
+    # a ninety-minute thirty-load night attributes every trace after a
+    # mid-night install to the pre-install hashes. Guarded per the matrix's
+    # close rather than the raw comparison #379 documents: a failed closing
+    # read deposits as unreadable, never as movement.
+    closing_spu = base._resolve_spu(cfg)
+    at_close = {
+        "engine_libraries": base.engine_libraries(cfg, closing_spu),
+        "weaver_binaries": base.weaver_binaries(cfg, closing_spu),
+        "toolchain": base.toolchain(cfg),
+    }
+    opening = {"engine_libraries": libraries,
+               "weaver_binaries": binaries, "toolchain": tools}
+    moved = {}
+    for field, closing in at_close.items():
+        if not base.is_reading(closing):
+            moved[field] = {"at_close_unreadable": closing}
+        elif not base.is_reading(opening[field]):
+            moved[field] = {"at_open_unreadable": opening[field]}
+        elif closing != opening[field]:
+            moved[field] = {"at_open": opening[field], "at_close": closing}
+    provenance["provenance_at_close"] = moved or "unchanged"
+    if moved:
+        print(f"PROVENANCE MOVED OR UNREADABLE: {sorted(moved)}", flush=True)
 
-        # A pair analysis only exists where both emissions do - a smoke
-        # subset must not deposit first_divergence("", "") reading as
-        # IDENTICAL for sessions that never ran.
-        for sweep in range(1, sweeps + 1):
-            a_long, a_short = em(f"A-long-s{sweep}"), em(f"A-short-s{sweep}")
-            if a_long and a_short:
-                report["analysis"][f"A-divergence-s{sweep}"] = \
-                    first_divergence(a_long, a_short)
-            b_a, b_b = em(f"B-a-s{sweep}"), em(f"B-b-s{sweep}")
-            if b_a and b_b:
-                report["analysis"][f"B-identity-s{sweep}"] = \
-                    first_divergence(b_a, b_b)
-        deposit_report()
+    # The cross-session findings, from the deposits rather than from memory
+    # of the loop above. A pair analysis only exists where both emissions
+    # do - a smoke subset must not deposit first_divergence("", "") reading
+    # as IDENTICAL for sessions that never ran.
+    def em(name, turn="t-1"):
+        return emissions_of(os.path.join(
+            args.outdir, f"cell-{name}-source.ndjson")).get(turn, "")
 
-        verdicts = [x.get("verdict") for x in report["sessions"]]
-        good = sum(v == "REPRODUCED" for v in verdicts)
-        print(f"\nsessions: {good}/{len(verdicts)} REPRODUCED", flush=True)
-        for sweep in range(1, sweeps + 1):
-            notes = []
-            if f"A-divergence-s{sweep}" in report["analysis"]:
-                a = report["analysis"][f"A-divergence-s{sweep}"]
-                notes.append("A first divergence " + (
-                    f"byte {a['byte']}" if a
-                    else "NONE - identical despite the ask"))
-            if f"B-identity-s{sweep}" in report["analysis"]:
-                b = report["analysis"][f"B-identity-s{sweep}"]
-                notes.append("B " + ("IDENTICAL" if b is None
-                                     else f"DIVERGED at byte {b['byte']}"))
-            if notes:
-                print(f"sweep {sweep}: " + ", ".join(notes), flush=True)
-    finally:
-        # **Restored from the string in hand, never from the disk.** A
-        # re-read of the backup inside a finally can raise, masking the real
-        # exception and skipping the unload with the agent still holding the
-        # device. The backup is removed only after the original is back, and
-        # the unload runs whatever the restore did.
-        try:
-            with open(cfg["declaration"], "w") as f:
-                f.write(original)
-            try:
-                os.unlink(backup)
-            except OSError:
-                pass
-            print("declaration restored", flush=True)
-        finally:
-            base.admin(cfg, "unload")
+    for sweep in range(1, sweeps + 1):
+        a_long, a_short = em(f"A-long-s{sweep}"), em(f"A-short-s{sweep}")
+        if a_long and a_short:
+            report["analysis"][f"A-divergence-s{sweep}"] = \
+                first_divergence(a_long, a_short)
+        b_a, b_b = em(f"B-a-s{sweep}"), em(f"B-b-s{sweep}")
+        if b_a and b_b:
+            report["analysis"][f"B-identity-s{sweep}"] = \
+                first_divergence(b_a, b_b)
+    deposit_report()
 
-    # **A night that did not reproduce says so in its exit code**, the same
-    # gate the confirm driver holds: a wrapper of the shape `... && publish`
-    # must not ship defective specimens because the failure was only prose.
-    if not report["sessions"] or not all_reproduced:
-        sys.exit(1)
+    verdicts = [x.get("verdict") for x in report["sessions"]]
+    good = sum(v == "REPRODUCED" for v in verdicts)
+    print(f"\nsessions: {good}/{len(verdicts)} REPRODUCED", flush=True)
+    for sweep in range(1, sweeps + 1):
+        notes = []
+        if f"A-divergence-s{sweep}" in report["analysis"]:
+            a = report["analysis"][f"A-divergence-s{sweep}"]
+            notes.append("A first divergence " + (
+                f"byte {a['byte']}" if a
+                else "NONE - identical despite the ask"))
+        if f"B-identity-s{sweep}" in report["analysis"]:
+            b = report["analysis"][f"B-identity-s{sweep}"]
+            notes.append("B " + ("IDENTICAL" if b is None
+                                 else f"DIVERGED at byte {b['byte']}"))
+        if notes:
+            print(f"sweep {sweep}: " + ", ".join(notes), flush=True)
 
 
 if __name__ == "__main__":
