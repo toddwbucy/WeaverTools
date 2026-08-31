@@ -4,6 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the
+pipe-shaped sink's discipline per the charter's section 3 as amended: read
+once, keep the report and its evidence, retain nothing drained, name the card
+model or state that it cannot be established. The kind-set count follows
+`weaver-diagnostic-Spec` to seventeen, and section 7 adds the lens artifacts
+as an open election beside the capture artifact.
 **Document ID:** `weaver-analysis-Spec`
 **Parent:** `weaver-analysis-PRD`
 **Editorial:** Per the Working Rules.
@@ -316,7 +322,7 @@ to: analysis-one-preload-per-run
 different authority.** The line is the same line and the envelope the same
 envelope, per `weaver-diagnostic-Spec` sections 2 and 3.1, so section 2's rules
 above bind here unchanged: skip the unknown, derive nothing absent, hold payloads
-raw. **What differs is the kind set**, sixteen rather than twenty-one, and
+raw. **What differs is the kind set**, seventeen rather than twenty-one, and
 `weaver-diagnostic-Spec` section 3.2 is authoritative for it, a divergence being a
 defect against that document rather than this one.
 
@@ -334,6 +340,18 @@ whichever way it came to be unclosed**. A pass that died and a pass still runnin
 leave one absence between them, and this crate does not try to tell them apart,
 because treating the end of available bytes as the end of a run is exactly what the
 marker exists to stop.
+
+**Where the sink is a pipe the reading drains it and keeps nothing but the
+report**, per the charter's section 3 as amended on the operator's ruling of
+2026-08-30. The stream is read once in landing order, the report carries the
+evidence it rests on, and no member of this crate retains the drained bytes:
+what would be kept is regenerable by replay, and the charter carries why that
+licence holds and where it is bounded. **The report names the card model the
+evidence came from**, read from the deposit the operator holds until the
+record event owed by that same section lands, and a report that cannot
+establish the architecture states that it cannot rather than omitting the
+member, the absence otherwise reading as a reproducibility the report does
+not have.
 
 ```graph
 node: analysis-gates-on-the-stated-outcome
@@ -454,6 +472,10 @@ most of this document is representation.
   tree, and nothing here is built against it.
 - **The capture artifact** - identity, custody, dataset shape, quota - is owed its
   own act and lands here when it lands, per the same section.
+- **The lens artifacts.** The charter names the fitting as this crate's, and the
+  fitted per-layer matrices are artifacts with identity, versioning against the
+  weights hash they were fitted to, and custody, none of which is settled here.
+  They land with the suite's act beside the capture artifact above.
 - **What the reading is, as an artifact.** This document settles when a reading is
   produced and refuses to settle what it looks like, that being the suite's
   question rather than the gate's.

@@ -5,6 +5,13 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-08-31, the discard's licence. Section 3 gains the operator's
+ruling of 2026-08-30: a pipe-shaped sink retains nothing, the report is the
+kept artifact carrying its evidence, the discard is licensed by bit-exact
+replay and bounded by the card model, which the report must name, the record
+event that would carry it named as owed. Nothing about the sink's governance
+moves.
+
 **Revised:** 2026-08-27, third of this date, the null replay's verb is corrected.
 Section 3 said this crate elects the null replay and section 4's cell said the same,
 which read as a control over the load this crate does not hold: the reader's
@@ -176,6 +183,24 @@ discriminant and holds its custody per `weaver-admin-Spec` section 5, and
 `weaver-admin-operator-contract` section 3 governs what crosses out and whose
 durability it is. This crate inherits that arrangement rather than standing
 outside it.
+
+**A pipe-shaped sink retains nothing, and the report is the kept artifact.**
+Per the operator's ruling of 2026-08-30: a diagnostic run whose sink is a pipe
+streams through this crate, the reading is taken as the stream drains, the
+report carries its evidence, and the raw capture is kept nowhere. **What
+licenses the discard is bit-exact replay and nothing weaker.** A capture a
+replay regenerates exactly is derivable rather than data, so keeping it would
+store what can be recomputed, and the trace with its declaration is already
+the capture's compressed form. **The licence is bounded by the card model and
+the report must name it**: reissue is bit-exact within a card model and not
+across one, so a report whose evidence was discarded is reproducible on the
+architecture that produced it, and a report that does not name that
+architecture asserts a reproducibility it cannot carry. The serving device
+does not yet ride the run's own record: it reaches the deposit through the
+driver that took it, per the run-records-what-served act of 2026-08-28, and a
+record event carrying it is owed its own act, named here as owed rather than
+assumed present. Until it lands the report reads the architecture from the
+deposit the operator holds, and a record alone does not license the discard.
 
 **It reads nothing for meaning from a replay that did not certify**, per
 `weaver-diagnostic-PRD` section 4, which carries the criterion because it
