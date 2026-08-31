@@ -2126,9 +2126,11 @@ position.
 the pair.** `column_permission` arrives at admit inside the instruction, set
 from the binding's kind by admin per 13.7, so this crate still never learns
 the kind itself. `column_ask` crosses once, at session open, per the same
-clause's cadence election. An open carrying the ask against an instruction
-carrying no permission, or against a family whose declaration holds no
-column, refuses typed at the open. **The no-column arm fires at the open
+clause's cadence election. An open carrying the ask refuses typed at the
+open on the three arms of 13.7's registry - no permission, no readout
+election, no column in the family's declaration - cited whole rather than
+restated in part, that clause holding the registry so no document decides a
+share. **The no-column arm fires at the open
 rather than at admit on purpose**: admission cannot know an ask will come,
 the ask being the open's member, and a diagnostic replay that elects the
 readout for norms alone against a family whose tap holds no column is a

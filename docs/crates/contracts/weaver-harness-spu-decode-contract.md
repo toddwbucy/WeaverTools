@@ -511,10 +511,11 @@ Refusals are typed and enumerable. The cases:
 - the elision's span describes no removable region: it overlaps the
   identity prefix, runs past the resident count, ends before it starts, or
   is empty with its end equal to its start
-- the open carries the column ask where the instruction carries no
-  admitted permission, where the readout was not elected at admit, or where
-  the family's declaration holds no column, refused at the open rather than
-  answered thin at the first sampled position
+- the open carries the column ask against any arm of `weaver-spu-PRD`
+  section 13.7's refusal registry - no admitted permission, no readout
+  election, no column in the family's declaration - refused at the open
+  rather than answered thin at the first sampled position, the registry
+  being that clause's and this list citing it
 
 **Every refusal on this seam is clerked, and the harness is the party that
 clerks it.** Per the operator's ruling of 2026-08-22. The SPU answers the

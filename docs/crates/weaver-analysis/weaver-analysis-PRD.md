@@ -219,6 +219,11 @@ it reaches the deposit through the driver that took it, per the
 run-records-what-served act of 2026-08-28, and a record event carrying it is
 owed its own act, named here as owed rather than assumed present. Until it
 lands the report reads the device model from the deposit the operator holds.
+**Code identity has the same status and the same reader**: regeneration runs
+the seam's code as well as the silicon, and the binaries, the engine
+libraries, and the toolchain reach the deposit by hash through the same
+driver, so the report reads them where it reads the device, and a report
+surviving a rebuild claims nothing the deposit's hashes do not carry.
 
 **It reads nothing for meaning from a replay that did not certify**, per
 `weaver-diagnostic-PRD` section 4, which carries the criterion because it

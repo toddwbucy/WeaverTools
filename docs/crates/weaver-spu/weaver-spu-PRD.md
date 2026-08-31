@@ -1085,10 +1085,15 @@ the cadence: **the ask crosses once, at session open**, the once-crossing
 discipline of the instruction reaching the one ask whose answer runs for the
 residency. Second, the enforcement: **the permission crosses at admit, inside
 the instruction, set from the binding by admin** - the party that holds the
-binding and already derives the member vector from it - so an open carrying
-the ask against an instruction carrying no permission refuses, typed, at the
-open. This crate still never learns the binding's kind: it learns one
-admitted permission that admin vouches for, which is the same shape every
+binding and already derives the member vector from it - and **the open's
+refusal registry is this clause's, three arms and no others**: an open
+carrying the ask refuses, typed, at the open where the instruction carries
+no permission, where the readout was not elected at admit - no election
+means no tap runs and no column exists to continue - or where the family's
+declaration holds no column. The Spec and the decode contract cite this
+registry and add no arm of their own. This crate still never learns the
+binding's kind: it learns one admitted permission that admin vouches for,
+which is the same shape every
 other admitted election takes. The harness's own discipline, that a serving
 harness never writes the ask, is watched on the harness and its assertion
 lands with the code act, named here as owed. The bar is 13.7's unchanged:
