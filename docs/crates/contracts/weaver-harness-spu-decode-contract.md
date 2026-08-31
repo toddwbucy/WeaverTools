@@ -10,13 +10,16 @@ and neither document restates the other.
 **Date filed:** 2026-08-02
 **Revised:** 2026-08-31, a third intermediate for the diagnostic binding.
 Per the operator's ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as
-amended in the same act: one message per generated position carrying the
-tap's residual columns, crossing only where the column ask stands, the ask
-crossing once at session open and only from a harness holding the diagnostic
-binding, the SPU never learning the binding. Section 5 gains the open's
-refusal where the ask cannot be honored, section 4 the harness's supply
-line, and the encoding stays `weaver-spu-Spec` section 12's open election.
-
+amended in the same act, which holds the cadence, the enforcement, and the
+position bound this contract cites rather than fixes. Section 2 gains the
+column message, one per sampled position carrying the tap's residual columns,
+and the once-at-open ask. Section 3's ordering and section 4's supply lines
+take the column stream, section 5 gains the open's refusal where the ask
+arrives without admin's admitted permission or against a family whose
+declaration holds no column, and the efficient framing stays
+`weaver-spu-Spec` section 12's open election over section 4.4's provisional
+bare JSON. The SPU never learns the binding's kind, learning one admitted
+permission admin vouches for.
 **Revised:** 2026-08-25, a citation is corrected and nothing else. Section 5's
 pointer at the record's load bracket moves from `weaver-trace-PRD` section 3.2 to
 3.1, where that clause has sat since it was filed. No clause of this seam changes.
@@ -297,22 +300,25 @@ nothing about why from the seam, the election's record being the load
 event's per `weaver-trace-PRD` section 3.1 and not this seam's to carry.
 
 **A third intermediate crosses where the column ask stands**, added
-2026-08-31 on the operator's ruling of 2026-08-30 and `weaver-spu-PRD`
-section 13.7 as amended. It carries one generated position's residual
-columns, the tap's own copy per layer at the width the tap holds, one
-message per generated position, paired by the position it names like the
-field's, and like both intermediates it closes nothing. It covers generated
-positions and promises nothing over prompt positions, per `weaver-spu-Spec`
-section 7. **The ask crosses once, at session open, and only from a harness
-holding the diagnostic binding.** The SPU never learns the binding and never
-needs to: the harness is the one party that knows it, a serving harness
-never writes the ask, and an open carrying it is honored only where the
-readout was elected at admit and the family's tap holds a column to answer.
-Where the ask does not stand the message does not cross, on the same
-no-empty-crossing rule as the field's. The framing of the ask and of the
-column message is `weaver-spu-Spec` section 12's open election, settled
-against the consumer draining it, and this contract fixes the granularity
-and the standing rather than the encoding.
+2026-08-31 on the operator's ruling of 2026-08-30. `weaver-spu-PRD` section
+13.7 as amended holds the elections this paragraph carries out: the cadence,
+the enforcement, and the position bound are that clause's, cited here rather
+than fixed here. It carries one sampled position's residual columns, the
+tap's own copy per layer at the width the artifact sets, one message per
+sampled position - each decode forward and the prefill's final position,
+where a turn's first token is drawn, nothing else of the prompt - paired by
+the position it names like the field's, and like both intermediates it
+closes nothing. **The ask crosses once, at session open, and its permission
+crosses at admit**: admin sets the permission from the binding's kind inside
+the instruction, so the SPU never learns the kind and never needs to, and an
+open carrying the ask against no admitted permission, or against a family
+whose declaration holds no column, refuses typed at the open. A serving
+harness never writes the ask, the discipline watched on the harness per that
+clause's owed assertion. Where the ask does not stand the message does not
+cross, on the same no-empty-crossing rule as the field's. The column crosses
+in `weaver-types-Spec` section 4.4's provisional bare JSON, the efficient
+framing staying `weaver-spu-Spec` section 12's open election, settled
+against the consumer draining it.
 
 **The stream changes the seam's rhythm
 and not the record's
@@ -417,7 +423,7 @@ carrying two kinds of traffic being the decoder-cut ruling's whole point.
   while an exchange is outstanding is that exchange's typed answer, per
   section 5, so a report never interleaves a stream.
 - Messages within one exchange are ordered, and the intermediate messages
-  of append-and-generate, token and field alike, all precede its answer.
+  of append-and-generate, token, field, and column alike, all precede its answer.
 - A retained token's field message precedes the token message its piece
   eventually lands in, because the field is read before the sampler draws
   and a piece exists only after. **The two streams are not joinable on
@@ -460,10 +466,11 @@ verbatim emission and the canonical parse both reaching the record, per
 the operator's end-to-end requirement.
 
 **The SPU supplies** the opened confirmation, the token stream as each is
-drawn, the field stream where its election stands, each generation with
-its measurement and elected reductions, the stopped partials, the flush
-confirmation, the elision confirmation with its resident counts either
-side, the typed refusals, and the fault reports.
+drawn, the field stream where its election stands, the column stream where
+the ask stood at open, one message per sampled position, each generation
+with its measurement and elected reductions, the stopped partials, the
+flush confirmation, the elision confirmation with its resident counts
+either side, the typed refusals, and the fault reports.
 
 **The SPU guarantees** that the session only advances: nothing ever asks
 resident state to rewind, and the weakest family sets the rule for all.
@@ -503,9 +510,10 @@ Refusals are typed and enumerable. The cases:
 - the elision's span describes no removable region: it overlaps the
   identity prefix, runs past the resident count, ends before it starts, or
   is empty with its end equal to its start
-- the open carries the column ask where the readout was not elected at
-  admit, or where the family's tap holds no column, refused at the open
-  rather than answered thin at the first turn
+- the open carries the column ask where the instruction carries no
+  admitted permission, where the readout was not elected at admit, or where
+  the family's declaration holds no column, refused at the open rather than
+  answered thin at the first sampled position
 
 **Every refusal on this seam is clerked, and the harness is the party that
 clerks it.** Per the operator's ruling of 2026-08-22. The SPU answers the

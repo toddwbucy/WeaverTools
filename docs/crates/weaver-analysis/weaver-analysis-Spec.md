@@ -6,8 +6,9 @@ written against it under the gates of Working Process section 6.
 **Date filed:** 2026-08-27
 **Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the
 pipe-shaped sink's discipline per the charter's section 3 as amended: read
-once, keep the report and its evidence, retain nothing drained, name the card
-model or state that it cannot be established. The kind-set count follows
+once, keep the report and its evidence, retain nothing drained, and gate the
+reproducibility claim rather than the drain on naming the device model or
+stating it cannot be established. The kind-set count follows
 `weaver-diagnostic-Spec` to seventeen, and section 7 adds the lens artifacts
 as an open election beside the capture artifact.
 **Document ID:** `weaver-analysis-Spec`
@@ -341,18 +342,6 @@ leave one absence between them, and this crate does not try to tell them apart,
 because treating the end of available bytes as the end of a run is exactly what the
 marker exists to stop.
 
-**Where the sink is a pipe the reading drains it and keeps nothing but the
-report**, per the charter's section 3 as amended on the operator's ruling of
-2026-08-30. The stream is read once in landing order, the report carries the
-evidence it rests on, and no member of this crate retains the drained bytes:
-what would be kept is regenerable by replay, and the charter carries why that
-licence holds and where it is bounded. **The report names the card model the
-evidence came from**, read from the deposit the operator holds until the
-record event owed by that same section lands, and a report that cannot
-establish the architecture states that it cannot rather than omitting the
-member, the absence otherwise reading as a reproducibility the report does
-not have.
-
 ```graph
 node: analysis-gates-on-the-stated-outcome
 kind: assertion
@@ -362,6 +351,18 @@ edge: asserts
 from: weaver-analysis
 to: analysis-gates-on-the-stated-outcome
 ```
+
+**Where the sink is a pipe the reading drains it and keeps nothing but the
+report**, per the charter's section 3 as amended on the operator's ruling of
+2026-08-30. The stream is read once in landing order, the report carries the
+evidence it rests on, and no member of this crate retains the drained bytes:
+retention was the sink shape's to give and it did not, and the charter
+carries the licence, the certification's exactness per payload, and the
+bound. **What the device model gates is the claim and never the drain**: the
+report names the device model the evidence came from, read from the deposit
+the operator holds until the record event the charter names as owed lands,
+and a report that cannot establish it says so and carries no reproducibility
+claim, the absent member otherwise reading as one.
 
 **The null replay is elected by this crate's own procedure and not by its control
 over the load.** The reader's election rides the declaration and is the operator's,

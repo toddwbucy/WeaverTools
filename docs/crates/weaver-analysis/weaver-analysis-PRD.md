@@ -7,10 +7,12 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 **Date filed:** 2026-08-24
 **Revised:** 2026-08-31, the discard's licence. Section 3 gains the operator's
 ruling of 2026-08-30: a pipe-shaped sink retains nothing, the report is the
-kept artifact carrying its evidence, the discard is licensed by bit-exact
-replay and bounded by the card model, which the report must name, the record
-event that would carry it named as owed. Nothing about the sink's governance
-moves.
+kept artifact carrying its evidence, and the discard is licensed by the
+replay's certification at the exactness the corpus grants each payload, token
+path exact and vectors within the diagnostic charter's stated tolerance,
+bounded by the device model the deposit names, which the report names or
+states it cannot, the record event that would carry it named as owed. Nothing
+about the sink's governance moves.
 
 **Revised:** 2026-08-27, third of this date, the null replay's verb is corrected.
 Section 3 said this crate elects the null replay and section 4's cell said the same,
@@ -187,20 +189,36 @@ outside it.
 **A pipe-shaped sink retains nothing, and the report is the kept artifact.**
 Per the operator's ruling of 2026-08-30: a diagnostic run whose sink is a pipe
 streams through this crate, the reading is taken as the stream drains, the
-report carries its evidence, and the raw capture is kept nowhere. **What
-licenses the discard is bit-exact replay and nothing weaker.** A capture a
-replay regenerates exactly is derivable rather than data, so keeping it would
-store what can be recomputed, and the trace with its declaration is already
-the capture's compressed form. **The licence is bounded by the card model and
-the report must name it**: reissue is bit-exact within a card model and not
-across one, so a report whose evidence was discarded is reproducible on the
-architecture that produced it, and a report that does not name that
-architecture asserts a reproducibility it cannot carry. The serving device
-does not yet ride the run's own record: it reaches the deposit through the
-driver that took it, per the run-records-what-served act of 2026-08-28, and a
-record event carrying it is owed its own act, named here as owed rather than
-assumed present. Until it lands the report reads the architecture from the
-deposit the operator holds, and a record alone does not license the discard.
+report carries its evidence, and the raw capture is kept nowhere. Retention is
+not this crate's to choose there - the sink's shape made it - so what this
+clause governs is the claim a report may make about what was not kept.
+
+**What licenses the discard is the replay's own certification, stated at the
+exactness the corpus grants each payload and no more.** The token path is
+held exact and the vectors within the tolerance `weaver-diagnostic-PRD`
+section 4's comparison states, that document declining bitwise equality of
+floats on purpose, and this clause claims nothing stronger for the columns
+than the certification that regenerates them claims. A capture the
+certification vouches for is derivable rather than data, so keeping it would
+store what can be recomputed to the same certified exactness, and the trace
+with its declaration is already the capture's compressed form. The evidence
+in hand is the measured half: within one device the weekend's replays of
+2026-08-29 through 30 reproduced token paths and per-token entropies
+byte-identical across 5,530 sessions and five precisions - the reduction
+rather than the columns, which is why the tolerance clause above carries the
+columns' share.
+
+**The licence is bounded by the device model the deposit names, and the
+report must name it or say that it cannot.** Reissue holds within one device
+model and is refuted across them by the measurement of issue #346, so a
+report whose evidence was discarded is reproducible on the silicon that
+produced it and nowhere else, and a report that cannot establish which states
+that plainly, carrying no reproducibility claim in place of a member that
+would read as one. The serving device does not yet ride the run's own record:
+it reaches the deposit through the driver that took it, per the
+run-records-what-served act of 2026-08-28, and a record event carrying it is
+owed its own act, named here as owed rather than assumed present. Until it
+lands the report reads the device model from the deposit the operator holds.
 
 **It reads nothing for meaning from a replay that did not certify**, per
 `weaver-diagnostic-PRD` section 4, which carries the criterion because it

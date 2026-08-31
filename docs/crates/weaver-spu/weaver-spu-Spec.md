@@ -836,7 +836,7 @@ to: spu-service-serial-one-loop
 
 The two exchanges of `weaver-harness-spu-contract`, in the charter's order.
 
-**Six of this section's nine records are review's, and the ground is
+**Six of this section's ten records are review's, and the ground is
 non-purchase rather than reach.** Section 10's perturbation list was written
 before the device-assignment ruling of 2026-08-03 reshaped this section and was
 revisited in the act that closed issue 37, which bought what needs no hardware
@@ -2012,9 +2012,9 @@ is the others' and the second is not**, which is the reverse of what a
 reader told only that the shape differs would look for. The gather keeps the
 batch order of the positions it retains, so the final column carries the
 last position in both shapes and one rule reads both. And the copy is that
-column alone, contiguous at `f32` and about eight kibibytes a layer, where
-copying whole tensors at a full batch would move gigabytes per prefill and
-is not viable.
+column alone, `n_embd` values contiguous at `f32` - the figure the artifact's
+own width sets, kibibytes a layer against the gigabytes per prefill that
+copying whole tensors at a full batch would move.
 
 **The refusal narrows to the flag.** `readout::judge` refused an elected
 GGUF load on the container, because the tap did not exist. With the tap
@@ -2105,30 +2105,33 @@ to: spu-reduction-in-place-at-the-tap
 ```
 
 **The diagnostic binding asks past the fold, and the column is already in
-hand.** Charter section 13.7 permits the activations out under the diagnostic
-binding and refuses them under the serving one. Representation follows the two
-fold paths this section already distinguishes. On the GGUF path the fold's
-input is a host-side copy of one layer's final column, `n_embd` values
-contiguous at `f32`, about eight kibibytes a layer, taken per layer per
+hand.** Charter section 13.7 as amended holds the three elections and this
+section represents them. Representation follows the two fold paths this
+section already distinguishes. On the GGUF path the fold's input is a
+host-side copy of one layer's final column, `n_embd` values contiguous at
+`f32` - the figure the artifact's own width sets - taken per layer per
 forward and dropped once its norm is folded: the diagnostic answer is that
 column continuing instead of dropping, and no second capture exists. On the
 native path `fold_norm` is the stronger in-place reading, one scalar crossing
-and no column held, so what a family's tap can answer is declared per tap the
-way the readout itself is, and the GGUF column is the first answer shown.
-**The answer covers generated positions and promises nothing over prompt
-positions**: a decode forward holds the position it generates, a prefill
-ubatch gathers to its final position alone, and the gather that makes prefill
-cheap is the same gather that discards the rest.
+and no column held, so whether a family's tap holds a column to answer is a
+member of its declaration per charter section 14, and the GGUF column is the
+first answer shown. **The answer covers every sampled position**: each decode
+forward, and the prefill's final position, where a turn's first token is
+drawn. Nothing else of the prompt crosses, and the bound's ground is the
+tap's one-column copy per 13.7, not the engine's gather, which at every layer
+but the last sees every prompt position.
 
-**The harness asks, and this crate never learns the binding.** The party
-holding the binding's kind is the harness, so the ask crosses per decode on
-the token seam from there or not at all, and a serving harness never writes
-it. An answer to an ask that never came is the defect below, and an asked
-column that does not arrive is a fault rather than an absence, the clause
-`spu-tap-failure-is-a-fault` already states reaching it unchanged: an elected
-observability that silently stopped observing reads as a run without one. The
-framing of the ask and of the answer joins section 12's open token-seam
-encoding election rather than being settled here blind.
+**The permission is admin's, the ask is the harness's, and this crate judges
+the pair.** `column_permission` arrives at admit inside the instruction, set
+from the binding's kind by admin per 13.7, so this crate still never learns
+the kind itself. `column_ask` crosses once, at session open, per the same
+clause's cadence election. An open carrying the ask against an instruction
+carrying no permission, or against a family whose declaration holds no
+column, refuses typed at the open. An asked column that does not arrive at a
+sampled position is charter 13.10's fault, owned there since this act. The
+efficient framing of the column message joins section 12's open token-seam
+encoding election, the provisional form being `weaver-types-Spec` section
+4.4's bare JSON like every crossing.
 
 ```graph
 node: spu-no-vector-unasked
@@ -2140,10 +2143,10 @@ from: weaver-spu
 to: spu-no-vector-unasked
 ```
 
-Review's by non-purchase: the watch is a decode ask carrying no activations
-request whose answer carries a per-layer vector, and it waits on the same
-open encoding the capture watch above waits on, nothing of this seam being
-built until that election lands.
+Review's by non-purchase: the watch is an open carrying no ask whose session
+answers any `Column` message, buyable with a fixture against the built seam,
+and unbought because the seam is unbuilt - the code act that builds it buys
+this watch in the same motion or the tag stands as the lie 13.7 refuses.
 
 **One forward per prompt when readout is elected, never a batch.** Batching
 prompts changes what the attention sees, so residuals taken from a batched
@@ -2941,7 +2944,7 @@ count exists for the first walk above, a writable handle to the agent's own reco
 sitting inside the agent's model server, and the discipline it checks is the
 harness's at the fork rather than the loop's at a seam.
 
-**Fifty-one claims grounding in no invariant is the expected result and not a gap**,
+**Seventy claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4, and the ratio is low here for a structural reason
 rather than an unfinished one. The bulk of this document is decode mechanics,
 sampling, family libraries, kernels, device judgment, residency bookkeeping, and
@@ -2983,20 +2986,24 @@ use them and listed in section 0, and the shape behind all nine is that this
 crate holds neither the floor's definitions nor the fork that creates its
 channels.
 
-**Thirty-one records carry `review`, and what has moved off the tag is what
-needed neither hardware nor seam work.** The five are the
-cheap refusals of section 3, the registry's refusal and the width refusal of
-section 5, the truncation fault of section 2, and the outbound parse of section
-5, all of them reachable with a fixture and none of them touching a device. What
+**Thirty-one records carry `review`, five fewer than the assertion pass of
+2026-08-16 left plus the one this act declares, and what has moved off the
+tag is what needed neither hardware nor seam work.** The five that moved are
+the cheap refusals of section 3, the registry's refusal and the width refusal
+of section 5, the truncation fault of section 2, and the outbound parse of
+section 5, all of them reachable with a fixture and none of them touching a
+device. What
 remains on prose in the residency half is what reads a driver: the room and reach
 conditions of the admission judgment and the release's free-before-answer
 ordering. Those reach the driver through a seam a suite could double and this
 Spec does not introduce, so they are unbought for the seam rather than for the
 watch, and introducing that seam is a larger act than this one. Every `review`
-tag in this document states its ground at its own clause, and outside two cases
-the ground is that no instrument was bought rather than that none exists. The two
-exceptions say so where they sit, the absence of anything laid in for an
-operation type that does not exist and the kernels' comparisons above.
+tag in this document states its ground at its own clause, and outside three
+cases the ground is that no instrument was bought rather than that none exists.
+The three exceptions say so where they sit: the absence of anything laid in for
+an operation type that does not exist, the kernels' comparisons above, and
+section 7's unasked-vector watch, whose instrument cannot exist before the seam
+it watches is built and whose ground obliges the building act to buy it.
 
 **The out-of-order refusal is stated and bought on both seams, per section 9,
 and this crate's side of the owing is discharged.** `weaver-types-Spec` section
@@ -3140,14 +3147,15 @@ Each names what settles it, and none is this Spec's to settle alone.
 
 - **The token seam's encoding.** The hot-path measurement the charter and both
   floor documents defer to, per `weaver-types-Spec` section 4's boundary rule.
-- **The diagnostic answer's framing.** Section 7 permits the tap's column out
-  under the diagnostic binding and settles nothing about how the ask or the
-  answer is framed on the wire. It is settled by the same act that settles the
-  token seam's encoding above, measured against the consumer draining it
-  rather than elected blind, per `weaver-analysis-PRD` section 3's rule that
-  the sink's reader is downstream of the shape the operator declares.
   Taken against real decode traffic, which this crate's own first
   demonstration produces.
+- **The diagnostic answer's efficient framing.** Section 7 puts the column
+  message on the wire in `weaver-types-Spec` section 4.4's provisional bare
+  JSON, and what stays open is the framing worth shipping at the column's
+  volume. It is settled by the same act that settles the token seam's
+  encoding above, measured against the consumer draining it rather than
+  elected blind - the reader being downstream of the sink rather than a party
+  to any delivery contract, per `weaver-analysis-PRD` section 3.
 - **The headroom figure.** Charter section 9's staged item, a construction
   parameter until a measurement on a real artifact against a real device
   replaces it.

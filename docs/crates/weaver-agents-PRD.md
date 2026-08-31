@@ -322,8 +322,8 @@ states how it serves this path.
    harness writes `model.request`, `model.output`, and `model.measurement` into
    the trace. If residual readout is enabled in this agent's config file, the
    eval callback reduces per-layer activations in place and the reduction
-   returns by the same path. **The in-place clause is a property of this
-   serving turn**, which is the only turn this section describes: every step
+   returns by the same path. **The in-place clause is the serving
+   binding's**, whose only turn shape this section describes: every step
    here runs gate to gate, and what it protects is the agent a client can
    reach. A diagnostic binding raises no gate and takes no step 1, and under
    it the SPU may answer the activations the tap holds rather than the
@@ -904,7 +904,9 @@ it might be needed, not that the prior tree had it.
 The named set, closed:
 
 - **Residual-stream readout.** Per-layer activations from the running decoder,
-  reduced in place, enabled or disabled per agent by its config file. See
+  reduced in place under the serving binding, enabled or disabled per agent by
+  its config file, and under the diagnostic binding answerable as the tap's
+  columns per the ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7. See
   section 8.
 - **Measurement payloads.** Token identifiers and token entropies, emitted into
   the stream at production time. These are what make replay under

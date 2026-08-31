@@ -107,6 +107,19 @@ The span is state and never the record.
 field's option, per `weaver-types-PRD` section 2.1's clause of this date on
 issue #258. A flag rather than an option because a per-position reading has
 no size to declare.
+**Revised:** 2026-08-31, the column takes its shapes. Per the operator's
+ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as amended.
+`DecoderInstruction` gains `column_permission`, admin's member and never the
+declaration's: admin sets it from the binding's kind, and the parse refuses
+it in a declaration under the unknown-field rule, so an operator cannot
+write what only the binding may derive. `TokenDirective::Open` gains
+`column_ask`, the once-at-open cadence that charter clause elects.
+`TokenAnswer` gains `Column`, the decode seam's third intermediate, carrying
+its position like `Field` and the layers' values layer-major, crossing as
+bare JSON under section 4.4's provisional encoding, the efficient framing
+staying `weaver-spu-Spec` section 12's open election. Absent where the ask
+is absent and never present-and-empty, the field's own rule.
+
 **Revised:** 2026-08-21, the field takes its shapes. `DecoderInstruction`
 gains `field_election`, optional because the election is, carrying the
 depth the operator declared per `weaver-spu-PRD` section 13.11.
@@ -506,6 +519,7 @@ pub struct DecoderInstruction {
     pub residual_readout_election: bool,
     pub field_election: Option<FieldElection>,
     pub surprisal_election: bool,
+    pub column_permission: bool,
     pub identity: Vec<weaver_traits::Message>,
     pub tunable_values: BTreeMap<String, f64>,
 }
@@ -1602,7 +1616,7 @@ two come apart, and the deferral belongs to the encoding alone.
 
 ```rust
 pub enum TokenDirective {
-    Open { session: SessionId, messages: Vec<Message> },
+    Open { session: SessionId, messages: Vec<Message>, column_ask: bool },
     AppendAndGenerate {
         turn: TurnKey,
         delta: Vec<Message>,
@@ -1616,6 +1630,7 @@ pub enum TokenAnswer {
     Opened,
     Token { token: u32, piece: String },
     Field { position: u64, ranked: Vec<Candidate>, realized: u32 },
+    Column { position: u64, layers: Vec<Vec<f32>> },
     Generated(Generation),
     AtRest,
     Flushed {
