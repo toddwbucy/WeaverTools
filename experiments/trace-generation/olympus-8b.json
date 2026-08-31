@@ -1,0 +1,15 @@
+{
+  "box": "olympus-tracegen",
+  "agent": "karl",
+  "declaration": "/bulk-store/weaver-testing/repro-olympus/agents/karl.yaml",
+  "gate_socket": "/run/weaver-karl/gate.sock",
+  "trace": "/home/todd/.weaveragents/karl/trace.ndjson",
+  "admin_bin": "/usr/local/libexec/weaver/experiment-616d0d4/weaver-admin",
+  "admin_config": "/bulk-store/weaver-testing/repro-olympus/config",
+  "repo": "/bulk-store/weaver-testing/repro-olympus/src-616d0d4",
+  "build_flags": "cargo build --release --workspace --features weaver-spu/cuda,weaver-harness/pyworker (the feature ships both pyworker and worker - the loop is selected by the worker-binary key, recorded per run in weaver_binaries); commit 616d0d4; rustc nightly-2026-02-13 (47611e160); CUDA 13.3.73 at /opt/cuda; NVCC_CCBIN=/usr/bin/g++-15 (GCC 15.3.0); driver 610.57.04; engine libs installed from llama-cpp-sys-2 out/lib (no build-dir RUNPATH)",
+  "artifact": "/opt/weaver/models/Qwen3-8B-BF16.gguf",
+  "schedule": "full-32k",
+  "context_capacity": 32768,
+  "sweeps": 3
+}
