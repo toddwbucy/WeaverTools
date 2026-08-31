@@ -3742,6 +3742,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "weaver-diagnostic"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "weaver-traits",
+]
+
+[[package]]
 name = "weaver-gate"
 version = "0.1.0"
 dependencies = [
