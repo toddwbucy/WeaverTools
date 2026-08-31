@@ -8,6 +8,12 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-08-31, second of this date, the refusal list cites the
+registry. The first entry of this date described the open's refusal in two
+arms and the registry is three, held whole at `weaver-spu-PRD` section 13.7
+since the same review: section 5's list now cites that registry rather than
+enumerating a share, and the column's gloss counts each append's prefill
+final, a tool round's append adding its own.
 **Revised:** 2026-08-31, a third intermediate for the diagnostic binding.
 Per the operator's ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as
 amended in the same act, which holds the cadence, the enforcement, and the
@@ -305,8 +311,8 @@ event's per `weaver-trace-PRD` section 3.1 and not this seam's to carry.
 the enforcement, and the position bound are that clause's, cited here rather
 than fixed here. It carries one sampled position's residual columns, the
 tap's own copy per layer at the width the artifact sets, one message per
-sampled position - each decode forward, and each turn's prefill final
-position, where that turn's first token is drawn, nothing else of the
+sampled position - each decode forward, and each append's prefill final
+position, a tool round's append adding its own, nothing else of the
 prompt - paired by
 the position it names like the field's, and like both intermediates it
 closes nothing. **The ask crosses once, at session open, and its permission

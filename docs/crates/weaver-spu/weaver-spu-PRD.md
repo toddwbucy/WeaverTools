@@ -7,6 +7,14 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-31, second of this date, the registry is whole and the
+gloss counts per append. The post-merge review's findings: 13.7's enforcement
+election now holds the open's refusal registry, three arms and no others, the
+not-elected arm carrying its ground, the Spec and the decode contract citing
+without deciding a share. The third election's gloss reads each append's
+prefill final position, a turn holding one append per generation, so the
+gloss no longer undercounts its own lead sentence.
+
 **Revised:** 2026-08-31, the diagnostic binding may ask for what the tap
 reduced. Section 13.7 carried one answer, the reduction, and a lens transports
 a vector and cannot read a norm. The operator's ruling of this date permits the
@@ -1103,8 +1111,8 @@ at its most expensive one.
 **What the tap can answer bounds what may be asked, and the bound's ground
 is the tap's own copy rather than the engine's gather.** Third election: the
 answer covers **every position at which a token was sampled** - each decode
-forward, and each turn's prefill final position, which is where that turn's
-first token is drawn, the append prefilling its delta turn by turn - and
+forward, and each append's prefill final position, a turn holding one append
+per generation so a tool round adds its own - and
 nothing else of the prompt. The ground is stated
 as it is: at every layer but the last the callback sees every prompt
 position, and what narrows the answer to one column per layer per forward is

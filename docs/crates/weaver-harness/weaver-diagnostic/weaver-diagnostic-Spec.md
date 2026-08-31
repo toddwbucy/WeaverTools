@@ -4,6 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, second of this date, the covered append. On the
+operator's ruling: a recorded tool round replays as an ordinary append and
+its prefill final is covered, replacing a sentence that claimed no tool-round
+prefill exists - false against this record's own `message.tool_result`, and
+hollow at exactly the position a diagnosis reads.
+
 **Revised:** 2026-08-31, the seventeenth kind. `residual.column` joins section
 3.2 per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7 as
 amended, and the decode contract's third intermediate: one event per sampled
