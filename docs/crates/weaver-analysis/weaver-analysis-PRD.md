@@ -5,6 +5,12 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-08-31, second of this date, code identity joins the bound.
+The licence names code identity beside the device model, each identifier at
+its own precision - the commit by hash, the toolchain and driver by pinned
+version, the binaries and engine libraries by the driver's sha256 - the same
+status and the same reader, the record events owed.
+
 **Revised:** 2026-08-31, the discard's licence. Section 3 gains the operator's
 ruling of 2026-08-30: a pipe-shaped sink retains nothing, the report is the
 kept artifact carrying its evidence, and the discard is licensed by the
@@ -219,6 +225,12 @@ it reaches the deposit through the driver that took it, per the
 run-records-what-served act of 2026-08-28, and a record event carrying it is
 owed its own act, named here as owed rather than assumed present. Until it
 lands the report reads the device model from the deposit the operator holds.
+**Code identity has the same status and the same reader**: regeneration runs
+the seam's code as well as the silicon, and the repository commit reaches
+the deposit by hash, the toolchain and the driver by pinned version string,
+and the engine libraries and organ binaries by the sha256 the driver takes
+of each, so the report reads them where it reads the device, and a report
+surviving a rebuild claims nothing the deposit's identifiers do not carry.
 
 **It reads nothing for meaning from a replay that did not certify**, per
 `weaver-diagnostic-PRD` section 4, which carries the criterion because it

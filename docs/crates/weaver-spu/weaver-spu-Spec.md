@@ -3,6 +3,11 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-31, second of this date, the refusal cites the registry
+whole. Section 7's open-time refusal names 13.7's three arms by citation
+rather than restating two, and the bound's gloss counts per append rather
+than per turn, matching the lead sentence it glosses.
+
 **Revised:** 2026-08-31, the diagnostic binding asks past the fold. Section
 7's in-place clause is scoped to the serving binding per the operator's ruling
 of 2026-08-30 and charter 13.7 as amended, and two paragraphs land beside it:
@@ -2116,8 +2121,8 @@ native path `fold_norm` is the stronger in-place reading, one scalar crossing
 and no column held, so whether a family's tap holds a column to answer is a
 member of its declaration per charter section 14, and the GGUF column is the
 first answer shown. **The answer covers every sampled position**: each decode
-forward, and each turn's prefill final position, where that turn's first
-token is drawn, every append prefilling its own delta. Nothing else of the
+forward, and each append's prefill final position, a turn holding one append
+per generation so a tool round adds its own. Nothing else of the
 prompt crosses, and the bound's ground is the tap's one-column copy per 13.7,
 not the engine's gather, which at every layer but the last sees every prompt
 position.
@@ -2126,9 +2131,11 @@ position.
 the pair.** `column_permission` arrives at admit inside the instruction, set
 from the binding's kind by admin per 13.7, so this crate still never learns
 the kind itself. `column_ask` crosses once, at session open, per the same
-clause's cadence election. An open carrying the ask against an instruction
-carrying no permission, or against a family whose declaration holds no
-column, refuses typed at the open. **The no-column arm fires at the open
+clause's cadence election. An open carrying the ask refuses typed at the
+open on the three arms of 13.7's registry - no permission, no readout
+election, no column in the family's declaration - cited whole rather than
+restated in part, that clause holding the registry so no document decides a
+share. **The no-column arm fires at the open
 rather than at admit on purpose**: admission cannot know an ask will come,
 the ask being the open's member, and a diagnostic replay that elects the
 readout for norms alone against a family whose tap holds no column is a

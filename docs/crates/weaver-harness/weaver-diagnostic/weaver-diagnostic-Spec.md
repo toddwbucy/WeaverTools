@@ -4,6 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, second of this date, the covered append. On the
+operator's ruling: a recorded tool round replays as an ordinary append and
+its prefill final is covered, replacing a sentence that claimed no tool-round
+prefill exists - false against this record's own `message.tool_result`, and
+hollow at exactly the position a diagnosis reads.
+
 **Revised:** 2026-08-31, the seventeenth kind. `residual.column` joins section
 3.2 per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7 as
 amended, and the decode contract's third intermediate: one event per sampled
@@ -208,11 +214,14 @@ own argument rather than finding a variant seated for it.
 **`residual.column` is carried because the diagnostic binding may ask past the
 fold**, per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7
 as amended, and the decode contract's third intermediate. One event per
-sampled position - each decode forward, and each turn's prefill final
-position, every reissued append prefilling its own delta, nothing else of
-the prompt, per that clause's bound, and no tool-round prefill existing
-here because a replay calls no tool, per the absent-kinds paragraph above -
-authored by the harness
+sampled position - each decode forward, and each reissued append's prefill
+final position, nothing else of the prompt, per that clause's bound. **A
+recorded tool round replays as an ordinary append and is covered**: the
+replay calls no tool, per the absent-kinds paragraph above, and the recorded
+`message.tool_result` still re-feeds as its own append, whose prefill final
+samples the continuation's first token - the position after the retrieved
+fact lands, which a bound excluding it would hollow at exactly the point a
+diagnosis reads. Authored by the harness
 from the intermediate the seam delivered, carrying the position it names, the
 layer count, and the tap's width, the values crossing in the provisional bare
 JSON the floor states and the efficient encoding being section 8's open

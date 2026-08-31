@@ -4,6 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-08-31, second of this date, the gate takes both members.
+Section 5's drain paragraph gates the reproducibility claim on the charter's
+whole licence by citation - the device model and the code identity, at the
+precisions that clause states - where the entry below records a single-member
+gate the body no longer has.
+
 **Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the
 pipe-shaped sink's discipline per the charter's section 3 as amended: read
 once, keep the report and its evidence, retain nothing drained, and gate the
@@ -358,11 +364,13 @@ report**, per the charter's section 3 as amended on the operator's ruling of
 evidence it rests on, and no member of this crate retains the drained bytes:
 retention was the sink shape's to give and it did not, and the charter
 carries the licence, the certification's exactness per payload, and the
-bound. **What the device model gates is the claim and never the drain**: the
-report names the device model the evidence came from, read from the deposit
-the operator holds until the record event the charter names as owed lands,
-and a report that cannot establish it says so and carries no reproducibility
-claim, the absent member otherwise reading as one.
+bound. **What the licence's members gate is the claim and never the drain**: the
+report names the device model and the code identity the evidence came from -
+both members of the charter's licence, read at the precisions that clause
+states from the deposit the operator holds until the record event it names
+as owed lands - and a report that cannot establish either says so and
+carries no reproducibility claim, the absent member otherwise reading as
+one.
 
 **The null replay is elected by this crate's own procedure and not by its control
 over the load.** The reader's election rides the declaration and is the operator's,
