@@ -727,7 +727,7 @@ def whole_ms(t):
     return (b - a) if a is not None and b is not None else None
 
 
-def cell_metadata(cfg, cell, libraries, binaries, tools):
+def cell_metadata(cfg, cell, libraries, binaries, tools, texts=None):
     # **The artifact's hash degrades rather than raising.** A missing or
     # unreadable artifact would otherwise abort `run_cell` before its report
     # exists and take every remaining cell with it, which is the class of
@@ -791,17 +791,47 @@ def cell_metadata(cfg, cell, libraries, binaries, tools):
         # directory.
         "toolchain": tools,
         "commit": commit,
-        "short_text": SHORT_TEXT,
-        "long_text": LONG_TEXT,
+        # **The texts recorded are the texts served.** With `texts` supplied
+        # the pinned pair below is wrong by construction - a caller passing
+        # its own turn list would deposit metadata naming prompts the record
+        # does not carry, which is the misstating-provenance defect this
+        # repository keeps paying for. The two constant keys stay for the
+        # default so existing deposits keep their schema.
+        **({"short_text": SHORT_TEXT, "long_text": LONG_TEXT}
+           if texts is None else {"turn_texts": list(texts)}),
     }
 
 
-def run_cell(cfg, cell, outdir, libraries, binaries, tools):
+def run_cell(cfg, cell, outdir, libraries, binaries, tools,
+             texts=None, require_completed=False, turn_timeout=600):
+    """One session under the serve-unload-reload-reissue protocol.
+
+    `texts` is the turn list, defaulted to the two pinned constants so the
+    cross-precision cells read as they always did. The trace-generation
+    driver passes its own list - the protocol is one and the sessions are
+    not, which is issue #379's ruling applied before the second
+    implementation exists rather than after.
+
+    `require_completed` makes a cap-hit a verdict rather than a recorded
+    field: a capped turn is a defective specimen for a trace whose purpose
+    is source material, per the 8B sketch's parameter section, so the cell
+    fails loudly instead of depositing a truncation that reads as an answer.
+    """
+    # **Materialized once, sentinel preserved.** The caller's value is
+    # listed exactly one time, so an iterator cannot be consumed by the
+    # serving loop and then re-listed empty into the metadata - the
+    # misstating-provenance defect this parameter exists to close, reachable
+    # by input shape. `None` still selects the short_text/long_text schema
+    # the existing confirm deposits carry.
+    texts = None if texts is None else list(texts)
     name = cell["name"]
     log = lambda m: print(f"[{name}] {m}", flush=True)
     report = {"cell": name,
-              "metadata": cell_metadata(cfg, cell, libraries, binaries, tools),
+              "metadata": cell_metadata(cfg, cell, libraries, binaries, tools,
+                                        texts=texts),
               "steps": [], "turns": [], "verdict": None}
+    if texts is None:
+        texts = [SHORT_TEXT, LONG_TEXT]
 
     # The declaration with this cell's artifact, everything else as
     # the operator wrote it.
@@ -848,8 +878,8 @@ def run_cell(cfg, cell, outdir, libraries, binaries, tools):
 
         log("serving the source turns")
         source_runs = set()
-        for text in (SHORT_TEXT, LONG_TEXT):
-            close = gate_turn(cfg, text)
+        for text in texts:
+            close = gate_turn(cfg, text, timeout=turn_timeout)
             log(f"close {close.get('kind')} turn {close.get('turn')}")
             if close.get("kind") != "answered":
                 report["verdict"] = f"source turn not answered: {close}"
@@ -865,10 +895,21 @@ def run_cell(cfg, cell, outdir, libraries, binaries, tools):
             )
             return report
         source_run = source_runs.pop()
-        source_turns, source_events = await_turns(cfg["trace"], 2, source_run)
-        if len(source_turns) != 2:
-            report["verdict"] = f"expected 2 source turns, found {len(source_turns)}"
+        source_turns, source_events = await_turns(
+            cfg["trace"], len(texts), source_run)
+        if len(source_turns) != len(texts):
+            report["verdict"] = (
+                f"expected {len(texts)} source turns, found {len(source_turns)}")
             return report
+        if require_completed:
+            for st in source_turns:
+                finish = pointer(st["payload"].get("model.output"), "/finish")
+                if finish != "completed":
+                    report["verdict"] = (
+                        f"source {st['turn']} finished {finish!r} rather than"
+                        " completed - a capped turn is a defective specimen"
+                        " and the cell fails rather than records")
+                    return report
 
         step("unload")
         replay_since = time.strftime(
@@ -931,7 +972,7 @@ def run_cell(cfg, cell, outdir, libraries, binaries, tools):
         log("reissuing from the record")
         runs_seen = set()
         for st in source_turns:
-            close = gate_turn(cfg, st["text"])
+            close = gate_turn(cfg, st["text"], timeout=turn_timeout)
             log(f"reissue {st['turn']} -> {close.get('kind')}")
             if close.get("kind") != "answered":
                 report["verdict"] = f"reissue {st['turn']} closed {close.get('kind')}"
