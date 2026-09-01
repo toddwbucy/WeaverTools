@@ -594,7 +594,7 @@ mod tests {
     /// Watched under exactly that removal.
     ///
     /// conforms: diagnostic-record-identifies-itself-at-the-open
-    /// conforms: diagnostic-no-identity-invented
+    /// conforms: diagnostic-identity-absent-not-invented
     #[test]
     fn an_absent_answer_abandons_and_the_record_opens_with_the_opened_kind() {
         let (outcome, lines) = run_drive(None, idle_decode);
@@ -625,7 +625,7 @@ mod tests {
     /// and this fails, the refused pass carrying an identity it never
     /// established. Watched under exactly that addition.
     ///
-    /// conforms: diagnostic-no-identity-invented
+    /// conforms: diagnostic-identity-absent-not-invented
     #[test]
     fn refused_holdings_author_no_identity() {
         let unpaired = concat!(
@@ -663,7 +663,7 @@ mod tests {
     /// this fails, a death path carrying an outcome. Watched under exactly
     /// that addition.
     ///
-    /// conforms: diagnostic-no-outcome-manufactured
+    /// conforms: diagnostic-outcome-absent-not-manufactured
     #[test]
     fn a_dead_seam_mid_replay_manufactures_no_outcome() {
         fn takes_and_closes(far: std::os::fd::OwnedFd) {
