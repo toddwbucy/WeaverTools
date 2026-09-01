@@ -119,14 +119,24 @@ pub(crate) fn drive(
             let refed = match seat.refeed(&turn, source.rendered.clone(), source.output_tokens.clone())
             {
                 Ok(generation) => generation,
-                Err(TurnError::ChannelLost) => return Err(TurnError::ChannelLost),
+                // Every exit past the open closes the bracket, the serving
+                // close's own rule: the record channel is the sink and may
+                // still hold what the decode channel lost.
+                Err(TurnError::ChannelLost) => {
+                    let _ = seat.replay_turn_stopped(&turn, weaver_trace::StopReason::Fault);
+                    return Err(TurnError::ChannelLost);
+                }
                 // A seam refusal or fault mid-replay ends the pass where it
                 // stopped: the refusal is already authored inside the
-                // bracket, the bracket closes, and no `replay.closed`
-                // follows - the not-ended outcome is the absence of one,
-                // per `weaver-diagnostic-Spec` section 3.
-                Err(_) => {
-                    let _ = seat.replay_turn_closed(&turn);
+                // bracket, the bracket closes stopped, and no
+                // `replay.closed` follows - the not-ended outcome is the
+                // absence of one, per `weaver-diagnostic-Spec` section 3.
+                Err(error) => {
+                    let reason = match error {
+                        TurnError::Refused { .. } => weaver_trace::StopReason::Refused,
+                        _ => weaver_trace::StopReason::Fault,
+                    };
+                    let _ = seat.replay_turn_stopped(&turn, reason);
                     return Ok(());
                 }
             };
@@ -425,4 +435,327 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
         });
     }
     Comparison::Matches
+}
+
+#[cfg(test)]
+mod tests {
+    //! The pass-behavior watches of `weaver-diagnostic-Spec` section 7,
+    //! bought by the loop act: the seat is granted against a scripted
+    //! custodian and a scripted decode peer, and the record on disk is what
+    //! each watch reads.
+
+    use std::io::{Read, Write};
+    use std::os::fd::AsRawFd;
+    use std::os::fd::OwnedFd;
+    use std::os::unix::net::UnixStream;
+
+    use nix::sys::socket::{AddressFamily, MsgFlags, SockFlag, SockType, recv, send, socketpair};
+
+    use crate::authorship::Author;
+    use crate::engine::Ports;
+    use crate::record::Record;
+    use weaver_types::SessionId;
+
+    fn sink() -> (OwnedFd, std::path::PathBuf) {
+        let path = std::env::temp_dir().join(format!(
+            "weaver-replay-{}-{:?}.ndjson",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let file = std::fs::File::create(&path).expect("sink");
+        (OwnedFd::from(file), path)
+    }
+
+    fn diagnostic_record(sink: OwnedFd) -> Record {
+        Record::Diagnostic(
+            weaver_diagnostic::Recorder::receive(
+                sink,
+                weaver_diagnostic::RunRef("r-d".into()),
+                weaver_diagnostic::SessionRef("s-d".into()),
+            )
+            .expect("the recorder receives"),
+        )
+    }
+
+    fn listener() -> crate::channel::CoordinationListener {
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-replay-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        std::fs::create_dir_all(&dir).expect("scratch dir");
+        let path = dir.join("c.sock");
+        std::fs::remove_file(&path).ok();
+        crate::channel::bind_coordination(&path).expect("bind")
+    }
+
+    fn record_lines(path: &std::path::Path) -> Vec<serde_json::Value> {
+        let mut text = String::new();
+        std::fs::File::open(path)
+            .expect("the record reopens")
+            .read_to_string(&mut text)
+            .expect("the record reads");
+        text.lines()
+            .map(|line| serde_json::from_str(line).expect("a record line parses"))
+            .collect()
+    }
+
+    /// One valid recorded generation, as the custodian would answer it.
+    fn sealed_answer() -> String {
+        concat!(
+            r#"{"answer":{"replay":{"events":["#,
+            r#"{"envelope":{"kind":"model.request","run":"r-1","turn":"t-1","sequence":"4"},"#,
+            r#""pairs":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}}},"#,
+            r#"{"envelope":{"kind":"model.measurement","run":"r-1","turn":"t-1","sequence":"6"},"#,
+            r#""pairs":{"input_tokens":[1,2],"output_tokens":[3],"model":"art","weights_hash":"h"}}"#,
+            r#"]}}}"#,
+            "\n"
+        )
+        .to_string()
+    }
+
+    /// A drive against scripted peers: the custodian's answer (or a closed
+    /// door), the decode peer's script, and the record read back.
+    fn run_drive(
+        custodian: Option<String>,
+        decode_script: fn(std::os::fd::OwnedFd),
+    ) -> (Result<(), crate::engine::TurnError>, Vec<serde_json::Value>) {
+        let (sink_fd, path) = sink();
+        let mut record = diagnostic_record(sink_fd);
+        let session = SessionId("s-d".into());
+        let author = Author::new(&session, &weaver_types::RunId("r-d".into()));
+
+        let (ours, theirs) = UnixStream::pair().expect("state pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut state = crate::state::StateSeam::new(ours);
+        let state_peer = std::thread::spawn(move || {
+            let mut peer = theirs;
+            let mut taken = [0u8; 256];
+            let Some(answer) = custodian else {
+                let _ = peer.read(&mut taken);
+                return;
+            };
+            let _ = peer.read(&mut taken).expect("reads the ask");
+            peer.write_all(answer.as_bytes()).expect("answers");
+            // Held open until the drive finishes with it.
+            let _ = peer.read(&mut taken);
+        });
+
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("decode pair");
+        let decode = crate::channel::decode_from_owned(near);
+        let decode_peer = std::thread::spawn(move || decode_script(far));
+
+        let coordination = listener();
+        let mut turn_ordinal = 0u64;
+        let mut fullness = None;
+        let mut pressure_reported = false;
+        let outcome = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut record,
+                &mut turn_ordinal,
+                None,
+                &coordination,
+                None,
+                None,
+                Some(&mut state),
+                None,
+                &mut fullness,
+                &mut pressure_reported,
+            );
+            super::drive(&mut ports, false, "art")
+        };
+        drop(decode);
+        drop(state);
+        decode_peer.join().expect("the decode peer finishes");
+        state_peer.join().expect("the custodian finishes");
+        let lines = record_lines(&path);
+        std::fs::remove_file(&path).ok();
+        (outcome, lines)
+    }
+
+    fn idle_decode(_far: std::os::fd::OwnedFd) {}
+
+    /// **The record identifies itself at the open, and an absent answer
+    /// invents nothing.** The custodian's door closes without answering,
+    /// and the record holds exactly the bracket: `replay.opened` first, no
+    /// `replay.identity` filled from defaults, and the close carrying the
+    /// abandoned outcome with the ask-unanswered reason.
+    ///
+    /// Perturbation: drop the opened authoring from the drive and the
+    /// first-event assertion fails, the record opening with its close.
+    /// Watched under exactly that removal.
+    ///
+    /// conforms: diagnostic-record-identifies-itself-at-the-open
+    /// conforms: diagnostic-no-identity-invented
+    #[test]
+    fn an_absent_answer_abandons_and_the_record_opens_with_the_opened_kind() {
+        let (outcome, lines) = run_drive(None, idle_decode);
+        assert!(outcome.is_ok(), "an abandoned pass is not a fault");
+        assert_eq!(
+            lines[0]["kind"], "replay.opened",
+            "the bracket opens with the opening kind"
+        );
+        assert!(
+            lines.iter().all(|l| l["kind"] != "replay.identity"),
+            "no identity is invented from an answer that never arrived"
+        );
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["kind"], "replay.closed");
+        assert_eq!(close["payload"]["outcome"]["kind"], "abandoned");
+        assert_eq!(
+            close["payload"]["outcome"]["reason"]["kind"],
+            "replay_ask_unanswered"
+        );
+    }
+
+    /// **Refused holdings author no identity either**, the case that bites:
+    /// a refused reading has everything an identity event would carry and
+    /// must still author nothing. The custodian answers a measurement with
+    /// no preceding request, the grouping refuses, and the close names it.
+    ///
+    /// Perturbation: author a default-filled identity on the refusal path
+    /// and this fails, the refused pass carrying an identity it never
+    /// established. Watched under exactly that addition.
+    ///
+    /// conforms: diagnostic-no-identity-invented
+    #[test]
+    fn refused_holdings_author_no_identity() {
+        let unpaired = concat!(
+            r#"{"answer":{"replay":{"events":["#,
+            r#"{"envelope":{"kind":"model.measurement","run":"r-1","turn":"t-1","sequence":"6"},"#,
+            r#""pairs":{"input_tokens":[1,2],"output_tokens":[3],"model":"art","weights_hash":"h"}}"#,
+            r#"]}}}"#,
+            "\n"
+        )
+        .to_string();
+        let (outcome, lines) = run_drive(Some(unpaired), idle_decode);
+        assert!(outcome.is_ok());
+        assert!(
+            lines.iter().all(|l| l["kind"] != "replay.identity"),
+            "a pass that refused its holdings authors none of these"
+        );
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "abandoned");
+        assert_eq!(close["payload"]["outcome"]["reason"]["kind"], "identity_refused");
+        assert!(
+            close["payload"]["outcome"]["reason"]["detail"]
+                .as_str()
+                .is_some_and(|d| d.contains("t-1")),
+            "the refusal names the turn: {close}"
+        );
+    }
+
+    /// **A pass that died manufactures no outcome.** The decode peer takes
+    /// the re-feed directive and closes, the drive loses the channel, and
+    /// the record ends where the replay stopped: the bracket closed
+    /// stopped, and no `replay.closed` at all - the fourth outcome is the
+    /// absence of the event.
+    ///
+    /// Perturbation: author a `replay.closed` on the channel-lost arm and
+    /// this fails, a death path carrying an outcome. Watched under exactly
+    /// that addition.
+    ///
+    /// conforms: diagnostic-no-outcome-manufactured
+    #[test]
+    fn a_dead_seam_mid_replay_manufactures_no_outcome() {
+        fn takes_and_closes(far: std::os::fd::OwnedFd) {
+            let mut buf = vec![0u8; 65536];
+            let _ = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("takes the re-feed");
+            drop(far);
+        }
+        let (outcome, lines) = run_drive(Some(sealed_answer()), takes_and_closes);
+        assert!(
+            matches!(outcome, Err(crate::engine::TurnError::ChannelLost)),
+            "the loss surfaces to end service"
+        );
+        assert!(
+            lines.iter().any(|l| l["kind"] == "replay.identity"),
+            "the identity had been established before the death"
+        );
+        assert!(
+            lines.iter().all(|l| l["kind"] != "replay.closed"),
+            "a death path authors no outcome: the absence is the fourth outcome"
+        );
+        let close = lines.last().expect("the bracket still closed");
+        assert_eq!(close["kind"], "turn.closed", "the turn bracket closed stopped");
+        assert_eq!(close["payload"]["close"], "stopped");
+    }
+
+    /// **The envelope is the run's session and the identity names the
+    /// replayed one, and a matching replay certifies.** The decode peer
+    /// answers the re-feed with the recorded path recomputed, the pass
+    /// closes certified, and every envelope line carries the diagnostic
+    /// run's own session while the identity payload names the replayed
+    /// session by the one name the contract gives it.
+    ///
+    /// Perturbation: stamp the envelope's session from anything but the
+    /// author's own in `author_diagnostic` and the session assertion
+    /// fails on every line. Watched under exactly that change.
+    ///
+    /// conforms: diagnostic-session-is-the-replays-own
+    #[test]
+    fn a_matching_replay_certifies_under_the_runs_own_session() {
+        fn answers_refed(far: std::os::fd::OwnedFd) {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("takes the re-feed");
+            let directive: serde_json::Value =
+                serde_json::from_slice(&buf[..n]).expect("the directive parses");
+            assert_eq!(directive["kind"], "re_feed", "the drive crossed: {directive}");
+            let refed = concat!(
+                r#"{"kind":"re_fed","body":{"emission":"hi","finish":"completed","#,
+                r#""content":[{"type":"text","text":"hi"}],"#,
+                r#""request":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}},"#,
+                r#""measurement":{"input_tokens":[1,2],"output_tokens":[3],"#,
+                r#""model":"art","weights_hash":"h"},"#,
+                r#""resident":6,"capacity":64}}"#
+            );
+            send(far.as_raw_fd(), refed.as_bytes(), MsgFlags::empty()).expect("answers");
+        }
+        let (outcome, lines) = run_drive(Some(sealed_answer()), answers_refed);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["kind"], "replay.closed");
+        assert_eq!(
+            close["payload"]["outcome"]["kind"], "certified",
+            "the matching path certifies: {close}"
+        );
+        for line in &lines {
+            assert_eq!(
+                line["session"], "s-d",
+                "every envelope is the run's own session: {line}"
+            );
+        }
+        let identity = lines
+            .iter()
+            .find(|l| l["kind"] == "replay.identity")
+            .expect("the identity stands");
+        assert_eq!(
+            identity["payload"]["replayed_session"], "s-d",
+            "and the identity names the replayed session"
+        );
+        let kinds: Vec<&str> = lines.iter().filter_map(|l| l["kind"].as_str()).collect();
+        assert_eq!(
+            kinds,
+            vec![
+                "replay.opened",
+                "replay.identity",
+                "turn.started",
+                "model.request",
+                "model.output",
+                "model.measurement",
+                "message.assistant",
+                "turn.closed",
+                "replay.closed",
+            ],
+            "the certified pass authors the mirrored bracket whole"
+        );
+    }
 }

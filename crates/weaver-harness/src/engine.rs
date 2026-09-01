@@ -1243,6 +1243,26 @@ impl<'a> Ports<'a> {
         Ok(())
     }
 
+    /// The replay's bracket closed stopped, the serving close's own rule -
+    /// every exit past the open closes the bracket - applied to a re-fed
+    /// turn a seam refusal or fault ended early.
+    pub(crate) fn replay_turn_stopped(
+        &mut self,
+        turn: &TurnKey,
+        reason: weaver_trace::StopReason,
+    ) -> Result<(), TurnError> {
+        self.author
+            .author(
+                self.recorder,
+                Kind::TurnClosed,
+                Subsystem::Harness,
+                Some(turn),
+                Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
     /// One re-feed exchange, the mirror of [`Self::generate_once`] against
     /// the decode contract's sixth exchange: the recorded rendered form and
     /// the recorded path cross, the SPU computes each draw as a generation
