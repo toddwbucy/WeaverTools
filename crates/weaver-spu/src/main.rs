@@ -114,17 +114,24 @@ fn judge_decode(
                 Some(TokenRefusal::OutOfOrder)
             }
         }
-        // The session is not open for the ask.
+        // The session is not open for the ask. The re-feed sits with the
+        // seam's general arms here, per charter 13.14: session and ordering
+        // refusals cover the drive as they cover every ask and are no arm
+        // of its own registry.
         (
             DecodePosition::BeforeOpen,
             TokenDirective::AppendAndGenerate { .. }
+            | TokenDirective::ReFeed { .. }
             | TokenDirective::Cancel { .. }
             | TokenDirective::Flush { .. }
             | TokenDirective::Elide { .. },
         ) => Some(TokenRefusal::NotOpen),
         // A second open refuses rather than rewinding.
         (DecodePosition::AtRest, TokenDirective::Open { .. }) => Some(TokenRefusal::OutOfOrder),
-        (DecodePosition::AtRest, TokenDirective::AppendAndGenerate { .. }) => None,
+        (
+            DecodePosition::AtRest,
+            TokenDirective::AppendAndGenerate { .. } | TokenDirective::ReFeed { .. },
+        ) => None,
         // The elision is valid between turns on the flush's ground and for
         // its reason, per the decode contract: a span named against a
         // resident sequence that is still growing names positions that will
@@ -195,6 +202,11 @@ struct Effective {
     /// knobs, because it is judged against the sampling cutoff that
     /// resolve produces and it stands for the residency the same way.
     field_depth: Option<u32>,
+    /// The re-feed drive's permission, per `weaver-spu-PRD` section 13.14:
+    /// admin's member, resolved at admit beside the elections because it is
+    /// a property of the binding the run opened under, never of any one
+    /// exchange.
+    refeed_permission: bool,
 }
 
 /// Resolve both sets against what the declaration supplied.
@@ -207,6 +219,7 @@ struct Effective {
 fn resolve_effective(supplied: &TunableValues) -> Result<Effective, KnobRefusal> {
     Ok(Effective {
         field_depth: None,
+        refeed_permission: false,
         knobs: KNOBS.resolve(supplied)?,
         session: SESSION_PARAMETERS.resolve(supplied)?,
     })
@@ -820,6 +833,240 @@ fn serve_decode(
                 }
             }
 
+            TokenDirective::ReFeed { turn, rendered, path } => {
+                // **The re-feed drive**, per `weaver-spu-PRD` section 13.14
+                // and `weaver-spu-Spec` section 4.6: the recorded rendered
+                // form re-runs and the recorded token appends at every
+                // position whatever the recomputed draw said. The permission
+                // is admin's member and judged first, the registry's own
+                // arm, because a caller without the diagnostic binding's
+                // grant has no business exercising the drive at all.
+                if !effective.refeed_permission {
+                    if send_refusal(decode, &TokenRefusal::RefeedPermissionAbsent).is_err() {
+                        return Err(());
+                    }
+                    continue;
+                }
+                // An empty path is a malformed exchange rather than a no-op:
+                // a recorded generation produced at least one token, so a
+                // pathless re-feed is asking to certify nothing, per the
+                // registry's second arm.
+                if path.is_empty() {
+                    if send_refusal(decode, &TokenRefusal::RefeedPathEmpty).is_err() {
+                        return Err(());
+                    }
+                    continue;
+                }
+                let standing = opened.as_mut().expect("at rest implies an open session");
+                // **The renderer is bypassed**, per the ruling of 2026-08-12
+                // carried in the decode contract's sixth exchange: the
+                // string is the model.request rendered form recorded at the
+                // source generation, opener and all, so rendering it again
+                // would put a second renderer between the record and the
+                // check. It tokenizes and appends verbatim.
+                let delta_tokens = match resident.tokenize(&rendered) {
+                    Ok(tokens) => tokens,
+                    Err(fault) => {
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                };
+                let path_tokens: Vec<TokenId> = path.iter().map(|t| TokenId(*t)).collect();
+                let mut cancel = SeamCancel {
+                    socket: decode,
+                    cancelled: false,
+                    fatal: false,
+                };
+                // The field's intermediate crosses exactly as a generation's
+                // does where the election stands, the realized rank being
+                // the recorded token's, which is the comparison the reader
+                // pass runs.
+                let stream_fatal = std::cell::Cell::new(false);
+                let mut on_field = |position: u64, ranked: Vec<(u32, f32)>, realized: u32| {
+                    if stream_fatal.get() {
+                        return;
+                    }
+                    let frame = TokenAnswer::Field {
+                        position,
+                        ranked: ranked
+                            .into_iter()
+                            .map(|(token, probability)| weaver_types::Candidate {
+                                token,
+                                probability,
+                            })
+                            .collect(),
+                        realized,
+                    };
+                    if send_answer(decode, &frame).is_err() {
+                        stream_fatal.set(true);
+                    }
+                };
+                // **The same ordinal count the generations share**, per
+                // `weaver-spu-Spec` sections 8.5 and 4.6: the sequence of
+                // calls is the thing a replay reissues, so a re-fed second
+                // generation of a turn derives the seed the source's second
+                // generation drew, or the recomputed draws prove nothing.
+                let generation_in_turn = match &mut standing.turn_generations {
+                    Some((held, count)) if *held == turn => {
+                        *count += 1;
+                        *count
+                    }
+                    slot => {
+                        *slot = Some((turn.clone(), 0));
+                        0
+                    }
+                };
+                let generation_seed = weaver_spu::sampling::derived_seed(
+                    effective.knobs.seed,
+                    &turn,
+                    generation_in_turn,
+                );
+                let generated = match standing.session.refeed(
+                    &delta_tokens,
+                    &path_tokens,
+                    standing.stop.terminator,
+                    &mut cancel,
+                    effective.field_depth.map(|d| d as usize),
+                    &mut on_field,
+                    generation_seed,
+                    effective.knobs.repetition_window as usize,
+                ) {
+                    Ok(generated) => generated,
+                    Err(DecodeFault::Overflow {
+                        resident,
+                        requested,
+                        capacity,
+                    }) => {
+                        let refusal = TokenRefusal::Overflow {
+                            resident: resident as u64,
+                            requested: requested as u64,
+                            capacity: capacity as u64,
+                        };
+                        if send_refusal(decode, &refusal).is_err() {
+                            return Err(());
+                        }
+                        continue;
+                    }
+                    Err(fault) => {
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                };
+                if cancel.fatal || stream_fatal.get() {
+                    eprintln!("{}", fault_line(&ChannelFault::Undecodable));
+                    return Err(());
+                }
+                // **The emission is the recorded path's text**: what became
+                // resident is what the answer reports as said, and the
+                // recomputed draws ride the measurement's output slots,
+                // where the comparison reads them against the record.
+                let emission = match resident.detokenize(&path_tokens) {
+                    Ok(text) => text,
+                    Err(fault) => {
+                        eprintln!("{}", decode_fault_line(&fault));
+                        return Err(());
+                    }
+                };
+                let finish = match generated.stopped {
+                    Stopped::Complete => Finish::Completed,
+                    Stopped::Cancelled | Stopped::CapacityReached => Finish::Stopped,
+                    Stopped::LimitReached => Finish::Length,
+                };
+                let measurement =
+                    render_measurement(resident, &delta_tokens, &generated, rendered.len());
+                let measurement = match serde_json::value::RawValue::from_string(measurement) {
+                    Ok(raw) => raw,
+                    Err(_) => {
+                        eprintln!(
+                            "{}",
+                            serde_json::json!({"decode_fault": "measurement did not render"})
+                        );
+                        return Err(());
+                    }
+                };
+                // The request block renders on the generation's own rule,
+                // the effective values this crate holds, so the re-fed
+                // record is checkable against the source record field for
+                // field, `generation_seed` included.
+                let knobs = effective.knobs;
+                let request = match serde_json::value::RawValue::from_string(
+                    serde_json::json!({
+                        "rendered": rendered,
+                        "template": standing.template,
+                        "sampling": {
+                            "temperature": knobs.temperature,
+                            "top_k": knobs.top_k,
+                            "top_p": knobs.top_p,
+                            "repetition_penalty": knobs.repetition_penalty,
+                            "repetition_window": knobs.repetition_window,
+                            "seed": knobs.seed,
+                            "generation_seed": generation_seed,
+                        },
+                        "stop": {
+                            "max_tokens": effective.session.max_tokens_per_turn,
+                            "stop_tokens": standing
+                                .stop
+                                .tokens
+                                .iter()
+                                .map(|t| t.0)
+                                .collect::<Vec<u32>>(),
+                            "terminator": standing.stop.terminator.0,
+                        },
+                    })
+                    .to_string(),
+                ) {
+                    Ok(raw) => raw,
+                    Err(_) => {
+                        eprintln!(
+                            "{}",
+                            serde_json::json!({"decode_fault": "request did not render"})
+                        );
+                        return Err(());
+                    }
+                };
+                let parsed = standing.renderer.parse(&emission);
+                if parsed.has_unrecovered_call() {
+                    eprintln!(
+                        "{}",
+                        serde_json::json!({
+                            "unrecovered_calls": parsed.unrecovered.len(),
+                        })
+                    );
+                }
+                let content: Vec<weaver_traits::ContentBlock> = parsed
+                    .content
+                    .into_iter()
+                    .map(|piece| match piece {
+                        family::Content::Text(text) => weaver_traits::ContentBlock::Text { text },
+                        family::Content::Call { name, arguments } => {
+                            weaver_traits::ContentBlock::ToolCall(weaver_traits::ToolCall {
+                                name: name.0,
+                                arguments,
+                            })
+                        }
+                    })
+                    .collect();
+                // **The answer's own variant**, per `weaver-types-Spec`: a
+                // supplied path never wears a sampled path's clothes, so
+                // the collapse the diagnostic exists to catch is not
+                // representable on the seam.
+                let answer = TokenAnswer::ReFed(Generation {
+                    emission,
+                    finish,
+                    content,
+                    request,
+                    measurement,
+                    resident: standing.session.resident_len() as u64,
+                    capacity: standing.session.capacity() as u64,
+                });
+                if send_answer(decode, &answer).is_err() {
+                    return Err(());
+                }
+                if cancel.cancelled && send_answer(decode, &TokenAnswer::AtRest).is_err() {
+                    return Err(());
+                }
+            }
+
             TokenDirective::Cancel { .. } => {
                 // At rest, a cancel answers at rest: a clean close rather
                 // than a refusal, the operator's intent satisfied by the
@@ -1170,6 +1417,7 @@ fn dispatch(
                     *position = SeamPosition::Admitted;
                     let mut resolved = resolved;
                     resolved.field_depth = decoder.field_election.as_ref().map(|e| e.depth);
+                    resolved.refeed_permission = decoder.refeed_permission;
                     *effective = Some(resolved);
                     Payload::Answer(LifecycleAnswer::Admitted)
                 }
@@ -1289,6 +1537,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                 identity: vec![],
                 tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),

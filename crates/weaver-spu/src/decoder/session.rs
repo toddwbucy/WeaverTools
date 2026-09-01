@@ -439,6 +439,126 @@ impl<'a> Session<'a> {
         })
     }
 
+    /// The re-feed drive, per `weaver-spu-PRD` section 13.14 and
+    /// `weaver-spu-Spec` section 4.6: the append's machinery with the draw's
+    /// destination changed. The rendered contribution arrives already
+    /// tokenized by the caller - no family rendering on the way, per the
+    /// ruling of 2026-08-12 - the forward passes run along the recorded
+    /// path, and at each position the draw is computed exactly as a
+    /// generation would compute it, **and the recorded token appends
+    /// whatever the draw said**, so a divergent position stays comparable
+    /// instead of cascading.
+    ///
+    /// **The recomputed draws land in `Generated::tokens`**, the slots the
+    /// sampled identifiers would fill, per the contract: the answer's own
+    /// variant is what keeps a supplied path out of a sampled path's
+    /// clothes, and the caller wraps this return under it. The signals are
+    /// the recorded token's - the entropy of each distribution and the
+    /// recorded token's surprisal in it - because those are the figures the
+    /// source measurement holds and the comparison reads. The field's
+    /// `realized` is likewise the recorded token's rank, comparability
+    /// being the reader pass's whole point.
+    ///
+    /// **No token streams**: the drive draws nothing of its own, so there
+    /// is no drawn piece to cross, and the caller passes no token sink.
+    /// The stop set does not apply - the recorded path is what it is, and
+    /// a stop token inside it was the source's business - and the
+    /// terminator lands after the path exactly as it landed after the
+    /// source's generation, so the resident state mirrors the source's.
+    #[allow(clippy::too_many_arguments)]
+    pub fn refeed(
+        &mut self,
+        delta: &[TokenId],
+        path: &[TokenId],
+        terminator: TokenId,
+        cancel: &mut dyn CancelPoll,
+        field: Option<usize>,
+        on_field: &mut dyn FnMut(u64, Vec<(u32, f32)>, u32),
+        seed: u64,
+        penalty_window: usize,
+    ) -> Result<Generated, DecodeFault> {
+        if !self.opened {
+            return Err(DecodeFault::NotOpen);
+        }
+        // Overflow refuses and sheds nothing, exactly as the generate does,
+        // the whole recorded extent judged upfront because the path's length
+        // is known where a generation's is not.
+        let needed = delta.len() + path.len() + 1;
+        if self.resident.len() + needed > self.capacity {
+            return Err(DecodeFault::Overflow {
+                resident: self.resident.len(),
+                requested: delta.len() + path.len(),
+                capacity: self.capacity,
+            });
+        }
+        let _ = self.backend.take_reduction();
+        let prefill_started = std::time::Instant::now();
+        if let Err(fault) = self.backend.decode_at(delta, self.resident.len()) {
+            return Err(self.poison(fault));
+        }
+        self.resident.extend_from_slice(delta);
+        let prefill_ns = prefill_started.elapsed().as_nanos() as u64;
+        // The sampler is built exactly as a generation builds it - the
+        // derived seed, the resident tail's window - because the recomputed
+        // draw is only evidence if it is the draw the source would have
+        // made.
+        let window_start = self.resident.len().saturating_sub(penalty_window);
+        let window: Vec<TokenId> = self.resident[window_start..].to_vec();
+        if let Err(fault) = self.backend.reseed(seed, &window) {
+            return Err(self.poison(fault));
+        }
+        let decode_started = std::time::Instant::now();
+        let mut recomputed = Vec::new();
+        let mut signals = measurement::Accumulator::new(self.surprisal_elected);
+        let mut stopped = Stopped::Complete;
+        for recorded in path {
+            if cancel.cancelled() {
+                stopped = Stopped::Cancelled;
+                break;
+            }
+            let step = match self.backend.distribution() {
+                Ok(logits) => Some((measurement::entropy_bits(logits), logits.to_vec())),
+                Err(_) => None,
+            };
+            let draw = match self.backend.sample() {
+                Ok(token) => token,
+                Err(fault) => return Err(self.poison(fault)),
+            };
+            if let Some(depth) = field
+                && let Some((_, logits)) = step.as_ref()
+                && let Some((ranked, realized)) =
+                    measurement::field(logits, recorded.0 as usize, depth)
+            {
+                on_field(self.resident.len() as u64, ranked, realized);
+            }
+            match step.and_then(|(entropy, logits)| {
+                measurement::surprisal_bits(&logits, recorded.0 as usize)
+                    .map(|surprisal| (entropy, surprisal))
+            }) {
+                Some((entropy, surprisal)) => signals.record(entropy, surprisal),
+                None => signals.abandon(),
+            }
+            recomputed.push(draw);
+            // **The recorded token appends, whatever the draw said.**
+            if let Err(fault) = self.backend.decode_at(&[*recorded], self.resident.len()) {
+                return Err(self.poison(fault));
+            }
+            self.resident.push(*recorded);
+        }
+        if let Err(fault) = self.backend.decode_at(&[terminator], self.resident.len()) {
+            return Err(self.poison(fault));
+        }
+        self.resident.push(terminator);
+        Ok(Generated {
+            tokens: recomputed,
+            stopped,
+            signals: signals.finish(),
+            prefill_ns,
+            decode_ns: decode_started.elapsed().as_nanos() as u64,
+            residual: self.backend.take_reduction(),
+        })
+    }
+
     /// Reach the ask's kept length: the session's first `keep` tokens
     /// resident, everything beyond them gone, per `weaver-spu-Spec` section
     /// 4.4 as of the cut act.

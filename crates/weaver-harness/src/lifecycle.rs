@@ -197,6 +197,10 @@ fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
         weaver_types::TokenRefusal::UnremovableSpan { .. } => {
             "the elision named no removable span"
         }
+        weaver_types::TokenRefusal::RefeedPermissionAbsent => {
+            "the re-feed permission was not granted"
+        }
+        weaver_types::TokenRefusal::RefeedPathEmpty => "the re-feed carried no token path",
     }
 }
 
@@ -2058,6 +2062,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -2175,6 +2180,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -2299,6 +2305,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: vec![weaver_traits::Message {
                         role: weaver_traits::Role::System,
                         content: vec![weaver_traits::ContentBlock::Text {
@@ -2405,6 +2412,7 @@ mod tests {
                         field_election: elected
                             .then(|| weaver_types::FieldElection { depth: 50 }),
                         surprisal_election: elected,
+                        refeed_permission: false,
                         identity: Vec::new(),
                         tunable_values: Default::default(),
                     },
@@ -2539,6 +2547,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     tunable_values: [
                         ("max-tokens-per-turn".to_string(), 4096.0),
@@ -2642,6 +2651,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     // The deployed root's three operator-tunables, required
                     // at admit since the seed act of 2026-08-19. The empty
