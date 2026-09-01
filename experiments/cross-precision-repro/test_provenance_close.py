@@ -129,6 +129,24 @@ def _drive_main(die_second_cell=False, swap_libs=False):
             setattr(g, n, fn)
 
 
+def test_failed_resolution_closes_unreadable_not_lost():
+    """A raising resolution becomes at_close_unreadable envelopes, never a
+    lost close - the outside-diff finding of #399's second exchange."""
+    saved = g._resolve_spu
+    try:
+        def boom(cfg):
+            raise RuntimeError("resolution died")
+        g._resolve_spu = boom
+        spu, note = g.closing_resolution({})
+        assert spu is None and "resolution raised" in note["unreadable"]
+        good = {"lib": {"path": "/x", "sha256": "aa", "resolved_by": "cfg"}}
+        env = g.provenance_close(
+            {}, lambda c: note or {"never": "reached"}, good, "engine_libraries")
+        assert env["status"] == "at_close_unreadable", env
+    finally:
+        g._resolve_spu = saved
+
+
 def test_clean_run_exits_zero_window_quiet():
     code, dep = _drive_main()
     assert code == 0 and len(dep) == 2

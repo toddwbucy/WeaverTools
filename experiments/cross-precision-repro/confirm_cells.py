@@ -316,6 +316,23 @@ def close_resolution(reading):
             for name, entry in reading.items() if isinstance(entry, dict)}
 
 
+def closing_resolution(cfg):
+    """The close's shared SPU resolution, or the note a failed one becomes.
+
+    The resolution is the one step of the close that ran outside
+    `provenance_close`'s catch, so a raise there - a second interrupt
+    landing in the window the matrix documents, or an unanticipated
+    failure - lost the entire close, and in the matrix the summary with
+    it. Resolved once so the two collectors cannot disagree about which
+    SPU they measured, and a failure becomes the reading both collectors
+    return, closing as `at_close_unreadable` instead of as a lost run.
+    """
+    try:
+        return _resolve_spu(cfg), None
+    except (Exception, KeyboardInterrupt) as e:  # noqa: BLE001
+        return None, {"unreadable": f"the SPU resolution raised: {_why(e)}"}
+
+
 def provenance_close(cfg, reader, at_start, what, essence=None):
     """Read again at the close and say how the two readings relate.
 
@@ -1169,13 +1186,13 @@ def main():
         # printed PROVENANCE MOVED out of a transient failure to look. The
         # lifted close claims `varied` only where both readings are sound
         # and looked at the same places.
-        closing_spu = _resolve_spu(cfg)
+        closing_spu, spu_note = closing_resolution(cfg)
         closings = {
             "engine_libraries": provenance_close(
-                cfg, lambda c: engine_libraries(c, closing_spu),
+                cfg, lambda c: spu_note or engine_libraries(c, closing_spu),
                 libraries, "engine_libraries"),
             "weaver_binaries": provenance_close(
-                cfg, lambda c: weaver_binaries(c, closing_spu),
+                cfg, lambda c: spu_note or weaver_binaries(c, closing_spu),
                 binaries, "weaver_binaries"),
             "toolchain": provenance_close(
                 cfg, toolchain, tools, "toolchain", essence=close_whole),

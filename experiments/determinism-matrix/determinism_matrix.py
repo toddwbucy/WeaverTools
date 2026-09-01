@@ -391,12 +391,12 @@ def main():
     # **One resolution for both collectors at each end**, so the two fields
     # cannot disagree about which SPU they measured - the same sharing the
     # confirm driver does at its own two reads.
-    closing_spu = base._resolve_spu(cfg)
+    closing_spu, spu_note = base.closing_resolution(cfg)
     binaries_at_close = close(
-        lambda c: base.weaver_binaries(c, closing_spu), binaries, "weaver_binaries"
+        lambda c: spu_note or base.weaver_binaries(c, closing_spu), binaries, "weaver_binaries"
     )
     libraries = close(
-        lambda c: base.engine_libraries(c, closing_spu), libraries, "engine_libraries"
+        lambda c: spu_note or base.engine_libraries(c, closing_spu), libraries, "engine_libraries"
     )
     # **Read twice like the other two.** It was the one reader left on a
     # single read, which is what made the invariant break in `toolchain`

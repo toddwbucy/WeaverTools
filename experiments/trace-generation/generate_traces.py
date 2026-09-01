@@ -394,13 +394,13 @@ def run_the_night(cfg, args, sessions, sweeps, schedule, provenance,
     # **Provenance is read again at close**, through the implementation
     # #379's fix lifted into the shared driver - one envelope per field, a
     # failed closing read deposits as unreadable, never as movement.
-    closing_spu = base._resolve_spu(cfg)
+    closing_spu, spu_note = base.closing_resolution(cfg)
     closings = {
         "engine_libraries": base.provenance_close(
-            cfg, lambda c: base.engine_libraries(c, closing_spu),
+            cfg, lambda c: spu_note or base.engine_libraries(c, closing_spu),
             libraries, "engine_libraries"),
         "weaver_binaries": base.provenance_close(
-            cfg, lambda c: base.weaver_binaries(c, closing_spu),
+            cfg, lambda c: spu_note or base.weaver_binaries(c, closing_spu),
             binaries, "weaver_binaries"),
         "toolchain": base.provenance_close(
             cfg, base.toolchain, tools, "toolchain",
