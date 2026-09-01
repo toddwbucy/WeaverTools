@@ -4,7 +4,17 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
-**Revised:** 2026-09-01, the declaration derives from the record. Section 3
+**Revised:** 2026-09-01, second of this date, the artifacts take their
+representation. Section 3 gains the lens artifact's shape - safetensors
+matrices, elected over the fitting tool's serialization so both sides of
+the boundary read the artifact without the other's runtime, beside the
+measured JSON manifest with its refusals - and states that the capture
+artifact has no second representation, being a certified record kept
+whole. Two open elections close. Per the charter as amended this date and
+the measurement acts of the same date.
+
+**Revised:** 2026-09-01, first of this date, the declaration derives from
+the record. Section 3
 gains the third projection per the charter as amended on issue #394: every
 derived member names its record source, disagreement and absence each
 refuse naming the member, the analyst's three inputs and the two fixed
@@ -311,6 +321,32 @@ from: weaver-analysis
 to: analysis-declaration-derives-from-the-record
 ```
 
+**The lens artifact's representation, per the charter's clauses of this
+date.** The matrices are stored as safetensors, one tensor per source layer
+named by its index, f32 - elected over the fitting tool's own torch
+serialization because both sides of the boundary must read the artifact:
+the fitting runs under the reference implementation and this crate reads
+the artifact without it, and a pickle-bearing format would put the fitting
+tool's runtime inside this crate's parse. The manifest is JSON beside the
+matrices: `lens-manifest{-tag}.json` beside the lens file
+`jacobian_lens_{model}{-tag}.safetensors`. Its members are the measured
+shape: `lens` naming the sibling file, `fitted_for` with the model path,
+its `model_safetensors_sha256`, and the dtype the fit ran in, `corpus`
+with source, selection rule, and `prompts_sha256`, `estimator` with the
+implementation, its revision, and its parameters, `environment`,
+`fit_seconds`, and `lens_shape` with `d_model`, `source_layers`, and
+`n_prompts`. **A reader
+refuses before it reads**: a manifest naming another lens file, other
+weights (the hash recomputed against the model in hand, never trusted from
+the name), or a width disagreeing with the loaded matrices each refuse
+naming the member, the identity discipline the first-light act exercised.
+
+**The capture artifact takes no representation here** because it has one
+already: a capture is a certified diagnostic record kept whole, per the
+charter, and its shape is `weaver-diagnostic-Spec`'s. What this document
+adds is only the reading side's rule, section 5's gate unchanged: a record
+is a capture exactly where its bracket closed certified.
+
 ## 4. The preload
 
 **Three things in one order, and the seam is owed nothing back.** The election
@@ -526,12 +562,12 @@ most of this document is representation.
 - **The instrument suite**, per the charter's section 4: what this crate carries
   beyond the certification is named there as a sketch that does not exist in this
   tree, and nothing here is built against it.
-- **The capture artifact** - identity, custody, dataset shape, quota - is owed its
-  own act and lands here when it lands, per the same section.
-- **The lens artifacts.** The charter names the fitting as this crate's, and the
-  fitted per-layer matrices are artifacts with identity, versioning against the
-  weights hash they were fitted to, and custody, none of which is settled here.
-  They land with the suite's act beside the capture artifact above.
+- **The capture artifact, closed 2026-09-01**: a certified diagnostic record
+  kept whole, the charter's section 3 carrying identity, custody, shape, and
+  quota, and section 3 here adding that no second representation exists.
+- **The lens artifacts, closed 2026-09-01**: representation in section 3 -
+  safetensors matrices beside a JSON manifest, refused before read where the
+  identity disagrees - the criteria the charter's clauses of the same date.
 - **What the reading is, as an artifact.** This document settles when a reading is
   produced and refuses to settle what it looks like, that being the suite's
   question rather than the gate's.
