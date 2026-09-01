@@ -1421,7 +1421,9 @@ ask.
 **Represented on the paths the generation already
 walks**, per charter section 13.14 and the decode contract's sixth
 exchange, added 2026-08-31. The drive is the append's machinery with the
-draw's destination changed: the delta appends as an append appends, the
+draw's destination changed and the renderer bypassed: the rendered
+contribution tokenizes and appends verbatim, no family rendering on the
+way per the ruling of 2026-08-12, the
 per-position loop runs the derived seed of section 8.5 and the effective
 knobs of section 8 through the sampler exactly as a generation runs them,
 and where a generation emits the drawn token and streams its piece, the

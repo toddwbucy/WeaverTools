@@ -107,6 +107,13 @@ The span is state and never the record.
 field's option, per `weaver-types-PRD` section 2.1's clause of this date on
 issue #258. A flag rather than an option because a per-position reading has
 no size to declare.
+**Revised:** 2026-08-31, third of this date, the re-feed carries the rendered
+form. `ReFeed`'s middle member read `delta: Vec<Message>`, which would route
+the replay through the family renderer - the exact re-rendering the ruling
+of 2026-08-12 forbids, the record holding the rendered form precisely so a
+replay does not re-render through a template that may have changed. The
+member is `rendered: String`, the contribution as `model.request` recorded
+it, tokenized and appended with no family rendering on the way.
 **Revised:** 2026-08-31, second of this date, the re-feed takes its shapes.
 Per `weaver-spu-PRD` section 13.14 and the decode contract's sixth exchange.
 `TokenDirective` gains `ReFeed`, the turn, the recorded delta, and the
@@ -1635,7 +1642,7 @@ pub enum TokenDirective {
     },
     ReFeed {
         turn: TurnKey,
-        delta: Vec<Message>,
+        rendered: String,
         path: Vec<u32>,
     },
     Cancel { turn: TurnKey },
