@@ -30,8 +30,8 @@ fn inputs() -> AnalystInputs {
 /// land in the record and the projection is byte-identical to the
 /// projection without them.
 ///
-/// Perturbation: refuse unknown kinds in `parse_record` and the count
-/// moves, the invented kind failing the record instead of passing by.
+/// Perturbation: refuse a payload member the parse does not know and the
+/// salted request line vanishes from the projection, the count moving.
 /// Watched under exactly that addition.
 #[test]
 fn an_invented_kind_and_member_move_no_grouping() {
