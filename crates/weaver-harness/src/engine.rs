@@ -1323,6 +1323,33 @@ impl<'a> Ports<'a> {
                             .map_err(|_| TurnError::ChannelLost)?;
                         continue;
                     }
+                    // **The column intermediate authors as it arrives**,
+                    // per `weaver-diagnostic-Spec` section 3.2 and the
+                    // decode contract's third intermediate: the replay
+                    // drives the pass and the columns ride it where the ask
+                    // stood, one `residual.column` event per sampled
+                    // position, the seventeenth kind and the harness's own
+                    // authoring. It closes no exchange.
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Column {
+                        position,
+                        layers,
+                    }) => {
+                        let column = weaver_diagnostic::ResidualColumn {
+                            position,
+                            layers: layers.len() as u32,
+                            width: layers.first().map(|l| l.len()).unwrap_or(0) as u32,
+                            values: layers,
+                        };
+                        self.author
+                            .author_diagnostic(
+                                self.recorder,
+                                weaver_diagnostic::Kind::ResidualColumn,
+                                Some(turn),
+                                Some(weaver_diagnostic::Payload::ResidualColumn(column)),
+                            )
+                            .map_err(|_| TurnError::ChannelLost)?;
+                        continue;
+                    }
                     crate::channel::DecodeReply::Answer(TokenAnswer::ReFed(generation)) => {
                         break generation;
                     }

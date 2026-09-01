@@ -557,8 +557,10 @@ fn run_load(
                 // read from the file, whose grant the inventory refused.
                 spu_instruction: {
                     let mut instruction = inventory.config.spu_instruction.clone();
-                    instruction.decoder.refeed_permission =
+                    let diagnostic =
                         matches!(inventory.binding, weaver_types::EnterBinding::Diagnostic);
+                    instruction.decoder.refeed_permission = diagnostic;
+                    instruction.decoder.column_permission = diagnostic;
                     instruction
                 },
                 // The resolution happened at the inventory, the one site, so
