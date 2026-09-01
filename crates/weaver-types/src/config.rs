@@ -202,6 +202,18 @@ pub struct DecoderInstruction {
     /// omitting the field.
     #[serde(default)]
     pub surprisal_election: bool,
+    /// The re-feed drive's permission, per `weaver-spu-PRD` section 13.14:
+    /// admin's member and never the declaration's. It parses with `default`
+    /// because one type serves the declaration and the seam, so a parse
+    /// that refused the member would also refuse the instruction admin
+    /// authored at the next seam, per `weaver-types-Spec` section 2 as
+    /// corrected 2026-08-31. The declaration's refusal is admin's at the
+    /// inventory, which refuses a granted permission naming this field,
+    /// and admin's construction overwrites the member from the resolved
+    /// kind, so a written `false` is inert and indistinguishable from
+    /// absence, per `weaver-admin-Spec` section 7.
+    #[serde(default)]
+    pub refeed_permission: bool,
     /// The session's identity material: the canonical messages the identity
     /// prefix is rendered from, configuration rather than history, per
     /// `weaver-types-Spec` section 2. Required like every field, and an
