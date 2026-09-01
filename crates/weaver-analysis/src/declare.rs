@@ -102,12 +102,16 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
         return Err(DeriveRefusal::MemberAbsent { member: "identity" });
     }
 
+    // Every interpolated string scalar is serialized as a JSON string,
+    // which YAML carries whole: a session, artifact, or sink path holding a
+    // colon, a quote, or any other YAML-significant character crosses as
+    // the value it is rather than as markup.
     let mut declaration = String::new();
-    declaration.push_str(&format!("session: {session}\n"));
+    declaration.push_str(&format!("session: {}\n", serde_json::json!(session)));
     declaration.push_str("binding-kind: diagnostic\n");
     declaration.push_str("spu-instruction:\n  decoder:\n");
     declaration.push_str("    model-binding:\n");
-    declaration.push_str(&format!("      artifact: {artifact}\n"));
+    declaration.push_str(&format!("      artifact: {}\n", serde_json::json!(artifact)));
     let devices: Vec<String> = inputs.devices.iter().map(|d| d.to_string()).collect();
     declaration.push_str(&format!("      devices: [{}]\n", devices.join(", ")));
     declaration.push_str(&format!(
@@ -129,7 +133,7 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
     declaration.push_str("tool-set: []\n");
     declaration.push_str("permission-mode: ask\n");
     declaration.push_str("trace-sink:\n  kind: file\n");
-    declaration.push_str(&format!("  path: {}\n", inputs.sink_path));
+    declaration.push_str(&format!("  path: {}\n", serde_json::json!(inputs.sink_path)));
     declaration.push_str("  create: true\n");
     Ok(declaration)
 }

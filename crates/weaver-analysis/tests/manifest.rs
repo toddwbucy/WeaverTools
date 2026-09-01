@@ -12,12 +12,16 @@ use std::process::Command;
 
 fn resolved_tree() -> String {
     let out = Command::new(env!("CARGO"))
+        // Every edge kind and every target: a dev or build dependency on
+        // an interior crate, or one reached only on another platform,
+        // crosses the same boundary the normal edges do.
         .args([
             "tree",
             "-p",
             "weaver-analysis",
             "--edges",
-            "normal",
+            "all",
+            "--all-targets",
             "--prefix",
             "none",
         ])

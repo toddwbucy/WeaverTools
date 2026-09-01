@@ -49,6 +49,10 @@ fn an_invented_kind_and_member_move_no_grouping() {
             1
         ),
     );
+    assert!(
+        salted.contains(r#""invented_member": 7"#),
+        "the salt landed in the source"
+    );
     let salted: Vec<String> = project(&parse_record(&salted))
         .iter()
         .map(|d| d.frame().to_string())
@@ -215,7 +219,7 @@ fn the_declaration_derives_every_source_run_fact() {
     let declaration =
         weaver_analysis::derive(&parse_record(SOURCE), &inputs()).expect("the record is whole");
     assert!(declaration.contains(
-        "artifact: /bulk-store/weaver-testing/cross-precision-repro/qwen2.5-0.5b-instruct-q8_0.gguf"
+        "artifact: \"/bulk-store/weaver-testing/cross-precision-repro/qwen2.5-0.5b-instruct-q8_0.gguf\""
     ));
     assert!(declaration.contains("seed: 451234785645"));
     assert!(declaration.contains("context-capacity: 16384"));
@@ -229,5 +233,17 @@ fn the_declaration_derives_every_source_run_fact() {
         !declaration.contains("gate-instruction"),
         "a diagnostic declaration carries no gate"
     );
-    assert!(declaration.contains("session: s-karl-1"));
+    assert!(declaration.contains("session: \"s-karl-1\""));
+    // A sink path holding YAML-significant characters crosses as the value
+    // it is rather than as markup.
+    let hostile = AnalystInputs {
+        sink_path: "/tmp/x: {y}".to_string(),
+        ..inputs()
+    };
+    let declaration =
+        weaver_analysis::derive(&parse_record(SOURCE), &hostile).expect("the record is whole");
+    assert!(
+        declaration.contains("  path: \"/tmp/x: {y}\""),
+        "a YAML-significant path stays a value: {declaration}"
+    );
 }

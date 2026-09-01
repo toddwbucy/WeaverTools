@@ -46,19 +46,51 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
         sink_path: String::new(),
     };
     let mut out: Option<String> = None;
+    let refused = |why: String| {
+        eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
+        std::process::ExitCode::FAILURE
+    };
     let mut it = rest.iter();
     while let Some(argument) = it.next() {
         match argument.as_str() {
+            // **A numeric token that does not parse refuses naming it**,
+            // never a silent discard: a device list that dropped a
+            // malformed entry, or a field depth that quietly became no
+            // election, would run a diagnostic the analyst did not ask
+            // for.
             "--devices" => {
-                inputs.devices = it
-                    .next()
-                    .map(|v| v.split(',').filter_map(|d| d.parse().ok()).collect())
-                    .unwrap_or_default();
+                let Some(value) = it.next() else {
+                    return refused("--devices takes a value".to_string());
+                };
+                let mut devices = Vec::new();
+                for token in value.split(',') {
+                    match token.parse() {
+                        Ok(device) => devices.push(device),
+                        Err(_) => {
+                            return refused(format!(
+                                "--devices holds a token that is not a device ordinal: {token}"
+                            ));
+                        }
+                    }
+                }
+                inputs.devices = devices;
             }
             "--sink" => inputs.sink_path = it.next().cloned().unwrap_or_default(),
             "--readout" => inputs.readout = true,
             "--surprisal" => inputs.surprisal = true,
-            "--field-depth" => inputs.field_depth = it.next().and_then(|v| v.parse().ok()),
+            "--field-depth" => {
+                let Some(value) = it.next() else {
+                    return refused("--field-depth takes a value".to_string());
+                };
+                match value.parse() {
+                    Ok(depth) => inputs.field_depth = Some(depth),
+                    Err(_) => {
+                        return refused(format!(
+                            "--field-depth is not a depth: {value}"
+                        ));
+                    }
+                }
+            }
             "--out" => out = it.next().cloned(),
             other if trace.is_none() => trace = Some(other.to_string()),
             other => {
