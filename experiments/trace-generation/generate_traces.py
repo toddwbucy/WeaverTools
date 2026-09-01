@@ -324,7 +324,12 @@ def main():
     # gate the confirm driver holds: a wrapper of the shape `... && publish`
     # must not ship defective specimens because the failure was only prose.
     verdicts = [x.get("verdict") for x in report["sessions"]]
-    if not verdicts or any(v != "REPRODUCED" for v in verdicts):
+    window_held = all(
+        v.get("status") == "unchanged"
+        for v in (report["provenance"].get("provenance_at_close") or {}).values()
+        if isinstance(v, dict))
+    if not verdicts or any(v != "REPRODUCED" for v in verdicts) \
+            or not window_held:
         sys.exit(1)
 
 
@@ -386,30 +391,27 @@ def run_the_night(cfg, args, sessions, sweeps, schedule, provenance,
             print(f"[{name}] {r.get('verdict')} in {r['seconds']}s",
                   flush=True)
 
-    # **Provenance is read again at close.** One opening block stamped into
-    # a ninety-minute thirty-load night attributes every trace after a
-    # mid-night install to the pre-install hashes. Guarded per the matrix's
-    # close rather than the raw comparison #379 documents: a failed closing
-    # read deposits as unreadable, never as movement.
+    # **Provenance is read again at close**, through the implementation
+    # #379's fix lifted into the shared driver - one envelope per field, a
+    # failed closing read deposits as unreadable, never as movement.
     closing_spu = base._resolve_spu(cfg)
-    at_close = {
-        "engine_libraries": base.engine_libraries(cfg, closing_spu),
-        "weaver_binaries": base.weaver_binaries(cfg, closing_spu),
-        "toolchain": base.toolchain(cfg),
+    closings = {
+        "engine_libraries": base.provenance_close(
+            cfg, lambda c: base.engine_libraries(c, closing_spu),
+            libraries, "engine_libraries"),
+        "weaver_binaries": base.provenance_close(
+            cfg, lambda c: base.weaver_binaries(c, closing_spu),
+            binaries, "weaver_binaries"),
+        "toolchain": base.provenance_close(
+            cfg, base.toolchain, tools, "toolchain",
+            essence=base.close_whole),
     }
-    opening = {"engine_libraries": libraries,
-               "weaver_binaries": binaries, "toolchain": tools}
-    moved = {}
-    for field, closing in at_close.items():
-        if not base.is_reading(closing):
-            moved[field] = {"at_close_unreadable": closing}
-        elif not base.is_reading(opening[field]):
-            moved[field] = {"at_open_unreadable": opening[field]}
-        elif closing != opening[field]:
-            moved[field] = {"at_open": opening[field], "at_close": closing}
-    provenance["provenance_at_close"] = moved or "unchanged"
-    if moved:
-        print(f"PROVENANCE MOVED OR UNREADABLE: {sorted(moved)}", flush=True)
+    provenance["provenance_at_close"] = closings
+    unquiet = {k: v["status"] for k, v in closings.items()
+               if v["status"] != "unchanged"}
+    if unquiet:
+        print(f"PROVENANCE DID NOT HOLD QUIET: {json.dumps(unquiet)}",
+              flush=True)
 
     # The cross-session findings, from the deposits rather than from memory
     # of the loop above. A pair analysis only exists where both emissions
