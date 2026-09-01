@@ -66,11 +66,22 @@ def main():
                               "turn": key[0], "position": key[1],
                               "a": len(va), "b": len(vb)}))
             return 1
+        if not va:
+            # Equal-and-empty is not comparable: a record of empty columns
+            # would verdict over zero values.
+            print(json.dumps({"refusal": "the column holds no layers",
+                              "turn": key[0], "position": key[1]}))
+            return 1
         for layer, (la, lb) in enumerate(zip(va, vb)):
             if len(la) != len(lb):
                 print(json.dumps({"refusal": "the widths differ",
                                   "turn": key[0], "position": key[1],
                                   "layer": layer, "a": len(la), "b": len(lb)}))
+                return 1
+            if not la:
+                print(json.dumps({"refusal": "the layer holds no values",
+                                  "turn": key[0], "position": key[1],
+                                  "layer": layer}))
                 return 1
             for x, y in zip(la, lb):
                 values += 1

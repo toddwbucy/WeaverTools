@@ -125,13 +125,14 @@ def main():
     import re
     if args.out_tag and not re.fullmatch(r"[A-Za-z0-9._-]+", args.out_tag):
         print(json.dumps({"refusal": f"the tag is not filename-safe: {args.out_tag!r}"}))
-        return
+        return 1
     tag = f"-{args.out_tag}" if args.out_tag else ""
     out = f"/bulk-store/weaver-testing/jacobian-lens-0.5b/lens-eval-results{tag}.json"
     with open(out, "w") as f:
         json.dump(results, f, indent=1)
     print(json.dumps({"written": out}))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
