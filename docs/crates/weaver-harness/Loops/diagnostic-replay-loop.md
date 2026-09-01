@@ -5,6 +5,11 @@ loop, filed under the harness's `Loops/` container per the Document Format's con
 entry. It argues no edges of its own: the seams it walks are declared in the crate
 charters, and a graph block here would duplicate a record that already has a home.
 
+**Revised:** 2026-09-01, the driver derives the declaration. Section 2's
+step 2 carries `weaver-analysis-PRD` section 3's rule as amended on issue
+#394: the declaration step one loads is derived from the record by the
+driver, the analyst declaring only the replay's own three facts, so the
+driver's act brackets the load rather than following it.
 **Revised:** 2026-08-27, second of this date, the driver's Spec is authoritative
 for the election. Section 2's step 2 sketched what the driver elects and now says
 so, naming `weaver-analysis-Spec` section 3 as the authority per G5 and gaining
@@ -94,7 +99,13 @@ The operator sequences three acts, and the loop is the third:
    the two criteria partition by binding with neither widening the other.
 2. **Run the driver.** `weaver-analysis` parses the operator-held record
    outside the agent, dials the preload door as an operator principal,
-   sends the election and the distillates, and seals. **What the election
+   sends the election and the distillates, and seals. **The driver also
+   derives the declaration step one loads**, per `weaver-analysis-PRD`
+   section 3 as amended 2026-09-01 on issue #394: every source-run fact
+   from the record, the analyst declaring only device placement, the
+   readers' elections, and the sink, so the derivation runs before step
+   one and the preload after it - one act of the driver's, bracketing the
+   load. **What the election
    holds is `weaver-analysis-Spec` section 3's**, composed from what this
    loop reads, and what follows sketches its shape rather than fixing the
    set: the message kinds, `model.request` for each turn's rendered

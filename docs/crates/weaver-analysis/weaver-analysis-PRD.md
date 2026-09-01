@@ -5,6 +5,15 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-09-01, the declaration derives from the record. Section 3
+gains the rule of issue #394 on the operator's direction: every fact of the
+source run comes from the record and the analyst declares only the
+diagnostic run's own three - device placement, the readers' elections, and
+the sink - with the record-silent-property class as the ground and the
+later random-seed case carried free. `weaver-analysis-Spec` section 3 takes
+the representation and `diagnostic-replay-loop` section 2 the walk's
+sentence, every party in the same act.
+
 **Revised:** 2026-08-31, second of this date, code identity joins the bound.
 The licence names code identity beside the device model, each identifier at
 its own precision - the commit by hash, the toolchain and driver by pinned
@@ -164,6 +173,28 @@ two statements of one shape: `weaver-trace-Spec` section 3 is the authority
 and a divergence is a defect here, per G5. The reader rules of
 `weaver-trace-PRD` section 6 bind this parser in both directions, and section
 6 of that document is where they are argued rather than restated here.
+
+**It derives the diagnostic declaration from the record it parsed, and the
+analyst declares only the diagnostic run's own facts.** Per the operator's
+direction of 2026-08-31 on issue #394. Every fact of the source run comes
+from the record - the artifact, the seated identity prefix, the declared
+seed and every tunable the effective sampling and its bounds name, the
+session's own name - because every value an analyst re-types into a
+declaration is a chance to be correct to memory instead of to the run,
+which is the record-silent-property defect class entering through the
+config file. Three facts stay the analyst's to declare, each for its own
+reason. **Device placement**, because the record deliberately names no
+silicon and a replay on other silicon is a legitimate act the record must
+not forbid. **The readers' elections**, riding the declaration per apex
+section 8, the analyst's question and never the source's property. **The
+diagnostic sink**, the new record's home. A member the record does
+not carry and the run under this binding does not read takes the fixed
+spelling the Spec names rather than a guess. The rule is also what makes a
+later randomly drawn seed free: a value that lands in the record's
+sampling members is picked up by the derivation with no further act, where
+a re-typed declaration would be wrong by construction. The replay's own
+identity checks then guard the derivation itself - a drifted derivation
+fails certification rather than replaying a run that never was.
 
 **It preloads what the parse projects**, across the one seam, per
 `weaver-analysis-state-contract`, and it sends three things in one order. **The
