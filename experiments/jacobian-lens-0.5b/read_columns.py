@@ -20,7 +20,19 @@ Run: /fastpool/venvs/jlens/bin/python read_columns.py <record.ndjson[.zst]>
 import argparse, io, json, subprocess, sys
 
 MODEL_DIR = "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct"
-LENS = "/bulk-store/weaver-testing/jacobian-lens-0.5b/jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt"
+DEFAULT_LENS = "/bulk-store/weaver-testing/jacobian-lens-0.5b/jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt"
+
+
+def manifest_path_for(lens_path):
+    """The manifest that identifies this lens, derived from its name: the
+    fit writes `jacobian_lens_...{tag}.pt` beside `lens-manifest{tag}.json`,
+    so a tagged lens is checked against its own manifest and never the
+    untagged sibling's."""
+    import os, re
+    base = os.path.basename(lens_path)
+    m = re.fullmatch(r"jacobian_lens_.*?bf16(?P<tag>(-[A-Za-z0-9._-]+)?)\.pt", base)
+    tag = m.group("tag") if m else ""
+    return os.path.join(os.path.dirname(lens_path), f"lens-manifest{tag}.json")
 
 
 def record_lines(path):
@@ -37,6 +49,7 @@ def main():
                     help="comma-separated absolute positions; default: a spread")
     ap.add_argument("--layers", default="2,6,10,14,18,22")
     ap.add_argument("--topk", type=int, default=5)
+    ap.add_argument("--lens", default=DEFAULT_LENS)
     ap.add_argument("--min-top5", type=float, default=0.9,
                     help="control gate: trajectories print only at or above this")
     args = ap.parse_args()
@@ -77,8 +90,8 @@ def main():
     # recomputed here), and the width, before any trajectory is printed. A
     # lens applied to weights it was not fitted for reads an unknown model.
     import hashlib, os
-    manifest = json.load(open(os.path.join(os.path.dirname(LENS), "lens-manifest.json")))
-    if manifest["lens"] != os.path.basename(LENS):
+    manifest = json.load(open(manifest_path_for(args.lens)))
+    if manifest["lens"] != os.path.basename(args.lens):
         print(json.dumps({"refusal": "the manifest names a different lens",
                           "manifest": manifest["lens"]}))
         return 1
@@ -99,7 +112,7 @@ def main():
     ).cuda()
     tok = transformers.AutoTokenizer.from_pretrained(MODEL_DIR)
     model = jlens.from_hf(hf, tok)
-    lens = jlens.JacobianLens.load(LENS)
+    lens = jlens.JacobianLens.load(args.lens)
     if lens.d_model != manifest["lens_shape"]["d_model"]:
         print(json.dumps({"refusal": "the lens width disagrees with its manifest",
                           "lens": lens.d_model,

@@ -9,7 +9,7 @@ will formalize.
 
 Run: /fastpool/venvs/jlens/bin/python fit_lens.py [--prompts N] [--device cuda:1]
 """
-import argparse, hashlib, json, subprocess, sys, time
+import argparse, hashlib, json, re, subprocess, sys, time
 
 MODEL_DIR = "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct"
 CORPUS = "/bulk-store/training-datasets/wikitext/wikitext-103-v1/train"
@@ -44,6 +44,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--prompts", type=int, default=200)
     ap.add_argument("--device", default="cuda:1")
+    ap.add_argument("--tag", default="",
+                    help="suffix for the lens, checkpoint, and manifest names, "
+                         "so fits at different corpus sizes stand side by side")
     args = ap.parse_args()
 
     import torch, transformers, jlens
@@ -83,15 +86,18 @@ def main():
 
     import os
     os.makedirs(OUT, exist_ok=True)
+    if args.tag and not re.fullmatch(r"[A-Za-z0-9._-]+", args.tag):
+        raise SystemExit(f"the tag is not filename-safe: {args.tag!r}")
+    tag = f"-{args.tag}" if args.tag else ""
     lens = jlens.fit(
         model,
         prompts=prompts,
-        checkpoint_path=f"{OUT}/fit-checkpoint.pt",
+        checkpoint_path=f"{OUT}/fit-checkpoint{tag}.pt",
     )
-    lens.save(f"{OUT}/jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt")
+    lens.save(f"{OUT}/jacobian_lens_qwen2.5-0.5b-instruct-bf16{tag}.pt")
 
     manifest = {
-        "lens": "jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt",
+        "lens": f"jacobian_lens_qwen2.5-0.5b-instruct-bf16{tag}.pt",
         "fitted_for": {
             "model": MODEL_DIR,
             "model_safetensors_sha256": sha256(f"{MODEL_DIR}/model.safetensors"),
@@ -121,7 +127,7 @@ def main():
             "n_prompts": lens.n_prompts,
         },
     }
-    with open(f"{OUT}/lens-manifest.json", "w") as f:
+    with open(f"{OUT}/lens-manifest{tag}.json", "w") as f:
         json.dump(manifest, f, indent=1)
     print(json.dumps({"fitted": True, "seconds": manifest["fit_seconds"],
                       "layers": len(lens.source_layers)}), flush=True)
