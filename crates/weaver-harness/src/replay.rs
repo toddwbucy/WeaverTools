@@ -689,18 +689,19 @@ mod tests {
         assert_eq!(close["payload"]["close"], "stopped");
     }
 
-    /// **The envelope is the run's session and the identity names the
-    /// replayed one, and a matching replay certifies.** The decode peer
-    /// answers the re-feed with the recorded path recomputed, the pass
-    /// closes certified, and every envelope line carries the diagnostic
-    /// run's own session while the identity payload names the replayed
-    /// session by the one name the contract gives it.
+    /// **A matching replay certifies, the bracket mirrored whole, under
+    /// the run's own session.** The decode peer answers the re-feed with
+    /// the recorded path recomputed, the pass closes certified, and the
+    /// identity payload names the replayed session by the one name the
+    /// contract gives it. The envelope's session needs no watch here: the
+    /// writer binds it by construction at submit, the crossing
+    /// unrepresentable, and that crate's own record carries the claim -
+    /// this test's per-line read is the loop confirming what construction
+    /// already holds.
     ///
-    /// Perturbation: stamp the envelope's session from anything but the
-    /// author's own in `author_diagnostic` and the session assertion
-    /// fails on every line. Watched under exactly that change.
-    ///
-    /// conforms: diagnostic-session-is-the-replays-own
+    /// Perturbation: fill `replayed_session` from anything but the
+    /// declared session's name in the drive and the identity assertion
+    /// fails. Watched under exactly that change.
     #[test]
     fn a_matching_replay_certifies_under_the_runs_own_session() {
         fn answers_refed(far: std::os::fd::OwnedFd) {
