@@ -1445,8 +1445,10 @@ impl Harness {
         // diagnostic load without the readout election has no tap running
         // and no column to ask for - the ask would meet the registry's
         // second arm.
-        let column_ask = run.diagnostic.is_some()
-            && payload.spu_instruction.decoder.residual_readout_election;
+        let column_ask = column_ask_for(
+            run.diagnostic.is_some(),
+            payload.spu_instruction.decoder.residual_readout_election,
+        );
         if let Err(refusal) = open_session(
             &spu.decode,
             SessionId(run.session.0.clone()),
@@ -1934,6 +1936,18 @@ fn clear_dumpable() -> Result<(), AdoptionFault> {
 /// say.
 ///
 /// conforms: harness-identity-refusal-authored-not-dropped
+/// The column ask's derivation, per `weaver-harness-Spec` section 6.1: the
+/// ask is written where and only where the binding is diagnostic and the
+/// readout is elected. A serving harness never writes it - the discipline
+/// `weaver-spu-PRD` section 13.7 watches on this crate - and a diagnostic
+/// load without the election asks nothing, the registry's second arm
+/// waiting for exactly that ask.
+///
+/// conforms: harness-serving-writes-no-column-ask
+fn column_ask_for(diagnostic: bool, readout_elected: bool) -> bool {
+    diagnostic && readout_elected
+}
+
 fn seat_identity_prefix(
     author: &crate::authorship::Author,
     recorder: &mut crate::record::Record,
@@ -3136,6 +3150,26 @@ mod tests {
             harness.grant_seat("identity", &[]).is_some(),
             "a loaded-and-idle run grants the seat"
         );
+    }
+
+    /// **A serving harness never writes the column ask.** The derivation
+    /// reads the binding and the election, and every combination but
+    /// diagnostic-with-readout asks nothing: the serving pair stay silent
+    /// whatever the election says, and a diagnostic load without the
+    /// election asks nothing rather than meeting the registry's second
+    /// arm.
+    ///
+    /// Perturbation: derive the ask from the election alone and the
+    /// serving-with-readout combination writes it. Watched under exactly
+    /// that change.
+    ///
+    /// conforms: harness-serving-writes-no-column-ask
+    #[test]
+    fn a_serving_harness_never_writes_the_column_ask() {
+        assert!(!column_ask_for(false, false), "serving, unelected");
+        assert!(!column_ask_for(false, true), "serving, elected: never the ask");
+        assert!(!column_ask_for(true, false), "diagnostic, unelected: nothing to continue");
+        assert!(column_ask_for(true, true), "diagnostic, elected: the one asking posture");
     }
 
     /// **A diagnostic run grants no frame seat, and answers rather than
