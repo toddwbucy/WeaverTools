@@ -2268,7 +2268,7 @@ since this act. The efficient framing of the column message joins section
 ```graph
 node: spu-no-vector-unasked
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu
@@ -3120,9 +3120,13 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Seventy-nine records in all, the
-elections taking nodes because gate H1 would otherwise leave the largest
-decisions in this Spec untraceable. **The split between this section's sorting
+general prohibition, and the kernels' comparisons. Eighty-five records in all,
+the elections taking nodes because gate H1 would otherwise leave the largest
+decisions in this Spec untraceable. Four of the eighty-five arrived with the
+re-feed act of 2026-08-31 without this count moving, that act's own
+oversight, and the column act of 2026-09-01 that recounts here adds two and
+moves one from review to perturbation, the unasked-vector watch its ground
+obliged it to buy. **The split between this section's sorting
 and the elections outside it is owed and is not restated here**: it read
 thirty-one and twenty-nine against a total of sixty, and the nineteen records
 since are not divided by any count this act can take mechanically. The total
@@ -3143,9 +3147,9 @@ use them and listed in section 0, and the shape behind all nine is that this
 crate holds neither the floor's definitions nor the fork that creates its
 channels.
 
-**Thirty-one records carry `review`, five fewer than the assertion pass of
-2026-08-16 left plus the one this act declares, and what has moved off the
-tag is what needed neither hardware nor seam work.** The five that moved are
+**Thirty records carry `review` as of the column act's recount, and what
+has moved off the tag is what needed neither hardware nor seam work, plus
+the one watch whose seam arrived.** The five that moved are
 the cheap refusals of section 3, the registry's refusal and the width refusal
 of section 5, the truncation fault of section 2, and the outbound parse of
 section 5, all of them reachable with a fixture and none of them touching a
@@ -3158,9 +3162,9 @@ watch, and introducing that seam is a larger act than this one. Every `review`
 tag in this document states its ground at its own clause, and outside three
 cases the ground is that no instrument was bought rather than that none exists.
 The three exceptions say so where they sit: the absence of anything laid in for
-an operation type that does not exist, the kernels' comparisons above, and
-section 7's unasked-vector watch, whose instrument cannot exist before the seam
-it watches is built and whose ground obliges the building act to buy it.
+an operation type that does not exist, and the kernels' comparisons above.
+Section 7's unasked-vector watch stood third among them until the column act
+built its seam and bought it, as its ground obliged.
 
 **The out-of-order refusal is stated and bought on both seams, per section 9,
 and this crate's side of the owing is discharged.** `weaver-types-Spec` section
