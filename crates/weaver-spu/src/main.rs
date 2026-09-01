@@ -207,6 +207,10 @@ struct Effective {
     /// a property of the binding the run opened under, never of any one
     /// exchange.
     refeed_permission: bool,
+    /// The column stream's permission, per `weaver-spu-PRD` section 13.7:
+    /// admin's member on the re-feed permission's own terms, judged at the
+    /// open where the ask arrives.
+    column_permission: bool,
 }
 
 /// Resolve both sets against what the declaration supplied.
@@ -220,6 +224,7 @@ fn resolve_effective(supplied: &TunableValues) -> Result<Effective, KnobRefusal>
     Ok(Effective {
         field_depth: None,
         refeed_permission: false,
+        column_permission: false,
         knobs: KNOBS.resolve(supplied)?,
         session: SESSION_PARAMETERS.resolve(supplied)?,
     })
@@ -1418,6 +1423,7 @@ fn dispatch(
                     let mut resolved = resolved;
                     resolved.field_depth = decoder.field_election.as_ref().map(|e| e.depth);
                     resolved.refeed_permission = decoder.refeed_permission;
+                    resolved.column_permission = decoder.column_permission;
                     *effective = Some(resolved);
                     Payload::Answer(LifecycleAnswer::Admitted)
                 }
@@ -1538,6 +1544,7 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                 identity: vec![],
                 tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -1765,6 +1772,7 @@ mod tests {
         TokenDirective::Open {
             session: weaver_types::SessionId("s-1".into()),
             messages: vec![],
+            column_ask: false,
         }
     }
 

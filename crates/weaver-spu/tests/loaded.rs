@@ -253,6 +253,7 @@ mod seam_success {
                     field_election: None,
                     surprisal_election: false,
                         refeed_permission: false,
+                        column_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -342,6 +343,7 @@ mod seam_success {
                         field_election: None,
                         surprisal_election: false,
                         refeed_permission: false,
+                        column_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -451,6 +453,7 @@ mod seam_success {
                         field_election: None,
                         surprisal_election: false,
                         refeed_permission: false,
+                        column_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
@@ -480,6 +483,7 @@ mod seam_success {
 
         send(&TokenDirective::Open {
             session: SessionId("s-ceiling".into()),
+            column_ask: false,
             messages: vec![message("You count plainly.")],
         });
         assert_eq!(recv(), TokenAnswer::Opened, "the session opens");
@@ -584,6 +588,7 @@ mod seam_success {
                         field_election: None,
                         surprisal_election: true,
                         refeed_permission: false,
+                        column_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
@@ -613,6 +618,7 @@ mod seam_success {
 
         send(&TokenDirective::Open {
             session: SessionId("s-surprisal".into()),
+            column_ask: false,
             messages: vec![message("You count plainly.")],
         });
         assert_eq!(recv(), TokenAnswer::Opened, "the session opens");
@@ -719,6 +725,7 @@ mod seam_success {
                         field_election: None,
                         surprisal_election: false,
                         refeed_permission: false,
+                        column_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -748,6 +755,7 @@ mod seam_success {
 
         send(&TokenDirective::Open {
             session: SessionId("s-1".into()),
+            column_ask: false,
             messages: vec![message("You answer in as few words as possible.")],
         });
         assert_eq!(recv(), TokenAnswer::Opened, "the session opens");
@@ -955,6 +963,7 @@ mod seam_success {
                         field_election: None,
                         surprisal_election: false,
                         refeed_permission: false,
+                        column_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 64.0),
@@ -980,6 +989,7 @@ mod seam_success {
 
         send(&TokenDirective::Open {
             session: SessionId("s-refused".into()),
+            column_ask: false,
             messages: vec![Message {
                 role: Role::User,
                 content: vec![ContentBlock::Text {
@@ -1146,6 +1156,7 @@ mod seam_success {
         };
         send(&decode, &TokenDirective::Open {
             session: SessionId("s-null".into()),
+            column_ask: false,
             messages: identity(),
         });
         assert_eq!(recv(&decode), TokenAnswer::Opened, "the source session opens");
@@ -1185,6 +1196,7 @@ mod seam_success {
         let (lifecycle, decode, child, log_path) = stand("replay", true);
         send(&decode, &TokenDirective::Open {
             session: SessionId("s-null".into()),
+            column_ask: false,
             messages: identity(),
         });
         assert_eq!(recv(&decode), TokenAnswer::Opened, "the replay session opens");

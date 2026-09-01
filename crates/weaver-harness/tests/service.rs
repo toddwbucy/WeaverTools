@@ -274,6 +274,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                         identity: vec![],
                         tunable_values: Default::default(),
                     },

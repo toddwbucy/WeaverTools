@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-01, the column's code act lands. The family
+declaration's column member takes its spelling, `taps_column` beside
+`taps_readout` in section 7's diagnostic clause, qwen2 alone declaring it
+on the GGUF answer shown, and the open's registry refusals take the floor's
+typed arms per `weaver-types-Spec` as revised this date. The watches the
+2026-08-31 entries named as the building act's are bought by it.
+
 **Revised:** 2026-08-31, fourth of this date, the drive's watches are
 bought. Section 4.6 lands the assertions its closing sentence owed, each
 perturbation-verified in the act that built the drive: the session appends
@@ -2227,8 +2234,11 @@ forward and dropped once its norm is folded: the diagnostic answer is that
 column continuing instead of dropping, and no second capture exists. On the
 native path `fold_norm` is the stronger in-place reading, one scalar crossing
 and no column held, so whether a family's tap holds a column to answer is a
-member of its declaration per charter section 14, and the GGUF column is the
-first answer shown. **The answer covers every sampled position**: each decode
+member of its declaration per charter section 14, spelled `taps_column`
+beside `taps_readout` and held to the same bar: a family declares it only
+where the answer has been shown on the engine that would serve it, so qwen2
+declares it on the GGUF answer shown first and every other family declares
+`false` until its own act. **The answer covers every sampled position**: each decode
 forward, and each append's prefill final position, a turn holding one append
 per generation so a tool round adds its own. Nothing else of the
 prompt crosses, and the bound's ground is the tap's one-column copy per 13.7,

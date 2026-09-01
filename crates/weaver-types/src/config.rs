@@ -214,6 +214,14 @@ pub struct DecoderInstruction {
     /// absence, per `weaver-admin-Spec` section 7.
     #[serde(default)]
     pub refeed_permission: bool,
+    /// The column stream's permission, per `weaver-spu-PRD` section 13.7:
+    /// admin's member on exactly `refeed_permission`'s terms - parsed with
+    /// `default` because one type serves the declaration and the seam,
+    /// refused at admin's inventory where a declaration grants it, and
+    /// written from the resolved binding kind at admin's construction, per
+    /// `weaver-admin-Spec` section 7.
+    #[serde(default)]
+    pub column_permission: bool,
     /// The session's identity material: the canonical messages the identity
     /// prefix is rendered from, configuration rather than history, per
     /// `weaver-types-Spec` section 2. Required like every field, and an
