@@ -122,6 +122,10 @@ def main():
             results[name] = {"items": 0, "skipped": skipped}
         print(json.dumps({name: results[name]}), flush=True)
 
+    import re
+    if args.out_tag and not re.fullmatch(r"[A-Za-z0-9._-]+", args.out_tag):
+        print(json.dumps({"refusal": f"the tag is not filename-safe: {args.out_tag!r}"}))
+        return
     tag = f"-{args.out_tag}" if args.out_tag else ""
     out = f"/bulk-store/weaver-testing/jacobian-lens-0.5b/lens-eval-results{tag}.json"
     with open(out, "w") as f:

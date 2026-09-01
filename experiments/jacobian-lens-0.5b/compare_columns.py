@@ -45,6 +45,11 @@ def main():
                           "only_a": len(set(a) - set(b)),
                           "only_b": len(set(b) - set(a))}))
         return 1
+    if not a:
+        # An empty comparison must not verdict: zero of zero values equal
+        # is no evidence of anything.
+        print(json.dumps({"refusal": "neither record holds a residual column"}))
+        return 1
     positions = 0
     values = 0
     exact = 0
@@ -53,7 +58,20 @@ def main():
     for key in sorted(a):
         va, vb = a[key], b[key]
         positions += 1
+        # **Cardinality is checked, never truncated**: a zip that silently
+        # dropped the longer side's tail would compare fewer values than
+        # the records hold and could still claim byte-identical.
+        if len(va) != len(vb):
+            print(json.dumps({"refusal": "the layer counts differ",
+                              "turn": key[0], "position": key[1],
+                              "a": len(va), "b": len(vb)}))
+            return 1
         for layer, (la, lb) in enumerate(zip(va, vb)):
+            if len(la) != len(lb):
+                print(json.dumps({"refusal": "the widths differ",
+                                  "turn": key[0], "position": key[1],
+                                  "layer": layer, "a": len(la), "b": len(lb)}))
+                return 1
             for x, y in zip(la, lb):
                 values += 1
                 if x == y:

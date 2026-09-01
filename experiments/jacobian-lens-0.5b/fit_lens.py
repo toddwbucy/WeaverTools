@@ -9,7 +9,7 @@ will formalize.
 
 Run: /fastpool/venvs/jlens/bin/python fit_lens.py [--prompts N] [--device cuda:1]
 """
-import argparse, hashlib, json, subprocess, sys, time
+import argparse, hashlib, json, re, subprocess, sys, time
 
 MODEL_DIR = "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct"
 CORPUS = "/bulk-store/training-datasets/wikitext/wikitext-103-v1/train"
@@ -86,6 +86,8 @@ def main():
 
     import os
     os.makedirs(OUT, exist_ok=True)
+    if args.tag and not re.fullmatch(r"[A-Za-z0-9._-]+", args.tag):
+        raise SystemExit(f"the tag is not filename-safe: {args.tag!r}")
     tag = f"-{args.tag}" if args.tag else ""
     lens = jlens.fit(
         model,
