@@ -1577,10 +1577,13 @@ impl Harness {
             // interior to hand across.
             ChannelState::Entered(run) if run.turn_in_flight.is_some() => None,
             ChannelState::Entered(run) => {
-                let structure = run
-                    .recorder
-                    .structure()
-                    .expect("the frame path runs under the serving record");
+                // **A diagnostic run grants no seat here.** Its record holds
+                // no working structure and no frame ever arrives to assemble
+                // for - the one grant is the run's opening, per Spec 6.2's
+                // second criterion - so this seam answers the same
+                // nothing-to-hand-across the other arms give rather than
+                // panicking on a record shape the guard above never read.
+                let structure = run.recorder.structure()?;
                 let prompt = crate::assembly::assemble(structure, identity, tool_schemas);
                 // **An incomplete prompt does not cross the seam.** A
                 // message-kind record that did not decode is a hole where a
@@ -3106,6 +3109,49 @@ mod tests {
             harness.grant_seat("identity", &[]).is_some(),
             "a loaded-and-idle run grants the seat"
         );
+    }
+
+    /// **A diagnostic run grants no frame seat, and answers rather than
+    /// panics.** The extension seam is the frame path's: a diagnostic
+    /// record holds no working structure and no frame ever arrives, so the
+    /// grant answers the same absence the mid-turn arm answers, per
+    /// `weaver-harness-Spec` section 6.2's partition of the two criteria.
+    ///
+    /// Perturbation: restore the `expect` on the structure read in
+    /// `grant_seat` and this panics instead of answering. Watched under
+    /// exactly that restoration. Found by the review seat on PR 393.
+    #[test]
+    fn a_diagnostic_run_grants_no_frame_seat() {
+        let (mut run, _spare, _path) = entered_run(None);
+        let sink_path = std::env::temp_dir().join(format!(
+            "weaver-harness-diag-seat-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+        run.recorder = crate::record::Record::Diagnostic(
+            weaver_diagnostic::Recorder::receive(
+                sink,
+                weaver_diagnostic::RunRef("r-1".into()),
+                weaver_diagnostic::SessionRef("s-1".into()),
+            )
+            .expect("the recorder receives"),
+        );
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                classify: None,
+                spu: "/nonexistent/spu".into(),
+                gate: "/nonexistent/gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::Entered(Box::new(run)),
+        };
+        assert!(
+            harness.grant_seat("identity", &[]).is_none(),
+            "a diagnostic run hands nothing across the frame seam"
+        );
+        let _ = std::fs::remove_file(&sink_path);
     }
 
     /// A stop at rest answers `AtRest`, a clean close and not a refusal, and
