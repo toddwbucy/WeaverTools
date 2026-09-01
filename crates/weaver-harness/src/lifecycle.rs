@@ -294,7 +294,7 @@ enum ChannelState {
 /// the compiler's match on the options is what makes a forgotten arm
 /// unrepresentable rather than unlikely.
 struct Run {
-    recorder: Recorder,
+    recorder: crate::record::Record,
     author: Author,
     session: SessionId,
     /// The run's own reference, retained so a close can name the run a turn
@@ -730,8 +730,11 @@ impl Harness {
                 // The seat, granted at loaded-and-idle: the assembly read,
                 // the grant across the dev boundary, and the take-back at
                 // the entry's return.
-                let prompt =
-                    crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas);
+                let structure = run
+                    .recorder
+                    .structure()
+                    .expect("the frame path runs under the serving record");
+                let prompt = crate::assembly::assemble(structure, identity, tool_schemas);
                 if prompt.undecodable > 0 {
                     // An incomplete prompt does not cross the seam: the hole
                     // becomes the fault event and the turn does not run.
@@ -1066,12 +1069,33 @@ impl Harness {
             LifecycleRefusal::DescriptorsUnusable,
         ))?;
         let session = payload.session.clone();
-        let mut recorder = Recorder::receive(
-            sink,
-            RunRef(payload.run.0.clone()),
-            SessionRef(session.0.clone()),
-        )
-        .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?;
+        // **The kind selects the record's mechanism**, per apex section 6 as
+        // ruled 2026-08-24 and `weaver-harness-Spec` section 9's settled
+        // election: a serving run authors the trace and a diagnostic run
+        // authors a diagnostic-trace, one shape over both arms, this crate
+        // the sole writer under either. The diagnostic record opens with
+        // `replay.opened`, the loop's to author, so the load bracket and
+        // the seated prefix below are the serving arm's alone.
+        let diagnostic = matches!(payload.binding, weaver_types::EnterBinding::Diagnostic);
+        let mut recorder = if diagnostic {
+            crate::record::Record::Diagnostic(
+                weaver_diagnostic::Recorder::receive(
+                    sink,
+                    weaver_diagnostic::RunRef(payload.run.0.clone()),
+                    weaver_diagnostic::SessionRef(session.0.clone()),
+                )
+                .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?,
+            )
+        } else {
+            crate::record::Record::Serving(
+                Recorder::receive(
+                    sink,
+                    RunRef(payload.run.0.clone()),
+                    SessionRef(session.0.clone()),
+                )
+                .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?,
+            )
+        };
 
         // The state seam, per `weaver-harness-state-contract` as ruled
         // 2026-08-26: a nameless pair whose harness end arrived on this
@@ -1111,14 +1135,29 @@ impl Harness {
         // the load unrefused.
         if let Some(end) = state_end {
             let channel = std::os::unix::net::UnixStream::from(end);
-            let ask_end = channel.try_clone();
-            // The session rides the opener beside the election, both being
-            // facts this enter declared, per the contract's amended term:
-            // the custodian bounds its answers to it, so a store holding an
-            // earlier session answers within the running one.
-            if let Ok(tee) = weaver_trace::Tee::open(channel, session.0.clone(), election) {
-                recorder.attach_tee(tee);
-                state_seam = ask_end.ok().map(crate::state::StateSeam::new);
+            match recorder.serving_mut() {
+                Some(serving) => {
+                    let ask_end = channel.try_clone();
+                    // The session rides the opener beside the election, both
+                    // being facts this enter declared, per the contract's
+                    // amended term: the custodian bounds its answers to it,
+                    // so a store holding an earlier session answers within
+                    // the running one.
+                    if let Ok(tee) =
+                        weaver_trace::Tee::open(channel, session.0.clone(), election)
+                    {
+                        serving.attach_tee(tee);
+                        state_seam = ask_end.ok().map(crate::state::StateSeam::new);
+                    }
+                }
+                // **No tee under the diagnostic record**: the tee distills a
+                // serving trace into the store, and a replay reads the store
+                // through this same channel, which is the ask end whole -
+                // the third refusal, nothing writes back to what is under
+                // examination, per `weaver-diagnostic-PRD` section 2.
+                None => {
+                    state_seam = Some(crate::state::StateSeam::new(channel));
+                }
             }
         }
 
@@ -1147,15 +1186,20 @@ impl Harness {
             surprisal: payload.spu_instruction.decoder.surprisal_election,
             tee: Some(tee_election),
         };
-        author
-            .author(
-                &mut recorder,
-                Kind::Load,
-                Subsystem::Harness,
-                None,
-                Some(Payload::Elections(elections)),
-            )
-            .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
+        // **The serving arm's alone**: the diagnostic record carries no
+        // `load` kind and opens with `replay.opened`, which is the loop's
+        // to author at the replay, per `weaver-diagnostic-Spec` section 4.
+        if !diagnostic {
+            author
+                .author(
+                    &mut recorder,
+                    Kind::Load,
+                    Subsystem::Harness,
+                    None,
+                    Some(Payload::Elections(elections)),
+                )
+                .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
+        }
 
         // **The seated prefix reaches the record beside the load**, per
         // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5.
@@ -1179,11 +1223,13 @@ impl Harness {
         // to say, and until it does this is the record's only account.
         //
         // conforms: harness-identity-refusal-authored-not-dropped
-        seat_identity_prefix(
-            &author,
-            &mut recorder,
-            &payload.spu_instruction.decoder.identity,
-        );
+        if !diagnostic {
+            seat_identity_prefix(
+                &author,
+                &mut recorder,
+                &payload.spu_instruction.decoder.identity,
+            );
+        }
 
         // **Past this line the bracket stands**, so every refusal below
         // carries the partial run back rather than dropping it: the leave that
@@ -1429,8 +1475,11 @@ impl Harness {
             // interior to hand across.
             ChannelState::Entered(run) if run.turn_in_flight.is_some() => None,
             ChannelState::Entered(run) => {
-                let prompt =
-                    crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas);
+                let structure = run
+                    .recorder
+                    .structure()
+                    .expect("the frame path runs under the serving record");
+                let prompt = crate::assembly::assemble(structure, identity, tool_schemas);
                 // **An incomplete prompt does not cross the seam.** A
                 // message-kind record that did not decode is a hole where a
                 // turn's content was, so the count becomes the `fault` event
@@ -1552,13 +1601,18 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
         drop(classify.channel);
         reap(classify.pid);
     }
-    let _ = run.author.author(
-        &mut run.recorder,
-        Kind::Unload,
-        Subsystem::Harness,
-        None,
-        None,
-    );
+    // The serving arm's bracket close: the diagnostic record carries no
+    // `unload`, its own close being `replay.closed`, the loop's to author,
+    // per `weaver-diagnostic-Spec` section 4.
+    if run.recorder.serving().is_some() {
+        let _ = run.author.author(
+            &mut run.recorder,
+            Kind::Unload,
+            Subsystem::Harness,
+            None,
+            None,
+        );
+    }
 
     // **The drain's outcome is carried, not discarded.** `Left` means
     // everything admitted reached the stream, so a failed drain must not be
@@ -1756,7 +1810,7 @@ fn clear_dumpable() -> Result<(), AdoptionFault> {
 /// conforms: harness-identity-refusal-authored-not-dropped
 fn seat_identity_prefix(
     author: &crate::authorship::Author,
-    recorder: &mut Recorder,
+    recorder: &mut crate::record::Record,
     identity: &[weaver_traits::Message],
 ) {
     for message in identity {
@@ -1849,9 +1903,10 @@ mod tests {
         ));
         let sink = OwnedFd::from(File::create(&path).expect("sink"));
         let session = SessionId("s-1".to_string());
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
 
         let said = |role| weaver_traits::Message {
@@ -1881,7 +1936,7 @@ mod tests {
             ],
         );
 
-        let kinds: Vec<Kind> = recorder.structure().iter().map(|r| r.kind).collect();
+        let kinds: Vec<Kind> = recorder.structure().expect("the serving record").iter().map(|r| r.kind).collect();
         assert_eq!(
             kinds,
             vec![Kind::MessageSystem, Kind::Fault, Kind::Fault],
@@ -1889,7 +1944,7 @@ mod tests {
         );
 
         let faults: Vec<&str> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Fault)
             // The line is read rather than a typed payload, the record
@@ -1937,9 +1992,10 @@ mod tests {
         ));
         let sink = OwnedFd::from(File::create(&path).expect("sink"));
         let session = SessionId("s-1".to_string());
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2214,7 +2270,7 @@ mod tests {
 
         let refusals: Vec<&weaver_trace::Record> = run
             .recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -2245,7 +2301,7 @@ mod tests {
         // and the close belongs to the leave.
         assert_eq!(
             run.recorder
-                .structure()
+                .structure().expect("the serving record")
                 .iter()
                 .filter(|r| r.kind == Kind::TurnClosed)
                 .count(),
@@ -2837,7 +2893,7 @@ mod tests {
         // The close is in the record.
         let closes = match &harness.state {
             ChannelState::Entered(run) => {
-                run.recorder.structure().by_kind(Kind::TurnClosed).count()
+                run.recorder.structure().expect("the serving record").by_kind(Kind::TurnClosed).count()
             }
             _ => panic!("the position stays entered after a stop"),
         };
@@ -3130,7 +3186,7 @@ mod tests {
         };
         let kinds: Vec<Kind> = run
             .recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)

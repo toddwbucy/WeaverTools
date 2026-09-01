@@ -38,9 +38,10 @@ fn crate_names(tree: &str) -> Vec<String> {
         .collect()
 }
 
-/// The internal set is exactly the two floor links and the trace seam tagged
-/// `link` - no organ appears, because a crate this one asks to do something is
-/// reached over a socket.
+/// The internal set is exactly the two floor links and the two member seams
+/// tagged `link`, per `weaver-harness-Spec` section 1's four-crate count as
+/// of the diagnostic member's build - no organ appears, because a crate this
+/// one asks to do something is reached over a socket.
 #[test]
 fn internal_dependency_set_is_the_floor_and_the_trace_seam() {
     let names = crate_names(&resolved_tree("normal"));
@@ -53,8 +54,13 @@ fn internal_dependency_set_is_the_floor_and_the_trace_seam() {
     internal.dedup();
     assert_eq!(
         internal,
-        vec!["weaver-trace", "weaver-traits", "weaver-types"],
-        "the floor pair and the trace seam, and no organ"
+        vec![
+            "weaver-diagnostic",
+            "weaver-trace",
+            "weaver-traits",
+            "weaver-types"
+        ],
+        "the floor pair and the two member seams, and no organ"
     );
 }
 

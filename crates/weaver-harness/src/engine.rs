@@ -27,7 +27,9 @@
 //! consumes the stream, reads the close, and authors the record. Loop 1
 //! authors nothing, which is the sole-writer property held where the turn runs.
 
-use weaver_trace::{Kind, ModelOutput, Payload, Recorder, Subsystem, TurnClose};
+use weaver_trace::{Kind, ModelOutput, Payload, Subsystem, TurnClose};
+
+use crate::record::Record;
 use weaver_traits::{ContentBlock, Message, Role};
 use weaver_types::{TokenAnswer, TokenDirective, TokenRefusal, TurnKey};
 
@@ -69,7 +71,7 @@ pub(crate) struct GatePort<'a> {
 pub struct Ports<'a> {
     decode: &'a DecodeChannel,
     author: &'a Author,
-    recorder: &'a mut Recorder,
+    recorder: &'a mut Record,
     turn_ordinal: &'a mut u64,
     assembled: Option<Prompt>,
     /// The coordination listener, waited against beside the decode channel
@@ -179,7 +181,7 @@ impl<'a> Ports<'a> {
     pub(crate) fn grant(
         decode: &'a DecodeChannel,
         author: &'a Author,
-        recorder: &'a mut Recorder,
+        recorder: &'a mut Record,
         turn_ordinal: &'a mut u64,
         assembled: Option<Prompt>,
         coordination: &'a CoordinationListener,
@@ -1342,9 +1344,10 @@ mod tests {
     fn a_refused_classify_authors_a_refusal_and_no_output() {
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
 
         // The producer's own path, over the shape the seam hands it.
@@ -1367,7 +1370,7 @@ mod tests {
             .expect("the refusal is authored");
 
         let refusals: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -1387,7 +1390,7 @@ mod tests {
 
         assert_eq!(
             recorder
-                .structure()
+                .structure().expect("the serving record")
                 .iter()
                 .filter(|r| r.kind == Kind::ClassifyOutput)
                 .count(),
@@ -1413,15 +1416,17 @@ mod tests {
     fn pressure_reports_once_per_crossing() {
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut reported = false;
 
         // Under the mark: nothing is authored and the flag stays down.
-        let faults = |r: &Recorder| {
+        let faults = |r: &crate::record::Record| {
             r.structure()
+                .expect("the serving record")
                 .iter()
                 .filter(|record| record.kind == Kind::Fault)
                 .count()
@@ -1435,7 +1440,7 @@ mod tests {
         // The rule itself, exercised over the flag the engine holds: an
         // authored report sets it, a second crossing while it stands
         // authors nothing, and falling under the mark clears it.
-        let mut report = |over: bool, queued: usize, recorder: &mut Recorder| {
+        let mut report = |over: bool, queued: usize, recorder: &mut crate::record::Record| {
             if !over {
                 reported = false;
                 return;
@@ -1576,9 +1581,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1627,7 +1633,7 @@ mod tests {
         );
 
         let closes: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::TurnClosed)
             .collect();
@@ -1641,7 +1647,7 @@ mod tests {
         );
 
         let refusals = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .count();
@@ -1693,9 +1699,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1736,7 +1743,7 @@ mod tests {
         assert!(answered.is_none(), "a refused span answers None as it did");
 
         let refusals: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -1806,9 +1813,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1855,7 +1863,7 @@ mod tests {
         assert_eq!(counts, (1237, 1221), "the seam's counts reach the loop");
 
         let lines: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Elision)
             .collect();
@@ -1945,9 +1953,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1999,7 +2008,7 @@ mod tests {
         // The bracket, in order: the turn's user message, the three model
         // events, the assistant's turn, and the close.
         let kinds: Vec<Kind> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2027,7 +2036,7 @@ mod tests {
         // Perturbation: forward a zero, a constant, or the members swapped,
         // and this fails.
         let output_line = recorder
-            .structure()
+            .structure().expect("the serving record")
             .by_kind(Kind::ModelOutput)
             .next()
             .expect("the output authored")
@@ -2048,7 +2057,7 @@ mod tests {
         // the template, the measurement the weights hash, both opaque.
         let line_of = |kind: Kind| {
             recorder
-                .structure()
+                .structure().expect("the serving record")
                 .by_kind(kind)
                 .next()
                 .expect("the event authored")
@@ -2124,9 +2133,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2185,7 +2195,7 @@ mod tests {
         // The pin: the turn-attributed sequence holds the fault before the
         // close, both inside the bracket.
         let kinds: Vec<Kind> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2322,9 +2332,10 @@ mod tests {
 
         let session = SessionId("s-t".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2381,7 +2392,7 @@ mod tests {
         assert!(held.is_empty(), "nothing crossed mid-execution to hold");
 
         let kinds: Vec<Kind> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2411,7 +2422,7 @@ mod tests {
         // the gate's answer.
         let line_of = |kind: Kind| {
             recorder
-                .structure()
+                .structure().expect("the serving record")
                 .by_kind(kind)
                 .next()
                 .expect("authored")
@@ -2495,9 +2506,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2542,7 +2554,7 @@ mod tests {
         assert_eq!(outcome.emission, "hi", "the close still closes the turn");
 
         let fields: Vec<String> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .by_kind(Kind::ModelField)
             .map(|r| r.line.to_string())
             .collect();
@@ -2594,9 +2606,10 @@ mod tests {
         drop(far);
         let session = SessionId("s-f".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut turn_ordinal = 0u64;
         let listener = test_listener();
@@ -2721,9 +2734,10 @@ mod tests {
 
         let session = SessionId("s-2".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2782,7 +2796,7 @@ mod tests {
 
         // The close names the directive, the partial standing before it.
         let close = recorder
-            .structure()
+            .structure().expect("the serving record")
             .by_kind(Kind::TurnClosed)
             .next()
             .expect("the close authored")

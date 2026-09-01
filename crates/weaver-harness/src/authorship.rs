@@ -13,13 +13,14 @@
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use weaver_trace::{
-    Envelope, Event, Failure, Kind, MonotonicNs, Payload, Recorder, RunRef, Sequence, SessionRef,
-    Subsystem, TurnRef, raw_payload,
+    Envelope, Event, Kind, MonotonicNs, Payload, RunRef, Sequence, SessionRef, Subsystem, TurnRef,
+    raw_payload,
 };
 use weaver_traits::{ContentBlock, Message, Role};
 use weaver_types::{RunId, SessionId, TurnKey};
 
 use crate::failure::UnlicensedMessage;
+use crate::record::{Record, RecordFailure};
 
 /// The authoring path: holds the run's identity and the origin of its
 /// monotonic clock, and stamps both timestamps at authoring from the standard
@@ -55,12 +56,12 @@ impl Author {
     /// acknowledgment the interior proceeds on.
     pub fn author(
         &self,
-        recorder: &mut Recorder,
+        recorder: &mut Record,
         kind: Kind,
         subsystem: Subsystem,
         turn: Option<&TurnKey>,
         payload: Option<Payload>,
-    ) -> Result<Sequence, Failure> {
+    ) -> Result<Sequence, RecordFailure> {
         let event = Event {
             envelope: Envelope {
                 session: self.session.clone(),
@@ -85,10 +86,10 @@ impl Author {
     /// because the recorder judges the envelope and never the interior.
     pub fn author_message(
         &self,
-        recorder: &mut Recorder,
+        recorder: &mut Record,
         message: &Message,
         turn: &TurnKey,
-    ) -> Result<Result<Sequence, Failure>, UnlicensedMessage> {
+    ) -> Result<Result<Sequence, RecordFailure>, UnlicensedMessage> {
         licensed(message)?;
         let kind = match message.role {
             Role::System => Kind::MessageSystem,
@@ -151,9 +152,9 @@ impl Author {
     /// conforms: harness-identity-door-writes-system-only
     pub fn author_identity(
         &self,
-        recorder: &mut Recorder,
+        recorder: &mut Record,
         message: &Message,
-    ) -> Result<Result<Sequence, Failure>, UnlicensedMessage> {
+    ) -> Result<Result<Sequence, RecordFailure>, UnlicensedMessage> {
         if !matches!(message.role, Role::System) {
             return Err(UnlicensedMessage {
                 role: role_name(&message.role),
@@ -184,10 +185,10 @@ impl Author {
     /// the conversation as a tool result is what crossed the gate exchange.
     pub fn author_tool_result(
         &self,
-        recorder: &mut Recorder,
+        recorder: &mut Record,
         grant: &crate::tools::ToolResult,
         turn: &TurnKey,
-    ) -> Result<Sequence, Failure> {
+    ) -> Result<Sequence, RecordFailure> {
         let message = Message {
             role: Role::ToolResult,
             content: vec![weaver_traits::ContentBlock::ToolResult(grant.block())],
@@ -211,19 +212,18 @@ impl Author {
     /// the case, this crate included, and this function classifies nothing.
     pub fn author_fault(
         &self,
-        recorder: &mut Recorder,
+        recorder: &mut Record,
         subsystem: Subsystem,
         turn: Option<&TurnKey>,
         report: &weaver_types::FaultReport,
-    ) -> Result<Sequence, Failure> {
-        let octets = serde_json::to_string(report).map_err(|_| Failure::RefusedOnSubmit {
-            reason: weaver_trace::SubmitRefusal::PayloadMalformed,
-        })?;
-        let payload = raw_payload(&octets)
-            .map(Payload::Fault)
-            .ok_or(Failure::RefusedOnSubmit {
+    ) -> Result<Sequence, RecordFailure> {
+        let malformed = || {
+            RecordFailure::Serving(weaver_trace::Failure::RefusedOnSubmit {
                 reason: weaver_trace::SubmitRefusal::PayloadMalformed,
-            })?;
+            })
+        };
+        let octets = serde_json::to_string(report).map_err(|_| malformed())?;
+        let payload = raw_payload(&octets).map(Payload::Fault).ok_or_else(malformed)?;
         self.author(recorder, Kind::Fault, subsystem, turn, Some(payload))
     }
 }
