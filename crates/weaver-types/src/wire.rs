@@ -522,6 +522,14 @@ pub enum TokenDirective {
     Open {
         session: SessionId,
         messages: Vec<weaver_traits::Message>,
+        /// The column ask, per `weaver-spu-PRD` section 13.7's cadence
+        /// election: it crosses once, at session open, and the one answer
+        /// runs for the residency. A serving harness never writes it, the
+        /// discipline watched on the harness, and an ask against any arm
+        /// of that clause's registry refuses typed at the open. Defaulted
+        /// so a directive written before the member existed asks nothing.
+        #[serde(default)]
+        column_ask: bool,
     },
     AppendAndGenerate {
         turn: TurnKey,
@@ -609,6 +617,18 @@ pub enum TokenAnswer {
         position: u64,
         ranked: Vec<Candidate>,
         realized: u32,
+    },
+    /// The decode seam's third intermediate, per `weaver-spu-PRD` section
+    /// 13.7 and the decode contract as amended 2026-08-31: one sampled
+    /// position's residual columns, the tap's own copy per layer at the
+    /// width the artifact sets, crossing where the column ask stands and
+    /// never otherwise. Carries its position like `Field` and closes
+    /// nothing. The layers ride layer-major in section 4.4's provisional
+    /// bare JSON, the efficient framing staying `weaver-spu-Spec` section
+    /// 12's open election.
+    Column {
+        position: u64,
+        layers: Vec<Vec<f32>>,
     },
     Generated(Generation),
     /// The re-feed's own answer, per `weaver-spu-PRD` section 13.14: the
@@ -734,6 +754,19 @@ pub enum TokenRefusal {
     /// The registry's second arm: an empty recorded path, a replay of
     /// nothing wearing an exchange.
     RefeedPathEmpty,
+    /// The open's column registry, per `weaver-spu-PRD` section 13.7: three
+    /// arms and no others, each a unit variant because the fact refused
+    /// carries no value the record holds nowhere else. The instruction
+    /// carries no admitted column permission.
+    ColumnPermissionAbsent,
+    /// The readout was not elected at admit: no election means no tap runs
+    /// and no column exists to continue.
+    ColumnReadoutUnelected,
+    /// The family's declaration holds no column, per `weaver-spu-Spec`
+    /// section 7: judged at the open rather than at admit because admission
+    /// cannot know an ask will come, and norms-alone against an untapped
+    /// column is a working configuration.
+    ColumnUndeclared,
     /// The elision's span describes no removable region, per the decode
     /// contract as amended 2026-08-22: it overlaps the identity prefix,
     /// runs past the resident count, ends before it starts, or is empty.

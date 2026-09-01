@@ -1068,6 +1068,21 @@ impl<'a> Ports<'a> {
                             refusal,
                         });
                     }
+                    // **The column rides this exchange too**, per the decode
+                    // contract's third intermediate: the stream carries it
+                    // wherever the open's ask stood, and a consumer that
+                    // read it as channel loss would kill service on a frame
+                    // the contract licenses. No harness flow produces it on
+                    // a serving record today - a serving open writes no ask
+                    // - but the seam's discipline is the contract's, not
+                    // this crate's flows'.
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Column {
+                        position,
+                        layers,
+                    }) => {
+                        self.author_residual_column(turn, position, layers)?;
+                        continue;
+                    }
                     crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
                 },
                 StreamWake::Dial => {
@@ -1323,6 +1338,20 @@ impl<'a> Ports<'a> {
                             .map_err(|_| TurnError::ChannelLost)?;
                         continue;
                     }
+                    // **The column intermediate authors as it arrives**,
+                    // per `weaver-diagnostic-Spec` section 3.2 and the
+                    // decode contract's third intermediate: the replay
+                    // drives the pass and the columns ride it where the ask
+                    // stood, one `residual.column` event per sampled
+                    // position, the seventeenth kind and the harness's own
+                    // authoring. It closes no exchange.
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Column {
+                        position,
+                        layers,
+                    }) => {
+                        self.author_residual_column(turn, position, layers)?;
+                        continue;
+                    }
                     crate::channel::DecodeReply::Answer(TokenAnswer::ReFed(generation)) => {
                         break generation;
                     }
@@ -1438,6 +1467,33 @@ impl<'a> Ports<'a> {
             .map_err(|_| TurnError::ChannelLost)?;
 
         Ok(generation)
+    }
+
+    /// One `residual.column` event authored from the seam's column frame,
+    /// per `weaver-diagnostic-Spec` section 3.2: the seventeenth kind, the
+    /// harness's own authoring, shared by the generate and re-feed streams
+    /// because the contract's third intermediate rides both exchanges.
+    fn author_residual_column(
+        &mut self,
+        turn: &TurnKey,
+        position: u64,
+        layers: Vec<Vec<f32>>,
+    ) -> Result<(), TurnError> {
+        let column = weaver_diagnostic::ResidualColumn {
+            position,
+            layers: layers.len() as u32,
+            width: layers.first().map(|l| l.len()).unwrap_or(0) as u32,
+            values: layers,
+        };
+        self.author
+            .author_diagnostic(
+                self.recorder,
+                weaver_diagnostic::Kind::ResidualColumn,
+                Some(turn),
+                Some(weaver_diagnostic::Payload::ResidualColumn(column)),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
     }
 
     /// One replay-native event authored, the loop's own kinds, per
@@ -3056,6 +3112,104 @@ mod tests {
             close.contains(r#""close":"stopped""#) && close.contains(r#""reason":"directive""#),
             "the close names the directive, not the fault: {close}"
         );
+    }
+
+    /// **A column frame on the generate stream authors rather than kills.**
+    /// The contract's third intermediate rides the append-and-generate
+    /// exchange wherever the open's ask stood, so the scripted peer sends
+    /// one mid-stream against a diagnostic record and the turn completes
+    /// with the `residual.column` event authored where a wildcard would
+    /// have read channel loss.
+    ///
+    /// Perturbation: remove the `Column` arm from the generate stream and
+    /// this fails, the turn dying of a frame the contract licenses.
+    /// Watched under exactly that removal.
+    #[test]
+    fn a_column_on_the_generate_stream_authors_rather_than_kills() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let _ = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let column = concat!(
+                r#"{"kind":"column","body":{"position":7,"layers":[[1.0,2.0],[3.0,4.0]]}}"#
+            );
+            send(far.as_raw_fd(), column.as_bytes(), MsgFlags::empty()).expect("send column");
+            let generated = concat!(
+                r#"{"kind":"generated","body":{"emission":"hi","finish":"completed","#,
+                r#""content":[{"type":"text","text":"hi"}],"#,
+                r#""request":{"rendered":"hi","template":"t","sampling":{}},"#,
+                r#""measurement":{"input_tokens":[1],"output_tokens":[2]},"#,
+                r#""resident":4,"capacity":64}}"#
+            );
+            send(far.as_raw_fd(), generated.as_bytes(), MsgFlags::empty()).expect("send close");
+        });
+
+        let session = SessionId("s-d".into());
+        let sink_path = std::env::temp_dir().join(format!(
+            "weaver-engine-column-{}-{:?}.ndjson",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let sink = OwnedFd::from(std::fs::File::create(&sink_path).expect("sink"));
+        let mut recorder = crate::record::Record::Diagnostic(
+            weaver_diagnostic::Recorder::receive(
+                sink,
+                weaver_diagnostic::RunRef("r-d".into()),
+                weaver_diagnostic::SessionRef(session.0.clone()),
+            )
+            .expect("the recorder receives"),
+        );
+        let author = Author::new(&session, &weaver_types::RunId("r-d".into()));
+        let mut turn_ordinal = 0u64;
+        let listener = test_listener();
+        let outcome = {
+            let mut fullness = None;
+            let mut pressure_reported = false;
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                None,
+                &listener,
+                None,
+                None,
+                None,
+                None,
+                &mut fullness,
+                &mut pressure_reported,
+            );
+            ports.turn(vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text { text: "hi".into() }],
+            }])
+        };
+        peer.join().expect("the decode peer finishes");
+        assert!(outcome.is_ok(), "the turn completes: {outcome:?}");
+
+        let mut text = String::new();
+        use std::io::Read as _;
+        std::fs::File::open(&sink_path)
+            .expect("the record reopens")
+            .read_to_string(&mut text)
+            .expect("the record reads");
+        let column = text
+            .lines()
+            .map(|l| serde_json::from_str::<serde_json::Value>(l).expect("a line parses"))
+            .find(|e| e["kind"] == "residual.column")
+            .expect("the column authored");
+        assert_eq!(column["payload"]["position"], 7);
+        assert_eq!(column["payload"]["layers"], 2);
+        assert_eq!(column["payload"]["width"], 2);
+        std::fs::remove_file(&sink_path).ok();
     }
 
     fn test_listener() -> crate::channel::CoordinationListener {

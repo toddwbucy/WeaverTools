@@ -273,8 +273,69 @@ pub fn judge(
     Ok(())
 }
 
+/// The open's column registry, per charter section 13.7: three arms and no
+/// others, judged in the clause's own order at the open - the cheapest
+/// moment that knows the ask. `None` is the ask standing, which arms the
+/// answer for the residency.
+///
+/// A function rather than an inline chain so the third arm is reachable by
+/// a test: a family with a tap and no column has no small artifact in this
+/// workshop, and the seam tests buy the first two arms against the real
+/// engine.
+pub fn judge_column_ask(
+    permission: bool,
+    readout_elected: bool,
+    taps_column: bool,
+) -> Option<weaver_types::TokenRefusal> {
+    if !permission {
+        return Some(weaver_types::TokenRefusal::ColumnPermissionAbsent);
+    }
+    if !readout_elected {
+        return Some(weaver_types::TokenRefusal::ColumnReadoutUnelected);
+    }
+    if !taps_column {
+        return Some(weaver_types::TokenRefusal::ColumnUndeclared);
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
+    /// **The open's registry, three arms in the clause's own order and no
+    /// fourth.** The third arm is judged here because no small artifact in
+    /// this workshop carries a family with a tap and no column, and the
+    /// first two are also bought at the seam against the real engine.
+    ///
+    /// Perturbation: remove any arm from `judge_column_ask`, or reorder
+    /// the first two, and this fails on the arm's own case. Watched under
+    /// exactly those changes.
+    ///
+    /// conforms: spu-column-registry-three-arms
+    #[test]
+    fn the_column_registry_holds_three_arms_in_order() {
+        use weaver_types::TokenRefusal;
+        assert_eq!(
+            super::judge_column_ask(false, false, false),
+            Some(TokenRefusal::ColumnPermissionAbsent),
+            "the permission is judged first"
+        );
+        assert_eq!(
+            super::judge_column_ask(true, false, false),
+            Some(TokenRefusal::ColumnReadoutUnelected),
+            "the election second"
+        );
+        assert_eq!(
+            super::judge_column_ask(true, true, false),
+            Some(TokenRefusal::ColumnUndeclared),
+            "the declaration third"
+        );
+        assert_eq!(
+            super::judge_column_ask(true, true, true),
+            None,
+            "and the ask stands past all three"
+        );
+    }
+
     use super::*;
     use crate::decoder::backend::FlushMechanism;
 
@@ -290,6 +351,7 @@ mod tests {
         selecting_markers: &[],
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: true,
+        taps_column: false,
     };
 
     const UNTAPPABLE: Declaration = Declaration {
@@ -301,6 +363,7 @@ mod tests {
         selecting_markers: &[],
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     };
 
     /// **An election a family cannot honor refuses at admit**, naming the

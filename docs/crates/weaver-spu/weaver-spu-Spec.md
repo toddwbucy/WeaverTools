@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-01, the column's code act lands. The family
+declaration's column member takes its spelling, `taps_column` beside
+`taps_readout` in section 7's diagnostic clause, qwen2 alone declaring it
+on the GGUF answer shown, and the open's registry refusals take the floor's
+typed arms per `weaver-types-Spec` as revised this date. The watches the
+2026-08-31 entries named as the building act's are bought by it.
+
 **Revised:** 2026-08-31, fourth of this date, the drive's watches are
 bought. Section 4.6 lands the assertions its closing sentence owed, each
 perturbation-verified in the act that built the drive: the session appends
@@ -2227,8 +2234,11 @@ forward and dropped once its norm is folded: the diagnostic answer is that
 column continuing instead of dropping, and no second capture exists. On the
 native path `fold_norm` is the stronger in-place reading, one scalar crossing
 and no column held, so whether a family's tap holds a column to answer is a
-member of its declaration per charter section 14, and the GGUF column is the
-first answer shown. **The answer covers every sampled position**: each decode
+member of its declaration per charter section 14, spelled `taps_column`
+beside `taps_readout` and held to the same bar: a family declares it only
+where the answer has been shown on the engine that would serve it, so qwen2
+declares it on the GGUF answer shown first and every other family declares
+`false` until its own act. **The answer covers every sampled position**: each decode
 forward, and each append's prefill final position, a turn holding one append
 per generation so a tool round adds its own. Nothing else of the
 prompt crosses, and the bound's ground is the tap's one-column copy per 13.7,
@@ -2251,24 +2261,65 @@ working configuration - the native tap's own shape - that an admit-time
 refusal would refuse. The open is the cheapest moment that knows the ask,
 which is 13.7's rule pointed at the right fact. An asked column that does
 not arrive at a sampled position is charter 13.10's fault, owned there
-since this act. The efficient framing of the column message joins section
+since this act: the draw site faults the session loudly where the armed
+take answers nothing - the native tap's own shape meeting an ask its
+family's declaration let past - because the silent absence is what the
+fault rule forbids. Perturbation: restore the silent skip at the draw site
+and an armed generation completes with no column and no fault. Watched
+under exactly that restoration.
+
+```graph
+node: spu-asked-column-arrives-or-faults
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-asked-column-arrives-or-faults
+```
+ The efficient framing of the column message joins section
 12's open token-seam encoding election, the provisional form being
 `weaver-types-Spec` section 4.4's bare JSON like every crossing.
 
 ```graph
 node: spu-no-vector-unasked
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-spu
 to: spu-no-vector-unasked
 ```
 
-Review's by non-purchase: the watch is an open carrying no ask whose session
-answers any `Column` message, buyable with a fixture against the built seam,
-and unbought because the seam is unbuilt - the code act that builds it buys
-this watch in the same motion or the tag stands as the lie 13.7 refuses.
+Bought by the building act of 2026-09-01, as this clause required: an open
+carrying no ask under a permission-granting instruction generates against
+the real engine and no `Column` message crosses the whole stream, watched
+red under the arming made unconditional. Beside it the act buys the
+registry's watch - three arms in the clause's own order, the third judged
+at the unit because no small artifact here carries a family with a tap and
+no column - and the crossing's own: where the ask stands, one column
+message per sampled position, the layer count and the width the model's
+own, watched red under the take removed.
+
+```graph
+node: spu-column-registry-three-arms
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-column-registry-three-arms
+```
+
+```graph
+node: spu-column-crosses-where-asked
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-column-crosses-where-asked
+```
 
 **One forward per prompt when readout is elected, never a batch.** Batching
 prompts changes what the attention sees, so residuals taken from a batched
@@ -3080,14 +3131,20 @@ reason.
 
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
-sections 1 through 9, rather than gathered here, per Document Format section 6:
+sections 1 through 9 and the classify arm's section 11, rather than gathered
+here, per Document Format section 6:
 this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Seventy-nine records in all, the
-elections taking nodes because gate H1 would otherwise leave the largest
-decisions in this Spec untraceable. **The split between this section's sorting
+general prohibition, and the kernels' comparisons. Eighty-six records in all,
+the elections taking nodes because gate H1 would otherwise leave the largest
+decisions in this Spec untraceable. Four of these arrived with the
+re-feed act of 2026-08-31 without this count moving, that act's own
+oversight, and the column act of 2026-09-01 that recounts here adds three -
+the registry, the crossing, and the arrives-or-faults rule the review seat
+held it to - and moves one from review to perturbation, the unasked-vector
+watch its ground obliged it to buy. **The split between this section's sorting
 and the elections outside it is owed and is not restated here**: it read
 thirty-one and twenty-nine against a total of sixty, and the nineteen records
 since are not divided by any count this act can take mechanically. The total
@@ -3108,9 +3165,9 @@ use them and listed in section 0, and the shape behind all nine is that this
 crate holds neither the floor's definitions nor the fork that creates its
 channels.
 
-**Thirty-one records carry `review`, five fewer than the assertion pass of
-2026-08-16 left plus the one this act declares, and what has moved off the
-tag is what needed neither hardware nor seam work.** The five that moved are
+**Thirty records carry `review` as of the column act's recount, and what
+has moved off the tag is what needed neither hardware nor seam work, plus
+the one watch whose seam arrived.** The five that moved are
 the cheap refusals of section 3, the registry's refusal and the width refusal
 of section 5, the truncation fault of section 2, and the outbound parse of
 section 5, all of them reachable with a fixture and none of them touching a
@@ -3123,9 +3180,9 @@ watch, and introducing that seam is a larger act than this one. Every `review`
 tag in this document states its ground at its own clause, and outside three
 cases the ground is that no instrument was bought rather than that none exists.
 The three exceptions say so where they sit: the absence of anything laid in for
-an operation type that does not exist, the kernels' comparisons above, and
-section 7's unasked-vector watch, whose instrument cannot exist before the seam
-it watches is built and whose ground obliges the building act to buy it.
+an operation type that does not exist, and the kernels' comparisons above.
+Section 7's unasked-vector watch stood third among them until the column act
+built its seam and bought it, as its ground obliged.
 
 **The out-of-order refusal is stated and bought on both seams, per section 9,
 and this crate's side of the owing is discharged.** `weaver-types-Spec` section

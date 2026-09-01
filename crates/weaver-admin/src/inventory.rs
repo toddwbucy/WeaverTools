@@ -163,6 +163,13 @@ fn take_inventory_against(
             )),
         });
     }
+    if config.spu_instruction.decoder.column_permission {
+        return Err(LifecycleRefusal::ConfigInvalid {
+            field: Some(FieldName(
+                "spu-instruction.decoder.column-permission".into(),
+            )),
+        });
+    }
 
     // The model artifact resolves to something readable. Nothing is repaired.
     if !artifact_readable(&config.spu_instruction.decoder.model_binding.artifact.0) {
@@ -1016,6 +1023,20 @@ mod tests {
                     if f.0 == "spu-instruction.decoder.refeed-permission"
             ),
             "the granting declaration refuses naming the field: {refused:?}"
+        );
+        // The sibling, on the same terms.
+        let source = config_source(&root).replace(
+            "    residual-readout-election: false\n",
+            "    residual-readout-election: false\n    column-permission: true\n",
+        );
+        let refused = take_inventory(&name, &source, &allow, &bound);
+        assert!(
+            matches!(
+                refused,
+                Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) })
+                    if f.0 == "spu-instruction.decoder.column-permission"
+            ),
+            "the granting declaration refuses naming the sibling: {refused:?}"
         );
         let _ = std::fs::remove_dir_all(&root);
     }

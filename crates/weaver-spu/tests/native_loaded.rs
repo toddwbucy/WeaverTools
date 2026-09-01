@@ -127,6 +127,7 @@ fn a_safetensors_artifact_generates_through_the_native_engine() {
             &mut |_token| {},
             None,
             &mut |_, _, _| {},
+            &mut |_, _| {},
             11,
             64,
         )
@@ -219,6 +220,7 @@ fn the_surprisal_election_governs_the_native_session() {
                 &mut |_token| {},
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -337,6 +339,7 @@ fn the_pair_agrees_with_the_single_card() {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -423,6 +426,7 @@ fn an_elected_readout_travels_with_the_generation() {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -585,6 +589,7 @@ fn an_elected_readout_is_admitted_by_a_gguf_family_that_declares_a_tap() {
             &mut |_| {},
             None,
             &mut |_, _, _| {},
+            &mut |_, _| {},
             11,
             64,
         )
@@ -677,6 +682,7 @@ fn the_pair_reports_its_pace() {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -785,6 +791,7 @@ fn a_large_sharded_safetensors_serves_across_the_pair() {
             &mut |_| {},
             None,
             &mut |_, _, _| {},
+            &mut |_, _| {},
             11,
             64,
         )

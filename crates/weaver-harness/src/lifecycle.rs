@@ -201,6 +201,15 @@ fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
             "the re-feed permission was not granted"
         }
         weaver_types::TokenRefusal::RefeedPathEmpty => "the re-feed carried no token path",
+        weaver_types::TokenRefusal::ColumnPermissionAbsent => {
+            "the column permission was not granted"
+        }
+        weaver_types::TokenRefusal::ColumnReadoutUnelected => {
+            "the column ask stood without the readout election"
+        }
+        weaver_types::TokenRefusal::ColumnUndeclared => {
+            "the family's declaration holds no column"
+        }
     }
 }
 
@@ -1429,10 +1438,22 @@ impl Harness {
         // payload this crate already holds. A refused open is a refused enter,
         // returned after-load so the bracket stands for the leave.
         let spu = run.spu.as_ref().expect("residency stands");
+        // **The column ask crosses where and only where the binding is
+        // diagnostic and the readout is elected**, per `weaver-spu-PRD`
+        // section 13.7's cadence election and the decode contract's
+        // supplies clause: a serving harness never writes the ask, and a
+        // diagnostic load without the readout election has no tap running
+        // and no column to ask for - the ask would meet the registry's
+        // second arm.
+        let column_ask = column_ask_for(
+            run.diagnostic.is_some(),
+            payload.spu_instruction.decoder.residual_readout_election,
+        );
         if let Err(refusal) = open_session(
             &spu.decode,
             SessionId(run.session.0.clone()),
             payload.spu_instruction.decoder.identity.clone(),
+            column_ask,
         ) {
             after_load!(run, refusal);
         }
@@ -1784,11 +1805,13 @@ fn open_session(
     decode: &DecodeChannel,
     session: SessionId,
     identity: Vec<weaver_traits::Message>,
+    column_ask: bool,
 ) -> Result<(), LifecycleRefusal> {
     decode
         .send_directive(&TokenDirective::Open {
             session,
             messages: identity,
+            column_ask,
         })
         .map_err(|_| LifecycleRefusal::NoResidency)?;
     match decode.recv_reply() {
@@ -1913,6 +1936,18 @@ fn clear_dumpable() -> Result<(), AdoptionFault> {
 /// say.
 ///
 /// conforms: harness-identity-refusal-authored-not-dropped
+/// The column ask's derivation, per `weaver-harness-Spec` section 6.1: the
+/// ask is written where and only where the binding is diagnostic and the
+/// readout is elected. A serving harness never writes it - the discipline
+/// `weaver-spu-PRD` section 13.7 watches on this crate - and a diagnostic
+/// load without the election asks nothing, the registry's second arm
+/// waiting for exactly that ask.
+///
+/// conforms: harness-serving-writes-no-column-ask
+fn column_ask_for(diagnostic: bool, readout_elected: bool) -> bool {
+    diagnostic && readout_elected
+}
+
 fn seat_identity_prefix(
     author: &crate::authorship::Author,
     recorder: &mut crate::record::Record,
@@ -2225,6 +2260,7 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -2343,6 +2379,7 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -2468,6 +2505,7 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                     identity: vec![weaver_traits::Message {
                         role: weaver_traits::Role::System,
                         content: vec![weaver_traits::ContentBlock::Text {
@@ -2575,6 +2613,7 @@ mod tests {
                             .then(|| weaver_types::FieldElection { depth: 50 }),
                         surprisal_election: elected,
                         refeed_permission: false,
+                        column_permission: false,
                         identity: Vec::new(),
                         tunable_values: Default::default(),
                     },
@@ -2710,6 +2749,7 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                     identity: Vec::new(),
                     tunable_values: [
                         ("max-tokens-per-turn".to_string(), 4096.0),
@@ -2814,6 +2854,7 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                     identity: Vec::new(),
                     // The deployed root's three operator-tunables, required
                     // at admit since the seed act of 2026-08-19. The empty
@@ -3109,6 +3150,26 @@ mod tests {
             harness.grant_seat("identity", &[]).is_some(),
             "a loaded-and-idle run grants the seat"
         );
+    }
+
+    /// **A serving harness never writes the column ask.** The derivation
+    /// reads the binding and the election, and every combination but
+    /// diagnostic-with-readout asks nothing: the serving pair stay silent
+    /// whatever the election says, and a diagnostic load without the
+    /// election asks nothing rather than meeting the registry's second
+    /// arm.
+    ///
+    /// Perturbation: derive the ask from the election alone and the
+    /// serving-with-readout combination writes it. Watched under exactly
+    /// that change.
+    ///
+    /// conforms: harness-serving-writes-no-column-ask
+    #[test]
+    fn a_serving_harness_never_writes_the_column_ask() {
+        assert!(!column_ask_for(false, false), "serving, unelected");
+        assert!(!column_ask_for(false, true), "serving, elected: never the ask");
+        assert!(!column_ask_for(true, false), "diagnostic, unelected: nothing to continue");
+        assert!(column_ask_for(true, true), "diagnostic, elected: the one asking posture");
     }
 
     /// **A diagnostic run grants no frame seat, and answers rather than

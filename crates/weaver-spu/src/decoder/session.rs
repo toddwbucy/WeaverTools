@@ -155,6 +155,11 @@ pub struct Session<'a> {
     /// would decode against a closed engine.
     poisoned: bool,
     flush_mechanism: FlushMechanism,
+    /// Whether the column ask stood at the open, per charter section 13.7:
+    /// the one ask whose answer runs for the residency. Where it stands
+    /// the draw sites take the tap's held columns and hand them out, and
+    /// where it does not no take happens at all.
+    columns_asked: bool,
     /// Whether the per-position surprisal is produced, per charter section
     /// 13.12.
     ///
@@ -182,8 +187,17 @@ impl<'a> Session<'a> {
             opened: false,
             poisoned: false,
             flush_mechanism,
+            columns_asked: false,
             surprisal_elected,
         }
+    }
+
+    /// Arm the column answer, per the open's one ask: the tap's hold and
+    /// this session's take stand together for the residency, and no call
+    /// disarms them because no directive un-asks.
+    pub fn ask_columns(&mut self) {
+        self.columns_asked = true;
+        self.backend.hold_columns(true);
     }
 
     /// What is resident now. The session's own account of itself, which the
@@ -258,6 +272,7 @@ impl<'a> Session<'a> {
         on_token: &mut dyn FnMut(TokenId),
         field: Option<usize>,
         on_field: &mut dyn FnMut(u64, Vec<(u32, f32)>, u32),
+        on_column: &mut dyn FnMut(u64, Vec<Vec<f32>>),
         seed: u64,
         penalty_window: usize,
     ) -> Result<Generated, DecodeFault> {
@@ -358,6 +373,31 @@ impl<'a> Session<'a> {
                 // and an absent one is a reported absence, per section 6.
                 Err(_) => None,
             };
+            // **The column crosses at the draw moment where the ask
+            // stood**, per charter section 13.7's position bound: what the
+            // take answers is the forward that feeds this draw - the
+            // append's prefill final on the first step, the decode forward
+            // after it - and the position is the one this draw's token
+            // would fill, the field's own pairing. The terminator's forward
+            // is never taken, no draw following it.
+            if self.columns_asked {
+                // **An asked column that does not arrive at a sampled
+                // position is charter 13.10's fault**, per `weaver-spu-Spec`
+                // section 7: the ask passed the registry, so a backend whose
+                // tap holds no column - the native tap's own shape - faults
+                // loudly here rather than omitting silently, the silent
+                // absence being what the fault rule forbids.
+                match self.backend.take_columns() {
+                    Some(columns) => on_column(self.resident.len() as u64, columns),
+                    None => {
+                        return Err(self.poison(DecodeFault::Engine {
+                            detail: "the column ask stood and no column arrived at a \
+                                     sampled position"
+                                .into(),
+                        }));
+                    }
+                }
+            }
 
             let token = match self.backend.sample() {
                 Ok(token) => token,
@@ -474,6 +514,7 @@ impl<'a> Session<'a> {
         cancel: &mut dyn CancelPoll,
         field: Option<usize>,
         on_field: &mut dyn FnMut(u64, Vec<(u32, f32)>, u32),
+        on_column: &mut dyn FnMut(u64, Vec<Vec<f32>>),
         seed: u64,
         penalty_window: usize,
     ) -> Result<Generated, DecodeFault> {
@@ -520,6 +561,24 @@ impl<'a> Session<'a> {
                 Ok(logits) => Some((measurement::entropy_bits(logits), logits.to_vec())),
                 Err(_) => None,
             };
+            // The column at the draw moment, exactly as the generate takes
+            // it: the re-fed forward is the source's, so the position bound
+            // and the pairing are unchanged.
+            if self.columns_asked {
+                // The generate's own 13.10 rule, unchanged by the re-feed:
+                // an asked column arrives at every sampled position or the
+                // pass faults.
+                match self.backend.take_columns() {
+                    Some(columns) => on_column(self.resident.len() as u64, columns),
+                    None => {
+                        return Err(self.poison(DecodeFault::Engine {
+                            detail: "the column ask stood and no column arrived at a \
+                                     sampled position"
+                                .into(),
+                        }));
+                    }
+                }
+            }
             let draw = match self.backend.sample() {
                 Ok(token) => token,
                 Err(fault) => return Err(self.poison(fault)),
@@ -819,6 +878,7 @@ mod tests {
                 &mut NeverCancels,
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -851,6 +911,53 @@ mod tests {
             log.borrow().reseeds,
             vec![(11, vec![TokenId(4), TokenId(5)])],
             "the sampler reseeds after the prefill exactly as a generation does"
+        );
+    }
+
+    /// **An asked column that does not arrive at a sampled position
+    /// faults**, per charter section 13.10 and Spec section 7: the ask
+    /// passed the registry, so a backend whose tap holds no column - the
+    /// native tap's own shape - faults loudly rather than omitting
+    /// silently. The scripted backend's `take_columns` answers `None`,
+    /// which is exactly that backend.
+    ///
+    /// Perturbation: restore the silent skip at the draw site - emit only
+    /// where the take answers - and the armed generation completes with no
+    /// column and no fault. Watched under exactly that restoration.
+    ///
+    /// conforms: spu-asked-column-arrives-or-faults
+    #[test]
+    fn an_asked_column_that_does_not_arrive_faults() {
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(9)],
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+            false,
+        );
+        session.open(&[TokenId(7)]).expect("the prefix lands");
+        session.ask_columns();
+        let outcome = session.append_and_generate(
+            &[TokenId(8)],
+            &StopCondition {
+                stop_tokens: vec![TokenId(9)],
+                terminator: TokenId(0),
+                max_tokens: 8,
+            },
+            &mut NeverCancels,
+            &mut |_| {},
+            None,
+            &mut |_, _, _| {},
+            &mut |_, _| {},
+            11,
+            64,
+        );
+        assert!(
+            matches!(outcome, Err(DecodeFault::Engine { .. })),
+            "the silent absence faults: {outcome:?}"
         );
     }
 
@@ -891,6 +998,7 @@ mod tests {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -941,6 +1049,7 @@ mod tests {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -1065,6 +1174,7 @@ mod tests {
                 &mut |token| streamed.push(token),
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -1087,7 +1197,7 @@ mod tests {
         let mut cancel = NeverCancels;
 
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
             .expect("first turn");
         let after_first = session.resident_len();
         assert!(
@@ -1097,7 +1207,7 @@ mod tests {
 
         let before = log.borrow().decoded.len();
         session
-            .append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+            .append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
             .expect("second turn");
 
         let (tokens, position) = log.borrow().decoded[before].clone();
@@ -1117,7 +1227,7 @@ mod tests {
         let mut seen = session.resident_len();
         for delta in [TokenId(3), TokenId(4), TokenId(5)] {
             session
-                .append_and_generate(&[delta], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+                .append_and_generate(&[delta], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
                 .expect("a turn");
             assert!(
                 session.resident_len() > seen,
@@ -1137,7 +1247,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(99)], 128);
         let mut cancel = NeverCancels;
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
             .expect("a turn");
         assert_eq!(generated.stopped, Stopped::Complete);
         assert_eq!(
@@ -1159,7 +1269,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
             .expect("a cancelled turn");
         assert_eq!(generated.stopped, Stopped::Cancelled);
         assert_eq!(
@@ -1181,7 +1291,7 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
             .expect("a cancelled turn");
         assert_eq!(
             generated.tokens,
@@ -1211,6 +1321,7 @@ mod tests {
             &mut |_| {},
             None,
             &mut |_, _, _| {},
+            &mut |_, _| {},
             11,
             64,
         );
@@ -1238,7 +1349,7 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
             .expect("a turn");
         session.flush(0).expect("flush");
         assert_eq!(session.resident_len(), session.prefix_len());
@@ -1255,7 +1366,7 @@ mod tests {
             let (mut session, log) = with_mechanism(vec![TokenId(99), TokenId(98)], 128, mechanism);
             let mut cancel = NeverCancels;
             session
-                .append_and_generate(&[TokenId(3), TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+                .append_and_generate(&[TokenId(3), TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
                 .expect("a turn");
             (session, log)
         };
@@ -1314,7 +1425,7 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
             .expect("a turn");
         let grown = session.resident_len();
         assert_eq!(
@@ -1345,7 +1456,7 @@ mod tests {
         assert!(session.flush(0).is_err(), "the flush reports its failure");
         let mut cancel = NeverCancels;
         assert_eq!(
-            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64),
+            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64),
             Err(DecodeFault::NotOpen),
             "the session no longer serves"
         );
@@ -1367,12 +1478,12 @@ mod tests {
         let mut cancel = NeverCancels;
         assert!(
             session
-                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64)
+                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
                 .is_err(),
             "the fault surfaces"
         );
         assert_eq!(
-            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, 11, 64),
+            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64),
             Err(DecodeFault::NotOpen),
             "and the session no longer serves"
         );
@@ -1430,6 +1541,7 @@ mod tests {
                 &mut |_| {},
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )
@@ -1503,6 +1615,7 @@ mod tests {
                         &mut |_| {},
                         None,
                         &mut |_, _, _| {},
+                        &mut |_, _| {},
                         11,
                         64,
                     )
@@ -1552,13 +1665,13 @@ mod tests {
 
         session
             .append_and_generate(&[TokenId(3)], &stop, &mut cancel, &mut |_| {},
-                                 None, &mut |_, _, _| {}, 0xAAAA, 2)
+                                 None, &mut |_, _, _| {}, &mut |_, _| {}, 0xAAAA, 2)
             .expect("the first generation runs");
         let window_before = log.borrow().reseeds[0].1.len();
         session.flush(0).expect("the flush lands");
         session
             .append_and_generate(&[TokenId(4)], &stop, &mut cancel, &mut |_| {},
-                                 None, &mut |_, _, _| {}, 0xBBBB, 2)
+                                 None, &mut |_, _, _| {}, &mut |_, _| {}, 0xBBBB, 2)
             .expect("the second generation runs");
 
         let reseeds = log.borrow().reseeds.clone();

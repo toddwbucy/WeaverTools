@@ -155,6 +155,19 @@ pub trait Backend {
         None
     }
 
+    /// Arm or disarm the tap's column hold, per `weaver-spu-PRD` section
+    /// 13.7's cadence: called once at the open where the column ask stood.
+    /// Default nothing, which is every engine whose tap holds no column.
+    fn hold_columns(&mut self, _hold: bool) {}
+
+    /// The last committed forward's columns where the hold stands, one
+    /// `Vec` per layer in layer order at the artifact's width, taken at
+    /// the draw site so what is taken is the forward that feeds the draw.
+    /// Default `None`, the same absence an unarmed tap answers.
+    fn take_columns(&mut self) -> Option<Vec<Vec<f32>>> {
+        None
+    }
+
     /// Release the engine's resources.
     fn close(&mut self);
 }

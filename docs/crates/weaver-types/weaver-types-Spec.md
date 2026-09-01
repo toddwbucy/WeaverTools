@@ -5,6 +5,15 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-09-01, the column registry's refusals are typed.
+`TokenRefusal` gains `ColumnPermissionAbsent`, `ColumnReadoutUnelected`,
+and `ColumnUndeclared`, the three arms of `weaver-spu-PRD` section 13.7's
+open registry in that clause's own order - no permission, no readout
+election, no column in the family's declaration - each a unit variant
+because the fact refused carries no value the record holds nowhere else,
+on the registry-typing pattern the re-feed's arms set. The refused ask is
+`Open`, which `TokenAsk` already names, so no ask joins.
+
 **Revised:** 2026-08-31, fifth of this date, the permission members take a
 parse the seam survives. The unknown-field mechanism the second entry of
 this date elected for `refeed_permission`, and the column entry for its
@@ -1731,6 +1740,9 @@ pub enum TokenRefusal {
     UnremovableSpan { from: u64, to: u64, prefix: u64, resident: u64 },
     RefeedPermissionAbsent,
     RefeedPathEmpty,
+    ColumnPermissionAbsent,
+    ColumnReadoutUnelected,
+    ColumnUndeclared,
 }
 ```
 

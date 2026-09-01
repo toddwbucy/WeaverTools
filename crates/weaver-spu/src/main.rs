@@ -207,6 +207,14 @@ struct Effective {
     /// a property of the binding the run opened under, never of any one
     /// exchange.
     refeed_permission: bool,
+    /// The column stream's permission, per `weaver-spu-PRD` section 13.7:
+    /// admin's member on the re-feed permission's own terms, judged at the
+    /// open where the ask arrives.
+    column_permission: bool,
+    /// Whether the readout was elected at admit, retained for the open's
+    /// registry: no election means no tap runs and no column exists to
+    /// continue, the registry's second arm.
+    readout_elected: bool,
 }
 
 /// Resolve both sets against what the declaration supplied.
@@ -220,6 +228,8 @@ fn resolve_effective(supplied: &TunableValues) -> Result<Effective, KnobRefusal>
     Ok(Effective {
         field_depth: None,
         refeed_permission: false,
+        column_permission: false,
+        readout_elected: false,
         knobs: KNOBS.resolve(supplied)?,
         session: SESSION_PARAMETERS.resolve(supplied)?,
     })
@@ -474,7 +484,11 @@ fn serve_decode(
         }
 
         match directive {
-            TokenDirective::Open { messages, .. } => {
+            TokenDirective::Open {
+                messages,
+                column_ask,
+                ..
+            } => {
                 // **The entry selected at admit, held rather than looked up
                 // again.** This was a second lookup by architecture with a
                 // branch for losing the family between admit and decode. The
@@ -485,6 +499,26 @@ fn serve_decode(
                 // answerable by architecture alone, so the lookup this
                 // replaces could not have served one.
                 let declaration = resident.declaration;
+                // **The open's registry, three arms and no others**, per
+                // `weaver-spu-PRD` section 13.7 and `weaver-spu-Spec`
+                // section 7: an open carrying the ask refuses typed where
+                // the instruction carries no admitted permission, where the
+                // readout was not elected at admit, or where the family's
+                // declaration holds no column - the open being the cheapest
+                // moment that knows the ask. Judged before any session
+                // work, in the clause's own arm order.
+                if column_ask
+                    && let Some(refusal) = weaver_spu::readout::judge_column_ask(
+                        effective.column_permission,
+                        effective.readout_elected,
+                        declaration.taps_column,
+                    )
+                {
+                    if send_refusal(decode, &refusal).is_err() {
+                        return Err(());
+                    }
+                    continue;
+                }
                 // The declaration cites its family's renderer, so the prefix is
                 // that family's own rendering rather than a template string
                 // this root walks. The preamble a family opens a prefix with
@@ -512,6 +546,13 @@ fn serve_decode(
                         // the set is built once here rather than assumed from
                         // the artifact's end-of-sequence.
                         let stop = resident.stop_set(renderer)?;
+                        // **The one ask's answer runs for the residency**:
+                        // the judged ask arms the tap's hold and the
+                        // session's take together, and nothing disarms
+                        // them because no directive un-asks.
+                        if column_ask {
+                            session.ask_columns();
+                        }
                         Ok(OpenedSession {
                             session,
                             renderer,
@@ -661,6 +702,20 @@ fn serve_decode(
                     &turn,
                     generation_in_turn,
                 );
+                // **The column message, one per sampled position where the
+                // ask stood**, per the decode contract's third intermediate:
+                // it carries its position like the field's and closes
+                // nothing, and where the ask does not stand the session
+                // takes nothing and this closure never runs.
+                let mut on_column = |position: u64, layers: Vec<Vec<f32>>| {
+                    if stream_fatal.get() {
+                        return;
+                    }
+                    let frame = TokenAnswer::Column { position, layers };
+                    if send_answer(decode, &frame).is_err() {
+                        stream_fatal.set(true);
+                    }
+                };
                 let generated = match standing.session.append_and_generate(
                     &delta_tokens,
                     &stop,
@@ -668,6 +723,7 @@ fn serve_decode(
                     &mut on_token,
                     effective.field_depth.map(|d| d as usize),
                     &mut on_field,
+                    &mut on_column,
                     generation_seed,
                     effective.knobs.repetition_window as usize,
                 ) {
@@ -921,6 +977,20 @@ fn serve_decode(
                     &turn,
                     generation_in_turn,
                 );
+                // **The column message, one per sampled position where the
+                // ask stood**, per the decode contract's third intermediate:
+                // it carries its position like the field's and closes
+                // nothing, and where the ask does not stand the session
+                // takes nothing and this closure never runs.
+                let mut on_column = |position: u64, layers: Vec<Vec<f32>>| {
+                    if stream_fatal.get() {
+                        return;
+                    }
+                    let frame = TokenAnswer::Column { position, layers };
+                    if send_answer(decode, &frame).is_err() {
+                        stream_fatal.set(true);
+                    }
+                };
                 let generated = match standing.session.refeed(
                     &delta_tokens,
                     &path_tokens,
@@ -928,6 +998,7 @@ fn serve_decode(
                     &mut cancel,
                     effective.field_depth.map(|d| d as usize),
                     &mut on_field,
+                    &mut on_column,
                     generation_seed,
                     effective.knobs.repetition_window as usize,
                 ) {
@@ -1418,6 +1489,8 @@ fn dispatch(
                     let mut resolved = resolved;
                     resolved.field_depth = decoder.field_election.as_ref().map(|e| e.depth);
                     resolved.refeed_permission = decoder.refeed_permission;
+                    resolved.column_permission = decoder.column_permission;
+                    resolved.readout_elected = decoder.residual_readout_election;
                     *effective = Some(resolved);
                     Payload::Answer(LifecycleAnswer::Admitted)
                 }
@@ -1538,6 +1611,7 @@ mod tests {
                     field_election: None,
                     surprisal_election: false,
                     refeed_permission: false,
+                    column_permission: false,
                 identity: vec![],
                 tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -1765,6 +1839,7 @@ mod tests {
         TokenDirective::Open {
             session: weaver_types::SessionId("s-1".into()),
             messages: vec![],
+            column_ask: false,
         }
     }
 

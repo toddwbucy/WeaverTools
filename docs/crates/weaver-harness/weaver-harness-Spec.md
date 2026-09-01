@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-01, the column ask's discipline is watched. Section
+6.1 states the ask's derivation - diagnostic and readout-elected, both
+already in the enter's hands - and lands the serving-writes-no-ask
+assertion `weaver-spu-PRD` section 13.7 named as owed to this crate, with
+the code act that writes the ask.
+
 **Revised:** 2026-08-31, the Gateless seat's criterion is written. Section
 6.2 gains the second criterion beside the frame's: under a diagnostic
 binding the seat is granted once at the run's opening, on the run itself as
@@ -2151,6 +2157,27 @@ and constructs the open without a second source. A refused open is a refused
 enter, returned through the fan-out's after-load failure so the authored bracket
 stands for the leave to unwind, the aggregate naming the decode seam as where the
 fan-out stopped.
+
+**The column ask is written where and only where the binding is diagnostic
+and the readout is elected**, per `weaver-spu-PRD` section 13.7's cadence
+election and the decode contract's supplies clause, and the discipline that
+a serving harness never writes it is this crate's own, watched here as that
+clause named owed. The derivation reads the two facts the enter already
+holds - the binding's kind and the instruction's readout election - and a
+diagnostic load without the election asks nothing, the ask having no tap
+to continue and the registry's second arm waiting for it. Perturbation:
+derive the ask from the election alone and the serving combination writes
+it. Watched under exactly that change.
+
+```graph
+node: harness-serving-writes-no-column-ask
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-serving-writes-no-column-ask
+```
 
 **The turn is loop 0's machinery, granted, and loop 1 supplies the delta and
 receives the outcome.** The granted surface offers a turn call: loop 1 hands the
