@@ -252,6 +252,7 @@ mod seam_success {
                         residual_readout_election: true,
                     field_election: None,
                     surprisal_election: false,
+                        refeed_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -340,6 +341,7 @@ mod seam_success {
                         residual_readout_election: false,
                         field_election: None,
                         surprisal_election: false,
+                        refeed_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -448,6 +450,7 @@ mod seam_success {
                         residual_readout_election: false,
                         field_election: None,
                         surprisal_election: false,
+                        refeed_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
@@ -580,6 +583,7 @@ mod seam_success {
                         residual_readout_election: false,
                         field_election: None,
                         surprisal_election: true,
+                        refeed_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 9.0),
@@ -714,6 +718,7 @@ mod seam_success {
                         residual_readout_election: false,
                         field_election: None,
                         surprisal_election: false,
+                        refeed_permission: false,
                         identity: vec![],
                         tunable_values: [
                             ("max-tokens-per-turn".to_string(), 4096.0),
@@ -884,5 +889,354 @@ mod seam_success {
         );
         assert!(status.success(), "and the process exits clean");
         std::fs::remove_file(&log_path).ok();
+    }
+
+    /// **A serving load never opens the re-feed drive.** The permission is
+    /// admin's member, set from the binding's kind and never the
+    /// declaration's, so an instruction without it meets the registry's
+    /// first arm before the session is touched, per `weaver-spu-PRD`
+    /// section 13.14. This is the structural read of "we should never have
+    /// a buggy serving harness within reach of the drive": the refusal is
+    /// the seam's, not the caller's manners.
+    ///
+    /// Perturbation: remove the permission check from the `ReFeed` dispatch
+    /// arm and this fails, the drive running and answering `ReFed` against
+    /// a serving instruction. Watched under exactly that removal.
+    ///
+    /// conforms: spu-refeed-permission-judged-first
+    #[test]
+    fn a_serving_load_never_opens_the_refeed_drive() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TokenRefusal, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP a_serving_load_never_opens: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP a_serving_load_never_opens: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-refeed-refusal-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: SpuInstruction {
+                    classify: None,
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                        field_election: None,
+                        surprisal_election: false,
+                        refeed_permission: false,
+                        identity: vec![],
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 64.0),
+                            ("context-capacity".to_string(), 1024.0),
+                            ("seed".to_string(), 37.0),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    },
+                },
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+
+        let send = |directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+        let recv = || -> TokenAnswer {
+            let frame = decode.recv_octets().expect("an answer arrives");
+            serde_json::from_slice(&frame).expect("the answer parses")
+        };
+
+        send(&TokenDirective::Open {
+            session: SessionId("s-refused".into()),
+            messages: vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "You answer in as few words as possible.".into(),
+                }],
+            }],
+        });
+        assert_eq!(recv(), TokenAnswer::Opened, "the session opens");
+
+        send(&TokenDirective::ReFeed {
+            turn: TurnKey("t-1".into()),
+            rendered: "anything".into(),
+            path: vec![1],
+        });
+        // A refusal crosses as the trio's own refusal frame, not an answer.
+        let frame = decode.recv_octets().expect("the refusal arrives");
+        let refusal: TokenRefusal =
+            serde_json::from_slice(&frame).expect("the refusal parses");
+        assert_eq!(
+            refusal,
+            TokenRefusal::RefeedPermissionAbsent,
+            "the drive refuses on the registry's first arm"
+        );
+
+        drop(decode);
+        let released = ask(&lifecycle, 2, LifecycleDirective::Release);
+        assert_eq!(released.payload, Payload::Answer(LifecycleAnswer::Released));
+        drop(lifecycle);
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!(
+                "the refused worker exits, child stderr at {}",
+                log_path.display()
+            ),
+        );
+        assert!(status.success(), "and the process exits clean");
+        std::fs::remove_file(&log_path).ok();
+    }
+
+    /// **The null re-feed recomputes the recorded draws exactly.** Process
+    /// one is the source: a real generation against the real engine, its
+    /// rendered form and token path captured from its own answer. Process
+    /// two is the replay: a fresh residency of the same declaration,
+    /// granted the permission, re-feeding the recorded rendered form along
+    /// the recorded path. The recomputed identifiers in the measurement's
+    /// output slots must equal the recorded path integer for integer, per
+    /// `weaver-spu-PRD` section 13.14 and the certification of
+    /// `diagnostic-replay-loop` section 3 - the same derived seed from the
+    /// same turn key and ordinal against the same weights on the same
+    /// device, which is `weaver-agents-PRD` section 8's reproducible claim
+    /// exercised across two processes. The empty-path refusal, the
+    /// registry's second arm, is read on the way.
+    ///
+    /// Perturbation for the second arm: remove the empty-path check from
+    /// the dispatch arm and the empty re-feed reaches the session, watched
+    /// red under that removal.
+    ///
+    /// conforms: spu-refeed-empty-path-refused
+    /// conforms: spu-refeed-recomputes-the-recorded-draws
+    #[test]
+    fn the_null_refeed_recomputes_the_recorded_draws_exactly() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TokenRefusal, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP the_null_refeed_recomputes: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP the_null_refeed_recomputes: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let identity = || {
+            vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "You answer in as few words as possible.".into(),
+                }],
+            }]
+        };
+        let instruction = |refeed_permission: bool| SpuInstruction {
+            classify: None,
+            decoder: DecoderInstruction {
+                model_binding: ModelBinding {
+                    artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                    devices: vec![DeviceOrdinal(0)],
+                },
+                residual_readout_election: false,
+                field_election: None,
+                surprisal_election: false,
+                refeed_permission,
+                identity: vec![],
+                tunable_values: [
+                    ("max-tokens-per-turn".to_string(), 64.0),
+                    ("context-capacity".to_string(), 1024.0),
+                    ("seed".to_string(), 37.0),
+                ]
+                .into_iter()
+                .collect(),
+            },
+        };
+        let stand = |name: &str, permission: bool| {
+            let (lifecycle, child_lifecycle) = seqpacket_pair();
+            let (decode_parent, child_decode) = seqpacket_pair();
+            let log_path = std::env::temp_dir().join(format!(
+                "weaver-spu-null-refeed-{name}-{}.log",
+                std::process::id()
+            ));
+            let log = std::fs::File::create(&log_path).expect("a child log file");
+            let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+            command
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::from(log));
+            place_inherited(
+                &mut command,
+                &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+            );
+            let child = command.spawn().expect("the binary starts");
+            bound_receives(&lifecycle, 120);
+            bound_receives(&decode_parent, 120);
+            let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+            let admitted = ask(
+                &lifecycle,
+                1,
+                LifecycleDirective::Admit {
+                    instruction: instruction(permission),
+                },
+            );
+            assert_eq!(
+                admitted.payload,
+                Payload::Answer(LifecycleAnswer::Admitted),
+                "the {name} residency admits"
+            );
+            (lifecycle, decode, child, log_path)
+        };
+        let close = |lifecycle, decode, mut child: std::process::Child, log_path: std::path::PathBuf, name: &str| {
+            drop(decode);
+            let released = ask(&lifecycle, 2, LifecycleDirective::Release);
+            assert_eq!(released.payload, Payload::Answer(LifecycleAnswer::Released));
+            drop(lifecycle);
+            let status = wait_bounded(
+                &mut child,
+                30,
+                &format!("the {name} worker exits, child stderr at {}", log_path.display()),
+            );
+            assert!(status.success(), "and the {name} process exits clean");
+            std::fs::remove_file(&log_path).ok();
+        };
+
+        // **The source pass**: a serving-postured generation, recorded from
+        // its own answer the way the trace records it.
+        let (lifecycle, decode, child, log_path) = stand("source", false);
+        let send = |decode: &weaver_spu::channel::DecodeSocket, directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+        let recv = |decode: &weaver_spu::channel::DecodeSocket| -> TokenAnswer {
+            let frame = decode.recv_octets().expect("an answer arrives");
+            serde_json::from_slice(&frame).expect("the answer parses")
+        };
+        send(&decode, &TokenDirective::Open {
+            session: SessionId("s-null".into()),
+            messages: identity(),
+        });
+        assert_eq!(recv(&decode), TokenAnswer::Opened, "the source session opens");
+        send(&decode, &TokenDirective::AppendAndGenerate {
+            turn: TurnKey("t-1".into()),
+            delta: vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "Name any three colors.".into(),
+                }],
+            }],
+        });
+        let generation = loop {
+            match recv(&decode) {
+                TokenAnswer::Token { .. } => continue,
+                TokenAnswer::Generated(generation) => break generation,
+                other => panic!("the source stream carries tokens then the close: {other:?}"),
+            }
+        };
+        let request: serde_json::Value =
+            serde_json::from_str(generation.request.get()).expect("the request splices");
+        let measurement: serde_json::Value =
+            serde_json::from_str(generation.measurement.get()).expect("the measurement splices");
+        let rendered = request["rendered"].as_str().expect("the rendered form").to_string();
+        let tokens = |value: &serde_json::Value| -> Vec<u32> {
+            serde_json::from_value(value.clone()).expect("token identifiers")
+        };
+        let recorded_input = tokens(&measurement["input_tokens"]);
+        let recorded_output = tokens(&measurement["output_tokens"]);
+        assert!(!recorded_output.is_empty(), "the source generated something");
+        let recorded_emission = generation.emission.clone();
+        let recorded_seed = request["sampling"]["generation_seed"].clone();
+        close(lifecycle, decode, child, log_path, "source");
+
+        // **The replay pass**: a fresh residency, the permission granted,
+        // the registry's second arm read on the way in.
+        let (lifecycle, decode, child, log_path) = stand("replay", true);
+        send(&decode, &TokenDirective::Open {
+            session: SessionId("s-null".into()),
+            messages: identity(),
+        });
+        assert_eq!(recv(&decode), TokenAnswer::Opened, "the replay session opens");
+        send(&decode, &TokenDirective::ReFeed {
+            turn: TurnKey("t-1".into()),
+            rendered: rendered.clone(),
+            path: vec![],
+        });
+        let frame = decode.recv_octets().expect("the refusal arrives");
+        let refusal: TokenRefusal =
+            serde_json::from_slice(&frame).expect("the refusal parses");
+        assert_eq!(
+            refusal,
+            TokenRefusal::RefeedPathEmpty,
+            "a replay of nothing wearing an exchange refuses"
+        );
+        send(&decode, &TokenDirective::ReFeed {
+            turn: TurnKey("t-1".into()),
+            rendered,
+            path: recorded_output.clone(),
+        });
+        let refed = loop {
+            match recv(&decode) {
+                TokenAnswer::ReFed(generation) => break generation,
+                TokenAnswer::Token { .. } => {
+                    panic!("the drive draws no token of its own to stream")
+                }
+                other => panic!("the re-feed answers in its own type: {other:?}"),
+            }
+        };
+        let refed_request: serde_json::Value =
+            serde_json::from_str(refed.request.get()).expect("the re-fed request splices");
+        let refed_measurement: serde_json::Value =
+            serde_json::from_str(refed.measurement.get()).expect("the re-fed measurement splices");
+        assert_eq!(
+            tokens(&refed_measurement["input_tokens"]),
+            recorded_input,
+            "the rendered form re-tokenizes to the recorded appended input"
+        );
+        assert_eq!(
+            tokens(&refed_measurement["output_tokens"]),
+            recorded_output,
+            "the recomputed draws equal the recorded path, integer for integer"
+        );
+        assert_eq!(
+            refed.emission, recorded_emission,
+            "the emission is the recorded path's text"
+        );
+        assert_eq!(
+            refed_request["sampling"]["generation_seed"], recorded_seed,
+            "the replay derived the seed the source drew from"
+        );
+        close(lifecycle, decode, child, log_path, "replay");
     }
 }

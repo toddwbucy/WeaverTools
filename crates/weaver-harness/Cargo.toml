@@ -20,6 +20,10 @@ description = "The hub: loop 0, the channels and their custody, trace authorship
 weaver-traits = { path = "../weaver-traits" }
 weaver-types = { path = "../weaver-types", default-features = false }
 weaver-trace = { path = "../weaver-trace" }
+# The diagnostic record's mechanism, per weaver-harness-Spec section 9's
+# settled election: one call site serves both writers and the binding's
+# kind selects the arm.
+weaver-diagnostic = { path = "../weaver-diagnostic" }
 serde_json.workspace = true
 nix = { version = "0.31", features = ["socket", "fs", "process", "uio", "user", "poll", "signal"] }
 # The embedded interpreter of the python-iterating worker, per

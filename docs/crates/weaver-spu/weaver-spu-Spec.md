@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-31, fourth of this date, the drive's watches are
+bought. Section 4.6 lands the assertions its closing sentence owed, each
+perturbation-verified in the act that built the drive: the session appends
+the recorded token whatever the draw said, the permission is judged first
+across the seam, an empty path refuses on the registry's second arm, and
+the null re-feed recomputes the recorded draws exactly across two
+processes of the real engine, which is `weaver-agents-PRD` section 8's
+reproducible claim exercised rather than assumed.
+
 **Revised:** 2026-08-31, third of this date, the re-feed drive is
 represented. Section 4 gains the drive on the paths the generation already
 walks per charter 13.14: the append's machinery with the draw's destination
@@ -1421,7 +1430,9 @@ ask.
 **Represented on the paths the generation already
 walks**, per charter section 13.14 and the decode contract's sixth
 exchange, added 2026-08-31. The drive is the append's machinery with the
-draw's destination changed: the delta appends as an append appends, the
+draw's destination changed and the renderer bypassed: the rendered
+contribution tokenizes and appends verbatim, no family rendering on the
+way per the ruling of 2026-08-12, the
 per-position loop runs the derived seed of section 8.5 and the effective
 knobs of section 8 through the sampler exactly as a generation runs them,
 and where a generation emits the drawn token and streams its piece, the
@@ -1436,7 +1447,73 @@ two-arm registry is the charter's, cited rather than restated. **The
 watches are the building act's**, per the pattern section 7's unasked
 vector set: the drive is unbuilt, its instruments cannot exist before it,
 and the act that builds it buys them in the same motion or their tags
-stand as the lie 13.7 refuses.
+stand as the lie 13.7 refuses. The building act bought them, four watches
+below, each seen red under the perturbation it names before its tag
+landed.
+
+**The session appends the recorded token whatever the draw said**, the
+drawn identifiers landing in the answer's output slots and one measurement
+taken per recorded position. Perturbation: append the draw instead of the
+recorded token and the watch fails, the decode log carrying the draws
+where the path belongs.
+
+```graph
+node: spu-refeed-appends-the-recorded-path
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-refeed-appends-the-recorded-path
+```
+
+**The permission is judged first across the seam**: an instruction without
+the admitted permission meets the registry's first arm before the session
+is touched. Perturbation: remove the permission check from the dispatch
+arm and the drive runs against a serving instruction.
+
+```graph
+node: spu-refeed-permission-judged-first
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-refeed-permission-judged-first
+```
+
+**An empty path refuses on the registry's second arm**, a replay of
+nothing wearing an exchange. Perturbation: remove the empty-path check and
+the empty re-feed reaches the session.
+
+```graph
+node: spu-refeed-empty-path-refused
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-refeed-empty-path-refused
+```
+
+**The null re-feed recomputes the recorded draws exactly**, across two
+processes of the real engine against the real weights: the source process
+generates and its answer is the record, the replay process re-feeds the
+recorded rendered form along the recorded path, and the recomputed
+identifiers equal the recorded ones integer for integer, the derived seed
+of section 8.5 meeting the same turn key at the same ordinal.
+Perturbation: derive the seed at the wrong ordinal in the dispatch arm and
+the recomputed path diverges.
+
+```graph
+node: spu-refeed-recomputes-the-recorded-draws
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-refeed-recomputes-the-recorded-draws
+```
 
 ## 5. The family libraries
 

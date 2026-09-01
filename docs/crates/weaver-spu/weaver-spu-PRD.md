@@ -1470,9 +1470,10 @@ edit.
 runs them is this clause's**, added 2026-08-31 per `diagnostic-replay-loop`
 section 2, which named it as the one act standing between the diagnostic
 papers and a running null replay. One drive per recorded generation: the
-recorded delta appends, the forward passes run along the recorded token
-path, and at each position the draw is computed exactly as a generation
-would compute it - the derived seed of 13.8, the effective knobs, the
+recorded rendered contribution appends verbatim, no family rendering on
+the way, the forward passes run along the recorded token path, and at each
+position the draw is computed exactly as a generation would compute it -
+the derived seed of 13.8, the effective knobs, the
 sampler consuming the distribution - **and the recorded token appends
 whatever the draw said**. A divergent draw is a finding carried in the
 answer, never a fork in the path, so every later position stays comparable

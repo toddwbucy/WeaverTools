@@ -551,7 +551,16 @@ fn run_load(
             payload: weaver_types::EnterPayload {
                 session: inventory.config.session.clone(),
                 run: run_reference,
-                spu_instruction: inventory.config.spu_instruction.clone(),
+                // The permission member is written from the resolved kind,
+                // per `weaver-admin-Spec` section 7: granted under a
+                // diagnostic enter and cleared under a serving one, never
+                // read from the file, whose grant the inventory refused.
+                spu_instruction: {
+                    let mut instruction = inventory.config.spu_instruction.clone();
+                    instruction.decoder.refeed_permission =
+                        matches!(inventory.binding, weaver_types::EnterBinding::Diagnostic);
+                    instruction
+                },
                 // The resolution happened at the inventory, the one site, so
                 // what crosses is the kind decided with what it requires
                 // riding inside it.

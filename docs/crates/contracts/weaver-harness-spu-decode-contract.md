@@ -365,8 +365,10 @@ turn's context returns with it.
 2026-08-31 per `diagnostic-replay-loop` section 2's owed act and
 `weaver-spu-PRD` section 13.14, which carries the criterion and the
 permission this exchange cites rather than fixes. It carries the turn's
-context, the recorded generation's delta as the record rendered it, and the
-recorded token path. The SPU appends the delta, runs the forward passes
+context, the recorded generation's rendered contribution - the string
+`model.request` recorded, per the ruling of 2026-08-12, tokenized and
+appended with no family rendering on the way - and the
+recorded token path. The SPU appends the rendered form, runs the forward passes
 along the recorded path, computes each position's draw exactly as
 append-and-generate would - the derived seed, the effective knobs, the
 sampler consuming the distribution - **and appends the recorded token
@@ -518,8 +520,8 @@ list.
 
 **The harness supplies** the session's identity material at open, the
 column ask where and only where its binding is diagnostic, each
-turn's context and delta, the re-feed's recorded delta and path where and
-only where its binding is diagnostic, the cancel, the flush, and the
+turn's context and delta, the re-feed's rendered contribution and path
+where and only where its binding is diagnostic, the cancel, the flush, and the
 elision's span.
 The sampling values are not among them and reach the SPU in the
 declaration instead.

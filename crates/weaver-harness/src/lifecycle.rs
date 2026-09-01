@@ -197,6 +197,10 @@ fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
         weaver_types::TokenRefusal::UnremovableSpan { .. } => {
             "the elision named no removable span"
         }
+        weaver_types::TokenRefusal::RefeedPermissionAbsent => {
+            "the re-feed permission was not granted"
+        }
+        weaver_types::TokenRefusal::RefeedPathEmpty => "the re-feed carried no token path",
     }
 }
 
@@ -290,7 +294,7 @@ enum ChannelState {
 /// the compiler's match on the options is what makes a forgotten arm
 /// unrepresentable rather than unlikely.
 struct Run {
-    recorder: Recorder,
+    recorder: crate::record::Record,
     author: Author,
     session: SessionId,
     /// The run's own reference, retained so a close can name the run a turn
@@ -323,6 +327,12 @@ struct Run {
     /// refuses.
     pressure_reported: bool,
     turn_in_flight: Option<TurnKey>,
+    /// The diagnostic run's own facts, present exactly where the binding
+    /// is: what the load declared for the replay's opening event, the
+    /// artifact the identity step checks the record against, and whether
+    /// the seat has been granted, it being granted once at the run's
+    /// opening per `weaver-harness-Spec` section 6.2's second criterion.
+    diagnostic: Option<DiagnosticSeat>,
     /// Each initiator numbers exchanges on its own channel, so the SPU's and
     /// the gate's counters are separate and neither is hardcoded.
     spu_ordinal: u64,
@@ -334,6 +344,15 @@ struct Run {
     /// The turn counter loop 0 mints turn keys from, per the gate contract's
     /// rule that the turn does not exist until the harness opens it.
     turn_ordinal: u64,
+}
+
+/// The Gateless seat's standing, per `weaver-harness-Spec` section 6.2: the
+/// run itself is the work, so what is held is what the one grant needs and
+/// a flag that it happened.
+struct DiagnosticSeat {
+    reader_elected: bool,
+    artifact: String,
+    replayed: bool,
 }
 
 /// The SPU's arm is a pair of channels rather than one, and they are one field
@@ -503,6 +522,20 @@ impl Harness {
                             return Err(fault);
                         }
                     }
+                    // **The Gateless seat, granted once at the run's
+                    // opening**, per `weaver-harness-Spec` section 6.2's
+                    // second criterion: a diagnostic enter that just
+                    // answered ready is the run arriving as the work, so
+                    // the replay runs here, after the answer crossed and
+                    // before the wait resumes. A serving run, and a
+                    // diagnostic run already replayed, pass through.
+                    if let Err(fault) = self.serve_replay(&mut pending) {
+                        self.unwind_if_entered(
+                            weaver_types::FaultCase::OrganDeathObserved,
+                            &fault,
+                        );
+                        return Err(fault);
+                    }
                 }
                 Ok(Wake::Gate) => {
                     if let Err(fault) =
@@ -616,6 +649,57 @@ impl Harness {
         }
     }
 
+    /// The diagnostic seat's one grant, per `weaver-harness-Spec` section
+    /// 6.2: under a diagnostic binding the seat is granted once, at the
+    /// run's opening, on the run itself as the work - the operator's
+    /// sealed preload is what arrived owed an answer and the certification
+    /// is the answer it is owed. No frame ever grants this seat, and a
+    /// serving run never reaches the entry. Every outcome of the replay
+    /// itself lands in the diagnostic-trace: only a channel-level loss
+    /// surfaces here, ending service the way a serving turn's loss does.
+    fn serve_replay(&mut self, pending: &mut Option<OrganChannel>) -> Result<(), ChannelFault> {
+        let ChannelState::Entered(run) = &mut self.state else {
+            return Ok(());
+        };
+        let Some(seat) = run.diagnostic.as_mut() else {
+            return Ok(());
+        };
+        if seat.replayed {
+            return Ok(());
+        }
+        seat.replayed = true;
+        let reader_elected = seat.reader_elected;
+        let artifact = seat.artifact.clone();
+        let Some(spu) = run.spu.as_ref() else {
+            return Ok(());
+        };
+        let mut ports = crate::engine::Ports::grant(
+            &spu.decode,
+            &run.author,
+            &mut run.recorder,
+            &mut run.turn_ordinal,
+            // No frame, no prompt: the replay feeds the record's rendered
+            // forms and assembles nothing.
+            None,
+            &self.coordination,
+            Some(pending),
+            // No Gate stands under this binding, by construction.
+            None,
+            run.state.as_mut(),
+            run.classify.as_ref().map(|arm| &arm.channel),
+            &mut run.fullness,
+            &mut run.pressure_reported,
+        );
+        match crate::replay::drive(&mut ports, reader_elected, &artifact) {
+            Ok(()) => Ok(()),
+            Err(crate::engine::TurnError::ChannelLost) => Err(ChannelFault::Closed),
+            // Refusals and faults are already the record's, authored
+            // inside the pass, and the run stands for the operator's
+            // leave.
+            Err(_) => Ok(()),
+        }
+    }
+
     /// A gate-channel wake, dispatched by payload kind per section 6.2: a
     /// frame grants the seat, a report is clerked, and the gate gone is the
     /// survivor's fault to report, the run standing so admin can still
@@ -726,8 +810,11 @@ impl Harness {
                 // The seat, granted at loaded-and-idle: the assembly read,
                 // the grant across the dev boundary, and the take-back at
                 // the entry's return.
-                let prompt =
-                    crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas);
+                let structure = run
+                    .recorder
+                    .structure()
+                    .expect("the frame path runs under the serving record");
+                let prompt = crate::assembly::assemble(structure, identity, tool_schemas);
                 if prompt.undecodable > 0 {
                     // An incomplete prompt does not cross the seam: the hole
                     // becomes the fault event and the turn does not run.
@@ -1062,12 +1149,33 @@ impl Harness {
             LifecycleRefusal::DescriptorsUnusable,
         ))?;
         let session = payload.session.clone();
-        let mut recorder = Recorder::receive(
-            sink,
-            RunRef(payload.run.0.clone()),
-            SessionRef(session.0.clone()),
-        )
-        .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?;
+        // **The kind selects the record's mechanism**, per apex section 6 as
+        // ruled 2026-08-24 and `weaver-harness-Spec` section 9's settled
+        // election: a serving run authors the trace and a diagnostic run
+        // authors a diagnostic-trace, one shape over both arms, this crate
+        // the sole writer under either. The diagnostic record opens with
+        // `replay.opened`, the loop's to author, so the load bracket and
+        // the seated prefix below are the serving arm's alone.
+        let diagnostic = matches!(payload.binding, weaver_types::EnterBinding::Diagnostic);
+        let mut recorder = if diagnostic {
+            crate::record::Record::Diagnostic(
+                weaver_diagnostic::Recorder::receive(
+                    sink,
+                    weaver_diagnostic::RunRef(payload.run.0.clone()),
+                    weaver_diagnostic::SessionRef(session.0.clone()),
+                )
+                .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?,
+            )
+        } else {
+            crate::record::Record::Serving(
+                Recorder::receive(
+                    sink,
+                    RunRef(payload.run.0.clone()),
+                    SessionRef(session.0.clone()),
+                )
+                .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::DescriptorsUnusable))?,
+            )
+        };
 
         // The state seam, per `weaver-harness-state-contract` as ruled
         // 2026-08-26: a nameless pair whose harness end arrived on this
@@ -1107,14 +1215,40 @@ impl Harness {
         // the load unrefused.
         if let Some(end) = state_end {
             let channel = std::os::unix::net::UnixStream::from(end);
-            let ask_end = channel.try_clone();
-            // The session rides the opener beside the election, both being
-            // facts this enter declared, per the contract's amended term:
-            // the custodian bounds its answers to it, so a store holding an
-            // earlier session answers within the running one.
-            if let Ok(tee) = weaver_trace::Tee::open(channel, session.0.clone(), election) {
-                recorder.attach_tee(tee);
-                state_seam = ask_end.ok().map(crate::state::StateSeam::new);
+            match recorder.serving_mut() {
+                Some(serving) => {
+                    let ask_end = channel.try_clone();
+                    // The session rides the opener beside the election, both
+                    // being facts this enter declared, per the contract's
+                    // amended term: the custodian bounds its answers to it,
+                    // so a store holding an earlier session answers within
+                    // the running one.
+                    if let Ok(tee) =
+                        weaver_trace::Tee::open(channel, session.0.clone(), election)
+                    {
+                        serving.attach_tee(tee);
+                        state_seam = ask_end.ok().map(crate::state::StateSeam::new);
+                    }
+                }
+                // **No tee under the diagnostic record**: the tee distills a
+                // serving trace into the store, and a replay reads the store
+                // through this same channel, which is the ask end whole -
+                // the third refusal, nothing writes back to what is under
+                // examination, per `weaver-diagnostic-PRD` section 2. **The
+                // opener still crosses**, because the contract makes it the
+                // channel's first traffic on every standing, tee or no tee:
+                // the custodian reads its session bound from it, and a
+                // channel whose first line is an ask would have that ask
+                // eaten as an opener naming no session. The harness sends
+                // it here, the same rendering the tee would have sent.
+                None => {
+                    use std::io::Write;
+                    let mut channel = channel;
+                    let frame = weaver_trace::opener(&session.0, &election);
+                    if channel.write_all(frame.as_bytes()).is_ok() {
+                        state_seam = Some(crate::state::StateSeam::new(channel));
+                    }
+                }
             }
         }
 
@@ -1143,15 +1277,20 @@ impl Harness {
             surprisal: payload.spu_instruction.decoder.surprisal_election,
             tee: Some(tee_election),
         };
-        author
-            .author(
-                &mut recorder,
-                Kind::Load,
-                Subsystem::Harness,
-                None,
-                Some(Payload::Elections(elections)),
-            )
-            .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
+        // **The serving arm's alone**: the diagnostic record carries no
+        // `load` kind and opens with `replay.opened`, which is the loop's
+        // to author at the replay, per `weaver-diagnostic-Spec` section 4.
+        if !diagnostic {
+            author
+                .author(
+                    &mut recorder,
+                    Kind::Load,
+                    Subsystem::Harness,
+                    None,
+                    Some(Payload::Elections(elections)),
+                )
+                .map_err(|_| EnterFailure::BeforeLoad(LifecycleRefusal::Malformed))?;
+        }
 
         // **The seated prefix reaches the record beside the load**, per
         // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5.
@@ -1175,11 +1314,13 @@ impl Harness {
         // to say, and until it does this is the record's only account.
         //
         // conforms: harness-identity-refusal-authored-not-dropped
-        seat_identity_prefix(
-            &author,
-            &mut recorder,
-            &payload.spu_instruction.decoder.identity,
-        );
+        if !diagnostic {
+            seat_identity_prefix(
+                &author,
+                &mut recorder,
+                &payload.spu_instruction.decoder.identity,
+            );
+        }
 
         // **Past this line the bracket stands**, so every refusal below
         // carries the partial run back rather than dropping it: the leave that
@@ -1202,6 +1343,17 @@ impl Harness {
             gate_ordinal: 0,
             held_frames: std::collections::VecDeque::new(),
             turn_ordinal: 0,
+            diagnostic: diagnostic.then(|| DiagnosticSeat {
+                reader_elected: payload.spu_instruction.decoder.residual_readout_election,
+                artifact: payload
+                    .spu_instruction
+                    .decoder
+                    .model_binding
+                    .artifact
+                    .0
+                    .clone(),
+                replayed: false,
+            }),
         };
 
         macro_rules! after_load {
@@ -1425,8 +1577,14 @@ impl Harness {
             // interior to hand across.
             ChannelState::Entered(run) if run.turn_in_flight.is_some() => None,
             ChannelState::Entered(run) => {
-                let prompt =
-                    crate::assembly::assemble(run.recorder.structure(), identity, tool_schemas);
+                // **A diagnostic run grants no seat here.** Its record holds
+                // no working structure and no frame ever arrives to assemble
+                // for - the one grant is the run's opening, per Spec 6.2's
+                // second criterion - so this seam answers the same
+                // nothing-to-hand-across the other arms give rather than
+                // panicking on a record shape the guard above never read.
+                let structure = run.recorder.structure()?;
+                let prompt = crate::assembly::assemble(structure, identity, tool_schemas);
                 // **An incomplete prompt does not cross the seam.** A
                 // message-kind record that did not decode is a hole where a
                 // turn's content was, so the count becomes the `fault` event
@@ -1548,13 +1706,18 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
         drop(classify.channel);
         reap(classify.pid);
     }
-    let _ = run.author.author(
-        &mut run.recorder,
-        Kind::Unload,
-        Subsystem::Harness,
-        None,
-        None,
-    );
+    // The serving arm's bracket close: the diagnostic record carries no
+    // `unload`, its own close being `replay.closed`, the loop's to author,
+    // per `weaver-diagnostic-Spec` section 4.
+    if run.recorder.serving().is_some() {
+        let _ = run.author.author(
+            &mut run.recorder,
+            Kind::Unload,
+            Subsystem::Harness,
+            None,
+            None,
+        );
+    }
 
     // **The drain's outcome is carried, not discarded.** `Left` means
     // everything admitted reached the stream, so a failed drain must not be
@@ -1752,7 +1915,7 @@ fn clear_dumpable() -> Result<(), AdoptionFault> {
 /// conforms: harness-identity-refusal-authored-not-dropped
 fn seat_identity_prefix(
     author: &crate::authorship::Author,
-    recorder: &mut Recorder,
+    recorder: &mut crate::record::Record,
     identity: &[weaver_traits::Message],
 ) {
     for message in identity {
@@ -1845,9 +2008,10 @@ mod tests {
         ));
         let sink = OwnedFd::from(File::create(&path).expect("sink"));
         let session = SessionId("s-1".to_string());
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
 
         let said = |role| weaver_traits::Message {
@@ -1877,7 +2041,7 @@ mod tests {
             ],
         );
 
-        let kinds: Vec<Kind> = recorder.structure().iter().map(|r| r.kind).collect();
+        let kinds: Vec<Kind> = recorder.structure().expect("the serving record").iter().map(|r| r.kind).collect();
         assert_eq!(
             kinds,
             vec![Kind::MessageSystem, Kind::Fault, Kind::Fault],
@@ -1885,7 +2049,7 @@ mod tests {
         );
 
         let faults: Vec<&str> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Fault)
             // The line is read rather than a typed payload, the record
@@ -1933,9 +2097,10 @@ mod tests {
         ));
         let sink = OwnedFd::from(File::create(&path).expect("sink"));
         let session = SessionId("s-1".to_string());
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1982,6 +2147,7 @@ mod tests {
                     pid: nix::unistd::Pid::from_raw(1),
                 }),
                 gate: None,
+                diagnostic: None,
                 state: None,
                 fullness: None,
                 pressure_reported: false,
@@ -2058,6 +2224,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -2175,6 +2342,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     tunable_values: Default::default(),
                 },
@@ -2208,7 +2376,7 @@ mod tests {
 
         let refusals: Vec<&weaver_trace::Record> = run
             .recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -2239,7 +2407,7 @@ mod tests {
         // and the close belongs to the leave.
         assert_eq!(
             run.recorder
-                .structure()
+                .structure().expect("the serving record")
                 .iter()
                 .filter(|r| r.kind == Kind::TurnClosed)
                 .count(),
@@ -2299,6 +2467,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: vec![weaver_traits::Message {
                         role: weaver_traits::Role::System,
                         content: vec![weaver_traits::ContentBlock::Text {
@@ -2405,6 +2574,7 @@ mod tests {
                         field_election: elected
                             .then(|| weaver_types::FieldElection { depth: 50 }),
                         surprisal_election: elected,
+                        refeed_permission: false,
                         identity: Vec::new(),
                         tunable_values: Default::default(),
                     },
@@ -2539,6 +2709,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     tunable_values: [
                         ("max-tokens-per-turn".to_string(), 4096.0),
@@ -2642,6 +2813,7 @@ mod tests {
                     residual_readout_election: false,
                     field_election: None,
                     surprisal_election: false,
+                    refeed_permission: false,
                     identity: Vec::new(),
                     // The deployed root's three operator-tunables, required
                     // at admit since the seed act of 2026-08-19. The empty
@@ -2827,7 +2999,7 @@ mod tests {
         // The close is in the record.
         let closes = match &harness.state {
             ChannelState::Entered(run) => {
-                run.recorder.structure().by_kind(Kind::TurnClosed).count()
+                run.recorder.structure().expect("the serving record").by_kind(Kind::TurnClosed).count()
             }
             _ => panic!("the position stays entered after a stop"),
         };
@@ -2937,6 +3109,49 @@ mod tests {
             harness.grant_seat("identity", &[]).is_some(),
             "a loaded-and-idle run grants the seat"
         );
+    }
+
+    /// **A diagnostic run grants no frame seat, and answers rather than
+    /// panics.** The extension seam is the frame path's: a diagnostic
+    /// record holds no working structure and no frame ever arrives, so the
+    /// grant answers the same absence the mid-turn arm answers, per
+    /// `weaver-harness-Spec` section 6.2's partition of the two criteria.
+    ///
+    /// Perturbation: restore the `expect` on the structure read in
+    /// `grant_seat` and this panics instead of answering. Watched under
+    /// exactly that restoration. Found by the review seat on PR 393.
+    #[test]
+    fn a_diagnostic_run_grants_no_frame_seat() {
+        let (mut run, _spare, _path) = entered_run(None);
+        let sink_path = std::env::temp_dir().join(format!(
+            "weaver-harness-diag-seat-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+        run.recorder = crate::record::Record::Diagnostic(
+            weaver_diagnostic::Recorder::receive(
+                sink,
+                weaver_diagnostic::RunRef("r-1".into()),
+                weaver_diagnostic::SessionRef("s-1".into()),
+            )
+            .expect("the recorder receives"),
+        );
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                classify: None,
+                spu: "/nonexistent/spu".into(),
+                gate: "/nonexistent/gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::Entered(Box::new(run)),
+        };
+        assert!(
+            harness.grant_seat("identity", &[]).is_none(),
+            "a diagnostic run hands nothing across the frame seam"
+        );
+        let _ = std::fs::remove_file(&sink_path);
     }
 
     /// A stop at rest answers `AtRest`, a clean close and not a refusal, and
@@ -3120,7 +3335,7 @@ mod tests {
         };
         let kinds: Vec<Kind> = run
             .recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)

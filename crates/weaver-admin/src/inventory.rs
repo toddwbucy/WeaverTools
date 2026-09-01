@@ -150,6 +150,20 @@ fn take_inventory_against(
         }
     };
 
+    // A granted permission member is refused, per `weaver-admin-Spec`
+    // section 7: the member is this crate's to set from the resolved kind at
+    // the construction, and it parses with `default` because one type
+    // serves the declaration and the seam, so the refusal lands here, where
+    // the file is seen whole, rather than at a parse that would also refuse
+    // the instruction this crate authors.
+    if config.spu_instruction.decoder.refeed_permission {
+        return Err(LifecycleRefusal::ConfigInvalid {
+            field: Some(FieldName(
+                "spu-instruction.decoder.refeed-permission".into(),
+            )),
+        });
+    }
+
     // The model artifact resolves to something readable. Nothing is repaired.
     if !artifact_readable(&config.spu_instruction.decoder.model_binding.artifact.0) {
         return Err(LifecycleRefusal::ArtifactUnresolvable);
@@ -968,6 +982,40 @@ mod tests {
                 Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) }) if f.0 == "gate-instruction"
             ),
             "the serving omission refuses naming the field: {refused:?}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// **A declaration granting the re-feed permission is refused.** The
+    /// member is this crate's to set from the resolved kind at the
+    /// construction, per `weaver-admin-Spec` section 7, and it parses with
+    /// `default` because one type serves the declaration and the seam, so
+    /// this refusal is the declaration's whole guard.
+    ///
+    /// Perturbation: remove the permission check from the inventory and the
+    /// granting declaration loads. Watched under exactly that removal.
+    ///
+    /// conforms: admin-granted-permission-refused-at-inventory
+    #[test]
+    fn a_declaration_granting_the_permission_refuses_at_the_inventory() {
+        let root = scratch("permission");
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".to_string());
+        let bound = boundary(&root.join("absent-home"), 65533);
+
+        let source = config_source(&root).replace(
+            "    residual-readout-election: false\n",
+            "    residual-readout-election: false\n    refeed-permission: true\n",
+        );
+        assert_ne!(source, config_source(&root), "the grant landed in the source");
+        let refused = take_inventory(&name, &source, &allow, &bound);
+        assert!(
+            matches!(
+                refused,
+                Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) })
+                    if f.0 == "spu-instruction.decoder.refeed-permission"
+            ),
+            "the granting declaration refuses naming the field: {refused:?}"
         );
         let _ = std::fs::remove_dir_all(&root);
     }

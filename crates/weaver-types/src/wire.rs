@@ -527,6 +527,17 @@ pub enum TokenDirective {
         turn: TurnKey,
         delta: Vec<weaver_traits::Message>,
     },
+    /// The re-feed drive, per `weaver-spu-PRD` section 13.14 and the decode
+    /// contract's sixth exchange: the recorded generation's rendered
+    /// contribution - the string `model.request` recorded, tokenized and
+    /// appended with no family rendering on the way, per the ruling of
+    /// 2026-08-12 - and the recorded token path the forward passes run
+    /// along. The drive draws no token of its own.
+    ReFeed {
+        turn: TurnKey,
+        rendered: String,
+        path: Vec<u32>,
+    },
     Cancel {
         turn: TurnKey,
     },
@@ -600,6 +611,13 @@ pub enum TokenAnswer {
         realized: u32,
     },
     Generated(Generation),
+    /// The re-feed's own answer, per `weaver-spu-PRD` section 13.14: the
+    /// generation's payload under its own arm, the recomputed draw
+    /// identifiers sitting where sampled identifiers would, so a supplied
+    /// path can never wear a sampled path's clothes - the variant and not
+    /// the payload is what the type buys, and the protoautonomic collapse
+    /// is unrepresentable rather than discouraged.
+    ReFed(Generation),
     AtRest,
     /// The flush confirmed, carrying both resident counts: the SPU is the
     /// one authority on either number, and the harness authors the
@@ -668,6 +686,8 @@ pub enum RefusalRecord {
 pub enum TokenAsk {
     Open,
     AppendAndGenerate,
+    /// The re-feed drive, per the decode contract's sixth exchange.
+    ReFeed,
     Cancel,
     Flush { keep: u64 },
     Elide { from: u64, to: u64 },
@@ -706,6 +726,14 @@ pub enum TokenRefusal {
         capacity: u64,
     },
     MalformedDelta,
+    /// The re-feed registry's first arm, per `weaver-spu-PRD` section
+    /// 13.14: the drive arrived against an instruction carrying no admitted
+    /// permission. A unit variant: the fact refused carries no value the
+    /// record holds nowhere else.
+    RefeedPermissionAbsent,
+    /// The registry's second arm: an empty recorded path, a replay of
+    /// nothing wearing an exchange.
+    RefeedPathEmpty,
     /// The elision's span describes no removable region, per the decode
     /// contract as amended 2026-08-22: it overlaps the identity prefix,
     /// runs past the resident count, ends before it starts, or is empty.

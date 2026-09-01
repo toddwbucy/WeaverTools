@@ -27,7 +27,9 @@
 //! consumes the stream, reads the close, and authors the record. Loop 1
 //! authors nothing, which is the sole-writer property held where the turn runs.
 
-use weaver_trace::{Kind, ModelOutput, Payload, Recorder, Subsystem, TurnClose};
+use weaver_trace::{Kind, ModelOutput, Payload, Subsystem, TurnClose};
+
+use crate::record::Record;
 use weaver_traits::{ContentBlock, Message, Role};
 use weaver_types::{TokenAnswer, TokenDirective, TokenRefusal, TurnKey};
 
@@ -69,7 +71,7 @@ pub(crate) struct GatePort<'a> {
 pub struct Ports<'a> {
     decode: &'a DecodeChannel,
     author: &'a Author,
-    recorder: &'a mut Recorder,
+    recorder: &'a mut Record,
     turn_ordinal: &'a mut u64,
     assembled: Option<Prompt>,
     /// The coordination listener, waited against beside the decode channel
@@ -179,7 +181,7 @@ impl<'a> Ports<'a> {
     pub(crate) fn grant(
         decode: &'a DecodeChannel,
         author: &'a Author,
-        recorder: &'a mut Recorder,
+        recorder: &'a mut Record,
         turn_ordinal: &'a mut u64,
         assembled: Option<Prompt>,
         coordination: &'a CoordinationListener,
@@ -1207,6 +1209,256 @@ impl<'a> Ports<'a> {
         Ok(generation)
     }
 
+    /// The replay's turn bracket opens, per `diagnostic-replay-loop`
+    /// section 2: the recorded turn's own key, carried rather than minted,
+    /// because the derived seed of `weaver-spu-Spec` section 8.5 hashes the
+    /// key and a re-fed generation under a fresh key would draw from a seed
+    /// the source never used.
+    pub(crate) fn replay_turn_started(&mut self, turn: &TurnKey) -> Result<(), TurnError> {
+        self.author
+            .author(
+                self.recorder,
+                Kind::TurnStarted,
+                Subsystem::Harness,
+                Some(turn),
+                None,
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
+    /// The replay's turn bracket closes clean: a re-fed turn has no stop to
+    /// hear and no execution to await, and a seam refusal mid-turn closes
+    /// through the refusal path instead.
+    pub(crate) fn replay_turn_closed(&mut self, turn: &TurnKey) -> Result<(), TurnError> {
+        self.author
+            .author(
+                self.recorder,
+                Kind::TurnClosed,
+                Subsystem::Harness,
+                Some(turn),
+                Some(Payload::TurnClosed(TurnClose::Clean)),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
+    /// The replay's bracket closed stopped, the serving close's own rule -
+    /// every exit past the open closes the bracket - applied to a re-fed
+    /// turn a seam refusal or fault ended early.
+    pub(crate) fn replay_turn_stopped(
+        &mut self,
+        turn: &TurnKey,
+        reason: weaver_trace::StopReason,
+    ) -> Result<(), TurnError> {
+        self.author
+            .author(
+                self.recorder,
+                Kind::TurnClosed,
+                Subsystem::Harness,
+                Some(turn),
+                Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
+    /// One re-feed exchange, the mirror of [`Self::generate_once`] against
+    /// the decode contract's sixth exchange: the recorded rendered form and
+    /// the recorded path cross, the SPU computes each draw as a generation
+    /// would and appends the recorded token whatever the draw said, and the
+    /// answer's own variant carries the generation shape with the recomputed
+    /// draws in the measurement's output slots, per `weaver-spu-PRD` section
+    /// 13.14. No token intermediate arrives, there being no drawn piece to
+    /// stream, while the field's intermediates author as they arrive exactly
+    /// as a generation's do.
+    ///
+    /// The four authorings mirror the serving ones event for event, which is
+    /// what makes the diagnostic record readable by the serving record's
+    /// instruments, per `weaver-diagnostic-Spec` section 4.
+    pub(crate) fn refeed(
+        &mut self,
+        turn: &TurnKey,
+        rendered: String,
+        path: Vec<u32>,
+    ) -> Result<weaver_types::Generation, TurnError> {
+        self.decode
+            .send_directive(&TokenDirective::ReFeed {
+                turn: turn.clone(),
+                rendered,
+                path,
+            })
+            .map_err(|_| TurnError::ChannelLost)?;
+
+        let generation = loop {
+            match self.stream_wake()? {
+                StreamWake::Decode => match self
+                    .decode
+                    .recv_reply()
+                    .map_err(|_| TurnError::ChannelLost)?
+                {
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Field {
+                        position,
+                        ranked,
+                        realized,
+                    }) => {
+                        self.author
+                            .author(
+                                self.recorder,
+                                Kind::ModelField,
+                                Subsystem::SpuDecoder,
+                                Some(turn),
+                                Some(Payload::ModelField(weaver_trace::ModelField {
+                                    position,
+                                    ranked: ranked
+                                        .into_iter()
+                                        .map(|candidate| weaver_trace::Candidate {
+                                            token: candidate.token,
+                                            probability: candidate.probability,
+                                        })
+                                        .collect(),
+                                    realized,
+                                })),
+                            )
+                            .map_err(|_| TurnError::ChannelLost)?;
+                        continue;
+                    }
+                    crate::channel::DecodeReply::Answer(TokenAnswer::ReFed(generation)) => {
+                        break generation;
+                    }
+                    crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Fault(report)) => {
+                        return Err(TurnError::Faulted {
+                            turn: turn.clone(),
+                            report,
+                        });
+                    }
+                    crate::channel::DecodeReply::Refusal(refusal) => {
+                        self.author_refusal(
+                            weaver_types::TokenAsk::ReFeed,
+                            refusal.clone(),
+                            Some(turn),
+                        );
+                        return Err(TurnError::Refused {
+                            turn: turn.clone(),
+                            refusal,
+                        });
+                    }
+                    crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
+                },
+                // The coordination channel is heard while the re-feed
+                // streams, exactly as a generation hears it, and everything
+                // but a channel loss is refused: the replay has no stop
+                // semantics of its own in this act, the run being the work.
+                StreamWake::Dial => {
+                    let Some(slot) = self.pending.as_deref_mut() else {
+                        continue;
+                    };
+                    match self.coordination.accept_root() {
+                        Ok(connection) => *slot = Some(connection),
+                        Err(crate::failure::ChannelFault::WrongPeer { .. }) => {}
+                        Err(_) => return Err(TurnError::ChannelLost),
+                    }
+                }
+                StreamWake::Directive => {
+                    let Some(slot) = self.pending.as_deref_mut() else {
+                        continue;
+                    };
+                    let Some(connection) = slot.as_ref() else {
+                        continue;
+                    };
+                    match connection.recv() {
+                        Ok(envelope) => {
+                            let exchange = envelope.exchange.clone();
+                            match envelope.payload {
+                                weaver_types::Payload::Directive(_) => {
+                                    let _ = connection.send(&weaver_types::OrganEnvelope {
+                                        exchange,
+                                        position: weaver_types::Position::Close,
+                                        payload: weaver_types::Payload::Refusal(
+                                            weaver_types::LifecycleRefusal::ActivityNotAtRest,
+                                        ),
+                                    });
+                                }
+                                _ => return Err(TurnError::ChannelLost),
+                            }
+                        }
+                        Err(crate::failure::ChannelFault::Closed) => {
+                            *slot = None;
+                        }
+                        Err(_) => return Err(TurnError::ChannelLost),
+                    }
+                }
+            }
+        };
+
+        self.author
+            .author(
+                self.recorder,
+                Kind::ModelRequest,
+                Subsystem::SpuDecoder,
+                Some(turn),
+                Some(Payload::ModelRequest(generation.request.clone())),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        self.author
+            .author(
+                self.recorder,
+                Kind::ModelOutput,
+                Subsystem::SpuDecoder,
+                Some(turn),
+                Some(Payload::ModelOutput(ModelOutput {
+                    emission: generation.emission.clone(),
+                    finish: match generation.finish {
+                        weaver_types::Finish::Completed => weaver_trace::Finish::Completed,
+                        weaver_types::Finish::Stopped => weaver_trace::Finish::Stopped,
+                        weaver_types::Finish::Length => weaver_trace::Finish::Length,
+                    },
+                    resident: generation.resident,
+                    capacity: generation.capacity,
+                })),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        self.author
+            .author(
+                self.recorder,
+                Kind::ModelMeasurement,
+                Subsystem::SpuDecoder,
+                Some(turn),
+                Some(Payload::ModelMeasurement(generation.measurement.clone())),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        let assistant = Message {
+            role: Role::Assistant,
+            content: generation.content.clone(),
+        };
+        self.author
+            .author_message(self.recorder, &assistant, turn)
+            .map_err(|_| TurnError::Unlicensed { turn: turn.clone() })?
+            .map_err(|_| TurnError::ChannelLost)?;
+
+        Ok(generation)
+    }
+
+    /// One replay-native event authored, the loop's own kinds, per
+    /// `weaver-diagnostic-Spec` section 3: the bracket's open, the identity
+    /// it established, and the close with its outcome.
+    pub(crate) fn author_replay(
+        &mut self,
+        kind: weaver_diagnostic::Kind,
+        payload: weaver_diagnostic::Payload,
+    ) -> Result<(), TurnError> {
+        self.author
+            .author_diagnostic(self.recorder, kind, None, Some(payload))
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
+    /// The declared session's name, for the identity event that carries it.
+    pub(crate) fn session_name(&self) -> String {
+        self.author.session().to_string()
+    }
+
     /// **The close names what ended the turn**, and the announce follows the
     /// record. Split from the rounds so one bracket closes however many
     /// generations ran inside it: the turn is the conversation's unit and the
@@ -1342,9 +1594,10 @@ mod tests {
     fn a_refused_classify_authors_a_refusal_and_no_output() {
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
 
         // The producer's own path, over the shape the seam hands it.
@@ -1367,7 +1620,7 @@ mod tests {
             .expect("the refusal is authored");
 
         let refusals: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -1387,7 +1640,7 @@ mod tests {
 
         assert_eq!(
             recorder
-                .structure()
+                .structure().expect("the serving record")
                 .iter()
                 .filter(|r| r.kind == Kind::ClassifyOutput)
                 .count(),
@@ -1413,15 +1666,17 @@ mod tests {
     fn pressure_reports_once_per_crossing() {
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut reported = false;
 
         // Under the mark: nothing is authored and the flag stays down.
-        let faults = |r: &Recorder| {
+        let faults = |r: &crate::record::Record| {
             r.structure()
+                .expect("the serving record")
                 .iter()
                 .filter(|record| record.kind == Kind::Fault)
                 .count()
@@ -1435,7 +1690,7 @@ mod tests {
         // The rule itself, exercised over the flag the engine holds: an
         // authored report sets it, a second crossing while it stands
         // authors nothing, and falling under the mark clears it.
-        let mut report = |over: bool, queued: usize, recorder: &mut Recorder| {
+        let mut report = |over: bool, queued: usize, recorder: &mut crate::record::Record| {
             if !over {
                 reported = false;
                 return;
@@ -1576,9 +1831,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1627,7 +1883,7 @@ mod tests {
         );
 
         let closes: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::TurnClosed)
             .collect();
@@ -1641,7 +1897,7 @@ mod tests {
         );
 
         let refusals = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .count();
@@ -1693,9 +1949,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1736,7 +1993,7 @@ mod tests {
         assert!(answered.is_none(), "a refused span answers None as it did");
 
         let refusals: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -1806,9 +2063,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1855,7 +2113,7 @@ mod tests {
         assert_eq!(counts, (1237, 1221), "the seam's counts reach the loop");
 
         let lines: Vec<&weaver_trace::Record> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Elision)
             .collect();
@@ -1945,9 +2203,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -1999,7 +2258,7 @@ mod tests {
         // The bracket, in order: the turn's user message, the three model
         // events, the assistant's turn, and the close.
         let kinds: Vec<Kind> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2027,7 +2286,7 @@ mod tests {
         // Perturbation: forward a zero, a constant, or the members swapped,
         // and this fails.
         let output_line = recorder
-            .structure()
+            .structure().expect("the serving record")
             .by_kind(Kind::ModelOutput)
             .next()
             .expect("the output authored")
@@ -2048,7 +2307,7 @@ mod tests {
         // the template, the measurement the weights hash, both opaque.
         let line_of = |kind: Kind| {
             recorder
-                .structure()
+                .structure().expect("the serving record")
                 .by_kind(kind)
                 .next()
                 .expect("the event authored")
@@ -2124,9 +2383,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2185,7 +2445,7 @@ mod tests {
         // The pin: the turn-attributed sequence holds the fault before the
         // close, both inside the bracket.
         let kinds: Vec<Kind> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2322,9 +2582,10 @@ mod tests {
 
         let session = SessionId("s-t".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2381,7 +2642,7 @@ mod tests {
         assert!(held.is_empty(), "nothing crossed mid-execution to hold");
 
         let kinds: Vec<Kind> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2411,7 +2672,7 @@ mod tests {
         // the gate's answer.
         let line_of = |kind: Kind| {
             recorder
-                .structure()
+                .structure().expect("the serving record")
                 .by_kind(kind)
                 .next()
                 .expect("authored")
@@ -2495,9 +2756,10 @@ mod tests {
 
         let session = SessionId("s-1".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2542,7 +2804,7 @@ mod tests {
         assert_eq!(outcome.emission, "hi", "the close still closes the turn");
 
         let fields: Vec<String> = recorder
-            .structure()
+            .structure().expect("the serving record")
             .by_kind(Kind::ModelField)
             .map(|r| r.line.to_string())
             .collect();
@@ -2594,9 +2856,10 @@ mod tests {
         drop(far);
         let session = SessionId("s-f".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut turn_ordinal = 0u64;
         let listener = test_listener();
@@ -2721,9 +2984,10 @@ mod tests {
 
         let session = SessionId("s-2".into());
         let sink = tempfile();
-        let mut recorder =
+        let mut recorder = crate::record::Record::Serving(
             Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
-                .expect("recorder");
+                .expect("recorder"),
+        );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         author
             .author(
@@ -2782,7 +3046,7 @@ mod tests {
 
         // The close names the directive, the partial standing before it.
         let close = recorder
-            .structure()
+            .structure().expect("the serving record")
             .by_kind(Kind::TurnClosed)
             .next()
             .expect("the close authored")
