@@ -1,0 +1,14 @@
+[package]
+name = "weaver-analysis"
+version = "0.1.0"
+edition = "2024"
+
+# The dependency set is two crates and no internal one, per
+# weaver-analysis-Spec section 1: this crate stands outside the agent and
+# its one seam draws its whole vocabulary from documents rather than from
+# types, so no weaver-* dependency appears here on purpose.
+# conforms: analysis-no-internal-dependency
+# conforms: analysis-no-runtime-no-socket-crate
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }

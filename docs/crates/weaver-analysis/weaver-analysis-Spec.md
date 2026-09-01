@@ -4,6 +4,14 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-01, the declaration derives from the record. Section 3
+gains the third projection per the charter as amended on issue #394: every
+derived member names its record source, disagreement and absence each
+refuse naming the member, the analyst's three inputs and the two fixed
+spellings are enumerated, and section 1's layout gains `src/declare.rs`
+beside the invocation's composition root, which it had left implicit.
+The watch is the code act's, bought in the same stack.
+
 **Revised:** 2026-08-31, second of this date, the gate takes both members.
 Section 5's drain paragraph gates the reproducibility claim on the charter's
 whole licence by citation - the device model and the code identity, at the
@@ -46,9 +54,11 @@ finished record from a truncated one could hold this shape and not use it.
 
 **Layout.** One module per obligation, re-exported at the root.
 
+    src/main.rs       the invocation's composition root, and nothing else
     src/lib.rs        re-exports, and nothing else
     src/record.rs     the parse of a serving record, section 2
     src/project.rs    the election and the projection, section 3
+    src/declare.rs    the declaration derived from the record, section 3
     src/preload.rs    the seam's sender, section 4
     src/reading.rs    the diagnostic-trace's parse and the gate, section 5
 
@@ -262,6 +272,43 @@ tag: perturbation
 edge: asserts
 from: weaver-analysis
 to: analysis-sequence-order-preserved
+```
+
+**The declaration is the third projection, and the record is its one
+source for every source-run fact**, per the charter's section 3 as amended
+on issue #394. The derivation reads members the record already spells and
+writes the declaration the operator loads, so the diagnostic run is correct
+to the run and never to the analyst's memory. Each derived member names its
+source: the session from the envelope, the artifact from
+`model.measurement`'s `model`, the seated identity prefix from the turnless
+`message.system` events at the run's opening in landing order with each
+payload carried verbatim, the seed from `model.request`'s `sampling.seed`,
+the per-turn ceiling from that request's `stop.max_tokens`, and the context
+capacity from `model.output`'s `capacity`. **A member the record spells two
+ways refuses the derivation naming the member**, disagreement being a
+question for the operator and never a pick, and **a derived member the
+record does not carry refuses the same way** rather than defaulting:
+completeness is claim-relative here exactly as it is at input identity,
+and the claim is the whole declaration. The rule reaches the derived
+members alone - the fixed and analyst-supplied members below come from no
+record and refuse on no absence.
+
+**Three members are the analyst's inputs and three take fixed values.**
+Device placement, the readers' elections, and the diagnostic sink arrive
+from the invocation, per the charter's three exceptions. `binding-kind` is
+`diagnostic` by construction, `tool-set` takes the empty list, and
+`permission-mode` takes `ask` - the fixed values for members the record
+does not carry and a run under this binding never reads, stated here so
+the derivation writes a spelling rather than a guess.
+
+```graph
+node: analysis-declaration-derives-from-the-record
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-declaration-derives-from-the-record
 ```
 
 ## 4. The preload
