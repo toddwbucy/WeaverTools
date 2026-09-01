@@ -81,7 +81,10 @@ positionally, and nothing writes back to what is under examination.
 
 The operator sequences three acts, and the loop is the third:
 
-1. **Load the diagnostic agent.** Admin stands the interior without Gate and
+1. **Load the diagnostic agent.** The declaration admin loads arrives
+   already derived, step 2's first half having run before this one, per
+   `weaver-analysis-PRD` section 3 as amended 2026-09-01. Admin stands the
+   interior without Gate and
    the state member with its preload door, per `weaver-agents-PRD` section 6
    and `weaver-analysis-state-contract`. The run opens, the loop takes its
    seat, and its first act is the replay ask below, so the agent at this

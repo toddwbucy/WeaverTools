@@ -286,18 +286,20 @@ payload carried verbatim, the seed from `model.request`'s `sampling.seed`,
 the per-turn ceiling from that request's `stop.max_tokens`, and the context
 capacity from `model.output`'s `capacity`. **A member the record spells two
 ways refuses the derivation naming the member**, disagreement being a
-question for the operator and never a pick, and a member the record does
-not carry refuses the same way rather than defaulting: completeness is
-claim-relative here exactly as it is at input identity, and the claim is
-the whole declaration.
+question for the operator and never a pick, and **a derived member the
+record does not carry refuses the same way** rather than defaulting:
+completeness is claim-relative here exactly as it is at input identity,
+and the claim is the whole declaration. The rule reaches the derived
+members alone - the fixed and analyst-supplied members below come from no
+record and refuse on no absence.
 
-**Three members are the analyst's inputs and two take fixed spellings.**
+**Three members are the analyst's inputs and three take fixed values.**
 Device placement, the readers' elections, and the diagnostic sink arrive
 from the invocation, per the charter's three exceptions. `binding-kind` is
-`diagnostic` by construction. `tool-set` takes the empty list and
-`permission-mode` takes `ask`, the fixed spellings for members the record
-does not carry and a run under this binding never reads, stated here so the
-derivation writes a spelling rather than a guess.
+`diagnostic` by construction, `tool-set` takes the empty list, and
+`permission-mode` takes `ask` - the fixed values for members the record
+does not carry and a run under this binding never reads, stated here so
+the derivation writes a spelling rather than a guess.
 
 ```graph
 node: analysis-declaration-derives-from-the-record

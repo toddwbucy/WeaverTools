@@ -69,6 +69,28 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
         .first()
         .map(|e| e.envelope.session.clone())
         .ok_or(DeriveRefusal::MemberAbsent { member: "session" })?;
+    // **One session and one run, judged before any member is read.** A
+    // record holding two sessions is two records concatenated, and one
+    // holding two runs seats its prefix once per run, so a derivation over
+    // either would compose a declaration from a mixture no run declared -
+    // the disagreement refusal's own case, judged on the envelope first.
+    let run = events[0].envelope.run.clone();
+    for event in events {
+        if event.envelope.session != session {
+            return Err(DeriveRefusal::MemberDisagrees {
+                member: "session",
+                held: session,
+                met: event.envelope.session.clone(),
+            });
+        }
+        if event.envelope.run != run {
+            return Err(DeriveRefusal::MemberDisagrees {
+                member: "run",
+                held: run,
+                met: event.envelope.run.clone(),
+            });
+        }
+    }
     let artifact: String = serde_json::from_str(&one_value(
         events,
         "model.measurement",

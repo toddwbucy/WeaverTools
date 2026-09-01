@@ -79,6 +79,28 @@ fn an_unclosed_bracket_produces_nothing() {
     );
 }
 
+/// **A certified null pass beside an unclosed pass licenses the closed
+/// alone**: the gate produces nothing for an unclosed bracket, on the same
+/// terms whichever way it came to be unclosed, so the licensed list
+/// carries stated outcomes and nothing else.
+///
+/// Perturbation: drop the outcome filter from the gate and the not-ended
+/// pass rides the licensed list. Watched under exactly that removal.
+#[test]
+fn an_unclosed_sibling_is_not_in_the_licensed_list() {
+    let with_open_sibling = format!(
+        "{}\n{}",
+        CERTIFIED.trim_end(),
+        r#"{"session":"s-karl-1","run":"r-later","sequence":"0","kind":"replay.opened","subsystem":"harness","payload":{"reader_elected":true}}"#,
+    );
+    let Gated::Produces { passes } = weaver_analysis::gate(&parse_record(&with_open_sibling))
+    else {
+        panic!("the certified null pass licenses the closed outcomes");
+    };
+    assert_eq!(passes.len(), 1, "the unclosed sibling is not produced");
+    assert!(matches!(passes[0].outcome, Some(Outcome::Certified)));
+}
+
 /// **The null replay gates the rest**: a certified reader pass beside no
 /// certified null pass licenses nothing, a readout from an uncertified
 /// replay being a picture of an unknown run.

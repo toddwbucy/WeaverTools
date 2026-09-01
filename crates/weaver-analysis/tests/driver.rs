@@ -90,7 +90,7 @@ fn a_disagreeing_member_refuses_rather_than_picks() {
     let salted = format!(
         "{}\n{}",
         SOURCE.trim_end(),
-        r#"{"session":"s-karl-1","run":"r-2","sequence":"90","kind":"model.measurement","subsystem":"spu.decoder","payload":{"model":"/other/artifact.gguf","input_tokens":[],"output_tokens":[1],"weights_hash":"x"}}"#,
+        r#"{"session":"s-karl-1","run":"2026-08-29T21:50:19.925Z-karl-93ebb51980edc046","sequence":"90","kind":"model.measurement","subsystem":"spu.decoder","payload":{"model":"/other/artifact.gguf","input_tokens":[],"output_tokens":[1],"weights_hash":"x"}}"#,
     );
     let refused = weaver_analysis::derive(&parse_record(&salted), &inputs());
     assert!(
@@ -102,6 +102,30 @@ fn a_disagreeing_member_refuses_rather_than_picks() {
             })
         ),
         "disagreement refuses naming the member: {refused:?}"
+    );
+}
+
+/// **A record holding two sessions or two runs refuses before any member
+/// is read**: two sessions are two records concatenated, and a second run
+/// seats its prefix again, so a derivation over either would compose a
+/// declaration from a mixture no run declared.
+#[test]
+fn a_mixed_record_refuses_on_the_envelope() {
+    let two_runs = format!(
+        "{}\n{}",
+        SOURCE.trim_end(),
+        r#"{"session":"s-karl-1","run":"r-2","sequence":"0","kind":"load","subsystem":"harness","payload":{"tee":{"all_kinds":true}}}"#,
+    );
+    let refused = weaver_analysis::derive(&parse_record(&two_runs), &inputs());
+    assert!(
+        matches!(refused, Err(DeriveRefusal::MemberDisagrees { member: "run", .. })),
+        "a second run refuses on the envelope: {refused:?}"
+    );
+    let two_sessions = SOURCE.replacen("s-karl-1", "s-other", 1);
+    let refused = weaver_analysis::derive(&parse_record(&two_sessions), &inputs());
+    assert!(
+        matches!(refused, Err(DeriveRefusal::MemberDisagrees { member: "session", .. })),
+        "a second session refuses on the envelope: {refused:?}"
     );
 }
 

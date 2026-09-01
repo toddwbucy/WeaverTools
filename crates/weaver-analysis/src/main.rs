@@ -75,7 +75,12 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
                 }
                 inputs.devices = devices;
             }
-            "--sink" => inputs.sink_path = it.next().cloned().unwrap_or_default(),
+            "--sink" => {
+                let Some(value) = it.next().filter(|v| !v.starts_with("--")) else {
+                    return refused("--sink takes a path".to_string());
+                };
+                inputs.sink_path = value.clone();
+            }
             "--readout" => inputs.readout = true,
             "--surprisal" => inputs.surprisal = true,
             "--field-depth" => {
@@ -91,7 +96,12 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
                     }
                 }
             }
-            "--out" => out = it.next().cloned(),
+            "--out" => {
+                let Some(value) = it.next().filter(|v| !v.starts_with("--")) else {
+                    return refused("--out takes a path".to_string());
+                };
+                out = Some(value.clone());
+            }
             other if trace.is_none() => trace = Some(other.to_string()),
             other => {
                 eprintln!(
@@ -199,6 +209,8 @@ fn run_read(trace: &str) -> std::process::ExitCode {
                                 format!("diverged {detail}"),
                             Some(weaver_analysis::Outcome::Abandoned { detail }) =>
                                 format!("abandoned {detail}"),
+                            // Unreachable by the gate's own filter, kept
+                            // total for the enum.
                             None => "not ended".to_string(),
                         },
                     })

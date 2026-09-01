@@ -104,8 +104,12 @@ pub fn brackets(events: &[Event]) -> Vec<Bracket> {
 /// What the gate answers for a record in hand.
 #[derive(Debug, Clone)]
 pub enum Gated {
-    /// A certified null pass stands and every stated outcome is listed:
-    /// readings downstream are licensed.
+    /// A certified null pass stands and every **stated** outcome is
+    /// listed: readings downstream are licensed. An unclosed bracket
+    /// contributes nothing here - the gate produces nothing for it, per
+    /// the Spec's own sentence, so the licensed list carries closed
+    /// brackets alone and a not-ended pass is read from [`brackets`]
+    /// where an account wants it.
     Produces { passes: Vec<Bracket> },
     /// Nothing is produced, and the account says why: no certified null
     /// pass stands in the record, whatever a reader pass beside it
@@ -132,5 +136,11 @@ pub fn gate(events: &[Event]) -> Gated {
             why: "no certified null pass stands in the record".to_string(),
         };
     }
+    // Nothing is produced for an unclosed bracket, on the same terms
+    // whichever way it came to be unclosed.
+    let passes = passes
+        .into_iter()
+        .filter(|b| b.outcome.is_some())
+        .collect();
     Gated::Produces { passes }
 }
