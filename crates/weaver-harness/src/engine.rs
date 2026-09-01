@@ -1209,6 +1209,236 @@ impl<'a> Ports<'a> {
         Ok(generation)
     }
 
+    /// The replay's turn bracket opens, per `diagnostic-replay-loop`
+    /// section 2: the recorded turn's own key, carried rather than minted,
+    /// because the derived seed of `weaver-spu-Spec` section 8.5 hashes the
+    /// key and a re-fed generation under a fresh key would draw from a seed
+    /// the source never used.
+    pub(crate) fn replay_turn_started(&mut self, turn: &TurnKey) -> Result<(), TurnError> {
+        self.author
+            .author(
+                self.recorder,
+                Kind::TurnStarted,
+                Subsystem::Harness,
+                Some(turn),
+                None,
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
+    /// The replay's turn bracket closes clean: a re-fed turn has no stop to
+    /// hear and no execution to await, and a seam refusal mid-turn closes
+    /// through the refusal path instead.
+    pub(crate) fn replay_turn_closed(&mut self, turn: &TurnKey) -> Result<(), TurnError> {
+        self.author
+            .author(
+                self.recorder,
+                Kind::TurnClosed,
+                Subsystem::Harness,
+                Some(turn),
+                Some(Payload::TurnClosed(TurnClose::Clean)),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
+    /// One re-feed exchange, the mirror of [`Self::generate_once`] against
+    /// the decode contract's sixth exchange: the recorded rendered form and
+    /// the recorded path cross, the SPU computes each draw as a generation
+    /// would and appends the recorded token whatever the draw said, and the
+    /// answer's own variant carries the generation shape with the recomputed
+    /// draws in the measurement's output slots, per `weaver-spu-PRD` section
+    /// 13.14. No token intermediate arrives, there being no drawn piece to
+    /// stream, while the field's intermediates author as they arrive exactly
+    /// as a generation's do.
+    ///
+    /// The four authorings mirror the serving ones event for event, which is
+    /// what makes the diagnostic record readable by the serving record's
+    /// instruments, per `weaver-diagnostic-Spec` section 4.
+    pub(crate) fn refeed(
+        &mut self,
+        turn: &TurnKey,
+        rendered: String,
+        path: Vec<u32>,
+    ) -> Result<weaver_types::Generation, TurnError> {
+        self.decode
+            .send_directive(&TokenDirective::ReFeed {
+                turn: turn.clone(),
+                rendered,
+                path,
+            })
+            .map_err(|_| TurnError::ChannelLost)?;
+
+        let generation = loop {
+            match self.stream_wake()? {
+                StreamWake::Decode => match self
+                    .decode
+                    .recv_reply()
+                    .map_err(|_| TurnError::ChannelLost)?
+                {
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Field {
+                        position,
+                        ranked,
+                        realized,
+                    }) => {
+                        self.author
+                            .author(
+                                self.recorder,
+                                Kind::ModelField,
+                                Subsystem::SpuDecoder,
+                                Some(turn),
+                                Some(Payload::ModelField(weaver_trace::ModelField {
+                                    position,
+                                    ranked: ranked
+                                        .into_iter()
+                                        .map(|candidate| weaver_trace::Candidate {
+                                            token: candidate.token,
+                                            probability: candidate.probability,
+                                        })
+                                        .collect(),
+                                    realized,
+                                })),
+                            )
+                            .map_err(|_| TurnError::ChannelLost)?;
+                        continue;
+                    }
+                    crate::channel::DecodeReply::Answer(TokenAnswer::ReFed(generation)) => {
+                        break generation;
+                    }
+                    crate::channel::DecodeReply::Answer(TokenAnswer::AtRest) => continue,
+                    crate::channel::DecodeReply::Answer(TokenAnswer::Fault(report)) => {
+                        return Err(TurnError::Faulted {
+                            turn: turn.clone(),
+                            report,
+                        });
+                    }
+                    crate::channel::DecodeReply::Refusal(refusal) => {
+                        self.author_refusal(
+                            weaver_types::TokenAsk::ReFeed,
+                            refusal.clone(),
+                            Some(turn),
+                        );
+                        return Err(TurnError::Refused {
+                            turn: turn.clone(),
+                            refusal,
+                        });
+                    }
+                    crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
+                },
+                // The coordination channel is heard while the re-feed
+                // streams, exactly as a generation hears it, and everything
+                // but a channel loss is refused: the replay has no stop
+                // semantics of its own in this act, the run being the work.
+                StreamWake::Dial => {
+                    let Some(slot) = self.pending.as_deref_mut() else {
+                        continue;
+                    };
+                    match self.coordination.accept_root() {
+                        Ok(connection) => *slot = Some(connection),
+                        Err(crate::failure::ChannelFault::WrongPeer { .. }) => {}
+                        Err(_) => return Err(TurnError::ChannelLost),
+                    }
+                }
+                StreamWake::Directive => {
+                    let Some(slot) = self.pending.as_deref_mut() else {
+                        continue;
+                    };
+                    let Some(connection) = slot.as_ref() else {
+                        continue;
+                    };
+                    match connection.recv() {
+                        Ok(envelope) => {
+                            let exchange = envelope.exchange.clone();
+                            match envelope.payload {
+                                weaver_types::Payload::Directive(_) => {
+                                    let _ = connection.send(&weaver_types::OrganEnvelope {
+                                        exchange,
+                                        position: weaver_types::Position::Close,
+                                        payload: weaver_types::Payload::Refusal(
+                                            weaver_types::LifecycleRefusal::ActivityNotAtRest,
+                                        ),
+                                    });
+                                }
+                                _ => return Err(TurnError::ChannelLost),
+                            }
+                        }
+                        Err(crate::failure::ChannelFault::Closed) => {
+                            *slot = None;
+                        }
+                        Err(_) => return Err(TurnError::ChannelLost),
+                    }
+                }
+            }
+        };
+
+        self.author
+            .author(
+                self.recorder,
+                Kind::ModelRequest,
+                Subsystem::SpuDecoder,
+                Some(turn),
+                Some(Payload::ModelRequest(generation.request.clone())),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        self.author
+            .author(
+                self.recorder,
+                Kind::ModelOutput,
+                Subsystem::SpuDecoder,
+                Some(turn),
+                Some(Payload::ModelOutput(ModelOutput {
+                    emission: generation.emission.clone(),
+                    finish: match generation.finish {
+                        weaver_types::Finish::Completed => weaver_trace::Finish::Completed,
+                        weaver_types::Finish::Stopped => weaver_trace::Finish::Stopped,
+                        weaver_types::Finish::Length => weaver_trace::Finish::Length,
+                    },
+                    resident: generation.resident,
+                    capacity: generation.capacity,
+                })),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        self.author
+            .author(
+                self.recorder,
+                Kind::ModelMeasurement,
+                Subsystem::SpuDecoder,
+                Some(turn),
+                Some(Payload::ModelMeasurement(generation.measurement.clone())),
+            )
+            .map_err(|_| TurnError::ChannelLost)?;
+        let assistant = Message {
+            role: Role::Assistant,
+            content: generation.content.clone(),
+        };
+        self.author
+            .author_message(self.recorder, &assistant, turn)
+            .map_err(|_| TurnError::Unlicensed { turn: turn.clone() })?
+            .map_err(|_| TurnError::ChannelLost)?;
+
+        Ok(generation)
+    }
+
+    /// One replay-native event authored, the loop's own kinds, per
+    /// `weaver-diagnostic-Spec` section 3: the bracket's open, the identity
+    /// it established, and the close with its outcome.
+    pub(crate) fn author_replay(
+        &mut self,
+        kind: weaver_diagnostic::Kind,
+        payload: weaver_diagnostic::Payload,
+    ) -> Result<(), TurnError> {
+        self.author
+            .author_diagnostic(self.recorder, kind, None, Some(payload))
+            .map_err(|_| TurnError::ChannelLost)?;
+        Ok(())
+    }
+
+    /// The declared session's name, for the identity event that carries it.
+    pub(crate) fn session_name(&self) -> String {
+        self.author.session().to_string()
+    }
+
     /// **The close names what ended the turn**, and the announce follows the
     /// record. Split from the rounds so one bracket closes however many
     /// generations ran inside it: the turn is the conversation's unit and the

@@ -81,6 +81,46 @@ impl Author {
         recorder.submit(event)
     }
 
+    /// Authors one diagnostic-native event and submits it, per
+    /// `weaver-diagnostic-Spec` section 3: the replay's own kinds exist in
+    /// no serving vocabulary and convert from nothing, so they are composed
+    /// here in the diagnostic vocabulary directly, stamped by the same
+    /// clocks at the same moment the serving road stamps.
+    pub fn author_diagnostic(
+        &self,
+        recorder: &mut Record,
+        kind: weaver_diagnostic::Kind,
+        turn: Option<&TurnKey>,
+        payload: Option<weaver_diagnostic::Payload>,
+    ) -> Result<weaver_diagnostic::Sequence, RecordFailure> {
+        let event = weaver_diagnostic::Event {
+            envelope: weaver_diagnostic::Envelope {
+                session: weaver_diagnostic::SessionRef(self.session.0.clone()),
+                run: weaver_diagnostic::RunRef(self.run.0.clone()),
+                turn: turn.map(|t| weaver_diagnostic::TurnRef(t.0.clone())),
+                // The recorder assigns the run-scoped sequence, as the
+                // serving road's does.
+                sequence: weaver_diagnostic::Sequence(0),
+                kind,
+                subsystem: weaver_diagnostic::Subsystem::Harness,
+                causal_parent: None,
+                wall_ms: wall_clock_millis(),
+                monotonic_ns: weaver_diagnostic::MonotonicNs(
+                    self.origin.elapsed().as_nanos() as u64
+                ),
+            },
+            payload,
+        };
+        recorder.submit_diagnostic(event)
+    }
+
+    /// The session's reference, for the one reader that names it in a
+    /// payload: `replay.identity` carries the replayed session, which the
+    /// contract makes the declared session's own name.
+    pub fn session(&self) -> &str {
+        &self.session.0
+    }
+
     /// Authors a message event after judging it against the licensing rule.
     /// An unlicensed message is refused by this crate and never submitted,
     /// because the recorder judges the envelope and never the interior.

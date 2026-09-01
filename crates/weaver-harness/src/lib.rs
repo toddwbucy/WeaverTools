@@ -104,6 +104,7 @@ mod engine;
 mod failure;
 mod lifecycle;
 mod record;
+mod replay;
 mod spawn;
 mod state;
 mod tools;

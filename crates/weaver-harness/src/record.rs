@@ -80,6 +80,22 @@ impl Record {
         }
     }
 
+    /// One diagnostic-native event submitted, the replay's own kinds:
+    /// composed in the diagnostic vocabulary because they exist in no
+    /// serving one. The serving arm refuses - a serving record has no
+    /// replay bracket to hold.
+    pub fn submit_diagnostic(
+        &mut self,
+        event: weaver_diagnostic::Event,
+    ) -> Result<weaver_diagnostic::Sequence, RecordFailure> {
+        match self {
+            Record::Serving(_) => Err(RecordFailure::OutsideDiagnosticVocabulary),
+            Record::Diagnostic(recorder) => {
+                recorder.submit(event).map_err(RecordFailure::Diagnostic)
+            }
+        }
+    }
+
     /// The commit queue's drain at the leave. The diagnostic writer is
     /// synchronous, every admitted event on the stream at its submit's
     /// return, so its arm has nothing to wait on and drains vacuously.
