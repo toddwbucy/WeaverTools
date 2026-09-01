@@ -7,9 +7,9 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 **Revised:** 2026-09-01, the vector bar is measured. Section 4's
 passive-read comparison holds the vectors exact within one device model,
 per the differencing measurement of this date, the float tolerance
-remaining the cross-device bar per `weaver-agents-PRD` section 8 and issue
-#346. `diagnostic-replay-loop` section 3 takes the same sentence in the
-same act.
+remaining the cross-device bar per `weaver-agents-PRD` section 8 and
+issue #346. `diagnostic-replay-loop` section 3 takes the same sentence
+in the same act.
 
 **Revised:** 2026-08-27, the record takes its shape and the seam its paper. This
 crate's Spec landed, settling the two elections section 6 held as the larger half of

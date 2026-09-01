@@ -338,7 +338,9 @@ implementation, its revision, and its parameters, `environment`,
 `n_prompts`. **A reader
 refuses before it reads**: a manifest naming another lens file, other
 weights (the hash recomputed against the model in hand, never trusted from
-the name), or a width disagreeing with the loaded matrices each refuse
+the name), a width disagreeing with the loaded matrices, or a
+`source_layers` set the tensor names do not match one for one - a missing
+layer and an extra tensor alike - each refuse
 naming the member, the identity discipline the first-light act exercised.
 
 **The capture artifact takes no representation here** because it has one
