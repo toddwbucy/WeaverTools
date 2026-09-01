@@ -370,7 +370,8 @@ def main():
     # discarded a good binary reading and was then recorded under the binary
     # field, so the summary said the binaries could not be re-read when they
     # could, and the library failure was recorded nowhere.
-    caught = (Exception, KeyboardInterrupt)
+    # The catch, `KeyboardInterrupt` included, now lives inside
+    # `base.provenance_close`, where the lift carried it.
     # **`varied` is claimed only where both sides are readings.** These
     # readers report failure by returning a note rather than by raising, so
     # the `except` below catches almost nothing and a failed closing read
@@ -378,79 +379,24 @@ def main():
     # mid-run out of a transient failure to look. `base.is_reading` is the
     # test, and a flag recording whether the read ran was not it: a read
     # that ran and failed leaves the same shape as one that never ran.
-    def hashes(reading):
-        """The sha256 of each entry, which is what a build comparison is
-        about. `path` and `resolved_by` can differ while the bytes agree."""
-        return {
-            name: entry.get("sha256")
-            for name, entry in reading.items()
-            if isinstance(entry, dict)
-        }
+    # **Lifted to `confirm_cells` per #379** - these helpers were local here
+    # while the confirm driver compared with a raw `!=`, two answers to one
+    # question. The matrix now calls the shared implementation it donated.
+    def close(reader, at_start, what, essence=None):
+        return base.provenance_close(cfg, reader, at_start, what,
+                                     essence=essence)
 
-    def whole(reading):
-        """The reading itself, for a reader whose values are not hashes.
-
-        `hashes` would answer `{}` for the toolchain, every value there being
-        a string, so two different toolchains would compare equal and the
-        double read would report nothing. What counts as a change differs by
-        reader, so the comparison is the caller's to name.
-        """
-        return reading
-
-    def resolution(reading):
-        """Which files a reading looked at, as against what it found in them."""
-        return {
-            name: (entry.get("path"), entry.get("resolved_by"))
-            for name, entry in reading.items()
-            if isinstance(entry, dict)
-        }
-
-    def close(reader, at_start, what, essence=hashes):
-        """Read again at the close and say how the two readings relate.
-
-        **One envelope on every branch.** `status` says which case it is and
-        the readings sit in named fields beside it, so a consumer reads the
-        status rather than testing which keys are present. An earlier form
-        returned the bare reading on the unchanged path and a differently
-        shaped dict on each other, which made every consumer a type test.
-
-        **Resolution is compared before content.** Two readings that looked at
-        different files say nothing about whether a build moved: the SPU's
-        path falls back to the guess beside `admin_bin` when a config read
-        blips, so a resolution switch with differing hashes is two different
-        binaries measured, not one binary changed. `varied` is claimed only
-        where both readings looked at the same places.
-        """
-        try:
-            at_close = reader(cfg)
-        except caught as e:  # noqa: BLE001 - any failure degrades to a note
-            # `base._why` rather than the exception directly: a
-            # `KeyboardInterrupt` renders empty and would leave this naming
-            # no failure.
-            at_close = {"unreadable": f"{what}: {base._why(e)}"}
-        if not base.is_reading(at_close):
-            return {"status": "at_close_unreadable",
-                    "at_start": at_start, "note": at_close}
-        if not base.is_reading(at_start):
-            return {"status": "at_start_unreadable",
-                    "at_close": at_close, "note": at_start}
-        if resolution(at_close) != resolution(at_start):
-            return {"status": "resolved_differently",
-                    "at_start": at_start, "at_close": at_close}
-        if essence(at_close) != essence(at_start):
-            return {"status": "varied",
-                    "at_start": at_start, "at_close": at_close}
-        return {"status": "unchanged", "reading": at_start}
+    whole = base.close_whole
 
     # **One resolution for both collectors at each end**, so the two fields
     # cannot disagree about which SPU they measured - the same sharing the
     # confirm driver does at its own two reads.
-    closing_spu = base._resolve_spu(cfg)
+    closing_spu, spu_note = base.closing_resolution(cfg)
     binaries_at_close = close(
-        lambda c: base.weaver_binaries(c, closing_spu), binaries, "weaver_binaries"
+        lambda c: spu_note or base.weaver_binaries(c, closing_spu), binaries, "weaver_binaries"
     )
     libraries = close(
-        lambda c: base.engine_libraries(c, closing_spu), libraries, "engine_libraries"
+        lambda c: spu_note or base.engine_libraries(c, closing_spu), libraries, "engine_libraries"
     )
     # **Read twice like the other two.** It was the one reader left on a
     # single read, which is what made the invariant break in `toolchain`
@@ -462,7 +408,7 @@ def main():
 
     try:
         bindings = base.device_bindings(cfg, run_started)
-    except caught as e:  # noqa: BLE001 - any failure degrades to a note
+    except (Exception, KeyboardInterrupt) as e:  # noqa: BLE001 - degrades to a note
         # `_why` here too: widening this catch to include `KeyboardInterrupt`
         # opened the empty-reason path, `journalctl` over a seven-hour window
         # being a call a Ctrl-C can land in.
@@ -489,7 +435,20 @@ def main():
         f"{len(errors)} errors")
     for ch, b in sorted(by_character.items()):
         log(f"  {ch}: {b['ok']}/{b['n']}")
-    sys.exit(0 if total and good == total else 1)
+    # **The window joins the verdict here too**, per #399's review: the
+    # confirm and trace-gen drivers already exit 1 over green sessions when
+    # the provenance moved, and one seam answering the same question two
+    # ways at the exit code is #379's opening defect relocated. The
+    # serving-device envelope is not in the gate: it is not a two-read
+    # close, and a multi-device report is its own field rather than a
+    # moved window.
+    window_held = all(
+        (summary[k] or {}).get("status") == "unchanged"
+        for k in ("engine_libraries", "weaver_binaries", "toolchain"))
+    if total and good == total and not window_held:
+        log("sessions reproduced but the provenance window did not hold"
+            " quiet - not a reproduction result")
+    sys.exit(0 if total and good == total and window_held else 1)
 
 
 if __name__ == "__main__":

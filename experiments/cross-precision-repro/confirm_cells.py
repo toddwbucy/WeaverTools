@@ -296,6 +296,80 @@ def is_reading(value):
     )
 
 
+def close_hashes(reading):
+    """The sha256 of each entry, which is what a build comparison is about.
+    `path` and `resolved_by` can differ while the bytes agree."""
+    return {name: entry.get("sha256")
+            for name, entry in reading.items() if isinstance(entry, dict)}
+
+
+def close_whole(reading):
+    """The reading itself, for a reader whose values are not hashes -
+    `close_hashes` would answer `{}` for the toolchain and two different
+    toolchains would compare equal."""
+    return reading
+
+
+def close_resolution(reading):
+    """Which files a reading looked at, as against what it found in them."""
+    return {name: (entry.get("path"), entry.get("resolved_by"))
+            for name, entry in reading.items() if isinstance(entry, dict)}
+
+
+def closing_resolution(cfg):
+    """The close's shared SPU resolution, or the note a failed one becomes.
+
+    The resolution is the one step of the close that ran outside
+    `provenance_close`'s catch, so a raise there - a second interrupt
+    landing in the window the matrix documents, or an unanticipated
+    failure - lost the entire close, and in the matrix the summary with
+    it. Resolved once so the two collectors cannot disagree about which
+    SPU they measured, and a failure becomes the reading both collectors
+    return, closing as `at_close_unreadable` instead of as a lost run.
+    """
+    try:
+        return _resolve_spu(cfg), None
+    except (Exception, KeyboardInterrupt) as e:  # noqa: BLE001
+        return None, {"unreadable": f"the SPU resolution raised: {_why(e)}"}
+
+
+def provenance_close(cfg, reader, at_start, what, essence=None):
+    """Read again at the close and say how the two readings relate.
+
+    Lifted from the matrix driver per #379: `close()` and its helpers were
+    local to `determinism_matrix.main` while this driver compared with a raw
+    `!=`, so the two drivers answered one question differently - the matrix
+    would not claim a change it could not support and this driver would.
+    One implementation, every driver a caller.
+
+    **One envelope on every branch.** `status` says which case it is and the
+    readings sit in named fields beside it, so a consumer reads the status
+    rather than testing which keys are present.
+
+    **Resolution is compared before content.** Two readings that looked at
+    different files say nothing about whether a build moved, so `varied` is
+    claimed only where both readings looked at the same places.
+    """
+    essence = close_hashes if essence is None else essence
+    try:
+        at_close = reader(cfg)
+    except (Exception, KeyboardInterrupt) as e:  # noqa: BLE001
+        at_close = {"unreadable": f"{what}: {_why(e)}"}
+    if not is_reading(at_close):
+        return {"status": "at_close_unreadable",
+                "at_start": at_start, "note": at_close}
+    if not is_reading(at_start):
+        return {"status": "at_start_unreadable",
+                "at_close": at_close, "note": at_start}
+    if close_resolution(at_close) != close_resolution(at_start):
+        return {"status": "resolved_differently",
+                "at_start": at_start, "at_close": at_close}
+    if essence(at_close) != essence(at_start):
+        return {"status": "varied",
+                "at_start": at_start, "at_close": at_close}
+    return {"status": "unchanged", "reading": at_start}
+
+
 def _said_or_unreadable(result, what):
     """A command's output, or a note saying why there is none.
 
@@ -435,12 +509,20 @@ def toolchain(cfg):
         # with nothing on either stream would read as `rustup exit 0:`, a
         # failure record naming no failure, which is the silent absence the
         # rest of this act removes.
-        if active.returncode == 0:
-            reason = "rustup exited cleanly and said nothing"
+        if active.returncode == 127:
+            # **Absent is a reading, not a failure.** A distro `rust` with no
+            # rustup is an ordinary box, stable across both reads, and the
+            # `rustc` string above is still the comparison's meat. Marking it
+            # unreadable made the whole toolchain permanently incomparable on
+            # such a box and threw the good half away - defect 3 of #379.
+            out["active_toolchain"] = {"absent": "no rustup on this box"}
+        elif active.returncode == 0:
+            out["active_toolchain"] = {
+                "unreadable": "rustup exited cleanly and said nothing"}
         else:
             said = active.stderr.strip()[:200]
-            reason = f"rustup exit {active.returncode}" + (f": {said}" if said else "")
-        out["active_toolchain"] = {"unreadable": reason}
+            out["active_toolchain"] = {"unreadable":
+                f"rustup exit {active.returncode}" + (f": {said}" if said else "")}
     return out
 
 
@@ -1063,6 +1145,17 @@ def main():
     # Read once for the run: the libraries cannot change under it, and
     # `libggml-cuda` built for four architectures is 142 MiB to hash.
     reports = []
+    out = os.path.join(args.outdir, f"report-{cfg['box']}.json")
+
+    def deposit():
+        # **Written after every cell and after the closing read**, so a raise
+        # anywhere past the first cell costs the tail and never the record -
+        # defect 2 of #379. The old single write sat after the try and a
+        # seven-hour arm dying in the closing block would have left a
+        # restored declaration and no deposit.
+        with open(out, "w") as f:
+            json.dump(reports, f, indent=1)
+
     try:
         # **Inside the scope that restores the declaration.** The backup is
         # already taken by this point, and a reader raising above the `try`
@@ -1081,47 +1174,74 @@ def main():
         for cell in cfg["cells"]:
             reports.append(
                 run_cell(cfg, cell, args.outdir, libraries, binaries, tools))
+            deposit()
 
         # **The provenance is read again after the cells have run**, the way
         # the matrix reads it at its close. A run unloads and reloads the
         # agent several times and can span an operator installing over it, so
         # a build swapped mid-run would otherwise be recorded nowhere and the
         # opening read asserted across the whole window.
-        closing_spu = _resolve_spu(cfg)
-        at_close = {
-            "engine_libraries": engine_libraries(cfg, closing_spu),
-            "weaver_binaries": weaver_binaries(cfg, closing_spu),
-            "toolchain": toolchain(cfg),
-        }
-        opening = {
-            "engine_libraries": libraries,
-            "weaver_binaries": binaries,
-            "toolchain": tools,
-        }
-        moved = {
-            name: {"at_start": opening[name], "at_close": reading}
-            for name, reading in at_close.items()
-            if reading != opening[name]
+        # **Guarded rather than raw**, per defect 1 of #379: the old `!=`
+        # compared a failed closing read against a good opening one and
+        # printed PROVENANCE MOVED out of a transient failure to look. The
+        # lifted close claims `varied` only where both readings are sound
+        # and looked at the same places.
+        closing_spu, spu_note = closing_resolution(cfg)
+        closings = {
+            "engine_libraries": provenance_close(
+                cfg, lambda c: spu_note or engine_libraries(c, closing_spu),
+                libraries, "engine_libraries"),
+            "weaver_binaries": provenance_close(
+                cfg, lambda c: spu_note or weaver_binaries(c, closing_spu),
+                binaries, "weaver_binaries"),
+            "toolchain": provenance_close(
+                cfg, toolchain, tools, "toolchain", essence=close_whole),
         }
         # Carried on every cell rather than beside them, the reports being a
         # list of cells and a reader of any one of them needing to know the
-        # window did not hold.
+        # window did not hold. **One envelope on every branch** - defect 4's
+        # shape half: a consumer reads `status`, never type-tests the field.
         for report in reports:
-            report["metadata"]["provenance_at_close"] = moved or "unchanged"
-        if moved:
-            print(f"PROVENANCE MOVED DURING THE RUN: {json.dumps(moved)}", flush=True)
+            report["metadata"]["provenance_at_close"] = closings
+        unquiet = {k: v["status"] for k, v in closings.items()
+                   if v["status"] != "unchanged"}
+        if unquiet:
+            print(f"PROVENANCE DID NOT HOLD QUIET: {json.dumps(unquiet)}",
+                  flush=True)
+        deposit()
     finally:
         shutil.copy2(backup, cfg["declaration"])
         os.unlink(backup)
         print("declaration restored", flush=True)
 
-    out = os.path.join(args.outdir, f"report-{cfg['box']}.json")
-    with open(out, "w") as f:
-        json.dump(reports, f, indent=1)
+    deposit()
     print(f"\nreport: {out}")
     for r in reports:
         print(f"  cell {r['cell']}: {r['verdict']}")
-    sys.exit(0 if all(r["verdict"] == "REPRODUCED" for r in reports) else 1)
+    # **The window is part of the verdict** - defect 4's consequence half: a
+    # detected mid-run swap, or a close that could not certify the window,
+    # is not a reproduction result and must not exit 0. `closings` is bound
+    # only when every cell ran, so an early abort exits nonzero through the
+    # reproduced check alone.
+    #
+    # **A stably unreadable reader fails the gate, and that is a decision
+    # rather than an inheritance**, named per #399's review: a box whose
+    # config names no repo cannot read its toolchain at either end, and a
+    # run that cannot read its toolchain cannot certify that its window
+    # held. Every committed config names a repo. The alternative #379
+    # sketched - is_reading distinguishing a partial reading from an
+    # unusable one - stays open there for the reader that earns it.
+    reproduced = all(r["verdict"] == "REPRODUCED" for r in reports) and reports
+    window_held = all(
+        v.get("status") == "unchanged"
+        for r in reports
+        for v in (r["metadata"].get("provenance_at_close") or {}).values()
+        if isinstance(v, dict)
+    )
+    if reproduced and not window_held:
+        print("cells reproduced but the provenance window did not hold quiet"
+              " - not a reproduction result", flush=True)
+    sys.exit(0 if reproduced and window_held else 1)
 
 
 if __name__ == "__main__":
