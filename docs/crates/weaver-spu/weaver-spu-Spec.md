@@ -3131,7 +3131,8 @@ reason.
 
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
-sections 1 through 9, rather than gathered here, per Document Format section 6:
+sections 1 through 9 and the classify arm's section 11, rather than gathered
+here, per Document Format section 6:
 this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
