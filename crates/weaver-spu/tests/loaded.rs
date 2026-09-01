@@ -1084,6 +1084,7 @@ mod seam_success {
                 field_election: None,
                 surprisal_election: false,
                 refeed_permission,
+                column_permission: false,
                 identity: vec![],
                 tunable_values: [
                     ("max-tokens-per-turn".to_string(), 64.0),
@@ -1250,5 +1251,361 @@ mod seam_success {
             "the replay derived the seed the source drew from"
         );
         close(lifecycle, decode, child, log_path, "replay");
+    }
+
+    /// **The column crosses where the ask stands, one message per sampled
+    /// position.** The ask is judged at the open and armed for the
+    /// residency, and the stream then carries a `Column` frame at each draw
+    /// moment - the append's prefill final and each decode forward - with
+    /// the layer count and the width the model's own, positions strictly
+    /// increasing, tokens streaming beside them untouched.
+    ///
+    /// Perturbation: remove the take at the generate's draw site and this
+    /// fails, the ask standing and no column crossing. Watched under
+    /// exactly that removal.
+    ///
+    /// conforms: spu-column-crosses-where-asked
+    #[test]
+    fn the_column_crosses_where_the_ask_stands() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP the_column_crosses: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP the_column_crosses: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-column-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: SpuInstruction {
+                    classify: None,
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: true,
+                        field_election: None,
+                        surprisal_election: false,
+                        refeed_permission: false,
+                        column_permission: true,
+                        identity: vec![],
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 24.0),
+                            ("context-capacity".to_string(), 1024.0),
+                            ("seed".to_string(), 37.0),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    },
+                },
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+
+        let send = |directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+        let recv = || -> TokenAnswer {
+            let frame = decode.recv_octets().expect("an answer arrives");
+            serde_json::from_slice(&frame).expect("the answer parses")
+        };
+
+        send(&TokenDirective::Open {
+            session: SessionId("s-column".into()),
+            column_ask: true,
+            messages: vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "You answer in as few words as possible.".into(),
+                }],
+            }],
+        });
+        assert_eq!(recv(), TokenAnswer::Opened, "the asked open opens");
+
+        send(&TokenDirective::AppendAndGenerate {
+            turn: TurnKey("t-1".into()),
+            delta: vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "Say one word.".into(),
+                }],
+            }],
+        });
+        let mut columns: Vec<(u64, usize, usize)> = Vec::new();
+        let mut streamed = 0usize;
+        let generation = loop {
+            match recv() {
+                TokenAnswer::Token { .. } => streamed += 1,
+                TokenAnswer::Column { position, layers } => {
+                    let width = layers.first().map(Vec::len).unwrap_or(0);
+                    assert!(
+                        layers.iter().all(|l| l.len() == width),
+                        "every layer at one width"
+                    );
+                    columns.push((position, layers.len(), width));
+                }
+                TokenAnswer::Generated(generation) => break generation,
+                other => panic!("the stream carries tokens, columns, then the close: {other:?}"),
+            }
+        };
+        assert!(streamed > 0, "the tokens still stream beside the columns");
+        let measurement: serde_json::Value =
+            serde_json::from_str(generation.measurement.get()).expect("the measurement splices");
+        let produced = measurement["output_tokens"].as_array().unwrap().len();
+        assert!(
+            columns.len() == produced || columns.len() == produced + 1,
+            "one column per sampled position: {} columns for {produced} tokens",
+            columns.len()
+        );
+        assert!(
+            columns.iter().all(|(_, layers, width)| *layers == 24 && *width == 896),
+            "the model's own shape at every position: {columns:?}"
+        );
+        assert!(
+            columns.windows(2).all(|w| w[0].0 < w[1].0),
+            "positions strictly increasing"
+        );
+
+        drop(decode);
+        let released = ask(&lifecycle, 2, LifecycleDirective::Release);
+        assert_eq!(released.payload, Payload::Answer(LifecycleAnswer::Released));
+        drop(lifecycle);
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!("the column worker exits, child stderr at {}", log_path.display()),
+        );
+        assert!(status.success(), "and the process exits clean");
+        std::fs::remove_file(&log_path).ok();
+    }
+
+    /// **No vector crosses unasked, and the registry's first two arms
+    /// refuse at the open.** One residency serves all three reads: an open
+    /// carrying the ask against no permission refuses on the first arm, a
+    /// permissionless posture being the serving one, and after a plain open
+    /// the whole generation stream carries no `Column` frame.
+    ///
+    /// Perturbation for the absence: make the session's arming
+    /// unconditional at the open and the plain open's stream carries
+    /// columns. Watched under exactly that change.
+    ///
+    /// conforms: spu-no-vector-unasked
+    #[test]
+    fn no_vector_crosses_unasked_and_the_arms_refuse() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TokenRefusal, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP no_vector_crosses_unasked: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP no_vector_crosses_unasked: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let instruction = |readout: bool, permission: bool| SpuInstruction {
+            classify: None,
+            decoder: DecoderInstruction {
+                model_binding: ModelBinding {
+                    artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                    devices: vec![DeviceOrdinal(0)],
+                },
+                residual_readout_election: readout,
+                field_election: None,
+                surprisal_election: false,
+                refeed_permission: false,
+                column_permission: permission,
+                identity: vec![],
+                tunable_values: [
+                    ("max-tokens-per-turn".to_string(), 16.0),
+                    ("context-capacity".to_string(), 1024.0),
+                    ("seed".to_string(), 37.0),
+                ]
+                .into_iter()
+                .collect(),
+            },
+        };
+
+        // **Arm one, across the seam**: the ask against no permission.
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-unasked-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: instruction(true, false),
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+
+        let send = |directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+        let identity = || {
+            vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "You answer briefly.".into(),
+                }],
+            }]
+        };
+        send(&TokenDirective::Open {
+            session: SessionId("s-unasked".into()),
+            column_ask: true,
+            messages: identity(),
+        });
+        let frame = decode.recv_octets().expect("the refusal arrives");
+        let refusal: TokenRefusal = serde_json::from_slice(&frame).expect("the refusal parses");
+        assert_eq!(
+            refusal,
+            TokenRefusal::ColumnPermissionAbsent,
+            "the registry's first arm refuses across the seam"
+        );
+
+        // **The refused open opened nothing**: a plain open still stands,
+        // and its whole stream carries no column.
+        send(&TokenDirective::Open {
+            session: SessionId("s-unasked".into()),
+            column_ask: false,
+            messages: identity(),
+        });
+        let recv = || -> TokenAnswer {
+            let frame = decode.recv_octets().expect("an answer arrives");
+            serde_json::from_slice(&frame).expect("the answer parses")
+        };
+        assert_eq!(recv(), TokenAnswer::Opened, "the plain open opens");
+        send(&TokenDirective::AppendAndGenerate {
+            turn: TurnKey("t-1".into()),
+            delta: identity(),
+        });
+        loop {
+            match recv() {
+                TokenAnswer::Token { .. } => continue,
+                TokenAnswer::Column { .. } => {
+                    panic!("a vector crossed unasked")
+                }
+                TokenAnswer::Generated(_) => break,
+                other => panic!("tokens then the close: {other:?}"),
+            }
+        }
+
+        drop(decode);
+        let released = ask(&lifecycle, 2, LifecycleDirective::Release);
+        assert_eq!(released.payload, Payload::Answer(LifecycleAnswer::Released));
+        drop(lifecycle);
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!("the unasked worker exits, child stderr at {}", log_path.display()),
+        );
+        assert!(status.success(), "and the process exits clean");
+        std::fs::remove_file(&log_path).ok();
+
+        // **Arm two, across the seam**: permission admitted, readout
+        // unelected.
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-arm2-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: instruction(false, true),
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+        let body = serde_json::to_vec(&TokenDirective::Open {
+            session: SessionId("s-arm2".into()),
+            column_ask: true,
+            messages: identity(),
+        })
+        .expect("a directive renders");
+        decode.send_octets(&body).expect("the frame sends");
+        let frame = decode.recv_octets().expect("the refusal arrives");
+        let refusal: TokenRefusal = serde_json::from_slice(&frame).expect("the refusal parses");
+        assert_eq!(
+            refusal,
+            TokenRefusal::ColumnReadoutUnelected,
+            "the registry's second arm refuses across the seam"
+        );
+        drop(decode);
+        let released = ask(&lifecycle, 2, LifecycleDirective::Release);
+        assert_eq!(released.payload, Payload::Answer(LifecycleAnswer::Released));
+        drop(lifecycle);
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!("the arm-two worker exits, child stderr at {}", log_path.display()),
+        );
+        assert!(status.success(), "and the process exits clean");
+        std::fs::remove_file(&log_path).ok();
     }
 }

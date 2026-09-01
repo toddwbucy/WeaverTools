@@ -2275,10 +2275,35 @@ from: weaver-spu
 to: spu-no-vector-unasked
 ```
 
-Review's by non-purchase: the watch is an open carrying no ask whose session
-answers any `Column` message, buyable with a fixture against the built seam,
-and unbought because the seam is unbuilt - the code act that builds it buys
-this watch in the same motion or the tag stands as the lie 13.7 refuses.
+Bought by the building act of 2026-09-01, as this clause required: an open
+carrying no ask under a permission-granting instruction generates against
+the real engine and no `Column` message crosses the whole stream, watched
+red under the arming made unconditional. Beside it the act buys the
+registry's watch - three arms in the clause's own order, the third judged
+at the unit because no small artifact here carries a family with a tap and
+no column - and the crossing's own: where the ask stands, one column
+message per sampled position, the layer count and the width the model's
+own, watched red under the take removed.
+
+```graph
+node: spu-column-registry-three-arms
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-column-registry-three-arms
+```
+
+```graph
+node: spu-column-crosses-where-asked
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-column-crosses-where-asked
+```
 
 **One forward per prompt when readout is elected, never a batch.** Batching
 prompts changes what the attention sees, so residuals taken from a batched

@@ -507,22 +507,17 @@ fn serve_decode(
                 // declaration holds no column - the open being the cheapest
                 // moment that knows the ask. Judged before any session
                 // work, in the clause's own arm order.
-                if column_ask {
-                    let refusal = if !effective.column_permission {
-                        Some(TokenRefusal::ColumnPermissionAbsent)
-                    } else if !effective.readout_elected {
-                        Some(TokenRefusal::ColumnReadoutUnelected)
-                    } else if !declaration.taps_column {
-                        Some(TokenRefusal::ColumnUndeclared)
-                    } else {
-                        None
-                    };
-                    if let Some(refusal) = refusal {
-                        if send_refusal(decode, &refusal).is_err() {
-                            return Err(());
-                        }
-                        continue;
+                if column_ask
+                    && let Some(refusal) = weaver_spu::readout::judge_column_ask(
+                        effective.column_permission,
+                        effective.readout_elected,
+                        declaration.taps_column,
+                    )
+                {
+                    if send_refusal(decode, &refusal).is_err() {
+                        return Err(());
                     }
+                    continue;
                 }
                 // The declaration cites its family's renderer, so the prefix is
                 // that family's own rendering rather than a template string

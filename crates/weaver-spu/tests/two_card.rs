@@ -72,6 +72,7 @@ fn generate_plain(resident: &weaver_spu::residency::Resident) -> (Vec<TokenId>, 
             &mut |_| {},
             None,
             &mut |_, _, _| {},
+            &mut |_, _| {},
             11,
             64,
         )

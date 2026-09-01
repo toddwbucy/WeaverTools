@@ -126,6 +126,7 @@ fn draw(
             &mut |_| {},
             None,
             &mut |_, _, _| {},
+            &mut |_, _| {},
             seed,
             64,
         )
