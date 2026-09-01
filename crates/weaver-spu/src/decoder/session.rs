@@ -380,10 +380,23 @@ impl<'a> Session<'a> {
             // after it - and the position is the one this draw's token
             // would fill, the field's own pairing. The terminator's forward
             // is never taken, no draw following it.
-            if self.columns_asked
-                && let Some(columns) = self.backend.take_columns()
-            {
-                on_column(self.resident.len() as u64, columns);
+            if self.columns_asked {
+                // **An asked column that does not arrive at a sampled
+                // position is charter 13.10's fault**, per `weaver-spu-Spec`
+                // section 7: the ask passed the registry, so a backend whose
+                // tap holds no column - the native tap's own shape - faults
+                // loudly here rather than omitting silently, the silent
+                // absence being what the fault rule forbids.
+                match self.backend.take_columns() {
+                    Some(columns) => on_column(self.resident.len() as u64, columns),
+                    None => {
+                        return Err(self.poison(DecodeFault::Engine {
+                            detail: "the column ask stood and no column arrived at a \
+                                     sampled position"
+                                .into(),
+                        }));
+                    }
+                }
             }
 
             let token = match self.backend.sample() {
@@ -551,10 +564,20 @@ impl<'a> Session<'a> {
             // The column at the draw moment, exactly as the generate takes
             // it: the re-fed forward is the source's, so the position bound
             // and the pairing are unchanged.
-            if self.columns_asked
-                && let Some(columns) = self.backend.take_columns()
-            {
-                on_column(self.resident.len() as u64, columns);
+            if self.columns_asked {
+                // The generate's own 13.10 rule, unchanged by the re-feed:
+                // an asked column arrives at every sampled position or the
+                // pass faults.
+                match self.backend.take_columns() {
+                    Some(columns) => on_column(self.resident.len() as u64, columns),
+                    None => {
+                        return Err(self.poison(DecodeFault::Engine {
+                            detail: "the column ask stood and no column arrived at a \
+                                     sampled position"
+                                .into(),
+                        }));
+                    }
+                }
             }
             let draw = match self.backend.sample() {
                 Ok(token) => token,
@@ -888,6 +911,53 @@ mod tests {
             log.borrow().reseeds,
             vec![(11, vec![TokenId(4), TokenId(5)])],
             "the sampler reseeds after the prefill exactly as a generation does"
+        );
+    }
+
+    /// **An asked column that does not arrive at a sampled position
+    /// faults**, per charter section 13.10 and Spec section 7: the ask
+    /// passed the registry, so a backend whose tap holds no column - the
+    /// native tap's own shape - faults loudly rather than omitting
+    /// silently. The scripted backend's `take_columns` answers `None`,
+    /// which is exactly that backend.
+    ///
+    /// Perturbation: restore the silent skip at the draw site - emit only
+    /// where the take answers - and the armed generation completes with no
+    /// column and no fault. Watched under exactly that restoration.
+    ///
+    /// conforms: spu-asked-column-arrives-or-faults
+    #[test]
+    fn an_asked_column_that_does_not_arrive_faults() {
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(9)],
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+            false,
+        );
+        session.open(&[TokenId(7)]).expect("the prefix lands");
+        session.ask_columns();
+        let outcome = session.append_and_generate(
+            &[TokenId(8)],
+            &StopCondition {
+                stop_tokens: vec![TokenId(9)],
+                terminator: TokenId(0),
+                max_tokens: 8,
+            },
+            &mut NeverCancels,
+            &mut |_| {},
+            None,
+            &mut |_, _, _| {},
+            &mut |_, _| {},
+            11,
+            64,
+        );
+        assert!(
+            matches!(outcome, Err(DecodeFault::Engine { .. })),
+            "the silent absence faults: {outcome:?}"
         );
     }
 

@@ -2261,7 +2261,23 @@ working configuration - the native tap's own shape - that an admit-time
 refusal would refuse. The open is the cheapest moment that knows the ask,
 which is 13.7's rule pointed at the right fact. An asked column that does
 not arrive at a sampled position is charter 13.10's fault, owned there
-since this act. The efficient framing of the column message joins section
+since this act: the draw site faults the session loudly where the armed
+take answers nothing - the native tap's own shape meeting an ask its
+family's declaration let past - because the silent absence is what the
+fault rule forbids. Perturbation: restore the silent skip at the draw site
+and an armed generation completes with no column and no fault. Watched
+under exactly that restoration.
+
+```graph
+node: spu-asked-column-arrives-or-faults
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-asked-column-arrives-or-faults
+```
+ The efficient framing of the column message joins section
 12's open token-seam encoding election, the provisional form being
 `weaver-types-Spec` section 4.4's bare JSON like every crossing.
 
@@ -3120,13 +3136,14 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Eighty-five records in all,
+general prohibition, and the kernels' comparisons. Eighty-six records in all,
 the elections taking nodes because gate H1 would otherwise leave the largest
-decisions in this Spec untraceable. Four of the eighty-five arrived with the
+decisions in this Spec untraceable. Four of these arrived with the
 re-feed act of 2026-08-31 without this count moving, that act's own
-oversight, and the column act of 2026-09-01 that recounts here adds two and
-moves one from review to perturbation, the unasked-vector watch its ground
-obliged it to buy. **The split between this section's sorting
+oversight, and the column act of 2026-09-01 that recounts here adds three -
+the registry, the crossing, and the arrives-or-faults rule the review seat
+held it to - and moves one from review to perturbation, the unasked-vector
+watch its ground obliged it to buy. **The split between this section's sorting
 and the elections outside it is owed and is not restated here**: it read
 thirty-one and twenty-nine against a total of sixty, and the nineteen records
 since are not divided by any count this act can take mechanically. The total
