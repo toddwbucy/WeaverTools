@@ -1,0 +1,2 @@
+{"session":"s-karl-1","run":"2026-09-01T01:18:54.615Z-karl-9107b1ec10790e22","sequence":"0","kind":"replay.opened","subsystem":"harness","wall_ms":1788225535726,"monotonic_ns":"1111275950","payload":{"reader_elected":false}}
+{"session":"s-karl-1","run":"2026-09-01T01:18:54.615Z-karl-9107b1ec10790e22","sequence":"1","kind":"replay.closed","subsystem":"harness","wall_ms":1788226135736,"monotonic_ns":"601120827714","payload":{"outcome":{"kind":"abandoned","reason":{"kind":"replay_ask_unanswered"}}}}
