@@ -505,6 +505,16 @@ impl Backend for GgufEngine<'_> {
         self.tap_mut().map(|state| state.drain())
     }
 
+    fn hold_columns(&mut self, hold: bool) {
+        if let Some(state) = self.tap_mut() {
+            state.set_hold_columns(hold);
+        }
+    }
+
+    fn take_columns(&mut self) -> Option<Vec<Vec<f32>>> {
+        self.tap_mut().and_then(|state| state.take_columns())
+    }
+
     fn close(&mut self) {
         // The context and the sampler release with this value. What close marks
         // is that nothing further may be asked, which every method above reads.
@@ -919,6 +929,7 @@ mod tests {
                 &mut |_| streamed += 1,
                 None,
                 &mut |_, _, _| {},
+                &mut |_, _| {},
                 11,
                 64,
             )

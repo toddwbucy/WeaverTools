@@ -80,6 +80,19 @@ pub struct TapState {
     /// How many figures a committed ubatch owes, from the model's own layer
     /// count.
     layers: usize,
+    /// Whether the columns continue instead of dropping, per charter
+    /// section 13.7 and Spec section 7's diagnostic clause: armed once at
+    /// the open where the column ask stood, and never otherwise. The
+    /// diagnostic answer is the copy this tap already takes, retained.
+    hold_columns: bool,
+    /// The ubatch in flight's columns where the hold stands, one per layer
+    /// in layer order, cleared at layer zero with the staging it parallels.
+    staged_columns: Vec<Vec<f32>>,
+    /// The last committed forward's columns, taken by the draw site and
+    /// overwritten by the next commit: a forward nothing samples at - the
+    /// terminator's - is overwritten untaken, which is the position bound
+    /// kept by construction.
+    held_columns: Option<Vec<Vec<f32>>>,
 }
 
 impl TapState {
@@ -90,6 +103,9 @@ impl TapState {
             fault: None,
             column: Vec::new(),
             layers,
+            hold_columns: false,
+            staged_columns: Vec::new(),
+            held_columns: None,
         })
     }
 
@@ -130,12 +146,41 @@ impl TapState {
             .map_err(|detail| DecodeFault::Engine {
                 detail: format!("the readout tap folded a ragged forward: {detail}"),
             })?;
+        if self.hold_columns {
+            let columns = std::mem::take(&mut self.staged_columns);
+            if columns.len() != self.layers {
+                return Err(DecodeFault::Engine {
+                    detail: format!(
+                        "the column hold retained {} of {} layers",
+                        columns.len(),
+                        self.layers
+                    ),
+                });
+            }
+            self.held_columns = Some(columns);
+        }
         Ok(())
     }
 
     /// Hand back what has accumulated and start empty.
     pub fn drain(&mut self) -> Reduction {
         std::mem::take(&mut self.reduction)
+    }
+
+    /// Arm or disarm the column hold, per the open's one ask.
+    pub fn set_hold_columns(&mut self, hold: bool) {
+        self.hold_columns = hold;
+        if !hold {
+            self.staged_columns.clear();
+            self.held_columns = None;
+        }
+    }
+
+    /// The last committed forward's columns, taken once: the draw site
+    /// calls this at the moment it reads the distribution, so what it
+    /// takes is the forward that feeds the draw.
+    pub fn take_columns(&mut self) -> Option<Vec<Vec<f32>>> {
+        self.held_columns.take()
     }
 
     /// Hold the first fault and let the later ones pass.
@@ -160,6 +205,7 @@ impl TapState {
         // ubatch before it and is not the position this decode will sample.
         if layer == 0 {
             self.staging = Reduction::new();
+            self.staged_columns.clear();
         }
         let node = unsafe { &*tensor };
         // **The value is f32 or the tap says so.** The residual stream is
@@ -230,6 +276,13 @@ impl TapState {
         // the absence the fault rule forbids.
         if let Err(detail) = self.staging.fold(&self.column) {
             self.latch(format!("l_out-{layer}: {detail}"));
+        }
+        // **The column continues instead of dropping where the ask stood**,
+        // per Spec section 7's diagnostic clause: the same copy the norm
+        // was folded from, retained per layer, and no second capture
+        // exists.
+        if self.hold_columns {
+            self.staged_columns.push(self.column.clone());
         }
     }
 }

@@ -290,6 +290,7 @@ mod tests {
         selecting_markers: &[],
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: true,
+        taps_column: false,
     };
 
     const UNTAPPABLE: Declaration = Declaration {
@@ -301,6 +302,7 @@ mod tests {
         selecting_markers: &[],
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     };
 
     /// **An election a family cannot honor refuses at admit**, naming the

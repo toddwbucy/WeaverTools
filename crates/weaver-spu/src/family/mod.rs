@@ -46,6 +46,7 @@
 //!     selecting_markers: &[],
 //!     flush: weaver_spu::decoder::backend::FlushMechanism::TruncateToPosition,
 //!     taps_readout: true,
+//!     taps_column: false,
 //! };
 //! assert!(SPARSE.shards_across(4));
 //! assert!(!SPARSE.shards_across(2));
@@ -515,6 +516,15 @@ pub struct Declaration {
     /// is the expensive lie the admit judgment exists to prevent. Each flips in
     /// the act that stands its engine's tap up, and not before.
     pub taps_readout: bool,
+    /// **Whether this family's tap holds a column to answer**, per
+    /// `weaver-spu-Spec` section 7's diagnostic clause and charter section
+    /// 13.7: the GGUF tap's one-column copy can continue instead of
+    /// dropping, the native tap folds in place and holds none. Held to the
+    /// tap flag's own bar - declared only where the answer has been shown
+    /// on the engine that would serve it - so qwen2 declares it on the GGUF
+    /// answer shown first and every other family declares `false` until its
+    /// own act.
+    pub taps_column: bool,
 }
 
 impl Declaration {
@@ -576,6 +586,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: llama::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // **The llama architecture's second reading, and the entry that makes
@@ -597,6 +608,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // **The llama architecture's third reading.** Mistral Small 3.2
@@ -618,6 +630,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: mistral3::SELECTING_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         family: "qwen2",
@@ -633,6 +646,9 @@ pub const REGISTRY: &[Declaration] = &[
         // that tap up is code this program has not written - and the judge
         // reads the container beside this flag, per readout::judge.
         taps_readout: true,
+        // The GGUF tap's column answer, shown for this family first, per
+        // Spec section 7's diagnostic clause.
+        taps_column: true,
     },
     Declaration {
         // **Qwen3 declares its own architecture and renders the same ChatML
@@ -656,6 +672,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // **Qwen3's sparse sibling declares its own architecture**, so it is
@@ -671,6 +688,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // **Qwen3.5 declares its own architecture and renders the same ChatML
@@ -705,6 +723,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::ReestablishAndReprefill,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // The sparse sibling declares its own architecture again, so it is its
@@ -729,6 +748,7 @@ pub const REGISTRY: &[Declaration] = &[
         // device. This is the architecture the workshop serves, so the
         // election it grants is one an operator can actually make.
         taps_readout: true,
+        taps_column: false,
     },
     Declaration {
         // **The first entry that had to grow a module rather than cite one.**
@@ -758,6 +778,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: gemma4::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // **The same module as the qwen keys, and a different flush.** Its
@@ -785,6 +806,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::ReestablishAndReprefill,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // **The first family that names no role**, wrapping the user's text in
@@ -822,6 +844,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: mistral3::SELECTING_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // **The second contested architecture, and the first where a vendor's
@@ -846,6 +869,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: phi::TAG_RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // The separator row of the pair above, serving Phi-4 14B artifacts.
@@ -860,6 +884,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: phi::SEP_RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
     Declaration {
         // The key is what llama.cpp writes into `general.architecture`, which
@@ -873,6 +898,7 @@ pub const REGISTRY: &[Declaration] = &[
         selecting_markers: gpt_oss::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
         taps_readout: false,
+        taps_column: false,
     },
 ];
 
@@ -1261,6 +1287,7 @@ mod tests {
             selecting_markers: qwen2::RENDERED_MARKERS,
             flush: FlushMechanism::TruncateToPosition,
             taps_readout: true,
+            taps_column: false,
         };
         assert!(SPARSE.shards_across(1));
         assert!(!SPARSE.shards_across(2), "a bound would admit this");

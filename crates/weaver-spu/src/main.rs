@@ -666,6 +666,20 @@ fn serve_decode(
                     &turn,
                     generation_in_turn,
                 );
+                // **The column message, one per sampled position where the
+                // ask stood**, per the decode contract's third intermediate:
+                // it carries its position like the field's and closes
+                // nothing, and where the ask does not stand the session
+                // takes nothing and this closure never runs.
+                let mut on_column = |position: u64, layers: Vec<Vec<f32>>| {
+                    if stream_fatal.get() {
+                        return;
+                    }
+                    let frame = TokenAnswer::Column { position, layers };
+                    if send_answer(decode, &frame).is_err() {
+                        stream_fatal.set(true);
+                    }
+                };
                 let generated = match standing.session.append_and_generate(
                     &delta_tokens,
                     &stop,
@@ -673,6 +687,7 @@ fn serve_decode(
                     &mut on_token,
                     effective.field_depth.map(|d| d as usize),
                     &mut on_field,
+                    &mut on_column,
                     generation_seed,
                     effective.knobs.repetition_window as usize,
                 ) {
@@ -926,6 +941,20 @@ fn serve_decode(
                     &turn,
                     generation_in_turn,
                 );
+                // **The column message, one per sampled position where the
+                // ask stood**, per the decode contract's third intermediate:
+                // it carries its position like the field's and closes
+                // nothing, and where the ask does not stand the session
+                // takes nothing and this closure never runs.
+                let mut on_column = |position: u64, layers: Vec<Vec<f32>>| {
+                    if stream_fatal.get() {
+                        return;
+                    }
+                    let frame = TokenAnswer::Column { position, layers };
+                    if send_answer(decode, &frame).is_err() {
+                        stream_fatal.set(true);
+                    }
+                };
                 let generated = match standing.session.refeed(
                     &delta_tokens,
                     &path_tokens,
@@ -933,6 +962,7 @@ fn serve_decode(
                     &mut cancel,
                     effective.field_depth.map(|d| d as usize),
                     &mut on_field,
+                    &mut on_column,
                     generation_seed,
                     effective.knobs.repetition_window as usize,
                 ) {
