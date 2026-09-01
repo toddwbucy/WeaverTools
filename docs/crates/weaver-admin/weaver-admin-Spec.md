@@ -3,7 +3,16 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
-**Revised:** 2026-08-31, the permission members are this crate's to set.
+**Revised:** 2026-08-31, second of this date, the census counts what the
+file holds. Per the review seat on PR 393: section 10's totals move from
+thirty-four to thirty-eight and the perturbation count from fourteen to
+eighteen, this act's own record counted with the three that arrived
+uncounted from the doors and boundary acts, each named. Section 7's new
+clause gains the removal sentence its neighbours carry. The entry below
+gains the ordinal the convention asks for, which it was filed without.
+
+**Revised:** 2026-08-31, first of this date, the permission members are
+this crate's to set.
 Section 7 states that the construction writes `refeed_permission` from the
 resolved kind, granted under a diagnostic enter and cleared under a serving
 one, its sibling `column_permission` taking the same rule when that act
@@ -1584,7 +1593,9 @@ because the member parses with `default` - one type serving the declaration
 and the seam, per `weaver-types-Spec` section 2 as corrected 2026-08-31 -
 so an operator cannot grant what only the resolved kind derives, and a
 written `false` is overwritten indistinguishably from absence, the bound
-that parse buys. Per `weaver-spu-PRD` section 13.14.
+that parse buys. Per `weaver-spu-PRD` section 13.14. Perturbation: remove
+the permission check from the inventory and the granting declaration
+loads. Watched under exactly that removal.
 
 ```graph
 node: admin-granted-permission-refused-at-inventory
@@ -1962,11 +1973,20 @@ sentence listed it as unedged while its own record carried the edge.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-four records in all,
-fifteen tagged for review, fourteen for perturbation, three for the manifest,
+would sit apart from the prose that earns it. Thirty-eight records in all,
+fifteen tagged for review, eighteen for perturbation, three for the manifest,
 and two for a compile pin. The residency record moved from review to
-perturbation on 2026-08-06, when the code act gave it a test. **Two of the
-fourteen perturbation records name no removal anywhere in this document**:
+perturbation on 2026-08-06, when the code act gave it a test. **Three of the
+perturbation records arrived without this count moving**, with the doors act
+and the boundary acts of 2026-08-26 and 2026-08-28:
+`admin-access-rule-reaches-the-socket`,
+`admin-runtime-directory-mode-is-stated`, and
+`admin-boundary-reads-every-gid-the-worker-holds`. The fourth arrival,
+`admin-granted-permission-refused-at-inventory`, is this recount's own act,
+counted with the record it adds. Whether the three uncounted arrivals name
+their removals was not audited in this recount and is owed beside the two
+below. **Two of the eighteen perturbation records name no removal anywhere
+in this document**:
 `admin-unload-answers-after-confirmed-stop` and
 `admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
 named removal says a test exists and not what breaks it, which is the tag's whole
