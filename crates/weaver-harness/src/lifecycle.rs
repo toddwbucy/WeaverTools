@@ -1234,9 +1234,20 @@ impl Harness {
                 // serving trace into the store, and a replay reads the store
                 // through this same channel, which is the ask end whole -
                 // the third refusal, nothing writes back to what is under
-                // examination, per `weaver-diagnostic-PRD` section 2.
+                // examination, per `weaver-diagnostic-PRD` section 2. **The
+                // opener still crosses**, because the contract makes it the
+                // channel's first traffic on every standing, tee or no tee:
+                // the custodian reads its session bound from it, and a
+                // channel whose first line is an ask would have that ask
+                // eaten as an opener naming no session. The harness sends
+                // it here, the same rendering the tee would have sent.
                 None => {
-                    state_seam = Some(crate::state::StateSeam::new(channel));
+                    use std::io::Write;
+                    let mut channel = channel;
+                    let frame = weaver_trace::opener(&session.0, &election);
+                    if channel.write_all(frame.as_bytes()).is_ok() {
+                        state_seam = Some(crate::state::StateSeam::new(channel));
+                    }
                 }
             }
         }
