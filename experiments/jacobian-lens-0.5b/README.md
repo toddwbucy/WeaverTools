@@ -19,6 +19,13 @@ diagnostic record's `residual.column` capture through it.
   rank the actually-drawn token at or near top-1 across every position,
   which validates the position pairing, the layer convention, and the
   engine-vs-HF numerics in one number before any lens claim is made.
+  **The control gates the trajectories**: below `--min-top5` (default 0.9)
+  nothing is printed and the exit is nonzero naming the rate, the
+  no-reading-from-an-uncertified-replay rule one level down. The reader
+  also refuses a lens whose manifest names other weights (sha256 recomputed
+  against the model in hand) and a record whose columns pair with no
+  measurement, and it scopes every pairing by turn so a multi-bracket
+  record cannot alias positions across passes.
 
 ## What the first read reads
 

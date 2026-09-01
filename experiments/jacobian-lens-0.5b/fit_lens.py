@@ -48,8 +48,30 @@ def main():
 
     import torch, transformers, jlens
 
+    # The implementation's identity is resolved before any fitting work, and
+    # the imported package must come from the revision the manifest will
+    # record: an empty or mismatched revision reaching a finished fit would
+    # be an artifact whose identity lies.
+    rev = subprocess.run(
+        ["git", "-C", JLENS_REPO, "rev-parse", "HEAD"],
+        capture_output=True, text=True,
+    )
+    jlens_rev = rev.stdout.strip()
+    if rev.returncode != 0 or not jlens_rev:
+        raise SystemExit(f"the jlens revision does not resolve: {rev.stderr.strip()}")
+    if not jlens.__file__.startswith(JLENS_REPO):
+        raise SystemExit(
+            f"the imported jlens is {jlens.__file__}, not the repo the "
+            f"manifest records ({JLENS_REPO})"
+        )
+
     started = time.time()
     prompts = corpus_prompts(args.prompts)
+    if len(prompts) != args.prompts:
+        raise SystemExit(
+            f"the corpus yielded {len(prompts)} of {args.prompts} prompts: "
+            "a partial selection would fit a lens the manifest misdescribes"
+        )
     prompt_hash = hashlib.sha256("\n\x00".join(prompts).encode()).hexdigest()
     print(f"corpus: {len(prompts)} prompts, sha256 {prompt_hash[:16]}", flush=True)
 
@@ -68,10 +90,6 @@ def main():
     )
     lens.save(f"{OUT}/jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt")
 
-    jlens_rev = subprocess.run(
-        ["git", "-C", JLENS_REPO, "rev-parse", "HEAD"],
-        capture_output=True, text=True,
-    ).stdout.strip()
     manifest = {
         "lens": "jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt",
         "fitted_for": {
