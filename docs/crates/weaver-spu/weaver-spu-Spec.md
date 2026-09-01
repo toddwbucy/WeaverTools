@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-31, third of this date, the re-feed drive is
+represented. Section 4 gains the drive on the paths the generation already
+walks per charter 13.14: the append's machinery with the draw's destination
+changed, the recorded token appended whatever the draw said, the recomputed
+identifiers in the measurement's output slots, nothing streamed, the answer
+under the floor's own arm. No new assertion is declared, the drive being
+unbuilt and its watches the building act's, per the pattern the unasked
+vector set.
+
 **Revised:** 2026-08-31, second of this date, the refusal cites the registry
 whole. Section 7's open-time refusal names 13.7's three arms by citation
 rather than restating two, and the bound's gloss counts per append rather
@@ -1406,6 +1415,28 @@ removes anything from a trace. The record keeps the elided material and
 gains the `elision` event, which carries the bounds the loop named beside
 the resident counts the seam returned, authored by the harness from its own
 ask.
+
+### 4.6 The re-feed drive
+
+**Represented on the paths the generation already
+walks**, per charter section 13.14 and the decode contract's sixth
+exchange, added 2026-08-31. The drive is the append's machinery with the
+draw's destination changed: the delta appends as an append appends, the
+per-position loop runs the derived seed of section 8.5 and the effective
+knobs of section 8 through the sampler exactly as a generation runs them,
+and where a generation emits the drawn token and streams its piece, the
+drive records the draw's identifier into the measurement's output slots
+and appends the recorded token instead, streaming nothing. The field and
+the column intermediates cross where their elections stand, on the same
+sites the generation crosses them. The answer wraps the generation shape
+under the floor's own `ReFed` arm, the variant and not the payload being
+what keeps a supplied path out of a sampled path's clothes. The
+permission is judged where every admitted member is judged, and the
+two-arm registry is the charter's, cited rather than restated. **The
+watches are the building act's**, per the pattern section 7's unasked
+vector set: the drive is unbuilt, its instruments cannot exist before it,
+and the act that builds it buys them in the same motion or their tags
+stand as the lie 13.7 refuses.
 
 ## 5. The family libraries
 

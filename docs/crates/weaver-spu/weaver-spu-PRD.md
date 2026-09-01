@@ -7,6 +7,16 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-08-31, third of this date, the re-feed drive is chartered.
+Section 13.14 lands per `diagnostic-replay-loop` section 2's owed act: one
+drive per recorded generation, the draw computed as a generation would
+compute it and the recorded token appended whatever the draw said, no token
+of the drive's own, the answer its own type so a supplied path can never
+wear a sampled one's clothes, the permission admin's from the binding's
+kind named individually beside the column's, and a two-arm registry the
+decode contract cites. Section 11's owed watch widens to both never-asks
+disciplines.
+
 **Revised:** 2026-08-31, second of this date, the registry is whole and the
 gloss counts per append. The post-merge review's findings: 13.7's enforcement
 election now holds the open's refusal registry, three arms and no others, the
@@ -828,10 +838,10 @@ register. Nothing below is applied by this document.
 An entry leaves this register when the edit lands, because a ruling recorded and not
 landed reads as settled and an entry landed and not cleared reads as outstanding.
 
-- **The harness's never-asks assertion**, owed by 13.7 as amended 2026-08-31:
-  the discipline that a serving harness never writes the column ask is
-  watched on the harness, and its assertion lands with the code act that
-  builds the ask.
+- **The harness's never-asks assertions**, owed by 13.7 and 13.14 as amended
+  2026-08-31: the discipline that a serving harness never writes the column
+  ask and never opens the re-feed drive is watched on the harness, and each
+  assertion lands with the code act that builds its ask.
 - `open-items.md`, the note owed to this crate's stub: discharged by section 2 of this
   charter carrying its substance directly, so the item leaves the list rather than
   moving into the stub it was owed to. Named by substance because that list renumbers.
@@ -1453,6 +1463,49 @@ the record's edits, the flushes and now the elisions, rather than
 accumulating contributions naively, which is the accumulation rule
 `weaver-trace-PRD` section 3.2 already carries meeting a second kind of
 edit.
+
+### 13.14 The re-feed drive
+
+**The replay's forward passes run through this crate, and the drive that
+runs them is this clause's**, added 2026-08-31 per `diagnostic-replay-loop`
+section 2, which named it as the one act standing between the diagnostic
+papers and a running null replay. One drive per recorded generation: the
+recorded delta appends, the forward passes run along the recorded token
+path, and at each position the draw is computed exactly as a generation
+would compute it - the derived seed of 13.8, the effective knobs, the
+sampler consuming the distribution - **and the recorded token appends
+whatever the draw said**. A divergent draw is a finding carried in the
+answer, never a fork in the path, so every later position stays comparable
+to its recorded self instead of drifting behind the first divergence.
+
+**The drive draws no token of its own, and the answer's type is what makes
+that checkable.** No token intermediate crosses, there being no drawn piece
+to stream, while the field and the column cross where their elections
+stand, which is what makes this drive the reader pass's substrate. The
+answer carries the measurement with the recomputed draw identifiers where
+sampled identifiers would sit, and it is its own answer and never a
+generation's: a supplied path in a sampled path's clothes is the collapse
+the protoautonomic design names as the defect class, and the answer's own
+type makes it unrepresentable rather than discouraged.
+
+**The permission is admin's, set from the binding's kind, named
+individually beside the column's per the no-bundle rule.** A serving
+harness never opens the drive and cannot usefully lie about it: the drive
+refuses, typed, where the instruction carries no admitted re-feed
+permission. **The registry is this clause's, two arms and no others**: no
+admitted permission, and an empty recorded path, a replay of nothing
+wearing an exchange. The session and ordering refusals of the seam cover
+the drive as they cover every ask and are no arm of this registry. The
+harness's own discipline is watched on the harness beside the column ask's
+watch, its assertion landing with the code act, named in section 11 as
+owed.
+
+**What the drive does not do bounds it the way the column's bound does.**
+It replays what a record holds and nothing else: no re-render through a
+template that may have changed, per the ruling of 2026-08-12 that the
+record carries the rendered form precisely so a replay does not, and no
+sampling of a fresh path, that being a different instrument this charter
+does not hold.
 
 ## 14. The family libraries
 

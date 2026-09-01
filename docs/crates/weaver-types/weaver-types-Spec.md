@@ -107,6 +107,17 @@ The span is state and never the record.
 field's option, per `weaver-types-PRD` section 2.1's clause of this date on
 issue #258. A flag rather than an option because a per-position reading has
 no size to declare.
+**Revised:** 2026-08-31, second of this date, the re-feed takes its shapes.
+Per `weaver-spu-PRD` section 13.14 and the decode contract's sixth exchange.
+`TokenDirective` gains `ReFeed`, the turn, the recorded delta, and the
+recorded path. `TokenAnswer` gains `ReFed`, carrying the generation shape
+under its own arm so a supplied path can never wear a sampled path's
+clothes: the payload is shared and the variant is not, which is the whole
+of what the type buys. `DecoderInstruction` gains `refeed_permission`,
+admin's member beside `column_permission`, named individually per the
+no-bundle rule, set from the binding's kind, and refused in a declaration
+under the unknown-field rule like its sibling.
+
 **Revised:** 2026-08-31, the column takes its shapes. Per the operator's
 ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as amended.
 `DecoderInstruction` gains `column_permission`, admin's member and never the
@@ -520,6 +531,7 @@ pub struct DecoderInstruction {
     pub field_election: Option<FieldElection>,
     pub surprisal_election: bool,
     pub column_permission: bool,
+    pub refeed_permission: bool,
     pub identity: Vec<weaver_traits::Message>,
     pub tunable_values: BTreeMap<String, f64>,
 }
@@ -1621,6 +1633,11 @@ pub enum TokenDirective {
         turn: TurnKey,
         delta: Vec<Message>,
     },
+    ReFeed {
+        turn: TurnKey,
+        delta: Vec<Message>,
+        path: Vec<u32>,
+    },
     Cancel { turn: TurnKey },
     Flush { keep: u64 },
     Elide { from: u64, to: u64 },
@@ -1632,6 +1649,7 @@ pub enum TokenAnswer {
     Field { position: u64, ranked: Vec<Candidate>, realized: u32 },
     Column { position: u64, layers: Vec<Vec<f32>> },
     Generated(Generation),
+    ReFed(Generation),
     AtRest,
     Flushed {
         resident_before: u64,

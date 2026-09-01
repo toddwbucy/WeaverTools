@@ -58,8 +58,10 @@ on, which is what the charter means by the class being authored once.
 declaration names this loop the way any declaration names its loop, riding `loop_file`
 per `weaver-harness-PRD` section 2, and it runs at the run's opening rather than on an
 arriving frame, because under a diagnostic binding no frame can arrive, there being no
-Gate. **That entry is owed and section 2 says so**, `weaver-harness-Spec` section 6.2
-granting the seat on work that arrives owed an answer and on nothing else. An earlier
+Gate. **That entry landed 2026-08-31**: `weaver-harness-Spec` section 6.2
+carries the second criterion beside the frame's, the seat granted once at
+the run's opening on the run itself as the work, the sealed preload having
+arrived owed its certification. An earlier
 form of this sentence rested it on the precedent the context-injection loop set, which
 does not carry it: that loop gained a port on a seat a turn had already granted, and a
 turn begins at the gate and nowhere else. The loop composes what the seat grants and
@@ -85,13 +87,11 @@ The operator sequences three acts, and the loop is the third:
    signature, deferred per `weaver-harness-Spec` section 6.2 and listed in
    that Spec's section 9, and this document records the difference rather
    than inventing a lifecycle event for it, a declared trigger nothing
-   raises being the empty joint apex section 9 refuses. **The seat's
-   chartered criterion does not reach this case and that is owed rather
-   than assumed here.** Section 6.2 grants the seat "on work that arrives
-   owed an answer, and on nothing else", which a diagnostic binding never
-   sees, having no Gate for work to arrive through. Widening that criterion
-   or writing a second one beside it is the harness Spec's act, named here
-   because this loop is the first case to need it.
+   raises being the empty joint apex section 9 refuses. **The seat's second
+   criterion landed 2026-08-31 in section 6.2**, this loop having been the
+   creditor that named the gap: under a diagnostic binding the seat is
+   granted once at the run's opening, on the run itself as the work, and
+   the two criteria partition by binding with neither widening the other.
 2. **Run the driver.** `weaver-analysis` parses the operator-held record
    outside the agent, dials the preload door as an operator principal,
    sends the election and the distillates, and seals. **What the election
@@ -133,15 +133,15 @@ identity is verified against the recorded token identifiers of
 claim exercised rather than assumed, and a mismatch is a failed
 certification and not a lesser reading.
 
-**The re-feed exchange on the decode seam is owed and named here rather
-than assumed.** The serving seam's append-and-generate samples, and a
-replay samples nothing: what the null replay needs is a drive that appends
-the recorded path, runs the forward passes, emits the measurements, and
-draws no token of its own. That drive does not exist on
-`weaver-harness-spu-decode-contract` today. It is the one act standing
-between these papers and a running null replay, it lands on the decode
-seam with the SPU and the harness merging, and this document's walk is
-written against it as owed. Nothing else in this walk waits on it.
+**The re-feed exchange landed 2026-08-31 and this walk runs against it.**
+The serving seam's append-and-generate samples, and a replay samples
+nothing: the drive is the decode contract's sixth exchange under
+`weaver-spu-PRD` section 13.14, appending the recorded path, running the
+forward passes, computing each draw as a generation would and appending
+the recorded token whatever the draw said, answering in its own type with
+the recomputed draws in the measurement. An earlier form of this paragraph
+named the drive as the one act standing between these papers and a running
+null replay, and that act is the one that cleared it.
 
 ## 3. Certification, walked
 
