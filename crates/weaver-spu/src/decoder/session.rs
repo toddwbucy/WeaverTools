@@ -785,6 +785,75 @@ mod tests {
         fn close(&mut self) {}
     }
 
+    /// **The re-feed appends the recorded token whatever the draw said, and
+    /// the draws land in the answer's output slots.** The scripted backend
+    /// draws one path while the recorded path is another, so the two are
+    /// distinguishable at every position: what became resident must be the
+    /// recorded path and the terminator, the drawn identifiers must ride
+    /// `Generated::tokens`, and the signals must count one measurement per
+    /// recorded position, per `weaver-spu-Spec` section 4.6.
+    ///
+    /// Perturbation: append the draw instead of the recorded token in
+    /// `refeed` and this fails, the decode log carrying the script where the
+    /// path belongs. Watched under exactly that change.
+    ///
+    /// conforms: spu-refeed-appends-the-recorded-path
+    #[test]
+    fn the_refeed_appends_the_recorded_token_whatever_the_draw_said() {
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(2), TokenId(3)],
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+            false,
+        );
+        session.open(&[TokenId(4)]).expect("the prefix lands");
+        let generated = session
+            .refeed(
+                &[TokenId(5)],
+                &[TokenId(7), TokenId(8), TokenId(9)],
+                TokenId(0),
+                &mut NeverCancels,
+                None,
+                &mut |_, _, _| {},
+                11,
+                64,
+            )
+            .expect("the re-feed runs");
+
+        assert_eq!(
+            generated.tokens,
+            vec![TokenId(1), TokenId(2), TokenId(3)],
+            "the recomputed draws fill the output slots"
+        );
+        let decoded = log.borrow().decoded.clone();
+        assert_eq!(
+            decoded,
+            vec![
+                (vec![TokenId(4)], 0),
+                (vec![TokenId(5)], 1),
+                (vec![TokenId(7)], 2),
+                (vec![TokenId(8)], 3),
+                (vec![TokenId(9)], 4),
+                (vec![TokenId(0)], 5),
+            ],
+            "the recorded token appends at every position, then the terminator, never the draw"
+        );
+        assert_eq!(
+            generated.signals.steps(),
+            3,
+            "one measurement per recorded position"
+        );
+        assert_eq!(
+            log.borrow().reseeds,
+            vec![(11, vec![TokenId(4), TokenId(5)])],
+            "the sampler reseeds after the prefill exactly as a generation does"
+        );
+    }
+
     /// **A step that cannot be measured makes the whole measurement absent**,
     /// not a vector one short.
     ///

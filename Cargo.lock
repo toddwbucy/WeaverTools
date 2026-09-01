@@ -3766,6 +3766,7 @@ dependencies = [
  "nix",
  "pyo3",
  "serde_json",
+ "weaver-diagnostic",
  "weaver-trace",
  "weaver-traits",
  "weaver-types",
