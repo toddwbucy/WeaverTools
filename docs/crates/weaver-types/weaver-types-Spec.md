@@ -5,6 +5,58 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-08-31, fifth of this date, the permission members take a
+parse the seam survives. The unknown-field mechanism the second entry of
+this date elected for `refeed_permission`, and the column entry for its
+sibling, is withdrawn as falsified by the build: one type serves the
+declaration and the instruction, so a parse that refuses the member refuses
+the instruction admin authored at the next seam, and the first admit across
+the coded seam died at exactly that parse. Both members take `default`
+instead, and the declaration's refusal moves to admin's inventory, the
+resolution site, which refuses a declaration granting either member as
+`ConfigInvalid` naming the field, per `weaver-admin-Spec` section 7. A
+written `false` is inert, overwritten at construction from the resolved
+kind and indistinguishable from absence, which is the bound `default` buys
+and the reason the refusal is of the grant alone. This date's entries also
+move to the banner's head in this act, having accumulated below entries of
+2026-08-21, where newest-first does not file them.
+**Revised:** 2026-08-31, fourth of this date, the registry's refusals are
+typed. `TokenRefusal` gains `RefeedPermissionAbsent` and `RefeedPathEmpty`,
+the two arms of `weaver-spu-PRD` section 13.14's registry, each a unit
+variant because the fact refused carries no value the record holds nowhere
+else. `TokenAsk` gains `ReFeed`, so the clerking rule of 2026-08-22 names
+the refused ask like every other.
+**Revised:** 2026-08-31, third of this date, the re-feed carries the rendered
+form. `ReFeed`'s middle member read `delta: Vec<Message>`, which would route
+the replay through the family renderer - the exact re-rendering the ruling
+of 2026-08-12 forbids, the record holding the rendered form precisely so a
+replay does not re-render through a template that may have changed. The
+member is `rendered: String`, the contribution as `model.request` recorded
+it, tokenized and appended with no family rendering on the way.
+**Revised:** 2026-08-31, second of this date, the re-feed takes its shapes.
+Per `weaver-spu-PRD` section 13.14 and the decode contract's sixth exchange.
+`TokenDirective` gains `ReFeed`, the turn, the recorded delta, and the
+recorded path. `TokenAnswer` gains `ReFed`, carrying the generation shape
+under its own arm so a supplied path can never wear a sampled path's
+clothes: the payload is shared and the variant is not, which is the whole
+of what the type buys. `DecoderInstruction` gains `refeed_permission`,
+admin's member beside `column_permission`, named individually per the
+no-bundle rule, set from the binding's kind, and refused in a declaration
+under the unknown-field rule like its sibling.
+
+**Revised:** 2026-08-31, the column takes its shapes. Per the operator's
+ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as amended.
+`DecoderInstruction` gains `column_permission`, admin's member and never the
+declaration's: admin sets it from the binding's kind, and the parse refuses
+it in a declaration under the unknown-field rule, so an operator cannot
+write what only the binding may derive. `TokenDirective::Open` gains
+`column_ask`, the once-at-open cadence that charter clause elects.
+`TokenAnswer` gains `Column`, the decode seam's third intermediate, carrying
+its position like `Field` and the layers' values layer-major, crossing as
+bare JSON under section 4.4's provisional encoding, the efficient framing
+staying `weaver-spu-Spec` section 12's open election. Absent where the ask
+is absent and never present-and-empty, the field's own rule.
+
 **Revised:** 2026-08-28, sixth of this date, the identity's refusals are
 enumerated and a fourth is added. Sections 2 and 5 state that a message
 carries at least one `Text` block and that each carries text: an empty string
@@ -107,37 +159,6 @@ The span is state and never the record.
 field's option, per `weaver-types-PRD` section 2.1's clause of this date on
 issue #258. A flag rather than an option because a per-position reading has
 no size to declare.
-**Revised:** 2026-08-31, third of this date, the re-feed carries the rendered
-form. `ReFeed`'s middle member read `delta: Vec<Message>`, which would route
-the replay through the family renderer - the exact re-rendering the ruling
-of 2026-08-12 forbids, the record holding the rendered form precisely so a
-replay does not re-render through a template that may have changed. The
-member is `rendered: String`, the contribution as `model.request` recorded
-it, tokenized and appended with no family rendering on the way.
-**Revised:** 2026-08-31, second of this date, the re-feed takes its shapes.
-Per `weaver-spu-PRD` section 13.14 and the decode contract's sixth exchange.
-`TokenDirective` gains `ReFeed`, the turn, the recorded delta, and the
-recorded path. `TokenAnswer` gains `ReFed`, carrying the generation shape
-under its own arm so a supplied path can never wear a sampled path's
-clothes: the payload is shared and the variant is not, which is the whole
-of what the type buys. `DecoderInstruction` gains `refeed_permission`,
-admin's member beside `column_permission`, named individually per the
-no-bundle rule, set from the binding's kind, and refused in a declaration
-under the unknown-field rule like its sibling.
-
-**Revised:** 2026-08-31, the column takes its shapes. Per the operator's
-ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as amended.
-`DecoderInstruction` gains `column_permission`, admin's member and never the
-declaration's: admin sets it from the binding's kind, and the parse refuses
-it in a declaration under the unknown-field rule, so an operator cannot
-write what only the binding may derive. `TokenDirective::Open` gains
-`column_ask`, the once-at-open cadence that charter clause elects.
-`TokenAnswer` gains `Column`, the decode seam's third intermediate, carrying
-its position like `Field` and the layers' values layer-major, crossing as
-bare JSON under section 4.4's provisional encoding, the efficient framing
-staying `weaver-spu-Spec` section 12's open election. Absent where the ask
-is absent and never present-and-empty, the field's own rule.
-
 **Revised:** 2026-08-21, the field takes its shapes. `DecoderInstruction`
 gains `field_election`, optional because the election is, carrying the
 depth the operator declared per `weaver-spu-PRD` section 13.11.
@@ -1686,6 +1707,7 @@ pub enum RefusalRecord {
 pub enum TokenAsk {
     Open,
     AppendAndGenerate,
+    ReFeed,
     Cancel,
     Flush { keep: u64 },
     Elide { from: u64, to: u64 },
@@ -1707,6 +1729,8 @@ pub enum TokenRefusal {
     Overflow { resident: u64, requested: u64, capacity: u64 },
     MalformedDelta,
     UnremovableSpan { from: u64, to: u64, prefix: u64, resident: u64 },
+    RefeedPermissionAbsent,
+    RefeedPathEmpty,
 }
 ```
 

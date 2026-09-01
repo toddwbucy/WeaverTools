@@ -3,6 +3,16 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-08-31, the permission members are this crate's to set.
+Section 7 states that the construction writes `refeed_permission` from the
+resolved kind, granted under a diagnostic enter and cleared under a serving
+one, its sibling `column_permission` taking the same rule when that act
+lands, and that the inventory refuses a declaration granting either as
+`ConfigInvalid` naming the field. The members parse with `default` because
+one type serves the declaration and the seam, so a parse-level refusal
+would also refuse the instruction this crate authors, per `weaver-spu-PRD`
+section 13.14 and `weaver-types-Spec` section 2 as corrected this date.
+
 **Revised:** 2026-08-28, second of this date, the access rule is checked
 against the mode that carries it. Section 6 states that a declaration whose
 `allowed-uids` name a peer the gate's `0770` socket turns away refuses at the
@@ -1563,6 +1573,27 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-kind-mismatch-refused-at-inventory
+```
+
+**The permission members are set here and never read from the file.** The
+construction writes `refeed_permission` from the resolved kind, granted
+under a diagnostic enter and cleared under a serving one, and its sibling
+`column_permission` takes the same rule when its act lands. The inventory
+refuses a declaration that grants either, `ConfigInvalid` naming the field,
+because the member parses with `default` - one type serving the declaration
+and the seam, per `weaver-types-Spec` section 2 as corrected 2026-08-31 -
+so an operator cannot grant what only the resolved kind derives, and a
+written `false` is overwritten indistinguishably from absence, the bound
+that parse buys. Per `weaver-spu-PRD` section 13.14.
+
+```graph
+node: admin-granted-permission-refused-at-inventory
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-granted-permission-refused-at-inventory
 ```
 
 **The run's identity is minted here and the session's is read.** They are two
