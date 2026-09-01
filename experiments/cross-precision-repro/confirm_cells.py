@@ -1206,12 +1206,20 @@ def main():
     # is not a reproduction result and must not exit 0. `closings` is bound
     # only when every cell ran, so an early abort exits nonzero through the
     # reproduced check alone.
+    #
+    # **A stably unreadable reader fails the gate, and that is a decision
+    # rather than an inheritance**, named per #399's review: a box whose
+    # config names no repo cannot read its toolchain at either end, and a
+    # run that cannot read its toolchain cannot certify that its window
+    # held. Every committed config names a repo. The alternative #379
+    # sketched - is_reading distinguishing a partial reading from an
+    # unusable one - stays open there for the reader that earns it.
     reproduced = all(r["verdict"] == "REPRODUCED" for r in reports) and reports
     window_held = all(
-        v["status"] == "unchanged"
+        v.get("status") == "unchanged"
         for r in reports
         for v in (r["metadata"].get("provenance_at_close") or {}).values()
-        if isinstance(v, dict) and "status" in v
+        if isinstance(v, dict)
     )
     if reproduced and not window_held:
         print("cells reproduced but the provenance window did not hold quiet"

@@ -408,7 +408,7 @@ def main():
 
     try:
         bindings = base.device_bindings(cfg, run_started)
-    except caught as e:  # noqa: BLE001 - any failure degrades to a note
+    except (Exception, KeyboardInterrupt) as e:  # noqa: BLE001 - degrades to a note
         # `_why` here too: widening this catch to include `KeyboardInterrupt`
         # opened the empty-reason path, `journalctl` over a seven-hour window
         # being a call a Ctrl-C can land in.
@@ -435,7 +435,20 @@ def main():
         f"{len(errors)} errors")
     for ch, b in sorted(by_character.items()):
         log(f"  {ch}: {b['ok']}/{b['n']}")
-    sys.exit(0 if total and good == total else 1)
+    # **The window joins the verdict here too**, per #399's review: the
+    # confirm and trace-gen drivers already exit 1 over green sessions when
+    # the provenance moved, and one seam answering the same question two
+    # ways at the exit code is #379's opening defect relocated. The
+    # serving-device envelope is not in the gate: it is not a two-read
+    # close, and a multi-device report is its own field rather than a
+    # moved window.
+    window_held = all(
+        (summary[k] or {}).get("status") == "unchanged"
+        for k in ("engine_libraries", "weaver_binaries", "toolchain"))
+    if total and good == total and not window_held:
+        log("sessions reproduced but the provenance window did not hold"
+            " quiet - not a reproduction result")
+    sys.exit(0 if total and good == total and window_held else 1)
 
 
 if __name__ == "__main__":

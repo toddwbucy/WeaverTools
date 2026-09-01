@@ -407,6 +407,10 @@ def run_the_night(cfg, args, sessions, sweeps, schedule, provenance,
             essence=base.close_whole),
     }
     provenance["provenance_at_close"] = closings
+    # Deposited the moment it is attached: the analysis loop below re-reads
+    # deposits and can raise, and the close is the most expensive read of
+    # the night - a raise there must not cost it.
+    deposit_report()
     unquiet = {k: v["status"] for k, v in closings.items()
                if v["status"] != "unchanged"}
     if unquiet:
