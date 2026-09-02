@@ -31,13 +31,22 @@ fn two_captures_of_one_run_are_identical() {
     }
 }
 
-/// **A changed value diverges and names where.**
+/// **One bit of difference diverges, and the comparison names where.**
+/// The value is moved by a single representable step, which is the whole
+/// of the exactness claim: a tolerance wide enough to admit arithmetic
+/// noise would admit this too, and the bar the measurement bought is
+/// exact.
+///
+/// Perturbation: relax the comparison to a relative epsilon - the shape a
+/// tolerance-bearing implementation takes - and this fails, the one-bit
+/// difference passing as identical. Watched under exactly that change.
 #[test]
-fn a_changed_value_diverges_naming_the_site() {
+fn one_bit_of_difference_diverges_naming_the_site() {
     let a = Capture::of(&parse_record(CERTIFIED));
     let mut b = Capture::of(&parse_record(REPEAT));
     let key = b.columns.keys().next().cloned().expect("a column");
-    b.columns.get_mut(&key).unwrap()[0][0] += 1.0;
+    let held = b.columns[&key][0][0];
+    b.columns.get_mut(&key).unwrap()[0][0] = f32::from_bits(held.to_bits() ^ 1);
     match compare(&a, &b) {
         Comparison::Diverged { position, layer, .. } => {
             assert_eq!(position, key.1);
