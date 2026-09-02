@@ -21,6 +21,38 @@ pub struct AnalystInputs {
     pub field_depth: Option<u32>,
     pub surprisal: bool,
     pub sink_path: String,
+    /// **The sink's shape is part of the analyst's input**, per
+    /// `weaver-analysis-Spec` section 3: a pipe elects that the run
+    /// retains nothing and the reading is taken as the stream drains, a
+    /// file declines that licence and keeps a capture. A derivation that
+    /// could write only one shape would make the election this crate's.
+    pub sink_kind: SinkKind,
+}
+
+/// The shapes admin opens, of those an analyst elects here. The floor
+/// carries a third, the socket, which no reading has asked for yet and
+/// which this crate does not derive rather than deriving it untested.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SinkKind {
+    File,
+    Pipe,
+}
+
+impl SinkKind {
+    pub fn parse(text: &str) -> Option<SinkKind> {
+        match text {
+            "file" => Some(SinkKind::File),
+            "pipe" => Some(SinkKind::Pipe),
+            _ => None,
+        }
+    }
+
+    fn declared(self) -> &'static str {
+        match self {
+            SinkKind::File => "file",
+            SinkKind::Pipe => "pipe",
+        }
+    }
 }
 
 /// Why a derivation refused, naming the member: disagreement is a question
@@ -154,7 +186,10 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
     // a guess.
     declaration.push_str("tool-set: []\n");
     declaration.push_str("permission-mode: ask\n");
-    declaration.push_str("trace-sink:\n  kind: file\n");
+    declaration.push_str(&format!(
+        "trace-sink:\n  kind: {}\n",
+        inputs.sink_kind.declared()
+    ));
     declaration.push_str(&format!("  path: {}\n", serde_json::json!(inputs.sink_path)));
     declaration.push_str("  create: true\n");
     Ok(declaration)

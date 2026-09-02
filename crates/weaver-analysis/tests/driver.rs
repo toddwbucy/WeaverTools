@@ -22,6 +22,7 @@ fn inputs() -> AnalystInputs {
         field_depth: None,
         surprisal: false,
         sink_path: "/tmp/diag.ndjson".to_string(),
+        sink_kind: weaver_analysis::SinkKind::File,
     }
 }
 
@@ -103,6 +104,29 @@ fn a_disagreeing_member_refuses_rather_than_picks() {
         ),
         "disagreement refuses naming the member: {refused:?}"
     );
+}
+
+/// **The sink's shape is the analyst's, and the derivation writes what was
+/// elected.** A pipe elects that the run retains nothing, a file declines
+/// that licence, and a derivation that could write only one shape would
+/// make the election this crate's.
+///
+/// Perturbation: hardcode the file spelling and this fails on the pipe
+/// case. Watched under exactly that change.
+#[test]
+fn the_derived_sink_carries_the_shape_the_analyst_elected() {
+    let piped = AnalystInputs {
+        sink_kind: weaver_analysis::SinkKind::Pipe,
+        ..inputs()
+    };
+    let declaration =
+        weaver_analysis::derive(&parse_record(SOURCE), &piped).expect("the record is whole");
+    assert!(declaration.contains("kind: pipe"), "{declaration}");
+    assert!(declaration.contains("create: true"), "a pipe is created where absent");
+
+    let filed =
+        weaver_analysis::derive(&parse_record(SOURCE), &inputs()).expect("the record is whole");
+    assert!(filed.contains("kind: file"), "{filed}");
 }
 
 /// **A record holding two sessions or two runs refuses before any member

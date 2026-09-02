@@ -204,3 +204,146 @@ pub fn compare(left: &Capture, right: &Capture) -> Comparison {
         values,
     }
 }
+
+/// The capture read as the stream drains, per `weaver-analysis-Spec`
+/// section 5, holding one turn at a time.
+///
+/// **What it holds is bounded by the turn in flight and the analyst's
+/// named positions.** The control needs each position's final-layer
+/// column against the token that position drew, and the drawn tokens
+/// arrive with the turn's measurement after its columns, so the final
+/// layers of the turn in flight are held until that measurement pairs
+/// them - then the ranks are taken by the caller's own reading and the
+/// columns are dropped. The trajectory's columns are held only for the
+/// positions the analyst named. So a reading over a pipe costs one turn's
+/// final layers and the named positions, never the record.
+pub struct Streaming<'a> {
+    wanted: Vec<u64>,
+    /// The turn in flight: its positions in landing order, and the final
+    /// layer of each, held until the measurement names their tokens.
+    pending: Vec<(u64, Vec<f32>)>,
+    /// Full columns for the named positions, which the trajectory reads.
+    pub kept: BTreeMap<Key, Vec<Vec<f32>>>,
+    /// What the caller does with each paired position as it lands: the
+    /// final-layer column and the token drawn there.
+    paired: &'a mut dyn FnMut(&Key, &[f32], u32),
+    /// The record's own outcome, which gates whether a reading is
+    /// produced at all. `None` until a `replay.closed` lands.
+    pub outcome: Option<String>,
+    pub opened: bool,
+    /// The run the opened bracket belongs to. **A close carries its own
+    /// run**, and a record may hold several brackets, so the close that
+    /// ends this reading is the one whose run opened it: another run's
+    /// outcome certifying these columns would be one pass vouching for
+    /// another's.
+    run: Option<String>,
+}
+
+impl<'a> Streaming<'a> {
+    pub fn new(
+        wanted: Vec<u64>,
+        paired: &'a mut dyn FnMut(&Key, &[f32], u32),
+    ) -> Streaming<'a> {
+        Streaming {
+            wanted,
+            pending: Vec::new(),
+            kept: BTreeMap::new(),
+            paired,
+            outcome: None,
+            opened: false,
+            run: None,
+        }
+    }
+
+    /// Whether the record's bracket closed certified, which is the only
+    /// outcome a reading may be produced over.
+    pub fn certified(&self) -> bool {
+        self.outcome.as_deref() == Some("certified")
+    }
+}
+
+impl crate::stream::Reader for Streaming<'_> {
+    fn event(&mut self, event: &crate::record::Event) -> crate::stream::Step {
+        use crate::stream::Step;
+        let turn = event.envelope.turn.clone();
+        match event.envelope.kind.as_str() {
+            "replay.opened" => {
+                self.opened = true;
+                self.run = Some(event.envelope.run.clone());
+            }
+            "residual.column" => {
+                let Some(payload) = event.payload.as_deref() else {
+                    return Step::Continue;
+                };
+                let Some(position) =
+                    value_at(payload, "position").and_then(|r| r.get().parse::<u64>().ok())
+                else {
+                    return Step::Continue;
+                };
+                let Some(values) = value_at(payload, "values")
+                    .and_then(|r| serde_json::from_str::<Vec<Vec<f32>>>(r.get()).ok())
+                else {
+                    return Step::Continue;
+                };
+                let Some(final_layer) = values.last().cloned() else {
+                    return Step::Refuse(format!(
+                        "the column at position {position} holds no layers"
+                    ));
+                };
+                if self.wanted.contains(&position) {
+                    self.kept.insert((turn, position), values);
+                }
+                self.pending.push((position, final_layer));
+            }
+            "model.measurement" => {
+                let Some(payload) = event.payload.as_deref() else {
+                    return Step::Continue;
+                };
+                let Some(out) = value_at(payload, "output_tokens")
+                    .and_then(|r| serde_json::from_str::<Vec<u32>>(r.get()).ok())
+                else {
+                    return Step::Continue;
+                };
+                // The turn's columns pair with its own measurement, in the
+                // draws' own order, and are dropped as they pair.
+                let mut pending = std::mem::take(&mut self.pending);
+                pending.sort_by_key(|(position, _)| *position);
+                // **The counts agree or the reading refuses.** A zip would
+                // pair a prefix and drop the rest silently, where a turn
+                // whose columns and drawn tokens disagree is exactly the
+                // 13.10 fault the SPU refuses on its own side.
+                if pending.len() != out.len() {
+                    return Step::Refuse(format!(
+                        "turn {:?} holds {} columns against {} drawn tokens",
+                        turn,
+                        pending.len(),
+                        out.len()
+                    ));
+                }
+                for ((position, column), token) in pending.into_iter().zip(out) {
+                    (self.paired)(&(turn.clone(), position), &column, token);
+                }
+            }
+            "replay.closed" => {
+                // A close from another run ends no reading of this one.
+                if self.run.as_deref() != Some(event.envelope.run.as_str()) {
+                    return Step::Continue;
+                }
+                self.outcome = event
+                    .payload
+                    .as_deref()
+                    .and_then(|p| value_at(p, "outcome.kind"))
+                    .map(|raw| raw.get().trim_matches('"').to_string());
+                // **The bracket's close ends the reading, not the
+                // stream's end.** A pipe's writer is the agent, which
+                // holds it open for the run's whole residency, so a
+                // reader waiting for end-of-stream would wait for the
+                // unload - and on a socket, for longer. The pass's own
+                // close is the fact that says the reading is complete.
+                return Step::Done;
+            }
+            _ => {}
+        }
+        Step::Continue
+    }
+}
