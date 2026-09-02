@@ -1014,7 +1014,11 @@ mod tests {
             "    residual-readout-election: false\n",
             "    residual-readout-election: false\n    refeed-permission: true\n",
         );
-        assert_ne!(source, config_source(&root), "the grant landed in the source");
+        assert_ne!(
+            source,
+            config_source(&root),
+            "the grant landed in the source"
+        );
         let refused = take_inventory(&name, &source, &allow, &bound);
         assert!(
             matches!(

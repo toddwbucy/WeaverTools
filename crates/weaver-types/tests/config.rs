@@ -327,7 +327,11 @@ fn a_finite_tunable_value_parses() {
     );
     let config = parse(&source).expect("parses");
     assert_eq!(
-        config.spu_instruction.decoder.tunable_values.get("temperature"),
+        config
+            .spu_instruction
+            .decoder
+            .tunable_values
+            .get("temperature"),
         Some(&0.2f64)
     );
 }
@@ -347,19 +351,21 @@ fn an_absent_binding_kind_is_none() {
 /// checks each field alone.
 #[test]
 fn a_diagnostic_declaration_parses_without_a_gate_instruction() {
-    let source = full_config()
-        .replace(
-            "gate-instruction:
+    let source = full_config().replace(
+        "gate-instruction:
   access-rule:
     allowed-uids: [1000]
     allowed-gids: []
     denied-uids: [1701]
 ",
-            "binding-kind: diagnostic
+        "binding-kind: diagnostic
 ",
-        );
+    );
     let config = parse(&source).expect("parses");
-    assert_eq!(config.binding_kind, Some(weaver_types::BindingKind::Diagnostic));
+    assert_eq!(
+        config.binding_kind,
+        Some(weaver_types::BindingKind::Diagnostic)
+    );
     assert_eq!(config.gate_instruction, None);
 }
 
@@ -369,10 +375,14 @@ fn a_diagnostic_declaration_parses_without_a_gate_instruction() {
 /// admin refuse it with the field named, before any unit starts.
 #[test]
 fn the_kind_gate_disagreement_is_the_inventorys_not_the_parses() {
-    let source = full_config() + "binding-kind: diagnostic
+    let source = full_config()
+        + "binding-kind: diagnostic
 ";
     let config = parse(&source).expect("parses");
-    assert_eq!(config.binding_kind, Some(weaver_types::BindingKind::Diagnostic));
+    assert_eq!(
+        config.binding_kind,
+        Some(weaver_types::BindingKind::Diagnostic)
+    );
     assert!(config.gate_instruction.is_some());
 }
 

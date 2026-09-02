@@ -81,8 +81,12 @@ pub fn brackets(events: &[Event]) -> Vec<Bracket> {
                 else {
                     continue;
                 };
-                let Some(payload) = event.payload.as_deref() else { continue };
-                let Some(kind) = value_at(payload, "outcome.kind") else { continue };
+                let Some(payload) = event.payload.as_deref() else {
+                    continue;
+                };
+                let Some(kind) = value_at(payload, "outcome.kind") else {
+                    continue;
+                };
                 let detail = || {
                     value_at(payload, "outcome")
                         .map(|v| v.get().to_string())
@@ -138,9 +142,6 @@ pub fn gate(events: &[Event]) -> Gated {
     }
     // Nothing is produced for an unclosed bracket, on the same terms
     // whichever way it came to be unclosed.
-    let passes = passes
-        .into_iter()
-        .filter(|b| b.outcome.is_some())
-        .collect();
+    let passes = passes.into_iter().filter(|b| b.outcome.is_some()).collect();
     Gated::Produces { passes }
 }

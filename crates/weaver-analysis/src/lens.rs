@@ -49,20 +49,40 @@ pub struct LensShape {
 /// the identity's parts.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LensRefusal {
-    ManifestUnreadable { detail: String },
-    ManifestNamesAnotherLens { named: String, held: String },
-    DigestMalformed { digest: String },
-    LayerSetUnsorted { layers: Vec<u32> },
+    ManifestUnreadable {
+        detail: String,
+    },
+    ManifestNamesAnotherLens {
+        named: String,
+        held: String,
+    },
+    DigestMalformed {
+        digest: String,
+    },
+    LayerSetUnsorted {
+        layers: Vec<u32>,
+    },
     LayerSetEmpty,
-    ArtifactUnreadable { detail: String },
+    ArtifactUnreadable {
+        detail: String,
+    },
     /// The artifact's tensor names against the manifest's layer set, read
     /// from the header before any data: a missing layer and an extra
     /// tensor alike.
-    LayersDisagree { artifact: Vec<u32>, manifest: Vec<u32> },
-    WidthDisagrees { artifact: u32, manifest: u32 },
+    LayersDisagree {
+        artifact: Vec<u32>,
+        manifest: Vec<u32>,
+    },
+    WidthDisagrees {
+        artifact: u32,
+        manifest: u32,
+    },
     /// The weights in hand are not the ones the fit ran against, the hash
     /// recomputed rather than trusted from the name.
-    WeightsDisagree { held: String, manifest: String },
+    WeightsDisagree {
+        held: String,
+        manifest: String,
+    },
 }
 
 /// The manifest that identifies a lens, derived from the lens's own name:
@@ -103,7 +123,10 @@ pub fn read_manifest(lens: &Path) -> Result<Manifest, LensRefusal> {
     // would cost that read to reach a mismatch it could never avoid, and
     // would name the weights where the manifest was at fault.
     let digest = &manifest.fitted_for.model_safetensors_sha256;
-    if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    if digest.len() != 64
+        || !digest
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
     {
         return Err(LensRefusal::DigestMalformed {
             digest: digest.clone(),
@@ -153,7 +176,9 @@ impl Lens {
                 Ok(layer) => named.push(layer),
                 Err(_) => {
                     return Err(LensRefusal::ArtifactUnreadable {
-                        detail: format!("the artifact holds a tensor named {name:?},                                          which is no layer index"),
+                        detail: format!(
+                            "the artifact holds a tensor named {name:?},                                          which is no layer index"
+                        ),
                     });
                 }
             }
@@ -168,11 +193,11 @@ impl Lens {
         let d_model = manifest.lens_shape.d_model as usize;
         let mut matrices = BTreeMap::new();
         for layer in &named {
-            let view = file
-                .tensor(&layer.to_string())
-                .map_err(|error| LensRefusal::ArtifactUnreadable {
+            let view = file.tensor(&layer.to_string()).map_err(|error| {
+                LensRefusal::ArtifactUnreadable {
                     detail: error.to_string(),
-                })?;
+                }
+            })?;
             if view.shape() != [d_model, d_model] {
                 return Err(LensRefusal::WidthDisagrees {
                     artifact: *view.shape().first().unwrap_or(&0) as u32,
@@ -245,11 +270,11 @@ impl Unembedding {
             .map_err(|error| LensRefusal::ArtifactUnreadable {
                 detail: format!("no unembedding tensor: {error}"),
             })?;
-        let norm = file
-            .tensor("model.norm.weight")
-            .map_err(|error| LensRefusal::ArtifactUnreadable {
-                detail: format!("no final norm: {error}"),
-            })?;
+        let norm =
+            file.tensor("model.norm.weight")
+                .map_err(|error| LensRefusal::ArtifactUnreadable {
+                    detail: format!("no final norm: {error}"),
+                })?;
         let shape = head.shape().to_vec();
         if shape.len() != 2 {
             return Err(LensRefusal::ArtifactUnreadable {
@@ -289,8 +314,7 @@ impl Unembedding {
         if residual.len() != self.width {
             return None;
         }
-        let mean_square =
-            residual.iter().map(|x| x * x).sum::<f32>() / self.width as f32;
+        let mean_square = residual.iter().map(|x| x * x).sum::<f32>() / self.width as f32;
         let scale = 1.0 / (mean_square + self.epsilon).sqrt();
         let normalized: Vec<f32> = residual
             .iter()
@@ -318,8 +342,7 @@ impl Unembedding {
 
     /// The top `k` token identifiers, most likely first.
     pub fn top_k(logits: &[f32], k: usize) -> Vec<u32> {
-        let mut ordered: Vec<(usize, f32)> =
-            logits.iter().copied().enumerate().collect();
+        let mut ordered: Vec<(usize, f32)> = logits.iter().copied().enumerate().collect();
         ordered.sort_unstable_by(|a, b| b.1.total_cmp(&a.1));
         ordered.into_iter().take(k).map(|(t, _)| t as u32).collect()
     }

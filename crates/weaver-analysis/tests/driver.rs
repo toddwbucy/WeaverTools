@@ -122,7 +122,10 @@ fn the_derived_sink_carries_the_shape_the_analyst_elected() {
     let declaration =
         weaver_analysis::derive(&parse_record(SOURCE), &piped).expect("the record is whole");
     assert!(declaration.contains("kind: pipe"), "{declaration}");
-    assert!(declaration.contains("create: true"), "a pipe is created where absent");
+    assert!(
+        declaration.contains("create: true"),
+        "a pipe is created where absent"
+    );
 
     let filed =
         weaver_analysis::derive(&parse_record(SOURCE), &inputs()).expect("the record is whole");
@@ -142,13 +145,22 @@ fn a_mixed_record_refuses_on_the_envelope() {
     );
     let refused = weaver_analysis::derive(&parse_record(&two_runs), &inputs());
     assert!(
-        matches!(refused, Err(DeriveRefusal::MemberDisagrees { member: "run", .. })),
+        matches!(
+            refused,
+            Err(DeriveRefusal::MemberDisagrees { member: "run", .. })
+        ),
         "a second run refuses on the envelope: {refused:?}"
     );
     let two_sessions = SOURCE.replacen("s-karl-1", "s-other", 1);
     let refused = weaver_analysis::derive(&parse_record(&two_sessions), &inputs());
     assert!(
-        matches!(refused, Err(DeriveRefusal::MemberDisagrees { member: "session", .. })),
+        matches!(
+            refused,
+            Err(DeriveRefusal::MemberDisagrees {
+                member: "session",
+                ..
+            })
+        ),
         "a second session refuses on the envelope: {refused:?}"
     );
 }
@@ -170,10 +182,7 @@ fn no_kind_crosses_past_the_election() {
     for distillate in project(&parse_record(SOURCE)) {
         let frame: serde_json::Value = serde_json::from_str(distillate.frame()).unwrap();
         let kind = frame["envelope"]["kind"].as_str().unwrap();
-        assert!(
-            elected.contains(&kind),
-            "{kind} crossed past the election"
-        );
+        assert!(elected.contains(&kind), "{kind} crossed past the election");
     }
     assert_eq!(
         project(&parse_record(SOURCE)).len(),
@@ -197,7 +206,9 @@ fn the_projection_splices_the_records_own_bytes() {
     let distillates = project(&parse_record(record));
     let frame = distillates[0].frame();
     assert!(
-        frame.contains(r#""sampling":{"seed":14458752852352082704,"temperature":0.699999988079071,"odd":1e3}"#),
+        frame.contains(
+            r#""sampling":{"seed":14458752852352082704,"temperature":0.699999988079071,"odd":1e3}"#
+        ),
         "the record's own spellings cross: {frame}"
     );
 }

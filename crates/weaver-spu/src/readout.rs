@@ -209,7 +209,10 @@ impl Reduction {
     /// the array's length by construction and a third field would be a
     /// second source for one fact.
     pub fn forwards(&self) -> usize {
-        self.per_layer_norm.len().checked_div(self.layers).unwrap_or(0)
+        self.per_layer_norm
+            .len()
+            .checked_div(self.layers)
+            .unwrap_or(0)
     }
 
     /// Every figure, across every forward.
@@ -251,10 +254,7 @@ pub trait Tap {
 /// The tap stands, the ground is gone, and a parameter kept against a reader
 /// that no longer exists is the reserved slot the apex forbids: the next
 /// reader would take its presence for a judgment this function makes.
-pub fn judge(
-    election: ReadoutElection,
-    declaration: &Declaration,
-) -> Result<(), ReadoutRefusal> {
+pub fn judge(election: ReadoutElection, declaration: &Declaration) -> Result<(), ReadoutRefusal> {
     if !election.elected() {
         return Ok(());
     }
@@ -521,7 +521,11 @@ mod tests {
         // **And the refusal leaves the reduction describable.** A forward
         // half folded would give counts whose product is not the figure
         // count, which is the state the whole clause exists to prevent.
-        assert_eq!(reduction.figures(), 3, "nothing of the ragged forward landed");
+        assert_eq!(
+            reduction.figures(),
+            3,
+            "nothing of the ragged forward landed"
+        );
         assert_eq!(
             reduction.layers() * reduction.forwards(),
             reduction.figures(),
@@ -576,7 +580,9 @@ mod tests {
         // Loose first, then a forward: those figures would belong to no
         // forward at all.
         let mut staged = Reduction::new();
-        staged.fold_norm(1.0).expect("a loose fold before any forward");
+        staged
+            .fold_norm(1.0)
+            .expect("a loose fold before any forward");
         staged.fold_norm(2.0).expect("and another");
         let refused = staged
             .fold_forward(&[3.0, 4.0, 5.0])
@@ -586,7 +592,11 @@ mod tests {
             "the refusal names what would be orphaned: {refused}"
         );
         assert_eq!(staged.figures(), 2, "and nothing of the forward landed");
-        assert_eq!(staged.layers(), 0, "the reduction is still a staging buffer");
+        assert_eq!(
+            staged.layers(),
+            0,
+            "the reduction is still a staging buffer"
+        );
     }
 
     /// **The reduction keeps a figure per layer and never the layer.** What
@@ -595,10 +605,10 @@ mod tests {
     fn the_reduction_holds_a_figure_per_layer_rather_than_the_layers() {
         let mut reduction = Reduction::new();
         // Two layers, wildly different widths. What comes out is two numbers.
-        reduction.fold(&[3.0, 4.0]).expect("a loose fold before any forward");
         reduction
-            .fold(&vec![1.0; 4096])
-            .expect("and another");
+            .fold(&[3.0, 4.0])
+            .expect("a loose fold before any forward");
+        reduction.fold(&vec![1.0; 4096]).expect("and another");
 
         // **Figures, not layers.** This asserted `layers()` until
         // 2026-08-24, when that method returned the figure count and the two

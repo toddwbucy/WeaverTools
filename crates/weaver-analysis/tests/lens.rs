@@ -48,7 +48,9 @@ fn one_bit_of_difference_diverges_naming_the_site() {
     let held = b.columns[&key][0][0];
     b.columns.get_mut(&key).unwrap()[0][0] = f32::from_bits(held.to_bits() ^ 1);
     match compare(&a, &b) {
-        Comparison::Diverged { position, layer, .. } => {
+        Comparison::Diverged {
+            position, layer, ..
+        } => {
             assert_eq!(position, key.1);
             assert_eq!(layer, 0);
         }
@@ -185,10 +187,13 @@ fn the_manifest_is_the_lens_it_names() {
     ));
 
     write(r#"{"lens":"jacobian_lens_m-bf16.safetensors","fitted_for":{"model":"/m"},"lens_shape":{"d_model":896,"source_layers":[0]}}"#).expect("w");
-    assert!(matches!(
-        weaver_analysis::read_manifest(&lens),
-        Err(LensRefusal::ManifestUnreadable { .. })
-    ), "a missing member is malformed rather than read past");
+    assert!(
+        matches!(
+            weaver_analysis::read_manifest(&lens),
+            Err(LensRefusal::ManifestUnreadable { .. })
+        ),
+        "a missing member is malformed rather than read past"
+    );
 
     let _ = std::fs::remove_dir_all(&dir);
 }

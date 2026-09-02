@@ -15,8 +15,8 @@
 //! conversation speed, then freeze the loop into a Rust composition root
 //! for deployment - iterate fast, then freeze.
 
-use std::ffi::CString;
 use std::collections::HashMap;
+use std::ffi::CString;
 use std::path::Path;
 
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
@@ -227,11 +227,7 @@ impl Seat {
 /// failure is printed and survived: the fallback below runs a plain turn so
 /// a broken loop file costs the injection and never the agent's answer,
 /// which is the same economics every optional leg in this program carries.
-pub fn drive(
-    loop_path: &Path,
-    seat: &mut Ports<'_>,
-    text: &str,
-) -> Result<TurnOutcome, TurnError> {
+pub fn drive(loop_path: &Path, seat: &mut Ports<'_>, text: &str) -> Result<TurnOutcome, TurnError> {
     let code = match std::fs::read_to_string(loop_path) {
         Ok(code) => code,
         Err(error) => {

@@ -179,11 +179,7 @@ impl Tee {
     /// Stand the tee on a channel: the opener goes first, and the stream is
     /// set nonblocking because the contract forbids backpressure onto the
     /// turn path in any form.
-    pub fn open(
-        channel: UnixStream,
-        session: String,
-        election: Election,
-    ) -> std::io::Result<Tee> {
+    pub fn open(channel: UnixStream, session: String, election: Election) -> std::io::Result<Tee> {
         channel.set_nonblocking(true)?;
         let mut tee = Tee {
             session,

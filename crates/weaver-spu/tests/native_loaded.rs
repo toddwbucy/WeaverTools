@@ -82,7 +82,12 @@ fn a_safetensors_artifact_generates_through_the_native_engine() {
         devices: vec![DeviceOrdinal(0)],
     };
     let resident = residency
-        .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false)
+        .admit(
+            &binding,
+            Headroom(64 * 1024 * 1024),
+            ReadoutElection(false),
+            false,
+        )
         .expect("the admit succeeds against a real artifact");
 
     // The prompt through the family's own rendering, tokenized against the
@@ -318,7 +323,12 @@ fn the_pair_agrees_with_the_single_card() {
             devices,
         };
         let resident = residency
-            .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false)
+            .admit(
+                &binding,
+                Headroom(64 * 1024 * 1024),
+                ReadoutElection(false),
+                false,
+            )
             .unwrap_or_else(|refusal| panic!("the admit at width {width}: {refusal:?}"));
         let prefix = resident.tokenize(prompt).expect("tokenizes");
         let mut session = resident.open_session(&knobs, 512).expect("session opens");
@@ -405,7 +415,12 @@ fn an_elected_readout_travels_with_the_generation() {
             devices,
         };
         let resident = residency
-            .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(elected), false)
+            .admit(
+                &binding,
+                Headroom(64 * 1024 * 1024),
+                ReadoutElection(elected),
+                false,
+            )
             .unwrap_or_else(|refusal| panic!("admit width {width}: {refusal:?}"));
         let prefix = resident.tokenize(prompt).expect("tokenizes");
         let mut session = resident.open_session(&knobs, 512).expect("session opens");
@@ -509,7 +524,12 @@ fn an_elected_readout_refuses_a_gguf_residency_at_admit() {
         devices: vec![DeviceOrdinal(0)],
     };
     let refusal = residency
-        .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(true), false)
+        .admit(
+            &binding,
+            Headroom(64 * 1024 * 1024),
+            ReadoutElection(true),
+            false,
+        )
         .expect_err("an elected GGUF admit refuses");
     assert!(
         format!("{refusal:?}").contains("NotTappable"),
@@ -557,7 +577,12 @@ fn an_elected_readout_is_admitted_by_a_gguf_family_that_declares_a_tap() {
         devices: vec![DeviceOrdinal(0)],
     };
     let resident = residency
-        .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(true), false)
+        .admit(
+            &binding,
+            Headroom(64 * 1024 * 1024),
+            ReadoutElection(true),
+            false,
+        )
         .expect("a family declaring a tap admits an elected readout");
 
     let knobs = EffectiveKnobs {
@@ -660,7 +685,12 @@ fn the_pair_reports_its_pace() {
             devices,
         };
         let resident = residency
-            .admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false)
+            .admit(
+                &binding,
+                Headroom(64 * 1024 * 1024),
+                ReadoutElection(false),
+                false,
+            )
             .unwrap_or_else(|refusal| panic!("the admit at width {width}: {refusal:?}"));
         let prefix = resident.tokenize(prompt).expect("tokenizes");
         let mut session = resident.open_session(&knobs, 2048).expect("session opens");

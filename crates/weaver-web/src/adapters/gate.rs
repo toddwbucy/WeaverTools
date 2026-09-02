@@ -36,7 +36,10 @@ impl std::fmt::Display for GateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             GateError::Unloaded => write!(f, "agent is not loaded (no listener)"),
-            GateError::LineTooLong(n) => write!(f, "request line of {n} bytes exceeds the {LINE_BOUND} byte bound"),
+            GateError::LineTooLong(n) => write!(
+                f,
+                "request line of {n} bytes exceeds the {LINE_BOUND} byte bound"
+            ),
             GateError::DeliveryLost(e) => write!(f, "delivery lost mid-turn: {e}"),
             GateError::BadClose(s) => write!(f, "close line did not parse: {s}"),
             GateError::CloseTooLong(n) => {
@@ -69,7 +72,9 @@ pub struct GateAdapter {
 
 impl GateAdapter {
     pub fn new(socket: &Path) -> Self {
-        Self { socket: socket.to_owned() }
+        Self {
+            socket: socket.to_owned(),
+        }
     }
 
     /// The load-state observable: the socket path's existence,
@@ -84,27 +89,30 @@ impl GateAdapter {
         struct Request<'a> {
             text: &'a str,
         }
-        let line = serde_json::to_string(&Request { text })
-            .expect("string serialization cannot fail");
+        let line =
+            serde_json::to_string(&Request { text }).expect("string serialization cannot fail");
         if line.len() > LINE_BOUND {
             return Err(GateError::LineTooLong(line.len()));
         }
 
-        let stream = UnixStream::connect(&self.socket).await.map_err(|e| {
-            match e.kind() {
+        let stream = UnixStream::connect(&self.socket)
+            .await
+            .map_err(|e| match e.kind() {
                 std::io::ErrorKind::NotFound | std::io::ErrorKind::ConnectionRefused => {
                     GateError::Unloaded
                 }
                 _ => GateError::DeliveryLost(e),
-            }
-        })?;
+            })?;
         let (read_half, mut write_half) = stream.into_split();
 
         write_half
             .write_all(line.as_bytes())
             .await
             .map_err(GateError::DeliveryLost)?;
-        write_half.write_all(b"\n").await.map_err(GateError::DeliveryLost)?;
+        write_half
+            .write_all(b"\n")
+            .await
+            .map_err(GateError::DeliveryLost)?;
         write_half.flush().await.map_err(GateError::DeliveryLost)?;
 
         // Take-limit the read so a peer that never sends the delimiter
@@ -129,9 +137,8 @@ impl GateAdapter {
         let raw: serde_json::Value = serde_json::from_str(close_line.trim_end())
             .map_err(|e| GateError::BadClose(format!("{e}")))?;
         let get_str = |key: &str| raw.get(key).and_then(|v| v.as_str()).map(str::to_owned);
-        let kind = get_str("kind").ok_or_else(|| {
-            GateError::BadClose("close carries no string member 'kind'".into())
-        })?;
+        let kind = get_str("kind")
+            .ok_or_else(|| GateError::BadClose("close carries no string member 'kind'".into()))?;
         Ok(GateClose {
             kind,
             run: get_str("run"),

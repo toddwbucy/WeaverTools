@@ -760,7 +760,11 @@ mod tests {
     fn a_broken_distribution_is_absent_rather_than_nan() {
         let logits = vec![1.0f32, f32::NAN, 3.0, 2.0];
         assert!(
-            logits.iter().copied().fold(f32::NEG_INFINITY, f32::max).is_finite(),
+            logits
+                .iter()
+                .copied()
+                .fold(f32::NEG_INFINITY, f32::max)
+                .is_finite(),
             "the fixture's maximum is finite, which is what makes it the case"
         );
         assert!(surprisal_bits(&logits, 2).is_none(), "no surprisal");

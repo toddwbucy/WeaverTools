@@ -43,9 +43,7 @@ impl Record {
     /// which the mirror's field-for-field claim licenses.
     pub fn submit(&mut self, event: Event) -> Result<Sequence, RecordFailure> {
         match self {
-            Record::Serving(recorder) => {
-                recorder.submit(event).map_err(RecordFailure::Serving)
-            }
+            Record::Serving(recorder) => recorder.submit(event).map_err(RecordFailure::Serving),
             Record::Diagnostic(recorder) => {
                 let converted = convert(event)?;
                 recorder

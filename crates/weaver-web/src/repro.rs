@@ -129,7 +129,9 @@ fn cut_turns(events: &[Value]) -> Vec<SourceTurn> {
     let mut by_turn: std::collections::HashMap<String, Vec<&Value>> =
         std::collections::HashMap::new();
     for e in events {
-        let Some(turn) = e.get("turn").and_then(|t| t.as_str()) else { continue };
+        let Some(turn) = e.get("turn").and_then(|t| t.as_str()) else {
+            continue;
+        };
         by_turn
             .entry(turn.to_owned())
             .or_insert_with(|| {
@@ -151,7 +153,8 @@ fn cut_turns(events: &[Value]) -> Vec<SourceTurn> {
             .iter()
             .filter(|e| e.get("kind").and_then(|k| k.as_str()) == Some("message.user"))
             .filter_map(|e| {
-                e.pointer("/payload/content/0/text").and_then(|t| t.as_str())
+                e.pointer("/payload/content/0/text")
+                    .and_then(|t| t.as_str())
             })
             .next_back()
             .map(str::to_owned);
@@ -161,9 +164,12 @@ fn cut_turns(events: &[Value]) -> Vec<SourceTurn> {
                 .and_then(|e| e.get("wall_ms"))
                 .and_then(|w| w.as_i64())
         };
-        let (Some(text), Some(request), Some(output), Some(measurement)) =
-            (text, find("model.request"), find("model.output"), find("model.measurement"))
-        else {
+        let (Some(text), Some(request), Some(output), Some(measurement)) = (
+            text,
+            find("model.request"),
+            find("model.output"),
+            find("model.measurement"),
+        ) else {
             continue; // an unfinished or refused turn has nothing to confirm
         };
         turns.push(SourceTurn {
@@ -284,12 +290,8 @@ async fn job(repro: &Repro, link: &Link, agent: &str, run: &str) -> Result<(), S
     }
     let replay_run = match runs_seen.as_slice() {
         [one] if one != run => one.clone(),
-        [one] => {
-            return Err(format!("reissues landed in the source run {one} itself"))
-        }
-        many => {
-            return Err(format!("reissues split across runs: {}", many.join(", ")))
-        }
+        [one] => return Err(format!("reissues landed in the source run {one} itself")),
+        many => return Err(format!("reissues split across runs: {}", many.join(", "))),
     };
 
     // 4. The replay run, from the record, and the comparison.

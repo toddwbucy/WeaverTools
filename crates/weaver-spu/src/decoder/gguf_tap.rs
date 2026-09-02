@@ -304,11 +304,7 @@ unsafe fn residual_layer_index(tensor: *const ggml_tensor) -> Option<usize> {
 ///
 /// Installed only by [`super::gguf::GgufEngine::open`], which passes a
 /// pointer into a [`TapState`] the engine owns and outlives the context.
-pub unsafe extern "C" fn tap(
-    tensor: *mut ggml_tensor,
-    ask: bool,
-    user_data: *mut c_void,
-) -> bool {
+pub unsafe extern "C" fn tap(tensor: *mut ggml_tensor, ask: bool, user_data: *mut c_void) -> bool {
     if tensor.is_null() || user_data.is_null() {
         // Nothing observable. On the ask this declines the node, and on the
         // data pass it continues the graph, which is the answer that never
@@ -373,13 +369,7 @@ mod tests {
         ] {
             let mut tensor = named(name);
             let mut state = TapState::new(1);
-            let answered = unsafe {
-                tap(
-                    &mut tensor,
-                    true,
-                    TapState::as_user_data(&mut state),
-                )
-            };
+            let answered = unsafe { tap(&mut tensor, true, TapState::as_user_data(&mut state)) };
             assert_eq!(answered, wanted, "the ask for {name:?}");
         }
     }
@@ -415,7 +405,10 @@ mod tests {
     fn a_commit_short_of_the_layer_count_faults() {
         let mut state = TapState::new(24);
         for _ in 0..20 {
-            state.staging.fold_norm(1.0).expect("staging takes loose figures");
+            state
+                .staging
+                .fold_norm(1.0)
+                .expect("staging takes loose figures");
         }
         let fault = state.commit().expect_err("a short observation faults");
         assert!(
@@ -454,11 +447,23 @@ mod tests {
     #[test]
     fn the_drain_empties_what_it_hands_back() {
         let mut state = TapState::new(2);
-        state.staging.fold_norm(3.0).expect("staging takes loose figures");
-        state.staging.fold_norm(4.0).expect("staging takes loose figures");
+        state
+            .staging
+            .fold_norm(3.0)
+            .expect("staging takes loose figures");
+        state
+            .staging
+            .fold_norm(4.0)
+            .expect("staging takes loose figures");
         state.commit().expect("a full count commits");
-        state.staging.fold_norm(5.0).expect("staging takes loose figures");
-        state.staging.fold_norm(6.0).expect("staging takes loose figures");
+        state
+            .staging
+            .fold_norm(5.0)
+            .expect("staging takes loose figures");
+        state
+            .staging
+            .fold_norm(6.0)
+            .expect("staging takes loose figures");
         state.commit().expect("a second decode commits too");
 
         let drained = state.drain();

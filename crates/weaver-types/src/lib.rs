@@ -90,17 +90,15 @@ mod wire;
 pub use config::parse;
 pub use config::{
     AgentConfig, ArtifactRef, BindingKind, ClassifyInstruction, ConfigError, ConfigErrorKind,
-    DecoderInstruction, DeviceOrdinal, ElectedKindConfig, FieldElection, FieldName, GateInstruction, ModelBinding,
-    SpuInstruction, StateElection, ToolName, TraceSink,
+    DecoderInstruction, DeviceOrdinal, ElectedKindConfig, FieldElection, FieldName,
+    GateInstruction, ModelBinding, SpuInstruction, StateElection, ToolName, TraceSink,
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{
-    LifecycleAsk,
-    AgentName, AgentState, AgentSummary, EnterBinding, EnterPayload, ExchangeId, FaultCase, FaultReport, Finish,
-    Candidate, DECODE_MESSAGE_BOUND, Generation, LabelAnswer, LabelDirective, LabelRefusal, LifecycleAnswer,
-    LifecycleDirective,
-    LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position, RefusingOrgan,
-    RefusalRecord, RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer, TokenAsk, TokenDirective, TokenRefusal,
-    ToolExecution,
-    ToolOutcome, TurnFrame, TurnKey,
+    AgentName, AgentState, AgentSummary, Candidate, DECODE_MESSAGE_BOUND, EnterBinding,
+    EnterPayload, ExchangeId, FaultCase, FaultReport, Finish, Generation, LabelAnswer,
+    LabelDirective, LabelRefusal, LifecycleAnswer, LifecycleAsk, LifecycleDirective,
+    LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position, RefusalRecord,
+    RefusingOrgan, RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer, TokenAsk,
+    TokenDirective, TokenRefusal, ToolExecution, ToolOutcome, TurnFrame, TurnKey,
 };

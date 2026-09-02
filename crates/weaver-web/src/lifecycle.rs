@@ -41,7 +41,9 @@ pub async fn run_verb(
         anyhow::bail!("'{verb}' is not a lifecycle verb");
     }
     if agent.is_empty()
-        || !agent.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        || !agent
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
     {
         anyhow::bail!("'{agent}' is not a well-formed agent name");
     }
@@ -57,27 +59,23 @@ pub async fn run_verb(
         .arg(agent)
         .kill_on_drop(true)
         .output();
-    let output = match tokio::time::timeout(
-        std::time::Duration::from_secs(VERB_TIMEOUT_SECS),
-        fut,
-    )
-    .await
-    {
-        Ok(res) => res?,
-        Err(_) => {
-            return Ok(VerbOutcome {
-                verb: verb.to_string(),
-                agent: agent.to_string(),
-                exit_code: None,
-                answer: None,
-                raw_stdout: None,
-                stderr: Some(format!(
-                    "invocation exceeded {VERB_TIMEOUT_SECS}s and was killed"
-                )),
-                timed_out: true,
-            });
-        }
-    };
+    let output =
+        match tokio::time::timeout(std::time::Duration::from_secs(VERB_TIMEOUT_SECS), fut).await {
+            Ok(res) => res?,
+            Err(_) => {
+                return Ok(VerbOutcome {
+                    verb: verb.to_string(),
+                    agent: agent.to_string(),
+                    exit_code: None,
+                    answer: None,
+                    raw_stdout: None,
+                    stderr: Some(format!(
+                        "invocation exceeded {VERB_TIMEOUT_SECS}s and was killed"
+                    )),
+                    timed_out: true,
+                });
+            }
+        };
 
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -87,9 +85,17 @@ pub async fn run_verb(
         verb: verb.to_string(),
         agent: agent.to_string(),
         exit_code: output.status.code(),
-        raw_stdout: if answer.is_none() && !stdout.is_empty() { Some(stdout) } else { None },
+        raw_stdout: if answer.is_none() && !stdout.is_empty() {
+            Some(stdout)
+        } else {
+            None
+        },
         answer,
-        stderr: if stderr.is_empty() { None } else { Some(stderr) },
+        stderr: if stderr.is_empty() {
+            None
+        } else {
+            Some(stderr)
+        },
         timed_out: false,
     })
 }

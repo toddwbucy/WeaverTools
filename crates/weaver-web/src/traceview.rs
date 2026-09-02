@@ -48,7 +48,9 @@ pub struct TraceViews {
 
 impl TraceViews {
     pub fn new() -> Self {
-        Self { views: Arc::new(Mutex::new(HashMap::new())) }
+        Self {
+            views: Arc::new(Mutex::new(HashMap::new())),
+        }
     }
 
     pub fn ensure(&self, agent: &str) {
@@ -199,8 +201,7 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
                 let meta = match file.metadata().await {
                     Ok(m) => m,
                     Err(_) => {
-                        tokio::time::sleep(std::time::Duration::from_millis(POLL_MS))
-                            .await;
+                        tokio::time::sleep(std::time::Duration::from_millis(POLL_MS)).await;
                         continue;
                     }
                 };
@@ -217,15 +218,16 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
                         let ev = TraceEvent {
                             seq,
                             mark: Some(format!("backfill starts {pos} bytes into the file")),
-                            run: None, turn: None, kind: None,
+                            run: None,
+                            turn: None,
+                            kind: None,
                             raw: serde_json::Value::Null,
                         };
                         if out.send(ev).await.is_err() {
                             return;
                         }
                     }
-                } else if (ident.is_some() && identity.is_some() && ident != identity)
-                    || len < pos
+                } else if (ident.is_some() && identity.is_some() && ident != identity) || len < pos
                 {
                     // A different inode, or a shrink in place: either
                     // way a discontinuity, marked, never smoothed.
@@ -237,7 +239,9 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
                         } else {
                             "file shrank: truncation".into()
                         }),
-                        run: None, turn: None, kind: None,
+                        run: None,
+                        turn: None,
+                        kind: None,
                         raw: serde_json::Value::Null,
                     };
                     if out.send(ev).await.is_err() {
@@ -294,16 +298,12 @@ pub async fn tail_task(path: PathBuf, out: mpsc::Sender<TraceEvent>) {
                                         seq += 1;
                                         TraceEvent {
                                             seq,
-                                            mark: Some(format!(
-                                                "record is not UTF-8: {e}"
-                                            )),
+                                            mark: Some(format!("record is not UTF-8: {e}")),
                                             run: None,
                                             turn: None,
                                             kind: None,
                                             raw: serde_json::Value::String(
-                                                String::from_utf8_lossy(&buf)
-                                                    .trim_end()
-                                                    .to_owned(),
+                                                String::from_utf8_lossy(&buf).trim_end().to_owned(),
                                             ),
                                         }
                                     }

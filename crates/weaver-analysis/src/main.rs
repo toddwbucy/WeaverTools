@@ -124,9 +124,7 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
                 match value.parse() {
                     Ok(depth) => inputs.field_depth = Some(depth),
                     Err(_) => {
-                        return refused(format!(
-                            "--field-depth is not a depth: {value}"
-                        ));
+                        return refused(format!("--field-depth is not a depth: {value}"));
                     }
                 }
             }
@@ -146,8 +144,11 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
             }
         }
     }
-    let (Some(trace), false, false) = (trace, inputs.devices.is_empty(), inputs.sink_path.is_empty())
-    else {
+    let (Some(trace), false, false) = (
+        trace,
+        inputs.devices.is_empty(),
+        inputs.sink_path.is_empty(),
+    ) else {
         eprintln!(
             "{}",
             serde_json::json!({"analysis_refusal": "derive takes <trace>, --devices, and --sink"})
@@ -155,7 +156,10 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
         return std::process::ExitCode::FAILURE;
     };
     let Ok(text) = read_stream(&trace) else {
-        eprintln!("{}", serde_json::json!({"analysis_refusal": "the trace does not read"}));
+        eprintln!(
+            "{}",
+            serde_json::json!({"analysis_refusal": "the trace does not read"})
+        );
         return std::process::ExitCode::FAILURE;
     };
     match weaver_analysis::derive(&parse_record(&text), &inputs) {
@@ -176,7 +180,10 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
             }
         },
         Err(refusal) => {
-            eprintln!("{}", serde_json::json!({"derive_refusal": format!("{refusal:?}")}));
+            eprintln!(
+                "{}",
+                serde_json::json!({"derive_refusal": format!("{refusal:?}")})
+            );
             std::process::ExitCode::FAILURE
         }
     }
@@ -184,23 +191,28 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
 
 fn run_preload(trace: &str, socket: &str) -> std::process::ExitCode {
     let Ok(text) = read_stream(trace) else {
-        eprintln!("{}", serde_json::json!({"analysis_refusal": "the trace does not read"}));
+        eprintln!(
+            "{}",
+            serde_json::json!({"analysis_refusal": "the trace does not read"})
+        );
         return std::process::ExitCode::FAILURE;
     };
     let events = parse_record(&text);
     let Some(session) = events.first().map(|e| e.envelope.session.clone()) else {
-        eprintln!("{}", serde_json::json!({"analysis_refusal": "the record holds no event"}));
+        eprintln!(
+            "{}",
+            serde_json::json!({"analysis_refusal": "the record holds no event"})
+        );
         return std::process::ExitCode::FAILURE;
     };
     let distillates = weaver_analysis::project(&events);
-    let outcome = std::os::unix::net::UnixStream::connect(socket)
-        .and_then(|stream| {
-            let mut sender = weaver_analysis::preload::open(stream, &session)?;
-            for distillate in &distillates {
-                sender.send(distillate)?;
-            }
-            sender.seal()
-        });
+    let outcome = std::os::unix::net::UnixStream::connect(socket).and_then(|stream| {
+        let mut sender = weaver_analysis::preload::open(stream, &session)?;
+        for distillate in &distillates {
+            sender.send(distillate)?;
+        }
+        sender.seal()
+    });
     match outcome {
         Ok(()) => {
             println!(
@@ -225,7 +237,10 @@ fn run_preload(trace: &str, socket: &str) -> std::process::ExitCode {
 
 fn run_read(trace: &str) -> std::process::ExitCode {
     let Ok(text) = read_stream(trace) else {
-        eprintln!("{}", serde_json::json!({"analysis_refusal": "the record does not read"}));
+        eprintln!(
+            "{}",
+            serde_json::json!({"analysis_refusal": "the record does not read"})
+        );
         return std::process::ExitCode::FAILURE;
     };
     let events = parse_record(&text);
@@ -264,7 +279,10 @@ fn run_read(trace: &str) -> std::process::ExitCode {
 /// and what it licenses is the discard.
 fn run_compare(left: &str, right: &str) -> std::process::ExitCode {
     let (Ok(a), Ok(b)) = (read_stream(left), read_stream(right)) else {
-        eprintln!("{}", serde_json::json!({"analysis_refusal": "a record does not read"}));
+        eprintln!(
+            "{}",
+            serde_json::json!({"analysis_refusal": "a record does not read"})
+        );
         return std::process::ExitCode::FAILURE;
     };
     let left = weaver_analysis::Capture::of(&parse_record(&a));
@@ -320,13 +338,16 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
     let mut it = rest.iter();
     while let Some(argument) = it.next() {
         let mut value = |name: &str| -> Option<String> {
-            it.next().filter(|v| !v.starts_with("--")).cloned().or_else(|| {
-                eprintln!(
-                    "{}",
-                    serde_json::json!({"analysis_refusal": format!("{name} takes a value")})
-                );
-                None
-            })
+            it.next()
+                .filter(|v| !v.starts_with("--"))
+                .cloned()
+                .or_else(|| {
+                    eprintln!(
+                        "{}",
+                        serde_json::json!({"analysis_refusal": format!("{name} takes a value")})
+                    );
+                    None
+                })
         };
         match argument.as_str() {
             "--lens" => match value("--lens") {
@@ -476,8 +497,10 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
                 None => faults.push("a column is not the model's width".to_string()),
             }
         };
-        let mut reader =
-            weaver_analysis::capture::Streaming::new(positions.clone().unwrap_or_default(), &mut pair);
+        let mut reader = weaver_analysis::capture::Streaming::new(
+            positions.clone().unwrap_or_default(),
+            &mut pair,
+        );
         match weaver_analysis::drain(source, &mut reader) {
             weaver_analysis::Drained::Refused(why) => return refused(why),
             _ => {}
@@ -501,7 +524,9 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
     match outcome.as_deref() {
         Some("certified") => {}
         Some(other) => {
-            return refused(format!("the record's bracket closed {other}, not certified"));
+            return refused(format!(
+                "the record's bracket closed {other}, not certified"
+            ));
         }
         None => {
             return refused(
@@ -639,7 +664,11 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
         return std::process::ExitCode::FAILURE;
     }
     let with_entropy = series.points.iter().filter(|p| p.entropy.is_some()).count();
-    let with_surprisal = series.points.iter().filter(|p| p.surprisal.is_some()).count();
+    let with_surprisal = series
+        .points
+        .iter()
+        .filter(|p| p.surprisal.is_some())
+        .count();
     println!(
         "{}",
         serde_json::json!({

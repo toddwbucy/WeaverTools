@@ -81,7 +81,10 @@ async fn open_session(
         .await?;
     // v1: roles come from the config's admin list, reapplied so a
     // first-time admin name lands with its role (Spec section 14).
-    state.store.reconcile_roles(state.cfg.admins.clone()).await?;
+    state
+        .store
+        .reconcile_roles(state.cfg.admins.clone())
+        .await?;
     let token = uuid::Uuid::new_v4().to_string();
     state.store.open_session(&token, pid).await?;
     // Strict blocks any cross-site request from carrying the session,
@@ -152,7 +155,10 @@ async fn create_channel(
     if !valid_handle(&name) {
         return Ok((StatusCode::BAD_REQUEST, "name must be kebab-case").into_response());
     }
-    let topic = form.get("topic").filter(|t| !t.is_empty()).map(|s| s.as_str());
+    let topic = form
+        .get("topic")
+        .filter(|t| !t.is_empty())
+        .map(|s| s.as_str());
     let cid = state.store.create_channel(&name, topic).await?;
     state.store.add_member(cid, me.id).await?;
     for key in form.keys() {
@@ -212,7 +218,10 @@ async fn channel_page(
         .await?
         .into_iter()
         .filter(|p| !member_list.iter().any(|m| m.id == p.id))
-        .map(|p| AddableRow { name: p.name, kind: p.kind })
+        .map(|p| AddableRow {
+            name: p.name,
+            kind: p.kind,
+        })
         .collect();
     let members = member_list
         .into_iter()
@@ -226,7 +235,11 @@ async fn channel_page(
             } else {
                 String::new()
             };
-            MemberRow { name: m.name, kind: m.kind, status }
+            MemberRow {
+                name: m.name,
+                kind: m.kind,
+                status,
+            }
         })
         .collect();
     let page = ChannelPage {
@@ -359,16 +372,11 @@ async fn channel_stream(
                         // from the last delivered position.
                         Err(e) => {
                             tracing::warn!("view fetch failed, catching up from the log: {e}");
-                            match channel::events_after(&store, channel_id, cursor, 10_000)
-                                .await
-                            {
+                            match channel::events_after(&store, channel_id, cursor, 10_000).await {
                                 Ok(missed) => {
                                     for ev in missed {
                                         cursor = ev.id;
-                                        if tx
-                                            .send(make_channel_sse(&ev, want_json))
-                                            .await
-                                            .is_err()
+                                        if tx.send(make_channel_sse(&ev, want_json)).await.is_err()
                                         {
                                             return;
                                         }
@@ -406,7 +414,9 @@ async fn channel_stream(
     });
 
     let stream = ReceiverStream::new(rx).map(Ok::<SseEvent, Infallible>);
-    Ok(Sse::new(stream).keep_alive(KeepAlive::default()).into_response())
+    Ok(Sse::new(stream)
+        .keep_alive(KeepAlive::default())
+        .into_response())
 }
 
 fn make_channel_sse(ev: &EventView, want_json: bool) -> SseEvent {

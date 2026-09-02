@@ -83,18 +83,18 @@ fn instruction() -> SpuInstruction {
         decoder: DecoderInstruction {
             model_binding: binding(),
             residual_readout_election: false,
-                    field_election: None,
-                    surprisal_election: false,
-                    refeed_permission: false,
-                    column_permission: false,
+            field_election: None,
+            surprisal_election: false,
+            refeed_permission: false,
+            column_permission: false,
             identity: vec![],
             tunable_values: [
-                            ("max-tokens-per-turn".to_string(), 4096.0),
-                            ("context-capacity".to_string(), 4096.0),
-                            ("seed".to_string(), 11.0),
-                        ]
-                .into_iter()
-                .collect(),
+                ("max-tokens-per-turn".to_string(), 4096.0),
+                ("context-capacity".to_string(), 4096.0),
+                ("seed".to_string(), 11.0),
+            ]
+            .into_iter()
+            .collect(),
         },
     }
 }

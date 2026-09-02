@@ -405,11 +405,7 @@ impl<'a> Ports<'a> {
                 // that was refused, the `elision` kind recording only
                 // removals that happened.
                 crate::channel::DecodeReply::Refusal(refusal) => {
-                    self.author_refusal(
-                        weaver_types::TokenAsk::Elide { from, to },
-                        refusal,
-                        None,
-                    );
+                    self.author_refusal(weaver_types::TokenAsk::Elide { from, to }, refusal, None);
                     return None;
                 }
                 _ => return None,
@@ -530,9 +526,10 @@ impl<'a> Ports<'a> {
         }
         loop {
             match channel.recv_reply_within(CLASSIFY_ANSWER_BOUND_MS) {
-                Ok(crate::channel::ClassifyReply::Answer(
-                    weaver_types::LabelAnswer::Scored { labels, .. },
-                )) => {
+                Ok(crate::channel::ClassifyReply::Answer(weaver_types::LabelAnswer::Scored {
+                    labels,
+                    ..
+                })) => {
                     let scored: Vec<(String, f64)> = labels
                         .into_iter()
                         .map(|scored| (scored.label, scored.score))
@@ -543,11 +540,9 @@ impl<'a> Ports<'a> {
                             Kind::ClassifyOutput,
                             Subsystem::Harness,
                             None,
-                            Some(Payload::ClassifyOutput(
-                                weaver_trace::ClassifyScored {
-                                    labels: scored.clone(),
-                                },
-                            )),
+                            Some(Payload::ClassifyOutput(weaver_trace::ClassifyScored {
+                                labels: scored.clone(),
+                            })),
                         )
                         .ok()?;
                     return Some(scored);
@@ -1676,7 +1671,8 @@ mod tests {
             .expect("the refusal is authored");
 
         let refusals: Vec<&weaver_trace::Record> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -1696,7 +1692,8 @@ mod tests {
 
         assert_eq!(
             recorder
-                .structure().expect("the serving record")
+                .structure()
+                .expect("the serving record")
                 .iter()
                 .filter(|r| r.kind == Kind::ClassifyOutput)
                 .count(),
@@ -1939,7 +1936,8 @@ mod tests {
         );
 
         let closes: Vec<&weaver_trace::Record> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::TurnClosed)
             .collect();
@@ -1953,7 +1951,8 @@ mod tests {
         );
 
         let refusals = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .count();
@@ -2049,7 +2048,8 @@ mod tests {
         assert!(answered.is_none(), "a refused span answers None as it did");
 
         let refusals: Vec<&weaver_trace::Record> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -2169,7 +2169,8 @@ mod tests {
         assert_eq!(counts, (1237, 1221), "the seam's counts reach the loop");
 
         let lines: Vec<&weaver_trace::Record> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Elision)
             .collect();
@@ -2314,7 +2315,8 @@ mod tests {
         // The bracket, in order: the turn's user message, the three model
         // events, the assistant's turn, and the close.
         let kinds: Vec<Kind> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2342,7 +2344,8 @@ mod tests {
         // Perturbation: forward a zero, a constant, or the members swapped,
         // and this fails.
         let output_line = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .by_kind(Kind::ModelOutput)
             .next()
             .expect("the output authored")
@@ -2363,7 +2366,8 @@ mod tests {
         // the template, the measurement the weights hash, both opaque.
         let line_of = |kind: Kind| {
             recorder
-                .structure().expect("the serving record")
+                .structure()
+                .expect("the serving record")
                 .by_kind(kind)
                 .next()
                 .expect("the event authored")
@@ -2501,7 +2505,8 @@ mod tests {
         // The pin: the turn-attributed sequence holds the fault before the
         // close, both inside the bracket.
         let kinds: Vec<Kind> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2698,7 +2703,8 @@ mod tests {
         assert!(held.is_empty(), "nothing crossed mid-execution to hold");
 
         let kinds: Vec<Kind> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -2728,7 +2734,8 @@ mod tests {
         // the gate's answer.
         let line_of = |kind: Kind| {
             recorder
-                .structure().expect("the serving record")
+                .structure()
+                .expect("the serving record")
                 .by_kind(kind)
                 .next()
                 .expect("authored")
@@ -2860,7 +2867,8 @@ mod tests {
         assert_eq!(outcome.emission, "hi", "the close still closes the turn");
 
         let fields: Vec<String> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .by_kind(Kind::ModelField)
             .map(|r| r.line.to_string())
             .collect();
@@ -3102,7 +3110,8 @@ mod tests {
 
         // The close names the directive, the partial standing before it.
         let close = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .by_kind(Kind::TurnClosed)
             .next()
             .expect("the close authored")
@@ -3138,7 +3147,8 @@ mod tests {
         let peer = std::thread::spawn(move || {
             let mut buf = vec![0u8; 65536];
             let _ = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
-            let column = r#"{"kind":"column","body":{"position":7,"layers":[[1.0,2.0],[3.0,4.0]]}}"#;
+            let column =
+                r#"{"kind":"column","body":{"position":7,"layers":[[1.0,2.0],[3.0,4.0]]}}"#;
             send(far.as_raw_fd(), column.as_bytes(), MsgFlags::empty()).expect("send column");
             let generated = concat!(
                 r#"{"kind":"generated","body":{"emission":"hi","finish":"completed","#,

@@ -16,7 +16,9 @@ use std::process::ExitCode;
 
 use weaver_spu::channel::{ChannelFault, ClassifySocket, adopt_classify};
 use weaver_spu::family::modernbert::engine::{Classifier, ClassifyFault};
-use weaver_types::{FaultCase, FaultReport, LabelAnswer, LabelDirective, LabelRefusal, ScoredLabel};
+use weaver_types::{
+    FaultCase, FaultReport, LabelAnswer, LabelDirective, LabelRefusal, ScoredLabel,
+};
 
 fn main() -> ExitCode {
     let mut args = std::env::args().skip(1);
@@ -127,9 +129,7 @@ fn serve(seam: &ClassifySocket, classifier: &Classifier) -> ExitCode {
             }
             // The tokenizer refusing the content is the ask's defect, per
             // the trio's cases, never a device fault.
-            Err(ClassifyFault::Malformed(_)) => {
-                send_refusal(seam, &LabelRefusal::MalformedContent)
-            }
+            Err(ClassifyFault::Malformed(_)) => send_refusal(seam, &LabelRefusal::MalformedContent),
             // The in-flight fault is this exchange's typed answer, per the
             // contract, and the seam serves on: the next exchange is
             // independent by construction.

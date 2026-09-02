@@ -118,10 +118,7 @@ fn artifact() -> Option<PathBuf> {
 /// and the charter's clause is about the declaration an operator writes.
 /// Sampling at a fixed seed reads the distribution's values and not only
 /// their order, so it is the more sensitive of the two probes.
-fn draw(
-    resident: &weaver_spu::residency::Resident,
-    seed: u64,
-) -> (Vec<TokenId>, Option<Vec<f32>>) {
+fn draw(resident: &weaver_spu::residency::Resident, seed: u64) -> (Vec<TokenId>, Option<Vec<f32>>) {
     let prefix = resident
         .tokenize("Explain, in a short paragraph, why the sky looks blue.")
         .expect("the prompt tokenizes");
@@ -133,7 +130,9 @@ fn draw(
         repetition_window: 64,
         seed,
     };
-    let mut session = resident.open_session(&knobs, 4096).expect("the session opens");
+    let mut session = resident
+        .open_session(&knobs, 4096)
+        .expect("the session opens");
     session.open(&prefix).expect("the prefix decodes");
     let eos = resident
         .declared_eos()

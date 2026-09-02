@@ -54,8 +54,8 @@ impl Capture {
                     let Some(payload) = event.payload.as_deref() else {
                         continue;
                     };
-                    let Some(position) = value_at(payload, "position")
-                        .and_then(|raw| raw.get().parse::<u64>().ok())
+                    let Some(position) =
+                        value_at(payload, "position").and_then(|raw| raw.get().parse::<u64>().ok())
                     else {
                         continue;
                     };
@@ -130,8 +130,7 @@ pub fn compare(left: &Capture, right: &Capture) -> Comparison {
     }
     if left.drawn != right.drawn {
         return Comparison::Incomparable {
-            detail: "the token paths differ: these are not two replays of one run"
-                .to_string(),
+            detail: "the token paths differ: these are not two replays of one run".to_string(),
         };
     }
     let left_keys: Vec<&Key> = left.columns.keys().collect();
@@ -172,10 +171,7 @@ pub fn compare(left: &Capture, right: &Capture) -> Comparison {
             }
             if la.is_empty() {
                 return Comparison::Incomparable {
-                    detail: format!(
-                        "the layer {layer} at position {} holds no values",
-                        key.1
-                    ),
+                    detail: format!("the layer {layer} at position {} holds no values", key.1),
                 };
             }
             for (x, y) in la.iter().zip(lb) {
@@ -240,10 +236,7 @@ pub struct Streaming<'a> {
 }
 
 impl<'a> Streaming<'a> {
-    pub fn new(
-        wanted: Vec<u64>,
-        paired: &'a mut dyn FnMut(&Key, &[f32], u32),
-    ) -> Streaming<'a> {
+    pub fn new(wanted: Vec<u64>, paired: &'a mut dyn FnMut(&Key, &[f32], u32)) -> Streaming<'a> {
         Streaming {
             wanted,
             pending: Vec::new(),

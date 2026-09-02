@@ -108,7 +108,10 @@ fn the_signals_series_pairs_and_keeps_absence() {
     drain(std::io::Cursor::new(bare.as_bytes()), &mut reader);
     assert!(reader.series.points.iter().all(|p| p.surprisal.is_none()));
     assert!(reader.series.points.iter().all(|p| p.entropy.is_some()));
-    assert!(reader.series.spikes(2.0).is_empty(), "no surprisal, no spike");
+    assert!(
+        reader.series.spikes(2.0).is_empty(),
+        "no surprisal, no spike"
+    );
 }
 
 /// **A spike is a position that clears the caller's bar**, stated in
@@ -176,8 +179,10 @@ fn a_turn_whose_counts_disagree_refuses() {
 #[test]
 fn the_series_is_gated_only_where_a_bracket_exists() {
     let serving = concat!(
-        r#"{"session":"s","run":"r","sequence":"0","kind":"load","payload":{"tee":{}}}"#, "\n",
-        r#"{"session":"s","run":"r","turn":"t-1","sequence":"1","kind":"model.measurement","payload":{"output_tokens":[7],"entropies":[1.0]}}"#, "\n",
+        r#"{"session":"s","run":"r","sequence":"0","kind":"load","payload":{"tee":{}}}"#,
+        "\n",
+        r#"{"session":"s","run":"r","turn":"t-1","sequence":"1","kind":"model.measurement","payload":{"output_tokens":[7],"entropies":[1.0]}}"#,
+        "\n",
     );
     let mut reader = Signals::default();
     drain(std::io::Cursor::new(serving.as_bytes()), &mut reader);
@@ -185,10 +190,20 @@ fn the_series_is_gated_only_where_a_bracket_exists() {
     assert!(reader.licensed(), "a serving record needs no certificate");
     assert_eq!(reader.series.points.len(), 1);
 
-    for (closed, licensed) in [(Some("certified"), true), (Some("diverged"), false), (None, false)] {
+    for (closed, licensed) in [
+        (Some("certified"), true),
+        (Some("diverged"), false),
+        (None, false),
+    ] {
         let mut reader = Signals::default();
-        drain(std::io::Cursor::new(record(closed, "").as_bytes()), &mut reader);
-        assert!(reader.diagnostic(), "replay.opened opens a diagnostic record");
+        drain(
+            std::io::Cursor::new(record(closed, "").as_bytes()),
+            &mut reader,
+        );
+        assert!(
+            reader.diagnostic(),
+            "replay.opened opens a diagnostic record"
+        );
         assert_eq!(reader.licensed(), licensed, "closed {closed:?}");
     }
 }

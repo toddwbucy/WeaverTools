@@ -63,9 +63,9 @@ pub fn drive(seat: &mut Ports<'_>, text: &str) -> Result<TurnOutcome, TurnError>
     // at it. Every judgment here is the loop's: the threshold, the recall
     // bound, and what the re-entry says.
     let reentry = if !first_turn
-        && seat.fullness().is_some_and(|(resident, capacity)| {
-            pressured(resident, capacity)
-        })
+        && seat
+            .fullness()
+            .is_some_and(|(resident, capacity)| pressured(resident, capacity))
     {
         // The flush is driven for its effect and its record event, and its
         // confirmation gates nothing here: a missing answer cannot prove
@@ -87,7 +87,8 @@ pub fn drive(seat: &mut Ports<'_>, text: &str) -> Result<TurnOutcome, TurnError>
     // ask costs one bounded exchange and a missing answer costs nothing
     // but the line, the leg being optional by presence.
     let continuity = if first_turn {
-        seat.session_shape().and_then(|shape| continuity_line(&shape))
+        seat.session_shape()
+            .and_then(|shape| continuity_line(&shape))
     } else {
         None
     };
@@ -326,10 +327,7 @@ mod tests {
     fn the_continuity_line_counts_the_past_and_only_the_past() {
         let run = |name: &str, closed: u64| weaver_harness::RunShape {
             run: name.to_string(),
-            kinds: vec![
-                ("load".to_string(), 1),
-                ("turn.closed".to_string(), closed),
-            ],
+            kinds: vec![("load".to_string(), 1), ("turn.closed".to_string(), closed)],
         };
         let alone = SessionShape {
             runs: vec![run("r-1", 0)],

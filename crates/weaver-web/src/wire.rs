@@ -22,12 +22,32 @@ use tokio::sync::{mpsc, oneshot};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "svc", rename_all = "snake_case")]
 pub enum ToConnector {
-    Turn { id: u64, agent: String, text: String },
-    Verb { id: u64, agent: String, verb: String },
-    Status { id: u64 },
-    Declaration { id: u64, agent: String },
-    TraceRuns { id: u64, agent: String },
-    TraceRun { id: u64, agent: String, run: String },
+    Turn {
+        id: u64,
+        agent: String,
+        text: String,
+    },
+    Verb {
+        id: u64,
+        agent: String,
+        verb: String,
+    },
+    Status {
+        id: u64,
+    },
+    Declaration {
+        id: u64,
+        agent: String,
+    },
+    TraceRuns {
+        id: u64,
+        agent: String,
+    },
+    TraceRun {
+        id: u64,
+        agent: String,
+        run: String,
+    },
 }
 
 /// One run as the sink file carries it: the confirm view's inventory
@@ -57,7 +77,10 @@ impl From<&GateError> for WireGateError {
             GateError::BadClose(_) => "bad_close",
             GateError::CloseTooLong(_) => "close_too_long",
         };
-        Self { kind: kind.into(), message: e.to_string() }
+        Self {
+            kind: kind.into(),
+            message: e.to_string(),
+        }
     }
 }
 
@@ -68,7 +91,9 @@ impl From<&GateError> for WireGateError {
 pub enum ToServer {
     /// First frame on every connection: the box's agent roster by
     /// name. Paths stay on the box (Spec section 16).
-    Hello { agents: Vec<String> },
+    Hello {
+        agents: Vec<String>,
+    },
     Turn {
         id: u64,
         close: Option<GateClose>,
@@ -79,9 +104,19 @@ pub enum ToServer {
         outcome: Option<VerbOutcome>,
         error: Option<String>,
     },
-    Status { id: u64, agents: HashMap<String, bool> },
-    Declaration { id: u64, path: String, content: String },
-    TraceRuns { id: u64, runs: Vec<RunSummary> },
+    Status {
+        id: u64,
+        agents: HashMap<String, bool>,
+    },
+    Declaration {
+        id: u64,
+        path: String,
+        content: String,
+    },
+    TraceRuns {
+        id: u64,
+        runs: Vec<RunSummary>,
+    },
     TraceRun {
         id: u64,
         events: Vec<serde_json::Value>,
@@ -89,7 +124,10 @@ pub enum ToServer {
         /// silent (Spec section 16).
         truncated: bool,
     },
-    Trace { agent: String, event: TraceEvent },
+    Trace {
+        agent: String,
+        event: TraceEvent,
+    },
 }
 
 /// What a turn ask can fail with on the server side: the gate's own
@@ -212,7 +250,11 @@ impl Link {
     ) -> Result<ToServer, ()> {
         let id = self.inner.next_ask.fetch_add(1, Ordering::Relaxed);
         let (reply_tx, reply_rx) = oneshot::channel();
-        self.inner.pending.lock().unwrap().insert(id, (conn, reply_tx));
+        self.inner
+            .pending
+            .lock()
+            .unwrap()
+            .insert(id, (conn, reply_tx));
         // The guard makes every exit from this frame remove the entry:
         // an answered ask already removed it (the remove is then a
         // no-op), and a timeout or a cancelled caller drops this future
@@ -240,7 +282,10 @@ impl Link {
     /// the typed error.
     pub async fn turn(&self, agent: &str, text: &str) -> Result<GateClose, TurnError> {
         let (a, text) = (agent.to_owned(), text.to_owned());
-        match self.ask(agent, |id| ToConnector::Turn { id, agent: a, text }).await {
+        match self
+            .ask(agent, |id| ToConnector::Turn { id, agent: a, text })
+            .await
+        {
             Ok(ToServer::Turn { close: Some(c), .. }) => Ok(c),
             Ok(ToServer::Turn { error: Some(e), .. }) => Err(TurnError::Gate(e)),
             _ => Err(TurnError::LinkDown),
@@ -250,8 +295,13 @@ impl Link {
     /// One verb invocation across the link (Spec section 11).
     pub async fn verb(&self, agent: &str, verb: &str) -> anyhow::Result<VerbOutcome> {
         let (a, verb) = (agent.to_owned(), verb.to_owned());
-        match self.ask(agent, |id| ToConnector::Verb { id, agent: a, verb }).await {
-            Ok(ToServer::Verb { outcome: Some(o), .. }) => Ok(o),
+        match self
+            .ask(agent, |id| ToConnector::Verb { id, agent: a, verb })
+            .await
+        {
+            Ok(ToServer::Verb {
+                outcome: Some(o), ..
+            }) => Ok(o),
             Ok(ToServer::Verb { error: Some(e), .. }) => anyhow::bail!("{e}"),
             _ => anyhow::bail!("the link to this agent's box is down"),
         }
@@ -298,11 +348,8 @@ impl Link {
         make: impl FnOnce(u64) -> ToConnector,
     ) -> Option<ToServer> {
         let fut = self.ask(agent, make);
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS),
-            fut,
-        )
-        .await
+        match tokio::time::timeout(std::time::Duration::from_secs(SMALL_ASK_TIMEOUT_SECS), fut)
+            .await
         {
             Ok(Ok(answer)) => Some(answer),
             _ => None,
@@ -346,7 +393,9 @@ impl Link {
             .small_ask(agent, |id| ToConnector::TraceRun { id, agent: a, run })
             .await
         {
-            Some(ToServer::TraceRun { events, truncated, .. }) => Some((events, truncated)),
+            Some(ToServer::TraceRun {
+                events, truncated, ..
+            }) => Some((events, truncated)),
             _ => None,
         }
     }
@@ -429,7 +478,10 @@ pub async fn serve(link: Link, listener: TcpListener, events: mpsc::Sender<LinkE
         tokio::spawn(async move {
             serve_connection(&link, conn, stream, &events).await;
             let lost = link.teardown(conn);
-            tracing::info!("link {conn} from {peer} closed, {} agent(s) lost", lost.len());
+            tracing::info!(
+                "link {conn} from {peer} closed, {} agent(s) lost",
+                lost.len()
+            );
             if !lost.is_empty() {
                 let _ = events.send(LinkEvent::Down(lost)).await;
             }
@@ -447,7 +499,9 @@ async fn serve_connection(
     let (tx, mut rx) = mpsc::channel::<ToConnector>(64);
     let writer = tokio::spawn(async move {
         while let Some(frame) = rx.recv().await {
-            let Ok(mut line) = serde_json::to_string(&frame) else { continue };
+            let Ok(mut line) = serde_json::to_string(&frame) else {
+                continue;
+            };
             line.push('\n');
             if write_half.write_all(line.as_bytes()).await.is_err() {
                 return;
@@ -549,7 +603,9 @@ async fn connector_connection(
 
     let writer = tokio::spawn(async move {
         while let Some(frame) = rx.recv().await {
-            let Ok(mut line) = serde_json::to_string(&frame) else { continue };
+            let Ok(mut line) = serde_json::to_string(&frame) else {
+                continue;
+            };
             line.push('\n');
             if write_half.write_all(line.as_bytes()).await.is_err() {
                 return;
@@ -575,7 +631,10 @@ async fn connector_connection(
             tokio::spawn(traceview::tail_task(path, ev_tx));
             while let Some(event) = ev_rx.recv().await {
                 if tx
-                    .send(ToServer::Trace { agent: agent.clone(), event })
+                    .send(ToServer::Trace {
+                        agent: agent.clone(),
+                        event,
+                    })
                     .await
                     .is_err()
                 {
@@ -604,10 +663,12 @@ async fn connector_connection(
         // Every ask runs concurrently: a turn holds the gate for
         // minutes while status must answer now. Answers serialize
         // through the writer's channel.
-        let (gates, cfg_decl, tx) =
-            (gates.clone(), cfg.agent_declarations.clone(), tx.clone());
-        let (admin_bin, admin_config, admin_env) =
-            (cfg.admin_bin.clone(), cfg.admin_config.clone(), cfg.admin_env);
+        let (gates, cfg_decl, tx) = (gates.clone(), cfg.agent_declarations.clone(), tx.clone());
+        let (admin_bin, admin_config, admin_env) = (
+            cfg.admin_bin.clone(),
+            cfg.admin_config.clone(),
+            cfg.admin_env,
+        );
         let trace_paths = trace_paths.clone();
         // Answered asks' handles are dropped as new asks arrive, so a
         // long-lived connection does not accumulate them.
@@ -616,7 +677,11 @@ async fn connector_connection(
             let answer = match frame {
                 ToConnector::Turn { id, agent, text } => match gates.get(&agent) {
                     Some(gate) => match gate.turn(&text).await {
-                        Ok(close) => ToServer::Turn { id, close: Some(close), error: None },
+                        Ok(close) => ToServer::Turn {
+                            id,
+                            close: Some(close),
+                            error: None,
+                        },
                         Err(e) => ToServer::Turn {
                             id,
                             close: None,
@@ -636,8 +701,16 @@ async fn connector_connection(
                     match lifecycle::run_verb(&verb, &agent, &admin_bin, &admin_config, admin_env)
                         .await
                     {
-                        Ok(outcome) => ToServer::Verb { id, outcome: Some(outcome), error: None },
-                        Err(e) => ToServer::Verb { id, outcome: None, error: Some(e.to_string()) },
+                        Ok(outcome) => ToServer::Verb {
+                            id,
+                            outcome: Some(outcome),
+                            error: None,
+                        },
+                        Err(e) => ToServer::Verb {
+                            id,
+                            outcome: None,
+                            error: Some(e.to_string()),
+                        },
                     }
                 }
                 ToConnector::Status { id } => ToServer::Status {
@@ -670,40 +743,30 @@ async fn connector_connection(
                             let mut order: Vec<String> = Vec::new();
                             let mut map: HashMap<String, RunSummary> = HashMap::new();
                             while let Ok(Some(line)) = lines.next_line().await {
-                                let Ok(v) =
-                                    serde_json::from_str::<serde_json::Value>(&line)
-                                else {
+                                let Ok(v) = serde_json::from_str::<serde_json::Value>(&line) else {
                                     continue;
                                 };
-                                let Some(run) = v.get("run").and_then(|r| r.as_str())
-                                else {
+                                let Some(run) = v.get("run").and_then(|r| r.as_str()) else {
                                     continue;
                                 };
-                                let entry =
-                                    map.entry(run.to_owned()).or_insert_with(|| {
-                                        order.push(run.to_owned());
-                                        RunSummary {
-                                            run: run.to_owned(),
-                                            turns: 0,
-                                            events: 0,
-                                            first_wall_ms: None,
-                                        }
-                                    });
+                                let entry = map.entry(run.to_owned()).or_insert_with(|| {
+                                    order.push(run.to_owned());
+                                    RunSummary {
+                                        run: run.to_owned(),
+                                        turns: 0,
+                                        events: 0,
+                                        first_wall_ms: None,
+                                    }
+                                });
                                 entry.events += 1;
                                 if entry.first_wall_ms.is_none() {
-                                    entry.first_wall_ms =
-                                        v.get("wall_ms").and_then(|w| w.as_i64());
+                                    entry.first_wall_ms = v.get("wall_ms").and_then(|w| w.as_i64());
                                 }
-                                if v.get("kind").and_then(|k| k.as_str())
-                                    == Some("turn.closed")
-                                {
+                                if v.get("kind").and_then(|k| k.as_str()) == Some("turn.closed") {
                                     entry.turns += 1;
                                 }
                             }
-                            runs = order
-                                .into_iter()
-                                .filter_map(|r| map.remove(&r))
-                                .collect();
+                            runs = order.into_iter().filter_map(|r| map.remove(&r)).collect();
                         }
                     }
                     ToServer::TraceRuns { id, runs }
@@ -716,14 +779,10 @@ async fn connector_connection(
                         if let Ok(file) = tokio::fs::File::open(path).await {
                             let mut lines = BufReader::new(file).lines();
                             while let Ok(Some(line)) = lines.next_line().await {
-                                let Ok(v) =
-                                    serde_json::from_str::<serde_json::Value>(&line)
-                                else {
+                                let Ok(v) = serde_json::from_str::<serde_json::Value>(&line) else {
                                     continue;
                                 };
-                                if v.get("run").and_then(|r| r.as_str())
-                                    == Some(run.as_str())
-                                {
+                                if v.get("run").and_then(|r| r.as_str()) == Some(run.as_str()) {
                                     if events.len() == RUN_CAP {
                                         truncated = true;
                                         break;
@@ -733,7 +792,11 @@ async fn connector_connection(
                             }
                         }
                     }
-                    ToServer::TraceRun { id, events, truncated }
+                    ToServer::TraceRun {
+                        id,
+                        events,
+                        truncated,
+                    }
                 }
             };
             let _ = tx.send(answer).await;

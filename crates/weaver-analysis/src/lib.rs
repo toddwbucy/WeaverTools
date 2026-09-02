@@ -37,8 +37,8 @@ pub mod stream;
 pub use capture::{Capture, Comparison, compare};
 pub use declare::{AnalystInputs, DeriveRefusal, SinkKind, derive};
 pub use lens::{
-    Lens, LensRefusal, Manifest, Unembedding, manifest_path_for, read_manifest, sha256_hex,
-    rms_epsilon, sha256_hex_of_file,
+    Lens, LensRefusal, Manifest, Unembedding, manifest_path_for, read_manifest, rms_epsilon,
+    sha256_hex, sha256_hex_of_file,
 };
 pub use project::{Distillate, ELECTION, project, render_opener};
 pub use reading::{Bracket, Gated, Outcome, RecordKind, brackets, gate, record_kind};

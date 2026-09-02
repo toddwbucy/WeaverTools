@@ -554,7 +554,9 @@ pub enum TokenDirective {
     /// bounded by the seam below at the identity prefix and above at the
     /// resident count, zero being the prefix-only state the flush has
     /// always meant.
-    Flush { keep: u64 },
+    Flush {
+        keep: u64,
+    },
     /// The elision names a half-open span of resident positions, per the
     /// decode contract as amended 2026-08-22 and `weaver-spu-PRD` section
     /// 13.13: `from` inclusive, `to` exclusive, and what the span covers
@@ -567,7 +569,10 @@ pub enum TokenDirective {
     /// the second.
     ///
     /// **These positions index the resident sequence and never a trace.**
-    Elide { from: u64, to: u64 },
+    Elide {
+        from: u64,
+        to: u64,
+    },
 }
 
 /// The decode seam's answer, per `weaver-types-Spec` section 4.4. A cancel
@@ -687,9 +692,7 @@ pub enum RefusalRecord {
     },
     /// **Classify carries no ask**, its content standing in the
     /// `classify.request` event the harness authored before the exchange.
-    Classify {
-        refusal: LabelRefusal,
-    },
+    Classify { refusal: LabelRefusal },
 }
 
 /// Which decode ask a refusal answered.
@@ -709,8 +712,13 @@ pub enum TokenAsk {
     /// The re-feed drive, per the decode contract's sixth exchange.
     ReFeed,
     Cancel,
-    Flush { keep: u64 },
-    Elide { from: u64, to: u64 },
+    Flush {
+        keep: u64,
+    },
+    Elide {
+        from: u64,
+        to: u64,
+    },
 }
 
 /// Which lifecycle ask a refusal answered, named without reproducing the

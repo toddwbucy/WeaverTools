@@ -98,11 +98,7 @@ impl Queues {
     }
 }
 
-async fn worker(
-    queues: Queues,
-    mut rx: mpsc::Receiver<Invocation>,
-    state: Arc<Mutex<AgentState>>,
-) {
+async fn worker(queues: Queues, mut rx: mpsc::Receiver<Invocation>, state: Arc<Mutex<AgentState>>) {
     while let Some(first) = rx.recv().await {
         // Batch-on-drain: collect everything pending. Invocations for
         // other channels than the first stay batched per channel.
@@ -145,8 +141,13 @@ async fn worker(
 
 async fn run_turn(queues: &Queues, inv: &Invocation) -> anyhow::Result<()> {
     let store = &queues.store;
-    let Some(context) =
-        build_context(store, inv.channel_id, inv.agent_participant_id, &inv.agent_name).await?
+    let Some(context) = build_context(
+        store,
+        inv.channel_id,
+        inv.agent_participant_id,
+        &inv.agent_name,
+    )
+    .await?
     else {
         return Ok(());
     };
@@ -165,10 +166,7 @@ async fn run_turn(queues: &Queues, inv: &Invocation) -> anyhow::Result<()> {
 
     match queues.link.turn(&inv.agent_name, &context).await {
         Ok(close) => {
-            let body = close
-                .text
-                .clone()
-                .unwrap_or_else(|| close.raw.to_string());
+            let body = close.text.clone().unwrap_or_else(|| close.raw.to_string());
             let event = store
                 .append(NewEvent {
                     channel_id: inv.channel_id,
@@ -222,8 +220,7 @@ async fn build_context(
     agent_participant_id: i64,
     agent_name: &str,
 ) -> anyhow::Result<Option<String>> {
-    let msgs =
-        channel::messages_since_last_close(store, channel_id, agent_participant_id).await?;
+    let msgs = channel::messages_since_last_close(store, channel_id, agent_participant_id).await?;
     // **A window without a message does not invoke.** Batching and
     // in-flight turns race: a mention enqueues the agent, the agent's
     // current turn closes after that mention landed, and the queued
@@ -236,9 +233,7 @@ async fn build_context(
     let Some(pin) = msgs.iter().rposition(|m| m.kind == "message") else {
         return Ok(None);
     };
-    let header = format!(
-        "Turn context. You are {agent_name}. Messages since your last turn:\n"
-    );
+    let header = format!("Turn context. You are {agent_name}. Messages since your last turn:\n");
     #[derive(serde::Serialize)]
     struct Request<'a> {
         text: &'a str,
@@ -252,7 +247,9 @@ async fn build_context(
     // escaped bytes, each row's escaped bytes, and 2 bytes per joining
     // newline.
     let escaped = |s: &str| {
-        serde_json::to_string(s).map(|j| j.len() - 2).unwrap_or(usize::MAX)
+        serde_json::to_string(s)
+            .map(|j| j.len() - 2)
+            .unwrap_or(usize::MAX)
     };
     struct Row {
         line: String,
@@ -268,13 +265,16 @@ async fn build_context(
                 m.author_name.as_deref().unwrap_or("unknown"),
                 m.body.as_deref().unwrap_or("")
             );
-            Row { cost: escaped(&line), line, pin: i == pin }
+            Row {
+                cost: escaped(&line),
+                line,
+                pin: i == pin,
+            }
         })
         .collect();
     const BOUND: usize = crate::adapters::gate::LINE_BOUND;
     let overhead = 11 + escaped(&header);
-    let mut total =
-        overhead + rows.iter().map(|r| r.cost).sum::<usize>() + 2 * (rows.len() - 1);
+    let mut total = overhead + rows.iter().map(|r| r.cost).sum::<usize>() + 2 * (rows.len() - 1);
     // Oldest first, the pinned mention never dropped: a close newer
     // than the mention that justified the turn must not displace it
     // (review of #350).
@@ -300,7 +300,11 @@ async fn build_context(
             let keep = only.chars().count().saturating_sub((len - BOUND).max(1));
             only = only.chars().take(keep).collect();
         }
-        rows.push(Row { cost: 0, line: only, pin: true });
+        rows.push(Row {
+            cost: 0,
+            line: only,
+            pin: true,
+        });
     }
     let joined: Vec<&str> = rows.iter().map(|r| r.line.as_str()).collect();
     Ok(Some(format!("{header}{}", joined.join("\n"))))

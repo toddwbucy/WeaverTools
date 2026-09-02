@@ -225,8 +225,7 @@ fn each_target_compiles_behind_its_documented_gate() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
     for (name, gate, _) in TABLE {
         let (_, found) = read_target(&dir.join(name));
-        let documented: BTreeSet<String> =
-            gate.iter().map(|g| g.to_string()).collect();
+        let documented: BTreeSet<String> = gate.iter().map(|g| g.to_string()).collect();
         assert_eq!(
             found, documented,
             "{name} compiles behind {found:?} and section 1.2 says {documented:?}"
@@ -265,8 +264,7 @@ fn each_target_reads_its_documented_fixtures() {
             }
             continue;
         }
-        let documented: BTreeSet<String> =
-            fixtures.iter().map(|f| f.to_string()).collect();
+        let documented: BTreeSet<String> = fixtures.iter().map(|f| f.to_string()).collect();
         assert_eq!(
             found, documented,
             "{name} reads {found:?} and section 1.2 says {documented:?}"

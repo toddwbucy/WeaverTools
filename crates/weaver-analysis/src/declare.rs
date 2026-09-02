@@ -61,8 +61,14 @@ impl SinkKind {
 /// declaration.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DeriveRefusal {
-    MemberAbsent { member: &'static str },
-    MemberDisagrees { member: &'static str, held: String, met: String },
+    MemberAbsent {
+        member: &'static str,
+    },
+    MemberDisagrees {
+        member: &'static str,
+        held: String,
+        met: String,
+    },
 }
 
 /// One value across the record or a refusal naming the member.
@@ -74,8 +80,12 @@ fn one_value(
 ) -> Result<String, DeriveRefusal> {
     let mut held: Option<String> = None;
     for event in events.iter().filter(|e| e.envelope.kind == kind) {
-        let Some(payload) = &event.payload else { continue };
-        let Some(value) = value_at(payload, path) else { continue };
+        let Some(payload) = &event.payload else {
+            continue;
+        };
+        let Some(value) = value_at(payload, path) else {
+            continue;
+        };
         let met = value.get().to_string();
         match &held {
             None => held = Some(met),
@@ -132,7 +142,12 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
     .map_err(|_| DeriveRefusal::MemberAbsent {
         member: "model-binding.artifact",
     })?;
-    let seed = one_value(events, "model.request", "sampling.seed", "tunable-values.seed")?;
+    let seed = one_value(
+        events,
+        "model.request",
+        "sampling.seed",
+        "tunable-values.seed",
+    )?;
     let max_tokens = one_value(
         events,
         "model.request",
@@ -165,7 +180,10 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
     declaration.push_str("binding-kind: diagnostic\n");
     declaration.push_str("spu-instruction:\n  decoder:\n");
     declaration.push_str("    model-binding:\n");
-    declaration.push_str(&format!("      artifact: {}\n", serde_json::json!(artifact)));
+    declaration.push_str(&format!(
+        "      artifact: {}\n",
+        serde_json::json!(artifact)
+    ));
     let devices: Vec<String> = inputs.devices.iter().map(|d| d.to_string()).collect();
     declaration.push_str(&format!("      devices: [{}]\n", devices.join(", ")));
     declaration.push_str(&format!(
@@ -190,7 +208,10 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
         "trace-sink:\n  kind: {}\n",
         inputs.sink_kind.declared()
     ));
-    declaration.push_str(&format!("  path: {}\n", serde_json::json!(inputs.sink_path)));
+    declaration.push_str(&format!(
+        "  path: {}\n",
+        serde_json::json!(inputs.sink_path)
+    ));
     declaration.push_str("  create: true\n");
     Ok(declaration)
 }
