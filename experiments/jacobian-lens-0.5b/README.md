@@ -12,22 +12,20 @@ diagnostic record's `residual.column` capture through it.
   selection, and writes the lens beside a manifest carrying the weights
   sha256, the corpus hash, the implementation revision, and the environment -
   the identity discipline the capture-artifact paper formalizes.
-- `read_columns.py` - parses a diagnostic record, pairs each
-  `residual.column` with the token its position drew, and prints the layer
-  trajectory `unembed(J_l @ h)` at chosen positions. **The control runs
-  first**: at the final layer, `unembed(h_final)` with no transport must
-  rank the actually-drawn token at or near top-1 across every position,
-  which validates the position pairing, the layer convention, and the
-  engine-vs-HF numerics in one number before any lens claim is made.
-  **The control gates the trajectories**: below `--min-top5` (default 0.9)
-  nothing is printed and the exit is nonzero naming the rate, the
-  no-reading-from-an-uncertified-replay rule one level down. The reader
-  also refuses a lens whose manifest names other weights (sha256 recomputed
-  against the model in hand) and a record whose columns pair with no
-  measurement, and it scopes every pairing by turn so a multi-bracket
-  record cannot alias positions across passes.
+**The reading moved into the crate on 2026-09-01.** `read_columns.py` and
+`compare_columns.py` proved the shapes this directory's measurements
+elected, and `weaver-analysis` now owns both:
 
-## What the first read reads
+    weaver-analysis lens <capture> --lens <artifact> --weights <model>
+    weaver-analysis compare <capture> <capture>
+
+with the same discipline papered rather than scripted - the manifest
+judged whole before anything loads, the header's names before its data,
+the control gating the trajectories, and the comparison exact and never
+truncating. The scripts are retired rather than kept beside it, one
+implementation of one reading being the point.
+
+## What the first read read
 
 Run 5's archived record (`null-replay-olympus/logs/`, the certified q8
 replay with every election on): 455 columns at 24x896. The lens is fitted
