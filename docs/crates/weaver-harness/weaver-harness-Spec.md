@@ -3,6 +3,16 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-02, second of this date, the last word's pipe travels
+clear of the standard streams. Section 2.2's stderr clause gains the
+equal-descriptor corner of its own placement: a write end arriving at 2 is
+never copied by the `dup2` onto 2, keeps the close-on-exec flag, and is
+closed by the exec, so the organ loses the stream and the journal loses
+what it kept. The repair is the parent's rather than the child's, which
+leaves the three-call bound as it stands. No record moves, the corner
+being a way `harness-death-carries-the-last-word` fails rather than a
+claim beside it.
+
 **Revised:** 2026-09-02, the dying organ's last word reaches the record.
 Section 2.2 gains the stderr pipe - descriptor 2 is the worker's, placed by
 the dup2 kind the three-call bound already enumerates - and the observed
@@ -902,6 +912,22 @@ The race at the very tail is narrowed and named: the author's read
 settles on the reader's end-of-stream, bounded so an arm that never died
 cannot hold the death hostage, and a read that hits the bound may miss
 the final line, which costs the member and never the death.
+
+**The write end travels clear of descriptor 2, and the parent is where it
+is made to.** The placement is a `dup2` onto 2, and a `dup2` whose two
+numbers are equal is defined as a no-op returning the number, so a write
+end that already sits at 2 is never copied, keeps the close-on-exec flag
+the pipe carries, and is closed by the exec: the organ loses the stream
+its last word travels on, and the journal loses what it kept before this
+clause. The corner is the pipe call's numbering rather than a race,
+because the lowest free numbers are what it answers and a parent that has
+closed its own stderr leaves 2 free. **The repair is the parent moving the
+end and not the child clearing the flag**, for two reasons pointing the
+same way: the child's three-call bound is left as it stands, and the same
+corner would put the parent's own stderr on this pipe, where the tee
+writes its own input back. This is the equal-descriptor corner the
+placement above meets at descriptor 3, answered differently because the
+two placements differ in who can move an end before the fork.
 
 ```graph
 node: harness-death-carries-the-last-word
