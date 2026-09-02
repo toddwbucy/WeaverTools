@@ -1,0 +1,17 @@
+{
+  "box": "olympus-ampere-q8",
+  "arm": "ampere-q8-comparison",
+  "agent": "karl",
+  "declaration": "/bulk-store/weaver-testing/repro-olympus/agents/karl.yaml",
+  "gate_socket": "/run/weaver-karl/gate.sock",
+  "trace": "/home/todd/.weaveragents/karl/trace.ndjson",
+  "admin_bin": "/usr/local/libexec/weaver/experiment-6e6fc4b/weaver-admin",
+  "admin_config": "/bulk-store/weaver-testing/tracegen-olympus/config",
+  "repo": "/opt/weavertools/WeaverTools",
+  "build_flags": "cargo build --release --features weaver-spu/cuda,weaver-harness/pyworker -p weaver-admin -p weaver-spu -p weaver-gate -p weaver-state -p weaver-harness; commit 6e6fc4b (main, the descriptor leak closed, qwen3's taps declared, the tree swept); built on olympus 2026-09-02 and installed root-owned at /usr/local/libexec/weaver/experiment-6e6fc4b; rustc nightly-2026-02-13; CUDA 13.3.73 at /opt/cuda; NVCC_CCBIN=/usr/bin/g++-15 (GCC 15.3.0); driver 610.57.04; cccl pinned 3.3.4-1 via IgnorePkg; engine libs from llama-cpp-sys-2 out/lib",
+  "artifact": "/opt/weaver/models/Qwen3-8B-Q8_0.gguf",
+  "schedule": "fit-16k",
+  "context_capacity": 16384,
+  "sweeps": 1,
+  "precision": "q8_0"
+}
