@@ -106,6 +106,23 @@ def main():
     if h.hexdigest() != manifest["fitted_for"]["model_safetensors_sha256"]:
         print(json.dumps({"refusal": "the weights are not the ones the lens was fitted for"}))
         return 1
+    # **Everything checkable before the tensors materialize is checked
+    # before**: the manifest's width against the model's own config, and
+    # the manifest's layer set for shape. Pre-load inspection of the tensor
+    # names themselves is what the safetensors election buys; the torch
+    # serialization in hand cannot offer it, so the loaded lens is then
+    # held to the manifest exactly, one layer for one.
+    config = json.load(open(os.path.join(MODEL_DIR, "config.json")))
+    if manifest["lens_shape"]["d_model"] != config["hidden_size"]:
+        print(json.dumps({"refusal": "the manifest's width is not the model's",
+                          "manifest": manifest["lens_shape"]["d_model"],
+                          "model": config["hidden_size"]}))
+        return 1
+    expected_layers = manifest["lens_shape"]["source_layers"]
+    if not expected_layers or expected_layers != sorted(set(expected_layers)):
+        print(json.dumps({"refusal": "the manifest's layer set is not a sorted set",
+                          "source_layers": expected_layers}))
+        return 1
 
     hf = transformers.AutoModelForCausalLM.from_pretrained(
         MODEL_DIR, dtype=torch.bfloat16
@@ -117,6 +134,12 @@ def main():
         print(json.dumps({"refusal": "the lens width disagrees with its manifest",
                           "lens": lens.d_model,
                           "manifest": manifest["lens_shape"]["d_model"]}))
+        return 1
+    if lens.source_layers != expected_layers:
+        print(json.dumps({"refusal": "the lens layers do not match the manifest "
+                          "one for one",
+                          "lens": lens.source_layers,
+                          "manifest": expected_layers}))
         return 1
 
     # **The control**: final-layer residual, no transport, model's own
