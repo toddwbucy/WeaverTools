@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.30, 2026-08-24. Companion to the Working Rules, the Document
+**Version:** v0.31, 2026-09-02. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -530,6 +530,33 @@ and does not enter the roster, holding the position outside that
 on the HADES server per `HANDOFF-2026-08-04-hades-graph-build`, the graph stood up
 from the merged set, and the set-level mark rides the apex's system record.
 
+**The diagnostic leg is delivered end to end, 2026-09-01, and the roster
+is twelve directories under `crates/`.** What was owed at the last refresh
+is built: `weaver-diagnostic` writes the diagnostic-trace as the harness's
+third member, the replay loop runs from the Gateless seat's own criterion,
+the null replay certifies against real records, the column seam carries the
+residual vectors under the diagnostic binding and no other, and
+`weaver-analysis` stands outside the boundary as the driver and the reader
+- deriving the declaration from the record, preloading, gating on the
+stated outcome, applying the lens, and comparing two captures exactly.
+Epic #293 closed on the operator's direction with its one live row, the
+capture artifact, carried by issue #386, and that act's papers landed the
+artifact criteria from measurement rather than assumption. **The vector
+bar is a measured number**: two certified column replays of one source
+differenced to 9,784,320 of 9,784,320 values exactly equal, so
+certification's vector comparison is exact within a device model and the
+float tolerance is the cross-device bar alone.
+
+**What the instrument measured about itself belongs here too, because it
+bounds where the next acts point.** On the 0.5b the lens reads concrete and
+lexical content and does not read the abstract evocations the source
+paper's workspace results turn on - unchanged at five times the fitting
+compute, so the bound is the model's scale rather than the fit's thinness.
+The families above it are therefore where the instrument earns its keep,
+and `weaver-spu`'s per-family `taps_readout` and `taps_column` are what
+stand between it and them, each owed its neutrality demonstration on the
+engine that would serve it, per issue #212.
+
 **The graph was rebuilt 2026-08-08 from `98c8713`** and stands at 293 nodes and
 426 edges in 19 `wt_` collections under the named graph `corpus_graph`. The census
 below verified on that build. Two earlier builds preceded it, 2026-08-06 from
@@ -600,29 +627,48 @@ earlier table read `types 17/17`, `trace 39/39`, `harness 48/48`, `gate 23/23`,
 comparing an old batch against this section needs to know the ruler changed and
 not the thing measured.
 
-**Three assertions are open across the set, and each is named with what it waits
-on**, the roll being short enough that leaving it to the register cost more than
-it saved. What an open assertion waits on is stated because the count cannot say
-it, and a blocked one and an overlooked one read the same in a total:
+**The roll of open assertions is recounted 2026-09-02, and it is fifteen
+rather than three.** The method is stated so a later reader can repeat it
+rather than trust it: every `node:` in an assertion record across `docs`,
+against every `conforms:` header across `crates`, the difference being
+what no code file claims. **355 assertion records are declared and 340 are
+cited**, and the tag census runs 137 perturbation, 136 review, 32
+manifest, 32 compile-pin, and 18 compile-fail. The earlier roll of three
+was taken by hand at a smaller set and did not move as the set grew, which
+is the drift a stated method exists to prevent.
 
-    weaver-spu        spu-one-forward-per-prompt                  review
-    weaver-spu        spu-two-taps-one-shape                      review
-    weaver-harness    harness-idle-report-authors-without-a-turn   perturbation
+    weaver-analysis   analysis-binds-no-port                        review
+    weaver-analysis   analysis-writes-no-record                     compile-fail
+    weaver-harness    harness-idle-report-authors-without-a-turn     perturbation
+    weaver-spu        spu-architecture-and-markers-are-unique        compile-pin
+    weaver-spu        spu-elected-readout-changes-no-token           perturbation
+    weaver-spu        spu-family-is-architecture-and-template        perturbation
+    weaver-spu        spu-field-changes-no-token                     perturbation
+    weaver-spu        spu-field-depth-refused-below-the-cutoff       perturbation
+    weaver-spu        spu-gguf-is-the-default-gate                   manifest
+    weaver-spu        spu-one-forward-per-prompt                     review
+    weaver-spu        spu-reduction-renders-its-shape                perturbation
+    weaver-spu        spu-room-refusal-carries-capacity              perturbation
+    weaver-spu        spu-sampler-holds-nothing-between-generations   perturbation
+    weaver-spu        spu-seed-derives-per-generation                perturbation
+    weaver-trace      trace-no-version-member                        review
 
-**All three are blocked rather than missed.** The SPU's two wait on the readout
-tap existing, the tap not being the engine: the eval-callback pin holds the seam
-open and nothing yet drives a tap through it, which `weaver-spu-Spec` section 7
-states plainly as code this program writes rather than salvage it inherits. The
-two that waited on the floor carrying the decode seam's vocabulary are cited and
-closed, and a fifth, the election refused at admit, was bought 2026-08-10 by the
-route act. `spu-marker-promotion` reads satisfied under this count and did not
-under the old one, its citation sitting with the perturbation test that buys it,
-which matters because it is the gate on any family the registry gains.
+**Uncited is not the same as unbought, and the roll cannot tell them
+apart.** Three of the fifteen are review-tagged, where the instrument is a
+reading and a header is a courtesy rather than the purchase. The rest name
+an instrument, and for those the header's absence is either an unwritten
+test or a written one whose act forgot the citation - a distinction only
+the reading of each can make, which is the counting pass owed rather than
+this refresh's to settle. **What the roll does say is where they cluster**:
+twelve of fifteen are the SPU's, the crate that grew fastest under the
+readout and decode acts, and the seed derivation, the room refusal, and
+the sampler's memory each name behaviour the seam tests exercise daily
+without claiming.
 
-**The harness's one waits on an act that has not started.** The idle report is
-unbuilt: no report authors without a turn because nothing authors one at all,
-and its sibling in the same section, `harness-frame-grants-the-seat`, is cited,
-so the dev boundary is partly built and this is the part still owed.
+`spu-two-taps-one-shape` left this roll on the GGUF tap's landing, and
+`harness-idle-report-authors-without-a-turn` remains what it was: the idle
+report is unbuilt, so nothing authors one at all, and its sibling
+`harness-frame-grants-the-seat` is cited.
 
 **Four came off this roll on 2026-08-16, and each is named with what closed
 it**, because a reader who saw one listed learns it closed rather than finding
@@ -721,6 +767,22 @@ commit, the build profile, and the identity of the binaries measured rather
 than the profile's bare claim. It is deliberately not a corpus member and
 nothing here is written against it. It does not reach the gates, and a reading
 it produces is evidence about the code rather than authority over a document.
+
+**Where the work sits as of 2026-09-02.** The seat is using the framework
+rather than building it, per the 2026-08-19 shift, and the pulls this week
+came from use exactly as that shift predicted: the diagnostic leg's papers
+were pulled by a replay that had to run, the artifact criteria by
+artifacts that already existed and needed identity, and the vector bar by
+a comparison that wanted a number. What stands open, in the order the
+seat holds it: the family taps toward the scale the lens needs (#212), the
+streaming shape the sink's declaration already permits and no run has
+exercised, the counting pass the roll above names, and the graph rebuild
+owed since `98c8713` and unrunnable while HADES is down. One operational
+finding rides beside them, filed 2026-09-02 as #404: a deployment whose
+organ binaries and admin come from different commits dies with a bare
+`Undecodable` and reports as `no_residency`, naming neither the binaries
+nor the field, so an experiment directory is all-or-nothing until that
+reporting is sharpened.
 
 What remains from the phase behind: G6 and then item 7, and the G2 and G5
 phase-close sweeps. The graph's expected census is stated as a number rather than
