@@ -126,7 +126,15 @@ impl LastWord {
     pub fn stand() -> Result<(Self, std::os::fd::OwnedFd), nix::Error> {
         use std::io::BufRead as _;
         use std::io::Write as _;
-        let (read_end, write_end) = nix::unistd::pipe()?;
+        // **Both ends close on exec**, per the descriptor hygiene the organ
+        // entry enforces: an organ counts what it inherited and refuses a
+        // count it did not expect, so a pipe created with the plain call -
+        // which sets no `O_CLOEXEC` - leaks its reader and the parent's
+        // write end into every organ and refuses the load with
+        // `descriptors_unusable`. The child's stderr survives regardless,
+        // because `dup2` produces a descriptor without the flag: the copy
+        // onto 2 is exactly what the exec keeps.
+        let (read_end, write_end) = nix::unistd::pipe2(nix::fcntl::OFlag::O_CLOEXEC)?;
         let cell = std::sync::Arc::new((
             std::sync::Mutex::new(WordCell::default()),
             std::sync::Condvar::new(),
@@ -277,6 +285,37 @@ mod last_word_tests {
         assert!(
             quiet_word.take().is_none(),
             "with no descriptor placed the word never arrives"
+        );
+    }
+
+    /// **The last word's pipe closes on exec**, per
+    /// `harness-organ-ends-from-descriptor-three`: an organ finds its ends
+    /// at 3 and, where it has a second, at 4, and finds nothing else, so a
+    /// pipe the parent holds at every fork must not ride in beside them.
+    /// The organ entry counts what it inherited and refuses a count it did
+    /// not expect, which is why a leak here is not a tidiness question but
+    /// a refused load. The watch reads the flag on the end the caller
+    /// receives, and `pipe2` sets both ends or neither, so the reader is
+    /// bought by the same figure. The child's stderr is untouched, because
+    /// `dup2` produces a copy without the flag.
+    ///
+    /// Perturbation: `pipe2(O_CLOEXEC)` back to the plain `pipe` and the
+    /// flag reads clear here, which is the defect that refused every load
+    /// with `descriptors_unusable` and four descriptors held.
+    #[test]
+    fn the_last_words_pipe_closes_on_exec() {
+        let (_word, write_end) = LastWord::stand().expect("a pipe");
+        // SAFETY: reading F_GETFD on a descriptor this frame owns.
+        let flags = unsafe {
+            nix::libc::fcntl(
+                std::os::fd::AsRawFd::as_raw_fd(&write_end),
+                nix::libc::F_GETFD,
+            )
+        };
+        assert!(flags != -1, "the descriptor answers its flags");
+        assert!(
+            (flags & nix::libc::FD_CLOEXEC) != 0,
+            "the last word's pipe must close on exec, or it rides into every organ"
         );
     }
 }
