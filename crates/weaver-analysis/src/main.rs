@@ -343,9 +343,15 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
                 Some(Err(_)) => return refused("--min-top5 is not a rate".to_string()),
                 None => return std::process::ExitCode::FAILURE,
             },
-            "--rms-epsilon" => match value("--rms-epsilon").map(|v| v.parse()) {
-                Some(Ok(e)) => epsilon = e,
-                Some(Err(_)) => return refused("--rms-epsilon is not a number".to_string()),
+            "--rms-epsilon" => match value("--rms-epsilon") {
+                Some(v) => match weaver_analysis::rms_epsilon(&v) {
+                    Some(e) => epsilon = e,
+                    None => {
+                        return refused(format!(
+                            "--rms-epsilon is not a finite positive number: {v}"
+                        ));
+                    }
+                },
                 None => return std::process::ExitCode::FAILURE,
             },
             // The capture is a path, so a token wearing a flag's shape is a

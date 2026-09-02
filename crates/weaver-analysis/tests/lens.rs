@@ -193,6 +193,27 @@ fn the_manifest_is_the_lens_it_names() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// **An epsilon that parses is not yet one that norms.** Zero and the
+/// negatives put a non-positive quantity under the reciprocal square root,
+/// and an infinity or a NaN carries through every logit, so each refuses
+/// rather than reaching the readout.
+///
+/// Perturbation: accept any value that parses and this fails on the first
+/// case. Watched under exactly that change.
+#[test]
+fn the_epsilon_must_be_finite_and_positive() {
+    for bad in [
+        "0", "0.0", "-0.0", "-1e-6", "nan", "NaN", "inf", "-inf", "infinity", "x",
+    ] {
+        assert!(
+            weaver_analysis::rms_epsilon(bad).is_none(),
+            "{bad:?} is not an epsilon"
+        );
+    }
+    assert_eq!(weaver_analysis::rms_epsilon("1e-6"), Some(1e-6));
+    assert_eq!(weaver_analysis::rms_epsilon("0.000001"), Some(0.000001));
+}
+
 /// **The digest is the standard's**, checked against a known vector so a
 /// wrong identity check cannot pass silently.
 #[test]
