@@ -5,6 +5,16 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-09-01, the kept artifacts take their identity. Section 3
+gains the capture-artifact clauses - identity as the closure of the claim,
+custody the sink's existing arrangement, shape the record's own, quota the
+operator's sink election - and the lens-artifact clauses - identity by
+weights, corpus, estimator, and environment, the weights hash as the
+version, refits as new artifacts, the fit size elected at two hundred
+prompts from the saturation measurement. Section 4's cell closes. Every
+member writes from the measurement acts of this date, and the
+representation is `weaver-analysis-Spec` section 3's in the same act.
+
 **Revised:** 2026-09-01, the declaration derives from the record. Section 3
 gains the rule of issue #394 on the operator's direction: every fact of the
 source run comes from the record and the analyst declares only the
@@ -223,6 +233,45 @@ discriminant and holds its custody per `weaver-admin-Spec` section 5, and
 durability it is. This crate inherits that arrangement rather than standing
 outside it.
 
+**Where the sink is a file, the kept record is the capture artifact, and
+this clause is what a kept capture must carry to be one.** Per the cell
+this act closes, every member measured before it was papered. **Identity**:
+a capture is a certified diagnostic record, and its identity is the closure
+of what its claim rests on - the source trace it replayed, the declaration
+the driver derived (itself the record's projection plus the analyst's
+three), the device model and code identity the licence clause already
+requires, and the certification outcome in the record's own
+`replay.closed`. An uncertified record is an account and never a capture,
+per the no-second-instrument rule. **Custody**: the operator's, outside the
+agent, on the arrangement the sink already has - admin opens it, the
+operator contract governs what crosses out - and this crate reads it as an
+operator principal like every record. **Dataset shape**: the
+diagnostic-trace's own, per `weaver-diagnostic-Spec`, at whatever density
+the load elected. No second format exists, because a capture is a record
+kept rather than a record converted. **Quota**: the sink shape is the
+operator's retention election - a pipe retains nothing and a file retains
+whole - and this charter adds no ceiling of its own: what bounds keeping is
+the operator's storage, and the discard licence stands wherever
+certification does, a kept capture being the operator declining a licence
+rather than lacking one.
+
+**The lens artifact is the fitted transport, versioned against the weights
+it was fitted to and meeting only their captures.** **Identity**: the
+weights by content hash, the corpus by source, selection rule, and content
+hash, the estimator by implementation revision and parameters, and the
+environment that ran the fit - each spelled in a manifest beside the
+matrices, and a reader refuses a lens whose manifest names other weights,
+recomputing the hash against the model in hand rather than trusting the
+name. **Versioning**: the weights hash is the version, so a refit is a new
+artifact beside the old and never a mutation - a lens refitted later
+applies to a capture recorded earlier, the capture holding activations
+rather than readouts, which is the provenance property the stream design
+bought. **The fit-size election is made from measurement**: two hundred
+corpus prompts, the paper-scale fit at five times the compute having moved
+no evaluation number, per the measurement act of 2026-09-01. **Custody**:
+the operator's storage beside the captures, outside the agent, the fit
+never touching the agent at all.
+
 **A pipe-shaped sink retains nothing, and the report is the kept artifact.**
 Per the operator's ruling of 2026-08-30: a diagnostic run whose sink is a pipe
 streams through this crate, the reading is taken as the stream drains, the
@@ -333,9 +382,11 @@ a sink.
   is named in the chartering ruling as a sketch that does not exist in this
   tree. The reference is recorded so the ghost is a known gap rather than a
   silent one, and no crate is built against it.
-- **The capture artifact** - identity, custody, dataset shape, quota - is owed
-  its own act and moves here with the reading, `weaver-diagnostic-PRD` section
-  6 having carried it while one crate held both roles.
+- **The capture artifact** - identity, custody, dataset shape, quota -
+  **closed 2026-09-01** in section 3's kept-artifact clauses, every member
+  written from the measurement acts of the same date rather than assumed,
+  and the lens artifact beside it. `weaver-diagnostic-PRD` section 6 carried
+  it while one crate held both roles.
 - **The licence boundary.** This crate is the piece that can be given away and
   it carries no cut-and-recompute, which is cleaner than expected. The
   intervention loop shares that mechanic with the calculator loop and is where

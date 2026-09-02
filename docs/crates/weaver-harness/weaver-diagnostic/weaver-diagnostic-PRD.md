@@ -4,6 +4,13 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-09-01, the vector bar is measured. Section 4's
+passive-read comparison holds the vectors exact within one device model,
+per the differencing measurement of this date, the float tolerance
+remaining the cross-device bar per `weaver-agents-PRD` section 8 and
+issue #346. `diagnostic-replay-loop` section 3 takes the same sentence
+in the same act.
+
 **Revised:** 2026-08-27, the record takes its shape and the seam its paper. This
 crate's Spec landed, settling the two elections section 6 held as the larger half of
 the work, and `weaver-harness-diagnostic-contract` landed with it, which lets the
@@ -271,11 +278,16 @@ wrongly amend it or wrongly fork it.
 not established by whether a readout is interpretable. It is established by
 exact-match comparison of a replay against its original, and then again with
 the readout elected, to show the read is passive. Exact match is a claim
-about the token path, which is integers and matches or does not: the elected
-readout's vectors are deterministic given the same weights within GPU float
-tolerance, per `weaver-agents-PRD` section 8, so the passive-read comparison
-holds the token path exact and the vectors within that tolerance rather than
-demanding bitwise equality of floats. A readout from an
+about the token path, which is integers and matches or does not. **Within
+one device model the vectors hold the same bar, measured rather than
+assumed**: two certified column replays of one source differenced to
+9,784,320 of 9,784,320 values exactly equal on 2026-09-01, so the
+passive-read comparison holds the token path and the vectors exact alike
+where the device model matches, the report naming that model per the
+licence rule. Across device models the comparison keeps the GPU float
+tolerance of `weaver-agents-PRD` section 8, unmeasured and bounded by
+issue #346's finding that replay is bit-exact within a card model and not
+across one. A readout from an
 uncertified replay is a picture of an unknown run.
 
 **Certification is two claims and not one.** An output comparison means

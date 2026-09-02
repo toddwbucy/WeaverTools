@@ -5,7 +5,12 @@ loop, filed under the harness's `Loops/` container per the Document Format's con
 entry. It argues no edges of its own: the seams it walks are declared in the crate
 charters, and a graph block here would duplicate a record that already has a home.
 
-**Revised:** 2026-09-01, the driver derives the declaration. Section 2's
+**Revised:** 2026-09-01, second of this date, the vector bar is measured.
+Section 3's step 3 compares the reader's vectors exact within one device
+model, per `weaver-diagnostic-PRD` section 4 as amended on the
+differencing measurement of this date.
+**Revised:** 2026-09-01, first of this date, the driver derives the
+declaration. Section 2's
 step 2 carries `weaver-analysis-PRD` section 3's rule as amended on issue
 #394: the declaration step one loads is derived from the record by the
 driver, the analyst declaring only the replay's own three facts, so the
@@ -193,8 +198,9 @@ The charter's section 4 procedure, as this loop performs it:
    each other. The token path must match as before, and the reader's
    presence changing
    any token is the read failing its own passivity claim. The reader's
-   vectors compare within the GPU float tolerance the apex names, per the
-   charter's section 4 scoping.
+   vectors compare exact within one device model and within the GPU float
+   tolerance across models, per the charter's section 4 as measured
+   2026-09-01.
 
 **A failed certification refuses the readout and keeps the run.** What was
 attempted and where it diverged lands in the run's own record, the

@@ -23,6 +23,70 @@ MODEL_DIR = "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct"
 DEFAULT_LENS = "/bulk-store/weaver-testing/jacobian-lens-0.5b/jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt"
 
 
+def _is_int(value):
+    """A genuine integer. **Booleans are excluded on purpose**: `bool` is a
+    subclass of `int`, so a manifest carrying `true` where a width belongs
+    would pass an `isinstance` check and then compare equal to 1 in every
+    later arithmetic - an identity that reads as a number."""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def manifest_shape_refusal(manifest):
+    """The manifest's whole schema judged before any member is read: a
+    manifest that is not an object, a missing member, a boolean wearing a
+    number's place, or a layer set that will not sort each answer a refusal
+    dict, never an exception - malformed identity is a refusal like wrong
+    identity."""
+    if not isinstance(manifest, dict):
+        return {"refusal": "the manifest is not an object"}
+    if not isinstance(manifest.get("lens"), str):
+        return {"refusal": "the manifest names no lens"}
+    fitted = manifest.get("fitted_for")
+    if not isinstance(fitted, dict):
+        return {"refusal": "the manifest holds no fitted_for"}
+    if not isinstance(fitted.get("model"), str):
+        return {"refusal": "the manifest's fitted_for names no model"}
+    digest = fitted.get("model_safetensors_sha256")
+    if not isinstance(digest, str):
+        return {"refusal": "the manifest's fitted_for holds no weights hash"}
+    # **A digest that cannot be one refuses here, not after the read**: the
+    # comparison below hashes the whole weights file, so a malformed value
+    # would cost that read to reach a mismatch it could never avoid, and
+    # would then refuse naming the weights rather than the manifest. Exactly
+    # sixty-four lowercase hex, which is what `hexdigest` produces and the
+    # only spelling the comparison can match.
+    if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+        return {"refusal": "the manifest's weights hash is not a sha256 digest",
+                "model_safetensors_sha256": digest}
+    shape = manifest.get("lens_shape")
+    if not isinstance(shape, dict):
+        return {"refusal": "the manifest holds no lens_shape"}
+    if not _is_int(shape.get("d_model")):
+        return {"refusal": "the manifest's d_model is absent or not an integer"}
+    layers = shape.get("source_layers")
+    if not isinstance(layers, list) or not layers:
+        return {"refusal": "the manifest's source_layers is absent or empty"}
+    if not all(_is_int(l) for l in layers):
+        return {"refusal": "the manifest's source_layers holds a non-integer"}
+    if layers != sorted(set(layers)):
+        return {"refusal": "the manifest's layer set is not a sorted set",
+                "source_layers": layers}
+    return None
+
+
+def load_model_and_lens(lens_path, device="cuda"):
+    """The heavy loads, behind one name so a caller - or a test - can see
+    exactly where the torch stack and the artifact's tensors enter. Nothing
+    above this line imports either."""
+    import torch, transformers, jlens
+
+    hf = transformers.AutoModelForCausalLM.from_pretrained(
+        MODEL_DIR, dtype=torch.bfloat16
+    ).to(device)
+    tok = transformers.AutoTokenizer.from_pretrained(MODEL_DIR)
+    return jlens.from_hf(hf, tok), tok, jlens.JacobianLens.load(lens_path)
+
+
 def manifest_path_for(lens_path):
     """The manifest that identifies this lens, derived from its name: the
     fit writes `jacobian_lens_...{tag}.pt` beside `lens-manifest{tag}.json`,
@@ -53,8 +117,43 @@ def main():
     ap.add_argument("--min-top5", type=float, default=0.9,
                     help="control gate: trajectories print only at or above this")
     args = ap.parse_args()
+    import hashlib, os
 
-    import torch, transformers, jlens
+    # **The identity is judged before anything heavy loads**: the schema
+    # whole, then the members, so a malformed or mismatched manifest
+    # refuses without a torch stack, a model, or an artifact's tensors ever
+    # entering the process.
+    try:
+        manifest = json.load(open(manifest_path_for(args.lens)))
+    except (OSError, json.JSONDecodeError) as error:
+        print(json.dumps({"refusal": f"the manifest does not read: {error}"}))
+        return 1
+    refusal = manifest_shape_refusal(manifest)
+    if refusal:
+        print(json.dumps(refusal))
+        return 1
+    if manifest["lens"] != os.path.basename(args.lens):
+        print(json.dumps({"refusal": "the manifest names a different lens",
+                          "manifest": manifest["lens"]}))
+        return 1
+    if manifest["fitted_for"]["model"] != MODEL_DIR:
+        print(json.dumps({"refusal": "the manifest names different weights",
+                          "manifest": manifest["fitted_for"]["model"]}))
+        return 1
+    config = json.load(open(os.path.join(MODEL_DIR, "config.json")))
+    if manifest["lens_shape"]["d_model"] != config["hidden_size"]:
+        print(json.dumps({"refusal": "the manifest's width is not the model's",
+                          "manifest": manifest["lens_shape"]["d_model"],
+                          "model": config["hidden_size"]}))
+        return 1
+    expected_layers = manifest["lens_shape"]["source_layers"]
+    h = hashlib.sha256()
+    with open(os.path.join(MODEL_DIR, "model.safetensors"), "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    if h.hexdigest() != manifest["fitted_for"]["model_safetensors_sha256"]:
+        print(json.dumps({"refusal": "the weights are not the ones the lens was fitted for"}))
+        return 1
 
     # Scoped by turn, not by position alone: positions are unique within
     # one run's session but a record holding several brackets repeats them,
@@ -85,38 +184,22 @@ def main():
     turns = {t for t, _ in columns}
     print(f"record: {len(columns)} columns across {len(turns)} turns", flush=True)
 
-    # **The manifest is the lens's identity and it is checked, not
-    # assumed**: the filename, the weights the fit ran against (by sha256,
-    # recomputed here), and the width, before any trajectory is printed. A
-    # lens applied to weights it was not fitted for reads an unknown model.
-    import hashlib, os
-    manifest = json.load(open(manifest_path_for(args.lens)))
-    if manifest["lens"] != os.path.basename(args.lens):
-        print(json.dumps({"refusal": "the manifest names a different lens",
-                          "manifest": manifest["lens"]}))
-        return 1
-    if manifest["fitted_for"]["model"] != MODEL_DIR:
-        print(json.dumps({"refusal": "the manifest names different weights",
-                          "manifest": manifest["fitted_for"]["model"]}))
-        return 1
-    h = hashlib.sha256()
-    with open(os.path.join(MODEL_DIR, "model.safetensors"), "rb") as f:
-        for block in iter(lambda: f.read(1 << 20), b""):
-            h.update(block)
-    if h.hexdigest() != manifest["fitted_for"]["model_safetensors_sha256"]:
-        print(json.dumps({"refusal": "the weights are not the ones the lens was fitted for"}))
-        return 1
-
-    hf = transformers.AutoModelForCausalLM.from_pretrained(
-        MODEL_DIR, dtype=torch.bfloat16
-    ).cuda()
-    tok = transformers.AutoTokenizer.from_pretrained(MODEL_DIR)
-    model = jlens.from_hf(hf, tok)
-    lens = jlens.JacobianLens.load(args.lens)
+    # **Pre-load inspection of the tensor names themselves is what the
+    # safetensors election buys**; the torch serialization in hand cannot
+    # offer it, so the loaded lens is held to the manifest exactly, one
+    # layer for one, the moment it materializes.
+    model, tok, lens = load_model_and_lens(args.lens)
+    import torch
     if lens.d_model != manifest["lens_shape"]["d_model"]:
         print(json.dumps({"refusal": "the lens width disagrees with its manifest",
                           "lens": lens.d_model,
                           "manifest": manifest["lens_shape"]["d_model"]}))
+        return 1
+    if lens.source_layers != expected_layers:
+        print(json.dumps({"refusal": "the lens layers do not match the manifest "
+                          "one for one",
+                          "lens": lens.source_layers,
+                          "manifest": expected_layers}))
         return 1
 
     # **The control**: final-layer residual, no transport, model's own
