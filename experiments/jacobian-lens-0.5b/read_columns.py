@@ -46,8 +46,18 @@ def manifest_shape_refusal(manifest):
         return {"refusal": "the manifest holds no fitted_for"}
     if not isinstance(fitted.get("model"), str):
         return {"refusal": "the manifest's fitted_for names no model"}
-    if not isinstance(fitted.get("model_safetensors_sha256"), str):
+    digest = fitted.get("model_safetensors_sha256")
+    if not isinstance(digest, str):
         return {"refusal": "the manifest's fitted_for holds no weights hash"}
+    # **A digest that cannot be one refuses here, not after the read**: the
+    # comparison below hashes the whole weights file, so a malformed value
+    # would cost that read to reach a mismatch it could never avoid, and
+    # would then refuse naming the weights rather than the manifest. Exactly
+    # sixty-four lowercase hex, which is what `hexdigest` produces and the
+    # only spelling the comparison can match.
+    if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+        return {"refusal": "the manifest's weights hash is not a sha256 digest",
+                "model_safetensors_sha256": digest}
     shape = manifest.get("lens_shape")
     if not isinstance(shape, dict):
         return {"refusal": "the manifest holds no lens_shape"}

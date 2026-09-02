@@ -26,7 +26,7 @@ spec.loader.exec_module(rc)
 
 GOOD = {
     "lens": "jacobian_lens_m-bf16.pt",
-    "fitted_for": {"model": "/m", "model_safetensors_sha256": "abc"},
+    "fitted_for": {"model": "/m", "model_safetensors_sha256": "0" * 64},
     "lens_shape": {"d_model": 896, "source_layers": [0, 1, 2]},
 }
 
@@ -58,6 +58,16 @@ cases = [
     ({**GOOD, "fitted_for": "x"}, "no fitted_for"),
     (without("fitted_for", "model"), "names no model"),
     (without("fitted_for", "model_safetensors_sha256"), "no weights hash"),
+    (with_value("fitted_for", "model_safetensors_sha256", 7), "no weights hash"),
+    (with_value("fitted_for", "model_safetensors_sha256", ""), "not a sha256"),
+    (with_value("fitted_for", "model_safetensors_sha256", "abc"), "not a sha256"),
+    (with_value("fitted_for", "model_safetensors_sha256", "f" * 63), "not a sha256"),
+    (with_value("fitted_for", "model_safetensors_sha256", "f" * 65), "not a sha256"),
+    (with_value("fitted_for", "model_safetensors_sha256", "g" * 64), "not a sha256"),
+    # Uppercase is refused rather than folded: `hexdigest` is lowercase, so
+    # an uppercase digest could only ever mismatch, and refusing it here
+    # names the manifest instead of the weights.
+    (with_value("fitted_for", "model_safetensors_sha256", "A" * 64), "not a sha256"),
     (without("lens_shape"), "no lens_shape"),
     ({**GOOD, "lens_shape": []}, "no lens_shape"),
     (without("lens_shape", "d_model"), "d_model"),
