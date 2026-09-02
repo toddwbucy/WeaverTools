@@ -126,7 +126,10 @@ impl LastWord {
     pub fn stand() -> Result<(Self, std::os::fd::OwnedFd), nix::Error> {
         use std::io::BufRead as _;
         use std::io::Write as _;
-        let (read_end, write_end) = nix::unistd::pipe()?;
+        // **One constructor, so the pipe's properties have one home.** The
+        // flag every organ's entry depends on and the numbering the child's
+        // placement depends on are both argued at `last_word_pipe`.
+        let (read_end, write_end) = last_word_pipe()?;
         let cell = std::sync::Arc::new((
             std::sync::Mutex::new(WordCell::default()),
             std::sync::Condvar::new(),
@@ -160,7 +163,52 @@ impl LastWord {
         });
         Ok((LastWord { cell }, write_end))
     }
+}
 
+/// The last word's pipe, with both properties the placement depends on.
+///
+/// **Both ends close on exec**, per the descriptor hygiene the organ entry
+/// enforces: an organ counts what it inherited and refuses a count it did not
+/// expect, so a pipe created with the plain call - which sets no `O_CLOEXEC` -
+/// leaks its reader and the parent's write end into every organ and refuses
+/// the load with `descriptors_unusable`. The child's stderr survives the flag,
+/// because `dup2` produces a descriptor without it and the copy onto 2 is what
+/// the exec keeps.
+///
+/// **And the write end travels clear of descriptor 2**, because that copy is
+/// only made where the call has two different numbers to work with. `dup2(2,
+/// 2)` is defined as a no-op returning the number, so a write end that arrives
+/// at 2 is never copied, the flag stays set, and the exec closes the organ's
+/// stderr: the last word has nowhere to go and the journal loses what it used
+/// to keep. `pipe2` answers the lowest free numbers, so the corner is reached
+/// by a parent that has closed its own stderr. **Moving the end is the repair
+/// rather than clearing the flag in the child**, because the same corner
+/// leaves the parent's own stderr on this pipe and the tee would then write
+/// its own input back.
+///
+/// `F_DUPFD_CLOEXEC` answers the lowest free number at or above the floor and
+/// sets the flag on what it answers, so the property the pipe was created with
+/// survives the move. The original is dropped, closing the low number.
+/// Nothing here allocates, so the whole of it is usable where the fork's bound
+/// applies.
+fn last_word_pipe() -> Result<(std::os::fd::OwnedFd, std::os::fd::OwnedFd), nix::Error> {
+    use std::os::fd::{AsFd, AsRawFd, FromRawFd, RawFd};
+    const FLOOR: RawFd = 3;
+    let (read_end, write_end) = nix::unistd::pipe2(nix::fcntl::OFlag::O_CLOEXEC)?;
+    if write_end.as_raw_fd() >= FLOOR {
+        return Ok((read_end, write_end));
+    }
+    let raw = nix::fcntl::fcntl(
+        write_end.as_fd(),
+        nix::fcntl::FcntlArg::F_DUPFD_CLOEXEC(FLOOR),
+    )?;
+    // SAFETY: `F_DUPFD_CLOEXEC` answered a fresh descriptor this process owns,
+    // and `write_end` is dropped here, so the low number is closed exactly
+    // once and the new number has exactly one owner.
+    Ok((read_end, unsafe { std::os::fd::OwnedFd::from_raw_fd(raw) }))
+}
+
+impl LastWord {
     /// A word that never speaks, for scripted arms in tests: no pipe, no
     /// thread, `take` answering the same absence a silent organ leaves.
     #[cfg(test)]
@@ -277,6 +325,114 @@ mod last_word_tests {
         assert!(
             quiet_word.take().is_none(),
             "with no descriptor placed the word never arrives"
+        );
+    }
+
+    /// **The write end never travels as descriptor 2**, which is the
+    /// aliasing corner of the placement: `dup2(2, 2)` is defined as a no-op
+    /// returning the number, so it makes no copy, the flag the pipe carries
+    /// stays set, and the exec closes the organ's stderr.
+    ///
+    /// **The corner is built rather than asserted about.** `pipe2` answers
+    /// the lowest free numbers, so closing 0 and 2 puts the read end at 0
+    /// and the write end at exactly 2. The arrangement runs in a forked
+    /// child because closing a standard stream in the test process would
+    /// reach every test sharing it, and the child does no allocation, so it
+    /// stays inside what a fork of a threaded process may run. The child
+    /// reports two facts, that the corner was reached and that the
+    /// relocation cleared it, so a run where the arrangement failed cannot
+    /// pass as a repair.
+    ///
+    /// The child asks twice: the plain call for the numbering, to establish
+    /// that the arrangement reached the corner, and then `last_word_pipe`,
+    /// which is the one place `stand` takes its pipe from.
+    ///
+    /// Perturbation: reduce `last_word_pipe` to its bare `pipe2` and the
+    /// second bit reads zero.
+    #[test]
+    fn the_write_end_never_travels_as_descriptor_two() {
+        use std::os::fd::{AsFd, AsRawFd};
+        let (report_r, report_w) = nix::unistd::pipe().expect("the report pipe");
+        // SAFETY: the child runs no allocation and no unwind, and leaves by
+        // `_exit`, which is what a fork of a threaded process may do.
+        match unsafe { nix::unistd::fork() }.expect("fork") {
+            nix::unistd::ForkResult::Child => {
+                // Close 0 and 2, keeping 1, so the next pipe takes 0 for its
+                // reader and 2 for its writer.
+                unsafe {
+                    nix::libc::close(0);
+                    nix::libc::close(2);
+                }
+                let mut report = 0u8;
+                // The corner, established: the plain call takes 0 and 2.
+                if let Ok((plain_read, plain_write)) =
+                    nix::unistd::pipe2(nix::fcntl::OFlag::O_CLOEXEC)
+                {
+                    if plain_write.as_raw_fd() == 2 {
+                        report |= 1;
+                    }
+                    drop(plain_read);
+                    drop(plain_write);
+                }
+                // The same table, asked of the constructor `stand` uses.
+                if let Ok((read_end, write_end)) = last_word_pipe() {
+                    if write_end.as_raw_fd() > 2 {
+                        report |= 2;
+                    }
+                    drop(read_end);
+                    drop(write_end);
+                }
+                let _ = nix::unistd::write(report_w.as_fd(), &[report]);
+                // SAFETY: async-signal-safe and does not unwind.
+                unsafe { nix::libc::_exit(0) };
+            }
+            nix::unistd::ForkResult::Parent { child } => {
+                drop(report_w);
+                let mut byte = [0u8; 1];
+                let _ = nix::unistd::read(report_r.as_fd(), &mut byte);
+                let _ = nix::sys::wait::waitpid(child, None);
+                assert_eq!(
+                    byte[0] & 1,
+                    1,
+                    "the arrangement did not reach the corner, so the run pins nothing"
+                );
+                assert_eq!(
+                    byte[0] & 2,
+                    2,
+                    "the write end stayed at descriptor 2, where the placement makes no copy"
+                );
+            }
+        }
+    }
+
+    /// **The last word's pipe closes on exec**, per
+    /// `harness-organ-ends-from-descriptor-three`: an organ finds its ends
+    /// at 3 and, where it has a second, at 4, and finds nothing else, so a
+    /// pipe the parent holds at every fork must not ride in beside them.
+    /// The organ entry counts what it inherited and refuses a count it did
+    /// not expect, which is why a leak here is not a tidiness question but
+    /// a refused load. The watch reads the flag on the end the caller
+    /// receives, and `pipe2` sets both ends or neither, so the reader is
+    /// bought by the same figure. The child's stderr is untouched, because
+    /// `dup2` produces a copy without the flag.
+    ///
+    /// Perturbation: `pipe2(O_CLOEXEC)` back to the plain `pipe` and the
+    /// flag reads clear here, which is the defect that refused every load
+    /// with `descriptors_unusable` and four descriptors held.
+    #[test]
+    fn the_last_words_pipe_closes_on_exec() {
+        let (_word, write_end) = LastWord::stand().expect("a pipe");
+        // SAFETY: reading F_GETFD on a descriptor this frame owns.
+        let flags = unsafe {
+            nix::libc::fcntl(
+                std::os::fd::AsRawFd::as_raw_fd(&write_end),
+                nix::libc::F_GETFD,
+            )
+        };
+        assert!(flags != -1, "the descriptor answers its flags");
+        assert!(
+            (flags & nix::libc::FD_CLOEXEC) != 0,
+            "the last word's pipe must close on exec, or it rides into every organ"
         );
     }
 }
