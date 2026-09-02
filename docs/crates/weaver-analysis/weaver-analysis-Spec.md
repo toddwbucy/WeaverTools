@@ -10,9 +10,10 @@ loaded and applied by the source's own arithmetic against the artifact's
 own weights, the control gating every reading, the by-turn pairing rule,
 and the exact capture comparison that performs certification step 3 where
 both records are held and licenses the discard. Section 1's layout gains
-`lens.rs` and `capture.rs`. The reading-as-artifact election narrows to
-its rendered form. Two assertions, bought by the code act in the same
-stack.
+`lens.rs` and `capture.rs`, and its dependency set gains `safetensors`,
+the format reader the artifact election implies and never an engine. The
+reading-as-artifact election narrows to its rendered form. Two assertions,
+bought by the code act in the same stack.
 
 **Revised:** 2026-09-01, second of this date, the artifacts take their
 representation. Section 3 gains the lens artifact's shape - safetensors
@@ -87,9 +88,17 @@ finished record from a truncated one could hold this shape and not use it.
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
 
-**The dependency set is two crates and no internal one.** `serde` with `derive`,
-and `serde_json` with `raw_value`, which sections 2 and 3 elect for carrying a
-payload's elected values as the record spelled them rather than re-encoding them.
+**The dependency set is three crates and no internal one.** `serde` with
+`derive`, and `serde_json` with `raw_value`, which sections 2 and 3 elect
+for carrying a payload's elected values as the record spelled them rather
+than re-encoding them, and `safetensors`, which section 5's reading elects
+to open the lens artifact and the weights its unembedding needs. **The
+third is a format reader and never an engine**: it maps a file and answers
+tensors, so what enters this crate is a parser for the container section 3
+elected and no inference runtime, which is the whole reason that election
+named a format both sides of the boundary can read. It is the same crate
+`weaver-spu` links for the native backend's weights, vetted in this tree
+rather than newly admitted.
 
 **No `weaver-*` dependency at all, and the negative is the boundary in the
 manifest.** This crate stands outside the agent, per the charter's section 1, and
