@@ -308,6 +308,13 @@ impl crate::stream::Reader for Streaming<'_> {
                     .as_deref()
                     .and_then(|p| value_at(p, "outcome.kind"))
                     .map(|raw| raw.get().trim_matches('"').to_string());
+                // **The bracket's close ends the reading, not the
+                // stream's end.** A pipe's writer is the agent, which
+                // holds it open for the run's whole residency, so a
+                // reader waiting for end-of-stream would wait for the
+                // unload - and on a socket, for longer. The pass's own
+                // close is the fact that says the reading is complete.
+                return Step::Done;
             }
             _ => {}
         }
