@@ -65,13 +65,61 @@ impl Series {
 }
 
 /// The reader itself: one measurement at a time, nothing held between.
+///
+/// **It reads either record and gates only the one that has a gate.** A
+/// serving record carries no bracket outcome and none is owed; a
+/// diagnostic record carries one, and a series read from an uncertified
+/// replay is a picture of an unknown run exactly as a readout is, per
+/// `weaver-diagnostic-PRD` section 4. So this reader records which record
+/// it holds and what that record's bracket said, and leaves the judgment
+/// to its caller.
 #[derive(Debug, Default)]
 pub struct Signals {
     pub series: Series,
+    /// The first event's kind, which is how a record says which record it
+    /// is, per `weaver-diagnostic-Spec` section 4.
+    pub opening: Option<String>,
+    /// The bracket's outcome where the record carries one.
+    pub outcome: Option<String>,
+    run: Option<String>,
+}
+
+impl Signals {
+    /// Whether this record is a diagnostic one, answered by the record.
+    pub fn diagnostic(&self) -> bool {
+        self.opening.as_deref() == Some("replay.opened")
+    }
+
+    /// Whether a series read from this record may be produced: a serving
+    /// record has no gate, and a diagnostic one passes only where its own
+    /// bracket closed certified.
+    pub fn licensed(&self) -> bool {
+        !self.diagnostic() || self.outcome.as_deref() == Some("certified")
+    }
 }
 
 impl Reader for Signals {
     fn event(&mut self, event: &Event) -> Step {
+        if self.opening.is_none() {
+            self.opening = Some(event.envelope.kind.clone());
+            if event.envelope.kind == "replay.opened" {
+                self.run = Some(event.envelope.run.clone());
+            }
+        }
+        if event.envelope.kind == "replay.closed" {
+            if self.run.as_deref() != Some(event.envelope.run.as_str()) {
+                return Step::Continue;
+            }
+            self.outcome = event
+                .payload
+                .as_deref()
+                .and_then(|p| value_at(p, "outcome.kind"))
+                .map(|raw| raw.get().trim_matches('"').to_string());
+            // The bracket's close ends this reading too, for the same
+            // reason it ends the capture's: a pipe's writer holds the
+            // stream open for the run's residency.
+            return Step::Done;
+        }
         if event.envelope.kind != "model.measurement" {
             return Step::Continue;
         }

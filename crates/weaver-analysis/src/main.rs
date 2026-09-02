@@ -20,12 +20,18 @@ fn main() -> std::process::ExitCode {
         Some(("read", [trace])) => run_read(trace),
         Some(("compare", [left, right])) => run_compare(left, right),
         Some(("signals", [record])) => run_signals(record, 2.0),
-        Some(("signals", [record, k])) => match k.parse() {
-            Ok(k) => run_signals(record, k),
-            Err(_) => {
+        Some(("signals", [record, k])) => match k.parse::<f32>() {
+            // A bar that parses is not yet a bar: an infinity clears
+            // nothing and a NaN compares false against everything, so
+            // either would answer "no spikes" about a series that has
+            // them.
+            Ok(k) if k.is_finite() => run_signals(record, k),
+            _ => {
                 eprintln!(
                     "{}",
-                    serde_json::json!({"analysis_refusal": "the spike bar is not a number"})
+                    serde_json::json!({
+                        "analysis_refusal": format!("the spike bar is not a finite number: {k}")
+                    })
                 );
                 std::process::ExitCode::FAILURE
             }
@@ -604,6 +610,24 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
     let mut reader = weaver_analysis::Signals::default();
     if let weaver_analysis::Drained::Refused(why) = weaver_analysis::drain(source, &mut reader) {
         eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
+        return std::process::ExitCode::FAILURE;
+    }
+    // **A diagnostic record's series is gated on its own bracket**, per
+    // `weaver-diagnostic-PRD` section 4: a series read from an
+    // uncertified replay is a picture of an unknown run exactly as a
+    // readout is. A serving record carries no bracket and no gate is
+    // owed - it is a record of what happened rather than a claim that
+    // something was reproduced.
+    if !reader.licensed() {
+        eprintln!(
+            "{}",
+            serde_json::json!({
+                "analysis_refusal": match reader.outcome.as_deref() {
+                    Some(other) => format!("the record's bracket closed {other}, not certified"),
+                    None => "the record's bracket did not close".to_string(),
+                }
+            })
+        );
         return std::process::ExitCode::FAILURE;
     }
     let series = &reader.series;

@@ -231,6 +231,12 @@ pub struct Streaming<'a> {
     /// produced at all. `None` until a `replay.closed` lands.
     pub outcome: Option<String>,
     pub opened: bool,
+    /// The run the opened bracket belongs to. **A close carries its own
+    /// run**, and a record may hold several brackets, so the close that
+    /// ends this reading is the one whose run opened it: another run's
+    /// outcome certifying these columns would be one pass vouching for
+    /// another's.
+    run: Option<String>,
 }
 
 impl<'a> Streaming<'a> {
@@ -245,6 +251,7 @@ impl<'a> Streaming<'a> {
             paired,
             outcome: None,
             opened: false,
+            run: None,
         }
     }
 
@@ -260,7 +267,10 @@ impl crate::stream::Reader for Streaming<'_> {
         use crate::stream::Step;
         let turn = event.envelope.turn.clone();
         match event.envelope.kind.as_str() {
-            "replay.opened" => self.opened = true,
+            "replay.opened" => {
+                self.opened = true;
+                self.run = Some(event.envelope.run.clone());
+            }
             "residual.column" => {
                 let Some(payload) = event.payload.as_deref() else {
                     return Step::Continue;
@@ -298,11 +308,27 @@ impl crate::stream::Reader for Streaming<'_> {
                 // draws' own order, and are dropped as they pair.
                 let mut pending = std::mem::take(&mut self.pending);
                 pending.sort_by_key(|(position, _)| *position);
+                // **The counts agree or the reading refuses.** A zip would
+                // pair a prefix and drop the rest silently, where a turn
+                // whose columns and drawn tokens disagree is exactly the
+                // 13.10 fault the SPU refuses on its own side.
+                if pending.len() != out.len() {
+                    return Step::Refuse(format!(
+                        "turn {:?} holds {} columns against {} drawn tokens",
+                        turn,
+                        pending.len(),
+                        out.len()
+                    ));
+                }
                 for ((position, column), token) in pending.into_iter().zip(out) {
                     (self.paired)(&(turn.clone(), position), &column, token);
                 }
             }
             "replay.closed" => {
+                // A close from another run ends no reading of this one.
+                if self.run.as_deref() != Some(event.envelope.run.as_str()) {
+                    return Step::Continue;
+                }
                 self.outcome = event
                     .payload
                     .as_deref()

@@ -128,17 +128,77 @@ fn the_spikes_are_the_positions_that_clear_the_bar() {
     assert_eq!(spikes[0].token, 4);
 }
 
+/// **A close from another run ends no reading of this one.** A record may
+/// hold several brackets, and one pass's outcome vouching for another's
+/// columns would be a certification borrowed rather than earned.
+///
+/// Perturbation: take any close as this reading's and this fails, the
+/// foreign certified close licensing columns whose own bracket never
+/// closed. Watched under exactly that change.
+#[test]
+fn a_close_from_another_run_certifies_nothing() {
+    let mut text = record(None, "");
+    text.push_str(
+        "{\"session\":\"s\",\"run\":\"other\",\"sequence\":\"9\",\"kind\":\"replay.closed\",\"payload\":{\"outcome\":{\"kind\":\"certified\"}}}\n",
+    );
+    let mut pair = |_: &Key, _: &[f32], _: u32| {};
+    let mut reader = Streaming::new(vec![], &mut pair);
+    let ended = drain(std::io::Cursor::new(text.as_bytes()), &mut reader);
+    assert_eq!(ended, Drained::Exhausted, "no close of this run arrived");
+    assert!(!reader.certified(), "another run's close certifies nothing");
+    assert_eq!(reader.outcome, None);
+}
+
+/// **A turn whose columns and drawn tokens disagree refuses.** A zip would
+/// pair a prefix and drop the rest without saying so, where the count's
+/// disagreement is the 13.10 fault the SPU refuses on its own side.
+///
+/// Perturbation: restore the truncating zip and this fails, the reading
+/// pairing one position and reporting nothing wrong. Watched under
+/// exactly that change.
+#[test]
+fn a_turn_whose_counts_disagree_refuses() {
+    let text = record(Some("certified"), "")
+        .replace(r#""output_tokens":[100,200]"#, r#""output_tokens":[100]"#);
+    let mut pair = |_: &Key, _: &[f32], _: u32| {};
+    let mut reader = Streaming::new(vec![], &mut pair);
+    match drain(std::io::Cursor::new(text.as_bytes()), &mut reader) {
+        Drained::Refused(why) => assert!(why.contains("2 columns against 1"), "{why}"),
+        other => panic!("the counts must refuse: {other:?}"),
+    }
+}
+
+/// **A serving record's series has no gate, and a diagnostic record's
+/// does.** A serving record is an account of what happened rather than a
+/// claim that something was reproduced, so nothing gates it; a diagnostic
+/// record carries a bracket, and a series from an uncertified replay is a
+/// picture of an unknown run exactly as a readout is.
+#[test]
+fn the_series_is_gated_only_where_a_bracket_exists() {
+    let serving = concat!(
+        r#"{"session":"s","run":"r","sequence":"0","kind":"load","payload":{"tee":{}}}"#, "\n",
+        r#"{"session":"s","run":"r","turn":"t-1","sequence":"1","kind":"model.measurement","payload":{"output_tokens":[7],"entropies":[1.0]}}"#, "\n",
+    );
+    let mut reader = Signals::default();
+    drain(std::io::Cursor::new(serving.as_bytes()), &mut reader);
+    assert!(!reader.diagnostic(), "a load opens a serving record");
+    assert!(reader.licensed(), "a serving record needs no certificate");
+    assert_eq!(reader.series.points.len(), 1);
+
+    for (closed, licensed) in [(Some("certified"), true), (Some("diverged"), false), (None, false)] {
+        let mut reader = Signals::default();
+        drain(std::io::Cursor::new(record(closed, "").as_bytes()), &mut reader);
+        assert!(reader.diagnostic(), "replay.opened opens a diagnostic record");
+        assert_eq!(reader.licensed(), licensed, "closed {closed:?}");
+    }
+}
+
 /// **A malformed line is skipped rather than fatal**, per section 2's
 /// reader rules carried into the drain.
 ///
-/// **The signals reader exhausts where the capture reader stops**, and
-/// the difference is the readers' own: a capture's reading ends at the
-/// bracket the pass closed, while a signal series has no such marker and
-/// serves a serving record too, where no `replay.closed` exists to wait
-/// for. Read over a pipe, this reader therefore runs until the writer
-/// closes - which is a property of what it reads rather than of the
-/// drain, and is stated here so a caller streaming signals knows what it
-/// is waiting on.
+/// **Both readers stop where their record's bracket closes**, and a
+/// serving record - which carries no bracket - is read to its end. That
+/// is a property of what is read rather than of the drain.
 #[test]
 fn a_malformed_line_does_not_end_the_stream() {
     let text = record(Some("certified"), "").replace(
@@ -147,6 +207,6 @@ fn a_malformed_line_does_not_end_the_stream() {
     );
     let mut reader = Signals::default();
     let ended = drain(std::io::Cursor::new(text.as_bytes()), &mut reader);
-    assert_eq!(ended, Drained::Exhausted, "a signal series reads to the end");
+    assert_eq!(ended, Drained::Stopped, "the record's own close ends it");
     assert_eq!(reader.series.points.len(), 2, "the measurement still read");
 }
