@@ -73,11 +73,18 @@ const LAYERS: usize = 40;
 /// because a layer count carried over from another family agrees with
 /// nothing.
 fn layers() -> usize {
+    // `NotPresent` is the one arm that means nobody asked. A value that is
+    // set and not Unicode is a named count this run cannot read, and taking
+    // the default for it would run the demonstration against another
+    // artifact's layer count.
     match std::env::var("WEAVER_ARTIFACT_READOUT_LAYERS") {
         Ok(named) => named
             .parse()
             .expect("WEAVER_ARTIFACT_READOUT_LAYERS names a layer count"),
-        Err(_) => LAYERS,
+        Err(std::env::VarError::NotPresent) => LAYERS,
+        Err(other) => {
+            panic!("WEAVER_ARTIFACT_READOUT_LAYERS is set and unreadable: {other}")
+        }
     }
 }
 

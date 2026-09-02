@@ -1300,17 +1300,21 @@ mod seam_success {
     /// this file's fixture. Named rather than derived, on the same rule
     /// the readout's layer count follows.
     fn column_shape() -> (usize, usize) {
-        // **Only an unset variable takes the fallback.** A named value that
+        // **Only an absent variable takes the fallback.** A named value that
         // does not parse is the operator's mistake, and reading it as the
         // fixture's shape would run the watch against a count belonging to
         // another artifact - which either fails far from its cause or, where
-        // the shapes happen to agree, passes on a premise nobody stated.
+        // the shapes happen to agree, passes on a premise nobody stated. A
+        // value that is not Unicode is named rather than absent and refuses
+        // for that reason, `NotPresent` being the one arm that means nobody
+        // asked.
         let named = |key: &str, fallback: usize| -> usize {
             match std::env::var(key) {
                 Ok(value) => value.parse().unwrap_or_else(|_| {
                     panic!("{key} names a count, and this one does not parse: {value}")
                 }),
-                Err(_) => fallback,
+                Err(std::env::VarError::NotPresent) => fallback,
+                Err(other) => panic!("{key} is set and unreadable: {other}"),
             }
         };
         (
