@@ -95,9 +95,22 @@ def main():
         checkpoint_path=f"{OUT}/fit-checkpoint{tag}.pt",
     )
     lens.save(f"{OUT}/jacobian_lens_qwen2.5-0.5b-instruct-bf16{tag}.pt")
+    # **The artifact the crate reads is safetensors**, per
+    # `weaver-analysis-Spec` section 3: one tensor per source layer named by
+    # its index, f32. The torch file stays beside it because the reference
+    # implementation's own loader wants it, and the manifest names the
+    # safetensors as the lens - the artifact of record is the one both
+    # sides of the boundary can read.
+    from safetensors.torch import save_file
+    lens_file = f"jacobian_lens_qwen2.5-0.5b-instruct-bf16{tag}.safetensors"
+    save_file(
+        {str(layer): J.contiguous().float().cpu()
+         for layer, J in lens.jacobians.items()},
+        f"{OUT}/{lens_file}",
+    )
 
     manifest = {
-        "lens": f"jacobian_lens_qwen2.5-0.5b-instruct-bf16{tag}.pt",
+        "lens": lens_file,
         "fitted_for": {
             "model": MODEL_DIR,
             "model_safetensors_sha256": sha256(f"{MODEL_DIR}/model.safetensors"),

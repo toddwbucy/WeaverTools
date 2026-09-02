@@ -12,3 +12,12 @@ edition = "2024"
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
+# The format reader section 5's reading elects, and never an engine: it
+# answers tensors from the container section 3 elected, so the lens and the
+# weights its unembedding needs are read without an inference runtime. The
+# same crate weaver-spu links for the native backend's weights.
+safetensors = "0.7"
+# The digest the manifest names, recomputed rather than trusted: an
+# identity check written here would be this crate's approximation of a
+# standard. Already in this workspace's resolved tree.
+sha2 = "0.10"

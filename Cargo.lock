@@ -3745,8 +3745,10 @@ dependencies = [
 name = "weaver-analysis"
 version = "0.1.0"
 dependencies = [
+ "safetensors 0.7.0",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
 ]
 
 [[package]]

@@ -4,6 +4,18 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-01, third of this date, the reading takes its surface.
+Section 5 gains what the crate-borne read needs and no more: the lens
+loaded and applied by the source's own arithmetic against the artifact's
+own weights, the control gating every reading, the by-turn pairing rule,
+and the exact capture comparison that performs certification step 3 where
+both records are held and licenses the discard. Section 1's layout gains
+`lens.rs` and `capture.rs`, and its dependency set gains `safetensors` and
+`sha2`, the format reader the artifact election implies and the digest its
+identity check recomputes, neither an engine. The
+reading-as-artifact election narrows to its rendered form. Two assertions,
+bought by the code act in the same stack.
+
 **Revised:** 2026-09-01, second of this date, the artifacts take their
 representation. Section 3 gains the lens artifact's shape - safetensors
 matrices, elected over the fitting tool's serialization so both sides of
@@ -71,13 +83,28 @@ finished record from a truncated one could hold this shape and not use it.
     src/declare.rs    the declaration derived from the record, section 3
     src/preload.rs    the seam's sender, section 4
     src/reading.rs    the diagnostic-trace's parse and the gate, section 5
+    src/lens.rs       the lens artifact, loaded and applied, section 5
+    src/capture.rs    a capture's columns and their comparison, section 5
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
 
-**The dependency set is two crates and no internal one.** `serde` with `derive`,
-and `serde_json` with `raw_value`, which sections 2 and 3 elect for carrying a
-payload's elected values as the record spelled them rather than re-encoding them.
+**The dependency set is four crates and no internal one.** `serde` with
+`derive`, and `serde_json` with `raw_value`, which sections 2 and 3 elect
+for carrying a payload's elected values as the record spelled them rather
+than re-encoding them, `safetensors`, which section 5's reading elects to
+open the lens artifact and the weights its unembedding needs, and `sha2`,
+which the same section's identity check elects to recompute the digest a
+manifest names. **Neither addition is an engine**: one maps a file and
+answers tensors, the other answers a digest, so what enters this crate is
+a parser for the container section 3 elected and the arithmetic that
+checks an identity, with no inference runtime - which is the whole reason
+that election named a format both sides of the boundary can read.
+`safetensors` is the crate `weaver-spu` links for the native backend's
+weights and `sha2` already stands in this workspace's resolved tree, both
+vetted here rather than newly admitted. **The digest is not hand-rolled**:
+an identity check written here would be this crate's approximation of a
+standard, and a wrong one would refuse good artifacts or admit bad ones.
 
 **No `weaver-*` dependency at all, and the negative is the boundary in the
 manifest.** This crate stands outside the agent, per the charter's section 1, and
@@ -493,6 +520,68 @@ from: weaver-analysis
 to: analysis-writes-no-record
 ```
 
+**The lens is loaded here and applied here, and the reading it produces is
+the layer trajectory.** The artifact is section 3's: the manifest judged
+whole before the file is opened, the header's tensor names answering
+before any tensor's data materializes - which is what the format election
+bought - and the matrices then held to the manifest one layer for one. The
+application is the source's own arithmetic and this crate restates it
+rather than inventing one: `unembed(J_l @ h)`, the transport at the layer
+the column came from, then the model's own final norm and unembedding, per
+`weaver-analysis-PRD` section 1's naming of the reading as this crate's.
+**The weights this crate reads for that step are the artifact's own**, the
+same safetensors the manifest's hash identifies, so the reading needs no
+inference runtime: a matrix multiply, a norm, and a second multiply are
+the whole of it.
+
+**The control precedes every reading and gates it.** At the final layer,
+with no transport, the model's own unembedding must rank the token each
+position drew at or within the reading's stated bar, and below the bar
+this crate produces nothing and says the rate: the pairing, the layer
+convention, and the numerics are what the control establishes, and a
+trajectory printed over an unestablished pairing is a picture of an
+unknown alignment. This is the no-reading-from-an-uncertified-replay rule
+one level down, and it is the crate's own bar rather than the record's.
+
+```graph
+node: analysis-control-gates-the-reading
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-control-gates-the-reading
+```
+
+**A capture's columns are paired by turn and by the measurement's own
+order.** A record holds several brackets and positions repeat across them,
+so a column is keyed by its turn beside its position, and a turn's
+measurement consumes exactly the positions gathered for that turn - the
+output order being the draws' own order, the same pairing the field's
+realized rank encodes. A column that pairs with no drawn token is not read.
+
+**Two captures compare exactly, and this is certification step 3's own
+check performed where both records are held.** Per
+`weaver-diagnostic-PRD` section 4 as measured: within one device model the
+comparison is exact, so two captures of one source under one declaration
+agree value for value or the comparison names the first disagreement with
+its turn, position, and layer. **Cardinality is checked and never
+truncated**: differing layer counts, differing widths, and an empty column
+set each refuse rather than comparing what happens to align, an equal-and-
+empty comparison being a verdict over no evidence. **This is what licenses
+the discard**: a capture the comparison vouches for is derivable, per the
+charter's section 3, and the licence is only as good as the check.
+
+```graph
+node: analysis-captures-compare-exactly
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-captures-compare-exactly
+```
+
 **How this crate reaches the sink follows the operator's declaration and not this
 document.** The charter's section 3 assumes no discriminant, so this crate takes a
 byte stream from its invocation and reads records off it, and whether that stream
@@ -570,9 +659,11 @@ most of this document is representation.
 - **The lens artifacts, closed 2026-09-01**: representation in section 3 -
   safetensors matrices beside a JSON manifest, refused before read where the
   identity disagrees - the criteria the charter's clauses of the same date.
-- **What the reading is, as an artifact.** This document settles when a reading is
-  produced and refuses to settle what it looks like, that being the suite's
-  question rather than the gate's.
+- **What the reading is, as an artifact, narrowed 2026-09-01.** Section 5
+  settles the reading's content - the layer trajectory, the control that
+  gates it, and the capture comparison - and leaves its rendered form to
+  the suite's act, that being a presentation question rather than the
+  gate's.
 - **The satellite types.** The parse's newtypes over the record's identity strings,
   the election's spelling here, and the byte-stream reader's shape. Identifier
   choices with no cross-crate consequence, listed so what this Spec leaves to a
