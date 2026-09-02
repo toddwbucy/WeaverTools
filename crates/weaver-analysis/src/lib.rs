@@ -31,6 +31,7 @@ pub mod preload;
 pub mod project;
 pub mod reading;
 pub mod record;
+pub mod stream;
 
 pub use capture::{Capture, Comparison, compare};
 pub use declare::{AnalystInputs, DeriveRefusal, derive};
@@ -41,3 +42,4 @@ pub use lens::{
 pub use project::{Distillate, ELECTION, project, render_opener};
 pub use reading::{Bracket, Gated, Outcome, RecordKind, brackets, gate, record_kind};
 pub use record::{Envelope, Event, parse_record, value_at};
+pub use stream::{Drained, Reader, Step, drain};
