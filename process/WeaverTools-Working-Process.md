@@ -660,7 +660,7 @@ an instrument, and for those the header's absence is either an unwritten
 test or a written one whose act forgot the citation - a distinction only
 the reading of each can make, which is the counting pass owed rather than
 this refresh's to settle. **What the roll does say is where they cluster**:
-twelve of fifteen are the SPU's, the crate that grew fastest under the
+eleven of fifteen are the SPU's, the crate that grew fastest under the
 readout and decode acts, and the seed derivation, the room refusal, and
 the sampler's memory each name behaviour the seam tests exercise daily
 without claiming.
