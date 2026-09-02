@@ -4,6 +4,15 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-02, the reading drains the stream. Section 3 states
+that the analyst's sink input carries its shape, so a pipe elects the
+discard and a file declines it, and section 5 states how a reading is
+taken as the stream drains: one drain for the class with readers above
+it, the held state bounded by the turn in flight and the analyst's named
+positions, the named positions required where no whole record exists to
+spread over, and the reading emitted only after a certified close. One
+assertion, bought by the act that streams.
+
 **Revised:** 2026-09-01, third of this date, the reading takes its surface.
 Section 5 gains what the crate-borne read needs and no more: the lens
 loaded and applied by the source's own arithmetic against the artifact's
@@ -332,7 +341,13 @@ record and refuse on no absence.
 
 **Three members are the analyst's inputs and three take fixed values.**
 Device placement, the readers' elections, and the diagnostic sink arrive
-from the invocation, per the charter's three exceptions. `binding-kind` is
+from the invocation, per the charter's three exceptions. **The sink's
+input carries its shape and not only its name**: the charter has this
+crate assume no discriminant, so the analyst who elects a pipe is electing
+that the run retains nothing and the reading is taken as the stream
+drains, and the analyst who elects a file is declining that licence and
+keeping a capture. A derivation that could only write one shape would
+make that election the crate's rather than the operator's. `binding-kind` is
 `diagnostic` by construction, `tool-set` takes the empty list, and
 `permission-mode` takes `ask` - the fixed values for members the record
 does not carry and a run under this binding never reads, stated here so
@@ -580,6 +595,49 @@ tag: perturbation
 edge: asserts
 from: weaver-analysis
 to: analysis-captures-compare-exactly
+```
+
+**The reading is taken as the stream drains, and the drain is the class's
+rather than the lens's.** `diagnostic-replay-loop` names the diagnostic
+loop a class with an interchangeable reader, so what this crate builds is
+one drain over the record's events with readers above it: a reader
+consumes events as they land and holds only what its own reading needs.
+The lens is the first such reader and sets no precedent the next one must
+break.
+
+**What a reading holds while it drains is bounded by one turn.** The
+control needs each position's final-layer column against the token that
+position drew, and the drawn tokens arrive with the turn's measurement
+after its columns, so the final-layer columns of the turn in flight are
+held until that measurement pairs them, the ranks are taken, and the
+columns are dropped. The trajectory's own columns are held only for the
+positions the analyst named. **So a reading over a pipe costs one turn's
+final layers and the named positions, never the record**, which is what
+makes the discard licence a live property rather than a claim about
+storage.
+
+**On a stream the analyst names the positions, and the default spread is
+the file's alone.** A spread over the whole record cannot be chosen
+without the whole record, and a reader that buffered to find one would
+have kept what the pipe exists not to keep, so a stream with no named
+positions refuses rather than silently retaining.
+
+**A reading is produced only where the record's own bracket closed
+certified**, per the charter's section 3 and the gate above: the outcome
+arrives at the end of the stream, so the reading accumulates while the
+stream runs and is emitted after the close, and a bracket that closed
+otherwise or did not close produces nothing. A readout from an
+uncertified replay is a picture of an unknown run whether it was read from
+a file or drained from a pipe.
+
+```graph
+node: analysis-reading-drains-within-a-turn
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-reading-drains-within-a-turn
 ```
 
 **How this crate reaches the sink follows the operator's declaration and not this
