@@ -143,11 +143,21 @@ impl Lens {
                 detail: error.to_string(),
             }
         })?;
-        let mut named: Vec<u32> = file
-            .names()
-            .into_iter()
-            .filter_map(|name| name.parse().ok())
-            .collect();
+        // **Every name is accounted for.** A name this reader cannot parse
+        // is an artifact carrying something the manifest does not describe,
+        // and dropping it silently would let an extra tensor ride along
+        // unnamed - the absence the layer check exists to catch.
+        let mut named: Vec<u32> = Vec::new();
+        for name in file.names() {
+            match name.parse() {
+                Ok(layer) => named.push(layer),
+                Err(_) => {
+                    return Err(LensRefusal::ArtifactUnreadable {
+                        detail: format!("the artifact holds a tensor named {name:?},                                          which is no layer index"),
+                    });
+                }
+            }
+        }
         named.sort_unstable();
         if named != manifest.lens_shape.source_layers {
             return Err(LensRefusal::LayersDisagree {
@@ -246,9 +256,19 @@ impl Unembedding {
                 detail: format!("the unembedding is not a matrix: {shape:?}"),
             });
         }
+        let norm_values = f32_of(norm.data(), norm.dtype())?;
+        // The norm is applied elementwise across the width, and a zip over
+        // a short one would normalize a prefix and leave the rest raw -
+        // silently, which is the shape of defect the fault rule forbids.
+        if norm_values.len() != shape[1] {
+            return Err(LensRefusal::WidthDisagrees {
+                artifact: norm_values.len() as u32,
+                manifest: shape[1] as u32,
+            });
+        }
         Ok(Unembedding {
             embedding: f32_of(head.data(), head.dtype())?,
-            norm: f32_of(norm.data(), norm.dtype())?,
+            norm: norm_values,
             epsilon,
             vocabulary: shape[0],
             width: shape[1],
@@ -317,6 +337,29 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect()
+}
+
+/// The digest of a file, read in bounded chunks: identifying a model does
+/// not require holding it. Lowercase hex, the only spelling a manifest may
+/// carry.
+pub fn sha256_hex_of_file(path: &Path) -> std::io::Result<String> {
+    use sha2::{Digest, Sha256};
+    use std::io::Read;
+    let mut file = std::fs::File::open(path)?;
+    let mut hasher = Sha256::new();
+    let mut block = vec![0u8; 1 << 20];
+    loop {
+        let read = file.read(&mut block)?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&block[..read]);
+    }
+    Ok(hasher
+        .finalize()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect())
 }
 
 /// Tensor bytes as `f32`, from the two dtypes these artifacts carry: the

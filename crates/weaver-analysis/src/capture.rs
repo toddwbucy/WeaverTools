@@ -29,6 +29,16 @@ pub struct Capture {
 }
 
 impl Capture {
+    /// A copy for a caller that needs to alter one value and compare, the
+    /// tests' own use: the columns are the bulk and this clones them, so
+    /// it is named for what it costs rather than derived silently.
+    pub fn clone_shallow(&self) -> Capture {
+        Capture {
+            columns: self.columns.clone(),
+            drawn: self.drawn.clone(),
+        }
+    }
+
     /// The columns of a diagnostic record, paired by turn and by the
     /// measurement's own order: a turn's measurement consumes exactly the
     /// positions gathered for that turn, the output order being the draws'
@@ -170,7 +180,14 @@ pub fn compare(left: &Capture, right: &Capture) -> Comparison {
             }
             for (x, y) in la.iter().zip(lb) {
                 values += 1;
-                if x != y {
+                // **The bits, not the values.** Two captures of one run are
+                // the same bytes or they are not: `==` on floats calls
+                // `0.0` and `-0.0` equal though their bits differ, and
+                // calls a `NaN` unequal to its own bit pattern, so an
+                // arithmetic comparison would admit one difference and
+                // invent another. The measurement this bar rests on was
+                // taken over bytes.
+                if x.to_bits() != y.to_bits() {
                     return Comparison::Diverged {
                         turn: key.0.clone(),
                         position: key.1,

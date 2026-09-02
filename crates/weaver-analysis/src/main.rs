@@ -25,7 +25,7 @@ fn main() -> std::process::ExitCode {
              [--readout] [--field-depth <n>] [--surprisal] | preload <trace> <socket> \
              | read <diagnostic-trace> | compare <capture> <capture> \
              | lens <capture> --lens <path> --weights <path> [--layers 2,6,..] \
-             [--positions p,..] [--topk 5] [--min-top5 0.9]",
+             [--positions p,..] [--topk 5] [--min-top5 0.9] [--rms-epsilon 1e-6]",
         ),
     }
 }
@@ -348,7 +348,12 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
                 Some(Err(_)) => return refused("--rms-epsilon is not a number".to_string()),
                 None => return std::process::ExitCode::FAILURE,
             },
-            other if record.is_none() => record = Some(other.to_string()),
+            // The capture is a path, so a token wearing a flag's shape is a
+            // mistyped flag rather than a positional: taking it would run
+            // the reading against a file named `--lense`.
+            other if record.is_none() && !other.starts_with('-') => {
+                record = Some(other.to_string())
+            }
             other => return refused(format!("unknown argument {other}")),
         }
     }
@@ -362,7 +367,8 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
     let paired = capture.paired();
     if paired.is_empty() {
         return refused(
-            "no column pairs with a drawn token: the record holds columns or              measurements, not both"
+            "no column pairs with a drawn token: the record holds columns or \
+             measurements, not both"
                 .to_string(),
         );
     }
@@ -373,11 +379,12 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         Ok(manifest) => manifest,
         Err(refusal) => return refused(format!("{refusal:?}")),
     };
-    let held = match std::fs::read(&weights) {
-        Ok(bytes) => bytes,
+    // **The digest reads in bounded chunks**, so identifying a model does
+    // not hold its whole file in memory beside the parse that follows.
+    let digest = match weaver_analysis::sha256_hex_of_file(std::path::Path::new(&weights)) {
+        Ok(digest) => digest,
         Err(error) => return refused(format!("the weights do not read: {error}")),
     };
-    let digest = weaver_analysis::sha256_hex(&held);
     if digest != manifest.fitted_for.model_safetensors_sha256 {
         eprintln!(
             "{}",
@@ -389,7 +396,6 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         );
         return std::process::ExitCode::FAILURE;
     }
-    drop(held);
     let lens = match weaver_analysis::Lens::open(lens_file, &manifest) {
         Ok(lens) => lens,
         Err(refusal) => return refused(format!("{refusal:?}")),
@@ -455,33 +461,56 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         Some(wanted) => paired.iter().filter(|(_, p)| wanted.contains(p)).collect(),
         None => paired.iter().step_by((paired.len() / 6).max(1)).take(6).collect(),
     };
+    // **A reading of nothing is a refusal, not a success.** A position the
+    // capture does not hold names no column, and exiting zero over an empty
+    // selection would report silence as a reading.
+    if chosen.is_empty() {
+        return refused(format!(
+            "no chosen position is in the capture: {:?}",
+            positions.unwrap_or_default()
+        ));
+    }
     for key in chosen {
         let column = &capture.columns[key];
         let mut trajectory = serde_json::Map::new();
+        // **A layer that answers nothing is named**, so an invalid layer
+        // request is distinguishable from a layer the lens declines: a
+        // silent skip would read as a lens that had nothing to say there.
+        let mut skipped: Vec<u32> = Vec::new();
         for layer in &layers {
-            let Some(residual) = column.get(*layer as usize) else {
-                continue;
-            };
-            let Some(transported) = lens.transport(*layer, residual) else {
-                continue;
-            };
-            let Some(logits) = unembedding.logits(&transported) else {
-                continue;
-            };
-            trajectory.insert(
-                layer.to_string(),
-                serde_json::json!(weaver_analysis::Unembedding::top_k(&logits, topk)),
-            );
+            let read = column
+                .get(*layer as usize)
+                .and_then(|residual| lens.transport(*layer, residual))
+                .and_then(|transported| unembedding.logits(&transported));
+            match read {
+                Some(logits) => {
+                    trajectory.insert(
+                        layer.to_string(),
+                        serde_json::json!(weaver_analysis::Unembedding::top_k(&logits, topk)),
+                    );
+                }
+                None => skipped.push(*layer),
+            }
         }
-        println!(
-            "{}",
-            serde_json::json!({
-                "turn": key.0,
-                "position": key.1,
-                "drawn": capture.drawn[key],
-                "trajectory": trajectory,
-            })
-        );
+        if trajectory.is_empty() {
+            return refused(format!(
+                "no requested layer reads at position {}: the capture holds {} \
+                 layers and the lens fits {:?}",
+                key.1,
+                column.len(),
+                lens.source_layers()
+            ));
+        }
+        let mut line = serde_json::json!({
+            "turn": key.0,
+            "position": key.1,
+            "drawn": capture.drawn[key],
+            "trajectory": trajectory,
+        });
+        if !skipped.is_empty() {
+            line["skipped_layers"] = serde_json::json!(skipped);
+        }
+        println!("{line}");
     }
     std::process::ExitCode::SUCCESS
 }

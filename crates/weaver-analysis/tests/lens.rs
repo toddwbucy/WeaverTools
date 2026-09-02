@@ -92,6 +92,40 @@ fn ragged_and_empty_comparisons_refuse() {
     );
 }
 
+/// **Signed zeros and NaNs are bits, not values.** `0.0` and `-0.0`
+/// compare equal in arithmetic and differ in bytes, and a `NaN` compares
+/// unequal to its own bit pattern - so an arithmetic comparison would
+/// admit one difference and invent another, over a bar the measurement
+/// took across bytes.
+///
+/// Perturbation: compare with `!=` on the values and this fails both ways,
+/// the signed zeros passing as identical and the equal NaNs diverging.
+/// Watched under exactly that change.
+#[test]
+fn signed_zeros_differ_and_equal_nans_do_not() {
+    let a = Capture::of(&parse_record(CERTIFIED));
+    let key = a.columns.keys().next().cloned().expect("a column");
+
+    let mut positive = a.clone_shallow();
+    let mut negative = a.clone_shallow();
+    positive.columns.get_mut(&key).unwrap()[0][0] = 0.0_f32;
+    negative.columns.get_mut(&key).unwrap()[0][0] = -0.0_f32;
+    assert!(
+        matches!(compare(&positive, &negative), Comparison::Diverged { .. }),
+        "a signed zero is a difference in the bytes"
+    );
+
+    let mut left = a.clone_shallow();
+    let mut right = a.clone_shallow();
+    let nan = f32::from_bits(0x7fc0_0001);
+    left.columns.get_mut(&key).unwrap()[0][0] = nan;
+    right.columns.get_mut(&key).unwrap()[0][0] = nan;
+    assert!(
+        matches!(compare(&left, &right), Comparison::Identical { .. }),
+        "one NaN's bits equal their own"
+    );
+}
+
 /// **A capture pairs by turn, not by position alone**: positions repeat
 /// across brackets, so a column belongs to its own turn's measurement.
 #[test]
