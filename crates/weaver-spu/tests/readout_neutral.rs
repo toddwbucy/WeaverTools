@@ -64,6 +64,23 @@ const ARTIFACT: &str = "/bulk-store/models/Qwen--Qwen-AgentWorld-35B-A3B-GGUF/\
 /// thing under test would agree with itself whatever the tap did.
 const LAYERS: usize = 40;
 
+/// What this run's artifact owes per forward, named by the operator where
+/// the artifact is not the default's.
+///
+/// **The count is named rather than derived**, for the reason the constant
+/// above gives: a count taken from the thing under test would agree with
+/// itself whatever the tap did. It moves with `WEAVER_ARTIFACT_READOUT`
+/// because a layer count carried over from another family agrees with
+/// nothing.
+fn layers() -> usize {
+    match std::env::var("WEAVER_ARTIFACT_READOUT_LAYERS") {
+        Ok(named) => named
+            .parse()
+            .expect("WEAVER_ARTIFACT_READOUT_LAYERS names a layer count"),
+        Err(_) => LAYERS,
+    }
+}
+
 fn artifact() -> Option<PathBuf> {
     match std::env::var_os("WEAVER_ARTIFACT_READOUT") {
         // An explicit request that cannot be met is a failure rather than a
@@ -262,10 +279,11 @@ fn an_elected_readout_changes_no_token_on_the_device() {
         // arithmetic.
         assert_eq!(
             norms.len(),
-            (with.len() + 1) * LAYERS,
-            "seed {seed}: {} figures against {} forwards at {LAYERS} layers",
+            (with.len() + 1) * layers(),
+            "seed {seed}: {} figures against {} forwards at {} layers",
             norms.len(),
-            with.len() + 1
+            with.len() + 1,
+            layers()
         );
 
         assert_eq!(
@@ -283,12 +301,13 @@ fn an_elected_readout_changes_no_token_on_the_device() {
     println!(
         "  readout neutrality, {} on device 0, {} seeds: {} and {} tokens drawn, \
          each identical with the election on and off, {} figures folded over {} \
-         forwards at {LAYERS} layers",
+         forwards at {} layers",
         path.file_name().unwrap_or_default().to_string_lossy(),
         SEEDS.len(),
         elected[0].0.len(),
         elected[1].0.len(),
         norms.len(),
-        norms.len() / LAYERS,
+        norms.len() / layers(),
+        layers(),
     );
 }

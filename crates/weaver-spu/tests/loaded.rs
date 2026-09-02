@@ -1253,6 +1253,23 @@ mod seam_success {
         close(lifecycle, decode, child, log_path, "replay");
     }
 
+    /// What this run's artifact owes per column: its layer count and the
+    /// residual width, named by the operator where the artifact is not
+    /// this file's fixture. Named rather than derived, on the same rule
+    /// the readout's layer count follows.
+    fn column_shape() -> (usize, usize) {
+        let named = |key: &str, fallback: usize| -> usize {
+            std::env::var(key)
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(fallback)
+        };
+        (
+            named("WEAVER_ARTIFACT_COLUMN_LAYERS", 24),
+            named("WEAVER_ARTIFACT_COLUMN_WIDTH", 896),
+        )
+    }
+
     /// **The column crosses where the ask stands, one message per sampled
     /// position.** The ask is judged at the open and armed for the
     /// residency, and the stream then carries a `Column` frame at each draw
@@ -1387,9 +1404,17 @@ mod seam_success {
             "one column per sampled position: {} columns for {produced} tokens",
             columns.len()
         );
+        // **The shape is the artifact's own and is named rather than
+        // derived**, on the layer count's own rule: a shape taken from the
+        // columns would agree with them whatever the tap did. The default
+        // is this file's fixture and an operator pointing elsewhere names
+        // what that artifact owes.
+        let (want_layers, want_width) = column_shape();
         assert!(
-            columns.iter().all(|(_, layers, width)| *layers == 24 && *width == 896),
-            "the model's own shape at every position: {columns:?}"
+            columns
+                .iter()
+                .all(|(_, layers, width)| *layers == want_layers && *width == want_width),
+            "the model's own shape at every position, {want_layers}x{want_width}: {columns:?}"
         );
         assert!(
             columns.windows(2).all(|w| w[0].0 < w[1].0),

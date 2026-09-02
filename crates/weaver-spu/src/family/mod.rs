@@ -671,8 +671,21 @@ pub const REGISTRY: &[Declaration] = &[
         renderer: qwen2::renderer,
         selecting_markers: qwen2::RENDERED_MARKERS,
         flush: FlushMechanism::TruncateToPosition,
-        taps_readout: false,
-        taps_column: false,
+        // **Declared on a measurement, 2026-09-02**, per charter section
+        // 13.7's bar and the rule that flipping this is a claim about the
+        // family rather than a line in a table. The claim is that the GGUF
+        // tap reads this architecture's residual correctly and changes no
+        // token doing it, bought by `tests/readout_neutral.rs` against
+        // Qwen3-8B-BF16 on a real device: two seeds, sixty-four tokens
+        // each, byte-identical with the election on and off, 2,340 figures
+        // folded over sixty-five forwards at thirty-six layers. The column
+        // half is bought beside it by `tests/loaded.rs` against the same
+        // artifact, one message per sampled position at thirty-six by four
+        // thousand and ninety-six. **The sibling keys are not flipped by
+        // this act**: `qwen3moe` and `qwen35` declare their own
+        // architectures and each owes its own measurement.
+        taps_readout: true,
+        taps_column: true,
     },
     Declaration {
         // **Qwen3's sparse sibling declares its own architecture**, so it is

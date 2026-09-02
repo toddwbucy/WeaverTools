@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-02, the qwen3 family declares its taps. Section 7
+records the measurement that bought them - both halves against
+`Qwen3-8B-BF16` on a real device, the neutrality bar at two seeds and the
+column crossing at the artifact's own shape - and states that the sibling
+keys are untouched. The two instruments now name their artifact's counts
+rather than deriving them, so a demonstration buys the family it ran
+against.
+
 **Revised:** 2026-09-01, the column's code act lands. The family
 declaration's column member takes its spelling, `taps_column` beside
 `taps_readout` in section 7's diagnostic clause, qwen2 alone declaring it
@@ -669,9 +677,9 @@ Process section 6 names the two invocations that reach them.
 | `markers.rs` | `gguf` | `WEAVER_VOCAB_<FAMILY>`, one per registry entry |
 | `selection.rs` | `gguf` | `WEAVER_ARTIFACT_GEMMA4`, `WEAVER_ARTIFACT_MISTRAL_SMALL`, `WEAVER_ARTIFACT_PHI4`, `WEAVER_ARTIFACT_PHI4_MINI`, `WEAVER_ARTIFACT_SMOLLM2` |
 | `native_loaded.rs` | `cuda` | `WEAVER_ARTIFACT_QWEN25_SAFETENSORS`, `WEAVER_ARTIFACT_QWEN25_32B`, `WEAVER_MEASURE_PACE` |
-| `loaded.rs` | `cuda` and `gguf` | `WEAVER_TEST_GGUF` |
+| `loaded.rs` | `cuda` and `gguf` | `WEAVER_TEST_GGUF`, `WEAVER_ARTIFACT_COLUMN_LAYERS`, `WEAVER_ARTIFACT_COLUMN_WIDTH` |
 | `two_card.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_TWO_CARD`, `WEAVER_ARTIFACT_SPLIT` |
-| `readout_neutral.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_READOUT` |
+| `readout_neutral.rs` | `cuda` and `gguf` | `WEAVER_ARTIFACT_READOUT`, `WEAVER_ARTIFACT_READOUT_LAYERS` |
 
 **Two targets name a fixture they do not read, and the first form of this
 table recorded the mention as a read.** `seam.rs` cites `WEAVER_TEST_GGUF` in a
@@ -684,6 +692,16 @@ read.
 could not.** That name is genuinely read by `loaded.rs`, so the union was
 satisfied while the mapping was false in two rows. This is why the assertion is
 per target rather than over the crate.
+
+**Three fixtures name a shape rather than an artifact**, added
+2026-09-02 with the qwen3 act: `WEAVER_ARTIFACT_READOUT_LAYERS` and the
+column pair say what the artifact a run points at owes per forward and per
+column. They exist because a demonstration is per family, so a run against
+another family must carry that family's counts, and the counts are named
+rather than derived on the rule those instruments already followed - a
+count taken from the thing under test agrees with itself whatever the tap
+did. Each defaults to the fixture its target documents, so a run that
+names no artifact needs none of them.
 
 **The vocabulary set is per family rather than fixed.** `markers.rs` asks each registry
 entry for its own artifact under `WEAVER_VOCAB_<FAMILY>`, so the set grows with the
@@ -2156,6 +2174,23 @@ figure per layer per forward. **Two seeds rather than one, because the
 comparison has to be known to discriminate**: an equality that held for
 every input would pass whatever the tap did, and the two sequences differing
 is what says it would not. The flag stands on that measurement.
+
+**The qwen3 family declares both taps as of 2026-09-02, and the run that
+bought them is named.** The registry's `qwen3` declared `taps_readout:
+false` while the claim was unmeasured, which is the same posture
+`qwen35moe` held before its own act. Both halves were measured against
+`Qwen3-8B-BF16` on one A6000: sixty-four tokens drawn under one
+declaration are identical with the election on and off at each of two
+seeds, the elected run folding 2,340 figures over sixty-five forwards at
+thirty-six layers, and the column stream crossing one message per sampled
+position at thirty-six layers by four thousand and ninety-six. **The
+instruments moved to take it**: the neutrality demonstration and the
+column watch each named their artifact's layer count and width rather than
+deriving them, on the rule the demonstration already carried, so a run
+against another family buys that family and not this one. **The sibling
+keys are untouched**: `qwen3moe` and `qwen35` declare their own
+architectures and each owes its own measurement, which is what per-family
+means.
 
 **The bar is a run and the run is kept.** Charter section 13.7 has an
 elected readout change no token, shown per tap rather than once for the
