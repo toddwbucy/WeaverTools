@@ -20,7 +20,8 @@ Run: /fastpool/venvs/jlens/bin/python read_columns.py <record.ndjson[.zst]>
 import argparse, io, json, subprocess, sys
 
 MODEL_DIR = "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct"
-DEFAULT_LENS = "/bulk-store/weaver-testing/jacobian-lens-0.5b/jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt"
+DEFAULT_LENS = ("/bulk-store/weaver-testing/jacobian-lens-0.5b/"
+                "jacobian_lens_qwen2.5-0.5b-instruct-bf16.safetensors")
 
 
 def _is_int(value):
@@ -74,6 +75,22 @@ def manifest_shape_refusal(manifest):
     return None
 
 
+def lens_layers(lens_path):
+    """The artifact's tensor names, read from the safetensors header alone
+    - **the pre-load check the format election buys**, per
+    `weaver-analysis-Spec` section 3: the names answer before a byte of
+    tensor data is materialized, so a layer set that disagrees with the
+    manifest refuses without loading. A torch-serialized lens answers
+    `None`, its names being pickled with the data."""
+    import struct
+    if not lens_path.endswith(".safetensors"):
+        return None
+    with open(lens_path, "rb") as f:
+        (header_len,) = struct.unpack("<Q", f.read(8))
+        header = json.loads(f.read(header_len))
+    return sorted(int(k) for k in header if k != "__metadata__" and k.isdigit())
+
+
 def load_model_and_lens(lens_path, device="cuda"):
     """The heavy loads, behind one name so a caller - or a test - can see
     exactly where the torch stack and the artifact's tensors enter. Nothing
@@ -84,7 +101,15 @@ def load_model_and_lens(lens_path, device="cuda"):
         MODEL_DIR, dtype=torch.bfloat16
     ).to(device)
     tok = transformers.AutoTokenizer.from_pretrained(MODEL_DIR)
-    return jlens.from_hf(hf, tok), tok, jlens.JacobianLens.load(lens_path)
+    if lens_path.endswith(".safetensors"):
+        from safetensors.torch import load_file
+        held = load_file(lens_path)
+        matrices = {int(k): v for k, v in held.items()}
+        width = next(iter(matrices.values())).shape[0] if matrices else 0
+        lens = jlens.JacobianLens(matrices, n_prompts=0, d_model=width)
+    else:
+        lens = jlens.JacobianLens.load(lens_path)
+    return jlens.from_hf(hf, tok), tok, lens
 
 
 def manifest_path_for(lens_path):
@@ -94,7 +119,9 @@ def manifest_path_for(lens_path):
     untagged sibling's."""
     import os, re
     base = os.path.basename(lens_path)
-    m = re.fullmatch(r"jacobian_lens_.*?bf16(?P<tag>(-[A-Za-z0-9._-]+)?)\.pt", base)
+    m = re.fullmatch(
+        r"jacobian_lens_.*?bf16(?P<tag>(-[A-Za-z0-9._-]+)?)\.(pt|safetensors)", base
+    )
     tag = m.group("tag") if m else ""
     return os.path.join(os.path.dirname(lens_path), f"lens-manifest{tag}.json")
 
@@ -147,6 +174,13 @@ def main():
                           "model": config["hidden_size"]}))
         return 1
     expected_layers = manifest["lens_shape"]["source_layers"]
+    # The header read: the artifact's own layer set, before its data.
+    named = lens_layers(args.lens)
+    if named is not None and named != expected_layers:
+        print(json.dumps({"refusal": "the artifact's tensors do not match the "
+                          "manifest's layers one for one",
+                          "artifact": named, "manifest": expected_layers}))
+        return 1
     h = hashlib.sha256()
     with open(os.path.join(MODEL_DIR, "model.safetensors"), "rb") as f:
         for block in iter(lambda: f.read(1 << 20), b""):
