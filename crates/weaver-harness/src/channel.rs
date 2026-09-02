@@ -382,7 +382,8 @@ impl OrganChannel {
     pub fn recv(&self) -> Result<OrganEnvelope, ChannelFault> {
         let octets = recv_octets(self.end.as_fd())?;
         serde_json::from_slice(&octets).map_err(|error| {
-            eprintln!("{}", undecodable_detail("organ", &error));
+            use std::io::Write as _;
+            let _ = writeln!(std::io::stderr(), "{}", undecodable_detail("organ", &error));
             ChannelFault::Undecodable
         })
     }
@@ -503,7 +504,12 @@ impl OrganChannel {
             return Err(ChannelFault::Closed);
         }
         let envelope = serde_json::from_slice(&buffer[..read]).map_err(|error| {
-            eprintln!("{}", undecodable_detail("coordination", &error));
+            use std::io::Write as _;
+            let _ = writeln!(
+                std::io::stderr(),
+                "{}",
+                undecodable_detail("coordination", &error)
+            );
             ChannelFault::Undecodable
         })?;
         Ok((envelope, sink, state_end))
