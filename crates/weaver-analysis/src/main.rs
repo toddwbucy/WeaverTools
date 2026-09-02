@@ -19,11 +19,23 @@ fn main() -> std::process::ExitCode {
         Some(("preload", [trace, socket])) => run_preload(trace, socket),
         Some(("read", [trace])) => run_read(trace),
         Some(("compare", [left, right])) => run_compare(left, right),
+        Some(("signals", [record])) => run_signals(record, 2.0),
+        Some(("signals", [record, k])) => match k.parse() {
+            Ok(k) => run_signals(record, k),
+            Err(_) => {
+                eprintln!(
+                    "{}",
+                    serde_json::json!({"analysis_refusal": "the spike bar is not a number"})
+                );
+                std::process::ExitCode::FAILURE
+            }
+        },
         Some(("lens", rest)) => run_lens(rest),
         _ => refused(
             "usage: weaver-analysis derive <trace> --devices <n,..> --sink <path> \
-             [--readout] [--field-depth <n>] [--surprisal] | preload <trace> <socket> \
+             [--sink-kind file|pipe] [--readout] [--field-depth <n>] [--surprisal] | preload <trace> <socket> \
              | read <diagnostic-trace> | compare <capture> <capture> \
+             | signals <record> [spike-bar] \
              | lens <capture> --lens <path> --weights <path> [--layers 2,6,..] \
              [--positions p,..] [--topk 5] [--min-top5 0.9] [--rms-epsilon 1e-6]",
         ),
@@ -48,6 +60,7 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
         field_depth: None,
         surprisal: false,
         sink_path: String::new(),
+        sink_kind: weaver_analysis::declare::SinkKind::File,
     };
     let mut out: Option<String> = None;
     let refused = |why: String| {
@@ -84,6 +97,17 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
                     return refused("--sink takes a path".to_string());
                 };
                 inputs.sink_path = value.clone();
+            }
+            "--sink-kind" => {
+                let Some(value) = it.next().filter(|v| !v.starts_with("--")) else {
+                    return refused("--sink-kind takes file or pipe".to_string());
+                };
+                match weaver_analysis::declare::SinkKind::parse(value) {
+                    Some(kind) => inputs.sink_kind = kind,
+                    None => {
+                        return refused(format!("--sink-kind is file or pipe, not {value}"));
+                    }
+                }
             }
             "--readout" => inputs.readout = true,
             "--surprisal" => inputs.surprisal = true,
@@ -366,15 +390,15 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
     let (Some(record), Some(lens_path), Some(weights)) = (record, lens_path, weights) else {
         return refused("lens takes <capture>, --lens, and --weights".to_string());
     };
-    let Ok(text) = read_stream(&record) else {
-        return refused("the capture does not read".to_string());
-    };
-    let capture = weaver_analysis::Capture::of(&parse_record(&text));
-    let paired = capture.paired();
-    if paired.is_empty() {
+    // **On a stream the analyst names the positions**, per Spec section 5:
+    // a spread over the whole record cannot be chosen without the whole
+    // record, and a reader that buffered to find one would keep what a
+    // pipe exists not to keep.
+    let streaming = record == "-" || is_fifo(&record);
+    if streaming && positions.is_none() {
         return refused(
-            "no column pairs with a drawn token: the record holds columns or \
-             measurements, not both"
+            "a streamed record needs --positions: the default spread wants a whole \
+             record, and holding one would keep what the pipe exists not to keep"
                 .to_string(),
         );
     }
@@ -419,23 +443,67 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         ));
     }
 
-    // **The control precedes every reading and gates it**: the final
-    // layer, no transport, against the token each position drew.
-    let mut ranks = Vec::with_capacity(paired.len());
-    for key in &paired {
-        let column = &capture.columns[key];
-        let Some(final_layer) = column.last() else {
-            return refused("a column holds no layers".to_string());
+    // **The reading is taken as the stream drains**, per Spec section 5:
+    // the control's rank is computed at the moment a position pairs with
+    // the token it drew, and the column is dropped there. What is held is
+    // one turn's final layers and the named positions.
+    let source = match weaver_analysis::stream::open(&record) {
+        Ok(source) => source,
+        Err(error) => return refused(format!("the record does not open: {error}")),
+    };
+    let mut ranks: Vec<usize> = Vec::new();
+    let mut faults: Vec<String> = Vec::new();
+    let mut drawn: std::collections::BTreeMap<weaver_analysis::capture::Key, u32> =
+        std::collections::BTreeMap::new();
+    let outcome;
+    let kept;
+    {
+        let mut pair = |key: &weaver_analysis::capture::Key, column: &[f32], token: u32| {
+            drawn.insert(key.clone(), token);
+            match unembedding.logits(column) {
+                Some(logits) => {
+                    match weaver_analysis::Unembedding::rank_of(&logits, token as usize) {
+                        Some(rank) => ranks.push(rank),
+                        None => faults.push(format!("token {token} is outside the vocabulary")),
+                    }
+                }
+                None => faults.push("a column is not the model's width".to_string()),
+            }
         };
-        let Some(logits) = unembedding.logits(final_layer) else {
-            return refused("a column is not the model's width".to_string());
-        };
-        let Some(rank) =
-            weaver_analysis::Unembedding::rank_of(&logits, capture.drawn[key] as usize)
-        else {
-            return refused("a drawn token is outside the vocabulary".to_string());
-        };
-        ranks.push(rank);
+        let mut reader =
+            weaver_analysis::capture::Streaming::new(positions.clone().unwrap_or_default(), &mut pair);
+        match weaver_analysis::drain(source, &mut reader) {
+            weaver_analysis::Drained::Refused(why) => return refused(why),
+            _ => {}
+        }
+        outcome = reader.outcome.clone();
+        kept = std::mem::take(&mut reader.kept);
+    }
+    if let Some(fault) = faults.first() {
+        return refused(fault.clone());
+    }
+    if ranks.is_empty() {
+        return refused(
+            "no column pairs with a drawn token: the record holds columns or \
+             measurements, not both"
+                .to_string(),
+        );
+    }
+    // **A reading is produced only over a certified close**, per the
+    // charter: a readout from an uncertified replay is a picture of an
+    // unknown run, however it was read.
+    match outcome.as_deref() {
+        Some("certified") => {}
+        Some(other) => {
+            return refused(format!("the record's bracket closed {other}, not certified"));
+        }
+        None => {
+            return refused(
+                "the record's bracket did not close: nothing is produced for an \
+                 unclosed replay"
+                    .to_string(),
+            );
+        }
     }
     let top1 = ranks.iter().filter(|r| **r == 0).count();
     let top5 = ranks.iter().filter(|r| **r < 5).count();
@@ -463,10 +531,7 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         return std::process::ExitCode::FAILURE;
     }
 
-    let chosen: Vec<&(Option<String>, u64)> = match &positions {
-        Some(wanted) => paired.iter().filter(|(_, p)| wanted.contains(p)).collect(),
-        None => paired.iter().step_by((paired.len() / 6).max(1)).take(6).collect(),
-    };
+    let chosen: Vec<&weaver_analysis::capture::Key> = kept.keys().collect();
     // **A reading of nothing is a refusal, not a success.** A position the
     // capture does not hold names no column, and exiting zero over an empty
     // selection would report silence as a reading.
@@ -477,7 +542,7 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         ));
     }
     for key in chosen {
-        let column = &capture.columns[key];
+        let column = &kept[key];
         let mut trajectory = serde_json::Map::new();
         // **A layer that answers nothing is named**, so an invalid layer
         // request is distinguishable from a layer the lens declines: a
@@ -510,7 +575,7 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         let mut line = serde_json::json!({
             "turn": key.0,
             "position": key.1,
-            "drawn": capture.drawn[key],
+            "drawn": drawn.get(key),
             "trajectory": trajectory,
         });
         if !skipped.is_empty() {
@@ -519,4 +584,83 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         println!("{line}");
     }
     std::process::ExitCode::SUCCESS
+}
+
+/// The per-position signal series, drained from any record - serving or
+/// diagnostic, file or pipe - per `weaver-analysis-Spec` section 5's
+/// class. Needs no lens, no weights, and no tap: the entropies ride every
+/// generation and the surprisals ride their election.
+fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
+    let source = match weaver_analysis::stream::open(record) {
+        Ok(source) => source,
+        Err(error) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({"analysis_refusal": format!("the record does not open: {error}")})
+            );
+            return std::process::ExitCode::FAILURE;
+        }
+    };
+    let mut reader = weaver_analysis::Signals::default();
+    if let weaver_analysis::Drained::Refused(why) = weaver_analysis::drain(source, &mut reader) {
+        eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
+        return std::process::ExitCode::FAILURE;
+    }
+    let series = &reader.series;
+    if series.points.is_empty() {
+        eprintln!(
+            "{}",
+            serde_json::json!({"analysis_refusal": "the record holds no measured generation"})
+        );
+        return std::process::ExitCode::FAILURE;
+    }
+    let with_entropy = series.points.iter().filter(|p| p.entropy.is_some()).count();
+    let with_surprisal = series.points.iter().filter(|p| p.surprisal.is_some()).count();
+    println!(
+        "{}",
+        serde_json::json!({
+            "positions": series.points.len(),
+            "with_entropy": with_entropy,
+            "with_surprisal": with_surprisal,
+            "perplexities": series.perplexities.iter()
+                .map(|(turn, value)| serde_json::json!({"turn": turn, "perplexity": value}))
+                .collect::<Vec<_>>(),
+        })
+    );
+    for point in &series.points {
+        println!(
+            "{}",
+            serde_json::json!({
+                "turn": point.turn,
+                "ordinal": point.ordinal,
+                "token": point.token,
+                "entropy": point.entropy,
+                "surprisal": point.surprisal,
+            })
+        );
+    }
+    // **The spikes are named rather than left to the reader's eye**: the
+    // bar is the caller's, stated in deviations, and what clears it is
+    // where a series turned.
+    let spikes = series.spikes(spike_bar);
+    eprintln!(
+        "{}",
+        serde_json::json!({
+            "spike_bar_deviations": spike_bar,
+            "spikes": spikes.iter().map(|p| serde_json::json!({
+                "turn": p.turn, "ordinal": p.ordinal, "token": p.token,
+                "surprisal": p.surprisal,
+            })).collect::<Vec<_>>(),
+        })
+    );
+    std::process::ExitCode::SUCCESS
+}
+
+/// Whether a path names a FIFO, which is how a reading learns it is
+/// draining rather than reading a record that stands still.
+fn is_fifo(path: &str) -> bool {
+    use std::os::unix::fs::FileTypeExt;
+    std::fs::metadata(path)
+        .map(|m| m.file_type().is_fifo())
+        .unwrap_or(false)
 }

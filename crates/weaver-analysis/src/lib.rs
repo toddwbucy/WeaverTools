@@ -31,10 +31,11 @@ pub mod preload;
 pub mod project;
 pub mod reading;
 pub mod record;
+pub mod signals;
 pub mod stream;
 
 pub use capture::{Capture, Comparison, compare};
-pub use declare::{AnalystInputs, DeriveRefusal, derive};
+pub use declare::{AnalystInputs, DeriveRefusal, SinkKind, derive};
 pub use lens::{
     Lens, LensRefusal, Manifest, Unembedding, manifest_path_for, read_manifest, sha256_hex,
     rms_epsilon, sha256_hex_of_file,
@@ -42,4 +43,5 @@ pub use lens::{
 pub use project::{Distillate, ELECTION, project, render_opener};
 pub use reading::{Bracket, Gated, Outcome, RecordKind, brackets, gate, record_kind};
 pub use record::{Envelope, Event, parse_record, value_at};
+pub use signals::{Point, Series, Signals};
 pub use stream::{Drained, Reader, Step, drain};
