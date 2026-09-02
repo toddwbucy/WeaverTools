@@ -55,9 +55,9 @@ mod failure;
 mod recorder;
 
 pub use event::{
-    AbandonReason, Divergence, Envelope, Event, Kind, ModelId, MonotonicNs, Payload,
-    ReplayClosed, ReplayIdentity, ReplayOpened, ReplayOutcome, ResidualColumn, RunRef,
-    Sequence, SessionRef, Subsystem, TemplateId, TokenId, TurnRef, WeightsHash,
+    AbandonReason, Divergence, Envelope, Event, Kind, ModelId, MonotonicNs, Payload, ReplayClosed,
+    ReplayIdentity, ReplayOpened, ReplayOutcome, ResidualColumn, RunRef, Sequence, SessionRef,
+    Subsystem, TemplateId, TokenId, TurnRef, WeightsHash,
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};
 pub use recorder::Recorder;

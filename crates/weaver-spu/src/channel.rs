@@ -261,9 +261,7 @@ impl DecodeSocket {
     pub fn try_recv_octets(&self) -> Result<Option<Vec<u8>>, ChannelFault> {
         match recv_with(self.end.as_fd(), MsgFlags::MSG_DONTWAIT)? {
             None => Ok(None),
-            Some(first) => {
-                reassemble_if_series(first, || recv_octets(self.end.as_fd())).map(Some)
-            }
+            Some(first) => reassemble_if_series(first, || recv_octets(self.end.as_fd())).map(Some),
         }
     }
 
@@ -550,8 +548,13 @@ mod series_tests {
         let back = receiver.recv_octets().expect("reassembles");
         assert_eq!(back, body, "byte-identical through the series");
         // And a small frame still crosses as one write.
-        sender.send_octets(b"{\"kind\":\"at_rest\"}").expect("plain");
-        assert_eq!(receiver.recv_octets().expect("plain"), b"{\"kind\":\"at_rest\"}");
+        sender
+            .send_octets(b"{\"kind\":\"at_rest\"}")
+            .expect("plain");
+        assert_eq!(
+            receiver.recv_octets().expect("plain"),
+            b"{\"kind\":\"at_rest\"}"
+        );
     }
 
     /// **An interrupted series faults whole**: a peer closing before its
@@ -567,10 +570,7 @@ mod series_tests {
             super::send_octets(sender.end.as_fd(), &[7u8; MAX_ENVELOPE_BYTES]).expect("one");
             // the sender dies here, two slices short
         }
-        assert!(matches!(
-            receiver.recv_octets(),
-            Err(ChannelFault::Closed)
-        ));
+        assert!(matches!(receiver.recv_octets(), Err(ChannelFault::Closed)));
     }
 
     /// The preamble validates whole before any slice is read: the kindless
@@ -594,8 +594,14 @@ mod series_tests {
         assert!(reassemble_if_series(b"[1,2]".to_vec(), || panic!()).is_ok());
         // kindless and not the exact preamble: refused, never guessed
         assert!(fault("{\"segments\":2}"), "one member");
-        assert!(fault("{\"segments\":2,\"bytes\":200000,\"extra\":1}"), "three members");
-        assert!(fault("{\"segments\":-2,\"bytes\":200000}"), "negative count");
+        assert!(
+            fault("{\"segments\":2,\"bytes\":200000,\"extra\":1}"),
+            "three members"
+        );
+        assert!(
+            fault("{\"segments\":-2,\"bytes\":200000}"),
+            "negative count"
+        );
         // bytes within one envelope: the sender had no series to send
         assert!(fault("{\"segments\":1,\"bytes\":100}"));
         // bytes past the total bound
@@ -615,10 +621,9 @@ mod series_tests {
         let slices = vec![vec![1u8; MAX_ENVELOPE_BYTES], vec![2u8; 10]];
         let mut feed = slices.clone().into_iter();
         let preamble = format!("{{\"segments\":2,\"bytes\":{}}}", MAX_ENVELOPE_BYTES + 10);
-        let whole = reassemble_if_series(preamble.into_bytes(), || {
-            Ok(feed.next().expect("scripted"))
-        })
-        .expect("exact total reassembles");
+        let whole =
+            reassemble_if_series(preamble.into_bytes(), || Ok(feed.next().expect("scripted")))
+                .expect("exact total reassembles");
         assert_eq!(whole.len(), MAX_ENVELOPE_BYTES + 10);
         let mut feed = vec![vec![1u8; MAX_ENVELOPE_BYTES], vec![2u8; 11]].into_iter();
         let preamble = format!("{{\"segments\":2,\"bytes\":{}}}", MAX_ENVELOPE_BYTES + 10);

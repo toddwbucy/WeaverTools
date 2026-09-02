@@ -41,11 +41,7 @@ impl Recorder {
     /// `OwnedFd` and nothing that could name a path: close-on-exec is the
     /// harness's at its own receive, and append-only rides the open file
     /// description from admin's open.
-    pub fn receive(
-        sink: OwnedFd,
-        run: RunRef,
-        session: SessionRef,
-    ) -> Result<Recorder, Failure> {
+    pub fn receive(sink: OwnedFd, run: RunRef, session: SessionRef) -> Result<Recorder, Failure> {
         Ok(Recorder {
             session,
             run,

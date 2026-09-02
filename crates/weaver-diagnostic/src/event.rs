@@ -161,7 +161,10 @@ pub enum Divergence {
         recorded: TokenId,
         recomputed: TokenId,
     },
-    Readout { position: u64, layer: u32 },
+    Readout {
+        position: u64,
+        layer: u32,
+    },
 }
 
 /// Why a pass reached its own end without certifying, per section 8's

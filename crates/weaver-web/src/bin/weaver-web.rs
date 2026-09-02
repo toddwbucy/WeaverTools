@@ -10,7 +10,10 @@ use weaver_web::traceview::TraceViews;
 use weaver_web::{queue, registry, store, web, wire};
 
 #[derive(Parser)]
-#[command(name = "weaver-web", about = "The WeaverTools suite's frontend server.")]
+#[command(
+    name = "weaver-web",
+    about = "The WeaverTools suite's frontend server."
+)]
 struct Args {
     /// Path to the server's TOML configuration file.
     #[arg(long, default_value = "/etc/weaver-web/config.toml")]

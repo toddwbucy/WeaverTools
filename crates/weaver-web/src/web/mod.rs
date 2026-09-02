@@ -50,7 +50,11 @@ impl IntoResponse for AppError {
         // The full chain goes to the log; the response stays generic so
         // SQL, filesystem, and upstream detail never reach a browser.
         tracing::error!("request failed: {:#}", self.0);
-        (StatusCode::INTERNAL_SERVER_ERROR, "internal error; see the server log").into_response()
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "internal error; see the server log",
+        )
+            .into_response()
     }
 }
 
@@ -76,7 +80,9 @@ pub async fn session_participant(
     state: &AppState,
     headers: &HeaderMap,
 ) -> anyhow::Result<Option<Participant>> {
-    let Some(token) = session_token(headers) else { return Ok(None) };
+    let Some(token) = session_token(headers) else {
+        return Ok(None);
+    };
     let pid: Option<i64> = sqlx::query_scalar(
         "SELECT participant_id FROM sessions WHERE token = $1 AND closed_at IS NULL",
     )
@@ -138,13 +144,41 @@ fn markdown_to_html(src: &str) -> String {
     let parser = Parser::new_ext(src, opts).map(|ev| match ev {
         Event::Html(t) => Event::Text(t),
         Event::InlineHtml(t) => Event::Text(t),
-        Event::Start(Tag::Link { link_type, dest_url, title, id }) => {
-            let dest_url = if safe_dest(&dest_url) { dest_url } else { "#".into() };
-            Event::Start(Tag::Link { link_type, dest_url, title, id })
+        Event::Start(Tag::Link {
+            link_type,
+            dest_url,
+            title,
+            id,
+        }) => {
+            let dest_url = if safe_dest(&dest_url) {
+                dest_url
+            } else {
+                "#".into()
+            };
+            Event::Start(Tag::Link {
+                link_type,
+                dest_url,
+                title,
+                id,
+            })
         }
-        Event::Start(Tag::Image { link_type, dest_url, title, id }) => {
-            let dest_url = if safe_dest(&dest_url) { dest_url } else { "#".into() };
-            Event::Start(Tag::Image { link_type, dest_url, title, id })
+        Event::Start(Tag::Image {
+            link_type,
+            dest_url,
+            title,
+            id,
+        }) => {
+            let dest_url = if safe_dest(&dest_url) {
+                dest_url
+            } else {
+                "#".into()
+            };
+            Event::Start(Tag::Image {
+                link_type,
+                dest_url,
+                title,
+                id,
+            })
         }
         other => other,
     });
@@ -228,7 +262,10 @@ pub fn render_event(ev: &EventView) -> String {
 
 async fn asset(Path(file): Path<String>) -> Response {
     let (bytes, ctype): (&'static [u8], &'static str) = match file.as_str() {
-        "htmx.min.js" => (include_bytes!("../../assets/htmx.min.js"), "text/javascript"),
+        "htmx.min.js" => (
+            include_bytes!("../../assets/htmx.min.js"),
+            "text/javascript",
+        ),
         "sse.js" => (include_bytes!("../../assets/sse.js"), "text/javascript"),
         "style.css" => (include_bytes!("../../assets/style.css"), "text/css"),
         _ => return (StatusCode::NOT_FOUND, "no such asset").into_response(),

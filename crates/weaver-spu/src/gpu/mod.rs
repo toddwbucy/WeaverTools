@@ -228,7 +228,10 @@ mod tests {
         }
         let absurd = 1024u64 * 1024 * 1024 * 1024;
         let Err(DeviceRefusal::NoRoom {
-            free, needed, total, ..
+            free,
+            needed,
+            total,
+            ..
         }) = room_and_reach(&[DeviceOrdinal(0)], absurd, 0)
         else {
             panic!("a terabyte shard refuses on room");

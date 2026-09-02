@@ -329,7 +329,10 @@ fn the_label_trio_round_trips_through_bytes() {
         encoded["body"]["account"].is_object(),
         "the account is a member, spliced as an object: {bytes}"
     );
-    assert_eq!(encoded["body"]["account"]["organ"], "spu-classify", "{bytes}");
+    assert_eq!(
+        encoded["body"]["account"]["organ"], "spu-classify",
+        "{bytes}"
+    );
     let back: weaver_types::LabelAnswer = serde_json::from_str(&bytes).expect("the splice returns");
     assert_eq!(back, fault);
 

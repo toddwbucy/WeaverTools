@@ -254,7 +254,7 @@ impl<'a> GgufEngine<'a> {
         // no later `&mut self` claims the pointee the callback writes to.
         let tap = readout.then(|| {
             std::ptr::NonNull::from(Box::leak(gguf_tap::TapState::new(
-                model.model().n_layer() as usize,
+                model.model().n_layer() as usize
             )))
         });
         let params = match tap {
@@ -262,7 +262,10 @@ impl<'a> GgufEngine<'a> {
             // its `Drop` and by nothing else, and the context that holds it
             // is a field of the same struct, so it cannot outlive it.
             Some(state) => unsafe {
-                params.with_eval_callback(Some(gguf_tap::tap), state.as_ptr() as *mut std::ffi::c_void)
+                params.with_eval_callback(
+                    Some(gguf_tap::tap),
+                    state.as_ptr() as *mut std::ffi::c_void,
+                )
             },
             None => params,
         };
@@ -330,7 +333,6 @@ impl<'a> GgufEngine<'a> {
             detail: detail.into(),
         }
     }
-
 }
 
 impl Backend for GgufEngine<'_> {
@@ -650,8 +652,7 @@ mod tests {
         let Some(model) = model_or_skip() else { return };
         let layers = model.model().n_layer() as usize;
         assert!(layers > 1, "the fixture must have layers to count");
-        let mut engine =
-            GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
+        let mut engine = GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
 
         engine
             .decode_at(&[TokenId(9707), TokenId(11), TokenId(1879)], 0)
@@ -732,7 +733,10 @@ mod tests {
         engine.decode_at(&prompt, 0).expect("the prompt decodes");
 
         assert_eq!(
-            engine.take_reduction().expect("an elected engine taps").layers(),
+            engine
+                .take_reduction()
+                .expect("an elected engine taps")
+                .layers(),
             layers,
             "a split prefill folds the layer count once, not once per ubatch"
         );
@@ -761,12 +765,15 @@ mod tests {
         let mut batched =
             GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
         batched.decode_at(&prompt, 0).expect("the prompt decodes");
-        let batched = batched.take_reduction().expect("elected").per_layer_norm().to_vec();
+        let batched = batched
+            .take_reduction()
+            .expect("elected")
+            .per_layer_norm()
+            .to_vec();
 
         // The same last position, reached one token at a time, so the tap has
         // one column to take and cannot have taken the wrong one.
-        let mut singly =
-            GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
+        let mut singly = GgufEngine::open(&model, &frozen(), 512, true).expect("the context opens");
         for (position, token) in prompt.iter().enumerate() {
             singly
                 .decode_at(&[*token], position)
@@ -777,9 +784,17 @@ mod tests {
                 singly.take_reduction();
             }
         }
-        let singly = singly.take_reduction().expect("elected").per_layer_norm().to_vec();
+        let singly = singly
+            .take_reduction()
+            .expect("elected")
+            .per_layer_norm()
+            .to_vec();
 
-        assert_eq!(batched.len(), singly.len(), "the same layer count either way");
+        assert_eq!(
+            batched.len(),
+            singly.len(),
+            "the same layer count either way"
+        );
         for (layer, (a, b)) in batched.iter().zip(&singly).enumerate() {
             let apart = (a - b).abs() / a.max(*b);
             assert!(

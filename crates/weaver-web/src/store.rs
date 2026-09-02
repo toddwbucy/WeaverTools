@@ -118,7 +118,11 @@ impl Store {
         let (events_tx, _) = broadcast::channel(1024);
         tokio::spawn(writer_task(pool.clone(), write_rx, events_tx.clone()));
 
-        Ok(Self { pool, write_tx, events_tx })
+        Ok(Self {
+            pool,
+            write_tx,
+            events_tx,
+        })
     }
 
     pub fn subscribe(&self) -> broadcast::Receiver<ChannelEvent> {
@@ -148,7 +152,9 @@ impl Store {
             .send(make(tx))
             .await
             .map_err(|_| anyhow::anyhow!("store writer is gone"))?;
-        Ok(rx.await.map_err(|_| anyhow::anyhow!("store writer dropped reply"))??)
+        Ok(rx
+            .await
+            .map_err(|_| anyhow::anyhow!("store writer dropped reply"))??)
     }
 
     pub async fn append(&self, event: NewEvent) -> anyhow::Result<ChannelEvent> {
@@ -165,36 +171,50 @@ impl Store {
         let conflict_name = name.to_owned();
         let (name, display, kind) = (name.to_owned(), display.to_owned(), kind.to_owned());
         let adapter = adapter.map(|s| s.to_owned());
-        self.send(|reply| WriteCmd::CreateParticipant { name, display, kind, adapter, reply })
-            .await
-            .map_err(|e| match e.downcast_ref::<sqlx::Error>() {
-                Some(sqlx::Error::RowNotFound) => {
-                    anyhow::Error::new(KindConflict(conflict_name))
-                }
-                _ => e,
-            })
+        self.send(|reply| WriteCmd::CreateParticipant {
+            name,
+            display,
+            kind,
+            adapter,
+            reply,
+        })
+        .await
+        .map_err(|e| match e.downcast_ref::<sqlx::Error>() {
+            Some(sqlx::Error::RowNotFound) => anyhow::Error::new(KindConflict(conflict_name)),
+            _ => e,
+        })
     }
 
     pub async fn create_channel(&self, name: &str, topic: Option<&str>) -> anyhow::Result<i64> {
         let (name, topic) = (name.to_owned(), topic.map(|s| s.to_owned()));
-        self.send(|reply| WriteCmd::CreateChannel { name, topic, reply }).await
+        self.send(|reply| WriteCmd::CreateChannel { name, topic, reply })
+            .await
     }
 
     pub async fn add_member(&self, channel_id: i64, participant_id: i64) -> anyhow::Result<()> {
-        self.send(|reply| WriteCmd::AddMember { channel_id, participant_id, reply })
-            .await
+        self.send(|reply| WriteCmd::AddMember {
+            channel_id,
+            participant_id,
+            reply,
+        })
+        .await
     }
 
     pub async fn open_session(&self, token: &str, participant_id: i64) -> anyhow::Result<i64> {
         let token = token.to_owned();
-        self.send(|reply| WriteCmd::OpenSession { token, participant_id, reply })
-            .await
+        self.send(|reply| WriteCmd::OpenSession {
+            token,
+            participant_id,
+            reply,
+        })
+        .await
     }
 
     /// v1 role assignment: the config's admin list is authoritative for
     /// human participants at startup (Spec section 14).
     pub async fn reconcile_roles(&self, admins: Vec<String>) -> anyhow::Result<()> {
-        self.send(|reply| WriteCmd::ReconcileRoles { admins, reply }).await
+        self.send(|reply| WriteCmd::ReconcileRoles { admins, reply })
+            .await
     }
 }
 
@@ -227,7 +247,13 @@ async fn writer_task(
                 }
                 let _ = reply.send(res);
             }
-            WriteCmd::CreateParticipant { name, display, kind, adapter, reply } => {
+            WriteCmd::CreateParticipant {
+                name,
+                display,
+                kind,
+                adapter,
+                reply,
+            } => {
                 // The upsert refreshes display and adapter only when
                 // the kind agrees: a name returning as a different
                 // kind is a conflict to refuse, never a half-update
@@ -264,7 +290,11 @@ async fn writer_task(
                 .await;
                 let _ = reply.send(res);
             }
-            WriteCmd::AddMember { channel_id, participant_id, reply } => {
+            WriteCmd::AddMember {
+                channel_id,
+                participant_id,
+                reply,
+            } => {
                 let res = sqlx::query(
                     "INSERT INTO members (channel_id, participant_id) VALUES ($1, $2) \
                      ON CONFLICT DO NOTHING",
@@ -276,7 +306,11 @@ async fn writer_task(
                 .map(|_| ());
                 let _ = reply.send(res);
             }
-            WriteCmd::OpenSession { token, participant_id, reply } => {
+            WriteCmd::OpenSession {
+                token,
+                participant_id,
+                reply,
+            } => {
                 let res = sqlx::query_scalar::<_, i64>(
                     "INSERT INTO sessions (token, participant_id) VALUES ($1, $2) RETURNING id",
                 )

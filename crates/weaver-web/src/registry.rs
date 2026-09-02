@@ -29,21 +29,25 @@ impl Participant {
 const COLUMNS: &str = "id, name, display, kind, adapter, respond, role";
 
 pub async fn by_name(store: &Store, name: &str) -> anyhow::Result<Option<Participant>> {
-    Ok(sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
-        "SELECT {COLUMNS} FROM participants WHERE name = $1"
-    )))
-    .bind(name)
-    .fetch_optional(&store.pool)
-    .await?)
+    Ok(
+        sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
+            "SELECT {COLUMNS} FROM participants WHERE name = $1"
+        )))
+        .bind(name)
+        .fetch_optional(&store.pool)
+        .await?,
+    )
 }
 
 pub async fn by_id(store: &Store, id: i64) -> anyhow::Result<Option<Participant>> {
-    Ok(sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
-        "SELECT {COLUMNS} FROM participants WHERE id = $1"
-    )))
-    .bind(id)
-    .fetch_optional(&store.pool)
-    .await?)
+    Ok(
+        sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
+            "SELECT {COLUMNS} FROM participants WHERE id = $1"
+        )))
+        .bind(id)
+        .fetch_optional(&store.pool)
+        .await?,
+    )
 }
 
 pub async fn channel_members(store: &Store, channel_id: i64) -> anyhow::Result<Vec<Participant>> {
@@ -60,22 +64,20 @@ pub async fn channel_members(store: &Store, channel_id: i64) -> anyhow::Result<V
 }
 
 pub async fn all(store: &Store) -> anyhow::Result<Vec<Participant>> {
-    Ok(sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
-        "SELECT {COLUMNS} FROM participants ORDER BY kind, name"
-    )))
-    .fetch_all(&store.pool)
-    .await?)
+    Ok(
+        sqlx::query_as::<_, Participant>(sqlx::AssertSqlSafe(format!(
+            "SELECT {COLUMNS} FROM participants ORDER BY kind, name"
+        )))
+        .fetch_all(&store.pool)
+        .await?,
+    )
 }
 
 /// Skip exactly the kind conflict, warned, and propagate everything
 /// else (review of #350): a squatting name must not block its
 /// neighbors, and a transport failure must not ride the same swallow
 /// into a hello that claims agents it never wrote.
-async fn reconcile_one(
-    store: &Store,
-    name: &str,
-    kind: &str,
-) -> anyhow::Result<()> {
+async fn reconcile_one(store: &Store, name: &str, kind: &str) -> anyhow::Result<()> {
     match store.create_participant(name, name, kind, Some(name)).await {
         Ok(_) => Ok(()),
         Err(e) if e.downcast_ref::<crate::store::KindConflict>().is_some() => {

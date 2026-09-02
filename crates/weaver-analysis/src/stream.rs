@@ -74,6 +74,8 @@ pub fn open(path: &str) -> std::io::Result<Box<dyn BufRead>> {
     if path == "-" {
         Ok(Box::new(std::io::BufReader::new(std::io::stdin())))
     } else {
-        Ok(Box::new(std::io::BufReader::new(std::fs::File::open(path)?)))
+        Ok(Box::new(std::io::BufReader::new(std::fs::File::open(
+            path,
+        )?)))
     }
 }

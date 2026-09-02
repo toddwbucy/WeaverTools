@@ -263,7 +263,9 @@ impl Author {
             })
         };
         let octets = serde_json::to_string(report).map_err(|_| malformed())?;
-        let payload = raw_payload(&octets).map(Payload::Fault).ok_or_else(malformed)?;
+        let payload = raw_payload(&octets)
+            .map(Payload::Fault)
+            .ok_or_else(malformed)?;
         self.author(recorder, Kind::Fault, subsystem, turn, Some(payload))
     }
 }

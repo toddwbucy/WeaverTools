@@ -173,16 +173,12 @@ async fn agent_config(
     }
     // The declaration lives on the agents' box; the connector reads
     // it (Spec section 16) and a read failure arrives as its own text.
-    let (path, content) = state
-        .link
-        .declaration(&agent)
-        .await
-        .unwrap_or_else(|| {
-            (
-                String::new(),
-                "the link to the agents' box is down or unresponsive".into(),
-            )
-        });
+    let (path, content) = state.link.declaration(&agent).await.unwrap_or_else(|| {
+        (
+            String::new(),
+            "the link to the agents' box is down or unresponsive".into(),
+        )
+    });
     let page = AgentConfigPage {
         nav_agents: nav_agents(&state).await,
         who: me.name,
@@ -250,7 +246,10 @@ async fn render_repro(state: &AppState, who: String, agent: String) -> AppResult
                 .collect(),
             String::new(),
         ),
-        None => (Vec::new(), "the record read failed - link down or unresponsive".into()),
+        None => (
+            Vec::new(),
+            "the record read failed - link down or unresponsive".into(),
+        ),
     };
     let snap = state.repro.snapshot();
     // The job log and running state belong to the agent the job runs
@@ -339,7 +338,10 @@ async fn repro_start(
     if !state.link.has_agent(&agent).await {
         return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
     }
-    if let Err(e) = state.repro.start(state.link.clone(), agent.clone(), form.run) {
+    if let Err(e) = state
+        .repro
+        .start(state.link.clone(), agent.clone(), form.run)
+    {
         return Ok((StatusCode::CONFLICT, e).into_response());
     }
     Ok(axum::response::Redirect::to(&format!("/admin/repro/{agent}")).into_response())
@@ -421,10 +423,7 @@ struct TraceFragment {
     raw: String,
 }
 
-fn render_trace_event(
-    ev: &TraceEvent,
-    hidden: &std::collections::BTreeSet<String>,
-) -> String {
+fn render_trace_event(ev: &TraceEvent, hidden: &std::collections::BTreeSet<String>) -> String {
     TraceFragment {
         seq: ev.seq,
         is_mark: ev.mark.is_some(),
@@ -593,5 +592,7 @@ async fn trace_stream(
     });
 
     let stream = ReceiverStream::new(rx).map(Ok::<SseEvent, Infallible>);
-    Ok(Sse::new(stream).keep_alive(KeepAlive::default()).into_response())
+    Ok(Sse::new(stream)
+        .keep_alive(KeepAlive::default())
+        .into_response())
 }

@@ -148,8 +148,8 @@ impl Reader for Signals {
                 surprisal: surprisals.as_ref().and_then(|v| v.get(ordinal).copied()),
             });
         }
-        if let Some(perplexity) = value_at(payload, "perplexity")
-            .and_then(|raw| raw.get().parse::<f32>().ok())
+        if let Some(perplexity) =
+            value_at(payload, "perplexity").and_then(|raw| raw.get().parse::<f32>().ok())
         {
             self.series
                 .perplexities

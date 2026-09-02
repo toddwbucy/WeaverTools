@@ -109,7 +109,10 @@ fn unlicensed_message_is_refused_before_submit() {
         .author_message(&mut recorder, &licensed_message, &turn)
         .expect("licensed")
         .expect("submitted");
-    assert_eq!(recorder.structure().expect("the serving record").len(), before + 1);
+    assert_eq!(
+        recorder.structure().expect("the serving record").len(),
+        before + 1
+    );
 }
 
 /// Every licensed pairing is admitted and every unlicensed one refused, which
@@ -211,7 +214,8 @@ fn timestamps_are_stamped_at_authoring() {
         )
         .expect("second");
     let lines: Vec<String> = recorder
-        .structure().expect("the serving record")
+        .structure()
+        .expect("the serving record")
         .iter()
         .map(|r| r.line.to_string())
         .collect();
@@ -321,7 +325,11 @@ fn assembly_sees_only_message_kinds() {
         .author_fault(&mut recorder, Subsystem::Spu, Some(&turn), &report)
         .expect("fault authored");
 
-    let prompt = assemble(recorder.structure().expect("the serving record"), "you are an agent", &[]);
+    let prompt = assemble(
+        recorder.structure().expect("the serving record"),
+        "you are an agent",
+        &[],
+    );
     let rendered = prompt.render();
     assert_eq!(prompt.messages.len(), 1, "only the message kind entered");
     assert!(
@@ -387,8 +395,16 @@ fn assembly_is_deterministic() {
             .unwrap()
             .unwrap();
     }
-    let a = assemble(recorder.structure().expect("the serving record"), "identity", &["schema".to_string()]);
-    let b = assemble(recorder.structure().expect("the serving record"), "identity", &["schema".to_string()]);
+    let a = assemble(
+        recorder.structure().expect("the serving record"),
+        "identity",
+        &["schema".to_string()],
+    );
+    let b = assemble(
+        recorder.structure().expect("the serving record"),
+        "identity",
+        &["schema".to_string()],
+    );
     assert_eq!(
         a.render(),
         b.render(),
@@ -451,7 +467,12 @@ fn prompt_part_order_is_fixed() {
         )
         .unwrap()
         .unwrap();
-    let rendered = assemble(recorder.structure().expect("the serving record"), "IDENTITY", &["SCHEMA".to_string()]).render();
+    let rendered = assemble(
+        recorder.structure().expect("the serving record"),
+        "IDENTITY",
+        &["SCHEMA".to_string()],
+    )
+    .render();
     let identity = rendered.find("IDENTITY").expect("identity present");
     let body = rendered.find("body").expect("message present");
     let schema = rendered.find("SCHEMA").expect("schema present");
@@ -494,7 +515,8 @@ fn fault_payload_is_carried_unchanged() {
         .author_fault(&mut recorder, Subsystem::Spu, None, &report)
         .expect("authored");
     let line = recorder
-        .structure().expect("the serving record")
+        .structure()
+        .expect("the serving record")
         .by_kind(Kind::Fault)
         .next()
         .expect("the fault landed")
@@ -569,7 +591,11 @@ fn undecodable_message_records_are_counted() {
             )),
         )
         .unwrap();
-    let prompt = assemble(recorder.structure().expect("the serving record"), "identity", &[]);
+    let prompt = assemble(
+        recorder.structure().expect("the serving record"),
+        "identity",
+        &[],
+    );
     assert_eq!(prompt.messages.len(), 1, "the sound message entered");
     assert_eq!(prompt.undecodable, 1, "the hole is counted, not silent");
 }
@@ -589,17 +615,17 @@ fn an_undecodable_record_refuses_the_seat_and_authors_a_fault() {
         let turn = TurnKey("t-1".to_string());
         author
             .author(
-            &mut recorder,
-            Kind::Load,
-            Subsystem::Harness,
-            None,
-            Some(Payload::Elections(weaver_trace::Elections {
-                residual_readout: false,
-                field: None,
-                surprisal: false,
-                tee: Some(weaver_trace::Election::default()),
-            })),
-        )
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
+                })),
+            )
             .unwrap();
         author
             .author(
@@ -621,7 +647,11 @@ fn an_undecodable_record_refuses_the_seat_and_authors_a_fault() {
                 )),
             )
             .unwrap();
-        assemble(recorder.structure().expect("the serving record"), "identity", &[])
+        assemble(
+            recorder.structure().expect("the serving record"),
+            "identity",
+            &[],
+        )
     };
     assert_eq!(
         prompt_with_hole.undecodable, 1,
@@ -670,7 +700,11 @@ fn the_identity_door_writes_system_only() {
         "a role that is not system is refused at the identity door"
     );
 
-    let lines: Vec<&weaver_trace::Record> = recorder.structure().expect("the serving record").iter().collect();
+    let lines: Vec<&weaver_trace::Record> = recorder
+        .structure()
+        .expect("the serving record")
+        .iter()
+        .collect();
     assert_eq!(lines.len(), 1, "only the prefix reached the record");
     assert_eq!(
         lines[0].kind,

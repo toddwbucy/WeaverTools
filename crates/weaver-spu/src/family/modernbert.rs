@@ -60,7 +60,10 @@ pub mod engine {
     #[derive(Debug)]
     pub enum ClassifyFault {
         NotAdmitted(String),
-        Oversized { requested: u64, bound: u64 },
+        Oversized {
+            requested: u64,
+            bound: u64,
+        },
         /// The content the tokenizer refused: the ask's defect, answered as
         /// the malformed refusal, never as a device fault.
         Malformed(String),
@@ -127,14 +130,18 @@ pub mod engine {
                         .parse::<usize>()
                         .map(|i| (i, label.clone()))
                         .map_err(|_| {
-                            ClassifyFault::NotAdmitted(format!("id2label key not an index: {index}"))
+                            ClassifyFault::NotAdmitted(format!(
+                                "id2label key not an index: {index}"
+                            ))
                         })
                 })
                 .collect::<Result<_, _>>()?;
             labels.sort_by_key(|(index, _)| *index);
             let labels: Vec<String> = labels.into_iter().map(|(_, label)| label).collect();
             if labels.is_empty() {
-                return Err(ClassifyFault::NotAdmitted("the head declares no label".into()));
+                return Err(ClassifyFault::NotAdmitted(
+                    "the head declares no label".into(),
+                ));
             }
             let tokenizer = tokenizers::Tokenizer::from_file(dir.join("tokenizer.json"))
                 .map_err(|e| ClassifyFault::NotAdmitted(format!("tokenizer unreadable: {e}")))?;
@@ -205,12 +212,7 @@ pub mod engine {
             if scores.iter().any(|s| !s.is_finite()) {
                 return Err(ClassifyFault::Forward("a score is not finite".into()));
             }
-            Ok(self
-                .labels
-                .iter()
-                .cloned()
-                .zip(scores)
-                .collect())
+            Ok(self.labels.iter().cloned().zip(scores).collect())
         }
     }
 }

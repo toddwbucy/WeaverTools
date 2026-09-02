@@ -479,15 +479,16 @@ pub struct Pressure {
 fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
     matches!(
         (kind, payload),
-        (
-            Kind::Unload | Kind::SessionClosed | Kind::TurnStarted,
-            None
-        ) | (Kind::Load, Some(Payload::Elections(_)))
+        (Kind::Unload | Kind::SessionClosed | Kind::TurnStarted, None)
+            | (Kind::Load, Some(Payload::Elections(_)))
             | (
-            Kind::MessageSystem | Kind::MessageUser | Kind::MessageAssistant
-                | Kind::MessageToolResult,
-            Some(Payload::Message(_))
-        ) | (Kind::TurnClosed, Some(Payload::TurnClosed(_)))
+                Kind::MessageSystem
+                    | Kind::MessageUser
+                    | Kind::MessageAssistant
+                    | Kind::MessageToolResult,
+                Some(Payload::Message(_))
+            )
+            | (Kind::TurnClosed, Some(Payload::TurnClosed(_)))
             | (Kind::Fault, Some(Payload::Fault(_)))
             | (Kind::Flush, Some(Payload::Flush(_)))
             | (Kind::Elision, Some(Payload::Elision(_)))

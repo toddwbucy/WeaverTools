@@ -426,11 +426,9 @@ impl<'a> Session<'a> {
                 if let Some((entropy_and_logits, position)) =
                     step.as_ref().map(|s| (s, self.resident.len() as u64))
                 {
-                    if let Some((ranked, realized)) = measurement::field(
-                        &entropy_and_logits.1,
-                        token.0 as usize,
-                        depth,
-                    ) {
+                    if let Some((ranked, realized)) =
+                        measurement::field(&entropy_and_logits.1, token.0 as usize, depth)
+                    {
                         on_field(position, ranked, realized);
                     }
                 }
@@ -1197,7 +1195,17 @@ mod tests {
         let mut cancel = NeverCancels;
 
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+            .append_and_generate(
+                &[TokenId(3)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
             .expect("first turn");
         let after_first = session.resident_len();
         assert!(
@@ -1207,7 +1215,17 @@ mod tests {
 
         let before = log.borrow().decoded.len();
         session
-            .append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+            .append_and_generate(
+                &[TokenId(4)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
             .expect("second turn");
 
         let (tokens, position) = log.borrow().decoded[before].clone();
@@ -1227,7 +1245,17 @@ mod tests {
         let mut seen = session.resident_len();
         for delta in [TokenId(3), TokenId(4), TokenId(5)] {
             session
-                .append_and_generate(&[delta], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+                .append_and_generate(
+                    &[delta],
+                    &stop_at(50),
+                    &mut cancel,
+                    &mut |_| {},
+                    None,
+                    &mut |_, _, _| {},
+                    &mut |_, _| {},
+                    11,
+                    64,
+                )
                 .expect("a turn");
             assert!(
                 session.resident_len() > seen,
@@ -1247,7 +1275,17 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(99)], 128);
         let mut cancel = NeverCancels;
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+            .append_and_generate(
+                &[TokenId(3)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
             .expect("a turn");
         assert_eq!(generated.stopped, Stopped::Complete);
         assert_eq!(
@@ -1269,7 +1307,17 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+            .append_and_generate(
+                &[TokenId(3)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
             .expect("a cancelled turn");
         assert_eq!(generated.stopped, Stopped::Cancelled);
         assert_eq!(
@@ -1291,7 +1339,17 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(7), TokenId(8), TokenId(9)], 128);
         let mut cancel = CancelsAfter { polls: 0, limit: 2 };
         let generated = session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+            .append_and_generate(
+                &[TokenId(3)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
             .expect("a cancelled turn");
         assert_eq!(
             generated.tokens,
@@ -1349,7 +1407,17 @@ mod tests {
         let (mut session, log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+            .append_and_generate(
+                &[TokenId(3)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
             .expect("a turn");
         session.flush(0).expect("flush");
         assert_eq!(session.resident_len(), session.prefix_len());
@@ -1366,7 +1434,17 @@ mod tests {
             let (mut session, log) = with_mechanism(vec![TokenId(99), TokenId(98)], 128, mechanism);
             let mut cancel = NeverCancels;
             session
-                .append_and_generate(&[TokenId(3), TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+                .append_and_generate(
+                    &[TokenId(3), TokenId(4)],
+                    &stop_at(50),
+                    &mut cancel,
+                    &mut |_| {},
+                    None,
+                    &mut |_, _, _| {},
+                    &mut |_, _| {},
+                    11,
+                    64,
+                )
                 .expect("a turn");
             (session, log)
         };
@@ -1425,7 +1503,17 @@ mod tests {
         let (mut session, _log) = opened(vec![TokenId(99)], 128);
         let mut cancel = NeverCancels;
         session
-            .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+            .append_and_generate(
+                &[TokenId(3)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
             .expect("a turn");
         let grown = session.resident_len();
         assert_eq!(
@@ -1456,7 +1544,17 @@ mod tests {
         assert!(session.flush(0).is_err(), "the flush reports its failure");
         let mut cancel = NeverCancels;
         assert_eq!(
-            session.append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64),
+            session.append_and_generate(
+                &[TokenId(3)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64
+            ),
             Err(DecodeFault::NotOpen),
             "the session no longer serves"
         );
@@ -1478,12 +1576,32 @@ mod tests {
         let mut cancel = NeverCancels;
         assert!(
             session
-                .append_and_generate(&[TokenId(3)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64)
+                .append_and_generate(
+                    &[TokenId(3)],
+                    &stop_at(50),
+                    &mut cancel,
+                    &mut |_| {},
+                    None,
+                    &mut |_, _, _| {},
+                    &mut |_, _| {},
+                    11,
+                    64
+                )
                 .is_err(),
             "the fault surfaces"
         );
         assert_eq!(
-            session.append_and_generate(&[TokenId(4)], &stop_at(50), &mut cancel, &mut |_| {}, None, &mut |_, _, _| {}, &mut |_, _| {}, 11, 64),
+            session.append_and_generate(
+                &[TokenId(4)],
+                &stop_at(50),
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64
+            ),
             Err(DecodeFault::NotOpen),
             "and the session no longer serves"
         );
@@ -1664,14 +1782,32 @@ mod tests {
         let mut cancel = NeverCancels;
 
         session
-            .append_and_generate(&[TokenId(3)], &stop, &mut cancel, &mut |_| {},
-                                 None, &mut |_, _, _| {}, &mut |_, _| {}, 0xAAAA, 2)
+            .append_and_generate(
+                &[TokenId(3)],
+                &stop,
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                0xAAAA,
+                2,
+            )
             .expect("the first generation runs");
         let window_before = log.borrow().reseeds[0].1.len();
         session.flush(0).expect("the flush lands");
         session
-            .append_and_generate(&[TokenId(4)], &stop, &mut cancel, &mut |_| {},
-                                 None, &mut |_, _, _| {}, &mut |_, _| {}, 0xBBBB, 2)
+            .append_and_generate(
+                &[TokenId(4)],
+                &stop,
+                &mut cancel,
+                &mut |_| {},
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                0xBBBB,
+                2,
+            )
             .expect("the second generation runs");
 
         let reseeds = log.borrow().reseeds.clone();

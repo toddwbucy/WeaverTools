@@ -102,7 +102,10 @@ async fn route(
                 channel_id: event.channel_id,
                 participant_id: None,
                 kind: "app-error".into(),
-                body: Some(format!("mention fan-out incomplete - {}", failures.join(", "))),
+                body: Some(format!(
+                    "mention fan-out incomplete - {}",
+                    failures.join(", ")
+                )),
                 run_label: None,
                 turn_label: None,
                 close_kind: None,
@@ -132,8 +135,16 @@ fn mentioned<'a>(text: &str, members: &'a [Participant]) -> Vec<&'a Participant>
         while let Some(pos) = text[start..].find(&pat) {
             let at = start + pos;
             let end = at + pat.len();
-            let left = text[..at].chars().next_back().map(|c| !is_word(c)).unwrap_or(true);
-            let right = text[end..].chars().next().map(|c| !is_word(c)).unwrap_or(true);
+            let left = text[..at]
+                .chars()
+                .next_back()
+                .map(|c| !is_word(c))
+                .unwrap_or(true);
+            let right = text[end..]
+                .chars()
+                .next()
+                .map(|c| !is_word(c))
+                .unwrap_or(true);
             if left && right {
                 found = true;
                 break;

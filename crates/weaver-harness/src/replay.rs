@@ -13,8 +13,8 @@
 //! being no one on this seam to answer.
 
 use weaver_diagnostic::{
-    AbandonReason, Divergence, Kind, ModelId, Payload, ReplayClosed, ReplayIdentity,
-    ReplayOpened, ReplayOutcome, TemplateId, TokenId, WeightsHash,
+    AbandonReason, Divergence, Kind, ModelId, Payload, ReplayClosed, ReplayIdentity, ReplayOpened,
+    ReplayOutcome, TemplateId, TokenId, WeightsHash,
 };
 use weaver_types::TurnKey;
 
@@ -116,30 +116,30 @@ pub(crate) fn drive(
         let turn = TurnKey(turn_key.clone());
         seat.replay_turn_started(&turn)?;
         for source in generations {
-            let refed = match seat.refeed(&turn, source.rendered.clone(), source.output_tokens.clone())
-            {
-                Ok(generation) => generation,
-                // Every exit past the open closes the bracket, the serving
-                // close's own rule: the record channel is the sink and may
-                // still hold what the decode channel lost.
-                Err(TurnError::ChannelLost) => {
-                    let _ = seat.replay_turn_stopped(&turn, weaver_trace::StopReason::Fault);
-                    return Err(TurnError::ChannelLost);
-                }
-                // A seam refusal or fault mid-replay ends the pass where it
-                // stopped: the refusal is already authored inside the
-                // bracket, the bracket closes stopped, and no
-                // `replay.closed` follows - the not-ended outcome is the
-                // absence of one, per `weaver-diagnostic-Spec` section 3.
-                Err(error) => {
-                    let reason = match error {
-                        TurnError::Refused { .. } => weaver_trace::StopReason::Refused,
-                        _ => weaver_trace::StopReason::Fault,
-                    };
-                    let _ = seat.replay_turn_stopped(&turn, reason);
-                    return Ok(());
-                }
-            };
+            let refed =
+                match seat.refeed(&turn, source.rendered.clone(), source.output_tokens.clone()) {
+                    Ok(generation) => generation,
+                    // Every exit past the open closes the bracket, the serving
+                    // close's own rule: the record channel is the sink and may
+                    // still hold what the decode channel lost.
+                    Err(TurnError::ChannelLost) => {
+                        let _ = seat.replay_turn_stopped(&turn, weaver_trace::StopReason::Fault);
+                        return Err(TurnError::ChannelLost);
+                    }
+                    // A seam refusal or fault mid-replay ends the pass where it
+                    // stopped: the refusal is already authored inside the
+                    // bracket, the bracket closes stopped, and no
+                    // `replay.closed` follows - the not-ended outcome is the
+                    // absence of one, per `weaver-diagnostic-Spec` section 3.
+                    Err(error) => {
+                        let reason = match error {
+                            TurnError::Refused { .. } => weaver_trace::StopReason::Refused,
+                            _ => weaver_trace::StopReason::Fault,
+                        };
+                        let _ = seat.replay_turn_stopped(&turn, reason);
+                        return Ok(());
+                    }
+                };
             match compare(source, &refed) {
                 Comparison::Matches => {}
                 Comparison::Diverged(divergence) => {
@@ -159,7 +159,10 @@ pub(crate) fn drive(
 }
 
 fn close(seat: &mut Ports<'_>, outcome: ReplayOutcome) -> Result<(), TurnError> {
-    seat.author_replay(Kind::ReplayClosed, Payload::ReplayClosed(ReplayClosed { outcome }))
+    seat.author_replay(
+        Kind::ReplayClosed,
+        Payload::ReplayClosed(ReplayClosed { outcome }),
+    )
 }
 
 fn refuse_identity(seat: &mut Ports<'_>, detail: String) -> Result<(), TurnError> {
@@ -206,9 +209,7 @@ fn group(events: &[Recalled]) -> Result<Vec<(String, Vec<SourceGeneration>)>, St
                 if !order.contains(turn) {
                     order.push(turn.clone());
                 } else if order.last() != Some(turn) {
-                    return Err(format!(
-                        "turn {turn} resumes after another turn intervened"
-                    ));
+                    return Err(format!("turn {turn} resumes after another turn intervened"));
                 }
                 if pending.contains_key(turn) {
                     return Err(format!(
@@ -298,8 +299,8 @@ fn measurement_members(
     let input = pair(event, "input_tokens").ok_or_else(|| missing("input_tokens"))?;
     let output = pair(event, "output_tokens").ok_or_else(|| missing("output_tokens"))?;
     let model = pair(event, "model").ok_or_else(|| missing("model"))?;
-    let model: String =
-        serde_json::from_str(model).map_err(|_| format!("the model of turn {turn} does not parse"))?;
+    let model: String = serde_json::from_str(model)
+        .map_err(|_| format!("the model of turn {turn} does not parse"))?;
     let weights_hash = pair(event, "weights_hash").ok_or_else(|| missing("weights_hash"))?;
     let weights_hash: String = serde_json::from_str(weights_hash)
         .map_err(|_| format!("the weights hash of turn {turn} does not parse"))?;
@@ -333,7 +334,9 @@ enum Comparison {
 fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Comparison {
     let measurement: serde_json::Value = match serde_json::from_str(refed.measurement.get()) {
         Ok(value) => value,
-        Err(_) => return Comparison::IdentityBroken("the re-fed measurement does not parse".into()),
+        Err(_) => {
+            return Comparison::IdentityBroken("the re-fed measurement does not parse".into());
+        }
     };
     let request: serde_json::Value = match serde_json::from_str(refed.request.get()) {
         Ok(value) => value,
@@ -378,8 +381,11 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
     // Tokenization identity: the rendered form re-tokenized must be the
     // recorded appended input, per the loop document's re-feed clause,
     // exercised rather than assumed.
-    for (position, (recorded, recomputed)) in
-        source.input_tokens.iter().zip(refed_input.iter()).enumerate()
+    for (position, (recorded, recomputed)) in source
+        .input_tokens
+        .iter()
+        .zip(refed_input.iter())
+        .enumerate()
     {
         if recorded != recomputed {
             return Comparison::Diverged(Divergence::TokenPath {
@@ -399,14 +405,22 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
                     .copied()
                     .unwrap_or(0),
             ),
-            recomputed: TokenId(refed_input.get(source.input_tokens.len()).copied().unwrap_or(0)),
+            recomputed: TokenId(
+                refed_input
+                    .get(source.input_tokens.len())
+                    .copied()
+                    .unwrap_or(0),
+            ),
         });
     }
     // **The null comparison itself**: the recomputed draws in the output
     // slots against the recorded path, exactly, integers.
     let base = source.input_tokens.len() as u64;
-    for (ordinal, (recorded, recomputed)) in
-        source.output_tokens.iter().zip(refed_output.iter()).enumerate()
+    for (ordinal, (recorded, recomputed)) in source
+        .output_tokens
+        .iter()
+        .zip(refed_output.iter())
+        .enumerate()
     {
         if recorded != recomputed {
             return Comparison::Diverged(Divergence::TokenPath {
@@ -644,7 +658,10 @@ mod tests {
         );
         let close = lines.last().expect("the close stands");
         assert_eq!(close["payload"]["outcome"]["kind"], "abandoned");
-        assert_eq!(close["payload"]["outcome"]["reason"]["kind"], "identity_refused");
+        assert_eq!(
+            close["payload"]["outcome"]["reason"]["kind"],
+            "identity_refused"
+        );
         assert!(
             close["payload"]["outcome"]["reason"]["detail"]
                 .as_str()
@@ -685,7 +702,10 @@ mod tests {
             "a death path authors no outcome: the absence is the fourth outcome"
         );
         let close = lines.last().expect("the bracket still closed");
-        assert_eq!(close["kind"], "turn.closed", "the turn bracket closed stopped");
+        assert_eq!(
+            close["kind"], "turn.closed",
+            "the turn bracket closed stopped"
+        );
         assert_eq!(close["payload"]["close"], "stopped");
     }
 
@@ -709,7 +729,10 @@ mod tests {
             let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("takes the re-feed");
             let directive: serde_json::Value =
                 serde_json::from_slice(&buf[..n]).expect("the directive parses");
-            assert_eq!(directive["kind"], "re_feed", "the drive crossed: {directive}");
+            assert_eq!(
+                directive["kind"], "re_feed",
+                "the drive crossed: {directive}"
+            );
             let refed = concat!(
                 r#"{"kind":"re_fed","body":{"emission":"hi","finish":"completed","#,
                 r#""content":[{"type":"text","text":"hi"}],"#,

@@ -306,8 +306,7 @@ impl ShardedModel {
         // state, per the module header.
         let mut hidden = [
             hidden0.clone(),
-            hop(&hidden0, &self.devices[1])
-                .map_err(|e| fault(format!("broadcast: {e}")))?,
+            hop(&hidden0, &self.devices[1]).map_err(|e| fault(format!("broadcast: {e}")))?,
         ];
 
         // **The mask spans the keys, not the queries alone.** After the
@@ -721,7 +720,9 @@ mod tests {
 
         // One token first: the mask-free path, isolating the seq dimension.
         let one = paired.forward(&[9707], 0, None).expect("one-token forward");
-        let one_ref = single_ref.forward(&[9707], 0, None).expect("reference forward");
+        let one_ref = single_ref
+            .forward(&[9707], 0, None)
+            .expect("reference forward");
         let one_diff = one
             .iter()
             .zip(&one_ref)
@@ -804,7 +805,9 @@ mod tests {
             [device.clone(), Device::new_cuda(1).unwrap()],
         )
         .expect("the descriptor-path load succeeds");
-        let fd_logits = via_fd.forward(&tokens, 0, None).expect("descriptor-path forward");
+        let fd_logits = via_fd
+            .forward(&tokens, 0, None)
+            .expect("descriptor-path forward");
         let fd_diff = fd_logits
             .iter()
             .zip(&paired_logits)
@@ -820,7 +823,9 @@ mod tests {
         // The engine's other difference: it decodes against a clone of the
         // resident's model, per the session discipline.
         let mut cloned = via_fd.session_clone();
-        let clone_logits = cloned.forward(&tokens, 0, None).expect("the clone forwards");
+        let clone_logits = cloned
+            .forward(&tokens, 0, None)
+            .expect("the clone forwards");
         eprintln!(
             "clone argmax {} original argmax {}",
             argmax(&clone_logits),

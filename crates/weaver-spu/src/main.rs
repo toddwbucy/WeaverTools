@@ -889,7 +889,11 @@ fn serve_decode(
                 }
             }
 
-            TokenDirective::ReFeed { turn, rendered, path } => {
+            TokenDirective::ReFeed {
+                turn,
+                rendered,
+                path,
+            } => {
                 // **The re-feed drive**, per `weaver-spu-PRD` section 13.14
                 // and `weaver-spu-Spec` section 4.6: the recorded rendered
                 // form re-runs and the recorded token appends at every
@@ -1551,7 +1555,6 @@ mod tests {
         AgentName, ArtifactRef, DecoderInstruction, DeviceOrdinal, ModelBinding, SpuInstruction,
     };
 
-
     /// **Every argument is read before the answer is given.**
     ///
     /// Perturbation: return on the first `--headroom-bytes` rather than
@@ -1607,20 +1610,20 @@ mod tests {
             classify: None,
             decoder: DecoderInstruction {
                 model_binding: binding(),
-                    residual_readout_election: false,
-                    field_election: None,
-                    surprisal_election: false,
-                    refeed_permission: false,
-                    column_permission: false,
+                residual_readout_election: false,
+                field_election: None,
+                surprisal_election: false,
+                refeed_permission: false,
+                column_permission: false,
                 identity: vec![],
                 tunable_values: [
-                            ("max-tokens-per-turn".to_string(), 4096.0),
-                            ("context-capacity".to_string(), 4096.0),
-                            // The seat's own draw, tunable as of 2026-08-20.
-                            ("seed".to_string(), 11.0),
-                        ]
-                    .into_iter()
-                    .collect(),
+                    ("max-tokens-per-turn".to_string(), 4096.0),
+                    ("context-capacity".to_string(), 4096.0),
+                    // The seat's own draw, tunable as of 2026-08-20.
+                    ("seed".to_string(), 11.0),
+                ]
+                .into_iter()
+                .collect(),
             },
         }
     }

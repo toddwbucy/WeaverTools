@@ -373,14 +373,13 @@ impl NativeEngine {
                     let mut forward = Vec::with_capacity(intermediates.len());
                     for layer in &intermediates {
                         forward.push(
-                            layer_norm_figure(layer).map_err(|error| {
-                                Self::engine_fault(&format!("tap: {error}"))
-                            })?,
+                            layer_norm_figure(layer)
+                                .map_err(|error| Self::engine_fault(&format!("tap: {error}")))?,
                         );
                     }
-                    self.reduction.fold_forward(&forward).map_err(|detail| {
-                        Self::engine_fault(&format!("tap: {detail}"))
-                    })?;
+                    self.reduction
+                        .fold_forward(&forward)
+                        .map_err(|detail| Self::engine_fault(&format!("tap: {detail}")))?;
                     logits
                 } else {
                     model
@@ -397,11 +396,10 @@ impl NativeEngine {
             Forward::Pair(model) => {
                 let norms = if self.readout {
                     let mut folded = Vec::new();
-                    let logits =
-                        model.forward(&ids, self.resident.len(), Some(&mut folded))?;
-                    self.reduction.fold_forward(&folded).map_err(|detail| {
-                        Self::engine_fault(&format!("tap: {detail}"))
-                    })?;
+                    let logits = model.forward(&ids, self.resident.len(), Some(&mut folded))?;
+                    self.reduction
+                        .fold_forward(&folded)
+                        .map_err(|detail| Self::engine_fault(&format!("tap: {detail}")))?;
                     return Ok(logits);
                 } else {
                     None
