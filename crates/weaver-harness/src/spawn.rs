@@ -106,7 +106,16 @@ pub unsafe fn fork_organ(
 /// conforms: harness-death-carries-the-last-word
 #[derive(Debug)]
 pub struct LastWord {
-    cell: std::sync::Arc<std::sync::Mutex<Option<String>>>,
+    cell: std::sync::Arc<(std::sync::Mutex<WordCell>, std::sync::Condvar)>,
+}
+
+/// The retained line and whether the reader has seen end-of-stream. Until
+/// `eof`, the reader thread may still be carrying a line from the pipe to
+/// the cell; after it, the cell is final.
+#[derive(Debug, Default)]
+struct WordCell {
+    word: Option<String>,
+    eof: bool,
 }
 
 impl LastWord {
@@ -118,7 +127,10 @@ impl LastWord {
         use std::io::BufRead as _;
         use std::io::Write as _;
         let (read_end, write_end) = nix::unistd::pipe()?;
-        let cell = std::sync::Arc::new(std::sync::Mutex::new(None));
+        let cell = std::sync::Arc::new((
+            std::sync::Mutex::new(WordCell::default()),
+            std::sync::Condvar::new(),
+        ));
         let retained = cell.clone();
         let reader = std::fs::File::from(read_end);
         // The thread ends at EOF, which arrives when the organ dies and the
@@ -139,9 +151,12 @@ impl LastWord {
                 let trimmed = line.trim();
                 if !trimmed.is_empty() && serde_json::from_str::<serde_json::Value>(trimmed).is_ok()
                 {
-                    *retained.lock().unwrap_or_else(|p| p.into_inner()) = Some(trimmed.to_string());
+                    retained.0.lock().unwrap_or_else(|p| p.into_inner()).word =
+                        Some(trimmed.to_string());
                 }
             }
+            retained.0.lock().unwrap_or_else(|p| p.into_inner()).eof = true;
+            retained.1.notify_all();
         });
         Ok((LastWord { cell }, write_end))
     }
@@ -151,7 +166,13 @@ impl LastWord {
     #[cfg(test)]
     pub fn quiet() -> Self {
         LastWord {
-            cell: std::sync::Arc::new(std::sync::Mutex::new(None)),
+            cell: std::sync::Arc::new((
+                std::sync::Mutex::new(WordCell {
+                    word: None,
+                    eof: true,
+                }),
+                std::sync::Condvar::new(),
+            )),
         }
     }
 
@@ -160,15 +181,33 @@ impl LastWord {
     /// was forked.
     #[cfg(test)]
     pub(crate) fn speak(&self, line: &str) {
-        *self.cell.lock().unwrap_or_else(|p| p.into_inner()) = Some(line.to_string());
+        self.cell.0.lock().unwrap_or_else(|p| p.into_inner()).word = Some(line.to_string());
     }
 
-    /// The last typed line the organ spoke, if it spoke one. Non-blocking on
-    /// purpose: at every death-author site the channel has already closed,
-    /// so EOF has landed and the cell holds what there is - and the tail
-    /// race the Spec names costs the member, never the death.
+    /// The last typed line the organ spoke, if it spoke one. The read
+    /// settles on the reader's end-of-stream, bounded: a dead organ's EOF
+    /// is already queued when the author site calls this, so the wait is
+    /// microseconds there, while the bound keeps a descriptor that outlives
+    /// its organ - or an arm that never died at all - from holding the
+    /// death hostage. A timeout reads whatever the cell holds, which is the
+    /// tail race the Spec names: it costs the member, never the death.
     pub fn take(&self) -> Option<String> {
-        self.cell.lock().unwrap_or_else(|p| p.into_inner()).clone()
+        let bound = std::time::Duration::from_millis(200);
+        let deadline = std::time::Instant::now() + bound;
+        let mut cell = self.cell.0.lock().unwrap_or_else(|p| p.into_inner());
+        while !cell.eof {
+            let now = std::time::Instant::now();
+            if now >= deadline {
+                break;
+            }
+            let (guard, _) = self
+                .cell
+                .1
+                .wait_timeout(cell, deadline - now)
+                .unwrap_or_else(|p| p.into_inner());
+            cell = guard;
+        }
+        cell.word.clone()
     }
 }
 
