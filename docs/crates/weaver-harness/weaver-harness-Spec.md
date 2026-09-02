@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-02, the dying organ's last word reaches the record.
+Section 2.2 gains the stderr pipe - descriptor 2 is the worker's, placed by
+the dup2 kind the three-call bound already enumerates - and the observed
+death's account carries the organ's last typed line, per the fault ruling
+of 2026-08-26 and issue #360. Section 7 gains the rule that `Undecodable`
+stays one case while the operator channel names what refused to decode,
+per issue #404's hour-long misdiagnosis. Two records land, both
+perturbation.
+
 **Revised:** 2026-09-01, the column ask's discipline is watched. Section
 6.1 states the ask's derivation - diagnostic and readout-elected, both
 already in the enter's hands - and lands the serving-writes-no-ask
@@ -873,6 +882,34 @@ the way the program name already is, so the vector the child hands `execve` is
 finished before the child exists. The child performs the same three calls. A
 parameter that could only be assembled after the fork would not be expressible
 here, which is a constraint on what may travel this way rather than a cost.
+
+**Descriptor 2 is the worker's pipe, and the dying organ's last word
+reaches the record through it.** The parent opens a pipe before the fork
+and the child places the write end at descriptor 2 - one more `dup2`, the
+call kind the three-call bound already enumerates, so the bound holds as
+stated. The worker's end is a reader thread that tees every line to the
+worker's own stderr, so the journal loses nothing it carries today, and
+retains the last line that parses as JSON - the SPU already dies printing
+a typed reason (`decode_fault_line`, per the fault ruling of 2026-08-26
+that made every mid-run fault a death), and before this clause the record
+held only that a death was observed while the reason died with the journal.
+The observed death's account carries the retained line as `last_word`,
+absent where the organ never spoke, raw where it spoke unparsable - an
+absence and a garble are different facts and the member does not conflate
+them. The race at the very tail is accepted and named: the reader thread
+owns the line between the organ's write and the cell, so a death observed
+in that instant may miss the final line, which costs the member and never
+the death.
+
+```graph
+node: harness-death-carries-the-last-word
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-death-carries-the-last-word
+```
 
 **What may travel it is bounded by who can read a process's arguments.**
 `/proc/<pid>/cmdline` carries mode 444 and any local reader sees it unless
@@ -2527,6 +2564,30 @@ dressing one as a refusal would put a case on the wire the vocabulary clause
 never drew. `Outcome` crosses no seam and is drawn by no contract, and its
 exhaustiveness serves this crate's own caller.
 
+**`Undecodable` stays one case, and the operator channel names what
+refused.** The decoder's own error carries the specifics - an instruction
+from a newer floor refuses on `unknown field: column-permission`, naming
+the exact member the two builds disagree about - and the map to the closed
+case discarded it, so a mixed-version deployment died saying nothing an
+operator could act on and the diagnosis cost an hour it should have cost a
+second, per issue #404. The decode that maps a failure to `Undecodable`
+first prints a typed line on the operator channel naming the channel and
+the decoder's detail. The enum does not widen: the wire carries the case,
+per the paragraph above and `weaver-types-Spec` section 4.2's arithmetic,
+and the specifics belong to the journal the operator reads - which the
+clause of section 2.2 now also carries into the record where the death is
+an organ's.
+
+```graph
+node: harness-undecodable-names-its-detail
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-undecodable-names-its-detail
+```
+
 ```graph
 node: harness-fault-below-the-exchange-layer
 kind: assertion
@@ -2685,6 +2746,10 @@ numbering stays declined for the reason the labelling pass gave, 5.1 delegating 
 a far end travels to the contract governing the seam, and 5.5 does not take it back:
 where an organ finds its end is contract material the organ presents rather than an
 ordering the loop reconciles.
+
+**Two records landed 2026-09-02 and are counted by this sentence rather
+than folded silently into the totals below**, which predate them: the last
+word of section 2.2 and the named detail of section 7, both perturbation.
 
 **Where the assertion records sit, and which of these bullets another crate
 declares.** The records are at the clauses that argue the claims, across
