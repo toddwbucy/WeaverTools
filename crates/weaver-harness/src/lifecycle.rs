@@ -1029,9 +1029,9 @@ impl Harness {
                 "service-ended": format!("{fault:?}"),
             });
             // **The dead organ's last word rides the account**, per
-            // `weaver-harness-Spec` section 2.2: absent where an organ never
-            // spoke, parsed where it spoke JSON, raw where it garbled - an
-            // absence and a garble are different facts.
+            // `weaver-harness-Spec` section 2.2: present where an organ
+            // spoke a line that parses, absent otherwise - garble is the
+            // journal's to keep, carried there by the tee.
             let mut words = serde_json::Map::new();
             for (name, spoken) in [
                 ("spu", run.spu.as_ref().map(|a| a.last_word.take())),
@@ -2680,7 +2680,8 @@ mod tests {
                             devices: vec![weaver_types::DeviceOrdinal(0)],
                         },
                         residual_readout_election: elected,
-                        field_election: elected.then_some(weaver_types::FieldElection { depth: 50 }),
+                        field_election: elected
+                            .then_some(weaver_types::FieldElection { depth: 50 }),
                         surprisal_election: elected,
                         refeed_permission: false,
                         column_permission: false,

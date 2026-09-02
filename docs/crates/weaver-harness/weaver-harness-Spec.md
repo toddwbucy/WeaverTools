@@ -894,12 +894,14 @@ a typed reason (`decode_fault_line`, per the fault ruling of 2026-08-26
 that made every mid-run fault a death), and before this clause the record
 held only that a death was observed while the reason died with the journal.
 The observed death's account carries the retained line as `last_word`,
-absent where the organ never spoke, raw where it spoke unparsable - an
-absence and a garble are different facts and the member does not conflate
-them. The race at the very tail is accepted and named: the reader thread
-owns the line between the organ's write and the cell, so a death observed
-in that instant may miss the final line, which costs the member and never
-the death.
+and the member is absent where no line parsed - an organ that never spoke
+and one that spoke only garble both leave it absent, because the account
+carries typed words and the journal carries everything, so the two facts
+stay distinguishable where the tee put them rather than in the member.
+The race at the very tail is narrowed and named: the author's read
+settles on the reader's end-of-stream, bounded so an arm that never died
+cannot hold the death hostage, and a read that hits the bound may miss
+the final line, which costs the member and never the death.
 
 ```graph
 node: harness-death-carries-the-last-word
