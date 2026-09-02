@@ -339,6 +339,16 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
         .collect()
 }
 
+/// The RMS norm's epsilon, parsed and judged. **A value that parses is not
+/// yet a value that norms**: zero or negative puts a non-positive quantity
+/// under the reciprocal square root, and either infinity or a NaN carries
+/// through every logit the readout produces, so a reading taken under one
+/// would be arithmetic wearing a number's clothes. `None` refuses.
+pub fn rms_epsilon(text: &str) -> Option<f32> {
+    let value: f32 = text.parse().ok()?;
+    (value.is_finite() && value > 0.0).then_some(value)
+}
+
 /// The digest of a file, read in bounded chunks: identifying a model does
 /// not require holding it. Lowercase hex, the only spelling a manifest may
 /// carry.
