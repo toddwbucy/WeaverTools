@@ -23,6 +23,27 @@ MODEL_DIR = "/bulk-store/models/Qwen--Qwen2.5-0.5B-Instruct"
 DEFAULT_LENS = "/bulk-store/weaver-testing/jacobian-lens-0.5b/jacobian_lens_qwen2.5-0.5b-instruct-bf16.pt"
 
 
+def manifest_shape_refusal(manifest):
+    """The manifest's schema judged before any member is compared: a
+    missing member or a layer set that will not sort answers a refusal
+    dict, never an exception - malformed identity is a refusal like wrong
+    identity."""
+    shape = manifest.get("lens_shape")
+    if not isinstance(shape, dict):
+        return {"refusal": "the manifest holds no lens_shape"}
+    if not isinstance(shape.get("d_model"), int):
+        return {"refusal": "the manifest's d_model is absent or not an integer"}
+    layers = shape.get("source_layers")
+    if not isinstance(layers, list) or not layers:
+        return {"refusal": "the manifest's source_layers is absent or empty"}
+    if not all(isinstance(l, int) for l in layers):
+        return {"refusal": "the manifest's source_layers holds a non-integer"}
+    if layers != sorted(set(layers)):
+        return {"refusal": "the manifest's layer set is not a sorted set",
+                "source_layers": layers}
+    return None
+
+
 def manifest_path_for(lens_path):
     """The manifest that identifies this lens, derived from its name: the
     fit writes `jacobian_lens_...{tag}.pt` beside `lens-manifest{tag}.json`,
@@ -112,6 +133,10 @@ def main():
     # names themselves is what the safetensors election buys; the torch
     # serialization in hand cannot offer it, so the loaded lens is then
     # held to the manifest exactly, one layer for one.
+    refusal = manifest_shape_refusal(manifest)
+    if refusal:
+        print(json.dumps(refusal))
+        return 1
     config = json.load(open(os.path.join(MODEL_DIR, "config.json")))
     if manifest["lens_shape"]["d_model"] != config["hidden_size"]:
         print(json.dumps({"refusal": "the manifest's width is not the model's",
@@ -119,10 +144,6 @@ def main():
                           "model": config["hidden_size"]}))
         return 1
     expected_layers = manifest["lens_shape"]["source_layers"]
-    if not expected_layers or expected_layers != sorted(set(expected_layers)):
-        print(json.dumps({"refusal": "the manifest's layer set is not a sorted set",
-                          "source_layers": expected_layers}))
-        return 1
 
     hf = transformers.AutoModelForCausalLM.from_pretrained(
         MODEL_DIR, dtype=torch.bfloat16
