@@ -3138,9 +3138,7 @@ mod tests {
         let peer = std::thread::spawn(move || {
             let mut buf = vec![0u8; 65536];
             let _ = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
-            let column = concat!(
-                r#"{"kind":"column","body":{"position":7,"layers":[[1.0,2.0],[3.0,4.0]]}}"#
-            );
+            let column = r#"{"kind":"column","body":{"position":7,"layers":[[1.0,2.0],[3.0,4.0]]}}"#;
             send(far.as_raw_fd(), column.as_bytes(), MsgFlags::empty()).expect("send column");
             let generated = concat!(
                 r#"{"kind":"generated","body":{"emission":"hi","finish":"completed","#,

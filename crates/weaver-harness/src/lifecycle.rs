@@ -194,9 +194,7 @@ fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
         // The span's own numbers are the loop's to read off the refusal, so
         // this rendering says the kind and leaves the arithmetic where a
         // reader can act on it rather than flattening it into prose.
-        weaver_types::TokenRefusal::UnremovableSpan { .. } => {
-            "the elision named no removable span"
-        }
+        weaver_types::TokenRefusal::UnremovableSpan { .. } => "the elision named no removable span",
         weaver_types::TokenRefusal::RefeedPermissionAbsent => {
             "the re-feed permission was not granted"
         }
@@ -207,9 +205,7 @@ fn refusal_reason(refusal: &weaver_types::TokenRefusal) -> &'static str {
         weaver_types::TokenRefusal::ColumnReadoutUnelected => {
             "the column ask stood without the readout election"
         }
-        weaver_types::TokenRefusal::ColumnUndeclared => {
-            "the family's declaration holds no column"
-        }
+        weaver_types::TokenRefusal::ColumnUndeclared => "the family's declaration holds no column",
     }
 }
 
@@ -376,6 +372,9 @@ struct SpuChannels {
     /// Retained so the leave can reap the organ rather than leaving a zombie
     /// entry for the life of the worker.
     pid: nix::unistd::Pid,
+    /// The organ's last typed stderr line, held so a death's account can
+    /// carry the reason, per `weaver-harness-Spec` section 2.2.
+    last_word: crate::spawn::LastWord,
 }
 
 /// The classify readiness bound: generous against an admission that loads a
@@ -389,6 +388,8 @@ const CLASSIFY_READY_BOUND_MS: u64 = 60_000;
 struct ClassifyArm {
     channel: crate::channel::ClassifyChannel,
     pid: nix::unistd::Pid,
+    /// Per `weaver-harness-Spec` section 2.2, as the SPU's.
+    last_word: crate::spawn::LastWord,
 }
 
 /// How an enter refused, and whether the bracket stands. **A refusal before
@@ -405,6 +406,8 @@ enum EnterFailure {
 struct GateChannel {
     channel: OrganChannel,
     pid: nix::unistd::Pid,
+    /// Per `weaver-harness-Spec` section 2.2, as the SPU's.
+    last_word: crate::spawn::LastWord,
 }
 
 /// The hub. Adopts the coordination end the unit's declared open delivered,
@@ -539,10 +542,7 @@ impl Harness {
                     // before the wait resumes. A serving run, and a
                     // diagnostic run already replayed, pass through.
                     if let Err(fault) = self.serve_replay(&mut pending) {
-                        self.unwind_if_entered(
-                            weaver_types::FaultCase::OrganDeathObserved,
-                            &fault,
-                        );
+                        self.unwind_if_entered(weaver_types::FaultCase::OrganDeathObserved, &fault);
                         return Err(fault);
                     }
                 }
@@ -550,10 +550,7 @@ impl Harness {
                     if let Err(fault) =
                         self.serve_gate_wake(identity, tool_schemas, &mut entry, &mut pending)
                     {
-                        self.unwind_if_entered(
-                            weaver_types::FaultCase::OrganDeathObserved,
-                            &fault,
-                        );
+                        self.unwind_if_entered(weaver_types::FaultCase::OrganDeathObserved, &fault);
                         return Err(fault);
                     }
                 }
@@ -744,13 +741,21 @@ impl Harness {
                     let gate = run.gate.take().expect("the arm stood");
                     drop(gate.channel);
                     reap(gate.pid);
+                    let mut account = serde_json::json!({
+                        "organ": "gate",
+                        "death": "channel closed with the hook raised",
+                    });
+                    if let Some(line) = gate.last_word.take() {
+                        account["last_word"] =
+                            serde_json::from_str(&line).unwrap_or(serde_json::Value::String(line));
+                    }
                     let _ = run.author.author_fault(
                         &mut run.recorder,
                         Subsystem::Harness,
                         None,
                         &crate::authorship::harness_report(
                             weaver_types::FaultCase::OrganDeathObserved,
-                            r#"{"organ":"gate","death":"channel closed with the hook raised"}"#,
+                            &account.to_string(),
                         ),
                     );
                     return Ok(());
@@ -869,7 +874,7 @@ impl Harness {
                         run.state.as_mut(),
                         run.classify.as_ref().map(|arm| &arm.channel),
                         &mut run.fullness,
-                    &mut run.pressure_reported,
+                        &mut run.pressure_reported,
                     );
                     match entry(&mut ports, &text) {
                         // A turn the operator's stop aborted answers the
@@ -1019,11 +1024,33 @@ impl Harness {
         if let ChannelState::Entered(run) = std::mem::replace(&mut self.state, ChannelState::Left) {
             let mut run = *run;
             let turn = run.turn_in_flight.clone();
-            let account = serde_json::json!({
+            let mut account = serde_json::json!({
                 "organ": "harness",
                 "service-ended": format!("{fault:?}"),
-            })
-            .to_string();
+            });
+            // **The dead organ's last word rides the account**, per
+            // `weaver-harness-Spec` section 2.2: present where an organ
+            // spoke a line that parses, absent otherwise - garble is the
+            // journal's to keep, carried there by the tee.
+            let mut words = serde_json::Map::new();
+            for (name, spoken) in [
+                ("spu", run.spu.as_ref().map(|a| a.last_word.take())),
+                ("gate", run.gate.as_ref().map(|a| a.last_word.take())),
+                (
+                    "classify",
+                    run.classify.as_ref().map(|a| a.last_word.take()),
+                ),
+            ] {
+                if let Some(Some(line)) = spoken {
+                    let value =
+                        serde_json::from_str(&line).unwrap_or(serde_json::Value::String(line));
+                    words.insert(name.to_string(), value);
+                }
+            }
+            if !words.is_empty() {
+                account["last_word"] = serde_json::Value::Object(words);
+            }
+            let account = account.to_string();
             let _ = run.author.author_fault(
                 &mut run.recorder,
                 Subsystem::Harness,
@@ -1232,9 +1259,7 @@ impl Harness {
                     // amended term: the custodian bounds its answers to it,
                     // so a store holding an earlier session answers within
                     // the running one.
-                    if let Ok(tee) =
-                        weaver_trace::Tee::open(channel, session.0.clone(), election)
-                    {
+                    if let Ok(tee) = weaver_trace::Tee::open(channel, session.0.clone(), election) {
                         serving.attach_tee(tee);
                         state_seam = ask_end.ok().map(crate::state::StateSeam::new);
                     }
@@ -1386,11 +1411,16 @@ impl Harness {
         // SAFETY: the fork runs on the serving thread, whose lifetime is the
         // worker's, and the child performs only the async-signal-safe calls of
         // `place_child_ends` before its exec.
+        let (spu_word, spu_stderr) = match crate::spawn::LastWord::stand() {
+            Ok(pair) => pair,
+            Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+        };
         let spu_pid = match unsafe {
             crate::spawn::fork_organ(
                 &self.organs.spu,
                 &[&lifecycle_child, &decode_child],
                 &self.parameters.spu_arguments(),
+                Some(std::os::fd::AsRawFd::as_raw_fd(&spu_stderr)),
             )
         } {
             Ok(pid) => pid,
@@ -1398,10 +1428,14 @@ impl Harness {
         };
         drop(lifecycle_child);
         drop(decode_child);
+        // The parent's write-end copy closes here, or the reader never sees
+        // EOF and the last word never settles.
+        drop(spu_stderr);
         run.spu = Some(SpuChannels {
             lifecycle,
             decode,
             pid: spu_pid,
+            last_word: spu_word,
         });
 
         // Admit carries the SPU instruction uninterpreted.
@@ -1468,18 +1502,24 @@ impl Harness {
             let Some(binary) = self.organs.classify.as_ref() else {
                 // A binding with no binary provisioned is half an arm, and
                 // half an arm refuses rather than standing.
-                after_load!(run, LifecycleRefusal::ConfigInvalid {
-                    field: Some(weaver_types::FieldName("classify".into())),
-                });
+                after_load!(
+                    run,
+                    LifecycleRefusal::ConfigInvalid {
+                        field: Some(weaver_types::FieldName("classify".into())),
+                    }
+                );
             };
             let (channel, child) = match crate::channel::ClassifyChannel::pair() {
                 Ok(pair) => pair,
                 Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
             };
             let Some(device) = instruction.model_binding.devices.first() else {
-                after_load!(run, LifecycleRefusal::ConfigInvalid {
-                    field: Some(weaver_types::FieldName("classify".into())),
-                });
+                after_load!(
+                    run,
+                    LifecycleRefusal::ConfigInvalid {
+                        field: Some(weaver_types::FieldName("classify".into())),
+                    }
+                );
             };
             let arguments = vec![
                 instruction.model_binding.artifact.0.clone(),
@@ -1487,14 +1527,28 @@ impl Harness {
             ];
             // SAFETY: as the SPU's fork above, on the serving thread, the
             // child performing only the async-signal-safe calls.
+            let (classify_word, classify_stderr) = match crate::spawn::LastWord::stand() {
+                Ok(pair) => pair,
+                Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+            };
             let pid = match unsafe {
-                crate::spawn::fork_organ(binary, &[&child], &arguments)
+                crate::spawn::fork_organ(
+                    binary,
+                    &[&child],
+                    &arguments,
+                    Some(std::os::fd::AsRawFd::as_raw_fd(&classify_stderr)),
+                )
             } {
                 Ok(pid) => pid,
                 Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
             };
             drop(child);
-            let arm = ClassifyArm { channel, pid };
+            drop(classify_stderr);
+            let arm = ClassifyArm {
+                channel,
+                pid,
+                last_word: classify_word,
+            };
             // Readiness gates service, per the contract: the seam's first
             // message is the admission's outcome, and a typed refusal, a
             // closure, or the bound's expiry refuses the load whole. The
@@ -1503,9 +1557,7 @@ impl Harness {
             // before it reaps: a process still loading weights does not
             // exit on a channel it has not read yet.
             match arm.channel.recv_reply_within(CLASSIFY_READY_BOUND_MS) {
-                Ok(crate::channel::ClassifyReply::Answer(
-                    weaver_types::LabelAnswer::Ready,
-                )) => {
+                Ok(crate::channel::ClassifyReply::Answer(weaver_types::LabelAnswer::Ready)) => {
                     run.classify = Some(arm);
                 }
                 _ => {
@@ -1536,12 +1588,23 @@ impl Harness {
             Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
         };
         // SAFETY: as above.
-        let gate_pid =
-            match unsafe { crate::spawn::fork_organ(&self.organs.gate, &[&gate_child], &[]) } {
-                Ok(pid) => pid,
-                Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
-            };
+        let (gate_word, gate_stderr) = match crate::spawn::LastWord::stand() {
+            Ok(pair) => pair,
+            Err(_) => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+        };
+        let gate_pid = match unsafe {
+            crate::spawn::fork_organ(
+                &self.organs.gate,
+                &[&gate_child],
+                &[],
+                Some(std::os::fd::AsRawFd::as_raw_fd(&gate_stderr)),
+            )
+        } {
+            Ok(pid) => pid,
+            Err(_) => after_load!(run, LifecycleRefusal::BindFailed),
+        };
         drop(gate_child);
+        drop(gate_stderr);
         run.gate_ordinal += 1;
         if let Err(refusal) = exchange(
             &gate,
@@ -1571,12 +1634,14 @@ impl Harness {
             run.gate = Some(GateChannel {
                 channel: gate,
                 pid: gate_pid,
+                last_word: gate_word,
             });
             after_load!(run, refusal);
         }
         run.gate = Some(GateChannel {
             channel: gate,
             pid: gate_pid,
+            last_word: gate_word,
         });
 
         Ok(run)
@@ -2076,7 +2141,12 @@ mod tests {
             ],
         );
 
-        let kinds: Vec<Kind> = recorder.structure().expect("the serving record").iter().map(|r| r.kind).collect();
+        let kinds: Vec<Kind> = recorder
+            .structure()
+            .expect("the serving record")
+            .iter()
+            .map(|r| r.kind)
+            .collect();
         assert_eq!(
             kinds,
             vec![Kind::MessageSystem, Kind::Fault, Kind::Fault],
@@ -2084,7 +2154,8 @@ mod tests {
         );
 
         let faults: Vec<&str> = recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Fault)
             // The line is read rather than a typed payload, the record
@@ -2180,6 +2251,7 @@ mod tests {
                     lifecycle,
                     decode,
                     pid: nix::unistd::Pid::from_raw(1),
+                    last_word: crate::spawn::LastWord::quiet(),
                 }),
                 gate: None,
                 diagnostic: None,
@@ -2413,7 +2485,8 @@ mod tests {
 
         let refusals: Vec<&weaver_trace::Record> = run
             .recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.kind == Kind::Refusal)
             .collect();
@@ -2434,17 +2507,15 @@ mod tests {
             serde_json::to_value(&refusal).expect("the refusal renders"),
             "the seam's own case travels whole: {event}"
         );
-        assert!(
-            event.get("turn").is_none(),
-            "an enter belongs to no turn"
-        );
+        assert!(event.get("turn").is_none(), "an enter belongs to no turn");
 
         // **The bracket is still open**, which is the property the shape
         // rests on: a refused enter authors an event inside a standing run
         // and the close belongs to the leave.
         assert_eq!(
             run.recorder
-                .structure().expect("the serving record")
+                .structure()
+                .expect("the serving record")
                 .iter()
                 .filter(|r| r.kind == Kind::TurnClosed)
                 .count(),
@@ -2610,7 +2681,7 @@ mod tests {
                         },
                         residual_readout_election: elected,
                         field_election: elected
-                            .then(|| weaver_types::FieldElection { depth: 50 }),
+                            .then_some(weaver_types::FieldElection { depth: 50 }),
                         surprisal_election: elected,
                         refeed_permission: false,
                         column_permission: false,
@@ -2646,10 +2717,9 @@ mod tests {
             drop(run);
 
             let held = std::fs::read_to_string(&sink_path).expect("the sink reads back");
-            let load: serde_json::Value = serde_json::from_str(
-                held.lines().next().expect("the load opens the run"),
-            )
-            .expect("the load parses");
+            let load: serde_json::Value =
+                serde_json::from_str(held.lines().next().expect("the load opens the run"))
+                    .expect("the load parses");
             assert_eq!(load["kind"], "load");
             assert_eq!(
                 load["payload"]["residual_readout"],
@@ -2900,6 +2970,7 @@ mod tests {
         run.gate = Some(GateChannel {
             channel: gate_end,
             pid: nix::unistd::Pid::from_raw(1),
+            last_word: crate::spawn::LastWord::quiet(),
         });
         harness.state = ChannelState::Entered(Box::new(run));
 
@@ -3039,9 +3110,12 @@ mod tests {
 
         // The close is in the record.
         let closes = match &harness.state {
-            ChannelState::Entered(run) => {
-                run.recorder.structure().expect("the serving record").by_kind(Kind::TurnClosed).count()
-            }
+            ChannelState::Entered(run) => run
+                .recorder
+                .structure()
+                .expect("the serving record")
+                .by_kind(Kind::TurnClosed)
+                .count(),
             _ => panic!("the position stays entered after a stop"),
         };
         assert_eq!(closes, 1, "the turn's close event was placed");
@@ -3109,6 +3183,50 @@ mod tests {
         );
     }
 
+    /// **The death's account carries the organ's last word**, per
+    /// `weaver-harness-Spec` section 2.2 and issue #360: the SPU dies
+    /// printing a typed reason, and before this act the record held only
+    /// that a death was observed while the reason died with the journal.
+    ///
+    /// Perturbation: drop the words loop from `unwind_if_entered` and the
+    /// account carries no `last_word` member. Watched under exactly that
+    /// removal, 2026-09-02.
+    ///
+    /// conforms: harness-death-carries-the-last-word
+    #[test]
+    fn the_death_account_carries_the_last_word() {
+        let (run, _spare, sink_path) = entered_run(None);
+        run.spu
+            .as_ref()
+            .expect("the arm stands")
+            .last_word
+            .speak(r#"{"decode_fault":"device lost mid-forward"}"#);
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                classify: None,
+                spu: "/nonexistent/spu".into(),
+                gate: "/nonexistent/gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::Entered(Box::new(run)),
+        };
+        harness.unwind_if_entered(
+            weaver_types::FaultCase::OrganDeathObserved,
+            &ChannelFault::Undecodable,
+        );
+        let stream = std::fs::read_to_string(&sink_path).expect("the sink");
+        assert!(
+            stream.contains("last_word") && stream.contains("device lost mid-forward"),
+            "the account carries the typed reason: {stream}"
+        );
+        // Parsed shape, not a quoted blob: the reason is queryable.
+        assert!(
+            stream.contains(r#"\"decode_fault\""#) || stream.contains("decode_fault"),
+            "the spoken JSON rides as structure: {stream}"
+        );
+    }
+
     /// **The seat is granted at loaded-and-idle and not mid-turn.** Loop 0
     /// has not taken the interior back while a turn is in flight, so there is
     /// no standing interior to hand across.
@@ -3167,9 +3285,18 @@ mod tests {
     #[test]
     fn a_serving_harness_never_writes_the_column_ask() {
         assert!(!column_ask_for(false, false), "serving, unelected");
-        assert!(!column_ask_for(false, true), "serving, elected: never the ask");
-        assert!(!column_ask_for(true, false), "diagnostic, unelected: nothing to continue");
-        assert!(column_ask_for(true, true), "diagnostic, elected: the one asking posture");
+        assert!(
+            !column_ask_for(false, true),
+            "serving, elected: never the ask"
+        );
+        assert!(
+            !column_ask_for(true, false),
+            "diagnostic, unelected: nothing to continue"
+        );
+        assert!(
+            column_ask_for(true, true),
+            "diagnostic, elected: the one asking posture"
+        );
     }
 
     /// **A diagnostic run grants no frame seat, and answers rather than
@@ -3296,6 +3423,7 @@ mod tests {
         run.gate = Some(GateChannel {
             channel: gate_end,
             pid: nix::unistd::Pid::from_raw(1),
+            last_word: crate::spawn::LastWord::quiet(),
         });
         let gate_peer = gate_peer.into_channel();
 
@@ -3396,7 +3524,8 @@ mod tests {
         };
         let kinds: Vec<Kind> = run
             .recorder
-            .structure().expect("the serving record")
+            .structure()
+            .expect("the serving record")
             .iter()
             .filter(|r| r.turn.is_some())
             .map(|r| r.kind)
@@ -3426,6 +3555,7 @@ mod tests {
         run.gate = Some(GateChannel {
             channel: gate_end,
             pid: nix::unistd::Pid::from_raw(1),
+            last_word: crate::spawn::LastWord::quiet(),
         });
         let gate_peer = gate_peer.into_channel();
         let mut harness = Harness {

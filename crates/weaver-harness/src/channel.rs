@@ -43,6 +43,28 @@ use crate::failure::ChannelFault;
 /// adopted and closed before that fault returns.
 const CONTROL_BYTES: usize = 256;
 
+/// The operator line an undecodable envelope leaves behind, per
+/// `weaver-harness-Spec` section 7 and issue #404: the decoder's own error
+/// names the specifics - a mixed-version deployment refuses on
+/// `unknown field: column-permission`, the exact member two builds disagree
+/// about - and the map to the closed case discarded it, so the death said
+/// nothing an operator could act on. The case stays one case on the wire;
+/// the specifics belong to the journal.
+///
+/// Built and returned so a watch can hold the line without capturing
+/// stderr, printed by the caller at the refusing site.
+///
+/// conforms: harness-undecodable-names-its-detail
+pub fn undecodable_detail(channel: &str, error: &serde_json::Error) -> String {
+    serde_json::json!({
+        "channel_undecodable": {
+            "channel": channel,
+            "detail": error.to_string(),
+        }
+    })
+    .to_string()
+}
+
 /// The first descriptor after the standard streams: where an organ finds its
 /// lifecycle channel from its first instruction, per section 2.2. An organ's
 /// further channel takes the next number, so the gate's single end sits where
@@ -359,7 +381,11 @@ impl OrganChannel {
     /// unchecked flag turns a long directive into a silently shortened one.
     pub fn recv(&self) -> Result<OrganEnvelope, ChannelFault> {
         let octets = recv_octets(self.end.as_fd())?;
-        serde_json::from_slice(&octets).map_err(|_| ChannelFault::Undecodable)
+        serde_json::from_slice(&octets).map_err(|error| {
+            use std::io::Write as _;
+            let _ = writeln!(std::io::stderr(), "{}", undecodable_detail("organ", &error));
+            ChannelFault::Undecodable
+        })
     }
 
     /// The one receive site that takes descriptors: the trace sink crosses
@@ -477,8 +503,15 @@ impl OrganChannel {
         if read == 0 {
             return Err(ChannelFault::Closed);
         }
-        let envelope =
-            serde_json::from_slice(&buffer[..read]).map_err(|_| ChannelFault::Undecodable)?;
+        let envelope = serde_json::from_slice(&buffer[..read]).map_err(|error| {
+            use std::io::Write as _;
+            let _ = writeln!(
+                std::io::stderr(),
+                "{}",
+                undecodable_detail("coordination", &error)
+            );
+            ChannelFault::Undecodable
+        })?;
         Ok((envelope, sink, state_end))
     }
 
@@ -1042,5 +1075,48 @@ mod door_mode_tests {
         );
         drop(listener);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[cfg(test)]
+mod undecodable_tests {
+    use super::undecodable_detail;
+
+    /// **The operator line names the member the builds disagree about**, per
+    /// `weaver-harness-Spec` section 7 and issue #404: an hour of diagnosis
+    /// against `no_residency` and a bare `Undecodable`, where one line naming
+    /// `unknown field: column-permission` costs a second.
+    ///
+    /// Perturbation: return a constant from `undecodable_detail` and this
+    /// fails on the member name. Watched under exactly that removal,
+    /// 2026-09-02.
+    ///
+    /// conforms: harness-undecodable-names-its-detail
+    #[test]
+    fn the_undecodable_line_names_the_field() {
+        // The mixed-version shape itself: an instruction carrying a member
+        // this build never registered, refused by deny_unknown_fields.
+        let alien = r#"{"model-binding":{"artifact":"a","devices":[0]},
+            "residual-readout-election":false,"surprisal-election":false,
+            "identity":[],"tunable-values":{},
+            "a-member-from-a-newer-floor":{"x":1}}"#;
+        let error = serde_json::from_str::<weaver_types::DecoderInstruction>(alien)
+            .expect_err("the alien member refuses");
+        let line = undecodable_detail("organ", &error);
+        assert!(
+            line.contains("a-member-from-a-newer-floor"),
+            "the line names the member: {line}"
+        );
+        assert!(
+            line.contains("unknown field"),
+            "and the refusal's kind: {line}"
+        );
+        assert!(
+            line.contains("\"channel\":\"organ\""),
+            "and which channel refused: {line}"
+        );
+        // The line itself is typed, so the journal grep that finds it can
+        // also parse it.
+        serde_json::from_str::<serde_json::Value>(&line).expect("a typed line");
     }
 }
