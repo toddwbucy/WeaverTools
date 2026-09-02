@@ -384,6 +384,48 @@ mod tests {
         assert_eq!(judge(ReadoutElection(true), &TAPPABLE), Ok(()));
     }
 
+    /// **A family answers columns only where that answer has been shown**,
+    /// which is the readout's own rule pointed at the second half of the
+    /// declaration: the tap's one-column copy continuing is a claim about
+    /// the family, per `weaver-spu-Spec` section 7, and a family joining
+    /// this set without its showing is the same defect the readout's
+    /// tripwire catches.
+    ///
+    /// Perturbation: add a family here without flipping its declaration,
+    /// or flip a declaration without adding it here, and this fails.
+    #[test]
+    fn no_shipped_family_answers_a_column_it_cannot_hold() {
+        // `qwen2` on the GGUF answer shown 2026-09-01, `qwen3` on the
+        // showing of 2026-09-02 against Qwen3-8B-BF16.
+        const COLUMNED: &[&str] = &["qwen2", "qwen3"];
+        for declaration in crate::family::REGISTRY {
+            assert_eq!(
+                declaration.taps_column,
+                COLUMNED.contains(&declaration.family),
+                "{} disagrees with the shown-column set",
+                declaration.family
+            );
+        }
+    }
+
+    /// **A column answered where no readout is elected is unreachable by
+    /// construction**, which the registry alone can say: every family that
+    /// declares a column declares the readout that produces it, and a
+    /// column without one would be a declaration the open's second
+    /// registry arm exists to refuse at every load.
+    #[test]
+    fn a_column_never_stands_without_its_readout() {
+        for declaration in crate::family::REGISTRY {
+            if declaration.taps_column {
+                assert!(
+                    declaration.taps_readout,
+                    "{} declares a column and no readout to produce it",
+                    declaration.family
+                );
+            }
+        }
+    }
+
     /// **A shipped family advertises a tap only where one stands.** The
     /// tripwire this replaces held that no family advertises one, and its
     /// own text named the edit that retires it: the day a backend stands
@@ -394,7 +436,10 @@ mod tests {
     /// test still catches.
     #[test]
     fn no_shipped_family_advertises_a_tap_it_cannot_perform() {
-        const TAPPED: &[&str] = &["qwen2", "qwen35moe"];
+        // `qwen3` joined 2026-09-02 on the measurement its declaration
+        // names: the GGUF bar taken against Qwen3-8B-BF16 on a real
+        // device. Its sibling keys did not, each owing its own.
+        const TAPPED: &[&str] = &["qwen2", "qwen35moe", "qwen3"];
         for declaration in crate::family::REGISTRY {
             assert_eq!(
                 declaration.taps_readout,

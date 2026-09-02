@@ -135,7 +135,12 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
         devices: vec![DeviceOrdinal(0)],
     };
 
-    let admitted = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false);
+    let admitted = residency.admit(
+        &binding,
+        Headroom(64 * 1024 * 1024),
+        ReadoutElection(false),
+        false,
+    );
     let resident = match admitted {
         Ok(resident) => resident,
         Err(refusal) => panic!("the admit succeeds against a real artifact, got {refusal:?}"),
@@ -157,7 +162,12 @@ fn a_real_admit_holds_the_device_and_release_frees_it() {
 
     // Nothing is idempotent: a second admit refuses on the ordering with an
     // identical binding, while the first residency stands.
-    let second = residency.admit(&binding, Headroom(64 * 1024 * 1024), ReadoutElection(false), false);
+    let second = residency.admit(
+        &binding,
+        Headroom(64 * 1024 * 1024),
+        ReadoutElection(false),
+        false,
+    );
     assert!(
         matches!(
             second,
@@ -213,9 +223,7 @@ mod seam_success {
     #[test]
     fn an_admit_electing_readout_refuses_across_the_seam() {
         let Some(model) = untapped_model_present() else {
-            eprintln!(
-                "SKIP an_admit_electing_readout_refuses: no model at {UNTAPPED_MODEL}"
-            );
+            eprintln!("SKIP an_admit_electing_readout_refuses: no model at {UNTAPPED_MODEL}");
             return;
         };
         if device_context().is_none() {
@@ -250,8 +258,8 @@ mod seam_success {
                             devices: vec![DeviceOrdinal(0)],
                         },
                         residual_readout_election: true,
-                    field_election: None,
-                    surprisal_election: false,
+                        field_election: None,
+                        surprisal_election: false,
                         refeed_permission: false,
                         column_permission: false,
                         identity: vec![],
@@ -260,8 +268,8 @@ mod seam_success {
                             ("context-capacity".to_string(), 4096.0),
                             ("seed".to_string(), 11.0),
                         ]
-                            .into_iter()
-                            .collect(),
+                        .into_iter()
+                        .collect(),
                     },
                 },
             },
@@ -350,8 +358,8 @@ mod seam_success {
                             ("context-capacity".to_string(), 4096.0),
                             ("seed".to_string(), 11.0),
                         ]
-                            .into_iter()
-                            .collect(),
+                        .into_iter()
+                        .collect(),
                     },
                 },
             },
@@ -460,8 +468,8 @@ mod seam_success {
                             ("context-capacity".to_string(), 4096.0),
                             ("seed".to_string(), 11.0),
                         ]
-                            .into_iter()
-                            .collect(),
+                        .into_iter()
+                        .collect(),
                     },
                 },
             },
@@ -595,8 +603,8 @@ mod seam_success {
                             ("context-capacity".to_string(), 4096.0),
                             ("seed".to_string(), 11.0),
                         ]
-                            .into_iter()
-                            .collect(),
+                        .into_iter()
+                        .collect(),
                     },
                 },
             },
@@ -732,8 +740,8 @@ mod seam_success {
                             ("context-capacity".to_string(), 4096.0),
                             ("seed".to_string(), 37.0),
                         ]
-                            .into_iter()
-                            .collect(),
+                        .into_iter()
+                        .collect(),
                     },
                 },
             },
@@ -1006,8 +1014,7 @@ mod seam_success {
         });
         // A refusal crosses as the trio's own refusal frame, not an answer.
         let frame = decode.recv_octets().expect("the refusal arrives");
-        let refusal: TokenRefusal =
-            serde_json::from_slice(&frame).expect("the refusal parses");
+        let refusal: TokenRefusal = serde_json::from_slice(&frame).expect("the refusal parses");
         assert_eq!(
             refusal,
             TokenRefusal::RefeedPermissionAbsent,
@@ -1130,7 +1137,11 @@ mod seam_success {
             );
             (lifecycle, decode, child, log_path)
         };
-        let close = |lifecycle, decode, mut child: std::process::Child, log_path: std::path::PathBuf, name: &str| {
+        let close = |lifecycle,
+                     decode,
+                     mut child: std::process::Child,
+                     log_path: std::path::PathBuf,
+                     name: &str| {
             drop(decode);
             let released = ask(&lifecycle, 2, LifecycleDirective::Release);
             assert_eq!(released.payload, Payload::Answer(LifecycleAnswer::Released));
@@ -1138,7 +1149,10 @@ mod seam_success {
             let status = wait_bounded(
                 &mut child,
                 30,
-                &format!("the {name} worker exits, child stderr at {}", log_path.display()),
+                &format!(
+                    "the {name} worker exits, child stderr at {}",
+                    log_path.display()
+                ),
             );
             assert!(status.success(), "and the {name} process exits clean");
             std::fs::remove_file(&log_path).ok();
@@ -1155,21 +1169,31 @@ mod seam_success {
             let frame = decode.recv_octets().expect("an answer arrives");
             serde_json::from_slice(&frame).expect("the answer parses")
         };
-        send(&decode, &TokenDirective::Open {
-            session: SessionId("s-null".into()),
-            column_ask: false,
-            messages: identity(),
-        });
-        assert_eq!(recv(&decode), TokenAnswer::Opened, "the source session opens");
-        send(&decode, &TokenDirective::AppendAndGenerate {
-            turn: TurnKey("t-1".into()),
-            delta: vec![Message {
-                role: Role::User,
-                content: vec![ContentBlock::Text {
-                    text: "Name any three colors.".into(),
+        send(
+            &decode,
+            &TokenDirective::Open {
+                session: SessionId("s-null".into()),
+                column_ask: false,
+                messages: identity(),
+            },
+        );
+        assert_eq!(
+            recv(&decode),
+            TokenAnswer::Opened,
+            "the source session opens"
+        );
+        send(
+            &decode,
+            &TokenDirective::AppendAndGenerate {
+                turn: TurnKey("t-1".into()),
+                delta: vec![Message {
+                    role: Role::User,
+                    content: vec![ContentBlock::Text {
+                        text: "Name any three colors.".into(),
+                    }],
                 }],
-            }],
-        });
+            },
+        );
         let generation = loop {
             match recv(&decode) {
                 TokenAnswer::Token { .. } => continue,
@@ -1181,13 +1205,19 @@ mod seam_success {
             serde_json::from_str(generation.request.get()).expect("the request splices");
         let measurement: serde_json::Value =
             serde_json::from_str(generation.measurement.get()).expect("the measurement splices");
-        let rendered = request["rendered"].as_str().expect("the rendered form").to_string();
+        let rendered = request["rendered"]
+            .as_str()
+            .expect("the rendered form")
+            .to_string();
         let tokens = |value: &serde_json::Value| -> Vec<u32> {
             serde_json::from_value(value.clone()).expect("token identifiers")
         };
         let recorded_input = tokens(&measurement["input_tokens"]);
         let recorded_output = tokens(&measurement["output_tokens"]);
-        assert!(!recorded_output.is_empty(), "the source generated something");
+        assert!(
+            !recorded_output.is_empty(),
+            "the source generated something"
+        );
         let recorded_emission = generation.emission.clone();
         let recorded_seed = request["sampling"]["generation_seed"].clone();
         close(lifecycle, decode, child, log_path, "source");
@@ -1195,30 +1225,42 @@ mod seam_success {
         // **The replay pass**: a fresh residency, the permission granted,
         // the registry's second arm read on the way in.
         let (lifecycle, decode, child, log_path) = stand("replay", true);
-        send(&decode, &TokenDirective::Open {
-            session: SessionId("s-null".into()),
-            column_ask: false,
-            messages: identity(),
-        });
-        assert_eq!(recv(&decode), TokenAnswer::Opened, "the replay session opens");
-        send(&decode, &TokenDirective::ReFeed {
-            turn: TurnKey("t-1".into()),
-            rendered: rendered.clone(),
-            path: vec![],
-        });
+        send(
+            &decode,
+            &TokenDirective::Open {
+                session: SessionId("s-null".into()),
+                column_ask: false,
+                messages: identity(),
+            },
+        );
+        assert_eq!(
+            recv(&decode),
+            TokenAnswer::Opened,
+            "the replay session opens"
+        );
+        send(
+            &decode,
+            &TokenDirective::ReFeed {
+                turn: TurnKey("t-1".into()),
+                rendered: rendered.clone(),
+                path: vec![],
+            },
+        );
         let frame = decode.recv_octets().expect("the refusal arrives");
-        let refusal: TokenRefusal =
-            serde_json::from_slice(&frame).expect("the refusal parses");
+        let refusal: TokenRefusal = serde_json::from_slice(&frame).expect("the refusal parses");
         assert_eq!(
             refusal,
             TokenRefusal::RefeedPathEmpty,
             "a replay of nothing wearing an exchange refuses"
         );
-        send(&decode, &TokenDirective::ReFeed {
-            turn: TurnKey("t-1".into()),
-            rendered,
-            path: recorded_output.clone(),
-        });
+        send(
+            &decode,
+            &TokenDirective::ReFeed {
+                turn: TurnKey("t-1".into()),
+                rendered,
+                path: recorded_output.clone(),
+            },
+        );
         let refed = loop {
             match recv(&decode) {
                 TokenAnswer::ReFed(generation) => break generation,
@@ -1251,6 +1293,34 @@ mod seam_success {
             "the replay derived the seed the source drew from"
         );
         close(lifecycle, decode, child, log_path, "replay");
+    }
+
+    /// What this run's artifact owes per column: its layer count and the
+    /// residual width, named by the operator where the artifact is not
+    /// this file's fixture. Named rather than derived, on the same rule
+    /// the readout's layer count follows.
+    fn column_shape() -> (usize, usize) {
+        // **Only an absent variable takes the fallback.** A named value that
+        // does not parse is the operator's mistake, and reading it as the
+        // fixture's shape would run the watch against a count belonging to
+        // another artifact - which either fails far from its cause or, where
+        // the shapes happen to agree, passes on a premise nobody stated. A
+        // value that is not Unicode is named rather than absent and refuses
+        // for that reason, `NotPresent` being the one arm that means nobody
+        // asked.
+        let named = |key: &str, fallback: usize| -> usize {
+            match std::env::var(key) {
+                Ok(value) => value.parse().unwrap_or_else(|_| {
+                    panic!("{key} names a count, and this one does not parse: {value}")
+                }),
+                Err(std::env::VarError::NotPresent) => fallback,
+                Err(other) => panic!("{key} is set and unreadable: {other}"),
+            }
+        };
+        (
+            named("WEAVER_ARTIFACT_COLUMN_LAYERS", 24),
+            named("WEAVER_ARTIFACT_COLUMN_WIDTH", 896),
+        )
     }
 
     /// **The column crosses where the ask stands, one message per sampled
@@ -1387,9 +1457,17 @@ mod seam_success {
             "one column per sampled position: {} columns for {produced} tokens",
             columns.len()
         );
+        // **The shape is the artifact's own and is named rather than
+        // derived**, on the layer count's own rule: a shape taken from the
+        // columns would agree with them whatever the tap did. The default
+        // is this file's fixture and an operator pointing elsewhere names
+        // what that artifact owes.
+        let (want_layers, want_width) = column_shape();
         assert!(
-            columns.iter().all(|(_, layers, width)| *layers == 24 && *width == 896),
-            "the model's own shape at every position: {columns:?}"
+            columns
+                .iter()
+                .all(|(_, layers, width)| *layers == want_layers && *width == want_width),
+            "the model's own shape at every position, {want_layers}x{want_width}: {columns:?}"
         );
         assert!(
             columns.windows(2).all(|w| w[0].0 < w[1].0),
@@ -1403,7 +1481,10 @@ mod seam_success {
         let status = wait_bounded(
             &mut child,
             30,
-            &format!("the column worker exits, child stderr at {}", log_path.display()),
+            &format!(
+                "the column worker exits, child stderr at {}",
+                log_path.display()
+            ),
         );
         assert!(status.success(), "and the process exits clean");
         std::fs::remove_file(&log_path).ok();
@@ -1547,7 +1628,10 @@ mod seam_success {
         let status = wait_bounded(
             &mut child,
             30,
-            &format!("the unasked worker exits, child stderr at {}", log_path.display()),
+            &format!(
+                "the unasked worker exits, child stderr at {}",
+                log_path.display()
+            ),
         );
         assert!(status.success(), "and the process exits clean");
         std::fs::remove_file(&log_path).ok();
@@ -1556,10 +1640,8 @@ mod seam_success {
         // unelected.
         let (lifecycle, child_lifecycle) = seqpacket_pair();
         let (decode_parent, child_decode) = seqpacket_pair();
-        let log_path = std::env::temp_dir().join(format!(
-            "weaver-spu-arm2-child-{}.log",
-            std::process::id()
-        ));
+        let log_path =
+            std::env::temp_dir().join(format!("weaver-spu-arm2-child-{}.log", std::process::id()));
         let log = std::fs::File::create(&log_path).expect("a child log file");
         let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
         command
@@ -1603,7 +1685,10 @@ mod seam_success {
         let status = wait_bounded(
             &mut child,
             30,
-            &format!("the arm-two worker exits, child stderr at {}", log_path.display()),
+            &format!(
+                "the arm-two worker exits, child stderr at {}",
+                log_path.display()
+            ),
         );
         assert!(status.success(), "and the process exits clean");
         std::fs::remove_file(&log_path).ok();

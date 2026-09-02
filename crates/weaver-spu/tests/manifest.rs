@@ -67,7 +67,18 @@ const TABLE: &[(&str, &[&str], &[&str])] = &[
             "WEAVER_MEASURE_PACE",
         ],
     ),
-    ("loaded.rs", &["cuda", "gguf"], &["WEAVER_TEST_GGUF"]),
+    // The column watch names what its artifact owes rather than deriving
+    // it, so a target pointed at another family carries that family's
+    // shape with its artifact.
+    (
+        "loaded.rs",
+        &["cuda", "gguf"],
+        &[
+            "WEAVER_ARTIFACT_COLUMN_LAYERS",
+            "WEAVER_ARTIFACT_COLUMN_WIDTH",
+            "WEAVER_TEST_GGUF",
+        ],
+    ),
     (
         "two_card.rs",
         &["cuda", "gguf"],
@@ -76,7 +87,7 @@ const TABLE: &[(&str, &[&str], &[&str])] = &[
     (
         "readout_neutral.rs",
         &["cuda", "gguf"],
-        &["WEAVER_ARTIFACT_READOUT"],
+        &["WEAVER_ARTIFACT_READOUT", "WEAVER_ARTIFACT_READOUT_LAYERS"],
     ),
 ];
 
