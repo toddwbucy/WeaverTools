@@ -10,8 +10,9 @@ loaded and applied by the source's own arithmetic against the artifact's
 own weights, the control gating every reading, the by-turn pairing rule,
 and the exact capture comparison that performs certification step 3 where
 both records are held and licenses the discard. Section 1's layout gains
-`lens.rs` and `capture.rs`, and its dependency set gains `safetensors`,
-the format reader the artifact election implies and never an engine. The
+`lens.rs` and `capture.rs`, and its dependency set gains `safetensors` and
+`sha2`, the format reader the artifact election implies and the digest its
+identity check recomputes, neither an engine. The
 reading-as-artifact election narrows to its rendered form. Two assertions,
 bought by the code act in the same stack.
 
@@ -88,17 +89,22 @@ finished record from a truncated one could hold this shape and not use it.
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
 
-**The dependency set is three crates and no internal one.** `serde` with
+**The dependency set is four crates and no internal one.** `serde` with
 `derive`, and `serde_json` with `raw_value`, which sections 2 and 3 elect
 for carrying a payload's elected values as the record spelled them rather
-than re-encoding them, and `safetensors`, which section 5's reading elects
-to open the lens artifact and the weights its unembedding needs. **The
-third is a format reader and never an engine**: it maps a file and answers
-tensors, so what enters this crate is a parser for the container section 3
-elected and no inference runtime, which is the whole reason that election
-named a format both sides of the boundary can read. It is the same crate
-`weaver-spu` links for the native backend's weights, vetted in this tree
-rather than newly admitted.
+than re-encoding them, `safetensors`, which section 5's reading elects to
+open the lens artifact and the weights its unembedding needs, and `sha2`,
+which the same section's identity check elects to recompute the digest a
+manifest names. **Neither addition is an engine**: one maps a file and
+answers tensors, the other answers a digest, so what enters this crate is
+a parser for the container section 3 elected and the arithmetic that
+checks an identity, with no inference runtime - which is the whole reason
+that election named a format both sides of the boundary can read.
+`safetensors` is the crate `weaver-spu` links for the native backend's
+weights and `sha2` already stands in this workspace's resolved tree, both
+vetted here rather than newly admitted. **The digest is not hand-rolled**:
+an identity check written here would be this crate's approximation of a
+standard, and a wrong one would refuse good artifacts or admit bad ones.
 
 **No `weaver-*` dependency at all, and the negative is the boundary in the
 manifest.** This crate stands outside the agent, per the charter's section 1, and

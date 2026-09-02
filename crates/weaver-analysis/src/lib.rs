@@ -24,13 +24,19 @@
 //! sender.send(&weaver_analysis::project::project(&[])[0]);
 //! ```
 
+pub mod capture;
 pub mod declare;
+pub mod lens;
 pub mod preload;
 pub mod project;
 pub mod reading;
 pub mod record;
 
+pub use capture::{Capture, Comparison, compare};
 pub use declare::{AnalystInputs, DeriveRefusal, derive};
+pub use lens::{
+    Lens, LensRefusal, Manifest, Unembedding, manifest_path_for, read_manifest, sha256_hex,
+};
 pub use project::{Distillate, ELECTION, project, render_opener};
 pub use reading::{Bracket, Gated, Outcome, RecordKind, brackets, gate, record_kind};
 pub use record::{Envelope, Event, parse_record, value_at};
