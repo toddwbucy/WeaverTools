@@ -1,5 +1,6 @@
 //! conforms: analysis-control-gates-the-reading
 //! conforms: analysis-captures-compare-exactly
+//! conforms: analysis-threaded-head-is-bit-identical
 //! conforms: analysis-lens-refuses-other-weights
 //!
 //! The reading's watches, per `weaver-analysis-Spec` sections 5 and 6. The
@@ -234,6 +235,104 @@ fn the_digest_is_the_standard() {
         weaver_analysis::sha256_hex(b""),
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     );
+}
+
+/// **The head across the cores is the head on one core, to the bit**, per
+/// Spec section 5: the rows are split across scoped threads and each row's
+/// sum runs in one order, so no logit moves. A vocabulary wider than the
+/// box's thread count, so the split is a real one, and values the rows
+/// cannot all share, so a row landing under the wrong token would show.
+///
+/// Perturbation: swap the first two chunks' row ranges, which are equal in
+/// size and so stay in bounds, and it fails naming the rows that moved
+/// under their tokens. Reversing every chunk, or offsetting each by one,
+/// runs the uneven last chunk past the head and fails on the range check
+/// instead of on this claim.
+#[test]
+fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
+    let scratch = std::env::temp_dir().join(format!("weaver-analysis-head-{}", std::process::id()));
+    std::fs::create_dir_all(&scratch).expect("scratch");
+    let (vocabulary, width) = (301usize, 8usize);
+    // A fixed generator, so the fixture is the same on every run and no
+    // two rows agree.
+    let mut state = 0x9E37_79B9u32;
+    let mut next = || {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        (state as f32 / u32::MAX as f32) * 2.0 - 1.0
+    };
+    let head: Vec<f32> = (0..vocabulary * width).map(|_| next()).collect();
+    let norm: Vec<f32> = (0..width).map(|_| next()).collect();
+    let residual: Vec<f32> = (0..width).map(|_| next()).collect();
+    let bytes =
+        |values: &[f32]| -> Vec<u8> { values.iter().flat_map(|v| v.to_le_bytes()).collect() };
+    let (head_bytes, norm_bytes) = (bytes(&head), bytes(&norm));
+    let views = vec![
+        (
+            "lm_head.weight",
+            safetensors::tensor::TensorView::new(
+                safetensors::Dtype::F32,
+                vec![vocabulary, width],
+                &head_bytes,
+            )
+            .expect("view"),
+        ),
+        (
+            "model.norm.weight",
+            safetensors::tensor::TensorView::new(safetensors::Dtype::F32, vec![width], &norm_bytes)
+                .expect("view"),
+        ),
+    ];
+    let weights = scratch.join("m.safetensors");
+    std::fs::write(
+        &weights,
+        safetensors::serialize(views, None).expect("serialize"),
+    )
+    .expect("write");
+
+    let unembedding = weaver_analysis::Unembedding::open(&weights, 1e-6).expect("weights");
+    // **The split is forced, not left to the box**: eight workers over 301
+    // rows is seven chunks of 38 and a last of 35, a real partition with an
+    // uneven remainder whatever `available_parallelism` reports here. Seven
+    // divided 301 exactly, which the review caught.
+    let threaded = unembedding
+        .logits_with_workers(&residual, 8)
+        .expect("width");
+    let normalized = unembedding.normalized(&residual).expect("width");
+    let mut single = vec![0.0f32; vocabulary];
+    unembedding
+        .logits_rows(&normalized, 0, &mut single)
+        .expect("every row fits the head");
+    assert_eq!(threaded.len(), vocabulary);
+    let differing = threaded
+        .iter()
+        .zip(&single)
+        .enumerate()
+        .filter(|(_, (a, b))| a.to_bits() != b.to_bits())
+        .map(|(token, _)| token)
+        .collect::<Vec<_>>();
+    assert!(
+        differing.is_empty(),
+        "rows that moved under the split: {differing:?}"
+    );
+    // The box's own split agrees too, judged after the named assertion so
+    // a perturbation fails on the claim the watch exists for.
+    assert_eq!(unembedding.logits(&residual).expect("width"), threaded);
+    // And a range past the head, or a residual of the wrong width, refuses
+    // rather than summing a prefix.
+    let mut past = vec![0.0f32; 2];
+    assert!(
+        unembedding
+            .logits_rows(&normalized, vocabulary - 1, &mut past)
+            .is_none()
+    );
+    assert!(
+        unembedding
+            .logits_rows(&normalized[..width - 1], 0, &mut single)
+            .is_none()
+    );
+    let _ = std::fs::remove_dir_all(&scratch);
 }
 
 /// A scratch directory of the test's own, removed on drop so a failing
