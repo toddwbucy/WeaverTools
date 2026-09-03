@@ -77,36 +77,58 @@ def main():
     report = {"ask": ASK, "task": a.task, "no_think": a.no_think, "book": a.book, "first_page": a.first_page, "pages_per_turn": a.pages_per_turn,
               "declaration_sha256_original": original_sha, "artifact": cfg["artifact"],
               "context_capacity": cfg["context_capacity"], "max_tokens_per_turn": MAX_TOKENS_PER_TURN, "turns": []}
+    answered = {}  # turn key -> ordinal, from the gate's own answers
+    run_id = None
+    failed = None
     try:
         open(decl, "w").write(patched(original, cfg)); report["declaration_sha256_as_run"] = sha(decl)
-        print("load:", base.admin(cfg, "load"), flush=True)
+        # **Unload first, and judge the load by its answer.** A load over a
+        # standing unit is refused while the old worker and its socket
+        # remain, and a socket that accepts a connection is not evidence
+        # that this declaration is the one serving.
+        base.admin(cfg, "unload")
+        load = base.admin(cfg, "load"); print("load:", load, flush=True)
+        if load.get("kind") != "state": raise SystemExit(f"the load did not reach a state: {load}")
         if not base.wait_socket(cfg): raise SystemExit("the gate socket never stood")
         for i, group in enumerate(turns, 1):
             body = "\n\n".join(open(p).read() for p in group)
             t0 = time.time(); answer = base.gate_turn(cfg, f"{ASK}\n\n{body}", timeout=900); dt = time.time() - t0
             entry = {"turn": i, "pages": [os.path.basename(p) for p in group], "input_words": len(body.split()),
-                     "seconds": round(dt, 1), "answer_kind": answer.get("kind"), "answer_chars": len(json.dumps(answer))}
+                     "seconds": round(dt, 1), "answer_kind": answer.get("kind"), "turn_key": answer.get("turn"), "run": answer.get("run")}
             report["turns"].append(entry); print(json.dumps(entry), flush=True)
-            if answer.get("kind") not in ("answered", "answer", None) and "text" not in json.dumps(answer): print("  answer:", str(answer)[:200], flush=True)
-        print("unload:", base.admin(cfg, "unload"), flush=True)
+            # **An unanswered turn ends the run**, recorded as such: a report
+            # with fewer valid turns that read as complete would be the
+            # defect the deposit exists to prevent.
+            if answer.get("kind") != "answered":
+                failed = {"turn": i, "answer": answer}; report["failed"] = failed
+                print("FAILED turn", i, str(answer)[:300], flush=True); break
+            answered[answer.get("turn")] = i
+            run_id = run_id or answer.get("run")
     finally:
+        print("unload:", base.admin(cfg, "unload"), flush=True)
         open(decl, "w").write(original)
         report["declaration_restored"] = sha(decl) == original_sha
         if report["declaration_restored"]: os.remove(backup)
-    # the run's own slice of the trace, deposited
+    # **The deposit is this run's and these turns'.** Run-level events of the
+    # run the gate named are kept, turn-level events only for the turns the
+    # gate answered here, so another dialer's turn in the same residency
+    # cannot ride into the record or into `resident`.
     with open(trace, "rb") as f:
         f.seek(start_bytes); data = f.read()
-    open(f"{a.outdir}/session.ndjson", "wb").write(data)
-    kinds = {}
+    kept, dropped, kinds = [], 0, {}
     for line in data.decode(errors="replace").splitlines():
         try: e = json.loads(line)
         except Exception: continue
-        kinds[e.get("kind")] = kinds.get(e.get("kind"), 0) + 1
+        if run_id and e.get("run") != run_id: dropped += 1; continue
+        if e.get("turn") and e.get("turn") not in answered: dropped += 1; continue
+        kept.append(line); kinds[e.get("kind")] = kinds.get(e.get("kind"), 0) + 1
         if e.get("kind") == "model.output": report.setdefault("resident", []).append(e["payload"].get("resident"))
         if e.get("kind") == "load": report["load_event"] = e["payload"]
-    report["record_kinds"] = kinds
+    open(f"{a.outdir}/session.ndjson", "w").write("\n".join(kept) + ("\n" if kept else ""))
+    report["run"] = run_id; report["record_kinds"] = kinds; report["events_dropped_as_not_this_runs"] = dropped
     json.dump(report, open(f"{a.outdir}/report.json", "w"), indent=1)
-    print(json.dumps({"turns": len(report["turns"]), "resident": report.get("resident"), "restored": report["declaration_restored"]}), flush=True)
+    print(json.dumps({"turns": len(answered), "resident": report.get("resident"), "restored": report["declaration_restored"], "failed": failed is not None}), flush=True)
+    if failed: sys.exit(1)
 
 if __name__ == "__main__":
     main()

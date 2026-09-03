@@ -11,10 +11,13 @@ _ap.add_argument("--book", default="/bulk-store/books/books/text_output/I_robot_
 _ap.add_argument("--out", default="/bulk-store/weaver-testing/ocr-surprisal-2026-09-03")
 _ap.add_argument("--device", default="cuda:1")
 _a = _ap.parse_args()
-import json, re, glob, os, csv, random, time, statistics as st
+import json, re, glob, os, csv, random, time, sys, statistics as st
 import torch, transformers
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "jacobian-lens-8b"))
+import model_identity  # noqa: E402
 B=_a.book; M="/bulk-store/models/Qwen--Qwen3-8B"; OUT=_a.out; dev=_a.device; t0=time.time()
 os.makedirs(OUT, exist_ok=True)
+shards=model_identity.verify(M)
 tok=transformers.AutoTokenizer.from_pretrained(M)
 hf=transformers.AutoModelForCausalLM.from_pretrained(M, dtype=torch.bfloat16).to(dev).eval()
 def score(text):
@@ -55,14 +58,33 @@ with open(f"{B}/unknown_words.tsv") as f:
             if n not in pages: continue
             pg=pages[n]["first_pass"]; sv=sorted(pg["surprisal"]); pct=sv[int(0.95*len(sv))]
             h=word_hits(row["word"], pg["text"], pg["offsets"], pg["surprisal"], pct); art_hits+=h; arts+=1 if h else 0
-random.seed(7); rnd_hits=[]
+# **The controls score the occurrence that was selected**, not the first
+# occurrence of its word on the page, so a repeated word cannot be counted
+# twice and every span is scored once.
+def span_hit(span, offs, surs, pct):
+    idx=[i for i,(a,b) in enumerate(offs) if a<span[1] and b>span[0]]
+    return (max(surs[i] for i in idx)>=pct) if idx else None
+random.seed(7); rnd_hits=[]; rare_hits=[]
+book=" ".join(pg["refined"]["text"] for pg in pages.values())
+from collections import Counter
+freq=Counter(re.findall(r"[A-Za-z]{4,}", book))
 for n,pg in pages.items():
     fp=pg["first_pass"]; sv=sorted(fp["surprisal"]); pct=sv[int(0.95*len(sv))]
-    words=[w for w in re.findall(r"[A-Za-z]{3,}", fp["text"])]
-    for w in random.sample(words, min(3,len(words))): rnd_hits+=word_hits(w, fp["text"], fp["offsets"], fp["surprisal"], pct)[:1]
+    spans=[m.span() for m in re.finditer(r"[A-Za-z]{3,}", fp["text"])]
+    for sp in random.sample(spans, min(3,len(spans))):
+        h=span_hit(sp, fp["offsets"], fp["surprisal"], pct)
+        if h is not None: rnd_hits.append(h)
+    # the fairer null: real words occurring exactly once in the whole refined
+    # book, legitimate but rare, up to three occurrences a page
+    rare=[m.span() for m in re.finditer(r"[A-Za-z]{4,}", fp["text"]) if freq.get(m.group(0))==1][:3]
+    for sp in rare:
+        h=span_hit(sp, fp["offsets"], fp["surprisal"], pct)
+        if h is not None: rare_hits.append(h)
 res["artifact_words_found"]=arts; res["artifact_hit_rate_at_page_p95"]=round(sum(art_hits)/max(1,len(art_hits)),3); res["artifact_occurrences"]=len(art_hits)
 res["random_word_hit_rate_at_page_p95"]=round(sum(rnd_hits)/max(1,len(rnd_hits)),3); res["random_occurrences"]=len(rnd_hits)
-res["seconds"]=round(time.time()-t0,1); res["model_revision"]="b968826d9c46"; res["context"]="each page scored alone, no book context, truncation 2048"
+res["rare_real_word_hit_rate_at_page_p95"]=round(sum(rare_hits)/max(1,len(rare_hits)),3); res["rare_real_word_occurrences"]=len(rare_hits)
+res["seconds"]=round(time.time()-t0,1); res["model_revision"]=model_identity.MODEL_REVISION; res["model_safetensors_sha256"]=shards
+res["context"]="each page scored alone, no book context, truncation 2048"
 json.dump(res, open(f"{OUT}/summary.json","w"), indent=1)
 json.dump({n:{k:{"surprisal":[round(v,3) for v in pg[k]["surprisal"]],"offsets":pg[k]["offsets"]} for k in pg} for n,pg in pages.items()}, open(f"{OUT}/per-page.json","w"))
 print(json.dumps(res))
