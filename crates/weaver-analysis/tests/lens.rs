@@ -1,11 +1,14 @@
 //! conforms: analysis-control-gates-the-reading
 //! conforms: analysis-captures-compare-exactly
+//! conforms: analysis-lens-refuses-other-weights
 //!
 //! The reading's watches, per `weaver-analysis-Spec` sections 5 and 6. The
 //! fixtures are the real records of 2026-09-01: the certified column
 //! replay and its repeat, whose differencing measured the vector bar.
 
-use weaver_analysis::{Capture, Comparison, LensRefusal, compare, manifest_path_for, parse_record};
+use weaver_analysis::{
+    Capture, Comparison, LensRefusal, WeightsDigest, compare, manifest_path_for, parse_record,
+};
 
 const CERTIFIED: &str = include_str!("fixtures/columns-a.ndjson");
 const REPEAT: &str = include_str!("fixtures/columns-b.ndjson");
@@ -230,5 +233,182 @@ fn the_digest_is_the_standard() {
     assert_eq!(
         weaver_analysis::sha256_hex(b""),
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    );
+}
+
+/// A scratch directory of the test's own, removed on drop so a failing
+/// assertion does not leave the next run reading a stale model.
+struct Scratch(std::path::PathBuf);
+impl Scratch {
+    fn new(name: &str) -> Scratch {
+        let dir =
+            std::env::temp_dir().join(format!("weaver-analysis-{name}-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("scratch");
+        Scratch(dir)
+    }
+}
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+/// One safetensors file holding the named f32 tensors.
+fn safetensors_file(path: &std::path::Path, tensors: &[(&str, Vec<usize>, Vec<f32>)]) {
+    let bytes: Vec<Vec<u8>> = tensors
+        .iter()
+        .map(|(_, _, values)| values.iter().flat_map(|v| v.to_le_bytes()).collect())
+        .collect();
+    let views: Vec<(&str, safetensors::tensor::TensorView)> = tensors
+        .iter()
+        .zip(&bytes)
+        .map(|((name, shape, _), data)| {
+            (
+                *name,
+                safetensors::tensor::TensorView::new(safetensors::Dtype::F32, shape.clone(), data)
+                    .expect("view"),
+            )
+        })
+        .collect();
+    std::fs::write(
+        path,
+        safetensors::serialize(views, None).expect("serialize"),
+    )
+    .expect("write");
+}
+
+/// A model kept in two shards, its index naming which holds what, and a
+/// lens manifest carrying the map of both shards' digests.
+fn sharded_model(dir: &std::path::Path) -> (std::path::PathBuf, std::path::PathBuf) {
+    let model = dir.join("model");
+    std::fs::create_dir_all(&model).expect("model dir");
+    // The head in one shard, the final norm in the other, as the 8B lays
+    // them out: a read that opened one file could not find both.
+    safetensors_file(
+        &model.join("a.safetensors"),
+        &[(
+            "lm_head.weight",
+            vec![3, 2],
+            vec![1.0, 0.0, 0.0, 1.0, 1.0, 1.0],
+        )],
+    );
+    safetensors_file(
+        &model.join("b.safetensors"),
+        &[
+            ("model.norm.weight", vec![2], vec![1.0, 1.0]),
+            ("model.layers.0.x", vec![1], vec![0.5]),
+        ],
+    );
+    std::fs::write(
+        model.join("model.safetensors.index.json"),
+        r#"{"metadata":{},"weight_map":{"lm_head.weight":"a.safetensors","model.norm.weight":"b.safetensors","model.layers.0.x":"b.safetensors"}}"#,
+    )
+    .expect("index");
+    let lens = dir.join("jacobian_lens_m-bf16.safetensors");
+    std::fs::write(&lens, b"").expect("lens");
+    let a = weaver_analysis::sha256_hex_of_file(&model.join("a.safetensors")).expect("digest a");
+    let b = weaver_analysis::sha256_hex_of_file(&model.join("b.safetensors")).expect("digest b");
+    std::fs::write(
+        dir.join("lens-manifest.json"),
+        format!(
+            r#"{{"lens":"jacobian_lens_m-bf16.safetensors","fitted_for":{{"model":"/m","model_safetensors_sha256":{{"a.safetensors":"{a}","b.safetensors":"{b}"}}}},"lens_shape":{{"d_model":2,"source_layers":[0]}}}}"#
+        ),
+    )
+    .expect("manifest");
+    (model, lens)
+}
+
+/// **The digest takes the shape the model on disk takes**, per Spec section
+/// 3: a string for one file, a map from shard name to digest for a sharded
+/// model, and every digest in either shape is judged before the weights
+/// are opened. A map naming no shard is refused as its own case, because
+/// an empty identity verifies nothing and would pass every model.
+///
+/// Perturbation: judge only the first digest and the malformed second one
+/// below is read past. Watched under exactly that change.
+#[test]
+fn a_sharded_digest_names_every_shard_and_each_is_judged() {
+    let scratch = Scratch::new("sharded-manifest");
+    let lens = scratch.0.join("jacobian_lens_m-bf16.safetensors");
+    std::fs::write(&lens, b"").expect("lens");
+    let write = |manifest: &str| std::fs::write(scratch.0.join("lens-manifest.json"), manifest);
+    let ok = "0000000000000000000000000000000000000000000000000000000000000000";
+
+    write(&format!(r#"{{"lens":"jacobian_lens_m-bf16.safetensors","fitted_for":{{"model":"/m","model_safetensors_sha256":{{"a.safetensors":"{ok}","b.safetensors":"{ok}"}}}},"lens_shape":{{"d_model":2,"source_layers":[0]}}}}"#)).expect("w");
+    let manifest = weaver_analysis::read_manifest(&lens).expect("a sharded manifest reads");
+    assert!(
+        matches!(manifest.fitted_for.model_safetensors_sha256, WeightsDigest::Sharded(ref map) if map.len() == 2)
+    );
+
+    write(&format!(r#"{{"lens":"jacobian_lens_m-bf16.safetensors","fitted_for":{{"model":"/m","model_safetensors_sha256":{{"a.safetensors":"{ok}","b.safetensors":"nope"}}}},"lens_shape":{{"d_model":2,"source_layers":[0]}}}}"#)).expect("w");
+    assert!(
+        matches!(weaver_analysis::read_manifest(&lens), Err(LensRefusal::DigestMalformed { ref digest }) if digest == "nope"),
+        "the second shard's digest is judged, not only the first"
+    );
+
+    write(r#"{"lens":"jacobian_lens_m-bf16.safetensors","fitted_for":{"model":"/m","model_safetensors_sha256":{}},"lens_shape":{"d_model":2,"source_layers":[0]}}"#).expect("w");
+    assert!(matches!(
+        weaver_analysis::read_manifest(&lens),
+        Err(LensRefusal::ShardSetEmpty)
+    ));
+}
+
+/// **The read follows the model's own index and verifies each shard it
+/// opens**, under its own name and never trusted from it, per Spec section
+/// 3. The head and the norm sit in different shards here, as the 8B lays
+/// them out, so a read of one file could not have found both.
+///
+/// Perturbation: verify only the first shard the index names and the
+/// altered digest for the second passes. Watched under exactly that
+/// change, by the second half below.
+#[test]
+fn the_read_follows_the_index_and_verifies_each_shard() {
+    let scratch = Scratch::new("sharded-read");
+    let (model, lens) = sharded_model(&scratch.0);
+    let manifest = weaver_analysis::read_manifest(&lens).expect("manifest");
+
+    let shards = weaver_analysis::shards_for(&model).expect("the index resolves");
+    assert_eq!(
+        shards,
+        vec![model.join("a.safetensors"), model.join("b.safetensors")]
+    );
+    let verified = weaver_analysis::verify_weights(&model, &manifest).expect("both shards verify");
+    assert_eq!(verified.len(), 2, "each opened shard is verified");
+    let unembedding =
+        weaver_analysis::Unembedding::open(&model, 1e-6).expect("both tensors found across shards");
+    assert_eq!((unembedding.width(), unembedding.vocabulary()), (2, 3));
+
+    // The second shard's digest is altered and the refusal names it.
+    let text = std::fs::read_to_string(scratch.0.join("lens-manifest.json")).expect("read");
+    let b = weaver_analysis::sha256_hex_of_file(&model.join("b.safetensors")).expect("b");
+    let altered = text.replace(&b, &format!("{}{}", &b[1..], &b[..1]));
+    std::fs::write(scratch.0.join("lens-manifest.json"), altered).expect("w");
+    let manifest = weaver_analysis::read_manifest(&lens).expect("manifest");
+    assert!(
+        matches!(weaver_analysis::verify_weights(&model, &manifest), Err(LensRefusal::WeightsDisagree { ref file, .. }) if file == "b.safetensors"),
+        "the disagreeing shard is named"
+    );
+
+    // A shard the map does not name is a file the fit never saw.
+    let unnamed = text.replace(r#","b.safetensors""#, r#","c.safetensors""#);
+    std::fs::write(scratch.0.join("lens-manifest.json"), unnamed).expect("w");
+    let manifest = weaver_analysis::read_manifest(&lens).expect("manifest");
+    assert!(
+        matches!(weaver_analysis::verify_weights(&model, &manifest), Err(LensRefusal::ShardUnnamed { ref shard }) if shard == "b.safetensors")
+    );
+
+    // The two shapes crossing refuse before a byte is hashed.
+    let one = weaver_analysis::sha256_hex_of_file(&model.join("a.safetensors")).expect("a");
+    std::fs::write(scratch.0.join("lens-manifest.json"), format!(r#"{{"lens":"jacobian_lens_m-bf16.safetensors","fitted_for":{{"model":"/m","model_safetensors_sha256":"{one}"}},"lens_shape":{{"d_model":2,"source_layers":[0]}}}}"#)).expect("w");
+    let manifest = weaver_analysis::read_manifest(&lens).expect("manifest");
+    assert!(matches!(
+        weaver_analysis::verify_weights(&model, &manifest),
+        Err(LensRefusal::WeightsShapeDisagrees { .. })
+    ));
+    assert_eq!(
+        weaver_analysis::verify_weights(&model.join("a.safetensors"), &manifest)
+            .expect("one file, one digest")
+            .len(),
+        1
     );
 }
