@@ -297,7 +297,20 @@ fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
     unembedding
         .logits_rows(&normalized, 0, &mut single)
         .expect("every row fits the head");
-    // The box's own split agrees too.
+    assert_eq!(threaded.len(), vocabulary);
+    let differing = threaded
+        .iter()
+        .zip(&single)
+        .enumerate()
+        .filter(|(_, (a, b))| a.to_bits() != b.to_bits())
+        .map(|(token, _)| token)
+        .collect::<Vec<_>>();
+    assert!(
+        differing.is_empty(),
+        "rows that moved under the split: {differing:?}"
+    );
+    // The box's own split agrees too, judged after the named assertion so
+    // a perturbation fails on the claim the watch exists for.
     assert_eq!(unembedding.logits(&residual).expect("width"), threaded);
     // And a range past the head, or a residual of the wrong width, refuses
     // rather than summing a prefix.
@@ -311,18 +324,6 @@ fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
         unembedding
             .logits_rows(&normalized[..width - 1], 0, &mut single)
             .is_none()
-    );
-    assert_eq!(threaded.len(), vocabulary);
-    let differing = threaded
-        .iter()
-        .zip(&single)
-        .enumerate()
-        .filter(|(_, (a, b))| a.to_bits() != b.to_bits())
-        .map(|(token, _)| token)
-        .collect::<Vec<_>>();
-    assert!(
-        differing.is_empty(),
-        "rows that moved under the split: {differing:?}"
     );
     let _ = std::fs::remove_dir_all(&scratch);
 }
