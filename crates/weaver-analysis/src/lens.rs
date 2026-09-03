@@ -277,9 +277,9 @@ impl Unembedding {
                     detail: format!("no final norm: {error}"),
                 })?;
         let shape = head.shape().to_vec();
-        if shape.len() != 2 {
+        if shape.len() != 2 || shape[0] == 0 {
             return Err(LensRefusal::ArtifactUnreadable {
-                detail: format!("the unembedding is not a matrix: {shape:?}"),
+                detail: format!("the unembedding is not a matrix with rows: {shape:?}"),
             });
         }
         let norm_values = f32_of(norm.data(), norm.dtype())?;
@@ -312,24 +312,36 @@ impl Unembedding {
     /// The logits for one residual: normalize, then project. Returns
     /// `None` where the residual is not this model's width.
     pub fn logits(&self, residual: &[f32]) -> Option<Vec<f32>> {
+        let workers = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(1);
+        self.logits_with_workers(residual, workers)
+    }
+
+    /// The logits with the split stated: `workers` row ranges, so a watch
+    /// can force a real partition whatever the box reports.
+    ///
+    /// **The head is applied across the cores by disjoint row ranges**, per
+    /// Spec section 5: every row's sum still runs in one thread in one
+    /// order, so the logits are the single-thread reading's to the bit, and
+    /// the exactness the compare rests on is untouched. The standard
+    /// library's scoped threads, because the dependency set is four crates
+    /// and this is not a reason to make it five.
+    pub fn logits_with_workers(&self, residual: &[f32], workers: usize) -> Option<Vec<f32>> {
         let normalized = self.normalized(residual)?;
         let mut logits = vec![0.0f32; self.vocabulary];
-        // **The head is applied across the cores by disjoint row ranges**,
-        // per Spec section 5: every row's sum still runs in one thread in
-        // one order, so the logits are the single-thread reading's to the
-        // bit, and the exactness the compare rests on is untouched. The
-        // standard library's scoped threads, because the dependency set is
-        // four crates and this is not a reason to make it five.
-        let threads = std::thread::available_parallelism()
-            .map(|n| n.get())
-            .unwrap_or(1)
-            .clamp(1, self.vocabulary.max(1));
-        let rows_per = self.vocabulary.div_ceil(threads);
+        // A head has rows, judged at `open`, so the chunk is never empty.
+        let workers = workers.clamp(1, self.vocabulary.max(1));
+        let rows_per = self.vocabulary.div_ceil(workers).max(1);
         std::thread::scope(|scope| {
             for (chunk, out) in logits.chunks_mut(rows_per).enumerate() {
                 let first = chunk * rows_per;
                 let normalized = &normalized;
-                scope.spawn(move || self.logits_rows(normalized, first, out));
+                scope.spawn(move || {
+                    // The ranges are this function's own, so the rows fit.
+                    self.logits_rows(normalized, first, out)
+                        .expect("a chunk of the head's own rows fits the head");
+                });
             }
         });
         Some(logits)
@@ -337,8 +349,14 @@ impl Unembedding {
 
     /// The logits for the rows `first..first + out.len()`, each row's dot
     /// product summed in index order by the one thread that owns it. The
-    /// single-thread reading is this over every row at once.
-    pub fn logits_rows(&self, normalized: &[f32], first: usize, out: &mut [f32]) {
+    /// single-thread reading is this over every row at once. `None` where
+    /// the residual is not this model's width or the rows run past the
+    /// head: a zip over a short residual would sum a prefix and call it a
+    /// logit, which is the shape of defect the fault rule forbids.
+    pub fn logits_rows(&self, normalized: &[f32], first: usize, out: &mut [f32]) -> Option<()> {
+        if normalized.len() != self.width || first.checked_add(out.len())? > self.vocabulary {
+            return None;
+        }
         for (offset, slot) in out.iter_mut().enumerate() {
             let base = (first + offset) * self.width;
             *slot = self.embedding[base..base + self.width]
@@ -347,6 +365,7 @@ impl Unembedding {
                 .map(|(e, h)| e * h)
                 .sum();
         }
+        Some(())
     }
 
     /// The normalized residual the head is applied to: the family's RMS

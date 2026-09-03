@@ -286,10 +286,32 @@ fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
     .expect("write");
 
     let unembedding = weaver_analysis::Unembedding::open(&weights, 1e-6).expect("weights");
-    let threaded = unembedding.logits(&residual).expect("width");
+    // **The split is forced, not left to the box**: seven workers over 301
+    // rows is a real partition with an uneven last chunk whatever
+    // `available_parallelism` reports here.
+    let threaded = unembedding
+        .logits_with_workers(&residual, 7)
+        .expect("width");
     let normalized = unembedding.normalized(&residual).expect("width");
     let mut single = vec![0.0f32; vocabulary];
-    unembedding.logits_rows(&normalized, 0, &mut single);
+    unembedding
+        .logits_rows(&normalized, 0, &mut single)
+        .expect("every row fits the head");
+    // The box's own split agrees too.
+    assert_eq!(unembedding.logits(&residual).expect("width"), threaded);
+    // And a range past the head, or a residual of the wrong width, refuses
+    // rather than summing a prefix.
+    let mut past = vec![0.0f32; 2];
+    assert!(
+        unembedding
+            .logits_rows(&normalized, vocabulary - 1, &mut past)
+            .is_none()
+    );
+    assert!(
+        unembedding
+            .logits_rows(&normalized[..width - 1], 0, &mut single)
+            .is_none()
+    );
     assert_eq!(threaded.len(), vocabulary);
     let differing = threaded
         .iter()
