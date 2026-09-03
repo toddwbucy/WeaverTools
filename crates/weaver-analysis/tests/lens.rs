@@ -1,5 +1,6 @@
 //! conforms: analysis-control-gates-the-reading
 //! conforms: analysis-captures-compare-exactly
+//! conforms: analysis-threaded-head-is-bit-identical
 //!
 //! The reading's watches, per `weaver-analysis-Spec` sections 5 and 6. The
 //! fixtures are the real records of 2026-09-01: the certified column
@@ -231,4 +232,75 @@ fn the_digest_is_the_standard() {
         weaver_analysis::sha256_hex(b""),
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     );
+}
+
+/// **The head across the cores is the head on one core, to the bit**, per
+/// Spec section 5: the rows are split across scoped threads and each row's
+/// sum runs in one order, so no logit moves. A vocabulary wider than the
+/// box's thread count, so the split is a real one, and values the rows
+/// cannot all share, so a row landing under the wrong token would show.
+///
+/// Perturbation: offset each chunk's first row by one and the rows shift
+/// under their tokens. Watched under exactly that change.
+#[test]
+fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
+    let scratch = std::env::temp_dir().join(format!("weaver-analysis-head-{}", std::process::id()));
+    std::fs::create_dir_all(&scratch).expect("scratch");
+    let (vocabulary, width) = (301usize, 8usize);
+    // A fixed generator, so the fixture is the same on every run and no
+    // two rows agree.
+    let mut state = 0x9E37_79B9u32;
+    let mut next = || {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        (state as f32 / u32::MAX as f32) * 2.0 - 1.0
+    };
+    let head: Vec<f32> = (0..vocabulary * width).map(|_| next()).collect();
+    let norm: Vec<f32> = (0..width).map(|_| next()).collect();
+    let residual: Vec<f32> = (0..width).map(|_| next()).collect();
+    let bytes =
+        |values: &[f32]| -> Vec<u8> { values.iter().flat_map(|v| v.to_le_bytes()).collect() };
+    let (head_bytes, norm_bytes) = (bytes(&head), bytes(&norm));
+    let views = vec![
+        (
+            "lm_head.weight",
+            safetensors::tensor::TensorView::new(
+                safetensors::Dtype::F32,
+                vec![vocabulary, width],
+                &head_bytes,
+            )
+            .expect("view"),
+        ),
+        (
+            "model.norm.weight",
+            safetensors::tensor::TensorView::new(safetensors::Dtype::F32, vec![width], &norm_bytes)
+                .expect("view"),
+        ),
+    ];
+    let weights = scratch.join("m.safetensors");
+    std::fs::write(
+        &weights,
+        safetensors::serialize(views, None).expect("serialize"),
+    )
+    .expect("write");
+
+    let unembedding = weaver_analysis::Unembedding::open(&weights, 1e-6).expect("weights");
+    let threaded = unembedding.logits(&residual).expect("width");
+    let normalized = unembedding.normalized(&residual).expect("width");
+    let mut single = vec![0.0f32; vocabulary];
+    unembedding.logits_rows(&normalized, 0, &mut single);
+    assert_eq!(threaded.len(), vocabulary);
+    let differing = threaded
+        .iter()
+        .zip(&single)
+        .enumerate()
+        .filter(|(_, (a, b))| a.to_bits() != b.to_bits())
+        .map(|(token, _)| token)
+        .collect::<Vec<_>>();
+    assert!(
+        differing.is_empty(),
+        "rows that moved under the split: {differing:?}"
+    );
+    let _ = std::fs::remove_dir_all(&scratch);
 }

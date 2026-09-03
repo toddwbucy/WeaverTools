@@ -4,6 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-03, the head is applied across the cores. Section 5
+states that the unembedding's rows are split across scoped threads with
+each row summed in one order, so the reading is bit-identical to the
+single-thread one, and the claim gains its record,
+`analysis-threaded-head-is-bit-identical`. Forced by the 8B, whose
+control over two thousand positions took fifteen minutes on one core.
 **Revised:** 2026-09-02, the reading drains the stream. Section 3 states
 that the analyst's sink input carries its shape, so a pipe elects the
 discard and a file declines it, and section 5 states how a reading is
@@ -547,7 +553,24 @@ the column came from, then the model's own final norm and unembedding, per
 **The weights this crate reads for that step are the artifact's own**, the
 same safetensors the manifest's hash identifies, so the reading needs no
 inference runtime: a matrix multiply, a norm, and a second multiply are
-the whole of it.
+the whole of it. **The second multiply is applied across the cores by
+disjoint row ranges**, as of 2026-09-03: the head is a hundred and fifty
+thousand rows against one normalized residual, and each row's sum runs in
+one thread in index order, so the logits are the single-thread reading's
+to the bit and the exactness section 6's compare rests on is untouched by
+the parallelism. The threads are the standard library's, scoped, because
+section 2's dependency set is four crates and speed is not a reason to
+make it five.
+
+```graph
+node: analysis-threaded-head-is-bit-identical
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-threaded-head-is-bit-identical
+```
 
 **The control precedes every reading and gates it.** At the final layer,
 with no transport, the model's own unembedding must rank the token each

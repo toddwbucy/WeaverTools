@@ -1,4 +1,5 @@
 //! conforms: analysis-control-gates-the-reading
+//! conforms: analysis-threaded-head-is-bit-identical
 //!
 //! The lens artifact, loaded and applied, per `weaver-analysis-Spec`
 //! sections 3 and 5. The manifest is judged whole before the file is
@@ -311,26 +312,59 @@ impl Unembedding {
     /// The logits for one residual: normalize, then project. Returns
     /// `None` where the residual is not this model's width.
     pub fn logits(&self, residual: &[f32]) -> Option<Vec<f32>> {
+        let normalized = self.normalized(residual)?;
+        let mut logits = vec![0.0f32; self.vocabulary];
+        // **The head is applied across the cores by disjoint row ranges**,
+        // per Spec section 5: every row's sum still runs in one thread in
+        // one order, so the logits are the single-thread reading's to the
+        // bit, and the exactness the compare rests on is untouched. The
+        // standard library's scoped threads, because the dependency set is
+        // four crates and this is not a reason to make it five.
+        let threads = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(1)
+            .clamp(1, self.vocabulary.max(1));
+        let rows_per = self.vocabulary.div_ceil(threads);
+        std::thread::scope(|scope| {
+            for (chunk, out) in logits.chunks_mut(rows_per).enumerate() {
+                let first = chunk * rows_per;
+                let normalized = &normalized;
+                scope.spawn(move || self.logits_rows(normalized, first, out));
+            }
+        });
+        Some(logits)
+    }
+
+    /// The logits for the rows `first..first + out.len()`, each row's dot
+    /// product summed in index order by the one thread that owns it. The
+    /// single-thread reading is this over every row at once.
+    pub fn logits_rows(&self, normalized: &[f32], first: usize, out: &mut [f32]) {
+        for (offset, slot) in out.iter_mut().enumerate() {
+            let base = (first + offset) * self.width;
+            *slot = self.embedding[base..base + self.width]
+                .iter()
+                .zip(normalized)
+                .map(|(e, h)| e * h)
+                .sum();
+        }
+    }
+
+    /// The normalized residual the head is applied to: the family's RMS
+    /// form, exposed so a watch can take the single-thread reading through
+    /// `logits_rows` and hold the threaded one to it.
+    pub fn normalized(&self, residual: &[f32]) -> Option<Vec<f32>> {
         if residual.len() != self.width {
             return None;
         }
         let mean_square = residual.iter().map(|x| x * x).sum::<f32>() / self.width as f32;
         let scale = 1.0 / (mean_square + self.epsilon).sqrt();
-        let normalized: Vec<f32> = residual
-            .iter()
-            .zip(&self.norm)
-            .map(|(x, w)| x * scale * w)
-            .collect();
-        let mut logits = vec![0.0f32; self.vocabulary];
-        for (token, slot) in logits.iter_mut().enumerate() {
-            let base = token * self.width;
-            *slot = self.embedding[base..base + self.width]
+        Some(
+            residual
                 .iter()
-                .zip(&normalized)
-                .map(|(e, h)| e * h)
-                .sum();
-        }
-        Some(logits)
+                .zip(&self.norm)
+                .map(|(x, w)| x * scale * w)
+                .collect(),
+        )
     }
 
     /// How many tokens outrank this one: the rank the control reads, taken
