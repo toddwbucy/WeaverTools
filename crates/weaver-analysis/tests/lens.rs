@@ -286,11 +286,12 @@ fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
     .expect("write");
 
     let unembedding = weaver_analysis::Unembedding::open(&weights, 1e-6).expect("weights");
-    // **The split is forced, not left to the box**: seven workers over 301
-    // rows is a real partition with an uneven last chunk whatever
-    // `available_parallelism` reports here.
+    // **The split is forced, not left to the box**: eight workers over 301
+    // rows is seven chunks of 38 and a last of 35, a real partition with an
+    // uneven remainder whatever `available_parallelism` reports here. Seven
+    // divided 301 exactly, which the review caught.
     let threaded = unembedding
-        .logits_with_workers(&residual, 7)
+        .logits_with_workers(&residual, 8)
         .expect("width");
     let normalized = unembedding.normalized(&residual).expect("width");
     let mut single = vec![0.0f32; vocabulary];
