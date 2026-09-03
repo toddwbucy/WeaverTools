@@ -240,8 +240,11 @@ fn the_digest_is_the_standard() {
 /// box's thread count, so the split is a real one, and values the rows
 /// cannot all share, so a row landing under the wrong token would show.
 ///
-/// Perturbation: offset each chunk's first row by one and the rows shift
-/// under their tokens. Watched under exactly that change.
+/// Perturbation: swap the first two chunks' row ranges, which are equal in
+/// size and so stay in bounds, and it fails naming the rows that moved
+/// under their tokens. Reversing every chunk, or offsetting each by one,
+/// runs the uneven last chunk past the head and fails on the range check
+/// instead of on this claim.
 #[test]
 fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
     let scratch = std::env::temp_dir().join(format!("weaver-analysis-head-{}", std::process::id()));
