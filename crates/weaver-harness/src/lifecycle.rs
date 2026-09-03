@@ -2562,6 +2562,111 @@ mod tests {
     /// does, which is what makes the test cheap: the load event and the
     /// prefix precede the forks, so no organ has to run for the record to
     /// be complete at the point this reads it.
+    /// **The load names the member it was handed and the composer serve set**,
+    /// through `enter` itself and not the payload's shape alone, per Spec
+    /// section 6.1's third route: `state_member` is the presence of the end
+    /// on this enter, true with one and false without, and `composer` is what
+    /// the binary handed in, read back with its file and digest so a default
+    /// could not pass as the handed value.
+    ///
+    /// Perturbation: author `state_member: false` regardless of the end, or
+    /// author a compiled composer regardless of what serve set, and this
+    /// fails on the standing case.
+    #[test]
+    fn the_load_names_the_member_it_was_handed_and_the_composer_serve_set() {
+        for standing in [false, true] {
+            let dir = std::env::temp_dir().join(format!(
+                "weaver-harness-named-{}-{standing}",
+                std::process::id()
+            ));
+            std::fs::create_dir_all(&dir).expect("scratch");
+            let socket = dir.join("c.sock");
+            std::fs::remove_file(&socket).ok();
+            let listener = crate::channel::bind_coordination(&socket).expect("bind");
+            let sink_path = dir.join("trace.ndjson");
+            let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+            let mut harness = Harness {
+                coordination: listener,
+                organs: OrganBinaries {
+                    classify: None,
+                    spu: "/nonexistent/weaver-spu".into(),
+                    gate: "/nonexistent/weaver-gate".into(),
+                },
+                parameters: OrganParameters::default(),
+                state: ChannelState::BeforeEnter,
+                composer: Some(weaver_trace::LoopIdentity::file(
+                    "pyworker",
+                    std::path::Path::new("/deployed/loop.py"),
+                    Some("cd".repeat(32)),
+                )),
+            };
+            let payload = weaver_types::EnterPayload {
+                session: SessionId("s-named".into()),
+                run: weaver_types::RunId("r-1".into()),
+                spu_instruction: weaver_types::SpuInstruction {
+                    classify: None,
+                    decoder: weaver_types::DecoderInstruction {
+                        model_binding: weaver_types::ModelBinding {
+                            artifact: weaver_types::ArtifactRef("unreachable".into()),
+                            devices: vec![weaver_types::DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                        field_election: None,
+                        surprisal_election: false,
+                        refeed_permission: false,
+                        column_permission: false,
+                        identity: Vec::new(),
+                        tunable_values: Default::default(),
+                    },
+                },
+                binding: weaver_types::EnterBinding::Serving {
+                    gate_instruction: weaver_types::GateInstruction {
+                        access_rule: weaver_types::AccessRule {
+                            allowed_uids: Default::default(),
+                            allowed_gids: Default::default(),
+                            denied_uids: Default::default(),
+                        },
+                    },
+                },
+                state_election: weaver_types::StateElection {
+                    all_kinds: false,
+                    keys: Vec::new(),
+                },
+            };
+            // The member's end, where it stands: one half of a pair the test
+            // holds, the way admin's spawn hands the harness its half.
+            let held_end = standing.then(|| {
+                let (near, _far) = std::os::unix::net::UnixStream::pair().expect("pair");
+                (OwnedFd::from(near), _far)
+            });
+            let state_end = held_end
+                .as_ref()
+                .map(|(near, _)| near.try_clone().expect("clone"));
+            let mut run = match harness.enter(payload, Some(sink), state_end) {
+                Err(EnterFailure::AfterLoad(run, _)) => run,
+                Ok(_) => panic!("the bogus fan-out cannot succeed"),
+                Err(EnterFailure::BeforeLoad(refusal)) => {
+                    panic!("failed before the load: {refusal:?}")
+                }
+            };
+            let _ = leave(&mut run);
+            drop(run);
+            let held = std::fs::read_to_string(&sink_path).expect("the sink reads back");
+            let load: serde_json::Value =
+                serde_json::from_str(held.lines().next().expect("a load")).expect("parses");
+            assert_eq!(load["kind"], "load");
+            assert_eq!(
+                load["payload"]["state_member"],
+                serde_json::json!(standing),
+                "the member's standing is the end's presence on this enter"
+            );
+            assert_eq!(load["payload"]["composer"]["binary"], "pyworker");
+            assert_eq!(load["payload"]["composer"]["file"], "/deployed/loop.py");
+            assert_eq!(load["payload"]["composer"]["sha256"], "cd".repeat(32));
+            let _ = std::fs::remove_dir_all(&dir);
+        }
+    }
+
     #[test]
     fn the_entered_identity_reaches_the_record() {
         let dir = std::env::temp_dir().join(format!(

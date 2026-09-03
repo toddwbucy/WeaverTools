@@ -632,11 +632,13 @@ different prompts from one declaration, so two records that do not say which
 loop composed them cannot be compared, and a reissue whose loop injects the
 session's past is not byte-comparable with a source whose loop did not, which
 is the finding of 2026-09-03 on issues #381 and #382. The state member's
-standing is the same shape one leg over: it was decided by where a binary sat
-on disk and recorded nowhere, and a record taken with the member standing and
-one taken without are not comparable either. **From this act the `load` event
-names both**, the loop by the binary that ran it and the file and digest where
-the loop is a file, and the member by whether its end arrived on the enter.
+standing is the same shape one leg over: admin elects it from where a binary
+sits on disk, per issue #381, and no record said whether it stood, so a record
+taken with the member standing and one taken without are not comparable
+either. **From this act the `load` event names both**, the loop by the binary
+that ran it and the file and digest where the loop is a file, and the member
+not by that election but by whether its end arrived on the enter, which is the
+harness's own knowledge whatever admin decided from.
 Absence means a record older than the act and is read as those facts being
 unrecoverable, never as a default. The record then says what the agent's
 prompts were built by and what its state was built into, which the elections
