@@ -4,6 +4,13 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-03, the weights identity is per file. Section 3's lens
+manifest carries its weights digest in the shape the model on disk takes, a
+map of shard digests for a sharded model, and the reader follows the model's
+index to the shards it needs, verifying each under its own name. The
+identity refusal gains its record, `analysis-lens-refuses-other-weights`,
+which the clause had argued without one. Forced by the 8B, whose head and
+final norm sit in different shards.
 **Revised:** 2026-09-02, the reading drains the stream. Section 3 states
 that the analyst's sink input carries its shape, so a pipe elects the
 discard and a file declines it, and section 5 states how a reading is
@@ -377,13 +384,34 @@ its `model_safetensors_sha256`, and the dtype the fit ran in, `corpus`
 with source, selection rule, and `prompts_sha256`, `estimator` with the
 implementation, its revision, and its parameters, `environment`,
 `fit_seconds`, and `lens_shape` with `d_model`, `source_layers`, and
-`n_prompts`. **A reader
+`n_prompts`. **The weights digest takes the shape the model on disk takes**,
+as of 2026-09-03: one digest for a model kept in one file, and for a sharded
+model a map from each shard's file name to its digest, because the reader
+recomputes against the files it opens and a single digest over a sharded
+model would name a file that does not exist to hash. A reader handed a
+directory follows the model's own index to the shards holding the head and
+the final norm, opens those and nothing else, and verifies each under its
+own name. A shard the map does not name is a file the fit never saw and
+refuses as a wrong digest does, and a map naming no shard refuses as its own
+case, an empty identity verifying nothing. **A reader
 refuses before it reads**: a manifest naming another lens file, other
-weights (the hash recomputed against the model in hand, never trusted from
-the name), a width disagreeing with the loaded matrices, or a
-`source_layers` set the tensor names do not match one for one - a missing
-layer and an extra tensor alike - each refuse
-naming the member, the identity discipline the first-light act exercised.
+weights (the hash recomputed against each file the read opens, never
+trusted from the name, and the identity's shape and the model's crossing
+refusing before a byte is hashed), a width disagreeing with the loaded
+matrices, or a `source_layers` set the tensor names do not match one for one
+- a missing layer and an extra tensor alike - each refuse naming the member,
+the identity discipline the first-light act exercised. The reading names
+the files it verified, so a report rests on weights it can point to.
+
+```graph
+node: analysis-lens-refuses-other-weights
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-lens-refuses-other-weights
+```
 
 **The capture artifact takes no representation here** because it has one
 already: a capture is a certified diagnostic record kept whole, per the
