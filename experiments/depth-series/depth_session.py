@@ -96,14 +96,25 @@ def main():
             entry = {"turn": i, "pages": [os.path.basename(p) for p in group], "input_words": len(body.split()),
                      "seconds": round(dt, 1), "answer_kind": answer.get("kind"), "turn_key": answer.get("turn"), "run": answer.get("run")}
             report["turns"].append(entry); print(json.dumps(entry), flush=True)
+            # **The run is judged on every answer, failures included**: an
+            # answer naming no run cannot be deposited against one, and an
+            # answer naming a different run than the first is another
+            # residency's and ends this one.
+            this_run = answer.get("run")
+            if not this_run:
+                failed = {"turn": i, "answer": answer, "why": "no run named"}; report["failed"] = failed
+                print("FAILED turn", i, "no run named", flush=True); break
+            if run_id is None: run_id = this_run; report["run"] = run_id
+            elif this_run != run_id:
+                failed = {"turn": i, "answer": answer, "why": f"answered from run {this_run}, not {run_id}"}; report["failed"] = failed
+                print("FAILED turn", i, failed["why"], flush=True); break
             # **An unanswered turn ends the run**, recorded as such: a report
             # with fewer valid turns that read as complete would be the
             # defect the deposit exists to prevent.
             if answer.get("kind") != "answered":
-                failed = {"turn": i, "answer": answer}; report["failed"] = failed
+                failed = {"turn": i, "answer": answer, "why": "not answered"}; report["failed"] = failed
                 print("FAILED turn", i, str(answer)[:300], flush=True); break
             answered[answer.get("turn")] = i
-            run_id = run_id or answer.get("run")
     finally:
         print("unload:", base.admin(cfg, "unload"), flush=True)
         open(decl, "w").write(original)

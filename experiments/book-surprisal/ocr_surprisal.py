@@ -80,9 +80,14 @@ for n,pg in pages.items():
     for sp in rare:
         h=span_hit(sp, fp["offsets"], fp["surprisal"], pct)
         if h is not None: rare_hits.append(h)
-res["artifact_words_found"]=arts; res["artifact_hit_rate_at_page_p95"]=round(sum(art_hits)/max(1,len(art_hits)),3); res["artifact_occurrences"]=len(art_hits)
-res["random_word_hit_rate_at_page_p95"]=round(sum(rnd_hits)/max(1,len(rnd_hits)),3); res["random_occurrences"]=len(rnd_hits)
-res["rare_real_word_hit_rate_at_page_p95"]=round(sum(rare_hits)/max(1,len(rare_hits)),3); res["rare_real_word_occurrences"]=len(rare_hits)
+# **An empty control refuses rather than reporting a rate of zero**: the
+# comparison is the point of the run, and a null written as 0.0 would read
+# as a measurement.
+for name, hits in (("artifact", art_hits), ("random", rnd_hits), ("rare real word", rare_hits)):
+    if not hits: raise SystemExit(f"the {name} control scored no occurrence: nothing to compare")
+res["artifact_words_found"]=arts; res["artifact_hit_rate_at_page_p95"]=round(sum(art_hits)/len(art_hits),3); res["artifact_occurrences"]=len(art_hits)
+res["random_word_hit_rate_at_page_p95"]=round(sum(rnd_hits)/len(rnd_hits),3); res["random_occurrences"]=len(rnd_hits)
+res["rare_real_word_hit_rate_at_page_p95"]=round(sum(rare_hits)/len(rare_hits),3); res["rare_real_word_occurrences"]=len(rare_hits)
 res["seconds"]=round(time.time()-t0,1); res["model_revision"]=model_identity.MODEL_REVISION; res["model_safetensors_sha256"]=shards
 res["context"]="each page scored alone, no book context, truncation 2048"
 json.dump(res, open(f"{OUT}/summary.json","w"), indent=1)
