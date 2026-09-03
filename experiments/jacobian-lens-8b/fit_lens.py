@@ -16,6 +16,19 @@ MODEL_DIR = "/bulk-store/models/Qwen--Qwen3-8B"
 # The revision the GGUF rung was converted from, so the two artifacts are
 # one model in two representations rather than two snapshots.
 MODEL_REVISION = "b968826d9c46"
+# **The revision is validated by content, not copied.** These are the five
+# shards' digests at that revision, taken from the calibration fit of
+# 2026-09-03. The shards under MODEL_DIR are hashed before any fitting
+# work and must match this set exactly: a missing shard, an extra one, or
+# a changed byte refuses, so the manifest cannot claim a revision the
+# weights on disk are not.
+PINNED_SHARDS = {
+    "model-00001-of-00005.safetensors": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f",
+    "model-00002-of-00005.safetensors": "5991236cea6fe21f3d43cab0f0e84448734fbbe0789816202989f2ddc9d18282",
+    "model-00003-of-00005.safetensors": "c5185c4794be2d8a9784d5753c9922db38df478ce11f9ed0b415b7304d896836",
+    "model-00004-of-00005.safetensors": "b5ee7de71fbf17db3d5704e0c8f2bc7d005ca9e1d7ca2aeb19827b0cfcaa917a",
+    "model-00005-of-00005.safetensors": "20c2d6366ab85c90786ccdd829cd2b9e7d30ef3b2ebbb998280e7e4014b542ff",
+}
 CORPUS = "/bulk-store/training-datasets/wikitext/wikitext-103-v1/train"
 JLENS_REPO = "/dbpool/experiments/jacobian-lens"
 OUT = "/bulk-store/weaver-testing/jacobian-lens-8b"
@@ -79,6 +92,13 @@ def main():
         )
 
     started = time.time()
+    shards = {os.path.basename(p): sha256(p) for p in sorted(glob.glob(f"{MODEL_DIR}/*.safetensors"))}
+    if not shards:
+        raise SystemExit(f"no safetensors shards under {MODEL_DIR}: nothing to identify")
+    if shards != PINNED_SHARDS:
+        differing = sorted(k for k in set(shards) | set(PINNED_SHARDS) if shards.get(k) != PINNED_SHARDS.get(k))
+        raise SystemExit(f"the shards on disk are not revision {MODEL_REVISION}: {differing}")
+    print(f"weights: {len(shards)} shards, revision {MODEL_REVISION} verified by digest", flush=True)
     prompts = corpus_prompts(args.prompts)
     if len(prompts) != args.prompts:
         raise SystemExit(
@@ -128,10 +148,7 @@ def main():
             # file and hashed it by name. Naming that file here would raise
             # rather than mislead, but a manifest that recorded only the
             # first shard would be the worse failure, so all five are named.
-            "model_safetensors_sha256": {
-                os.path.basename(p): sha256(p)
-                for p in sorted(glob.glob(f"{MODEL_DIR}/*.safetensors"))
-            },
+            "model_safetensors_sha256": shards,
             "dtype": "bfloat16",
         },
         "corpus": {
