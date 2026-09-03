@@ -3,6 +3,11 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-03, the load names its loop and its member. Section
+6.1's load clause gains the two members that are not elections: the
+composing loop, handed to `serve` by the binary that runs it, and the state
+member's standing, the presence of its end on the enter. Per
+`weaver-trace-Spec` section 3 as revised the same date.
 **Revised:** 2026-09-02, second of this date, the last word's pipe travels
 clear of the standard streams. Section 2.2's stderr clause gains the
 equal-descriptor corner of its own placement: a write end arriving at 2 is
@@ -2290,7 +2295,13 @@ declaration 2026-08-25**, per `weaver-trace-Spec` section 3, and this clause nam
 elections and one route until then. The rendered contribution and the measurement splice
 into their own boxes, one member per box per the streaming ruling, and the harness
 checks each spliced member's conformance to its event's accepting shape at the author
-call, the price the splice's opacity is paid at.
+call, the price the splice's opacity is paid at. **Two members of that declaration are
+not elections and arrive by a third route**, as of 2026-09-03: the loop that composes
+the run's prompts is handed to `serve` by the binary that runs it, since only the
+binary knows whether its loop is compiled in or a file it resolved and read, and
+whether the state member stands is the presence of its end on the enter, which this
+crate receives and no one else does. Neither is read from the deployment, so the
+record cannot disagree with what ran.
 
 **The seated identity prefix is authored beside the load, one `message.system` per
 message**, per `weaver-trace-PRD` section 5. The harness is again the party that holds

@@ -387,6 +387,42 @@ pub struct Candidate {
 /// without it, a record holding no field and a record whose election stood
 /// and produced nothing are one absence on disk, a configuration and a
 /// fault wearing one face.
+/// The loop that composes a run's prompts, named on the `load` event per
+/// `weaver-trace-Spec` section 3. `binary` is the worker's own name for
+/// itself. Where the loop is a file the worker reads, `file` is the path it
+/// resolved and `sha256` the digest of that file as read at the load, both
+/// absent for a loop compiled into the binary. The digest is the file at
+/// the load and not at each crossing, a bound the Spec states.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct LoopIdentity {
+    pub binary: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sha256: Option<String>,
+}
+
+impl LoopIdentity {
+    /// A loop compiled into the binary: no file, no digest.
+    pub fn compiled(binary: &str) -> LoopIdentity {
+        LoopIdentity {
+            binary: binary.to_string(),
+            file: None,
+            sha256: None,
+        }
+    }
+
+    /// A loop the binary read from a file, with the digest where the file
+    /// could be read at the load.
+    pub fn file(binary: &str, path: &std::path::Path, sha256: Option<String>) -> LoopIdentity {
+        LoopIdentity {
+            binary: binary.to_string(),
+            file: Some(path.display().to_string()),
+            sha256,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Elections {
     pub residual_readout: bool,
@@ -404,6 +440,18 @@ pub struct Elections {
     /// election existed, where the member is absent altogether: absent,
     /// false, and true are three states and the shape keeps them three.
     pub surprisal: bool,
+    /// Whether the state member's end arrived on the enter, per
+    /// `weaver-trace-Spec` section 3 as of 2026-09-03: the harness's own
+    /// knowledge and never a read of the deployment. **Serialized even
+    /// when false**, for the same three-state reason as the surprisal: a
+    /// record written before the member existed is absent, not false.
+    pub state_member: bool,
+    /// The loop that assembled this run's prompts, per `weaver-trace-Spec`
+    /// section 3: the binary that ran it, and the file and its digest at
+    /// the load where the loop is a file. Two loops assemble different
+    /// prompts from one declaration, so a record that does not name its
+    /// composer cannot be compared with one that does.
+    pub composer: LoopIdentity,
     /// The tee's rule, this crate's own `Election`, written whole on every
     /// `load` the harness authors: every load has an election, a deployment
     /// that elects nothing running under the default, per

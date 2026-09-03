@@ -1,5 +1,6 @@
 //! conforms: trace-one-line-per-event
 //! conforms: trace-load-carries-the-tee-election
+//! conforms: trace-load-names-its-loop-and-its-member
 //! conforms: trace-large-integers-as-decimal-strings
 //! conforms: trace-admission-precedes-fan-out
 //! conforms: trace-one-rendering-two-holders
@@ -68,6 +69,8 @@ fn elections() -> Payload {
         field: None,
         surprisal: false,
         tee: Some(weaver_trace::Election::default()),
+        state_member: false,
+        composer: weaver_trace::LoopIdentity::compiled("test"),
     })
 }
 
@@ -771,6 +774,8 @@ fn the_load_carries_the_tee_election() {
                     paths: vec!["close".into()],
                 }],
             }),
+            state_member: false,
+            composer: weaver_trace::LoopIdentity::compiled("test"),
         })),
     ))
     .unwrap();
@@ -812,6 +817,8 @@ fn a_declined_surprisal_election_is_written_down() {
             field: None,
             surprisal: true,
             tee: Some(weaver_trace::Election::default()),
+            state_member: false,
+            composer: weaver_trace::LoopIdentity::compiled("test"),
         })),
     ))
     .unwrap();
@@ -934,4 +941,65 @@ fn a_submission_past_the_mark_still_answers_ok() {
 
     drop(reader);
     let _ = r.drain();
+}
+
+/// **The `load` event names its loop and its member**, per `weaver-trace-Spec`
+/// section 3 (`trace-load-names-its-loop-and-its-member`): a payload rendered
+/// with a file-backed composer and a standing member reads both back off the
+/// canonical form, the digest and the path included, and a compiled loop
+/// renders no file and no digest rather than empty ones.
+///
+/// Perturbation: skip either member's serialization and this fails, on the
+/// same ground as the tee's watch: a member that serializes is easy to lose
+/// and losing it is silent.
+#[test]
+fn the_load_names_its_loop_and_its_member() {
+    let rendered = serde_json::to_value(weaver_trace::Elections {
+        residual_readout: false,
+        field: None,
+        surprisal: false,
+        tee: Some(weaver_trace::Election::default()),
+        state_member: true,
+        composer: weaver_trace::LoopIdentity::file(
+            "pyworker",
+            std::path::Path::new("/usr/local/libexec/weaver/loops/dev_loop.py"),
+            Some("ab".repeat(32)),
+        ),
+    })
+    .expect("renders");
+    assert_eq!(rendered["state_member"], serde_json::json!(true));
+    assert_eq!(
+        rendered["composer"]["binary"],
+        serde_json::json!("pyworker")
+    );
+    assert_eq!(
+        rendered["composer"]["file"],
+        serde_json::json!("/usr/local/libexec/weaver/loops/dev_loop.py")
+    );
+    assert_eq!(
+        rendered["composer"]["sha256"],
+        serde_json::json!("ab".repeat(32))
+    );
+
+    let compiled =
+        serde_json::to_value(weaver_trace::LoopIdentity::compiled("worker")).expect("renders");
+    assert_eq!(
+        compiled,
+        serde_json::json!({"binary": "worker"}),
+        "no file and no digest, not empty ones"
+    );
+    let absent = serde_json::to_value(weaver_trace::Elections {
+        residual_readout: false,
+        field: None,
+        surprisal: false,
+        tee: None,
+        state_member: false,
+        composer: weaver_trace::LoopIdentity::compiled("worker"),
+    })
+    .expect("renders");
+    assert_eq!(
+        absent["state_member"],
+        serde_json::json!(false),
+        "false is written, not omitted"
+    );
 }

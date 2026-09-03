@@ -122,3 +122,4 @@ pub use record::{Record, RecordFailure};
 pub use spawn::fork_organ;
 pub use state::{Recalled, RunShape, SessionShape, StateSeam};
 pub use tools::ToolResult;
+pub use weaver_trace::LoopIdentity;

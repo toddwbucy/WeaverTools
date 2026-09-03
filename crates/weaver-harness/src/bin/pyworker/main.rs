@@ -114,7 +114,27 @@ fn main() -> ExitCode {
         }
     };
 
-    match harness.serve(&identity, &[], |seat, text| {
+    // **The record names the file and its digest at the load**, per
+    // `weaver-trace-Spec` section 3. The digest is the interpreter's own
+    // `hashlib`, this crate's dependency set holding no digest of its own,
+    // and a file unreadable at the load names no digest - the crossing that
+    // reads it will say so in the journal as it does today.
+    let digest = std::fs::read(&loop_path).ok().and_then(|bytes| {
+        pyo3::Python::attach(|py| -> Option<String> {
+            use pyo3::prelude::*;
+            let hashlib = py.import("hashlib").ok()?;
+            let digest = hashlib
+                .call_method1("sha256", (pyo3::types::PyBytes::new(py, &bytes),))
+                .ok()?;
+            digest
+                .call_method0("hexdigest")
+                .ok()?
+                .extract::<String>()
+                .ok()
+        })
+    });
+    let composer = weaver_harness::LoopIdentity::file("pyworker", &loop_path, digest);
+    match harness.serve(&identity, &[], composer, |seat, text| {
         py_loop::drive(&loop_path, seat, text)
     }) {
         Ok(_) => ExitCode::SUCCESS,

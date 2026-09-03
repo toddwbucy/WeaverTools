@@ -61,6 +61,8 @@ fn unlicensed_message_is_refused_before_submit() {
                 field: None,
                 surprisal: false,
                 tee: Some(weaver_trace::Election::default()),
+                state_member: false,
+                composer: weaver_trace::LoopIdentity::compiled("test"),
             })),
         )
         .expect("load");
@@ -201,6 +203,8 @@ fn timestamps_are_stamped_at_authoring() {
                 field: None,
                 surprisal: false,
                 tee: Some(weaver_trace::Election::default()),
+                state_member: false,
+                composer: weaver_trace::LoopIdentity::compiled("test"),
             })),
         )
         .expect("load");
@@ -261,6 +265,8 @@ fn assembly_sees_only_message_kinds() {
                 field: None,
                 surprisal: false,
                 tee: Some(weaver_trace::Election::default()),
+                state_member: false,
+                composer: weaver_trace::LoopIdentity::compiled("test"),
             })),
         )
         .unwrap();
@@ -370,6 +376,8 @@ fn assembly_is_deterministic() {
                 field: None,
                 surprisal: false,
                 tee: Some(weaver_trace::Election::default()),
+                state_member: false,
+                composer: weaver_trace::LoopIdentity::compiled("test"),
             })),
         )
         .unwrap();
@@ -442,6 +450,8 @@ fn prompt_part_order_is_fixed() {
                 field: None,
                 surprisal: false,
                 tee: Some(weaver_trace::Election::default()),
+                state_member: false,
+                composer: weaver_trace::LoopIdentity::compiled("test"),
             })),
         )
         .unwrap();
@@ -499,6 +509,8 @@ fn fault_payload_is_carried_unchanged() {
                 field: None,
                 surprisal: false,
                 tee: Some(weaver_trace::Election::default()),
+                state_member: false,
+                composer: weaver_trace::LoopIdentity::compiled("test"),
             })),
         )
         .unwrap();
@@ -553,6 +565,8 @@ fn undecodable_message_records_are_counted() {
                 field: None,
                 surprisal: false,
                 tee: Some(weaver_trace::Election::default()),
+                state_member: false,
+                composer: weaver_trace::LoopIdentity::compiled("test"),
             })),
         )
         .unwrap();
@@ -624,6 +638,8 @@ fn an_undecodable_record_refuses_the_seat_and_authors_a_fault() {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .unwrap();

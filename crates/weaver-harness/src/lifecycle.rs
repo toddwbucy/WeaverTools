@@ -417,6 +417,10 @@ pub struct Harness {
     organs: OrganBinaries,
     parameters: OrganParameters,
     state: ChannelState,
+    /// The loop that composes this worker's prompts, handed to `serve` by
+    /// the binary that runs it and named on every load, per
+    /// `weaver-harness-Spec` section 6.1. None until `serve` is entered.
+    composer: Option<weaver_trace::LoopIdentity>,
 }
 
 impl Harness {
@@ -439,6 +443,7 @@ impl Harness {
             organs,
             parameters,
             state: ChannelState::BeforeEnter,
+            composer: None,
         })
     }
 
@@ -462,6 +467,7 @@ impl Harness {
         mut self,
         identity: &str,
         tool_schemas: &[String],
+        composer: weaver_trace::LoopIdentity,
         mut entry: F,
     ) -> Result<Outcome, ChannelFault>
     where
@@ -470,6 +476,9 @@ impl Harness {
             &str,
         ) -> Result<crate::engine::TurnOutcome, crate::engine::TurnError>,
     {
+        // **The composer is the binary's fact and it names it once**, before
+        // any enter can author a load.
+        self.composer = Some(composer);
         // **One connection at a time**, held in the wait rather than blocked
         // on: the listener leaves the read set while a verb's connection is
         // being served, which is what holds the contract's
@@ -1176,6 +1185,7 @@ impl Harness {
         sink: Option<OwnedFd>,
         state_end: Option<OwnedFd>,
     ) -> Result<Run, EnterFailure> {
+        let state_member = state_end.is_some();
         // The sink descriptor arrives on the directive's own message, the
         // state channel's end beside it where the member stands, per the
         // ruling of 2026-08-26. The sink's absence refuses and the end's
@@ -1301,6 +1311,15 @@ impl Harness {
         // no field and a record whose election stood and produced nothing
         // are one absence on disk.
         let elections = weaver_trace::Elections {
+            // **Two members are not elections and arrive by a third route**,
+            // per Spec section 6.1: the member stands where its end arrived
+            // on this enter, and the composer is what the binary handed
+            // `serve`. Neither is read from the deployment.
+            state_member,
+            composer: self
+                .composer
+                .clone()
+                .expect("serve names the composer before any enter"),
             residual_readout: payload.spu_instruction.decoder.residual_readout_election,
             field: payload
                 .spu_instruction
@@ -2219,6 +2238,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -2317,6 +2338,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::BeforeEnter,
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         let payload = weaver_types::EnterPayload {
             session: SessionId("s-election".into()),
@@ -2436,6 +2458,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::BeforeEnter,
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         let payload = weaver_types::EnterPayload {
             session: SessionId("s-refused".into()),
@@ -2561,6 +2584,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::BeforeEnter,
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         let payload = weaver_types::EnterPayload {
             session: SessionId("s-identity".into()),
@@ -2668,6 +2692,7 @@ mod tests {
                 },
                 parameters: OrganParameters::default(),
                 state: ChannelState::BeforeEnter,
+                composer: Some(weaver_trace::LoopIdentity::compiled("test")),
             };
             let payload = weaver_types::EnterPayload {
                 session: SessionId("s-elections".into()),
@@ -2804,6 +2829,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::BeforeEnter,
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         let payload = weaver_types::EnterPayload {
             session: SessionId("diagnostic".into()),
@@ -2909,6 +2935,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::BeforeEnter,
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         let payload = weaver_types::EnterPayload {
             session: SessionId("rehearsal".into()),
@@ -3097,6 +3124,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         harness
             .dispatch_on(
@@ -3149,6 +3177,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         harness.unwind_if_entered(
             weaver_types::FaultCase::OrganDeathObserved,
@@ -3210,6 +3239,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         harness.unwind_if_entered(
             weaver_types::FaultCase::OrganDeathObserved,
@@ -3245,6 +3275,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         assert!(
             harness.grant_seat("identity", &[]).is_none(),
@@ -3263,6 +3294,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(idle)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         assert!(
             harness.grant_seat("identity", &[]).is_some(),
@@ -3334,6 +3366,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         assert!(
             harness.grant_seat("identity", &[]).is_none(),
@@ -3357,6 +3390,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         harness
             .dispatch_on(
@@ -3467,6 +3501,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
 
         // The frame stands on the channel before the wake is served, the way
@@ -3567,6 +3602,7 @@ mod tests {
             },
             parameters: OrganParameters::default(),
             state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
         };
         let mut entered = false;
         let mut entry = |_: &mut crate::engine::Ports<'_>, _: &str| {

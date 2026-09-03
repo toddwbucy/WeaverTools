@@ -90,7 +90,14 @@ fn main() -> ExitCode {
     // Loop 0 serves, and the one name that crosses the dev boundary is the
     // entry below: the seat and the parsed request go across, the response
     // content comes back, and nothing else does in either direction.
-    match harness.serve(&identity, &[], dev_loop::drive) {
+    // The loop is compiled into this binary, so the record names the binary
+    // and no file, per `weaver-trace-Spec` section 3.
+    match harness.serve(
+        &identity,
+        &[],
+        weaver_harness::LoopIdentity::compiled("worker"),
+        dev_loop::drive,
+    ) {
         Ok(_) => ExitCode::SUCCESS,
         Err(fault) => {
             eprintln!("worker: service ended below the exchange layer: {fault:?}");
