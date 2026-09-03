@@ -102,18 +102,26 @@ def main():
             # residency's and ends this one.
             this_run = answer.get("run")
             if not this_run:
-                failed = {"turn": i, "answer": answer, "why": "no run named"}; report["failed"] = failed
-                print("FAILED turn", i, "no run named", flush=True); break
-            if run_id is None: run_id = this_run; report["run"] = run_id
+                failed = {"turn": i, "answer": answer, "why": "no run named"}
+                report["failed"] = failed
+                print("FAILED turn", i, "no run named", flush=True)
+                break
+            if run_id is None:
+                run_id = this_run
+                report["run"] = run_id
             elif this_run != run_id:
-                failed = {"turn": i, "answer": answer, "why": f"answered from run {this_run}, not {run_id}"}; report["failed"] = failed
-                print("FAILED turn", i, failed["why"], flush=True); break
+                failed = {"turn": i, "answer": answer, "why": f"answered from run {this_run}, not {run_id}"}
+                report["failed"] = failed
+                print("FAILED turn", i, failed["why"], flush=True)
+                break
             # **An unanswered turn ends the run**, recorded as such: a report
             # with fewer valid turns that read as complete would be the
             # defect the deposit exists to prevent.
             if answer.get("kind") != "answered":
-                failed = {"turn": i, "answer": answer, "why": "not answered"}; report["failed"] = failed
-                print("FAILED turn", i, str(answer)[:300], flush=True); break
+                failed = {"turn": i, "answer": answer, "why": "not answered"}
+                report["failed"] = failed
+                print("FAILED turn", i, str(answer)[:300], flush=True)
+                break
             answered[answer.get("turn")] = i
     finally:
         print("unload:", base.admin(cfg, "unload"), flush=True)
