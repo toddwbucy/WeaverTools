@@ -436,23 +436,30 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         Ok(manifest) => manifest,
         Err(refusal) => return refused(format!("{refusal:?}")),
     };
-    // **The digest reads in bounded chunks**, so identifying a model does
-    // not hold its whole file in memory beside the parse that follows.
-    let digest = match weaver_analysis::sha256_hex_of_file(std::path::Path::new(&weights)) {
-        Ok(digest) => digest,
-        Err(error) => return refused(format!("the weights do not read: {error}")),
+    // **The identity is judged against the files the read will open**, each
+    // digest recomputed in bounded chunks and never trusted from a name: one
+    // file for a model kept whole, each index-named shard for a sharded one.
+    let verified = match weaver_analysis::verify_weights(std::path::Path::new(&weights), &manifest)
+    {
+        Ok(verified) => verified,
+        Err(weaver_analysis::LensRefusal::WeightsDisagree {
+            file,
+            held,
+            manifest,
+        }) => {
+            eprintln!(
+                "{}",
+                serde_json::json!({
+                    "analysis_refusal": "the weights are not the ones the lens was fitted for",
+                    "file": file,
+                    "held": held,
+                    "manifest": manifest,
+                })
+            );
+            return std::process::ExitCode::FAILURE;
+        }
+        Err(refusal) => return refused(format!("{refusal:?}")),
     };
-    if digest != manifest.fitted_for.model_safetensors_sha256 {
-        eprintln!(
-            "{}",
-            serde_json::json!({
-                "analysis_refusal": "the weights are not the ones the lens was fitted for",
-                "held": digest,
-                "manifest": manifest.fitted_for.model_safetensors_sha256,
-            })
-        );
-        return std::process::ExitCode::FAILURE;
-    }
     let lens = match weaver_analysis::Lens::open(lens_file, &manifest) {
         Ok(lens) => lens,
         Err(refusal) => return refused(format!("{refusal:?}")),
@@ -543,6 +550,7 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
         "{}",
         serde_json::json!({
             "control": "unembed(h_final) vs the drawn token",
+            "weights": verified.iter().cloned().collect::<std::collections::BTreeMap<_, _>>(),
             "positions": ranks.len(),
             "top1": top1,
             "top1_rate": (top1 as f64 / ranks.len() as f64 * 1e4).round() / 1e4,

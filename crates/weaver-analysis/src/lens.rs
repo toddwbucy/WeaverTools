@@ -1,5 +1,6 @@
 //! conforms: analysis-control-gates-the-reading
 //! conforms: analysis-threaded-head-is-bit-identical
+//! conforms: analysis-lens-refuses-other-weights
 //!
 //! The lens artifact, loaded and applied, per `weaver-analysis-Spec`
 //! sections 3 and 5. The manifest is judged whole before the file is
@@ -32,9 +33,32 @@ pub struct Manifest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct FittedFor {
     pub model: String,
-    pub model_safetensors_sha256: String,
+    pub model_safetensors_sha256: WeightsDigest,
     #[serde(default)]
     pub dtype: String,
+}
+
+/// The weights' content hash, in the shape the model on disk takes, per
+/// Spec section 3: one digest for a model kept in one file, and for a
+/// sharded model a map from each shard's file name to its digest. **The
+/// shape is the model's and not the manifest author's choice**, because the
+/// reader recomputes against the files it opens, and a single digest over a
+/// sharded model would name a file that does not exist to hash.
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum WeightsDigest {
+    OneFile(String),
+    Sharded(BTreeMap<String, String>),
+}
+
+impl WeightsDigest {
+    /// Every digest the manifest carries, for judging their spelling.
+    pub fn digests(&self) -> Vec<&String> {
+        match self {
+            WeightsDigest::OneFile(digest) => vec![digest],
+            WeightsDigest::Sharded(shards) => shards.values().collect(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -79,11 +103,28 @@ pub enum LensRefusal {
         manifest: u32,
     },
     /// The weights in hand are not the ones the fit ran against, the hash
-    /// recomputed rather than trusted from the name.
+    /// recomputed rather than trusted from the name, and the file named so
+    /// a sharded model says which shard.
     WeightsDisagree {
+        file: String,
         held: String,
         manifest: String,
     },
+    /// The manifest names one file and a directory was handed, or the
+    /// reverse: the identity's shape and the model's disagree before any
+    /// hash is taken.
+    WeightsShapeDisagrees {
+        manifest: String,
+        held: String,
+    },
+    /// A shard the read must open that the manifest's map does not name.
+    /// An unnamed shard is not "unverified", it is a file the fit never
+    /// saw, so it refuses like a wrong digest does.
+    ShardUnnamed {
+        shard: String,
+    },
+    /// A sharded digest naming no shard at all.
+    ShardSetEmpty,
 }
 
 /// The manifest that identifies a lens, derived from the lens's own name:
@@ -123,15 +164,20 @@ pub fn read_manifest(lens: &Path) -> Result<Manifest, LensRefusal> {
     // hashed: the comparison reads the whole file, so a malformed value
     // would cost that read to reach a mismatch it could never avoid, and
     // would name the weights where the manifest was at fault.
-    let digest = &manifest.fitted_for.model_safetensors_sha256;
-    if digest.len() != 64
-        || !digest
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
-    {
-        return Err(LensRefusal::DigestMalformed {
-            digest: digest.clone(),
-        });
+    let digests = manifest.fitted_for.model_safetensors_sha256.digests();
+    if digests.is_empty() {
+        return Err(LensRefusal::ShardSetEmpty);
+    }
+    for digest in digests {
+        if digest.len() != 64
+            || !digest
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err(LensRefusal::DigestMalformed {
+                digest: digest.clone(),
+            });
+        }
     }
     if manifest.lens_shape.source_layers.is_empty() {
         return Err(LensRefusal::LayerSetEmpty);
@@ -239,10 +285,128 @@ impl Lens {
     }
 }
 
+/// The files a read opens for the weights it was handed: the file itself,
+/// or for a directory the shards its own index names as holding the head
+/// and the final norm, and nothing else. **The index is the model's own
+/// statement of where its tensors live**, so following it is reading the
+/// model rather than guessing at it, and a directory without one refuses.
+pub fn shards_for(weights: &Path) -> Result<Vec<PathBuf>, LensRefusal> {
+    if weights.is_file() {
+        return Ok(vec![weights.to_path_buf()]);
+    }
+    if !weights.is_dir() {
+        return Err(LensRefusal::ArtifactUnreadable {
+            detail: format!("{}: neither a file nor a directory", weights.display()),
+        });
+    }
+    let index_path = weights.join("model.safetensors.index.json");
+    let text =
+        std::fs::read_to_string(&index_path).map_err(|error| LensRefusal::ArtifactUnreadable {
+            detail: format!("{}: {error}", index_path.display()),
+        })?;
+    #[derive(Deserialize)]
+    struct Index {
+        weight_map: BTreeMap<String, String>,
+    }
+    let index: Index =
+        serde_json::from_str(&text).map_err(|error| LensRefusal::ArtifactUnreadable {
+            detail: format!("{}: {error}", index_path.display()),
+        })?;
+    let head = index
+        .weight_map
+        .get("lm_head.weight")
+        .or_else(|| index.weight_map.get("model.embed_tokens.weight"))
+        .ok_or_else(|| LensRefusal::ArtifactUnreadable {
+            detail: "the index names no unembedding tensor".to_string(),
+        })?;
+    let norm = index.weight_map.get("model.norm.weight").ok_or_else(|| {
+        LensRefusal::ArtifactUnreadable {
+            detail: "the index names no final norm".to_string(),
+        }
+    })?;
+    let mut shards = vec![head.clone(), norm.clone()];
+    shards.sort();
+    shards.dedup();
+    Ok(shards
+        .into_iter()
+        .map(|shard| weights.join(shard))
+        .collect())
+}
+
+/// The identity judged against the files the read will open, each hash
+/// recomputed against bytes in hand and never trusted from a name. A
+/// one-file digest meets one file, a sharded map meets each opened shard
+/// under its own name, and the two shapes crossing refuse before a byte is
+/// hashed. Returns what was verified, file name and digest, for the record.
+pub fn verify_weights(
+    weights: &Path,
+    manifest: &Manifest,
+) -> Result<Vec<(String, String)>, LensRefusal> {
+    let shards = shards_for(weights)?;
+    let name_of = |path: &Path| -> String {
+        path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string()
+    };
+    let mut verified = Vec::new();
+    match &manifest.fitted_for.model_safetensors_sha256 {
+        WeightsDigest::OneFile(expected) => {
+            if weights.is_dir() {
+                return Err(LensRefusal::WeightsShapeDisagrees {
+                    manifest: "one file".to_string(),
+                    held: "a sharded model".to_string(),
+                });
+            }
+            let held = sha256_hex_of_file(&shards[0]).map_err(|error| {
+                LensRefusal::ArtifactUnreadable {
+                    detail: format!("{}: {error}", shards[0].display()),
+                }
+            })?;
+            if &held != expected {
+                return Err(LensRefusal::WeightsDisagree {
+                    file: name_of(&shards[0]),
+                    held,
+                    manifest: expected.clone(),
+                });
+            }
+            verified.push((name_of(&shards[0]), held));
+        }
+        WeightsDigest::Sharded(map) => {
+            if weights.is_file() {
+                return Err(LensRefusal::WeightsShapeDisagrees {
+                    manifest: "a sharded model".to_string(),
+                    held: "one file".to_string(),
+                });
+            }
+            for shard in &shards {
+                let name = name_of(shard);
+                let expected = map.get(&name).ok_or_else(|| LensRefusal::ShardUnnamed {
+                    shard: name.clone(),
+                })?;
+                let held =
+                    sha256_hex_of_file(shard).map_err(|error| LensRefusal::ArtifactUnreadable {
+                        detail: format!("{}: {error}", shard.display()),
+                    })?;
+                if &held != expected {
+                    return Err(LensRefusal::WeightsDisagree {
+                        file: name,
+                        held,
+                        manifest: expected.clone(),
+                    });
+                }
+                verified.push((name, held));
+            }
+        }
+    }
+    Ok(verified)
+}
+
 /// The model's own final norm and unembedding, read from the same weights
 /// the manifest's hash identifies. **No inference runtime**: the norm is
 /// the family's RMS form and the unembedding is one matrix multiply
-/// against the embedding matrix, which this family ties to its head.
+/// against the head where the model has one and against the embedding
+/// matrix where it ties the two, per the model's own configuration.
 pub struct Unembedding {
     embedding: Vec<f32>,
     norm: Vec<f32>,
@@ -252,37 +416,58 @@ pub struct Unembedding {
 }
 
 impl Unembedding {
-    /// Read the two tensors the readout needs from a model's safetensors.
-    /// The tied-embedding case is the one this family presents: where no
-    /// head tensor stands, the embedding is the head, per the model's own
-    /// configuration.
+    /// Read the two tensors the readout needs from a model's safetensors,
+    /// opening only the files `shards_for` names. Where no head tensor
+    /// stands the embedding is the head, per the model's own configuration,
+    /// which is the tied case the 0.5b presents and the 8B does not.
     pub fn open(weights: &Path, epsilon: f32) -> Result<Unembedding, LensRefusal> {
-        let held = std::fs::read(weights).map_err(|error| LensRefusal::ArtifactUnreadable {
-            detail: format!("{}: {error}", weights.display()),
-        })?;
-        let file = safetensors::SafeTensors::deserialize(&held).map_err(|error| {
-            LensRefusal::ArtifactUnreadable {
-                detail: error.to_string(),
-            }
-        })?;
-        let head = file
-            .tensor("lm_head.weight")
-            .or_else(|_| file.tensor("model.embed_tokens.weight"))
-            .map_err(|error| LensRefusal::ArtifactUnreadable {
-                detail: format!("no unembedding tensor: {error}"),
+        let mut head: Option<(Vec<f32>, Vec<usize>)> = None;
+        let mut embedding: Option<(Vec<f32>, Vec<usize>)> = None;
+        let mut norm_values: Option<Vec<f32>> = None;
+        for shard in shards_for(weights)? {
+            let held = std::fs::read(&shard).map_err(|error| LensRefusal::ArtifactUnreadable {
+                detail: format!("{}: {error}", shard.display()),
             })?;
-        let norm =
-            file.tensor("model.norm.weight")
-                .map_err(|error| LensRefusal::ArtifactUnreadable {
-                    detail: format!("no final norm: {error}"),
+            let file = safetensors::SafeTensors::deserialize(&held).map_err(|error| {
+                LensRefusal::ArtifactUnreadable {
+                    detail: format!("{}: {error}", shard.display()),
+                }
+            })?;
+            if head.is_none()
+                && let Ok(tensor) = file.tensor("lm_head.weight")
+            {
+                head = Some((
+                    f32_of(tensor.data(), tensor.dtype())?,
+                    tensor.shape().to_vec(),
+                ));
+            }
+            if embedding.is_none()
+                && let Ok(tensor) = file.tensor("model.embed_tokens.weight")
+            {
+                embedding = Some((
+                    f32_of(tensor.data(), tensor.dtype())?,
+                    tensor.shape().to_vec(),
+                ));
+            }
+            if norm_values.is_none()
+                && let Ok(tensor) = file.tensor("model.norm.weight")
+            {
+                norm_values = Some(f32_of(tensor.data(), tensor.dtype())?);
+            }
+        }
+        let (head_values, shape) =
+            head.or(embedding)
+                .ok_or_else(|| LensRefusal::ArtifactUnreadable {
+                    detail: "no unembedding tensor in the files opened".to_string(),
                 })?;
-        let shape = head.shape().to_vec();
+        let norm_values = norm_values.ok_or_else(|| LensRefusal::ArtifactUnreadable {
+            detail: "no final norm in the files opened".to_string(),
+        })?;
         if shape.len() != 2 || shape[0] == 0 {
             return Err(LensRefusal::ArtifactUnreadable {
                 detail: format!("the unembedding is not a matrix with rows: {shape:?}"),
             });
         }
-        let norm_values = f32_of(norm.data(), norm.dtype())?;
         // The norm is applied elementwise across the width, and a zip over
         // a short one would normalize a prefix and leave the rest raw -
         // silently, which is the shape of defect the fault rule forbids.
@@ -293,7 +478,7 @@ impl Unembedding {
             });
         }
         Ok(Unembedding {
-            embedding: f32_of(head.data(), head.dtype())?,
+            embedding: head_values,
             norm: norm_values,
             epsilon,
             vocabulary: shape[0],
