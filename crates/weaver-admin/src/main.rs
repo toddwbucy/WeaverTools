@@ -410,7 +410,17 @@ fn take_inventory(
             .worker
             .parent()
             .map(|directory| directory.join("weaver-state"))
-            .filter(|binary| binary.exists()),
+            // A binary and not a path: a directory or an unexecutable file
+            // under that name would pass an existence look and fail at the
+            // spawn, the leg then down under a declaration that never
+            // declined it, which is the #381 class this rule exists to
+            // refuse at the inventory.
+            .filter(|binary| {
+                use std::os::unix::fs::PermissionsExt;
+                std::fs::metadata(binary)
+                    .map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+                    .unwrap_or(false)
+            }),
         store_socket: config.state_store_socket.clone(),
     };
     inventory::take_inventory(agent, &source, &config.allow_list, &boundary)

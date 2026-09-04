@@ -100,22 +100,37 @@ fn with_pairs(
     client: &mut Client,
     rows: Vec<postgres::Row>,
 ) -> Result<Vec<RecalledEvent>, CustodyFault> {
+    // One read for every event's pairs rather than one per event: the
+    // answer is a session's worth of rows and a round trip per event would
+    // charge the ask for its own length. Grouped by event on this side, the
+    // pairs of one event kept in the order the store returns them, which
+    // the answer renders as a map and so does not depend on.
+    let ids: Vec<i64> = rows.iter().map(|row| row.get(0)).collect();
+    let mut pairs_by_event: std::collections::HashMap<i64, Vec<(String, String)>> =
+        std::collections::HashMap::with_capacity(ids.len());
+    for pair in client
+        .query(
+            "SELECT event_id, key, value FROM field WHERE event_id = ANY($1) ORDER BY event_id",
+            &[&ids],
+        )
+        .map_err(unavailable)?
+    {
+        let event_id: i64 = pair.get(0);
+        pairs_by_event
+            .entry(event_id)
+            .or_default()
+            .push((pair.get(1), pair.get(2)));
+    }
     let mut out = Vec::with_capacity(rows.len());
     for row in rows {
         let id: i64 = row.get(0);
-        let pairs: Vec<(String, String)> = client
-            .query("SELECT key, value FROM field WHERE event_id = $1", &[&id])
-            .map_err(unavailable)?
-            .into_iter()
-            .map(|r| (r.get(0), r.get(1)))
-            .collect();
         out.push(RecalledEvent {
             session: row.get(1),
             run: row.get(2),
             turn: row.get(3),
             kind: row.get(4),
             sequence: row.get(5),
-            pairs,
+            pairs: pairs_by_event.remove(&id).unwrap_or_default(),
         });
     }
     Ok(out)
