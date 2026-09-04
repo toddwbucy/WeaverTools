@@ -2,6 +2,14 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, the store is a port and two engines stand. Section 3
+declares `Store` and its two implementations, the embedded engine of the
+2026-08-18 ruling and the service engine, each behind a feature, and the
+record `state-store-is-a-port`. Section 1's dependency clause takes one client
+per engine, section 2's territory holds the file under one engine and only the
+door's name under the other, and sections 4, 5, and 6 stop speaking of the
+file where they meant the store. Per `weaver-state-PRD` section 4 as revised
+this date and issue #411.
 **Revised:** 2026-08-28, the preload name's mode is elected rather than
 inherited. Section 4 states that the bind happens under a umask denying every
 bit outside the owner, so the name lands at `0700` rather than at whatever
@@ -133,21 +141,32 @@ other internal crate: the floor's wire trio does not cross this seam, the
 distillate being the seam's own vocabulary per the contract, so the floor
 links would be dependencies nothing here consumes.
 
-**Dependencies, external.** `rusqlite` with its bundled engine, so the store's
-version is the build's fact rather than the host's, pinned by the lock file
-like every dependency. `serde_json` for the canonical event JSON the ingest
-reads. `nix` for the preload door's credential check and for the descriptor
-handling both doors require. Nothing else: no async runtime, no logging
+**Dependencies, external.** One per engine, each behind a feature named for
+its engine so a build compiles the integrations it deploys and no other, per
+the ruling of 2026-09-04 that the store is a port: `rusqlite` with its bundled
+engine for the embedded store, so that store's version is the build's fact
+rather than the host's, and `postgres`, the synchronous client, for the service
+store, so no async runtime enters with it. Both pinned by the lock file like
+every dependency. `serde_json` for the canonical event JSON the ingest reads.
+`nix` for the preload door's credential check and for the descriptor handling
+both doors require. Nothing else: no async runtime, no logging
 crate, no HTTP, per the corpus's standing refusals.
 
 ## 2. The process and its territory
 
 The member runs under its own account, owning one subdirectory in the
 operator-side territory where the session record lives, per the charter's
-custody ruling: the store opens by path and keeps sibling files, so custody
-is by ownership, mode-locked against the agent's uid. The subdirectory holds
-the store's file and whatever siblings the engine keeps beside it, and
-nothing else writes there.
+custody ruling. Under the embedded engine the store opens by path in that
+subdirectory and keeps sibling files, so custody is by ownership, mode-locked
+against the agent's uid, and nothing else writes there. Under the service
+engine the subdirectory holds the preload door's name and nothing of the
+store, the store being reached by a connection the member alone holds: it
+dials the store's unix socket under its own account, the store's peer
+authentication maps that account to the role the binding declares, and the
+agent's uid maps to no role, which is the second gate of the charter's section
+4 standing where the first did not already refuse. The engine and, for the
+service engine, the socket, the database, and the role arrive on the member's
+vector from the binding, per `weaver-admin-Spec` section 6.
 
 The first door's end arrives with the process, per the operator's ruling of
 2026-08-26: admin creates the pair at the spawn and this member inherits its
@@ -170,10 +189,30 @@ binds under this member's own territory, the credential judgment of section
 
 ## 3. The store
 
-**The engine is sqlite, per the operator's representation ruling of
-2026-08-18**, carried in the charter with its measured grounds. The file is
-`state.sql` in the member's territory, opened or created at load, reopened by
-later loads of the same session, and retired with the session.
+**The store is a port and the engine is elected, per the operator's ruling of
+2026-09-04.** `src/store.rs` declares `Store`, the port: open under the
+binding's election, retire a session's prior holdings, land a distillate
+whole, build the elected indexes, and answer the three asks. Every engine
+implements it whole and the ingest and serve of section 4 speak to the port
+and never to an engine, so the seam's traffic is the same whatever engine
+answers. Two engines stand, one module each behind its feature: `Sqlite`, the
+embedded engine of the 2026-08-18 ruling, its file `state.sql` in the member's
+territory, opened or created at load, reopened by later loads of the same
+session, and retired with the session, and `Postgres`, the service engine, one
+database per agent named by the binding, reached over the store's unix socket
+under the member's account. The port is the one place a query language is
+spelled, each engine spelling its own dialect of the same two-table shape
+below, and a third engine is an implementation of the port in its own act.
+
+```graph
+node: state-store-is-a-port
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-state
+to: state-store-is-a-port
+```
 
 **Two tables, and the shape is provisional with a stated trigger.** The
 distillate lands as an event row and its elected pairs:
@@ -235,10 +274,12 @@ to: state-indexes-built-at-load
 
 **Durability yields to speed, and the charter is the license.** The
 derivative is rebuildable from the record and the session never depends on
-it, per the loss clause, so the store runs with synchronization relaxed and
-the journal in memory, the crash cost being a rebuild or an empty stand
-rather than a lost account. The exact pragmas are the code act's, under this
-election.
+it, per the loss clause, so the embedded engine runs with synchronization
+relaxed and the journal in memory, the crash cost being a rebuild or an empty
+stand rather than a lost account. The exact pragmas are the code act's, under
+this election. The service engine's durability is the store's own and this
+crate asks nothing of it, its rows being the same derivative under the same
+license.
 
 ## 4. The ingest and the serve
 
@@ -283,12 +324,13 @@ answering across every session a store file had ever held, and the answers
 looked perfectly well formed - a shape ask reporting a lifetime's runs as
 this session's, and a recall reaching a fact the operator believed a session
 cut had retired. Nothing surfaced it until a fresh session reported
-twenty-eight earlier runs it never had. **A store file holding more than one
+twenty-eight earlier runs it never had. **A store holding more than one
 session is the normal case rather than the broken one**, sessions outliving
-runs and the file outliving sessions, so the restriction is what makes
-`weaver-state-PRD` section 4's within-a-session boundary a property of the
-answers instead of an assumption about the file. What becomes of an earlier
-session's rows on disk is section 6's open question and deliberately not
+runs and the store outliving sessions under either engine, so the restriction
+is what makes `weaver-state-PRD` section 4's within-a-session boundary a
+property of the answers instead of an assumption about the store. What
+becomes of an earlier session's rows on disk is section 6's open question and
+deliberately not
 settled here, per the operator's ruling of the same date: unreachable is
 what this act delivers, and removal is its own election.
 
@@ -487,7 +529,11 @@ and the dead-peer clause watched by killing the member mid-run for the
 ingest, and the shape ask answered with exactly what the record shows plus
 the ask against a dead member costing the answer and never the turn for
 the serve. The territory's mode is checkable by the same walk the trace's
-custody was checked by, the agent's uid asked to read the file and refused.
+custody was checked by, the agent's uid asked to read the file and refused,
+and the service engine's second gate by the same walk at the store, the
+agent's uid asked to connect as any role and refused by the store's own
+authentication. The port is review: the ingest and serve are read for any
+engine reached past the port, and there is none.
 
 ## 6. Open elections
 
@@ -501,8 +547,9 @@ against the context-injection loop's real ask per the charter's cell.
   custody performs stays elected ask by ask, because a derivation is named
   by what reads it.
 - **The retirement mechanics.** The session's close retires the holdings,
-  and the act that gives sessions a close in practice elects how the file
-  is removed, sessions today outliving every run this workshop has
+  and the act that gives sessions a close in practice elects how the
+  embedded engine's file is removed and how the service engine's rows are
+  dropped, sessions today outliving every run this workshop has
   produced. **Sharpened 2026-08-20 rather than closed**: the serve
   restriction of section 4 makes an earlier session's holdings unreachable,
   so the charter's boundary now holds in the answers, and what remains open

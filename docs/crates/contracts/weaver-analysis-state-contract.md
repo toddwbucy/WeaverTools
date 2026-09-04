@@ -2,6 +2,9 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, the store and not its file. One phrase, per
+`weaver-state-PRD` section 4 as revised this date: the engine behind the store
+is elected and may hold no file. Nothing crossing this door moves.
 **Revised:** 2026-08-26, second of this date, the seam states its mechanics.
 Two facts the code act of this date elected are pinned where the seam's
 parties read them, per the audit of the same date: the seal's spelling is
@@ -254,7 +257,7 @@ re-preloads from the record it still holds.
   `weaver-trace` keeps its write-only pin.
 - Neither party exposes this seam to the model or to the loop's interior.
 - Neither party persists anything across the session through this seam. The
-  door adds no life to the store's file.
+  door adds no life to the store.
 - State never learns a path. Distillates arrive as content, and everything
   path-shaped was resolved by the driver on its own side of the boundary.
 

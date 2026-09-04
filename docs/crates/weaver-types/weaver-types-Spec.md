@@ -225,6 +225,12 @@ turn's token limit was reached, a third fact the two-case set flattened
 into `Completed`, which issue #218 found from the record's own evidence -
 a capped answer reporting itself complete. The trace's mirror and the
 close's member move in the same act.
+**Revised:** 2026-09-04, the store election reaches the declaration.
+`AgentConfig` gains `state_store`, optional, its absence meaning the embedded
+engine per `weaver-state-PRD` section 4 as revised this date, its `engine`
+closed at three cases, and `database` and `role` required under the service
+engine and refused under the other two. `EnterPayload` carries it resolved
+beside the state election. Per issue #411.
 **Revised:** 2026-08-19, the tee's election reaches the declaration.
 `AgentConfig` gains `state_election`, the one optional field this Spec
 carries, its absence meaning the ruled default election per
@@ -535,7 +541,20 @@ pub struct AgentConfig {
     pub gate_instruction: Option<GateInstruction>,
     pub trace_sink: TraceSink,
     pub state_election: Option<StateElection>,
+    pub state_store: Option<StateStore>,
     pub loop_file: Option<PathBuf>,
+}
+
+pub struct StateStore {
+    pub engine: StoreEngine,
+    pub database: Option<String>,
+    pub role: Option<String>,
+}
+
+pub enum StoreEngine {
+    None,
+    Sqlite,
+    Postgres,
 }
 
 pub struct StateElection {
@@ -790,7 +809,29 @@ Present, it names the loop file the agent's worker runs, the loop being a
 member of that agent's harness and unique to it per the same section's ruling
 of 2026-08-20, and it reaches the worker in the unit's argument vector per
 `weaver-admin-Spec` section 6 rather than in any exchange, because no exchange
-carries a path. `binding_kind` may be absent because `weaver-types-PRD`
+carries a path. `state_store` may be absent because `weaver-state-PRD` section
+4 rules what absence means, the embedded engine, so a declaration written
+before the member existed still parses and still means what it meant, and the
+state member stands. Present, its `engine` names which port the deployment
+elects, as of 2026-09-04: `none` declares that no member stands, which is a
+deployment's real posture and the one the instrument-validation matrices ran
+under, `sqlite` the embedded engine, and `postgres` the service engine, for
+which `database` and `role` are required and for the other two are refused if
+present, the same cross-field rule admin holds for the gate instruction, judged
+at inventory before a process exists. **`none` beside a present
+`state_election` is refused by the same rule**: the election says what the tee
+sends to the
+member, and a declaration that elects what to send to a member it declined is
+malformed rather than surplus, refused `ConfigInvalid` naming the election, the
+way a granted permission naming a field is. `none` with the election absent is
+whole, the ruled default still written on the load event as the record's
+posture, per `weaver-trace-PRD` section 3.1, beside a `state_member` of false.
+The three are the binding's members: they
+change only across the load boundary, they ride the enter directive resolved,
+and the load event records them, per `weaver-trace-PRD` section 3.1. The enum
+is closed at three because the state charter charters two engines and the
+absence of a member, and a further engine is a state act before it is a
+variant. `binding_kind` may be absent because `weaver-types-PRD`
 section 2.1 rules what absence means, a serving binding, so a declaration
 written before the member existed still parses and still means what it meant,
 on the same footing as `loop_file` above. The enum is closed at two cases
@@ -1301,6 +1342,7 @@ pub struct EnterPayload {
     pub spu_instruction: SpuInstruction,
     pub binding: EnterBinding,
     pub state_election: StateElection,
+    pub state_store: StateStore,
 }
 
 pub enum EnterBinding {
@@ -1326,6 +1368,17 @@ pub enum FaultCase {
     MessageRecordUndecodable,
 }
 ```
+
+**`state_store` rides the enter resolved, beside the election, as of
+2026-09-04.** The config holds it as an option whose absence means the
+embedded engine, per section 2, and the payload holds it as admin resolved it
+at inventory, so the harness never re-derives an absence and the load event it
+authors names the engine and, under the service engine, the database and role,
+per `weaver-trace-PRD` section 3.1. `database` and `role` are present in the
+resolved value exactly where the engine is the service one, the cross-field
+rule having been judged before any process existed, and the member's own
+vector carries the same three, per `weaver-admin-Spec` section 6, so the two
+parties that need them read one resolution.
 
 **`EnterBinding` is the kind resolved, and a directive disagreeing with its
 kind is unrepresentable rather than refused.** The config holds the kind as

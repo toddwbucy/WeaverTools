@@ -5,6 +5,10 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
+**Revised:** 2026-09-04, the member stands where the declaration says. Section
+2's standing clause takes the store election as the fact that decides whether
+the member starts, a missing binary refusing rather than an absent leg passing
+silently, per issue #381 and `weaver-state-PRD` section 4 as revised this date.
 **Revised:** 2026-08-26, the standing carries the transport. Per the operator's
 ruling of this date, section 2's standing clause gains what the start now
 makes: the socketpair the first door is, one end to the member with its
@@ -249,7 +253,14 @@ operator's territory, the binding kind the inventory settled, and the enter,
 the one exchange the harness's end of the pair can cross, which only this
 crate opens. This crate holds all three at
 that moment and no other party holds any of them, so the member is this
-crate's to start. The agent's resolved identity stood third on this list
+crate's to start. **Whether it starts is the declaration's fact, as of
+2026-09-04**: the store election of `weaver-state-PRD` section 4 says which
+engine the member stands on or that none stands, an absent election meaning
+the embedded engine with the member standing, and a box that cannot stand what
+the declaration elects refuses the load rather than serving without the leg.
+Until that date the member stood where its binary sat beside the worker's,
+recorded nowhere, which issue #381 measured as the cause of a verdict no report
+could explain. The agent's resolved identity stood third on this list
 while the vector carried its uid, and left it with the ruling of 2026-08-26,
 both of that value's uses having died. **It is not the
 worker's unit and does not become one.** The worker is asked of the init system

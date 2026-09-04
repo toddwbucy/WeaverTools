@@ -2,6 +2,17 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, the store is a port and the engine is the deployment's
+election. Section 4 recuts the representation ruling: the seam names asks and
+never a query language, the store holds its one opinion at the engine's port,
+the embedded engine stays as the default an absent election means with its
+2026-08-18 measurement as its ground, and the service engine joins on chapter
+six's shape argument and on who this is built for. Custody becomes the
+engine's, the service engine's wall being two gates and one identity, with the
+engine, the database, and the role members of the binding and the grant
+surface read back at the close. Section 3 states that a persisting substrate is
+not a crossing. Section 5 gains the third-engine cell and the service
+retirement cell. Per issue #411, items 1 and 2.
 **Revised:** 2026-08-26, the first door loses its name. Section 3's seam clause
 recuts per the operator's ruling of this date: the harness channel is a
 socketpair admin creates at the member's spawn, one end inherited and one
@@ -187,7 +198,12 @@ the run, is the boundary, per the operator's ruling of 2026-08-18. The trace
 file already persists across load and unload cycles within one session, and
 the state file persists beside it the same way: an unload retires a run and
 leaves the holdings standing, the next load of the same session reopens them,
-and the close of the session is what retires them. Persistence across
+and the close of the session is what retires them. The service engine keeps
+its rows on the same terms the file does, per the ruling of 2026-09-04: rows
+that stand in a database after a session closes are the same fact as rows that
+stand in a file, and the boundary holds in the answers, every answer bounded to
+the session its opener declared per the contract, so a persisting substrate is
+not a crossing. Persistence across
 sessions is a second return through the same apex door with its own paper,
 and nothing here lays in for it: no export surface a future act would wish
 existed, per the no-reserved-slots rule. The prohibition is on outliving the
@@ -232,41 +248,92 @@ nothing survives the session's close.
 
 What organizing means at this charter's level: the holdings are queryable by
 the facts the record already carries, the run, the turn, the kind, and the
-keys the tee elected. **The representation is ruled**: the operator elected an
-embedded relational store, sqlite, on 2026-08-18, and the election stands on
-this workshop's own measurements rather than on preference, the regime's
-backend comparison having held its registered prediction that an in-process
-query is a function call while a service on loopback pays a round trip per
-ask. The store lives inside this member's process as its internal
-representation, the tee's distillate feeding it and the indexes for the
-elected keys built at load, so extension within a session is rows accumulating
-under standing indexes and extension of the schema is a new load's new
-election. What remains the Spec's: the table and index shapes, the query
-surface, and the dependency's own clause.
+keys the tee elected.
 
-**The file lives beside the trace, in the operator's territory, owned by the
-member's own account.** The operator's ruling of 2026-08-18: the state file
-sits in the per-agent directory on the operator's side where the session
-record already lives, never in the agent's home, because the wall of section
-2 is enforced at the filesystem and the agent's home is the one place the
-agent's uid writes - a state file the agent's uid could read would hand the
-model its own state through an ordinary tool call. The custody diverges from
-the trace's in one named way: the trace is held by descriptor, opened by
-admin and handed down, while an embedded relational store opens by path and
-keeps sibling files beside itself, so the state member holds its territory by
-owning it, a uid of its own over one subdirectory the agent's uid cannot
-enter. The stakes tolerate the divergence, because the derivative is
-rebuildable from the record and the account never depends on it. The path is
-the operator's configuration the way the trace sink's is, and its exact key
-is the deployment's.
+**The store is a port, and the engine behind it is the deployment's election,
+per the operator's ruling of 2026-09-04.** This crate's custody has no opinion
+about which database keeps its rows. The seam to the harness names asks and
+never a query language, which `weaver-harness-state-contract` already holds
+and this ruling makes a rule: what crosses the seam is the same whatever engine
+answers it, and the only place this crate holds an opinion about a database is
+the port that integrates that database, one integration per engine, like a
+plugin. Two engines are chartered, and the declaration elects one per agent.
+**The embedded engine, sqlite, is the default an absent election means**, and
+the election of 2026-08-18 stands as its ground: the regime's backend
+comparison held its registered prediction that an in-process query is a
+function call while a service on loopback pays a round trip per ask, so where
+nothing outside the member needs the rows, the embedded engine is the right
+one and stays. **The service engine, postgres, is elected where the rows are
+worth asking from outside the member's process**, and its ground is two facts
+the embedded engine cannot buy. The first is the shape argument the merged
+document's chapter six makes: a store is worth having when it can be asked,
+and similarity, ranking, a classifier in front of the selection and a reranker
+behind it are cheap against a queryable structure and impossible against a
+flat file, the two holding the same thing and one of them answerable. The
+second is who this is built for: an engineer pulling a cloud application down
+to a local box, where the service store is the thing already on the machine,
+and where holding the level-A problems fixed - the run deterministic, recorded,
+and comparable - is the same substrate that later lets the individuation
+question be explored on the object the engineer already has rather than on a
+rebuilt one. The store is the framework's drawing of a line and not a
+requirement on anyone else's, per the paper's community-instrument position:
+an adopter needs the framework's line and its record, not its store. **A third
+engine is not laid in.** The previous program tied a graph store into its base
+code, and this ruling keeps every engine out of the base by the same port that
+admits the two: a further engine arrives as an integration in its own act, and
+section 5 names that cell. Under either engine the tee's distillate feeds the
+store and the indexes for the elected keys are built at load, so extension
+within a session is rows accumulating under standing indexes and extension of
+the schema is a new load's new election. What remains the Spec's: the port's
+shape, each engine's table and index shapes, the query surface, and each
+dependency's own clause.
 
-**The store is reached through the seam and never as a file.** A database file
-opened from two processes would be a seam crossing a process line without a
-socket, which the first invariant forbids however convenient the driver makes
-it. The harness's speed rides the seam's standing channel, which this workshop has
-measured well below any control loop's cadence, and a caller that someday
-needs faster than the seam is a ruling for that day rather than a shared file
-today.
+**Custody is the engine's, and each engine holds the wall its own way.** The
+wall of section 2 is one requirement: the agent's uid reaches no store, because
+a store the model's uid could read would hand the model its own state through
+an ordinary tool call. **Under the embedded engine the wall is the filesystem**,
+per the operator's ruling of 2026-08-18: the state file sits in the per-agent
+directory on the operator's side where the session record already lives, never
+in the agent's home, which is the one place the agent's uid writes. The custody
+diverges from the trace's in one named way: the trace is held by descriptor,
+opened by admin and handed down, while an embedded store opens by path and
+keeps sibling files beside itself, so the member holds its territory by owning
+it, a uid of its own over one subdirectory the agent's uid cannot enter. The
+stakes tolerate the divergence, because the derivative is rebuildable from the
+record and the account never depends on it. **Under the service engine the wall
+is two gates and one identity**, per the ruling of 2026-09-04. The service gate
+is kernel-class: the store's socket is a unix domain socket, and the member
+dials it under its own account, the peer verified by credential as every
+internal seam's is. It is checkable by looking and moves only by creating a
+different process. The object gate is the store's own access model: the
+database and the role's grants draw what the verified identity may touch. That
+gate is configuration and therefore mobile, so it is disciplined: **the engine,
+the database, and the role are members of the binding**, declared in the
+agent's file, changing only across the load boundary, and named on the load
+event the way every fact that decides a record is. Peer authentication welds
+the object gate to the service gate, the store mapping the member's kernel
+identity to its role, so the object gate's identity is derived from the kernel
+fact rather than asserted a second time, and the agent's uid, mapping to no
+role, is refused at the second gate where it was not already refused at the
+first. **The close reads the boundary back**: the grant surface is read from
+the store's catalog at the enter and re-read at the leave, and the leave event
+carries the reading as unchanged, varied, or unreadable, the envelope the
+confirm drivers already carry for provenance. A grant surface that varied
+mid-session is a boundary move the record must carry and never absorb. The
+territory's path and the store's socket, database, and role are the operator's
+configuration the way the trace sink's is, and their exact keys are the
+declaration's, shaped at `weaver-types-Spec` section 2.
+
+**The store is reached through the seam, never as a file and never as a
+connection.** A database file opened from two processes would be a seam
+crossing a process line without a socket, which the first invariant forbids
+however convenient the driver makes it, and a second connection to the service
+engine from the harness or a loop would be the same crossing with a better
+excuse: the member is the one holder of the engine under either election, and
+the harness asks the member. The harness's speed rides the seam's standing
+channel, which this workshop has measured well below any control loop's
+cadence, and a caller that someday needs faster than the seam is a ruling for
+that day rather than a shared file or a shared connection today.
 
 ## 5. Open cells
 
@@ -285,6 +352,17 @@ today.
   `weaver-types-Spec` section 2, riding the enter directive per
   `weaver-admin-harness-contract`, absent meaning section 4's ruled
   default.
+- **A third engine.** The port admits an engine by an integration of its
+  own, and the previous program's graph store is the one most likely to ask,
+  having been tied into that program's base code. It arrives as a port
+  implementation in its own act, with its own custody clause and its own
+  binding members, and never in the base: the base holds the port and the
+  two engines this workshop runs, per the ruling of 2026-09-04.
+- **The retirement of a session's rows under the service engine.** The
+  embedded engine's cell at `weaver-state-Spec` section 6 asks what a session's
+  close does to the disk. The service engine asks the same of a database that
+  many sessions share, and the answer is elected with the first act that gives
+  sessions a close in practice, the boundary holding in the answers meanwhile.
 - **Who else may ask.** Today the harness is the one peer, and every ask
   arrives through it. Whether a later operator surface reads state directly or
   through an admin verb is a cell for the day such a reader exists, refused

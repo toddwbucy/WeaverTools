@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-04, the store election is judged at the inventory and
+rides the member's vector. Section 4 resolves an absent election to the
+embedded engine and requires the member's binary, refuses a service election
+whose socket, role mapping, or agent refusal the box does not hold, and takes
+`none` as a declared absence, so the leg stands where the declaration says and
+not where a binary happens to sit. Section 6's vector gains the engine and,
+under the service engine, its socket, database, and role. Per issue #411.
 **Revised:** 2026-08-31, second of this date, the census counts what the
 file holds. Per the review seat on PR 393: section 10's totals move from
 thirty-four to thirty-eight and the perturbation count from fourteen to
@@ -783,6 +790,26 @@ from: weaver-admin
 to: admin-existence-checks-repair-nothing
 ```
 
+**The store election is judged here too, as of 2026-09-04.** Every election but
+`none` stands a member, so every election but `none` requires the member's
+binary beside the worker's, and a box that lacks it refuses with
+`BoundaryUnverified` rather than running without a leg the declaration never
+declined: the leg's standing is the declaration's fact and not the directory's,
+per `weaver-state-PRD` section 4 and issue #381, and a missing binary is never
+read as an absent member. Absent, the election resolves to the embedded engine
+under that same requirement. `none` declines the member and requires nothing,
+and refuses a declaration that elects a state election beside it,
+`ConfigInvalid` naming `state-election`, per `weaver-types-Spec` section 2: an
+election with no member to receive it is malformed, not surplus. `postgres`
+requires
+`database` and `role` in the declaration and, on the box, the store's socket
+present under the path this crate's own configuration names, and the walk asks
+the store the two questions the charter's two gates pose: that the member's
+account maps to the declared role and that the agent's uid maps to none, each
+refused with `BoundaryUnverified` and never `ConfigInvalid`, for the reason the
+group case below gives. The grant surface is not judged here, only read, at the
+enter and again at the leave, per `weaver-trace-PRD` section 3.1.
+
 **One check in that list is the second walk's mechanism and is held
 mechanically instead.** The sink path's containing directory is root-owned
 and not searchable by the agent uid, whatever the sink's kind: the agent uid
@@ -1260,7 +1287,10 @@ door rides the vector and no name exists to ride it. The agent's uid retires
 from the vector with both of its uses, the first door judging no credential
 under possession and the preload door admitting the operator principal and
 refusing the rest without knowing the agent by number. The territory is what
-the member needs to open its store. **The preload path is present only where
+the member needs to open the embedded store, and under the service engine the
+vector carries the store's socket, the database, and the role beside it, per
+`weaver-state-Spec` section 2, the engine itself first so the member knows
+which port to stand. **The preload path is present only where
 the resolved kind is diagnostic**, per `weaver-agents-PRD` section 6 as ruled
 2026-08-24, and its absence is a serving load rather than a defect: the
 member binds the preload name only where this vector carries one, so a
