@@ -307,6 +307,10 @@ impl Store for Postgres {
             .query(
                 "SELECT id, session, run, turn, kind, sequence FROM event
                  WHERE session = $1 AND kind = 'message.system' AND turn IS NULL
+                   AND run = (SELECT run FROM event
+                              WHERE session = $1 AND kind = 'message.system'
+                                AND turn IS NULL
+                              ORDER BY id DESC LIMIT 1)
                  ORDER BY id",
                 &[&session],
             )

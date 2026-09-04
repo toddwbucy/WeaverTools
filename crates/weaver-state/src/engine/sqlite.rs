@@ -352,8 +352,10 @@ impl Store for Sqlite {
         ])
     }
 
-    /// The turnless `message.system` rows of the session in landing order,
-    /// with their pairs, per `weaver-state-Spec` section 4's identity ask.
+    /// The turnless `message.system` rows of the session's newest run that
+    /// holds any, in landing order with their pairs, per `weaver-state-Spec`
+    /// section 4's identity ask: every load records the prefix it seated,
+    /// so the one in force is the newest run's.
     fn identity(&self, session: &str) -> Result<Vec<RecalledEvent>, CustodyFault> {
         let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
         let mut events_query = self
@@ -361,6 +363,10 @@ impl Store for Sqlite {
             .prepare_cached(
                 "SELECT id, session, run, turn, kind, sequence FROM event
                  WHERE session = ?1 AND kind = 'message.system' AND turn IS NULL
+                   AND run = (SELECT run FROM event
+                              WHERE session = ?1 AND kind = 'message.system'
+                                AND turn IS NULL
+                              ORDER BY id DESC LIMIT 1)
                  ORDER BY id",
             )
             .map_err(fault)?;
@@ -480,6 +486,25 @@ mod tests {
         assert_eq!(held.len(), 2);
         assert_eq!(held[0].sequence, 1);
         assert_eq!(held[1].sequence, 2);
+        // A second load records the prefix it seated under its own run, and
+        // the answer is that run's alone. Perturbation: drop the run
+        // subquery and the answer holds three.
+        store
+            .land(&Distillate {
+                session: "s".into(),
+                run: "r-2".into(),
+                turn: None,
+                kind: "message.system".into(),
+                sequence: 1,
+                pairs: vec![
+                    ("role".into(), "\"system\"".into()),
+                    ("content".into(), "[]".into()),
+                ],
+            })
+            .expect("lands");
+        let newest = store.identity("s").expect("answers");
+        assert_eq!(newest.len(), 1, "the newest run's prefix alone");
+        assert_eq!(newest[0].run, "r-2");
         assert!(
             held.iter()
                 .all(|e| e.turn.is_none() && e.kind == "message.system")
