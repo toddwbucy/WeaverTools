@@ -8,6 +8,13 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-09-04, second of this date, the seated prefix crosses the tee
+whole. Section 11 states the one exception to the key-based election: the
+turnless `message.system` at the run's opening distills with its payload under
+every election, because the store is the identity's custodian from this date
+and a replay rebuilds the prefix from it. Section 3.2's replay clause closes
+its open question on the same ground. Per issue #422.
+
 **Revised:** 2026-09-04, the record names its store. Section 3.1's `load`
 event gains the engine the member stands on and, under the service engine,
 its database and role, and the `unload` event gains the grant surface read
@@ -813,43 +820,39 @@ the cut fell observes a generation the run never had. The stop token set
 travels for the same reason and closes the same kind of gap: a generation
 ending on a stop token is explained by a set the record did not hold.
 
-**`model.request` carries what the model was asked this turn, the turn's
-rendered contribution, per the operator's ruling of 2026-08-12.** The turn's
-delta as the family library rendered it, the identity of the template that
-produced it, and the sampling values in effect for the turn, effective
-values whichever side set them, per the disposition rule of `weaver-spu-PRD`
-section 13.8. The seam is append-only, so what the model received grows each
-turn while only the delta crosses, and the full effective context is what
-the record determines rather than what any one event stores: the
-accumulation of the recorded contributions under their recorded template
-identities, from the identity prefix the run's opening records, per
-section 5. Recording
-the full effective prompt per turn would store a derived quantity the record
-already determines, one fact in two places, and would grow the account by
-the square of the conversation, the resend pathology the append-only seam
-exists to kill returning as record bloat. The state is a distillation of the
-record and is never stored back into it. The rendered form is here rather
-than nowhere because of the end-to-end requirement of 2026-08-02: each model
-carries its own template, so the turn's contribution exists twice, as the
-canonical messages this crate's message kinds hold and as the rendered piece
-the model was given, and a record holding only the first forces a replay to
-re-render through a template that may have changed since, which observes a
-forward pass that never happened. Recording both, with the measurement's
-token identifiers carrying the exact tokenization, is what makes apex
-section 8's rule that tokenization is reproducible from what is recorded
-true rather than hopeful. Two conditions ride the ruling, named rather than
-slid past. The accumulation reading holds while every operation that moves
-the resident context is recorded. **The flush's condition fired 2026-08-19
-and was honored**: the context-management act exposed the flush at the seat
-and added its event to the kind set through the front door in the same act,
-exactly as this sentence required. The reading therefore survives a flush
-by the event itself: a reader or a replay meeting `flush` resets its
-accumulation to the identity prefix, the payload's resident counts
-confirming the reset, so no later turn can be read against pre-flush
-context. And a
-replay's identity prefix is the configuration's, so the record's sufficiency
-for replay leans on the open question of what the load event carries of the
-admitted identity, which this ruling names and does not decide.
+**`model.request` carries what the model was asked this turn, the turn's rendered
+contribution, per the operator's ruling of 2026-08-12.** The turn's delta as the family
+library rendered it, the identity of the template that produced it, and the sampling
+values in effect for the turn, effective values whichever side set them, per the
+disposition rule of `weaver-spu-PRD` section 13.8. The seam is append-only, so what the
+model received grows each turn while only the delta crosses, and the full effective
+context is what the record determines rather than what any one event stores: the
+accumulation of the recorded contributions under their recorded template identities,
+from the identity prefix the run's opening records, per section 5. Recording the full
+effective prompt per turn would store a derived quantity the record already determines,
+one fact in two places, and would grow the account by the square of the conversation,
+the resend pathology the append-only seam exists to kill returning as record bloat. The
+state is a distillation of the record and is never stored back into it. The rendered
+form is here rather than nowhere because of the end-to-end requirement of 2026-08-02:
+each model carries its own template, so the turn's contribution exists twice, as the
+canonical messages this crate's message kinds hold and as the rendered piece the model
+was given, and a record holding only the first forces a replay to re-render through a
+template that may have changed since, which observes a forward pass that never happened.
+Recording both, with the measurement's token identifiers carrying the exact
+tokenization, is what makes apex section 8's rule that tokenization is reproducible from
+what is recorded true rather than hopeful. Two conditions ride the ruling, named rather
+than slid past. The accumulation reading holds while every operation that moves the
+resident context is recorded. **The flush's condition fired 2026-08-19 and was
+honored**: the context-management act exposed the flush at the seat and added its event
+to the kind set through the front door in the same act, exactly as this sentence
+required. The reading therefore survives a flush by the event itself: a reader or a
+replay meeting `flush` resets its accumulation to the identity prefix, the payload's
+resident counts confirming the reset, so no later turn can be read against pre-flush
+context. And a replay's identity prefix is the record's own since the ruling of
+2026-09-04: the store preloaded from the record answers the identity ask at the replayed
+run's opening, the prefix having crossed the tee whole under every election, so the
+record's sufficiency for replay no longer leans on the configuration, and the open
+question this ruling once named closes.
 
 **`model.output` carries the emission verbatim, before any parse.** The
 model's own family-styled output, the reasoning blocks and channel markers
@@ -1427,14 +1430,20 @@ structure, and now to a selection whose output feeds the state seam under
 writer, per the custody rule of apex section 5.2, and this crate holds the
 mechanism the way it holds every other: without policy.
 
-**The tee selects and never computes**, per the operator's ruling of
-2026-08-18. The selection is per event and key-based: the envelope crosses
-whole on every distilled event and is not electable, session, run, turn,
-kind, and sequence, so no election can produce an unattributable row, and
-the election ranges over payload keys alone, named as paths into the
-canonical JSON. An elected kind with no payload keys is a meaningful
-election, presence itself being state. Transformation of what was selected
-is `weaver-state`'s work and decision about what it means is the harness's
+**The tee selects and never computes**, per the operator's ruling of 2026-08-18. The
+selection is per event and key-based: the envelope crosses whole on every distilled
+event and is not electable, session, run, turn, kind, and sequence, so no election can
+produce an unattributable row, and the election ranges over payload keys alone, named as
+paths into the canonical JSON. An elected kind with no payload keys is a meaningful
+election, presence itself being state. **One event crosses whole under every election:
+the seated identity prefix**, the turnless `message.system` at the run's opening, per
+the operator's ruling of 2026-09-04 on issue #422. The prefix is the session's first
+bounding and the store is its custodian from that ruling on, so an election that could
+drop its payload could produce a session whose identity the store never held and a
+replay that could not rebuild it. The exception is stated here because the rule it
+excepts is stated here, and it stays selection: the prefix's payload crosses as the
+record rendered it, and no election adds to or subtracts from it. Transformation of what
+was selected is `weaver-state`'s work and decision about what it means is the harness's
 loops', and a tee that computed would smuggle the first into this crate.
 
 **The election is fixed at load and arrives with the declaration.** What the

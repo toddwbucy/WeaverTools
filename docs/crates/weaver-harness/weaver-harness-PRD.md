@@ -8,6 +8,12 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-09-04, the identity prefix is read from state. Section 2's
+prompt assembly names the prefix's source: the store where a member stands, the
+declaration's seed where the store holds none or no member stands, and a missed
+read refusing the enter rather than composing a run with no bounding. Per
+`weaver-state-PRD` section 4 as revised this date and issue #422.
+
 **Revised:** 2026-08-28, the fifth case is the hole rather than its cause.
 Section 5's fifth case covers every way a seated prefix goes unrecorded - the
 door's three refusal conditions and the recorder declining the write - on the
@@ -254,22 +260,22 @@ consulted before a class of action. Stating this plainly is the point. A permiss
 that reads as a security control when the kernel is the actual control is a thing that
 gets trusted wrongly later.
 
-**Prompt assembly's deterministic floor, with the family render across the
-seam.** The harness composes the canonical conversation: the identity prefix,
-which is the system prompt together with the agent's fixed identity material,
-then the session's message sequence read from the working structure, then the
-tool schemas, in that order, always. What moved on the framing ruling of
-2026-08-02, ratified with the token workflow's act, is the per-model half:
-the family template's application, the phrasing layer that reliably elicits a
-tool call from one decoder and not another, seats in the SPU's family library
-per `weaver-spu-PRD` sections 13.4 and 14, because family knowledge lives in
-one home and the harness links nothing of any model's. The harness sends
-canonical messages, the family library renders, and the rendered reality
-returns on the report path, template identity, token identifiers, and block
-partition, so the harness authors what the model saw without having rendered
-it. No model is a build or run dependency of this crate, now stronger than a
-discipline: the per-model knowledge lives across a seam entirely. The
-deterministic assembly floor stands alone, always.
+**Prompt assembly's deterministic floor, with the family render across the seam.** The
+harness composes the canonical conversation: the identity prefix, which is the system
+prompt together with the agent's fixed identity material, read from state where a member
+stands and from the declaration's seed where the store holds none or no member stands,
+per `weaver-state-PRD` section 4 as ruled 2026-09-04, then the session's message
+sequence read from the working structure, then the tool schemas, in that order, always.
+What moved on the framing ruling of 2026-08-02, ratified with the token workflow's act,
+is the per-model half: the family template's application, the phrasing layer that
+reliably elicits a tool call from one decoder and not another, seats in the SPU's family
+library per `weaver-spu-PRD` sections 13.4 and 14, because family knowledge lives in one
+home and the harness links nothing of any model's. The harness sends canonical messages,
+the family library renders, and the rendered reality returns on the report path,
+template identity, token identifiers, and block partition, so the harness authors what
+the model saw without having rendered it. No model is a build or run dependency of this
+crate, now stronger than a discipline: the per-model knowledge lives across a seam
+entirely. The deterministic assembly floor stands alone, always.
 
 **Decode against a resident session.** The harness issues decode requests over the
 decode socket against a resident KV session rather than resending the conversation

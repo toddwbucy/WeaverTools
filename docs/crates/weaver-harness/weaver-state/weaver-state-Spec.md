@@ -2,6 +2,10 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, third of this date, the port answers the `identity` ask.
+Section 4 gains the fifth ask of `weaver-harness-state-contract` section 2, the
+turnless `message.system` rows of the session in landing order. Per issue #422.
+
 **Revised:** 2026-09-04, second of this date, the vector's flags stand ahead of its
 positionals and the port answers the `grants` ask. Section 2's count sentence spoke
 of the territory and the preload path alone, and the engine's flags now precede
@@ -364,9 +368,12 @@ form it kept it. The `grants` ask reads no event row: it reads the engine's own
 boundary, the catalog's lines for the connected role under the service engine and the
 file's owner, group, and mode under the embedded one, and answers them in the engine's
 order as `{"answer":{"grants":{"surface":[...]}}}`, each line a string, per the
-contract's fourth ask of 2026-09-04. A malformed ask is dropped whole the way a
-malformed distillate is, and the resulting silence is the harness's bound to convert
-into a missing answer.
+contract's fourth ask of 2026-09-04. The `identity` ask reads the event rows of kind
+`message.system` whose turn is absent, ordered by the `id` column, with their field
+pairs, and answers them as `{"answer":{"identity":{"messages":[...]}}}`, each the
+distillate's own shape, an empty list where the session holds none, per the contract's
+fifth ask of 2026-09-04. A malformed ask is dropped whole the way a malformed distillate
+is, and the resulting silence is the harness's bound to convert into a missing answer.
 
 **Three protocol bounds are this crate's elections, each named with what its
 breach means, per the audit of 2026-08-26.** The answer ceiling is one

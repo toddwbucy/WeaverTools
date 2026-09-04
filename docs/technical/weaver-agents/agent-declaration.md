@@ -73,11 +73,13 @@ time.
 raises the per-layer residual readout. A diagnostic election, `false` for a
 plain serving agent.
 
-**`spu-instruction.decoder.identity`** - the canonical messages the identity
-prefix renders from. Configuration rather than history: an empty list is a
-declaration the operator made, where an absent field is a file unfinished.
-Worth writing with care - an identity that advertises tools the `tool-set`
-does not grant is a lie told to the model every turn.
+**`spu-instruction.decoder.identity`** - the canonical messages the identity prefix
+renders from. The seed, since 2026-09-04: the first load of a session seats it and the
+store holds it from then on, every later load of the session reading the identity from
+state and this field only where no member stands. An empty list is a declaration the
+operator made, where an absent field is a file unfinished. Worth writing with care - an
+identity that advertises tools the `tool-set` does not grant is a lie told to the model
+every turn.
 
 **Every message here carries `role: system`, and any other role refuses the
 load** with a `config_invalid` refusal naming the field, `identity.<n>.role`.

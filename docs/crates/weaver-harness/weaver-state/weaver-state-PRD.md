@@ -2,6 +2,12 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, second of this date, the identity is the session's first
+holding. Section 4 lands the three rulings of issue #422: the declaration seeds
+and the store governs, a missed read of the identity fails the enter closed, and
+the seated prefix crosses the tee whole under every election. Within a session
+only, the memory leg untouched.
+
 **Revised:** 2026-09-04, the store is a port and the engine is the deployment's
 election. Section 4 recuts the representation ruling: the seam names asks and
 never a query language, the store holds its one opinion at the engine's port,
@@ -222,23 +228,44 @@ may make the session's continuation depend on the derivative surviving.
 
 ## 4. Its material
 
-The input is the inspected artifact's lineage: canonical event JSON as the
-trace renders it, selected per event by the tee's key-based filter, fixed at
-load. **The tee's rulings of 2026-08-18**: the envelope always rides and is
-not electable, session, run, turn, kind, and sequence crossing on every
-distilled event so no election can produce an unattributable row, and the
-election ranges over payload keys alone. An elected kind with no payload keys
-is a meaningful election, because presence itself is state. **The default
-election is the envelope of every kind and nothing more**, the operator
-electing payload keys on top of it, so a deployment that elects nothing still
-holds the session's shape - what happened, in what order, in which turn - and
-pays for no payload it never asked to keep. An event the election does not
-match costs nothing and is dropped at the tee, the trace remaining complete
-regardless, because the tee reads the stream and never thins it. The run
-identifies itself in that stream since the ruling of 2026-08-14, admin's run
-reference having replaced the ordinal, so what state receives is attributable
-to the run that produced it without this crate minting any identity of its
-own.
+The input is the inspected artifact's lineage: canonical event JSON as the trace renders
+it, selected per event by the tee's key-based filter, fixed at load. **The tee's rulings
+of 2026-08-18**: the envelope always rides and is not electable, session, run, turn,
+kind, and sequence crossing on every distilled event so no election can produce an
+unattributable row, and the election ranges over payload keys alone, with one exception
+ruled 2026-09-04 and stated below. An elected kind with no payload keys is a meaningful
+election, because presence itself is state. **The default election is the envelope of
+every kind and nothing more**, the operator electing payload keys on top of it, so a
+deployment that elects nothing still holds the session's shape - what happened, in what
+order, in which turn - and pays for no payload it never asked to keep. An event the
+election does not match costs nothing and is dropped at the tee, the trace remaining
+complete regardless, because the tee reads the stream and never thins it. The run
+identifies itself in that stream since the ruling of 2026-08-14, admin's run reference
+having replaced the ordinal, so what state receives is attributable to the run that
+produced it without this crate minting any identity of its own.
+
+**The identity is the session's first holding, per the operator's ruling of 2026-09-04
+on issue #422.** The system prompt is the first bounding of the possibility space the
+decoder samples from, which is to say it is context, and context is this crate's
+material and not the declaration's. Three rulings land it. **The declaration seeds and
+the store governs**: a session's first load seats the declaration's `identity` field and
+the tee lands it here as the turnless `message.system` events at the run's opening, and
+from then on what this crate holds under that kind is the session's identity, answered
+to the harness's `identity` ask at every later load's opening, the declaration's field
+authoritative for the seed alone. **A missed read fails closed**: the harness refuses
+the enter where the ask misses, per `weaver-harness-Spec` section 2, because a run with
+no bounding is not a run this charter's custody can stand behind, and this is the one
+ask the dead-peer clause does not convert. **The identity's kind cannot be elected
+out**: the seated prefix crosses the tee whole under every election, per
+`weaver-trace-PRD` section 11 as revised this date, the one exception to the key-based
+rule, so no election produces a session whose identity this crate never held. Within
+this act the store's identity is what the session's first load seated, and a mechanism
+that lands a revised prefix mid-session is a further act, taking effect at the next load
+because the decode seam holds the prefix permanent for a residency. Across sessions
+nothing moves, per apex section 9: an identity that individuates across sessions is the
+memory leg's, a schema extension with its own socket and contract, and this ruling is
+compatible with that path and does not take it. Where no member stands, the declaration
+governs alone, which is what it did before the ruling.
 
 One member instance serves one session: it stands with each run, ingests a
 stream whose events already carry their session, run, and turn identity, and

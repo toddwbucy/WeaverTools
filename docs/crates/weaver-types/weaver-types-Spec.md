@@ -5,6 +5,10 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-09-04, the identity field is the seed. Section 2 states that
+`identity` seeds the session's first load and that the store governs every load
+after it where a state member stands, per `weaver-state-PRD` section 4 as revised
+this date and issue #422. The shape and the refusals are unchanged.
 **Revised:** 2026-09-01, the column registry's refusals are typed.
 `TokenRefusal` gains `ColumnPermissionAbsent`, `ColumnReadoutUnelected`,
 and `ColumnUndeclared`, the three arms of `weaver-spu-PRD` section 13.7's
@@ -592,6 +596,17 @@ pub struct DecoderInstruction {
     pub tunable_values: BTreeMap<String, f64>,
 }
 
+
+**`identity` is the seed and not the session's identity, per the operator's ruling of
+2026-09-04 on issue #422.** The field keeps its shape and its refusals: canonical
+messages, every one `role: system`, required with an empty list legitimate. What changed
+is its authority. Where a state member stands, the session's identity is what the store
+holds under the turnless `message.system` events at the session's opening, and this
+field is what the first load of a session seats and lands there, the store governing
+every later load of the session, per `weaver-state-PRD` section 4. Where no member
+stands the field governs alone, which is what it did before the ruling. Divergence
+between the two is not a defect, because they answer different questions, the seed and
+the session, and G5 names the store authoritative within the session.
 pub struct FieldElection {
     pub depth: u32,
 }

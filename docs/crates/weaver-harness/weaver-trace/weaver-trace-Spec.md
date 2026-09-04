@@ -4,6 +4,11 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-09-04, second of this date, the seated prefix distills whole.
+Section 11's `distill` carries a turnless `message.system` line under every
+election, one pair per top-level payload member, per charter section 11 as
+revised this date and issue #422.
+
 **Revised:** 2026-09-04, the load names its store and the unload reads the
 boundary back. Section 3's `Elections` gains `state_store`, the engine and, under
 the service engine, the database and role the enter resolved, and `unload` leaves
@@ -1779,15 +1784,19 @@ indexes from the election before the first distillate, and the session rides
 beside the rule per the ruling of 2026-08-20, both being load-declared facts
 standing for the channel's life.
 
-**`distill` applies the rule to one canonical line, and it is selection only.**
-The function takes the line and the election and returns the distillate frame
-or `None`, and `None` means the election did not match, the event costing
-nothing and the trace remaining complete regardless, because the tee reads the
-stream and never thins it. The frame is the contract's distillate shape, the
-envelope whole and the elected pairs beside it. A line this crate rendered
-always parses, so a parse failure here is unreachable in custody and answered
-by not distilling, the guard standing against a caller outside custody rather
-than a case inside it. Two properties of the read carry assertions.
+**`distill` applies the rule to one canonical line, and it is selection only.** The
+function takes the line and the election and returns the distillate frame or `None`, and
+`None` means the election did not match, the event costing nothing and the trace
+remaining complete regardless, because the tee reads the stream and never thins it. The
+frame is the contract's distillate shape, the envelope whole and the elected pairs
+beside it. **A turnless `message.system` line distills whole under every election**, per
+charter section 11 as revised 2026-09-04: `distill` matches it before the election is
+consulted and carries one pair per top-level payload member, the value that member's
+canonical JSON, so the seated prefix reaches the store as the record rendered it
+whatever the operator elected, and the election's paths for the kind add nothing to it.
+A line this crate rendered always parses, so a parse failure here is unreachable in
+custody and answered by not distilling, the guard standing against a caller outside
+custody rather than a case inside it. Two properties of the read carry assertions.
 
 **The envelope is not electable, and no election can produce an unattributable
 row.** Every distilled event carries session, run, turn, kind, and sequence as
