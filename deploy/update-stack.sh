@@ -24,6 +24,28 @@ die() { printf '\nREFUSED: %s\n' "$*" >&2; exit 1; }
 
 read_key() { cat "$ADMIN_CONFIG/$1" 2>/dev/null || true; }
 
+# Reads a run's new trace lines on stdin and prints what the load event says
+# about the two facts #419 put there. Non-zero where no load event names a
+# composer, which is how the verify step knows the install took.
+weaver_read_load() {
+  python3 -c '
+import sys, json
+for line in sys.stdin:
+    try:
+        e = json.loads(line)
+    except ValueError:
+        continue
+    if e.get("kind") == "load":
+        p = e.get("payload", {})
+        print("  state_member:", p.get("state_member"))
+        print("  composer:    ", json.dumps(p.get("composer")))
+        if p.get("state_store"):
+            print("  state_store: ", json.dumps(p["state_store"]))
+        sys.exit(0 if p.get("composer") else 1)
+sys.exit(1)
+'
+}
+
 WORKER_BINARY=$(read_key worker-binary)
 AGENT_DIR=$(read_key agent-config-directory)
 ALLOW_LIST=$(read_key allow-list)
@@ -92,58 +114,27 @@ if [ ${#CHANGED[@]} -eq 0 ]; then
   exit 0
 fi
 
-# ------------------------------------------------- 6. the declaration guard
-# The trap that made this script worth writing. As of #420 an election other
-# than `none` REQUIRES the member's binary beside the worker's, and admin
-# refuses BoundaryUnverified where it is missing. An absent `state-store`
-# key means the default, which is the embedded engine and not `none`. So a
-# box whose agents never mentioned the store stops loading the moment this
-# admin lands, and the failure looks like a bad install rather than a
-# declaration that never said what it wanted.
-say "declaration guard"
+# ------------------------------------------------ 6. what the install implies
+# **The order here was wrong once and the deadlock is worth naming.** As of
+# #420 an election other than `none` requires the member's binary beside the
+# worker's, and an absent `state-store` key means the default, which is the
+# embedded engine and not `none`. So a declaration that never mentioned the
+# store stops loading the moment that admin lands. But the *old* admin
+# refuses `state-store` as an unknown field, so the fix cannot be applied
+# before the install that needs it.
+#
+# The resolution is to stop predicting. Install, then ask the admin that is
+# actually running, agent by agent, and reconcile what it refuses. `validate`
+# is the oracle and it is cheap, so a later schema change gets the same
+# treatment without this script having to know about it in advance.
+say "what the install implies"
 STATE_BINARY="$BIN_DIR/weaver-state"
 if [ -f "$STATE_BINARY" ]; then
-  printf '  weaver-state present: any election stands a leg\n'
+  printf '  weaver-state present: declarations may elect any engine\n'
 else
-  printf '  weaver-state absent: only `engine: none` will load\n'
-  BAD=()
-  for agent in $ALLOW_LIST; do
-    decl="$AGENT_DIR/$agent.yaml"
-    [ -f "$decl" ] || continue
-    engine=$(python3 - "$decl" <<'PY'
-import sys
-try:
-    import yaml
-    d = yaml.safe_load(open(sys.argv[1])) or {}
-    print(((d.get("state-store") or {}).get("engine") or "ABSENT"))
-except ImportError:
-    import re
-    t = open(sys.argv[1]).read()
-    m = re.search(r'^state-store:\s*\n(?:\s+.*\n)*?\s+engine:\s*(\S+)', t, re.M)
-    print(m.group(1) if m else "ABSENT")
-PY
-)
-    printf '  %-12s state-store engine: %s\n' "$agent" "$engine"
-    [ "$engine" = "none" ] || BAD+=("$agent")
-  done
-  if [ ${#BAD[@]} -gt 0 ]; then
-    die "$(cat <<EOF
-these declarations elect a store this box cannot stand: ${BAD[*]}
-
-  Installing would leave them unloadable with BoundaryUnverified, because
-  as of #420 the leg's standing is the declaration's fact and not the
-  directory's (issue #381 ask 2).
-
-  Decide, per agent, and rerun:
-    state-store:            declines the leg by the declaration's own word;
-      engine: none          byte-exact reissue is preserved (#381 defect 2)
-  or install weaver-state into $BIN_DIR, which stands the leg and gives up
-  byte-exact serving reissue for those agents.
-EOF
-)"
-  fi
+  printf '  weaver-state absent: a declaration electing a store will be reconciled\n'
+  printf '  to `state-store: engine: none` after the install, backed up first\n'
 fi
-printf '  ok\n'
 
 [ "$INSTALL" -eq 1 ] || { say "plan only. rerun with --install"; exit 0; }
 
@@ -159,37 +150,64 @@ for b in "${CHANGED[@]}"; do
 done
 printf '  previous binaries kept at %s\n' "$BACKUP"
 
-# ------------------------------------------------------------------- 8. verify
-# A load that is not read back is an install that was not verified. This
-# reads the event out of the agent's own sink, which is the only place the
-# claim can be checked from.
+rollback() {
+  printf '\n  rolling the binaries back from %s\n' "$BACKUP" >&2
+  for b in "${CHANGED[@]}"; do
+    sudo install -o root -g root -m 0755 "$BACKUP/$b" "$BIN_DIR/$b"
+  done
+  die "$1"
+}
+
+validate() {
+  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" validate "$1" 2>&1 | tail -1
+}
+
+# -------------------------------------------------------- 8. reconcile agents
+say "reconcile declarations"
+for agent in $ALLOW_LIST; do
+  decl="$AGENT_DIR/$agent.yaml"
+  if [ ! -f "$decl" ]; then
+    printf '  %-12s no declaration at %s\n' "$agent" "$decl"
+    continue
+  fi
+  verdict=$(validate "$agent")
+  if [ "$verdict" = '{"kind":"validated"}' ]; then
+    printf '  %-12s validated\n' "$agent"
+    continue
+  fi
+  # The one reconciliation this script knows how to make, and only where the
+  # box cannot stand a leg at all. Anything else is the operator's.
+  if [ ! -f "$STATE_BINARY" ] && ! grep -q '^state-store:' "$decl"; then
+    printf '  %-12s %s\n' "$agent" "$verdict"
+    cp -a "$decl" "$decl.pre-$AFTER-bak"
+    printf 'state-store:\n  engine: none\n' >> "$decl"
+    verdict=$(validate "$agent")
+    if [ "$verdict" != '{"kind":"validated"}' ]; then
+      rollback "$agent still refuses after the declaration: $verdict"
+    fi
+    printf '  %-12s declared `state-store: engine: none`, validated (backup %s)\n' \
+      "$agent" "$(basename "$decl.pre-$AFTER-bak")"
+  else
+    rollback "$agent refuses and this script will not guess the fix: $verdict"
+  fi
+done
+
+# -------------------------------------------------------------------- 9. verify
+# A load that is not read back is an install that was not verified. This reads
+# the event out of the agent's own sink, the only place the claim can be
+# checked from.
 say "verify"
 AGENT=$(echo $ALLOW_LIST | awk '{print $1}')
-SINK=$(python3 - "$AGENT_DIR/$AGENT.yaml" <<'PY'
-import sys, re
-t = open(sys.argv[1]).read()
-m = re.search(r'^\s+path:\s*(\S+)', t, re.M)
-print(m.group(1) if m else "")
-PY
-)
-[ -n "$SINK" ] || die "cannot find the trace sink for $AGENT"
+SINK=$(sed -n 's/^[[:space:]]*path:[[:space:]]*\(.*\)$/\1/p' "$AGENT_DIR/$AGENT.yaml" | head -1)
+[ -n "$SINK" ] || rollback "cannot find the trace sink for $AGENT"
 LINES=$(wc -l < "$SINK")
 sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
 sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1
 NEW=$(( $(wc -l < "$SINK") - LINES ))
-[ "$NEW" -gt 0 ] || die "the load wrote no events to $SINK"
-tail -n "$NEW" "$SINK" | python3 -c '
-import sys, json
-for line in sys.stdin:
-    e = json.loads(line)
-    if e.get("kind") == "load":
-        p = e["payload"]
-        print("  state_member:", p.get("state_member"))
-        print("  composer:    ", json.dumps(p.get("composer")))
-        if p.get("state_store"): print("  state_store: ", json.dumps(p["state_store"]))
-        raise SystemExit(0 if "composer" in p else 1)
-raise SystemExit("no load event in the new lines")
-' || die "the load event does not name its composer; the install did not take"
+[ "$NEW" -gt 0 ] || rollback "the load wrote no events to $SINK"
+if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
+  rollback "the load event does not name its composer; the install did not take"
+fi
 sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
 
 say "the box is at $AFTER"
