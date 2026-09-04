@@ -7,12 +7,13 @@
   "admin_bin": "/opt/weaver/bin/weaver-admin",
   "admin_config": "/etc/weaver/admin",
   "repo": "/home/todd/Projects/WeaverTools_Project/WeaverTools",
-  "build_flags": "cargo build --release --workspace --features weaver-spu/cuda (nightly-2026-02-13, CUDA 13.3 at /opt/cuda)",
+  "build_flags": "cargo build --release --workspace --features weaver-spu/cuda,weaver-harness/pyworker (the feature ships both pyworker and worker - the loop is selected by the worker-binary key, and as of #419 the load event names the composer and its sha256 rather than leaving it to this field); commit 67f2c1d; rustc nightly-2026-02-13 (47611e160); CUDA 13.3.73 at /opt/cuda; NVCC_CCBIN=/usr/bin/g++-15 (GCC 15.3.0); driver 610.57.04; engine libs unchanged from the 2026-09-02 install, weaver-spu byte-identical across this build",
   "cells": [
     {"name": "bf16",   "precision": "bf16",   "artifact": "/opt/weaver/models/Qwen3-8B-BF16.gguf"},
     {"name": "q8_0",   "precision": "q8_0",   "artifact": "/opt/weaver/models/Qwen3-8B-Q8_0.gguf"},
     {"name": "q6_k",   "precision": "q6_k",   "artifact": "/opt/weaver/models/Qwen3-8B-Q6_K.gguf"},
     {"name": "q5_k_m", "precision": "q5_k_m", "artifact": "/opt/weaver/models/Qwen3-8B-Q5_K_M.gguf"},
     {"name": "q4_k_m", "precision": "q4_k_m", "artifact": "/opt/weaver/models/Qwen3-8B-Q4_K_M.gguf"}
-  ]
+  ],
+  "cccl_version": "3.3.4-1 (CCCL_VERSION 3003004), pinned via IgnorePkg"
 }
