@@ -2,6 +2,11 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, the answers are the store's and not the file's. One word
+in section 4, per `weaver-state-PRD` section 4 as revised this date: the store
+is a port and the engine behind it is elected, and this contract's vocabulary
+names asks and never a query language, which was true before the ruling and is
+a rule after it. Nothing crossing this seam moves.
 **Revised:** 2026-08-26, the channel loses its name. The wire clause held a named
 Unix socket authenticated by credential, and the operator's ruling of this date
 recuts it: admin creates a socketpair at the member's spawn, the member inherits
@@ -226,7 +231,7 @@ shape and recall asks keep the pre-ask view without exception.
 operator's ruling of 2026-08-20. Holdings a member accumulated under an
 earlier session are outside every answer's view, whatever else is true of
 them, so an ask cannot reach across the boundary `weaver-state-PRD` section
-4 draws. This is a property of the answers rather than of the file: what
+4 draws. This is a property of the answers rather than of the store: what
 becomes of an earlier session's rows on disk is deliberately not settled
 here, per the same ruling, and stands as its own question.
 

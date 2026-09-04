@@ -4,6 +4,11 @@
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 
+**Revised:** 2026-09-04, the enter carries the store election. Section 3's enter
+supplies the engine the member stands on and, under the service engine, its
+database and role, beside the state election and on the same ground: admin has
+no channel to the member, and the harness authors the load event that records
+them. Section 5's supplies follow by derivation. Per issue #411.
 **Revised:** 2026-08-26, the enter carries a second handle. Per the operator's
 ruling of this date, the supply list gains the state channel's end, the
 harness half of the socketpair admin creates at the member's spawn: admin
@@ -246,8 +251,10 @@ Three, and no others, all opened by admin.
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run reference, the kind of the binding, the trace sink
 handle, the state channel's end where the member stands, the
-SPU instruction, the gate instruction where the kind declares a Gate, and the state
-election the tee applies. The state channel's end is the harness half of the
+SPU instruction, the gate instruction where the kind declares a Gate, the state
+election the tee applies, and the store election the member stands on, resolved
+to the embedded engine where the declaration is silent, per `weaver-state-PRD`
+section 4 as revised 2026-09-04. The state channel's end is the harness half of the
 socketpair admin created at the member's spawn, per the operator's ruling of
 2026-08-26 carried at `weaver-harness-state-contract`: admin couriers it and
 speaks on it never. Its absence is the state leg not standing, never a
@@ -377,8 +384,10 @@ trace sink handle, the state channel's end where the member stands, the SPU
 instruction the fan-out admits,
 the gate instruction the fan-out starts where the kind declares a Gate, the
 state election the tee applies,
-resolved to the ruled default where the declaration is silent, and the intent
-to stop.
+resolved to the ruled default where the declaration is silent, the store
+election the member stands on with its database and role under the service
+engine, resolved to the embedded engine where the declaration is silent, and
+the intent to stop.
 
 **Admin guarantees** that the trace sink handle it passes refers to the sink the
 session's configuration declares, that the run reference distinguishes this run

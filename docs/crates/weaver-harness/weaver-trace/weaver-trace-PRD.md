@@ -8,6 +8,11 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-09-04, the record names its store. Section 3.1's `load`
+event gains the engine the member stands on and, under the service engine,
+its database and role, and the `unload` event gains the grant surface read
+back at the leave as unchanged, varied, or unreadable. Per `weaver-state-PRD`
+section 4 as revised this date and issue #411.
 **Revised:** 2026-09-03, the record names its loop and its member. Section
 3.1's `load` event gains which loop composed the run and whether the state
 member stood, two facts that decide what a record is a record of and were
@@ -639,6 +644,21 @@ either. **From this act the `load` event names both**, the loop by the binary
 that ran it and the file and digest where the loop is a file, and the member
 not by that election but by whether its end arrived on the enter, which is the
 harness's own knowledge whatever admin decided from.
+
+**The store the member stands on is a third such fact, as of 2026-09-04.** Per
+`weaver-state-PRD` section 4 as revised that date the engine is the
+deployment's election and, under the service engine, the database and the role
+are the object gate's own members, changing only across the load boundary.
+What a record was built into decides what can be asked of it later, so the
+`load` event names the engine and, where the service engine stands, its
+database and role, resolved as the enter carried them. **The leave reads the
+boundary back**: the harness reads the role's grant surface from the store's
+catalog at the enter through the member and again at the leave, and the
+`unload` event carries the reading as unchanged, varied, or unreadable, the
+envelope the confirm drivers already carry for the engine libraries. A grant
+surface that varied inside a session is a boundary move the record carries and
+never absorbs, and one unreadable at the close is said to be so rather than
+reported unchanged.
 Absence means a record older than the act and is read as those facts being
 unrecoverable, never as a default. The record then says what the agent's
 prompts were built by and what its state was built into, which the elections
