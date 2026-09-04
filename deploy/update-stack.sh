@@ -164,35 +164,61 @@ PATCHED=()
 COMPLETED=0
 RESTORED=0
 INSTALL_DONE=0
-# **The backup is named for the binaries it holds, not for the checkout.**
-# `$BEFORE` is the commit the tree sat at when the run began, which on a
-# re-run is the commit being installed rather than the one being replaced.
-BACKUP="/opt/weaver/backup-$(date +%Y%m%dT%H%M%S)"
-if [ ${#CHANGED[@]} -gt 0 ]; then
-  say "install"
-  # Credentials are asked for where they are needed. Reconcile and verify
-  # reach admin through the NOPASSWD verbs, so a repair run that installs
-  # nothing prompts for nothing.
-  sudo -v
-  sudo mkdir -p "$BACKUP"
-  for b in "${CHANGED[@]}"; do
-    sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
-    sudo install -o root -g root -m 0755 "target/release/$b" "$BIN_DIR/$b"
-    printf '  installed %s\n' "$b"
-  done
-  printf '  previous binaries kept at %s\n' "$BACKUP"
-  INSTALL_DONE=1
-else
-  say "install"
-  printf '  nothing to install; continuing to reconcile and verify\n'
-fi
+BACKUP=""
+
+# **A rollback that restores only the binaries leaves the box worse than it
+# found it.** The old admin refuses `state-store` as an unknown field, so a
+# declaration this script patched and did not un-patch is unloadable under
+# the binaries the rollback just put back. Declarations go back first.
+#
+# **And only the binaries this run actually replaced.** A death inside the
+# install loop leaves later members never backed up and never touched, so
+# restoring them from a backup that does not hold them would fail the
+# restore itself.
+# **The restore is best-effort across every member, not until the first
+# failure.** It is the last line of defence, and `set -e` abandoning it
+# halfway leaves a box in a state neither the old stack nor the new one -
+# which a mid-loop test produced: the first member back, the second left
+# new, and the run reporting only the failure that stopped it.
+restore() {
+  [ "$RESTORED" -eq 0 ] || return 0
+  RESTORED=1
+  local failed=0
+  if [ ${#PATCHED[@]} -gt 0 ]; then
+    for entry in "${PATCHED[@]}"; do
+      printf '  restoring declaration %s\n' "${entry%%|*}" >&2
+      cp -a "${entry##*|}" "${entry%%|*}" \
+        || { printf '  FAILED to restore %s\n' "${entry%%|*}" >&2; failed=1; }
+    done
+  fi
+  if [ "$INSTALL_DONE" -eq 1 ] && [ -n "$BACKUP" ]; then
+    printf '  rolling the binaries back from %s\n' "$BACKUP" >&2
+    for b in "${CHANGED[@]}"; do
+      # Never backed up is never replaced, so there is nothing to put back.
+      [ -f "$BACKUP/$b" ] || continue
+      sudo install -o root -g root -m 0755 "$BACKUP/$b" "$BIN_DIR/$b" \
+        || { printf '  FAILED to restore %s\n' "$b" >&2; failed=1; }
+    done
+  fi
+  if [ "$failed" -ne 0 ]; then
+    printf '  RESTORE INCOMPLETE - inspect %s and %s by hand\n' "$BIN_DIR" "$BACKUP" >&2
+  fi
+  return 0
+}
+
+rollback() {
+  restore
+  die "$1"
+}
 
 # **An abort that never reached `rollback` still has to restore.** The
-# pipefail defect above exited on `set -e`, so none of the rollback paths
-# ran and the box was left with new binaries and an unloadable agent. A
-# rollback reachable only from the failures this script predicted is not a
-# rollback, so the restore now hangs off EXIT and every early death goes
-# through it.
+# pipefail defect exited on `set -e`, so none of the rollback paths ran and
+# the box was left with new binaries and an unloadable agent. A rollback
+# reachable only from the failures this script predicted is not a rollback.
+#
+# **The trap is armed before the first binary moves**, not after the loop:
+# a `sudo install` that fails on the fourth of six would otherwise exit with
+# three replaced and nothing registered to put them back.
 on_exit() {
   local rc=$?
   if [ "$COMPLETED" -eq 0 ] && { [ "$INSTALL_DONE" -eq 1 ] || [ ${#PATCHED[@]} -gt 0 ]; }; then
@@ -202,31 +228,30 @@ on_exit() {
 }
 trap on_exit EXIT
 
-# **A rollback that restores only the binaries leaves the box worse than it
-# found it.** The old admin refuses `state-store` as an unknown field, so a
-# declaration this script patched and did not un-patch is unloadable under
-# the binaries the rollback just put back. Declarations go back first.
-restore() {
-  [ "$RESTORED" -eq 0 ] || return 0
-  RESTORED=1
-  if [ ${#PATCHED[@]} -gt 0 ]; then
-    for entry in "${PATCHED[@]}"; do
-      printf '  restoring declaration %s\n' "${entry%%|*}" >&2
-      cp -a "${entry##*|}" "${entry%%|*}"
-    done
-  fi
-  if [ "$INSTALL_DONE" -eq 1 ] && [ ${#CHANGED[@]} -gt 0 ]; then
-    printf '  rolling the binaries back from %s\n' "$BACKUP" >&2
-    for b in "${CHANGED[@]}"; do
-      sudo install -o root -g root -m 0755 "$BACKUP/$b" "$BIN_DIR/$b"
-    done
-  fi
-}
-
-rollback() {
-  restore
-  die "$1"
-}
+if [ ${#CHANGED[@]} -gt 0 ]; then
+  say "install"
+  # Credentials are asked for where they are needed. Reconcile and verify
+  # reach admin through the NOPASSWD verbs, so a repair run that installs
+  # nothing prompts for nothing.
+  sudo -v
+  # **Exclusive, not merely named.** A seconds-resolution name with
+  # `mkdir -p` lets two runs in one second share a directory, and the
+  # second run's copies would then be what the first run's rollback
+  # restores. `mktemp -d` creates or fails.
+  BACKUP=$(sudo mktemp -d "/opt/weaver/backup-$(date +%Y%m%dT%H%M%S)-XXXXXX")
+  # State may change from the next line on, so the trap's condition is
+  # armed before it does rather than after the loop closes.
+  INSTALL_DONE=1
+  for b in "${CHANGED[@]}"; do
+    sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
+    sudo install -o root -g root -m 0755 "target/release/$b" "$BIN_DIR/$b"
+    printf '  installed %s\n' "$b"
+  done
+  printf '  previous binaries kept at %s\n' "$BACKUP"
+else
+  say "install"
+  printf '  nothing to install; continuing to reconcile and verify\n'
+fi
 
 # **A refusal is this function's answer, not its failure.** `weaver-admin
 # validate` exits non-zero when it refuses, `tail` exits zero, and under
