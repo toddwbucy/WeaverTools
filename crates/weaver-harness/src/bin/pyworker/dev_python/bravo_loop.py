@@ -51,12 +51,12 @@
 import json
 
 # THE PROMPTS ARE NOT HERE EITHER, for the same reason the teaching is not:
-# the system prompt and the memory conventions are seated by the
-# declaration's identity block, and this file held a second copy of both
-# that nothing read. Two copies of one text is one fact in two places with
+# the system prompt and the memory conventions are seated from the session's
+# identity in state, which the declaration's identity block seeds on the
+# first load, and this file held a second copy of both that nothing read. Two copies of one text is one fact in two places with
 # no authority named, and the copy that is not the one in force is the one
-# a reader trusts by being nearer the code. The text in force is in the
-# agent's own declaration under `identity:`.
+# a reader trusts by being nearer the code. The seed is in the agent's own
+# declaration under `identity:`, and the text in force is the store's.
 
 # The flush trigger: four fifths of capacity, checked between turns. Set
 # this to what your setup wants - it is policy, not physics.

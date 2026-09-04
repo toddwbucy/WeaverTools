@@ -11,9 +11,11 @@
 # into `seat.turn`, and the marshalling of the outcome back, which is the
 # code every richer loop is built on.
 #
-# THE SYSTEM PROMPT IS NOT HERE. It is the declaration's `identity:` block,
-# seated at load by the Open directive and standing in the resident prefix
-# before this loop runs at all. A loop that added its own would stack a
+# THE SYSTEM PROMPT IS NOT HERE. It is the session's first holding in state,
+# seeded from the declaration's `identity:` block on the session's first
+# load and read from the store at every load after, seated by the Open
+# directive and standing in the resident prefix before this loop runs at
+# all. A loop that added its own would stack a
 # second system message on the agent's own voice, which is what the
 # compiled `dev_loop` does and why a box running it renders a different
 # prompt from a box running this.

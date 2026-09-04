@@ -2,6 +2,11 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, fourth of this date, the identity answer is the newest run's.
+Section 2's `identity` ask serves the turnless system messages of the session's most
+recent run that holds any, not of every run, because every load records the prefix
+it seated and a session holds one per run. Found by the code act's live proof on
+PR 430, where a second load would otherwise have seated two.
 **Revised:** 2026-09-04, third of this date, the vocabulary gains the `identity` ask.
 Section 2 holds five names: the fifth returns the session's seated prefix as
 custody holds it, asked once at every enter before the decode open, an empty
@@ -333,14 +338,16 @@ answers immediately against the store, holding no event and parking never, like 
 session's first holding: the harness asks once at every enter, after this seam stands
 and before the decode session opens, and what answers is what the open seats. The ask
 carries no members. The answer carries one member, `messages`, the turnless
-`message.system` events of the declared session in landing order, each served as the
-distillate's own shape, envelope and pairs, the pairs being the prefix's payload whole
-because that kind crosses the tee whole under every election. An empty list is an answer
-and not a miss: it says the store holds no prefix for the session, which is the first
-load, and the harness seeds from the declaration. **This is the one ask the dead-peer
-clause of section 5 does not convert**: a missed answer refuses the enter, because a run
-whose bounding cannot be read is not a run with no bounding. The ask answers
-immediately, holding no event and parking never, like `shape`.
+`message.system` events of the declared session's most recent run that holds any, in
+landing order, because every load seats the prefix and the prefix door records it again,
+so the session holds one prefix per run and the one in force is the newest run's, each
+served as the distillate's own shape, envelope and pairs, the pairs being the prefix's
+payload whole because that kind crosses the tee whole under every election. An empty
+list is an answer and not a miss: it says the store holds no prefix for the session,
+which is the first load, and the harness seeds from the declaration. **This is the one
+ask the dead-peer clause of section 5 does not convert**: a missed answer refuses the
+enter, because a run whose bounding cannot be read is not a run with no bounding. The
+ask answers immediately, holding no event and parking never, like `shape`.
 
 A further ask name is a change under section 7 and does not exist until it merges there.
 

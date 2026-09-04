@@ -147,6 +147,29 @@ impl StateSeam {
         parse_grants_answer(&line)
     }
 
+    /// The session's seated prefix as custody holds it, per the contract's
+    /// `identity` ask of 2026-09-04: asked once at the enter before the
+    /// decode open. An empty answer is an answer, the first load, and a
+    /// miss is the one the enter does not convert.
+    pub(crate) fn ask_identity(&mut self) -> Option<Vec<Recalled>> {
+        if self.dead {
+            return None;
+        }
+        let answered = self.identity_exchange();
+        if answered.is_none() {
+            self.dead = true;
+        }
+        answered
+    }
+
+    fn identity_exchange(&mut self) -> Option<Vec<Recalled>> {
+        if !self.send(b"{\"ask\":{\"identity\":{}}}\n") {
+            return None;
+        }
+        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
+        parse_identity_answer(&line)
+    }
+
     pub(crate) fn ask_recall(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
         if self.dead {
             return None;
@@ -291,6 +314,54 @@ fn parse_replay_answer(line: &str) -> Option<Vec<Recalled>> {
         .get("events")?
         .as_array()?;
     parse_recalled_events(events)
+}
+
+/// The identity answer's messages, or nothing where the frame is not one:
+/// `{"answer":{"identity":{"messages":[...]}}}`, each event the
+/// distillate's shape.
+fn parse_identity_answer(line: &str) -> Option<Vec<Recalled>> {
+    let value: serde_json::Value = serde_json::from_str(line).ok()?;
+    let events = value
+        .get("answer")?
+        .get("identity")?
+        .get("messages")?
+        .as_array()?;
+    parse_recalled_events(events)
+}
+
+/// **The open's identity material, two sources and one rule**, per
+/// `weaver-harness-Spec` section 2 as of 2026-09-04. `None` for the answer
+/// is the ask missed: the enter refuses rather than opening a run with no
+/// bounding. An empty answer is the first load of the session, so the
+/// declaration's field seeds the open. A prefix answered is the open's
+/// messages, each rebuilt from the pairs the tee carried whole, `role` and
+/// `content`, and a prefix that does not rebuild refuses the same way a
+/// miss does, because a half-read bounding is no bounding.
+pub(crate) fn identity_material(
+    answer: Option<Vec<Recalled>>,
+    seed: &[weaver_traits::Message],
+) -> Option<Vec<weaver_traits::Message>> {
+    let held = answer?;
+    if held.is_empty() {
+        return Some(seed.to_vec());
+    }
+    held.iter().map(prefix_message).collect()
+}
+
+fn prefix_message(event: &Recalled) -> Option<weaver_traits::Message> {
+    let role = event
+        .pairs
+        .iter()
+        .find(|(key, _)| key == "role")?
+        .1
+        .as_str();
+    let content = event
+        .pairs
+        .iter()
+        .find(|(key, _)| key == "content")?
+        .1
+        .as_str();
+    serde_json::from_str(&format!("{{\"role\":{role},\"content\":{content}}}")).ok()
 }
 
 /// The grants answer's surface, or nothing where the frame is not one:
@@ -447,6 +518,62 @@ mod tests {
         assert!(
             seam.ask_grants().is_none(),
             "a non-string entry is a malformed answer"
+        );
+    }
+
+    /// **The identity ask's three arms**, per `weaver-harness-Spec` section
+    /// 2 as of 2026-09-04: a miss is `None` and refuses, an empty answer
+    /// seeds, and a prefix rebuilds from its pairs. Perturbation: return
+    /// the seed on a miss and the first assertion fails; skip the rebuild's
+    /// `content` and the third.
+    #[test]
+    fn the_identity_material_has_two_sources_and_one_rule() {
+        let seed = vec![weaver_traits::Message {
+            role: weaver_traits::Role::System,
+            content: vec![weaver_traits::ContentBlock::Text {
+                text: "seed".into(),
+            }],
+        }];
+        assert!(identity_material(None, &seed).is_none(), "a miss refuses");
+        assert_eq!(
+            identity_material(Some(vec![]), &seed),
+            Some(seed.clone()),
+            "an empty answer is the first load and seeds"
+        );
+        let (ours, theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let mut peer = theirs;
+        peer.write_all(
+            concat!(
+                r#"{"answer":{"identity":{"messages":[{"envelope":{"session":"s","run":"r-1","#,
+                r#""kind":"message.system","sequence":"3"},"pairs":{"role":"system","#,
+                r#""content":[{"type":"text","text":"You are Karl."}]}}]}}}"#,
+                "\n"
+            )
+            .as_bytes(),
+        )
+        .expect("answers in advance");
+        let held = seam.ask_identity().expect("answered");
+        let material = identity_material(Some(held), &seed).expect("rebuilds");
+        assert_eq!(material.len(), 1);
+        assert!(matches!(material[0].role, weaver_traits::Role::System));
+        assert!(
+            matches!(&material[0].content[0], weaver_traits::ContentBlock::Text { text } if text == "You are Karl.")
+        );
+        let mut asked = [0u8; 64];
+        let n = peer.read(&mut asked).expect("reads the ask");
+        assert_eq!(&asked[..n], b"{\"ask\":{\"identity\":{}}}\n");
+        let half = vec![Recalled {
+            kind: "message.system".into(),
+            run: "r-1".into(),
+            turn: None,
+            sequence: "3".into(),
+            pairs: vec![("role".into(), "\"system\"".into())],
+        }];
+        assert!(
+            identity_material(Some(half), &seed).is_none(),
+            "a prefix without content refuses"
         );
     }
 

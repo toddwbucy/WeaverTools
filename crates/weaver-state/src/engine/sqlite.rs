@@ -351,6 +351,61 @@ impl Store for Sqlite {
             format!("mode {:04o}", meta.mode() & 0o7777),
         ])
     }
+
+    /// The turnless `message.system` rows of the session's newest run that
+    /// holds any, in landing order with their pairs, per `weaver-state-Spec`
+    /// section 4's identity ask: every load records the prefix it seated,
+    /// so the one in force is the newest run's.
+    fn identity(&self, session: &str) -> Result<Vec<RecalledEvent>, CustodyFault> {
+        let fault = |e: rusqlite::Error| CustodyFault::StoreUnavailable(e.to_string());
+        let mut events_query = self
+            .connection
+            .prepare_cached(
+                "SELECT id, session, run, turn, kind, sequence FROM event
+                 WHERE session = ?1 AND kind = 'message.system' AND turn IS NULL
+                   AND run = (SELECT run FROM event
+                              WHERE session = ?1 AND kind = 'message.system'
+                                AND turn IS NULL
+                              ORDER BY id DESC LIMIT 1)
+                 ORDER BY id",
+            )
+            .map_err(fault)?;
+        let rows: Vec<(i64, String, String, Option<String>, String, i64)> = events_query
+            .query_map([session], |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    row.get(5)?,
+                ))
+            })
+            .map_err(fault)?
+            .collect::<Result<_, _>>()
+            .map_err(fault)?;
+        let mut pairs_query = self
+            .connection
+            .prepare_cached("SELECT key, value FROM field WHERE event_id = ?1")
+            .map_err(fault)?;
+        let mut held = Vec::with_capacity(rows.len());
+        for (id, session, run, turn, kind, sequence) in rows {
+            let pairs: Vec<(String, String)> = pairs_query
+                .query_map([id], |row| Ok((row.get(0)?, row.get(1)?)))
+                .map_err(fault)?
+                .collect::<Result<_, _>>()
+                .map_err(fault)?;
+            held.push(RecalledEvent {
+                session,
+                run,
+                turn,
+                kind,
+                sequence,
+                pairs,
+            });
+        }
+        Ok(held)
+    }
 }
 
 fn build_indexes(
@@ -391,6 +446,89 @@ mod tests {
     /// name. Perturbation: render the mode in decimal and the second
     /// assertion fails on its spelling, which is the whole of what a
     /// comparison across two readings rests on.
+    /// **The identity ask serves the turnless system messages and no
+    /// other**, in landing order, with the prefix's pairs. Perturbation:
+    /// drop `turn IS NULL` from the query and the turned system message
+    /// joins the answer; drop the kind and the user message does.
+    #[test]
+    fn the_identity_ask_serves_the_seated_prefix_alone() {
+        let path = scratch();
+        let mut store = Sqlite::open(&path).expect("opens");
+        let land = |store: &mut Sqlite, turn: Option<&str>, kind: &str, seq: i64, text: &str| {
+            store
+                .land(&Distillate {
+                    session: "s".into(),
+                    run: "r-1".into(),
+                    turn: turn.map(str::to_string),
+                    kind: kind.into(),
+                    sequence: seq,
+                    pairs: vec![
+                        ("role".into(), "\"system\"".into()),
+                        (
+                            "content".into(),
+                            format!("[{{\"type\":\"text\",\"text\":\"{text}\"}}]"),
+                        ),
+                    ],
+                })
+                .expect("lands");
+        };
+        land(&mut store, None, "message.system", 1, "You are Karl.");
+        land(&mut store, None, "message.system", 2, "Answer briefly.");
+        land(
+            &mut store,
+            Some("t-1"),
+            "message.system",
+            3,
+            "inside a turn",
+        );
+        land(&mut store, Some("t-1"), "message.user", 4, "hello");
+        let held = store.identity("s").expect("answers");
+        assert_eq!(held.len(), 2);
+        assert_eq!(held[0].sequence, 1);
+        assert_eq!(held[1].sequence, 2);
+        // A second load records the prefix it seated under its own run, and
+        // the answer is that run's alone. Perturbation: drop the run
+        // subquery and the answer holds three.
+        store
+            .land(&Distillate {
+                session: "s".into(),
+                run: "r-2".into(),
+                turn: None,
+                kind: "message.system".into(),
+                sequence: 1,
+                pairs: vec![
+                    ("role".into(), "\"system\"".into()),
+                    ("content".into(), "[]".into()),
+                ],
+            })
+            .expect("lands");
+        let newest = store.identity("s").expect("answers");
+        assert_eq!(newest.len(), 1, "the newest run's prefix alone");
+        assert_eq!(newest[0].run, "r-2");
+        assert!(
+            held.iter()
+                .all(|e| e.turn.is_none() && e.kind == "message.system")
+        );
+        assert_eq!(
+            held[0].pairs[0],
+            ("role".to_string(), "\"system\"".to_string())
+        );
+        assert!(
+            store.identity("other").expect("answers").is_empty(),
+            "an empty list is an answer"
+        );
+        assert!(matches!(
+            parse_ask("{\"ask\":{\"identity\":{}}}"),
+            Some(Ask::Identity)
+        ));
+        let frame = render_identity_answer(&held);
+        assert!(frame.starts_with("{\"answer\":{\"identity\":{\"messages\":[{\"envelope\":"));
+        assert!(
+            frame.contains("\"role\":\"system\""),
+            "pairs render as JSON, not as strings"
+        );
+    }
+
     #[test]
     fn the_grants_ask_states_the_file_boundary() {
         let path = scratch();

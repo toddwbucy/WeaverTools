@@ -2,6 +2,9 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, fourth of this date, the identity answer is the newest
+run's. Section 4's identity query binds to the run of the newest turnless system
+message, per `weaver-harness-state-contract` section 2 as revised the same date.
 **Revised:** 2026-09-04, third of this date, the port answers the `identity` ask.
 Section 4 gains the fifth ask of `weaver-harness-state-contract` section 2, the
 turnless `message.system` rows of the session in landing order. Per issue #422.
@@ -369,11 +372,12 @@ boundary, the catalog's lines for the connected role under the service engine an
 file's owner, group, and mode under the embedded one, and answers them in the engine's
 order as `{"answer":{"grants":{"surface":[...]}}}`, each line a string, per the
 contract's fourth ask of 2026-09-04. The `identity` ask reads the event rows of kind
-`message.system` whose turn is absent, ordered by the `id` column, with their field
-pairs, and answers them as `{"answer":{"identity":{"messages":[...]}}}`, each the
-distillate's own shape, an empty list where the session holds none, per the contract's
-fifth ask of 2026-09-04. A malformed ask is dropped whole the way a malformed distillate
-is, and the resulting silence is the harness's bound to convert into a missing answer.
+`message.system` whose turn is absent and whose run is the run of the newest such row,
+ordered by the `id` column, with their field pairs, and answers them as
+`{"answer":{"identity":{"messages":[...]}}}`, each the distillate's own shape, an empty
+list where the session holds none, per the contract's fifth ask of 2026-09-04. A
+malformed ask is dropped whole the way a malformed distillate is, and the resulting
+silence is the harness's bound to convert into a missing answer.
 
 **Three protocol bounds are this crate's elections, each named with what its
 breach means, per the audit of 2026-08-26.** The answer ceiling is one
