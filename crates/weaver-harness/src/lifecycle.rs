@@ -1437,6 +1437,37 @@ impl Harness {
             };
         }
 
+        // **The identity material has two sources and one rule**, per
+        // `weaver-harness-Spec` section 2 as of 2026-09-04. Where the
+        // member's end arrived, the store is asked for the session's
+        // seated prefix once the seam stands and before the open: a prefix
+        // answered is the open's messages, an empty answer is the first
+        // load and the declaration's field seeds it, and a miss refuses
+        // the enter, the one ask the dead-peer clause does not convert,
+        // because a run whose bounding cannot be read is not a run with no
+        // bounding. Where no end arrived the field governs alone. The
+        // refusal is carried under `DescriptorsUnusable`, the enter's own
+        // descriptor for the member having proved unusable for the one ask
+        // the enter owes it, the refusal vocabulary naming no member.
+        let identity = {
+            let seed = &payload.spu_instruction.decoder.identity;
+            match run.state.as_mut() {
+                None => seed.clone(),
+                Some(seam) => match crate::state::identity_material(seam.ask_identity(), seed) {
+                    Some(material) => material,
+                    None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+                },
+            }
+        };
+        // **The seated prefix reaches the record beside the load**, per
+        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5,
+        // authored from what the open carries, whichever source it came
+        // from, so the record names the prefix the session ran under.
+        //
+        // conforms: harness-identity-refusal-authored-not-dropped
+        if !diagnostic {
+            seat_identity_prefix(&run.author, &mut run.recorder, &identity);
+        }
         // The residency and decode pairs are created in one act before the SPU
         // fork: a socket with no address cannot be reached later by resolving
         // one, so the only moment it can reach a child is before that child
@@ -1511,37 +1542,6 @@ impl Harness {
         // a session at rest. The open carries the identity material resolved
         // above as its messages and the run's session as its session. A refused open is a refused enter,
         // returned after-load so the bracket stands for the leave.
-        // **The identity material has two sources and one rule**, per
-        // `weaver-harness-Spec` section 2 as of 2026-09-04. Where the
-        // member's end arrived, the store is asked for the session's
-        // seated prefix once the seam stands and before the open: a prefix
-        // answered is the open's messages, an empty answer is the first
-        // load and the declaration's field seeds it, and a miss refuses
-        // the enter, the one ask the dead-peer clause does not convert,
-        // because a run whose bounding cannot be read is not a run with no
-        // bounding. Where no end arrived the field governs alone. The
-        // refusal is carried under `DescriptorsUnusable`, the enter's own
-        // descriptor for the member having proved unusable for the one ask
-        // the enter owes it, the refusal vocabulary naming no member.
-        let identity = {
-            let seed = &payload.spu_instruction.decoder.identity;
-            match run.state.as_mut() {
-                None => seed.clone(),
-                Some(seam) => match crate::state::identity_material(seam.ask_identity(), seed) {
-                    Some(material) => material,
-                    None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
-                },
-            }
-        };
-        // **The seated prefix reaches the record beside the load**, per
-        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5,
-        // authored from what the open carries, whichever source it came
-        // from, so the record names the prefix the session ran under.
-        //
-        // conforms: harness-identity-refusal-authored-not-dropped
-        if !diagnostic {
-            seat_identity_prefix(&run.author, &mut run.recorder, &identity);
-        }
         let spu = run.spu.as_ref().expect("residency stands");
         // **The column ask crosses where and only where the binding is
         // diagnostic and the readout is elected**, per `weaver-spu-PRD`
