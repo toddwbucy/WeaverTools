@@ -340,3 +340,61 @@ impl crate::stream::Reader for Streaming<'_> {
         Step::Continue
     }
 }
+
+/// **The file's default spread**, per `weaver-analysis-Spec` section 5 as of
+/// 2026-09-04: `count` of the record's positions in order, the first and the
+/// last among them and the rest evenly spaced by index, every position where
+/// the record holds `count` or fewer. Duplicates in the input collapse
+/// before the spread is taken, so a position seen on two brackets counts
+/// once.
+pub fn spread(positions: &[u64], count: usize) -> Vec<u64> {
+    let ordered: Vec<u64> = positions
+        .iter()
+        .copied()
+        .collect::<std::collections::BTreeSet<u64>>()
+        .into_iter()
+        .collect();
+    if count == 0 || ordered.is_empty() {
+        return Vec::new();
+    }
+    if ordered.len() <= count || count == 1 {
+        return if count == 1 {
+            vec![ordered[0]]
+        } else {
+            ordered
+        };
+    }
+    let last = ordered.len() - 1;
+    let mut chosen: Vec<u64> = (0..count)
+        .map(|i| ordered[i * last / (count - 1)])
+        .collect();
+    chosen.dedup();
+    chosen
+}
+
+/// The position a `residual.column` event carries, or nothing where the
+/// event is another kind or its payload does not spell one.
+fn column_position(event: &crate::record::Event) -> Option<u64> {
+    if event.envelope.kind != "residual.column" {
+        return None;
+    }
+    let payload = event.payload.as_deref()?;
+    value_at(payload, "position").and_then(|r| r.get().parse::<u64>().ok())
+}
+
+/// A reader that learns which positions a record holds columns for and
+/// keeps nothing else: the first of the file's two reads under the default
+/// spread.
+#[derive(Default)]
+pub struct Positions {
+    pub held: Vec<u64>,
+}
+
+impl crate::stream::Reader for Positions {
+    fn event(&mut self, event: &crate::record::Event) -> crate::stream::Step {
+        if let Some(position) = column_position(event) {
+            self.held.push(position);
+        }
+        crate::stream::Step::Continue
+    }
+}
