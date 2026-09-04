@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-04, second of this date, the open reads the identity from
+state. Section 2's open clause names two sources under one rule, the store's
+answer to the `identity` ask where a member stands and the declaration's seed
+where the store holds none or no member stands, and a missed ask refusing the
+enter. Section 6's prefix door authors what the open carried, and the state
+clause names the fifth ask as the seat's own. Per `weaver-state-PRD` section 4
+as revised this date and issue #422.
+
 **Revised:** 2026-09-04, the leave reads the boundary back. Section 6's state
 clause gains the `grants` ask, asked by the seat at the enter and the leave and
 granted to no loop, and the `unload` the serving arm authors carries the reading
@@ -2151,16 +2159,20 @@ name. The contract's fourth ask, `grants` of 2026-09-04, is the seat's own and r
 no `Ports` call: `src/state.rs` asks it once the seam stands under a serving record and
 again at the leave, and the `unload` event carries the comparison, per
 `weaver-trace-Spec` section 3 as revised that date, a loop having no business with the
-boundary its state sits behind. The seam's ask end lives in `src/state.rs`, a clone of
-the standing state channel held on the run beside the tee the enter attaches, that
-channel arriving in the enter directive as the harness half of the pair admin created,
-per the operator's ruling of 2026-08-26, dialed nowhere and derived from nothing, the
-ask written and the answer awaited on the serving thread inside a bound this crate
-elects, generous against a member whose answer is one pass over its own holdings.
-Serialization on the shared channel is the serving thread itself: the tee's feed and the
-seat's ask both run on it, so no ask can interleave a distillate's octets, and the
-member's answers are the only traffic that ever flows toward this crate, so whatever the
-wait reads is the answer or is malformed, with no third case to disambiguate.
+boundary its state sits behind. The fifth, `identity` of the same date, is the seat's
+own for the opposite reason: it is asked once at the enter, before the decode open, and
+its answer is the open's material rather than a loop's, so no loop composes a prefix and
+no `Ports` call exists to hand one out. The seam's ask end lives in `src/state.rs`, a
+clone of the standing state channel held on the run beside the tee the enter attaches,
+that channel arriving in the enter directive as the harness half of the pair admin
+created, per the operator's ruling of 2026-08-26, dialed nowhere and derived from
+nothing, the ask written and the answer awaited on the serving thread inside a bound
+this crate elects, generous against a member whose answer is one pass over its own
+holdings. Serialization on the shared channel is the serving thread itself: the tee's
+feed and the seat's ask both run on it, so no ask can interleave a distillate's octets,
+and the member's answers are the only traffic that ever flows toward this crate, so
+whatever the wait reads is the answer or is malformed, with no third case to
+disambiguate.
 
 **The seat carries the recall port, 2026-08-19, its clause landed by the
 audit of 2026-08-26.** The port was built with the context-management
@@ -2218,20 +2230,25 @@ direction of 2026-08-11 that the harness half of the turn is drafted before it i
 built. What it charters is the granted surface and the seam's mechanics, never the
 loop that composes them, which stays the builder's.
 
-**The session opens at the enter fan-out and not at the first turn**, per the
-operator's ruling of 2026-08-11 answering the handoff's first question. Loop 0 opens
-the decode session as the last step of standing the interior up, after the SPU's
-admit confirms residency, so the surface loop 0 grants at loaded-and-idle is already
-a session at rest. The identity material the open carries is the decoder
-instruction's `identity` field, per `weaver-types-Spec` section 2, configuration
-the operator wrote rather than history the working structure holds, the structure
-being empty at enter by construction. The mapping is direct: the field's canonical
-messages are the open directive's `messages`, and the run's session identity is its
-`session`, so the harness reads the field from the instruction it already carries
-and constructs the open without a second source. A refused open is a refused
-enter, returned through the fan-out's after-load failure so the authored bracket
-stands for the leave to unwind, the aggregate naming the decode seam as where the
-fan-out stopped.
+**The session opens at the enter fan-out and not at the first turn**, per the operator's
+ruling of 2026-08-11 answering the handoff's first question. Loop 0 opens the decode
+session as the last step of standing the interior up, after the SPU's admit confirms
+residency, so the surface loop 0 grants at loaded-and-idle is already a session at rest.
+The identity material the open carries has two sources and one rule, per the operator's
+ruling of 2026-09-04 on issue #422. Where the state member's end arrived on this enter,
+the harness asks the store for the session's identity, the `identity` ask of
+`weaver-harness-state-contract` section 2, once the seam stands and before the open: a
+prefix answered is the open's `messages`, and an empty answer, the store holding no
+turnless `message.system` for the session, means the first load of the session, so the
+decoder instruction's `identity` field seeds the open and the tee lands what it seated.
+Where no end arrived the field governs alone, as it did before the ruling. **A missed
+ask refuses the enter**, the dead-peer conversion of every other ask notwithstanding: a
+run whose bounding cannot be read is not a run with no bounding, so the enter fails
+closed through the same after-load failure a refused open uses, per ruling 2 of the
+issue. The run's session identity is the open's `session` in every case. A refused open
+is a refused enter, returned through the fan-out's after-load failure so the authored
+bracket stands for the leave to unwind, the aggregate naming the decode seam as where
+the fan-out stopped.
 
 **The column ask is written where and only where the binding is diagnostic
 and the readout is elected**, per `weaver-spu-PRD` section 13.7's cadence
@@ -2310,8 +2327,9 @@ record cannot disagree with what ran.
 
 **The seated identity prefix is authored beside the load, one `message.system` per
 message**, per `weaver-trace-PRD` section 5. The harness is again the party that holds
-it, arriving in the same enter's SPU instruction beside the three elections it carries,
-so the write is one read of what is in hand. The events carry no turn, a prefix
+it, whichever source the open read it from, the store's answer or the declaration's
+seed, so the write is one read of what the open carried and the record names the prefix
+the session ran under and never the seed alone. The events carry no turn, a prefix
 preceding every turn of the run, and they are authored after the load event so the run's
 bracket stands over them.
 

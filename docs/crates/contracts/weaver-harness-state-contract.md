@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, third of this date, the vocabulary gains the `identity` ask.
+Section 2 holds five names: the fifth returns the session's seated prefix as
+custody holds it, asked once at every enter before the decode open, an empty
+answer meaning the first load and a miss refusing the enter, section 5 naming
+that miss as its one unconverted case. Per `weaver-state-PRD` section 4 as
+revised this date and issue #422.
+
 **Revised:** 2026-09-04, second of this date, the vocabulary gains the `grants` ask.
 Section 2 holds four names: the fourth reads the store's boundary as the engine
 states it, asked by the harness at the enter and the leave so the record's `unload`
@@ -241,15 +248,15 @@ them, so an ask cannot reach across the boundary `weaver-state-PRD` section
 becomes of an earlier session's rows on disk is deliberately not settled
 here, per the same ruling, and stands as its own question.
 
-**The ask vocabulary is closed and enumerated here, and it holds four names: `shape`,
-`recall`, `replay`, and `grants`.** The shape ask carries no members, one member
-instance holding one session, and asks for the session's shape - what happened, in what
-order, in which run, which is the phrase the charter uses for what the default election
-holds. Its answer carries the session's runs in the order custody first saw them, each
-with its run reference and its held event counts by kind, every name spelled as the
-envelope spelled it. The counts are organized envelope fact and carry no judgment: what
-a kind's count means to a turn is the asking loop's business, per the three-way division
-of `weaver-state-PRD` section 2.
+**The ask vocabulary is closed and enumerated here, and it holds five names: `shape`,
+`recall`, `replay`, `grants`, and `identity`.** The shape ask carries no members, one
+member instance holding one session, and asks for the session's shape - what happened,
+in what order, in which run, which is the phrase the charter uses for what the default
+election holds. Its answer carries the session's runs in the order custody first saw
+them, each with its run reference and its held event counts by kind, every name spelled
+as the envelope spelled it. The counts are organized envelope fact and carry no
+judgment: what a kind's count means to a turn is the asking loop's business, per the
+three-way division of `weaver-state-PRD` section 2.
 
 **The `recall` ask returns the conversation as custody holds it**, added
 2026-08-19 against the context-management loop's need: after a flush the
@@ -321,6 +328,20 @@ equal or not and for nothing else: the harness compares and the record carries t
 comparison, and custody states the surface and never judges it, per section 4. The ask
 answers immediately against the store, holding no event and parking never, like `shape`.
 
+**The `identity` ask returns the session's seated prefix as custody holds it**, added
+2026-09-04 against the ruling of `weaver-state-PRD` section 4 that the identity is the
+session's first holding: the harness asks once at every enter, after this seam stands
+and before the decode session opens, and what answers is what the open seats. The ask
+carries no members. The answer carries one member, `messages`, the turnless
+`message.system` events of the declared session in landing order, each served as the
+distillate's own shape, envelope and pairs, the pairs being the prefix's payload whole
+because that kind crosses the tee whole under every election. An empty list is an answer
+and not a miss: it says the store holds no prefix for the session, which is the first
+load, and the harness seeds from the declaration. **This is the one ask the dead-peer
+clause of section 5 does not convert**: a missed answer refuses the enter, because a run
+whose bounding cannot be read is not a run with no bounding. The ask answers
+immediately, holding no event and parking never, like `shape`.
+
 A further ask name is a change under section 7 and does not exist until it merges there.
 
 ## 3. What the harness owes
@@ -370,15 +391,16 @@ closing nothing: the event is dropped, the defect is state's to surface when
 the serve direction gives it a voice, and the record remains authoritative
 for what was elected. The seam does not fault the worker for a bad row.
 
-**A dead or silent peer costs the answer and never the turn.** The serve
-direction fails the way the ingest does: where state is gone, or an answer
-does not arrive inside the harness's bound, the harness proceeds as if
-nothing were held, the loop composes its turn without the fact, and no
-retry follows on this standing of the channel. A malformed ask is dropped
-by the custodian without an answer, which the harness's bound converts into
-the same missing-answer outcome, and a malformed answer is dropped by the
-harness to the same effect. In every one of these the record remains whole
-and the next load's channel asks again against holdings that never moved.
+**A dead or silent peer costs the answer and never the turn.** The serve direction fails
+the way the ingest does: where state is gone, or an answer does not arrive inside the
+harness's bound, the harness proceeds as if nothing were held, the loop composes its
+turn without the fact, and no retry follows on this standing of the channel. A malformed
+ask is dropped by the custodian without an answer, which the harness's bound converts
+into the same missing-answer outcome, and a malformed answer is dropped by the harness
+to the same effect. In every one of these the record remains whole and the next load's
+channel asks again against holdings that never moved. The `identity` ask of section 2 is
+the stated exception, ruled 2026-09-04: its miss refuses the enter rather than costing
+an answer, the turn it would cost being every turn of the run.
 
 ## 6. What neither party may do
 

@@ -4,6 +4,10 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-04, the derived identity is the seed. The derivation's
+prefix member names its standing under `weaver-state-PRD` section 4 as revised
+this date: the seed of the derived declaration, the preloaded store answering the
+replayed run's identity ask from the same events. Per issue #422.
 **Revised:** 2026-09-03, the head is applied across the cores. Section 5
 states that the unembedding's rows are split across scoped threads with
 each row summed in one order, so the reading is bit-identical to the
@@ -333,24 +337,24 @@ from: weaver-analysis
 to: analysis-sequence-order-preserved
 ```
 
-**The declaration is the third projection, and the record is its one
-source for every source-run fact**, per the charter's section 3 as amended
-on issue #394. The derivation reads members the record already spells and
-writes the declaration the operator loads, so the diagnostic run is correct
-to the run and never to the analyst's memory. Each derived member names its
-source: the session from the envelope, the artifact from
+**The declaration is the third projection, and the record is its one source for every
+source-run fact**, per the charter's section 3 as amended on issue #394. The derivation
+reads members the record already spells and writes the declaration the operator loads,
+so the diagnostic run is correct to the run and never to the analyst's memory. Each
+derived member names its source: the session from the envelope, the artifact from
 `model.measurement`'s `model`, the seated identity prefix from the turnless
-`message.system` events at the run's opening in landing order with each
-payload carried verbatim, the seed from `model.request`'s `sampling.seed`,
-the per-turn ceiling from that request's `stop.max_tokens`, and the context
-capacity from `model.output`'s `capacity`. **A member the record spells two
-ways refuses the derivation naming the member**, disagreement being a
-question for the operator and never a pick, and **a derived member the
-record does not carry refuses the same way** rather than defaulting:
-completeness is claim-relative here exactly as it is at input identity,
-and the claim is the whole declaration. The rule reaches the derived
-members alone - the fixed and analyst-supplied members below come from no
-record and refuse on no absence.
+`message.system` events at the run's opening in landing order with each payload carried
+verbatim, which since the ruling of 2026-09-04 is the seed the derived declaration
+carries while the preloaded store answers the replayed run's `identity` ask, the two
+agreeing by construction because both are the same record's events, the seed from
+`model.request`'s `sampling.seed`, the per-turn ceiling from that request's
+`stop.max_tokens`, and the context capacity from `model.output`'s `capacity`. **A member
+the record spells two ways refuses the derivation naming the member**, disagreement
+being a question for the operator and never a pick, and **a derived member the record
+does not carry refuses the same way** rather than defaulting: completeness is
+claim-relative here exactly as it is at input identity, and the claim is the whole
+declaration. The rule reaches the derived members alone - the fixed and analyst-supplied
+members below come from no record and refuse on no absence.
 
 **Three members are the analyst's inputs and three take fixed values.**
 Device placement, the readers' elections, and the diagnostic sink arrive
