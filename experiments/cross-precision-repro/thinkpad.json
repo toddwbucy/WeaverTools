@@ -20,7 +20,7 @@
       "artifact": "/opt/weaver/models/qwen2.5-0.5b-instruct-bf16.gguf"
     }
   ],
-  "cccl_version": "3.3.4-1 (CCCL_VERSION 300304), pinned via IgnorePkg",
+  "cccl_version": "3.3.4-1 (CCCL_VERSION 3003004), pinned via IgnorePkg",
   "kernel_selection": "CUB argsort, CUB top-k",
   "cuda_arch_list": "sm_75 sm_80 sm_86 sm_89 sm_120a sm_121a",
   "namespace_read_from_object": "cub::_V_300304_SM_750_800_860_890_1200_1210"
