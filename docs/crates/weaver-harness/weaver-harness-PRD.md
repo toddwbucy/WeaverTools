@@ -8,7 +8,13 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
-**Revised:** 2026-09-04, the identity prefix is read from state. Section 2's
+**Revised:** 2026-09-04, second of this date, the `reads` edge to the declaration
+retires. Section 4's boundary paragraph declared a read this crate does not
+perform, admin reading the file and this crate receiving the enter, the
+descriptor, and the vector, and the edge returns with the tool workflow that
+would perform it. Per issue #311.
+**Revised:** 2026-09-04, first of this date, the identity prefix is read from
+state. Section 2's
 prompt assembly names the prefix's source: the store where a member stands, the
 declaration's seed where the store holds none or no member stands, and a missed
 read refusing the enter rather than composing a run with no bounding. Per
@@ -347,14 +353,15 @@ inward count is unchanged.
 
 **Boundary verification and lifecycle supervision go to `weaver-admin`.** Provisioning
 is the operator's rather than admin's, per `weaver-admin-PRD` section 1, and there is
-no privileged startup window to assign. The harness reads the configuration file the
-operator produces and never writes it.
-
-```graph
-edge: reads
-from: weaver-harness
-to: agent-config
-```
+no privileged startup window to assign. The operator produces the configuration file and
+admin reads it, per `weaver-admin-PRD` section 2: this crate receives what the enter
+carries, the sink's descriptor beside it, and the loop's path on the unit's vector, and
+holds no parser and no path. **The `reads` edge this paragraph declared to
+`agent-config` retired on 2026-09-04, per issue #311**, because it recorded a read the
+crate does not perform and no chartered workflow exercises, which is the reserved slot
+in graph form. It returns, declared here again, with the tool workflow that consumes the
+tool set and the permission mode, on the day that workflow is chartered and the read
+exists.
 
 **Encoding and decoding both go to `weaver-spu`, and so does everything that
 serves them.** Model residency, GPU arbitration, decode compute, embedding compute,

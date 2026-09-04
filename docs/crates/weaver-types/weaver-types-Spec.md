@@ -5,7 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
-**Revised:** 2026-09-04, the identity field is the seed. Section 2 states that
+**Revised:** 2026-09-04, second of this date, admin is the sink field's reader.
+Section 2 names it beside the discriminant's argument, per `weaver-admin-Spec`
+section 5 and issue #311.
+**Revised:** 2026-09-04, first of this date, the identity field is the seed.
+Section 2 states that
 `identity` seeds the session's first load and that the store governs every load
 after it where a state member stands, per `weaver-state-PRD` section 4 as revised
 this date and issue #422. The shape and the refusals are unchanged.
@@ -913,6 +917,12 @@ carries a discriminated shape and admin opens by the discriminant. A bare path
 would force admin to guess from the filesystem what the operator meant, and the
 guess is wrong exactly when the operator meant a named pipe that does not exist
 yet, which is the discriminant's whole argument.
+
+**Admin is the field's one reader**, per `weaver-admin-Spec` section 5's assertion that
+the sink path dies at its one open site and issue #311: the harness receives the opened
+descriptor over the coordination socket and never the path, so the name this field
+carries reaches no process but admin's, and the harness charter's sentence that the
+agent is never told it is the same fact from the other side.
 
 ```graph
 node: types-trace-sink-discriminated
