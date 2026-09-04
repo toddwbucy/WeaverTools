@@ -3,7 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
-**Revised:** 2026-09-04, the store election is judged at the inventory and
+**Revised:** 2026-09-04, second of this date, the vector's flags and the socket's
+key are spelled. Section 6 names the four flags the member's vector carries ahead
+of its positionals, and section 9 names `state-store-socket`, the one value the
+store's inventory reads from this crate's own file. Per issue #411's code act.
+**Revised:** 2026-09-04, first of this date, the store election is judged at the
+inventory and
 rides the member's vector. Section 4 resolves an absent election to the
 embedded engine and requires the member's binary, refuses a service election
 whose socket, role mapping, or agent refusal the box does not hold, and takes
@@ -1277,28 +1282,28 @@ a privilege drop at the spawn. The isolation it exists to buy holds meanwhile
 by a weaker route, the territory being unreachable to the agent's uid either
 way, which is why nothing has tripped on the gap.
 
-**Its vector is the territory and, under a diagnostic binding, the preload
-socket path, with the first door's end inherited beside it rather than named
-on it.** Per the operator's ruling of 2026-08-26 the first door is a
-socketpair this crate creates at the spawn: the member's end crosses by
-inheritance, its number the code act's one remaining election, and the
-harness's end crosses inside the enter directive, so no socket path for that
-door rides the vector and no name exists to ride it. The agent's uid retires
-from the vector with both of its uses, the first door judging no credential
-under possession and the preload door admitting the operator principal and
-refusing the rest without knowing the agent by number. The territory is what
-the member needs to open the embedded store, and under the service engine the
-vector carries the store's socket, the database, and the role beside it, per
-`weaver-state-Spec` section 2, the engine itself first so the member knows
-which port to stand. **The preload path is present only where
-the resolved kind is diagnostic**, per `weaver-agents-PRD` section 6 as ruled
-2026-08-24, and its absence is a serving load rather than a defect: the
-member binds the preload name only where this vector carries one, so a
-serving binding stands no named door by the value not being there. The kind
-is section 4's inventory's, resolved once and read here, which is the same
-single-resolution rule the enter
-payload's `EnterBinding` follows in section 7 - the verb and the load cannot
-resolve differently because only one site resolves.
+**Its vector is the territory and, under a diagnostic binding, the preload socket path,
+with the first door's end inherited beside it rather than named on it.** Per the
+operator's ruling of 2026-08-26 the first door is a socketpair this crate creates at the
+spawn: the member's end crosses by inheritance, its number the code act's one remaining
+election, and the harness's end crosses inside the enter directive, so no socket path
+for that door rides the vector and no name exists to ride it. The agent's uid retires
+from the vector with both of its uses, the first door judging no credential under
+possession and the preload door admitting the operator principal and refusing the rest
+without knowing the agent by number. The territory is what the member needs to open the
+embedded store, and under the service engine the vector carries the store's socket, the
+database, and the role beside it, per `weaver-state-Spec` section 2, the engine itself
+first so the member knows which port to stand. The spelling is four flags ahead of the
+positionals, `--engine`, `--store-socket`, `--database`, and `--role`, each followed by
+its value, the first on every vector and the other three under the service engine alone,
+so the territory and the preload path keep their places behind them. **The preload path
+is present only where the resolved kind is diagnostic**, per `weaver-agents-PRD` section
+6 as ruled 2026-08-24, and its absence is a serving load rather than a defect: the
+member binds the preload name only where this vector carries one, so a serving binding
+stands no named door by the value not being there. The kind is section 4's inventory's,
+resolved once and read here, which is the same single-resolution rule the enter
+payload's `EnterBinding` follows in section 7 - the verb and the load cannot resolve
+differently because only one site resolves.
 
 **The instrument is perturbation, and the claim is this site's half of a
 two-sided one.** **What is watched is the vector this crate composes, in both
@@ -1770,23 +1775,24 @@ accumulates, which is the charter's own grounds read forward.
 
 ## 9. The service's own configuration
 
-**Admin has operator-installed configuration of its own, and this Spec names
-it rather than leaving it implied.** The coordination socket's per-agent name,
-the log directory, the unit template, the agent config directory, the allow-list,
-and the two organ binary paths are deployment facts the operator installs. The
-operator socket's path left this list with the socket on 2026-08-05, and the
-coordination name stayed but changed hands: the operator places it, the harness
-binds it, and admin dials it, so one value reaches two crates and the operator's
-file is where they agree. They are not the agent config and no seam carries them,
-which is why the file takes no contract of its own. **The file and its values part
-company at the start ask, and the distinction is worth holding.** This crate is the
-only one that reads the file. Three of the values do not stay in it: the
-coordination socket's name and the two organ binary paths reach the worker in
-section 6's argument vector, over the external boundary
-`weaver-admin-systemd-contract` holds rather than over any seam. The shape is
-a satellite of section 11: what is fixed here is that these values exist, that
-they are the operator's to place, and that none of them is discovered at
-runtime by searching.
+**Admin has operator-installed configuration of its own, and this Spec names it rather
+than leaving it implied.** The coordination socket's per-agent name, the log directory,
+the unit template, the agent config directory, the allow-list, and the two organ binary
+paths are deployment facts the operator installs. The store's socket directory joined
+the list 2026-09-04 under the key `state-store-socket`, optional, the service engine's
+conventional directory standing where the file is silent, and read under a service
+election alone. The operator socket's path left this list with the socket on 2026-08-05,
+and the coordination name stayed but changed hands: the operator places it, the harness
+binds it, and admin dials it, so one value reaches two crates and the operator's file is
+where they agree. They are not the agent config and no seam carries them, which is why
+the file takes no contract of its own. **The file and its values part company at the
+start ask, and the distinction is worth holding.** This crate is the only one that reads
+the file. Three of the values do not stay in it: the coordination socket's name and the
+two organ binary paths reach the worker in section 6's argument vector, over the
+external boundary `weaver-admin-systemd-contract` holds rather than over any seam. The
+shape is a satellite of section 11: what is fixed here is that these values exist, that
+they are the operator's to place, and that none of them is discovered at runtime by
+searching.
 
 **The organ binaries are on this list and not in the agent's declaration, and
 the placement is the ruling rather than a convenience.** They are one

@@ -60,6 +60,14 @@ pub struct AgentConfig {
     /// absence at inventory, so the worker never re-derives it.
     #[serde(default)]
     pub state_election: Option<StateElection>,
+    /// The store the state member stands on, per `weaver-types-Spec` section
+    /// 2 and the ruling of 2026-09-04 that the store is a port: absent means
+    /// the embedded engine with the member standing, and the cross-field
+    /// rules - `database` and `role` exactly under the service engine, and
+    /// no election beside `none` - are admin's at inventory, this parse
+    /// checking each field alone.
+    #[serde(default)]
+    pub state_store: Option<StateStore>,
     /// The agent's loop file, per `weaver-types-Spec` section 2 and the
     /// ruling of 2026-08-20 on issue #243: the loop is a member of this
     /// agent's harness and unique to it. The second optional field, by the
@@ -69,6 +77,40 @@ pub struct AgentConfig {
     /// exchange, because no exchange carries a path.
     #[serde(default)]
     pub loop_file: Option<PathBuf>,
+}
+
+/// The store election, per `weaver-types-Spec` section 2: which port the
+/// deployment elects, and the service engine's database and role.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct StateStore {
+    pub engine: StoreEngine,
+    #[serde(default)]
+    pub database: Option<String>,
+    #[serde(default)]
+    pub role: Option<String>,
+}
+
+impl Default for StateStore {
+    /// The embedded engine, which is what an absent election means.
+    fn default() -> Self {
+        StateStore {
+            engine: StoreEngine::Sqlite,
+            database: None,
+            role: None,
+        }
+    }
+}
+
+/// The engines the state charter charters, and the declared absence of a
+/// member. Closed at three: a further engine is a state act before it is a
+/// variant.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum StoreEngine {
+    None,
+    Sqlite,
+    Postgres,
 }
 
 /// What a load is for, per `weaver-agents-PRD` section 6 as amended

@@ -22,8 +22,8 @@
 use std::io::Read;
 
 use weaver_state::{
-    Ask, Election, Store, parse_ask, parse_distillate, render_recall_answer, render_replay_answer,
-    render_shape_answer,
+    Ask, Election, Store, parse_ask, parse_distillate, render_grants_answer, render_recall_answer,
+    render_replay_answer, render_shape_answer,
 };
 
 /// The first door's end arrives at this descriptor number, the fixed
@@ -50,15 +50,30 @@ fn main() -> std::process::ExitCode {
     // member on the vector because no exchange this member holds carries a
     // path. The first door rides no argument at all, its end inherited at
     // the fixed number above.
-    let mut arguments = std::env::args().skip(1);
-    let Some(territory) = arguments.next() else {
+    // **The store election rides the vector too**, per `weaver-state-Spec`
+    // section 4 as of 2026-09-04: `--engine` names the port, and under the
+    // service engine `--store-socket`, `--database`, and `--role` name where
+    // and as whom the member connects. Absent flags mean the embedded
+    // engine, which is what an absent election means in the declaration.
+    let Some(vector) = StoreVector::parse(std::env::args().skip(1)) else {
         eprintln!(
             "{}",
-            serde_json::json!({"state_fault": "usage: weaver-state <territory> [preload-socket]"})
+            serde_json::json!({
+                "state_fault":
+                    "usage: weaver-state [--engine sqlite|postgres] [--store-socket DIR] \
+                     [--database NAME] [--role NAME] <territory> [preload-socket]"
+            })
         );
         return std::process::ExitCode::FAILURE;
     };
-    let preload_socket = arguments.next();
+    let StoreVector {
+        engine,
+        socket,
+        database,
+        role,
+        territory,
+        preload_socket,
+    } = vector;
 
     // The inherited end is this process's by construction: admin armed it
     // onto the fixed number in the spawn path itself. **The number is probed
@@ -93,8 +108,7 @@ fn main() -> std::process::ExitCode {
         std::os::unix::net::UnixStream::from_raw_fd(FIRST_DOOR_FD)
     };
 
-    let path = std::path::Path::new(&territory).join("state.sql");
-    let mut store = match Store::open(&path) {
+    let mut store: Box<dyn Store> = match open_store(&engine, &territory, socket, database, role) {
         Ok(store) => store,
         Err(fault) => {
             eprintln!(
@@ -148,7 +162,93 @@ fn main() -> std::process::ExitCode {
         Some(None) => return std::process::ExitCode::FAILURE,
     };
 
-    serve(lines, preload, preload_socket, &mut store, &session)
+    serve(lines, preload, preload_socket, store.as_mut(), &session)
+}
+
+/// The member's vector, parsed: the flags in any order before the two
+/// positionals the vector has always carried.
+struct StoreVector {
+    engine: String,
+    socket: Option<String>,
+    database: Option<String>,
+    role: Option<String>,
+    territory: String,
+    preload_socket: Option<String>,
+}
+
+impl StoreVector {
+    fn parse(arguments: impl Iterator<Item = String>) -> Option<StoreVector> {
+        let mut engine = String::from("sqlite");
+        let mut socket = None;
+        let mut database = None;
+        let mut role = None;
+        let mut positional = Vec::new();
+        let mut arguments = arguments.peekable();
+        while let Some(argument) = arguments.next() {
+            match argument.as_str() {
+                "--engine" => engine = arguments.next()?,
+                "--store-socket" => socket = Some(arguments.next()?),
+                "--database" => database = Some(arguments.next()?),
+                "--role" => role = Some(arguments.next()?),
+                flag if flag.starts_with("--") => return None,
+                _ => positional.push(argument),
+            }
+        }
+        if positional.is_empty() || positional.len() > 2 {
+            return None;
+        }
+        let mut positional = positional.into_iter();
+        Some(StoreVector {
+            engine,
+            socket,
+            database,
+            role,
+            territory: positional.next()?,
+            preload_socket: positional.next(),
+        })
+    }
+}
+
+/// The engine the vector elects, opened, per `weaver-state-Spec` section 3:
+/// the embedded engine at the territory's `state.sql`, the service engine
+/// over its socket under the declared database and role. An engine this
+/// binary was not built with, or one the vector spells that the port does
+/// not name, is `StoreUnavailable`: the member cannot stand on a store it
+/// does not carry, and admin's inventory should have refused the load
+/// before the vector was built.
+fn open_store(
+    engine: &str,
+    territory: &str,
+    socket: Option<String>,
+    database: Option<String>,
+    role: Option<String>,
+) -> Result<Box<dyn Store>, weaver_state::CustodyFault> {
+    use weaver_state::CustodyFault;
+    match engine {
+        #[cfg(feature = "sqlite")]
+        "sqlite" => {
+            let path = std::path::Path::new(territory).join("state.sql");
+            Ok(Box::new(weaver_state::engine::sqlite::Sqlite::open(&path)?))
+        }
+        #[cfg(feature = "postgres")]
+        "postgres" => {
+            let socket = socket.unwrap_or_else(|| String::from("/run/postgresql"));
+            let (Some(database), Some(role)) = (database, role) else {
+                return Err(CustodyFault::StoreUnavailable(String::from(
+                    "the service engine needs --database and --role",
+                )));
+            };
+            Ok(Box::new(weaver_state::engine::postgres::Postgres::open(
+                &socket, &database, &role,
+            )?))
+        }
+        other => {
+            let _ = (territory, socket, database, role);
+            Err(CustodyFault::StoreUnavailable(format!(
+                "no engine named {other:?} in this binary"
+            )))
+        }
+    }
 }
 
 /// Custody until closure, across the doors this standing carries.
@@ -162,7 +262,7 @@ fn serve(
     mut harness: LineReader<'_>,
     preload_listener: Option<std::os::unix::net::UnixListener>,
     preload_path: Option<String>,
-    store: &mut Store,
+    store: &mut dyn Store,
     session: &str,
 ) -> std::process::ExitCode {
     use std::os::fd::AsFd;
@@ -312,7 +412,7 @@ fn serve(
 /// cannot block on a peer that sent nothing since.
 fn drain_harness_lines(
     harness: &mut LineReader<'_>,
-    store: &mut Store,
+    store: &mut dyn Store,
     session: &str,
     parking: &mut ReplayParking,
 ) -> Option<std::process::ExitCode> {
@@ -344,6 +444,7 @@ fn drain_harness_lines(
             Ask::Replay => store
                 .replay(session)
                 .map(|events| render_replay_answer(&events)),
+            Ask::Grants => store.grants().map(|surface| render_grants_answer(&surface)),
         };
         if let Ok(frame) = frame
             && frame.len() <= ANSWER_BOUND
@@ -742,6 +843,65 @@ impl<'a> LineReader<'a> {
 
 #[cfg(test)]
 mod tests {
+    /// **The engine leads and the positionals keep their places**, per
+    /// `weaver-state-Spec` section 4 as of 2026-09-04. Perturbation: parse
+    /// the flags after the positionals and the diagnostic case reads the
+    /// preload name as the territory.
+    #[test]
+    fn the_vector_elects_the_engine_before_the_territory() {
+        fn words(v: &[&str]) -> std::vec::IntoIter<String> {
+            v.iter()
+                .map(|w| w.to_string())
+                .collect::<Vec<_>>()
+                .into_iter()
+        }
+        let embedded =
+            super::StoreVector::parse(words(&["--engine", "sqlite", "/t"])).expect("parses");
+        assert_eq!(embedded.engine, "sqlite");
+        assert_eq!(embedded.territory, "/t");
+        assert!(embedded.preload_socket.is_none());
+        let bare = super::StoreVector::parse(words(&["/t", "/t/preload.sock"])).expect("parses");
+        assert_eq!(
+            bare.engine, "sqlite",
+            "absent flags are the embedded engine"
+        );
+        assert_eq!(bare.preload_socket.as_deref(), Some("/t/preload.sock"));
+        let service = super::StoreVector::parse(words(&[
+            "--engine",
+            "postgres",
+            "--store-socket",
+            "/run/postgresql",
+            "--database",
+            "d",
+            "--role",
+            "r",
+            "/t",
+            "/t/preload.sock",
+        ]))
+        .expect("parses");
+        assert_eq!(service.engine, "postgres");
+        assert_eq!(service.socket.as_deref(), Some("/run/postgresql"));
+        assert_eq!(service.database.as_deref(), Some("d"));
+        assert_eq!(service.role.as_deref(), Some("r"));
+        assert_eq!(service.territory, "/t");
+        assert!(
+            super::StoreVector::parse(words(&["--engine"])).is_none(),
+            "a flag without a value"
+        );
+        assert!(
+            super::StoreVector::parse(words(&["--other", "x", "/t"])).is_none(),
+            "an unknown flag"
+        );
+        assert!(
+            super::StoreVector::parse(words(&["/t", "/p", "/x"])).is_none(),
+            "three positionals"
+        );
+        assert!(
+            super::StoreVector::parse(words(&[])).is_none(),
+            "no territory"
+        );
+    }
+
     use super::*;
 
     /// **The preload door denies every uid but its owner.**

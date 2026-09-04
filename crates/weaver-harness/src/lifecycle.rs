@@ -314,6 +314,11 @@ struct Run {
     /// state port. `None` where the leg is not standing, which the port
     /// serves as the same absence a missing answer does.
     state: Option<crate::state::StateSeam>,
+    /// The store's grant surface as the member stated it at the enter, per
+    /// `weaver-trace-PRD` section 3.1 as of 2026-09-04, held for the leave
+    /// to compare against. `None` where no member stood under a serving
+    /// record, or where the enter's ask missed.
+    grants_at_enter: Option<Vec<String>>,
     /// The classify arm, per `weaver-harness-Spec` section 6: `None` where
     /// the declaration carried no binding, which the port serves as the
     /// missing leg's absence.
@@ -1316,6 +1321,16 @@ impl Harness {
             // on this enter, and the composer is what the binary handed
             // `serve`. Neither is read from the deployment.
             state_member,
+            state_store: weaver_trace::StoreIdentity {
+                engine: match payload.state_store.engine {
+                    weaver_types::StoreEngine::None => "none",
+                    weaver_types::StoreEngine::Sqlite => "sqlite",
+                    weaver_types::StoreEngine::Postgres => "postgres",
+                }
+                .to_string(),
+                database: payload.state_store.database.clone(),
+                role: payload.state_store.role.clone(),
+            },
             composer: self
                 .composer
                 .clone()
@@ -1380,6 +1395,16 @@ impl Harness {
         // follows unwinds exactly what stood up, closes the bracket, and
         // drains. Dropping it here would orphan whatever forked and leave an
         // unclosed bracket on the stream.
+        // **The leave reads the boundary back**, per `weaver-trace-PRD`
+        // section 3.1 as of 2026-09-04, so the enter reads it first: the
+        // grants ask goes out once the seam stands under a serving record,
+        // and the reading is held on the run for the unload to compare.
+        // No member, or a diagnostic record that authors no unload, reads
+        // nothing.
+        let grants_at_enter = match (recorder.serving().is_some(), state_seam.as_mut()) {
+            (true, Some(seam)) => seam.ask_grants(),
+            _ => None,
+        };
         let mut run = Run {
             classify: None,
             recorder,
@@ -1389,6 +1414,7 @@ impl Harness {
             spu: None,
             gate: None,
             state: state_seam,
+            grants_at_enter,
             fullness: None,
             pressure_reported: false,
             turn_in_flight: None,
@@ -1815,12 +1841,31 @@ fn leave(run: &mut Run) -> Result<(), LifecycleRefusal> {
     // `unload`, its own close being `replay.closed`, the loop's to author,
     // per `weaver-diagnostic-Spec` section 4.
     if run.recorder.serving().is_some() {
+        // **The grant surface read back**, per `weaver-trace-PRD` section
+        // 3.1 as of 2026-09-04: where a member stood, the leave asks again
+        // and the event carries the comparison, a surface that varied
+        // inside the session being a boundary move the record carries and
+        // never absorbs, and one unreadable at the close said to be so
+        // rather than reported unchanged. Where no member stood there was
+        // no boundary to read and the event carries nothing.
+        let payload = run.state.as_mut().map(|seam| {
+            let at_leave = seam.ask_grants();
+            weaver_trace::Payload::Unload(weaver_trace::UnloadClose {
+                grant_surface: match (&run.grants_at_enter, at_leave) {
+                    (Some(entered), Some(left)) if *entered == left => {
+                        weaver_trace::GrantSurface::Unchanged
+                    }
+                    (Some(_), Some(_)) => weaver_trace::GrantSurface::Varied,
+                    _ => weaver_trace::GrantSurface::Unreadable,
+                },
+            })
+        });
         let _ = run.author.author(
             &mut run.recorder,
             Kind::Unload,
             Subsystem::Harness,
             None,
-            None,
+            payload,
         );
     }
 
@@ -2239,6 +2284,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -2277,6 +2323,7 @@ mod tests {
                 gate: None,
                 diagnostic: None,
                 state: None,
+                grants_at_enter: None,
                 fullness: None,
                 pressure_reported: false,
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
@@ -2368,6 +2415,7 @@ mod tests {
                     },
                 },
             },
+            state_store: weaver_types::StateStore::default(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: vec![weaver_types::ElectedKindConfig {
@@ -2488,6 +2536,7 @@ mod tests {
                     },
                 },
             },
+            state_store: weaver_types::StateStore::default(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: Vec::new(),
@@ -2628,6 +2677,7 @@ mod tests {
                         },
                     },
                 },
+                state_store: weaver_types::StateStore::default(),
                 state_election: weaver_types::StateElection {
                     all_kinds: false,
                     keys: Vec::new(),
@@ -2724,6 +2774,7 @@ mod tests {
                     },
                 },
             },
+            state_store: weaver_types::StateStore::default(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: Vec::new(),
@@ -2828,6 +2879,7 @@ mod tests {
                         },
                     },
                 },
+                state_store: weaver_types::StateStore::default(),
                 state_election: weaver_types::StateElection {
                     all_kinds: false,
                     keys: vec![weaver_types::ElectedKindConfig {
@@ -2962,6 +3014,7 @@ mod tests {
                 },
             },
             binding: weaver_types::EnterBinding::Diagnostic,
+            state_store: weaver_types::StateStore::default(),
             state_election: weaver_types::StateElection::default(),
         };
 
@@ -3080,6 +3133,7 @@ mod tests {
                     },
                 },
             },
+            state_store: weaver_types::StateStore::default(),
             state_election: weaver_types::StateElection::default(),
         };
 

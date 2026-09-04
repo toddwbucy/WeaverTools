@@ -10,9 +10,11 @@
 //! 2026-08-19, shaped by its first asker per the charter's cell - the
 //! context-injection loop, whose one ask is the session's shape.
 
-pub mod store;
+pub mod engine;
+mod store;
 
 pub use store::{
     Ask, CustodyFault, Distillate, Election, RecalledEvent, RunShape, Store, is_shape_ask,
-    parse_ask, parse_distillate, render_recall_answer, render_replay_answer, render_shape_answer,
+    parse_ask, parse_distillate, render_grants_answer, render_recall_answer, render_replay_answer,
+    render_shape_answer,
 };

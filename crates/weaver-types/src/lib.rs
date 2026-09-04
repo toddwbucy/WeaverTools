@@ -91,7 +91,8 @@ pub use config::parse;
 pub use config::{
     AgentConfig, ArtifactRef, BindingKind, ClassifyInstruction, ConfigError, ConfigErrorKind,
     DecoderInstruction, DeviceOrdinal, ElectedKindConfig, FieldElection, FieldName,
-    GateInstruction, ModelBinding, SpuInstruction, StateElection, ToolName, TraceSink,
+    GateInstruction, ModelBinding, SpuInstruction, StateElection, StateStore, StoreEngine,
+    ToolName, TraceSink,
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{

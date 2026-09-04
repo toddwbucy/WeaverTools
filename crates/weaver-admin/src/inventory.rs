@@ -14,7 +14,7 @@ use std::path::Path;
 
 use weaver_types::{
     AgentConfig, AgentName, BindingKind, ConfigErrorKind, EnterBinding, FieldName,
-    LifecycleRefusal, TraceSink,
+    LifecycleRefusal, StoreEngine, TraceSink,
 };
 
 /// What the boundary check needs to know about the host, supplied by the
@@ -30,6 +30,14 @@ pub struct Boundary {
     pub agent_gids: Vec<u32>,
     /// The agent's home, which must exist.
     pub home: std::path::PathBuf,
+    /// The state member's binary where the box carries one beside the
+    /// worker's, per `weaver-admin-Spec` section 4 as of 2026-09-04: every
+    /// election but `none` requires it, so its absence is the box's fault
+    /// and never an absent member.
+    pub member_binary: Option<std::path::PathBuf>,
+    /// The directory the store's socket stands in, from this crate's own
+    /// configuration, read under the service engine alone.
+    pub store_socket: std::path::PathBuf,
 }
 
 /// The fleet's allow-list: the names the operator delegated, per charter
@@ -150,6 +158,39 @@ fn take_inventory_against(
         }
     };
 
+    // **The store election is judged here**, per `weaver-admin-Spec` section
+    // 4 as of 2026-09-04, the declaration's half first, before any look at
+    // the box. The parse checks each field alone, so the cross-field rules
+    // land here: `none` declines the member and so refuses a state election
+    // beside it, an election with no member to receive it being malformed
+    // rather than surplus, and `database` and `role` belong to the service
+    // engine exactly, absent under every other engine and present under it.
+    let store = config.state_store.clone().unwrap_or_default();
+    let store_invalid = |field: &str| LifecycleRefusal::ConfigInvalid {
+        field: Some(FieldName(field.into())),
+    };
+    match store.engine {
+        StoreEngine::None if config.state_election.is_some() => {
+            return Err(store_invalid("state-election"));
+        }
+        StoreEngine::None | StoreEngine::Sqlite => {
+            if store.database.is_some() {
+                return Err(store_invalid("state-store.database"));
+            }
+            if store.role.is_some() {
+                return Err(store_invalid("state-store.role"));
+            }
+        }
+        StoreEngine::Postgres => {
+            if store.database.is_none() {
+                return Err(store_invalid("state-store.database"));
+            }
+            if store.role.is_none() {
+                return Err(store_invalid("state-store.role"));
+            }
+        }
+    }
+
     // A granted permission member is refused, per `weaver-admin-Spec`
     // section 7: the member is this crate's to set from the resolved kind at
     // the construction, and it parses with `default` because one type
@@ -204,6 +245,68 @@ fn take_inventory_against(
     }
     if !admin_holds_custody(directory, boundary) {
         return Err(LifecycleRefusal::BoundaryUnverified);
+    }
+
+    // **The store's box half**, per `weaver-admin-Spec` section 4 as of
+    // 2026-09-04. Every election but `none` stands a member and so requires
+    // the member's binary: the leg's standing is the declaration's fact and
+    // not the directory's, per `weaver-state-PRD` section 4 and issue #381,
+    // so a box lacking the binary refuses rather than running without a leg
+    // the declaration never declined. The service engine further requires
+    // the store's socket under the configured directory, and the walk asks
+    // the store the two questions the charter's two gates pose: that this
+    // account, the member's, maps to the declared role, and that the agent's
+    // uid maps to none. Each is `BoundaryUnverified` and never
+    // `ConfigInvalid`, for the reason the group case below gives: the
+    // declaration is well formed and the fault is the provisioning's.
+    if store.engine != StoreEngine::None && boundary.member_binary.is_none() {
+        eprintln!("boundary unverified: no weaver-state binary beside the worker's");
+        return Err(LifecycleRefusal::BoundaryUnverified);
+    }
+    if store.engine == StoreEngine::Postgres {
+        let (Some(database), Some(role)) = (store.database.as_deref(), store.role.as_deref())
+        else {
+            unreachable!("the declaration's half required both");
+        };
+        let socket = boundary.store_socket.join(STORE_SOCKET_LEAF);
+        if !std::fs::metadata(&socket)
+            .map(|m| std::os::unix::fs::FileTypeExt::is_socket(&m.file_type()))
+            .unwrap_or(false)
+        {
+            eprintln!(
+                "boundary unverified: no store socket at {}",
+                socket.display()
+            );
+            return Err(LifecycleRefusal::BoundaryUnverified);
+        }
+        match store_admits(&boundary.store_socket, database, role) {
+            Ok(true) => {}
+            Ok(false) => {
+                eprintln!(
+                    "boundary unverified: the store does not map this account to role {role:?} \
+                     on database {database:?}"
+                );
+                return Err(LifecycleRefusal::BoundaryUnverified);
+            }
+            Err(e) => {
+                eprintln!("boundary unverified: the store could not be asked: {e}");
+                return Err(LifecycleRefusal::BoundaryUnverified);
+            }
+        }
+        match store_admits_as(boundary, database, role) {
+            Ok(false) => {}
+            Ok(true) => {
+                eprintln!(
+                    "boundary unverified: the store maps the agent's uid {} to role {role:?}",
+                    boundary.agent_uid
+                );
+                return Err(LifecycleRefusal::BoundaryUnverified);
+            }
+            Err(e) => {
+                eprintln!("boundary unverified: the store could not be asked as the agent: {e}");
+                return Err(LifecycleRefusal::BoundaryUnverified);
+            }
+        }
     }
 
     // **The access rule is checked against the mode that will carry it**, per
@@ -275,6 +378,92 @@ fn take_inventory_against(
         identity,
         binding,
     })
+}
+
+/// The service engine's conventional socket directory, standing where this
+/// crate's configuration names none.
+pub const STORE_SOCKET_DIRECTORY: &str = "/run/postgresql";
+
+/// The leaf the store's socket carries under its directory, at the engine's
+/// default port.
+pub const STORE_SOCKET_LEAF: &str = ".s.PGSQL.5432";
+
+/// The name of the environment variable under which this binary, re-executed
+/// as the agent's uid, answers the store's second question instead of
+/// serving a verb: no verb of the operator's surface is added for a question
+/// the surface never asks.
+pub const PROBE_STORE_VARIABLE: &str = "WEAVER_ADMIN_PROBE_STORE";
+
+/// **Does the store admit this process as `role` on `database`?** Asked in
+/// the engine's own startup handshake over the unix socket, with no client
+/// library: one startup message carrying the role and database, and one
+/// answer read, an authentication-complete meaning the store's peer
+/// authentication mapped this account to the role, and anything else meaning
+/// it did not. An authentication method this process cannot answer, a
+/// password or a challenge, counts as not admitted, because the member
+/// authenticates by peer credential and nothing else. The error names a
+/// socket that could not be spoken to, never a refusal.
+pub fn store_admits(socket_dir: &Path, database: &str, role: &str) -> std::io::Result<bool> {
+    use std::io::{Read, Write};
+    let mut stream = std::os::unix::net::UnixStream::connect(socket_dir.join(STORE_SOCKET_LEAF))?;
+    stream.set_read_timeout(Some(std::time::Duration::from_secs(5)))?;
+    let mut body = Vec::new();
+    body.extend_from_slice(&196_608u32.to_be_bytes());
+    for (key, value) in [("user", role), ("database", database)] {
+        body.extend_from_slice(key.as_bytes());
+        body.push(0);
+        body.extend_from_slice(value.as_bytes());
+        body.push(0);
+    }
+    body.push(0);
+    let mut message = ((body.len() + 4) as u32).to_be_bytes().to_vec();
+    message.extend_from_slice(&body);
+    stream.write_all(&message)?;
+    let mut head = [0u8; 5];
+    stream.read_exact(&mut head)?;
+    let length = u32::from_be_bytes([head[1], head[2], head[3], head[4]]) as usize;
+    let admitted = if head[0] == b'R' && length >= 8 {
+        let mut code = [0u8; 4];
+        stream.read_exact(&mut code)?;
+        u32::from_be_bytes(code) == 0
+    } else {
+        false
+    };
+    let _ = stream.write_all(&[b'X', 0, 0, 0, 4]);
+    Ok(admitted)
+}
+
+/// **Does the store admit the agent's uid as `role`?** The question the
+/// charter's second gate poses, and the one this process cannot ask as
+/// itself: peer authentication reads the connecting uid, so this binary
+/// re-executes itself under the agent's uid and primary gid with
+/// [`PROBE_STORE_VARIABLE`] set, and the child asks [`store_admits`] and
+/// exits zero for admitted and one for refused. Any other exit is the probe
+/// failing to run, which is an error and not an answer.
+pub fn store_admits_as(boundary: &Boundary, database: &str, role: &str) -> std::io::Result<bool> {
+    use std::os::unix::process::CommandExt;
+    let mut probe = std::process::Command::new(std::env::current_exe()?);
+    probe
+        .env_clear()
+        .env(PROBE_STORE_VARIABLE, "1")
+        .arg(&boundary.store_socket)
+        .arg(database)
+        .arg(role)
+        .uid(boundary.agent_uid)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    if let Some(gid) = boundary.agent_gids.first() {
+        probe.gid(*gid);
+    }
+    match probe.status()?.code() {
+        Some(0) => Ok(true),
+        Some(1) => Ok(false),
+        other => Err(std::io::Error::other(format!(
+            "the probe under uid {} ended with {other:?}",
+            boundary.agent_uid
+        ))),
+    }
 }
 
 /// The first peer an access rule admits that the socket's mode will turn
@@ -904,6 +1093,11 @@ mod tests {
             // that the agent holds no membership reaching this directory.
             agent_gids: vec![65533],
             home: home.to_path_buf(),
+            // The fixtures elect no store, which resolves to the embedded
+            // engine and so requires a member binary: this process's own
+            // stands in for it, present on every box the suite runs on.
+            member_binary: Some(std::path::PathBuf::from("/proc/self/exe")),
+            store_socket: std::path::PathBuf::from(STORE_SOCKET_DIRECTORY),
         }
     }
 
@@ -941,6 +1135,98 @@ mod tests {
             ),
             sink_dir.display()
         )
+    }
+
+    /// The fixture with a store election appended, the rest unchanged.
+    fn config_source_electing(sink_dir: &std::path::Path, store: &str) -> String {
+        format!("{}state-store:\n{store}", config_source(sink_dir))
+    }
+
+    /// **The store election's declaration half**, per `weaver-admin-Spec`
+    /// section 4 as of 2026-09-04: `none` beside a state election refuses
+    /// naming `state-election`, `database` and `role` belong to the service
+    /// engine exactly, and each refusal is `ConfigInvalid` naming the field.
+    /// Perturbation: remove any one arm of the match and its case below
+    /// passes the inventory, each case naming the arm that catches it.
+    #[test]
+    fn the_store_election_is_judged_before_the_box() {
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".into());
+        let root = std::env::temp_dir().join(format!("wt-store-decl-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let home = root.join("home");
+        std::fs::create_dir_all(&home).expect("home");
+        let boundary = boundary(&home, 65533);
+        let cases: [(&str, &str); 5] = [
+            (
+                "  engine: none\nstate-election:\n  all-kinds: true\n  keys: []\n",
+                "state-election",
+            ),
+            ("  engine: none\n  database: d\n", "state-store.database"),
+            ("  engine: sqlite\n  role: r\n", "state-store.role"),
+            ("  engine: postgres\n  role: r\n", "state-store.database"),
+            ("  engine: postgres\n  database: d\n", "state-store.role"),
+        ];
+        for (store, field) in cases {
+            let source = config_source_electing(&home, store);
+            let refused = take_inventory(&name, &source, &allow, &boundary);
+            match refused {
+                Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) }) if f.0 == field => {}
+                other => panic!("{store:?} should refuse naming {field}, got {other:?}"),
+            }
+        }
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// **Every election but `none` requires the member's binary**, and the
+    /// service engine requires the store's socket, each `BoundaryUnverified`.
+    /// Perturbation: drop the binary check and the first case passes the
+    /// inventory or fails later on the sink instead, and drop the socket
+    /// check and the second reaches the store's handshake against a
+    /// directory holding no socket, failing as an ask rather than a look.
+    #[test]
+    fn every_election_but_none_requires_the_member_and_postgres_its_socket() {
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".into());
+        let root = std::env::temp_dir().join(format!("wt-store-box-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let home = root.join("home");
+        std::fs::create_dir_all(&home).expect("home");
+        let sink_dir = root.join("sink");
+        std::fs::create_dir_all(&sink_dir).expect("sink");
+        // The sink is admin's, mode-locked, so the walks before the store's
+        // pass and the store's own is what refuses.
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o700)).expect("mode");
+
+        let mut without_binary = boundary(&home, 65533);
+        without_binary.member_binary = None;
+        let embedded = config_source(&sink_dir);
+        assert!(
+            matches!(
+                take_inventory(&name, &embedded, &allow, &without_binary),
+                Err(LifecycleRefusal::BoundaryUnverified)
+            ),
+            "an absent election is the embedded engine and requires the member"
+        );
+        let declined = config_source_electing(&sink_dir, "  engine: none\n");
+        assert!(
+            take_inventory(&name, &declined, &allow, &without_binary).is_ok(),
+            "none declines the member and requires nothing"
+        );
+
+        let mut without_socket = boundary(&home, 65533);
+        without_socket.store_socket = root.join("no-such-store");
+        let service =
+            config_source_electing(&sink_dir, "  engine: postgres\n  database: d\n  role: r\n");
+        assert!(
+            matches!(
+                take_inventory(&name, &service, &allow, &without_socket),
+                Err(LifecycleRefusal::BoundaryUnverified)
+            ),
+            "the service engine requires the store's socket under the configured directory"
+        );
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     /// **A declaration whose gate instruction disagrees with its kind is
@@ -1157,6 +1443,8 @@ mod tests {
             admin_uid: 65532,
             agent_gids: vec![65531],
             home: home.clone(),
+            member_binary: Some(std::path::PathBuf::from("/proc/self/exe")),
+            store_socket: std::path::PathBuf::from(STORE_SOCKET_DIRECTORY),
         };
         assert!(
             !agent_can_traverse(&sink_dir, &third_party),

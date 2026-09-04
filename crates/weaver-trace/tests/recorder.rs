@@ -70,6 +70,7 @@ fn elections() -> Payload {
         surprisal: false,
         tee: Some(weaver_trace::Election::default()),
         state_member: false,
+        state_store: Default::default(),
         composer: weaver_trace::LoopIdentity::compiled("test"),
     })
 }
@@ -478,6 +479,39 @@ fn pretty_printed_payload_refuses_at_render() {
     assert_eq!(r.structure().len(), 1, "the refused event landed nowhere");
 }
 
+/// **`unload` has two licensed pairings and no third**, per Spec section 3
+/// as of 2026-09-04: payload-free where no member stood, `UnloadClose` where
+/// one did, and the close's shape on any other kind refuses. Perturbation:
+/// drop the `(Unload, Some(Unload))` arm of the pairing and the second
+/// submit refuses; widen it to `(_, Some(Unload))` and the third passes.
+#[test]
+fn the_unload_carries_its_close_or_nothing() {
+    let (mut r, _path) = recorder();
+    let close = || {
+        Some(Payload::Unload(weaver_trace::UnloadClose {
+            grant_surface: weaver_trace::GrantSurface::Varied,
+        }))
+    };
+    r.submit(event(Kind::Unload, None, None))
+        .expect("payload-free where no member stood");
+    r.submit(event(Kind::Unload, None, close()))
+        .expect("the close where one did");
+    let err = r
+        .submit(event(Kind::SessionClosed, None, close()))
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        Failure::RefusedOnSubmit {
+            reason: SubmitRefusal::PayloadMalformed
+        }
+    ));
+    let rendered = serde_json::to_value(weaver_trace::UnloadClose {
+        grant_surface: weaver_trace::GrantSurface::Unreadable,
+    })
+    .expect("renders");
+    assert_eq!(rendered, serde_json::json!({"grant_surface": "unreadable"}));
+}
+
 /// A run-level kind carrying a turn refuses: a join key the work never held
 /// would be a false attribution. `fault` stays exempt, its option being the
 /// caller's fact.
@@ -775,6 +809,7 @@ fn the_load_carries_the_tee_election() {
                 }],
             }),
             state_member: false,
+            state_store: Default::default(),
             composer: weaver_trace::LoopIdentity::compiled("test"),
         })),
     ))
@@ -818,6 +853,7 @@ fn a_declined_surprisal_election_is_written_down() {
             surprisal: true,
             tee: Some(weaver_trace::Election::default()),
             state_member: false,
+            state_store: Default::default(),
             composer: weaver_trace::LoopIdentity::compiled("test"),
         })),
     ))
@@ -960,6 +996,11 @@ fn the_load_names_its_loop_and_its_member() {
         surprisal: false,
         tee: Some(weaver_trace::Election::default()),
         state_member: true,
+        state_store: weaver_trace::StoreIdentity {
+            engine: "postgres".into(),
+            database: Some("weaver_karl".into()),
+            role: Some("weaver_karl".into()),
+        },
         composer: weaver_trace::LoopIdentity::file(
             "pyworker",
             std::path::Path::new("/usr/local/libexec/weaver/loops/dev_loop.py"),
@@ -968,6 +1009,21 @@ fn the_load_names_its_loop_and_its_member() {
     })
     .expect("renders");
     assert_eq!(rendered["state_member"], serde_json::json!(true));
+    assert_eq!(
+        rendered["state_store"],
+        serde_json::json!({"engine": "postgres", "database": "weaver_karl", "role": "weaver_karl"}),
+        "the load names the store the member stands on"
+    );
+    assert_eq!(
+        serde_json::to_value(weaver_trace::StoreIdentity {
+            engine: "sqlite".into(),
+            database: None,
+            role: None
+        })
+        .expect("renders"),
+        serde_json::json!({"engine": "sqlite"}),
+        "the embedded engine names no database and no role, not null ones"
+    );
     assert_eq!(
         rendered["composer"]["binary"],
         serde_json::json!("pyworker")
@@ -994,6 +1050,7 @@ fn the_load_names_its_loop_and_its_member() {
         surprisal: false,
         tee: None,
         state_member: false,
+        state_store: Default::default(),
         composer: weaver_trace::LoopIdentity::compiled("worker"),
     })
     .expect("renders");

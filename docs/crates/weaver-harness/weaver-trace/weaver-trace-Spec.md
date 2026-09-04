@@ -4,6 +4,13 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-09-04, the load names its store and the unload reads the
+boundary back. Section 3's `Elections` gains `state_store`, the engine and, under
+the service engine, the database and role the enter resolved, and `unload` leaves
+the payload-free set, carrying `UnloadClose` where a member stood: the grant
+surface read at the leave against the enter's reading as unchanged, varied, or
+unreadable. The mapping counts sixteen dispositions. Per `weaver-trace-PRD`
+section 3.1 as revised this date and issue #411.
 **Revised:** 2026-09-03, the load names its loop and its member. Section 3's
 `Elections` gains `composer`, the loop that assembled the run's prompts by
 binary and, where it is a file, path and digest at the load, and
@@ -367,6 +374,7 @@ pub enum Kind {
 pub enum Payload {
     Message(Box<serde_json::value::RawValue>),
     TurnClosed(TurnClose),
+    Unload(UnloadClose),
     Fault(Box<serde_json::value::RawValue>),
     ModelRequest(Box<serde_json::value::RawValue>),
     ModelOutput(ModelOutput),
@@ -405,6 +413,7 @@ pub struct Elections {
     pub surprisal: bool,
     pub tee: Option<Election>,
     pub state_member: bool,
+    pub state_store: StoreIdentity,
     pub composer: LoopIdentity,
 }
 
@@ -412,6 +421,22 @@ pub struct LoopIdentity {
     pub binary: String,
     pub file: Option<String>,
     pub sha256: Option<String>,
+}
+
+pub struct StoreIdentity {
+    pub engine: String,
+    pub database: Option<String>,
+    pub role: Option<String>,
+}
+
+pub struct UnloadClose {
+    pub grant_surface: GrantSurface,
+}
+
+pub enum GrantSurface {
+    Unchanged,
+    Varied,
+    Unreadable,
 }
 
 pub struct Election {
@@ -683,18 +708,21 @@ to: trace-payload-untagged-kind-discriminant
 ```
 
 **A bracket kind carries no payload member at all, rather than a null one.**
-`unload`, `session.closed`, and `turn.started` are identified entirely by their
-envelope, so `payload` is `Option<Payload>` and those three kinds carry `None`
-with `skip_serializing_if`, emitting `{"kind":"unload"}`. **They are the whole of
-the payload-free set**, per the kind table below. Neither bracket that opens a
-scope nor the turn's closing one is among them: `load` carries `Elections` and
-`turn.closed` carries `TurnClosed`. This clause named `load` as its example until
-2026-08-25, which was wrong from the act of 2026-08-21 that gave the load its
-elections. Verified against serde_json
-1.x: a unit variant inside an untagged enum renders `"payload":null` instead,
-which is a member whose only content is the statement that there is no content,
-and a consumer keying on member presence would see two stream shapes for one
-absence.
+`session.closed` and `turn.started` are identified entirely by their envelope, so
+`payload` is `Option<Payload>` and those two kinds carry `None` with
+`skip_serializing_if`, emitting `{"kind":"turn.started"}`. `unload` was among them until
+2026-09-04 and now carries `UnloadClose` where a state member stood, the grant surface
+read back at the leave against the enter's reading as unchanged, varied, or unreadable,
+per `weaver-trace-PRD` section 3.1, and stays payload-free where no member stood and
+there was no boundary to read, so `{"kind":"unload"}` still occurs and means exactly
+that. **The two are the whole of the payload-free set**, per the kind table below.
+Neither bracket that opens a scope nor the turn's closing one is among them: `load`
+carries `Elections` and `turn.closed` carries `TurnClosed`. This clause named `load` as
+its example until 2026-08-25, which was wrong from the act of 2026-08-21 that gave the
+load its elections. Verified against serde_json 1.x: a unit variant inside an untagged
+enum renders `"payload":null` instead, which is a member whose only content is the
+statement that there is no content, and a consumer keying on member presence would see
+two stream shapes for one absence.
 
 ```graph
 node: trace-bracket-kind-omits-payload
@@ -727,24 +755,22 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, twenty-one kinds and fifteen
-dispositions**, the payload-free case counting as one of them. `refusal`
-carries `Refusal`, spliced, the organ's own account of what it turned away. `unload`,
-`session.closed`, and `turn.started` carry `None`.
-`load` carries `Elections`. The four message kinds carry `Message`.
-`turn.closed` carries `TurnClosed`. `fault` carries `Fault`. `flush` and
-`elision` each carry `FlushCounts`, the resident token counts before and
-after, both plain integers, two kinds over one shape because the two
-operations report the same two facts. The four model kinds carry their four
-own shapes, one each. The
-classify pair carries its two own shapes, `ClassifyAsk` and
-`ClassifyScored`. **A refused classify authors no output at all** and
-reaches the record under `refusal`, so a refusal the exchange met is still
-the record's fact and never a fabricated answer, carried by the kind the
-class gives it rather than by the outcome's own variant. The tool bracket's
-two carry `Deferred`. Three plus one plus four plus one plus one plus two
-plus four plus two plus two plus one is twenty-one, which is the whole of
-charter section 3.1's set.
+**The kind-to-payload mapping is total, twenty-one kinds and sixteen dispositions**, the
+payload-free case counting as one of them. `refusal` carries `Refusal`, spliced, the
+organ's own account of what it turned away. `session.closed` and `turn.started` carry
+`None`, and `unload` carries `UnloadClose` where a member stood and `None` where none
+did, the one kind with two licensed pairings. `load` carries `Elections`. The four
+message kinds carry `Message`. `turn.closed` carries `TurnClosed`. `fault` carries
+`Fault`. `flush` and `elision` each carry `FlushCounts`, the resident token counts
+before and after, both plain integers, two kinds over one shape because the two
+operations report the same two facts. The four model kinds carry their four own shapes,
+one each. The classify pair carries its two own shapes, `ClassifyAsk` and
+`ClassifyScored`. **A refused classify authors no output at all** and reaches the record
+under `refusal`, so a refusal the exchange met is still the record's fact and never a
+fabricated answer, carried by the kind the class gives it rather than by the outcome's
+own variant. The tool bracket's two carry `Deferred`. Three plus one plus four plus one
+plus one plus two plus four plus two plus two plus one is twenty-one, which is the whole
+of charter section 3.1's set.
 
 **The count is stated because it has twice been wrong, and the second time
 it was wrong silently.** An earlier draft assigned thirteen and left
@@ -831,21 +857,24 @@ carrying that name becomes a record of something else without any event
 saying so. Naming each election is what keeps a record's posture
 recoverable from the record.
 
-**The `load` event names its loop and its member**, as of 2026-09-03, per the
-charter's section 3.1 as revised on that date. `composer` is the loop that
-assembles the run's prompts: `binary` names the worker that ran it, the
-harness's own name for itself, and where the loop is a file the worker reads,
-`file` is the path it resolved and `sha256` the digest of that file as read at
-the load, both absent for a loop compiled into the binary. `state_member` is
-whether the state member's end arrived on the enter, the harness's own
-knowledge and never a read of the deployment. Both ride the same `Elections`
-payload rather than a second member on the event, because the payload is the
-record's declaration of its posture and these are posture, and each is named
-individually for the drift reason above. **The digest is the file at the
-load**: a Python-iterating worker reads its file per crossing, so a file
-edited during a session composes later turns under a digest the load did not
-name, and that bound is stated rather than closed, the per-crossing mark being
-its own act if a reading ever needs it.
+**The `load` event names its loop and its member**, as of 2026-09-03, per the charter's
+section 3.1 as revised on that date. `composer` is the loop that assembles the run's
+prompts: `binary` names the worker that ran it, the harness's own name for itself, and
+where the loop is a file the worker reads, `file` is the path it resolved and `sha256`
+the digest of that file as read at the load, both absent for a loop compiled into the
+binary. `state_member` is whether the state member's end arrived on the enter, the
+harness's own knowledge and never a read of the deployment. `state_store` is the store
+the member stands on, `StoreIdentity` by engine name and, under the service engine,
+database and role, copied from the enter's resolved election as of 2026-09-04 and
+written beside the member because the two answer different questions, the election being
+what the deployment asked for and the member whether an end arrived. The database and
+role are absent under the embedded engine, not null. Both ride the same `Elections`
+payload rather than a second member on the event, because the payload is the record's
+declaration of its posture and these are posture, and each is named individually for the
+drift reason above. **The digest is the file at the load**: a Python-iterating worker
+reads its file per crossing, so a file edited during a session composes later turns
+under a digest the load did not name, and that bound is stated rather than closed, the
+per-crossing mark being its own act if a reading ever needs it.
 
 ```graph
 node: trace-load-names-its-loop-and-its-member
