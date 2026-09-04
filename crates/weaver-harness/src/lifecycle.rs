@@ -1452,6 +1452,10 @@ impl Harness {
         let identity = {
             let seed = &payload.spu_instruction.decoder.identity;
             match run.state.as_mut() {
+                // The end arrived and the seam did not stand, the clone or
+                // the tee's open having failed: the ask the enter owes
+                // cannot be made, which is the miss and not the first load.
+                None if state_member => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
                 None => seed.clone(),
                 Some(seam) => match crate::state::identity_material(seam.ask_identity(), seed) {
                     Some(material) => material,
