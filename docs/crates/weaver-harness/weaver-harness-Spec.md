@@ -3,6 +3,11 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-04, third of this date, the sink half of section 9's config
+item closes. The field is admin's to read and the harness holds a descriptor and
+never a path, which the charter's section 5 said and the item had read as a
+tension. The read half is restated for what it is, no read this crate performs
+today and a re-entry the tool workflow carries. Per issue #311.
 **Revised:** 2026-09-04, second of this date, the open reads the identity from
 state. Section 2's open clause names two sources under one rule, the store's
 answer to the `identity` ask where a member stands and the declaration's seed
@@ -2948,16 +2953,21 @@ Each names what settles it, and none is this Spec's to settle alone.
   carries, this section holding the election rather than the implementation. An
   earlier form of this item had the measurement relayed outward to an assembler
   outside the agent, which the ruling replaced with the member composed inside.
-- **The config read, and the sink field's custody question.** The charter's
-  `reads` edge to `agent-config` is exercised by no chartered workflow, so
-  the read arrives with the tool workflow, which consumes the tool set and
-  the permission mode. That pass must also answer what section 5 of the
-  charter makes awkward to leave implicit: the config's `trace-sink` field
-  names the sink, the charter's custody prose has the agent never told the
-  name, and the kernel's search-bit lock is what stands between knowledge
-  and reach. Whether the read drops the field unretained, or the never-told
-  sentence rescopes to the descriptor mechanism, is that pass's to elect
-  with the charter in hand.
+- **The config read.** No chartered workflow reads the declaration from this crate,
+  and the crate links no parser: admin reads the file at its inventory and what this
+  crate receives is the enter, the sink's descriptor, and the loop's path on the unit's
+  vector, per `weaver-admin-Spec` section 4. The read this charter once declared returns
+  with the tool workflow, which consumes the tool set and the permission mode, and the
+  charter's section 5 names that re-entry in place of the edge it retired on 2026-09-04.
+  **The sink half of this item closed the same date, per issue #311**: the config's
+  `trace-sink` field names the sink and the charter has the agent never told the name,
+  and the two never disagreed, because the charter's own descriptor paragraph scopes
+  them. The harness never resolves a trace path, the descriptor is opened by an admin
+  principal and crosses the coordination socket with `SCM_RIGHTS`, and
+  `weaver-admin-Spec` section 5 asserts the one open site the path dies at, so the field
+  is admin's to read and `weaver-types-Spec` section 2 now names it so. The kernel's
+  search-bit lock stands between knowledge and reach either way, and nothing here
+  retains the field because nothing here ever receives it.
 - **Tool dispatch, the execution context, and the permission-mode
   enforcement point.** Blocked with `tool-trait`, per `weaver-traits-PRD`
   section 3.1.
