@@ -63,15 +63,28 @@ printf '  driver        %s\n' "$(nvidia-smi --query-gpu=driver_version --format=
 # failure here is cheaper than one twenty minutes into a build.
 CCCL=$(pacman -Q cccl 2>/dev/null | awk '{print $2}' || true)
 printf '  cccl          %s\n' "${CCCL:-unknown}"
-case "$CCCL" in
-  3.1.4*|3.2.*|3.3.*) ;;
-  "" ) printf '  (cccl not queryable; not gating on it)\n' ;;
-  * ) die "cccl $CCCL is outside the 3.1.4-3.3.4 window #397 measured. Fix the pin first." ;;
-esac
+# **Both ends, and by version order rather than by glob.** A `3.3.*` pattern
+# waves 3.3.5 through, which is outside what #397 measured, and a `3.1.4*`
+# one turns away 3.1.5, which is inside it. The pacman release suffix is
+# dropped before the comparison.
+cccl_in_window() {
+  local v=${1%%-*} lo=3.1.4 hi=3.3.4
+  [ "$(printf '%s\n%s\n' "$lo" "$v" | sort -V | head -1)" = "$lo" ] &&
+  [ "$(printf '%s\n%s\n' "$v" "$hi" | sort -V | head -1)" = "$v" ]
+}
+if [ -z "$CCCL" ]; then
+  printf '  (cccl not queryable; not gating on it)\n'
+elif ! cccl_in_window "$CCCL"; then
+  die "cccl $CCCL is outside the 3.1.4-3.3.4 window #397 measured. Fix the pin first."
+fi
 
 # --------------------------------------------------------------- 2. update main
 say "tree"
-git remote update origin >/dev/null 2>&1 || true
+# **A failed refresh is not a stale-but-fine refresh.** Suppressing it would
+# fast-forward to whatever origin/main last said and then report that commit
+# as the box's, which is the kind of quiet staleness this script exists to
+# remove rather than introduce.
+git remote update origin >/dev/null || die "cannot refresh origin; refusing to build against a stale origin/main"
 BEFORE=$(git rev-parse --short HEAD)
 BRANCH=$(git branch --show-current)
 if [ "$BRANCH" = "main" ]; then
@@ -150,11 +163,25 @@ for b in "${CHANGED[@]}"; do
 done
 printf '  previous binaries kept at %s\n' "$BACKUP"
 
+PATCHED=()
+
+# **A rollback that restores only the binaries leaves the box worse than it
+# found it.** The old admin refuses `state-store` as an unknown field, so a
+# declaration this script patched and did not un-patch is unloadable under
+# the binaries the rollback just put back. Declarations go back first.
 rollback() {
-  printf '\n  rolling the binaries back from %s\n' "$BACKUP" >&2
-  for b in "${CHANGED[@]}"; do
-    sudo install -o root -g root -m 0755 "$BACKUP/$b" "$BIN_DIR/$b"
-  done
+  if [ ${#PATCHED[@]} -gt 0 ]; then
+    for entry in "${PATCHED[@]}"; do
+      printf '  restoring declaration %s\n' "${entry%%|*}" >&2
+      cp -a "${entry##*|}" "${entry%%|*}"
+    done
+  fi
+  printf '  rolling the binaries back from %s\n' "$BACKUP" >&2
+  if [ ${#CHANGED[@]} -gt 0 ]; then
+    for b in "${CHANGED[@]}"; do
+      sudo install -o root -g root -m 0755 "$BACKUP/$b" "$BIN_DIR/$b"
+    done
+  fi
   die "$1"
 }
 
@@ -180,6 +207,7 @@ for agent in $ALLOW_LIST; do
   if [ ! -f "$STATE_BINARY" ] && ! grep -q '^state-store:' "$decl"; then
     printf '  %-12s %s\n' "$agent" "$verdict"
     cp -a "$decl" "$decl.pre-$AFTER-bak"
+    PATCHED+=("$decl|$decl.pre-$AFTER-bak")
     printf 'state-store:\n  engine: none\n' >> "$decl"
     verdict=$(validate "$agent")
     if [ "$verdict" != '{"kind":"validated"}' ]; then
@@ -196,18 +224,31 @@ done
 # A load that is not read back is an install that was not verified. This reads
 # the event out of the agent's own sink, the only place the claim can be
 # checked from.
+# **Every agent the allow-list admits, not the first one.** Step 8 reconciles
+# each of them, so verifying one and reporting the box current would leave
+# the others' declarations changed and never loaded.
 say "verify"
-AGENT=$(echo $ALLOW_LIST | awk '{print $1}')
-SINK=$(sed -n 's/^[[:space:]]*path:[[:space:]]*\(.*\)$/\1/p' "$AGENT_DIR/$AGENT.yaml" | head -1)
-[ -n "$SINK" ] || rollback "cannot find the trace sink for $AGENT"
-LINES=$(wc -l < "$SINK")
-sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
-sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1
-NEW=$(( $(wc -l < "$SINK") - LINES ))
-[ "$NEW" -gt 0 ] || rollback "the load wrote no events to $SINK"
-if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
-  rollback "the load event does not name its composer; the install did not take"
-fi
-sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
+VERIFIED=0
+for AGENT in $ALLOW_LIST; do
+  decl="$AGENT_DIR/$AGENT.yaml"
+  if [ ! -f "$decl" ]; then
+    printf '  %-12s no declaration, not verified\n' "$AGENT"
+    continue
+  fi
+  SINK=$(sed -n 's/^[[:space:]]*path:[[:space:]]*\(.*\)$/\1/p' "$decl" | head -1)
+  [ -n "$SINK" ] || rollback "cannot find the trace sink for $AGENT"
+  printf '  %s\n' "$AGENT"
+  LINES=$(wc -l < "$SINK")
+  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
+  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1
+  NEW=$(( $(wc -l < "$SINK") - LINES ))
+  [ "$NEW" -gt 0 ] || rollback "$AGENT: the load wrote no events to $SINK"
+  if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
+    rollback "$AGENT: the load event does not name its composer; the install did not take"
+  fi
+  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
+  VERIFIED=$((VERIFIED + 1))
+done
+[ "$VERIFIED" -gt 0 ] || rollback "no agent in the allow-list could be verified"
 
 say "the box is at $AFTER"
