@@ -95,6 +95,17 @@ impl Peer {
         Peer,
         std::thread::JoinHandle<Result<Outcome, weaver_harness::ChannelFault>>,
     ) {
+        Peer::stand_up_with(weaver_harness::LoopIdentity::compiled("test"))
+    }
+
+    /// The same, with the composer the binary would hand `serve`, so a test can
+    /// read it back off the record and hold it to what was handed.
+    fn stand_up_with(
+        composer: weaver_harness::LoopIdentity,
+    ) -> (
+        Peer,
+        std::thread::JoinHandle<Result<Outcome, weaver_harness::ChannelFault>>,
+    ) {
         let (listener, path, dir) = bound_listener();
         let handle = std::thread::spawn(move || {
             let harness = Harness::listen(
@@ -112,7 +123,7 @@ impl Peer {
             harness.serve(
                 "",
                 &[],
-                weaver_harness::LoopIdentity::compiled("test"),
+                composer,
                 |_: &mut weaver_harness::Ports<'_>, _: &str| {
                     Err(weaver_harness::TurnError::Unlicensed {
                         turn: weaver_types::TurnKey("t-0".into()),
@@ -136,6 +147,36 @@ impl Peer {
         self.send_payload(ordinal, Payload::Directive(directive));
     }
 
+    /// Sends a directive with descriptors riding beside it, the way admin
+    /// hands the harness its sink and, where the member stands, the state
+    /// end: `SCM_RIGHTS` on the same message.
+    fn send_with(
+        &self,
+        ordinal: u64,
+        directive: LifecycleDirective,
+        descriptors: &[std::os::fd::RawFd],
+    ) {
+        let envelope = OrganEnvelope {
+            exchange: ExchangeId {
+                opener: Opener::Admin,
+                ordinal,
+            },
+            position: Position::Open,
+            payload: Payload::Directive(directive),
+        };
+        let body = serde_json::to_vec(&envelope).expect("render");
+        let slices = [std::io::IoSlice::new(&body)];
+        let rights = [nix::sys::socket::ControlMessage::ScmRights(descriptors)];
+        nix::sys::socket::sendmsg::<()>(
+            self.fd.as_raw_fd(),
+            &slices,
+            &rights,
+            nix::sys::socket::MsgFlags::empty(),
+            None,
+        )
+        .expect("sent with descriptors");
+    }
+
     /// Sends any payload, for the tests that put something other than a
     /// directive on the channel.
     fn send_payload(&self, ordinal: u64, payload: Payload) {
@@ -157,6 +198,24 @@ impl Peer {
             None,
         )
         .expect("sent");
+    }
+
+    /// The answer, or the socket's own error where the serving side closed
+    /// without one, so a test can name how service ended instead of
+    /// reporting a reset.
+    fn try_read(&self) -> Result<Payload, nix::Error> {
+        let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
+        let mut slices = [std::io::IoSliceMut::new(&mut buffer)];
+        let message = nix::sys::socket::recvmsg::<()>(
+            self.fd.as_raw_fd(),
+            &mut slices,
+            None,
+            nix::sys::socket::MsgFlags::empty(),
+        )?;
+        let read = message.bytes;
+        let envelope: OrganEnvelope =
+            serde_json::from_slice(&buffer[..read]).expect("answer decodes");
+        Ok(envelope.payload)
     }
 
     fn read(&self) -> Payload {
@@ -489,4 +548,113 @@ fn the_listener_survives_an_accept() {
         "a second dial is accepted on the same listener, got {again:?}"
     );
     drop(second);
+}
+
+/// The enter payload a serving load carries, against organs that do not
+/// exist: the load is authored before the fan-out fails, which is what lets
+/// a test read the record the production path wrote.
+fn serving_enter(session: &str) -> LifecycleDirective {
+    LifecycleDirective::Enter {
+        payload: weaver_types::EnterPayload {
+            session: weaver_types::SessionId(session.into()),
+            run: weaver_types::RunId("r-1".into()),
+            spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef("unreachable".into()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    field_election: None,
+                    surprisal_election: false,
+                    refeed_permission: false,
+                    column_permission: false,
+                    identity: Vec::new(),
+                    tunable_values: Default::default(),
+                },
+            },
+            binding: weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
+                },
+            },
+            state_election: weaver_types::StateElection {
+                all_kinds: false,
+                keys: Vec::new(),
+            },
+        },
+    }
+}
+
+/// **The load names the composer serve was handed and the member the enter
+/// carried, through the production path**: `serve` receives the binary's
+/// composer, the peer plays admin and sends the enter with its sink over
+/// `SCM_RIGHTS`, with and without a state end beside it, and the load is
+/// authored before the fan-out. The organs do not exist, so the enter is
+/// refused after the load and service then ends on their death, which is
+/// the harness's own rule for a dead organ and not this test's doing. The
+/// record the path wrote names both. Per `weaver-harness-Spec` section 6.1
+/// and `weaver-trace-Spec` section 3.
+///
+/// Perturbation: have `serve` keep a compiled composer instead of the one it
+/// was handed, and this fails on the binary, the first member read back.
+/// Watched under exactly that change.
+#[test]
+fn the_load_names_what_serve_was_handed_and_what_the_enter_carried() {
+    if !root_or_skip("the_load_names_what_serve_was_handed_and_what_the_enter_carried") {
+        return;
+    }
+    for standing in [false, true] {
+        let (mut peer, handle) = Peer::stand_up_with(weaver_harness::LoopIdentity::file(
+            "pyworker",
+            std::path::Path::new("/deployed/loop.py"),
+            Some("ef".repeat(32)),
+        ));
+        let sink_path = peer._dir.0.join("trace.ndjson");
+        let sink = OwnedFd::from(std::fs::File::create(&sink_path).expect("sink"));
+        let ends = standing.then(|| std::os::unix::net::UnixStream::pair().expect("pair"));
+        let mut descriptors = vec![sink.as_raw_fd()];
+        if let Some((near, _)) = &ends {
+            descriptors.push(near.as_raw_fd());
+        }
+        peer.send_with(1, serving_enter("s-named"), &descriptors);
+        match peer.try_read() {
+            Ok(Payload::Refusal(_)) => {}
+            Ok(other) => panic!("the missing organs refuse after the load, got {other:?}"),
+            Err(error) => {
+                drop(peer);
+                let ended = handle.join().expect("service thread");
+                panic!("no answer ({error}): service ended with {ended:?}");
+            }
+        }
+        // Service ends on the organs' death, after the refusal was answered:
+        // the join is what proves serving did not panic. The peer holds the
+        // scratch directory, so it outlives the read of the record.
+        let outcome = handle.join().expect("service thread did not panic");
+        assert!(
+            matches!(outcome, Err(weaver_harness::ChannelFault::Closed)),
+            "service ended on the dead organs, not by a panic: {outcome:?}"
+        );
+        let held = std::fs::read_to_string(&sink_path).expect("the sink reads back");
+        let load: serde_json::Value =
+            serde_json::from_str(held.lines().next().expect("a load")).expect("parses");
+        assert_eq!(load["kind"], "load");
+        assert_eq!(
+            load["payload"]["state_member"],
+            serde_json::json!(standing),
+            "the member's standing is the end's presence on the enter"
+        );
+        assert_eq!(
+            load["payload"]["composer"]["binary"], "pyworker",
+            "the composer is the one serve was handed"
+        );
+        assert_eq!(load["payload"]["composer"]["file"], "/deployed/loop.py");
+        assert_eq!(load["payload"]["composer"]["sha256"], "ef".repeat(32));
+        drop(peer);
+    }
 }
