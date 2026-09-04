@@ -1900,6 +1900,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -2020,6 +2022,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -2135,6 +2139,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -2276,6 +2282,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -2459,6 +2467,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -2659,6 +2669,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -2835,6 +2847,8 @@ mod tests {
                     field: Some(2),
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");
@@ -3064,6 +3078,8 @@ mod tests {
                     field: None,
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
             .expect("load");

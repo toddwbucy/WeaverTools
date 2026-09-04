@@ -4,6 +4,12 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-09-03, the load names its loop and its member. Section 3's
+`Elections` gains `composer`, the loop that assembled the run's prompts by
+binary and, where it is a file, path and digest at the load, and
+`state_member`, whether the member's end arrived on the enter. Each is a
+named member and never a profile, and the claim gains its record,
+`trace-load-names-its-loop-and-its-member`.
 **Revised:** 2026-08-26, the tee takes its Spec section. `src/tee.rs` stood as a sixth
 module with no section, no declared type, and no header to carry, the weaver-state
 defect class again, per issue 351. Section 11 now declares `Election`, `ElectedKind`,
@@ -398,6 +404,14 @@ pub struct Elections {
     pub field: Option<u32>,
     pub surprisal: bool,
     pub tee: Option<Election>,
+    pub state_member: bool,
+    pub composer: LoopIdentity,
+}
+
+pub struct LoopIdentity {
+    pub binary: String,
+    pub file: Option<String>,
+    pub sha256: Option<String>,
 }
 
 pub struct Election {
@@ -816,6 +830,32 @@ a set named once drifts as members join it, and every record already
 carrying that name becomes a record of something else without any event
 saying so. Naming each election is what keeps a record's posture
 recoverable from the record.
+
+**The `load` event names its loop and its member**, as of 2026-09-03, per the
+charter's section 3.1 as revised on that date. `composer` is the loop that
+assembles the run's prompts: `binary` names the worker that ran it, the
+harness's own name for itself, and where the loop is a file the worker reads,
+`file` is the path it resolved and `sha256` the digest of that file as read at
+the load, both absent for a loop compiled into the binary. `state_member` is
+whether the state member's end arrived on the enter, the harness's own
+knowledge and never a read of the deployment. Both ride the same `Elections`
+payload rather than a second member on the event, because the payload is the
+record's declaration of its posture and these are posture, and each is named
+individually for the drift reason above. **The digest is the file at the
+load**: a Python-iterating worker reads its file per crossing, so a file
+edited during a session composes later turns under a digest the load did not
+name, and that bound is stated rather than closed, the per-crossing mark being
+its own act if a reading ever needs it.
+
+```graph
+node: trace-load-names-its-loop-and-its-member
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-load-names-its-loop-and-its-member
+```
 
 **`elision` carries its coordinates and `flush` does not need to.** An
 earlier draft of this section gave the elision `FlushCounts` on the reading
