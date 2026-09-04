@@ -797,8 +797,11 @@ binary beside the worker's, and a box that lacks it refuses with
 declined: the leg's standing is the declaration's fact and not the directory's,
 per `weaver-state-PRD` section 4 and issue #381, and a missing binary is never
 read as an absent member. Absent, the election resolves to the embedded engine
-under that same requirement. `none` declines the member and requires nothing.
-`postgres` requires
+under that same requirement. `none` declines the member and requires nothing,
+and refuses a declaration that elects a state election beside it,
+`ConfigInvalid` naming `state-election`, per `weaver-types-Spec` section 2: an
+election with no member to receive it is malformed, not surplus. `postgres`
+requires
 `database` and `role` in the declaration and, on the box, the store's socket
 present under the path this crate's own configuration names, and the walk asks
 the store the two questions the charter's two gates pose: that the member's

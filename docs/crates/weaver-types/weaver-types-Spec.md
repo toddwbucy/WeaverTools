@@ -818,7 +818,13 @@ deployment's real posture and the one the instrument-validation matrices ran
 under, `sqlite` the embedded engine, and `postgres` the service engine, for
 which `database` and `role` are required and for the other two are refused if
 present, the same cross-field rule admin holds for the gate instruction, judged
-at inventory before a process exists. The three are the binding's members: they
+at inventory before a process exists. **`none` beside a present `state_election`
+is refused by the same rule**: the election says what the tee sends to the
+member, and a declaration that elects what to send to a member it declined is
+malformed rather than surplus, refused `ConfigInvalid` naming the election, the
+way a granted permission naming a field is. `none` with the election absent is
+whole, the ruled default still written on the load event as the record's
+posture, per `weaver-trace-PRD` section 3.1, beside a `state_member` of false. The three are the binding's members: they
 change only across the load boundary, they ride the enter directive resolved,
 and the load event records them, per `weaver-trace-PRD` section 3.1. The enum
 is closed at three because the state charter charters two engines and the
