@@ -22,8 +22,8 @@
 use std::io::Read;
 
 use weaver_state::{
-    Ask, Election, Store, parse_ask, parse_distillate, render_grants_answer, render_recall_answer,
-    render_replay_answer, render_shape_answer,
+    Ask, Election, Store, parse_ask, parse_distillate, render_grants_answer,
+    render_identity_answer, render_recall_answer, render_replay_answer, render_shape_answer,
 };
 
 /// The first door's end arrives at this descriptor number, the fixed
@@ -445,6 +445,9 @@ fn drain_harness_lines(
                 .replay(session)
                 .map(|events| render_replay_answer(&events)),
             Ask::Grants => store.grants().map(|surface| render_grants_answer(&surface)),
+            Ask::Identity => store
+                .identity(session)
+                .map(|events| render_identity_answer(&events)),
         };
         if let Ok(frame) = frame
             && frame.len() <= ANSWER_BOUND

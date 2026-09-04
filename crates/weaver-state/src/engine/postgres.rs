@@ -300,4 +300,17 @@ impl Store for Postgres {
             .map_err(unavailable)?;
         Ok(rows.into_iter().map(|r| r.get(0)).collect())
     }
+
+    fn identity(&self, session: &str) -> Result<Vec<RecalledEvent>, CustodyFault> {
+        let mut client = self.client();
+        let rows = client
+            .query(
+                "SELECT id, session, run, turn, kind, sequence FROM event
+                 WHERE session = $1 AND kind = 'message.system' AND turn IS NULL
+                 ORDER BY id",
+                &[&session],
+            )
+            .map_err(unavailable)?;
+        with_pairs(&mut client, rows)
+    }
 }

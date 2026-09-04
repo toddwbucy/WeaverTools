@@ -81,6 +81,11 @@ pub trait Store {
     /// ask of 2026-09-04: an ordered list of lines the engine renders from
     /// its own catalog, spelled so two readings compare and no more.
     fn grants(&self) -> Result<Vec<String>, CustodyFault>;
+    /// The session's seated prefix as custody holds it, per the contract's
+    /// `identity` ask of 2026-09-04: the turnless `message.system` events
+    /// in landing order with their pairs, empty where the session holds
+    /// none.
+    fn identity(&self, session: &str) -> Result<Vec<RecalledEvent>, CustodyFault>;
 }
 
 /// One run's shape, the answer's material: the run reference and the held
@@ -108,6 +113,9 @@ pub enum Ask {
     /// The boundary as the store states it, read at the enter and the
     /// leave, per the contract as of 2026-09-04. Carries no members.
     Grants,
+    /// The session's seated prefix, asked once at every enter before the
+    /// decode open, per the contract as of 2026-09-04. Carries no members.
+    Identity,
 }
 
 /// Parse a seam frame as an ask, or nothing where it is not one.
@@ -122,6 +130,9 @@ pub fn parse_ask(frame: &str) -> Option<Ask> {
     }
     if ask.get("grants").is_some() {
         return Some(Ask::Grants);
+    }
+    if ask.get("identity").is_some() {
+        return Some(Ask::Identity);
     }
     let recall = ask.get("recall")?;
     let last_turns = match recall.get("last-turns") {
@@ -205,6 +216,17 @@ pub fn render_replay_answer(events: &[RecalledEvent]) -> String {
 /// contract's answer shape `{"answer":{"grants":{"surface":[...]}}}`.
 pub fn render_grants_answer(surface: &[String]) -> String {
     let mut frame = serde_json::json!({"answer": {"grants": {"surface": surface}}}).to_string();
+    frame.push('\n');
+    frame
+}
+
+/// The identity answer: the seated prefix's events, each the distillate's
+/// own shape, per the contract's `{"answer":{"identity":{"messages":[...]}}}`.
+/// An empty list is an answer, the first load of the session.
+pub fn render_identity_answer(events: &[RecalledEvent]) -> String {
+    let mut frame =
+        serde_json::json!({"answer": {"identity": {"messages": rendered_events(events)}}})
+            .to_string();
     frame.push('\n');
     frame
 }

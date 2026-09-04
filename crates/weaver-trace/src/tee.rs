@@ -101,7 +101,7 @@ struct CanonicalLine<'a> {
 #[derive(Serialize)]
 struct Frame<'a> {
     envelope: FrameEnvelope<'a>,
-    pairs: BTreeMap<&'a str, &'a RawValue>,
+    pairs: BTreeMap<std::borrow::Cow<'a, str>, &'a RawValue>,
 }
 
 #[derive(Serialize)]
@@ -121,15 +121,29 @@ struct FrameEnvelope<'a> {
 /// here is unreachable in custody and answered by not distilling.
 pub fn distill(line: &str, election: &Election) -> Option<String> {
     let event: CanonicalLine = serde_json::from_str(line).ok()?;
-    let elected = election.keys.iter().find(|entry| entry.kind == event.kind);
-    if !election.all_kinds && elected.is_none() {
-        return None;
-    }
-    let mut pairs = BTreeMap::new();
-    if let (Some(entry), Some(payload)) = (elected, event.payload) {
-        for path in &entry.paths {
-            if let Some(value) = value_at(payload, path) {
-                pairs.insert(path.as_str(), value);
+    let mut pairs: BTreeMap<std::borrow::Cow<'_, str>, &RawValue> = BTreeMap::new();
+    // **A turnless `message.system` line distills whole under every
+    // election**, per `weaver-trace-Spec` section 11 as of 2026-09-04: the
+    // seated identity prefix is the session's first holding and the store
+    // its custodian, so it crosses before the election is consulted, one
+    // pair per top-level payload member, the value that member's canonical
+    // JSON, and the election's paths for the kind add nothing to it.
+    if event.kind == "message.system" && event.turn.is_none() {
+        if let Some(payload) = event.payload {
+            let members: BTreeMap<std::borrow::Cow<'_, str>, &RawValue> =
+                serde_json::from_str(payload.get()).ok()?;
+            pairs = members;
+        }
+    } else {
+        let elected = election.keys.iter().find(|entry| entry.kind == event.kind);
+        if !election.all_kinds && elected.is_none() {
+            return None;
+        }
+        if let (Some(entry), Some(payload)) = (elected, event.payload) {
+            for path in &entry.paths {
+                if let Some(value) = value_at(payload, path) {
+                    pairs.insert(std::borrow::Cow::Borrowed(path.as_str()), value);
+                }
             }
         }
     }
@@ -317,6 +331,41 @@ mod tests {
 
     /// A turnless event distills without a turn member, mirroring the
     /// canonical form's own omission.
+    #[test]
+    fn the_seated_prefix_distills_whole_under_every_election() {
+        // **Perturbation:** consult the election before the prefix arm and
+        // the narrowed election below refuses the line, or drop the
+        // turnless condition and the turned line distills too.
+        const PREFIX: &str = concat!(
+            r#"{"session":"alpha-1","run":"r-1","kind":"message.system","#,
+            r#""sequence":"3","subsystem":"harness","wall_ms":1,"monotonic_ns":"2","#,
+            r#""payload":{"role":"system","content":[{"type":"text","text":"You are Karl."}]}}"#
+        );
+        let narrowed = Election {
+            all_kinds: false,
+            keys: vec![ElectedKind {
+                kind: "turn.closed".into(),
+                paths: vec![],
+            }],
+        };
+        let frame = distill(PREFIX, &narrowed).expect("the prefix crosses");
+        assert_eq!(
+            frame,
+            concat!(
+                r#"{"envelope":{"session":"alpha-1","run":"r-1","kind":"message.system","#,
+                r#""sequence":"3"},"pairs":{"content":[{"type":"text","text":"You are Karl."}],"#,
+                r#""role":"system"}}"#,
+                "\n"
+            ),
+            "one pair per top-level member, the value verbatim, under an election naming no such kind"
+        );
+        let turned = PREFIX.replace(r#""run":"r-1","#, r#""run":"r-1","turn":"t-1","#);
+        assert!(
+            distill(&turned, &narrowed).is_none(),
+            "a system message inside a turn is the election's to keep or drop"
+        );
+    }
+
     #[test]
     fn a_turnless_event_stays_turnless() {
         let line = r#"{"session":"s","run":"r","kind":"run.load","sequence":"0","wall_ms":1}"#;
