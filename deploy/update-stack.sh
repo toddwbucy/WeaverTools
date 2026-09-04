@@ -37,7 +37,7 @@ for line in sys.stdin:
         continue
     if e.get("kind") == "load":
         p = e.get("payload", {})
-        print("  state_member:", p.get("state_member"))
+        print("  state_member:", json.dumps(p.get("state_member")))
         print("  composer:    ", json.dumps(p.get("composer")))
         if p.get("state_store"):
             print("  state_store: ", json.dumps(p["state_store"]))
@@ -122,9 +122,17 @@ for b in $(ls "$BIN_DIR"); do
     CHANGED+=("$b")
   fi
 done
+# **Binaries current is not the same as the box being finished.** A run that
+# installed and then died before reconciling leaves every digest matching
+# and an agent that will not load, so an early exit here would refuse to
+# repair exactly the state a failed run leaves behind. Only a plan run stops
+# on this.
 if [ ${#CHANGED[@]} -eq 0 ]; then
-  say "nothing to install; the box is current at $AFTER"
-  exit 0
+  printf '  every deployed binary already matches the build\n'
+  if [ "$INSTALL" -eq 0 ]; then
+    say "the box is current at $AFTER"
+    exit 0
+  fi
 fi
 
 # ------------------------------------------------ 6. what the install implies
@@ -152,41 +160,83 @@ fi
 [ "$INSTALL" -eq 1 ] || { say "plan only. rerun with --install"; exit 0; }
 
 # ------------------------------------------------------------------ 7. install
-say "install"
-BACKUP="/opt/weaver/backup-$BEFORE"
-sudo -v
-sudo mkdir -p "$BACKUP"
-for b in "${CHANGED[@]}"; do
-  sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
-  sudo install -o root -g root -m 0755 "target/release/$b" "$BIN_DIR/$b"
-  printf '  installed %s\n' "$b"
-done
-printf '  previous binaries kept at %s\n' "$BACKUP"
-
 PATCHED=()
+COMPLETED=0
+RESTORED=0
+INSTALL_DONE=0
+# **The backup is named for the binaries it holds, not for the checkout.**
+# `$BEFORE` is the commit the tree sat at when the run began, which on a
+# re-run is the commit being installed rather than the one being replaced.
+BACKUP="/opt/weaver/backup-$(date +%Y%m%dT%H%M%S)"
+if [ ${#CHANGED[@]} -gt 0 ]; then
+  say "install"
+  # Credentials are asked for where they are needed. Reconcile and verify
+  # reach admin through the NOPASSWD verbs, so a repair run that installs
+  # nothing prompts for nothing.
+  sudo -v
+  sudo mkdir -p "$BACKUP"
+  for b in "${CHANGED[@]}"; do
+    sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
+    sudo install -o root -g root -m 0755 "target/release/$b" "$BIN_DIR/$b"
+    printf '  installed %s\n' "$b"
+  done
+  printf '  previous binaries kept at %s\n' "$BACKUP"
+  INSTALL_DONE=1
+else
+  say "install"
+  printf '  nothing to install; continuing to reconcile and verify\n'
+fi
+
+# **An abort that never reached `rollback` still has to restore.** The
+# pipefail defect above exited on `set -e`, so none of the rollback paths
+# ran and the box was left with new binaries and an unloadable agent. A
+# rollback reachable only from the failures this script predicted is not a
+# rollback, so the restore now hangs off EXIT and every early death goes
+# through it.
+on_exit() {
+  local rc=$?
+  if [ "$COMPLETED" -eq 0 ] && { [ "$INSTALL_DONE" -eq 1 ] || [ ${#PATCHED[@]} -gt 0 ]; }; then
+    printf '\n  the run did not complete (exit %d)\n' "$rc" >&2
+    restore
+  fi
+}
+trap on_exit EXIT
 
 # **A rollback that restores only the binaries leaves the box worse than it
 # found it.** The old admin refuses `state-store` as an unknown field, so a
 # declaration this script patched and did not un-patch is unloadable under
 # the binaries the rollback just put back. Declarations go back first.
-rollback() {
+restore() {
+  [ "$RESTORED" -eq 0 ] || return 0
+  RESTORED=1
   if [ ${#PATCHED[@]} -gt 0 ]; then
     for entry in "${PATCHED[@]}"; do
       printf '  restoring declaration %s\n' "${entry%%|*}" >&2
       cp -a "${entry##*|}" "${entry%%|*}"
     done
   fi
-  printf '  rolling the binaries back from %s\n' "$BACKUP" >&2
-  if [ ${#CHANGED[@]} -gt 0 ]; then
+  if [ "$INSTALL_DONE" -eq 1 ] && [ ${#CHANGED[@]} -gt 0 ]; then
+    printf '  rolling the binaries back from %s\n' "$BACKUP" >&2
     for b in "${CHANGED[@]}"; do
       sudo install -o root -g root -m 0755 "$BACKUP/$b" "$BIN_DIR/$b"
     done
   fi
+}
+
+rollback() {
+  restore
   die "$1"
 }
 
+# **A refusal is this function's answer, not its failure.** `weaver-admin
+# validate` exits non-zero when it refuses, `tail` exits zero, and under
+# `pipefail` the pipeline carries the refusal's status - so `set -e` killed
+# the script at the first agent that needed reconciling, which is every
+# agent this step exists for. Measured on this box 2026-09-04: the run
+# printed the step's header, installed binaries already in place, and
+# stopped without reconciling, verifying, or rolling back.
 validate() {
-  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" validate "$1" 2>&1 | tail -1
+  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" validate "$1" 2>&1 | tail -1 || true
 }
 
 # -------------------------------------------------------- 8. reconcile agents
@@ -240,7 +290,7 @@ for AGENT in $ALLOW_LIST; do
   printf '  %s\n' "$AGENT"
   LINES=$(wc -l < "$SINK")
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
-  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1
+  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1 || true
   NEW=$(( $(wc -l < "$SINK") - LINES ))
   [ "$NEW" -gt 0 ] || rollback "$AGENT: the load wrote no events to $SINK"
   if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
@@ -251,4 +301,5 @@ for AGENT in $ALLOW_LIST; do
 done
 [ "$VERIFIED" -gt 0 ] || rollback "no agent in the allow-list could be verified"
 
+COMPLETED=1
 say "the box is at $AFTER"
