@@ -195,6 +195,10 @@ pub enum Payload {
     Message(Box<RawValue>),
     /// The turn's close, the one payload the merged corpus fixes today.
     TurnClosed(TurnClose),
+    /// The leave's reading of the store's boundary, per `weaver-trace-PRD`
+    /// section 3.1 as of 2026-09-04, carried where a member stood and
+    /// absent where none did.
+    Unload(UnloadClose),
     /// The floor's fault-report shape: the reporting organ renders its
     /// account and names its case, the harness serializes the report whole
     /// and splices it, per apex section 5.2's custody rule. Formerly
@@ -378,6 +382,39 @@ pub struct Candidate {
     pub probability: f32,
 }
 
+/// The `unload` event's payload, per `weaver-trace-PRD` section 3.1 as of
+/// 2026-09-04: the grant surface read back at the leave against the reading
+/// taken at the enter.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct UnloadClose {
+    pub grant_surface: GrantSurface,
+}
+
+/// What the leave found, in the envelope the confirm drivers carry: the
+/// surface read the same, read different, or not readable at the close, the
+/// last said rather than reported unchanged.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum GrantSurface {
+    Unchanged,
+    Varied,
+    Unreadable,
+}
+
+/// The store the state member stands on, per `weaver-trace-PRD` section 3.1
+/// as of 2026-09-04: the engine by its name, and under the service engine
+/// the database and the role. Written whole on the load. This crate spells
+/// the shape itself, as it does the loop's, because the floor's election
+/// type is the declaration's and the record names what was resolved.
+#[derive(Default, Debug, Clone, PartialEq, Serialize)]
+pub struct StoreIdentity {
+    pub engine: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub database: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+}
+
 /// The diagnostic elections a load declared, per charter section 3.2.
 ///
 /// **Each is named individually and none is bundled under a profile
@@ -446,6 +483,13 @@ pub struct Elections {
     /// when false**, for the same three-state reason as the surprisal: a
     /// record written before the member existed is absent, not false.
     pub state_member: bool,
+    /// The store the member stands on, per `weaver-trace-PRD` section 3.1
+    /// as of 2026-09-04: the engine, and under the service engine the
+    /// database and role, copied from the enter, the floor's own shape.
+    /// Written beside `state_member` because the two answer different
+    /// questions: the election is what the deployment asked for and the
+    /// member is whether an end arrived.
+    pub state_store: StoreIdentity,
     /// The loop that assembled this run's prompts, per `weaver-trace-Spec`
     /// section 3: the binary that ran it, and the file and its digest at
     /// the load where the loop is a file. Two loops assemble different

@@ -3,6 +3,11 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-04, the leave reads the boundary back. Section 6's state
+clause gains the `grants` ask, asked by the seat at the enter and the leave and
+granted to no loop, and the `unload` the serving arm authors carries the reading
+as `UnloadClose`, per `weaver-trace-Spec` section 3 and
+`weaver-harness-state-contract` section 2 as revised this date. Per issue #411.
 **Revised:** 2026-09-03, the load names its loop and its member. Section
 6.1's load clause gains the two members that are not elections: the
 composing loop, handed to `serve` by the binary that runs it, and the state
@@ -2132,30 +2137,30 @@ from: weaver-harness
 to: harness-elision-authors-from-the-ask
 ```
 
-**The seat carries the state port, 2026-08-19, through the front door this
-section names.** The context-injection loop needed a port the granted
-surface did not offer, and the capability change entered as a charter and
-contract edit rather than as an import, this clause and
-`weaver-harness-state-contract`'s serve sections landing in one act.
-`Ports` grows one call, the shape ask of that contract's section 2,
-returning the session's shape as the member answered it, or nothing where
-the leg is down, the answer malformed, or the bound expired, each of which
-is the contract's dead peer converted at the seat into the same absence a
-missing leg serves. The port rides the same blade as every other: a type
-this crate owns, granted with the seat and mintable nowhere, so the loop
-that holds a seat holds the ask and no narrower grant exists for the
-boundary to name. The seam's ask end lives in `src/state.rs`, a clone of
-the standing state channel held on the run beside the tee the enter
-attaches, that channel arriving in the enter directive as the harness half
-of the pair admin created, per the operator's ruling of 2026-08-26, dialed
-nowhere and derived from nothing, the ask written and the answer awaited on
-the serving thread
-inside a bound this crate elects, generous against a member whose answer is
-one pass over its own holdings. Serialization on the shared channel is the
-serving thread itself: the tee's feed and the seat's ask both run on it, so
-no ask can interleave a distillate's octets, and the member's answers are
-the only traffic that ever flows toward this crate, so whatever the wait
-reads is the answer or is malformed, with no third case to disambiguate.
+**The seat carries the state port, 2026-08-19, through the front door this section
+names.** The context-injection loop needed a port the granted surface did not offer, and
+the capability change entered as a charter and contract edit rather than as an import,
+this clause and `weaver-harness-state-contract`'s serve sections landing in one act.
+`Ports` grows one call, the shape ask of that contract's section 2, returning the
+session's shape as the member answered it, or nothing where the leg is down, the answer
+malformed, or the bound expired, each of which is the contract's dead peer converted at
+the seat into the same absence a missing leg serves. The port rides the same blade as
+every other: a type this crate owns, granted with the seat and mintable nowhere, so the
+loop that holds a seat holds the ask and no narrower grant exists for the boundary to
+name. The contract's fourth ask, `grants` of 2026-09-04, is the seat's own and reaches
+no `Ports` call: `src/state.rs` asks it once the seam stands under a serving record and
+again at the leave, and the `unload` event carries the comparison, per
+`weaver-trace-Spec` section 3 as revised that date, a loop having no business with the
+boundary its state sits behind. The seam's ask end lives in `src/state.rs`, a clone of
+the standing state channel held on the run beside the tee the enter attaches, that
+channel arriving in the enter directive as the harness half of the pair admin created,
+per the operator's ruling of 2026-08-26, dialed nowhere and derived from nothing, the
+ask written and the answer awaited on the serving thread inside a bound this crate
+elects, generous against a member whose answer is one pass over its own holdings.
+Serialization on the shared channel is the serving thread itself: the tee's feed and the
+seat's ask both run on it, so no ask can interleave a distillate's octets, and the
+member's answers are the only traffic that ever flows toward this crate, so whatever the
+wait reads is the answer or is malformed, with no third case to disambiguate.
 
 **The seat carries the recall port, 2026-08-19, its clause landed by the
 audit of 2026-08-26.** The port was built with the context-management

@@ -1901,6 +1901,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -2023,6 +2024,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -2140,6 +2142,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -2283,6 +2286,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -2468,6 +2472,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -2670,6 +2675,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -2848,6 +2854,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )
@@ -3079,6 +3086,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
             )

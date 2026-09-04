@@ -471,15 +471,19 @@ pub struct Pressure {
     pub over_mark: bool,
 }
 
-/// The total kind-to-payload mapping, twenty-one kinds and fifteen
+/// The total kind-to-payload mapping, twenty-one kinds and sixteen
 /// dispositions, matching charter section 3.1 whole, enforced here because
 /// the untagged payload leaves serde unable to. **`load` stopped being
 /// payload-free 2026-08-21**: it carries the diagnostic elections of its
-/// load, so a record declares the posture it was written in.
+/// load, so a record declares the posture it was written in. **`unload`
+/// carries `UnloadClose` where a member stood, as of 2026-09-04**, the
+/// grant surface read back at the leave, and stays payload-free where no
+/// member stood and no boundary was there to read.
 fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
     matches!(
         (kind, payload),
         (Kind::Unload | Kind::SessionClosed | Kind::TurnStarted, None)
+            | (Kind::Unload, Some(Payload::Unload(_)))
             | (Kind::Load, Some(Payload::Elections(_)))
             | (
                 Kind::MessageSystem

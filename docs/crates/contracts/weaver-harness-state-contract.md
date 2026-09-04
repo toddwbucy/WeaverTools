@@ -2,7 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-09-04, the answers are the store's and not the file's. One word
+**Revised:** 2026-09-04, second of this date, the vocabulary gains the `grants` ask.
+Section 2 holds four names: the fourth reads the store's boundary as the engine
+states it, asked by the harness at the enter and the leave so the record's `unload`
+can carry whether it moved, per `weaver-trace-PRD` section 3.1 as revised this date.
+Every party lands in the same act. Per issue #411.
+**Revised:** 2026-09-04, first of this date, the answers are the store's and not the
+file's. One word
 in section 4, per `weaver-state-PRD` section 4 as revised this date: the store
 is a port and the engine behind it is elected, and this contract's vocabulary
 names asks and never a query language, which was true before the ruling and is
@@ -235,16 +241,14 @@ them, so an ask cannot reach across the boundary `weaver-state-PRD` section
 becomes of an earlier session's rows on disk is deliberately not settled
 here, per the same ruling, and stands as its own question.
 
-**The ask vocabulary is closed and enumerated here, and it holds three
-names: `shape`, `recall`, and `replay`.** The shape ask carries no members, one
-member instance holding
-one session, and asks for the session's shape - what happened, in what
-order, in which run, which is the phrase the charter uses for what the
-default election holds. Its answer carries the session's runs in the order
-custody first saw them, each with its run reference and its held event
-counts by kind, every name spelled as the envelope spelled it. The counts
-are organized envelope fact and carry no judgment: what a kind's count
-means to a turn is the asking loop's business, per the three-way division
+**The ask vocabulary is closed and enumerated here, and it holds four names: `shape`,
+`recall`, `replay`, and `grants`.** The shape ask carries no members, one member
+instance holding one session, and asks for the session's shape - what happened, in what
+order, in which run, which is the phrase the charter uses for what the default election
+holds. Its answer carries the session's runs in the order custody first saw them, each
+with its run reference and its held event counts by kind, every name spelled as the
+envelope spelled it. The counts are organized envelope fact and carry no judgment: what
+a kind's count means to a turn is the asking loop's business, per the three-way division
 of `weaver-state-PRD` section 2.
 
 **The `recall` ask returns the conversation as custody holds it**, added
@@ -304,9 +308,20 @@ for it. On a member standing without the preload
 door, the ask answers immediately, against the holdings the stream carried
 before it, like its two siblings.
 
-A further ask
-name is a change under section 7 and does not exist until it merges
-there.
+**The `grants` ask returns the boundary as the store states it**, added 2026-09-04
+against the leave clause of `weaver-trace-PRD` section 3.1: the record names what its
+state was built into, and the harness reads the store's grant surface at the enter and
+again at the leave so the `unload` event can say whether the boundary moved inside the
+session. The ask carries no members. The answer carries one member, `surface`, an
+ordered list of strings the engine renders from its own catalog, under the service
+engine the role's attributes, its memberships, the database's access list, and the table
+grants it holds, and under the embedded engine the file's owner, group, and mode, the
+filesystem being the boundary there. The lines are spelled so two readings compare as
+equal or not and for nothing else: the harness compares and the record carries the
+comparison, and custody states the surface and never judges it, per section 4. The ask
+answers immediately against the store, holding no event and parking never, like `shape`.
+
+A further ask name is a change under section 7 and does not exist until it merges there.
 
 ## 3. What the harness owes
 

@@ -2,7 +2,14 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-09-04, the store is a port and two engines stand. Section 3
+**Revised:** 2026-09-04, second of this date, the vector's flags stand ahead of its
+positionals and the port answers the `grants` ask. Section 2's count sentence spoke
+of the territory and the preload path alone, and the engine's flags now precede
+both, per `weaver-admin-Spec` section 6 as revised this date. Section 4 gains the
+fourth ask of `weaver-harness-state-contract` section 2, the boundary as the engine
+states it. Per issue #411's code act.
+**Revised:** 2026-09-04, first of this date, the store is a port and two engines
+stand. Section 3
 declares `Store` and its two implementations, the embedded engine of the
 2026-08-18 ruling and the service engine, each behind a feature, and the
 record `state-store-is-a-port`. Section 1's dependency clause takes one client
@@ -168,24 +175,22 @@ agent's uid maps to no role, which is the second gate of the charter's section
 service engine, the socket, the database, and the role arrive on the member's
 vector from the binding, per `weaver-admin-Spec` section 6.
 
-The first door's end arrives with the process, per the operator's ruling of
-2026-08-26: admin creates the pair at the spawn and this member inherits its
-end, so the peer is authenticated by possession and no credential is judged
-on this door, the one party that can hold the other end being the one the
-enter handed it to. The end's number is the code act's to elect, a fixed
-convention between this crate and admin rather than a value the vector
-carries, so the vector's counts are the territory's and the preload path's
-alone, per `weaver-admin-Spec` section 6. **The number is probed before it
-is adopted**: the member reads the number's socket type and refuses, with a
-named fault, a number holding no stream socket, because a hand-run process
-holds whatever its shell left there and an adoption would read it as seam
-traffic and close it on exit. The probe borrows and owns nothing, so the
-refusal closes nothing that is not this process's own. The choreography
-election below is narrowed once already by section 4 and now again by the
-ruling: what remains that act's is the number and the probe's mechanics.
-The preload door's name arrives on the vector under a diagnostic binding and
-binds under this member's own territory, the credential judgment of section
-4 unchanged on it.
+The first door's end arrives with the process, per the operator's ruling of 2026-08-26:
+admin creates the pair at the spawn and this member inherits its end, so the peer is
+authenticated by possession and no credential is judged on this door, the one party that
+can hold the other end being the one the enter handed it to. The end's number is the
+code act's to elect, a fixed convention between this crate and admin rather than a value
+the vector carries, so the vector's positionals are the territory and the preload path
+alone, the engine's flags standing ahead of them, per `weaver-admin-Spec` section 6.
+**The number is probed before it is adopted**: the member reads the number's socket type
+and refuses, with a named fault, a number holding no stream socket, because a hand-run
+process holds whatever its shell left there and an adoption would read it as seam
+traffic and close it on exit. The probe borrows and owns nothing, so the refusal closes
+nothing that is not this process's own. The choreography election below is narrowed once
+already by section 4 and now again by the ruling: what remains that act's is the number
+and the probe's mechanics. The preload door's name arrives on the vector under a
+diagnostic binding and binds under this member's own territory, the credential judgment
+of section 4 unchanged on it.
 
 ## 3. The store
 
@@ -344,22 +349,24 @@ from: weaver-state
 to: state-serve-restricts-to-the-session
 ```
 
-The `shape` ask runs one grouped count over the event
-table, and the landing order the contract's first-seen clause asks for is
-the `id` column's, custody's own order key: the run groups are ordered by
-the least `id` each holds, each carrying its kinds and their counts as the
-envelope spelled them, rendered as the contract's answer frame and written
-back on the channel as one answer frame, the frame's byte shape riding the
-encoding election of section 6. The `recall` ask reads the event rows of
-the four message kinds with their field pairs, ordered by the `id` column
-like every landing-order answer, and where `last-turns` bounds it the
-bound resolves as the distinct session, run, and turn triples of the most
-recent turns by id, the rows outside them left unread, a turn label
-recurring across runs naming two different turns. The answer serves each
-event as the distillate's own shape, envelope and pairs, because custody
-serves what it kept in the form it kept it. A malformed ask is dropped whole the
-way a malformed distillate is, and the resulting silence is the harness's
-bound to convert into a missing answer.
+The `shape` ask runs one grouped count over the event table, and the landing order the
+contract's first-seen clause asks for is the `id` column's, custody's own order key: the
+run groups are ordered by the least `id` each holds, each carrying its kinds and their
+counts as the envelope spelled them, rendered as the contract's answer frame and written
+back on the channel as one answer frame, the frame's byte shape riding the encoding
+election of section 6. The `recall` ask reads the event rows of the four message kinds
+with their field pairs, ordered by the `id` column like every landing-order answer, and
+where `last-turns` bounds it the bound resolves as the distinct session, run, and turn
+triples of the most recent turns by id, the rows outside them left unread, a turn label
+recurring across runs naming two different turns. The answer serves each event as the
+distillate's own shape, envelope and pairs, because custody serves what it kept in the
+form it kept it. The `grants` ask reads no event row: it reads the engine's own
+boundary, the catalog's lines for the connected role under the service engine and the
+file's owner, group, and mode under the embedded one, and answers them in the engine's
+order as `{"answer":{"grants":{"surface":[...]}}}`, each line a string, per the
+contract's fourth ask of 2026-09-04. A malformed ask is dropped whole the way a
+malformed distillate is, and the resulting silence is the harness's bound to convert
+into a missing answer.
 
 **Three protocol bounds are this crate's elections, each named with what its
 breach means, per the audit of 2026-08-26.** The answer ceiling is one

@@ -124,6 +124,29 @@ impl StateSeam {
     /// it, bounded to the most recent turns where a bound is given. The
     /// same one-strike economics as the shape ask, for the same
     /// mis-attribution reason.
+    /// The boundary as the store states it, per the contract's `grants` ask
+    /// of 2026-09-04: asked at the enter and the leave by the seat itself,
+    /// never granted to a loop, and missing on the same three grounds as
+    /// every other ask.
+    pub(crate) fn ask_grants(&mut self) -> Option<Vec<String>> {
+        if self.dead {
+            return None;
+        }
+        let answered = self.grants_exchange();
+        if answered.is_none() {
+            self.dead = true;
+        }
+        answered
+    }
+
+    fn grants_exchange(&mut self) -> Option<Vec<String>> {
+        if !self.send(b"{\"ask\":{\"grants\":{}}}\n") {
+            return None;
+        }
+        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
+        parse_grants_answer(&line)
+    }
+
     pub(crate) fn ask_recall(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
         if self.dead {
             return None;
@@ -270,6 +293,21 @@ fn parse_replay_answer(line: &str) -> Option<Vec<Recalled>> {
     parse_recalled_events(events)
 }
 
+/// The grants answer's surface, or nothing where the frame is not one:
+/// `{"answer":{"grants":{"surface":["...", ...]}}}`, every entry a string.
+fn parse_grants_answer(line: &str) -> Option<Vec<String>> {
+    let value: serde_json::Value = serde_json::from_str(line).ok()?;
+    let surface = value
+        .get("answer")?
+        .get("grants")?
+        .get("surface")?
+        .as_array()?;
+    surface
+        .iter()
+        .map(|entry| entry.as_str().map(str::to_string))
+        .collect()
+}
+
 /// Parse the recall answer, per the contract:
 /// `{"answer":{"recall":{"events":[{"envelope":{...},"pairs":{...}}]}}}`.
 /// A frame that does not carry the whole shape answers nothing.
@@ -372,6 +410,43 @@ mod tests {
         assert!(
             seam.ask_shape().is_none(),
             "the retired seam never reads the late well-formed answer"
+        );
+    }
+
+    /// **The grants ask reads the surface as strings and nothing else**, per
+    /// the contract's fourth ask of 2026-09-04. Perturbation: accept a
+    /// non-string entry and the second case answers a surface with a hole
+    /// in it, which two readings would then compare as equal across.
+    #[test]
+    fn the_grants_ask_reads_the_surface_whole_or_not_at_all() {
+        let (ours, theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let mut peer = theirs;
+        peer.write_all(b"{\"answer\":{\"grants\":{\"surface\":[\"owner 0:0\",\"mode 0640\"]}}}\n")
+            .expect("answers in advance");
+        let surface = seam.ask_grants().expect("answered");
+        assert_eq!(
+            surface,
+            vec!["owner 0:0".to_string(), "mode 0640".to_string()]
+        );
+        let mut asked = [0u8; 64];
+        let n = peer.read(&mut asked).expect("reads the ask");
+        assert_eq!(
+            &asked[..n],
+            b"{\"ask\":{\"grants\":{}}}\n",
+            "the ask carries no members"
+        );
+
+        let (ours, theirs) = UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = StateSeam::new(ours);
+        let mut peer = theirs;
+        peer.write_all(b"{\"answer\":{\"grants\":{\"surface\":[\"owner 0:0\",7]}}}\n")
+            .expect("answers in advance");
+        assert!(
+            seam.ask_grants().is_none(),
+            "a non-string entry is a malformed answer"
         );
     }
 

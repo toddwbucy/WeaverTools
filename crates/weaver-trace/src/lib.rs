@@ -146,8 +146,8 @@ mod writer;
 pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
     Candidate, ClassifyAsk, ClassifyScored, Elections, ElisionSpan, Envelope, Event, Finish,
-    FlushCounts, Kind, Line, LoopIdentity, ModelField, ModelOutput, Payload, RunRef, SessionRef,
-    StopReason, Subsystem, TurnClose, TurnRef, raw_payload,
+    FlushCounts, GrantSurface, Kind, Line, LoopIdentity, ModelField, ModelOutput, Payload, RunRef,
+    SessionRef, StopReason, StoreIdentity, Subsystem, TurnClose, TurnRef, UnloadClose, raw_payload,
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};
 pub use structure::{Record, WorkingStructure};

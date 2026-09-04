@@ -50,6 +50,11 @@ struct ServiceConfig {
     log_path: PathBuf,
     agent_config_directory: PathBuf,
     unit: unit::UnitTemplate,
+    /// The directory the store's unix socket stands in, per Spec section 9
+    /// as of 2026-09-04: read under a service election and otherwise idle.
+    /// Optional in the file, the engine's conventional directory standing
+    /// where the file is silent.
+    state_store_socket: PathBuf,
     allow_list: inventory::AllowList,
 }
 
@@ -66,6 +71,27 @@ impl ServiceConfig {
 }
 
 fn main() {
+    // **The store's second question is answered by this binary under the
+    // agent's uid**, per `weaver-admin-Spec` section 4 as of 2026-09-04: the
+    // parent sets the variable and three arguments, and the child asks the
+    // store and exits with the answer. This is not a verb of the surface,
+    // and an invocation that carries the variable serves no verb.
+    if std::env::var_os(inventory::PROBE_STORE_VARIABLE).is_some() {
+        let arguments: Vec<String> = std::env::args().skip(1).collect();
+        let admitted = match arguments.as_slice() {
+            [socket, database, role] => {
+                inventory::store_admits(std::path::Path::new(socket), database, role)
+            }
+            _ => Err(std::io::Error::other(
+                "the probe takes socket, database, role",
+            )),
+        };
+        std::process::exit(match admitted {
+            Ok(true) => 0,
+            Ok(false) => 1,
+            Err(_) => 2,
+        });
+    }
     let outcome = run();
     // **The answer is one JSON object on standard output and the exit status
     // agrees with it.** Zero exits an answer and a non-zero status exits a
@@ -168,6 +194,13 @@ fn stand_state_member(
     config: &ServiceConfig,
     inventory: &inventory::Inventory,
 ) -> Option<std::os::fd::OwnedFd> {
+    // `none` declines the member, per `weaver-state-PRD` section 4 as of
+    // 2026-09-04: nothing is stood, no territory is made, and the harness's
+    // end is absent from the enter by the declaration's own word.
+    let store = inventory.config.state_store.clone().unwrap_or_default();
+    if store.engine == weaver_types::StoreEngine::None {
+        return None;
+    }
     let binary_directory = config.unit.worker.parent()?;
     let binary = binary_directory.join("weaver-state");
     if !binary.exists() {
@@ -213,7 +246,12 @@ fn stand_state_member(
         .open(territory.join("state.log"));
     let mut member = std::process::Command::new(&binary);
     member
-        .args(member_vector(&territory, &inventory.binding))
+        .args(member_vector(
+            &territory,
+            &inventory.binding,
+            &store,
+            &config.state_store_socket,
+        ))
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null());
     if let Ok(log) = log {
@@ -295,8 +333,32 @@ fn arm_member_end(raw_member_end: std::os::fd::RawFd) -> std::io::Result<()> {
 fn member_vector(
     territory: &std::path::Path,
     binding: &weaver_types::EnterBinding,
+    store: &weaver_types::StateStore,
+    store_socket: &std::path::Path,
 ) -> Vec<std::ffi::OsString> {
-    let mut vector = vec![territory.as_os_str().to_owned()];
+    // **The engine leads**, so the member knows which port to stand before
+    // it reads a positional, per Spec section 6 as of 2026-09-04, and under
+    // the service engine the socket, the database, and the role follow it.
+    let mut vector: Vec<std::ffi::OsString> = vec!["--engine".into()];
+    vector.push(
+        match store.engine {
+            weaver_types::StoreEngine::None => "none",
+            weaver_types::StoreEngine::Sqlite => "sqlite",
+            weaver_types::StoreEngine::Postgres => "postgres",
+        }
+        .into(),
+    );
+    if store.engine == weaver_types::StoreEngine::Postgres {
+        vector.push("--store-socket".into());
+        vector.push(store_socket.as_os_str().to_owned());
+        for (flag, value) in [("--database", &store.database), ("--role", &store.role)] {
+            if let Some(value) = value {
+                vector.push(flag.into());
+                vector.push(value.into());
+            }
+        }
+    }
+    vector.push(territory.as_os_str().to_owned());
     if matches!(binding, weaver_types::EnterBinding::Diagnostic) {
         vector.push(territory.join("preload.sock").into_os_string());
     }
@@ -340,6 +402,26 @@ fn take_inventory(
         // gid too few admits one that does not.
         agent_gids: agent_gids(&user),
         home: user.dir.clone(),
+        // The two box facts the store rules read, per Spec section 4 as of
+        // 2026-09-04: the member's binary beside the worker's, and the
+        // store's socket directory from this crate's own file.
+        member_binary: config
+            .unit
+            .worker
+            .parent()
+            .map(|directory| directory.join("weaver-state"))
+            // A binary and not a path: a directory or an unexecutable file
+            // under that name would pass an existence look and fail at the
+            // spawn, the leg then down under a declaration that never
+            // declined it, which is the #381 class this rule exists to
+            // refuse at the inventory.
+            .filter(|binary| {
+                use std::os::unix::fs::PermissionsExt;
+                std::fs::metadata(binary)
+                    .map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+                    .unwrap_or(false)
+            }),
+        store_socket: config.state_store_socket.clone(),
     };
     inventory::take_inventory(agent, &source, &config.allow_list, &boundary)
 }
@@ -572,6 +654,10 @@ fn run_load(
                 // crosses is always the election whole and the worker
                 // never re-derives an absence.
                 state_election: inventory.config.state_election.clone().unwrap_or_default(),
+                // The same resolution for the store, per `weaver-types-Spec`
+                // section 4 as of 2026-09-04: an absent election is the
+                // embedded engine, and the record names what was resolved.
+                state_store: inventory.config.state_store.clone().unwrap_or_default(),
             },
         }),
     };
@@ -856,6 +942,11 @@ fn load_service_config() -> Result<ServiceConfig, String> {
             // no headroom leaves the organ's compiled default standing.
             headroom_bytes: read("headroom-bytes").ok().filter(|v| !v.is_empty()),
         },
+        state_store_socket: read("state-store-socket")
+            .ok()
+            .filter(|v| !v.is_empty())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(inventory::STORE_SOCKET_DIRECTORY)),
         allow_list: inventory::AllowList::new(provisioned),
     })
 }
@@ -1012,6 +1103,8 @@ mod tests {
     #[test]
     fn the_vector_follows_the_kind_in_both_directions() {
         let territory = std::path::Path::new("/dbpool/agents/alpha/state");
+        let embedded = weaver_types::StateStore::default();
+        let socket = std::path::Path::new("/run/postgresql");
         let serving = member_vector(
             territory,
             &weaver_types::EnterBinding::Serving {
@@ -1023,22 +1116,31 @@ mod tests {
                     },
                 },
             },
+            &embedded,
+            socket,
         );
         assert_eq!(
             serving.len(),
-            1,
-            "a serving load carries the territory alone"
+            3,
+            "a serving load carries the engine pair and the territory alone"
         );
-        assert_eq!(serving[0], territory.as_os_str());
-        let diagnostic = member_vector(territory, &weaver_types::EnterBinding::Diagnostic);
+        assert_eq!(serving[0], "--engine");
+        assert_eq!(serving[1], "sqlite");
+        assert_eq!(serving[2], territory.as_os_str());
+        let diagnostic = member_vector(
+            territory,
+            &weaver_types::EnterBinding::Diagnostic,
+            &embedded,
+            socket,
+        );
         assert_eq!(
             diagnostic.len(),
-            2,
+            4,
             "a diagnostic load carries the preload path"
         );
-        assert_eq!(diagnostic[0], territory.as_os_str());
+        assert_eq!(diagnostic[2], territory.as_os_str());
         assert_eq!(
-            diagnostic[1],
+            diagnostic[3],
             territory.join("preload.sock").into_os_string(),
             "the territory with the fixed leaf, no invocation input composing it"
         );
@@ -1049,6 +1151,7 @@ mod tests {
     /// stand without a filesystem.
     fn unread_config() -> ServiceConfig {
         ServiceConfig {
+            state_store_socket: PathBuf::from(inventory::STORE_SOCKET_DIRECTORY),
             coordination_root: PathBuf::from("/nonexistent"),
             log_path: PathBuf::from("/nonexistent/log"),
             agent_config_directory: PathBuf::from("/nonexistent/agents"),

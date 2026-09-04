@@ -317,6 +317,11 @@ pub struct EnterPayload {
     /// the declaration is silent, per `weaver-admin-harness-contract`
     /// section 5, so what crosses is always the election whole.
     pub state_election: crate::config::StateElection,
+    /// The store the member stands on, resolved the same way: the embedded
+    /// engine where the declaration is silent, and under the service engine
+    /// the database and role, per `weaver-types-Spec` section 4 as of
+    /// 2026-09-04. The harness names it on the load event.
+    pub state_store: crate::config::StateStore,
 }
 
 /// The binding kind as admin resolved it, per `weaver-types-Spec` section 4:

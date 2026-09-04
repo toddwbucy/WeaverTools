@@ -4,11 +4,19 @@ version = "0.1.0"
 edition = "2024"
 
 # The custodian, per weaver-state-Spec section 1: one binary, weaver-trace
-# for the canonical event vocabulary, and the three externals the Spec
-# names. No async runtime, no logging crate, no HTTP, per the corpus's
-# standing refusals.
+# for the canonical event vocabulary, weaver-types for the store election's
+# shape, and the externals the Spec names, one engine's driver behind each
+# engine's feature. No async runtime of the crate's own, no logging crate,
+# no HTTP, per the corpus's standing refusals.
+[features]
+default = ["sqlite"]
+sqlite = ["dep:rusqlite"]
+postgres = ["dep:postgres"]
+
 [dependencies]
 weaver-trace = { path = "../weaver-trace" }
-rusqlite = { version = "0.37", features = ["bundled"] }
+weaver-types = { path = "../weaver-types" }
+rusqlite = { version = "0.37", features = ["bundled"], optional = true }
+postgres = { version = "0.19", optional = true }
 serde_json = { version = "1", features = ["raw_value"] }
 nix = { version = "0.31", features = ["socket", "fs", "uio", "user", "poll"] }
