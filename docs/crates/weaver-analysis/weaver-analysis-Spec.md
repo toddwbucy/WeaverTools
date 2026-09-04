@@ -4,7 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
-**Revised:** 2026-09-04, the derived identity is the seed. The derivation's
+**Revised:** 2026-09-04, second of this date, the file's default spread is
+defined. Section 5 names it eight positions evenly spaced over the record's
+generated positions by index, first and last included, taken by a second read
+of the file, where the clause had named a default and defined none. Per the
+last open defect of issue #386.
+**Revised:** 2026-09-04, first of this date, the derived identity is the seed. The derivation's
 prefix member names its standing under `weaver-state-PRD` section 4 as revised
 this date: the seed of the derived declaration, the preloaded store answering the
 replayed run's identity ask from the same events. Per issue #422.
@@ -671,11 +676,17 @@ final layers and the named positions, never the record**, which is what
 makes the discard licence a live property rather than a claim about
 storage.
 
-**On a stream the analyst names the positions, and the default spread is
-the file's alone.** A spread over the whole record cannot be chosen
-without the whole record, and a reader that buffered to find one would
-have kept what the pipe exists not to keep, so a stream with no named
-positions refuses rather than silently retaining.
+**On a stream the analyst names the positions, and the default spread is the file's
+alone.** A spread over the whole record cannot be chosen without the whole record, and a
+reader that buffered to find one would have kept what the pipe exists not to keep, so a
+stream with no named positions refuses rather than silently retaining. **The file's
+default spread is eight positions**, defined here since 2026-09-04 because the clause
+named one and nothing defined it, which left the file branch refusing with an empty
+list: the record's generated positions in order, the first and the last among the eight
+and the rest evenly spaced between them by index, every position where the record holds
+eight or fewer. The file is read twice to take it, once to learn its positions and once
+to read, because a file can be, and the analyst's `--positions` replaces the spread
+rather than adding to it. The control runs over every position in both cases.
 
 **A reading is produced only where the record's own bracket closed
 certified**, per the charter's section 3 and the gate above: the outcome

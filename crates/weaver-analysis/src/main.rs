@@ -43,7 +43,8 @@ fn main() -> std::process::ExitCode {
              | read <diagnostic-trace> | compare <capture> <capture> \
              | signals <record> [spike-bar] \
              | lens <capture> --lens <path> --weights <path> [--layers 2,6,..] \
-             [--positions p,..] [--topk 5] [--min-top5 0.9] [--rms-epsilon 1e-6]",
+             [--positions p,.. (a file defaults to a spread of eight)] [--topk 5] \
+             [--min-top5 0.9] [--rms-epsilon 1e-6]",
         ),
     }
 }
@@ -429,6 +430,23 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
                 .to_string(),
         );
     }
+    // **The file's default spread is eight positions**, per Spec section 5
+    // as of 2026-09-04, taken by a first read that learns the record's
+    // positions and keeps nothing else, because a file can be read twice
+    // and a pipe cannot. The analyst's own list replaces it.
+    let mut first_read_identity: Option<(u64, std::time::SystemTime)> = None;
+    if !streaming && positions.is_none() {
+        first_read_identity = file_identity(&record);
+        let source = match weaver_analysis::stream::open(&record) {
+            Ok(source) => source,
+            Err(error) => return refused(format!("the record does not open: {error}")),
+        };
+        let mut held = weaver_analysis::capture::Positions::default();
+        if let weaver_analysis::Drained::Refused(why) = weaver_analysis::drain(source, &mut held) {
+            return refused(why);
+        }
+        positions = Some(weaver_analysis::capture::spread(&held.held, DEFAULT_SPREAD));
+    }
 
     // The identity, judged before anything large is read.
     let lens_file = std::path::Path::new(&lens_path);
@@ -481,6 +499,15 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
     // the control's rank is computed at the moment a position pairs with
     // the token it drew, and the column is dropped there. What is held is
     // one turn's final layers and the named positions.
+    // **The second read reads the file the first read chose over.** A
+    // file that moved between them would have its spread taken over one
+    // record and its reading over another, so the two reads are held to
+    // one length and one modification time and a change refuses.
+    if first_read_identity.is_some() && file_identity(&record) != first_read_identity {
+        return refused(
+            "the record changed between the read that chose the spread and the read".to_string(),
+        );
+    }
     let source = match weaver_analysis::stream::open(&record) {
         Ok(source) => source,
         Err(error) => return refused(format!("the record does not open: {error}")),
@@ -719,6 +746,16 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
 
 /// Whether a path names a FIFO, which is how a reading learns it is
 /// draining rather than reading a record that stands still.
+/// The file's default spread, per Spec section 5 as of 2026-09-04.
+const DEFAULT_SPREAD: usize = 8;
+
+/// A file's length and modification time, the identity the two reads of
+/// the default spread are held to, or nothing where the path does not stat.
+fn file_identity(path: &str) -> Option<(u64, std::time::SystemTime)> {
+    let meta = std::fs::metadata(path).ok()?;
+    Some((meta.len(), meta.modified().ok()?))
+}
+
 fn is_fifo(path: &str) -> bool {
     use std::os::unix::fs::FileTypeExt;
     std::fs::metadata(path)

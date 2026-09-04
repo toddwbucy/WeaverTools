@@ -225,3 +225,58 @@ fn a_malformed_line_does_not_end_the_stream() {
     assert_eq!(ended, Drained::Stopped, "the record's own close ends it");
     assert_eq!(reader.series.points.len(), 2, "the measurement still read");
 }
+
+/// **The default spread is first, last, and evenly between**, per Spec
+/// section 5 as of 2026-09-04. Perturbation: index by `i * len / count`
+/// and the last position drops out of the eight; skip the dedup and a
+/// record of nine positions yields a repeated one at the join.
+#[test]
+fn the_default_spread_is_first_last_and_evenly_between() {
+    use weaver_analysis::capture::spread;
+    let record: Vec<u64> = (100..=170).collect();
+    let eight = spread(&record, 8);
+    assert_eq!(eight, vec![100, 110, 120, 130, 140, 150, 160, 170]);
+    assert_eq!(
+        spread(&[5, 6, 7], 8),
+        vec![5, 6, 7],
+        "eight or fewer is every position"
+    );
+    assert_eq!(
+        spread(&[7, 5, 6, 5], 8),
+        vec![5, 6, 7],
+        "ordered and deduplicated"
+    );
+    let nine = spread(&(0..9).collect::<Vec<u64>>(), 8);
+    assert_eq!(nine.first(), Some(&0));
+    assert_eq!(nine.last(), Some(&8));
+    assert_eq!(
+        nine.len(),
+        nine.iter().collect::<std::collections::BTreeSet<_>>().len()
+    );
+    assert!(spread(&[], 8).is_empty());
+    assert_eq!(spread(&[3, 4], 1), vec![3]);
+}
+
+/// **The positions read ends at the bracket's own close**, the record
+/// boundary the reading keeps, so a trailing bracket in the same file adds
+/// nothing to the spread. Perturbation: drop the `replay.closed` arm of
+/// `Positions::event` and the trailing position joins the held list.
+#[test]
+fn the_positions_read_stops_at_the_close() {
+    use weaver_analysis::capture::Positions;
+    let trailing = concat!(
+        r#"{"session":"s","run":"r-2","kind":"replay.opened","sequence":"9"}"#,
+        "\n",
+        r#"{"session":"s","run":"r-2","turn":"t-1","kind":"residual.column","sequence":"10","#,
+        r#""payload":{"position":99,"layer":0,"values":[[1.0]]}}"#,
+        "\n",
+    );
+    let mut held = Positions::default();
+    let drained = drain(record(Some("certified"), trailing).as_bytes(), &mut held);
+    assert!(matches!(drained, Drained::Stopped), "{drained:?}");
+    assert!(
+        !held.held.contains(&99),
+        "the trailing bracket's position is not held"
+    );
+    assert!(!held.held.is_empty(), "the bracket's own positions are");
+}
