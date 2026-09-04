@@ -200,10 +200,10 @@ impl Peer {
         .expect("sent");
     }
 
-    /// The answer, or the socket's own error where the serving side closed
-    /// without one, so a test can name how service ended instead of
-    /// reporting a reset.
-    fn try_read(&self) -> Result<Payload, nix::Error> {
+    /// The answer, `None` where the serving side closed in order without
+    /// one, or the socket's own error where it reset, so a test can name how
+    /// service ended instead of reporting a decode of nothing.
+    fn try_read(&self) -> Result<Option<Payload>, nix::Error> {
         let mut buffer = vec![0u8; MAX_ENVELOPE_BYTES];
         let mut slices = [std::io::IoSliceMut::new(&mut buffer)];
         let message = nix::sys::socket::recvmsg::<()>(
@@ -213,9 +213,12 @@ impl Peer {
             nix::sys::socket::MsgFlags::empty(),
         )?;
         let read = message.bytes;
+        if read == 0 {
+            return Ok(None);
+        }
         let envelope: OrganEnvelope =
             serde_json::from_slice(&buffer[..read]).expect("answer decodes");
-        Ok(envelope.payload)
+        Ok(Some(envelope.payload))
     }
 
     fn read(&self) -> Payload {
@@ -624,8 +627,13 @@ fn the_load_names_what_serve_was_handed_and_what_the_enter_carried() {
         }
         peer.send_with(1, serving_enter("s-named"), &descriptors);
         match peer.try_read() {
-            Ok(Payload::Refusal(_)) => {}
-            Ok(other) => panic!("the missing organs refuse after the load, got {other:?}"),
+            Ok(Some(Payload::Refusal(_))) => {}
+            Ok(Some(other)) => panic!("the missing organs refuse after the load, got {other:?}"),
+            Ok(None) => {
+                drop(peer);
+                let ended = handle.join().expect("service thread");
+                panic!("the serving side closed without answering: service ended with {ended:?}");
+            }
             Err(error) => {
                 drop(peer);
                 let ended = handle.join().expect("service thread");
