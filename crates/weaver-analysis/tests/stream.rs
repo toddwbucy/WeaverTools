@@ -256,3 +256,27 @@ fn the_default_spread_is_first_last_and_evenly_between() {
     assert!(spread(&[], 8).is_empty());
     assert_eq!(spread(&[3, 4], 1), vec![3]);
 }
+
+/// **The positions read ends at the bracket's own close**, the record
+/// boundary the reading keeps, so a trailing bracket in the same file adds
+/// nothing to the spread. Perturbation: drop the `replay.closed` arm of
+/// `Positions::event` and the trailing position joins the held list.
+#[test]
+fn the_positions_read_stops_at_the_close() {
+    use weaver_analysis::capture::Positions;
+    let trailing = concat!(
+        r#"{"session":"s","run":"r-2","kind":"replay.opened","sequence":"9"}"#,
+        "\n",
+        r#"{"session":"s","run":"r-2","turn":"t-1","kind":"residual.column","sequence":"10","#,
+        r#""payload":{"position":99,"layer":0,"values":[[1.0]]}}"#,
+        "\n",
+    );
+    let mut held = Positions::default();
+    let drained = drain(record(Some("certified"), trailing).as_bytes(), &mut held);
+    assert!(matches!(drained, Drained::Stopped), "{drained:?}");
+    assert!(
+        !held.held.contains(&99),
+        "the trailing bracket's position is not held"
+    );
+    assert!(!held.held.is_empty(), "the bracket's own positions are");
+}

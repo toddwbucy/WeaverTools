@@ -7,8 +7,8 @@ written against it under the gates of Working Process section 6.
 **Revised:** 2026-09-04, second of this date, the file's default spread is
 defined. Section 5 names it eight positions evenly spaced over the record's
 generated positions by index, first and last included, taken by a second read
-of the file, where the clause had named a default and defined none. Per issue
-#386's last open defect.
+of the file, where the clause had named a default and defined none. Per the
+last open defect of issue #386.
 **Revised:** 2026-09-04, first of this date, the derived identity is the seed. The derivation's
 prefix member names its standing under `weaver-state-PRD` section 4 as revised
 this date: the seed of the derived declaration, the preloaded store answering the

@@ -268,9 +268,7 @@ impl crate::stream::Reader for Streaming<'_> {
                 let Some(payload) = event.payload.as_deref() else {
                     return Step::Continue;
                 };
-                let Some(position) =
-                    value_at(payload, "position").and_then(|r| r.get().parse::<u64>().ok())
-                else {
+                let Some(position) = column_position(event) else {
                     return Step::Continue;
                 };
                 let Some(values) = value_at(payload, "values")
@@ -388,13 +386,27 @@ fn column_position(event: &crate::record::Event) -> Option<u64> {
 #[derive(Default)]
 pub struct Positions {
     pub held: Vec<u64>,
+    /// The run the opened bracket belongs to, so the read ends at that
+    /// bracket's own close and not at the file's end, the record boundary
+    /// [`Streaming`] keeps: a file may hold several brackets and the spread
+    /// is taken over the one the reading will read.
+    run: Option<String>,
 }
 
 impl crate::stream::Reader for Positions {
     fn event(&mut self, event: &crate::record::Event) -> crate::stream::Step {
-        if let Some(position) = column_position(event) {
-            self.held.push(position);
+        use crate::stream::Step;
+        match event.envelope.kind.as_str() {
+            "replay.opened" => self.run = Some(event.envelope.run.clone()),
+            "replay.closed" if self.run.as_deref() == Some(event.envelope.run.as_str()) => {
+                return Step::Done;
+            }
+            _ => {
+                if let Some(position) = column_position(event) {
+                    self.held.push(position);
+                }
+            }
         }
-        crate::stream::Step::Continue
+        Step::Continue
     }
 }
