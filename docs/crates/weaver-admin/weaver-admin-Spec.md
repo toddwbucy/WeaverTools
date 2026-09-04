@@ -790,12 +790,15 @@ from: weaver-admin
 to: admin-existence-checks-repair-nothing
 ```
 
-**The store election is judged here too, as of 2026-09-04.** Absent, the
-embedded engine is resolved and the member's binary is required beside the
-worker's, a deployment that carries no member refusing with `BoundaryUnverified`
-rather than running without a leg it never declined: the leg's standing is the
-declaration's fact and not the directory's, per `weaver-state-PRD` section 4 and
-issue #381. `none` declines the member and requires nothing. `postgres` requires
+**The store election is judged here too, as of 2026-09-04.** Every election but
+`none` stands a member, so every election but `none` requires the member's
+binary beside the worker's, and a box that lacks it refuses with
+`BoundaryUnverified` rather than running without a leg the declaration never
+declined: the leg's standing is the declaration's fact and not the directory's,
+per `weaver-state-PRD` section 4 and issue #381, and a missing binary is never
+read as an absent member. Absent, the election resolves to the embedded engine
+under that same requirement. `none` declines the member and requires nothing.
+`postgres` requires
 `database` and `role` in the declaration and, on the box, the store's socket
 present under the path this crate's own configuration names, and the walk asks
 the store the two questions the charter's two gates pose: that the member's

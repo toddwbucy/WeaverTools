@@ -1334,6 +1334,7 @@ pub struct EnterPayload {
     pub spu_instruction: SpuInstruction,
     pub binding: EnterBinding,
     pub state_election: StateElection,
+    pub state_store: StateStore,
 }
 
 pub enum EnterBinding {
@@ -1359,6 +1360,17 @@ pub enum FaultCase {
     MessageRecordUndecodable,
 }
 ```
+
+**`state_store` rides the enter resolved, beside the election, as of
+2026-09-04.** The config holds it as an option whose absence means the
+embedded engine, per section 2, and the payload holds it as admin resolved it
+at inventory, so the harness never re-derives an absence and the load event it
+authors names the engine and, under the service engine, the database and role,
+per `weaver-trace-PRD` section 3.1. `database` and `role` are present in the
+resolved value exactly where the engine is the service one, the cross-field
+rule having been judged before any process existed, and the member's own
+vector carries the same three, per `weaver-admin-Spec` section 6, so the two
+parties that need them read one resolution.
 
 **`EnterBinding` is the kind resolved, and a directive disagreeing with its
 kind is unrepresentable rather than refused.** The config holds the kind as
