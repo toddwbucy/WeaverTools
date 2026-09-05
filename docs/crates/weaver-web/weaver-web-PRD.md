@@ -66,6 +66,17 @@ tuple, the parent run and the branch position being lineage rather than
 condition, which is what makes a branch comparable to its parent. Per the
 review of PR `#453`.
 
+**Revised:** 2026-09-05, fifth of this date, the identity is the corpus's
+and the election is recorded. The artifact identity rule this crate had
+derived for itself is withdrawn for the one `weaver-analysis` already
+carries, the set of per-file content digests keyed by file name, compared
+as a set: a rolled-up digest of this crate's own devising was a second rule
+for one subject, which is what the lens paragraph beside it refuses. An
+elected lens reuse is recorded with both weights identities, so a reading
+through a lens fitted to other weights says so. Section 3.6 states which
+surface writes what rather than claiming all of them write. Per the review
+of PR `#453`.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -297,10 +308,14 @@ the control arm is free.
 
 ### 3.6 The five on the list side
 
-Global, filtered, and written into by every surface above. **Four of the
-five are lists and the fifth is not.** Agents, Models, Experiments and
-Record are list destinations. The Experiment view is the detail surface one
-of them opens into, and it is a surface rather than a mode of the list
+Global and filtered. **Every surface above writes what it authors and
+nothing else**: Compose lands a declaration, Stage lands a staged
+experiment, and the runs and positions arrive by the ingest path of section
+4 rather than from any screen. These surfaces read the result and filter
+it. **Four of the five are lists and the fifth is not.** Agents, Models,
+Experiments and Record are list destinations. The Experiment view is the
+detail surface one of them opens into, and it is a surface rather than a
+mode of the list
 above it: its own destination, its own state, and its own module under the
 Spec's rule of one module each. **The group is named for how it is
 reached** - by a chip-query rather than along the path - and not for the
@@ -325,14 +340,18 @@ where the artifact came from or what is known about it. This surface does:
 verifying each shard under its own name. Its provenance, downloaded from a
 repository at a revision or converted from another artifact by a named
 converter at a pin. Which box holds it, since this crate runs on one
-machine and the agents on another. And its relations, the lens artifacts
-fitted to
-these weights, and the reference cells taken against them.
+machine and the agents on another. And its relations, the lens
+artifacts fitted to these weights, the readings taken through a lens fitted
+to other weights where the operator elected that reuse, and the reference
+cells taken against them.
 
 **An artifact is the complete set its own index names, and one rule decides
-identity.** That identity derives from the per-file identities in the order
-the index gives them. A set missing a file the index names is not that
-artifact, and the catalog dedupes on that and nothing else. **The
+identity** - the corpus's own, the set of per-file content digests keyed by
+file name that `weaver-analysis-PRD` section 3 already carries. Equality is
+set equality, so a set missing a file the index names is unequal to the
+complete one and is not that artifact, and the catalog dedupes on that and
+nothing else. **This crate defines no digest of its own**, a second rule for
+one subject being what the paragraph below refuses for the lens. **The
 provenance chain is recorded and is not a second identity**: it says what
 an artifact was made from, which is what makes an elected lens reuse across
 a conversion legible afterward, and it does not version a lens. Section 3's

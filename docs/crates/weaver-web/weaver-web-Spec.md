@@ -42,6 +42,15 @@ field election's depth, which sets the length of every position's
 alternative list and which the charter's section 4 compares. Per the review
 of PR `#453`.
 
+**Revised:** 2026-09-05, fifth of this date. Section 2.3's artifact
+identity becomes `weaver-analysis-Spec` section 3's `WeightsDigest` rather
+than a composite this document defined, equality being set equality with no
+order imposed. Section 2.2 states that the parent run and branch position
+are lineage outside tuple equality, so two rows differing only in them
+remain comparable, which is what makes a branch reproducible against its
+parent. Section 2.4 carries the lens artifact a reading was taken through
+and the weights it was fitted to. Per the review of PR `#453`.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -132,7 +141,8 @@ Everything identifying the conditions lives in the run's own row:
   position's alternative list and the charter's section 4 compares them
 - the task, by source and identity
 - the declared boundary set
-- the parent run reference and branch position, where the run is a branch
+- the parent run reference and branch position, where the run is a branch,
+  **which are lineage and stand outside tuple equality**
 - whether a token was forced, and which
 
 **The engine is in the compound, so the row holds it.** The tuple is a model
@@ -144,6 +154,14 @@ device model, the commit by hash, the toolchain and driver by pinned
 version, and the binaries and engine libraries by the driver's sha256. This
 row carries the same fact so a reading drawn from the store needs no
 deposit beside it to be read.
+
+**The row holds more than the tuple, and the difference is lineage.** The
+parent run reference and the branch position say where a run came from
+rather than what it ran under, per the charter's section 4, so **two rows
+differing only in them hold the same tuple** and remain comparable. Nothing
+else in this list is outside the compound. Were lineage inside it, a branch
+could never be reproduced against its parent, which is the comparison the
+staging surface exists to make.
 
 **A reading without its tuple is a reading of an unnamed compound.** The
 task is in this list for the same reason the artifact is: two runs of the
@@ -157,16 +175,23 @@ weights identity rather than by a path**, because a path is where a file
 sits and an identity is what it is, and the same weights under two paths on
 two boxes are one artifact.
 
-**The identity is derived and its derivation is stated here**, because a
-catalog that dedupes on one rule while a lens refuses on another is two
-rules for one subject. **An artifact is the complete set of files its own
-index enumerates** - the safetensors index, or the split manifest a sharded
-GGUF carries - **and its identity is the digest over the per-file
-identities in the order that index names them.** A set missing a file the
-index names is not that artifact and joins to nothing. The catalog dedupes
-on that digest and on nothing else, and it is the grain section 2.2's tuple
-means by artifact identity, fine enough to separate two quantizations
-because their files differ.
+**The identity is the corpus's existing one and this document defines no
+second**, because a catalog that dedupes on one rule while a lens refuses
+on another is two rules for one subject. **An artifact is the complete set
+of files its own index enumerates** - the safetensors index, or the split
+manifest a sharded GGUF carries - **and its identity is the set of per-file
+content digests keyed by file name**, which is the shape
+`weaver-analysis-Spec` section 3 already carries as `WeightsDigest`, one
+digest for a model kept in one file and a map from shard name to digest for
+a sharded one.
+
+**Equality is set equality and no order is imposed**, the map being keyed
+rather than sequenced. **A set missing a file the index names is unequal to
+the complete set** and therefore joins to nothing, which is the whole of
+what the incompleteness rule needs and asks for no rolled-up digest of this
+crate's own devising. The catalog dedupes on that set and on nothing else,
+and it is the grain section 2.2's tuple means by artifact identity, fine
+enough to separate two quantizations because their files differ.
 
 **The provenance chain is recorded and is not an identity.** A conversion
 or a quantization records its source artifact with the converter and the
@@ -224,6 +249,8 @@ Each recorded query is its own row under its own identifier, carrying:
 - the query text as issued, verbatim
 - the runs it addressed, each by identity
 - the reader that served it, by name and version
+- **the lens artifact it read through, where it read one, and the weights
+  that lens was fitted to**
 - when it was taken
 
 **The result is not stored beside it.** A stored result would be a second
@@ -231,6 +258,15 @@ truth about positions section 2.1 already holds, and it would go stale the
 moment a later ingest completed the run. The row stores what reruns the
 query, and the rerun is what produces the result again - which is the whole
 of what a quotable reading claims.
+
+**An elected reuse is recorded here and is visible in the reading.** Where
+the weights a lens was fitted to are not the run's own artifact, the
+operator elected the reuse rather than the tool inferring it, per the
+charter's section 5, and both identities stand in the row so a reader
+downstream sees an election rather than a fit. The catalog resolves each of
+them, which is what makes the election legible after the fact. **A reading
+whose lens was fitted to other weights and does not say so is the one thing
+this row exists to prevent.**
 
 **A query that cannot name every run it addressed is not recorded and not
 quotable.** Section 4's condition is that a second person can rerun it, and
