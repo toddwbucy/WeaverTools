@@ -1,5 +1,6 @@
 //! conforms: spu-weights-hash-at-admit
 //! conforms: spu-hash-failure-sentinel
+//! conforms: spu-artifact-refusal-names-path-and-identity
 //!
 //! The artifact: resolution, the header read, and the weights hash.
 //!
@@ -62,22 +63,38 @@ pub enum Container {
 /// on an open waiting for a writer.
 pub fn resolve(reference: &ArtifactRef) -> Result<PathBuf, LifecycleRefusal> {
     let path = PathBuf::from(&reference.0);
-    if !path.exists() {
-        return Err(LifecycleRefusal::ArtifactUnresolvable);
-    }
+    // **Absent and denied are told apart here**, per Spec section 3. A lookup
+    // the kernel refuses is a present artifact this identity cannot reach,
+    // which is the operator's likeliest fault and the one admin's root-side
+    // look could never see, so it refuses unreadable rather than unresolvable,
+    // the reading the pin gives an open that fails for a reason other than
+    // absence. Nothing at the path, or a path through a non-directory, is the
+    // artifact failing to resolve.
+    let metadata = match std::fs::metadata(&path) {
+        Ok(metadata) => metadata,
+        Err(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::NotFound | std::io::ErrorKind::NotADirectory
+            ) =>
+        {
+            return Err(LifecycleRefusal::ArtifactUnresolvable);
+        }
+        Err(_) => return Err(LifecycleRefusal::ArtifactUnreadable),
+    };
     // A directory resolves here, at step one, to the single container file it
     // holds. Resolving it later would leave the admission carrying the
     // directory while the header read blessed the file inside, and the loader
     // would then be handed a path it cannot open, refusing as a device
     // condition three steps after the fact that caused it.
-    if path.is_dir() {
+    if metadata.is_dir() {
         return container_within(&path);
     }
     // Only a regular file resolves. A FIFO with a container's name would open
     // and then block until a writer connects, which turns a bad binding into
     // an admission that never returns, where every other malformation on this
     // path is a refusal costing no device work.
-    if !path.is_file() {
+    if !metadata.is_file() {
         return Err(LifecycleRefusal::ArtifactUnresolvable);
     }
     Ok(path)
@@ -898,6 +915,39 @@ mod tests {
             resolve(&ArtifactRef(dir.to_string_lossy().into_owned())),
             Err(LifecycleRefusal::ArtifactUnresolvable),
             "two containers is an ambiguity, not a choice"
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// **A directory the identity cannot traverse is a present artifact it
+    /// cannot reach**, per Spec section 3, and refuses unreadable rather than
+    /// unresolvable, so the operator's account says denied and not absent.
+    /// Skips as root, a uid no directory denies, rather than passing on
+    /// nothing.
+    ///
+    /// Perturbation: map every metadata error to unresolvable and this test
+    /// fails. Watched under exactly that removal.
+    #[test]
+    fn a_denied_directory_is_unreadable_rather_than_unresolvable() {
+        use std::os::unix::fs::PermissionsExt as _;
+        if nix::unistd::geteuid().is_root() {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-spu-artifact-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&dir).expect("a scratch dir");
+        let inside = dir.join("model.gguf");
+        std::fs::write(&inside, b"GGUF").expect("a file inside");
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o000)).expect("deny");
+        let outcome = resolve(&ArtifactRef(inside.to_string_lossy().into_owned()));
+        let _ = std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700));
+        assert_eq!(
+            outcome,
+            Err(LifecycleRefusal::ArtifactUnreadable),
+            "a denied lookup is present and unreachable, not absent"
         );
         std::fs::remove_dir_all(&dir).ok();
     }
