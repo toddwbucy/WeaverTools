@@ -4,10 +4,11 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-**Revised:** 2026-09-05, a reachable organ's boundary is judged at the inventory. Section 4
-fixes the refusal's shape ahead of the organ that will need it, `ConfigInvalid` naming the
-organ's `boundary` member, and states that today's parse refuses any such binding as an
-unknown field, per charter section 4.3 as ruled this date and issue #438.
+**Revised:** 2026-09-05, a reachable organ's boundary is judged at the inventory.
+Section 4 fixes the refusal's shape ahead of the organ that will need it,
+`ConfigInvalid` naming the organ's `boundary` member, and states that today's parse
+refuses any such binding as an unknown field, per charter section 4.3 as ruled this date
+and issue #438.
 
 **Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3's
 `show` and `list` answer through `weaver-admin-harness-contract` section 3's fourth

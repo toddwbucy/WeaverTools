@@ -6,11 +6,11 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 2026-07-31 with no other edit.
 
 **Revised:** 2026-09-05, a reachable organ declares its boundary. Section 4.3 carries
-the rule the operator ruled into the corpus this date: every service reachable other than
-by kernel-enforced peer identity declares a boundary, the inventory refuses a load
-whose reachable organ carries none, the record carries what was declared, and no
-minimum is set on what a boundary is. The declaration member waits for the first
-chartered reachable organ, per the apex's rule against reserved slots. Per issue #438.
+the rule the operator ruled into the corpus this date: every service reachable other
+than by kernel-enforced peer identity declares a boundary, the inventory refuses a load
+whose reachable organ carries none, the record carries what was declared, and no minimum
+is set on what a boundary is. The declaration member waits for the first chartered
+reachable organ, per the apex's rule against reserved slots. Per issue #438.
 
 **Revised:** 2026-09-04, second of this date, the observation exchange lands. Section
 8's operator interface reports the harness's own word on an agent's state through the
