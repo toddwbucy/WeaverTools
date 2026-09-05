@@ -449,6 +449,10 @@ pub fn scan(
 }
 
 /// A family's name, as the artifact header declares it.
+///
+/// Held in the header's own spelling, which is what a refusal names. The
+/// registry matches it by [`same_key`], so the spelling is kept for the record
+/// and folded for the comparison.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FamilyName(pub String);
 
@@ -1025,6 +1029,83 @@ const fn same_text(left: &str, right: &str) -> bool {
     true
 }
 
+/// Whether a byte is a separator the family key does not read.
+///
+/// **The rule of the key lives here and in [`key_byte_folded`], once.** The two
+/// containers do not spell one architecture alike: GGUF writes `qwen35moe` and
+/// `gpt-oss` where a safetensors `config.json` writes `qwen3_5_moe` and
+/// `gpt_oss`, so the separators are what the spellings differ by and the key
+/// drops them, per Spec section 5.
+const fn key_byte_ignored(byte: u8) -> bool {
+    matches!(byte, b'_' | b'-' | b'.')
+}
+
+/// A byte folded to the family key's case. ASCII letters fold to lower case
+/// and every other byte stands as written.
+const fn key_byte_folded(byte: u8) -> u8 {
+    byte.to_ascii_lowercase()
+}
+
+/// The next byte of `text` from `at` that the key reads, folded, with the
+/// index after it. `None` once the text is spent.
+const fn next_key_byte(text: &[u8], mut at: usize) -> Option<(u8, usize)> {
+    while at < text.len() {
+        let byte = text[at];
+        at += 1;
+        if !key_byte_ignored(byte) {
+            return Some((key_byte_folded(byte), at));
+        }
+    }
+    None
+}
+
+/// **Whether two spellings name one family key**, in a const context, per Spec
+/// section 5.
+///
+/// Both sides pass through the same fold before they meet, so the registry's
+/// spelling stays whatever container it was measured against and the artifact's
+/// spelling stays whatever its header declared. What is compared is the key and
+/// what is refused by is the spelling: a miss names the string the header
+/// carried, not the fold of it.
+pub const fn same_key(left: &str, right: &str) -> bool {
+    let (left, right) = (left.as_bytes(), right.as_bytes());
+    let (mut at_left, mut at_right) = (0, 0);
+    loop {
+        match (next_key_byte(left, at_left), next_key_byte(right, at_right)) {
+            (None, None) => return true,
+            (Some((l, next_left)), Some((r, next_right))) => {
+                if l != r {
+                    return false;
+                }
+                at_left = next_left;
+                at_right = next_right;
+            }
+            _ => return false,
+        }
+    }
+}
+
+/// The family key a spelling folds to, as a string, by the same walk
+/// [`same_key`] compares by.
+///
+/// Read by the tests and by nothing on the admission path, which compares
+/// without allocating. `same_key(a, b)` and `normalised_key(a) ==
+/// normalised_key(b)` are one rule reached two ways, and the test module holds
+/// them to that.
+pub fn normalised_key(spelled: &str) -> String {
+    let bytes = spelled.as_bytes();
+    let mut folded = Vec::with_capacity(bytes.len());
+    let mut at = 0;
+    while let Some((byte, next)) = next_key_byte(bytes, at) {
+        folded.push(byte);
+        at = next;
+    }
+    // The fold drops and lowercases ASCII bytes only, and a multi-byte
+    // sequence has no ASCII byte in it, so what remains is the UTF-8 that
+    // arrived minus some ASCII.
+    String::from_utf8(folded).expect("dropping and folding ASCII bytes preserves UTF-8")
+}
+
 /// Whether every marker in `inner` appears in `outer`.
 const fn contained_in(inner: &[&str], outer: &[&str]) -> bool {
     let mut i = 0;
@@ -1059,13 +1140,15 @@ const fn contained_in(inner: &[&str], outer: &[&str]) -> bool {
 /// uniqueness the section names rather than replacing it.
 ///
 /// Marker sets are compared only within one architecture, because entries that
-/// declare different architectures never compete.
+/// declare different architectures never compete. Sharing is judged by
+/// [`same_key`] rather than by spelling, so that the pin reads the table the
+/// way selection reads it.
 const fn table_reads_unambiguously() -> bool {
     let mut i = 0;
     while i < REGISTRY.len() {
         let mut j = i + 1;
         while j < REGISTRY.len() {
-            if same_text(REGISTRY[i].family, REGISTRY[j].family)
+            if same_key(REGISTRY[i].family, REGISTRY[j].family)
                 && (contained_in(REGISTRY[i].selecting_markers, REGISTRY[j].selecting_markers)
                     || contained_in(REGISTRY[j].selecting_markers, REGISTRY[i].selecting_markers))
             {
@@ -1082,6 +1165,37 @@ const _: () = assert!(
     table_reads_unambiguously(),
     "two registry entries share an architecture and neither marker set \
      distinguishes them, so the table's order would be the selector"
+);
+
+/// **Whether no two spellings in the table fold to one key**, which Spec
+/// section 5 requires of it beside the marker-set uniqueness above.
+///
+/// Two entries spelled alike are one contested architecture and are allowed,
+/// `llama` and `phi3` being the standing cases. Two entries spelled differently
+/// that fold to one key would be one architecture the table admits under two
+/// names, one per container, with nothing saying which row a given artifact
+/// reaches, so the build refuses the table rather than admission reading it.
+const fn spellings_do_not_collapse() -> bool {
+    let mut i = 0;
+    while i < REGISTRY.len() {
+        let mut j = i + 1;
+        while j < REGISTRY.len() {
+            if same_key(REGISTRY[i].family, REGISTRY[j].family)
+                && !same_text(REGISTRY[i].family, REGISTRY[j].family)
+            {
+                return false;
+            }
+            j += 1;
+        }
+        i += 1;
+    }
+    true
+}
+
+const _: () = assert!(
+    spellings_do_not_collapse(),
+    "two registry entries spelled differently fold to one family key, so the \
+     table carries one architecture under two names"
 );
 
 /// The conversation every contested artifact is asked to render.
@@ -1163,10 +1277,15 @@ fn render_probe(_template: &str) -> Option<String> {
 /// between them and returning the first would make the table's order the
 /// selector. [`select`] is the door that can choose, because it holds the
 /// artifact's template as well as its architecture.
+///
+/// **The name is matched by key rather than by spelling**, per Spec section 5:
+/// [`same_key`] folds the entry's spelling and the header's alike, so a
+/// safetensors `qwen3_5_moe` finds the row spelled `qwen35moe`. The refusal
+/// still carries the spelling the header declared.
 pub fn lookup(name: &FamilyName) -> Result<&'static Declaration, FamilyRefusal> {
     let mut found = None;
     for declaration in REGISTRY {
-        if declaration.family == name.0 {
+        if same_key(declaration.family, &name.0) {
             if found.is_some() {
                 return Err(FamilyRefusal::ArchitectureContested(name.clone()));
             }
@@ -1190,13 +1309,20 @@ pub fn lookup(name: &FamilyName) -> Result<&'static Declaration, FamilyRefusal> 
 /// derivation that produces no set refuses rather than falling back to the
 /// architecture, because falling back is the silent substitution this reached
 /// for the template to prevent.
+///
+/// **The candidates are gathered by key rather than by spelling**, per Spec
+/// section 5, so the two containers' spellings of one architecture reach one
+/// set of rows. What the fold bridges is a spelling and nothing more: a
+/// safetensors `mistral` is not the registry's `mistral3` under any fold, and a
+/// family the registry spells differently from a container is a row owed
+/// rather than a wider fold.
 pub fn select(
     name: &FamilyName,
     chat_template: Option<&str>,
 ) -> Result<&'static Declaration, FamilyRefusal> {
     let candidates: Vec<&'static Declaration> = REGISTRY
         .iter()
-        .filter(|declaration| declaration.family == name.0)
+        .filter(|declaration| same_key(declaration.family, &name.0))
         .collect();
     match candidates.as_slice() {
         [] => return Err(FamilyRefusal::UnknownFamily(name.clone())),
@@ -1270,6 +1396,156 @@ mod tests {
             "the refusal carries the family the header named, got {:?}",
             outcome.as_ref().map(|declaration| declaration.family)
         );
+    }
+
+    /// **The two containers' spellings of one architecture select one entry**,
+    /// per Spec section 5 and #212's table of 2026-08-21. Each pair is the
+    /// safetensors `model_type` beside the GGUF `general.architecture`, and the
+    /// `qwen3_5` pair is the one this workshop's own library adds to the table:
+    /// five Qwen3.5 exports declare it against the registry's `qwen35`.
+    ///
+    /// The two selections are compared by address, because the claim is that
+    /// one row is reached, not that two rows agree about their fields.
+    ///
+    /// Perturbation: put `declaration.family == name.0` back in `select` and
+    /// every safetensors spelling here refuses as `UnknownFamily`, which is the
+    /// admission refusal #212 found. Watched under exactly that reversion.
+    #[test]
+    fn one_architecture_selects_one_entry_under_either_containers_spelling() {
+        let pairs = [
+            ("qwen3_5_moe", "qwen35moe"),
+            ("qwen3_moe", "qwen3moe"),
+            ("qwen3_5", "qwen35"),
+            ("gpt_oss", "gpt-oss"),
+            ("nemotron_h_moe", "nemotron_h_moe"),
+        ];
+        for (safetensors, gguf) in pairs {
+            let by_safetensors = select(&FamilyName(safetensors.into()), None)
+                .unwrap_or_else(|refusal| panic!("{safetensors} refused: {refusal:?}"));
+            let by_gguf = select(&FamilyName(gguf.into()), None)
+                .unwrap_or_else(|refusal| panic!("{gguf} refused: {refusal:?}"));
+            assert!(
+                std::ptr::eq(by_safetensors, by_gguf),
+                "{safetensors} and {gguf} reached two rows, {} and {}",
+                by_safetensors.family,
+                by_gguf.family
+            );
+            assert!(
+                same_key(safetensors, gguf),
+                "{safetensors} and {gguf} are one key by the const comparison too"
+            );
+        }
+    }
+
+    /// **A spelling difference that is a different family is not the fold's
+    /// to bridge.** Safetensors Mistral exports declare `mistral` and the
+    /// registry carries `mistral3`, and the two are two names for two things,
+    /// so `mistral` refuses naming itself while `mistral3` selects, per Spec
+    /// section 5. The registry question that leaves open is #212's, not this
+    /// test's.
+    ///
+    /// Perturbation: widen the fold to drop ASCII digits as well. Both compile
+    /// pins stop the build first, the registry's own qwen keys folding
+    /// together and sharing markers, and with both pins removed `mistral`
+    /// reaches the `mistral3` row and this test fails on the first assertion.
+    /// Watched under exactly that pair.
+    #[test]
+    fn a_different_family_spelled_differently_is_not_bridged() {
+        let mistral = FamilyName("mistral".into());
+        let outcome = select(&mistral, None);
+        assert!(
+            matches!(&outcome, Err(FamilyRefusal::UnknownFamily(named)) if named == &mistral),
+            "mistral is not carried and the refusal names it, got {:?}",
+            outcome.as_ref().map(|declaration| declaration.family)
+        );
+        assert_eq!(
+            select(&FamilyName("mistral3".into()), None)
+                .expect("the registry carries mistral3")
+                .family,
+            "mistral3"
+        );
+        assert!(!same_key("mistral", "mistral3"));
+    }
+
+    /// **No two registry spellings fold to one key**, per Spec section 5,
+    /// read at runtime beside the compile-time pin that says the same. Two
+    /// rows spelled alike are a contested architecture and pass, so what is
+    /// asserted is that agreement under the fold implies agreement in
+    /// spelling. The table of expected keys is written out so that a reader
+    /// can check each registry spelling against its fold by eye, and so that
+    /// a row entering under a new spelling has to be recorded here.
+    ///
+    /// Perturbation: add a row spelled `qwen3_moe` beside `qwen3moe` and the
+    /// build stops on `spellings_do_not_collapse` before this runs. Remove
+    /// that pin and this test fails on the pair instead, which is why both
+    /// stand. Watched under the added row with the pin removed.
+    #[test]
+    fn no_two_registry_spellings_fold_to_one_key() {
+        let expected = [
+            ("llama", "llama"),
+            ("qwen2", "qwen2"),
+            ("qwen3", "qwen3"),
+            ("qwen3moe", "qwen3moe"),
+            ("qwen35", "qwen35"),
+            ("qwen35moe", "qwen35moe"),
+            ("gemma4", "gemma4"),
+            ("nemotron_h_moe", "nemotronhmoe"),
+            ("mistral3", "mistral3"),
+            ("phi3", "phi3"),
+            ("gpt-oss", "gptoss"),
+        ];
+        for row in REGISTRY {
+            let folded = normalised_key(row.family);
+            let recorded = expected
+                .iter()
+                .find(|(spelled, _)| *spelled == row.family)
+                .unwrap_or_else(|| {
+                    panic!("{} is a spelling this table does not record", row.family)
+                });
+            assert_eq!(
+                folded, recorded.1,
+                "{} folds otherwise than recorded",
+                row.family
+            );
+        }
+        for (i, left) in REGISTRY.iter().enumerate() {
+            for right in &REGISTRY[i + 1..] {
+                if same_key(left.family, right.family) {
+                    assert_eq!(
+                        left.family, right.family,
+                        "two spellings fold to one key, so the table carries one \
+                         architecture under two names"
+                    );
+                }
+                assert_eq!(
+                    same_key(left.family, right.family),
+                    normalised_key(left.family) == normalised_key(right.family),
+                    "the const comparison and the string fold disagree on {} and {}",
+                    left.family,
+                    right.family
+                );
+            }
+        }
+    }
+
+    /// **The fold is lower case with `_`, `-`, and `.` dropped, and nothing
+    /// else.** Digits stand, other punctuation stands, and a non-ASCII byte
+    /// passes through unfolded, so the rule is exactly the one Spec section 5
+    /// states rather than a looser one that happens to pass the pairs above.
+    ///
+    /// Perturbation: fold `/` as a separator too, which no registry key
+    /// carries and so no compile pin sees, and the fourth assertion fails.
+    /// Watched under exactly that widening.
+    #[test]
+    fn the_fold_drops_three_separators_and_folds_ascii_case_only() {
+        assert_eq!(normalised_key("Qwen3_5-MoE.x"), "qwen35moex");
+        assert_eq!(normalised_key("GPT_OSS"), "gptoss");
+        assert_eq!(normalised_key("__-.-__"), "");
+        assert_eq!(normalised_key("a/b"), "a/b");
+        assert_eq!(normalised_key("caf\u{e9}"), "caf\u{e9}");
+        assert!(same_key("Qwen3_5-MoE", "qwen35moe"));
+        assert!(!same_key("qwen35moe", "qwen35"));
+        assert!(!same_key("qwen35", "qwen35moe"));
     }
 
     /// **The width is judged by membership rather than against a bound.**
