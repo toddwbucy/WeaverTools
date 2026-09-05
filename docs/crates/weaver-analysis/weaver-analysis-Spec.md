@@ -10,29 +10,35 @@ and position, drained from a serving or diagnostic record, file or pipe, spliced
 record spelled it, holding one position and never the record, and gated on no certified
 close because the field is the record's own fact about a position rather than a reading
 over a replay. Section 1's layout gains `field.rs`. Per issue #436.
+
 **Revised:** 2026-09-04, third of this date, the preload takes a cut. Section 4's
 `preload` accepts `--through <run>:<turn>`, projecting the record through that turn's
 close, and `--as <session>`, landing the projection under another session name. Per
 issue #432.
+
 **Revised:** 2026-09-04, second of this date, the file's default spread is defined.
 Section 5 names it eight positions evenly spaced over the record's generated positions
 by index, first and last included, taken by a second read of the file, where the clause
 had named a default and defined none. Per the last open defect of issue #386.
+
 **Revised:** 2026-09-04, first of this date, the derived identity is the seed. The
 derivation's prefix member names its standing under `weaver-state-PRD` section 4 as
 revised this date: the seed of the derived declaration, the preloaded store answering
 the replayed run's identity ask from the same events. Per issue #422.
+
 **Revised:** 2026-09-03, the head is applied across the cores. Section 5 states that the
 unembedding's rows are split across scoped threads with each row summed in one order, so
 the reading is bit-identical to the single-thread one, and the claim gains its record,
 `analysis-threaded-head-is-bit-identical`. Forced by the 8B, whose control over two
 thousand positions took fifteen minutes on one core.
+
 **Revised:** 2026-09-03, the weights identity is per file. Section 3's lens manifest
 carries its weights digest in the shape the model on disk takes, a map of shard digests
 for a sharded model, and the reader follows the model's index to the shards it needs,
 verifying each under its own name. The identity refusal gains its record,
 `analysis-lens-refuses-other-weights`, which the clause had argued without one. Forced
 by the 8B, whose head and final norm sit in different shards.
+
 **Revised:** 2026-09-02, the reading drains the stream. Section 3 states that the
 analyst's sink input carries its shape, so a pipe elects the discard and a file declines
 it, and section 5 states how a reading is taken as the stream drains: one drain for the
@@ -76,8 +82,11 @@ sink's discipline per the charter's section 3 as amended: read once, keep the re
 its evidence, retain nothing drained, and gate the reproducibility claim rather than the
 drain on naming the device model or stating it cannot be established. The kind-set count
 follows `weaver-diagnostic-Spec` to seventeen, and section 7 adds the lens artifacts as
-an open election beside the capture artifact. **Document ID:** `weaver-analysis-Spec`
-**Parent:** `weaver-analysis-PRD` **Editorial:** Per the Working Rules.
+an open election beside the capture artifact.
+
+**Document ID:** `weaver-analysis-Spec`
+**Parent:** `weaver-analysis-PRD`
+**Editorial:** Per the Working Rules.
 
 ---
 
