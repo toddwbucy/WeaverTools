@@ -3,6 +3,10 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-05, the observation exchange lands. Section 2 answers `Observe`
+from any position with the load's facts held on the run, authoring nothing, and
+section 6.1's load event gains the declaration's digest the enter carries. Per
+`weaver-admin-harness-contract` section 3 as revised this date and issue #435.
 **Revised:** 2026-09-04, fourth of this date, a session stands from a record. Section
 2's open carries the restored conversation beside the identity under a restoring
 load, permanent for the residency, with the turn ordinal starting at the cut so the
@@ -1625,6 +1629,18 @@ decoder is deferred with the decode seam, per section 8, and the trace
 semantics are settled either way, which is what `basic-inference-loop` section
 7 already records.
 
+**Observe answers from any position and authors nothing**, per
+`weaver-admin-harness-contract` section 3 as of 2026-09-05. Before an enter the answer
+is `Unloaded` with no load. Entered, it is `Idle` where no turn key stands in flight and
+`Active` where one does, with `LoadFacts` beside it read from the run: the session and
+run, the declaration's digest the enter carried, the artifact, the elections, the store
+and whether the member's end arrived, and the composer `serve` was handed, the same
+facts the load event was authored from and held on the run for this exchange. After a
+leave the answer is `Unloaded` with no load, the position being terminal and the
+observation not an act, so it is the one directive the left position answers rather than
+refuses. No event is authored and no bracket touched: an observation mid-turn reads the
+turn key and the held facts and disturbs nothing.
+
 ```graph
 node: harness-announce-after-record
 kind: assertion
@@ -2345,11 +2361,14 @@ into their own boxes, one member per box per the streaming ruling, and the harne
 checks each spliced member's conformance to its event's accepting shape at the author
 call, the price the splice's opacity is paid at. **Two members of that declaration are
 not elections and arrive by a third route**, as of 2026-09-03: the loop that composes
-the run's prompts is handed to `serve` by the binary that runs it, since only the
-binary knows whether its loop is compiled in or a file it resolved and read, and
-whether the state member stands is the presence of its end on the enter, which this
-crate receives and no one else does. Neither is read from the deployment, so the
-record cannot disagree with what ran.
+the run's prompts is handed to `serve` by the binary that runs it, since only the binary
+knows whether its loop is compiled in or a file it resolved and read, and whether the
+state member stands is the presence of its end on the enter, which this crate receives
+and no one else does. Neither is read from the deployment, so the record cannot disagree
+with what ran. A third member that is not an election joins on 2026-09-05: the
+declaration's digest, which admin computed at the inventory and the enter carries, so
+the record names what the run was built from without this crate reading a file, per
+issue #435.
 
 **The seated identity prefix is authored beside the load, one `message.system` per
 message**, per `weaver-trace-PRD` section 5. The harness is again the party that holds

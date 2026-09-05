@@ -8,6 +8,8 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-09-05, the load names its declaration. Section 3.1's `load` event
+gains the declaration's digest as the enter carried it. Per issue #435.
 **Revised:** 2026-09-04, third of this date, the load names its lineage and its
 stack. Section 3.1's `load` event gains the parent session, run, and cut where the
 session stands from a record, and the digests of the organ binaries that ran it on

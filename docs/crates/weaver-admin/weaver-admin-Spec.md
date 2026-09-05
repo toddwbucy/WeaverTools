@@ -3,6 +3,12 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-05, the observation exchange lands. Section 3's `show` and `list`
+answer through `weaver-admin-harness-contract` section 3's fourth exchange, the
+harness's own word with the load's facts beside it, residency read only where no
+worker answers the dial, and the record's instrument follows. Section 1 takes `sha2`
+for the declaration's digest the enter now supplies. Section 11's election of
+2026-08-06 is settled. Per issue #435 and the front end epic #434.
 **Revised:** 2026-09-04, third of this date, a session stands from a record. Section 4
 judges the restore election, the record readable under this crate's custody, the cut a
 run and a turn it holds, and the session name deciding resume from branch with every
@@ -364,22 +370,23 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly
 feature used.
 
-**The dependency set is one internal crate and two external ones, and each is
-argued.** `weaver-types` is the charter's one floor link, taken **with its
-`config` feature on**, because admin is the crate that parses the operator's
-file, per that Spec's section 1, and the parser's whole audience is this
-module's inventory. `weaver-traits` is deliberately not a direct dependency, per
-charter section 3: it arrives transitively through `weaver-types` and nothing
-here draws it by name, which the manifest states by carrying no line for it.
-`serde_json` renders the invocation's answers and encodes and decodes the
-coordination channel's envelopes. `nix` is the OS surface, on the grounds
-`weaver-harness-Spec` section 2.4 argued and this crate inherits rather than
-re-argues: descriptor custody is central, the io-safe owned types make it a
+**The dependency set is one internal crate and three external ones, and each is
+argued.** `weaver-types` is the charter's one floor link, taken **with its `config`
+feature on**, because admin is the crate that parses the operator's file, per that
+Spec's section 1, and the parser's whole audience is this module's inventory.
+`weaver-traits` is deliberately not a direct dependency, per charter section 3: it
+arrives transitively through `weaver-types` and nothing here draws it by name, which the
+manifest states by carrying no line for it. `serde_json` renders the invocation's
+answers and encodes and decodes the coordination channel's envelopes. `nix` is the OS
+surface, on the grounds `weaver-harness-Spec` section 2.4 argued and this crate inherits
+rather than re-argues: descriptor custody is central, the io-safe owned types make it a
 compile property, and the needed calls, `socket`, `bind`, `listen`, `accept`,
-`getsockopt` for the peer credential, `sendmsg` with control messages, `open`,
-`mkfifo`, and `stat`, are all covered. That crate asserts the election where
-it argues it, so this one cites it and adds no second record for one
-decision.
+`getsockopt` for the peer credential, `sendmsg` with control messages, `open`, `mkfifo`,
+and `stat`, are all covered. That crate asserts the election where it argues it, so this
+one cites it and adds no second record for one decision. `sha2` joins on 2026-09-05 for
+one purpose, the digest of the declaration file this crate reads at the inventory and
+supplies on the enter, per `weaver-admin-harness-contract` section 5, so the run and the
+record name what they were built from without a second reader of the file.
 
 ```graph
 node: admin-one-floor-link-types-config
@@ -527,48 +534,33 @@ signal and nothing more. Reading it as loaded-and-idle would also contradict the
 charter's own rule that the state publishes only on a ready aggregate, since a
 unit is running well before any aggregate returns.
 
-**So `show` and `list` refuse, with the residency they could read named in the
-refusal's own prose rather than dressed as a state.** They return
-`StateNotObservable`, the floor case `weaver-types-Spec` section 4.2 adds for
-exactly this, because the answer they would otherwise carry does not exist: the
-two fitting cases of `lifecycle-answer` both take an `AgentState`, and this crate
-has no source for one. What admin can read is the manager's three values under
-the manager's own names, `active`, `failed`, and `inactive`, the last covering
-the several cases section 6's measurement records it cannot separate. That is
-residency, it is carried rather than translated because a translation is where
-the invention would enter, and it is not what these verbs were asked for.
+**So `show` and `list` answer through the observation exchange, as of 2026-09-05, and
+residency is read only where no worker answers.** `show` dials the agent's coordination
+socket and opens `Observe`, per `weaver-admin-harness-contract` section 3, and what
+returns is the harness's own word: `Unloaded` before any enter or after a leave, `Idle`
+or `Active` with the load's facts beside it where a run stands, the same facts the
+`load` event carries, read from the run and never from the record. Where the socket does
+not exist or nothing answers the dial, there is no exchange to open, and this crate
+reports `Unloaded` from that absence, which is the one place residency is read and it is
+read as the absence of a worker and not as a state. A name the allow-list does not admit
+refuses `NoSuchAgent` as every verb does, and whether a declaration validates stays
+`validate`'s own answer, since no verb chains another. `list` opens the same exchange
+for every admitted agent and answers `Agents`, one summary per name with its state and
+its load.
 
-**The refusal is the smallest honest answer available and it is temporary.**
-An operator running `show` learns that the state is not observable from here
-rather than receiving a value the program guessed, and the refusal is typed, so
-tooling keys on it rather than parsing prose. It goes when the observation
-exchange lands, and the record below is what a reviewer checks to find it gone.
+**The manager's three values stay the manager's and reach no answer.** `active`,
+`failed`, and `inactive` are residency and not lifecycle state, per the paragraph above,
+and mapping them onto `AgentState` would be the invention this section has always
+refused: `active` covers both `Idle` and `Active`, and `failed` has no case. The harness
+holds the run and answers from it, which is why the exchange and not a mapping closes
+the election section 11 filed on 2026-08-06. `StateNotObservable` leaves the floor's
+vocabulary with this act, the scheduled death `weaver-types-Spec` section 4.2 gave it.
 
-**Those three values do not map onto `AgentState`, and that is a gap this act
-names rather than closes.** The floor enumerates `Absent`, `Unloaded`, `Idle`, and
-`Active`, per `weaver-types-Spec` section 6. A manager reading `active` covers both
-`Idle` and `Active`, because a running unit is one that may be at rest or serving a
-turn and the manager cannot tell which. A manager reading `failed` has no case at
-all. So the residency answer is not an `AgentState` and this crate does not
-construct one, which leaves `lifecycle-answer`'s `State` case without a producer
-for these verbs until the gap is closed. **The edit is owed to `weaver-types`** and
-named in the charter's section 11 register, and it is deliberately not made here: a
-Spec that grew the floor's enumeration to fit what a manager happens to report
-would be settling the vocabulary from the representation, which is the direction
-gate G2 forbids.
-
-**What closes it is the observation exchange, which is also what the richer state
-needs.** `AgentState`'s distinction between idle and active is reachable only from
-the party that holds the run, and `weaver-admin-harness-contract` section 3
-charters enter, leave, and stop with no observation. One exchange answers both this
-gap and that one, so section 11 files a single open election rather than two.
-
-**The record's instrument is a test rather than review, because the refusal is
-checkable.** `show` on a provisioned agent returns `StateNotObservable` and
-constructs no `AgentState`, watched to fail when the verb is made to answer with
-a state read from the unit, which is the invention this clause forbids. Review
-could confirm the absence of a mapping and could not confirm that the verb
-refuses rather than returning something plausible.
+**The record's instrument stays a test.** `show` on an admitted agent whose socket is
+absent answers `Unloaded` with no load and constructs no state from the unit, watched to
+fail when the verb is made to read the manager's `active` as `Idle`, which is the
+invention this clause forbids. Review could confirm the absence of a mapping and could
+not confirm that the verb answers the harness's word rather than something plausible.
 
 ```graph
 node: admin-residency-is-not-lifecycle-state
@@ -2159,57 +2151,52 @@ directive is asserted where the run happens.
 
 Each names what settles it, and none is this Spec's to settle alone.
 
-- **How an agent's lifecycle state is observed, and what the `State` answer
-  carries meanwhile.** Section 3 reports residency in the manager's own three
-  values because that is what the init system can answer, and apex section 6's
-  four states are the harness's to know. The two halves are one election: the
-  manager's `active` covers both `Idle` and `Active` and its `failed` has no
-  `AgentState` case, so `lifecycle-answer`'s `State` case has no producer for
-  these verbs until an observation reaches the party that holds the run.
-  **Settled by:** an observation exchange on `weaver-admin-harness-contract`,
-  which charters enter, leave, and stop and no query, together with whatever
-  `weaver-types` owes its enumeration once that exchange fixes what can be
-  observed. The answer arrives with that contract's next opening rather than
-  from a mapping this Spec could invent.
-- **The session-close cue and the enter question.** Charter section 10's two
-  cells, settled by the human's ruling and the memory-and-state round
-  respectively, carried here only so this list is complete.
-- **The log's field set and rotation policy.** Satellites of section 8,
-  the fields a builder's choice with no cross-crate consequence, the
-  rotation elected against a measurement of what accumulates.
-- **The service configuration's shape.** Section 9's file: its format and
-  field list are a builder's choice bounded by what that section fixes,
-  and the natural candidate is the same dialect the agent config elected,
-  one syntax for everything the operator writes, per the common-syntax
-  direction the composability batch recorded on the working list.
-- **`AgentState` and `AgentSummary` field lists.** The floor names the
-  types in `lifecycle-answer` and their fields are satellites there,
-  consumed here as drawn.
-- **The two values the argument vector does not carry.** Section 6's vector
-  carries the socket path and the two organ binaries and stops there, and the
-  worker's remaining two inputs are named here rather than routed, because
-  routing either now would carry a value nothing reads. The assembled prompt's
-  identity is one: the agent's declaration holds an identity the SPU makes
-  resident as the session's prefix, the assembled prompt holds a second the
-  loop reads, and whether those are one thing is the assembly question rather
-  than this act's. The tool schemas are the other, the declaration's tool set
-  reaching this crate and going no further while nothing dispatches a tool.
-  **Settled by:** the assembly and distillation act for the first, and the
-  tool workflow that charters dispatch for the second. Until then the worker
-  defaults both, which is why a load stands without either.
-- **The unit template's hardening set.** Which properties beyond `User=`
-  the fixed template carries is the operator's policy surface, named in
-  section 9's configuration and deliberately not enumerated by this Spec,
-  because a hardening list frozen in a Spec is a security posture that
-  cannot track its host. **The properties the sandbox must
-  deliver are required and their directives are not**, per the operator's
-  ruling of 2026-08-05 and `weaver-admin-PRD` section 7: no privilege
-  escalation from inside, no reach into another principal's home, and a bound
-  on what the agent may consume. The operator owns the posture the way an
-  operator owns a firewall configuration.
-- **Whether the unit restricts the agent's address families to `AF_UNIX`.**
-  Open with a stated cost rather than required, per the same ruling. It is
-  **not** a restatement of the rule that no crate here exposes a network
-  surface: that rule binds what these crates link, and this would bind what an
-  agent's tools may reach, so an agent whose tools fetch anything would break
-  under it. Settled by an operator who knows which tools their agents carry.
+- **How an agent's lifecycle state is observed. Settled 2026-09-05** by the observation
+exchange of `weaver-admin-harness-contract` section 3, per issue #435: the harness
+answers its state from the run with the load's facts beside it, section 3 above says how
+`show` and `list` use it, and `StateNotObservable` left the floor with it. The entry
+stood as: **How an agent's lifecycle state is observed, and what the `State` answer
+carries meanwhile.** Section 3 reports residency in the manager's own three values
+because that is what the init system can answer, and apex section 6's four states are
+the harness's to know. The two halves are one election: the manager's `active` covers
+both `Idle` and `Active` and its `failed` has no `AgentState` case, so
+`lifecycle-answer`'s `State` case has no producer for these verbs until an observation
+reaches the party that holds the run. **Settled by:** an observation exchange on
+`weaver-admin-harness-contract`, which charters enter, leave, and stop and no query,
+together with whatever `weaver-types` owes its enumeration once that exchange fixes what
+can be observed. The answer arrives with that contract's next opening rather than from a
+mapping this Spec could invent. - **The session-close cue and the enter question.**
+Charter section 10's two cells, settled by the human's ruling and the memory-and-state
+round respectively, carried here only so this list is complete. - **The log's field set
+and rotation policy.** Satellites of section 8, the fields a builder's choice with no
+cross-crate consequence, the rotation elected against a measurement of what accumulates.
+- **The service configuration's shape.** Section 9's file: its format and field list are
+a builder's choice bounded by what that section fixes, and the natural candidate is the
+same dialect the agent config elected, one syntax for everything the operator writes,
+per the common-syntax direction the composability batch recorded on the working list. -
+**`AgentState` and `AgentSummary` field lists.** The floor names the types in
+`lifecycle-answer` and their fields are satellites there, consumed here as drawn. -
+**The two values the argument vector does not carry.** Section 6's vector carries the
+socket path and the two organ binaries and stops there, and the worker's remaining two
+inputs are named here rather than routed, because routing either now would carry a value
+nothing reads. The assembled prompt's identity is one: the agent's declaration holds an
+identity the SPU makes resident as the session's prefix, the assembled prompt holds a
+second the loop reads, and whether those are one thing is the assembly question rather
+than this act's. The tool schemas are the other, the declaration's tool set reaching
+this crate and going no further while nothing dispatches a tool. **Settled by:** the
+assembly and distillation act for the first, and the tool workflow that charters
+dispatch for the second. Until then the worker defaults both, which is why a load stands
+without either. - **The unit template's hardening set.** Which properties beyond `User=`
+the fixed template carries is the operator's policy surface, named in section 9's
+configuration and deliberately not enumerated by this Spec, because a hardening list
+frozen in a Spec is a security posture that cannot track its host. **The properties the
+sandbox must deliver are required and their directives are not**, per the operator's
+ruling of 2026-08-05 and `weaver-admin-PRD` section 7: no privilege escalation from
+inside, no reach into another principal's home, and a bound on what the agent may
+consume. The operator owns the posture the way an operator owns a firewall
+configuration. - **Whether the unit restricts the agent's address families to
+`AF_UNIX`.** Open with a stated cost rather than required, per the same ruling. It is
+**not** a restatement of the rule that no crate here exposes a network surface: that
+rule binds what these crates link, and this would bind what an agent's tools may reach,
+so an agent whose tools fetch anything would break under it. Settled by an operator who
+knows which tools their agents carry.

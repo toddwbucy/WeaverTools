@@ -5,6 +5,10 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
+**Revised:** 2026-09-05, the observation exchange lands. Section 8's operator
+interface reports the harness's own word on an agent's state through the fourth
+exchange of `weaver-admin-harness-contract`, the init system consulted only where
+no worker answers. Per issue #435.
 **Revised:** 2026-09-04, the member stands where the declaration says. Section
 2's standing clause takes the store election as the fact that decides whether
 the member starts, a missing binary refusing rather than an absent leg passing
@@ -1264,7 +1268,8 @@ the human's ruling, and the register stood empty from that date until the act of
 of 2026-08-05 and neither landed by it.
 
 - **`weaver-types-Spec` section 4.2, the `AgentState` gap, partly discharged
-  2026-08-06.** The `weaver-admin` code act found the gap load-bearing rather
+  2026-08-06 and discharged 2026-09-05.** The `weaver-admin` code act found the gap
+  load-bearing rather
   than theoretical: `show` and `list` had no writable implementation, since the
   answer must be one of the floor's two enums and the only fitting cases carry an
   `AgentState`. The floor gained `StateNotObservable` and those verbs refuse with
@@ -1278,7 +1283,8 @@ of 2026-08-05 and neither landed by it.
   report, which would settle a vocabulary from a representation. **Settled by:**
   the observation exchange `weaver-admin-Spec` section 11 names, which fixes
   what can be observed before the floor is asked to enumerate it, and which
-  retires `StateNotObservable` in the same act.
+  retires `StateNotObservable` in the same act. It landed 2026-09-05, per issue
+  #435, and the marker left the floor with it.
 - **The merged code of `weaver-admin` and `weaver-harness`.** Four things
   contradict what `main` builds: the coordination channel's direction, the
   operator surface's retirement, the fleet map's removal, and the harness

@@ -4,6 +4,11 @@
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 
+**Revised:** 2026-09-05, the observation exchange lands. Section 3 gains the fourth
+exchange, admin asking what stands and the harness answering `State` from whichever
+position it holds with the load's facts beside it, the exchange the parties named as
+owed on 2026-08-06 when `StateNotObservable` was minted to die with it. Section 5's
+enter supplies the declaration's digest. Per issue #435 and the front end epic #434.
 **Revised:** 2026-09-04, second of this date, the enter carries the restore and the
 stack. Section 3's enter supplies the lineage of the restore where the declaration
 elects one, resolved and never the record's path, and the digests of the organ binaries
@@ -151,7 +156,8 @@ and nothing of it is restated here.
 
 One fact of this seam lands at that layer. Either party may open an exchange on this
 channel, the census of chartered exchanges is section 3's, and every one of them is
-admin's today, per the fault-carrier ruling of 2026-08-01.
+admin's today, per the fault-carrier ruling of 2026-08-01, and the census is four since
+the observation exchange of 2026-09-05.
 
 ## 2. The channel
 
@@ -302,6 +308,22 @@ the operator interrupt of `weaver-harness-PRD` section 2 arrives on, and it exis
 this seam because the operator holds no other crossing. How the abort lands at the
 decoder is the harness's interior and crosses nowhere.
 
+**Observe the run.** Opened by admin, added 2026-09-05 per issue #435 as the observation
+exchange this contract's parties named as owed on 2026-08-06. Admin asks what stands and
+carries nothing. The harness answers `State` from whichever position it holds: before
+any enter, `Unloaded` and no load. Entered, `Idle` where no turn is in flight and
+`Active` where one is, with the load's facts beside the state, the session, the run, the
+declaration's digest as admin read it at the enter, the artifact, the elections the load
+stands under, the store the member stands on and whether its end arrived, and the
+composing loop by binary and, where it is a file, path and digest, the same facts the
+`load` event carries and read from the run rather than the record. After a leave,
+`Unloaded` and no load, the position being terminal. The answer is the harness's own
+word and never a read of the deployment, it touches no bracket and authors no event, and
+an observation arriving mid-turn is answered without disturbing the turn, the facts
+being held on the run and the state a read of whether a turn key stands. Where no worker
+answers the dial at all, admin has no exchange to open and reports `Unloaded` from the
+absence, per `weaver-admin-Spec` section 3, the one place residency is read.
+
 **There is no alert exchange, per the fault-carrier ruling of 2026-08-01.** A fault
 the worker survives is a `fault` event, authored by the harness into the stream
 like every other event, per `weaver-trace-PRD` section 3.1, and the stream is the
@@ -380,7 +402,9 @@ service engine, resolved to the embedded engine where the declaration is silent,
 lineage of the restore where the declaration elects one, the parent's session, the run
 the cut falls in, and the turn the holdings stop at, resolved by admin and never the
 record's path, so the harness names its parent without opening anything, the digests of
-the organ binaries admin started, keyed by name, and the intent to stop.
+the organ binaries admin started, keyed by name, the declaration's digest as this crate
+read the file at the inventory, so the run and the record can both name what they were
+built from, and the intent to stop.
 
 **Admin guarantees** that the trace sink handle it passes refers to the sink the
 session's configuration declares, that the run reference distinguishes this run
@@ -487,12 +511,14 @@ the exchanges above are the whole of what either learns.
 ## 8. Vocabulary
 
 **Drawn from `weaver-types`:** `organ-envelope`, `lifecycle-directive`,
-`lifecycle-answer`, `lifecycle-refusal`, `peer-identity` as of the inversion
-ruling of 2026-08-05, because the identity the harness reads at every accept is
-the floor's, `model-binding` and `residual-readout-election` as of the
-route act of 2026-08-10, `gate-instruction` as of 2026-08-17,
-`state-election` as of 2026-08-19, `field-election` with
-`surprisal-election` as of 2026-08-21, and `binding-kind` as of 2026-08-24.
+`lifecycle-answer`, `lifecycle-refusal`, `peer-identity` as of the inversion ruling of
+2026-08-05, because the identity the harness reads at every accept is the floor's,
+`model-binding` and `residual-readout-election` as of the route act of 2026-08-10,
+`gate-instruction` as of 2026-08-17, `state-election` as of 2026-08-19, `field-election`
+with `surprisal-election` as of 2026-08-21, and `binding-kind` as of 2026-08-24. The
+observation exchange of 2026-09-05 draws nothing further: its directive is a case of
+`lifecycle-directive`, its answer the `State` case of `lifecycle-answer` grown to carry
+the load's facts, both the floor's.
 
 ```graph
 edge: draws
