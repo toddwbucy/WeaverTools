@@ -23,3 +23,12 @@ depth and the far tail does not.
 The deposit is the run's own slice of the trace beside a report carrying
 resident per turn, the load event with its elections, both declaration
 hashes, and whether the declaration was restored, which it must be.
+
+The config's `loop_sha256` declares the loop by digest, `alpha_loop.py` as
+the olympus declaration names it, and the driver refuses the session before
+its first turn where the load event's composer records another digest or
+none, depositing `"loop_refused": {"declared": ..., "recorded": ...}` and
+exiting nonzero rather than a short session. The digest and not the name is
+the identity, a config with no key is unchecked, and `sha256sum` on the
+deployed loop file gives the value. The cross-precision README is the
+authority on the key, per issue #426.

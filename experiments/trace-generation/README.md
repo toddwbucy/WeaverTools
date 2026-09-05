@@ -113,6 +113,22 @@ read from the header the build includes, and the kernel guards derived
 from it - named `_derived` because until the loop-identity act lands, the
 guard state is computed rather than read from a shipped object.
 
+## The loop is declared by digest
+
+Every config carries `loop_sha256`, the sha256 of the loop file the box
+composes with, and the shared driver refuses a session whose load event
+records another digest, or none, before a turn is served through it. A
+refused session deposits no runs and carries
+`"loop_refused": {"declared": ..., "recorded": ...}` beside a verdict that
+names it, and the night's summary counts those sessions apart from the
+REPRODUCED tally. The digest and not the filename is the identity, a config
+with no key is unchecked, and the digest is read with `sha256sum` against
+the deployed file. The cross-precision README is the authority on the key,
+per issue #426. The olympus configs declare `alpha_loop.py`, the loop their
+declaration names, and the thinkpad config declares `dev_loop.py`, the loop
+both boxes ran when #426 was measured, so a thinkpad that has moved is told
+so by the refusal rather than by a guess made here.
+
 ## Open cells this run settles, and does not
 
     7.1  settled here, by the arithmetic above

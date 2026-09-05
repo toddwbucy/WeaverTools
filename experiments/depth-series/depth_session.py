@@ -86,10 +86,25 @@ def main():
         # standing unit is refused while the old worker and its socket
         # remain, and a socket that accepts a connection is not evidence
         # that this declaration is the one serving.
+        before = base.newest_load(trace)[0]
         base.admin(cfg, "unload")
         load = base.admin(cfg, "load"); print("load:", load, flush=True)
         if load.get("kind") != "state": raise SystemExit(f"the load did not reach a state: {load}")
         if not base.wait_socket(cfg): raise SystemExit("the gate socket never stood")
+        # **The loop that composed this load is checked before a turn is
+        # served through it**, per issue #426: the config's `loop_sha256`
+        # against the load event's composer digest, the shared helper doing
+        # the comparison. A refusal serves no turn, lands typed in the
+        # report, and exits nonzero, so the deposit is a refusal and not a
+        # short session.
+        refused = base.assert_loop(cfg, trace, before)
+        if refused:
+            report["loop_refused"] = refused; run_id = refused["run"]; report["run"] = run_id
+            failed = {"turn": 0, "why": "loop refused: declared "
+                      f"{refused['declared']}, recorded {refused['recorded']}"}
+            report["failed"] = failed
+            print("LOOP REFUSED", json.dumps(report["loop_refused"]), flush=True)
+            turns = []
         for i, group in enumerate(turns, 1):
             body = "\n\n".join(open(p).read() for p in group)
             t0 = time.time(); answer = base.gate_turn(cfg, f"{ASK}\n\n{body}", timeout=900); dt = time.time() - t0

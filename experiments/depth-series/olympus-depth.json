@@ -8,6 +8,7 @@
   "admin_config": "/bulk-store/weaver-testing/tracegen-olympus/config",
   "repo": "/opt/weavertools/WeaverTools",
   "build_flags": "cargo build --release --features weaver-spu/cuda,weaver-harness/pyworker -p weaver-admin -p weaver-spu -p weaver-gate -p weaver-state -p weaver-harness; commit 6e6fc4b (main); built on olympus 2026-09-02 and installed root-owned at /usr/local/libexec/weaver/experiment-6e6fc4b; rustc nightly-2026-02-13; CUDA 13.3.73 at /opt/cuda; NVCC_CCBIN=/usr/bin/g++-15 (GCC 15.3.0); driver 610.57.04; cccl pinned 3.3.4-1 via IgnorePkg; engine libs from llama-cpp-sys-2 out/lib",
+  "loop_sha256": "20ed6b6e2fbb3139894d97bd7d1f76e48ea822a6154f9945fccf543be115d6e7",
   "artifact": "/opt/weaver/models/Qwen3-8B-BF16.gguf",
   "schedule": "full-32k",
   "context_capacity": 32768,

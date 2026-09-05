@@ -8,6 +8,7 @@
   "admin_config": "/etc/weaver/admin",
   "repo": "/home/todd/Projects/WeaverTools_Project/WeaverTools",
   "build_flags": "cargo build --release --workspace --features weaver-spu/cuda,weaver-harness/pyworker (the feature ships both pyworker and worker - the loop is selected by the worker-binary key, and as of #419 the load event names the composer and its sha256 rather than leaving it to this field); commit 67f2c1d; rustc nightly-2026-02-13 (47611e160); CUDA 13.3.73 at /opt/cuda; NVCC_CCBIN=/usr/bin/g++-15 (GCC 15.3.0); driver 610.57.04; engine libs unchanged from the 2026-09-02 install, weaver-spu byte-identical across this build",
+  "loop_sha256": "5d34b9df996815d9f228a70f0d38f5dbbb17a878ed5ded578c5e87ec3071cc00",
   "cells": [
     {"name": "bf16",   "precision": "bf16",   "artifact": "/opt/weaver/models/Qwen3-8B-BF16.gguf"},
     {"name": "q8_0",   "precision": "q8_0",   "artifact": "/opt/weaver/models/Qwen3-8B-Q8_0.gguf"},

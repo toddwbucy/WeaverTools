@@ -27,6 +27,7 @@ Config (JSON):
   "repo":         "/home/todd/Projects/WeaverTools_Project/WeaverTools",
   "spu_bin":      "optional; overrides the spu-binary named in admin_config",
   "build_flags":  "cargo build --release --workspace --features weaver-spu/cuda",
+  "loop_sha256":  "optional; the sha256 of the loop file the box composes with",
   "cells": [
     {"name": "q8",   "precision": "q8_0", "artifact": "/opt/weaver/models/qwen2.5-0.5b-instruct-q8_0.gguf"},
     {"name": "bf16", "precision": "bf16", "artifact": "/opt/weaver/models/qwen2.5-0.5b-instruct-bf16.gguf"}
@@ -701,6 +702,92 @@ def _tail_lines(trace_path, keep, chunk=1 << 20):
     return [raw.decode("utf-8", "replace") for raw in reversed(out)]
 
 
+def newest_load(trace_path, keep=2):
+    """The newest run carrying a `load` event, and that event.
+
+    Answers `(None, None)` where the trace does not exist or holds no load in
+    its tail, so a caller on a fresh box reads an absence rather than
+    catching one.
+    """
+    try:
+        order, runs = read_runs(trace_path, keep=keep)
+    except OSError:
+        return None, None
+    for run in reversed(order):
+        for e in runs[run]:
+            if e.get("kind") == "load":
+                return run, e
+    return None, None
+
+
+def assert_loop(cfg, trace_path, before=None, timeout=15.0):
+    """Refuse a load composed by a loop other than the one the config declares.
+
+    **The digest is the identity and the name is not**, per issue #426. Every
+    `load` event carries `payload.composer`, the loop that composed the run's
+    prompts, with `sha256` present where the loop is a file the pyworker read
+    and absent where it is compiled in. `dev_loop.py` and `basic_loop.py`
+    were byte-identical when this was measured, as were `alpha_loop.py` and
+    `bravo_loop.py`, so a criterion written against a name passes a box
+    running either, and a box that silently changed loops would deposit a
+    comparable-looking run. The config's `loop_sha256` is compared to the
+    recorded digest and nothing else.
+
+    **A config declaring no loop is unchecked**, so the configs that predate
+    the key keep running, and a deposit made under one carries no
+    `loop_refused` field either way - absence of the key means the question
+    was not asked, and the README says so.
+
+    Answers `None` where the load's composer carries the declared digest, and
+    otherwise the refusal, carrying both digests so the report names what
+    was declared and what was found. A composer with no digest - a compiled
+    loop, or a build from before #419 that recorded no composer - is refused
+    where a digest is declared, because it cannot be shown to be the one
+    declared. The newest load is awaited rather than read once: the harness
+    writes the trace behind the close, and `before` names the newest run
+    that stood ahead of this load so the previous cell's load cannot answer
+    for it.
+    """
+    declared = cfg.get("loop_sha256")
+    if declared is None:
+        return None
+    end = time.time() + timeout
+    delay = 0.02
+    while True:
+        run, event = newest_load(trace_path)
+        if run is not None and run != before:
+            break
+        if time.time() >= end:
+            return {"declared": declared, "recorded": None, "run": None,
+                    "composer": None,
+                    "note": "no load event for a new run reached the trace "
+                            f"within {timeout:g}s, so the loop cannot be shown "
+                            "to be the declared one"}
+        time.sleep(delay)
+        delay = min(delay * 1.5, 1.0)
+    composer = (event.get("payload") or {}).get("composer")
+    recorded = composer.get("sha256") if isinstance(composer, dict) else None
+    if recorded == declared:
+        return None
+    return {"declared": declared, "recorded": recorded, "run": run,
+            "composer": composer}
+
+
+def loop_refusal(report, refused, half, log):
+    """Land a refusal in the cell's report, loudly and typed.
+
+    One field, `loop_refused`, beside a verdict that names it, so a consumer
+    reads the field rather than parsing the verdict, and the driver's summary
+    line cannot read as a reproduction result.
+    """
+    report["loop_refused"] = dict(refused, half=half)
+    report["verdict"] = (
+        f"loop refused at the {half} load: declared "
+        f"{refused['declared']}, recorded {refused['recorded']}")
+    log(f"LOOP REFUSED: {json.dumps(report['loop_refused'])}")
+    return report
+
+
 def await_turns(trace_path, want, run_id, keep=4, timeout=None):
     """`run_id` once it carries `want` turns, or once time runs out.
 
@@ -943,12 +1030,20 @@ def run_cell(cfg, cell, outdir, libraries, binaries, tools,
         # own timestamps.
         since = time.strftime(
             "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
+        before = newest_load(cfg["trace"])[0]
         if step("load").get("kind") != "state":
             report["verdict"] = "load refused"
             return report
         if not wait_socket(cfg):
             report["verdict"] = "gate socket never stood"
             return report
+        # **The loop that composed this load is checked before a turn is
+        # served through it**, per issue #426. A cell refused here deposits
+        # no runs and no turns, only the refusal, so the report cannot be
+        # read as a comparison.
+        refused = assert_loop(cfg, cfg["trace"], before)
+        if refused:
+            return loop_refusal(report, refused, "source", log)
 
         # **What served is read from the worker and not from the machine**,
         # per issue #370's third ask. Read after the socket stands, so the
@@ -996,12 +1091,18 @@ def run_cell(cfg, cell, outdir, libraries, binaries, tools,
         step("unload")
         replay_since = time.strftime(
             "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
+        before = source_run
         if step("load").get("kind") != "state":
             report["verdict"] = "reload refused"
             return report
         if not wait_socket(cfg):
             report["verdict"] = "gate socket never stood after reload"
             return report
+        # The reload is a second load and is checked as one: the loop file
+        # can move between the two halves as easily as before the first.
+        refused = assert_loop(cfg, cfg["trace"], before)
+        if refused:
+            return loop_refusal(report, refused, "replay", log)
 
         # **The reissue half binds its own devices and they are read too.**
         # A cell that compared a source on one card against a replay on
@@ -1218,6 +1319,11 @@ def main():
     print(f"\nreport: {out}")
     for r in reports:
         print(f"  cell {r['cell']}: {r['verdict']}")
+    refused = [r["cell"] for r in reports if r.get("loop_refused")]
+    if refused:
+        print(f"LOOP REFUSED on {len(refused)} cell(s): {', '.join(refused)}"
+              " - the box composed with a loop other than the one the config"
+              " declares, and those cells deposited no comparison", flush=True)
     # **The window is part of the verdict** - defect 4's consequence half: a
     # detected mid-run swap, or a close that could not certify the window,
     # is not a reproduction result and must not exit 0. `closings` is bound
