@@ -1,12 +1,14 @@
 # weaver-web - Spec
 
-**Status:** MERGED. In `main` and the source of truth. Ratification is not
-claimed by the act that landed this text, and follows the charter's.
+**Status:** MERGED. In `main` and the source of truth. **Merged is not
+ratified.** This text inherits no ratification from the Spec it replaces,
+and takes whatever ratification the rewritten `weaver-web-PRD` is granted,
+which is the operator's to say.
 
-**A rewrite of this crate's Spec, not a new one.** Authored 2026-09-04 from the thinkpad
-seat beside the rewritten
-`weaver-web-PRD` of the same date. The prior text is replaced whole rather than
-amended, and git is its archive.
+**A rewrite of this crate's Spec, not a new one.** Authored 2026-09-04 from
+the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
+The prior text is replaced whole rather than amended, and git is its
+archive.
 
 **Revised:** 2026-09-05, against the acts of that date. The observation
 exchange landed, issue #435 at PR #440, and the per-position read landed,
