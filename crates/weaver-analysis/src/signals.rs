@@ -1,4 +1,5 @@
 //! conforms: analysis-signals-keep-absence
+//! conforms: analysis-summary-reports-residency
 //!
 //! The per-position signals, read as a series, per `weaver-analysis-Spec`
 //! section 5 as of 2026-09-05.
@@ -36,13 +37,36 @@ pub struct Point {
     pub surprisal: Option<f32>,
 }
 
+/// One generation's summary: what a store keyed by position converts
+/// from, per `weaver-analysis-Spec` section 5 as of 2026-09-05.
+///
+/// **Reported and derived from nothing.** The resident count is the one
+/// `model.output` carried as the generation closed, which includes the
+/// turn terminator per `weaver-spu-Spec` section 4, and the output count is
+/// the drawn tokens. The position of the generation's first draw is the
+/// consumer's to derive at ingest, the closing count less the drawn tokens
+/// less one, and a reader that reported the previous closing count plus
+/// the delta here would be wrong on every first generation by the identity
+/// prefix, which no delta carries.
+#[derive(Debug, Clone, PartialEq)]
+pub struct GenerationSummary {
+    pub turn: Option<String>,
+    /// The generation's perplexity where the record carries one.
+    pub perplexity: Option<f32>,
+    /// The session's resident count as this generation closed, as
+    /// `model.output` reported it. Absent where the record holds no
+    /// `model.output` for the generation, never derived.
+    pub resident: Option<u64>,
+    /// How many tokens the generation drew, the terminator outside them.
+    pub output_count: usize,
+}
+
 /// The series, and the generation-level figures beside it.
 #[derive(Debug, Clone, Default)]
 pub struct Series {
     pub points: Vec<Point>,
-    /// One entry per generation: its turn and its perplexity where the
-    /// record carries one.
-    pub perplexities: Vec<(Option<String>, f32)>,
+    /// One entry per measured generation, in landing order.
+    pub generations: Vec<GenerationSummary>,
 }
 
 impl Series {
@@ -85,6 +109,9 @@ pub struct Signals {
     /// The bracket's outcome where the record carries one.
     pub outcome: Option<String>,
     run: Option<String>,
+    /// The closing count `model.output` reported for the generation in
+    /// flight, held until its measurement lands and pairs it by turn.
+    closing: Option<(Option<String>, u64)>,
 }
 
 impl Signals {
@@ -123,6 +150,17 @@ impl Reader for Signals {
             // stream open for the run's residency.
             return Step::Done;
         }
+        if event.envelope.kind == "model.output" {
+            // The closing count is reported, never derived: it is the
+            // session's own figure after the terminator landed.
+            let resident = event
+                .payload
+                .as_deref()
+                .and_then(|p| value_at(p, "resident"))
+                .and_then(|raw| raw.get().parse::<u64>().ok());
+            self.closing = resident.map(|r| (event.envelope.turn.clone(), r));
+            return Step::Continue;
+        }
         if event.envelope.kind != "model.measurement" {
             return Step::Continue;
         }
@@ -139,6 +177,14 @@ impl Reader for Signals {
         };
         let entropies = read("entropies");
         let surprisals = read("surprisals");
+        let output_count = tokens.len();
+        // The closing count pairs with this measurement by turn, and a
+        // count from another turn is not this generation's.
+        let resident = self
+            .closing
+            .take()
+            .filter(|(turn, _)| *turn == event.envelope.turn)
+            .map(|(_, resident)| resident);
         for (ordinal, token) in tokens.into_iter().enumerate() {
             self.series.points.push(Point {
                 turn: event.envelope.turn.clone(),
@@ -151,13 +197,14 @@ impl Reader for Signals {
                 surprisal: surprisals.as_ref().and_then(|v| v.get(ordinal).copied()),
             });
         }
-        if let Some(perplexity) =
-            value_at(payload, "perplexity").and_then(|raw| raw.get().parse::<f32>().ok())
-        {
-            self.series
-                .perplexities
-                .push((event.envelope.turn.clone(), perplexity));
-        }
+        let perplexity =
+            value_at(payload, "perplexity").and_then(|raw| raw.get().parse::<f32>().ok());
+        self.series.generations.push(GenerationSummary {
+            turn: event.envelope.turn.clone(),
+            perplexity,
+            resident,
+            output_count,
+        });
         Step::Continue
     }
 }
