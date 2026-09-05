@@ -193,8 +193,11 @@ moved, or the seed moved.
 
 **Text is the surface. Numbers are on demand.** The transcript of a run,
 token-addressable, with the measurement drawn as a timeline over it.
-Surprisal and per-token entropy come off the ordinary logit stream, so the
-timeline is populated on every run at no cost.
+**Per-token entropy comes off the ordinary logit stream and rides every
+generation unconditionally**, so an entropy timeline is populated on every
+run at no cost. **Surprisal rides only where its election stands**, so a run
+that did not elect it has no surprisal timeline, and the surface says the
+election did not stand rather than drawing a floor.
 
 A spike on the graph resolves to the token that produced it and jumps the
 transcript there. **A surprisal graph nobody can click is decoration; a
@@ -290,9 +293,10 @@ registry that cannot hold a failure is a marketing surface.
 ## 4. The record this crate holds
 
 The front end holds the cell registry, on its own store. The grain is the
-grain the interface clicks at: **one row per position per run, keyed by the
-run reference and the position number**, because those two together are the
-only address the interface ever has.
+grain the interface clicks at: **one row per position per run, addressed by
+the run, the turn, and the position**. All three are needed because turn
+keys repeat across a serving record's runs, and because a position is the
+resident length at the draw rather than an ordinal within its turn.
 
 Each position carries the emitted token by identifier and surface text, the
 surprisal and entropy there, and the ranked alternatives with their
@@ -319,9 +323,11 @@ while holding the rest still is the loosening the instrument is for. This
 crate offers a ladder of presets, and a preset stages a runnable declaration
 the operator can then edit by hand.
 
-    rung one    everything local, Unix sockets only
-    rung two    everything local, loopback network
-    rung three  any service off the host
+```text
+rung one    everything local, Unix sockets only
+rung two    everything local, loopback network
+rung three  any service off the host
+```
 
 **Every service reachable other than by kernel-enforced peer identity
 carries a declared boundary.** The socket rung is exempt because the kernel

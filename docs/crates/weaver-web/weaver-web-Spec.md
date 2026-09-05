@@ -5,10 +5,12 @@ one.** Authored 2026-09-04 from the thinkpad seat beside the rewritten
 `weaver-web-PRD` of the same date. The prior text is replaced whole rather than
 amended, and git is its archive.
 
-**Revised:** 2026-09-05, against the acts of that date. #435 landed at
-#440 and #436 at #444, #437 answered with a finding rather than a
-catalogue, and two facts the record spells corrected this document where it
-had guessed: the address carries the turn, and a position is a resident
+**Revised:** 2026-09-05, against the acts of that date. The observation
+exchange landed, issue #435 at PR #440, and the per-position read landed,
+issue #436 at PR #444. The component catalogue, issue #437, was answered
+with a finding rather than a catalogue. Two facts the record spells
+corrected this document where it had guessed: the address carries the turn,
+and a position is a resident
 length rather than an ordinal.
 
 **Date filed:** 2026-09-04
@@ -28,13 +30,15 @@ silence settle it.
 
 ## 1. The crate
 
-    src/
-      store/        the registry: schema, migrations, the three reads
-      ingest/       the write path, a consumer of the analysis stream
-      queue/        staged experiments and their states
-      surfaces/     one module per surface of charter section 3
-      seams/        gate client, admin verbs, analysis stream reader
-      link/         the connector and server halves
+```text
+src/
+  store/        the registry: schema, migrations, the three reads
+  ingest/       the write path, a consumer of the analysis stream
+  queue/        staged experiments and their states
+  surfaces/     one module per surface of charter section 3
+  seams/        gate client, admin verbs, analysis stream reader
+  link/         the connector and server halves
+```
 
 **This crate links no crate of the agent workspace** and reaches the agent
 exactly as an outside consumer does: a socket dialed by path, a binary run
@@ -105,8 +109,10 @@ and nothing else in the row would say so.
 
 ### 2.3 The indexes
 
-    primary       (run, turn, position)
-    secondary     (run, surprisal)
+```text
+primary       (run, turn, position)
+secondary     (run, surprisal)
+```
 
 The secondary index exists so the largest spikes in a run are reachable
 without pulling the run down. **Nothing is computed at read time.** A value
@@ -120,8 +126,8 @@ analysis emission leaves over its own socket, a process on this side reads
 it and lands it in the store, and **the decoder never waits on the store.**
 
 - Writes are **bulk per turn or per window**, never per token.
-- Writes are **idempotent on the run-and-position key**, so a replayed or
-  partially failed ingest cannot produce two truths about one position.
+- Writes are **idempotent on the run, turn and position key**, so a replayed
+  or partially failed ingest cannot produce two truths about one position.
 - **The run row is written first and closed last**, carrying a status a
   surface can read, so a partially ingested run is visibly partial rather
   than quietly short.
@@ -151,11 +157,13 @@ position, so the comparison needs no reconstruction.
 
 ### 5.1 The five states
 
-    draft       editable in every field
-    registered  frozen, the claim on the record, eligible for a batch
-    queued      handed to a runner, waiting
-    running     a runner holds it
-    returned    results in the store
+```text
+draft       editable in every field
+registered  frozen, the claim on the record, eligible for a batch
+queued      handed to a runner, waiting
+running     a runner holds it
+returned    results in the store
+```
 
 **Registration is the freeze**, not the launch. A draft is a draft and
 editing one is what drafts are for, because a draft has no result its author
@@ -186,18 +194,32 @@ The interface states both consequences where the change is made.
 
 An experiment is refused when it is authored, not when it is drained.
 
-    the parent record is readable, and holds the branch position
-    the context capacity holds the prefix
-    the forced token is present in the capture at that position
-    every artifact the diff names resolves
+```text
+the parent record is readable, and holds the branch position
+the context capacity holds the prefix
+the forced token is present in the capture at that position
+every artifact the diff names resolves
+```
 
 **A runner cannot ask.** A refusal discovered at three in the morning costs
 a batch window; the same refusal at authoring costs nothing.
 
 ## 6. The surfaces
 
-One module each, and each renders from the reads of section 4 and nothing
-else. Their destinations are the charter's section 3 and are not restated.
+One module each, and their destinations are the charter's section 3 and are
+not restated.
+
+**A surface that renders what is kept reads the store and nothing else** -
+Open a trace, Record, Experiments, and the returned half of Stage. That is
+what makes section 4's three reads sufficient for them.
+
+**A surface that authors or exchanges also holds a seam**, and section 7
+names each: Compose writes its draft and asks `validate`; Live carries a
+turn to the gate and reads the measurement that comes back; Agents drives
+the lifecycle verbs and reads the observation exchange; Stage submits a
+registered experiment to the queue. **None of them writes the registry** -
+the write path of section 3 is the only writer - and none reads the agent
+except through a seam that is named.
 
 **The state a surface holds is a query, never a location.** A filter chip is
 a clause; clearing it widens the list in place. A card carries the operator
@@ -274,7 +296,7 @@ cell record like any other.
 
 | claim | instrument |
 |---|---|
-| a position is addressed by run and position alone | compile-pin on the key type |
+| a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
 | nothing is computed at read time | review, over the three reads |
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
