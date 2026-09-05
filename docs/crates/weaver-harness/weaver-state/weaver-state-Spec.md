@@ -201,8 +201,9 @@ traffic and close it on exit. The probe borrows and owns nothing, so the refusal
 nothing that is not this process's own. The choreography election below is narrowed once
 already by section 4 and now again by the ruling: what remains that act's is the number
 and the probe's mechanics. The preload door's name arrives on the vector under a
-diagnostic binding and binds under this member's own territory, the credential judgment
-of section 4 unchanged on it.
+diagnostic binding or a serving load that elects a restore, per issue #432, this member
+binding whatever name it is given and none it is not, and binds under this member's own
+territory, the credential judgment of section 4 unchanged on it.
 
 ## 3. The store
 

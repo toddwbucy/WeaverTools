@@ -309,9 +309,11 @@ whose answer may wait, and these two join it under that binding alone, the waiti
 not the custodian initiating, and one answer still follows one ask. **The parked ask
 steps out of the arrival order, and that is this clause's stated exception to section
 4's ordering rule**: a shape or recall ask arriving while a replay ask parks is answered
-in its own arrival order, against the holdings the stream carried before it, and the
-replay's answer follows the seal whenever that is, its view the seal's position, every
-distillate received through the seal in it. What keeps the pairing unambiguous without a
+in its own arrival order, against the holdings the stream carried before it, except the
+enter's `identity` and `recall` asks under a restoring load, which park on the seal
+themselves per the clause below and step out of the order the same way, and the replay's
+answer follows the seal whenever that is, its view the seal's position, every distillate
+received through the seal in it. What keeps the pairing unambiguous without a
 correlation member is that every answer names the ask it answers, per the answer's own
 shape, and at most one replay ask parks per channel: **a second replay ask arriving
 while one parks replaces it**, the first cleared unanswered, the seal answering the

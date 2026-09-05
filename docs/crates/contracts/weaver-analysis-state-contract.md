@@ -66,23 +66,25 @@ prefix unsealed. Landed with the replay loop's act, every party merging.
   speaks at no time on this seam. What it holds here is answered on the other
   door, to the harness, exactly as if a tee had landed it.
 
-No third party reaches this seam. The agent holds no end of it: the harness
-never dials this door, the model has no path to it, and the door refuses the
-agent's own credential at the accept. The one ruled crossing into the agent
-that is not the two external contracts of 2026-08-01, per `weaver-agents-PRD`
-section 0 as amended 2026-08-24, and it exists only where the load declared
-the diagnostic kind.
+No third party reaches this seam. The agent holds no end of it: the harness never dials
+this door, the model has no path to it, and the door refuses the agent's own credential
+at the accept. The one ruled crossing into the agent that is not the two external
+contracts of 2026-08-01, per `weaver-agents-PRD` section 0 as amended 2026-08-24, and it
+exists only where the load declared the diagnostic kind or elected a restore, per
+section 1 as revised 2026-09-04.
 
-**This seam is a wire.** A named Unix socket on the state member, the member's
-one named door since the first lost its name to the operator's ruling of
-2026-08-26, stood only under a diagnostic binding and authenticated by
-credential per the first invariant's rule for a channel with a name. Its name
-stands in the member's own territory on the operator's side, per the same
-ruling: the driver is an operator principal and traverses, the worker's
-identity holds nothing there, and the squat an agent-writable directory
-invited is unrepresentable rather than defended. The door's absence under a
-serving binding is the charter's cheap refusal made structural: a driver
-pointed at a serving agent finds nothing to dial.
+**This seam is a wire.** A named Unix socket on the state member, the member's one named
+door since the first lost its name to the operator's ruling of 2026-08-26, stood under a
+diagnostic binding or a serving load that elects a restore, per section 1 as revised
+2026-09-04, and authenticated by credential per the first invariant's rule for a channel
+with a name. Its name stands in the member's own territory on the operator's side, per
+the same ruling: the driver is an operator principal and traverses, the worker's
+identity holds nothing there, and the squat an agent-writable directory invited is
+unrepresentable rather than defended. The door's absence under a serving load that
+elects no restore is the charter's cheap refusal made structural: a driver pointed at
+such an agent finds nothing to dial, and a serving load that elects a restore is
+distinct from one by that election alone, admin having named the door on the vector for
+it.
 
 ```graph
 node: weaver-analysis-state-contract
