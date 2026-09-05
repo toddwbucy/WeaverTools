@@ -2,6 +2,7 @@
 //! conforms: spu-out-of-order-refused-on-residency
 //! conforms: spu-out-of-order-refused-on-decode
 //! conforms: spu-fault-below-the-exchange-layer
+//! conforms: spu-artifact-refusal-names-path-and-identity
 //!
 //! Entry, the hygiene sets, and the service loop, per `weaver-spu-Spec`
 //! sections 2, 3, and 9.
@@ -1314,6 +1315,38 @@ fn main() -> ExitCode {
     serve(inherited, headroom)
 }
 
+/// The account of an admit refusal that stays on this side of the seam, per
+/// Spec section 3: one typed line for the cases whose floor conversion drops
+/// what the operator needs, and nothing for the rest. The artifact cases name
+/// the path the step failed on, the step, and the identity this process runs
+/// under, because the fault admin's root-side look cannot see is a directory
+/// this uid is denied.
+fn admit_refusal_line(refusal: &weaver_spu::residency::AdmitRefusal) -> Option<String> {
+    use weaver_spu::residency::AdmitRefusal;
+    let artifact = |name: &str, path: &str, step: &str| {
+        serde_json::json!({
+            "refusal": name,
+            "path": path,
+            "step": step,
+            "uid": nix::unistd::getuid().as_raw(),
+            "gid": nix::unistd::getegid().as_raw(),
+        })
+        .to_string()
+    };
+    match refusal {
+        AdmitRefusal::Unresolvable { path, step } => {
+            Some(artifact("artifact_unresolvable", path, step))
+        }
+        AdmitRefusal::Unreadable { path, step } => {
+            Some(artifact("artifact_unreadable", path, step))
+        }
+        AdmitRefusal::LoadFailed { detail } => {
+            Some(serde_json::json!({"refusal": "load_failed", "detail": detail}).to_string())
+        }
+        _ => None,
+    }
+}
+
 /// A refusal before any channel is trusted goes to standard error, because the
 /// lifecycle channel is exactly what this path could not establish.
 fn entry_refusal_line(fault: &EntryFault) -> String {
@@ -1499,16 +1532,15 @@ fn dispatch(
                     Payload::Answer(LifecycleAnswer::Admitted)
                 }
                 Err(refusal) => {
-                    // The engine's account of a failed load dies at the floor
-                    // conversion, whose closed set carries no detail field, so
-                    // it lands on standard error first: an operator meeting
-                    // DeviceCannotAdmit for a corrupt artifact should not be
-                    // sent to look at a healthy card with nothing else to read.
-                    if let weaver_spu::residency::AdmitRefusal::LoadFailed { detail } = &refusal {
-                        eprintln!(
-                            "{}",
-                            serde_json::json!({"refusal": "load_failed", "detail": detail})
-                        );
+                    // The account of a refusal dies at the floor conversion,
+                    // whose closed set carries no detail field, so it lands
+                    // on standard error first, per Spec section 3: an operator
+                    // meeting DeviceCannotAdmit for a corrupt artifact should
+                    // not be sent to look at a healthy card, and one meeting
+                    // ArtifactUnresolvable should read which path and which
+                    // uid rather than a sound binding refused for no reason.
+                    if let Some(line) = admit_refusal_line(&refusal) {
+                        eprintln!("{line}");
                     }
                     // The one admission is spent whatever it answered.
                     *position = SeamPosition::AdmitRefused;
@@ -1550,6 +1582,38 @@ fn dispatch(
 
 #[cfg(test)]
 mod tests {
+    /// **The artifact refusal's account names the path and the identity**,
+    /// per `weaver-spu-Spec` section 3, and the cases the floor carries whole
+    /// leave no line.
+    ///
+    /// Perturbation: drop `path` or `uid` from the line and this test fails.
+    /// Watched under exactly that removal.
+    #[test]
+    fn the_artifact_refusal_line_names_the_path_and_the_identity() {
+        use weaver_spu::residency::AdmitRefusal;
+        let refusal = AdmitRefusal::Unreadable {
+            path: "/models/denied/model.gguf".into(),
+            step: "resolve",
+        };
+        let line = super::admit_refusal_line(&refusal).expect("the artifact case has an account");
+        let parsed: serde_json::Value = serde_json::from_str(&line).expect("one typed line");
+        assert_eq!(parsed["refusal"], "artifact_unreadable");
+        assert_eq!(parsed["path"], "/models/denied/model.gguf");
+        assert_eq!(parsed["step"], "resolve");
+        assert_eq!(parsed["uid"], nix::unistd::getuid().as_raw());
+        assert_eq!(parsed["gid"], nix::unistd::getegid().as_raw());
+        let absent = AdmitRefusal::Unresolvable {
+            path: "/models/absent.gguf".into(),
+            step: "resolve",
+        };
+        let line = super::admit_refusal_line(&absent).expect("absent has an account too");
+        assert!(line.contains("artifact_unresolvable") && line.contains("/models/absent.gguf"));
+        assert!(
+            super::admit_refusal_line(&AdmitRefusal::AlreadyAttempted).is_none(),
+            "a case the floor carries whole leaves no line"
+        );
+    }
+
     use super::*;
     use weaver_traits::{ContentBlock, Role};
     use weaver_types::{

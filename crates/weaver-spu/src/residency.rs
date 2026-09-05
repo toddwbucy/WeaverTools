@@ -105,11 +105,17 @@ pub enum AdmitRefusal {
     /// Judged on the admit path, so the refusal costs the operator nothing
     /// beyond the header read.
     Readout(ReadoutRefusal),
-    /// Step one: the binding did not resolve to an artifact.
-    Unresolvable,
-    /// Step two: the artifact is present and could not be read, its header or
-    /// its size on disk. Both reads are of the artifact and both are free.
-    Unreadable,
+    /// Step one: the binding did not resolve to an artifact, nothing standing
+    /// at the path as this process. Carries the path and the step, because the
+    /// account that stays on this side of the seam names them, per Spec
+    /// section 3.
+    Unresolvable { path: String, step: &'static str },
+    /// Steps one and two: the artifact is present and could not be reached,
+    /// opened, or read, its header or its size on disk, judged as this
+    /// process's identity. Every read is of the artifact and every one is
+    /// free. Carries the path the step failed on and the step, for the same
+    /// account.
+    Unreadable { path: String, step: &'static str },
     /// Step three, on the condition that reads nothing. Carries the family,
     /// because the no-silent-substitution test reads the name.
     Family(FamilyRefusal),
@@ -137,11 +143,24 @@ pub enum AdmitRefusal {
     AlreadyAttempted,
 }
 
+impl AdmitRefusal {
+    /// The floor's artifact case with the account this side keeps, per Spec
+    /// section 3: absent is unresolvable and everything else is unreadable,
+    /// each naming the path the step failed on and the step.
+    fn on_artifact(refusal: LifecycleRefusal, path: &std::path::Path, step: &'static str) -> Self {
+        let path = path.display().to_string();
+        match refusal {
+            LifecycleRefusal::ArtifactUnresolvable => AdmitRefusal::Unresolvable { path, step },
+            _ => AdmitRefusal::Unreadable { path, step },
+        }
+    }
+}
+
 impl From<AdmitRefusal> for LifecycleRefusal {
     fn from(refusal: AdmitRefusal) -> Self {
         match refusal {
-            AdmitRefusal::Unresolvable => LifecycleRefusal::ArtifactUnresolvable,
-            AdmitRefusal::Unreadable => LifecycleRefusal::ArtifactUnreadable,
+            AdmitRefusal::Unresolvable { .. } => LifecycleRefusal::ArtifactUnresolvable,
+            AdmitRefusal::Unreadable { .. } => LifecycleRefusal::ArtifactUnreadable,
             AdmitRefusal::Family(inner) => inner.into(),
             // The floor's set carries no readout-naming case, so the election
             // failure maps onto the device's inability to admit, which is what
@@ -583,20 +602,25 @@ impl Residency {
         self.admit_attempted = true;
 
         // Step one. Resolve the binding to an artifact. Free.
-        let path = artifact::resolve(&binding.artifact).map_err(|_| AdmitRefusal::Unresolvable)?;
+        let path = artifact::resolve(&binding.artifact).map_err(|refusal| {
+            AdmitRefusal::on_artifact(
+                refusal,
+                std::path::Path::new(&binding.artifact.0),
+                "resolve",
+            )
+        })?;
 
         // Open it once and hold it. Every read after this, the header, the
         // load, and the hash, goes through this descriptor, so a name replaced
         // mid-admit cannot make the three observe three different files, and
         // the kind check runs on what was opened rather than on the name.
-        let mut pinned = artifact::pin(&path).map_err(|refusal| match refusal {
-            LifecycleRefusal::ArtifactUnresolvable => AdmitRefusal::Unresolvable,
-            _ => AdmitRefusal::Unreadable,
-        })?;
+        let mut pinned = artifact::pin(&path)
+            .map_err(|refusal| AdmitRefusal::on_artifact(refusal, &path, "pin"))?;
 
         // Step two. Read what the artifact declares about itself, without
         // loading it and without touching a device. Free.
-        let header = artifact::read_header(&mut pinned).map_err(|_| AdmitRefusal::Unreadable)?;
+        let header = artifact::read_header(&mut pinned)
+            .map_err(|refusal| AdmitRefusal::on_artifact(refusal, &path, "header"))?;
 
         // Step three, cheapest first. The width condition is a comparison
         // between the binding's count and the family's declaration and reads
@@ -627,8 +651,10 @@ impl Residency {
         // The shard each device must hold, read from the held descriptor
         // rather than from the name. The width was judged above, so the
         // divisor is known non-zero.
-        let shard_bytes =
-            pinned.len().map_err(|_| AdmitRefusal::Unreadable)? / binding.devices.len() as u64;
+        let shard_bytes = pinned
+            .len()
+            .map_err(|refusal| AdmitRefusal::on_artifact(refusal, &path, "size"))?
+            / binding.devices.len() as u64;
         judge_room_and_reach(&binding.devices, shard_bytes, headroom)?;
 
         // Step four. Take the devices in shard order and load each shard. The
@@ -901,10 +927,9 @@ mod tests {
         let first = residency
             .admit(&binding, Headroom(0), ReadoutElection(false), false)
             .err();
-        assert_eq!(
-            first,
-            Some(AdmitRefusal::Unresolvable),
-            "the fixture refuses at step one"
+        assert!(
+            matches!(first, Some(AdmitRefusal::Unresolvable { .. })),
+            "the fixture refuses at step one, got {first:?}"
         );
         let second = residency
             .admit(&binding, Headroom(0), ReadoutElection(false), false)
