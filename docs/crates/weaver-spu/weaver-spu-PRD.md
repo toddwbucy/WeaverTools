@@ -7,6 +7,10 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-09-05, second of this date, the refusal's account names its step.
+Section 4.1 step 1 requires the step beside the path and the identity, matching
+what the Spec's section 3 already carried, per the review of PR #457.
+
 **Revised:** 2026-09-05, the artifact refusal names its path and its identity.
 Section 4.1 step 1 and section 7 carry the operator's ruling on issue #456: admin
 checks that the binding names an artifact and nothing more, this crate resolves it
@@ -370,8 +374,9 @@ directive. It ends in residency confirmed or in a typed refusal.
 
 1. **Resolve the binding to an artifact.** A binding naming a model this crate
    cannot find is refused before the device is touched, and the refusal's account
-   names the path that failed and the identity it was judged under, because this
-   crate runs as the agent and admin does not, per section 7: the operator's
+   names the path that failed, the step that failed on it, and the identity it
+   was judged under, because this crate runs as the agent and admin does not,
+   per section 7: the operator's
    likeliest fault, an artifact readable to root under a directory the agent uid
    cannot traverse, is visible from here and nowhere earlier.
 2. **Read what the artifact declares about itself, without loading it.** The old

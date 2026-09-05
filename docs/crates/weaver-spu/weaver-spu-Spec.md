@@ -3,6 +3,10 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-05, third of this date, the denied lookup confirms no presence.
+Section 3's resolve clause says the classification reads the observed error and
+does not infer that a denied artifact exists, per the review of PR #457.
+
 **Revised:** 2026-09-05, second of this date, the artifact refusal carries its
 account. Section 3 states what a refusal on the artifact leaves on this side of
 the seam, one typed line on standard error naming the refusal, the path, the
@@ -952,8 +956,10 @@ already does: the refusal's name, the path the step failed on, the step, and
 the uid and gid this process runs under. The line rides the worker's pipe to
 the journal per `weaver-harness-Spec` section 2.2, and is the one place an
 operator reads the fault the charter's step names. **Absent and denied are
-told apart at the resolve.** A lookup the kernel refuses is a present
-artifact this identity cannot reach, so it refuses unreadable rather than
+told apart at the resolve.** The classification reads the error the lookup
+returned and confirms no presence: a lookup the kernel refuses says that
+something on the path denied this identity, the artifact or a directory above
+it, and not that the artifact is there, so it refuses unreadable rather than
 unresolvable, the reading the pin already gives an open that fails for a
 reason other than absence. The perturbation is dropping the path from the
 line, under which the test that reads the line back fails, and the resolve's

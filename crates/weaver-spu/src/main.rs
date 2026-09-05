@@ -1328,7 +1328,10 @@ fn admit_refusal_line(refusal: &weaver_spu::residency::AdmitRefusal) -> Option<S
             "refusal": name,
             "path": path,
             "step": step,
-            "uid": nix::unistd::getuid().as_raw(),
+            // The effective pair, because the kernel judged the lookup on
+            // it: a real uid that differs names an identity that was not
+            // the one refused.
+            "uid": nix::unistd::geteuid().as_raw(),
             "gid": nix::unistd::getegid().as_raw(),
         })
         .to_string()
@@ -1600,7 +1603,7 @@ mod tests {
         assert_eq!(parsed["refusal"], "artifact_unreadable");
         assert_eq!(parsed["path"], "/models/denied/model.gguf");
         assert_eq!(parsed["step"], "resolve");
-        assert_eq!(parsed["uid"], nix::unistd::getuid().as_raw());
+        assert_eq!(parsed["uid"], nix::unistd::geteuid().as_raw());
         assert_eq!(parsed["gid"], nix::unistd::getegid().as_raw());
         let absent = AdmitRefusal::Unresolvable {
             path: "/models/absent.gguf".into(),

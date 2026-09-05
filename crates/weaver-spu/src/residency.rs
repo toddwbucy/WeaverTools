@@ -151,7 +151,12 @@ impl AdmitRefusal {
         let path = path.display().to_string();
         match refusal {
             LifecycleRefusal::ArtifactUnresolvable => AdmitRefusal::Unresolvable { path, step },
-            _ => AdmitRefusal::Unreadable { path, step },
+            LifecycleRefusal::ArtifactUnreadable => AdmitRefusal::Unreadable { path, step },
+            // The artifact module raises the two cases above and no other,
+            // so a third arriving here is an act that added one without
+            // saying where it lands, and it declares itself rather than
+            // reading as unreadable.
+            other => unreachable!("the artifact module raised {other:?}, which it does not raise"),
         }
     }
 }

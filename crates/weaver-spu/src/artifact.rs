@@ -930,7 +930,14 @@ mod tests {
     #[test]
     fn a_denied_directory_is_unreadable_rather_than_unresolvable() {
         use std::os::unix::fs::PermissionsExt as _;
+        // The suite skips loudly rather than attesting to nothing: a bare
+        // return reports as a pass, and this is the one test that watches
+        // the fault the ruling exists to catch.
         if nix::unistd::geteuid().is_root() {
+            eprintln!(
+                "SKIP a_denied_directory_is_unreadable_rather_than_unresolvable: \
+                 no directory denies root, rerun as an unprivileged uid"
+            );
             return;
         }
         let dir = std::env::temp_dir().join(format!(

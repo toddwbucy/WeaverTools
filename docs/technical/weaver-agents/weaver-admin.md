@@ -57,8 +57,9 @@ failure refuses the load, and nothing is repaired - a verb that found a
 boundary missing does not build one.
 
 **Validation of the declaration, before a process exists.** A file that is
-absent, missing a required field, or naming a binding the load cannot satisfy
-fails at the cheapest possible moment.
+absent, missing a required field, or leaving the model binding's artifact unnamed
+fails at the cheapest possible moment, and whether the artifact resolves is the
+SPU's to answer at admission.
 
 **Custody of the sink.** The invocation opens the sink the declaration names,
 under root, and passes the descriptor into the enter directive - so the worker
