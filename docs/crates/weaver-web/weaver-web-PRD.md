@@ -1,7 +1,13 @@
 # weaver-web - PRD (crate charter)
 
-**Status:** DRAFT, unratified. **This is a rewrite of this crate's charter,
-not a new one.** The document ID, the crate, and its node are unchanged; the
+**Status:** MERGED. In `main` and the source of truth. **Ratification is not
+claimed by the act that landed this text**: the charter it replaces was
+ratified on its own terms under the per-charter rule of 2026-08-23, and a
+rewrite does not inherit that. Whether this text has cleared its gates is
+the operator's to say.
+
+**This is a rewrite of this crate's charter, not a new one.** The document ID, the
+crate, and its node are unchanged; the
 prior text is archived rather than amended, per the operator's ruling of
 2026-09-04, because the purpose clause is what changed and every section
 below it was that clause's consequence.

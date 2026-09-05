@@ -1,7 +1,10 @@
 # weaver-web - Spec
 
-**Status:** DRAFT, unratified. **A rewrite of this crate's Spec, not a new
-one.** Authored 2026-09-04 from the thinkpad seat beside the rewritten
+**Status:** MERGED. In `main` and the source of truth. Ratification is not
+claimed by the act that landed this text, and follows the charter's.
+
+**A rewrite of this crate's Spec, not a new one.** Authored 2026-09-04 from the thinkpad
+seat beside the rewritten
 `weaver-web-PRD` of the same date. The prior text is replaced whole rather than
 amended, and git is its archive.
 
