@@ -439,6 +439,15 @@ def run_the_night(cfg, args, sessions, sweeps, schedule, provenance,
     verdicts = [x.get("verdict") for x in report["sessions"]]
     good = sum(v == "REPRODUCED" for v in verdicts)
     print(f"\nsessions: {good}/{len(verdicts)} REPRODUCED", flush=True)
+    # **A loop refusal is named beside the count**, per issue #426: the shared
+    # driver refuses a session composed by a loop other than the one the
+    # config declares, and a night that lost sessions to that must say so
+    # rather than reading as a short REPRODUCED tally.
+    refused = [x["session"] for x in report["sessions"] if x.get("loop_refused")]
+    if refused:
+        print(f"LOOP REFUSED on {len(refused)} session(s): {', '.join(refused)}"
+              " - composed by a loop other than the one the config declares,"
+              " and those sessions deposited no comparison", flush=True)
     for sweep in range(1, sweeps + 1):
         notes = []
         if f"A-divergence-s{sweep}" in report["analysis"]:

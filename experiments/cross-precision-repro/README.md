@@ -88,10 +88,54 @@ cannot say whether two boxes built the same bytes. Any field that could
 not be read carries `unreadable` and its reason rather than an empty
 value.
 
+**The config declares its loop by digest, and the driver refuses a run
+composed by another.** Since #419 every `load` event carries
+`payload.composer`, the loop that composed the run's prompts, with `file`
+and `sha256` present where the loop is a file the pyworker read and absent
+where it is compiled in. The config's `loop_sha256` names the digest the
+box is expected to compose with, and after each load - the source half and
+the replay half both - the driver reads the newest load event for the run
+and compares. A mismatch, or a composer with no digest where one is
+declared, refuses the cell: no turn is served through it, the report
+carries `"loop_refused": {"declared": ..., "recorded": ..., "run": ...,
+"composer": ...}` beside a verdict that names it, and no run is deposited,
+so the report cannot be read as a comparison. This is issue #426's ask:
+both boxes were found composing through the same bytes and nothing asserted
+they would keep doing so.
+
+**The digest is the identity and the name is not.** `dev_loop.py` and
+`basic_loop.py` were byte-identical when #426 was measured, and
+`alpha_loop.py` and `bravo_loop.py` are byte-identical today, so a criterion
+written against a name passes a box running either. The loop a box runs is
+named by its declaration's `loop-file:` key, `dev_loop.py` when the key is
+absent, and the value to declare is read from the deployed file:
+
+```bash
+sha256sum /usr/local/libexec/weaver/loops/alpha_loop.py
+```
+
+**A config with no `loop_sha256` is unchecked.** The configs that predate
+the key keep running, and a deposit made under one carries no
+`loop_refused` field either way, so absence means the question was not
+asked and never that it was answered. The committed thinkpad configs
+declare the `dev_loop.py` digest, `5d34b9df...`, because that is what both
+boxes ran when #426 was measured and olympus cannot read the thinkpad's
+declaration. If the thinkpad has moved to another loop the driver's refusal
+says so, with both digests, and the config is corrected to what the box
+runs rather than the check loosened. The olympus configs declare the
+`alpha_loop.py` digest, `20ed6b6e...`, which is what their declaration
+names and what the live record shows.
+
 Run:
 
-```
+```bash
 python3 confirm_cells.py --config thinkpad.json --outdir <deposit>
+```
+
+The watches for the loop check run without a box:
+
+```bash
+python3 test_loop_digest.py
 ```
 
 Requires: the box's sudoers fragment for the three admin verbs (the

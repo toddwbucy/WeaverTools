@@ -86,10 +86,28 @@ def main():
         # standing unit is refused while the old worker and its socket
         # remain, and a socket that accepts a connection is not evidence
         # that this declaration is the one serving.
+        before = base.newest_load(trace)[0]
         base.admin(cfg, "unload")
         load = base.admin(cfg, "load"); print("load:", load, flush=True)
         if load.get("kind") != "state": raise SystemExit(f"the load did not reach a state: {load}")
         if not base.wait_socket(cfg): raise SystemExit("the gate socket never stood")
+        # **The loop that composed this load is checked before a turn is
+        # served through it**, per issue #426: the config's `loop_sha256`
+        # against the load event's composer digest, the shared helper doing
+        # the comparison. A refusal serves no turn, lands typed in the
+        # report, and exits nonzero, so the deposit is a refusal and not a
+        # short session.
+        refused = base.assert_loop(cfg, trace, before)
+        if refused:
+            # The refused run is named in `loop_refused` and nowhere else:
+            # `run_id` stays unset so the deposit below writes no session
+            # for it, per the README's word that a refusal deposits no run.
+            report["loop_refused"] = refused
+            failed = {"turn": 0, "why": "loop refused: declared "
+                      f"{refused['declared']}, recorded {refused['recorded']}"}
+            report["failed"] = failed
+            print("LOOP REFUSED", json.dumps(report["loop_refused"]), flush=True)
+            turns = []
         for i, group in enumerate(turns, 1):
             body = "\n\n".join(open(p).read() for p in group)
             t0 = time.time(); answer = base.gate_turn(cfg, f"{ASK}\n\n{body}", timeout=900); dt = time.time() - t0
@@ -132,6 +150,14 @@ def main():
     # run the gate named are kept, turn-level events only for the turns the
     # gate answered here, so another dialer's turn in the same residency
     # cannot ride into the record or into `resident`.
+    if "loop_refused" in report:
+        # **A refused load deposits the refusal and no session.** The report
+        # carries both digests and the refused run's reference; the trace
+        # slice, the load event, and `session.ndjson` are not written, so
+        # nothing under this deposit can be read as a run of the campaign.
+        json.dump(report, open(f"{a.outdir}/report.json", "w"), indent=1)
+        print(json.dumps({"loop_refused": report["loop_refused"], "restored": report["declaration_restored"]}), flush=True)
+        sys.exit(1)
     with open(trace, "rb") as f:
         f.seek(start_bytes); data = f.read()
     kept, dropped, kinds = [], 0, {}
