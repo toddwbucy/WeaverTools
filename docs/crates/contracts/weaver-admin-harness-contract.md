@@ -4,11 +4,12 @@
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 
-**Revised:** 2026-09-05, the observation exchange lands. Section 3 gains the fourth
-exchange, admin asking what stands and the harness answering `State` from whichever
-position it holds with the load's facts beside it, the exchange the parties named as
-owed on 2026-08-06 when `StateNotObservable` was minted to die with it. Section 5's
-enter supplies the declaration's digest. Per issue #435 and the front end epic #434.
+**Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3
+gains the fourth exchange, admin asking what stands and the harness answering `State`
+from whichever position it holds with the load's facts beside it, the exchange the
+parties named as owed on 2026-08-06 when `StateNotObservable` was minted to die with it.
+Section 5's enter supplies the declaration's digest. Per issue #435 and the front end
+epic #434.
 **Revised:** 2026-09-04, second of this date, the enter carries the restore and the
 stack. Section 3's enter supplies the lineage of the restore where the declaration
 elects one, resolved and never the record's path, and the digests of the organ binaries
@@ -111,7 +112,7 @@ what makes admin an organ: an organ owns a domain and holds a two-initiator chan
 the harness, both properties and not either, and admin owns the lifecycle domain. The
 property is the channel's rather than the exchange census's, the same reading the
 half-chartered organ seams take, so the census standing at four exchanges since the
-observation exchange of 2026-09-05, all admin's since the fault-carrier ruling of
+observation exchange of 2026-09-04, all admin's since the fault-carrier ruling of
 2026-08-01 rerouted the fault to the stream, retires no half of what makes admin an
 organ. The invariant is authored in the apex and this document is downstream of it.
 
@@ -157,7 +158,7 @@ and nothing of it is restated here.
 One fact of this seam lands at that layer. Either party may open an exchange on this
 channel, the census of chartered exchanges is section 3's, and every one of them is
 admin's today, per the fault-carrier ruling of 2026-08-01, and the census is four since
-the observation exchange of 2026-09-05.
+the observation exchange of 2026-09-04.
 
 ## 2. The channel
 
@@ -308,7 +309,7 @@ the operator interrupt of `weaver-harness-PRD` section 2 arrives on, and it exis
 this seam because the operator holds no other crossing. How the abort lands at the
 decoder is the harness's interior and crosses nowhere.
 
-**Observe the run.** Opened by admin, added 2026-09-05 per issue #435 as the observation
+**Observe the run.** Opened by admin, added 2026-09-04 per issue #435 as the observation
 exchange this contract's parties named as owed on 2026-08-06. Admin asks what stands and
 carries nothing. The harness answers `State` from whichever position it holds: before
 any enter, `Unloaded` and no load. Entered, `Idle` where no turn is in flight and
@@ -516,7 +517,7 @@ the exchanges above are the whole of what either learns.
 `model-binding` and `residual-readout-election` as of the route act of 2026-08-10,
 `gate-instruction` as of 2026-08-17, `state-election` as of 2026-08-19, `field-election`
 with `surprisal-election` as of 2026-08-21, and `binding-kind` as of 2026-08-24. The
-observation exchange of 2026-09-05 draws nothing further: its directive is a case of
+observation exchange of 2026-09-04 draws nothing further: its directive is a case of
 `lifecycle-directive`, its answer the `State` case of `lifecycle-answer` grown to carry
 the load's facts, both the floor's.
 

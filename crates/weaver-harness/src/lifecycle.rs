@@ -320,7 +320,7 @@ struct Run {
     /// record, or where the enter's ask missed.
     grants_at_enter: Option<Vec<String>>,
     /// What this run was built from, held for the observation exchange of
-    /// `weaver-admin-harness-contract` section 3 as of 2026-09-05: the same
+    /// `weaver-admin-harness-contract` section 3 as of 2026-09-04: the same
     /// facts the load event was authored from, answered from the run and
     /// never read from the record.
     load: weaver_types::LoadFacts,
@@ -1150,7 +1150,7 @@ impl Harness {
                 Ok(Some(Outcome::Left))
             }
             // **Observe answers from any position and authors nothing**, per
-            // `weaver-admin-harness-contract` section 3 as of 2026-09-05: the
+            // `weaver-admin-harness-contract` section 3 as of 2026-09-04: the
             // state is a read of whether a turn key stands, the facts are
             // held on the run, and the left position answers rather than
             // refuses because an observation is not an act.
@@ -3399,7 +3399,7 @@ mod tests {
     /// `harness-announce-after-record` `perturbation` - a tension named here
     /// for the operator rather than hidden behind a green test.
     /// **Observe answers from any position and authors nothing**, per
-    /// `weaver-admin-harness-contract` section 3 as of 2026-09-05: unloaded
+    /// `weaver-admin-harness-contract` section 3 as of 2026-09-04: unloaded
     /// with no load before an enter and after a leave, idle or active with
     /// the load's facts while entered, the state a read of the turn key.
     /// Perturbation: answer `Idle` for a run whose turn key stands and the

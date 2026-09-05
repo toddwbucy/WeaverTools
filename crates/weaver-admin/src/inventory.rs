@@ -77,7 +77,7 @@ pub struct Inventory {
     pub config: AgentConfig,
     pub identity: String,
     /// The declaration file's digest as this inventory read it, per
-    /// `weaver-admin-harness-contract` section 5 as of 2026-09-05: supplied
+    /// `weaver-admin-harness-contract` section 5 as of 2026-09-04: supplied
     /// on the enter so the run and the record name what they were built
     /// from, and this crate is the file's one reader.
     pub declaration: String,

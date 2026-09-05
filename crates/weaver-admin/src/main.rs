@@ -134,7 +134,7 @@ fn dispatch(
         surface::Request::Unload(agent) => unload(config, &agent),
         surface::Request::Stop(agent) => stop(config, &agent),
         // **`show` and `list` answer through the observation exchange**, per
-        // Spec section 3 as of 2026-09-05: the harness's own word where a
+        // Spec section 3 as of 2026-09-04: the harness's own word where a
         // worker answers the dial, and `Unloaded` from the absence where
         // none does, which is the one place residency is read and it is
         // read as the absence of a worker and not as a state.
@@ -740,7 +740,7 @@ fn start_refusal_for_residency(
 /// existed, and one whose exec never succeeded, so nothing is claimed beyond
 /// the value.
 /// **Observe one agent**, per `weaver-admin-harness-contract` section 3 as
-/// of 2026-09-05: dial the coordination socket and open the exchange, and
+/// of 2026-09-04: dial the coordination socket and open the exchange, and
 /// carry the harness's answer whole. No socket, or no worker answering the
 /// dial, is `Unloaded` with no load, read from the absence and never from
 /// the unit.
@@ -1311,7 +1311,7 @@ mod tests {
     fn show_and_list_answer_the_absence_as_unloaded() {
         // **Where no worker answers the dial, the answer is `Unloaded` from
         // the absence and constructs no state from the unit**, per Spec
-        // section 3 as of 2026-09-05. Perturbation: map the manager's
+        // section 3 as of 2026-09-04. Perturbation: map the manager's
         // `active` onto `Idle` in `observe` and a box with the unit running
         // fails this, which is the invention the clause forbids. The
         // coordination root below does not exist, so no socket does.

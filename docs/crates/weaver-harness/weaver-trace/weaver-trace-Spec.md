@@ -4,9 +4,10 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
-**Revised:** 2026-09-05, the load names its declaration. Section 3's `Elections`
-gains `declaration`, the digest of the file the load was built from as the enter
-carried it. Per `weaver-trace-PRD` section 3.1 as revised this date and issue #435.
+**Revised:** 2026-09-04, third of this date, the load names its declaration. Section 3's
+`Elections` gains `declaration`, the digest of the file the load was built from as the
+enter carried it. Per `weaver-trace-PRD` section 3.1 as revised this date and issue
+#435.
 **Revised:** 2026-09-04, second of this date, the seated prefix distills whole.
 Section 11's `distill` carries a turnless `message.system` line under every
 election, one pair per top-level payload member, per charter section 11 as

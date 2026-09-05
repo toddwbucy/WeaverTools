@@ -22,11 +22,11 @@ declaration - each a unit variant because the fact refused carries no value the 
 holds nowhere else, on the registry-typing pattern the re-feed's arms set. The refused
 ask is `Open`, which `TokenAsk` already names, so no ask joins.
 
-**Revised:** 2026-09-05, the observation exchange lands. Section 4's
-`lifecycle-directive` gains `Observe`, its `State` answer and `AgentSummary` gain
-`load`, `LoadFacts` and `Composer` are declared, `EnterPayload` gains the
-declaration's digest, and `StateNotObservable` leaves `lifecycle-refusal` on the
-scheduled death section 4.2 gave it on 2026-08-06. Per issue #435.
+**Revised:** 2026-09-04, second of this date, the observation exchange lands. Section
+4's `lifecycle-directive` gains `Observe`, its `State` answer and `AgentSummary` gain
+`load`, `LoadFacts` and `Composer` are declared, `EnterPayload` gains the declaration's
+digest, and `StateNotObservable` leaves `lifecycle-refusal` on the scheduled death
+section 4.2 gave it on 2026-08-06. Per issue #435.
 **Revised:** 2026-08-31, fifth of this date, the permission members take a
 parse the seam survives. The unknown-field mechanism the second entry of
 this date elected for `refeed_permission`, and the column entry for its
@@ -238,7 +238,7 @@ turn's token limit was reached, a third fact the two-case set flattened
 into `Completed`, which issue #218 found from the record's own evidence -
 a capped answer reporting itself complete. The trace's mirror and the
 close's member move in the same act.
-**Revised:** 2026-09-04, the store election reaches the declaration.
+**Revised:** 2026-09-04, first of this date, the store election reaches the declaration.
 `AgentConfig` gains `state_store`, optional, its absence meaning the embedded
 engine per `weaver-state-PRD` section 4 as revised this date, its `engine`
 closed at three cases, and `database` and `role` required under the service
@@ -1461,7 +1461,7 @@ section 6. `stack` is the digests of the organ binaries admin started, keyed by 
 binary's name, so the load event names the stack that ran it and a record is sufficient
 for its own conditions without a deposit beside it, per `weaver-trace-PRD` section 3.1.
 Both are admin's facts and the harness authors them as it authors the store's.
-**`declaration` rides beside them as of 2026-09-05**, the digest of the declaration file
+**`declaration` rides beside them as of 2026-09-04**, the digest of the declaration file
 as admin read it at the inventory, so the harness names it on the load event and answers
 it to an observation without holding the file, per issue #435.
 
@@ -1626,7 +1626,7 @@ this crate.** Whether the SPU's admit cases needed a type of their own was the
 cell `weaver-spu-PRD` section 10 held, and the naming ruling settled it as
 extension: they are loop 0 refusals because they refuse loop 0's directives.
 
-**`StateNotObservable` joined the set on 2026-08-06 and left it on 2026-09-05.** It
+**`StateNotObservable` joined the set on 2026-08-06 and left it on 2026-09-04.** It
 refused a question rather than an act, because the party that knows an agent's lifecycle
 state is the harness and no exchange asked it, and it was minted as a marker with a
 scheduled death, leaving exactly one thing to delete when the observation exchange

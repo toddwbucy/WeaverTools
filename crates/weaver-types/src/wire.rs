@@ -199,7 +199,7 @@ pub enum LifecycleDirective {
     Leave,
     Stop,
     /// **Observe the run**, per `weaver-admin-harness-contract` section 3 as
-    /// of 2026-09-05: admin asks what stands and carries nothing, and the
+    /// of 2026-09-04: admin asks what stands and carries nothing, and the
     /// harness answers `State` from whichever position it holds, the load's
     /// facts beside the state where a run stands. Authors nothing.
     Observe,
@@ -255,7 +255,7 @@ pub enum LifecycleAnswer {
     GateStopped,
     Validated,
     /// The agent's state and, where a run stands, the load's facts, per
-    /// `weaver-types-Spec` section 4 as of 2026-09-05. `load` is absent
+    /// `weaver-types-Spec` section 4 as of 2026-09-04. `load` is absent
     /// exactly where the state is `Absent` or `Unloaded`.
     State {
         state: AgentState,
@@ -268,7 +268,7 @@ pub enum LifecycleAnswer {
 }
 
 /// **What a standing run was built from**, per `weaver-types-Spec` section
-/// 4.2 as of 2026-09-05: the floor's shape of what the `load` event names,
+/// 4.2 as of 2026-09-04: the floor's shape of what the `load` event names,
 /// answered to the observation exchange from the run and never read from the
 /// record.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -366,7 +366,7 @@ pub struct EnterPayload {
     /// 2026-09-04. The harness names it on the load event.
     pub state_store: crate::config::StateStore,
     /// The declaration file's digest as admin read it at the inventory, per
-    /// `weaver-types-Spec` section 4 as of 2026-09-05, so the run and the
+    /// `weaver-types-Spec` section 4 as of 2026-09-04, so the run and the
     /// record both name what they were built from and the harness holds no
     /// file.
     pub declaration: String,

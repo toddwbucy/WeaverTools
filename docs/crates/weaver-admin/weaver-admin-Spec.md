@@ -3,11 +3,11 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
-**Revised:** 2026-09-05, the observation exchange lands. Section 3's `show` and `list`
-answer through `weaver-admin-harness-contract` section 3's fourth exchange, the
-harness's own word with the load's facts beside it, residency read only where no
-worker answers the dial, and the record's instrument follows. Section 1 takes `sha2`
-for the declaration's digest the enter now supplies. Section 11's election of
+**Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3's
+`show` and `list` answer through `weaver-admin-harness-contract` section 3's fourth
+exchange, the harness's own word with the load's facts beside it, residency read only
+where no worker answers the dial, and the record's instrument follows. Section 1 takes
+`sha2` for the declaration's digest the enter now supplies. Section 11's election of
 2026-08-06 is settled. Per issue #435 and the front end epic #434.
 **Revised:** 2026-09-04, third of this date, a session stands from a record. Section 4
 judges the restore election, the record readable under this crate's custody, the cut a
@@ -383,7 +383,7 @@ rather than re-argues: descriptor custody is central, the io-safe owned types ma
 compile property, and the needed calls, `socket`, `bind`, `listen`, `accept`,
 `getsockopt` for the peer credential, `sendmsg` with control messages, `open`, `mkfifo`,
 and `stat`, are all covered. That crate asserts the election where it argues it, so this
-one cites it and adds no second record for one decision. `sha2` joins on 2026-09-05 for
+one cites it and adds no second record for one decision. `sha2` joins on 2026-09-04 for
 one purpose, the digest of the declaration file this crate reads at the inventory and
 supplies on the enter, per `weaver-admin-harness-contract` section 5, so the run and the
 record name what they were built from without a second reader of the file.
@@ -534,7 +534,7 @@ signal and nothing more. Reading it as loaded-and-idle would also contradict the
 charter's own rule that the state publishes only on a ready aggregate, since a
 unit is running well before any aggregate returns.
 
-**So `show` and `list` answer through the observation exchange, as of 2026-09-05, and
+**So `show` and `list` answer through the observation exchange, as of 2026-09-04, and
 residency is read only where no worker answers.** `show` dials the agent's coordination
 socket and opens `Observe`, per `weaver-admin-harness-contract` section 3, and what
 returns is the harness's own word: `Unloaded` before any enter or after a leave, `Idle`
@@ -2151,7 +2151,7 @@ directive is asserted where the run happens.
 
 Each names what settles it, and none is this Spec's to settle alone.
 
-- **How an agent's lifecycle state is observed. Settled 2026-09-05** by the observation
+- **How an agent's lifecycle state is observed. Settled 2026-09-04** by the observation
 exchange of `weaver-admin-harness-contract` section 3, per issue #435: the harness
 answers its state from the run with the load's facts beside it, section 3 above says how
 `show` and `list` use it, and `StateNotObservable` left the floor with it. The entry
