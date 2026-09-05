@@ -7,9 +7,9 @@ rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
 **This is a rewrite of this crate's charter, not a new one.** The document
-ID, the crate, and its node are unchanged; the prior text is archived rather
-than amended, per the operator's ruling of 2026-09-04, because the purpose
-clause is what changed and every section below it was that clause's
+ID, the crate, and its node are unchanged, and the prior text is archived
+rather than amended, per the operator's ruling of 2026-09-04, because the
+purpose clause is what changed and every section below it was that clause's
 consequence.
 
 **Prior version:** the charter of 2026-08-04 as amended through 2026-08-25,
@@ -27,6 +27,67 @@ store run on one machine, the agents on another, and the only crossing is
 store traffic and a queue. Whether these papers eventually move to a
 separate corpus follows from that but is not identical to it, and stays
 decision two of #439.
+
+**Revised:** 2026-09-05, sixth of this date, the second review pass. Five
+sentences lost a word to the semicolon sweep of the second act and are
+restored, the sweep having rewrapped line pairs and dropped the word at the
+old break. The preset ladder is introduced before section 9 defers its
+shape. The artifact identity's citation splits, the rule being
+`weaver-analysis-PRD` section 3's and the shape its Spec's. **No surface
+writes the registry**, correcting this act's own earlier wording against
+`weaver-web-Spec` section 6, which has said so throughout: a surface
+authors across its seam and the ingest path is the only writer. The
+semicolon counts in the second entry were low by two. Entries now run
+newest first, per the corpus's convention.
+
+**Revised:** 2026-09-05, fifth of this date, the identity is the corpus's
+and the election is recorded. The artifact identity rule this crate had
+derived for itself is withdrawn for the one `weaver-analysis` already
+carries, the set of per-file content digests keyed by file name, compared
+as a set: a rolled-up digest of this crate's own devising was a second rule
+for one subject, which is what the lens paragraph beside it refuses. An
+elected lens reuse is recorded with both weights identities, so a reading
+through a lens fitted to other weights says so. Section 3.6 states which
+surface writes what rather than claiming all of them write. Per the review
+of PR `#453`.
+
+**Revised:** 2026-09-05, fourth of this date, the tuple carries what the
+projection compares. The field election's depth and the forced token join
+the run's tuple: a run keeping forty alternatives and one keeping fifty
+differ in every position's list length by declaration, and section 4's
+comparison would have read that as a divergence. The row is told from the
+tuple, the parent run and the branch position being lineage rather than
+condition, which is what makes a branch comparable to its parent. Per the
+review of PR `#453`.
+
+**Revised:** 2026-09-05, third of this date, the Models surface and the
+review of PR #455. Section 3.6 gains **Models**, the catalog sections 3.1
+and 5 already assumed, and the list-side group grows to five with four of
+them lists. **One rule decides artifact identity**: the complete set the
+model's own index names, digested over the per-file identities in that
+order, which closes a subject the documents had stated four ways. **The
+provenance chain is recorded and is not a second identity**, corrected
+from an earlier draft of this act that had it version a lens, which
+`weaver-analysis-PRD` section 3 owns and does otherwise. **Presence is a
+dated observation and never a gate.** Three cells named in section 9 that
+this act's pull request had named only in its body. Semicolons swept
+under G1.
+
+**Revised:** 2026-09-05, second of this date, against two reviews on PR
+`#453`. The engine joins the run's tuple at build grain. **The scorer is
+named on the verdict and never in the run's tuple**, correcting a clause
+that put it in both and contradicted itself four lines apart.
+**Reproduction states its projection** and leaves section 9, which held a
+settled half in a list of open ones. **The lens clause is withdrawn to
+`weaver-analysis-PRD` section 3's identity**, the weights by content hash:
+this document had asserted a trained-weights identity inherited through
+provenance, which the owning charter states otherwise and
+`analysis-lens-refuses-other-weights` pins otherwise, and the 8B
+measurement it rested on was taken by naming the fitted weights to the
+reader rather than by any mechanism. Reuse across a conversion is an
+operator election, and whether a lineage should ever let the tool answer
+it is section 9's. Semicolons swept from the whole document under G1, seven
+of them older than this act.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
@@ -79,7 +140,10 @@ ship.
 
 The person in front of it is an engineer deploying a local model as an
 agent, who needs to know before shipping what the arrangement can tolerate,
-and who has been working on intuition because no instrument existed.
+and who has been working on intuition because **nothing accumulates**.
+Readings exist and are taken every day. What has not existed is a reading
+that comes back as a cell carrying its declared tuple, which a second person
+reruns and gets again.
 
 **The positioning rule reaches the interface.** The tool measures. It does
 not testify. Every reading this crate shows is labelled as a reading of
@@ -105,12 +169,18 @@ shown, from the tool's own labels, to be wrong.
   and the interface makes the reload the visible event it is.
 - **Not a judge of a declared boundary.** It requires the declaration and
   displays it. It does not grade it.
+- **Not a logprob viewer.** Per-token logprobs are drawn by a dozen tools,
+  and an engineer meeting section 3.4 will name one they already use. The
+  difference is not the picture. It is that a reading here is a cell with
+  its declared tuple, addressed by run, turn and position, and rerunnable by
+  someone who was not there. Claiming the picture as the novelty would be
+  the overclaim section 1 forbids, pointed at ourselves.
 - **Not a knowledge-graph governance layer.** No axioms, smells, gates, or
   conformance as product features.
 
 ## 3. The surfaces
 
-Nine, in two groups. **Every surface has a direction**: you enter somewhere,
+Ten, in two groups. **Every surface has a direction**: you enter somewhere,
 you end somewhere, and the screen says where you are on that path. The
 failure to avoid is the interface that exposes its graph before it shows the
 artifact, so that nothing on screen says what you came to produce. Each
@@ -206,7 +276,7 @@ that did not elect it has no surprisal timeline, and the surface says the
 election did not stand rather than drawing a floor.
 
 A spike on the graph resolves to the token that produced it and jumps the
-transcript there. **A surprisal graph nobody can click is decoration; a
+transcript there. **A surprisal graph nobody can click is decoration, and a
 spike that resolves to a token is an instrument.** Clicking a position pulls
 that position's alternatives and their mass from the capture, and the
 operator walks upstream watching the mass move until the position where the
@@ -229,9 +299,10 @@ the branch position, the forced token where one is forced, and the parent
 declaration with its diff. A runner drains the queue, and **the reload that
 runs it is the branch**.
 
-That is not a new rule. The load boundary is the only change boundary; a
-branch is a change; therefore a branch is a load. An interface that branched
-directly would be mutating a loaded agent, which section 2 refuses.
+That is not a new rule. The load boundary is the only change boundary, a
+branch is a change, and therefore a branch is a load. An interface that
+branched directly would be mutating a loaded agent, which section 2
+refuses.
 
 **A forced token is not a sampled one**, and a trajectory reached by forcing
 is never quotable as something the model produced on its own. The forcing is
@@ -239,7 +310,7 @@ declared on the branch run and the record carries it.
 
 Fork the same position many times under fresh seeds and the result is the
 distribution that one repeatable line was drawn from. A deterministic run is
-not an average of anything; it is one sample that can be fetched again, so
+not an average of anything. It is one sample that can be fetched again, so
 determinism buys reproducibility rather than centrality. Because the seed is
 drawn per generation from the declared seed, the turn's reference and the
 ordinal, **a branch that changes nothing draws what its parent drew**, and
@@ -247,9 +318,21 @@ the control arm is free.
 
 <!-- figure: Branch | Stage -->
 
-### 3.6 The three lists
+### 3.6 The five on the list side
 
-Global, filtered, and written into by every surface above.
+Global and filtered. **No surface writes the registry.** Each authors across
+its own seam, Compose asking `validate` and Stage submitting to the queue,
+and what lands in the store lands by the ingest path of section 4. These
+lists read that store and filter it, which is why a chip can be a query
+rather than a location. **Four of the five are lists and the fifth is not.**
+Agents, Models, Experiments and Record are list destinations. The Experiment
+view is the detail surface one of them opens into, and it is a surface
+rather than a mode of the list above it: its own destination, its own state,
+and its own module under the Spec's rule of one module each. **The group is
+named for how it is reached** - by a chip-query rather than along the path -
+and not for the shape of what it holds, so no implementer reads the detail
+view as a fifth list. Five on the path and five here are the ten this
+section opens with.
 
 **One navigational grammar: a chip is a query rather than a location.**
 Clearing it widens the list where the operator stands, and nothing
@@ -260,6 +343,53 @@ the operator into a list with a chip already set.
 its parent and the one thing that moved where it is derived.
 
 <!-- figure: Library | Agents -->
+
+**Models** holds the artifacts, which is the catalog two surfaces above
+already assume. Section 3.1's roster resolves each component's artifact and
+section 5's qualification runs a reference against one, and neither says
+where the artifact came from or what is known about it. This surface does:
+**the artifact's identity per file**, following the model's own index and
+verifying each shard under its own name. Its provenance, downloaded from a
+repository at a revision or converted from another artifact by a named
+converter at a pin. Which box holds it, since this crate runs on one
+machine and the agents on another. And its relations, the lens
+artifacts fitted to these weights, the readings taken through a lens fitted
+to other weights where the operator elected that reuse, and the reference
+cells taken against them.
+
+**An artifact is the complete set its own index names, and one rule decides
+identity** - the corpus's own. `weaver-analysis-PRD` section 3 carries the
+rule, the weights by content hash, and that charter's Spec section 3 carries
+the shape it takes on disk: one digest for a model kept in one file, and a
+digest per shard keyed by shard name for a sharded one. Equality is set
+equality, so a set missing a file the index names is unequal to the complete
+one and is not that artifact, and the catalog dedupes on that and nothing
+else. **This crate defines no digest of its own**, a second rule for one
+subject being what the paragraph below refuses for the lens. **The
+provenance chain is recorded and is not a second identity**: it says what an
+artifact was made from, which is what makes an elected lens reuse across a
+conversion legible afterward, and it does not version a lens. The lens
+identity is `weaver-analysis-PRD` section 3's, and a conversion changes it.
+
+**Presence is an observation and never a gate.** Which box holds an
+artifact is dated, attributed, and advisory, and a box that has not
+reported is unknown rather than empty. No load consults it - the load
+resolves the artifact on the box it runs on and is refused there - because
+a gate built on a stale observation refuses a box that has the artifact and
+admits one that lost it.
+
+It is a surface rather than a mode of Agents because an agent is a
+configuration and a model is an artifact: **many agents share one model and
+many lenses attach to one model**, and a many-to-one relation held inside
+the wrong noun is where a catalog goes wrong.
+
+**It catalogs artifacts and not organ kinds.** The charters hold the roster
+per section 3.1, and a kind is a charter act before it is a row anywhere, so
+an artifact acquires a kind when a declaration references it and admit
+judges the family. Encoders and further kinds need no special case here,
+they arrive with their charters.
+
+<!-- figure: Models | Models -->
 
 **Experiments** holds every experiment and where it stands across five
 states: draft, registered, queued, running, returned. **Registering freezes
@@ -313,21 +443,100 @@ projected readout, so a future refitted lens can read an old run.
 
 **Everything identifying the conditions lives in the run's own row**:
 artifact identity at a grain fine enough to catch a quantization difference,
-seed, the full sampler configuration, device, precision, the batching
-election, the task, and the declared boundary set.
+**the engine's identity at a grain fine enough to catch a library
+revision**, seed, the full sampler configuration, device, precision, the
+batching election, **the field election's depth**, the task, the declared
+boundary set, and **whether a token was forced and which**. The engine is in
+the compound the tuple names, and a divergence between two runs differing in
+both silicon and library revision names neither cause unless both are held.
+
+**The field election's depth is in the tuple because the projection below
+compares what it decides.** A run keeping forty alternatives and one keeping
+fifty differ in the length of every position's list by declaration rather
+than by behaviour, and a comparison that held the rest of the tuple would
+report that as a divergence. Forcing is in for the same reason under the
+rule of section 3.5: a forced token is not a sampled one, so two rows
+differing in it are not two readings of one condition.
+
+**The row holds more than the tuple, and the difference is lineage.** The
+parent run reference and the branch position say where a run came from
+rather than what it ran under. They are the row's and not the compound's, so
+two rows are comparable across them, which is what makes a branch
+measurable against its parent at all.
 
 The write path is a consumer rather than a step in the loop, and **the
 decoder never waits on a database**. The read path is what the schema is
 for, and nothing is computed at read time: a value computed in the interface
 is a value nobody else can reproduce.
 
+**Reproduction is a measurement this record supports, and its projection is
+stated here.** Two rows align on turn and position, which are the address
+rather than the subject, and compare on the emitted token, the surprisal,
+the entropy, and the ranked alternatives with their mass. **Byte equality
+is claimed only where the tuple is held.** Where any member of the tuple
+differs the result is a divergence report naming which member differs and
+never a verdict, because a decode under a different engine build is a
+different compound and equality was not the question asked of it.
+
 ## 5. Placement, and the boundary rule
 
 Composition includes placement. Each declared component has its own socket
 and its own surface, so each can be placed independently, and moving one
-while holding the rest still is the loosening the instrument is for. This
-crate offers a ladder of presets, and a preset stages a runnable declaration
-the operator can then edit by hand.
+while holding the rest still is the loosening the instrument is for. **This
+crate offers a ladder of presets**, whose shape section 9 holds open.
+
+**A preset stages a runnable declaration the operator can then edit by
+hand**, and placement is one axis of that mechanic rather than the whole of
+it. The other axis is **qualification: establishing what a reference is
+worth on weights nobody has measured** - a quantization, a fine-tune, a
+merge, a different conversion. The cell is the same shape in each case: the
+family's reference task, the artifact moved, the control compared.
+
+**Post-training is a first-class use of that axis** and needs no machinery
+of its own. What a fine-tune changed becomes a cell with its tuple that a
+reviewer reruns, rather than a claim about a training run.
+
+**Whether the lens is reused or refitted is the operator's election, and
+this crate records which was made.** The lens identity is
+`weaver-analysis-PRD` section 3's and is not restated here: the weights by
+content hash, recomputed against the model in hand, and a reader refuses a
+lens whose manifest names other weights. That refusal is the refit's
+trigger, and it fires on a conversion as readily as on a fine-tune, because
+a quantization is different bytes.
+
+**Reuse across a conversion is therefore an election and not an
+inference.** The operator names the fitted weights to the reader, which is
+exactly what was done at the 8B: GGUF columns read through a
+safetensors-fitted lens scored a fraction above the torch reference on the
+same tokens at both bf16 and q8_0. **That measurement shows the projection
+survives the encoding. It does not show a mechanism**, because the reader
+was handed the safetensors and never saw the GGUF's identity. The two cases
+differ in what the election is worth: post-trained weights are a different
+function and a reuse there is unsound, while a quantization is the same
+trained weights in a lossy encoding and the measurement above is the ground
+for electing reuse.
+
+**This surface's job is to make the election visible rather than to make
+it.** A reading taken through a lens fitted to other weights carries that
+fact beside it, so a reader downstream sees an elected reuse rather than a
+fit. Whether the corpus should carry a trained-weights lineage that would
+let the tool answer this instead is section 9's, and it is the analysis
+charter's to state if it is ever stated.
+
+**A refit is a new artifact, and two readings through two lenses are not
+directly comparable.** Base against fine-tune compares two models through
+two lenses, so what carries across is the control and the trajectory's
+shape rather than a rank. A surface that placed those ranks side by side
+would invite the comparison the refit makes invalid.
+
+**This axis is why an unmeasured reading is offered rather than withheld.**
+It is not this crate's burden to have measured every artifact in advance,
+it is this crate's job to make measuring one cheap. Where a reading has no
+control on the artifact in hand, the surface says so and offers the cell
+that takes one, because a caveat leaves the operator holding a doubt and a
+preset hands them the answer.
+
+The placement axis is a ladder of three rungs.
 
 ```text
 rung one    everything local, Unix sockets only
@@ -426,14 +635,21 @@ this crate designs around the gap until it closes.
 
 - **The name and the placement of these papers**, decisions one and two of
   #439.
-- **Whether this crate scores.** Behavior and cost are measurements. A
-  benchmark score is a correctness judgment, and section 1 holds that the
-  tool measures and does not testify. Three answers are open: this crate
-  does not score and records the emission for an external scorer; it scores
-  and records the scorer in the tuple, so the judgment is attributable to a
-  named thing rather than to the instrument; or scoring lives in the
-  benchmark harness and this crate cites its verdict. **The interface draws
-  the score as present and unfilled, naming no scorer, until this closes.**
+- **Whether this crate scores a correctness verdict.** Reproduction is not
+  in this list: it is measurement, it is in scope and drawn, and section 4
+  states its projection. **Correctness is testimony** and needs a scorer.
+  Section 1's discipline forbids this crate from scoring correctness, so
+  what stays open is which of three answers that takes. This crate does not
+  score and records the emission for an external scorer. Or it records a
+  scorer's verdict with **the scorer named on the verdict and never in the
+  run's
+  tuple**, so the judgment is attributable to a named thing rather than to
+  the instrument, and a second scorer applied to the same run adds a
+  verdict rather than changing what the run was or duplicating its row.
+  Or scoring lives in the benchmark harness and this crate cites it. **The
+  two are separate columns and the correctness one stays unfilled until a
+  scorer is named**, because a column that mixes them would let a
+  reproduction verdict be read as a verdict on the answer.
 - **The word "cell" carries two senses** and the corpus must settle one. A
   matrix coordinate, which is what the cross-precision configs and the
   confirm driver mean by it today, and a declaration plus a task plus a run,
@@ -448,3 +664,24 @@ this crate designs around the gap until it closes.
 - **Whether the preset ladder is a picker or a wizard.**
 - **The registry's schema**, which is `weaver-web-Spec` section 3's and
   not this document's.
+- **How presence on another box is answered.** Section 3.6 records which
+  box holds an artifact as a dated observation, and who reports it is
+  unchosen. Three answers stand. An operator registers it, which is a
+  claim. Admin answers it on the observation exchange's pattern, which
+  #457's rule argues against, admin adjudicating only what it holds custody
+  of and the artifact being the organ's. Or **the SPU hashes the weights at
+  admit and the record carries them**, making presence derivable from
+  recorded admits, a fact rather than a claim, with "never admitted here"
+  the honest reading of an artifact no box has loaded. The third fits this
+  crate's measure-rather-than-testify rule and is the seat's
+  recommendation, and the choice is the operator's.
+- **Whether import fetches.** Section 3.6 records provenance by repository
+  and revision, which is what a fetch would need, and this crate has no
+  ruling that it may reach the network. Until one lands, import records an
+  artifact already on a box.
+- **Whether a trained-weights lineage should exist at all.** Section 5
+  makes reuse across a conversion an operator election because
+  `weaver-analysis-PRD` section 3 versions a lens by the weights content
+  hash. A lineage would let the tool answer instead. It would be that
+  charter's fact to state and its Spec's record to change, so this cell is
+  named here and owned there.

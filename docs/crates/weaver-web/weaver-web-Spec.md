@@ -10,13 +10,56 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-05, sixth of this date, the second review pass. Four
+sentences lost a word to the semicolon sweep and are restored. **A sharded
+GGUF carries no index**, so section 2.3 enumerates it by the
+`-NNNNN-of-NNNNN` pattern `weaver-spu-Spec` section 3's pin collects on, the
+earlier wording having named a split manifest that does not exist for the
+format this catalog most holds. The identity cites the manifest member the
+owning Spec declares rather than a Rust item it does not. Section 6 no
+longer says section 7 names a queue seam, which it does not. The semicolon
+count in the second entry was low by two. Entries now run newest first.
+
+**Revised:** 2026-09-05, fifth of this date. Section 2.3's artifact identity
+becomes the shape `weaver-analysis-Spec` section 3 gives
+`model_safetensors_sha256` rather than a composite this document defined,
+equality being set equality with no order imposed. Section 2.2 states that
+the parent run and branch position are lineage outside tuple equality, so
+two rows differing only in them remain comparable, which is what makes a
+branch reproducible against its parent. Section 2.4 carries the lens
+artifact a reading was taken through and the weights it was fitted to. Per
+the review of PR `#453`.
+
+**Revised:** 2026-09-05, fourth of this date, the run's row carries the
+field election's depth, which sets the length of every position's
+alternative list and which the charter's section 4 compares. Per the review
+of PR `#453`.
+
+**Revised:** 2026-09-05, third of this date, the Models surface and the
+review of PR #455. Section 2.3 gains the artifact catalog with one derived
+identity rule, the complete set the model's own index names. The join
+resolves to that set or to nothing, so a lens relation and a reference cell
+relation each name one unambiguous artifact. Presence carries its reporter
+and its date and gates nothing. The lens row cites `weaver-analysis-PRD`
+section 3 rather than restating it, correcting an earlier draft of this act.
+Two assertion rows added. Semicolons swept under G1.
+
+**Revised:** 2026-09-05, second of this date, against two reviews on PR
+`#453`. Section 2.3 gains the recorded query, which section 4 required and
+section 2 gave nowhere to put, the indexes moving down and their citations
+following. The artifact catalog of the act below later took 2.3 and the
+recorded query became 2.4. The engine's identity enters the run's row, and
+**the deposit regime behind it is cited to `weaver-analysis-PRD` section 3**
+rather than asserted, an uncited regime in a Spec being testimony. The
+scorer leaves the run's tuple for the verdict. Semicolons swept from the
+whole document under G1, eight of them older than this act.
+
 **Revised:** 2026-09-05, against the acts of that date. The observation
 exchange landed, issue #435 at PR #440, and the per-position read landed,
 issue #436 at PR #444. The component catalogue, issue #437, was answered
 with a finding rather than a catalogue. Two facts the record spells
 corrected this document where it had guessed: the address carries the turn,
-and a position is a resident
-length rather than an ordinal.
+and a position is a resident length rather than an ordinal.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
@@ -101,18 +144,152 @@ Everything identifying the conditions lives in the run's own row:
   difference**
 - seed, and the full sampler configuration
 - device, and precision
+- **the engine's identity at build grain**: the libraries the decode ran
+  through, each by name and digest, with the build that produced them
 - the batching election
+- **the field election's depth**, because it sets the length of every
+  position's alternative list and the charter's section 4 compares them
 - the task, by source and identity
 - the declared boundary set
-- the parent run reference and branch position, where the run is a branch
+- the parent run reference and branch position, where the run is a branch,
+  **which are lineage and stand outside tuple equality**
 - whether a token was forced, and which
+
+**The engine is in the compound, so the row holds it.** The tuple is a model
+on a device under a kernel at a precision, and a divergence between two rows
+differing in both silicon and library revision names neither cause unless
+both are recorded. **The regime that deposits these identifiers is
+`weaver-analysis-PRD` section 3's**, which carries code identity beside the
+device model, the commit by hash, the toolchain and driver by pinned
+version, and the binaries and engine libraries by the driver's sha256. This
+row carries the same fact so a reading drawn from the store needs no
+deposit beside it to be read.
+
+**The row holds more than the tuple, and the difference is lineage.** The
+parent run reference and the branch position say where a run came from
+rather than what it ran under, per the charter's section 4, so **two rows
+differing only in them hold the same tuple** and remain comparable. Nothing
+else in this list is outside the compound. Were lineage inside it, a branch
+could never be reproduced against its parent, which is the comparison the
+staging surface exists to make.
 
 **A reading without its tuple is a reading of an unnamed compound.** The
 task is in this list for the same reason the artifact is: two runs of the
 same benchmark item under different suite versions are not the same task,
 and nothing else in the row would say so.
 
-### 2.3 The indexes
+### 2.3 The artifact
+
+The catalog the charter's section 3.6 surfaces. **Keyed by the artifact's
+weights identity rather than by a path**, because a path is where a file
+sits and an identity is what it is, and the same weights under two paths on
+two boxes are one artifact.
+
+**The identity is the corpus's existing one and this document defines no
+second**, because a catalog that dedupes on one rule while a lens refuses
+on another is two rules for one subject. **Its identity is the set of
+per-file content digests keyed by file name**, which is the shape
+`weaver-analysis-Spec` section 3 gives `fitted_for`'s
+`model_safetensors_sha256`: one digest for a model kept in one file, and a
+digest per shard keyed by shard name for a sharded one.
+
+**What the complete set is depends on the container, and both cases are
+named.** A safetensors model enumerates its shards in its own index,
+`model.safetensors.index.json`, which the analysis reader follows. **A
+sharded GGUF carries no index.** Its set is the siblings matching the
+`-NNNNN-of-NNNNN` pattern, which is how `weaver-spu-Spec` section 3's pin
+collects them, and a single-file GGUF is the one-file case unchanged. This
+catalog holds GGUFs, so the rule that names only an index would leave the
+format the box actually runs without one.
+
+**Equality is set equality and no order is imposed**, the map being keyed
+rather than sequenced. **A set missing a file the index names is unequal to
+the complete set** and therefore joins to nothing, which is the whole of
+what the incompleteness rule needs and asks for no rolled-up digest of this
+crate's own devising. The catalog dedupes on that set and on nothing else,
+and it is the grain section 2.2's tuple means by artifact identity, fine
+enough to separate two quantizations because their files differ.
+
+**The provenance chain is recorded and is not an identity.** A conversion
+or a quantization records its source artifact with the converter and the
+pin, so the chain says what an artifact was made from. It does not version
+a lens: `weaver-analysis-PRD` section 3 owns that and versions by the
+weights content hash, which a conversion changes. The chain is what makes
+an elected reuse across a conversion legible after the fact, per the
+charter's section 5, and this crate records the election rather than
+deriving it.
+
+Each row carries:
+
+- the artifact identity, derived as above
+- the identity **per file**, following the model's own index, each shard
+  under its own name and verified against it
+- the provenance: a repository and revision, or a source artifact with the
+  converter and pin that produced it
+- where it is present, by box, as an observation rather than a fact
+- the lens artifacts fitted to these weights, each versioned as
+  `weaver-analysis-PRD` section 3 versions them, by the weights content
+  hash
+- the reference cells taken against it
+
+**This is the join the run's row points at.** Section 2.2 holds artifact
+identity in the tuple so a reading names its conditions, and this table is
+what that identity resolves to. It is also where an elected lens reuse is
+legible, the fitted weights and the read weights both resolving here.
+**The join resolves to the complete set or to nothing**, so a lens
+relation and a
+reference cell relation each name one unambiguous artifact and never a
+shard of one.
+
+**Presence is a dated observation by a named reporter, and it is
+advisory.** Each entry carries the box, the reporter, and when it was last
+confirmed. A box that has not reported is unknown rather than empty,
+because this crate runs on one machine and the agents on another, and
+silence from a box that is merely offline is not evidence about its disk.
+
+**No load consults it.** The load resolves the artifact on the box it runs
+on and is refused there under that box's own rules. Presence here is an
+index for an operator choosing where to place a run, never the thing
+deciding whether the run may proceed: a gate built on a stale observation
+refuses a box that holds the artifact and admits one that lost it.
+
+**Nothing here fetches.** An entry says an artifact was seen, not that it
+can be obtained. Whether a missing one is fetchable is the provenance's
+question, answered by the repository and revision the row already carries.
+
+### 2.4 The recorded query
+
+Section 4 admits an open query surface on the condition that the query is
+recorded beside its result, and that condition needs somewhere to land.
+Each recorded query is its own row under its own identifier, carrying:
+
+- the query text as issued, verbatim
+- the runs it addressed, each by identity
+- the reader that served it, by name and version
+- **the lens artifact it read through, where it read one, and the weights
+  that lens was fitted to**
+- when it was taken
+
+**The result is not stored beside it.** A stored result would be a second
+truth about positions section 2.1 already holds, and it would go stale the
+moment a later ingest completed the run. The row stores what reruns the
+query, and the rerun is what produces the result again - which is the whole
+of what a quotable reading claims.
+
+**An elected reuse is recorded here and is visible in the reading.** Where
+the weights a lens was fitted to are not the run's own artifact, the
+operator elected the reuse rather than the tool inferring it, per the
+charter's section 5, and both identities stand in the row so a reader
+downstream sees an election rather than a fit. The catalog resolves each of
+them, which is what makes the election legible after the fact. **A reading
+whose lens was fitted to other weights and does not say so is the one thing
+this row exists to prevent.**
+
+**A query that cannot name every run it addressed is not recorded and not
+quotable.** Section 4's condition is that a second person can rerun it, and
+a reader that cannot say what it read cannot be rerun by anyone.
+
+### 2.5 The indexes
 
 ```text
 primary       (run, turn, position)
@@ -150,6 +327,14 @@ Three queries, and the schema of section 2 exists to make each an index hit.
 
 A surface that needs a fourth query is a surface this document has not
 described, and it returns here before it is built.
+
+**An open query surface is admissible on one condition: the query is
+recorded beside its result.** A reading is a thing a second person reruns,
+so a result whose query text was not stored is not quotable and this crate
+does not present it as one. **Section 2.4 is where it lands.** That keeps
+section 2.5's rule rather than spending it: the derivation is recorded
+rather than absent, and what section 2.5 forbids is a derivation nobody can
+find.
 
 ## 5. Staged experiments
 
@@ -207,42 +392,48 @@ every artifact the diff names resolves
 ```
 
 **A runner cannot ask.** A refusal discovered at three in the morning costs
-a batch window; the same refusal at authoring costs nothing.
+a batch window, and the same refusal at authoring costs nothing.
 
 ## 6. The surfaces
 
-One module each, and their destinations are the charter's section 3 and are
-not restated.
+One module each, the Experiment view and Models included: each is a surface
+with its own destination rather than a mode of a list beside it. Their
+destinations are the charter's section 3 and are not restated.
 
 **A surface that renders what is kept reads the store and nothing else** -
 Open a trace, Record, Experiments, and the returned half of Stage. That is
 what makes section 4's three reads sufficient for them.
 
-**A surface that authors or exchanges also holds a seam**, and section 7
-names each: Compose writes its draft and asks `validate`; Live carries a
-turn to the gate and reads the measurement that comes back; Agents drives
-the lifecycle verbs and reads the observation exchange; Stage submits a
-registered experiment to the queue. **None of them writes the registry** -
+**A surface that authors or exchanges also holds a seam.** Compose writes
+its draft and asks `validate`. Live carries a turn to the gate and reads
+the measurement that comes back. Agents drives the lifecycle verbs and
+reads the observation exchange. Section 7 names those three. **Stage
+submits a registered experiment to the queue, and section 7 names no queue
+seam**, the queue being the harness's per the charter's section 3.5 and
+this crate's part in it a write the runner drains rather than an exchange
+it holds open. **None of them writes the registry** -
 the write path of section 3 is the only writer - and none reads the agent
 except through a seam that is named.
 
 **The state a surface holds is a query, never a location.** A filter chip is
-a clause; clearing it widens the list in place. A card carries the operator
-into a list with a chip already set, and no surface has a variant that
-differs only by a pre-applied filter.
+a clause, and clearing it widens the list in place. A card carries the
+operator into a list with a chip already set, and no surface has a variant
+that differs only by a pre-applied filter.
 
 **A timeline is drawn on ordinals and a click addresses a position, and the
 surface converts between them.** The per-generation series is indexed by the
-ordinal within its generation; the field is addressed by the resident length
-at the draw. They are different coordinates and the record spells both, so
-the conversion is the surface's to make and to make once. A view that passes
-an ordinal where a position is expected reads a different token and says
+ordinal within its generation, and the field is addressed by the resident
+length at the draw. They are different coordinates and the record spells
+both, so the conversion is the surface's to make and to make once. A view
+that passes an ordinal where a position is expected reads a different token
+and says
 nothing about it.
 
 **Absence renders as absence.** Entropy rides every generation
-unconditionally; surprisal rides only where its election stands. A surface
-that plots an absent surprisal as zero is lying about the election, so where
-the election did not stand the surface says so rather than drawing a floor.
+unconditionally, and surprisal rides only where its election stands. A
+surface that plots an absent surprisal as zero is lying about the election,
+so where the election did not stand the surface says so rather than drawing
+a floor.
 
 **A reading is produced only where the record's own bracket permits it.** A
 serving record carries no gate. A diagnostic record carries one, and a
@@ -312,6 +503,9 @@ cell record like any other.
 | a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
 | nothing is computed at read time | review, over the three reads |
+| a recorded query names every run it addressed | perturbation: drop one, the row refuses |
+| an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
+| presence never gates a load | review, over the load path: this crate's catalog is not read there |
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
 | a forced run is marked in the record | perturbation: strip the mark, the read refuses |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
@@ -323,13 +517,24 @@ act that lands it states what removal makes it fail and confirms it does.
 ## 10. Open elections
 
 - **The store engine and its migrations.** Postgres is the charter's
-  election; the schema's expression is this document's and lands with the
-  first code act.
+  election, and the schema's expression is this document's and lands with
+  the first code act.
 - **The field election's depth**, which is the charter's open cell and not
   this crate's to set.
 - **Whether surprisal and entropy draw as one timeline or two.**
 - **Whether the preset ladder is a picker or a wizard.**
-- **Whether this crate scores**, which the charter's section 9 holds open
-  and which decides whether a score column exists in section 2.2 at all.
+- **Who reports an artifact's presence on a box**, which the charter's
+  section 9 holds open. Section 2.3 stores the entry with its reporter and
+  its date whichever answer lands, and no read of it gates anything, so
+  this document is not blocked on the choice.
+- **Whether this crate scores a correctness verdict**, which the charter's
+  section 9 holds open. The reproduction verdict is not open and is not a
+  score: it is the projected comparison of two rows this crate holds, on
+  the fields the charter's section 4 names, and section 2.2 carries the
+  tuple that decides whether equality is claimed or a divergence is
+  reported. What stays open is whether a correctness column exists beside
+  it. Where one does, **the scorer is named on the verdict and never in the
+  run's tuple**, so a second scorer adds a verdict rather than changing what
+  the run was.
 - **The word "cell"**, which carries a second sense elsewhere in the corpus
   and must be settled once rather than twice.
