@@ -4,130 +4,134 @@
 one's Spec pass. Code is written against it under the gates of Working Process section
 6.
 
-**Date filed:** 2026-08-01 **Revised:** 2026-09-04, fourth of this date, a session
-stands from a record. Section 2 gains `restore`, optional, the record the session stands
-from and the cut, a run and a turn within it, and section 4's enter carries its lineage
-resolved beside `stack`, never the record's path, the digests of the organ binaries
-admin started. Per issue #432. **Revised:** 2026-09-04, second of this date, admin is
-the sink field's reader. Section 2 names it beside the discriminant's argument, per
-`weaver-admin-Spec` section 5 and issue #311. **Revised:** 2026-09-04, first of this
-date, the identity field is the seed. Section 2 states that `identity` seeds the
-session's first load and that the store governs every load after it where a state member
-stands, per `weaver-state-PRD` section 4 as revised this date and issue #422. The shape
-and the refusals are unchanged. **Revised:** 2026-09-01, the column registry's refusals
-are typed. `TokenRefusal` gains `ColumnPermissionAbsent`, `ColumnReadoutUnelected`, and
-`ColumnUndeclared`, the three arms of `weaver-spu-PRD` section 13.7's open registry in
-that clause's own order - no permission, no readout election, no column in the family's
-declaration - each a unit variant because the fact refused carries no value the record
-holds nowhere else, on the registry-typing pattern the re-feed's arms set. The refused
-ask is `Open`, which `TokenAsk` already names, so no ask joins.
+**Date filed:** 2026-08-01
+**Revised:** 2026-09-04, fourth of this date, a session stands from a record. Section 2
+gains `restore`, optional, the record the session stands from and the cut, a run and a
+turn within it, and section 4's enter carries its lineage resolved beside `stack`, never
+the record's path, the digests of the organ binaries admin started. Per issue #432.
+
+**Revised:** 2026-09-04, second of this date, admin is the sink field's reader. Section
+2 names it beside the discriminant's argument, per `weaver-admin-Spec` section 5 and
+issue #311.
 
 **Revised:** 2026-09-04, second of this date, the observation exchange lands. Section
 4's `lifecycle-directive` gains `Observe`, its `State` answer and `AgentSummary` gain
 `load`, `LoadFacts` and `Composer` are declared, `EnterPayload` gains the declaration's
 digest, and `StateNotObservable` leaves `lifecycle-refusal` on the scheduled death
 section 4.2 gave it on 2026-08-06. Per issue #435.
-**Revised:** 2026-08-31, fifth of this date, the permission members take a
-parse the seam survives. The unknown-field mechanism the second entry of
-this date elected for `refeed_permission`, and the column entry for its
-sibling, is withdrawn as falsified by the build: one type serves the
-declaration and the instruction, so a parse that refuses the member refuses
-the instruction admin authored at the next seam, and the first admit across
-the coded seam died at exactly that parse. Both members take `default`
-instead, and the declaration's refusal moves to admin's inventory, the
-resolution site, which refuses a declaration granting either member as
-`ConfigInvalid` naming the field, per `weaver-admin-Spec` section 7. A
-written `false` is inert, overwritten at construction from the resolved
-kind and indistinguishable from absence, which is the bound `default` buys
-and the reason the refusal is of the grant alone. This date's entries also
-move to the banner's head in this act, having accumulated below entries of
-2026-08-21, where newest-first does not file them.
-**Revised:** 2026-08-31, fourth of this date, the registry's refusals are
-typed. `TokenRefusal` gains `RefeedPermissionAbsent` and `RefeedPathEmpty`,
-the two arms of `weaver-spu-PRD` section 13.14's registry, each a unit
-variant because the fact refused carries no value the record holds nowhere
-else. `TokenAsk` gains `ReFeed`, so the clerking rule of 2026-08-22 names
-the refused ask like every other.
-**Revised:** 2026-08-31, third of this date, the re-feed carries the rendered
-form. `ReFeed`'s middle member read `delta: Vec<Message>`, which would route
-the replay through the family renderer - the exact re-rendering the ruling
-of 2026-08-12 forbids, the record holding the rendered form precisely so a
-replay does not re-render through a template that may have changed. The
-member is `rendered: String`, the contribution as `model.request` recorded
-it, tokenized and appended with no family rendering on the way.
-**Revised:** 2026-08-31, second of this date, the re-feed takes its shapes.
-Per `weaver-spu-PRD` section 13.14 and the decode contract's sixth exchange.
-`TokenDirective` gains `ReFeed`, the turn, the recorded delta, and the
-recorded path. `TokenAnswer` gains `ReFed`, carrying the generation shape
-under its own arm so a supplied path can never wear a sampled path's
-clothes: the payload is shared and the variant is not, which is the whole
-of what the type buys. `DecoderInstruction` gains `refeed_permission`,
-admin's member beside `column_permission`, named individually per the
-no-bundle rule, set from the binding's kind, and refused in a declaration
-under the unknown-field rule like its sibling.
 
-**Revised:** 2026-08-31, the column takes its shapes. Per the operator's
-ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as amended.
-`DecoderInstruction` gains `column_permission`, admin's member and never the
-declaration's: admin sets it from the binding's kind, and the parse refuses
-it in a declaration under the unknown-field rule, so an operator cannot
-write what only the binding may derive. `TokenDirective::Open` gains
-`column_ask`, the once-at-open cadence that charter clause elects.
-`TokenAnswer` gains `Column`, the decode seam's third intermediate, carrying
-its position like `Field` and the layers' values layer-major, crossing as
-bare JSON under section 4.4's provisional encoding, the efficient framing
-staying `weaver-spu-Spec` section 12's open election. Absent where the ask
-is absent and never present-and-empty, the field's own rule.
+**Revised:** 2026-09-04, first of this date, the identity field is the seed. Section 2
+states that `identity` seeds the session's first load and that the store governs every
+load after it where a state member stands, per `weaver-state-PRD` section 4 as revised
+this date and issue #422. The shape and the refusals are unchanged.
 
-**Revised:** 2026-08-28, sixth of this date, the identity's refusals are
-enumerated and a fourth is added. Sections 2 and 5 state that a message
-carries at least one `Text` block and that each carries text: an empty string
-in a licensed block passed both prior checks and seated the same nothing an
-empty list would have. Section 5's entry names each refusal with its own
-watch rather than describing two and citing one.
+**Revised:** 2026-09-04, first of this date, the store election reaches the declaration.
+`AgentConfig` gains `state_store`, optional, its absence meaning the embedded engine per
+`weaver-state-PRD` section 4 as revised this date, its `engine` closed at three cases,
+and `database` and `role` required under the service engine and refused under the other
+two. `EnterPayload` carries it resolved beside the state election. Per issue #411.
 
-**Revised:** 2026-08-28, fifth of this date, the parse judges the block
-beside the role. Sections 2 and 5 state that an identity message carries
-`Text` and nothing else, the door refusing both and the role alone having left
-half the refusal at runtime.
+**Revised:** 2026-09-01, the column registry's refusals are typed. `TokenRefusal` gains
+`ColumnPermissionAbsent`, `ColumnReadoutUnelected`, and `ColumnUndeclared`, the three
+arms of `weaver-spu-PRD` section 13.7's open registry in that clause's own order - no
+permission, no readout election, no column in the family's declaration - each a unit
+variant because the fact refused carries no value the record holds nowhere else, on the
+registry-typing pattern the re-feed's arms set. The refused ask is `Open`, which
+`TokenAsk` already names, so no ask joins.
 
-**Revised:** 2026-08-28, fourth of this date, the review seat's findings land.
-The parse's rule stands and the two families that name no system turn fold it
-rather than refusing, per the operator's ruling. Section 5's test joins the
-perturbation enumeration its peers sit in, and that section's claim counts are
-corrected from seventeen and ten to twenty and thirteen, two thirds of the
-drift predating this act.
+**Revised:** 2026-08-31, fifth of this date, the permission members take a parse the
+seam survives. The unknown-field mechanism the second entry of this date elected for
+`refeed_permission`, and the column entry for its sibling, is withdrawn as falsified by
+the build: one type serves the declaration and the instruction, so a parse that refuses
+the member refuses the instruction admin authored at the next seam, and the first admit
+across the coded seam died at exactly that parse. Both members take `default` instead,
+and the declaration's refusal moves to admin's inventory, the resolution site, which
+refuses a declaration granting either member as `ConfigInvalid` naming the field, per
+`weaver-admin-Spec` section 7. A written `false` is inert, overwritten at construction
+from the resolved kind and indistinguishable from absence, which is the bound `default`
+buys and the reason the refusal is of the grant alone. This date's entries also move to
+the banner's head in this act, having accumulated below entries of 2026-08-21, where
+newest-first does not file them.
 
-**Revised:** 2026-08-28, third of this date, the identity role's check lands
-and the rule stops being owed. Section 2 states the refusal at the parse with
-its field name, section 5 moves the entry from enforced-by-nothing to a
-perturbation-verified test, and the assertion record withheld two days ago
-lands with the instrument it names. The gate dissolved when the operator
-ruled a re-baseline on one frozen build, retiring the deposits the old role
-was held for. Item 2 of issue #369, code half.
+**Revised:** 2026-08-31, fourth of this date, the registry's refusals are typed.
+`TokenRefusal` gains `RefeedPermissionAbsent` and `RefeedPathEmpty`, the two arms of
+`weaver-spu-PRD` section 13.14's registry, each a unit variant because the fact refused
+carries no value the record holds nowhere else. `TokenAsk` gains `ReFeed`, so the
+clerking rule of 2026-08-22 names the refused ask like every other.
 
-**Revised:** 2026-08-28, second of this date, the identity prefix's role is
-judged where declarations are judged. Section 2 states that every identity
-message carries `role: system` and names the parse as the place the rule
-binds; section 5 records that the instrument is owed rather than in force,
-and why it waits on issue #346. Item 2 of issue #369, docs half.
+**Revised:** 2026-08-31, third of this date, the re-feed carries the rendered form.
+`ReFeed`'s middle member read `delta: Vec<Message>`, which would route the replay
+through the family renderer - the exact re-rendering the ruling of 2026-08-12 forbids,
+the record holding the rendered form precisely so a replay does not re-render through a
+template that may have changed. The member is `rendered: String`, the contribution as
+`model.request` recorded it, tokenized and appended with no family rendering on the way.
 
-**Revised:** 2026-08-28, the eleventh case is renamed to the condition it
-reports. `identity_prefix_unrecorded` rather than a role-specific name, the
-role being one of four ways the record fails to account for a seated prefix.
-Per the review seat on PR 371.
+**Revised:** 2026-08-31, second of this date, the re-feed takes its shapes. Per
+`weaver-spu-PRD` section 13.14 and the decode contract's sixth exchange.
+`TokenDirective` gains `ReFeed`, the turn, the recorded delta, and the recorded path.
+`TokenAnswer` gains `ReFed`, carrying the generation shape under its own arm so a
+supplied path can never wear a sampled path's clothes: the payload is shared and the
+variant is not, which is the whole of what the type buys. `DecoderInstruction` gains
+`refeed_permission`, admin's member beside `column_permission`, named individually per
+the no-bundle rule, set from the binding's kind, and refused in a declaration under the
+unknown-field rule like its sibling.
 
-**Revised:** 2026-08-27, the fault case set widens to eleven. Section 4.2's
-arithmetic follows `weaver-harness-PRD` section 5 from four harness cases to
-five, the eleventh being the identity door's refused role, per issue #369.
+**Revised:** 2026-08-31, the column takes its shapes. Per the operator's ruling of
+2026-08-30 and `weaver-spu-PRD` section 13.7 as amended. `DecoderInstruction` gains
+`column_permission`, admin's member and never the declaration's: admin sets it from the
+binding's kind, and the parse refuses it in a declaration under the unknown-field rule,
+so an operator cannot write what only the binding may derive. `TokenDirective::Open`
+gains `column_ask`, the once-at-open cadence that charter clause elects. `TokenAnswer`
+gains `Column`, the decode seam's third intermediate, carrying its position like `Field`
+and the layers' values layer-major, crossing as bare JSON under section 4.4's
+provisional encoding, the efficient framing staying `weaver-spu-Spec` section 12's open
+election. Absent where the ask is absent and never present-and-empty, the field's own
+rule.
 
-**Revised:** 2026-08-26, the refusal block catches up to its fifth case.
-`TokenRefusal` gained `UnremovableSpan` with the wire on 2026-08-22,
-carrying the span it refused beside the bounds it was judged against so the
-loop learns which edge it crossed, and this section's prose has argued the
-case since that date while the block held four - the ruling reaching the
-banner and the prose and never the enumeration beside them, the drift the
-audit of 2026-08-26 names as the corpus's dominant failure, caught here.
+**Revised:** 2026-08-28, sixth of this date, the identity's refusals are enumerated and
+a fourth is added. Sections 2 and 5 state that a message carries at least one `Text`
+block and that each carries text: an empty string in a licensed block passed both prior
+checks and seated the same nothing an empty list would have. Section 5's entry names
+each refusal with its own watch rather than describing two and citing one.
+
+**Revised:** 2026-08-28, fifth of this date, the parse judges the block beside the role.
+Sections 2 and 5 state that an identity message carries `Text` and nothing else, the
+door refusing both and the role alone having left half the refusal at runtime.
+
+**Revised:** 2026-08-28, fourth of this date, the review seat's findings land. The
+parse's rule stands and the two families that name no system turn fold it rather than
+refusing, per the operator's ruling. Section 5's test joins the perturbation enumeration
+its peers sit in, and that section's claim counts are corrected from seventeen and ten
+to twenty and thirteen, two thirds of the drift predating this act.
+
+**Revised:** 2026-08-28, third of this date, the identity role's check lands and the
+rule stops being owed. Section 2 states the refusal at the parse with its field name,
+section 5 moves the entry from enforced-by-nothing to a perturbation-verified test, and
+the assertion record withheld two days ago lands with the instrument it names. The gate
+dissolved when the operator ruled a re-baseline on one frozen build, retiring the
+deposits the old role was held for. Item 2 of issue #369, code half.
+
+**Revised:** 2026-08-28, second of this date, the identity prefix's role is judged
+where declarations are judged. Section 2 states that every identity message carries
+`role: system` and names the parse as the place the rule binds; section 5 records that
+the instrument is owed rather than in force, and why it waits on issue #346. Item 2 of
+issue #369, docs half.
+
+**Revised:** 2026-08-28, the eleventh case is renamed to the condition it reports.
+`identity_prefix_unrecorded` rather than a role-specific name, the role being one of
+four ways the record fails to account for a seated prefix. Per the review seat on PR
+371.
+
+**Revised:** 2026-08-27, the fault case set widens to eleven. Section 4.2's arithmetic
+follows `weaver-harness-PRD` section 5 from four harness cases to five, the eleventh
+being the identity door's refused role, per issue #369.
+
+**Revised:** 2026-08-26, the refusal block catches up to its fifth case. `TokenRefusal`
+gained `UnremovableSpan` with the wire on 2026-08-22, carrying the span it refused
+beside the bounds it was judged against so the loop learns which edge it crossed, and
+this section's prose has argued the case since that date while the block held four - the
+ruling reaching the banner and the prose and never the enumeration beside them, the
+drift the audit of 2026-08-26 names as the corpus's dominant failure, caught here.
 
 **Revised:** 2026-08-25, this Spec is named the election's shape authority.
 `weaver-trace` holds a second `Election` of this shape because it links nothing, and
@@ -139,24 +143,25 @@ divergence of shape is a defect against section 2 of this document, per G5. **Fi
 spellings are each renderer's**: this declaration renames for the operator's file and
 `weaver-trace` renders for a seam that already parses it, so the record's `all_kinds` is
 not a divergence. Unifying the types is not owed. Per issue 347.
-**Revised:** 2026-08-24, third of this date, the diagnostic member composes
-inside. The entry below is reversed rather than amended and stands so the
-reversal is visible: `trace_sink` goes back to required under either kind,
-every binding declaring a sink and the kind selecting the mechanism the
-harness authors through rather than whether it authors, per
-`weaver-agents-PRD` section 6 as ruled this date. The optional count returns
-to three by that rule and one by the conditional one. `gate_instruction` is
+
+**Revised:** 2026-08-24, third of this date, the diagnostic member composes inside. The
+entry below is reversed rather than amended and stands so the reversal is visible:
+`trace_sink` goes back to required under either kind, every binding declaring a sink and
+the kind selecting the mechanism the harness authors through rather than whether it
+authors, per `weaver-agents-PRD` section 6 as ruled this date. The optional count
+returns to three by that rule and one by the conditional one. `gate_instruction` is
 unaffected and stays conditional.
-**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
-record. `trace_sink` becomes an option and joins `gate_instruction` under the
-same conditional rule, a serving binding requiring each and a diagnostic
-binding excluding each, per `weaver-agents-PRD` section 6 as amended this date.
-An absent sink is stated as not a defaulted one, so no reader invents a path.
-The optional count was stale before this entry and is corrected in the same
-pass, reading two where the paragraph then named three, `binding_kind` having
-joined `state_election` and `loop_file` without the count following it. The
-entry below gains the ordinal the convention asks for, which it was filed
-without.
+
+**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no record.
+`trace_sink` becomes an option and joins `gate_instruction` under the same conditional
+rule, a serving binding requiring each and a diagnostic binding excluding each, per
+`weaver-agents-PRD` section 6 as amended this date. An absent sink is stated as not a
+defaulted one, so no reader invents a path. The optional count was stale before this
+entry and is corrected in the same pass, reading two where the paragraph then named
+three, `binding_kind` having joined `state_election` and `loop_file` without the count
+following it. The entry below gains the ordinal the convention asks for, which it was
+filed without.
+
 **Revised:** 2026-08-24, first of this date, the kind takes its shape. `BindingKind`
 joins the config as an option whose absence means serving, `gate_instruction` becomes an
 option whose presence follows the resolved kind, and `EnterPayload` carries
@@ -165,227 +170,224 @@ case. The refusal question the contract left to this round is answered by shape:
 directive disagreeing with its kind cannot be constructed. Per `weaver-agents-PRD`
 section 6 as amended this date and the contract act of the same date.
 
-**Revised:** 2026-08-22, second of this date, the refusal record takes its
-shape. `RefusalRecord` names the seam and carries that seam's own case, with
-the ask beside it where the seam's asks reach no event of their own, per
-`weaver-types-PRD` section 2.1's clause of this date. `TokenAsk` and
-`LifecycleAsk` arrive with it. Classify carries no ask, its content already
-reaching the record under its own kind.
-**Revised:** 2026-08-22, the elision takes its wire shape.
-`TokenDirective` gains `Elide { from, to }`, a half-open span of resident
-positions, and `TokenAnswer` gains `Elided` carrying the resident counts
-either side as `Flushed` does, per the decode contract as amended this date.
-The span is state and never the record.
+**Revised:** 2026-08-22, second of this date, the refusal record takes its shape.
+`RefusalRecord` names the seam and carries that seam's own case, with the ask beside it
+where the seam's asks reach no event of their own, per `weaver-types-PRD` section 2.1's
+clause of this date. `TokenAsk` and `LifecycleAsk` arrive with it. Classify carries no
+ask, its content already reaching the record under its own kind.
+
+**Revised:** 2026-08-22, the elision takes its wire shape. `TokenDirective` gains `Elide
+{ from, to }`, a half-open span of resident positions, and `TokenAnswer` gains `Elided`
+carrying the resident counts either side as `Flushed` does, per the decode contract as
+amended this date. The span is state and never the record.
+
 **Revised:** 2026-08-21, the decoder instruction carries a third election.
-`DecoderInstruction` gains `surprisal_election`, a bare boolean beside the
-field's option, per `weaver-types-PRD` section 2.1's clause of this date on
-issue #258. A flag rather than an option because a per-position reading has
-no size to declare.
-**Revised:** 2026-08-21, the field takes its shapes. `DecoderInstruction`
-gains `field_election`, optional because the election is, carrying the
-depth the operator declared per `weaver-spu-PRD` section 13.11.
-`TokenAnswer` gains `Field`, the decode seam's second intermediate, which
-carries its own position because a token message crosses per renderable
-piece and cannot pair one. `Candidate` is the ranked pair. Absent where
-the election is absent and never present-and-empty, the rule the
-measurement's unproduced readings already follow.
-**Revised:** 2026-08-20, second of this date, the loop joins the
-declaration. Per the operator's ruling on issue #243: `AgentConfig`
-gains `loop_file`, optional beside `state_election` and by the same
-exception, `weaver-harness-PRD` section 2 ruling its absence as the
-worker's own default loop. Present, it names the loop file the agent's
-worker runs, the loop being a member of the agent's harness and unique
-to it. The carriage is `weaver-admin-Spec` section 6's, in the same
-act.
-**Revised:** 2026-08-20, the segment series takes shape. Per the decode
-contract's amendment on issue #236: a frame past the envelope crosses as
-a preamble spelling its count and byte length, then raw octet slices
-reassembled to the one frame, recognized by the `kind` member the
-preamble lacks, bounded in total at eight mebibytes as
-`DECODE_MESSAGE_BOUND`. Section 4.4 carries the spelling beside the
-encoding it segments.
-**Revised:** 2026-08-19, seventh of this date, the classify role joins the
-declaration. `SpuInstruction` gains `classify`, optional by presence per
-`weaver-spu-PRD` section 15.3, carrying the model binding at the smaller
-size: the second role key, arriving with the act that builds it exactly as
-section 2's role-not-slot rule promised. The external citation to
-`weaver-spu-Spec`'s open elections follows that document's renumbering to
+`DecoderInstruction` gains `surprisal_election`, a bare boolean beside the field's
+option, per `weaver-types-PRD` section 2.1's clause of this date on issue #258. A flag
+rather than an option because a per-position reading has no size to declare.
+
+**Revised:** 2026-08-21, the field takes its shapes. `DecoderInstruction` gains
+`field_election`, optional because the election is, carrying the depth the operator
+declared per `weaver-spu-PRD` section 13.11. `TokenAnswer` gains `Field`, the decode
+seam's second intermediate, which carries its own position because a token message
+crosses per renderable piece and cannot pair one. `Candidate` is the ranked pair. Absent
+where the election is absent and never present-and-empty, the rule the measurement's
+unproduced readings already follow.
+
+**Revised:** 2026-08-20, second of this date, the loop joins the declaration. Per the
+operator's ruling on issue #243: `AgentConfig` gains `loop_file`, optional beside
+`state_election` and by the same exception, `weaver-harness-PRD` section 2 ruling its
+absence as the worker's own default loop. Present, it names the loop file the agent's
+worker runs, the loop being a member of the agent's harness and unique to it. The
+carriage is `weaver-admin-Spec` section 6's, in the same act.
+
+**Revised:** 2026-08-20, the segment series takes shape. Per the decode contract's
+amendment on issue #236: a frame past the envelope crosses as a preamble spelling its
+count and byte length, then raw octet slices reassembled to the one frame, recognized by
+the `kind` member the preamble lacks, bounded in total at eight mebibytes as
+`DECODE_MESSAGE_BOUND`. Section 4.4 carries the spelling beside the encoding it
+segments.
+
+**Revised:** 2026-08-19, seventh of this date, the classify role joins the declaration.
+`SpuInstruction` gains `classify`, optional by presence per `weaver-spu-PRD` section
+15.3, carrying the model binding at the smaller size: the second role key, arriving with
+the act that builds it exactly as section 2's role-not-slot rule promised. The external
+citation to `weaver-spu-Spec`'s open elections follows that document's renumbering to
 section 12 in the same act.
-**Revised:** 2026-08-19, sixth of this date, the label trio takes shape.
-Section 4.5 holds the classify contract's trio the way 4.4 holds the
-decode contract's: the cases spelled once from the contract's enumeration,
-the directive and refusal internally tagged and the answer adjacent
-because the fault's account splices, and JSON as a settled election
-against the loop 0 criterion, there being no hot path to measure. Arrives
-with the floor half of the classifier's owed acts, per the contract's
-section 9.
+
+**Revised:** 2026-08-19, sixth of this date, the label trio takes shape. Section 4.5
+holds the classify contract's trio the way 4.4 holds the decode contract's: the cases
+spelled once from the contract's enumeration, the directive and refusal internally
+tagged and the answer adjacent because the fault's account splices, and JSON as a
+settled election against the loop 0 criterion, there being no hot path to measure.
+Arrives with the floor half of the classifier's owed acts, per the contract's section 9.
+
 **Revised:** 2026-08-19, fifth of this date, the flush names its cut.
-`TokenDirective::Flush` gains `keep`, the resident length the session
-returns to, per the operator's ruling that the cleanup line is the
-loop's and the decode contract's amended flush exchange. The cut is
-bounded rather than refused, below by the identity prefix and above by
-the resident count, the confirmation's standing counts carrying what
+`TokenDirective::Flush` gains `keep`, the resident length the session returns to, per
+the operator's ruling that the cleanup line is the loop's and the decode contract's
+amended flush exchange. The cut is bounded rather than refused, below by the identity
+prefix and above by the resident count, the confirmation's standing counts carrying what
 held, so the answer's shape does not move.
-**Revised:** 2026-08-19, fourth of this date, the generation reports the
-session's fullness. Section 4.4's `Generation` gains `resident` and
-`capacity`, the session's token count and its ceiling as the generation
-closed, per issue #221's arc: the loop that manages the context must see
-pressure before the wall, and the wall's own refusal was the only carrier
-of either number.
-**Revised:** 2026-08-19, third of this date, the finish tells the truth.
-Section 4.4's `Finish` gains `Length`: the generation ended because the
-turn's token limit was reached, a third fact the two-case set flattened
-into `Completed`, which issue #218 found from the record's own evidence -
-a capped answer reporting itself complete. The trace's mirror and the
-close's member move in the same act.
-**Revised:** 2026-09-04, first of this date, the store election reaches the declaration.
-`AgentConfig` gains `state_store`, optional, its absence meaning the embedded
-engine per `weaver-state-PRD` section 4 as revised this date, its `engine`
-closed at three cases, and `database` and `role` required under the service
-engine and refused under the other two. `EnterPayload` carries it resolved
-beside the state election. Per issue #411.
-**Revised:** 2026-08-19, the tee's election reaches the declaration.
-`AgentConfig` gains `state_election`, the one optional field this Spec
-carries, its absence meaning the ruled default election per
-`weaver-state-PRD` section 4, which is the exception the required-field
-rule itself names: a charter saying a field is optional and saying what
-its absence means. `StateElection` and `ElectedKindConfig` join the
-section, `EnterPayload` carries the resolved election to the worker, and
-the supplies change lands in `weaver-admin-harness-contract` in the same
-act.
-**Revised:** 2026-08-17, the `Generation` subsection's restatement of the
-measurement's enumeration follows the decode contract's #129 correction: the
-template identity is the request's member, and the sentence names itself a
-restatement so the authority stays with the contract.
-**Revised:** 2026-08-16, second of that date, a held unit name is its own
-refusal. `LifecycleRefusal` gains `PriorUnitUnreaped`, because `BindFailed` was
-answering for two conditions a state ask already tells apart: a unit that runs
-with an unreachable socket, where a bind is what failed, and a unit whose
-process exited non-zero, where a held name is what refuses.
-**Revised:** 2026-08-16, the declaration carries what a binary left movable.
-`DecoderInstruction` gains `tunable_values`, a name-keyed map of numbers that is
-the route `Disposition::OperatorTunable` names and had never been built. A map
-rather than a field per parameter because which parameters a binary leaves
-tunable is that binary's election and moves with a recompile, so a floor type
-enumerating them would move with every deployment that changed its mind.
-**Revised:** 2026-08-12, fourth of this date, the encoding rides with the
-type. One sentence lands with the gate's turn-half act: the frame encoding's
-implementation is the floor's, beside the type, one canonical form for every
-party, owed by the wiring act.
-**Revised:** 2026-08-12, third of this date, the frame's shape closes.
-`TurnFrame` carries its octets base64-encoded in one member, elected at
-section 4.1 by argument rather than the deferred measurement, per the
-operator's ruling of this date: no party validates a line before it crosses,
-so a splice would convert a refused turn into a channel fault that ends
-service. Section 6's bullet closes, one perturbation assertion lands, and
-the code's empty placeholder gains its member with the wiring act.
-**Revised:** 2026-08-12, second of this date, the request is the turn's
-contribution. Per the operator's ruling closing issue 124, `Generation`'s
-`request` member carries the turn's delta as rendered, the full effective
-context being the accumulation the record determines. No shape moves, and
-the wording follows `weaver-trace-PRD` section 3.2 as narrowed.
-**Revised:** 2026-08-12, the receipt retires and `Received` leaves the trio.
-Per the decode contract's second ruling of this date, the SPU's fault report
-is the seam's one emission and takes no answer, so the `TokenAnswer` case
-that closed it as an exchange is a case nothing would construct, the
-reserved slot apex section 7 forbids in data. Section 4.4 drops the case
-and states the report's standing: an emission owed nothing back, its wire
-case arriving with `FaultReport`'s shape, which section 6 holds open.
-**Revised:** 2026-08-17, second of that date, the fault report takes its
-shape. Section 6's election closes at section 4.2: a typed `case` against the
-three charters' closed nine, and an organ-rendered `account` the harness
-splices, apex section 5.2's custody rule deciding the split. The token trio
-gains the emission's `Fault` case, the wire case the entry below always said
-would arrive with the shape, a case of the answer that closes no exchange and
-answers nothing. The run bracket's payload question is settled by the same
-judgment and recorded with the closed election, its two reopenings named as
+
+**Revised:** 2026-08-19, fourth of this date, the generation reports the session's
+fullness. Section 4.4's `Generation` gains `resident` and `capacity`, the session's
+token count and its ceiling as the generation closed, per issue #221's arc: the loop
+that manages the context must see pressure before the wall, and the wall's own refusal
+was the only carrier of either number.
+
+**Revised:** 2026-08-19, third of this date, the finish tells the truth. Section 4.4's
+`Finish` gains `Length`: the generation ended because the turn's token limit was
+reached, a third fact the two-case set flattened into `Completed`, which issue #218
+found from the record's own evidence - a capped answer reporting itself complete. The
+trace's mirror and the close's member move in the same act.
+
+**Revised:** 2026-08-19, the tee's election reaches the declaration. `AgentConfig` gains
+`state_election`, the one optional field this Spec carries, its absence meaning the
+ruled default election per `weaver-state-PRD` section 4, which is the exception the
+required-field rule itself names: a charter saying a field is optional and saying what
+its absence means. `StateElection` and `ElectedKindConfig` join the section,
+`EnterPayload` carries the resolved election to the worker, and the supplies change
+lands in `weaver-admin-harness-contract` in the same act.
+
+**Revised:** 2026-08-17, the `Generation` subsection's restatement of the measurement's
+enumeration follows the decode contract's #129 correction: the template identity is the
+request's member, and the sentence names itself a restatement so the authority stays
+with the contract.
+
+**Revised:** 2026-08-17, second of that date, the fault report takes its shape. Section
+6's election closes at section 4.2: a typed `case` against the three charters' closed
+nine, and an organ-rendered `account` the harness splices, apex section 5.2's custody
+rule deciding the split. The token trio gains the emission's `Fault` case, the wire case
+the entry below always said would arrive with the shape, a case of the answer that
+closes no exchange and answers nothing. The run bracket's payload question is settled by
+the same judgment and recorded with the closed election, its two reopenings named as
 owed to the act that builds the load line's mechanism.
-**Revised:** 2026-08-11, third of that date, the model events splice.
-`Generation`'s `rendered` member becomes `request` and carries the model.request
-content whole, the rendered prompt with its template and effective sampling,
-because the custody act makes `model.request` and `model.measurement` spliced
-payloads the SPU renders and the harness carries opaque. No case set moves, the
-trio's shape unchanged but for the member's name and widened content.
-**Revised:** 2026-08-11, the seam streams. `TokenAnswer` gains its `Token`
-case, the intermediate the decode contract's streaming ruling of this date
-enumerates, any number preceding the close and none closing, the identifier
-a bare `u32` and the piece the family's rendering of that one token.
-`Generation` carries `request` and `measurement` as two spliced members, one
-per record box, the request being the model.request content whole and renamed
-from the `rendered` of one act ago now the custody act of 2026-08-11 makes the
-whole request the SPU's to render. The decoder's
-section gains the `identity` field, the open exchange's canonical messages
-as configuration rather than history, required with an empty list
-legitimate, interior to the section with no vocabulary node moving.
-**Revised:** 2026-08-10, second of that date. The shared tagging test of section
-4.3 gains its fourth arm, identical in `weaver-traits-Spec` section 3 so the
-floor cannot drift: an enum with a variant wrapping a struct that carries a
-spliced member is adjacently tagged, the trio's code act having measured
-internal tagging failing the round trip at deserialization, an invalid-type
-error at the splice, where the rule's rationale named only write-side
-failures. Applied at section 4.3: the token directive and refusal internally
-tagged, `Finish` fieldless, and `TokenAnswer` adjacent under the new arm.
-**Revised:** 2026-08-10. The SPU's configuration becomes a section:
-`spu-instruction` holds a `decoder` subsection carrying the model binding and
-the readout election together, and the section is what `EnterPayload` and
-`Admit` now carry, which closes the route the charter's revision of this date
-names, the election having been declared, held, and given no seam to cross. The
-gate's instruction is the pattern followed rather than a precedent invented. In
-the same act, `Generation` settles at section 4.4 and its bullet leaves section
-6: the emission and the finish are shaped here because the harness consumes
-them, and the measurement splices because nothing consumes it on the way to the
-trace's model events, the satellites staying `weaver-trace`'s. Section 1's
-dependency set names `serde_json`'s `raw_value` feature, the splice's gate, on
-the review seat's finding that the set was argued at feature granularity and
-the new member was absent. No graph record moves, the trio's nodes being the
-charter's and the config vocabulary unchanged.
-**Revised:** 2026-08-08, second of that date. The trio names what exists. The
-messages it carries are `weaver-traits`' `Message`, drawn rather than restated,
-where an earlier wording named a `CanonicalMessage` that exists nowhere.
-`Generation` is moved to section 6 as an open election rather than left as a
-name with no shape: the determination is the decode contract's and is not in
-question, and what is open is where the payload lives, seven of the satellites
-it implies being `weaver-trace`'s against a crate that links one internal
-dependency. Restating them would put one fact in two places with no authority
-and drawing them would widen a floor whose argument is thinness, so the deferral
-follows the fault report's rather than inventing a shape ahead of its answer.
-Section 6's encoding bullet narrows to the encoding, a review finding of this
-act: the entry preceding this one argued that the shape and the encoding
-separate and did not carry that through to the bullet still claiming both, so
-the document represented the trio at section 4.4 and called it unrepresented at
-section 6.
-**Revised:** 2026-08-08. The token trio is held at the new section 4.4, its cases
-being the decode contract's sections 2 and 5 and this crate holding rather than
-creating them. An earlier wording of section 4 deferred the trio's shape and its
-encoding together, and the two separate: what cases a type carries is determined
-by the demand construction puts on it, and only the encoding waits on the
-hot-path measurement. The deferral had become circular, that measurement being
-taken against traffic that cannot exist until the seam carries the trio. The
-section is retitled from the loop 0 wire vocabulary to the organ wire vocabulary,
-the heading being the only place in the corpus that phrase appeared and every
-citation to this section being by number. **The sorting test is rate of change
-rather than loop number,** per the operator of this date: a type an organ
-publishes is constitutive and lives here, loop 0 among them because a badly
-changed loop 0 is a model that cannot load, and a loop conforms to an organ's
-type where it uses one without being obliged to use it. A shelf for types a
-particular loop 1 defines is not created here, nothing in this crate being one
-today. No graph record moves: the nodes are the charter's and the ordering's
-instrument is `weaver-spu-Spec` section 9's.
-**Revised:** 2026-08-06, `lifecycle-refusal` gains `StateNotObservable`. The
-`weaver-admin` code act found sections 2 and 3 of `weaver-admin-Spec` jointly
-unsatisfiable for `show` and `list`: the answer must be one of the floor's two
-enums, and the only fitting answer cases carry an `AgentState` the corpus has no
-source for. The case is the honest third door, per section 4.2, and it retires
-with the observation exchange that closes the gap.
-**Revised:** 2026-08-14, the run identifies itself. `AgentConfig` gains `session`, the
-grouping the operator declares, and `EnterPayload`'s `run_ordinal` becomes
-`run: RunId`. Both are identifiers rather than numbers, which is what lets a
-run reference carry a stamp that distinguishes without anything being
-remembered between invocations.
+
+**Revised:** 2026-08-16, second of that date, a held unit name is its own refusal.
+`LifecycleRefusal` gains `PriorUnitUnreaped`, because `BindFailed` was answering for two
+conditions a state ask already tells apart: a unit that runs with an unreachable socket,
+where a bind is what failed, and a unit whose process exited non-zero, where a held name
+is what refuses.
+
+**Revised:** 2026-08-16, the declaration carries what a binary left movable.
+`DecoderInstruction` gains `tunable_values`, a name-keyed map of numbers that is the
+route `Disposition::OperatorTunable` names and had never been built. A map rather than a
+field per parameter because which parameters a binary leaves tunable is that binary's
+election and moves with a recompile, so a floor type enumerating them would move with
+every deployment that changed its mind.
+
 **Revised:** 2026-08-15, the gate socket is the program's. `GateInstruction` loses
 `socket_path` and `Raise` gains a `socket` beside the instruction, two fields because
 two authors. The group survives the loss rather than collapsing to a bare rule, so a
 field the gate workflow adds later has somewhere to land.
+
+**Revised:** 2026-08-14, the run identifies itself. `AgentConfig` gains `session`, the
+grouping the operator declares, and `EnterPayload`'s `run_ordinal` becomes `run: RunId`.
+Both are identifiers rather than numbers, which is what lets a run reference carry a
+stamp that distinguishes without anything being remembered between invocations.
+
+**Revised:** 2026-08-12, fourth of this date, the encoding rides with the type. One
+sentence lands with the gate's turn-half act: the frame encoding's implementation is the
+floor's, beside the type, one canonical form for every party, owed by the wiring act.
+
+**Revised:** 2026-08-12, third of this date, the frame's shape closes. `TurnFrame`
+carries its octets base64-encoded in one member, elected at section 4.1 by argument
+rather than the deferred measurement, per the operator's ruling of this date: no party
+validates a line before it crosses, so a splice would convert a refused turn into a
+channel fault that ends service. Section 6's bullet closes, one perturbation assertion
+lands, and the code's empty placeholder gains its member with the wiring act.
+
+**Revised:** 2026-08-12, second of this date, the request is the turn's contribution.
+Per the operator's ruling closing issue 124, `Generation`'s `request` member carries the
+turn's delta as rendered, the full effective context being the accumulation the record
+determines. No shape moves, and the wording follows `weaver-trace-PRD` section 3.2 as
+narrowed.
+
+**Revised:** 2026-08-12, the receipt retires and `Received` leaves the trio. Per the
+decode contract's second ruling of this date, the SPU's fault report is the seam's one
+emission and takes no answer, so the `TokenAnswer` case that closed it as an exchange is
+a case nothing would construct, the reserved slot apex section 7 forbids in data.
+Section 4.4 drops the case and states the report's standing: an emission owed nothing
+back, its wire case arriving with `FaultReport`'s shape, which section 6 holds open.
+
+**Revised:** 2026-08-11, third of that date, the model events splice. `Generation`'s
+`rendered` member becomes `request` and carries the model.request content whole, the
+rendered prompt with its template and effective sampling, because the custody act makes
+`model.request` and `model.measurement` spliced payloads the SPU renders and the harness
+carries opaque. No case set moves, the trio's shape unchanged but for the member's name
+and widened content.
+
+**Revised:** 2026-08-11, the seam streams. `TokenAnswer` gains its `Token` case, the
+intermediate the decode contract's streaming ruling of this date enumerates, any number
+preceding the close and none closing, the identifier a bare `u32` and the piece the
+family's rendering of that one token. `Generation` carries `request` and `measurement`
+as two spliced members, one per record box, the request being the model.request content
+whole and renamed from the `rendered` of one act ago now the custody act of 2026-08-11
+makes the whole request the SPU's to render. The decoder's section gains the `identity`
+field, the open exchange's canonical messages as configuration rather than history,
+required with an empty list legitimate, interior to the section with no vocabulary node
+moving.
+
+**Revised:** 2026-08-10, second of that date. The shared tagging test of section 4.3
+gains its fourth arm, identical in `weaver-traits-Spec` section 3 so the floor cannot
+drift: an enum with a variant wrapping a struct that carries a spliced member is
+adjacently tagged, the trio's code act having measured internal tagging failing the
+round trip at deserialization, an invalid-type error at the splice, where the rule's
+rationale named only write-side failures. Applied at section 4.3: the token directive
+and refusal internally tagged, `Finish` fieldless, and `TokenAnswer` adjacent under the
+new arm.
+
+**Revised:** 2026-08-10. The SPU's configuration becomes a section: `spu-instruction`
+holds a `decoder` subsection carrying the model binding and the readout election
+together, and the section is what `EnterPayload` and `Admit` now carry, which closes the
+route the charter's revision of this date names, the election having been declared,
+held, and given no seam to cross. The gate's instruction is the pattern followed rather
+than a precedent invented. In the same act, `Generation` settles at section 4.4 and its
+bullet leaves section 6: the emission and the finish are shaped here because the harness
+consumes them, and the measurement splices because nothing consumes it on the way to the
+trace's model events, the satellites staying `weaver-trace`'s. Section 1's dependency
+set names `serde_json`'s `raw_value` feature, the splice's gate, on the review seat's
+finding that the set was argued at feature granularity and the new member was absent. No
+graph record moves, the trio's nodes being the charter's and the config vocabulary
+unchanged.
+
+**Revised:** 2026-08-08, second of that date. The trio names what exists. The messages
+it carries are `weaver-traits`' `Message`, drawn rather than restated, where an earlier
+wording named a `CanonicalMessage` that exists nowhere. `Generation` is moved to section
+6 as an open election rather than left as a name with no shape: the determination is the
+decode contract's and is not in question, and what is open is where the payload lives,
+seven of the satellites it implies being `weaver-trace`'s against a crate that links one
+internal dependency. Restating them would put one fact in two places with no authority
+and drawing them would widen a floor whose argument is thinness, so the deferral follows
+the fault report's rather than inventing a shape ahead of its answer. Section 6's
+encoding bullet narrows to the encoding, a review finding of this act: the entry
+preceding this one argued that the shape and the encoding separate and did not carry
+that through to the bullet still claiming both, so the document represented the trio at
+section 4.4 and called it unrepresented at section 6.
+
+**Revised:** 2026-08-08. The token trio is held at the new section 4.4, its cases being
+the decode contract's sections 2 and 5 and this crate holding rather than creating them.
+An earlier wording of section 4 deferred the trio's shape and its encoding together, and
+the two separate: what cases a type carries is determined by the demand construction
+puts on it, and only the encoding waits on the hot-path measurement. The deferral had
+become circular, that measurement being taken against traffic that cannot exist until
+the seam carries the trio. The section is retitled from the loop 0 wire vocabulary to
+the organ wire vocabulary, the heading being the only place in the corpus that phrase
+appeared and every citation to this section being by number. **The sorting test is rate
+of change rather than loop number,** per the operator of this date: a type an organ
+publishes is constitutive and lives here, loop 0 among them because a badly changed loop
+0 is a model that cannot load, and a loop conforms to an organ's type where it uses one
+without being obliged to use it. A shelf for types a particular loop 1 defines is not
+created here, nothing in this crate being one today. No graph record moves: the nodes
+are the charter's and the ordering's instrument is `weaver-spu-Spec` section 9's.
+
+**Revised:** 2026-08-06, `lifecycle-refusal` gains `StateNotObservable`. The
+`weaver-admin` code act found sections 2 and 3 of `weaver-admin-Spec` jointly
+unsatisfiable for `show` and `list`: the answer must be one of the floor's two enums,
+and the only fitting answer cases carry an `AgentState` the corpus has no source for.
+The case is the honest third door, per section 4.2, and it retires with the observation
+exchange that closes the gap.
+
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
