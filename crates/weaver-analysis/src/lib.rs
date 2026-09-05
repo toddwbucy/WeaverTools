@@ -26,6 +26,7 @@
 
 pub mod capture;
 pub mod declare;
+pub mod field;
 pub mod lens;
 pub mod preload;
 pub mod project;
@@ -36,6 +37,7 @@ pub mod stream;
 
 pub use capture::{Capture, Comparison, compare};
 pub use declare::{AnalystInputs, DeriveRefusal, SinkKind, derive};
+pub use field::{Address, Answer, FieldReader};
 pub use lens::{
     Lens, LensRefusal, Manifest, Unembedding, WeightsDigest, manifest_path_for, read_manifest,
     rms_epsilon, sha256_hex, sha256_hex_of_file, shards_for, verify_weights,

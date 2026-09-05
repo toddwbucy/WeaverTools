@@ -3,7 +3,13 @@
 **Status:** MERGED. Cut 2026-08-27, the second Spec of the diagnostic leg. Code is
 written against it under the gates of Working Process section 6.
 
-**Date filed:** 2026-08-27 **Revised:** 2026-09-04, third of this date, the preload
+**Date filed:** 2026-08-27 **Revised:** 2026-09-04, fourth of this date, a position's
+field is read from the record. Section 5 gains the `field` verb: the one `model.field`
+event at an asked turn and position, drained from a serving or diagnostic record, file
+or pipe, spliced as the record spelled it, holding one position and never the record,
+and gated on no certified close because the field is the record's own fact about a
+position rather than a reading over a replay. Section 1's layout gains `field.rs`. Per
+issue #436. **Revised:** 2026-09-04, third of this date, the preload
 takes a cut. Section 4's `preload` accepts `--through <run>:<turn>`, projecting the
 record through that turn's close, and `--as <session>`, landing the projection under
 another session name. Per issue #432. **Revised:** 2026-09-04, second of this date, the
@@ -113,6 +119,7 @@ finished record from a truncated one could hold this shape and not use it.
     src/reading.rs    the diagnostic-trace's parse and the gate, section 5
     src/lens.rs       the lens artifact, loaded and applied, section 5
     src/capture.rs    a capture's columns and their comparison, section 5
+    src/field.rs      a position's field, read from the record, section 5
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -719,6 +726,34 @@ edge: asserts
 from: weaver-analysis
 to: analysis-reading-drains-within-a-turn
 ```
+
+**A position's field is read from the record on the same drain, one position at a
+time and never the record.** The record already carries what else had mass at a
+generated position: under the field election a `model.field` event stands at every
+position the generation retained, per `weaver-trace-Spec` section 3, carrying the
+position as the resident length at the draw, the ranked candidates with their
+probabilities, and the rank the draw landed on. So the `field <record> --position
+<turn>:<position> [--run <run>]` verb, added 2026-09-04 for the trace surface's click
+on a spike, adds no reading of its own. Its reader drains a file or a stream as the
+signals reader does, keeps the one `model.field` event whose turn and position match
+the address, splices the ranked list as the record spelled it rather than parsing and
+re-rendering a probability, and drops every other event as it lands, so twenty
+thousand positions cost the read one position. **The drawn token is the candidate at
+the realized rank** where that rank is within the list, and where the draw fell past
+the reported depth it is the entry of the generation's `model.measurement`
+`output_tokens` at the field's ordinal within that generation, the fields pairing with
+the drawn tokens one for one in landing order because the stop token is neither
+retained nor ranked, and where neither answers it is absent rather than invented. One
+line answers per run holding the position, each naming its run, because turn keys
+repeat across the runs of a serving record, and `--run` narrows the read to one run
+and ends it when that run has answered. **It gates on no certified close**, unlike the
+lens: the field is the record's own fact about a position and not a reading taken
+over a replay, so a serving record and a diagnostic record answer alike, the
+diagnostic bracket's close ending the read as it ends every reader's. Three refusals,
+each typed as the others are. A record holding no `model.field` event at all refuses
+as the field not having been elected, or as elected and unproduced where the `load`
+carried a depth. A position the record does not hold at that turn refuses naming the
+address. An address that is not `<turn>:<position>` refuses naming what was given.
 
 **How this crate reaches the sink follows the operator's declaration and not this
 document.** The charter's section 3 assumes no discriminant, so this crate takes a
